@@ -9106,11 +9106,23 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
                     `->${ringAbstand(e, th, NACH[th], null).toFixed(2)}`
             )
         ].join(' | '));
+        // NEU GERECHNET am 2026-09-30 (Pruefung W3-C, Runde 1), jetzt mit der
+        // Farbe, die vorher wirklich dastand. Drei Zeilen lesen sich anders als
+        // in der ersten Fassung, und jede Aenderung hat eine Aussage:
+        //   dmscreen.css hat in ALLEN VIER Themes denselben Ausgangswert 1,20,
+        //     weil dort Literal UND Flaeche themenblind sind — und verliert in
+        //     Sepia (1,20 -> 1,10), wo vorher eine Verbesserung stand.
+        //   party.css ist NUR in Dark bildpunktgleich: in Light und Sepia
+        //     wechselt der Ring die Farbe (#d4af37 -> #b8860b bzw. #8b4513)
+        //     und gewinnt dabei (1,10 -> 1,16 und 1,08 -> 1,24).
+        //   migration.css schwaecht nur Dark und Light ab; in Sepia gewinnt es
+        //     leicht (1,21 -> 1,26).
+        // welt.css bleibt wortgleich — es trug schon color-mix.
         expect(gerechnet).toEqual([
-            'dmscreen.css {.form-group input:focus} | dark 1.20->1.32 | light 1.14->1.23 | sepia 1.06->1.10 | contrast 1.26->12.41',
-            'party.css {.cf-panel .cf-field input:focus} | dark 1.27->1.27 | light 1.16->1.16 | sepia 1.24->1.24 | contrast 1.29->14.97',
+            'dmscreen.css {.form-group input:focus} | dark 1.20->1.32 | light 1.20->1.23 | sepia 1.20->1.10 | contrast 1.20->12.41',
+            'party.css {.cf-panel .cf-field input:focus} | dark 1.27->1.27 | light 1.10->1.16 | sepia 1.08->1.24 | contrast 1.21->14.97',
             'welt.css {.wp-rich-editor:focus} | dark 1.32->1.32 | light 1.17->1.17 | sepia 1.26->1.26 | contrast 1.41->13.46',
-            'migration.css {.wizard-step.active} | dark 1.89->1.32 | light 1.37->1.17 | sepia 1.60->1.26 | contrast 2.21->13.46'
+            'migration.css {.wizard-step.active} | dark 1.89->1.32 | light 1.24->1.17 | sepia 1.21->1.26 | contrast 1.85->13.46'
         ]);
     });
 
@@ -9137,13 +9149,15 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         const ziele = RING_STELLEN.filter(e => e.ziel === 'token');
         expect(ziele.map(e => `${e.datei} {${e.marke}} ${aendertSich(e).join('/') || '(gleich)'}`)).toEqual([
             'dmscreen.css {.form-group input:focus} dark/light/sepia/contrast',
-            'party.css {.cf-panel .cf-field input:focus} contrast',
+            'party.css {.cf-panel .cf-field input:focus} light/sepia/contrast',
             'welt.css {.wp-rich-editor:focus} dark/light/sepia/contrast',
             'migration.css {.wizard-step.active} dark/light/sepia/contrast'
         ]);
         // ALLE VIER sind betroffen, spaetestens in Contrast: dort geht jede von
-        // Teildeckung auf volles Gold. Auch der Fokusring, der in den drei
-        // weichen Themes bildpunktgleich bleibt, gehoert deshalb auf die Liste.
+        // Teildeckung auf volles Gold. party.css stand hier zuerst mit "contrast"
+        // allein — das war die Folge der uebergangenen Farbe: geometrisch aendert
+        // sich dort in Light und Sepia nichts, tonlich sehr wohl. Nur DARK ist an
+        // dieser Stelle wirklich bildpunktgleich.
         const betroffen = ziele.filter(e => aendertSich(e).length > 0);
         expect(betroffen.length).toBe(4);
         const offen = betroffen.filter(e => !inAktenlage(e.datei, e.marke)).map(e => `${e.datei} {${e.marke}}`);

@@ -2874,7 +2874,7 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 3 | `core.css` → `.offline-indicator` | Stufe 2 statt Stufe 1, obwohl der Radius näher an 6 liegt als an 16: die Leiste ist `position: fixed`, eine frei schwebende Auflage. Weichzeichnung 10 → 16 px, y 2 → 4 px. | Die einzige bewusste Abweichung von der Radiusregel. Sieht sie nach zu viel aus? |
 | 4 | Die sechs `transition`-Regeln in **Contrast** (`core.css`, `dmscreen.css` zweimal, `migration.css`, `npcs.css`, `party.css`) | Aus weichem Aufsteigen wird hartes Einrasten — im Kontrast-Theme ist die Höhenlage ein Umriss ohne Verlauf. | Ruckelt es, oder liest es als bewusstes Einschnappen? |
 | 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
-| 6 | `migration.css` → `.wizard-step.active` (Umzugsassistent, der aktive Schritt) | **Zwei Änderungen auf einmal:** Dicke 2 → 3 px (Faktor 1,50 in der Breite) **und** Deckung 30 % → 15 % (Faktor 0,50). Der Ring wird breiter und gleichzeitig halb so dicht. Abstand zum Assistentenkasten (`--bg-card`): dark 1,89 → 1,32 · light 1,37 → 1,17 · sepia 1,60 → 1,26 · contrast 2,21 → **13,46**. | Die **einzige Abschwächung** des Schritts 6. Ist der aktive Schritt in Dark, Light und Sepia noch als der aktuelle erkennbar? Die Punktfläche selbst trägt `var(--gold)` gegen `var(--text-dim)` an den inaktiven und ist unberührt — der Zustand hängt also nicht allein am Ring. Vollständig in **Teil E**. |
+| 6 | `migration.css` → `.wizard-step.active` (Umzugsassistent, der aktive Schritt) | **Drei Änderungen auf einmal:** Dicke 2 → 3 px (Faktor 1,50 in der Breite), Deckung 30 % → 15 % (Faktor 0,50) **und** der Ton, denn das Literal `rgba(212,175,55,0.3)` war themenblind. Der Ring wird breiter, halb so dicht und in Light/Sepia/Contrast anders gefärbt. Abstand zum Assistentenkasten (`--bg-card`), gerechnet mit dem Ton, der vorher wirklich dastand: dark 1,89 → 1,32 · light 1,24 → 1,17 · sepia **1,21 → 1,26** · contrast 1,85 → **13,46**. | Die Abschwächung des Schritts 6 — aber **nur in Dark und Light**: in Sepia gewinnt der Ring leicht, in Contrast massiv. (Die erste Fassung dieser Zeile rechnete das „vorher" mit dem Gold des jeweiligen Themes und schrieb darum sepia 1,60 → 1,26, also eine Abschwächung, wo eine Verbesserung steht; gefunden in Runde 1 der Prüfung **W3-C**.) Ist der aktive Schritt in Dark und Light noch als der aktuelle erkennbar? Die Punktfläche selbst trägt `var(--gold)` gegen `var(--text-dim)` an den inaktiven und ist unberührt — der Zustand hängt also nicht allein am Ring. Vollständig in **Teil E**. |
 | 7 | **Die fünf farbigen Höhenlagen, die schwarz werden** (Schritte 3 und 4): `dashboard.css` → `.qref-fab:hover` · `dmscreen.css` → `.dragging` · `dmscreen.css` → `[data-sortable].drag-over` (zweite Lage) · `loot.css` → `.shop-cat-badge.active` · `loot.css` → `.shop-sort-btn.active` | Sie trugen goldene Tinte (`rgba(212,175,55,.3/.4)`) und tragen jetzt die schwarze Tinte ihrer Stufe. **In Dark verlieren sie ihren farbigen Hof praktisch ersatzlos:** gerechnet mit `tests/unit/helpers/wcag-contrast.js` gegen alle vier Dark-Flächen fällt der Abstand Hof-zu-Untergrund von **1,79–2,40 auf 1,03–1,46**, auf `--bg-dark` je auf 1,03–1,05. In **Light** steigt er von 1,15–1,33 auf **1,24–1,61**, in **Sepia** von 1,13–1,29 auf **1,23–1,52** — dort hebt der schwarze Hof also eher besser ab, nur ohne den Farbhinweis. | **Fehlt der Farbhinweis in Dark?** Vier der fünf melden einen Zustand (Ziehen, Ablegen, aktive Kategorie, aktive Sortierung), eine ist ein Hover. Wo der Zustand nur am Schatten hing, ist er in Dark jetzt weg — Hintergrund, Rahmen und Schriftfarbe müssen ihn allein tragen. |
 | 7a | **Warum hier fünf und nicht sieben stehen** (Prüfung W3-B, Runde 1) | Die zwei roten Höhenlagen des Würfelknopfs standen hier mit `rgba(220,38,38,.4/.5)` und zogen die Dark-Spanne auf 1,48–2,40, die Light-Spanne auf 1,15–2,28 und die Sepia-Spanne auf 1,13–2,21. Beide werden von `floatingPulse` überschrieben und sind **nicht gerendert** — siehe Eintrag 10. Die drei Spannen oben sind ohne sie neu gerechnet. | Nichts. Dieser Eintrag ist nur die Begründung der Zahlen darüber. |
 | 8 | `dashboard.css` → `.qref-fab` **und** `.qref-fab:hover` liegen jetzt auf **derselben** Stufe 2 | Folge der Radiusregel: Ruhe hatte 12 px, Hover 20 px, beide liegen näher an 16 als an 6 oder 32. Der Hover-Schatten ist damit **wertgleich mit dem Ruhezustand**; die Rückmeldung beim Überfahren trägt allein noch `transform: scale(1.1)`. | Reicht das Größerwerden als Rückmeldung, oder braucht der Knopf im Hover Stufe 3? Das wäre **ein** Wert in der Ort→Stufe-Tabelle von R-19 und **einer** in `dashboard.css`, keine Leiteränderung. |
@@ -3125,24 +3125,44 @@ Fokusringe da, wo sie sind; 40 % hätten sie um das 2,7- bis 4-fache deckender g
 gleichzeitig das Ablageziel geschwächt — genau verkehrt herum.
 
 Trägerfläche ist jeweils der Kasten **hinter** dem Element, denn der Ring liegt außerhalb; sie ist
-aus dem CSS gelesen und nicht geraten. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`:
+aus dem CSS gelesen und nicht geraten. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`.
 
-| Stelle | Rolle | Dicke | Deckung | Fläche | Abstand vorher → nachher |
-| --- | --- | --- | --- | --- | --- |
-| `dmscreen.css` → `.form-group input:focus` (mit `select` und `textarea`) | Fokus | 3 → 3 px | 10 % → 15 % (Faktor 1,50) | `.modal`, themenblindes Literal `rgba(26,26,26,0.95)` | dark 1,20 → 1,32 · light 1,14 → 1,23 · sepia 1,06 → 1,10 · contrast 1,26 → **12,41** |
-| `party.css` → `.cf-panel .cf-field input:focus` (mit `select`) | Fokus | 3 → 3 px | 15 % → 15 % (**wortgleich**) | `.cf-panel` = `--bg-dark` | dark 1,27 → 1,27 · light 1,16 → 1,16 · sepia 1,24 → 1,24 · contrast 1,29 → **14,97** |
-| `welt.css` → `.wp-rich-editor:focus` | Fokus | **2 → 3 px** | 15 % → 15 % | `.wp-section` = `--surface` → `--bg-card` | dark 1,32 → 1,32 · light 1,17 → 1,17 · sepia 1,26 → 1,26 · contrast 1,41 → **13,46** |
-| `migration.css` → `.wizard-step.active` | Zustand | **2 → 3 px** | **30 % → 15 %** | `.migration-wizard` = `--bg-card` | dark 1,89 → 1,32 · light 1,37 → 1,17 · sepia 1,60 → 1,26 · contrast 2,21 → **13,46** |
-| `dmscreen.css` → `[data-sortable].drag-over` | Ablageziel | 2 px | 100 % | — | **unverändert**, siehe unten |
+**Drei der vier Ringe trugen ein themenblindes Gold, und darauf kommt es an.** `dmscreen.css`,
+`party.css` und `migration.css` standen auf `rgba(212,175,55, …)` = fest `#d4af37`, das dem Theme
+**nicht** folgte; nur `welt.css` trug schon `color-mix(… var(--gold) 15 % …)`. Die Spalte „vorher"
+ist deshalb an diesen drei Stellen mit `#d4af37` gerechnet und **nicht** mit dem Gold des jeweiligen
+Themes — die erste Fassung dieser Tabelle tat Letzteres und war an sechs Zahlen falsch (gefunden in
+Runde 1 der Prüfung **W3-C**; `R-21` führt die Farbe jetzt als `vorher.farbe` und hält sie gegen das
+CSS). Wo der Ring die Farbe wechselt, ist das eine **sichtbare** Änderung ohne einen Bildpunkt
+Geometrie.
+
+| Stelle | Rolle | Dicke | Deckung | Ton vorher | Fläche | Abstand vorher → nachher |
+| --- | --- | --- | --- | --- | --- | --- |
+| `dmscreen.css` → `.form-group input:focus` (mit `select` und `textarea`) | Fokus | 3 → 3 px | 10 % → 15 % (Faktor 1,50) | `#d4af37` fest | `.modal`, themenblindes Literal `rgba(26,26,26,0.95)` | dark 1,20 → 1,32 · light 1,20 → 1,23 · **sepia 1,20 → 1,10** · contrast 1,20 → **12,41** |
+| `party.css` → `.cf-panel .cf-field input:focus` (mit `select`) | Fokus | 3 → 3 px | 15 % → 15 % (**geometrisch wortgleich**) | `#d4af37` fest | `.cf-panel` = `--bg-dark` | dark 1,27 → 1,27 · light **1,10 → 1,16** · sepia **1,08 → 1,24** · contrast 1,21 → **14,97** |
+| `welt.css` → `.wp-rich-editor:focus` | Fokus | **2 → 3 px** | 15 % → 15 % | `var(--gold)`, folgt dem Theme | `.wp-section` = `--surface` → `--bg-card` | dark 1,32 → 1,32 · light 1,17 → 1,17 · sepia 1,26 → 1,26 · contrast 1,41 → **13,46** |
+| `migration.css` → `.wizard-step.active` | Zustand | **2 → 3 px** | **30 % → 15 %** | `#d4af37` fest | `.migration-wizard` = `--bg-card` | dark 1,89 → 1,32 · light 1,24 → 1,17 · **sepia 1,21 → 1,26** · contrast 1,85 → **13,46** |
+| `dmscreen.css` → `[data-sortable].drag-over` | Ablageziel | 2 px | 100 % | `var(--gold)`, folgt dem Theme | — | **unverändert**, siehe unten |
 
 **Anzusehen sind vier Dinge, in dieser Reihenfolge.** Erstens **Contrast**: dort bekommen alle
 vier Ringe einen satten goldenen 3-px-Rahmen, wo vorher ein nicht ablesbarer Hauch war
-(1,26–2,21 → 12,41–14,97). Das ist gewollt und der Punkt des Themas — aber es ist die
+(1,20–1,85 → 12,41–14,97). Das ist gewollt und der Punkt des Themas — aber es ist die
 größte sichtbare Änderung, die Welle 3 irgendwo macht, und sie gehört gesehen. Zweitens
-`migration.css`: die einzige **Abschwächung** (Teil A Eintrag 6). Drittens `welt.css`: der Ring
-wird **einen Bildpunkt breiter**, sonst nichts — der Preis dafür, dass ein Token **eine** Dicke
-hat und zwei der vier Stellen bereits 3 px trugen. Viertens `party.css`: in drei Themes
-**bildpunktgleich**, es ist der Maßstab, an dem die 15 % gewählt wurden.
+`dmscreen.css` **in Sepia**: die einzige Stelle der Tabelle, die dort **schlechter** wird
+(1,20 → 1,10) — das Literal war ein helles Gold auf dem dunklen, themenblinden Modalkasten, das
+Token bringt dort das dunkle Sepia-Gold `#8b4513`. Drittens `migration.css`: die Abschwächung in
+**Dark und Light** (Teil A Eintrag 6) — in Sepia gewinnt es leicht (1,21 → 1,26), die Überschrift
+„die einzige Abschwächung" gilt also nicht für alle vier Themes. Viertens `welt.css`: der Ring wird
+**einen Bildpunkt breiter**, sonst nichts — der Preis dafür, dass ein Token **eine** Dicke hat und
+zwei der vier Stellen bereits 3 px trugen.
+
+**`party.css` ist NUR in Dark bildpunktgleich, nicht in drei Themes.** Hier stand zuerst das
+Gegenteil. Geometrisch ändert sich dort nichts (3 px, 15 %), und es bleibt der Maßstab, an dem die
+15 % gewählt wurden — aber der Ring wechselt die **Farbe** von `#d4af37` auf `#b8860b` (Light) bzw.
+`#8b4513` (Sepia) und wird dabei in beiden Themes **besser** ablesbar (1,10 → 1,16 und
+1,08 → 1,24). In Sepia ist der Unterschied mit `#efdcac` → `#e4cca7` mit dem Auge zu sehen. Diese
+Stelle gehört damit auf die Sichtprobenliste und stand in `R-21` zuerst fälschlich nur mit
+`contrast`.
 
 **Das Ablageziel bleibt volldeckend, und das ist der Kern der Entscheidung.** `[data-sortable]`
 `.drag-over` trägt `0 0 0 2px var(--gold)` — ein einheitliches Token würde ausgerechnet das eine
