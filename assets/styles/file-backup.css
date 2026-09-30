@@ -136,21 +136,52 @@
 
        UMRISS UND NICHT RAHMEN, wie an .qref-row: die Ruheregel setzt keinen
        border, ein border im Hover verschoebe das Raster um 1px und liesse die
-       Zeile springen. Ein outline liegt ausserhalb des Kastens und braucht
-       keinen Platz.
+       Zeile springen. Ein outline braucht keinen Platz im Raster — auch der
+       eingerueckte nicht, weil er nur MALT und nichts verschiebt.
 
        --gold-dim UND NICHT --gold, ebenfalls wie dort: 2px --gold ist in
        diesem Baum der Tastaturfokus (core.css, editors.css, dmscreen.css).
        Ein 1px --gold-dim ist davon unterscheidbar und haelt WCAG 1.4.11
-       gegen die Flaeche, auf der er liegt (--bg-card, innen wie aussen — die
-       Liste sitzt im Modal auf derselben Karte):
+       gegen BEIDE Nachbarflaechen, seit der Versatz beide zur Zeile macht:
        R-23: W2-D-05 Umriss gegen die Zeilenflaeche    5,21 · 5,09 · 9,17 · 8,51
+       R-23: W2-D-05 Umriss gegen die Zeilenoberkante  3,41 · 3,17 · 5,13 · 3,36
+
+       DER VERSATZ IST NICHT KOSMETIK, ER TRAEGT DIE ZAHL (Pruefung W3-E,
+       Runde 1). Ohne ihn liegt ein outline einen Pixel AUSSERHALB des
+       Rahmenkastens. Diese Zeile ist ein Grid in der Breite des
+       Inhaltskastens von .modal, und .modal fuehrt padding: 24px — die zwei
+       senkrechten Segmente (je min. 44px hoch) und das untere Segment der
+       letzten Zeile (die traegt border-bottom: none, drei Regeln weiter oben)
+       lagen damit IM POLSTER DES MODALS. Und .modal traegt baumweit genau
+       EINE Flaechendeklaration: background: rgba(26, 26, 26, 0.95) in
+       dmscreen.css, ein themenblindes Literal (gefuehrte Ausnahme W2-C-01),
+       das KEIN Theme-Block ueberschreibt. Gegen diese Flaeche liest
+       --gold-dim 5,27 · 3,01 · 1,57 · 7,93: in Sepia war der Ring seitlich
+       UNSICHTBAR, in Light stand er mit 3,01 auf der Schwelle. In Light lagen
+       ausserdem weisse Zeilen (--bg-card #ffffff) auf Fast-Schwarz (#252525) —
+       zwischen angenommener und wirklicher Aussenflaeche lagen dort 15:1.
+
+       WOHER DER FALSCHE SATZ KAM: hier stand "--bg-card, innen wie aussen —
+       die Liste sitzt im Modal auf derselben Karte", woertlich von der
+       Vorlage .qref-row uebernommen (dashboard.css). DORT TRIFFT ER ZU, weil
+       .qref-panel selbst var(--bg-card) traegt und die Zeile unmittelbar
+       darin liegt. Hier nicht. party.css fuehrt genau diese Falle seit
+       Welle 2 schriftlich: ".modal traegt background: rgba(26, 26, 26, 0.95)
+       — ein festes Dunkel, das KEINEM Theme folgt."
+
+       outline-offset: -1px zieht den Ring in den Rahmenkasten: innen stoesst
+       er ueberall an --bg-card, von aussen stoesst sein oberes Segment an das
+       border-bottom der Zeile darueber (--border). Beide Reihen stehen oben,
+       R-23 Teil (4) rechnet beide bei jedem Lauf nach und verlangt zusaetzlich,
+       dass der Versatz negativ BLEIBT. Nebeneffekt, erwuenscht: der Ring deckt
+       das eigene border-bottom, die Doppellinie aus Ring und Rahmen entfaellt.
 
        SICHTFOLGE, beziffert: das Ueberfahren war bisher eine Andeutung —
        --bg-hover gegen --bg-card liest 1,38 · 1,36 · 1,27 · 1,49. Der Umriss
        liest 5,21 bis 9,17. Die Zeile meldet den Zustand ab jetzt deutlich
        STAERKER als vorher, nur anders: Ring statt Fuellung. */
     outline: 1px solid var(--gold-dim);
+    outline-offset: -1px;
 }
 
 /* Header-Zeile der Backup-Liste */

@@ -1398,7 +1398,16 @@
    ist davon unterscheidbar und haelt WCAG 1.4.11 gegen die Flaeche, auf der
    er liegt — gegen --bg-card 5,21 · 5,09 · 9,17 · 8,51, also in allen vier
    Themes ueber 3. Innen wie aussen ist das dieselbe Flaeche: die Zeile
-   liegt auf .qref-panel, das ebenfalls --bg-card traegt. */
+   liegt auf .qref-panel, das ebenfalls --bg-card traegt.
+
+   DIESER LETZTE SATZ IST NICHT UEBERTRAGBAR, und das ist keine Vorsicht,
+   sondern Erfahrung: Schritt 9 hat diese Regel an .backup-entry:hover
+   nachgebaut und den Satz mitgenommen. Dort sitzt die Zeile aber im .modal,
+   und .modal traegt ein themenblindes Literal statt --bg-card; der aussen
+   liegende Ring las in Sepia 1,57. Wer diese Bauart ein drittes Mal
+   uebernimmt, prueft ZUERST, welche Flaeche der Ring aussen beruehrt —
+   an .qref-row ist das --bg-card, weil .qref-panel es traegt, und an keiner
+   anderen Stelle von selbst. Siehe file-backup.css und Pruefung W3-E. */
 .qref-row:hover {
     outline: 1px solid var(--gold-dim);
 }

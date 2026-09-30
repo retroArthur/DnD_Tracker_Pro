@@ -601,7 +601,7 @@ dashboard.css
   706  .icon-btn.danger:hover
   707  .icon-btn.success:hover
  1140  .dash-timer-time
- 1442  .qref-chip.danger
+ 1451  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css
@@ -629,7 +629,7 @@ encounters.css
   680  .calc-fav-item.save
  1180  .enc-speed-line
 file-backup.css
-  212  .backup-entry-restore
+  243  .backup-entry-restore
 initiative.css
    72  .bf-xp
   111  .init-entry.lair .init-name
