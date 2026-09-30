@@ -109,10 +109,18 @@ Rückfall im `var()` — nur `@supports`.
   `--green-hover`, `--red-dim`, `--green-dim`, `--red-dark`, `--orange-dim`)
   fallen per `@supports not (…)` in `assets/styles/variables.css` auf ihre
   Basisrolle zurück.
-- **Nicht abgesichert:** die neun Auflagen- und Blenden-Tokens
-  (`--overlay-*`, `--scrim-*`). R-13 in
-  `tests/unit/design-consistency.test.js` führt sie als Inventar,
-  `.planning/HANDOFF-V3-OFFENE-PUNKTE.md` als offenen Punkt.
+- **Bewusst nicht abgesichert:** die neun Auflagen- und Blenden-Tokens
+  (`--overlay-*`, `--scrim-*`) — 9 Definitionen, 22 Nutzungen per `var()`,
+  davon 6 Modalblenden. R-13 in `tests/unit/design-consistency.test.js` führt
+  sie als Inventar. Seit dem 2026-09-30 (Welle 3, Schritt 9) ist das
+  **entschieden** und kein offener Punkt mehr: der Zweig feuert oberhalb des
+  Bodens ohnehin nirgends, und der einzige exakte Rückfall für diese neun wäre
+  ein `rgba()`-Tripel — sie tragen keine Rolle, auf die man zeigen könnte,
+  sondern sind absichtlich themenblindes Weiß bzw. Schwarz. Der Preis ist
+  nachgemessen: R-10 (die `rgba()`-Tripel in `variables.css` sind hart auf 12
+  gepinnt) und R-13 gehen mit drei Zusicherungen rot. Begründung und Rückweg
+  stehen am Zweig in `assets/styles/variables.css` und in
+  `.planning/HANDOFF-V3-OFFENE-PUNKTE.md` unter W2-B-05.
 
 Flächenregeln brauchen **keinen** solchen Rückfall: dort gewinnt bei
 unbekanntem `color-mix()` die vorausgehende Deklaration derselben
