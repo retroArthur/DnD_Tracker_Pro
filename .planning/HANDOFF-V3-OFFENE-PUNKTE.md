@@ -2809,8 +2809,12 @@ beträgt dort rund 1,05).
 
 ## W3-F-01 — Sichtprobenliste der Vier-Themes-Runde (Welle 3, Schritt 10)
 
-**Stand:** 2026-09-30, Welle 3 Schritt 2, **berichtigt in Runde 2 der Nachprüfung** (Teil B von 22
-auf 27, Teil C um die zwei Farbfeld-Marken). **Offen bis zur Runde.** Gesichert durch **R-20** in
+**Stand:** 2026-09-30, Welle 3 Schritte 3 und 4, **berichtigt in Runde 2 der Nachprüfung** (Teil B
+von 22 auf 27, Teil C um die zwei Farbfeld-Marken) und **erweitert nach der Umsetzung der
+Höhenlagen** (Teil A von 6 auf 10 Einträge: die sieben Tinten, die von Gold oder Rot auf Schwarz
+gehen, der gleich gewordene Hover des Schnellreferenz-Knopfs, die größte Deckungsänderung in
+Light/Sepia und der Doppelzustand des Würfelknopfs bei ausgesetzter Animation).
+**Offen bis zur Runde.** Gesichert durch **R-20** in
 `tests/unit/design-consistency.test.js`: die beiden Tests „jede Gluehlage, deren Deckung ODER Ton
 sich aendert, steht in der Aktenlage unter W3-F-01" und „jeder Rahmennachbar mit Abstand unter 3
 steht namentlich in der Aktenlage unter W3-F-01" gehen rot, wenn eine Stelle hier verschwindet.
@@ -2852,6 +2856,10 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 4 | Die sechs `transition`-Regeln in **Contrast** (`core.css`, `dmscreen.css` zweimal, `migration.css`, `npcs.css`, `party.css`) | Aus weichem Aufsteigen wird hartes Einrasten — im Kontrast-Theme ist die Höhenlage ein Umriss ohne Verlauf. | Ruckelt es, oder liest es als bewusstes Einschnappen? |
 | 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
 | 6 | `migration.css` → der Assistentenschritt | Ring von 30 % auf 15 %. | Ist der aktive Schritt noch hervorgehoben? |
+| 7 | **Die sieben farbigen Höhenlagen, die schwarz werden** (Schritte 3 und 4): `dashboard.css` → `.qref-fab:hover` · `dmscreen.css` → `.dragging` · `dmscreen.css` → `[data-sortable].drag-over` (zweite Lage) · `loot.css` → `.shop-cat-badge.active` · `loot.css` → `.shop-sort-btn.active` · `dice.css` → `.floating-dice-trigger` · `dice.css` → `.floating-dice-trigger:hover` | Sie trugen goldene (`rgba(212,175,55,.3/.4)`) oder rote (`rgba(220,38,38,.4/.5)`) Tinte und tragen jetzt die schwarze Tinte ihrer Stufe. **In Dark verlieren sie ihren farbigen Hof praktisch ersatzlos:** gerechnet mit `tests/unit/helpers/wcag-contrast.js` gegen alle vier Dark-Flächen fällt der Abstand Hof-zu-Untergrund von **1,48–2,40 auf 1,03–1,46**, auf `--bg-dark` je auf 1,03–1,05. In **Light** steigt er von 1,15–2,28 auf **1,24–1,61**, in **Sepia** von 1,13–2,21 auf **1,23–1,52** — dort hebt der schwarze Hof also eher besser ab, nur ohne den Farbhinweis. | **Fehlt der Farbhinweis in Dark?** Fünf der sieben melden einen Zustand (Ziehen, Ablegen, aktive Kategorie, aktive Sortierung, Ruhelage des Würfelknopfs), zwei sind ein Hover. Wo der Zustand nur am Schatten hing, ist er in Dark jetzt weg — Hintergrund, Rahmen und Schriftfarbe müssen ihn allein tragen. |
+| 8 | `dashboard.css` → `.qref-fab` **und** `.qref-fab:hover` liegen jetzt auf **derselben** Stufe 2 | Folge der Radiusregel: Ruhe hatte 12 px, Hover 20 px, beide liegen näher an 16 als an 6 oder 32. Der Hover-Schatten ist damit **wertgleich mit dem Ruhezustand**; die Rückmeldung beim Überfahren trägt allein noch `transform: scale(1.1)`. | Reicht das Größerwerden als Rückmeldung, oder braucht der Knopf im Hover Stufe 3? Das wäre **ein** Wert in der Ort→Stufe-Tabelle von R-19 und **einer** in `dashboard.css`, keine Leiteränderung. |
+| 9 | `editors.css` → `.editor-toolbar .tb-menu` in **Light und Sepia** | Die dichteste Schattendeklaration des ganzen Bestands (0,65) steht dort jetzt auf 0,20 bzw. 0,22, Faktor **0,31**; dazu y 14 → 8 px. | Die größte Deckungsänderung der Schritte 3 und 4. Steht das Werkzeugmenü in Light noch frei, oder liegt es flach auf? |
+| 10 | `dice.css` → `.floating-dice-trigger` bei **ausgesetzter Animation** (`prefers-reduced-motion`) | Die erste Lage der Regel ist Stufe 2 (schwarz), die beiden `@keyframes floatingPulse`-Bilder daneben behalten ihr rotes `0 4px 16px rgba(220,38,38,0.4)` (R-19-Ausnahmen 10 und 11). Läuft die Animation, sieht man nur die Bilder; setzt sie aus, steht ein **schwarzer** Schatten, wo vorher ein roter stand. | Kein Fehler, aber der einzige Ort der Welle, an dem dieselbe Regel zwei verschiedene Gesichter hat. Nur mit abgeschalteten Bewegungen prüfbar. |
 
 ### Teil B — die Umrisse in Contrast: **27** Kandidaten, nicht 22 und nicht 13
 
