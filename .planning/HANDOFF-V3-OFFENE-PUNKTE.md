@@ -138,6 +138,32 @@ npx jest tests/unit/design-consistency.test.js -t "R-15"
 wo dieselben Attributfarben auf einer Tönung sitzen — sind ein anderer Punkt und in Schritt 8
 erledigt worden (die Tönung bleibt, die Tinte ist neutral). Sie sind hier nicht mitgemeint.
 
+### Nachtrag Welle 3 Schritt 9 (2026-09-30) — die 4,52 gehören nicht zum DM-Screen
+
+Der Punkt bleibt **erledigt**; berichtigt wird eine **Zuordnung**, die drei Pläne dieser Welle
+weitergetragen haben. Sie lautete: „`--attr-wis` hält in Dark genau 4,52 — wer eine Höhenstufe als
+**inset** auf `.dms-attr-item` legt, kippt diese 0,02." Der erste Halbsatz stimmt, der zweite
+verweist auf die falsche Regel.
+
+Die Tabelle oben zeigt je Theme die Spanne der **schlechteren** der zwei Flächen, nicht beide. Je
+Fläche einzeln gerechnet, Minimum über alle sechs Tokens (dark · light · sepia · contrast):
+
+- `--bg-dark` — `.dms-attr-item` und `.dms-save-item`: **5,04 · 5,66 · 4,98 · 5,25**
+- `--bg-card` — `.attr-str` … `.attr-cha` in `.qref-row`: **4,52 · 6,17 · 5,81 · 4,72**
+
+Die **4,52 sind `--attr-wis` gegen `--bg-card`, also die Schnellreferenz-Zeile `.qref-row`.** Auf
+der Fläche von `.dms-attr-item` hält `--attr-wis` in Dark **5,04**; der knappste Wert dort ist
+`--attr-dex` in Sepia mit **4,98**. Ein inset auf `.dms-attr-item` verschiebt also die erste Reihe
+(Luft 0,48), ein inset auf `.qref-row` die zweite (Luft 0,02). Wer die 0,02 sucht, muss zu
+`.qref-row` — und das ist ausgerechnet die Regel, die aus E3 einen Umriß statt einer Füllung trägt.
+
+Heute trägt **keine** der beiden Regeln einen `box-shadow`; die neun `inset`-Lagen des Baumes sind
+die sieben Papierhöfe des Vorlesetextes plus die zwei Glanzkanten in `dice.css` und `dmscreen.css`.
+**R-23 Teil (6)** hält das fest: es prüft, daß beide Regeln ihre erwartete Fläche tragen und keinen
+`box-shadow`, und rechnet beide Reihen bei jedem Lauf nach — die sechs Tokennamen liest es dafür aus
+den `.dms-attr-item`-Regeln, statt sie zu tippen. Die zwei Reihen stehen zusätzlich mit
+`R-23:`-Etikett am Attributfarben-Kommentar in `assets/styles/variables.css`.
+
 ---
 
 ## W1-C-01 — Elf vorgefundene Stellen hielten 4,5 auf ihrer eigenen Fläche nicht; fünf sind noch offen
@@ -1194,9 +1220,11 @@ grep -rn "color-mix(in srgb, var(--gold)" assets/styles/*.css
 
 ## W2-B-05 — Der `@supports`-Auftrag von Schritt 11 nennt 6 Tokens; die Klasse hat 15
 
-**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. **Teilweise erledigt, weiterhin offen** — Schritt 11
-hat die sechs benannten abgesichert; die neun aus Schritt 3 sind es nicht. Der Nachtrag am Ende
-dieses Punktes nennt den Reststand und das, was dagegen jetzt spricht.
+**Stand:** 2026-09-30, Welle 3 Schritt 9 — **ENTSCHIEDEN**: die neun bekommen **keinen** Rückfall,
+bewußt und mit nachgemessenem Preis für den Gegenweg (Commits `49695bd`, `dcd8365`). Schritt 11 der
+Welle 2 hatte die sechs von E4 benannten abgesichert, die neun aus Schritt 3 nicht. Der **zweite**
+Nachtrag am Ende dieses Punktes führt die Entscheidung, ihre Gründe und den exakt bezifferten
+Rückweg.
 
 ### Worum es geht
 
@@ -1237,7 +1265,7 @@ unsichere Bauart überführt.
 
 ### Warum das nicht kosmetisch ist
 
-Sechs der 22 Stellen sind **Modalblenden**:
+**6** der 22 Stellen sind **Modalblenden** — es sind genau die `--scrim-*`-Nutzungen:
 
 | Datei | Regel |
 | --- | --- |
@@ -1305,7 +1333,8 @@ Schrittes. Umgesetzt ist deshalb genau das Angeordnete:
 Der Rückfall setzt die **Rolle**, kein Literal — ein Hex wäre themenblind und in drei von vier
 Themes die falsche Farbe. `R-13` fällt dadurch von 15 auf **9**: die sechs sind nicht mehr
 rückfalllos, die neun aus Schritt 3 sind es weiterhin, und sie tragen ausgerechnet die sechs
-Modalblenden.
+Modalblenden. (Seit Welle 3 Schritt 2 steht `R-13` wieder bei **13**: die vier Leuchtfarben
+`--glow-gold`, `--glow-yellow`, `--glow-green` und `--glow-red` sind dazugekommen.)
 
 **Was sich seit der Aufnahme dieses Punktes geändert hat:** der Browserboden ist jetzt
 aufgeschrieben (`DEVELOPMENT.md`, Abschnitt „Browser-Mindestanforderung"). Er liegt bei
@@ -1318,7 +1347,53 @@ abgehakt zu werden.
 
 **Zu entscheiden bleibt** (Welle 3): den Zweig um die neun erweitern — ein Einzeiler je Token, in
 demselben Block, `R-13` würde dabei auf 0 fallen und müsste dann als leeres Inventar begründet
-werden.
+werden. — _Diese letzte Zahl ist seit Welle 3 Schritt 2 überholt: `R-13` steht bei **13**, nicht bei
+9 (die vier Leuchtfarben `--glow-*` sind dazugekommen), und fiele bei einer Erweiterung auf **4**,
+nicht auf 0. Entschieden ist im zweiten Nachtrag darunter._
+
+### Zweiter Nachtrag, Welle 3 Schritt 9 (2026-09-30) — entschieden: kein Rückfall, Preis gemessen
+
+**Die neun bleiben ohne `@supports`-Rückfall.** Das ist ab jetzt eine Entscheidung, kein Aufschub.
+Der Bestand, an diesem Tag frisch gezählt und nicht abgeschrieben:
+
+| Größe                                | Zahl   | Befehl                                                                  |
+| ------------------------------------ | -----: | ----------------------------------------------------------------------- |
+| Definitionen in `variables.css`      | **9**  | `grep -cE "^\s*--(overlay-(faint\|weak\|mid\|strong\|heavy)\|scrim-..)\s*:" assets/styles/variables.css` |
+| echte Nutzungen per `var()`          | **22** | 23 Rohtreffer minus **eine Nennung im Kommentar** von `tools.css`       |
+| davon Modalblenden                   | **6**  | alle `var(--scrim-*)`-Nutzungen                                          |
+
+**Grund 1, gemessen: der Zweig feuert oberhalb des Browserbodens nirgends.** Der Boden liegt bei
+Chromium/Edge 121 und Firefox 121 (`DEVELOPMENT.md`), und zwar wegen `scrollbar-color` und sechs
+`:has()`-Regeln — nicht wegen `color-mix` (111/113). Ein Rückfall kauft also für keinen Browser
+etwas, den dieses Projekt als Ziel führt.
+
+**Grund 2, gerechnet: für diese neun gibt es keinen Rollenrückfall.** Die sechs von E4 fallen auf
+ihre Basisrolle zurück („die Rolle selbst, kein Literal" — ein Hex wäre themenblind und in drei von
+vier Themes falsch). Die neun **sind** themenblind: absichtlich Weiß bzw. Schwarz mit einem
+Deckungsanteil, ohne Rolle, auf die man zeigen könnte. Der einzige **exakte** Rückfall ist damit ein
+`rgba()`-Tripel, und ein deckendes `#fff` wäre dort, wo der Zweig feuert, aktiv falsch: eine
+2-%-Auflage würde zur weißen Fläche.
+
+**Der Preis des `rgba()`-Wegs ist nachgemessen, nicht geschätzt.** Die neun Zeilen probehalber in den
+Zweig eingesetzt, `R-10` und `R-13` gefahren, danach zurückgenommen:
+
+| Ratsche | Zusicherung                                                       | vorher | mit Rückfall |
+| ------- | ----------------------------------------------------------------- | -----: | -----------: |
+| R-10    | `rgba()`-Tripel in `variables.css` (hart gepinnt, `toBe`)          |     12 |       **21** |
+| R-13    | Inventar der rückfalllosen `color-mix`-Tokens                      |     13 |        **4** |
+| R-13    | Tokens im verneinten `@supports`-Zweig                             |      6 |       **15** |
+
+Drei Zusicherungen in zwei Ratschen also, deren Zweck genau dieses Sichtbarmachen ist — für einen
+Gurt an einem Träger, den kein Zielbrowser braucht. **Der Rückweg ist damit exakt beziffert**: neun
+Zeilen in dem Zweig plus die drei Zahlen 12 → 21, 13 → 4 und 6 → 15. Wer die Entscheidung umdreht,
+weiß vorher, was sie kostet.
+
+**Was die Klasse weiter bewacht:** `R-13` führt die neun unverändert als Inventar. Ein sechzehnter
+Token dieser Bauart geht rot, ein verschwundener auch. Die Ungleichbehandlung der zwei Hälften
+bleibt also sichtbar; sie ist nur nicht mehr offen, sondern begründet. Die Begründung steht
+zusätzlich am Zweig selbst in `assets/styles/variables.css` und im Abschnitt „Was unterhalb des
+Bodens passiert" von `DEVELOPMENT.md` — bis Schritt 9 nannte auch dieses Dokument den Punkt „offen",
+und ein zweites Dokument, das einer Entscheidung widerspricht, macht sie unauffindbar.
 
 ---
 
@@ -2259,12 +2334,13 @@ führte, ist beides getan:
    Deckel**. Die Grundregel war dabei der schwerere Fall: gewöhnlicher Text, in allen vier Themes
    unter 4,5.
 
-**Offen bleibt nur die Trägerflächenfrage** `--bg-hover` an `.backup-entry-restore:hover` (die Zeile
+**Offen blieb nur die Trägerflächenfrage** `--bg-hover` an `.backup-entry-restore:hover` (die Zeile
 `.backup-entry` schaltet beim Überfahren auf `var(--bg-hover)`, und dagegen hält keine Fassung).
 Das ist W1-B-01/E3 und von D-2 ausdrücklich ausgenommen — kein Rest dieses Punktes, sondern ein
 anderer. Für E3 selbst ändert sich an der Lage nichts: drei der fünf melden das Überfahren über eine
 Füllung, und für genau diese Frage ist E3 entschieden — bisher allerdings nur für `.qref-row:hover`
-ausformuliert.
+ausformuliert. **Beides ist am 2026-09-30 in Welle 3 Schritt 9 geschlossen; siehe den Nachtrag am
+Ende dieses Punktes.**
 
 ### Was der Schrittbericht von Schritt 8 damit zu weit sagt
 
@@ -2273,6 +2349,64 @@ für Regeln mit **eigener** Tinte. Regeln, die nur die Fläche wechseln und die 
 den 128 nie enthalten; gerechnet **und** bewacht sind sie seit Runde 1 des Nachtrags, durch R-18.
 Die Einschränkung steht seit dieser Runde auch im R-04-Block von
 `tests/unit/design-consistency.test.js`, damit sie dort steht, wo jemand die Zahl liest.
+
+### Nachtrag Welle 3 Schritt 9 (2026-09-30) — die zwei letzten Reste, beide geschlossen
+
+Dieser Punkt hieß seit dem Nachtrag der Welle 2 „geschlossen" und trug trotzdem zwei unerledigte
+Teilstücke: die Trägerflächenfrage am Rückhol-Knopf und die benannte Sichtfolge am PWA-Knopf. Beide
+sind jetzt entschieden, umgesetzt und unter einer Ratsche (**R-23**, die drei Reste dieses Schritts
+beziffert geführt). Keine der beiden Lücken hätte R-18 finden können, und das ist der eigentliche
+Befund: R-18 rechnet über die D-2-Dreierliste, nicht über die Fläche, auf der die Regel sitzt.
+
+**1. `.backup-entry-restore:hover` — Weg A, E3 an der Zeile** (Commit `f443fa5`). Der Knopf ist
+nur sichtbar, **während** man seine Zeile überfährt, und die Zeile füllte sich dabei mit
+`var(--bg-hover)`. Dort ist die Sache strukturell verloren, nicht bloß knapp: `--red-text` ist in
+Welle 1 **gegen genau diese Fläche** auf 4,5 gerechnet worden, jede Auflage darüber drückt es
+darunter. Blank liest es 4,52 · 4,54 · 4,61 · 4,55, mit der gedeckelten Tönung
+4,06 · 4,12 · 4,21 · 4,42. Nachgerechnet für **neun** Deckelwerte:
+
+| Deckel | 12 % | 10 % | 8 % | 7 % | 6 % | 5 % | 4 % | 3 % | 2 % |
+| ------ | ---: | ---: | --: | --: | --: | --: | --: | --: | --: |
+| min über die vier Themes | 4,06 | 4,12 | 4,12 | 4,12 | 4,18 | 4,24 | 4,31 | 4,37 | 4,41 |
+
+Das Beste, was eine Tönung überhaupt erreicht, sind **4,41 bei 2 %** — und dann ist sie unsichtbar.
+Die **Fläche** ist das Problem, nicht die Stärke. Also E3 zum zweiten Mal, wortgleich mit
+`.qref-row`: `.backup-entry:hover` meldet den Zustand über `outline: 1px solid var(--gold-dim)`. Der
+Knopf ist in keiner Zeile angefaßt und sitzt dadurch auf `--bg-card`:
+**5,52 · 5,55 · 5,32 · 6,35**, min 5,32. Der Umriß selbst hält WCAG 1.4.11 gegen `--bg-card` mit
+**5,21 · 5,09 · 9,17 · 8,51**.
+
+Zwei Folgeänderungen, beide unumgänglich: `.backup-entry-header:hover` hielt den Hover der
+Kopfzeile mit `background: transparent` zurück — gegen einen Umriß greift das nicht, ohne
+`outline: none` bekäme die nicht anklickbare Kopfzeile einen goldenen Ring. Und
+`transition: background 0.12s` an `.backup-entry` ist entfallen, weil die Zeile ihre Fläche nicht
+mehr wechselt (`.qref-row` führt aus demselben Grund keine).
+
+**2. `.pwa-install-btn` — Hover mitgedeckelt plus eine nicht tönende Deklaration an `:active`**
+(Commit `832ebde`). Der Nachtrag hatte `:active` gedeckelt und `:hover` ungedeckelt gelassen. Beide
+halten 4,5, also schwieg jede Kontrastratsche — der Mangel war, daß die **gedrückte** Fläche in
+Light und Sepia blasser wurde als die überfahrene und die Zustandsleiter auf dem Kopf stand
+(Abstand zur Ruhefläche überfahren 1,14 gegen gedrückt 1,07 in Light, 1,19 gegen 1,11 in Sepia).
+
+| Sprosse                 | vorher                     | nachher                    |
+| ----------------------- | -------------------------- | -------------------------- |
+| `:hover` (12 %)         | 5,75 · 4,55 · 4,77 · 8,40  | **5,75 · 4,78 · 5,14 · 8,40** |
+| `:active` (22 %)        | 5,65 · 4,78 · 5,14 · 6,76  | 5,65 · 4,78 · 5,14 · 6,76 (unverändert) |
+
+Der Deckel **verbessert** den Hover also zusätzlich. Dafür fallen die zwei Flächen danach in Light
+und Sepia zusammen (beide 7 %) und liegen in Dark einen Prozentpunkt auseinander; nur in Contrast
+bleibt der Unterschied deutlich (12/20 %). Der Druck wird deshalb von `transform: scale(0.97)`
+getragen — dasselbe Mittel, mit dem der Nachtrag `.link-chip:hover` den Deckel aushalten ließ (dort
+`scale(1.05)`). `transform` steht bewußt **nicht** in der `transition` der Grundregel: mit 0,15 s
+liefe die Verkleinerung der Rückmeldung hinterher und beim Loslassen wieder zurück.
+
+**Was daraus für R-18 folgt, und es ist kein Vorwurf an R-18.** Beide Lücken lagen außerhalb dessen,
+was diese Ratsche nach ihrer Bauart sieht: die erste, weil D-2 `--bg-hover` bewußt ausschließt (mit
+`--bg-hover` als Träger wäre jeder Deckel 0 %, also ein Verbot jeder Tönung); die zweite, weil eine
+verkehrte Leiter kein Schwellenmangel ist. **R-23** urteilt genau über diese zwei Fragen: es rechnet
+gegen die **tatsächliche** Fläche und prüft zusätzlich die **Richtung** der Leiter. Und es hängt
+jede geführte Zahl an ein `R-23:`-Etikett im CSS, das bei jedem Lauf nachgerechnet wird — die 3,71
+aus W2-D-06 wäre so nie entstanden.
 
 ### Befehle
 
@@ -2293,15 +2427,20 @@ grep -n "WORAUF SICH DIE ZAHL 128" -A 60 tests/unit/design-consistency.test.js
 npx jest tests/unit/design-consistency.test.js -t "R-18"
 # Der Zweig fuer blanke Flaechen in R-04:
 npx jest tests/unit/design-consistency.test.js -t "blanker Flaeche"
+# Die Ratsche der drei Restposten aus Schritt 9:
+npx jest tests/unit/design-consistency.test.js -t "R-23"
 ```
 
 ---
 
 ## W2-D-06 — Die Goldtinte des W20-Knopfs liegt auf zwei Rotstopps; die Zahlen standen im Kommentar, an keiner Schwelle
 
-**Stand:** 2026-09-29, Nachtrag der Welle 2, **Runde 2**. Offen. Vorbestand seit Schritt 7, kein
-Rückschritt dieser Welle — gefunden, als R-18 in Runde 2 auch die **Klassenform** der
-verfeinernden Regel zu sehen bekam (W2-D-05).
+**Stand:** 2026-09-30, Welle 3 Schritt 9 — **ENTSCHIEDEN UND UMGESETZT** (Commit `862d885`):
+Weg 1, beide Verlaufsstopps gedeckelt, min **5,49** gegen die tatsächliche Trägerfläche.
+Aufgenommen am 2026-09-29 im Nachtrag der Welle 2, Runde 2, als Vorbestand seit Schritt 7 —
+gefunden, als R-18 in Runde 2 auch die **Klassenform** der verfeinernden Regel zu sehen bekam
+(W2-D-05). Der Nachtrag am Ende dieses Punktes nennt die Zahl, die der Entscheidung gefehlt hat,
+und warum der Eintrag in R-18 trotzdem stehen bleibt.
 
 ### Worum es geht
 
@@ -2357,18 +2496,67 @@ Eine D-4-Frage (Tinte gegen Tönung), keine Schreibweise:
    Nimmt dem W20-Knopf aber die Goldbeschriftung, die alle anderen Würfelknöpfe tragen, und
    damit einen Teil seiner Sonderstellung. Mit Deckel 10,19 · 12,51 · 7,78 · 14,03.
 
-Gewählt ist vorerst: nicht geändert, hier geführt, in R-18 bewacht. Die Sichtprobe zu E1
+Gewählt war vorerst: nicht geändert, hier geführt, in R-18 bewacht. Die Sichtprobe zu E1
 (Schritt 4 der Vier-Themes-Runde, „hebt sich der W20 noch von den übrigen Würfelknöpfen ab")
 fragt nach genau der Eigenschaft, die Weg 3 kostet — sie gehört vor diese Entscheidung, nicht
 danach.
+
+### Nachtrag Welle 3 Schritt 9 (2026-09-30) — Weg 1 trägt, weil die Fläche eine andere ist
+
+**Der Satz „nur deckeln reicht nicht" war gegen die falsche Fläche gerechnet.** Beide Zahlen, die
+oben stehen, sind richtig; der Schluß aus ihnen war es nicht. Die D-2-Dreierliste
+(`--bg-card`/`--bg-dark`/`--bg-elevated`) ist hier nicht die Trägerfläche:
+`background: linear-gradient(…)` ist die **Kurzschreibweise** und setzt `background-color` auf
+`transparent` zurück — das `var(--bg-elevated)` der Grundregel `.fdp-die` ist damit weg. Dahinter
+liegt genau eine Fläche, und sie steht zwanzig Zeilen weiter oben in derselben Datei:
+`.floating-dice-panel` mit `color-mix(in srgb, var(--bg-card) 98%, transparent)`.
+
+Dagegen gerechnet, Tinte `var(--gold-text)`, dark · light · sepia · contrast:
+
+| Lage                         | ungedeckelt                    | gedeckelt                      |
+| ---------------------------- | ------------------------------ | ------------------------------ |
+| Verlaufskopf                 | 6,64 · 4,56 · 4,93 · 11,57     | 7,28 · 5,61 · 5,95 · 11,57     |
+| Verlaufsfuß                  | 7,27 · 3,42 · 3,72 · 12,33     | 7,91 · 5,49 · 5,83 · 12,82     |
+| **min beider Stopps**        | 6,64 · **3,42** · **3,72** · 11,57 | 7,28 · 5,49 · 5,83 · 11,57 |
+
+min **5,49** — 0,99 **über** der Schwelle statt 0,02 darunter. Umgesetzt ist damit Weg 1 (nur
+deckeln); Weg 3 („eigene Tinte `var(--text)`") ist nicht nötig geworden und kostet die
+Goldbeschriftung nicht.
+
+Die Vereinfachung „Träger = `--bg-card`" ist **gepinnt, nicht angenommen**: R-23 Teil (3) rechnet
+die Reihe zusätzlich über die wirkliche Panelfläche und meldet jede Abweichung über 0,01. Gemessen
+kostet sie genau 0,01, und nur in Sepia (5,82 gegen 5,83).
+
+**Der Eintrag in R-18 bleibt, sein Wert ist von 2,87 auf 4,48 nachgezogen** (Commit `7266cb9`). Er
+bleibt, weil R-18 nach seiner eigenen Bauart über D-2 urteilt wie R-04, R-11 und R-14, und dort
+fehlen die 0,02. Er deckt damit **keinen Mangel mehr, sondern die bewußte Strenge von D-2**. Er
+wird nachgezogen, weil 2,87 nach dem Deckel nicht mehr die Messung ist — mit der alten Zahl könnte
+der Deckel lautlos wieder verschwinden. Mutationsprobe: beide `min()`-Klammern aus `dice.css`
+entfernt, R-18 geht rot mit „eingetragen war min 4.48, gemessen 2.87".
+
+**SICHTFOLGE, beziffert und auf der Sichtprobenliste (W3-F-01 Teil F).** `--tint-max` ist
+13/7/7/20 %. Der Kopf fällt auf Faktor 0,65 · 0,35 · 0,35 · 1,00, der Fuß auf
+0,43 · 0,23 · 0,23 · 0,67. Und weil der Deckel in **jedem** Theme beide Stopps auf denselben Anteil
+zieht (13/13, 7/7, 7/7, 20/20), verliert der Verlauf sein **Deckkraftgefälle**; es bleibt das
+Farbgefälle `--red` → `--red-dark` bei gleicher Deckung. Der Würfel wird also blasser **und**
+flacher. Der Rahmen ist bewußt nicht mitgedeckelt — er ist keine Fläche unter der Schrift, sondern
+eine Linie daneben; seine Zahlen (2,03 · 2,28 · 2,12 · 1,88, alle unter 3:1 wie schon vorher)
+bleiben gültig.
+
+Nebenbei korrigiert: der Kommentar an der Regel schrieb für den Verlaufsfuß in Sepia **3,71**.
+Gemessen sind 3,7171, also 3,72 — abgeschnitten statt gerundet, folgenlos für das Urteil, aber
+falsch. Genau diese Art Fehler findet **R-23** ab jetzt bei jedem Lauf: die fünf Zahlenreihen
+dieser Regel stehen im CSS mit einem `R-23:`-Etikett und werden nachgerechnet, statt geglaubt zu
+werden.
 
 ### Befehle
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
-grep -n "fdp-die.d20" -A 26 assets/styles/dice.css
+grep -n "fdp-die.d20" -A 60 assets/styles/dice.css
 grep -n "floating-dice-panel" -A 40 assets/styles/dice.css | grep -n "background"
 npx jest tests/unit/design-consistency.test.js -t "R-18"
+npx jest tests/unit/design-consistency.test.js -t "R-23"
 ```
 
 ---
@@ -2827,7 +3015,11 @@ fälschlich für folgenlos hielt — und die zwei weißen Glanzkanten als Nachwe
 übersehen wurden; **Teil D** von vier Sätzen auf die vollständige Messung, weil die sechs
 JS-Stellen **nicht** in der Planfassung umgesetzt sind, sondern nach **W3-D-05** verstärkt;
 dazu unter Teil E die Notiz, warum die Ausnahmeliste mit Paragraph 7 nicht deckungsgleich
-werden kann).
+werden kann) und **erweitert nach der Umsetzung des Schritts 9** (neuer **Teil F** mit den drei
+Restposten der Wellen 1 und 2 — dem gedeckelten W20-Knopf, dem Umriß statt der Füllung an der
+Sicherungsliste und der gedeckelten Hover-Sprosse des PWA-Knopfs; zwei davon sind **nur im
+Überfahren oder im Drücken** sichtbar. Diesen Teil F hatten die Kommentare des Schritts 8 schon
+genannt, bevor es ihn gab — jetzt gibt es ihn).
 **Offen bis zur Runde.** Gesichert durch **R-20** und **R-21** in
 `tests/unit/design-consistency.test.js`: die Tests „jede Gluehlage, deren Deckung ODER Ton
 sich aendert, steht in der Aktenlage unter W3-F-01", „jeder Rahmennachbar mit Abstand unter 3
@@ -3293,6 +3485,33 @@ genau darauf auf und erbt die Mehrdeutigkeit. Jetzt notiert, jetzt nicht gelöst
 sind es vier:** die zwei JS-Ringe (Auftragskarte, Notizzettel) sind Sprungmarken, keine
 Fokusringe, und tragen dasselbe Token — siehe Teil D.
 
+### Teil F — die drei Restposten aus Schritt 9: **drei** Stellen ändern sichtbar ihr Aussehen
+
+Diese drei gehören nicht zur Schattenfamilie, sondern zu den Tönungen der Wellen 1 und 2. Sie
+stehen hier, weil die Runde ohnehin alle vier Themes durchgeht und weil zwei von ihnen Zustände
+betreffen, die **nur im Überfahren oder im Drücken** sichtbar sind — also genau die, die man beim
+Ansehen einer Seite nicht findet. Gesichert durch **R-23** in
+`tests/unit/design-consistency.test.js`.
+
+| # | Stelle | Was sich ändert | Worauf zu achten ist |
+| --: | --- | --- | --- |
+| 14 | `dice.css` → `.fdp-die.d20` (der W20-Knopf im schwebenden Würfelpanel) | **Beide Verlaufsstopps sind gedeckelt** (W2-D-06). `--tint-max` ist 13/7/7/20 %: der Kopf fällt auf Faktor 0,65 · 0,35 · 0,35 · 1,00, der Fuß auf 0,43 · 0,23 · 0,23 · 0,67. Und weil der Deckel in **jedem** Theme beide Stopps auf denselben Anteil zieht (13/13 · 7/7 · 7/7 · 20/20), verliert der Verlauf sein **Deckkraftgefälle**; es bleibt das Farbgefälle `--red` → `--red-dark` bei gleicher Deckung. Der Knopf wird also **blasser und flacher**. Die Beschriftung gewinnt: 6,64 · 3,42 · 3,72 · 11,57 → 7,28 · 5,49 · 5,83 · 11,57. Rahmen unberührt (2,03 · 2,28 · 2,12 · 1,88, wie vorher unter 3:1). | **Hebt sich der W20 noch von den übrigen fünf Würfelknöpfen ab?** Dieselbe Frage, die die Sichtprobe zu E1 schon stellt — jetzt mit einem schwächeren Rot. In Light und Sepia ist die Fläche auf ein Drittel gefallen; wenn der Knopf dort nicht mehr als „der besondere" liest, ist die Antwort **eine benannte Ausnahme für diese Regel**, nicht ein anderer Deckel (der gilt für 115 weitere Stellen). Contrast ist unverändert. |
+| 15 | `file-backup.css` → `.backup-entry:hover` (die Zeilen der Sicherungsliste im Modal „Datei-Backups") | **Aus einer Füllung wird ein Umriß** (E3, zum zweiten Mal nach `.qref-row`): `background: var(--bg-hover)` → `outline: 1px solid var(--gold-dim)`. Das Überfahren war bisher eine Andeutung (`--bg-hover` gegen `--bg-card`: 1,38 · 1,36 · 1,27 · 1,49), der Umriß liest **5,21 · 5,09 · 9,17 · 8,51** — die Zeile meldet also **deutlicher** als vorher, nur anders. Der rote Rückhol-Knopf darin sitzt dadurch auf `--bg-card` statt auf `--bg-hover` und steigt von 4,06 · 4,12 · 4,21 · 4,42 auf **5,52 · 5,55 · 5,32 · 6,35**. | **Zwei Fragen.** Erstens: liest der Ring als Zeilenhervorhebung oder als Fokusring? Er ist 1 px `--gold-dim`, der Tastaturfokus ist 2 px `--gold` — dieselbe Unterscheidung wie bei `.qref-row`, hier aber an einer Zeile **mit** einem Knopf darin, also dort, wo beides zusammen auftreten kann. Zweitens: bekommt die **Kopfzeile** der Liste versehentlich einen Ring? Sie ist ausdrücklich ausgenommen (`outline: none`); greift die Ausnahme nicht, sieht man es sofort. |
+| 16 | `pwa.css` → `.pwa-install-btn:hover` und `:active` (Installieren-Knopf in der Kopfzeile; erscheint nur, wenn der Browser die Installation anbietet) | **Der Hover ist mitgedeckelt**, die Fläche fällt auf Faktor 1,00 · 0,58 · 0,58 · 1,00. Danach stehen die zwei Sprossen bei 12/13 % (dark), 7/7 % (light), 7/7 % (sepia), 12/20 % (contrast) — in Light und Sepia sind sie **flächengleich**, in Dark trennt sie ein Prozentpunkt. Der Druck wird deshalb von `transform: scale(0.97)` getragen. Der Kontrast des Hovers steigt: 5,75 · 4,55 · 4,77 · 8,40 → **5,75 · 4,78 · 5,14 · 8,40**; `:active` bleibt bei 5,65 · 4,78 · 5,14 · 6,76. Vorher stand die Leiter in Light und Sepia **auf dem Kopf** (gedrückt blasser als überfahren, 1,14 gegen 1,07 bzw. 1,19 gegen 1,11); das ist behoben. | **Ist der Druck noch zu spüren?** In Light und Sepia trägt ihn allein das Zusammenziehen um 3 %, in Dark fast allein. Wenn das nicht reicht, ist der Weg **nicht** ein größerer Deckel (der gilt für die ganze Welle 2), sondern eine zweite nicht tönende Deklaration an `:active` — etwa der Rahmen auf `var(--gold-text)`. Ohne Installationsangebot des Browsers ist diese Zeile nicht prüfbar, und das ist kein Befund. |
+
+**Was diese drei mit der Schattenwelle zu tun haben und was nicht.** Nichts an ihnen ist eine
+Schattenlage; sie sind der Restposten, den Schritt 9 abräumt. Sie stehen aber in **derselben**
+Runde, weil zwei von ihnen sonst niemand ansieht: Eintrag 15 ist nur im Überfahren einer Zeile in
+einem Modal sichtbar, Eintrag 16 nur im Drücken eines Knopfs, der nur unter einer Bedingung
+überhaupt erscheint. Eintrag 14 dagegen liegt offen — der W20 ist der auffälligste der sechs
+Würfelknöpfe im schwebenden Panel.
+
+**Ein Punkt für den Bericht, keine Aufgabe der Runde** (W1-B-01): die 4,52, die drei Pläne dieser
+Welle `.dms-attr-item` zugeschrieben haben, gehören zu `.qref-row`. Auf der Fläche von
+`.dms-attr-item` (`--bg-dark`) hält `--attr-wis` in Dark **5,04**, und der knappste Wert dort ist
+`--attr-dex` in Sepia mit **4,98**. Kein Schritt der Welle 3 hat ein `inset` auf eine dieser Flächen
+gelegt; **R-23 Teil (6)** hält das fest. Vollständig unter W1-B-01.
+
 ### Die Ausnahmeliste ist geschlossen — aber nicht deckungsgleich mit Paragraph 7, und das geht nicht
 
 Schritt 7 verlangt, dass die Ausnahmeliste im Test und die in Paragraph 7 des Handoffs nach ihm
@@ -3344,6 +3563,7 @@ PYTHONIOENCODING=utf-8 python build.py     # dist/dnd-tracker-bundled.html oeffn
 npx jest tests/unit/design-consistency.test.js -t "R-19"
 npx jest tests/unit/design-consistency.test.js -t "R-20"
 npx jest tests/unit/design-consistency.test.js -t "R-21"
+npx jest tests/unit/design-consistency.test.js -t "R-23"
 ```
 
 ---
