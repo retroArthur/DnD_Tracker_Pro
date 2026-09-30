@@ -107,7 +107,7 @@
     max-width: 800px;
     max-height: 90vh;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-3);
     transform: none !important;
     padding: 0 !important;
 }
@@ -574,7 +574,7 @@
     border-radius: 50%;
     background: var(--gold);
     border: 2px solid var(--bg-dark);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-1);
     cursor: grab;
 }
 
@@ -584,7 +584,7 @@
     border-radius: 50%;
     background: var(--gold);
     border: 2px solid var(--bg-dark);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-1);
     cursor: grab;
 }
 
@@ -642,7 +642,7 @@
     background: var(--bg-dark);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-2);
     z-index: var(--z-dropdown);
     overflow: hidden;
 }
@@ -1374,7 +1374,7 @@
     max-height: 200px;
     overflow-y: auto;
     z-index: var(--z-dropdown);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-2);
 }
 
 .enc-languages-wrapper.open .enc-lang-dropdown {
