@@ -572,7 +572,7 @@
     transform: scale(1.1);
     box-shadow:
         var(--shadow-3),
-        0 0 20px rgba(220, 38, 38, 0.3);
+        0 0 20px var(--glow-red);
 }
 
 .floating-dice-trigger:active {
@@ -702,13 +702,13 @@
 
 .fdp-number.crit {
     color: var(--green-text);
-    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    text-shadow: 0 0 20px var(--glow-green);
     animation: critPulse 0.5s ease-out;
 }
 
 .fdp-number.fail {
     color: var(--red-text);
-    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    text-shadow: 0 0 20px var(--glow-red);
 }
 
 .fdp-formula {
@@ -785,7 +785,7 @@
 
 .fdp-die.d20:hover {
     border-color: var(--red);
-    box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 0 12px var(--glow-red);
 }
 
 /* Quick Buttons */
