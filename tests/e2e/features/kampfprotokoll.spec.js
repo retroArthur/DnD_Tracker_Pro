@@ -33,18 +33,13 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
  */
 async function ladeApp(page) {
     await seedCleanSession(page);
-    await page.addInitScript(() => {
-        try {
-            localStorage.removeItem('dnd-tracker-v4::kampfprotokoll');
-        } catch {
-            // file://-Speicherbeschraenkungen sind je Browser-Build unterschiedlich
-        }
-    });
     await page.goto(APP_URL);
     await page.waitForFunction(() => typeof window.showToast === 'function', { timeout: 15000 });
     await page.waitForTimeout(600);
-    // Was der Seed nicht verhindern kann, raeumt der Test selbst ab: der Zaehlstand
-    // beginnt bei 0, egal welcher Start-Hinweis vorher gelaufen ist.
+    // Der Zaehlstand beginnt bei 0, egal welcher Start-Hinweis vorher gelaufen ist.
+    // Bewusst NICHT per page.addInitScript(): das liefe auch beim reload wieder und
+    // wuerde dem Neustart-Fall genau den Stand wegraeumen, den er pruefen soll.
+    // clearCombatLog() leert Puffer UND Speicherschluessel in einem Zug.
     await page.evaluate(() => {
         if (typeof window.clearCombatLog === 'function') window.clearCombatLog();
         if (typeof window.clearEventLog === 'function') window.clearEventLog();
@@ -89,8 +84,7 @@ test.describe('U5: Kampfprotokoll — nichts geht verloren', () => {
         await page.waitForTimeout(3000);
 
         const messwert = await page.evaluate(() => {
-            const puffer =
-                typeof window.getCombatLog === 'function' ? window.getCombatLog() : null;
+            const puffer = typeof window.getCombatLog === 'function' ? window.getCombatLog() : null;
             return {
                 imAltenLog: document.querySelectorAll('#event-log .event-log-entry').length,
                 imPuffer: puffer ? puffer.length : -1,
@@ -124,8 +118,7 @@ test.describe('U5: Kampfprotokoll — nichts geht verloren', () => {
         await page.waitForTimeout(600);
 
         const messwert = await page.evaluate(() => {
-            const puffer =
-                typeof window.getCombatLog === 'function' ? window.getCombatLog() : null;
+            const puffer = typeof window.getCombatLog === 'function' ? window.getCombatLog() : null;
             return {
                 imPuffer: puffer ? puffer.length : -1,
                 gefunden: puffer

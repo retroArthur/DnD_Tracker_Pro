@@ -7,7 +7,15 @@
  * eine MODULVARIABLE und liegt NICHT in `window.D`. `pushUndo()` serialisiert
  * bei jeder destruktiven Aktion das ganze `D` (systems/undo.js); ein
  * wachsendes Protokoll dort verteuerte jeden Undo-Schritt. Vorbild fuer die
- * Modulvariable: `diceHistory` in features/dice/dice-core.js.
+ * Modulvariable: `diceHistory` im Wuerfel-Kernmodul (features/dice/).
+ *
+ * DER PFAD DIESES VORBILDS STEHT HIER ABSICHTLICH NICHT VOLLSTAENDIG. Das
+ * Abdeckungs-Gate (tests/unit/module-test-coverage.test.js) sucht
+ * loader.js-relative Modulpfade WOERTLICH in allen Dateien unter tests/ — eine
+ * blosse Erwaehnung im Erklaertext haette das Wuerfel-Kernmodul aus seiner
+ * datierten Ausnahme geholt und damit still aus dem Gate genommen, ohne dass
+ * ein einziger Test es anfasst. Genau diese Unterscheidung (Kommentar ist
+ * keine Abdeckung) hielt der Eintrag vom 2026-09-28 in derselben Datei fest.
  *
  * Ladeidiom wie tests/unit/initiative-mob.test.js: vm.runInContext gegen einen
  * selbstgebauten Kontext, keine ESM-Einbindung (die App ist Non-ESM).
@@ -18,7 +26,14 @@ const path = require('path');
 const vm = require('vm');
 
 const REPO = path.resolve(__dirname, '..', '..');
-const MODUL = path.join(REPO, 'features', 'combat-log', 'combat-log-core.js');
+// Die loader.js-relativen Pfade stehen in AUSFUEHRBAREM Code, nicht nur im
+// Erklaertext: das Abdeckungs-Gate (tests/unit/module-test-coverage.test.js)
+// sucht sie woertlich, und ein Kommentar ist dort laut eigenem Eintrag
+// ausdruecklich KEINE Abdeckung.
+const KERN_REL = 'features/combat-log/combat-log-core.js';
+const FENSTER_REL = 'features/combat-log/combat-log-render.js';
+const MODUL = path.join(REPO, ...KERN_REL.split('/'));
+const FENSTER = path.join(REPO, ...FENSTER_REL.split('/'));
 
 /**
  * Baut einen frischen Kontext mit einem localStorage-Doppel und laedt das Modul.
@@ -52,9 +67,58 @@ function ladeModul(vorbelegung = {}) {
     return { ctx: context, speicher };
 }
 
+/**
+ * Laedt das Fenster-Modul gegen ein DOM-Doppel und gibt Kontext plus die
+ * geschriebene Liste zurueck. Absichtlich KEIN jsdom: das Modul braucht genau
+ * vier Dinge ($, document.querySelectorAll, esc, getCombatLog), und ein Doppel
+ * macht sichtbar, welche das sind.
+ * @param {Array<object>} eintraege - was getCombatLog() liefern soll
+ */
+function ladeFenster(eintraege) {
+    const knoten = {
+        liste: { innerHTML: '' },
+        anzahl: { textContent: '' },
+        panel: { classList: { contains: () => true, toggle: () => true } }
+    };
+    const context = {
+        console,
+        Math,
+        Date,
+        JSON,
+        setTimeout,
+        clearTimeout,
+        $: id =>
+            ({
+                'kampflog-liste': knoten.liste,
+                'kampflog-anzahl': knoten.anzahl,
+                'kampflog-panel': knoten.panel
+            })[id] || null,
+        document: { querySelectorAll: () => [] },
+        // Derselbe Ersatz wie in utils/basic.js esc(): die fuenf HTML-kritischen Zeichen.
+        esc: s =>
+            String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;'),
+        confirm: () => true
+    };
+    context.window = context;
+    context.globalThis = context;
+    context.getCombatLog = () => eintraege;
+    vm.createContext(context);
+    vm.runInContext(fs.readFileSync(FENSTER, 'utf8'), context);
+    return { ctx: context, knoten };
+}
+
 describe('Kampfprotokoll: Modul ist vorhanden und exportiert seinen Vertrag', () => {
     test('features/combat-log/combat-log-core.js existiert', () => {
         expect(fs.existsSync(MODUL)).toBe(true);
+    });
+
+    test('features/combat-log/combat-log-render.js existiert', () => {
+        expect(fs.existsSync(FENSTER)).toBe(true);
     });
 
     test('exportiert pushCombatLog, getCombatLog, clearCombatLog und den Deckel', () => {
@@ -171,6 +235,56 @@ describe('Kampfprotokoll: Persistenz', () => {
         }
         const { ctx } = ladeModul({ [schluessel]: JSON.stringify(zuViel) });
         expect(ctx.window.getCombatLog().length).toBe(deckel);
+    });
+});
+
+describe('Kampfprotokoll: das Fenster', () => {
+    test('eine leere Liste ergibt einen Hinweis, keine leere Flaeche', () => {
+        const { ctx, knoten } = ladeFenster([]);
+        ctx.window.renderCombatLog();
+        expect(knoten.liste.innerHTML).toContain('kplog-leer');
+        expect(knoten.anzahl.textContent).toBe('0');
+    });
+
+    test('jeder Eintrag wird als kplog-entry mit Typklasse und Kategorie gezeichnet', () => {
+        const { ctx, knoten } = ladeFenster([
+            { nr: 2, text: 'Ork: 12 Schaden', typ: 'error', kategorie: 'kampf', zeit: 1 },
+            { nr: 1, text: 'Truhe gespeichert', typ: 'success', kategorie: 'system', zeit: 1 }
+        ]);
+        ctx.window.renderCombatLog();
+        const html = knoten.liste.innerHTML;
+        expect((html.match(/class="kplog-entry /g) || []).length).toBe(2);
+        expect(html).toContain('kplog-entry error');
+        expect(html).toContain('data-kategorie="kampf"');
+        expect(html).toContain('kplog-marke');
+        expect(knoten.anzahl.textContent).toBe('2');
+    });
+
+    test('Meldungstexte werden escaped — sie enthalten Namen aus Nutzereingaben', () => {
+        const { ctx, knoten } = ladeFenster([
+            {
+                nr: 1,
+                text: '<img src=x onerror=alert(1)>: 7 Schaden',
+                typ: 'info',
+                kategorie: 'kampf',
+                zeit: 1
+            }
+        ]);
+        ctx.window.renderCombatLog();
+        expect(knoten.liste.innerHTML).not.toContain('<img');
+        expect(knoten.liste.innerHTML).toContain('&lt;img');
+    });
+
+    test('der Filter waehlt zwischen alles und kampf und faellt auf alles zurueck', () => {
+        const { ctx } = ladeFenster([]);
+        const gesehen = [];
+        ctx.getCombatLog = k => {
+            gesehen.push(k);
+            return [];
+        };
+        ctx.window.setCombatLogFilter('kampf');
+        ctx.window.setCombatLogFilter('unsinn');
+        expect(gesehen).toEqual(['kampf', 'alles']);
     });
 });
 

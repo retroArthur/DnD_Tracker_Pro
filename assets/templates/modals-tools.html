@@ -218,6 +218,31 @@
         </div>
     </div>
 
+    <!-- Kampfprotokoll-Panel (U5) — NICHT modal.
+         Das Ereignis-Log darüber ist die flüchtige Anzeige (2000 ms, Deckel 5);
+         dieses Panel ist das Gedächtnis dahinter (200 Einträge, überlebt den
+         Neustart). Baumuster: .qref-panel, keine Blende, --z-panel — es bleibt
+         offen, während weitergewürfelt wird. -->
+    <div class="kplog-panel" id="kampflog-panel" role="region" aria-label="Kampfprotokoll">
+        <div class="kplog-header">
+            <div class="kplog-title">
+                <span class="kplog-title-icon">📜</span>
+                <span>Kampfprotokoll</span>
+                <span class="kplog-kbd-hint">K</span>
+            </div>
+            <div class="kplog-header-actions">
+                <button class="kplog-btn kplog-btn-del" data-action="clear-combat-log" title="Protokoll leeren">Leeren</button>
+                <button class="kplog-btn" data-action="toggle-combat-log" title="Schließen">✕</button>
+            </div>
+        </div>
+        <div class="kplog-tabs">
+            <button class="kplog-tab active" data-action="kplog-tab" data-value="alles">Alles</button>
+            <button class="kplog-tab" data-action="kplog-tab" data-value="kampf">⚔️ Kampf</button>
+        </div>
+        <div class="kplog-anzahl"><span id="kampflog-anzahl">0</span> Einträge</div>
+        <div class="kplog-liste" id="kampflog-liste"></div>
+    </div>
+
     <!-- Floating Dice Trigger (immer sichtbar) -->
     <button class="floating-dice-trigger" id="floating-dice-trigger" data-action="toggle-floating-dice" title="Würfel">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">

@@ -152,6 +152,13 @@ const MODULES = [
     'ui/layout-profiles.js',
     'utils/performance-extras.js',
 
+    // Kampfprotokoll (U5). Der Kern MUSS vor dem Fenster stehen — das Fenster
+    // liest getCombatLog(). Beide nach core/data.js (getActiveCampaignKey fuer
+    // den kampagnengebundenen Speicherschluessel) und vor ui/actions/, wo
+    // toggle-combat-log haengt.
+    'features/combat-log/combat-log-core.js',
+    'features/combat-log/combat-log-render.js',
+
     // UI
     'ui/dom-builder.js',
     'ui/safe-render.js',

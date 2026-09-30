@@ -225,7 +225,12 @@ const UIActions = {
 
     // Event Log
     'toggle-event-log': () => toggleEventLog(),
-    'clear-event-log': () => clearEventLog()
+    'clear-event-log': () => clearEventLog(),
+
+    // Kampfprotokoll (U5) — das Gedaechtnis hinter dem fluechtigen Ereignis-Log
+    'toggle-combat-log': () => toggleCombatLog(),
+    'clear-combat-log': () => clearCombatLogMitRueckfrage(),
+    'kplog-tab': ctx => setCombatLogFilter(ctx.value)
 };
 
 // Register all UI actions

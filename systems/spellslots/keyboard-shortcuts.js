@@ -209,6 +209,13 @@ function initKeyboardShortcuts() {
             if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
             return;
         }
+        // K: Kampfprotokoll-Panel (U5). Bare 'k' war frei — Strg+K ist die globale
+        // Suche und Strg+Shift+K die Kommandopalette, beide fangen weiter oben ab.
+        if (e.key === 'k' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            if (typeof window.toggleCombatLog === 'function') window.toggleCombatLog();
+            return;
+        }
         // N: Neues Element (kontextabhängig)
         if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();

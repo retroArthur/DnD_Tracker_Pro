@@ -7308,6 +7308,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dashboard.css', zeile: 1198, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
+        { datei: 'dashboard.css', zeile: 2140, stufe: 3,
+          pfad: '.kplog-panel',
+          vorher:
+              'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +
+              'getragen. Das Kampfprotokoll-Panel ist nach .qref-panel gebaut (dieselbe ' +
+              'Datei, gut 900 Zeilen darueber) und uebernimmt dessen Stufe 3: frei ' +
+              'schwebendes Panel mit Radius --radius-lg' },
         { datei: 'dice.css', zeile: 79, stufe: 2,
           pfad: '.dice-die:hover',
           vorher: '0 4px 16px rgba(0,0,0,0.3)' },
@@ -7654,10 +7661,17 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
        selbst.
        ------------------------------------------------------------------- */
 
-    /** Die drei Stellen, an denen ein Schatten im JavaScript ein Literal
+    /** Die ZWEI Stellen, an denen ein Schatten im JavaScript ein Literal
      *  bleiben DARF. Namentlich, mit Grund, und jede wird genau einmal
      *  getroffen — dieselbe Zucht wie bei AUSNAHMEN oben, und aus demselben
-     *  Grund: eine Ausnahme, die ins Leere zeigt, ist Altlast. */
+     *  Grund: eine Ausnahme, die ins Leere zeigt, ist Altlast.
+     *
+     *  ES WAREN DREI. Die dritte war utils/utilities.js:707, der Notfall-Toast
+     *  (`0 4px 12px rgba(0,0,0,0.15)` in einer Inline-Stilzeichenkette). U5 hat
+     *  den Alt-#toast-Knoten abgeschaltet — er schrieb jede Meldung ein zweites
+     *  Mal, mittig oben, ueber allem —, und damit ist die Ausnahme verwaist.
+     *  Sie ist gestrichen statt stehengelassen: genau das verlangt der
+     *  Kopfkommentar dieser Liste. Von drei auf zwei, nachgezaehlt. */
     const JS_AUSNAHMEN = [
         {
             datei: 'features/shops/shop-export.js',
@@ -7672,14 +7686,6 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
             zeile: 486,
             wert: 'none',
             grund: 'Druckregel desselben Handouts'
-        },
-        {
-            datei: 'utils/utilities.js',
-            zeile: 707,
-            wert: '0 4px 12px rgba(0,0,0,0.15)',
-            grund:
-                'Notfall-Toast (der Alt-#toast aus W2-E-05) — eine Inline-Stilzeichenkette, ' +
-                'die laeuft, wenn die App schon halb steht; ein var() koennte dort leer sein'
         }
     ];
 
@@ -7757,7 +7763,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
             anzahl: R19_ZIEL,
             stichprobe: []
         });
-        expect(JS_AUSNAHMEN.length).toBe(3);
+        expect(JS_AUSNAHMEN.length).toBe(2);
     });
 
     /* -------------------------------------------------------------------
@@ -7797,14 +7803,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
        gleich und dieser Test gruen. Waechst sie, ist eine neue ungeregelte
        Stelle entstanden.
        ------------------------------------------------------------------- */
-    test('der Bestand ist der gemessene: 71 box-shadow, 8 text-shadow, 1 drop-shadow', () => {
+    test('der Bestand ist der gemessene: 72 box-shadow, 8 text-shadow, 1 drop-shadow', () => {
         const zahl = prop => alleSchatten.filter(d => prop.test(d.prop)).length;
         expect({
             box: zahl(/box-shadow$/),
             text: zahl(/text-shadow$/),
             drop: zahl(/filter$/),
             lagen: lagen().length
-        }).toEqual({ box: 71, text: 8, drop: 1, lagen: 86 });
+        }).toEqual({ box: 72, text: 8, drop: 1, lagen: 87 });
     });
 
     /* -------------------------------------------------------------------
@@ -8430,8 +8436,8 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(new Set(soll).size).toBe(14);
     });
 
-    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 14 Gluehlagen', () => {
-        expect({ dekl: SCHATTEN.length, gluehe: gluehlagen().length }).toEqual({ dekl: 71, gluehe: 14 });
+    test('dieselbe Menge wie R-19: 72 box-shadow-Deklarationen, 14 Gluehlagen', () => {
+        expect({ dekl: SCHATTEN.length, gluehe: gluehlagen().length }).toEqual({ dekl: 72, gluehe: 14 });
     });
 
     test('die vierzehn Radien bleiben unberuehrt (W3-D-03): 4/4/6/6/8/8/10/12/12/12/12/20/30/30', () => {
@@ -8655,7 +8661,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
        faellt jede Regel mit `border` in genau eine von fuenf Klassen, jede
        Klasse hat eine Zahl, und die Summe ist eine Aussage.
        ------------------------------------------------------------------- */
-    test('jede Schattenregel mit Rahmen faellt in eine der sechs Klassen: 13/6/3/5/14/1', () => {
+    test('jede Schattenregel mit Rahmen faellt in eine der sechs Klassen: 14/6/3/5/14/1', () => {
         const nb = rahmenNachbarn();
         const zahl = k => nb.filter(n => n.klasse === k).length;
         expect({
@@ -8665,9 +8671,9 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             farbig: zahl('farbig'),
             nurFarbe: zahl('nurFarbe'),
             ohne: zahl('ohne')
-        }).toEqual({ border: 13, goldVoll: 6, goldMix: 3, farbig: 5, nurFarbe: 14, ohne: 1 });
+        }).toEqual({ border: 14, goldVoll: 6, goldMix: 3, farbig: 5, nurFarbe: 14, ohne: 1 });
         // Kein Auffangbecken: die sechs Klassen sind alle Klassen.
-        expect(nb.length).toBe(42);
+        expect(nb.length).toBe(43);
         expect(
             nb.filter(
                 n =>
@@ -8676,9 +8682,11 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
                     )
             )
         ).toEqual([]);
-        // 41 tragen einen SICHTBAREN Rahmen; die 42. ist
+        // 42 tragen einen SICHTBAREN Rahmen; die 43. ist
         // `border: none !important` neben `box-shadow: none !important`.
-        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(41);
+        // Die 42. ist .kplog-panel (U5): 1px solid var(--border) neben
+        // var(--shadow-3) — dieselbe Konstruktion wie .qref-panel.
+        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(42);
         expect(nb.filter(n => n.klasse === 'ohne').map(n => `${n.datei} {${n.sel}}`)).toEqual([
             'encounters.css {#calculator-modal}'
         ]);
@@ -9552,8 +9560,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         expect(RING_STELLEN.length).toBe(5);
     });
 
-    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 8 Ringlagen', () => {
-        expect({ dekl: BOX.length, ringe: ringlagen().length }).toEqual({ dekl: 71, ringe: 8 });
+    test('dieselbe Menge wie R-19: 72 box-shadow-Deklarationen, 8 Ringlagen', () => {
+        expect({ dekl: BOX.length, ringe: ringlagen().length }).toEqual({ dekl: 72, ringe: 8 });
     });
 
     test('jede Marke ist ein Ausschnitt ihres gemessenen Selektors', () => {
