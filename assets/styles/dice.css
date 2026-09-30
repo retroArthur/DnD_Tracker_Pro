@@ -76,7 +76,7 @@
 
 .dice-die:hover {
     transform: scale(1.1) rotate(-5deg);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-2);
 }
 
 .dice-die:active {
@@ -562,7 +562,7 @@
     align-items: center;
     justify-content: center;
     box-shadow:
-        0 4px 16px rgba(220, 38, 38, 0.4),
+        var(--shadow-2),
         0 0 0 0 rgba(220, 38, 38, 0.4);
     transition: all 0.3s ease;
     animation: floatingPulse 3s ease-in-out infinite;
@@ -571,7 +571,7 @@
 .floating-dice-trigger:hover {
     transform: scale(1.1);
     box-shadow:
-        0 6px 24px rgba(220, 38, 38, 0.5),
+        var(--shadow-3),
         0 0 20px rgba(220, 38, 38, 0.3);
 }
 
@@ -626,7 +626,7 @@
     padding: 16px;
     z-index: var(--z-floating);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.5),
+        var(--shadow-3),
         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     opacity: 0;
     visibility: hidden;
