@@ -2382,6 +2382,35 @@ Kopfzeile mit `background: transparent` zurück — gegen einen Umriß greift da
 `transition: background 0.12s` an `.backup-entry` ist entfallen, weil die Zeile ihre Fläche nicht
 mehr wechselt (`.qref-row` führt aus demselben Grund keine).
 
+**1a. Dabei ist der schwerste Befund dieses Schritts aufgefallen: die Tintenkorrektur der Welle 2 an
+genau diesem Knopf war nie gerendert.** Das Markup (`systems/file-backup/file-backup-ui.js`) trug
+`style="color: var(--red); border-color: var(--red);"`. Ein Inline-Stil schlägt **jeden** Selektor.
+Die Umstellung von `var(--red)` auf `var(--red-text)`, die dieser Punkt oben als erledigt führt und
+die in `file-backup.css` mit ihren Zahlen begründet steht, ist damit **nie auf einem Schirm
+erschienen**. `R-18` las die Regel und meldete grün; diese Akte nannte den Punkt geschlossen.
+
+Der Unterschied, gerechnet über die jeweilige Trägerfläche (dark · light · sepia · contrast):
+
+| Lage | was die Regel sagt | was das Markup malte |
+| --- | --- | --- |
+| auf `--bg-hover` (Stand vor diesem Schritt) | 4,06 · 4,12 · 4,21 · 4,42 | **3,01 · 3,22 · 3,07 · 3,07** |
+| auf `--bg-card` (nach dem Umriß) | 5,52 · 5,55 · 5,32 · 6,35 | **4,10 · 4,35 · 3,88 · 4,41** |
+
+Beide Inline-Deklarationen sind entfernt (Commit `aea0fcf`); sie sagten dasselbe wie die Regel, nur
+mit dem falschen Token. **Erst beides zusammen trägt** — der Umriß allein hob den gemalten Wert von
+3,01 auf 3,88, also weiter unter 4,5; mit der Regel als Tinte steht er bei **5,32**. Das ist
+wortgleich die Lehre, die der Welle-2-Nachtrag für diese Stelle schon gezogen hatte („erst beides
+zusammen trägt") — sie war nur an der falschen Hälfte umgesetzt.
+
+`R-23` prüft in Teil (4) deshalb **zuerst**, daß kein Inline-Stil die Tinte setzt, und meldet auch
+den leeren Fall (findet es das Element nirgends im Markup, ist das ein Befund). Nachgesehen statt
+vermutet: außer dieser einen trägt **keines** der von R-23 gerechneten Elemente einen farbsetzenden
+Inline-Stil — der PWA-Knopf hat `style="display:none"` in `header.html`, das ist keine Farbe;
+`.fdp-die.d20`, `.qref-row` und `.dms-attr-item` haben keinen. **Für die ganze Familie ist die Frage
+damit nicht beantwortet:** die Prüfung gilt für eine Klasse, nicht für alle Inline-Stile des Baumes.
+Wie viele davon eine Tinte setzen, die eine CSS-Regel daneben anders nennt, ist **nicht erhoben** —
+ein eigener Punkt für eine eigene Runde, und nach diesem Befund ein lohnender.
+
 **2. `.pwa-install-btn` — Hover mitgedeckelt plus eine nicht tönende Deklaration an `:active`**
 (Commit `832ebde`). Der Nachtrag hatte `:active` gedeckelt und `:hover` ungedeckelt gelassen. Beide
 halten 4,5, also schwieg jede Kontrastratsche — der Mangel war, daß die **gedrückte** Fläche in
@@ -3496,7 +3525,7 @@ Ansehen einer Seite nicht findet. Gesichert durch **R-23** in
 | # | Stelle | Was sich ändert | Worauf zu achten ist |
 | --: | --- | --- | --- |
 | 14 | `dice.css` → `.fdp-die.d20` (der W20-Knopf im schwebenden Würfelpanel) | **Beide Verlaufsstopps sind gedeckelt** (W2-D-06). `--tint-max` ist 13/7/7/20 %: der Kopf fällt auf Faktor 0,65 · 0,35 · 0,35 · 1,00, der Fuß auf 0,43 · 0,23 · 0,23 · 0,67. Und weil der Deckel in **jedem** Theme beide Stopps auf denselben Anteil zieht (13/13 · 7/7 · 7/7 · 20/20), verliert der Verlauf sein **Deckkraftgefälle**; es bleibt das Farbgefälle `--red` → `--red-dark` bei gleicher Deckung. Der Knopf wird also **blasser und flacher**. Die Beschriftung gewinnt: 6,64 · 3,42 · 3,72 · 11,57 → 7,28 · 5,49 · 5,83 · 11,57. Rahmen unberührt (2,03 · 2,28 · 2,12 · 1,88, wie vorher unter 3:1). | **Hebt sich der W20 noch von den übrigen fünf Würfelknöpfen ab?** Dieselbe Frage, die die Sichtprobe zu E1 schon stellt — jetzt mit einem schwächeren Rot. In Light und Sepia ist die Fläche auf ein Drittel gefallen; wenn der Knopf dort nicht mehr als „der besondere" liest, ist die Antwort **eine benannte Ausnahme für diese Regel**, nicht ein anderer Deckel (der gilt für 115 weitere Stellen). Contrast ist unverändert. |
-| 15 | `file-backup.css` → `.backup-entry:hover` (die Zeilen der Sicherungsliste im Modal „Datei-Backups") | **Aus einer Füllung wird ein Umriß** (E3, zum zweiten Mal nach `.qref-row`): `background: var(--bg-hover)` → `outline: 1px solid var(--gold-dim)`. Das Überfahren war bisher eine Andeutung (`--bg-hover` gegen `--bg-card`: 1,38 · 1,36 · 1,27 · 1,49), der Umriß liest **5,21 · 5,09 · 9,17 · 8,51** — die Zeile meldet also **deutlicher** als vorher, nur anders. Der rote Rückhol-Knopf darin sitzt dadurch auf `--bg-card` statt auf `--bg-hover` und steigt von 4,06 · 4,12 · 4,21 · 4,42 auf **5,52 · 5,55 · 5,32 · 6,35**. | **Zwei Fragen.** Erstens: liest der Ring als Zeilenhervorhebung oder als Fokusring? Er ist 1 px `--gold-dim`, der Tastaturfokus ist 2 px `--gold` — dieselbe Unterscheidung wie bei `.qref-row`, hier aber an einer Zeile **mit** einem Knopf darin, also dort, wo beides zusammen auftreten kann. Zweitens: bekommt die **Kopfzeile** der Liste versehentlich einen Ring? Sie ist ausdrücklich ausgenommen (`outline: none`); greift die Ausnahme nicht, sieht man es sofort. |
+| 15 | `file-backup.css` → `.backup-entry:hover` (die Zeilen der Sicherungsliste im Modal „Datei-Backups") | **Aus einer Füllung wird ein Umriß** (E3, zum zweiten Mal nach `.qref-row`): `background: var(--bg-hover)` → `outline: 1px solid var(--gold-dim)`. Das Überfahren war bisher eine Andeutung (`--bg-hover` gegen `--bg-card`: 1,38 · 1,36 · 1,27 · 1,49), der Umriß liest **5,21 · 5,09 · 9,17 · 8,51** — die Zeile meldet also **deutlicher** als vorher, nur anders. Der rote Rückhol-Knopf darin sitzt dadurch auf `--bg-card` statt auf `--bg-hover`. **Und er wechselt zugleich seine Farbe**, weil sein Markup die Tinte inline überschrieb und das behoben ist (siehe W2-D-05, Punkt 1a): **gemalt** steigt er von 3,01 · 3,22 · 3,07 · 3,07 auf **5,52 · 5,55 · 5,32 · 6,35**. Sichtbar heißt das: aus `--red` wird `--red-text`, also ein etwas hellerer Rotton in Dark und Contrast und ein dunklerer in Light und Sepia, bei Schrift **und** Rand. | **Drei Fragen.** Erstens: liest der Knopf noch als „gefährlich"? Er ist rot geblieben, aber in Light und Sepia ein dunkleres, in Dark und Contrast ein etwas helleres Rot. Zweitens: liest der Ring als Zeilenhervorhebung oder als Fokusring? Er ist 1 px `--gold-dim`, der Tastaturfokus ist 2 px `--gold` — dieselbe Unterscheidung wie bei `.qref-row`, hier aber an einer Zeile **mit** einem Knopf darin, also dort, wo beides zusammen auftreten kann. Drittens: bekommt die **Kopfzeile** der Liste versehentlich einen Ring? Sie ist ausdrücklich ausgenommen (`outline: none`); greift die Ausnahme nicht, sieht man es sofort. |
 | 16 | `pwa.css` → `.pwa-install-btn:hover` und `:active` (Installieren-Knopf in der Kopfzeile; erscheint nur, wenn der Browser die Installation anbietet) | **Der Hover ist mitgedeckelt**, die Fläche fällt auf Faktor 1,00 · 0,58 · 0,58 · 1,00. Danach stehen die zwei Sprossen bei 12/13 % (dark), 7/7 % (light), 7/7 % (sepia), 12/20 % (contrast) — in Light und Sepia sind sie **flächengleich**, in Dark trennt sie ein Prozentpunkt. Der Druck wird deshalb von `transform: scale(0.97)` getragen. Der Kontrast des Hovers steigt: 5,75 · 4,55 · 4,77 · 8,40 → **5,75 · 4,78 · 5,14 · 8,40**; `:active` bleibt bei 5,65 · 4,78 · 5,14 · 6,76. Vorher stand die Leiter in Light und Sepia **auf dem Kopf** (gedrückt blasser als überfahren, 1,14 gegen 1,07 bzw. 1,19 gegen 1,11); das ist behoben. | **Ist der Druck noch zu spüren?** In Light und Sepia trägt ihn allein das Zusammenziehen um 3 %, in Dark fast allein. Wenn das nicht reicht, ist der Weg **nicht** ein größerer Deckel (der gilt für die ganze Welle 2), sondern eine zweite nicht tönende Deklaration an `:active` — etwa der Rahmen auf `var(--gold-text)`. Ohne Installationsangebot des Browsers ist diese Zeile nicht prüfbar, und das ist kein Befund. |
 
 **Was diese drei mit der Schattenwelle zu tun haben und was nicht.** Nichts an ihnen ist eine
@@ -3505,6 +3534,12 @@ Runde, weil zwei von ihnen sonst niemand ansieht: Eintrag 15 ist nur im Überfah
 einem Modal sichtbar, Eintrag 16 nur im Drücken eines Knopfs, der nur unter einer Bedingung
 überhaupt erscheint. Eintrag 14 dagegen liegt offen — der W20 ist der auffälligste der sechs
 Würfelknöpfe im schwebenden Panel.
+
+**Der Ort, an dem in dieser Runde am ehesten etwas Unerwartetes zu sehen ist, ist Eintrag 15** — und
+zwar nicht wegen des Umrisses, sondern wegen der Farbe des Knopfs darin. Sein Rot wechselt von
+`--red` auf `--red-text`, weil ein Inline-Stil die Regel überschrieb und das behoben ist. Das ist
+die **einzige** Änderung dieses Schritts, die eine Farbe wechselt und nicht bloß eine Deckung; alles
+andere ist blasser, flacher oder anders geformt. Vollständig unter W2-D-05, Punkt 1a.
 
 **Ein Punkt für den Bericht, keine Aufgabe der Runde** (W1-B-01): die 4,52, die drei Pläne dieser
 Welle `.dms-attr-item` zugeschrieben haben, gehören zu `.qref-row`. Auf der Fläche von
