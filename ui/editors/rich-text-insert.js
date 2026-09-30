@@ -720,10 +720,11 @@ function insertTable(rows = 3, cols = 3) {
  * drei kumulativen Glieder ersetzen es.
  *
  * Aufrufer: core/init.js (einmal beim Start und entprellt am resize-Ereignis),
- * renderQuickActionsBar() (Glied 3 ist nur messbar, solange die Initiative
- * sichtbar ist) und die fuenf Stellen in systems/migration/migration-wizard.js,
- * an denen ein festes Band erscheint oder verschwindet (ueber die dortige
- * Huelle _updateStickyChainAfterBanner()).
+ * setLayout() in ui/layout-profiles.js (der Mobil-Zweig raeumt die Kette ab, der
+ * Rueckweg nach Desktop muss sie neu besetzen), renderQuickActionsBar() (Glied 3
+ * ist nur messbar, solange die Initiative sichtbar ist) und die fuenf Stellen in
+ * systems/migration/migration-wizard.js, an denen ein festes Band erscheint oder
+ * verschwindet (ueber die dortige Huelle _updateStickyChainAfterBanner()).
  */
 function updateStickyOffsets() {
     const root = document.documentElement;
@@ -737,6 +738,9 @@ function updateStickyOffsets() {
         // ([data-layout="mobile"] ...). Alle drei Glieder werden
         // zurueckgenommen, damit kein Desktop-Wert stehenbleibt — ein Token, das
         // niemand liest, ist genau der Fehler, den --header-height war.
+        // Das Abraeumen ist nur deshalb unschaedlich, weil setLayout() diese
+        // Funktion auf dem Rueckweg nach Desktop erneut aufruft; ohne diesen
+        // Aufruf kamen hier die CSS-Rueckfallwerte 0px/75px/145px zum Zug.
         root.style.removeProperty('--sticky-top-header');
         root.style.removeProperty('--sticky-top-round');
         root.style.removeProperty('--sticky-top-actions');

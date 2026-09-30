@@ -12,6 +12,20 @@ function setLayout(layout) {
     D.settings.layout = layout;
     save();
     updateLayoutSwitcher(layout);
+    // Die Versatzkette der angehefteten Ebenen haengt am Layout (U3, Glied 1-3).
+    // Der Mobil-Zweig von updateStickyOffsets() raeumt alle drei Glieder ab, weil
+    // Kopfzeile, Runden- und Aktionsleiste dort nach eigenen Regeln anheften
+    // ([data-layout="mobile"] ...). Ohne diesen Aufruf blieben sie auf dem
+    // RUECKWEG nach Desktop leer, und die CSS-Rueckfallwerte (0px / 75px / 145px)
+    // kamen wieder ans Licht — genau die verdrahteten Werte, deren Fehler der
+    // Grund fuer die gerechnete Kette sind: das Umzugs-Hinweisband deckte die
+    // Kopfzeile dann wieder um 61px zu (App-Titel und globale Suche unerreichbar)
+    // und die Aktionsleiste schnitt die Runden-Leiste. Der Wechsel selbst muss
+    // die Kette also neu besetzen; niemand soll erst die Initiative aufrufen
+    // muessen, damit renderQuickActionsBar() den Zustand heilt.
+    if (typeof window.updateStickyOffsets === 'function') {
+        window.updateStickyOffsets();
+    }
     showToast(`Layout: ${layout === 'desktop' ? '🖥️ Desktop' : '📱 Mobil'}`);
 }
 function loadLayout() {
