@@ -359,7 +359,18 @@ const EntityActions = {
             const questCard = $(`quest-${ctx.id}`);
             if (questCard) {
                 questCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                questCard.style.boxShadow = '0 0 0 2px var(--gold)';
+                /* W3-D-05: der Ring kommt aus --ring-gold statt aus
+                   volldeckendem var(--gold) (2px -> 3px). DAZU eine Leuchte,
+                   weil --ring-gold allein 15 % deckend ist und auf --bg-card,
+                   der Flaeche der Auftragskarte, nur 1,32 / 1,17 / 1,26 liest
+                   (dark/light/sepia; Contrast 13,46, dort traegt der Ring
+                   volles Gold). Eine Marke, die nach zwei Sekunden wieder
+                   verschwindet, waere damit praktisch unsichtbar — heute sind
+                   es 8,28 / 3,25 / 6,58 / 13,46. Mit der Leuchte darueber
+                   3,61 / 1,90 / 2,66 / 13,46. Ruecknahme auf die Planfassung
+                   kostet das Loeschen der zweiten Lage; Zahlen in
+                   W3-F-01 Teil F. */
+                questCard.style.boxShadow = 'var(--ring-gold), 0 0 12px var(--glow-gold)';
                 setTimeout(() => (questCard.style.boxShadow = ''), 2000);
             }
         }, 100);
