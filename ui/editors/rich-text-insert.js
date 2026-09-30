@@ -721,8 +721,9 @@ function insertTable(rows = 3, cols = 3) {
  *
  * Aufrufer: core/init.js (einmal beim Start und entprellt am resize-Ereignis),
  * renderQuickActionsBar() (Glied 3 ist nur messbar, solange die Initiative
- * sichtbar ist) und die vier Stellen in systems/migration/migration-wizard.js,
- * an denen ein festes Band erscheint oder verschwindet.
+ * sichtbar ist) und die fuenf Stellen in systems/migration/migration-wizard.js,
+ * an denen ein festes Band erscheint oder verschwindet (ueber die dortige
+ * Huelle _updateStickyChainAfterBanner()).
  */
 function updateStickyOffsets() {
     const root = document.documentElement;
