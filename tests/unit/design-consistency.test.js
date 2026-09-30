@@ -6108,10 +6108,30 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
      stehen seit Welle 2 Schritt 7 im Kommentar der Regel selbst (ueber die
      tatsaechliche Traegerflaeche --bg-card: Verlaufskopf 6,64 · 4,56 · 4,93 ·
      11,57, Verlaufsfuss 7,27 · 3,42 · 3,72 · 12,33) — sie waren nur nie gegen
-     eine Schwelle gehalten. Die 2,87 hier sind das Minimum ueber die drei
-     Traeger nach D-2. Ein Deckel allein traegt nicht: gedeckelt liest sie
-     6,40 · 4,48 · 5,01 · 10,00 und verfehlt Light um 0,02. Gefuehrt als
-     W2-D-06.
+     eine Schwelle gehalten. Gefuehrt als W2-D-06.
+
+     BERICHTIGT IN WELLE 3 SCHRITT 9, und es ist eine Berichtigung DIESES
+     Kopfes: hier stand "ein Deckel allein traegt nicht: gedeckelt liest sie
+     6,40 · 4,48 · 5,01 · 10,00 und verfehlt Light um 0,02". Die Zahlen sind
+     richtig, der Schluss war falsch, weil er die D-2-Dreierliste fuer die
+     Traegerflaeche nahm. Das ist sie hier nicht: `background:
+     linear-gradient(...)` ist die Kurzschreibweise und setzt background-color
+     auf transparent zurueck, das var(--bg-elevated) der Grundregel ist damit
+     weg, und dahinter liegt .floating-dice-panel mit 98 % --bg-card. Ueber
+     DIESE Flaeche liest die gedeckelte Regel 7,28 · 5,49 · 5,83 · 11,57, also
+     min 5,49 — 0,99 ueber der Schwelle statt 0,02 darunter. Beide Stopps sind
+     seit Schritt 9 gedeckelt.
+
+     DER EINTRAG BLEIBT TROTZDEM, und sein Wert ist von 2,87 auf 4,48
+     NACHGEZOGEN. Er bleibt, weil diese Ratsche nach ihrer eigenen Bauart
+     ueber D-2 urteilt (wie R-04, R-11 und R-14) und dort 0,02 fehlen; er wird
+     nachgezogen, weil 2,87 nach dem Deckel nicht mehr die Messung ist — mit
+     der alten Zahl koennte der Deckel lautlos wieder verschwinden. Mit 4,48
+     meldet `min < eingetragen` genau das. Nachgeprueft per Mutation: beide
+     min()-Klammern aus dice.css entfernt, diese Ratsche geht rot mit "min
+     2,87". Die Rechnung ueber die WIRKLICHE Flaeche fuehrt R-23 Teil (3), das
+     zusaetzlich pinnt, dass Panelflaeche und --bg-card nur 0,01 auseinander
+     liegen.
 
    WAS SIE NICHT SIEHT. Dasselbe wie R-14: ein Nachfahre, der im DOM unter der
    Toenung liegt, ohne dass sein Selektor das sagt. Das ist Gruppe B von
@@ -6332,7 +6352,9 @@ describe('R-18 — verfeinernde Regel toent, Tinte ist geerbt (Ratsche)', () => 
      *  W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9, drei sind in Runde 2
      *  des Nachtrags mit der Klassenform dazugekommen (W2-D-02 bzw. W2-D-06). */
     const AUSNAHME = {
-        'dice.css .fdp-die.d20 -> .fdp-die': 2.87,
+        // 2,87 bis Welle 3 Schritt 9, seit dem Deckel 4,48 — die Begruendung
+        // fuer BEIDE Zahlen steht im Kopf dieses Blocks.
+        'dice.css .fdp-die.d20 -> .fdp-die': 4.48,
         'initiative.css .init-entry.active -> .init-entry .drag-handle': 3.56,
         'initiative.css .init-entry.lair -> .init-entry .drag-handle': 3.93,
         'loot.css .loot-tag-chip:has(input:checked) -> .loot-tag-chip input:checked + span': 4.23,
