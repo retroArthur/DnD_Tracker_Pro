@@ -7688,10 +7688,30 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
      *  gebildet wurde; der Test "die abgeleitete Stufe stimmt mit RAHMEN_GOLD
      *  ueberein" haelt beide gegeneinander, statt 18 Stufenwerte von Hand
      *  hierher zu kopieren. Null, wenn die Deklaration keine Hoehenlage
-     *  traegt (`none`, reine Gluehe, reiner Ring). */
+     *  traegt (`none`, reine Gluehe, reiner Ring).
+     *
+     *  DIE ZWEITE SCHREIBWEISE (Welle 3, Schritte 3 und 4). Traegt eine Lage
+     *  ihr Token, steht die Geometrie IM Token. Dann wird das Token ueber
+     *  seine ERSTE Deklaration in variables.css aufgeloest — der :root-Block,
+     *  wo die Leiter 0 2px 6px / 0 4px 16px / 0 8px 32px steht — und die
+     *  Ableitung laeuft danach unveraendert weiter. Sie liest die Stufe also
+     *  NICHT aus dem Tokennamen ab: verschiebt jemand die Leiter in
+     *  variables.css, wandert die abgeleitete Stufe mit, und der Vergleich
+     *  gegen die eingefrorenen Stufen von RAHMEN_GOLD schlaegt an. Erste und
+     *  nicht letzte Deklaration aus demselben Grund wie bei
+     *  tokenDeklaration(): in Contrast ist --shadow-N ein versatzloser Ring
+     *  ohne Radius, aus dem sich keine Hoehe ableiten laesst. */
     function stufeAusRadius(wert) {
         for (const l of lagen20(wert)) {
             if (/\binset\b/.test(l)) continue;
+            const tok = l.match(/^var\(\s*(--shadow-[\w-]+)\s*\)$/);
+            if (tok) {
+                const aufgeloest = tokenDeklaration(tok[1]);
+                if (!aufgeloest) continue;
+                const s = stufeAusRadius(aufgeloest);
+                if (s !== null) return s;
+                continue;
+            }
             const [x = 0, y = 0, b = 0] = laengen20(l);
             if (b <= 0 || (x === 0 && y === 0)) continue;
             const ziele = { 1: 6, 2: 16, 3: 32 };
@@ -8178,8 +8198,18 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(stufeAusRadius('var(--shadow-1)')).toBe(1);
         expect(stufeAusRadius('var(--shadow-2)')).toBe(2);
         expect(stufeAusRadius('var(--shadow-3)')).toBe(3);
-        // Die Schublade ist keine Hoehe (X-Versatz), der Ring hat keinen Radius:
-        expect(stufeAusRadius('var(--shadow-drawer)')).toBe(null);
+        /* Die eigentliche Zusicherung ist nicht die Zahl, sondern die
+           Gleichheit: BEIDE Schreibweisen derselben Sache muessen dasselbe
+           ergeben. Bei der Schublade ist das aufschlussreich — ihr Wert
+           -4px 0 24px faellt schon in der rohen Form unter "Hoehe mit Radius
+           24" und loest den Gleichstand nach OBEN auf, gibt also 3 und nicht
+           null. Das ist nicht neu und aendert nichts; es steht hier, damit
+           niemand die Zahl fuer eine Folge der Tokenisierung haelt. */
+        expect(stufeAusRadius('var(--shadow-drawer)')).toBe(
+            stufeAusRadius('-4px 0 24px rgba(0,0,0,0.5)')
+        );
+        expect(stufeAusRadius('var(--shadow-drawer)')).toBe(3);
+        // Der Ring hat keinen Radius und wird auch als Token nicht aufgeloest:
         expect(stufeAusRadius('var(--ring-gold)')).toBe(null);
         // Und gemischt: Ring voran, Hoehentoken dahinter — dmscreen .drag-over.
         expect(stufeAusRadius('0 0 0 2px var(--gold), var(--shadow-2)')).toBe(2);
