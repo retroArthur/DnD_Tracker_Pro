@@ -2815,7 +2815,9 @@ Höhenlagen** (Teil A von 6 auf 10 Einträge: die Tinten, die von Gold oder Rot 
 gehen, der gleich gewordene Hover des Schnellreferenz-Knopfs, die größte Deckungsänderung in
 Light/Sepia und der Doppelzustand des Würfelknopfs bei ausgesetzter Animation) und **berichtigt in
 Runde 1 der Prüfung W3-B** (Eintrag 7 von sieben auf fünf Stellen: die zwei Höhenlagen des
-Würfelknopfs werden von `floatingPulse` überschrieben und sind auf keinem Schirm zu sehen).
+Würfelknopfs werden von `floatingPulse` überschrieben und sind auf keinem Schirm zu sehen; Teil B von
+27 auf 41 Regeln mit sichtbarem Rahmen, weil die Klassifikation die Regeln übersah, die ihren Rahmen
+nur **umfärben** — darunter der schlechteste Doppellinienfall der Welle mit 1,05).
 **Offen bis zur Runde.** Gesichert durch **R-20** in
 `tests/unit/design-consistency.test.js`: die Tests „jede Gluehlage, deren Deckung ODER Ton
 sich aendert, steht in der Aktenlage unter W3-F-01", „jeder Rahmennachbar mit Abstand unter 3
@@ -2868,29 +2870,49 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 9 | `editors.css` → `.editor-toolbar .tb-menu` in **Light und Sepia** | Die dichteste Schattendeklaration des ganzen Bestands (0,65) steht dort jetzt auf 0,20 bzw. 0,22, Faktor **0,31**; dazu y 14 → 8 px. | Die größte Deckungsänderung der Schritte 3 und 4. Steht das Werkzeugmenü in Light noch frei, oder liegt es flach auf? |
 | 10 | `dice.css` → `.floating-dice-trigger` und `.floating-dice-trigger:hover` sind bei laufender Animation **nicht gerendert**; sichtbar werden sie nur bei **ausgesetzter Animation** (`prefers-reduced-motion`) | Die Regel trägt `animation: floatingPulse 3s ease-in-out infinite`, und `@keyframes floatingPulse` setzt `box-shadow` in allen drei Bildern mit der konstant roten ersten Lage `0 4px 16px rgba(220,38,38,0.4)` (R-19-Ausnahmen 10 und 11). Animationsdeklarationen stehen in der Kaskade **über** normalen Autorendeklarationen — auch über `:hover` und unabhängig von der Spezifität; nur `!important` schlüge sie, und keine der beiden trägt es. Läuft die Animation, sieht man nur die Bilder; setzt sie aus, steht ein **schwarzer** Schatten, wo vorher ein roter stand. **Der `:hover`-Schatten war schon vor Welle 3 toter Code** und ist in Runde 1 der Prüfung W3-B als lebend nachgemessen worden. | Kein Fehler, aber der einzige Ort der Welle, an dem dieselbe Regel zwei verschiedene Gesichter hat. Nur mit abgeschalteten Bewegungen prüfbar. **Für Schritt 7:** wer die Höhe des Knopfs wirklich auf die Leiter holen will, muss sie aus `floatingPulse` nehmen — das ist eine Entscheidung dort, nicht hier. **Für den Bericht von Schritt 10:** die Geometrieänderung an `.floating-dice-trigger:hover` (Weichzeichnung 24 → 32 px, y 6 → 8; einer der fünf Gleichstände, die nach oben aufgelöst wurden) ist wertgeändert, aber **nicht gerendert** — sie darf nicht unter den sichtbaren Sprüngen mitgezählt werden. |
 
-### Teil B — die Umrisse in Contrast: **27** Kandidaten, nicht 22 und nicht 13
+### Teil B — die Umrisse in Contrast: **41** Regeln mit sichtbarem Rahmen, nicht 27, nicht 22, nicht 13
 
 Die Entscheidung W3-D-01 stellt Höhe in Contrast als harten Umriss dar (`#888` / `#aaa` / `#ccc`,
 getrennt über den Spread 1/2/3 px). Der Plan nennt als Kandidaten für „Umriss nicht von Rahmen zu
 unterscheiden" nur die **13** Schattenregeln mit `border: 1px solid var(--border)`. Gemessen am
 2026-09-30 tragen **zusätzlich neun** Schattenregeln einen Rahmen aus `--gold` — und **fünf
-weitere** einen anderen farbigen Rahmen. Summe **27**.
+weitere** einen anderen farbigen Rahmen. Das ergab 27. **Vierzehn weitere** kamen in Runde 1 der
+Prüfung W3-B dazu: sie **färben** ihren Rahmen nur **um** (`border-color`), während Breite und Stil
+aus der Basisregel kommen. Summe **41**.
 
 **Warum hier zuerst 22 stand.** Die erste Fassung dieses Abschnitts zählte drei Klassen
 (13 + 6 + 3) und nannte die Summe eine Kandidatenzahl. `rahmenArt()` in `R-20` hatte aber eine
 **vierte** Klasse `sonst`, die kein Test angesehen hat, und dort lagen sechs weitere Regeln. Die
 Zahl 22 war damit eine Messung von drei Klassen und keine Aussage über Geschlossenheit. Seit dem
-2026-09-30 (Runde 2) fällt jede Schattenregel mit `border` in genau eine von **fünf** Klassen —
-13 `var(--border)` · 6 volles Gold · 3 gemischtes Gold · 5 andere Farbe · 1 `border: none` —, und
-`R-20` rechnet den Abstand **jeder** der 27 mit sichtbarem Rahmen. Die 28. Regel
+2026-09-30 (Runde 2) fällt jede Schattenregel mit `border` in genau eine Klasse, und `R-20` rechnet
+den Abstand **jeder** mit sichtbarem Rahmen.
+
+**Und warum dann 27 auch noch zu klein war.** `rahmenArt()` suchte ausschließlich die
+**Kurzschreibweise** `border: <breite> <stil> <farbe>` und gab `null` zurück, wenn sie fehlte. Eine
+Zustandsregel, die nur `border-color` setzt, war damit unsichtbar — und genau so ist der
+**schlechteste Doppellinienfall der ganzen Welle** geschrieben: `dmscreen.css` färbt beim Schweben
+über fünf Kartenarten auf `--gold-dim` um und liegt mit **1,05** unter den 1,14 der drei
+Stufe-3-Goldrahmen, an den zahlreichsten Karten der App. Seit Runde 1 der Prüfung W3-B fällt jede
+Schattenregel mit Rahmen in genau eine von **sechs** Klassen — 13 `var(--border)` · 6 volles Gold ·
+3 gemischtes Gold · 5 andere Farbe · **14 nur umgefärbt** · 1 `border: none` = 42. Die 42. Regel
 (`encounters.css` → `#calculator-modal`) trägt `border: none !important` neben
 `box-shadow: none !important` und ist deshalb kein Kandidat.
+
+**Was die Klassifikation weiter NICHT sieht, und mit Absicht:** `border-left` und
+`border-<seite>-color`. Ein Seitenstreifen ist keine Doppellinie rundherum; die sechs
+`.read-aloud`-Varianten (`party.css`, 4 px links) wären sonst als Rahmennachbarn gezählt, obwohl der
+Umriss an drei Seiten allein steht. Die Seitenstreifen sind in Teil A Eintrag 5 geführt.
+
+**Von den 41 bekommen 32 überhaupt einen Umriss:** 27 aus der Kurzschreibweise und 5 der 14
+Umfärber. Die neun anderen Umfärber tragen nur eine Glühe oder einen Ring — dort entsteht in
+Contrast keine zweite Linie, und die Frage stellt sich nicht.
 
 In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`
 (Selbstprobe `#777`/weiß = 4,48 und `#767676`/weiß = 4,54 bestanden):
 
 | Stelle | Rahmen | Stufe | Umriss | Abstand Umriss ↔ Rahmen |
 | --- | --- | --: | --- | --: |
+| `dmscreen.css` → `.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover` | umgefärbt auf `var(--gold-dim)` = `#ccac00` | 2 | `#aaa`, 2 px | **1,05** |
 | `core.css` → `.spell-tooltip` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
 | `editors.css` → `.editor-toolbar .tb-menu` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
 | `encounters.css` → `#calculator-modal .modal-content` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
@@ -2898,8 +2920,12 @@ In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-con
 | `party.css` → `.cf-languages-block .cf-lang-dropdown` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `spells.css` → `.floating-toolbar` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `tools.css` → `.wiki-link-suggester` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `dashboard.css` → `.dash-char:hover` | umgefärbt auf `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `dmscreen.css` → `[data-sortable].drag-over` | umgefärbt auf `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `spells.css` → `.table-context-toolbar` | voll `var(--cyan)` = `#00ffff` | 2 | `#aaa`, 2 px | 1,85 |
 | `dmscreen.css` → `[data-tooltip]::after` | `var(--border)` = `#555` | 1 | `#888`, 1 px | 2,10 |
+| `loot.css` → `.shop-cat-badge.active` | umgefärbt auf `var(--gold)` | 1 | `#888`, 1 px | 2,53 |
+| `loot.css` → `.shop-sort-btn.active` | umgefärbt auf `var(--gold)` | 1 | `#888`, 1 px | 2,53 |
 | `dice.css` → `.floating-dice-trigger` (**nicht gerendert**, siehe Teil A Eintrag 10) | 20 % Weiß auf rotem Verlauf | 2 | `#aaa`, 2 px | 2,37 |
 | die anderen **zwölf** `var(--border)`-Regeln | `#555` | 2 bzw. 3 | `#aaa` / `#ccc` | 3,21 / 4,64 |
 | `command-palette.css` → `.cp-box` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
@@ -2932,17 +2958,45 @@ Eintrag 10). Der Doppelring erscheint darum nur bei ausgesetzter Bewegung. Die Z
 stehen, weil sie richtig gerechnet ist und weil die Ratsche über **alle** Rahmennachbarn urteilt,
 nicht nur über die gerenderten — sie ist keine Aufforderung zur Sichtprobe am laufenden Knopf.
 
-**Anzusehen sind alle 27**, in dieser Reihenfolge: erst die drei mit 1,14, dann `--purple` (1,35),
-dann die drei mit 1,66, dann `--cyan` (1,85), dann `[data-tooltip]::after` (2,10), dann die
-restlichen zwölf `var(--border)`-Regeln, zuletzt die drei gemischten Goldrahmen und die zwei
+**Die fünf Umfärber mit Umriss, und warum der erste die wichtigste Stelle dieses Teils ist.**
+`dmscreen.css` → `.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover`
+färbt beim Schweben auf `--gold-dim` um; in Contrast ist das `#ccac00`, und daneben steht der 2-px-Umriss
+`#aaa`. **1,05** — der kleinste Abstand der ganzen Welle, kleiner als die 1,14 der drei
+Stufe-3-Goldrahmen. Die Breite und den Stil malt die Basisregel (`.char-card`, `core.css`; ebenso
+`.spell-card`, `spells.css`). Zwei Hinweise für die Sichtprobe: `.npc-card` trägt in der Basisregel
+nur einen `border-left`, `.location-card` und `.encounter-card` haben im ganzen Stilbaum **keine**
+Rahmenregel — die 4-px-Bande entsteht also an den Charakter- und Zauberkarten, an den NPC-Karten nur
+links, und an Orts- und Begegnungskarten steht der Umriss allein. `dashboard.css` → `.dash-char:hover`
+(1,66) ist derselbe Fall eine Spur milder und gleichzeitig Punkt 5 in Teil A — dort trifft der Umriss
+zusätzlich auf den farbigen `border-left`-Statusstreifen. `dmscreen.css` →
+`[data-sortable].drag-over` (1,66) legt neben den Umriss noch einen **eigenen** 2-px-Goldring als
+erste Lage; dort liegen drei Linien übereinander, und der Rahmen kommt von der Klasse des Elements,
+das das Attribut trägt (`.char-card`, `.quest-item`). Die zwei `loot.css`-Marken (2,53) sind die
+mildesten der fünf: 1 px Gold neben 1 px `#888`.
+
+**Anzusehen sind die 32 mit Umriss**, in dieser Reihenfolge: erst das Kartenschweben in `dmscreen.css`
+(1,05), dann die drei mit 1,14, dann `--purple` (1,35), dann die fünf mit 1,66 (drei volle
+Goldrahmen, `.dash-char:hover`, `[data-sortable].drag-over`), dann `--cyan` (1,85), dann
+`[data-tooltip]::after` (2,10), dann die zwei `loot.css`-Marken (2,53), dann die restlichen zwölf
+`var(--border)`-Regeln, zuletzt die drei gemischten Goldrahmen und die zwei
 Schieberegler-Griffe als Gegenprobe. Der Würfelknopf (2,37) steht **nicht** in dieser Reihenfolge:
 er ist nur mit abgeschalteten Bewegungen zu sehen und gehört damit zu Eintrag 10 in Teil A.
 
-**Fällt die Ablesung an den sechs Goldrahmen durch, ist die FORM falsch, nicht der Grauwert.** Die
+**Fällt die Ablesung an den Goldrahmen durch, ist die FORM falsch, nicht der Grauwert.** Die
 Grauleiter ist nach oben ausgereizt: `#ccc` ist bereits die hellste der drei Stufen, und heller
 würde den Abstand zu Gold weiter verkleinern. Dann kommen nur zwei Wege in Frage: ein **versetzter**
-Umriss (y > 0, damit die Bande nicht rundherum gleich dick ist) oder für diese sechs Stellen eine
+Umriss (y > 0, damit die Bande nicht rundherum gleich dick ist) oder für die betroffenen Stellen eine
 helle weiche Auflage statt des harten Umrisses. Die Grauleiter nachzujustieren löst es nicht.
+
+**Beim schlechtesten Fall der Liste ist es anders, und das ist wichtig.** `--gold-dim` = `#ccac00`
+liegt in der Helligkeit fast genau auf `#aaa` — gemessen 1,05 —, hat zu `#888` aber **1,60** und zu
+`#ccc` **1,38**. Die 1,05 sind also kein Ausreizen der Grauleiter, sondern ein Zusammentreffen mit
+ihrer **mittleren** Sprosse; beide Nachbarsprossen wären besser. Weil die Stufe aus dem Radius folgt
+und nicht frei wählbar ist, bleiben für diese eine Regel drei Wege: der versetzte Umriss, der
+Verzicht auf den Umriss, oder ein anderer Contrast-Wert für `--gold-dim`. Alle drei sind **ein** Wert
+und keine Leiteränderung. Zum Vergleich: volles `--gold` = `#ffd700` liegt bei `#888` auf 2,53, bei
+`#aaa` auf 1,66 und bei `#ccc` auf 1,14 — dort wird es nach oben hin monoton schlechter, und nur
+dort ist die Leiter wirklich ausgereizt.
 
 ### Teil C — die Glühlagen: **zwölf** von 14 ändern sich sichtbar
 
@@ -3003,7 +3057,8 @@ Marken wechseln von voll deckendem Gold auf eine Leuchte mit Teildeckung.
 ### Was diese Runde **nicht** finden kann
 
 Kontrastwerte und Geometrie. Die sind gemessen und durch `R-19` (Form, Ort→Stufe, Contrast ohne
-Weiß) und `R-20` (Radien, Deckungsverteilung, Abstand Umriss ↔ Goldrahmen) gesichert; ein Auge
+Weiß) und `R-20` (Radien, Deckungsverteilung, Abstand Umriss ↔ Rahmen für alle 41 Rahmennachbarn,
+und welche Lagen eine Animation überschreibt) gesichert; ein Auge
 misst sie nicht nach. Sie beantwortet genau zwei Fragen, die keine Messung beantwortet: **ob ein
 harter Umriss als Höhe gelesen wird** und **ob eine halbdurchsichtige Marke noch zeigt, wo.**
 
