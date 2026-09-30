@@ -2810,20 +2810,26 @@ beträgt dort rund 1,05).
 ## W3-F-01 — Sichtprobenliste der Vier-Themes-Runde (Welle 3, Schritt 10)
 
 **Stand:** 2026-09-30, Welle 3 Schritte 3 und 4, **berichtigt in Runde 2 der Nachprüfung** (Teil B
-von 22 auf 27, Teil C um die zwei Farbfeld-Marken) und **erweitert nach der Umsetzung der
-Höhenlagen** (Teil A von 6 auf 10 Einträge: die sieben Tinten, die von Gold oder Rot auf Schwarz
+von 22 auf 27, Teil C um die zwei Farbfeld-Marken), **erweitert nach der Umsetzung der
+Höhenlagen** (Teil A von 6 auf 10 Einträge: die Tinten, die von Gold oder Rot auf Schwarz
 gehen, der gleich gewordene Hover des Schnellreferenz-Knopfs, die größte Deckungsänderung in
-Light/Sepia und der Doppelzustand des Würfelknopfs bei ausgesetzter Animation).
+Light/Sepia und der Doppelzustand des Würfelknopfs bei ausgesetzter Animation) und **berichtigt in
+Runde 1 der Prüfung W3-B** (Eintrag 7 von sieben auf fünf Stellen: die zwei Höhenlagen des
+Würfelknopfs werden von `floatingPulse` überschrieben und sind auf keinem Schirm zu sehen).
 **Offen bis zur Runde.** Gesichert durch **R-20** in
-`tests/unit/design-consistency.test.js`: die beiden Tests „jede Gluehlage, deren Deckung ODER Ton
-sich aendert, steht in der Aktenlage unter W3-F-01" und „jeder Rahmennachbar mit Abstand unter 3
-steht namentlich in der Aktenlage unter W3-F-01" gehen rot, wenn eine Stelle hier verschwindet.
+`tests/unit/design-consistency.test.js`: die Tests „jede Gluehlage, deren Deckung ODER Ton
+sich aendert, steht in der Aktenlage unter W3-F-01", „jeder Rahmennachbar mit Abstand unter 3
+steht namentlich in der Aktenlage unter W3-F-01" und „jede von einer Animation ueberschriebene Lage
+steht in W3-F-01 als nicht gerendert" gehen rot, wenn eine Stelle hier verschwindet.
 Diese Liste kann also nicht durch Vergessen kürzer werden.
 
-Was die Ratsche **nicht** leistet: sie sucht Datei und Selektor als Teilstrings im Abschnitt, nicht
-als Paar in einer Zeile. Eine Stelle kann darum durch einen Nachbareintrag mitgedeckt scheinen —
-`dice.css` → `.floating-dice-trigger` gilt schon durch `.floating-dice-trigger:hover` als geführt.
-Sie steht trotzdem ausdrücklich in Teil B.
+Was die Führungs-Ratschen **nicht** leisten: sie suchen Datei und Selektor als Teilstrings im
+Abschnitt, nicht als Paar in einer Zeile. Eine Stelle kann darum durch einen Nachbareintrag
+mitgedeckt scheinen — `dice.css` → `.floating-dice-trigger` gilt schon durch
+`.floating-dice-trigger:hover` als geführt. Sie steht trotzdem ausdrücklich in Teil B. Die dritte
+Ratsche (Animation) ist die **einzige** hier, die zeilentreu prüft: sie verlangt das Paar und das
+Wort „nicht gerendert" in **einer** Zeile und verbietet dasselbe Paar in der Aufzählung des
+Eintrags 7.
 
 ### Warum sie existiert
 
@@ -2856,10 +2862,11 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 4 | Die sechs `transition`-Regeln in **Contrast** (`core.css`, `dmscreen.css` zweimal, `migration.css`, `npcs.css`, `party.css`) | Aus weichem Aufsteigen wird hartes Einrasten — im Kontrast-Theme ist die Höhenlage ein Umriss ohne Verlauf. | Ruckelt es, oder liest es als bewusstes Einschnappen? |
 | 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
 | 6 | `migration.css` → der Assistentenschritt | Ring von 30 % auf 15 %. | Ist der aktive Schritt noch hervorgehoben? |
-| 7 | **Die sieben farbigen Höhenlagen, die schwarz werden** (Schritte 3 und 4): `dashboard.css` → `.qref-fab:hover` · `dmscreen.css` → `.dragging` · `dmscreen.css` → `[data-sortable].drag-over` (zweite Lage) · `loot.css` → `.shop-cat-badge.active` · `loot.css` → `.shop-sort-btn.active` · `dice.css` → `.floating-dice-trigger` · `dice.css` → `.floating-dice-trigger:hover` | Sie trugen goldene (`rgba(212,175,55,.3/.4)`) oder rote (`rgba(220,38,38,.4/.5)`) Tinte und tragen jetzt die schwarze Tinte ihrer Stufe. **In Dark verlieren sie ihren farbigen Hof praktisch ersatzlos:** gerechnet mit `tests/unit/helpers/wcag-contrast.js` gegen alle vier Dark-Flächen fällt der Abstand Hof-zu-Untergrund von **1,48–2,40 auf 1,03–1,46**, auf `--bg-dark` je auf 1,03–1,05. In **Light** steigt er von 1,15–2,28 auf **1,24–1,61**, in **Sepia** von 1,13–2,21 auf **1,23–1,52** — dort hebt der schwarze Hof also eher besser ab, nur ohne den Farbhinweis. | **Fehlt der Farbhinweis in Dark?** Fünf der sieben melden einen Zustand (Ziehen, Ablegen, aktive Kategorie, aktive Sortierung, Ruhelage des Würfelknopfs), zwei sind ein Hover. Wo der Zustand nur am Schatten hing, ist er in Dark jetzt weg — Hintergrund, Rahmen und Schriftfarbe müssen ihn allein tragen. |
+| 7 | **Die fünf farbigen Höhenlagen, die schwarz werden** (Schritte 3 und 4): `dashboard.css` → `.qref-fab:hover` · `dmscreen.css` → `.dragging` · `dmscreen.css` → `[data-sortable].drag-over` (zweite Lage) · `loot.css` → `.shop-cat-badge.active` · `loot.css` → `.shop-sort-btn.active` | Sie trugen goldene Tinte (`rgba(212,175,55,.3/.4)`) und tragen jetzt die schwarze Tinte ihrer Stufe. **In Dark verlieren sie ihren farbigen Hof praktisch ersatzlos:** gerechnet mit `tests/unit/helpers/wcag-contrast.js` gegen alle vier Dark-Flächen fällt der Abstand Hof-zu-Untergrund von **1,79–2,40 auf 1,03–1,46**, auf `--bg-dark` je auf 1,03–1,05. In **Light** steigt er von 1,15–1,33 auf **1,24–1,61**, in **Sepia** von 1,13–1,29 auf **1,23–1,52** — dort hebt der schwarze Hof also eher besser ab, nur ohne den Farbhinweis. | **Fehlt der Farbhinweis in Dark?** Vier der fünf melden einen Zustand (Ziehen, Ablegen, aktive Kategorie, aktive Sortierung), eine ist ein Hover. Wo der Zustand nur am Schatten hing, ist er in Dark jetzt weg — Hintergrund, Rahmen und Schriftfarbe müssen ihn allein tragen. |
+| 7a | **Warum hier fünf und nicht sieben stehen** (Prüfung W3-B, Runde 1) | Die zwei roten Höhenlagen des Würfelknopfs standen hier mit `rgba(220,38,38,.4/.5)` und zogen die Dark-Spanne auf 1,48–2,40, die Light-Spanne auf 1,15–2,28 und die Sepia-Spanne auf 1,13–2,21. Beide werden von `floatingPulse` überschrieben und sind **nicht gerendert** — siehe Eintrag 10. Die drei Spannen oben sind ohne sie neu gerechnet. | Nichts. Dieser Eintrag ist nur die Begründung der Zahlen darüber. |
 | 8 | `dashboard.css` → `.qref-fab` **und** `.qref-fab:hover` liegen jetzt auf **derselben** Stufe 2 | Folge der Radiusregel: Ruhe hatte 12 px, Hover 20 px, beide liegen näher an 16 als an 6 oder 32. Der Hover-Schatten ist damit **wertgleich mit dem Ruhezustand**; die Rückmeldung beim Überfahren trägt allein noch `transform: scale(1.1)`. | Reicht das Größerwerden als Rückmeldung, oder braucht der Knopf im Hover Stufe 3? Das wäre **ein** Wert in der Ort→Stufe-Tabelle von R-19 und **einer** in `dashboard.css`, keine Leiteränderung. |
 | 9 | `editors.css` → `.editor-toolbar .tb-menu` in **Light und Sepia** | Die dichteste Schattendeklaration des ganzen Bestands (0,65) steht dort jetzt auf 0,20 bzw. 0,22, Faktor **0,31**; dazu y 14 → 8 px. | Die größte Deckungsänderung der Schritte 3 und 4. Steht das Werkzeugmenü in Light noch frei, oder liegt es flach auf? |
-| 10 | `dice.css` → `.floating-dice-trigger` bei **ausgesetzter Animation** (`prefers-reduced-motion`) | Die erste Lage der Regel ist Stufe 2 (schwarz), die beiden `@keyframes floatingPulse`-Bilder daneben behalten ihr rotes `0 4px 16px rgba(220,38,38,0.4)` (R-19-Ausnahmen 10 und 11). Läuft die Animation, sieht man nur die Bilder; setzt sie aus, steht ein **schwarzer** Schatten, wo vorher ein roter stand. | Kein Fehler, aber der einzige Ort der Welle, an dem dieselbe Regel zwei verschiedene Gesichter hat. Nur mit abgeschalteten Bewegungen prüfbar. |
+| 10 | `dice.css` → `.floating-dice-trigger` und `.floating-dice-trigger:hover` sind bei laufender Animation **nicht gerendert**; sichtbar werden sie nur bei **ausgesetzter Animation** (`prefers-reduced-motion`) | Die Regel trägt `animation: floatingPulse 3s ease-in-out infinite`, und `@keyframes floatingPulse` setzt `box-shadow` in allen drei Bildern mit der konstant roten ersten Lage `0 4px 16px rgba(220,38,38,0.4)` (R-19-Ausnahmen 10 und 11). Animationsdeklarationen stehen in der Kaskade **über** normalen Autorendeklarationen — auch über `:hover` und unabhängig von der Spezifität; nur `!important` schlüge sie, und keine der beiden trägt es. Läuft die Animation, sieht man nur die Bilder; setzt sie aus, steht ein **schwarzer** Schatten, wo vorher ein roter stand. **Der `:hover`-Schatten war schon vor Welle 3 toter Code** und ist in Runde 1 der Prüfung W3-B als lebend nachgemessen worden. | Kein Fehler, aber der einzige Ort der Welle, an dem dieselbe Regel zwei verschiedene Gesichter hat. Nur mit abgeschalteten Bewegungen prüfbar. **Für Schritt 7:** wer die Höhe des Knopfs wirklich auf die Leiter holen will, muss sie aus `floatingPulse` nehmen — das ist eine Entscheidung dort, nicht hier. **Für den Bericht von Schritt 10:** die Geometrieänderung an `.floating-dice-trigger:hover` (Weichzeichnung 24 → 32 px, y 6 → 8; einer der fünf Gleichstände, die nach oben aufgelöst wurden) ist wertgeändert, aber **nicht gerendert** — sie darf nicht unter den sichtbaren Sprüngen mitgezählt werden. |
 
 ### Teil B — die Umrisse in Contrast: **27** Kandidaten, nicht 22 und nicht 13
 
@@ -2893,7 +2900,7 @@ In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-con
 | `tools.css` → `.wiki-link-suggester` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `spells.css` → `.table-context-toolbar` | voll `var(--cyan)` = `#00ffff` | 2 | `#aaa`, 2 px | 1,85 |
 | `dmscreen.css` → `[data-tooltip]::after` | `var(--border)` = `#555` | 1 | `#888`, 1 px | 2,10 |
-| `dice.css` → `.floating-dice-trigger` | 20 % Weiß auf rotem Verlauf | 2 | `#aaa`, 2 px | 2,37 |
+| `dice.css` → `.floating-dice-trigger` (**nicht gerendert**, siehe Teil A Eintrag 10) | 20 % Weiß auf rotem Verlauf | 2 | `#aaa`, 2 px | 2,37 |
 | die anderen **zwölf** `var(--border)`-Regeln | `#555` | 2 bzw. 3 | `#aaa` / `#ccc` | 3,21 / 4,64 |
 | `command-palette.css` → `.cp-box` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
 | `dice.css` → `.floating-dice-panel` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
@@ -2919,12 +2926,17 @@ unterscheidbar sein" betraf also genau eine Stelle. `dice.css` → `.floating-di
 schließlich trägt `border: 2px solid var(--overlay-strong)` (20 % Weiß) auf einem Verlauf aus
 `--red-dim` (70 % Rot auf Schwarz) und `--red-dark` (55 %); in Contrast löst der Rahmen dort zu
 `#c23333` bzw. `#a33333` auf und liegt bei **2,37** bzw. 2,94 — gerechnet wird der schlechtere.
-Der runde Würfelknopf bekommt damit einen 4 px breiten Doppelring.
+Der runde Würfelknopf bekäme damit einen 4 px breiten Doppelring. **Bekäme:** in Contrast steht
+`--shadow-2` für den Umriss, und dieselbe Deklaration wird von `floatingPulse` überschrieben (Teil A
+Eintrag 10). Der Doppelring erscheint darum nur bei ausgesetzter Bewegung. Die Zahl bleibt hier
+stehen, weil sie richtig gerechnet ist und weil die Ratsche über **alle** Rahmennachbarn urteilt,
+nicht nur über die gerenderten — sie ist keine Aufforderung zur Sichtprobe am laufenden Knopf.
 
 **Anzusehen sind alle 27**, in dieser Reihenfolge: erst die drei mit 1,14, dann `--purple` (1,35),
-dann die drei mit 1,66, dann `--cyan` (1,85), dann `[data-tooltip]::after` (2,10) und der
-Würfelknopf (2,37), dann die restlichen zwölf `var(--border)`-Regeln, zuletzt die drei gemischten
-Goldrahmen und die zwei Schieberegler-Griffe als Gegenprobe.
+dann die drei mit 1,66, dann `--cyan` (1,85), dann `[data-tooltip]::after` (2,10), dann die
+restlichen zwölf `var(--border)`-Regeln, zuletzt die drei gemischten Goldrahmen und die zwei
+Schieberegler-Griffe als Gegenprobe. Der Würfelknopf (2,37) steht **nicht** in dieser Reihenfolge:
+er ist nur mit abgeschalteten Bewegungen zu sehen und gehört damit zu Eintrag 10 in Teil A.
 
 **Fällt die Ablesung an den sechs Goldrahmen durch, ist die FORM falsch, nicht der Grauwert.** Die
 Grauleiter ist nach oben ausgereizt: `#ccc` ist bereits die hellste der drei Stufen, und heller
@@ -2957,7 +2969,7 @@ ist. Er prüft seit Runde 2 auf „Deckung **oder** Ton". Die zehn mit Deckungs�
 | `dmscreen.css` → `.btn:hover` | 0,25 → 0,50 | 2,00 | Alle drei DM-Screen-Knöpfe glühen beim Überfahren doppelt so stark. |
 | `dmscreen.css` → `.btn-success:hover` | 0,25 → 0,50 | 2,00 | ebenda |
 | `dmscreen.css` → `.btn-danger:hover` | 0,25 → 0,50 | 2,00 | ebenda |
-| `dice.css` → `.floating-dice-trigger:hover` | 0,30 → 0,50 | 1,67 | **Zusätzlich** wechselt der Ton: heute `#dc2626` (das Rot des Light-Blocks), künftig `--red` des jeweiligen Themes — in Dark sichtbar heller. |
+| `dice.css` → `.floating-dice-trigger:hover` | 0,30 → 0,50 | 1,67 | **Zusätzlich** wechselt der Ton: heute `#dc2626` (das Rot des Light-Blocks), künftig `--red` des jeweiligen Themes — in Dark sichtbar heller. **Aber: bei laufender Animation nicht gerendert.** Diese Glühlage steht in derselben Deklaration wie die Höhenlage aus Teil A Eintrag 10, und `floatingPulse` überschreibt `box-shadow` als Ganzes. Schritt 5 fasst hier also eine Stelle an, die nur mit abgeschalteten Bewegungen zu sehen ist; nicht in der Vier-Themes-Runde suchen. |
 | `dice.css` → `.fdp-die.d20:hover` | 0,30 → 0,50 | 1,67 | derselbe Tonwechsel |
 | `file-backup.css` → `.backup-dot-active` | 0,40 → 0,50 | 1,25 | Kaum sichtbar; nur zur Vollständigkeit. |
 | `file-backup.css` → `.backup-dot-paused` | 0,40 → 0,50 | 1,25 | ebenda |
