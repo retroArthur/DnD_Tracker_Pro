@@ -3737,3 +3737,114 @@ npx jest tests/unit/design-consistency.test.js -t "das Wort im Kommentar"
 ```
 
 ---
+
+## W3-F-03 — Die Abnahme der Welle 3 (Schritt 10): gemessen, nicht behauptet
+
+**Stand:** 2026-09-30, an HEAD nach den Schritten 1–9 (78 Commits über der Basis `03274fa`).
+
+### Stufe 1 — die Suiten, jede Zahl mit ihrem Befehl
+
+| Was | Befehl | Basis `03274fa` | Jetzt |
+| --- | --- | --- | --- |
+| Dev-Bündel | `PYTHONIOENCODING=utf-8 python build.py` | exit 0 | **exit 0** |
+| Prod-Bündel | `… python build.py --production` | exit 0 | **exit 0** |
+| Jest, voll | `npx jest` | 1786 / 71 Suiten | **1861 / 71 Suiten** (+75) |
+| Stil-Ratschen | `npx jest tests/unit/design-consistency.test.js` | 119 | **194** (+75) |
+| Kontrast-Helfer | `npx jest tests/unit/wcag-contrast-helper.test.js` | 40 | **40** |
+| R-19 allein | `npx jest -t "R-19"` | — | **12 bestanden** |
+| Playwright, voll | `npx playwright test` | 381 / 11 übersprungen / 0 | **382 / 15 übersprungen / 0** |
+| Build-Tests | `python -m pytest tests/build` | 30 | **30** |
+| Lint | `npm run lint` | exit 0, 363 Warnungen | **exit 0, 363** = Pin |
+| Typen | `npm run typecheck` · `typecheck:strict` | exit 0 | **exit 0 · exit 0** |
+
+**Die beiden Abweichungen von der Basis sind beide erklärt und keine Regression.**
+Playwright zählt **382** statt 381, weil Schritt 9 mit `kaskade-tinten.spec.js` einen
+Browser-Fall hinzugefügt hat (381 + 1). Es zählt **15** statt 11 Übersprungene, weil die
+Ablichtung dieses Schritts vier Themes als übersprungene Fälle führt, solange
+`WELLE3_SCREENS=1` nicht gesetzt ist — genau das Muster der Wellen 1 und 2.
+
+### Die Ratschen ohne Spielraum
+
+| Ratsche | Schwelle | Gemessen | Befehl |
+| --- | --: | --: | --- |
+| Dubletten | 0 | **0** | der Test rechnet `toBeLessThanOrEqual(0)` und ist grün |
+| `!important` | 105 | **105** | `cat assets/styles/*.css`, Kommentare entfernt (roh 107, zwei stehen **in** Kommentaren) |
+| Inline-Stile | 256 | **256** | `cat assets/templates/*.html \| grep -o 'style="' \| wc -l` |
+
+Keine ist gestiegen. Der Pin der Lint-Warnungen steht unverändert bei 363.
+
+### R-19 ist grün — und seine Tabelle stammt aus der Messung, nicht aus der Umsetzung
+
+Das ist die Frage, an der diese Welle hängt, und sie ist am Verlauf belegbar, nicht nur
+behauptet. `1b208d9` (`test(W3): R-19 … rot`) steht **vor** `947cdb1` (die Umsetzung der
+Leiter). Entscheidend ist aber nicht die Reihenfolge allein, sondern ob die Tabelle
+**danach** an die Umsetzung angepasst wurde. Strukturvergleich der `ORT_ZU_STUFE` zwischen
+`1b208d9` und HEAD:
+
+| | rot-Commit | HEAD |
+| --- | --: | --: |
+| Einträge | 52 | **52** |
+| `stufe` oder `vorher` geändert | — | **0** |
+| hinzugekommen | — | **0** |
+| entfallen | — | **0** |
+| nur `zeile` nachgezogen | — | 4 |
+
+Die vier sind `core.css` → `.offline-indicator` 840→854, `.char-tag.clickable:hover`
+1348→1362, `.spell-tooltip` 1427→1441 und `initiative.css` → `.init-statblock-content`
+1055→1078 — Zeilen, die durch eingefügte Kommentare gewandert sind. **Die urteilenden
+Spalten (Ort, Stufe, gemessener Altwert) sind byte-gleich mit dem roten Commit.**
+
+### Der Stil-Sollstand: 6 Digests, und der schlüsselweise Vergleich dazu
+
+`computed-style-diff.spec.js` ging beim ersten vollen Lauf rot — **erwartet**: `6367990`
+(Schritt 4) hatte das angekündigt und die Sollstandsdatei ausdrücklich diesem Schritt
+überlassen. Neu erhoben und **schlüsselweise** gegengeprüft, nicht nur „der Lauf ist grün":
+
+| | |
+| --- | --: |
+| Digests gesamt | 3626 → **3626** |
+| geänderte Digests | **6** |
+| **Zugänge** (neuer Schlüssel) | **0** |
+| **Abgänge** (Schlüssel weg) | **0** |
+| Ansichten je Durchgang | 24 → 24, keine zu, keine ab |
+
+Die 6 sind zwei Elemente in je drei Durchgängen (`standard`, `narrow`, `reducedMotion`),
+beide aus `loot.css`: `button.active.shop-sort-btn#0` und
+`span.active.all.shop-cat-badge#0`. Der **Wert** dahinter — den ein Digest nicht nennen
+kann — steht im örtlichen Vollabzug: `rgba(0, 0, 0, 0.35) 0px 2px 6px 0px`, vorher
+`rgba(212, 175, 55, 0.3) 0px 2px 4px 0px`. Das ist wörtlich die Vorhersage aus `6367990`.
+
+**Wie neu erhoben, und warum die Ausnahmeliste danach wieder leer ist.**
+`EXPECTED_DEVIATION_KEYS` trug die zwei Schlüssel genau für die Dauer der Neuerhebung,
+damit die drei Durchgänge die übrigen **3620** Schlüssel weiter vergleichen. Danach leer —
+eine Ausnahmeliste, die nichts mehr ausnimmt, ist eine stille Freigabe und würde ab dem
+nächsten Lauf echte Befunde an genau diesen Schlüsseln verschlucken. Der anschließende Lauf
+**ohne** Ausnahmeliste ist grün; `computed-style-diff.spec.js` ist an HEAD unverändert,
+geändert wurde allein die JSON-Datei (6 Zeilen).
+
+### Die Ablichtung
+
+`tests/e2e/features/welle-3-screens.spec.js`, Schalter `WELLE3_SCREENS=1`, Ablage
+`tests/e2e/__screens__/welle-3/`. 24 Ansichten × 4 Themes = 96 Vollbilder, dazu 9
+Zustandsbilder je Theme = 36. **132 Bilder, keine Fehlmeldung eines Zustandsbildes.**
+Die neun Zustände sind die Stellen, die im Ruhezustand einer Ansicht nicht zu sehen sind:
+`rechner`, `befehlspalette`, `offline-hinweis`, `statblock-schublade`, `sprungmarke-nsc`,
+`sprungmarke-ort`, `kartenschweben`, `qref-fab-hover`, `vorlesetext`.
+
+### Zwei Beobachtungen, die nicht aus dieser Welle stammen
+
+**(1) Der Offline-Hinweis hat zwei Beobachter, und einer schaltet eine Klasse, die es im
+CSS nicht gibt.** Das Avatar-Modul schaltet `visible` — die Klasse, auf die `core.css`
+hört, und darum erscheint der Hinweis. Die Initialisierung schaltet daneben `show`, und
+**keine Regel im ganzen Stilbaum** trifft `.offline-indicator.show`. Der zweite Beobachter
+ist damit wirkungslos. Das ist älter als Welle 3 und betrifft die Sichtbarkeit, nicht den
+Schatten — hier nur festgehalten, nicht angefasst.
+
+**(2) `prettier --check` beanstandet zwei Dateien, beide vorbestehend.** Die
+Sollstandsdatei entsteht maschinell aus `JSON.stringify` und steht nicht in
+`.prettierignore`; sie wird auch in ihrem HEAD-Stand beanstandet. Die neue
+Ablichtungsdatei wird an **genau einem** Block beanstandet (die kompakt geschriebene
+`VIEWS`-Liste) — wörtlich derselbe Block, an dem auch `welle-1-screens.spec.js` und
+`welle-2-screens.spec.js` beanstandet werden. Sie bleibt stilgleich mit ihren Geschwistern.
+
+---
