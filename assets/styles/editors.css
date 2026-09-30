@@ -189,7 +189,7 @@
             background: var(--bg-card);
             border: 1px solid var(--gold);
             border-radius: 0;
-            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.65);
+            box-shadow: var(--shadow-3);
             z-index: var(--z-dropdown);
         }
 
@@ -334,7 +334,7 @@
             padding: 3px 4px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-2);
             z-index: var(--z-floating);
         }
 
