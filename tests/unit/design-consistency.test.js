@@ -8602,3 +8602,662 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(literalFarbeVon('0 0 12px var(--glow-yellow)')).toBe(null);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 3 — R-21: die fuenf Ringe und die Text-Leuchten
+   ===========================================================================
+   WARUM SIE NEBEN R-19 UND R-20 STEHT. R-19 urteilt in Teil (1) nur ueber die
+   FORM einer Lage und laesst `var(--ring-gold)` zu, ohne zu sagen, welche
+   Stelle ihn tragen soll und was sich dabei sichtbar aendert; ihre Teil-(2)-
+   Tabelle fuehrt nur Hoehen- und die eine seitliche Lage. R-20 bewacht die 14
+   Gluehlagen der box-shadow-Familie. Damit standen bis zum 2026-09-30 zwei
+   Mengen unter keiner Ratsche:
+
+   (a) DIE FUENF RINGLAGEN MIT GOLD. Vier gehen auf das Token, eine bleibt
+       volldeckend. Die vier aendern dabei DICKE und/oder DECKUNG, und in
+       Contrast alle vier den Ton bis zum volldeckenden Gold — die groesste
+       Einzelaenderung dieser Welle in einem Theme, bei der bisher nichts
+       nachgehalten hat, dass sie ueberhaupt bemerkt wird.
+
+   (b) DIE SECHS TEXT-LEUCHTEN. Paragraph 3.2 regelt text-shadow nicht;
+       Schritt 5 empfiehlt, die Familie mitzunehmen. Genau sechs der acht
+       text-shadow-Deklarationen tragen die Gluehform `0 0 <r>px <Farbe>` und
+       gehen deshalb auf --glow-*. Die drei anderen Schatten dieser Familie
+       (zwei text-shadow, ein drop-shadow) tragen HOEHENform `0 <y> <r>` und
+       bleiben Literale: die Hoehenstufen fuehren ihre Geometrie IM Token und
+       sind schwarz — in einem Textschatten ist beides unbrauchbar, und ein
+       Token fuer "farbige Texthoehe" gibt es nicht. Sie stehen hier
+       namentlich, damit die Restmenge benannt und nicht uebersehen ist.
+
+   DER BESTAND, am 2026-09-30 an HEAD 211aefb mit eigenem Parser erhoben
+   (Kommentare zeilentreu geleert, Deklarationen ueber Klammertiefe, Lagen am
+   Komma auf Klammertiefe 0):
+
+        8   Ringlagen in box-shadow: 5 mit Gold, 3 mit dem Rot des
+            Wuerfelknopfs (dessen Ruhelage und die zwei Bilder von
+            floatingPulse; alle drei sind R-19-Ausnahmen)
+        8   text-shadow-Deklarationen, davon 6 in Gluehform
+        1   filter: drop-shadow, in Hoehenform
+
+   WAS SIE PRUEFT:
+
+   (1) Die Menge der Ringlagen ist die gemessene, und jede goldene steht in
+       RING_STELLEN.
+   (2) Die vier Fokus-/Zustandsringe tragen `var(--ring-gold)`; das Ablageziel
+       traegt unveraendert sein volldeckendes Gold.
+   (3) Das Token ist in allen vier Themes 3 px dick und traegt in drei 15 % und
+       in Contrast volles Gold — gelesen aus variables.css, nicht behauptet.
+   (4) Der Abstand jedes Rings zu SEINER Traegerflaeche, vorher und nachher, in
+       allen vier Themes — gerechnet, nicht abgeschrieben.
+   (5) Die sechs Text-Leuchten tragen `0 0 <r>px var(--glow-*)`, ihre Radien
+       bleiben, und die drei Hoehenform-Schatten bleiben namentlich draussen.
+   (6) Jede Stelle, deren Dicke, Deckung oder Ton sich aendert, steht in der
+       Aktenlage unter W3-F-01 — zeilentreu als Paar aus Datei und Marke, nicht
+       als zwei Teilstrings irgendwo im Abschnitt.
+
+   SIE IST BEI DER GEBURT ROT, in fuenf Zusicherungen, mit den Ausgangswerten
+   4 (Ringe noch am Literal), 6 (Text-Leuchten noch am Literal) und 11 (Stellen
+   ohne Eintrag in der Aktenlage: 4 Ringe, 4 Text-Leuchten mit Tonwechsel, 3
+   Restschatten). Die Zahlen stehen als Kommentar an ihrer Zielkonstante.
+   =========================================================================== */
+describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () => {
+    /** Zielwerte. 0 von der Geburt an; die gemessenen Ausgangswerte stehen
+     *  hier als Kommentar und NICHT als Schranke — eine Ratsche, deren
+     *  Schranke mitwandert, schuetzt nichts.
+     *  Ausgangswerte am 2026-09-30, HEAD 211aefb, gemessen und nicht
+     *  geschaetzt: 4 Ringe noch am Literal, 6 Text-Leuchten noch am Literal
+     *  und 11 Stellen ohne Eintrag in der Aktenlage (4 Ringe + 4 Text-Leuchten
+     *  mit Tonwechsel + 3 Restschatten) — fuenf rote Zusicherungen. */
+    const R21_ZIEL = 0;
+
+    const AKTENLAGE_PFAD = path.join(REPO, '.planning', 'HANDOFF-V3-OFFENE-PUNKTE.md');
+    const AKTENLAGE = fs.readFileSync(AKTENLAGE_PFAD, 'utf8');
+
+    function aktenlageAbschnitt(marke) {
+        const i = AKTENLAGE.indexOf(`## ${marke}`);
+        if (i < 0) return '';
+        const j = AKTENLAGE.indexOf('\n## ', i + 1);
+        return AKTENLAGE.slice(i, j < 0 ? AKTENLAGE.length : j);
+    }
+    const W3F01 = aktenlageAbschnitt('W3-F-01');
+
+    /* -------------------------------------------------------------------
+       ZERLEGUNG. Eigenstaendig, wie schon bei R-20: die von R-19 steht im
+       Rumpf ihres describe und waere nur durch ein Herausziehen erreichbar,
+       das ihren eingefrorenen Block anfasst. Die Zahlen werden gegen R-19s
+       und R-20s Zahlen gehalten (Test "dieselbe Menge wie R-19").
+       ------------------------------------------------------------------- */
+
+    /** Lagen am Komma der OBERSTEN Klammerebene. */
+    function lagen21(wert) {
+        const out = [];
+        let tiefe = 0;
+        let cur = '';
+        for (const ch of wert) {
+            if (ch === '(') tiefe++;
+            else if (ch === ')') tiefe--;
+            if (ch === ',' && tiefe === 0) {
+                if (cur.trim()) out.push(cur.trim());
+                cur = '';
+            } else cur += ch;
+        }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
+    }
+
+    /** Die fuehrenden Laengen einer Lage. Abbruch beim ersten Wort, das keine
+     *  Laenge ist — danach kommt die Farbe. */
+    function laengen21(lage) {
+        const nums = [];
+        for (const tok of lage
+            .replace(/\binset\b/g, ' ')
+            .trim()
+            .split(/\s+/)) {
+            if (/^-?\d*\.?\d+px$/.test(tok)) nums.push(parseFloat(tok));
+            else if (tok === '0') nums.push(0);
+            else break;
+        }
+        return nums;
+    }
+
+    /** Ringlage: X=0, Weichzeichnung 0, kein inset. Zeichengleich mit
+     *  bauart() === 'ring' in R-19, einschliesslich der Tokenform. */
+    function istRing(lage) {
+        if (/^var\(--ring-gold\)$/.test(lage)) return true;
+        if (/^var\(--shadow-(?:[123]|drawer)\)$/.test(lage)) return false;
+        if (/\binset\b/.test(lage)) return false;
+        const [x = null, y = null, b = 0] = laengen21(lage);
+        if (x !== null && x !== 0) return false;
+        if (y !== null && y > 0) return false;
+        return !(x === 0 && y === 0 && b > 0);
+    }
+
+    /** Gluehlage: X=0, Y=0, Weichzeichnung > 0, kein inset. */
+    function istGluehe21(lage) {
+        if (/\binset\b/.test(lage)) return false;
+        const [x = null, y = null, b = 0] = laengen21(lage);
+        return x === 0 && y === 0 && b > 0;
+    }
+
+    /** Die Deckung einer Lage, oder null wenn sie in einem Token steckt. */
+    function deckung21(lage) {
+        if (/var\(--(?:glow|ring|shadow)-/.test(lage)) return null;
+        let m = lage.match(/rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)/);
+        if (m) return parseFloat(m[1]);
+        m = lage.match(/color-mix\(\s*in srgb\s*,[^,]*?([\d.]+)%\s*,\s*transparent\s*\)/);
+        if (m) return parseFloat(m[1]) / 100;
+        if (/var\(--|#[0-9a-f]{3,8}\b|\brgb\(/i.test(lage)) return 1.0;
+        return null;
+    }
+
+    /** Die Literalfarbe einer Lage als Hex, null sobald sie in einem Token
+     *  steckt. */
+    function literalFarbe21(lage) {
+        const m = lage.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (m) return '#' + [1, 2, 3].map(i => Number(m[i]).toString(16).padStart(2, '0')).join('');
+        const h = lage.match(/#[0-9a-f]{6}\b/i);
+        return h ? h[0].toLowerCase() : null;
+    }
+
+    /** Alle Deklarationen einer Schatteneigenschaft mit Datei, Selektor und
+     *  Zeile. `props` ist die Regex fuer den Eigenschaftsnamen. */
+    function regelnMit(props) {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => {
+                const re = new RegExp(`(?:^|[;{\\s])((?:-webkit-)?${props})\\s*:\\s*([^;}]+)`, 'g');
+                let m;
+                while ((m = re.exec(r.rumpf))) {
+                    out.push({
+                        datei: f.name,
+                        sel: r.sel,
+                        prop: m[1],
+                        wert: m[2].trim().replace(/\s+/g, ' '),
+                        zeile: r.zeile + (r.rumpf.slice(0, m.index).match(/\n/g) || []).length
+                    });
+                }
+            })
+        );
+        return out;
+    }
+    const BOX = regelnMit('box-shadow');
+    const TEXT = regelnMit('text-shadow');
+    const FILTER = regelnMit('filter').filter(d => /drop-shadow/.test(d.wert));
+
+    const schluessel = e => `${e.datei} {${e.sel}}`;
+
+    /** Jede Ringlage der box-shadow-Familie mit ihrer Deklaration im Ruecken.
+     *  Die @keyframes-Bilder liegen NICHT darin: regelnMitRumpf() laeuft in
+     *  At-Regeln hinein, und `0%, 100%` ist dort ein eigener Selektorkopf —
+     *  darum tragen sie ihren Dateinamen und ihren Prozentkopf und werden am
+     *  Kopf erkannt, nicht ausgeschlossen. */
+    function ringlagen() {
+        const out = [];
+        BOX.forEach(d => {
+            if (/^none\b/.test(d.wert)) return;
+            lagen21(d.wert).forEach(l => {
+                if (istRing(l)) out.push({ ...d, lage: l, dicke: laengen21(l)[3], deckung: deckung21(l) });
+            });
+        });
+        return out;
+    }
+
+    function textgluehlagen() {
+        const out = [];
+        TEXT.concat(FILTER).forEach(d => {
+            const roh = /drop-shadow/.test(d.wert) ? d.wert.replace(/^.*drop-shadow\(([^)]*(?:\([^)]*\))?[^)]*)\).*$/, '$1') : d.wert;
+            lagen21(roh).forEach(l => {
+                if (istGluehe21(l)) out.push({ ...d, lage: l, radius: laengen21(l)[2], deckung: deckung21(l) });
+            });
+        });
+        return out;
+    }
+
+    /* -------------------------------------------------------------------
+       DIE FUENF RINGLAGEN MIT GOLD, gemessen am 2026-09-30.
+
+       `marke` ist der Selektorausschnitt, den die Aktenlage nennen muss. Er
+       ist NICHT frei gewaehlt: ein eigener Test haelt ihn gegen den gemessenen
+       Selektor. Die drei Fokusregeln nennen je zwei bis drei Felder in einer
+       Auswahl; die ganze Auswahl in eine Tabellenzeile der Aktenlage zu
+       schreiben waere unlesbar, und ein blosser Teilstring-Treffer irgendwo im
+       Abschnitt waere zu schwach (die Lehre von R-20).
+
+       `flaeche` ist die TATSAECHLICHE Traegerflaeche, aus dem CSS gelesen und
+       nicht geraten: der Ring liegt AUSSERHALB des Elements, also auf dem
+       Kasten dahinter. Eine feste Hexangabe steht dort, wo die Flaeche
+       themenblind ist — `.modal` (dmscreen.css) traegt ein Literal
+       `rgba(26, 26, 26, 0.95)` und ist eine gefuehrte Ausnahme von R-10
+       (offener Punkt W2-C-01); ihre Flaeche folgt dem Theme also NICHT,
+       waehrend der Goldton darauf es sehr wohl tut.
+       ------------------------------------------------------------------- */
+    const RING_STELLEN = [
+        {
+            datei: 'dmscreen.css',
+            zeile: 1077,
+            sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
+            marke: '.form-group input:focus',
+            vorher: { dicke: 3, deckung: 0.1 },
+            flaeche: '#1a1a1a',
+            rolle: 'fokus',
+            ziel: 'token'
+        },
+        {
+            datei: 'party.css',
+            zeile: 1217,
+            sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
+            marke: '.cf-panel .cf-field input:focus',
+            vorher: { dicke: 3, deckung: 0.15 },
+            flaeche: '--bg-dark',
+            rolle: 'fokus',
+            ziel: 'token'
+        },
+        {
+            datei: 'welt.css',
+            zeile: 156,
+            sel: '.wp-rich-editor:focus',
+            marke: '.wp-rich-editor:focus',
+            vorher: { dicke: 2, deckung: 0.15 },
+            flaeche: '--bg-card',
+            rolle: 'fokus',
+            ziel: 'token'
+        },
+        {
+            datei: 'migration.css',
+            zeile: 65,
+            sel: '.wizard-step.active',
+            marke: '.wizard-step.active',
+            vorher: { dicke: 2, deckung: 0.3 },
+            flaeche: '--bg-card',
+            rolle: 'zustand',
+            ziel: 'token'
+        },
+        {
+            datei: 'dmscreen.css',
+            zeile: 1137,
+            sel: '[data-sortable].drag-over',
+            marke: '[data-sortable].drag-over',
+            vorher: { dicke: 2, deckung: 1.0 },
+            flaeche: '#1a1a1a',
+            rolle: 'ablageziel',
+            ziel: 'unveraendert'
+        }
+    ];
+
+    /** Die drei roten Ringlagen des Wuerfelknopfs. Sie sind R-19-Ausnahmen
+     *  (Ruhelage und die zwei Bilder von floatingPulse) und tragen kein Gold;
+     *  sie stehen hier, damit die gemessene Gesamtmenge 8 aufgeht und eine
+     *  neunte Ringlage nicht lautlos hinzukommen kann. */
+    const RING_ROT = [
+        'dice.css {.floating-dice-trigger}',
+        'dice.css {0%, 100%}',
+        'dice.css {50%}'
+    ];
+
+    /* -------------------------------------------------------------------
+       DIE SECHS TEXT-LEUCHTEN, gemessen am 2026-09-30.
+
+       Alle sechs tragen heute 0,50 — genau die Deckung, die --glow-* setzt.
+       Radius und Deckung bleiben deshalb an JEDER der sechs bildpunktgleich;
+       was sich aendert, ist allein der TON, und zwar an vier von ihnen (die
+       zwei dashboard-Stellen tragen schon color-mix derselben Rolle und
+       aendern in keinem Theme etwas).
+       ------------------------------------------------------------------- */
+    const TEXT_GLUEH = [
+        { datei: 'dashboard.css', zeile: 66, sel: '.dice-crit', marke: '.dice-crit', radius: 10, vorher: 0.5, rolle: '--green', farbe: null },
+        { datei: 'dashboard.css', zeile: 67, sel: '.dice-fail', marke: '.dice-fail', radius: 10, vorher: 0.5, rolle: '--red', farbe: null },
+        { datei: 'dice.css', zeile: 31, sel: '.dice-hero-result.crit', marke: '.dice-hero-result.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 36, sel: '.dice-hero-result.fail', marke: '.dice-hero-result.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' },
+        { datei: 'dice.css', zeile: 705, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 711, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
+    ];
+
+    /* -------------------------------------------------------------------
+       DIE DREI, DIE DRAUSSEN BLEIBEN, und warum. Alle drei sind HOEHENform
+       (`0 <y> <r>`), keine Gluehe. Fuer eine Texthoehe gibt es kein Token:
+       --shadow-1/-2/-3 fuehren ihre Geometrie mit sich und sind schwarz, und
+       in Contrast sind sie ein Umriss mit Spread — als text-shadow ergaebe
+       das eine Kontur um jeden Buchstaben. Ein Token "farbige Texthoehe"
+       waere neu und hat genau eine Verwendung; es kaeme mit einem Fuss im
+       Grab zur Welt (dieselbe Rechnung, mit der --glow-purple nicht angelegt
+       wurde).
+       ------------------------------------------------------------------- */
+    const TEXT_REST = [
+        {
+            datei: 'dashboard.css',
+            zeile: 61,
+            sel: '.dice-result-main',
+            marke: '.dice-result-main',
+            wert: '0 2px 10px rgba(251, 191, 36, 0.3)',
+            grund: 'farbige Texthoehe, kein Gluehradius'
+        },
+        {
+            datei: 'dmscreen.css',
+            zeile: 1311,
+            sel: '.dms-hp-text',
+            marke: '.dms-hp-text',
+            wert: '0 1px 2px rgba(0,0,0,0.5)',
+            grund: 'schwarze Texthoehe, Lesbarkeit auf dem HP-Balken'
+        },
+        {
+            datei: 'dice.css',
+            zeile: 583,
+            sel: '.floating-dice-trigger svg',
+            marke: '.floating-dice-trigger svg',
+            wert: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+            grund: 'schwarze Hoehe als Filter, keine box-shadow-Lage'
+        }
+    ];
+
+    /** Nennt diese Zeile der Aktenlage genau dieses Paar? Der Riegel
+     *  `(?![\w:.-])` ist der Kern — ohne ihn gilt `.dice-crit` schon durch
+     *  `.dice-crit-effect` als genannt. Zeichengleich mit nenntPaar() in
+     *  R-20; bewusst kopiert und nicht geteilt, weil beide Bloecke fuer sich
+     *  lesbar bleiben sollen. */
+    function nenntPaar21(zeile, datei, marke) {
+        if (!zeile.includes(datei)) return false;
+        return new RegExp(`${marke.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w:.-])`).test(zeile);
+    }
+    const W3F01_ZEILEN = W3F01.split('\n');
+    const inAktenlage = (datei, marke) => W3F01_ZEILEN.some(z => nenntPaar21(z, datei, marke));
+
+    /** Der Wert von --ring-gold je Theme, aus variables.css gelesen. */
+    function ringToken() {
+        const out = {};
+        WCAG.THEMES.forEach(t => {
+            const roh = WCAG.palette(t)['--ring-gold'] || '';
+            const l = laengen21(roh);
+            out[t] = { roh, dicke: l[3], deckung: deckung21(roh) };
+        });
+        return out;
+    }
+
+    /** Der Goldton einer Ringlage ueber ihrer Traegerflaeche, als Verhaeltnis
+     *  zur Flaeche. `flaeche` ist ein Tokenname oder eine feste Hexangabe. */
+    function ringAbstand(e, theme, deckung) {
+        const p = WCAG.palettes();
+        const fl = e.flaeche.startsWith('#') ? e.flaeche : p[theme][e.flaeche];
+        const ton = WCAG.mixOver(p[theme]['--gold'], deckung, fl);
+        return +WCAG.ratio(ton, fl).toFixed(2);
+    }
+
+    /* ===================================================================
+       (a) DIE FUENF RINGE
+       =================================================================== */
+
+    test('die Menge der Ringlagen ist die gemessene: 8, davon 5 mit Gold und 3 rote', () => {
+        const alle = ringlagen();
+        expect(alle.length).toBe(8);
+        const gold = alle.filter(l => /212\s*,\s*175\s*,\s*55|--gold|--ring-gold/.test(l.lage));
+        expect(gold.map(schluessel).sort()).toEqual(RING_STELLEN.map(schluessel).sort());
+        expect(
+            alle
+                .filter(l => !gold.includes(l))
+                .map(schluessel)
+                .sort()
+        ).toEqual([...RING_ROT].sort());
+        expect(RING_STELLEN.length).toBe(5);
+    });
+
+    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 8 Ringlagen', () => {
+        expect({ dekl: BOX.length, ringe: ringlagen().length }).toEqual({ dekl: 71, ringe: 8 });
+    });
+
+    test('jede Marke ist ein Ausschnitt ihres gemessenen Selektors', () => {
+        const abweichung = RING_STELLEN.concat(TEXT_GLUEH, TEXT_REST)
+            .filter(e => !e.sel.includes(e.marke))
+            .map(e => `${e.datei} {${e.sel}} — Marke "${e.marke}" steht nicht darin`);
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('der Zeilenanker jeder Ringlage stimmt mit der gefundenen Deklaration', () => {
+        const nach = new Map(ringlagen().map(l => [schluessel(l), l.zeile]));
+        const abweichung = RING_STELLEN.filter(e => nach.get(schluessel(e)) !== e.zeile).map(
+            e => `${schluessel(e)} — Anker ${e.zeile}, gefunden ${nach.get(schluessel(e))}`
+        );
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('die vier Fokus- und Zustandsringe tragen var(--ring-gold)', () => {
+        const nach = new Map(ringlagen().map(l => [schluessel(l), l.lage]));
+        const offen = RING_STELLEN.filter(e => e.ziel === 'token')
+            .filter(e => nach.get(schluessel(e)) !== 'var(--ring-gold)')
+            .map(e => `${schluessel(e)} — traegt "${nach.get(schluessel(e))}", erwartet var(--ring-gold)`);
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R21_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    test('das Ablageziel beim Ziehen bleibt volldeckend und unveraendert', () => {
+        const nach = new Map(ringlagen().map(l => [schluessel(l), l.lage]));
+        const e = RING_STELLEN.find(x => x.ziel === 'unveraendert');
+        expect(nach.get(schluessel(e))).toBe('0 0 0 2px var(--gold)');
+        // Und es ist die EINZIGE Ausnahme dieser Art.
+        expect(RING_STELLEN.filter(x => x.ziel === 'unveraendert').length).toBe(1);
+    });
+
+    test('solange eine Ringlage ein Literal traegt, ist es das gemessene', () => {
+        const nach = new Map(ringlagen().map(l => [schluessel(l), l]));
+        const abweichung = RING_STELLEN.filter(e => {
+            const l = nach.get(schluessel(e));
+            if (!l || l.lage === 'var(--ring-gold)') return false;
+            return l.dicke !== e.vorher.dicke || Math.abs(l.deckung - e.vorher.deckung) > 1e-9;
+        }).map(e => {
+            const l = nach.get(schluessel(e));
+            return `${schluessel(e)} — Tabelle ${e.vorher.dicke}px/${e.vorher.deckung}, gefunden ${l.dicke}px/${l.deckung}`;
+        });
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('--ring-gold ist in allen vier Themes 3 px und traegt in Contrast volles Gold', () => {
+        const t = ringToken();
+        expect(WCAG.THEMES.map(th => t[th].dicke)).toEqual([3, 3, 3, 3]);
+        expect(WCAG.THEMES.map(th => t[th].deckung)).toEqual([0.15, 0.15, 0.15, 1.0]);
+        // Die volle Deckung in Contrast ist die Entscheidung des Schritts 2
+        // (eine 15-%-Mischung ist in einem Kontrastthema keine Aussage) und
+        // keine Nachlaessigkeit. Sie macht die vier Ringe dort um das
+        // Sieben- bis Zehnfache deutlicher — der groesste Sprung der Welle in
+        // einem einzelnen Theme, und deshalb steht er hier beziffert.
+        expect(t.contrast.roh).toBe('0 0 0 3px var(--gold)');
+    });
+
+    test('der Abstand jedes Rings zu SEINER Traegerflaeche, vorher und nachher, in vier Themes', () => {
+        const NACH = { dark: 0.15, light: 0.15, sepia: 0.15, contrast: 1.0 };
+        const gerechnet = RING_STELLEN.filter(e => e.ziel === 'token').map(e => [
+            `${e.datei} {${e.marke}}`,
+            ...WCAG.THEMES.map(
+                th => `${th} ${ringAbstand(e, th, e.vorher.deckung).toFixed(2)}->${ringAbstand(e, th, NACH[th]).toFixed(2)}`
+            )
+        ].join(' | '));
+        expect(gerechnet).toEqual([
+            'dmscreen.css {.form-group input:focus} | dark 1.20->1.32 | light 1.14->1.23 | sepia 1.06->1.10 | contrast 1.26->12.41',
+            'party.css {.cf-panel .cf-field input:focus} | dark 1.27->1.27 | light 1.16->1.16 | sepia 1.24->1.24 | contrast 1.29->14.97',
+            'welt.css {.wp-rich-editor:focus} | dark 1.32->1.32 | light 1.17->1.17 | sepia 1.26->1.26 | contrast 1.41->13.46',
+            'migration.css {.wizard-step.active} | dark 1.89->1.32 | light 1.37->1.17 | sepia 1.60->1.26 | contrast 2.21->13.46'
+        ]);
+    });
+
+    test('jeder Ring, dessen Dicke, Deckung oder Ton sich aendert, steht zeilentreu in W3-F-01', () => {
+        expect(W3F01).not.toBe('');
+        const t = ringToken();
+        /** In welchen Themes weicht das Token von der gemessenen Lage ab?
+         *  GERECHNET aus dem Token und der Tabelle, nicht behauptet. */
+        const aendertSich = e =>
+            WCAG.THEMES.filter(
+                th => t[th].dicke !== e.vorher.dicke || Math.abs(t[th].deckung - e.vorher.deckung) > 1e-9
+            );
+        const ziele = RING_STELLEN.filter(e => e.ziel === 'token');
+        expect(ziele.map(e => `${e.datei} {${e.marke}} ${aendertSich(e).join('/') || '(gleich)'}`)).toEqual([
+            'dmscreen.css {.form-group input:focus} dark/light/sepia/contrast',
+            'party.css {.cf-panel .cf-field input:focus} contrast',
+            'welt.css {.wp-rich-editor:focus} dark/light/sepia/contrast',
+            'migration.css {.wizard-step.active} dark/light/sepia/contrast'
+        ]);
+        // ALLE VIER sind betroffen, spaetestens in Contrast: dort geht jede von
+        // Teildeckung auf volles Gold. Auch der Fokusring, der in den drei
+        // weichen Themes bildpunktgleich bleibt, gehoert deshalb auf die Liste.
+        const betroffen = ziele.filter(e => aendertSich(e).length > 0);
+        expect(betroffen.length).toBe(4);
+        const offen = betroffen.filter(e => !inAktenlage(e.datei, e.marke)).map(e => `${e.datei} {${e.marke}}`);
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R21_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* ===================================================================
+       (b) DIE SECHS TEXT-LEUCHTEN UND DIE DREI, DIE BLEIBEN
+       =================================================================== */
+
+    test('der Bestand der Textschatten ist der gemessene: 8 text-shadow, 1 drop-shadow, 6 in Gluehform', () => {
+        expect({ text: TEXT.length, drop: FILTER.length, gluehe: textgluehlagen().length }).toEqual({
+            text: 8,
+            drop: 1,
+            gluehe: 6
+        });
+        expect(textgluehlagen().map(schluessel).sort()).toEqual(TEXT_GLUEH.map(schluessel).sort());
+        // Und die drei Hoehenform-Stellen sind genau die der Restliste.
+        const gluehKeys = new Set(textgluehlagen().map(schluessel));
+        expect(
+            TEXT.concat(FILTER)
+                .filter(d => !gluehKeys.has(schluessel(d)))
+                .map(schluessel)
+                .sort()
+        ).toEqual(TEXT_REST.map(schluessel).sort());
+    });
+
+    test('der Zeilenanker jeder Textstelle stimmt mit der gefundenen Deklaration', () => {
+        const nach = new Map(TEXT.concat(FILTER).map(d => [schluessel(d), d.zeile]));
+        const abweichung = TEXT_GLUEH.concat(TEXT_REST)
+            .filter(e => nach.get(schluessel(e)) !== e.zeile)
+            .map(e => `${schluessel(e)} — Anker ${e.zeile}, gefunden ${nach.get(schluessel(e))}`);
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('die sechs Text-Leuchten tragen 0 0 <r>px var(--glow-*)', () => {
+        const FORM = /^0 0 \d+px var\(--glow-(gold|yellow|green|red)\)$/;
+        const nach = new Map(textgluehlagen().map(l => [schluessel(l), l.lage]));
+        const offen = TEXT_GLUEH.filter(e => !FORM.test(nach.get(schluessel(e)) || '')).map(
+            e => `${schluessel(e)} — traegt "${nach.get(schluessel(e))}"`
+        );
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R21_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    test('die sechs Radien bleiben unberuehrt: 10/10/20/20/20/20', () => {
+        const nach = new Map(textgluehlagen().map(l => [schluessel(l), l.radius]));
+        const abweichung = TEXT_GLUEH.filter(e => nach.get(schluessel(e)) !== e.radius).map(
+            e => `${schluessel(e)} — Tabelle ${e.radius}px, gefunden ${nach.get(schluessel(e))}px`
+        );
+        expect(abweichung.sort()).toEqual([]);
+        expect(
+            TEXT_GLUEH.map(e => e.radius)
+                .sort((a, b) => a - b)
+                .join('/')
+        ).toBe('10/10/20/20/20/20');
+    });
+
+    test('alle sechs tragen heute 0,50 — das Token aendert an keiner die Deckung', () => {
+        expect([...new Set(TEXT_GLUEH.map(e => e.vorher))]).toEqual([0.5]);
+        const nach = new Map(textgluehlagen().map(l => [schluessel(l), l.deckung]));
+        const abweichung = TEXT_GLUEH.filter(e => {
+            const d = nach.get(schluessel(e));
+            return d !== null && d !== undefined && Math.abs(d - e.vorher) > 1e-9;
+        }).map(e => `${schluessel(e)} — Tabelle ${e.vorher}, gefunden ${nach.get(schluessel(e))}`);
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('solange eine Text-Leuchte ein Farbliteral traegt, ist es das gemessene', () => {
+        const nach = new Map(textgluehlagen().map(l => [schluessel(l), literalFarbe21(l.lage)]));
+        const abweichung = TEXT_GLUEH.filter(e => {
+            const f = nach.get(schluessel(e));
+            return f !== null && f !== undefined && f !== (e.farbe || null);
+        }).map(e => `${schluessel(e)} — Tabelle ${e.farbe || '(Token)'}, gefunden ${nach.get(schluessel(e))}`);
+        expect(abweichung.sort()).toEqual([]);
+        // Zwei tragen schon color-mix derselben Rolle und haben kein Literal.
+        expect(TEXT_GLUEH.filter(e => !e.farbe).map(schluessel).sort()).toEqual([
+            'dashboard.css {.dice-crit}',
+            'dashboard.css {.dice-fail}'
+        ]);
+    });
+
+    test('vier Text-Leuchten wechseln den Ton, und jede steht zeilentreu in W3-F-01', () => {
+        expect(W3F01).not.toBe('');
+        const p = WCAG.palettes();
+        const tonwechsel = e =>
+            e.farbe ? WCAG.THEMES.filter(t => (p[t][e.rolle] || '').toLowerCase() !== e.farbe.toLowerCase()) : [];
+        const betroffen = TEXT_GLUEH.filter(e => tonwechsel(e).length > 0);
+        expect(betroffen.map(schluessel).sort()).toEqual([
+            'dice.css {.dice-hero-result.crit}',
+            'dice.css {.dice-hero-result.fail}',
+            'dice.css {.fdp-number.crit}',
+            'dice.css {.fdp-number.fail}'
+        ]);
+        // Je drei der vier Themes, nie alle vier: das Literal IST der Dark-Wert.
+        expect([...new Set(betroffen.map(e => tonwechsel(e).join('/')))]).toEqual(['light/sepia/contrast']);
+        const offen = betroffen.filter(e => !inAktenlage(e.datei, e.marke)).map(e => `${e.datei} {${e.marke}}`);
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R21_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    test('die drei nicht mitgenommenen Schatten sind Hoehenform und stehen benannt in W3-F-01', () => {
+        expect(W3F01).not.toBe('');
+        const nach = new Map(TEXT.concat(FILTER).map(d => [schluessel(d), d.wert]));
+        // Sie tragen unveraendert ihren gemessenen Wert ...
+        expect(TEXT_REST.map(e => `${schluessel(e)} ${nach.get(schluessel(e))}`)).toEqual(
+            TEXT_REST.map(e => `${schluessel(e)} ${e.wert}`)
+        );
+        // ... keine von ihnen ist Gluehform ...
+        const gluehKeys = new Set(textgluehlagen().map(schluessel));
+        expect(TEXT_REST.filter(e => gluehKeys.has(schluessel(e)))).toEqual([]);
+        // ... und jede ist in der Aktenlage als bewusster Rest gefuehrt.
+        const offen = TEXT_REST.filter(e => !inAktenlage(e.datei, e.marke)).map(e => `${e.datei} {${e.marke}}`);
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R21_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* ===================================================================
+       (c) SELBSTPROBE DER ZERLEGUNG, nicht ihres Ergebnisses
+       =================================================================== */
+
+    test('istRing() und istGluehe21() urteilen wie R-19, in beiden Schreibweisen', () => {
+        expect(istRing('0 0 0 3px rgba(212,175,55,0.1)')).toBe(true);
+        expect(istRing('0 0 0 2px var(--gold)')).toBe(true);
+        expect(istRing('var(--ring-gold)')).toBe(true);
+        expect(istRing('0 0 0 0 rgba(220, 38, 38, 0.4)')).toBe(true);
+        expect(istRing('0 0 12px var(--glow-gold)')).toBe(false); // Gluehe
+        expect(istRing('var(--shadow-2)')).toBe(false); // Hoehe im Token
+        expect(istRing('0 4px 16px rgba(0,0,0,0.4)')).toBe(false); // Hoehe
+        expect(istRing('-4px 0 24px rgba(0,0,0,0.5)')).toBe(false); // seitlich
+        expect(istRing('inset 0 0 15px rgba(139,69,19,0.08)')).toBe(false);
+
+        expect(istGluehe21('0 0 10px color-mix(in srgb, var(--green) 50%, transparent)')).toBe(true);
+        expect(istGluehe21('0 0 20px var(--glow-red)')).toBe(true);
+        expect(istGluehe21('0 2px 10px rgba(251,191,36,0.3)')).toBe(false); // Hoehe
+    });
+
+    test('deckung21() liest rgba, color-mix und Volldeckung und gibt bei Tokens null', () => {
+        expect(deckung21('0 0 0 3px rgba(212, 175, 55, 0.1)')).toBe(0.1);
+        expect(deckung21('0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent)')).toBe(0.15);
+        expect(deckung21('0 0 0 2px var(--gold)')).toBe(1.0);
+        expect(deckung21('var(--ring-gold)')).toBe(null);
+        expect(deckung21('0 0 12px var(--glow-yellow)')).toBe(null);
+    });
+
+    test('lagen21() trennt am Komma der obersten Klammerebene', () => {
+        expect(lagen21('var(--shadow-2), 0 0 0 0 rgba(220, 38, 38, 0.4)')).toEqual([
+            'var(--shadow-2)',
+            '0 0 0 0 rgba(220, 38, 38, 0.4)'
+        ]);
+        expect(lagen21('0 0 10px color-mix(in srgb, var(--green) 50%, transparent)')).toEqual([
+            '0 0 10px color-mix(in srgb, var(--green) 50%, transparent)'
+        ]);
+    });
+});
