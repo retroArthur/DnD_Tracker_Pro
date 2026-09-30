@@ -62,7 +62,7 @@
 
 .wizard-step.active {
     background: var(--gold, var(--gold));
-    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+    box-shadow: var(--ring-gold);
 }
 
 .wizard-step.done {
