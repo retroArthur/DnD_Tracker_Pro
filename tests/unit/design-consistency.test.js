@@ -1328,6 +1328,29 @@ describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
         const ohne = FORMULAR_PRIMITIVE.filter(c => !hatSelektor(c));
         expect(ohne).toEqual([]);
     });
+
+    test('jede Modal-Schale traegt eine Karte mit der Klasse "modal", ausser der gefuehrten', () => {
+        // Die dritte Auflage desselben Fehlers, namentlich gefuehrt statt
+        // stillschweigend hingenommen: features/session-prep/session-prep-render.js
+        // baut die Schale richtig (modal-overlay + showModal()), nennt die Karte
+        // aber `modal-content modal-large` — und `.modal-content` hat im ganzen
+        // Baum nur EINE Regel, und die haengt an `#calculator-modal`. Gemessen
+        // am Buendel vom 2026-10-01 bei 1440x900: Hintergrund rgba(0,0,0,0),
+        // Rahmen 0px none, padding 0px, max-height none, overflow-y visible —
+        // die Karte ist 1210px hoch, beginnt bei y=-155 und ragt 155px unter
+        // den Fensterrand; das Formular liegt ohne Flaeche auf der
+        // weichgezeichneten Seite. Dazu zeigt ihr Schliessknopf auf
+        // data-action="close-modal", und dieser Schluessel ist in KEINEM
+        // ui/actions/*.js registriert — das x schliesst nichts (nachgeklickt).
+        // Das ist ein eigener Vorgang mit eigenem roten Nachweis; hier steht
+        // es, damit es nicht verloren geht. Diese Liste darf nur KUERZER werden.
+        const KARTE_GEFUEHRT = ['session-prep-render.js'];
+        const ohne = sourceJs()
+            .filter(f => /class=(["'])[^"']*\bmodal-overlay\b[^"']*\1/.test(f.content))
+            .filter(f => !/class=(["'])modal(?:\s[^"']*)?\1/.test(f.content))
+            .map(f => path.basename(f.name));
+        expect(ohne.sort()).toEqual([...KARTE_GEFUEHRT].sort());
+    });
 });
 
 /* ===========================================================================
