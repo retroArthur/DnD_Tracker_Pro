@@ -762,7 +762,7 @@ function goToNote(date) {
                unsichtbar — heute sind es 8,28 / 3,25 / 6,58 / 13,46, mit der
                Leuchte 3,61 / 1,90 / 2,66 / 13,46. Zeichengleich mit
                entity-actions.js 'navigate-to-quest', weil es dieselbe Marke
-               ist. Zahlen in W3-F-01 Teil F. */
+               ist. Zahlen in W3-F-01 Teil D. */
             noteEl.style.boxShadow = 'var(--ring-gold), 0 0 12px var(--glow-gold)';
             setTimeout(() => (noteEl.style.boxShadow = ''), 2000);
         }

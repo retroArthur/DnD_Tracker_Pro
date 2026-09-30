@@ -433,7 +433,7 @@ function highlightEntity(type, id) {
            von vier Themes unter den 3:1, die R-02 fuer nicht-Text verlangt.
            Zwei uebereinander ergeben 75 % und 4,09 / 1,91 / 3,24 / 5,79. Diese
            Marke trennt sich zusaetzlich durch scale(1.02) vom Umfeld, sie ist
-           die staerkste der vier; Zahlen und Ruecknahmeweg in W3-F-01 Teil F. */
+           die staerkste der vier; Zahlen und Ruecknahmeweg in W3-F-01 Teil D. */
         card.style.boxShadow = '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)';
         card.style.transform = 'scale(1.02)';
         setTimeout(() => {

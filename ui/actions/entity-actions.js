@@ -369,7 +369,7 @@ const EntityActions = {
                    es 8,28 / 3,25 / 6,58 / 13,46. Mit der Leuchte darueber
                    3,61 / 1,90 / 2,66 / 13,46. Ruecknahme auf die Planfassung
                    kostet das Loeschen der zweiten Lage; Zahlen in
-                   W3-F-01 Teil F. */
+                   W3-F-01 Teil D. */
                 questCard.style.boxShadow = 'var(--ring-gold), 0 0 12px var(--glow-gold)';
                 setTimeout(() => (questCard.style.boxShadow = ''), 2000);
             }

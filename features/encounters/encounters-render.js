@@ -524,7 +524,7 @@ function toggleEncounter(id) {
                3:1, die R-02 fuer nicht-Text verlangt. Zwei uebereinander
                ergeben 75 % und 4,09 / 1,91 / 3,24 / 5,79. Die Marke soll in
                zwei Sekunden zeigen, wohin gesprungen wurde; Zahlen und
-               Ruecknahmeweg stehen in W3-F-01 Teil F. */
+               Ruecknahmeweg stehen in W3-F-01 Teil D. */
             item.style.boxShadow = '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)';
             setTimeout(() => {
                 item.style.boxShadow = '';
