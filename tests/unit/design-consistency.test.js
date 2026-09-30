@@ -10976,6 +10976,22 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
     ];
     const INLINE_ZUSTANDSFORMEN = [':hover', ':focus', ':focus-visible', ':active'];
 
+    /** Setzt einen Modulpfad aus Ordner und Datei zusammen.
+     *
+     *  WARUM NICHT ALS EIN STRING: tests/unit/module-test-coverage.test.js
+     *  zaehlt ein Modul als "von einem Test angefasst", sobald sein
+     *  loader-relativer Pfad WOERTLICH in irgendeiner Datei unter tests/ steht.
+     *  Eine Erwaehnung in dieser Duldungsliste ist aber kein Test. Woertlich
+     *  geschrieben nahm sie zwei Module (den Quests-Renderer und das
+     *  Sitzungsmodul) aus jenem Gate heraus, und dessen Ratsche verlangte
+     *  daraufhin, beide aus MODULE_TEST_EXCEPTIONS zu streichen — also genau
+     *  die "Erwaehnung zur Gate-Beruhigung", vor der dessen Kopfkommentar
+     *  warnt. Zusammensetzen vermeidet das, ohne diese Liste unleserlich zu
+     *  machen. Fuer die uebrigen Pfade hier ist es unnoetig (sie sind von
+     *  echten Tests abgedeckt), aber es kostet nichts und bleibt richtig,
+     *  falls sich das aendert. */
+    const modul = (ordner, datei) => `${ordner}/${datei}`;
+
     /** Schluessel: `datei|.klasse|eigenschaft|wert`. Wert = warum die Stelle
      *  bleiben darf. Jeder Eintrag muss GEBRAUCHT werden. */
     const INLINE_TINTE_GEDULDET = {
@@ -10995,11 +11011,11 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
         'assets/templates/modals-editors.html|.editor-btn|color|#ef4444':
             'Die beiden loeschenden Knoepfe der Tabellen- und der Link-Kontextleiste. ' +
             'Eingefrorenes Editor-Testnetz.',
-        'features/quests/quests-render.js|.btn|color|var(--on-gold)':
+        [`${modul('features/quests', 'quests-render.js')}|.btn|color|var(--on-gold)`]:
             'Der Verfolgen-Knopf setzt Flaeche UND Tinte in einem Zug ' +
             '(background: var(--gold); color: var(--on-gold)). --on-gold ist genau die Tinte, ' +
             'die fuer diese Flaeche gerechnet ist — kein Alleingang der Tinte.',
-        'features/sessions/sessions.js|.session-arc-title|color|var(--text-dim)':
+        [`${modul('features/sessions', 'sessions.js')}|.session-arc-title|color|var(--text-dim)`]:
             'Die Sammelgruppe "Ohne Arc" ist kein Arc und tritt bewusst hinter die goldenen ' +
             'Arc-Titel zurueck.',
         'systems/entity-links.js|.link-chip|background|var(--bg-dark)':
