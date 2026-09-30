@@ -135,7 +135,7 @@
 
         .editor-toolbar .color-swatch.active {
             border-color: var(--gold);
-            box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 6px var(--glow-yellow);
         }
 
         /* Tier steuert jetzt, WELCHE Gruppen im Markup stehen (Generator:
