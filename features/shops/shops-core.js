@@ -561,7 +561,7 @@ function renderShopItems(shopId, items) {
                                     ? `<span class="si-tag"><span class="si-tag-l">STR:</span> <span class="si-tag-v">${esc(item.strength)}</span></span>`
                                     : '',
                                 item.stealth === 'disadvantage'
-                                    ? `<span class="si-tag"><span class="si-tag-l">Heiml.:</span> <span class="si-tag-v" style="color:var(--red);">Nachteil</span></span>`
+                                    ? `<span class="si-tag"><span class="si-tag-l">Heiml.:</span> <span class="si-tag-v si-tag-neg">Nachteil</span></span>`
                                     : '',
                                 item.weight
                                     ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>`

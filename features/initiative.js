@@ -151,7 +151,7 @@ function renderInit() {
                 <div class="init-ac" style="visibility: hidden;">-</div>
                 <div class="init-info" style="flex: 1;">
                     <div class="init-name">${esc(cb.name)}</div>
-                    <div class="init-type" style="color: var(--red);">Lair Action</div>
+                    <div class="init-type">Lair Action</div>
                 </div>
                 <div class="init-right">
                     <span style="color: var(--text-dim); font-size: 0.8rem; margin-right: 8px;">Am Rundenende</span>

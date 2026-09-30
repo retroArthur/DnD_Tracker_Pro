@@ -1249,6 +1249,34 @@
     border-color: var(--gold);
 }
 
+/* Der Loeschknopf der eigenen Schnellreferenz-Eintraege.
+
+   PRUEFUNG W3-E, RUNDE 1 — WAS HIER FALSCH WAR, war nicht die Farbe, sondern
+   der Ort. systems/spellslots/quick-reference.js schrieb
+   style="border-color: var(--red)" ins Markup. Ein Inline-Stil schlaegt jeden
+   Selektor, also auch .qref-btn:hover drei Zeilen weiter oben: dieser Knopf
+   hatte in KEINEM Theme eine Hover-Kontur, waehrend sein Geschwister (der
+   Stift) sie hat. Kein Kontrastmangel — --red gegen --bg-hover liest
+   3,36 · 3,56 · 3,36 · 3,16, also ueber 3 —, aber ein stumm abgeschalteter
+   Zustandsmelder, und fuer jede Ratsche unsichtbar.
+
+   ALS KLASSE MIT --red-text, nicht mit --red: --red ist eine Flaechenrolle.
+   Als Linie auf der Ruheflaeche des Knopfs liest --red-text
+   R-23: W3-E Loeschring auf der Ruheflaeche  6,22 · 6,17 · 5,88 · 6,80
+   statt 4,62 · 4,83 · 4,29 · 4,72 — dasselbe Token, das
+   .backup-entry-restore in file-backup.css als destruktiver Umrissknopf schon
+   fuehrt, also dieselbe Sprache fuer dieselbe Sache.
+
+   0-1-0 UND DAMIT ABSICHTLICH SCHWAECHER ALS DER HOVER: .qref-btn:hover ist
+   0-2-0 und gewinnt beim Ueberfahren wieder, ganz ohne eigene Regel hier. Das
+   ist der Punkt — der Zustand kommt zurueck. Rot ist die Ruhekennung
+   ("das loescht"), Gold die Ueberfahrkennung ("das hier"), und beide widmen
+   sich nicht mehr gegenseitig. Damit die Reihenfolge stimmt, steht diese Regel
+   NACH .qref-btn: gegen die Grundregel (auch 0-1-0) entscheidet die Kaskade. */
+.qref-btn-del {
+    border-color: var(--red-text);
+}
+
 /* Tabs */
 .qref-tabs {
     display: flex;

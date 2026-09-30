@@ -112,6 +112,29 @@
             font-weight: 600;
         }
 
+        .init-entry.lair .init-type {
+            /* Pruefung W3-E, Runde 1. Diese Unterzeile ("Lair Action") trug ihre
+               Tinte INLINE im Markup: features/initiative.js schrieb
+               style="color: var(--red)". Ein Inline-Stil schlaegt jeden Selektor,
+               die Regel .init-type { color: var(--text-dim) } war damit Fiktion —
+               und die Tintenkorrektur der Welle 2, die am Geschwister drei Zeilen
+               weiter oben (.init-name) angekommen ist, war hier nie angekommen,
+               weil sie im CSS gar nichts zu fassen hatte.
+
+               --red ist eine FLAECHENrolle. Als Tinte auf dem getoenten Ende des
+               Lair-Verlaufs las sie 4,21 · 4,35 · 3,88 · 4,49 — in ALLEN VIER
+               Themes unter 4,5, in Sepia bei 3,88. Bei font-size 0.75em gilt 4,5
+               und nicht 3,0. --red-text ist in Welle 1 gegen genau diese Flaechen
+               gerechnet und hebt die Zeile auf
+               R-23: W3-E Lair-Unterzeile auf der Lair-Toenung  5,67 · 5,55 · 5,32 · 6,47
+
+               Gerechnet wird gegen den GETOENTEN Verlaufsstopp, obwohl die Zeile
+               in der vierten Rasterspalte und damit ueber dem helleren Ende
+               sitzt: das ist der schlechtere Fall, und die Regelgruppe daneben
+               haelt es seit Welle 2 genauso. */
+            color: var(--red-text);
+        }
+
         .init-list { display: flex; flex-direction: column; gap: 6px; }
         
         .init-entry {

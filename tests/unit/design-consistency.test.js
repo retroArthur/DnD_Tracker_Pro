@@ -5020,16 +5020,31 @@ describe('R-14 — Toenung im Elter, Tinte im Kind (Ratsche)', () => {
         return out;
     }
 
-    /** DIE MENGE, nicht nur die Werte. Ein fuenfter Quergriff ist ein Befund,
+    /** DIE MENGE, nicht nur die Werte. Ein weiterer Quergriff ist ein Befund,
      *  bis jemand ihn ausrechnet und hier eintraegt. */
     const ERWARTETE_PAARE = [
         'dashboard.css .char-save-box.proficient -> .char-save-box.proficient .save-label',
         'dashboard.css .enc-save-box.active -> .enc-save-box.active .enc-save-label',
         'initiative.css .concentration-check-banner -> .concentration-check-banner .conc-dc',
-        'initiative.css .init-entry.lair -> .init-entry.lair .init-name'
+        'initiative.css .init-entry.lair -> .init-entry.lair .init-name',
+        /* DER FUENFTE, und er ist genau so entstanden, wie diese Ratsche es
+           vorsieht: Pruefung W3-E, Runde 1 hat die Tinte der Lair-Unterzeile
+           aus dem Markup ins CSS geholt — sie stand inline und war damit fuer
+           jede Rechnung unsichtbar —, und im selben Zug war der Quergriff da:
+           dieselbe Elternregel, dieselbe Toenung, derselbe Nachfahre ohne
+           eigene Flaeche wie beim vierten eine Zeile darueber. Der Test wurde
+           rot, die Zahl ist ausgerechnet und steht im Test darunter:
+           var(--red-text) ueber dem 10-%-Rotstopp haelt ueber die
+           D-2-Dreierliste 4,97 · 4,55 · 4,60 · 5,48 — Zahl fuer Zahl dieselbe
+           Reihe wie .init-name, weil es dieselbe Tinte auf derselben Toenung
+           ist. Vorher trug die Zeile inline var(--red) und war gar kein
+           Quergriff, weil im CSS nichts stand, worauf man haette zeigen
+           koennen: der blinde Fleck war nicht diese Ratsche, sondern der
+           Inline-Stil. */
+        'initiative.css .init-entry.lair -> .init-entry.lair .init-type'
     ];
 
-    test('die vier bekannten Quergriffe sind die einzigen im Baum', () => {
+    test('die fuenf bekannten Quergriffe sind die einzigen im Baum', () => {
         const gefunden = quergriffe()
             .map(q => `${q.datei} ${q.eltern.sel} -> ${q.kind.sel}`)
             .sort();
@@ -7080,7 +7095,9 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'encounters.css', zeile: 1377, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'initiative.css', zeile: 1055, stufe: 'drawer',
+        // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
+        // (Pruefung W3-E, Runde 1) ist 23 Zeilen weiter oben eingefuegt.
+        { datei: 'initiative.css', zeile: 1078, stufe: 'drawer',
           pfad: '.init-statblock-content',
           vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
         { datei: 'loot.css', zeile: 313, stufe: 1,

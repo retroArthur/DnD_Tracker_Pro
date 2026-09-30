@@ -474,7 +474,24 @@
         .si-tag-v {
             color: var(--cyan);
         }
-        
+
+        .si-tag-v.si-tag-neg {
+            /* Pruefung W3-E, Runde 1. Das Etikett "Nachteil" (Heimlichkeit bei
+               schwerer Ruestung) trug seine Tinte INLINE im Markup:
+               features/shops/shops-core.js schrieb style="color:var(--red)" und
+               schlug damit die Regel darueber. --red ist eine FLAECHENrolle; auf
+               .si-details (var(--bg-card)) las sie 4,62 · 4,83 · 4,29 · 4,72, in
+               Sepia also unter 4,5. --red-text ist die Tinte, die Welle 1 gegen
+               genau diese Flaechen gerechnet hat:
+               R-23: W3-E Nachteil-Etikett auf der Detailflaeche  6,22 · 6,17 · 5,88 · 6,80
+
+               EINE KLASSE UND KEIN INLINE-STIL, auch wenn es nur eine Stelle ist:
+               ein Inline-Wert ist fuer jede Ratsche unsichtbar und fuer jeden,
+               der das CSS liest, eine Luege. Genau daran ist die Tintenkorrektur
+               der Welle 2 an zwei Stellen dieses Baumes vorbeigelaufen. */
+            color: var(--red-text);
+        }
+
         .si-special {
             color: var(--gold-text);
             font-style: italic;

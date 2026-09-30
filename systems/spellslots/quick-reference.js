@@ -340,7 +340,7 @@ function renderQuickRefCustom() {
                 <span>📌 ${esc(entry.title)}</span>
                 <div style="display: flex; align-items: center; gap: 4px;">
                     <button class="qref-btn" data-action="edit-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Bearbeiten">✏️</button>
-                    <button class="qref-btn" style="border-color: var(--red);" data-action="delete-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Löschen">🗑️</button>
+                    <button class="qref-btn qref-btn-del" data-action="delete-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Löschen">🗑️</button>
                     <span class="quick-ref-toggle-arrow">▼</span>
                 </div>
             </div>
