@@ -310,7 +310,7 @@
             color: var(--on-gold);
             border-color: var(--gold);
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+            box-shadow: var(--shadow-1);
         }
 
         .shop-sort-controls {
@@ -350,7 +350,7 @@
             color: var(--on-gold);
             border-color: var(--gold);
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+            box-shadow: var(--shadow-1);
         }
         
         .shop-items-container {
