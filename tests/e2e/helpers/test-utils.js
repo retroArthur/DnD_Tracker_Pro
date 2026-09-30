@@ -6,8 +6,21 @@
 
 /**
  * Seedet einen sauberen App-Zustand VOR dem App-Boot (per page.addInitScript), damit kein
- * fruehzeitiger save() den geteilten #toast-Knoten mit einem eigenen Hinweis ueberschreibt,
- * bevor eine Testassertion ihn liest. Muss vor loadApp(page) aufgerufen werden.
+ * fruehzeitiger save() das Ereignis-Log mit eigenen Hinweisen vollschreibt, bevor eine
+ * Testassertion es liest. Muss vor loadApp(page) aufgerufen werden.
+ *
+ * WAS SICH IN U5 GEAENDERT HAT — DER GRUND IST NICHT MEHR DERSELBE. Der ganze
+ * Abschnitt darunter ist ein Protokoll dreier Untersuchungen, und alle drei
+ * drehten sich um EINE Eigenschaft des Alt-Knotens `#toast`: er war EIN geteiltes
+ * Element, das jede naechste Meldung ueberschrieb ("stomps"). Dieser Knoten ist
+ * abgeschaltet (U5, utils/utilities.js). Das Ereignis-Log haengt je Meldung einen
+ * EIGENEN Knoten ein, und das Kampfprotokoll haelt 200 Eintraege — es kann nichts
+ * mehr ueberschrieben werden, die Ursache ist strukturell weg.
+ * Der Seed BLEIBT trotzdem, aus dem schwaecheren, aber echten Grund: er haelt das
+ * Log ruhig, damit eine Zusicherung, die Eintraege ZAEHLT (siehe
+ * tests/e2e/features/persistence.spec.js), nicht ueber Start-Hinweise stolpert.
+ * Die Untersuchungen darunter stehen weiter da, weil sie zwei frueh feuernde
+ * save()-Pfade namentlich festhalten, die es beide immer noch gibt.
  *
  * 08-RESEARCH Pitfall 4 / D-06: seed markdownOnboardingSeen BEFORE loadApp()
  * so the 2000ms onboarding setTimeout (ui/editors/markdown-shortcuts.js) never
@@ -487,22 +500,41 @@ export async function clickAction(page, action, value) {
 }
 
 /**
- * Wartet auf Toast-Nachricht
+ * Wartet auf einen Eintrag im Ereignis-Log und gibt ihn zurueck.
+ *
+ * ES GAB HIER EINEN `waitForToast()`, DER NICHTS TUN KONNTE: er wartete auf
+ * `#toast.show` — eine Klasse, die utils/utilities.js NIE gesetzt hat (der
+ * Alt-Knoten trug `toast <typ>`). Der Selektor konnte also nie erfuellt werden.
+ * Aufgefallen ist es nie, weil keine einzige Spec die Funktion rief. U5 hat den
+ * Alt-Knoten #toast abgeschaltet und diesen Helfer auf den Ereignis-Log
+ * umgehaengt, statt beides stehenzulassen: eine tote, kaputte Funktion neben
+ * vier Specs, die dieselbe Warterei von Hand schreiben.
+ *
+ * Der Text wird gegen das KAMPFPROTOKOLL geprueft, nicht gegen das DOM. Das ist
+ * strenger, nicht schwaecher: ein DOM-Eintrag verblasst nach ~2,4 s und der
+ * Kasten haelt hoechstens fuenf gleichzeitig, der Ringpuffer haelt 200 und
+ * verliert nichts. Die SICHTBARKEIT wird weiter am DOM geprueft — sonst
+ * bewiese der Aufruf nicht, dass ueberhaupt etwas angezeigt wurde.
+ *
  * @param {import('@playwright/test').Page} page
- * @param {string} [text] - Optionaler Text der enthalten sein soll
+ * @param {{ text?: string, typ?: 'success'|'error'|'warning'|'info' }} [optionen]
+ * @returns {import('@playwright/test').Locator} der neueste passende Eintrag
  */
-export async function waitForToast(page, text) {
-    const toast = page.locator('#toast.show');
-    await toast.waitFor({ state: 'visible', timeout: 3000 });
+export async function waitForLogEntry(page, optionen = {}) {
+    const { text, typ } = optionen;
+    const selektor = typ ? `#event-log .event-log-entry.${typ}` : '#event-log .event-log-entry';
+    await page.waitForSelector(selektor, { state: 'visible', timeout: 5000 });
     if (text) {
         await page.waitForFunction(
-            expectedText => document.querySelector('#toast')?.textContent?.includes(expectedText),
+            erwartet =>
+                (typeof window.getCombatLog === 'function' ? window.getCombatLog() : []).some(e =>
+                    String(e.text).includes(erwartet)
+                ),
             text,
-            { timeout: 3000 }
+            { timeout: 5000 }
         );
     }
-    // Warte bis Toast verschwindet
-    await page.waitForTimeout(1500);
+    return page.locator(selektor).first();
 }
 
 /**

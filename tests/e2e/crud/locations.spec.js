@@ -6,7 +6,8 @@ import {
     fillField,
     generateTestName,
     performUndo,
-    seedCleanSession
+    seedCleanSession,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -78,8 +79,11 @@ test.describe('Locations - CRUD Operationen', () => {
 
             await page.click('[data-action="call"][data-value="saveLocation"]');
 
-            // Fehlermeldung erwartet
-            await expect(page.locator('#toast')).toContainText('Name');
+            // Fehlermeldung erwartet — im Ereignis-Log statt im abgeschalteten
+            // Alt-Knoten #toast (U5). Der Text wird ueber das Kampfprotokoll
+            // geprueft, das nichts verliert; die Sichtbarkeit am DOM.
+            const meldung = await waitForLogEntry(page, { typ: 'error', text: 'Name' });
+            await expect(meldung).toBeVisible();
         });
     });
 

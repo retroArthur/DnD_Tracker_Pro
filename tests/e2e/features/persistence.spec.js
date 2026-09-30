@@ -8,7 +8,8 @@ import {
     generateTestName,
     performSave,
     seedCleanSession,
-    waitForAppReady
+    waitForAppReady,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -88,11 +89,31 @@ test.describe('Datenpersistenz', () => {
             await page.click('[data-action="call"][data-value="saveCharacter"]');
             await page.waitForTimeout(500);
 
+            // U5: der Alt-Knoten #toast ist abgeschaltet, und die Zusicherung ist
+            // dabei STRENGER geworden. Vorher genuegte, dass irgendwo im einen
+            // geteilten Knoten "gespeichert" stand — auch wenn das noch die
+            // Meldung des Anlegens von vorhin war. Jetzt wird der Stand VOR dem
+            // Speichern gemerkt und ein NEUER passender Eintrag verlangt.
+            const vorher = await page.evaluate(() =>
+                (typeof window.getCombatLog === 'function' ? window.getCombatLog() : []).map(
+                    e => e.nr
+                )
+            );
+
             // Manuell speichern
             await performSave(page);
 
-            // Toast sollte Speicherbestätigung zeigen
-            await expect(page.locator('#toast')).toContainText(/gespeichert|saved/i);
+            const meldung = await waitForLogEntry(page);
+            await expect(meldung).toBeVisible();
+            const neueBestaetigungen = await page.evaluate(
+                bekannt =>
+                    (typeof window.getCombatLog === 'function' ? window.getCombatLog() : [])
+                        .filter(e => !bekannt.includes(e.nr))
+                        .filter(e => /gespeichert|saved/i.test(String(e.text)))
+                        .map(e => e.text),
+                vorher
+            );
+            expect(neueBestaetigungen.length).toBeGreaterThanOrEqual(1);
         });
     });
 
