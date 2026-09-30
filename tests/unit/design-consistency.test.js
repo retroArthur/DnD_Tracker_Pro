@@ -7309,16 +7309,26 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
 
            6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
                4x `0 0 20px var(--gold)`   Sprungmarken:
-                   features/encounters/encounters-render.js:520
-                   features/locations/locations-render.js:360
-                   features/npcs/npc-render.js:382
-                   systems/entity-links.js:430
+                   features/encounters/encounters-render.js:520  (heute :528)
+                   features/locations/locations-render.js:360    (heute :368)
+                   features/npcs/npc-render.js:382               (heute :390)
+                   systems/entity-links.js:430                   (heute :437)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
-                   ui/actions/entity-actions.js:362
-                   systems/undo.js:756
+                   ui/actions/entity-actions.js:362              (heute :373)
+                   systems/undo.js:766                           (war :756)
            6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
            3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
            3   `transition = 'box-shadow …'` — keine Schattenwerte, kein Fall
+
+       DIE ZWEITE NUMMER JE ZEILE ist die von heute. Die sechs Stellen sind bei
+       ihrer Umstellung um 8 bis 11 Zeilen nach unten gerutscht, weil jede
+       einen Begruendungskommentar bekommen hat (W3-D-05 verlangt die
+       Begruendung AM CODE). Beide Nummern stehen hier, weil die erste den
+       Ausgangswert verankert und die zweite auffindbar halten muss — ein
+       Anker, der nur historisch stimmt, ist in dieser Datei nichts wert. Ein
+       Test prueft sie nicht: die sechs sind KEINE Ausnahmen, sie tragen
+       Tokens, und ihre Form wird ueber `ERLAUBT` geprueft, nicht ueber eine
+       Zeilennummer. Geprueft werden die Anker der drei JS_AUSNAHMEN unten.
 
        `var(--gold)` ist ein Token, aber kein SCHATTENtoken: es traegt eine
        Farbe und keine Lage, und es ist volldeckend. Genau daran haengt die
