@@ -2199,19 +2199,19 @@
         .fr-layout {
             display: grid;
             grid-template-columns: 1fr 825px;
-            /* Die Zeile MUSS an die Hoehe des Rasters gebunden sein, nicht an
-               seinen Inhalt. Ohne diese Zeile bemisst sich die einzige Rasterzeile
-               am hoechsten Kind — und das ist das Detail mit seinem festen
-               `height: calc(100vh - 120px)` (weiter unten). Das Raster selbst ist
-               aber nur so hoch, wie `flex: 1` in der Schale uebrig laesst, also um
-               die Hoehe der Werkzeugleiste weniger. Die Master-Spalte erbte die
-               zu grosse Zeilenhoehe, ragte um genau diesen Betrag unter die
-               `overflow: hidden`-Kante des Rasters und verlor dort ihr unteres
-               Ende: bei Begegnungen (Werkzeugleiste 184px) lag der letzte von 24
-               Eintraegen auch voll heruntergescrollt noch bei top=805px in einem
-               720px hohen Fenster. `minmax(0, 1fr)` bindet die Zeile an das
-               Raster; die Null als Minimum verhindert, dass der Inhalt sie wieder
-               aufblaeht. */
+            /* Die Zeile bindet die einzige Rasterzeile an die Hoehe des Rasters
+               statt an seinen Inhalt; die Null als Minimum verhindert, dass der
+               Inhalt sie wieder aufblaeht. Fehlt sie, ist die Zeile `auto` und
+               bemisst sich am hoechsten Kind — traegt das Detail dann eine feste
+               Fensterhoehe (wie vor der Umstellung auf `height: 100%` weiter
+               unten), erbt die Master-Spalte die zu grosse Zeilenhoehe und ragt
+               um genau diesen Betrag unter die `overflow: hidden`-Kante des
+               Rasters. Gemessen am gebauten Buendel: erst wenn BEIDE Zeilen
+               fehlen, liegt bei Begegnungen (Werkzeugleiste 184px) der letzte
+               von 24 Eintraegen voll heruntergescrollt bei top=805px in einem
+               720px hohen Fenster und die Truhe bei 695..769px hinter der Kante.
+               Nimmt man diese Zeile hier allein zurueck, bleibt alles auf dem
+               Pixel gleich — sie ist die Absicherung, nicht der Hebel. */
             grid-template-rows: minmax(0, 1fr);
             gap: 0;
             flex: 1;

@@ -424,9 +424,9 @@
    ============================================ */
 
 /* `calc(100vh - 120px)` wie die vier Geschwister — hier stand `- 60px`, also
-   60px zu viel. Die Schale ragte um diesen Betrag unter den Fensterrand, ihre
-   Werkzeugleiste blieb hinter der Kopfzeile stehen und der letzte Listeneintrag
-   lag ausserhalb des klickbaren Bereichs. */
+   60px zu viel: die Schale stand 660 statt 600px hoch und ragte 119 statt 59px
+   unter den Fensterrand, was ihre Werkzeugleiste beim Blaettern hinter die
+   Kopfzeile schob. Der letzte Listeneintrag blieb dabei erreichbar. */
 .loot-view.active {
     display: flex;
     flex-direction: column;

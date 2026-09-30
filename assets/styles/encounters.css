@@ -916,13 +916,13 @@
    ============================================================ */
 
 /* `overflow: hidden` wie bei Orten, NSCs, Truhe und Bestiar — vorher stand hier
-   `overflow-y: auto`. Solange die Schale wegen der Kaskade auf `block` stand
-   (siehe dmscreen.css, `.view:not(.active)`), war dieses `auto` der EINZIGE
-   Grund, warum die Begegnungsliste ueberhaupt scrollte: die Schale selbst
-   scrollte. Mit wiederhergestelltem `flex` scrollt `.enc-master` innen, und das
-   aeussere `auto` liess den letzten Eintrag von 24 bei top=805px in einem 720px
-   hohen Fenster liegen — es haette die Korrektur fuer Begegnungen ins Gegenteil
-   verkehrt. */
+   `overflow-y: auto`. Die Zeile gleicht die Bauart den vier Geschwistern an und
+   ist im ausgelieferten Stand geometrisch wirkungslos: nimmt man sie ALLEIN
+   zurueck, liegen Raster, Master und Detail in allen fuenf Ansichten bei
+   1920x1080 und 1280x720 auf dem Pixel gleich, der letzte von 24 Eintraegen
+   bleibt erreichbar (bei 1280x720 weiter 621..695px, nachgemessen in
+   ansichts-schalen.spec.js). Tragend sind die beiden Zeilen in core.css
+   (`grid-template-rows`, `height: 100%`) — fehlen BEIDE, liegt er bei 805px. */
 .enc-view.active {
     display: flex;
     flex-direction: column;
