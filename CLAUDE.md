@@ -435,6 +435,7 @@ function deleteEntity(id) {
 | `R`        | Quick roll d20                                 |
 | `T`        | Toggle session timer                           |
 | `L`        | Toggle event log (persistent mode)             |
+| `K`        | Toggle Kampfprotokoll panel                    |
 | `/`        | Open Quick Reference and focus search          |
 | `?`        | Show keyboard shortcuts                        |
 | `N`        | Next turn (Initiative) / New element (context) |
