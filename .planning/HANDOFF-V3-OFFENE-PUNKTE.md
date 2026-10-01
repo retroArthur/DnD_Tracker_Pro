@@ -4720,3 +4720,139 @@ npx playwright test tests/e2e/features/computed-style-diff.spec.js   # 3 Faelle,
   verschwindet.
 
 ---
+
+## M-Abnahme — die Mobil-Runde nachgefahren (2026-10-01)
+
+Abnahme der drei Einheiten M1/M2/M3. **Kein Befund am Produkt** — alle Tore stehen, und jede der
+vier Behauptungen aus M1/M2 hält der eigenen Nachmessung stand. Was diese Runde beiträgt, ist
+Nachweisnetz: eine fehlende Gegenprobe und das Bildmaterial für das menschliche Urteil.
+
+### Die Tore, gegen die Basiswerte aufgerechnet
+
+Die Basiswerte des Auftrags stammen von `cecfefe` — also von **vor** M1/M2/M3. Jede Abweichung ist
+deshalb auseinandergerechnet statt als Fehler gemeldet:
+
+| Tor | Basiswert (cecfefe) | gemessen (HEAD) | Differenz |
+| --- | --- | --- | --- |
+| Jest | 1908 in 75 Suiten | **1910 in 75 Suiten** | +2 aus M3 (`schalen-aktenlage.test.js` 2 → 4) |
+| Playwright | 444 / 19 übersprungen / 0 | **528 / 23 / 0** | +84 bestanden, +4 übersprungen — siehe unten |
+| pytest | 30 | **30** | — (`python -m pytest tests/build/`; ohne Pfad sammelt pytest nichts) |
+| Lint | exit 0, exakt 363 Warnungen | **exit 0, 363** | — |
+| Builds | beide exit 0 | **beide exit 0** | — |
+| typecheck / :strict | exit 0 | **beide exit 0** | — |
+| `check-f18-kaskade --check` | OK | **OK, 126 Abhängigkeiten, 8509 Elemente** | — |
+| `sync-aktenlage-anker --check` | 0 Abweichungen, 123 Anker | **0 / 123** | — |
+
+Die 84 zusätzlich bestandenen Playwright-Fälle: `layoutprofil.spec.js` **48** (neu, M2),
+`mobil-navigation.spec.js` **21** (20 neu aus M1 + **1 aus dieser Runde**), `baender-stapel.spec.js`
+**4** (neu, M3), `hoehenbudget.spec.js` 23 → **33** (+10 aus M3). Die 4 zusätzlich übersprungenen
+sind `mobil-screens.spec.js` aus dieser Runde — dieselbe Bauart wie die vier vorhandenen
+Ablichtungs-Dateien, die zusammen mit 2 PWA-Fällen und 1 Service-Worker-Fall die bisherigen 19
+ausmachen.
+
+**Ratschen.** Dubletten **0**, `!important` **105** (kommentarfrei gezählt wie die Ratsche; roh 108,
+die Differenz sind drei Erwähnungen in Kommentaren), Inline-Stile **256**. Keine gestiegen. Als
+nackte Zahl kommt `z-index` nur mit **2** und **10** vor, beide unter der Schranke 20.
+
+**Eine erklärungsbedürftige Abweichung vom Auftragstext.** Der Auftrag nennt „42 benannte Ausnahmen
+in `EXPECTED_DEVIATION_KEYS` (14 breit + 28 schmal)". An HEAD sind **beide Listen leer**. Das ist
+kein Verlust, sondern `ab16e43`: der Stil-Sollstand wurde regulär neu erhoben und schlüsselweise
+verglichen — 0 Zugänge, 63 Abgänge an 49 Schlüsseln, **0 Digest-Änderungen** in allen drei
+Durchgängen, alle Abgänge in der Bestiar-Ansicht. Die Ausnahmen mussten danach nicht mehr geführt
+werden. Der Auftragstext beschreibt den Stand von `cecfefe`.
+
+### Was ich selbst gefahren bin, mit eigenen Skripten und echten Klicks
+
+Alle Messungen: gebautes Bündel per `file://`, Umzugs-Band **nicht** unterdrückt, Klicks mit der
+Maus auf gemessene Koordinaten, Scrollen nur per Mausrad. Kein `scrollTop`, kein `scrollIntoView`.
+
+**(a) Alle 24 Ansichten, und jede führt wirklich in ihre Ansicht.** Geprüft wird nicht nur
+`elementFromPoint`, sondern nach jedem Klick `section.view.active` gegen `view-<name>`.
+
+| Zustand | 360x740 | 390x844 | 740x360 | 320x700 |
+| --- | --- | --- | --- | --- |
+| schlicht, vier Themes | **24/24**, 0 Radrunden | **24/24**, 0 | **24/24**, max 2 | — |
+| voll (Dauer-Log mit 8 Einträgen, Kampfprotokoll offen, Würfel-Schweber, Schnellreferenz) | **24/24**, 0 | **24/24**, 0 | **24/24**, max 2 | **24/24**, 0 |
+
+Der volle Zustand ist die Zeile, auf die es ankommt: dort meldete M1 vorher **6 von 24** (390x844)
+und **0 von 24** (360x740, das Kampfprotokoll lag auf der Umschalter-Zeile). 16 Zustände, alle
+24/24.
+
+**(b) Die Messung misst wirklich etwas.** Gegenprobe mit dem erzwungenen Deckel von vor M1
+(`--mobile-nav-max-height: 300px`): Sichtfeld 444px → **300px**, Rasterinhalt unverändert 444px,
+sofort erreichbar 24 → **20**. Diese Gegenprobe steht jetzt fest in `mobil-navigation.spec.js`
+(siehe unten).
+
+**(c) Das Desktop-Layout ist unverändert** — die fünf Funde der Vorrunde einzeln nachgefahren, bei
+1440x900, 1280x800 und 1000x800 in allen vier Themes (**12 Zustände, 0 rot**):
+
+| Fund | gemessen |
+| --- | --- |
+| F1 Ereignis-Dialog | Karte 500x438px sichtbar, Klassen `modal-overlay modal-transient show`, 6 Felder, **0** ragen über die Karte |
+| F2 Listen | 24/24 gerendert in Orten, NSCs, Truhe, Begegnungen; der **letzte** Eintrag nach 60 Radstößen in allen 12 Zuständen erreichbar |
+| F3 Initiative mit Menü | gescrollt (scrollY 582/682/770), **6** Menüs, **23/23** Einträge erreichbar, kein Verdecker |
+| F4 Kampfprotokoll | 6 echte Klicks ohne `force`, 0 Klickfehler, flüchtiges Log nach 3000 ms **leer**, Panel sichtbar, **6 Angriffszeilen**, der zweite wörtlich nachlesbar |
+| F5 Werkzeugleiste frei | Seitenüberhang **0** in allen 12 Zuständen, Suchfeld in Orten/NSCs/Truhe **klickbar** |
+
+F4 zusätzlich bei 390x844 nachgefahren: ebenfalls 6 Angriffszeilen, zweiter lesbar.
+
+**(d) Das Layoutprofil folgt dem Fenster** (M2a), ohne Eingriff nachgemessen: frisch geladen
+`desktop` bei 1440x900 und 1000x800, `mobile` bei 740x360, 390x844, 360x740 und 320x700; beim
+Verkleinern **und** Vergrößern folgt es in beide Richtungen; `D.settings.layout` bleibt dabei
+durchweg `null` — der automatische Wechsel schreibt nichts. Nach ausdrücklichem `setLayout('desktop')`
+bleibt das Profil `desktop`, auch bei 390x844 und 360x740, und `D.settings.layout` steht auf
+`desktop`. Beides wie behauptet.
+
+### Was neu dazugekommen ist
+
+- **`tests/e2e/features/mobil-navigation.spec.js`** — **1 neuer Fall**, 20 → **21**: die permanente
+  Gegenprobe zum Deckel. Sie stellt den Zustand vor M1 wirklich her (Zwang auf
+  `--mobile-nav-max-height` per Stilblatt mit `!important`, nicht per Inline-Stil — die Kette
+  schreibt den Inline-Wert bei jedem Lauf neu) und besteht aus einer Vorbedingung und dem Befund.
+  Ohne Vorbedingung wäre sie eine Probe, die einen vorbestehenden Fehler als Erfolg verbucht.
+  Der rote Nachweis steht in `1937a88`: ohne den Zwang ist der „verdrahtete" Durchgang mit dem
+  gemessenen identisch (444px / 24-von-24), der Lauf fällt an `Expected: 300 / Received: 444`.
+- **`tests/e2e/features/mobil-screens.spec.js`** — **4 neue, standardmäßig übersprungene Fälle**.
+  Mit `MOBIL_SCREENS=1`: 3 Zustände (ausgefahrene Leiste, Ortsliste ganz unten, laufende Initiative)
+  x 2 Fenster x 4 Themes = **24 Bilder** nach `tests/e2e/__screens__/mobil/`, keines 0 Byte. Sie
+  prüft **nichts am Aussehen** — sie fällt durch, wenn ein Zustand sich nicht herstellen lässt.
+  Der erste Lauf war genau daran rot (4 von 6 bei dark); Ursache war die Hülle, nicht die
+  Anwendung.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js       # 21 Faelle
+MOBIL_SCREENS=1 npx playwright test tests/e2e/features/mobil-screens.spec.js   # 4 Faelle, 24 Bilder
+python -m pytest tests/build/                                          # 30 Faelle
+```
+
+### Offen geblieben
+
+- **`.qref-fab` liegt auf dem 56px-Streifen der eingeklappten Leiste** — unverändert offen aus M1,
+  jetzt beziffert: gemessen **2250 px² Deckung** bei 360x740, 390x844 und 320x700, **1750 px²** bei
+  740x360. Die **Mitte** der Umschalter-Zeile bleibt in allen vier Fenstern frei, die Navigation
+  funktioniert also — aber ein Daumen, der die rechte Seite des Streifens trifft, öffnet die
+  Schnellreferenz statt der Leiste. Saubere Behebung bleibt: `--mobile-nav-rest` auch von ihrem
+  `bottom` abziehen.
+- **`.event-log-entry { pointer-events: auto }`** gilt auch im flüchtigen Modus — unverändert offen
+  aus M1. In dieser Runde zusätzlich am Desktop gesehen: beim Radeln über die Initiative antwortete
+  `elementFromPoint` an einzelnen Rollständen mit `div.event-log-time` (1100x800 und 1000x800).
+  Folgenlos, weil das Ziel einen Rollstand später frei liegt — aber derselbe Befund, eine
+  Vierteldrehung weiter.
+- **Kein `scroll-margin-top` im ganzen Stilbaum**, bei zwölf `scrollIntoView`-Aufrufen im Quellbaum
+  und drei angehefteten Leisten darüber. Gemessen: nach `scrollIntoViewIfNeeded()` auf die Mob-Zeile
+  der Initiative antwortet `elementFromPoint` auf der Mitte des Angriffsknopfs ab **1100px Breite
+  abwärts** mit `span.qa-name` (der Aktionsleiste), bei 1440 und 1280 nicht. Ein Mausrad-Durchlauf
+  erreicht den Knopf an jeder Breite (Rollstand 0 / 60 / 240 / 240 / 180) — der Knopf ist also
+  **nicht unerreichbar**, er landet nur dort, wo eine Leiste klebt. **Nicht zu Ende untersucht:**
+  der eine Aufruf mit `block: 'start'` (das Sitzungsformular) ließ sich nicht messen, weil das
+  Formular im Ruhezustand 0px hoch ist. Eigene Einheit, kein Rückschritt dieser Runde.
+- **Die Listenspalte des Bestiars folgt der Schale nicht** — unverändert offen aus M2/M3.
+- **Sehr kurze Fenster** (U6-R4-01 Punkt 3) — unverändert offen.
+- **`npm run check` bleibt rot**, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  vorbestehend nicht prettier-konform ist. Die beiden in dieser Runde angefassten Testdateien sind
+  einzeln prettier-konform (`npx prettier --check` je Datei).
+
+---
