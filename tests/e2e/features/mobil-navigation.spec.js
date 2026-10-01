@@ -158,10 +158,15 @@ const SAAT = {
 
 /**
  * Laedt das gebaute Buendel, stellt das Mobil-Layout und das Theme her.
+ *
+ * Die Saat ist ein Parameter mit Standardwert, damit die Zusicherung 11 weiter
+ * unten mit einer GEFUELLTEN Kampagne laden kann, ohne dass sich fuer die acht
+ * Zusicherungen darueber irgendetwas aendert.
  * @param {import('@playwright/test').Page} page
  * @param {string} theme
+ * @param {object} [saat] Ausgangsdaten im localStorage; Standard ist der Leerzustand.
  */
-async function mobilLaden(page, theme) {
+async function mobilLaden(page, theme, saat = SAAT) {
     await page.addInitScript(s => {
         try {
             localStorage.setItem('dnd-tracker-v4', JSON.stringify(s));
@@ -170,7 +175,7 @@ async function mobilLaden(page, theme) {
             // dann greift der Leerzustand, und der ist fuer diese Probe genauso
             // brauchbar.
         }
-    }, SAAT);
+    }, saat);
     await page.goto(APP_URL);
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', null, {
         timeout: 25000
@@ -1204,5 +1209,463 @@ test.describe('M1 — Gegenprobe: der alte Sitz der Kugel meldet den Befund', ()
             alt.fremd.length,
             `die Tastpunkt-Zusicherung muss fremde Punkte melden (${alt.fremd.length})`
         ).toBeGreaterThan(0);
+    });
+});
+
+/* ====================================================================
+   ZUSICHERUNG 11 — DER BODENVERANKERTE STAPEL. DAS EREIGNIS-LOG LIEGT
+   NICHT AUF DEN RUNDEN KNOEPFEN.
+   ====================================================================
+   WAS DIE ZUSICHERUNG 9/10 DARUEBER NICHT SIEHT. Sie prueft einen STREIFEN —
+   die 56px der eingeklappten Leiste am unteren Fensterrand. Alles, was ueber
+   diesem Streifen liegt, ist fuer sie in Ordnung. Genau dorthin hat die
+   Korrektur zum Streifen die Schnellreferenz-Kugel gehoben, und dort stand
+   schon etwas: das Ereignis-Log, `bottom: 80px` bei <=900px Breite, mit
+   `--z-toast` (4000) ueber allem und `pointer-events: auto` an jedem Eintrag.
+
+   DIE KUGEL IST DEM STREIFEN AUSGEWICHEN UND IM BAND DES LOGS GELANDET.
+   Eigene Messung, gefuellte Kampagne, Mobil-Layout, Leiste eingeklappt;
+   senkrechtes Abtasten der Kugelmitte Punkt fuer Punkt, dazu ein ECHTER
+   `mouse.click` auf dieselbe Stelle:
+
+     Fenster    Kugel vorher          Kugel nach der Streifen-Korrektur
+     --------   -------------------   ---------------------------------
+     320x700    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+     360x740    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+     390x844    frei 50/50, Klick ja  frei 50/50 — aber nur, weil die
+                                      Kugelmitte x=355 genau auf der rechten
+                                      Logkante liegt (35+320). Null Reserve.
+     740x360    frei 50/50, Klick ja  frei 50/50 (Log 320px breit, mittig —
+                                      es reicht hier nicht an die Kugel)
+
+   14px sind weniger als ein Drittel der MIN_TIPPFLAECHE, die Zusicherung 4
+   derselben Datei fuer die Reiter verlangt. Und 14px sind noch die freundliche
+   Lesart: die MITTE der Kugel antwortete mit `div.event-log-entry`, der echte
+   Klick oeffnete die Schnellreferenz nicht.
+
+   DIE GANZE FAMILIE, NICHT NUR DIE KUGEL. Dieselbe Messung am Wuerfel-Knopf
+   unten links: frei 10/48, Klick tot — VOR und NACH der Streifen-Korrektur
+   gleich. Das Log lag dort schon immer drauf (`bottom: 80px` gegen einen Knopf,
+   der von 70 bis 118 reicht). Die Zusicherung 9/10 konnte es nicht sehen, weil
+   beides ueber dem Streifen liegt. Deshalb nimmt diese Zusicherung nicht die
+   Kugel, sondern JEDEN bodenverankerten runden Knopf — der naechste, den jemand
+   dort ablegt, faellt von selbst auf.
+
+   DER FILTER, und warum seine Zahlen aus MIN_TIPPFLAECHE kommen: ein sichtbares
+   `position: fixed`-Element mit `data-action`, dessen Kasten in BEIDEN Achsen
+   hoechstens zwei Daumenbreiten misst (ein Knopf, kein Panel — `.qref-panel`
+   und `.floating-dice-panel` sind breiter als 88px und fallen damit heraus) und
+   dessen Unterkante hoechstens vier Daumenbreiten ueber dem Fensterrand liegt
+   (bodenverankert). Nachkontrolliert: er findet in allen sechs Fenstern genau
+   zwei, `.floating-dice-trigger` und `.qref-fab`. Elemente INNERHALB der Leiste
+   bleiben aussen vor — der Streifen ist Gegenstand der Zusicherung 9/10, und
+   zwei Proben sollen nicht dieselbe Stelle messen.
+
+   ZWEI LOGZUSTAENDE, beide mit echtem Klick pruefbar:
+     fluechtig    EINE Meldung, kein Dauermodus. Das ist der Zustand nach
+                  praktisch jeder Handlung. `showToast` nimmt die Standzeit als
+                  dritten Parameter — gesetzt auf zehn Minuten, damit die
+                  Meldung nicht mitten in der Messung verblasst und die Probe
+                  dadurch inhaltsleer gruen wird.
+     dauermodus   Sechs Meldungen, `toggleEventLog()`. Hier traegt der BEHAELTER
+                  selbst `pointer-events: auto` (party.css, `.event-log
+                  .persistent`), nicht nur die Eintraege.
+   Gemessen war die freie Hoehe in beiden Zustaenden dieselbe (14/50): der
+   Ueberschnitt entsteht an der UNTERKANTE des Logs, und die ist in beiden
+   Zustaenden dieselbe Zahl. Der Dauermodus ist trotzdem beide Male dabei, weil
+   nur dort der Behaelter mitfaengt.
+
+   UND DIE MOBIL-KOPFZEILE. Die naheliegende Korrektur — das Log einfach um die
+   Streifenhoehe hochschieben — hat genau hier einen Preis, der gemessen werden
+   muss: bei 320x568 reichte das Log danach bis 32px unter den Fensterrand und
+   deckte SECHS der sieben Knoepfe der Mobil-Kopfzeile. Das ist kein
+   Nebenschaden, sondern ein benannter Beschluss der Vorrunden
+   (`ui/editors/rich-text-insert.js`, setzeMobilKopfHoehe: die Mobil-Kopfzeile
+   traegt Suche, Rueckgaengig, Schnellnotizen, Theme, Layout UND den einzigen
+   Mobil-Weg zum Kampfprotokoll; ein Band darueber zu legen macht sie alle
+   unerreichbar). Die Probe prueft das deshalb mit — sonst tauscht die naechste
+   Korrektur zwei Knoepfe unten gegen sieben oben.
+
+   GEFUELLTE KAMPAGNE. Die acht Zusicherungen darueber laden den Leerzustand;
+   fuer die Geometrie fester Elemente reicht das. Hier nicht: bei gefuellter
+   Kampagne steht das Log schon ohne jede Nutzerhandlung voll (gemessen 223px
+   Hoehe direkt nach dem Start, Meldungen aus dem Ladeweg). Der Fall tritt also
+   ohne Zutun ein, und die Probe stellt ihn deshalb auch so her.
+   ==================================================================== */
+
+/** Gefuellte Kampagne — aus SAAT abgeleitet, damit es eine Saat-Quelle bleibt. */
+const SAAT_GEFUELLT = {
+    ...SAAT,
+    characters: Array.from({ length: 6 }, (_, i) => ({
+        id: i + 1,
+        name: 'Spielerfigur mit langem Namen ' + (i + 1),
+        class: 'Magier',
+        level: 5,
+        hp: 30,
+        maxHp: 30,
+        ac: 14
+    })),
+    npcs: Array.from({ length: 14 }, (_, i) => ({
+        id: i + 1,
+        name: 'Nichtspielerfigur ' + (i + 1),
+        description: 'Beschreibung'
+    })),
+    locations: Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: 'Ort ' + (i + 1) })),
+    quests: Array.from({ length: 11 }, (_, i) => ({
+        id: i + 1,
+        title: 'Ein Auftrag mit einem ziemlich langen Titel ' + (i + 1),
+        status: 'active'
+    })),
+    encounters: Array.from({ length: 7 }, (_, i) => ({ id: i + 1, name: 'Begegnung ' + (i + 1) })),
+    loot: Array.from({ length: 9 }, (_, i) => ({ id: i + 1, name: 'Beute ' + (i + 1) })),
+    wiki: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, title: 'Eintrag ' + (i + 1) })),
+    sessionNotes: Array.from({ length: 6 }, (_, i) => ({
+        id: i + 1,
+        title: 'Sitzung ' + (i + 1),
+        date: '2026-01-01',
+        content: 'Text'
+    }))
+};
+
+/** Standzeit der fluechtigen Meldung: lang genug, dass sie die Messung ueberlebt. */
+const LANGE_STANDZEIT = 600000;
+
+/**
+ * Stellt einen der beiden Logzustaende her und belegt, dass er steht.
+ * @param {import('@playwright/test').Page} page
+ * @param {'fluechtig'|'dauermodus'} zustand
+ */
+async function logZustand(page, zustand) {
+    await page.evaluate(
+        ([z, standzeit]) => {
+            if (z === 'dauermodus') {
+                // @ts-ignore — global aus den Hilfsfunktionen
+                if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
+                for (let i = 1; i <= 6; i++) {
+                    // @ts-ignore — global aus den Hilfsfunktionen
+                    if (typeof window.showToast === 'function')
+                        window.showToast('Probemeldung ' + i, 'info', standzeit);
+                }
+            } else {
+                // @ts-ignore — global aus den Hilfsfunktionen
+                if (typeof window.showToast === 'function')
+                    window.showToast('Charakter gespeichert', 'success', standzeit);
+            }
+        },
+        [zustand, LANGE_STANDZEIT]
+    );
+    await page.waitForTimeout(400);
+    const stand = await page.evaluate(() => ({
+        eintraege: document.querySelectorAll('#event-log .event-log-entry').length,
+        dauermodus: !!document.querySelector('#event-log.persistent')
+    }));
+    expect(stand.eintraege, `${zustand}: das Ereignis-Log muss Meldungen tragen`).toBeGreaterThan(
+        0
+    );
+    expect(stand.dauermodus, `${zustand}: Dauermodus`).toBe(zustand === 'dauermodus');
+}
+
+/**
+ * Laeuft im Browser. Findet die bodenverankerten runden Knoepfe, tastet jeden
+ * auf seiner Mittelsenkrechten ab und misst, was das Ereignis-Log von der
+ * Mobil-Kopfzeile deckt.
+ *
+ * Reine Funktion ihrer Umgebung, kein Zugriff auf Modul-Scope — sie wird
+ * serialisiert. MIN_TIPPFLAECHE kommt deshalb als Argument.
+ * @param {number} min
+ */
+function messeStapel(min) {
+    const bez = e => {
+        if (!e) return 'nichts';
+        const id = e.id ? '#' + e.id : '';
+        const kl =
+            typeof e.className === 'string' && e.className.trim()
+                ? '.' + e.className.trim().split(/\s+/).join('.')
+                : '';
+        return e.tagName.toLowerCase() + id + kl;
+    };
+    const sichtbar = e => {
+        if (!e) return false;
+        const cs = getComputedStyle(e);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        if (parseFloat(cs.opacity) === 0) return false;
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    };
+    const kopf = document.querySelector('.app-header');
+    const mobilKopf = document.querySelector('.mobile-header');
+    const log = document.querySelector('#event-log');
+
+    const knoepfe = Array.from(document.querySelectorAll('[data-action]'))
+        .filter(e => {
+            if (!sichtbar(e)) return false;
+            if (kopf && (e === kopf || kopf.contains(e))) return false;
+            if (getComputedStyle(e).position !== 'fixed') return false;
+            const r = e.getBoundingClientRect();
+            if (r.width > 2 * min || r.height > 2 * min) return false;
+            return window.innerHeight - r.bottom <= 4 * min;
+        })
+        .map(e => {
+            const r = e.getBoundingClientRect();
+            const cx = Math.round(r.left + r.width / 2);
+            /* Senkrechtes Abtasten in 1px-Schritten: gesucht ist die laengste
+               ZUSAMMENHAENGENDE Strecke, auf der der Knopf selbst antwortet.
+               Nicht die Summe — ein Daumen braucht eine zusammenhaengende
+               Flaeche, nicht zwei Streifen mit einem Loch dazwischen. */
+            let best = 0;
+            let lauf = 0;
+            for (let y = Math.ceil(r.top); y <= Math.floor(r.bottom); y++) {
+                const t = document.elementFromPoint(cx, y);
+                if (t && (t === e || e.contains(t))) {
+                    lauf++;
+                    if (lauf > best) best = lauf;
+                } else {
+                    lauf = 0;
+                }
+            }
+            const my = Math.round(r.top + r.height / 2);
+            const obenauf = document.elementFromPoint(cx, my);
+            return {
+                was: bez(e),
+                wahl: e.id ? '#' + e.id : '.' + Array.from(e.classList).join('.'),
+                hoehe: Math.round(r.height),
+                frei: best,
+                mitte: [cx, my],
+                mitteObenauf: bez(obenauf),
+                mitteFrei: !!obenauf && (obenauf === e || e.contains(obenauf))
+            };
+        });
+
+    /* Die Mobil-Kopfzeile: jeder sichtbare Knopf darin muss sich selbst melden.
+       Sie ist der Gegenpreis jeder Korrektur, die das Log hochschiebt. */
+    const kopfKnoepfe = mobilKopf
+        ? Array.from(mobilKopf.querySelectorAll('button,[data-action]'))
+              .filter(sichtbar)
+              .map(e => {
+                  const r = e.getBoundingClientRect();
+                  const cx = Math.round(r.left + r.width / 2);
+                  const cy = Math.round(r.top + r.height / 2);
+                  const t = document.elementFromPoint(cx, cy);
+                  return { was: bez(e), frei: !!t && (t === e || e.contains(t)), obenauf: bez(t) };
+              })
+        : [];
+
+    const lr = log && sichtbar(log) ? log.getBoundingClientRect() : null;
+    return {
+        navOffen: !!document.querySelector('.app-header.nav-open'),
+        knoepfe,
+        kopfAnzahl: kopfKnoepfe.length,
+        kopfBlockiert: kopfKnoepfe.filter(k => !k.frei).map(k => `${k.was} -> ${k.obenauf}`),
+        log: lr
+            ? {
+                  kasten: [
+                      Math.round(lr.left),
+                      Math.round(lr.top),
+                      Math.round(lr.width),
+                      Math.round(lr.height)
+                  ],
+                  abstandUnten: Math.round(window.innerHeight - lr.bottom),
+                  /* Was oben aus dem Fenster haengt, ist nicht erreichbar —
+                     weder durch Scrollen im Log noch sonst. */
+                  abgeschnitten: Math.round(Math.max(0, -lr.top))
+              }
+            : null
+    };
+}
+
+/**
+ * Klickt WIRKLICH auf einen Punkt und meldet, welches Element das Ereignis
+ * bekommen hat. Kein Element-Klick: der wuerde die Zustellung erzwingen und
+ * damit genau die Frage ueberspringen.
+ * @param {import('@playwright/test').Page} page
+ * @param {number[]} punkt
+ * @param {string} wahl CSS-Wahl des Knopfes, der getroffen werden soll
+ */
+async function klickTrifft(page, punkt, wahl) {
+    await page.evaluate(() => {
+        // @ts-ignore — Messfeld der Probe
+        window.__mobZiel = null;
+        // @ts-ignore — Messfeld der Probe
+        window.__mobLauscher = e => {
+            // @ts-ignore — Messfeld der Probe
+            window.__mobZiel = e.target;
+        };
+        // @ts-ignore — Messfeld der Probe
+        document.addEventListener('click', window.__mobLauscher, true);
+    });
+    await page.mouse.click(punkt[0], punkt[1]);
+    await page.waitForTimeout(350);
+    const treffer = await page.evaluate(w => {
+        // @ts-ignore — Messfeld der Probe
+        document.removeEventListener('click', window.__mobLauscher, true);
+        const knopf = document.querySelector(w);
+        // @ts-ignore — Messfeld der Probe
+        const ziel = window.__mobZiel;
+        const bez = e => {
+            if (!e) return 'nichts';
+            const id = e.id ? '#' + e.id : '';
+            const kl =
+                typeof e.className === 'string' && e.className.trim()
+                    ? '.' + e.className.trim().split(/\s+/).join('.')
+                    : '';
+            return e.tagName.toLowerCase() + id + kl;
+        };
+        return {
+            drin: !!(knopf && ziel && (ziel === knopf || knopf.contains(ziel))),
+            ziel: bez(ziel)
+        };
+    }, wahl);
+    // Zustand zuruecksetzen: ein Treffer hat ein Panel aufgeklappt.
+    await page.evaluate(() => {
+        if (document.querySelector('.qref-panel.active')) {
+            // @ts-ignore — global aus der Schnellreferenz
+            if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
+        }
+        if (document.querySelector('.floating-dice-panel.show')) {
+            // @ts-ignore — global aus dem Wuerfel-Kern
+            if (typeof window.toggleFloatingDice === 'function') window.toggleFloatingDice();
+        }
+    });
+    await page.waitForTimeout(300);
+    return treffer;
+}
+
+test.describe('M1 — das Ereignis-Log liegt nicht auf den bodenverankerten Knoepfen', () => {
+    for (const theme of THEMES) {
+        for (const [breite, hoehe] of STREIFEN_FENSTER) {
+            test(`${breite}x${hoehe}, Theme ${theme}: runde Knoepfe bleiben unter dem Log erreichbar`, async ({
+                page
+            }) => {
+                await page.setViewportSize({ width: breite, height: hoehe });
+                await mobilLaden(page, theme, SAAT_GEFUELLT);
+
+                for (const zustand of ['fluechtig', 'dauermodus']) {
+                    await logZustand(page, zustand);
+                    const m = await page.evaluate(messeStapel, MIN_TIPPFLAECHE);
+
+                    console.log(
+                        `[M1-Stapel] ${breite}x${hoehe} ${theme} ${zustand}: Log ` +
+                            `${m.log ? JSON.stringify(m.log.kasten) : '(fehlt)'} ` +
+                            `${m.log ? m.log.abstandUnten + 'px ueber dem Rand, ' + m.log.abgeschnitten + 'px abgeschnitten' : ''}, ` +
+                            `Knoepfe ${m.knoepfe.map(k => `${k.was} frei ${k.frei}/${k.hoehe}`).join(', ')}, ` +
+                            `Kopfzeile ${m.kopfAnzahl - m.kopfBlockiert.length}/${m.kopfAnzahl}`
+                    );
+
+                    /* VORBEDINGUNGEN. Ohne sie koennte die Probe einen Zustand
+                       messen, in dem es nichts zu messen gibt, und zufrieden
+                       sein: kein Log, keine Knoepfe, eine ausgefahrene Leiste
+                       (dann verbirgt die Regel aus der Vorrunde ohnehin alles). */
+                    expect(m.navOffen, `${zustand}: die Leiste muss eingeklappt stehen`).toBe(
+                        false
+                    );
+                    expect(m.log, `${zustand}: das Ereignis-Log muss sichtbar sein`).not.toBeNull();
+                    expect(
+                        m.knoepfe.map(k => k.was),
+                        `${zustand}: der Filter muss die bodenverankerten runden Knoepfe finden`
+                    ).toHaveLength(2);
+                    expect(
+                        m.kopfAnzahl,
+                        `${zustand}: die Mobil-Kopfzeile muss Knoepfe tragen`
+                    ).toBeGreaterThan(0);
+
+                    // A — FREIE TIPPFLAECHE auf der Mittelsenkrechten.
+                    expect(
+                        m.knoepfe
+                            .filter(k => k.frei < MIN_TIPPFLAECHE)
+                            .map(
+                                k =>
+                                    `${k.was}: nur ${k.frei} von ${k.hoehe}px frei, ` +
+                                    `Mitte (${k.mitte[0]},${k.mitte[1]}) -> ${k.mitteObenauf}`
+                            ),
+                        `${zustand}: bodenverankerte Knoepfe unter ${MIN_TIPPFLAECHE}px freier Hoehe`
+                    ).toEqual([]);
+
+                    // B — DAS LOG DECKT KEINEN KNOPF DER MOBIL-KOPFZEILE.
+                    expect(
+                        m.kopfBlockiert,
+                        `${zustand}: verdeckte Knoepfe der Mobil-Kopfzeile ` +
+                            `(${m.kopfBlockiert.length} von ${m.kopfAnzahl})`
+                    ).toEqual([]);
+
+                    // C — UND DER ECHTE KLICK KOMMT AN.
+                    const tot = [];
+                    for (const k of m.knoepfe) {
+                        const t = await klickTrifft(page, k.mitte, k.wahl);
+                        if (!t.drin) tot.push(`${k.was}: Klick landete auf ${t.ziel}`);
+                    }
+                    expect(tot, `${zustand}: echte Klicks, die den Knopf nicht erreichen`).toEqual(
+                        []
+                    );
+                }
+            });
+        }
+    }
+});
+
+/* ====================================================================
+   GEGENPROBE ZUM STAPEL — der alte Sitz des Logs meldet den Befund.
+   ====================================================================
+   Dieselbe Begruendung wie bei den beiden Gegenproben darueber: eine Probe, die
+   den Zustand VOR der Korrektur nie herstellt, belegt nicht, dass sie ihn sehen
+   koennte. Der alte Zustand ist hier eine einzige Zahl — das Log sass 80px
+   ueber dem unteren Fensterrand statt 80px ueber dem Streifen.
+
+   Erzwungen mit `!important`, weil die Korrektur selbst eine Regel mit
+   Attributselektor ist (`[data-layout="mobile"] .event-log`, Spezifitaet 0-2-0)
+   und von einem gewoehnlichen Stilblatt nicht geschlagen wird. Das `!important`
+   faellt NICHT in die Ratsche: die zaehlt die Quelldateien unter assets/styles/,
+   nicht die Stilblaetter eines Testlaufs.
+
+   GEMESSEN, 360x740, Theme dark, Dauermodus:
+
+     Zustand                       Kugel        Wuerfel-Knopf   Klicks
+     ---------------------------   ----------   -------------   ---------------
+     80px ueber dem Streifen (Q2)  frei 50/50   frei 48/48      beide kommen an
+     80px ueber dem Rand (vorher)  frei 14/50   frei 10/48      beide tot
+   ==================================================================== */
+test.describe('M1 — Gegenprobe: der alte Sitz des Ereignis-Logs meldet den Befund', () => {
+    test('360x740: 80px ueber dem Fensterrand decken die runden Knoepfe wieder', async ({
+        page
+    }) => {
+        // Kleinstes Fenster der eigenen Achse — wandert mit, statt eine
+        // verdrahtete Zahl zu fuehren.
+        const [breite, hoehe] = FENSTER.reduce((a, b) => (b[1] < a[1] ? b : a));
+        await page.setViewportSize({ width: breite, height: hoehe });
+        await mobilLaden(page, THEMES[0], SAAT_GEFUELLT);
+        await logZustand(page, 'dauermodus');
+
+        // VORBEDINGUNG — beide Knoepfe sind frei. Ohne sie wuerde die Gegenprobe
+        // einen vorbestehenden Fehler als Erfolg verbuchen.
+        const frei = await page.evaluate(messeStapel, MIN_TIPPFLAECHE);
+        expect(
+            frei.knoepfe.filter(k => k.frei < MIN_TIPPFLAECHE).map(k => `${k.was} ${k.frei}px`),
+            'Vorbedingung: beide runden Knoepfe muessen frei sein'
+        ).toEqual([]);
+
+        // Und jetzt der Sitz von vorher.
+        await page.addStyleTag({ content: '.event-log { bottom: 80px !important; }' });
+        await page.waitForTimeout(300);
+        const alt = await page.evaluate(messeStapel, MIN_TIPPFLAECHE);
+        console.log(
+            `[M1-Stapel-Gegenprobe] ${breite}x${hoehe}: frei ` +
+                `${frei.knoepfe.map(k => k.was + ' ' + k.frei).join(',')} | alt ` +
+                `${alt.knoepfe.map(k => k.was + ' ' + k.frei).join(',')}`
+        );
+
+        // Erst der Beweis, dass der Zwang gegriffen hat.
+        expect(
+            alt.log ? alt.log.abstandUnten : null,
+            'der alte Sitz muss zu erzwingen sein (80px ueber dem Fensterrand)'
+        ).toBe(80);
+        // Und dann: die Zusicherung sieht den Befund — beide Knoepfe UND der Klick.
+        expect(
+            alt.knoepfe.filter(k => k.frei < MIN_TIPPFLAECHE).map(k => k.was),
+            `die Flaechen-Zusicherung muss beide Knoepfe melden ` +
+                `(${alt.knoepfe.map(k => k.was + ' ' + k.frei + 'px').join(', ')})`
+        ).toHaveLength(2);
+        for (const k of alt.knoepfe) {
+            const t = await klickTrifft(page, k.mitte, k.wahl);
+            expect(t.drin, `${k.was}: der Klick muss am alten Sitz des Logs scheitern`).toBe(false);
+        }
     });
 });
