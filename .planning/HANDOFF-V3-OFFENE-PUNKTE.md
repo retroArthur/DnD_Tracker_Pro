@@ -430,10 +430,10 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
-| `initiative.css:650` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:790` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
-| `initiative.css:807` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:811` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
+| `initiative.css:733` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:873` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
+| `initiative.css:890` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:894` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
 | `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -500,12 +500,12 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `dmscreen.css:1163` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
-| `initiative.css:230` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:262` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:290` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:291` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1318` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1319` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:274` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:306` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:334` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:335` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:1401` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1402` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
@@ -633,11 +633,11 @@ file-backup.css
 initiative.css
    72  .bf-xp
   111  .init-entry.lair .init-name
-  292  .init-hp-value.critical
-  362  .death-saves-label
- 1211  .la-label
- 1252  .lr-label
- 1320  .init-mob-alive.critical
+  336  .init-hp-value.critical
+  406  .death-saves-label
+ 1294  .la-label
+ 1335  .lr-label
+ 1403  .init-mob-alive.critical
 loot.css
   297  .shop-cat-badge.item
   475  .si-tag-v
