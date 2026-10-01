@@ -4219,3 +4219,162 @@ npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 21 Faelle
 ```
 
 ---
+
+## M2 — Das Layoutprofil folgt dem Fenster, und der Platz wird einmal reserviert (2026-10-01, erledigt)
+
+Drei vorbestehende Befunde der Vorrunden, alle gemessen statt geraten. Zwei davon standen
+weiter oben in dieser Akte schon mit Zahlen: **U6-R4-01 Punkt (2)** („Das Layoutprofil wird nur
+beim Start gewählt") und der Absatz **„Mobil, 360px Breite, mit stehendem Umzugs-Band"** unter
+U6-R4-01 Punkt (3). Beide sind hiermit entschieden und behoben.
+
+### (a) Das Profil folgt dem Fenster — aber nie gegen die Wahl des Nutzers
+
+`loadLayout()` erkannte die Breite genau einmal beim Start. Gemessen am Bündel zu `f58699b`,
+Fenster **nach** dem Laden gezogen, in allen vier Themes auf den Bildpunkt gleich:
+
+| Messgröße | 1440x800 | 390x844 vorher | 390x844 nachher |
+| --- | --- | --- | --- |
+| `data-layout` | desktop | **desktop** | mobile |
+| Höhe der Kopfzeile | 102px | **234px** | 501px (56 sichtbar) |
+| Oberkante der Kopfzeile | 61px | 157px | 788px |
+| Mobil-Kopfzeile | 0px | **0px** | 64px |
+| sichtbare Reiter von 24 | 1 | **1** | 24 |
+| Seitenüberhang | 74px | 658px | 528px |
+
+234 von 844 Bildpunkten sind 28% des Fensters, und 23 der 24 Reiter steckten in zugeklappten
+Gruppenmenüs. Der umgekehrte Weg stimmt jetzt ebenso (390x844 nach 1440x800 ergibt `desktop`), und
+der Verlauf über vier Wechsel lautet mobile/desktop/mobile/desktop statt viermal desktop.
+
+**Die Entscheidung mit ihrer Begründung.** Das Profil folgt dem Fenster, weil der Gegenfall ein
+Fehler am Spieltisch ist; es folgt aber **nur**, solange `D.settings.layout` leer ist. Was der
+Nutzer per Schalter gewählt hat, bleibt stehen (zwei Wächterfälle, beide Richtungen). Und der
+automatische Wechsel schreibt selbst **nichts** nach `D.settings.layout` — täte er es, würde die
+erste Verkleinerung das Profil für immer festschreiben und die Zusicherung sich selbst aufheben
+(gemessen: nach vier Wechseln steht dort viermal `null`). Kein `save()`, kein Toast: ein
+Fensterwechsel ist keine Anweisung, und M1 hat gemessen, dass gerade das Ereignis-Log die
+Navigationsleiste zudeckt. **Ein** Beobachter, nicht zwei: die Profilwahl läuft im bestehenden
+entprellten `resize`-Beobachter von `core/init.js`, und zwar **vor** `updateStickyOffsets()`,
+weil dessen Mobil-/Desktop-Zweig an `data-layout` verzweigt.
+
+### (b) Der Platz der unteren festen Leiste war doppelt reserviert
+
+`body { padding-bottom: 70px }` **und** `.main-content { margin-bottom: 70px }` hielten denselben
+Platz frei — 140px für einen 56px hohen sichtbaren Streifen. Die Höhenbudget-Kette zählt beides
+mit, das Ergebnis stimmte also; dem Inhalt gingen die 70px doppelt verloren. Der Rand an
+`.main-content` ist entfallen: der body-Innenabstand ist die Reservierung, die das **ganze**
+Dokument abdeckt, und die Leiste ist `position: fixed` zum Fenster.
+
+### (c) Das Hinweisband war auf Telefonbreite das teuerste Element der Seite
+
+| Breite | 320 | 360 | 390 | 480 | 500 | 600 |
+| --- | --- | --- | --- | --- | --- | --- |
+| vorher | 136 | 136 | **157** | 101 | 80 | 61 |
+| nachher | 94 | 94 | **117** | 61 | 61 | 61 |
+
+157px bei 390px Breite sind 19% des Fensters für einen Satz. Vier Fassungen wurden gegeneinander
+gemessen; die Klammer auf zwei Zeilen (`-webkit-line-clamp`) bringt nichts, was der kurze Text
+nicht schon bringt, und bleibt deshalb weg. Zwei Fassungen desselben Hinweises stehen jetzt im
+Markup, eine Regel an der 600px-Grenze schaltet — der lange Satz bleibt auf dem Desktop Zeichen
+für Zeichen derselbe. Was übrig bleibt, sind zwei Tippreihen zu 44px, und die darf nichts
+schrumpfen (Daumen, wie bei M1).
+
+**Die Kürzung allein wäre eine Verschlechterung gewesen.** Mobil-Kopfzeile und Band sind beide
+`position: fixed; top: 0` auf `--z-panel` (600), und die Kopfzeile gewann, weil sie später im
+Dokument steht. Gemessen bei 390x844 mit `elementsFromPoint` auf der Mitte von „Zum App-Umzug"
+(Kasten 237,28,137x44): obenauf lag der klassenlose Flex-Behälter der Mobil-Kopfzeile
+(266,10,116x43) — der Knopf war **nicht anklickbar**. Bei 320/360px brach er in die zweite
+Bandreihe aus und war frei; dieser Zufall **kippte** durch die Kürzung, weil die zweite Reihe auf
+`y 41..85` stieg und damit selbst unter die 64px hohe Kopfzeile geriet (dann war auch der
+Schließknopf verdeckt). Das Band weicht deshalb im Mobil-Layout unter die Kopfzeile aus, nicht
+umgekehrt: die Mobil-Kopfzeile trägt Suche, Rückgängig, Schnellnotizen, Theme, Layout **und** den
+einzigen Mobil-Einstieg ins Kampfprotokoll (U5). Die Höhe kommt aus `setzeMobilKopfHoehe()`
+(Glied 6 der Messkette, `--mobile-header-height`), weil die Kopfzeile keine gesetzte Höhe hat; an
+derselben Zahl hing die Platzhaltung `.main-content { padding-top }`, die auf verdrahteten 60px
+gegen eine 64px hohe Kopfzeile stand.
+
+Die tote Geschwisterregel `.migration-hint-banner ~ .divergence-banner { top: 48px }` aus
+U6-R4-01 Punkt (1) bleibt davon **unberührt** und damit offen: sie regelt einen Zustand, der im
+Betrieb nicht eintritt; die neue Ausweichregel gilt für beide Bänder einzeln.
+
+### Gemessene Wirkung
+
+Mobil-Layout mit stehendem Band, 24 Einträge je Liste, in allen vier Themes gleich:
+
+| Messgröße | 360x740 | 390x844 |
+| --- | --- | --- |
+| Reservierung für die Leiste | 140 auf **70px** | 140 auf **70px** |
+| totes Feld unter der Schale | 94 auf **24px** | 94 auf **24px** |
+| Umrahmung (`--view-frame-height`) | 346 auf **238px** | 367 auf **261px** |
+| Schalenhöhe | 394 auf **502px** | 477 auf **583px** |
+| Listenspalte NSCs | 126 auf **234px** | 209 auf **315px** |
+| Listenspalte Truhe | 54 auf **162px** | 137 auf **243px** |
+| Listenspalte Begegnungen | 88 auf **200px** | 171 auf **281px** |
+| Listenspalte Orte | 201 auf **313px** | 284 auf **394px** |
+
+Die Zahlen 126/54/201 sind dieselben, die weiter oben unter U6-R4-01 Punkt (3) stehen — sie sind
+die Höhe der **Listenspalte** (`.npc-master` und Geschwister), nicht die der Schale. Eine
+Listenspalte von 54px zeigt bei 74px Eintragshöhe **keinen ganzen Eintrag**; in fünf von acht
+gemessenen Zuständen passte kein zweiter hinein. Seitenüberhang bleibt 0, und der letzte von 24
+Einträgen ist in allen acht Zuständen per Mausrad erreichbar und unverdeckt (vorher war er in der
+Truhe bei 360x740 von `BUTTON.io-btn` verdeckt). Band: beginnt bei 64px (Unterkante der
+Mobil-Kopfzeile), endet genau dort, wo der Inhalt anfängt; beide Knöpfe frei.
+
+### Die Zusicherung
+
+`tests/e2e/features/layoutprofil.spec.js`, 28 Fälle, davon **25 vorher rot**. Die drei grünen sind
+absichtlich grün und im Kopf als Wächter benannt: die ausdrückliche Wahl überlebt den
+Fensterwechsel (beide Richtungen) und im breiten Fenster steht der vollständige Hinweis.
+Gescrollt wird nur per `page.mouse.wheel`, und der Radpunkt kommt aus der sichtbaren Mitte der
+**Listenspalte**, nicht der Liste: aus der Liste gerechnet lag er bei 54px Spalte und 2049px Liste
+weit unter dem Scrollbereich, `.npc-master.scrollTop` blieb 0 von 1927 — eine Unerreichbarkeit vom
+Messpunkt, nicht von der App.
+
+### Drei bestehende Proben nachgetragen (Verhaltensänderungen, keine Anpassungen zum Grünwerden)
+
+- `tests/e2e/app.spec.js` „App funktioniert auf Mobile-Größe" prüft auf einem 375px-Fenster jetzt
+  das Mobil-Profil samt Mobil-Kopfzeile und Umschalter statt `.app-title` — die Desktop-Kopfzeile
+  **ist** dort ausgeblendet, und das ist der erwünschte Zustand.
+- `tests/e2e/features/sticky-stapel.spec.js` Fall A erwartete nach dem Großziehen `mobile`. Jetzt
+  steht dort `desktop`, und die Versatzkette muss schon **ohne** jeden Schalterklick vollständig
+  besetzt sein — die Zusicherung wird stärker. Der leere Mobil-Zustand der drei Glieder und der
+  Rückweg per Schalter bleiben beide geprüft.
+- `tests/e2e/features/hoehenbudget.spec.js`: der Fall 1440x800 nach 500x800 verlangte als
+  **Vorbedingung** einen Bandumbruch bei 500px. Den gibt es dort nicht mehr (61px Einzeiler). Die
+  Vorbedingung steht jetzt auf `false`, und 1440x800 nach 360x740 kommt als vierter Fall hinzu
+  (gemessen 61 auf 94px), damit sie nicht an einem einzigen Fenster hängt.
+
+### Offen geblieben
+
+- **Die Listenspalte des Bestiars folgt der Schale nicht.** M2b/M2c geben der Schale bei 375x812
+  108px zurück (466 auf 574px), und die Liste **schrumpft** dabei: Sichtfeld 400 auf 122px,
+  gerenderte Zeilen 13 auf 8. Ursache ist nicht die Schale, sondern `VirtualScroll.create()`
+  (`ui/virtual-scroll.js`): es nimmt `container.clientHeight`, sonst `parent.clientHeight - padY`,
+  sonst den festen Rückfall **400**. In der Schmalfassung ist `.bestiary-master`
+  inhaltsgetrieben (`grid-template-rows: auto`, `overflow-y: visible`), die Messung hängt also an
+  der vorigen Messung — ein Fixpunkt ohne Bezug zum verfügbaren Platz. Die 400px vorher waren
+  genau dieser Rückfall, keine Messung; mit der größeren Schale greift der zweite Zweig und
+  liefert 122px, wo rund 228px frei sind. **Gemessen, dass keine Funktion verlorengeht:** die Liste
+  scrollt in allen sechs Zuständen (drei Telefonfenster, vorher und nachher) bis an ihr Ende, das
+  letzte Monster liegt im Fenster und ist anklickbar. Der Wert ist auch nachher nicht einheitlich
+  (400px bei 360x740, 122 bei 375x812, 127 bei 390x844) — er war nie eine Eigenschaft des
+  Entwurfs. Eine saubere Behebung heißt, der geteilten Maschinerie eine echte Platzrechnung zu
+  geben; das ist eine Einheit für sich. Sieben Schlüssel der achten Bestiar-Zeile sind dafür im
+  schmalen Durchgang von `computed-style-diff.spec.js` benannt ausgenommen (28 auf 35 schmal,
+  42 auf **49** gesamt).
+- `.event-log-entry { pointer-events: auto }` im **flüchtigen** Modus (aus M1) — unverändert
+  offen, zwei Zeilen wert.
+- `.qref-fab` überlappt den 56px-Streifen der eingeklappten Leiste (aus M1) — unverändert offen.
+- Das Umzugs-Band und `.mobile-header` überlappen sich **nicht** mehr (siehe (c)); der dort
+  genannte Grund, warum im Querformat rechnerisch kein Platz für ein Panel neben der offenen
+  Leiste bleibt, ist damit um die Bandhöhe entspannt, aber nicht aufgehoben.
+- `npm run check` bleibt rot, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  (vorbestehend) nicht prettier-konform ist. Unverändert gegenüber `cecfefe`.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/layoutprofil.spec.js   # 28 Faelle
+```
+
+---
