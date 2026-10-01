@@ -288,6 +288,12 @@
         <div style="display: flex; gap: 8px; align-items: center;">
             <button class="mobile-search-btn" data-action="call" data-value="showMobileQuickNotes" title="Schnellnotizen">📝</button>
             <button class="mobile-search-btn" data-action="undo" title="Rückgängig">↩️</button>
+            <!-- Einstieg zum Kampfprotokoll. Im Mobil-Layout ist .header-actions
+                 display:none (core.css) und damit auch #kampflog-toggle; uebrig blieb
+                 die Taste K, die ein Touchgeraet nicht hat. Ohne diesen Knopf gab es
+                 bei 680/560/420/360 px NULL sichtbare Wege zum Panel — genau der
+                 Befund, aus dem U5 entstand. -->
+            <button class="mobile-search-btn" id="kampflog-toggle-mobil" data-action="toggle-combat-log" title="Kampfprotokoll" aria-label="Kampfprotokoll öffnen" aria-expanded="false" aria-controls="kampflog-panel">📜</button>
         </div>
         <div class="mobile-timer" data-action="call" data-value="toggleSessionTimer" title="Session Timer">
             <span id="mobile-timer-display">00:00:00</span>

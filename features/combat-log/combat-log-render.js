@@ -117,8 +117,14 @@ function toggleCombatLog() {
     const panel = $('kampflog-panel');
     if (!panel) return;
     panel.classList.toggle('active');
-    const knopf = $('kampflog-toggle');
-    if (knopf) knopf.setAttribute('aria-expanded', String(panel.classList.contains('active')));
+    const offen = String(panel.classList.contains('active'));
+    // ALLE Ausloeser mitziehen, nicht nur den Kopfknopf: seit der Pruefrunde 1 gibt
+    // es einen zweiten im Mobil-Kopf (dort ist .header-actions ausgeblendet, siehe
+    // assets/styles/core.css). Die Auswahl verlangt ein VORHANDENES aria-expanded —
+    // das ✕ im Panel traegt keines und soll auch keines bekommen.
+    document
+        .querySelectorAll('[data-action="toggle-combat-log"][aria-expanded]')
+        .forEach(k => k.setAttribute('aria-expanded', offen));
     if (panel.classList.contains('active')) renderCombatLog();
 }
 

@@ -82,7 +82,25 @@
         [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display {
             color: var(--yellow);
         }
-        
+
+        /* Der Mobil-Kopf traegt seit der Pruefrunde 1 sieben Bedienelemente: der
+           Einstieg zum Kampfprotokoll gehoert dazu, weil .header-actions im
+           Mobil-Layout ausgeblendet ist und es sonst NULL sichtbare Wege zum Panel
+           gab. Bei 360px passten sieben mit 8px Innenabstand nicht mehr — gemessen
+           ragte der Theme-Knopf 29px aus dem Kopf heraus und war nicht mehr
+           erreichbar. Enger statt unerreichbar: unterhalb von 400px schrumpfen die
+           Innenabstaende, die Hoehe der Tippflaeche (43px) bleibt unberuehrt, und
+           kein Bedienelement verschwindet. */
+        @media (max-width: 400px) {
+            [data-layout="mobile"] .mobile-header {
+                padding: 10px 8px;
+            }
+
+            [data-layout="mobile"] .mobile-search-btn {
+                padding: 8px 4px;
+            }
+        }
+
         /* Desktop keeps everything as-is */
         [data-layout="desktop"] .mobile-header {
             display: none;
