@@ -827,7 +827,14 @@ test.describe('M1 — Gegenprobe: der Deckel von vor M1 meldet den Befund', () =
                 `erreichbar sein (${gemessenErreichbar})`
         ).toBe(ANZAHL_ANSICHTEN);
 
-        // Und jetzt der Zustand von vor M1.
+        // Und jetzt der Zustand von vor M1. Gezwungen wird das TOKEN, nicht
+        // `max-height` an der Leiste: setzeMobilLeistenDeckel() schreibt den
+        // Inline-Wert bei jedem Lauf der Kette neu, ein Inline-Zwang waere beim
+        // naechsten `resize` weg. Ein Stilblatt mit `!important` auf `:root`
+        // schlaegt den nicht-wichtigen Inline-Wert dauerhaft.
+        await page.addStyleTag({
+            content: ':root { --mobile-nav-max-height: 300px !important; }'
+        });
         await page.waitForTimeout(300);
         const verdrahtet = await page.evaluate(messeLeiste);
         const verdrahtetErreichbar = verdrahtet.reiter.filter(r => r.erreichbar).length;
