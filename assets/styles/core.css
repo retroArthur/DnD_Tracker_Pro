@@ -1971,7 +1971,38 @@
         
         .quest-header:hover { background: var(--bg-hover); }
         
-        .quest-title-row { display: flex; align-items: center; gap: 8px; flex: 1; }
+        /* Q1 — DIE TITELZEILE DARF SCHRUMPFEN UND UMBRECHEN.
+           `flex: 1` setzt `flex-shrink: 1`, aber `min-width` steht per Vorgabe
+           auf `auto`, und bei einem Flex-Element ist das das inhaltsbasierte
+           Minimum: Griff, Anheft-Knopf, Titel, Typ-Marke und der Auftraggeber
+           ergaben zusammen 303px. In einer 296px breiten `.quest-header`
+           (`justify-content: space-between`) konnte die Zeile nicht nachgeben,
+           und die Done/Loot-Marken rechts davon wurden hinausgedrueckt.
+           `.quest-item { overflow: hidden }` schnitt sie dann ab — gemessen am
+           gebauten Buendel mit GEFUELLTER Kampagne begannen sie bei 320x700 bei
+           x=328, lagen also VOLLSTAENDIG ausserhalb eines 320px breiten
+           Fensters und waren nicht antippbar. Das Dokument meldete dabei 0
+           Ueberhang; der Fehler war nur an den einzelnen Elementen zu sehen
+           (48 bei 320x700, 32 bei 360x740, 24 bei 390x844).
+
+           WARUM BEIDES, `min-width: 0` UND `flex-wrap: wrap`. `min-width: 0`
+           allein loest die Marken frei, verschiebt den Fehler aber eine Ebene
+           nach innen: die Titelzeile ist dann 137px breit, und der
+           Auftraggeber-Verweis darin hat selbst 117px min-content (das Wort
+           "Nichtspielerfigur") — er ragte weiter hinaus. Mit `wrap` legt sich
+           der Verweis in eine zweite Zeile und passt. Das ist der Unterschied
+           zwischen frei und versteckt: nichts wird abgeschnitten, alles bleibt
+           erreichbar.
+
+           WARUM NICHT `overflow: hidden; text-overflow: ellipsis` am Verweis,
+           was die App an `.init-name` und `.fr-card-name` tut: dort kuerzt es
+           einen NAMEN, der im Detail daneben vollstaendig steht. Hier waere es
+           der einzige Ort, an dem der Auftraggeber in der Liste auftaucht.
+
+           Gilt in jeder Breite, nicht nur im Mobil-Profil: die Zeile bricht nur
+           um, wenn der Platz fehlt. Bei 1440x900 und 1280x800 ist die Geometrie
+           aller 24 Ansichten vorher/nachher auf den Bildpunkt gleich. */
+        .quest-title-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; flex-wrap: wrap; }
         .quest-title { font-weight: 600; color: var(--text); }
         .quest-item.completed .quest-title { text-decoration: line-through; }
         

@@ -417,6 +417,19 @@
 
 .dice-char-header select {
     flex: 1;
+    /* Q1 — DIESELBE SCHRANKE WIE AN `.dice-formula` WEITER OBEN, derselbe
+       Griff. `flex: 1` erlaubt das Schrumpfen, `min-width: auto` verbietet es
+       wieder: bei einer Auswahlliste ist das inhaltsbasierte Minimum die Breite
+       ihres laengsten Eintrags, und das sind hier die Figurennamen. Der
+       "🎯 Init"-Knopf daneben wurde dadurch aus dem Fenster gedrueckt —
+       gemessen am gebauten Buendel mit GEFUELLTER Kampagne 50px Ueberhang bei
+       320x700 und 10px bei 360x740.
+       WARUM ES SO LANGE UNBEMERKT BLIEB: die Flaeche sitzt in einer
+       zugeklappten `<details>`. Chrome gibt deren Inhalt `content-visibility:
+       hidden`; er traegt nichts zum Scrollueberlauf bei, das Dokument meldete
+       also 0 — bis der Spielleiter die Falte antippt. Die Probe klappt deshalb
+       vor jeder Messung alle Falten auf. */
+    min-width: 0;
     padding: 8px 12px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);

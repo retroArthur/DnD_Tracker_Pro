@@ -1151,7 +1151,7 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
      Ansichten alle fuenf, NICHTS weggelassen. Die Schalen tragen FUENF
                unabhaengige
                `height: calc(100vh - var(--view-frame-height, ..))`-Deklarationen
-               in vier Stilblaettern (bestiary.css:25, core.css:2276,
+               in vier Stilblaettern (bestiary.css:25, core.css:2307,
                encounters.css:932, npcs.css:10, npcs.css:439); eine davon
                weglassen heisst, eine davon ungeprueft lassen.
                BERICHTIGUNG (Runde 1): hier stand "alle vier ... VIER
