@@ -105,8 +105,72 @@
  *   Quests      0px (n=48)       0px (n=32)       0px (n=24)     0
  *   Wuerfel     50px (n=1)       10px (n=1)       0px (n=0)      0
  *
+ * DREI ZUSTANDSFLAECHEN DER KAMPFZEILE, die bis Runde 2 keine Saat erreichte.
+ * Die sechs Ursachen oben haengen an der MENGE der Daten; diese drei haengen am
+ * ZUSTAND. Sie stehen ueberhaupt nur im Markup, wenn der Kampf sie verlangt:
+ *
+ *   Todesrettung   `.death-saves` (`display: flex`, `flex-wrap: nowrap`) steht
+ *                  in `.init-info` und rendert nur fuer einen SPIELER bei 0
+ *                  Trefferpunkten (`features/initiative.js:183`). Sie braucht
+ *                  277px und bekommt die 128px der `minmax(0, 1fr)`-Namensspalte
+ *                  — die sechs 16px-Punkte sind Tippziele und schrumpfen nicht.
+ *                  Der letzte lag bei x=431..447, in JEDEM der drei Fenster
+ *                  gleich, also vollstaendig ausserhalb.
+ *   Konzentration  `.concentration-badge` ist `inline-flex` OHNE `max-width`,
+ *                  und `.conc-spell` deckelte den Namen auf feste 120px statt
+ *                  ihn schrumpfen zu lassen. Die Marke wuchs damit aus der
+ *                  128px-Spalte heraus, sobald der Zaubername lang wurde.
+ *                  Gemessen mit echten deutschen Konzentrationszaubern bei
+ *                  320x700: "Segnen" (6) 0px · "Dunkelheit" (10) 0px ·
+ *                  "Verlangsamen" (12) 1px · "Unsichtbarkeit" (14) 3px ·
+ *                  "Spinnenklettern" (15) 11px · "Person bezaubern" (16) 22px ·
+ *                  "Schild des Glaubens" (19) 33px. Beim letzten lag der
+ *                  ✕-Knopf (Konzentration abbrechen) bei x=320..342 in einem
+ *                  320px breiten Fenster, also GANZ drauszen.
+ *   Konz.-Probe    `.concentration-check-banner` (ebenfalls nowrap) erscheint,
+ *                  sobald der Spielleiter einem konzentrierenden Kaempfer
+ *                  Schaden gibt (`concentration.pendingCheck`). Sie braucht
+ *                  221px in 128px; der Knopf fuer den KON-Rettungswurf lag bei
+ *                  x=336..391, der Wert `DC 22` bei x=304..326 — beide
+ *                  ausserhalb.
+ *
+ * ROT OHNE DIESE DREI KORREKTUREN, je EINZELN gemessen (ein Kaempfer, sonst
+ * leere Kampagne, Theme `dark`; die Konzentrationsmarke zusaetzlich in `light`,
+ * `sepia` und `contrast` auf den Bildpunkt gleich — die Ursachen sind Raster und
+ * Flex, nicht Farbe):
+ *
+ *   Zustand                              320x700      390x844
+ *   ----------------------------------   ----------   ---------
+ *   0 TP, Todesrettung 1/2               127px (10)   57px (5)
+ *   Konzentration "Schild des Glaubens"   33px (2)     0px (0)
+ *   offene Probe, pendingCheck 22         71px (2)     1px (0)
+ *
+ * Und ZUSAMMEN, wie die Saat unten sie stellt (drei der zehn Kaempfer tragen je
+ * einen Zustand) — das ist der Rotwert, den DIESE Probe meldet:
+ *
+ *   Ansicht     320x700          360x740          390x844        740x360
+ *   ---------   --------------   --------------   -------------  -------
+ *   Initiative  127px (n=14)     87px (n=7)       57px (n=5)     0
+ *   uebrige 23  0                0                0              0
+ *
+ * WARUM UMBRECHEN UND NICHT SCHRUMPFEN, bei zwei der drei: die Todeswurf-Punkte
+ * und der Wuerfelknopf sind Tippflaechen und duerfen nicht unter die
+ * Fingergroesse gedrueckt werden — dieselbe Begruendung wie bei `.init-right`
+ * in Runde 1. Nur beim Zaubernamen ist Abkuerzen zulaessig, weil der volle Name
+ * im `title` der Marke steht (`features/initiative-combat-widgets.js:294`).
+ *
+ * WARUM ZUSICHERUNG 4 MITWACHSEN MUSS. Dass die Probe diese drei Faelle bis
+ * Runde 2 gruen durchlief, lag nicht an den Zusicherungen, sondern an der SAAT:
+ * zehn Kaempfer mit `currentHp: 20`, `spell: 'Segnen'` und `pendingCheck: 0`
+ * erzeugen keine der drei Flaechen, und was nicht im Markup steht, kann nicht
+ * hinausragen. `initZeilen` in Zusicherung 4 deckte das nicht ab — es zaehlt
+ * die ZEILEN, nicht die Zustaende darin. Zusicherung 4 zaehlt deshalb jetzt
+ * auch die drei Zustandsknoten und die Laenge des Zaubernamens; mit der zahmen
+ * Saat von vorher ist sie rot (`initTodeswuerfe` 0, `initKonzKnopf` 0,
+ * `initKonzNameLaenge` 6 — gemessen).
+ *
  * 740x360 (Telefon im Querformat) ist auch ohne Korrektur frei: 740px Breite
- * liegen ueber allen sechs min-content-Schranken. Der Fall bleibt trotzdem in
+ * liegen ueber allen neun min-content-Schranken. Der Fall bleibt trotzdem in
  * der Probe, weil er die einzige Breite ist, bei der das Mobil-Profil gilt und
  * das Fenster dennoch breit ist — eine Korrektur, die dort etwas kaputt macht,
  * faellt nur hier auf.
@@ -120,7 +184,8 @@
  * Zusicherung 2 rot.
  *
  * Betroffene Quellen: `assets/styles/dashboard.css` (`.dash`),
- * `assets/styles/initiative.css` (Mobil-Zweig von `.init-entry`),
+ * `assets/styles/initiative.css` (Mobil-Zweig von `.init-entry`, `.death-saves`,
+ * `.concentration-badge`/`.conc-spell`, `.concentration-check-banner`),
  * `assets/styles/dice.css` (`.dice-formula`, `.dice-char-header select`),
  * `assets/styles/core.css` (Master-Detail-Familie unter 900px,
  * `.quest-title-row`).
@@ -389,17 +454,36 @@ const SAAT = {
     partyGold: 1234,
     quickNotes: 'Eine schnelle Notiz mit genug Text fuer mehrere Zeilen im Telefonfenster.',
     initiative: {
+        /* DREI KAEMPFER TRAGEN EINEN ZUSTAND, DEN DIE RUHIGE ZEILE NICHT HAT.
+           Siehe "DREI ZUSTANDSFLAECHEN" im Kopfkommentar: die Zustandsflaechen
+           der Kampfzeile stehen nur im Markup, wenn der Kampf sie verlangt, und
+           eine Saat aus zehn gleich gesunden Kaempfern erzeugt keine davon.
+           Die Zuordnung haengt am Index, damit sie beim Lesen nachzaehlbar ist:
+             i=1  aktive Konzentration mit einem LANGEN Zauber (19 Zeichen) —
+                  auch der Kaempfer, der gerade am Zug ist (currentTurn 0)
+             i=3  bei 0 Trefferpunkten mit zwei Fehlschlaegen → Todesrettung
+             i=5  offene Konzentrationsprobe (pendingCheck 22) → Pruefbanner
+           Alle drei Indizes sind ungerade, also `type: 'player'` — die
+           Todesrettung rendert nur fuer Spieler (features/initiative.js:183). */
         combatants: reihe(10, i => ({
             id: i,
             name: `Kaempfer mit langem Namen ${zz(i)}`,
             initiative: 20 - i,
-            currentHp: 20,
+            currentHp: i === 3 ? 0 : 20,
             maxHp: 30,
             ac: 15,
             type: i % 2 ? 'player' : 'enemy',
             conditions: i % 3 === 0 ? ['Betaeubt'] : [],
-            concentration: { active: i === 1, spell: 'Segnen', pendingCheck: 0 },
-            deathSaves: { successes: 0, failures: 0 }
+            concentration: {
+                active: i === 1 || i === 5,
+                /* Ein ECHTER langer Konzentrationszauber, kein Platzhalter:
+                   "Schild des Glaubens" ist mit 19 Zeichen der laengste der
+                   gaengigen Konzentrationszauber und der Fall, der die Marke am
+                   weitesten hinausschob. */
+                spell: i === 1 ? 'Schild des Glaubens' : 'Segnen',
+                pendingCheck: i === 5 ? 22 : 0
+            },
+            deathSaves: i === 3 ? { successes: 1, failures: 2 } : { successes: 0, failures: 0 }
         })),
         currentTurn: 0,
         round: 3
@@ -562,7 +646,25 @@ function messeFuellung() {
         frKarten: zahl('#view-fraktionen .fr-faction-card'),
         wuerfelFeld: zahl('#view-dice .dice-formula'),
         questZeilen: zahl('#view-quests .quest-title-row'),
-        wuerfelWahl: zahl('#view-dice #dice-char-select')
+        wuerfelWahl: zahl('#view-dice #dice-char-select'),
+        /* DIE DREI ZUSTANDSFLAECHEN DER KAMPFZEILE. Sie stehen nur im Markup,
+           wenn der Kampf sie verlangt — 0 Trefferpunkte, aktive Konzentration,
+           offene Probe. Eine Saat aus zehn gleich gesunden Kaempfern erzeugt
+           keine davon, und dann sind Zusicherung 1 und 2 fuer sie blind, weil
+           es nichts zu messen gibt. `initZeilen` oben deckt das NICHT ab: es
+           zaehlt die Zeilen, nicht die Zustaende darin. Faellt die Saat je auf
+           zehn gesunde Kaempfer zurueck, schlaegt Zusicherung 4 an. */
+        initTodeswuerfe: zahl('#view-initiative .death-saves'),
+        initKonzMarke: zahl('#view-initiative .concentration-badge'),
+        initKonzKnopf: zahl('#view-initiative .conc-roll-btn'),
+        /* Und der Zaubername muss LANG sein: bei "Segnen" (6 Zeichen) bleibt
+           die Marke innerhalb der Spalte, der Fall entsteht erst ab 12. */
+        initKonzNameLaenge: Math.max(
+            0,
+            ...[...document.querySelectorAll('#view-initiative .conc-spell')].map(
+                e => (e.textContent || '').trim().length
+            )
+        )
     };
 }
 
@@ -691,16 +793,25 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                 frKarten: f.frKarten >= 5,
                 wuerfelFeld: f.wuerfelFeld >= 1,
                 questZeilen: f.questZeilen >= 8,
-                wuerfelWahl: f.wuerfelWahl >= 1
+                wuerfelWahl: f.wuerfelWahl >= 1,
+                /* Die drei Zustandsflaechen der Kampfzeile, je einmal. */
+                initTodeswuerfe: f.initTodeswuerfe >= 1,
+                initKonzMarke: f.initKonzMarke >= 1,
+                initKonzKnopf: f.initKonzKnopf >= 1,
+                initKonzNameLang: f.initKonzNameLaenge >= 12
             },
-            `gerenderte Knoten ${JSON.stringify(f)} — genau diese sechs trugen die sechs Ursachen`
+            `gerenderte Knoten ${JSON.stringify(f)} — genau diese Knoten trugen die neun Ursachen`
         ).toEqual({
             dashFiguren: true,
             initZeilen: true,
             frKarten: true,
             wuerfelFeld: true,
             questZeilen: true,
-            wuerfelWahl: true
+            wuerfelWahl: true,
+            initTodeswuerfe: true,
+            initKonzMarke: true,
+            initKonzKnopf: true,
+            initKonzNameLang: true
         });
     });
 
