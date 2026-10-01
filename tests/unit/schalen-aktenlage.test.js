@@ -352,8 +352,10 @@ describe('Ansichts-Schalen — Deckung der Messmatrix', () => {
             if (n === undefined) befunde.push(`${was}: "${t[1]}" ist kein gefuehrtes Zahlwort`);
             return n === undefined ? null : n;
         };
-        const istDekl = zahlwort(/(\w+) unabhaengige/, 'die Zahl der Deklarationen');
-        const istBlatt = zahlwort(/in (\w+) Stilblaettern/, 'die Zahl der Stilblaetter');
+        // `\s+` statt eines Leerzeichens: der Kommentar ist auf 80 Spalten
+        // umbrochen, und das Zahlwort kann am Zeilenende stehen.
+        const istDekl = zahlwort(/(\w+)\s+unabhaengige/, 'die Zahl der Deklarationen');
+        const istBlatt = zahlwort(/in\s+(\w+)\s+Stilblaettern/, 'die Zahl der Stilblaetter');
         if (istDekl !== null && istDekl !== zensus.treffer.length) {
             befunde.push(
                 `der Kommentar behauptet ${istDekl} Deklarationen, gezaehlt sind ` +

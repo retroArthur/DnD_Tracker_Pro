@@ -188,11 +188,21 @@ async function reiterUndRollen(page, reiter, listenSel) {
 
 /**
  * Die vier Messgroessen im aktuellen Zustand. Laeuft IM Browser.
- * @param {string[]} sel [Suchfeld, Liste]
+ *
+ * `sel[2]` ist ein optionaler Waehler fuer die EINTRAEGE. Ohne ihn gelten die
+ * direkten Kinder des Listencontainers als Eintraege — das trifft fuer die vier
+ * gesaeten Listen zu, NICHT fuer das Bestiar: `#bestiary-list` fuehrt genau EIN
+ * Kind (die Huelle des VirtualScroll; gemessen `children.length === 1` in allen
+ * 16 Matrix-Zustaenden), und das deckt die ganze Liste ab. Ohne eigenen Waehler
+ * maesse die vierte Zusicherung diese Huelle statt den letzten Eintrag und waere
+ * damit immer gruen — eine Zusicherung, die nichts prueft.
+ *
+ * @param {string[]} sel [Suchfeld, Liste, Eintraege?]
  */
 function messeBudget(sel) {
     const suchSel = sel[0];
     const listenSel = sel[1];
+    const postenSel = sel[2];
     const de = document.documentElement;
     const treffer = el => {
         if (!el) return 'fehlt';
@@ -210,12 +220,17 @@ function messeBudget(sel) {
     const band =
         document.querySelector('.migration-hint-banner') ||
         document.querySelector('.divergence-banner');
-    const posten = Array.from(document.querySelector(listenSel).children);
+    const posten = postenSel
+        ? Array.from(document.querySelectorAll(postenSel))
+        : Array.from(document.querySelector(listenSel).children);
     const letzter = posten[posten.length - 1];
-    const lr = letzter.getBoundingClientRect();
-    const imFenster = lr.top < window.innerHeight && lr.bottom > 0 && lr.height > 0;
-    const px = Math.round(lr.left + Math.min(lr.width, window.innerWidth - lr.left) / 2);
-    const py = Math.round(Math.min(lr.bottom, window.innerHeight - 1)) - 4;
+    // Ohne Eintraege gab es hier einen Fehlschlag aus dem Browser heraus, dessen
+    // Meldung nichts sagte. Die leere Liste ist ein BEFUND, kein Absturz: sie
+    // faellt ueber `anzahl` auf, und die Geometrie meldet sich als unbekannt.
+    const lr = letzter ? letzter.getBoundingClientRect() : null;
+    const imFenster = !!lr && lr.top < window.innerHeight && lr.bottom > 0 && lr.height > 0;
+    const px = lr ? Math.round(lr.left + Math.min(lr.width, window.innerWidth - lr.left) / 2) : 0;
+    const py = lr ? Math.round(Math.min(lr.bottom, window.innerHeight - 1)) - 4 : 0;
     const getroffen = imFenster ? document.elementFromPoint(px, py) : null;
     const ue = (a, b) =>
         a && b ? Math.max(0, Math.round(Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))) : 0;
@@ -242,8 +257,8 @@ function messeBudget(sel) {
         appTitel: treffer(document.querySelector('.app-title')),
         globaleSuche: treffer(document.getElementById('global-search')),
         anzahl: posten.length,
-        letzterOben: Math.round(lr.top),
-        letzterUnten: Math.round(lr.bottom),
+        letzterOben: lr ? Math.round(lr.top) : null,
+        letzterUnten: lr ? Math.round(lr.bottom) : null,
         letzterImFenster: imFenster,
         letzterKlickbar: !!(getroffen && (letzter === getroffen || letzter.contains(getroffen)))
     };
@@ -1087,18 +1102,26 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
    ====================================================================
    Bis M3c prueften die Faelle oben in dieser Datei ALLE bei 1440x800. Die
    Matrix, mit der die Korrektur ueberhaupt gefunden wurde, steckte nur in einem
-   Messskript im Scratchpad: 4 Ansichten x 4 Breiten (1920/1440/1280/900) x 2
-   Fensterhoehen (900/700) x mit/ohne Band x gescrollt/oben = 128 Zustaende,
-   Laufzeit rund 2 Minuten. Ein Nachweis, der nur im Arbeitsverzeichnis seines
-   Autors liegt, ist kein Nachweis — die Luecke, die er geschlossen hat, kann
-   morgen zurueckkommen, ohne dass etwas rot wird.
+   Messskript im Scratchpad: 4 Breiten (1920/1440/1280/900) x 2 Fensterhoehen
+   (900/700) x mit/ohne Band x gescrollt/oben, Laufzeit rund 2 Minuten. Ein
+   Nachweis, der nur im Arbeitsverzeichnis seines Autors liegt, ist kein
+   Nachweis — die Luecke, die er geschlossen hat, kann morgen zurueckkommen,
+   ohne dass etwas rot wird.
 
-   WAS HIER LAEUFT: 64 der 128 Zustaende, als 8 Faelle zu je 8 Zustaenden
-   (4 Ansichten x oben/gescrollt). Die Zuschnitt-Achsen einzeln:
+   Jenes Messskript fuhr VIER Ansichten und kam so auf 128 Zustaende; die erste
+   Fassung dieser Matrix uebernahm die Zahl samt der Auslassung. Es sind FUENF
+   Schalen — mit der fuenften sind es 160 Zustaende. Die Berichtigung steht
+   unten bei der Achse "Ansichten"; bewacht wird sie seit Runde 1 von
+   tests/unit/schalen-aktenlage.test.js, das den Zensus der Stilblaetter gegen
+   diesen Kommentar haelt.
+
+   WAS HIER LAEUFT: 80 der 160 Zustaende, als 8 Faelle zu je 10 Zustaenden
+   (5 Ansichten x oben/gescrollt). Die Zuschnitt-Achsen einzeln:
 
      Breite    1280 und 900. GEMESSEN am Buendel zu fef3afb lagen 1920, 1440 und
-               1280 in allen 96 ihrer Zustaende auf demselben Wert (Ueberhang
-               14px ohne Band, 75px mit Band); 900 war der abweichende Fall
+               1280 in allen 96 ihrer Zustaende auf demselben Wert (96, weil die
+               damalige Messung vier Ansichten fuhr) — Ueberhang
+               14px ohne Band, 75px mit Band; 900 war der abweichende Fall
                (52px / 113px) und zugleich der schlimmste. 1280 ist die untere
                Kante dieses Plateaus, 900 der Ausreisser.
                WEGGELASSEN: 1920 und 1440. 1440 pruefen die fuenf Faelle oben in
@@ -1125,25 +1148,71 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
                Gegenrechnung des Bands am Seiteninhalt, gescrollt die
                Anheft-Versatzkette. Es sind zwei verschiedene Mechanismen.
 
-     Ansichten alle vier. Die Schalen tragen VIER unabhaengige
+     Ansichten alle fuenf, NICHTS weggelassen. Die Schalen tragen FUENF
+               unabhaengige
                `height: calc(100vh - var(--view-frame-height, ..))`-Deklarationen
-               in drei Stilblaettern (core.css, npcs.css zweimal,
-               encounters.css); eine davon weglassen heisst, eine davon
-               ungeprueft lassen.
+               in vier Stilblaettern (bestiary.css:25, core.css:2276,
+               encounters.css:932, npcs.css:10, npcs.css:439); eine davon
+               weglassen heisst, eine davon ungeprueft lassen.
+               BERICHTIGUNG (Runde 1): hier stand "alle vier ... VIER
+               Deklarationen in drei Stilblaettern" und die Bestiar-Schale lief
+               nicht mit. Das war der schlimmere der beiden Fehler: nicht die
+               Luecke, sondern dass der Kommentar sie als Vollstaendigkeit
+               auswies — eine so ausgewiesene Luecke sucht niemand. Gezaehlt
+               wird der Zensus jetzt maschinell gegen diesen Kommentar
+               (tests/unit/schalen-aktenlage.test.js), damit eine sechste Schale
+               nicht wieder lautlos danebensteht.
 
    Gemessen werden je Zustand dieselben vier Groessen wie im Messskript:
    Seitenueberhang, Treffer auf das Suchfeld der Werkzeugleiste, Freiheit der
-   Kopfzeile (App-Titel und globale Suche) und Erreichbarkeit des letzten von 24
-   Eintraegen. Die vierte wird nur im GESCROLLTEN Zustand verlangt, aus einem
+   Kopfzeile (App-Titel und globale Suche) und Erreichbarkeit des letzten
+   Eintrags. Die vierte wird nur im GESCROLLTEN Zustand verlangt, aus einem
    gemessenen Grund — Begruendung an befundeAus(). Jeder Fall sammelt ALLE seine
    Befunde und meldet sie zusammen; ein Fall, der beim ersten Befund abbricht,
-   verschweigt die anderen sieben Zustaende.
+   verschweigt die anderen neun Zustaende.
+
+   DIE FUENFTE SCHALE FAEHRT ANDERS, und das ist kein Schoenheitsfehler: das
+   Bestiar bringt seine Liste selbst mit (SRD) und rendert sie hinter einer
+   VirtualScroll-Huelle. `#bestiary-list` fuehrt deshalb genau EIN Kind, und die
+   Zahl der gerenderten Eintraege haengt an derselben Schalenhoehe, die hier
+   geprueft wird (gemessen 7 bis 18 ueber die 16 Zustaende). Beides steht in
+   MATRIX_ANSICHTEN: ein eigener Eintrags-Waehler und "mindestens einer" statt
+   der festen 24. Die drei allgemeinen Zusicherungen gelten unverkuerzt.
 
    Und weil eine Probe, die nie rot war, nichts beweist: der letzte Fall dieses
    Abschnitts zwingt das Token auf die alte verdrahtete 120px zurueck und
    verlangt, dass die Matrix genau dann Befunde meldet. */
 const MATRIX_BREITEN = [1280, 900];
 const MATRIX_HOEHEN = [900, 700];
+
+/**
+ * Die fuenf Schalen, wie die Matrix sie faehrt: Reiter, Suchfeld, Liste,
+ * Eintrags-Waehler (null = die Kinder der Liste), erwartete Zahl der Eintraege
+ * (null = mindestens einer).
+ *
+ * Eine EIGENE Liste neben ANSICHTEN, kein Umbau von ANSICHTEN: die vier
+ * gesaeten Faelle oben in dieser Datei verlangen `anzahl === ANZAHL` (24), und
+ * das kann das Bestiar nicht halten — es saet nichts, sondern bringt die
+ * SRD-Liste mit und rendert nur deren sichtbares Fenster. Die vier Zeilen
+ * kommen deshalb per Spread aus ANSICHTEN und koennen nicht auseinanderlaufen;
+ * die fuenfte ist der Zusatz.
+ */
+const MATRIX_ANSICHTEN = [
+    ...ANSICHTEN.map(([reiter, , suchSel, listenSel]) => ({
+        reiter,
+        suchSel,
+        listenSel,
+        postenSel: null,
+        erwartet: ANZAHL
+    })),
+    {
+        reiter: 'bestiary',
+        suchSel: '#bestiary-search',
+        listenSel: '#bestiary-list',
+        postenSel: '#bestiary-list .bestiary-list-item',
+        erwartet: null
+    }
+];
 
 /**
  * Faehrt eine Ansicht an und stellt den gewuenschten Scrollzustand her.
@@ -1167,27 +1236,38 @@ async function zustandHerstellen(page, reiter, listenSel, gescrollt) {
  * Prueft eine Messung gegen die vier Zusicherungen und liefert die Befunde.
  *
  * `letzterPruefen` schaltet die VIERTE Zusicherung (Erreichbarkeit des letzten
- * von 24 Eintraegen) zu — sie gilt NUR im gescrollten Zustand. Das ist beim
- * ersten Lauf dieser Matrix gemessen worden, nicht vorher gewusst: ungescrollt
- * meldete sie in allen 8 Faellen je 4 Befunde (z.B. "1280x900 MIT Band oben
- * locations: letzter Eintrag 2148..2222px AUSSERHALB NICHT-KLICKBAR", einen je
- * Ansicht) — und das ist richtig so. Am Listenanfang liegt der 24. Eintrag
- * legitim unter der Falz; ihn dort zu verlangen hiesse zu verlangen, dass die
- * ganze Liste in die Schale passt, und das verspricht das Hoehenbudget nicht.
- * Versprochen ist, dass die Liste SELBST scrollt und ihr Ende erreichbar
- * BLEIBT — genau das misst der gescrollte Zustand. Die drei anderen
- * Zusicherungen (Ueberhang, Werkzeugleiste, Kopfzeile) gelten in beiden
- * Zustaenden und waren im selben Lauf in beiden gruen.
+ * Eintrags) zu — sie gilt NUR im gescrollten Zustand. Das ist beim ersten Lauf
+ * dieser Matrix gemessen worden, nicht vorher gewusst: ungescrollt meldete sie
+ * in allen 8 Faellen je 4 Befunde (z.B. "1280x900 MIT Band oben locations:
+ * letzter Eintrag 2148..2222px AUSSERHALB NICHT-KLICKBAR", einen je Ansicht) —
+ * und das ist richtig so. Am Listenanfang liegt der letzte Eintrag legitim unter
+ * der Falz; ihn dort zu verlangen hiesse zu verlangen, dass die ganze Liste in
+ * die Schale passt, und das verspricht das Hoehenbudget nicht. Versprochen ist,
+ * dass die Liste SELBST scrollt und ihr Ende erreichbar BLEIBT — genau das misst
+ * der gescrollte Zustand. Die drei anderen Zusicherungen (Ueberhang,
+ * Werkzeugleiste, Kopfzeile) gelten in beiden Zustaenden und waren im selben
+ * Lauf in beiden gruen. Das Bestiar verhaelt sich darin wie die vier anderen:
+ * ungescrollt liegt sein letzter gerenderter Eintrag in 12 von 16 Zustaenden
+ * unter der Falz, gescrollt in allen 16 im Fenster und anklickbar.
+ *
+ * `erwartet` ist die Zahl der Eintraege, die gerendert sein MUSS — oder null fuer
+ * "mindestens einer". Null gilt fuer das Bestiar: es rendert nur das sichtbare
+ * Fenster seiner SRD-Liste, und dessen Groesse haengt an genau der Schalenhoehe,
+ * die hier geprueft wird (gemessen 7 bis 18). Auf eine feste Zahl zu zielen
+ * hiesse, die Probe an eine Nebenwirkung des Geprueften zu binden.
  *
  * @param {string} marke
  * @param {any} m Ergebnis von messeBudget()
  * @param {boolean} [letzterPruefen] Erreichbarkeit des letzten Eintrags mitpruefen
+ * @param {number|null} [erwartet] Soll-Zahl der Eintraege, null = mindestens einer
  * @returns {string[]}
  */
-function befundeAus(marke, m, letzterPruefen = true) {
+function befundeAus(marke, m, letzterPruefen = true, erwartet = ANZAHL) {
     const befunde = [];
-    if (m.anzahl !== ANZAHL) {
-        befunde.push(`${marke}: ${m.anzahl} statt ${ANZAHL} Eintraege gerendert`);
+    if (erwartet === null) {
+        if (m.anzahl < 1) befunde.push(`${marke}: kein Eintrag gerendert`);
+    } else if (m.anzahl !== erwartet) {
+        befunde.push(`${marke}: ${m.anzahl} statt ${erwartet} Eintraege gerendert`);
     }
     if (m.ueberhang !== 0) {
         befunde.push(`${marke}: Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen})`);
@@ -1213,12 +1293,12 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
     for (const hoehe of MATRIX_HOEHEN) {
         for (const breite of MATRIX_BREITEN) {
             for (const mitBand of [true, false]) {
-                test(`${breite}x${hoehe} ${mitBand ? 'mit' : 'ohne'} Band — vier Ansichten, oben und gescrollt`, async ({
+                test(`${breite}x${hoehe} ${mitBand ? 'mit' : 'ohne'} Band — fuenf Ansichten, oben und gescrollt`, async ({
                     page
                 }) => {
-                    // Acht Zustaende mit je 40 Radrunden: die 30s-Grenze der
+                    // Zehn Zustaende mit je 40 Radrunden: die 30s-Grenze der
                     // Konfiguration traegt das nicht.
-                    test.setTimeout(120000);
+                    test.setTimeout(150000);
                     await page.setViewportSize({ width: breite, height: hoehe });
                     await appLaden(page);
 
@@ -1240,26 +1320,31 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
 
                     const befunde = [];
                     const protokoll = [];
-                    for (const [reiter, , suchSel, listenSel] of ANSICHTEN) {
+                    for (const a of MATRIX_ANSICHTEN) {
                         for (const gescrollt of [false, true]) {
-                            await zustandHerstellen(page, reiter, listenSel, gescrollt);
-                            const m = await page.evaluate(messeBudget, [suchSel, listenSel]);
+                            await zustandHerstellen(page, a.reiter, a.listenSel, gescrollt);
+                            const m = await page.evaluate(messeBudget, [
+                                a.suchSel,
+                                a.listenSel,
+                                a.postenSel
+                            ]);
                             const marke =
                                 `${breite}x${hoehe} ${mitBand ? 'MIT Band ' : 'ohne Band'} ` +
-                                `${gescrollt ? 'gescrollt' : 'oben'} ${reiter}`;
+                                `${gescrollt ? 'gescrollt' : 'oben'} ${a.reiter}`;
                             protokoll.push(
                                 `${marke} | Ueberhang ${m.ueberhang}px | Rahmen ${m.rahmen} | ` +
                                     `Band ${m.bandHoehe}px | KopfDecktLeiste ${m.kopfDecktLeiste}px | ` +
                                     `Suchfeld ${m.suchfeld} | letzter(${m.anzahl}) ` +
                                     `${m.letzterOben}..${m.letzterUnten}`
                             );
-                            befunde.push(...befundeAus(marke, m, gescrollt));
+                            befunde.push(...befundeAus(marke, m, gescrollt, a.erwartet));
                         }
                     }
                     console.log(`[M3c]\n${protokoll.join('\n')}`);
                     expect(
                         befunde,
-                        `${befunde.length} Befund(e) in 8 Zustaenden:\n${befunde.join('\n')}`
+                        `${befunde.length} Befund(e) in ${MATRIX_ANSICHTEN.length * 2} ` +
+                            `Zustaenden:\n${befunde.join('\n')}`
                     ).toEqual([]);
                 });
             }
@@ -1289,11 +1374,12 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
         await page.setViewportSize({ width: breite, height: hoehe });
         await appLaden(page);
 
-        const [reiter, , suchSel, listenSel] = ANSICHTEN[0];
-        await zustandHerstellen(page, reiter, listenSel, true);
-        const gemessen = await page.evaluate(messeBudget, [suchSel, listenSel]);
+        const a = MATRIX_ANSICHTEN[0];
+        const sel = [a.suchSel, a.listenSel, a.postenSel];
+        await zustandHerstellen(page, a.reiter, a.listenSel, true);
+        const gemessen = await page.evaluate(messeBudget, sel);
         expect(
-            befundeAus('gemessenes Budget', gemessen),
+            befundeAus('gemessenes Budget', gemessen, true, a.erwartet),
             'die Matrix muss mit dem gemessenen Budget befundfrei sein, sonst misst diese ' +
                 'Gegenprobe nur einen vorbestehenden Fehler'
         ).toEqual([]);
@@ -1302,9 +1388,9 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
             content: ':root { --view-frame-height: 120px !important; }'
         });
         await page.waitForTimeout(300);
-        await zustandHerstellen(page, reiter, listenSel, true);
-        const verdrahtet = await page.evaluate(messeBudget, [suchSel, listenSel]);
-        const befunde = befundeAus('verdrahtete 120px', verdrahtet);
+        await zustandHerstellen(page, a.reiter, a.listenSel, true);
+        const verdrahtet = await page.evaluate(messeBudget, sel);
+        const befunde = befundeAus('verdrahtete 120px', verdrahtet, true, a.erwartet);
         console.log(
             `[M3c] Gegenprobe ${breite}x${hoehe} mit Band, gescrollt — gemessen: Rahmen ` +
                 `${gemessen.rahmen}, ` +
