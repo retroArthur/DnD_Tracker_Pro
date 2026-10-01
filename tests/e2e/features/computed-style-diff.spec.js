@@ -143,124 +143,32 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Erwartungsliste absichtlicher Abweichungen (D-24) — nach der Neuerhebung des Sollstands in
 // Plan 15-13 LEER. Ein Eintrag gehoert hierhin AUSSCHLIESSLICH fuer die Dauer genau der Welle,
 // die eine berechnete Stiländerung absichtlich herbeifuehrt — mit Nennung des Plans, aus dem er
-// stammt (z. B. "15-16: Farbtoken-Umstellung, siehe D-27"). Eine Ausnahmeliste, die nichts mehr
-// ausnimmt, ist eine stille Freigabe: sie wuerde ab dem naechsten Lauf echte Befunde an genau
-// diesen Schluesseln verschlucken. Jeder Eintrag ist ein Teilstring, der gegen den
+// stammt (z. B. "15-16: Farbtoken-Umstellung, siehe D-27"). Ein Eintrag, der ueber diese Welle
+// hinaus stehen bleibt, ist eine stille Freigabe: er verschluckt ab dem naechsten Lauf echte
+// Befunde an genau diesem Schluessel. Jeder Eintrag ist ein Teilstring, der gegen den
 // Element-Schluessel geprueft wird.
-// U6 (Hoehenbudget der Listen-Schalen): die fuenf Master-Detail-Schalen rechnen ihre Hoehe nicht
-// mehr gegen die verdrahtete 120px, sondern gegen die GEMESSENE Umrahmung
-// (`--view-frame-height`, updateStickyOffsets()). Mit stehendem Umzugs-Band — dem Normalfall unter
-// file://, und dem Zustand, in dem dieser Durchgang laeuft — ist die Umrahmung 195px statt 120px,
-// die Bestiar-Schale also 525 statt 600px hoch und ihre Liste 439 statt 514px. Der VirtualScroll
-// des Bestiars (`VirtualScroll.create(container, filtered, renderBestiaryListItem, 52)`,
-// features/bestiary/bestiary-render.js) rendert daraus 13 statt 15 Zeilen — gemessen am gebauten
-// Buendel bei 1280x720, Gegenprobe mit auf 120px gezwungenem Token. Die beiden letzten Zeilen und
-// ihre je sechs Kindelemente verschwinden damit aus der Erfassung. Das ist KEIN Stilverlust: die
-// 75px, die hier wegfallen, waren genau der Seitenueberhang, auf dem die Werkzeugleiste unter die
-// Kopfzeile rutschte. Der versionierte Sollstand bleibt unangetastet; nur diese 14 Schluessel sind
-// benannt ausgenommen, alles andere bleibt bewacht.
-// Die Teilstrings tragen KEIN Ansichtspraefix: isExpectedDeviation() wird mit dem Element-
-// schluessel allein aufgerufen, nicht mit `ansicht/schluessel` (am Aufruf in diffPass()
-// nachgelesen — ein Praefix hier nimmt nichts aus). Zwoelf der vierzehn tragen `bestiary` im
-// Klassennamen und sind damit ohnehin ansichtsgebunden; `span.sr-only#13/#14` kommt im
-// gesamten Sollstand NUR im Bestiar vor (am JSON nachgezaehlt, standard und reducedMotion).
-const EXPECTED_DEVIATION_KEYS = [
-    'button.bestiary-fav#13',
-    'button.bestiary-fav#14',
-    'div.bestiary-list-item#13',
-    'div.bestiary-list-item#14',
-    'span.bestiary-badge.srd#13',
-    'span.bestiary-badge.srd#14',
-    'span.bestiary-cr#13',
-    'span.bestiary-cr#14',
-    'span.bestiary-name#13',
-    'span.bestiary-name#14',
-    'span.bestiary-type#13',
-    'span.bestiary-type#14',
-    'span.sr-only#13',
-    'span.sr-only#14'
-];
+//
+// BEIDE LISTEN SIND SEIT M3b (2026-10-01) WIEDER LEER — und zwar absichtlich leer, nicht
+// abwesend. Vor M3b trugen sie zusammen 49 Schluessel (14 global + 35 nur schmal): Bestiar-
+// Listenzeilen, die durch die Hoehenbudget-Korrektur (U6) und die beiden Platzgewinne aus M2
+// aus der Erfassung gefallen waren. Sie standen dort ueber mehrere Wellen hinweg und waren damit
+// genau das, was der Absatz oben verbietet. Statt sie weiterzuschleppen ist der Sollstand
+// REGULAER NEU ERHOBEN (`UPDATE_STYLE_BASELINE=1`) und schluesselweise gegen den vorigen
+// verglichen; die Zu-/Abgaenge und Digest-Aenderungen stehen einzeln im Commit der Neuerhebung.
+//
+// Die Mechanik (`isExpectedDeviation()` mit dem `durchgang`-Parameter) bleibt stehen, damit die
+// naechste Welle, die berechnete Stile absichtlich aendert, sie wieder benutzen kann — eine leere
+// Liste ist der Normalzustand, keine fehlende Einrichtung.
 
-// NUR fuer den schmalen Durchgang (375x812). Dieselbe Ursache eine Stufe weiter: das Bestiar war
-// die einzige der fuenf Schalen, die ihr Hoehenbudget unter 900px und im Mobil-Layout wieder aufgab
-// (`height: auto; overflow: visible`, zwei Fassungen in bestiary.css). Die SEITE scrollte dann, und
-// die Werkzeugleiste der Ansicht fuhr vollstaendig aus dem Fenster — gemessen am Buendel zu
-// b09550b, Bestiar mit gewaehltem Monster, per Mausrad bis zum Anschlag: 900x700 Seitenueberhang
-// 697px, Leiste bei -474..-400, `elementFromPoint` auf das Suchfeld antwortete mit "nichts". Seit
-// Runde 1 behaelt die Schale ihr Budget und `.bestiary-layout` scrollt selbst. Die Liste ist damit
-// an die Schalenhoehe gebunden statt an den Inhalt, und der VirtualScroll rendert bei 375x812 vier
-// Zeilen weniger (#9..#12) — am gebauten Buendel nachgezaehlt, nicht geschaetzt.
-//
-// WARUM GETRENNT VON DER LISTE OBEN: die vier Zeilen sind im Sollstand in ALLEN DREI Durchgaengen
-// erfasst (standard, narrow, reducedMotion — am JSON nachgezaehlt). Eine Ausnahme in der globalen
-// Liste haette sie auch in den beiden breiten Durchgaengen ausgeblendet, wo sich nichts geaendert
-// hat und wo sie weiter bewacht gehoeren. Deshalb nimmt isExpectedDeviation() seit Runde 1 den
-// Durchgang mit.
-//
-// Die Teilstrings tragen weiterhin kein Ansichtspraefix (siehe oben). 30 der 35 tragen `bestiary`
-// im Klassennamen; `span.sr-only#8` bis `#12` kommen im gesamten Sollstand NUR im Bestiar vor —
-// am JSON nachgezaehlt, in allen drei Durchgaengen.
-//
-// ERWEITERT MIT M2 (2026-10) um die SIEBTE Zeile, `#8` — dieselbe Ursache eine Stufe weiter.
-// M2b/M2c geben der Schale im Mobil-Layout 108px zurueck (zweite Reservierung des Leistenplatzes
-// entfallen, Hinweisband auf Telefonbreite kurz gefasst): bei 375x812 waechst `.bestiary-view` von
-// 466 auf 574px. Dass die Liste davon SCHRUMPFT (Sichtfeld 400 -> 122px, gerenderte Zeilen 13 -> 8),
-// liegt NICHT an der Schale, sondern an `VirtualScroll.create()` — der geteilten Maschinerie in
-// `virtual-scroll.js` (im `ui/`-Verzeichnis). Der vollstaendige Pfad steht hier ABSICHTLICH nicht:
-// das Abdeckungs-Gate in tests/unit/module-test-coverage.test.js zaehlt jede woertliche
-// Pfadnennung in einer Testdatei als Abdeckung, und diese Erwaehnung ist keine. Es nimmt
-// `container.clientHeight`, sonst `parent.clientHeight - padY`, sonst den festen Rueckfall 400. In
-// der Schmalfassung ist `.bestiary-master` inhaltsgetrieben (`grid-template-rows: auto`,
-// `overflow-y: visible`), also liefert die Messung einen Wert, der von der vorigen Messung abhaengt
-// — ein Fixpunkt ohne Bezug zum verfuegbaren Platz. Die 400px vorher waren genau dieser feste
-// Rueckfall, nicht eine Messung: mit der groesseren Schale greift jetzt der zweite Zweig und liefert
-// 122px, wo ~228px frei sind.
-//
-// GEMESSEN, dass dabei keine Funktion verlorengeht (je drei Telefonfenster vor und nach der
-// Aenderung, Rad bis zum Anschlag ueber der Liste): die Liste scrollt in allen sechs Zustaenden bis
-// an ihr Ende, das letzte Monster (Kraken) liegt im Fenster und ist anklickbar. Und der Wert ist
-// auch NACH der Aenderung nicht einheitlich — 400px bei 360x740, 122px bei 375x812, 127px bei
-// 390x844 —, er war also nie eine Eigenschaft des Entwurfs. Das Hoehenbudget der Schmalfassung des
-// Bestiars gerade zu ruecken heisst, dieser geteilten Maschinerie eine echte Platzrechnung zu geben;
-// das ist eine Einheit fuer sich und steht als offener Befund. Hier wird nur der eine Schluessel
-// benannt, der dadurch aus der Erfassung faellt — alles andere bleibt bewacht.
-const EXPECTED_DEVIATION_KEYS_NARROW = [
-    'button.bestiary-fav#8',
-    'div.bestiary-list-item#8',
-    'span.bestiary-badge.srd#8',
-    'span.bestiary-cr#8',
-    'span.bestiary-name#8',
-    'span.bestiary-type#8',
-    'span.sr-only#8',
-    'button.bestiary-fav#9',
-    'button.bestiary-fav#10',
-    'button.bestiary-fav#11',
-    'button.bestiary-fav#12',
-    'div.bestiary-list-item#9',
-    'div.bestiary-list-item#10',
-    'div.bestiary-list-item#11',
-    'div.bestiary-list-item#12',
-    'span.bestiary-badge.srd#9',
-    'span.bestiary-badge.srd#10',
-    'span.bestiary-badge.srd#11',
-    'span.bestiary-badge.srd#12',
-    'span.bestiary-cr#9',
-    'span.bestiary-cr#10',
-    'span.bestiary-cr#11',
-    'span.bestiary-cr#12',
-    'span.bestiary-name#9',
-    'span.bestiary-name#10',
-    'span.bestiary-name#11',
-    'span.bestiary-name#12',
-    'span.bestiary-type#9',
-    'span.bestiary-type#10',
-    'span.bestiary-type#11',
-    'span.bestiary-type#12',
-    'span.sr-only#9',
-    'span.sr-only#10',
-    'span.sr-only#11',
-    'span.sr-only#12'
-];
+// Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
+/** @type {string[]} */
+const EXPECTED_DEVIATION_KEYS = [];
+
+// Ausnahmen NUR fuer den schmalen Durchgang (375x812). Ebenfalls leer seit M3b. Die Trennung
+// bleibt bestehen: eine nur schmal gebrauchte Ausnahme in der globalen Liste blendete sie auch
+// in den beiden breiten Durchgaengen aus, wo dieselben Schluessel weiter bewacht gehoeren.
+/** @type {string[]} */
+const EXPECTED_DEVIATION_KEYS_NARROW = [];
 
 /**
  * @param {string} elementKey Element-Schluessel OHNE Ansichtspraefix
