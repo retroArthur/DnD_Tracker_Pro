@@ -4378,3 +4378,102 @@ npx playwright test tests/e2e/features/layoutprofil.spec.js   # 28 Faelle
 ```
 
 ---
+## M2 Runde 2 — das Querformat gehört noch zum Telefon (2026-10-01, erledigt)
+
+Ein Rückschlag der eigenen Korrektur M2a, vom Prüfbefund gemessen und von mir unabhängig
+nachgemessen. M2a ließ das Layoutprofil dem Fenster folgen — und öffnete damit eine Richtung,
+die vorher unerreichbar war, weil das Profil nur beim Laden gewählt wurde: **das Drehen ins
+Querformat verlässt das Mobil-Profil.**
+
+### Der Befund, nachgemessen
+
+Eigene Messung (Playwright/Chromium, eigenes Bündel, je frisch geladen, 900 ms nach dem Drehen),
+am Bündel zu `960b32b`:
+
+| Gerät | hoch → quer | Kopf quer | Mobil-Kopf | Überhang X |
+| ------- | ----------------- | ------------ | ---------- | ---------- |
+| 390x844 | mobile → DESKTOP | 152px @ 61px | 0px | **184px** |
+| 393x852 | mobile → DESKTOP | 152px @ 61px | 0px | **176px** |
+| 430x932 | mobile → DESKTOP | 152px @ 61px | 0px | **96px** |
+| 360x740 | mobile → mobile | — | 64px | 0px |
+
+Mit dem 61px hohen Umzugs-Band sind das **213 von 390 Bildpunkten** feste Kopf-Möblierung (55 %
+des Fensters), **ein** sichtbarer Reiter von 24 — und eine Seite, die seitwärts scrollt.
+Zurückdrehen heilte; der zweite Ausweg war der Layout-Schalter, der die Wahl dann aber dauerhaft
+festschreibt. 740x360 blieb mobil: **dieselbe Geste, zwei Ergebnisse.**
+
+Ursache: `layoutAusFenster()` entschied allein an `window.innerWidth <= 768`. Die gängige
+Telefonklasse ist im Querformat 740..956 Bildpunkte **breit**.
+
+### Die Entscheidung
+
+Die Regel bekommt eine zweite, von der ersten unabhängige Bedingung: **kurze Seite ≤ 480 UND lange
+Seite ≤ 1000** ist ein gedrehtes Telefon (`LAYOUT_QUER_KURZE_SEITE`, `LAYOUT_QUER_LANGE_SEITE` in
+`ui/layout-profiles.js`). Die Klasse selbst gibt die Zahlen her: im Hochformat 320..448 breit, im
+Querformat 568..956.
+
+**Zustandslos, keine Hysterese.** Dieselbe Funktion trägt `loadLayout()` beim Start und
+`autoLayoutNachFenster()` am Fensterbeobachter. Eine Hysterese („das Mobil-Profil erst oberhalb von
+1000px verlassen") hätte die beiden auseinanderlaufen lassen: ein direkt im Querformat geöffnetes
+Telefon bekäme Desktop, ein gedrehtes Mobil — das Ergebnis hinge daran, wie der Spielleiter das
+Gerät in der Hand hielt, als er die App öffnete. Jeder Querformat-Fall ist deshalb **doppelt**
+geprüft, gezogen und direkt geladen.
+
+**Die Schranke auf der langen Seite ist der Teil, der wehtut.** Der naheliegende Griff
+`innerWidth <= 768 || innerHeight <= 500` ist falsch: er zieht jedes flache Desktop-Fenster mit.
+Gemessen bleiben **1440x450, 1280x400, 1024x768 und 901x700** Desktop, auf beiden Wegen — vier
+Wächter, die vor der Korrektur schon hielten und die eine Übertreibung sofort melden.
+
+### Gemessene Wirkung
+
+Alle vier Geräte, hoch → quer → zurück: durchgehend `mobile`, Mobil-Kopfzeile 64px,
+Seitenüberhang X = 0, `--view-frame-height` im Querformat 205px (gemessen, nicht verdrahtet).
+`D.settings.layout` bleibt in jedem Schritt leer — der automatische Wechsel schreibt nichts fest.
+In allen vier Themes auf den Bildpunkt gleich.
+
+### Die Zusicherung
+
+`tests/e2e/features/layoutprofil.spec.js`, neuer Block **(a2)**, 19 neue Fälle — davon
+**10 rot vor der Korrektur** (vier Themes beim Drehen, drei Gerätepaare, drei direkt im Querformat
+geladen) und 9 Wächter, die vorher wie nachher halten. Die Datei steht bei **48/48**.
+
+### Mitgemessen, nicht mitbehoben — der offene Punkt
+
+Weil die Korrektur das gedrehte Telefon neu ins Mobil-Profil führt, gehört die Frage dazu, ob das
+Mobil-Profil bei **390px Fensterhöhe** trägt. Für Kopf und Fuß ja, für die Listenspalte **nein**:
+
+| erreicht über | Rahmen | Schale | Werkzeugleiste | Liste | letzter von 24 |
+| ----------------------- | ------ | ------ | -------------- | ----- | -------------- |
+| Drehen (neue Regel) | 205px | 185px | 158px | 15px | nicht erreichbar |
+| Layout-Schalter (alt) | 205px | 185px | 158px | 15px | nicht erreichbar |
+
+**Auf den Bildpunkt gleich — vorbestehend, nicht von dieser Korrektur gemacht.** Es ist die
+Rechnung selbst: 390px Fenster minus 205px gemessener Möblierung (61 Band + 64 Mobil-Kopf + 56
+Streifen + Innenabstand) lassen 185px Schale, und `.section-toolbar` allein braucht 158px davon
+(zwei Zeilen Suchfeld/Filter, `min-height: 74px`, `flex: 0 1 auto`). Weil die Schale
+`overflow: hidden` führt, scrollt auch die **Seite** nicht (Überhang 0).
+
+**Warum trotzdem mobil.** Im Desktop-Profil ist dieselbe Schale noch kleiner (Rahmen 239px, Schale
+151px) **und** es kommen 184px Seitenüberhang sowie eine 152px hohe Kopfzeile mit einem sichtbaren
+Reiter von 24 dazu. Mobil ist der strikt bessere der zwei Zustände — nur nicht gut.
+
+**Warum nicht hier behoben.** Die Abhilfe heißt, die Schale in kurzen Fenstern nicht zu kappen
+(`height: auto`, die Seite scrollt). Diese Zeile führen **fünf Geschwisterschalen** gemeinsam
+(`.loc-view`, `.npc-view`, `.loot-view`, `.enc-view`, `.bestiary-view`), bewacht von
+`tests/unit/schalen-aktenlage.test.js`, das genau auf ihrer Gleichheit besteht. Das ist eine
+Messung über fünf Ansichten und vier Themes und gehört nicht in dieselbe Runde wie die Profilwahl.
+Der Fall „im Querformat trägt die Möblierung, die Liste bleibt eng" hält die **158px** als Schranke
+nach oben fest, damit es nicht schlechter wird, ohne aufzufallen.
+
+Aus demselben Grund steht 844x390 **nicht** in der `FENSTER`-Liste des Blocks (b): dessen
+Zusicherung lautet „Platz für zwei Einträge", und die hält dort nicht — aus Gründen, die nicht an
+der Reservierung des Leistenplatzes liegen.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/layoutprofil.spec.js   # 48 Faelle
+```
+
+---
