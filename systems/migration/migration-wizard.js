@@ -919,6 +919,16 @@ function showDivergenceBanner(dateStr) {
     `;
 
     document.body.insertBefore(banner, document.body.firstChild);
+    // Gegenrechnung am Seiteninhalt (U6). Bis 2026-10 fehlte sie — das Banner ist
+    // `position: fixed; top: 0` auf --z-panel und deckte die Kopfzeile deshalb
+    // auch UNGESCROLLT zu, wo ein Anheft-Versatz nichts ausrichtet. Die Hoehe
+    // wird GEMESSEN wie beim Hinweisband, statt die 40px aus dem CSS anzunehmen:
+    // der Text kann bei schmalen Fenstern umbrechen.
+    document.documentElement.style.setProperty(
+        '--divergence-banner-height',
+        banner.offsetHeight + 'px'
+    );
+    document.body.classList.add('has-divergence-banner');
     _updateStickyChainAfterBanner();
 
     // Checkpoint-Fix (Weg B): startMigrationFlow() loest den Audio-Download NICHT
@@ -1019,6 +1029,12 @@ function startMigrationFlow() {
     // Hinweis-Banner ausblenden (Umzug wurde gestartet)
     const hintBanner = document.getElementById('migration-hint-banner');
     if (hintBanner) hintBanner.remove();
+    // Die Klasse muss MIT dem Band gehen. Blieb sie stehen, hielt
+    // `body.has-migration-hint { padding-top }` weiter die 61px des
+    // verschwundenen Hinweises frei, waehrend das Divergenz-Banner nur 40px hoch
+    // ist — 21px Luft ueber der Kopfzeile und, seit das Hoehenbudget der
+    // Listen-Schalen daran haengt (U6), 21px Seitenueberhang.
+    document.body.classList.remove('has-migration-hint');
     // Das Divergenz-Banner ist niedriger als der Hinweis: die Kette muss NACH
     // dem Entfernen noch einmal laufen, sonst behaelt die Kopfzeile den
     // Versatz des gerade verschwundenen Bands.
@@ -1124,6 +1140,9 @@ function initMigrationActions() {
         StorageAPI.setJSON('migration-divergence-dismissed', { dismissed: true });
         const banner = document.getElementById('migration-divergence-banner');
         if (banner) banner.remove();
+        // Klasse mit dem Band zuruecknehmen — sonst bleibt die Gegenrechnung am
+        // Seiteninhalt stehen (siehe showDivergenceBanner()).
+        document.body.classList.remove('has-divergence-banner');
         _updateStickyChainAfterBanner();
     });
     // Checkpoint-Fix (Weg B): expliziter Button im Divergenz-Banner statt

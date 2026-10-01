@@ -52,13 +52,21 @@ describe('F-01 — Custom Properties', () => {
     // nur der Zustand VOR dem ersten Lauf der Funktion. Dass Tokenname in CSS
     // und JS uebereinstimmen, sichert der Test "KERNBELEG U3: die drei
     // Anheft-Versaetze kommen aus der Versatzkette" — nicht diese Liste.
+    //
+    // --view-frame-height (U6) kommt aus derselben Messung, ist aber keine
+    // Oberkante, sondern die GESAMTHOEHE der Umrahmung der Listen-Schalen
+    // ("Band-Gegenrechnung am body + Kopfzeile + Innenabstand von
+    // .main-content"). --divergence-banner-height ist die gemessene Hoehe des
+    // Divergenz-Banners, das Gegenstueck zu --migration-hint-height.
     const RUNTIME_TOKENS = new Set([
         '--hp-pct',
         '--map-zoom',
         '--migration-hint-height',
+        '--divergence-banner-height',
         '--sticky-top-header',
         '--sticky-top-round',
-        '--sticky-top-actions'
+        '--sticky-top-actions',
+        '--view-frame-height'
     ]);
 
     /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal
@@ -7378,7 +7386,9 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'encounters.css', zeile: 645, stufe: 2,
           pfad: '.calc-favorites-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 1385, stufe: 2,
+        // Anker 1385 -> 1388: die Begruendung am Hoehenbudget von
+        // .enc-view.active (U6) ist 3 Zeilen weiter oben eingefuegt.
+        { datei: 'encounters.css', zeile: 1388, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
@@ -7392,10 +7402,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'loot.css', zeile: 353, stufe: 1,
           pfad: '.shop-sort-btn.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
-        { datei: 'npcs.css', zeile: 938, stufe: 3,
+        // Anker 938 -> 944 und 1067 -> 1073: die Begruendungen am
+        // Hoehenbudget von .npc-view.active und .loot-view.active (U6) sind
+        // zusammen 6 Zeilen weiter oben eingefuegt.
+        { datei: 'npcs.css', zeile: 944, stufe: 3,
           pfad: '.npc-popup',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'npcs.css', zeile: 1067, stufe: 1,
+        { datei: 'npcs.css', zeile: 1073, stufe: 1,
           pfad: '.npc-list-tag.clickable:hover',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
         { datei: 'party.css', zeile: 390, stufe: 1,

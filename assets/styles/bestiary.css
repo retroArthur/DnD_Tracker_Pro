@@ -8,10 +8,14 @@
    VIEW CONTAINER
    ============================================================ */
 
+/* Hoehenbudget aus der gemessenen Kette, nicht aus einer Zahl (U6) —
+   Begruendung und Messwerte stehen an `.loc-view.active` in core.css. Die beiden
+   Mobil-/Schmalfassungen weiter unten setzen `height: auto` und sind davon
+   unberuehrt. */
 .bestiary-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--view-frame-height, 134px));
     overflow: hidden;
 }
 

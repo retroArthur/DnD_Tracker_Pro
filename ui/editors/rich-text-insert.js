@@ -690,15 +690,90 @@ function insertTable(rows = 3, cols = 3) {
     hideFloatingToolbar();
 }
 /**
- * Setzt die Versatzkette der angehefteten Ebenen (U3).
+ * Gesamthoehe der Umrahmung der Listen-Schalen (U6, Glied 0 der Versatzkette).
+ *
+ * Die fuenf Master-Detail-Schalen (`.loc-view`, `.npc-view`, `.loot-view`,
+ * `.enc-view`, `.bestiary-view`) rechnen ihre Hoehe gegen den Fensterrand:
+ * `height: calc(100vh - var(--view-frame-height, 134px))` mit `overflow: hidden`.
+ * Was von der Fensterhoehe abgeht, ist alles, was AUSSERHALB der Schale
+ * vertikalen Platz nimmt:
+ *
+ *   `imFlussDarueber`  die Kopfzeile, SOFERN sie im Fluss steht (Desktop: ihre
+ *                      gemessene Hoehe; Mobil: 0, dort stehen Mobil-Kopf UND
+ *                      Kopfzeile `position: fixed`)
+ *   + body             padding-top + padding-bottom
+ *   + .main-content    padding-top + padding-bottom + margin-top + margin-bottom
+ *
+ * Die Band-Gegenrechnung steckt im `padding-top` des body
+ * (`body.has-migration-hint` / `body.has-divergence-banner`) und wird deshalb
+ * NICHT eigens uebergeben: gemessen wird der Platz, den das Band im Fluss
+ * tatsaechlich belegt, nicht seine Hoehe. Im Mobil-Layout kommt derselbe Weg mit
+ * drei weiteren Reservierungen zurecht, die es im Desktop nicht gibt —
+ * `body { padding-bottom: 70px }`, `.main-content { padding-top: 60px }` und
+ * `.main-content { margin-bottom: 70px }` halten dort den Platz der beiden
+ * festen Leisten frei (gemessen 271px Umrahmung bei 700x800, davon 61px Band).
+ *
+ * Bis 2026-10 stand dort die feste Zahl 120px, waehrend die Umrahmung
+ * tatsaechlich 134px hoch war (102 Kopfzeile + 16 + 16) — und mit stehendem
+ * Umzugs-Band 195px. Gemessen am Buendel zu fef3afb, 128 Zustaende: Ueberhang
+ * 14px (ohne Band, ab 1280 Breite), 52px (900), 75px (mit Band, ab 1280),
+ * 113px (900) — in 128 von 128 Zustaenden groesser als 0. Dieser Ueberhang ist
+ * der Weg, auf dem die Seite UEBERHAUPT scrollt, und damit der Weg, auf dem die
+ * Werkzeugleiste der Ansicht unter die angeheftete Kopfzeile rutscht (gemessen
+ * 59px ab 1280, 74-103px bei 900; das Suchfeld antwortete auf
+ * `elementFromPoint` mit `BUTTON.nav-group-btn`). Bei Ueberhang 0 scrollt die
+ * Seite nicht, und keine Leiste kann irgendwohin rutschen.
+ *
+ * Der Rueckfallwert 134px an den Fundstellen ist NICHT die Wahrheit, sondern
+ * nur der Zustand vor dem ersten Lauf dieser Funktion: er ist die gemessene
+ * Desktop-Umrahmung ohne Band bei >=1280 Breite. Das Token wird in BEIDEN
+ * Layout-Zweigen besetzt, damit der Rueckfall im Betrieb nie zum Zug kommt —
+ * anders als die drei Anheft-Glieder, die im Mobil-Zweig absichtlich abgeraeumt
+ * werden, weil dort spezifischere Mobil-Regeln an ihre Stelle treten. Fuer die
+ * Schalenhoehe gibt es keine solche Regel; ein abgeraeumtes Token waere hier
+ * also ein stiller Rueckfall auf eine Zahl.
+ *
+ * @param {HTMLElement} root `document.documentElement`, Traeger der Tokens
+ * @param {number} imFlussDarueber Hoehe der Kopfzeile, sofern sie im Fluss steht
+ */
+function setzeRahmenHoehe(root, imFlussDarueber) {
+    const zahl = wert => Math.round(parseFloat(wert) || 0);
+    let rahmen = imFlussDarueber;
+    const koerper = document.body;
+    if (koerper) {
+        const stil = getComputedStyle(koerper);
+        rahmen += zahl(stil.paddingTop) + zahl(stil.paddingBottom);
+    }
+    const inhalt = document.querySelector('.main-content');
+    if (inhalt) {
+        const stil = getComputedStyle(inhalt);
+        rahmen +=
+            zahl(stil.paddingTop) +
+            zahl(stil.paddingBottom) +
+            zahl(stil.marginTop) +
+            zahl(stil.marginBottom);
+    } else {
+        // 32 = 16 oben + 16 unten, der Desktop-Innenabstand von .main-content —
+        // was die Messung hergaebe, falls der Container noch fehlt.
+        rahmen += 32;
+    }
+    root.style.setProperty('--view-frame-height', rahmen + 'px');
+}
+
+/**
+ * Setzt die Versatzkette der angehefteten Ebenen (U3) und das Hoehenbudget der
+ * Listen-Schalen (U6).
  *
  * Auf Kampf -> Initiative liegen vier Ebenen uebereinander, jede mit eigenem
  * Anheft-Versatz, und jeder Versatz haengt an der gemessenen Unterkante der
  * Ebene darueber:
  *
- *   Glied 1  festes Umzugs-Band  -> .app-header          (--sticky-top-header)
- *   Glied 2  Kopfzeile           -> .encounter-controls  (--sticky-top-round)
- *   Glied 3  Runden-Leiste       -> #quick-actions-bar   (--sticky-top-actions)
+ *   Glied 1  festes Band        -> .app-header          (--sticky-top-header)
+ *   Glied 2  Kopfzeile          -> .encounter-controls  (--sticky-top-round)
+ *   Glied 3  Runden-Leiste      -> #quick-actions-bar   (--sticky-top-actions)
+ *
+ * Aus derselben Messung faellt ein viertes Token ab, das keine Oberkante, sondern
+ * eine Gesamthoehe ist: `--view-frame-height` (Glied 0, siehe setzeRahmenHoehe()).
  *
  * Bis 2026-09 war nur Glied 2 berechnet. Die Aktionsleiste behielt ihren 2026
  * fest verdrahteten Wert `top: 145px` und schnitt die Runden-Leiste dadurch um
@@ -708,7 +783,7 @@ function insertTable(rows = 3, cols = 3) {
  * --z-panel, die Kopfzeile heftete auf `top: 0` an und fuhr beim Scrollen
  * 61px darunter — App-Titel und globale Suche waren verdeckt.
  *
- * Die Kette wird als drei Custom Properties auf <html> veroeffentlicht, NICHT
+ * Die Kette wird als Custom Properties auf <html> veroeffentlicht, NICHT
  * als Inline-Stil am Element. Der frueher benutzte Inline-Weg hatte einen
  * stillen Fehler: beim Wechsel in das Mobil-Layout blieb der Desktop-Wert am
  * Element stehen und schlug die Regel
@@ -731,6 +806,30 @@ function updateStickyOffsets() {
     const header = document.querySelector('.app-header');
     if (!header) return;
 
+    // Unterkante des tiefsten festen Bands am Fensterkopf, 0 ohne Band — in
+    // BEIDEN Layouts gebraucht, deshalb vor der Verzweigung gemessen.
+    // BEIDE Baender zaehlen: das Umzugs-Hinweisband (.migration-hint-banner) und
+    // das Divergenz-Banner (.divergence-banner). Letzteres war bis 2026-10
+    // absichtlich ausgelassen, weil ihm die Gegenrechnung am Seiteninhalt fehlte
+    // (die Entsprechung zu `body.has-migration-hint { padding-top }`) und es die
+    // Kopfzeile deshalb auch UNGESCROLLT verdeckte, wo ein Anheft-Versatz nichts
+    // ausrichtet: gemessen deckte es die Kopfzeile um 40px, App-Titel und globale
+    // Suche antworteten auf elementFromPoint mit STRONG bzw.
+    // SPAN.divergence-banner-text. Diese Gegenrechnung gibt es jetzt
+    // (`body.has-divergence-banner`, migration.css), also traegt das Band hier
+    // mit. Gemessen wird `bottom` und nicht `height`, damit ein gestapelter
+    // Zustand ohne Sonderfall richtig herauskommt — im Betrieb schliessen sich
+    // die beiden Baender aus (startMigrationFileSide() verzweigt entweder/oder,
+    // und startMigrationFlow() entfernt den Hinweis im selben synchronen Block).
+    const baender = [
+        document.querySelector('.migration-hint-banner'),
+        document.querySelector('.divergence-banner')
+    ].filter(Boolean);
+    const bandHoehe = baender.reduce(
+        (tiefste, el) => Math.max(tiefste, Math.round(el.getBoundingClientRect().bottom)),
+        0
+    );
+
     if (root.dataset.layout === 'mobile') {
         // Im Mobil-Layout hat die Kette keinen Gegenstand: die Kopfzeile ist dort
         // eine feste Leiste am UNTEREN Fensterrand (`top: auto`), und Runden-
@@ -744,24 +843,30 @@ function updateStickyOffsets() {
         root.style.removeProperty('--sticky-top-header');
         root.style.removeProperty('--sticky-top-round');
         root.style.removeProperty('--sticky-top-actions');
+        // Glied 0 wird dagegen BESETZT, nicht abgeraeumt: fuer die Schalenhoehe
+        // gibt es keine spezifischere Mobil-Regel, die an seine Stelle treten
+        // koennte (nur `.bestiary-view` setzt dort `height: auto`). Hier geht 0
+        // ueber den Inhalt ein, weil Mobil-Kopf UND Kopfzeile `position: fixed`
+        // stehen — ihren Platz halten die Innenabstaende an body und
+        // .main-content frei, die setzeRahmenHoehe() ohnehin mitmisst.
+        // Gemessen: 271px Umrahmung bei 700x800 mit Band, Seitenueberhang 0
+        // (vorher mit der verdrahteten 120px: Ueberhang 151px, und das Suchfeld
+        // der Werkzeugleiste antwortete gescrollt mit DIV.mobile-header).
+        setzeRahmenHoehe(root, 0);
         return;
     }
 
-    // Glied 1 — Hoehe des Umzugs-Hinweisbands, 0 wenn keines da ist.
-    // ABSICHTLICH NUR dieses Band: das Divergenz-Banner (.divergence-banner,
-    // gleiche Positionierung, gleiche Sprosse) hat KEINE Gegenrechnung am
-    // Seiteninhalt — es fehlt die Entsprechung zu
-    // `body.has-migration-hint { padding-top }` — und verdeckt die Kopfzeile
-    // deshalb auch UNGESCROLLT, wo ein Anheft-Versatz nichts ausrichtet. Es
-    // hier mitzumessen wuerde den halben Fall heilen und den anderen halben
-    // verschleiern; es bleibt unveraendert und ist als offener Punkt gefuehrt.
-    const band = document.querySelector('.migration-hint-banner');
-    const bandHoehe = band ? Math.round(band.getBoundingClientRect().height) : 0;
+    // Glied 1 — die Kopfzeile heftet unter dem Band an.
     root.style.setProperty('--sticky-top-header', bandHoehe + 'px');
 
     // Glied 2 — Runden-Leiste unter der Kopfzeile.
     const rundenTop = bandHoehe + Math.round(header.getBoundingClientRect().height);
     root.style.setProperty('--sticky-top-round', rundenTop + 'px');
+
+    // Glied 0 — Hoehenbudget der Listen-Schalen. Im Desktop-Fluss steht ueber
+    // .main-content die Kopfzeile (`position: sticky`, also IM Fluss); die
+    // Gegenrechnung des Bands liest setzeRahmenHoehe() selbst am body ab.
+    setzeRahmenHoehe(root, Math.round(header.getBoundingClientRect().height));
 
     // Glied 3 — Aktionsleiste unter der Runden-Leiste. Bei verborgener
     // Initiative ist die Leiste 0px hoch; dann bleibt das Glied unveraendert,

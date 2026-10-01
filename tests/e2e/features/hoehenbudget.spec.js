@@ -124,6 +124,14 @@ async function bandSchliessen(page) {
 
 /**
  * Wechselt den Reiter und fuehrt das Mausrad ueber der Liste.
+ *
+ * Der Radpunkt wird aus dem SICHTBAREN Teil der Liste gerechnet, nicht aus der
+ * halben Fensterhoehe. Mit der halben Fensterhoehe lag der Punkt bei 700px
+ * Fenster und stehendem Band auf der Werkzeugleiste (die Schale beginnt dort
+ * erst bei 195px) — das Rad erreichte die Liste nicht, und die Probe haette
+ * eine Unerreichbarkeit gemeldet, die es nicht gibt. Nachgemessen am Buendel,
+ * nicht vermutet.
+ *
  * @param {import('@playwright/test').Page} page
  * @param {string} reiter
  * @param {string} listenSel
@@ -134,7 +142,11 @@ async function reiterUndRollen(page, reiter, listenSel) {
     const kasten = await page.locator(listenSel).boundingBox();
     const breite = page.viewportSize().width;
     const mx = kasten ? Math.min(Math.max(kasten.x + kasten.width / 2, 5), breite - 5) : breite / 2;
-    await page.mouse.move(Math.round(mx), Math.round(page.viewportSize().height / 2));
+    const my = await page.evaluate(sel => {
+        const r = document.querySelector(sel).getBoundingClientRect();
+        return Math.round((Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2);
+    }, listenSel);
+    await page.mouse.move(Math.round(mx), my);
     for (let i = 0; i < 40; i++) await page.mouse.wheel(0, 400);
     await page.waitForTimeout(400);
 }

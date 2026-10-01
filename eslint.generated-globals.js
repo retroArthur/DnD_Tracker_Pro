@@ -1374,6 +1374,7 @@ export default {
     "setTrackVolume": 'readonly',
     "setViewCount": 'readonly',
     "setupDMScreenLiveSync": 'readonly',
+    "setzeRahmenHoehe": 'readonly',
     "setzeRuf": 'readonly',
     "shopCart": 'writable',
     "shopSortMode": 'writable',

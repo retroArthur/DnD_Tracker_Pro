@@ -345,6 +345,17 @@ body.has-migration-hint {
     color: var(--text, var(--text));
 }
 
+/* U6: dieselbe Gegenrechnung wie beim Hinweisband — sie fehlte hier, und ohne
+   sie deckte das `position: fixed`-Banner die Kopfzeile auch UNGESCROLLT zu, wo
+   kein Anheft-Versatz etwas ausrichtet. Seit das Hoehenbudget der Listen-Schalen
+   (`--view-frame-height`) aus derselben Messung kommt, haengt auch der
+   Seitenueberhang daran. Klasse wird von showDivergenceBanner() gesetzt und vom
+   dismiss-divergence-banner-Handler wieder entfernt; die Hoehe ist gemessen, der
+   Rueckfall 40px ist der CSS-Wert fuer den ungebrochenen Einzeiler. */
+body.has-divergence-banner {
+    padding-top: var(--divergence-banner-height, 40px);
+}
+
 /* Wenn beide Banner sichtbar sind, zweiten nach unten verschieben */
 .migration-hint-banner ~ .divergence-banner {
     top: 48px;

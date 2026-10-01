@@ -425,8 +425,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `bestiary.css:497` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:510` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
 | `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
@@ -572,7 +572,7 @@ sie als unerreichbar abschreibt.
 
 ```
 bestiary.css
-  142  .bestiary-fav.active
+  146  .bestiary-fav.active
 core.css
    17  [data-layout="mobile"] .mobile-nav-toggle-text
    75  [data-layout="mobile"] #mobile-timer-display
@@ -627,7 +627,7 @@ encounters.css
   509  .calc-preview-xp
   514  .calc-preview-change
   680  .calc-fav-item.save
- 1188  .enc-speed-line
+ 1191  .enc-speed-line
 file-backup.css
   243  .backup-entry-restore
 initiative.css
@@ -644,10 +644,10 @@ loot.css
   640  .cart-shop-name
   707  .cart-item-total
 npcs.css
-  236  .npc-detail-location
-  904  .npc-name
-  985  .npc-popup-name
- 1018  .npc-popup-section-title
+  238  .npc-detail-location
+  910  .npc-name
+  991  .npc-popup-name
+ 1024  .npc-popup-section-title
 party.css
  1982  .party-stat-card.critical .party-stat-value
  2249  .rest-heal-preview

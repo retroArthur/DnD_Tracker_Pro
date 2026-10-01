@@ -5,7 +5,8 @@
  * Master-Detail-Schalen hat drei Deklarationen MITGEZOGEN, die nicht der
  * eigentliche Hebel waren: `overflow: hidden` an `.enc-view.active`
  * (encounters.css), `grid-template-rows: minmax(0, 1fr)` an der gemeinsamen
- * Rasterregel (core.css) und `calc(100vh - 120px)` an `.loot-view.active`
+ * Rasterregel (core.css) und die Gleichstellung des Hoehenbudgets an
+ * `.loot-view.active`
  * (npcs.css). Jede der drei bekam einen erklaerenden Kommentar — und alle drei
  * Kommentare schrieben ihrer Zeile eine Wirkung zu, die eine Mutationsprobe am
  * gebauten Buendel widerlegt. Das ist kein Schoenheitsfehler: wer eine Zeile
@@ -45,7 +46,8 @@
  *   1. BAUART — die fuenf Schalen fuehren dieselben vier Deklarationen. Das
  *      ist die einzige Begruendung, die den drei mitgezogenen Zeilen bleibt,
  *      und sie ist pruefbar. Faellt eine Schale heraus (zurueck auf
- *      `overflow-y: auto`, zurueck auf `- 60px`), meldet es der Waechter.
+ *      `overflow-y: auto`, zurueck auf `- 60px` oder auf eine verdrahtete
+ *      Zahl statt `--view-frame-height`), meldet es der Waechter.
  *   2. AKTENLAGE — die Kommentarbloecke der drei Zeilen fuehren nicht die
  *      widerlegten Wendungen und nennen den Messbefund. Vorbild ist die
  *      Aktenlage-Ratsche in design-consistency.test.js: eine Behauptung, die
@@ -113,11 +115,21 @@ const SCHALEN = [
     ['Bestiar', 'bestiary.css', '\n.bestiary-view.active {']
 ];
 
-/** Die Bauart, auf die die Korrektur alle fuenf gebracht hat. */
+/**
+ * Die Bauart, auf die die Korrektur alle fuenf gebracht hat.
+ *
+ * Die dritte Zeile hiess bis 2026-10 `height: calc(100vh - 120px)`. Die
+ * Gleichstellung aller fuenf auf diese Zahl hat den UNTERSCHIED beseitigt, nicht
+ * den Fehler: 120px waren selbst zu wenig, die Umrahmung ist 134px hoch (102
+ * Kopfzeile + 16 + 16 Innenabstand von .main-content) und mit stehendem
+ * Umzugs-Band 195px. Seit U6 kommt das Budget aus der gemessenen Versatzkette
+ * (`--view-frame-height`, updateStickyOffsets()); der Rueckfallwert 134px gilt
+ * nur vor deren erstem Lauf. Beleg: tests/e2e/features/hoehenbudget.spec.js.
+ */
 const BAUART = [
     'display: flex',
     'flex-direction: column',
-    'height: calc(100vh - 120px)',
+    'height: calc(100vh - var(--view-frame-height, 134px))',
     'overflow: hidden'
 ];
 
@@ -168,7 +180,7 @@ const AKTENLAGE = [
         gefordert: [/BEIDE/]
     },
     {
-        was: 'npcs.css `calc(100vh - 120px)` an .loot-view.active',
+        was: 'npcs.css Hoehenbudget an .loot-view.active',
         datei: 'npcs.css',
         anker: '.loot-view.active {',
         verboten: [/ausserhalb des klickbaren Bereichs/],

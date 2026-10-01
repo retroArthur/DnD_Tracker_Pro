@@ -2252,10 +2252,28 @@
         /* ============================================================
            LOCATIONS VIEW - Master-Detail Layout (Redesigned)
            ============================================================ */
+        /* DAS HOEHENBUDGET KOMMT AUS DER MESSUNG, NICHT AUS EINER ZAHL (U6).
+           `--view-frame-height` ist "Band-Gegenrechnung am body + Kopfzeile +
+           Innenabstand von .main-content", von updateStickyOffsets() in
+           ui/editors/rich-text-insert.js zur Laufzeit gemessen. Hier stand
+           `calc(100vh - 120px)`, waehrend die Umrahmung 134px hoch ist (102
+           Kopfzeile + 16 + 16) — und mit stehendem Umzugs-Band 195px. Gemessen
+           am Buendel zu fef3afb, 128 Zustaende: Seitenueberhang 14px ohne Band
+           (ab 1280 Breite), 52px bei 900, 75px mit Band (ab 1280), 113px bei
+           900; in 128 von 128 Zustaenden groesser als 0. Der Ueberhang ist der
+           Weg, auf dem die Seite ueberhaupt scrollt — und damit der, auf dem die
+           Werkzeugleiste unter die angeheftete Kopfzeile rutscht (59px ab 1280,
+           74-103px bei 900; das Suchfeld antwortete auf elementFromPoint mit
+           BUTTON.nav-group-btn). Der Rueckfall 134px ist nur der Zustand VOR dem
+           ersten Lauf der Funktion; sie besetzt das Token in beiden
+           Layout-Zweigen, damit er im Betrieb nie zum Zug kommt.
+           Dieselbe Zeile fuehren die vier Geschwister: npcs.css
+           (.npc-view/.loot-view), encounters.css (.enc-view), bestiary.css
+           (.bestiary-view) — bewacht von tests/unit/schalen-aktenlage.test.js. */
         .loc-view.active {
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 120px);
+            height: calc(100vh - var(--view-frame-height, 134px));
             overflow: hidden;
         }
 

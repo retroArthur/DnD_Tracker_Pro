@@ -168,12 +168,32 @@ test.describe('Ansichts-Schalen (U1)', () => {
             expect(anzahl, `${listenSel} muss ${ANZAHL} Eintraege rendern`).toBe(ANZAHL);
 
             // Mausrad ueber der Liste — NICHT scrollTop, das taeuscht Erreichbarkeit vor.
+            // DER RADPUNKT KOMMT AUS DEM SICHTBAREN TEIL DER LISTE, nicht aus der
+            // halben Fensterhoehe. Die halbe Fensterhoehe war eine Annahme, die
+            // mit der Geometrie wackelt: seit das Hoehenbudget der Schalen
+            // gemessen wird (U6, --view-frame-height) beginnt die Schale bei
+            // stehendem Umzugs-Band erst bei 195px statt bei 120px, und im
+            // Playwright-Fenster (1280x720, aus devices['Desktop Chrome'])
+            // lag y=360 damit 3px UEBER der Oberkante von .enc-master (363px) —
+            // auf der Werkzeugleiste. Das Rad erreichte die Liste nicht, und die
+            // Probe meldete eine Unerreichbarkeit, die es nicht gibt: dieselbe
+            // Lage, mit dem Punkt im sichtbaren Listenteil gemessen, bringt den
+            // letzten von 24 Eintraegen auf 601..675px und anklickbar (128
+            // Zustaende aus 4 Ansichten x 4 Breiten x 2 Fensterhoehen x mit/ohne
+            // Band, <scratch>/uat-budget/hoehenbudget/messen.mjs). Die
+            // Zusicherungen darunter sind unveraendert — nur das Zielen ist es.
             const kasten = await page.locator(listenSel).boundingBox();
             const mx = Math.min(
                 Math.max(kasten.x + kasten.width / 2, 5),
                 page.viewportSize().width - 5
             );
-            await page.mouse.move(mx, Math.round(page.viewportSize().height / 2));
+            const my = await page.evaluate(sel => {
+                const r = document.querySelector(sel).getBoundingClientRect();
+                return Math.round(
+                    (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2
+                );
+            }, listenSel);
+            await page.mouse.move(mx, my);
             for (let i = 0; i < 60; i++) await page.mouse.wheel(0, 400);
             await page.waitForTimeout(400);
 
@@ -286,7 +306,15 @@ test.describe('Ansichts-Schalen (U1)', () => {
                 Math.max(kasten.x + kasten.width / 2, 5),
                 page.viewportSize().width - 5
             );
-            await page.mouse.move(mx, Math.round(page.viewportSize().height / 2));
+            // Radpunkt im sichtbaren Listenteil — Begruendung mit Zahlen oben am
+            // ersten Mausradlauf dieser Datei.
+            const my = await page.evaluate(sel => {
+                const r = document.querySelector(sel).getBoundingClientRect();
+                return Math.round(
+                    (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2
+                );
+            }, LISTE);
+            await page.mouse.move(mx, my);
             for (let i = 0; i < 60; i++) await page.mouse.wheel(0, 400);
             await page.waitForTimeout(400);
             return page.evaluate(sel => {
