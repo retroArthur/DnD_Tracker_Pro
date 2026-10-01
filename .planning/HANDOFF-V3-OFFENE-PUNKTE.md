@@ -3995,6 +3995,14 @@ unter** der Fensterkante und ist mit einem Klick nicht erreichbar — gemessen b
 Fensterhöhe). Vorbestehend, vom Höhenbudget unabhängig; ein Ansichtswechsel im Mobil-Layout
 gelingt in diesen Fenstern nur über die Kommandopalette oder die Tastatur.
 
+> **RICHTIGSTELLUNG (M1, 2026-10-01).** Der letzte Satz ist falsch, und zwar der zweite Teil.
+> Die Leiste **fährt per Klick aus**: `.mobile-nav-toggle` ist 56px hoch, sitzt am unteren
+> Fensterrand und `elementFromPoint` traf ihn in allen gemessenen Fenstern selbst; ein Klick
+> setzt `.nav-open` und die Leiste fährt auf `translateY(0)`. Gemessen wurde oben nur der
+> **eingeklappte** Zustand. Die ausgefahrene Leiste war sehr wohl erreichbar — nur nicht
+> vollständig: von 24 Reitern antworteten **7 (390x844), 10 (360x740), 16 (700x800)**. Die
+> wirklichen Ursachen und ihre Behebung stehen unter „M1" am Ende dieser Akte.
+
 **Zu entscheiden bleibt** (zusammen mit U6-R2-01 Punkt 3, es ist dieselbe Entscheidung): eine
 Untergrenze an den fünf Schalen — dann scrollt die Seite im Grenzfall wieder und die
 Werkzeugleiste kann dort wieder unter die Kopfzeile rutschen —, oder die Werkzeugleiste bei
@@ -4007,6 +4015,110 @@ mitnimmt.
 PYTHONIOENCODING=utf-8 python build.py
 npx playwright test tests/e2e/features/hoehenbudget.spec.js   # 23 Faelle
 UAT_SCREENS=1 npx playwright test tests/e2e/features/uat-funde-screens.spec.js   # 28 Bilder
+```
+
+---
+
+## M1 — Alle 24 Ansichten auf dem Telefon erreichbar (2026-10-01, erledigt)
+
+Behebt den Nebenbefund (4) oben, nachdem dessen Diagnose richtiggestellt war.
+
+### Der Ausgangsstand, beziffert
+
+Gebautes Bündel zu `cecfefe`, Mobil-Layout per `setLayout('mobile')`, Umschalter geklickt,
+`elementFromPoint` auf der Reitermitte:
+
+| Fenster | Reiter | im Sichtfeld | anklickbar | Leiste | Raster Sicht/Inhalt |
+| --- | --- | --- | --- | --- | --- |
+| 390x844 | 24 | 16 | **7** | 357px | 300px / 444px |
+| 360x740 | 24 | 16 | **10** | 357px | 300px / 444px |
+| 700x800 | 24 | 16 | **16** | 357px | 300px / 444px |
+
+### Zwei unabhängige Ursachen
+
+**A — der Deckel.** `[data-layout="mobile"] .nav-tabs` trug `max-height: 300px` bei 444px
+Rasterinhalt. Die unterste Reihe (Soundboard, Statistiken, Session-Prep, Daten) lag dauerhaft
+hinter dem `overflow`. Die 300 hatten keinen Bezug zum Fenster: bei 390x844 lagen unter dem
+Umzugs-Band 623px frei.
+
+**B — Überdeckung.** Vier bodenverankerte Flächen lagen auf der ausgefahrenen Leiste; je Reiter
+der Verdecker, den `elementFromPoint` zurückgab (390x844, Deckungsfläche in Bildpunkten²):
+
+| Element | z-index | Deckung | betroffene Reiter |
+| --- | --- | --- | --- |
+| `#event-log` | `--z-toast` 4000 | 71420 | Orte, Kalender, Reise, Quests, Initiative, Begegnung, Bestiar |
+| `#floating-dice-trigger` | `--z-floating` 2000 | 2304 | Notizen |
+| `.qref-fab` | `--z-panel` 600 | 2500 | DM Screen, Daten |
+| `.kplog-panel` | `--z-panel` 600 | — | sobald es offen stand |
+
+Die `.qref-fab` liegt auf **derselben** Ebene wie die Leiste und gewann allein durch die
+Dokumentreihenfolge. Wie viele Reiter das Ereignis-Log traf, hing daran, wie viele Meldungen
+gerade darin standen — die Erreichbarkeit war nicht einmal stabil.
+
+**Und der Weg in die Leiste.** Das Kampfprotokoll rechnete seine Höhe gegen den unteren
+Fensterrand, der im Mobil-Layout der eingeklappten Leiste gehört. Bei 740x360 antwortete
+`elementFromPoint` auf der Mitte der Umschalter-Zeile mit `div.kplog-text`: der Umschalter war
+nicht klickbar, und damit waren **alle** 24 Ansichten unerreichbar — ein Zustand, den keine
+Messung an der ausgefahrenen Leiste je bemerkt hätte.
+
+### Die Entscheidung
+
+Die **56px Tippfläche bleiben**. Der andere Weg, 24 Reiter in 300px zu bringen, wäre eine
+kleinere Tippfläche gewesen; der Nutzer ist Spielleiter am Tisch und bedient die App mit dem
+Daumen, unter 44px trifft er nicht mehr zuverlässig. Auch die Desktop-Gruppierung (6 Gruppen
+statt 24 Reitern) ist nicht übernommen: sie macht aus einem Tipp zwei und versteckt den
+Ansichtsnamen hinter einem Gruppennamen — am Tisch muss „wo ist das Soundboard" durch Hinsehen
+beantwortbar sein, nicht durch Erinnern. Falsch war der Deckel, nicht die Reitergröße.
+
+Statt der Zahl steht jetzt eine **Messung**: `setzeMobilLeistenDeckel()` in der Anheft-Kette
+(`ui/editors/rich-text-insert.js`) veröffentlicht zwei weitere Tokens auf `<html>` —
+`--mobile-nav-max-height` (Glied 4: Fensterhöhe minus die tiefste Unterkante der festen
+Kopfblöcke minus die Umschalter-Zeile minus 8px Luft) und `--mobile-nav-rest` (Glied 5: die Höhe
+des Streifens, den die eingeklappte Leiste immer belegt). Die vier Schwebeelemente verbergen
+sich, solange `.nav-open` steht; ausweichen war nicht möglich, oberhalb der offenen Leiste wäre
+bei 740x360 ein Rest von **-17px** geblieben.
+
+### Die gemessene Wirkung
+
+Gebautes Bündel, voller Zustand (Dauermodus-Log mit fünf Meldungen, Kampfprotokoll offen), in
+allen vier Themes auf den Bildpunkt gleich:
+
+| Fenster | Deckel | Leiste | Raster Sicht/Inhalt | anklickbar (vorher) | kleinster Reiter |
+| --- | --- | --- | --- | --- | --- |
+| 390x844 | 623px | 501px | 444 / 444 | **24/24** (7) | 56px |
+| 360x740 | 540px | 501px | 444 / 444 | **24/24** (10) | 56px |
+| 700x800 | 672px | 501px | 444 / 444 | **24/24** (16) | 56px |
+| 740x360 | 232px | 289px | 232 / 444 | **24/24** nach zwei echten Radrunden | 56px |
+
+Null Überlapper in allen 16 Zuständen, Umschalter-Zeile in allen 16 frei, alle vier
+Schwebeelemente nach dem Einfahren wieder sichtbar.
+
+### Die Zusicherung
+
+`tests/e2e/features/mobil-navigation.spec.js`, 13 Fälle, alle fünf Zusicherungen vorher rot:
+alle 24 im echten Mausrad-Durchlauf erreichbar · kein sichtbares Schwebeelement über der Leiste ·
+bei 360x740 und 390x844 passt der Rasterinhalt ohne Scrollen hinein · Tippfläche ≥ 44px · im
+Querformat 740x360 muss gescrollt werden und das Rad erreicht trotzdem alle 24. Gescrollt wird
+nur per `page.mouse.wheel`, geklickt nur auf gemessenen Koordinaten.
+
+### Offen geblieben
+
+- `.event-log-entry` trägt `pointer-events: auto`, obwohl an einem **flüchtigen** Eintrag nichts
+  zu klicken ist (nur der Dauermodus hat Knöpfe). Dadurch schluckt das Ereignis-Log Klicks auf
+  alles, was unter ihm liegt — auch im Desktop-Layout, wo es mittig auf `bottom: 20px` sitzt.
+  M1 brauchte die Korrektur nicht, weil das Log im Mobil-Layout ohnehin verborgen wird; der
+  Befund steht aber und ist zwei Zeilen wert.
+- `.qref-fab` sitzt im Mobil-Layout auf `bottom: 10px` (unter 600px Breite) bzw. `20px` und
+  überlappt damit den 56px-Streifen der **eingeklappten** Leiste — bei 390x844 liegt sie über dem
+  ▲-Zeichen der Umschalter-Zeile. Der Umschalter bleibt an seiner Mitte klickbar (x=195 gegen
+  330..380), es ist ein kosmetischer Befund, aber derselbe Fehler wie der behobene am
+  Kampfprotokoll.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 13 Faelle
 ```
 
 ---

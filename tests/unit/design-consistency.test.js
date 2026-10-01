@@ -58,6 +58,16 @@ describe('F-01 — Custom Properties', () => {
     // ("Band-Gegenrechnung am body + Kopfzeile + Innenabstand von
     // .main-content"). --divergence-banner-height ist die gemessene Hoehe des
     // Divergenz-Banners, das Gegenstueck zu --migration-hint-height.
+    //
+    // --mobile-nav-max-height und --mobile-nav-rest (M1) kommen aus demselben
+    // Messlauf, werden aber NUR im Mobil-Zweig besetzt: das erste ist der
+    // Hoehendeckel der ausgefahrenen Navigationsleiste ("Fensterhoehe minus die
+    // festen Kopfbloecke minus die Umschalter-Zeile minus Luft"), das zweite die
+    // Hoehe des Streifens, den die EINGEKLAPPTE Leiste immer belegt. Beide
+    // ersetzen verdrahtete Zahlen, die im Browser falsch waren (300px Deckel bei
+    // 444px Rasterinhalt; ein Hoehenbudget des Kampfprotokolls, das den
+    // Umschalter ueberdeckte) — ein CSS-Standardwert dafuer waere wieder genau
+    // diese Zahl.
     const RUNTIME_TOKENS = new Set([
         '--hp-pct',
         '--map-zoom',
@@ -66,7 +76,9 @@ describe('F-01 — Custom Properties', () => {
         '--sticky-top-header',
         '--sticky-top-round',
         '--sticky-top-actions',
-        '--view-frame-height'
+        '--view-frame-height',
+        '--mobile-nav-max-height',
+        '--mobile-nav-rest'
     ]);
 
     /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal
