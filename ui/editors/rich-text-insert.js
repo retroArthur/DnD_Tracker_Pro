@@ -760,6 +760,95 @@ function setzeRahmenHoehe(root, imFlussDarueber) {
     root.style.setProperty('--view-frame-height', rahmen + 'px');
 }
 
+/* Luft zwischen der ausgefahrenen Mobil-Leiste und dem tiefsten festen Block am
+   Fensterkopf. Ein Bildpunkt genuegte rechnerisch; 8px sind der Abstand, bei dem
+   die Leiste als eigene Flaeche zu erkennen ist und nicht am Band klebt. */
+const MOBIL_LEISTE_LUFT = 8;
+
+/* Fussboden des Deckels: zwei Reiterreihen (2 x 56px). Er greift nur in einem
+   Fenster, das so niedrig ist, dass selbst zwei Reihen nicht mehr unter die
+   festen Kopfbloecke passen — dann ist eine Leiste, die ueber das Band laeuft,
+   immer noch besser als eine, die auf null zusammenfaellt und den
+   Ansichtswechsel ganz verliert. */
+const MOBIL_LEISTE_MINDESTFELD = 112;
+
+/**
+ * Hoehendeckel der ausgefahrenen Mobil-Navigationsleiste (M1, Glied 4).
+ *
+ * Die Leiste fuehrt im Mobil-Layout ALLE 24 Ansichten flach in einem Raster aus
+ * vier Spalten (`.nav-group { display: contents }` loest die sechs
+ * Desktop-Gruppen dort auf). 24 Reiter zu 56px Tippflaeche in sechs Reihen, plus
+ * Abstaenden und Innenabstand, sind 382px Rasterinhalt.
+ *
+ * Bis 2026-10 stand dort `max-height: 300px` — eine Zahl ohne Bezug zum Fenster.
+ * GEMESSEN am Buendel zu cecfefe (Mobil-Layout, Umschalter geklickt,
+ * `elementFromPoint` auf der Reitermitte): Rasterinhalt 444px gegen 300px
+ * Sichtfeld, also 144px Ueberhang; die unterste Reihe (Soundboard, Statistiken,
+ * Session-Prep, Daten) lag dauerhaft hinter dem `overflow`. Erreichbar waren
+ * 7 von 24 Reitern bei 390x844 und 10 von 24 bei 360x740 — und das, obwohl bei
+ * 390x844 unter dem Umzugs-Band 623px frei lagen und die Leiste 300 nahm.
+ *
+ * WARUM DIE 56px NICHT SCHRUMPFEN. Der andere Weg, 24 Reiter in 300px zu
+ * bringen, waere eine kleinere Tippflaeche. Der Nutzer ist Spielleiter am Tisch
+ * und bedient die App mit dem Daumen; unter 44px trifft ein Daumen nicht mehr
+ * zuverlaessig. Die Leiste waere also genau in dem Moment unbenutzbar geworden,
+ * in dem sie vollstaendig wird. Falsch war der Deckel, nicht die Reitergroesse.
+ *
+ * WAS GEMESSEN WIRD, statt verdrahtet zu werden:
+ *
+ *   obenUnterkante   die tiefste Unterkante der fest am Fensterkopf sitzenden
+ *                    Bloecke — Umzugs-Hinweisband, Divergenz-Banner UND
+ *                    Mobil-Kopfzeile. Alle drei sind `position: fixed` am oberen
+ *                    Rand, und das Band ist bei 360-390px Breite 157px hoch (es
+ *                    bricht um). Gemessen wird `bottom`, damit ein gestapelter
+ *                    Zustand ohne Sonderfall richtig herauskommt — dasselbe
+ *                    Vorgehen wie bei Glied 1.
+ *   umschalterHoehe  die Hoehe der Umschalter-Zeile, die ueber dem Raster in
+ *                    derselben Leiste steht (56px laut Regel, hier aber
+ *                    abgelesen — sie traegt Text, der umbrechen kann).
+ *
+ * Der Deckel ist der Rest: `innerHeight - obenUnterkante - umschalterHoehe -
+ * Luft`. Bei 390x844 sind das 623px, und das Raster passt ohne Scrollen hinein;
+ * im Querformat (740x360) sind es 235px, und dann scrollt die Leiste wirklich —
+ * `overflow-y: auto` bleibt der Rueckfall, nicht die Regel.
+ *
+ * Der CSS-Rueckfallwert 300px an der Fundstelle ist NICHT die Wahrheit, sondern
+ * nur der Zustand vor dem ersten Lauf dieser Funktion; er ist bewusst der alte
+ * Wert, damit ein ausgefallener Lauf nicht schlechter dasteht als der Stand
+ * vorher. Im Betrieb kommt er nie zum Zug: der Mobil-Zweig besetzt das Token bei
+ * jedem Lauf, und `loadLayout()` setzt `data-layout` in `core/init.js` VOR dem
+ * ersten Aufruf dieser Kette.
+ *
+ * @param {HTMLElement} root `document.documentElement`, Traeger der Tokens
+ * @param {HTMLElement} kopf die Kopfzeile — im Mobil-Layout die Leiste selbst
+ */
+function setzeMobilLeistenDeckel(root, kopf) {
+    const umschalter = kopf.querySelector('.mobile-nav-toggle');
+    if (!umschalter) return;
+    const obenUnterkante = ['.migration-hint-banner', '.divergence-banner', '.mobile-header']
+        .map(auswahl => document.querySelector(auswahl))
+        .filter(Boolean)
+        .reduce((tiefste, el) => {
+            const stil = getComputedStyle(el);
+            if (stil.display === 'none' || stil.visibility === 'hidden') return tiefste;
+            return Math.max(tiefste, Math.round(el.getBoundingClientRect().bottom));
+        }, 0);
+    const umschalterHoehe = Math.round(umschalter.getBoundingClientRect().height);
+    const deckel = Math.max(
+        MOBIL_LEISTE_MINDESTFELD,
+        window.innerHeight - obenUnterkante - umschalterHoehe - MOBIL_LEISTE_LUFT
+    );
+    root.style.setProperty('--mobile-nav-max-height', deckel + 'px');
+    // Glied 5 — der Streifen, den die EINGEKLAPPTE Leiste immer belegt. Sie faehrt
+    // auf `translateY(calc(100% - 56px))` ein, sichtbar bleibt also genau die
+    // Umschalter-Zeile. Wer dort etwas hinlegt, macht alle 24 Ansichten
+    // unerreichbar, ohne dass eine Messung an der AUSGEFAHRENEN Leiste das
+    // bemerkt: man kommt gar nicht dazu, sie auszufahren. Gemessen am Buendel zu
+    // cecfefe mit offenem Kampfprotokoll antwortete `elementFromPoint` auf der
+    // Mitte der Umschalter-Zeile bei 740x360 mit DIV.kplog-text.
+    root.style.setProperty('--mobile-nav-rest', umschalterHoehe + 'px');
+}
+
 /**
  * Setzt die Versatzkette der angehefteten Ebenen (U3) und das Hoehenbudget der
  * Listen-Schalen (U6).
@@ -884,6 +973,12 @@ function updateStickyOffsets() {
         // (vorher mit der verdrahteten 120px: Ueberhang 151px, und das Suchfeld
         // der Werkzeugleiste antwortete gescrollt mit DIV.mobile-header).
         setzeRahmenHoehe(root, 0);
+        // Glied 4 — Hoehendeckel der ausgefahrenen Navigationsleiste (M1). NUR im
+        // Mobil-Zweig: im Desktop-Layout ist `.mobile-nav-toggle` ausgeblendet und
+        // die Leiste steht oben im Fluss, das Token hat dort keinen Verbraucher.
+        // Es wird auf dem Rueckweg nach Desktop deshalb auch nicht abgeraeumt —
+        // die Regel, die es liest, haengt selbst an `[data-layout="mobile"]`.
+        setzeMobilLeistenDeckel(root, header);
         return;
     }
 

@@ -1484,10 +1484,96 @@
             grid-template-columns: repeat(4, 1fr);
             padding: 8px;
             gap: 6px;
-            max-height: 300px;
+            /* M1 — GEMESSEN, nicht verdrahtet. Hier stand `max-height: 300px` bei
+               einem Rasterinhalt von 444px: die unterste Reihe (Soundboard,
+               Statistiken, Session-Prep, Daten) lag dauerhaft hinter dem
+               `overflow`, erreichbar waren 7 von 24 Reitern bei 390x844. Das
+               Token kommt aus setzeMobilLeistenDeckel() und ist genau
+               "Fensterhoehe minus die festen Kopfbloecke minus die
+               Umschalter-Zeile minus Luft" — bei 390x844 sind das 623px, und das
+               Raster passt ohne Scrollen hinein. Die Begruendung, warum nicht
+               stattdessen die 56px-Tippflaeche schrumpft, steht dort.
+               Der Rueckfall 300px ist der alte Wert, damit ein ausgefallener Lauf
+               nicht schlechter dasteht als der Stand vorher. */
+            max-height: var(--mobile-nav-max-height, 300px);
             overflow-y: auto;
+            /* Scrollt die Leiste bis an ihr Ende, soll sich die Seite dahinter
+               NICHT mitbewegen — der Daumen bleibt in der Leiste, bis er sie
+               verlaesst. Nur im Querformat ueberhaupt erreichbar, weil das Raster
+               sonst ohne Scrollen hineinpasst. */
+            overscroll-behavior: contain;
         }
-        
+
+        /* ============================================================
+           M1 — DIE SCHWEBEELEMENTE RAEUMEN DIE AUSGEFAHRENE LEISTE.
+           ============================================================
+           Zweite Ursache der unerreichbaren Reiter, unabhaengig vom Deckel
+           darueber. Vier bodenverankerte Flaechen lagen auf der ausgefahrenen
+           Leiste; gemessen am Buendel zu cecfefe bei 390x844, je Reiter der
+           Verdecker, den `elementFromPoint` zurueckgab:
+
+             #event-log              z=4000, Deckung 71420 px² — Orte, Kalender,
+                                     Reise, Quests, Initiative, Begegnung, Bestiar
+             #floating-dice-trigger  z=2000, Deckung  2304 px² — Notizen
+             .qref-fab               z= 600, Deckung  2500 px² — DM Screen, Daten
+             .kplog-panel            z= 600, sobald es offen stand
+
+           Die `.qref-fab` liegt auf DERSELBEN Ebene wie die Leiste (--z-panel)
+           und gewinnt allein, weil sie spaeter im Dokument steht. Eine hoehere
+           Ebene fuer die Leiste waere die falsche Antwort: das Ereignis-Log liegt
+           mit --z-toast bewusst ueber allem, und daran soll sich nichts aendern.
+
+           WARUM VERSTECKEN UND NICHT AUSWEICHEN. Ausweichen hiesse: oberhalb der
+           Leiste anordnen. Auf einem Telefon nimmt die offene Leiste 439 von 844
+           Bildpunkten (390x844) bzw. 292 von 360 im Querformat; oberhalb bleibt
+           nach Band und Mobil-Kopf kein Platz, in den ein 320-400px hohes Panel
+           ehrlich passt. Nachgerechnet: bei 740x360 waere der Rest -17px. Ein
+           zusammengequetschtes Panel, das halb auf der Navigation liegt, ist
+           schlechter als eines, das zwei Sekunden wartet.
+
+           WAS DER NUTZER DAFUER NICHT VERLIERT. Die Leiste schliesst sich beim
+           ersten Reiterklick von selbst (switchView() nimmt `nav-open` zurueck) —
+           der verborgene Zustand dauert genau die Navigationsgeste. Beide Panels
+           kommen mit ihrem Inhalt zurueck: der Dauermodus des Ereignis-Logs haelt
+           bis zu 50 Eintraege, das Kampfprotokoll seine Liste. Verloren geht
+           allein eine FLUECHTIGE Meldung, die in genau dieser Sekunde erscheint
+           und verblasst — fuer den Fall gibt es den Dauermodus (Taste L und der
+           Knopf im Mobil-Kopf), und das ist der bessere Tausch.
+
+           Die Auswahl laeuft ueber `:has()` am Wurzelelement, weil die vier
+           Flaechen Geschwister der Leiste sind und nicht in ihr liegen. `:has()`
+           ist im Browserboden des Projekts ohnehin verlangt (sechs Regeln davor).
+           ============================================================ */
+        /* Und der Weg IN die Leiste bleibt frei. Das Kampfprotokoll ist im
+           Mobil-Layout oben verankert und rechnet seine Hoehe gegen den unteren
+           Fensterrand (`calc(100vh - --sticky-top-round - 28px)`, dashboard.css).
+           Der untere Fensterrand gehoert dort aber der eingeklappten Leiste: von
+           ihr bleibt immer die Umschalter-Zeile stehen. Gemessen bei 740x360
+           antwortete `elementFromPoint` auf deren Mitte mit `div.kplog-text` — der
+           Umschalter war nicht klickbar, und damit waren ALLE 24 Ansichten
+           unerreichbar. Die Regel oben hilft hier nicht: sie haengt an
+           `.nav-open`, und dieser Zustand liess sich gar nicht erst herstellen.
+           Der Reststreifen wird gemessen (Glied 5), nicht verdrahtet; die Liste im
+           Panel scrollt ohnehin selbst (`.kplog-liste { overflow-y: auto }`), der
+           knappere Deckel kostet also keinen Inhalt. Bei 390x844 greift er nicht
+           (700px gegen rund 270px Isthoehe) — nur dort, wo er muss. */
+        [data-layout="mobile"] .kplog-panel {
+            max-height: calc(
+                100vh - var(--sticky-top-round, 60px) - 28px - var(--mobile-nav-rest, 56px)
+            );
+        }
+
+        [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-trigger,
+        [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-panel,
+        [data-layout="mobile"]:has(.app-header.nav-open) .qref-fab,
+        [data-layout="mobile"]:has(.app-header.nav-open) .qref-panel,
+        [data-layout="mobile"]:has(.app-header.nav-open) .event-log,
+        [data-layout="mobile"]:has(.app-header.nav-open) .kplog-panel {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
         [data-layout="mobile"] .nav-tab {
             flex-direction: column;
             padding: 12px 8px;

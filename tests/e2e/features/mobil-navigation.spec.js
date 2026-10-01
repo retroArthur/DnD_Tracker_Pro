@@ -195,17 +195,74 @@ async function vollerZustand(page) {
 }
 
 /**
- * Faehrt die Leiste ueber den echten Umschalter aus.
+ * Faehrt die Leiste ueber den echten Umschalter aus — und prueft VORHER, dass
+ * der Weg dorthin frei ist.
+ *
+ * Die eingeklappte Leiste zeigt nur die Umschalter-Zeile am unteren Fensterrand.
+ * Liegt darauf ein Schwebeelement, sind alle 24 Ansichten unerreichbar, ohne dass
+ * eine Messung an der ausgefahrenen Leiste das jemals bemerkt: man kommt gar
+ * nicht dazu, sie auszufahren. Gemessen am Buendel zu cecfefe mit offenem
+ * Kampfprotokoll antwortete `elementFromPoint` auf der Mitte der
+ * Umschalter-Zeile mit `div#kampflog-panel.kplog-panel.active` — bei 390x844,
+ * 360x740 UND 740x360.
+ *
+ * Geklickt wird auf den gemessenen Koordinaten, nicht per Element-Klick: ein
+ * Element-Klick rollt ins Sichtfeld und erzwingt die Zustellung und
+ * uebersprignt damit genau die Frage.
  * @param {import('@playwright/test').Page} page
  */
 async function leisteOeffnen(page) {
     const schon = await page.evaluate(() => !!document.querySelector('.app-header.nav-open'));
     if (!schon) {
-        await page.locator('.mobile-nav-toggle').click();
+        const weg = await page.evaluate(() => {
+            const u = document.querySelector('.mobile-nav-toggle');
+            if (!u) return null;
+            const r = u.getBoundingClientRect();
+            const cx = Math.round(r.left + r.width / 2);
+            const cy = Math.round(r.top + r.height / 2);
+            const el = document.elementFromPoint(cx, cy);
+            const bez = e => {
+                if (!e) return 'nichts';
+                const id = e.id ? '#' + e.id : '';
+                const kl =
+                    typeof e.className === 'string' && e.className.trim()
+                        ? '.' + e.className.trim().split(/\s+/).join('.')
+                        : '';
+                return e.tagName.toLowerCase() + id + kl;
+            };
+            return { cx, cy, frei: !!el && (el === u || u.contains(el)), obenauf: bez(el) };
+        });
+        expect(weg, 'die Umschalter-Zeile fehlt').not.toBeNull();
+        expect(
+            weg.frei ? 'frei' : weg.obenauf,
+            `der Weg in die Leiste muss frei sein (Mitte ${weg.cx},${weg.cy})`
+        ).toBe('frei');
+        await page.mouse.click(weg.cx, weg.cy);
         await page.waitForTimeout(450); // 0.3s Uebergang plus Luft
     }
     const offen = await page.evaluate(() => !!document.querySelector('.app-header.nav-open'));
     expect(offen, 'die Leiste liess sich nicht ausfahren').toBe(true);
+}
+
+/**
+ * Faehrt die Leiste wieder ein, damit der naechste Zustand den echten
+ * Oeffnungsweg erneut gehen muss.
+ * @param {import('@playwright/test').Page} page
+ */
+async function leisteSchliessen(page) {
+    const offen = await page.evaluate(() => !!document.querySelector('.app-header.nav-open'));
+    if (!offen) return;
+    const mitte = await page.evaluate(() => {
+        const u = document.querySelector('.mobile-nav-toggle');
+        if (!u) return null;
+        const r = u.getBoundingClientRect();
+        return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)];
+    });
+    if (!mitte) return;
+    await page.mouse.click(mitte[0], mitte[1]);
+    await page.waitForTimeout(450);
+    const zu = await page.evaluate(() => !document.querySelector('.app-header.nav-open'));
+    expect(zu, 'die Leiste liess sich nicht einfahren').toBe(true);
 }
 
 /**
@@ -370,6 +427,10 @@ test.describe('M1 — alle 24 Ansichten auf dem Telefon', () => {
                 await mobilLaden(page, theme);
 
                 for (const zustand of ['schlicht', 'voll']) {
+                    // Jeder Zustand geht den Oeffnungsweg selbst — sonst bliebe
+                    // ungeprueft, ob die Umschalter-Zeile im vollen Zustand noch
+                    // frei liegt.
+                    await leisteSchliessen(page);
                     if (zustand === 'voll') await vollerZustand(page);
                     await leisteOeffnen(page);
 
