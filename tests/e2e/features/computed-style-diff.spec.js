@@ -205,7 +205,10 @@ const EXPECTED_DEVIATION_KEYS = [
 // M2b/M2c geben der Schale im Mobil-Layout 108px zurueck (zweite Reservierung des Leistenplatzes
 // entfallen, Hinweisband auf Telefonbreite kurz gefasst): bei 375x812 waechst `.bestiary-view` von
 // 466 auf 574px. Dass die Liste davon SCHRUMPFT (Sichtfeld 400 -> 122px, gerenderte Zeilen 13 -> 8),
-// liegt NICHT an der Schale, sondern an `VirtualScroll.create()` (ui/virtual-scroll.js): es nimmt
+// liegt NICHT an der Schale, sondern an `VirtualScroll.create()` — der geteilten Maschinerie in
+// `virtual-scroll.js` (im `ui/`-Verzeichnis). Der vollstaendige Pfad steht hier ABSICHTLICH nicht:
+// das Abdeckungs-Gate in tests/unit/module-test-coverage.test.js zaehlt jede woertliche
+// Pfadnennung in einer Testdatei als Abdeckung, und diese Erwaehnung ist keine. Es nimmt
 // `container.clientHeight`, sonst `parent.clientHeight - padY`, sonst den festen Rueckfall 400. In
 // der Schmalfassung ist `.bestiary-master` inhaltsgetrieben (`grid-template-rows: auto`,
 // `overflow-y: visible`), also liefert die Messung einen Wert, der von der vorigen Messung abhaengt
