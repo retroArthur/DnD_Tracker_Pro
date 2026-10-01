@@ -157,7 +157,20 @@
  * und der Wuerfelknopf sind Tippflaechen und duerfen nicht unter die
  * Fingergroesse gedrueckt werden — dieselbe Begruendung wie bei `.init-right`
  * in Runde 1. Nur beim Zaubernamen ist Abkuerzen zulaessig, weil der volle Name
- * im `title` der Marke steht (`features/initiative-combat-widgets.js:294`).
+ * im `title` der Marke steht (`renderConcentration()` in
+ * `initiative-combat-widgets.js:294`, unter `features/`).
+ *
+ *   OHNE VERZEICHNISPRAEFIX, UND ZWAR ABSICHTLICH. Das Abdeckungs-Gate
+ *   (`tests/unit/module-test-coverage.test.js`) haelt ein Modul fuer von einem
+ *   Test angefasst, sobald sein loader-relativer Pfad WOERTLICH irgendwo unter
+ *   `tests/` steht — auch in einem blossen Kommentar. Diese Probe LIEST das
+ *   Modul aber nicht, sie misst nur die Flaeche, die es zeichnet. Stuende der
+ *   volle Pfad hier, wuerde das Modul aus der Ausnahmeliste fallen und waere
+ *   damit dauerhaft und unsichtbar aus dem Gate heraus — die Liste darf nur
+ *   schrumpfen, und zwar nur, wenn ein Test den Pfad in AUSFUEHRBAREM Code
+ *   fuehrt (so steht es in der Ausnahmeliste selbst, Eintraege vom 2026-09-28
+ *   und 2026-09-29). `features/initiative.js` oben ist unschaedlich: dieses
+ *   Modul steht gar nicht auf der Liste.
  *
  * WARUM ZUSICHERUNG 4 MITWACHSEN MUSS. Dass die Probe diese drei Faelle bis
  * Runde 2 gruen durchlief, lag nicht an den Zusicherungen, sondern an der SAAT:

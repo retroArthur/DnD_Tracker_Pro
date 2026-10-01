@@ -7417,7 +7417,9 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
         // (Pruefung W3-E, Runde 1) ist 23 Zeilen weiter oben eingefuegt.
-        { datei: 'initiative.css', zeile: 1133, stufe: 'drawer',
+        // Anker 1133 -> 1216: die zwei Begruendungen an den Zustandsflaechen
+        // der Kampfzeile (Q1, Runde 2) sind 83 Zeilen weiter oben eingefuegt.
+        { datei: 'initiative.css', zeile: 1216, stufe: 'drawer',
           pfad: '.init-statblock-content',
           vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
         { datei: 'loot.css', zeile: 313, stufe: 1,
