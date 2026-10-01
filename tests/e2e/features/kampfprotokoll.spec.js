@@ -307,6 +307,131 @@ test.describe('U5: Kampfprotokoll — Kategorien', () => {
     });
 });
 
+test.describe('U5: Einstieg im Mobil-Layout', () => {
+    // 420px: das Mobil-Layout ist ab ~680px aktiv. Die Taste K hilft am Touchgeraet
+    // nicht — hier zaehlt nur, was ein Finger trifft.
+    test.use({ viewport: { width: 420, height: 760 } });
+
+    test('auch im Mobil-Layout gibt es einen sichtbaren Weg zum Panel', async ({ page }) => {
+        await ladeApp(page);
+
+        const messwert = await page.evaluate(() => {
+            const alle = [...document.querySelectorAll('[data-action="toggle-combat-log"]')];
+            const sichtbar = alle.filter(e => {
+                const r = e.getBoundingClientRect();
+                return r.width > 0 && r.height > 0;
+            });
+            return {
+                layout: document.documentElement.dataset.layout || '(keins)',
+                imDom: alle.length,
+                sichtbareWege: sichtbar.length,
+                wo: sichtbar.map(e => e.id || String(e.className).slice(0, 30))
+            };
+        });
+
+        console.log(
+            `[U5-11] Layout: ${messwert.layout} · Ausloeser im DOM: ${messwert.imDom} · ` +
+                `davon sichtbar: ${messwert.sichtbareWege} (${messwert.wo.join(', ') || 'keiner'})`
+        );
+
+        expect(messwert.layout).toBe('mobile');
+        // Der Befund, aus dem U5 entstand, lautete "es gibt nur einen versteckten
+        // Mausweg". Im Mobil-Layout gab es NULL: .header-actions ist dort
+        // display:none, und damit auch der Kopfknopf.
+        expect(messwert.sichtbareWege).toBeGreaterThanOrEqual(1);
+    });
+
+    test('der Einstieg im Mobil-Kopf oeffnet das Panel, ohne von ihm verdeckt zu werden', async ({
+        page
+    }) => {
+        await ladeApp(page);
+
+        const knopf = page.locator('.mobile-header [data-action="toggle-combat-log"]');
+        await expect(knopf).toBeVisible();
+        await knopf.click();
+        await page.waitForTimeout(350);
+        await expect(page.locator('#kampflog-panel')).toBeVisible();
+
+        const geo = await page.evaluate(() => {
+            const panel = document.getElementById('kampflog-panel');
+            const kopf = document.querySelector('.mobile-header');
+            const p = panel.getBoundingClientRect();
+            const k = kopf ? kopf.getBoundingClientRect() : null;
+            return {
+                panel: `${Math.round(p.width)}x${Math.round(p.height)} bei ${Math.round(p.left)}/${Math.round(p.top)}`,
+                kopfUnten: k ? Math.round(k.bottom) : -1,
+                panelOben: Math.round(p.top),
+                ueberlappung: k ? Math.max(0, Math.round(k.bottom - p.top)) : -1,
+                ueberRechtemRand: Math.max(0, Math.round(p.right - window.innerWidth))
+            };
+        });
+
+        console.log(
+            `[U5-12] Panel ${geo.panel} · Mobil-Kopf endet bei ${geo.kopfUnten}, Panel beginnt ` +
+                `bei ${geo.panelOben} · Ueberlappung: ${geo.ueberlappung}px · ueber dem rechten ` +
+                `Rand: ${geo.ueberRechtemRand}px`
+        );
+
+        expect(geo.ueberlappung).toBe(0);
+        expect(geo.ueberRechtemRand).toBe(0);
+    });
+});
+
+test.describe('U5: Loeschen raeumt das Protokoll mit', () => {
+    test('"Alle Daten löschen" laesst keinen Kampagneninhalt im Protokoll stehen', async ({
+        page
+    }) => {
+        // Beide Bestaetigungen des echten Wegs annehmen (plus die Rueckfrage eines
+        // etwaigen gescheiterten Sicherungsschritts).
+        page.on('dialog', d => d.accept());
+        await ladeApp(page);
+
+        await page.evaluate(() => {
+            window.showToast('Held 01 trifft NSC 07 für 12 Schaden', 'info', {
+                kategorie: 'kampf'
+            });
+        });
+        await page.waitForTimeout(700); // ueber der Schreibverzoegerung des Protokolls
+
+        const vor = await page.evaluate(() => ({
+            mitNamen: window.getCombatLog().filter(e => /Held 01|NSC 07/.test(e.text)).length,
+            schluessel: Object.keys(localStorage).filter(k => /kampfprotokoll/.test(k)).length
+        }));
+        expect(vor.mitNamen).toBe(1);
+        expect(vor.schluessel).toBe(1);
+
+        // Der echte Weg: zwei Bestaetigungen, Sicherheitskopie, Entfernen, Neuladen.
+        await page.evaluate(() => {
+            window.clearStorage();
+        });
+        await page.waitForTimeout(3500); // Entfernen + 1000 ms bis location.reload()
+        await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', {
+            timeout: 20000
+        });
+        await page.waitForTimeout(500);
+
+        const nach = await page.evaluate(() => {
+            const log = window.getCombatLog();
+            return {
+                gesamt: log.length,
+                mitNamen: log.filter(e => /Held 01|NSC 07/.test(e.text)).map(e => e.text),
+                loeschmeldung: log.some(e => /Alle Daten gelöscht/.test(e.text))
+            };
+        });
+
+        console.log(
+            `[U5-13] nach dem Loeschen + Neuladen — Eintraege: ${nach.gesamt} · Loeschmeldung ` +
+                `vorhanden: ${nach.loeschmeldung} · noch mit Namen: ` +
+                `${JSON.stringify(nach.mitNamen)}`
+        );
+
+        // Belegt, dass der Loeschweg wirklich durchgelaufen ist (und der Fall nicht
+        // nur gruen ist, weil clearStorage() abgebrochen hat).
+        expect(nach.loeschmeldung).toBe(true);
+        expect(nach.mitNamen).toEqual([]);
+    });
+});
+
 test.describe('U5: Doppelblase abgeschaltet', () => {
     test('nach einer Meldung existiert kein #toast-Knoten mehr', async ({ page }) => {
         await ladeApp(page);
