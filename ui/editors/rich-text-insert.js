@@ -825,6 +825,37 @@ function updateStickyOffsets() {
         document.querySelector('.migration-hint-banner'),
         document.querySelector('.divergence-banner')
     ].filter(Boolean);
+
+    // Die Hoehe jedes gefundenen Bands wird HIER nachgemessen und sein Token neu
+    // gesetzt, statt dem Wert zu glauben, den showMigrationHintBanner() bzw.
+    // showDivergenceBanner() bei der Erzeugung EINMAL abgelegt haben.
+    //
+    // Grund: die Hoehe haengt an der Fensterbreite — das Hinweisband bricht um
+    // (gemessen 61px bei 1440, 80px bei 500, 157px bei 390 Breite). Ein
+    // Fensterwechsel NACH dem Laden liess die Gegenrechnung am Seiteninhalt
+    // (`body.has-migration-hint { padding-top }`) auf dem alten Wert stehen,
+    // waehrend Glied 1 unten der neuen Isthoehe folgte. Die angeheftete Kopfzeile
+    // rutschte dadurch ueber die Werkzeugleiste der Ansicht und deckte sie bei
+    // 1440x800 -> 390x844 um 74 von 74px zu — UNGESCROLLT, wo weder Scrollweg
+    // noch Anheft-Versatz etwas ausrichten. Bei 500px waren es 9px. Und weil
+    // Glied 0 (setzeRahmenHoehe) denselben body-Innenabstand mitliest, war mit
+    // der Gegenrechnung auch das Hoehenbudget falsch.
+    //
+    // Die Messung ist NICHT zirkulaer: beide Baender sind `position: fixed` und
+    // stehen damit ausserhalb des Flusses — ihre eigene Hoehe haengt nicht an dem
+    // Innenabstand, den sie setzen.
+    //
+    // Das Divergenz-Band kann derzeit nicht umbrechen (`height: 40px` +
+    // `white-space: nowrap` + Ellipse, migration.css) und wird hier trotzdem
+    // mitgefuehrt: sein Token kommt aus derselben Einmal-Messung, und die
+    // Symmetrie kostet nichts.
+    for (const band of baender) {
+        const name = band.classList.contains('migration-hint-banner')
+            ? '--migration-hint-height'
+            : '--divergence-banner-height';
+        root.style.setProperty(name, Math.round(band.getBoundingClientRect().height) + 'px');
+    }
+
     const bandHoehe = baender.reduce(
         (tiefste, el) => Math.max(tiefste, Math.round(el.getBoundingClientRect().bottom)),
         0
