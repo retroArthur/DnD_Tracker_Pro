@@ -9,15 +9,31 @@
  * werden dort aufgeloest (`.nav-group { display: contents }`). Der Umschalter
  * selbst war immer erreichbar; die Reiter dahinter waren es nicht.
  *
- * GEMESSEN am Buendel zu cecfefe (`setLayout('mobile')`, Umschalter geklickt,
- * `elementFromPoint` auf der Reitermitte, Ereignis-Log im Dauermodus mit fuenf
- * Meldungen und offenem Kampfprotokoll):
+ * GEMESSEN am Buendel zu cecfefe (`setLayout('mobile')`, Umschalter auf seinen
+ * gemessenen Koordinaten geklickt, `elementFromPoint` auf der Reitermitte).
  *
- *   Fenster    Reiter  im Feld  erreichbar   Leiste  Rasterinhalt
- *   --------   ------  -------  ----------   ------  ------------
- *   390x844        24       16          11    300px         444px
- *   360x740        24       16          13    300px         444px
- *   700x800        24       16          16    300px         444px
+ * EINE EINZIGE ZAHLENREIHE GAB ES NIE, und das ist selbst ein Befund: wie viele
+ * Reiter erreichbar waren, hing daran, wie viele Meldungen gerade im
+ * Ereignis-Log standen. Jeder Eintrag machte es rund 70px hoeher (153px bei
+ * zwei Eintraegen, 223px bei drei) und verdeckte damit eine weitere Reiterreihe.
+ * `setLayout('mobile')` schreibt selbst eine Meldung ("Layout: Mobil"), die
+ * Sicherungserinnerung eine zweite — die Messung stoerte also ihren eigenen
+ * Gegenstand. Deshalb stehen hier alle drei Zustaende mit ihrer Bedingung statt
+ * einer Reihe ohne:
+ *
+ *   Zustand                                  390x844  360x740  700x800
+ *   --------------------------------------   -------  -------  -------
+ *   schlicht, zwei fluechtige Meldungen           11       13       16
+ *   schlicht, drei (ein `setTheme()` mehr)         7       10       14
+ *   voll (Dauermodus mit 5 Meldungen UND              6        0*       8
+ *         offenem Kampfprotokoll)
+ *
+ *   * bei 360x740 lag das Kampfprotokoll auf der Umschalter-Zeile: die Leiste
+ *     liess sich gar nicht erst ausfahren, also waren ALLE 24 unerreichbar.
+ *
+ * In jedem dieser Zustaende lagen 20 der 24 Reitermitten im sichtbaren Feld der
+ * Leiste (ausser im Fall mit dem Stern, wo es 0 waren), die Leiste war 357px
+ * hoch, das Raster 300px sichtbar bei 444px Inhalt.
  *
  * ZWEI UNABHAENGIGE URSACHEN, beide beziffert:
  *

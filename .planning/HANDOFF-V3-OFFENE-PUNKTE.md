@@ -4118,7 +4118,104 @@ nur per `page.mouse.wheel`, geklickt nur auf gemessenen Koordinaten.
 
 ```bash
 PYTHONIOENCODING=utf-8 python build.py
-npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 13 Faelle
+npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 21 Faelle
+```
+
+---
+
+## M1 Runde 2 — die waagerechte Achse (2026-10-01, erledigt)
+
+Runde 1 hat die Leiste nur **senkrecht** vermessen. Die Prüfung der Einheit hat die zweite Achse
+gefunden; sie ist echt, und sie trifft genau die Breite, die CLAUDE.md als Mobil-Prüfbreite nennt.
+
+### Der Befund, nachgemessen
+
+`.nav-tabs` steht auf `repeat(4, 1fr)`. Ein `1fr` ist `minmax(auto, 1fr)`, und `auto` löst als
+Mindestbreite die **Min-Inhalt-Breite** des Rasterkindes auf. Solange die Beschriftung aus
+`core.css` `white-space: nowrap` erbt, ist das die volle Textbreite — die vier Spalten konnten
+gar nicht unter **408px** gehen, bei jeder Fensterbreite.
+
+| Fenster | Rasterbreite / Fenster | Überhang | erreichbar |
+| --- | --- | --- | --- |
+| 320x568, 320x740 | 408px / 320px | 88px | **18/24** |
+| 360x740 | 408px / 360px | 48px | 24/24 (rechte Spalte angeschnitten) |
+| 390x844 | 408px / 390px | 18px | 24/24 (rechte Spalte angeschnitten) |
+
+Bei 320px lag die vierte Spalte (x 308..400) **ganz** außerhalb der Scheibe. `elementFromPoint`
+antwortete auf ihrer Mitte (x=354) mit `null` — nicht weil etwas darüberlag, sondern weil der
+Punkt das Fenster verlassen hatte. Unerreichbar waren Fraktionen, Quests, Wiki, Shops, DM Screen
+und Daten. Ein senkrechtes Mausrad half nicht (`scrollLeft` blieb 0); nur ein **waagerechtes**
+Rad erreichte sie, und dann verließ die erste Spalte das Fenster. Es waren nie alle 24
+gleichzeitig da, und nichts in der Leiste deutete auf diese Geste hin.
+
+Die Ursache ist vorbestehend (`grid-template-columns` ist im Diff der Runde 1 unveränderte
+Kontextzeile). Die **Zusicherung** der Runde 1 war aber „alle 24 Ansichten erreichbar", und ihr
+Netz prüfte ausschließlich 360px und 390px — es konnte diesen Fall nie melden.
+
+### Die Entscheidung
+
+Vier Angaben an `[data-layout="mobile"] .nav-tab`: `min-width: 0` (nimmt der Spalte die
+Mindestbreite), `white-space: normal` (hebt das geerbte `nowrap` auf), `overflow-wrap: anywhere`
+(die funktionale Zusage — die einzige der drei, die auch die Min-Inhalt-Breite senkt) und
+`hyphens: auto` (nur die Form: mit `lang="de"` wird aus „Soundboar|d" ein „Sound-|board").
+
+`min-width: 0` **allein** wäre die halbe Lösung gewesen: die Spalten schrumpfen (408 → 320, 24/24
+erreichbar), aber die Beschriftung behält `nowrap` und quillt über den Knopfrand auf den Nachbarn
+— bei 320px gemessen `dmscreen` +1px, `soundboard` +4px, `sessionprep` +6px. Dagegen steht jetzt
+Zusicherung 7.
+
+Nicht gewählt: eine Ellipse (schneidet die Beschriftung ab — am Tisch muss „wo ist das
+Soundboard" durch Hinsehen beantwortbar sein, und „Soundb…" ist kein Hinsehen); drei Spalten
+unter 360px (568px hohes Raster bei 368px Sichtfeld, also mehr Wischen statt weniger, gemessen
+18/24 ohne Rad bei 320x568); eine kleinere Schrift oder Tippfläche (unter 44px trifft ein Daumen
+nicht mehr zuverlässig — derselbe Grund wie beim Deckel in Runde 1).
+
+### Die gemessene Wirkung
+
+Gebautes Bündel, vier Themes auf den Bildpunkt gleich, beide Zustände:
+
+| Fenster | Raster waagerecht Inhalt/Sichtfeld | erreichbar (vorher) | kleinster Reiter |
+| --- | --- | --- | --- |
+| 320x568 | 320 / 320 (vorher 408) | **24/24** (18) | 72x56 |
+| 320x740 | 320 / 320 (vorher 408) | **24/24** (18) | 72x56 |
+| 360x740 | 360 / 360 (vorher 408) | **24/24** (24) | 82x56 |
+| 390x844 | 390 / 390 (vorher 408) | **24/24** (24) | 89x56 |
+| 700x800 | 700 / 700 | **24/24** | 167x56 |
+| 740x360 | 740 / 740 | **24/24** nach Rad | 177x56 |
+
+Kein Textüberlauf in keinem Fall. Bei 320px laufen zwei Beschriftungen auf zwei Zeilen und machen
+ihren Reiter 64px hoch. Das Desktop-Layout ist unberührt; der Stil-Sollstand erfasst ohnehin nur
+Elemente innerhalb der `#view-*`-Behälter, die Leiste liegt im Kopf.
+
+### Richtiggestellt: der Kopf der Probe
+
+Die Prüfung hat außerdem gemeldet, die Ausgangszahlen im Kopf von `mobil-navigation.spec.js`
+(11/13/16) seien „nicht reproduzierbar" und die Wirklichkeit sei 7/10/14. **Das stimmt nur zur
+Hälfte.** Nachgemessen am selbst gebauten `cecfefe`-Bündel sind *beide* Reihen echt — der
+Unterschied ist **eine einzige flüchtige Meldung**:
+
+| Zustand | Einträge im Ereignis-Log | 390x844 | 360x740 | 700x800 |
+| --- | --- | --- | --- | --- |
+| schlicht | 2 (Sicherungserinnerung, „Layout: Mobil") | 11 | 13 | 16 |
+| schlicht + `setTheme()` | 3 (zusätzlich „Theme: Dunkel") | 7 | 10 | 14 |
+| voll (Dauermodus mit 5, Kampfprotokoll offen) | 5 | 6 | 0 | 8 |
+
+Jeder Eintrag macht das Log rund 70px höher (153px bei zwei, 223px bei drei Einträgen) und
+verdeckt damit eine weitere Reiterreihe. `setLayout('mobile')` schreibt dabei **selbst** eine
+Meldung: die Messung störte ihren eigenen Gegenstand. Bei 360x740 im vollen Zustand lag das
+Kampfprotokoll auf der Umschalter-Zeile, die Leiste ließ sich gar nicht ausfahren — daher die 0.
+
+Der echte Fehler im Kopf war deshalb nicht die Zahlenreihe, sondern ihre **Beschriftung**: dort
+stand als Bedingung der volle Zustand, die Zahlen waren aber die des schlichten. Die Spalte „im
+Feld 16" war ebenfalls falsch, gemessen sind es 20. Der Kopf führt jetzt alle drei Zustände mit
+ihrer Bedingung statt einer Reihe ohne. Die Tabelle der Runde 1 weiter oben (7/10/16) bleibt, wie
+sie ist: sie nennt den Stand, gegen den Runde 1 gearbeitet hat.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 21 Faelle
 ```
 
 ---
