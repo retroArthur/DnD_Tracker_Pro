@@ -89,6 +89,16 @@ const FENSTER = [
 /** Telefon im Querformat — hier MUSS die Leiste scrollen. */
 const KURZES_FENSTER = [740, 360];
 
+/* Das ENGSTE gebraeuchliche Telefon. CLAUDE.md nennt 320px ausdruecklich als
+   Mobil-Pruefbreite („Mobile First: Test widgets at 320px width"); die erste
+   Runde dieser Probe hat genau diese Breite ausgelassen und konnte den
+   waagerechten Ueberhang deshalb nicht sehen. 320x568 ist das iPhone SE der
+   ersten Bauart, 320x740 ein schmales Android-Geraet. */
+const ENGE_FENSTER = [
+    [320, 568],
+    [320, 740]
+];
+
 /** Vollzahl der Ansichten (dieselbe Liste wie in der Reiter-Registrierung). */
 const ANZAHL_ANSICHTEN = 24;
 
@@ -302,7 +312,14 @@ function messeLeiste() {
             // Liegt die Mitte im SICHTBAREN Feld der Leiste (also nicht hinter
             // deren eigenem overflow) und im Fenster?
             imFeld: cy >= nr.top && cy <= nr.bottom && cy >= 0 && cy <= window.innerHeight,
+            // Liegt die Mitte waagerecht ueberhaupt im Fenster? Steht hier
+            // `false`, antwortet `elementFromPoint` mit `null` — nicht weil etwas
+            // darueberliegt, sondern weil der Punkt die Scheibe verlassen hat.
+            imFensterWaagerecht: cx >= 0 && cx <= window.innerWidth,
             erreichbar: !!el && (el === t || t.contains(el)),
+            // Laeuft die Beschriftung aus ihrem EIGENEN Knopf heraus? Das ist der
+            // Preis der naheliegenden, falschen Korrektur (Zusicherung 7).
+            textUeberlauf: t.scrollWidth - t.clientWidth,
             obenauf: bez(el),
             obenaufPos: obenauf ? obenauf.position : null,
             obenaufZ: obenauf ? obenauf.zIndex : null
@@ -351,7 +368,11 @@ function messeLeiste() {
         navUnten: Math.round(nr.bottom),
         navSichtHoehe: nav.clientHeight,
         navInhaltHoehe: nav.scrollHeight,
+        // Die WAAGERECHTE Achse, dieselbe Groesse eine Vierteldrehung weiter.
+        navSichtBreite: nav.clientWidth,
+        navInhaltBreite: nav.scrollWidth,
         navRollstand: Math.round(nav.scrollTop),
+        navRollstandWaagerecht: Math.round(nav.scrollLeft),
         reiter,
         ueberlapper
     };
@@ -414,6 +435,59 @@ async function radDurchlauf(page) {
     return { erreicht, offen, letzte, runden };
 }
 
+/**
+ * ZUSICHERUNG 6 und 7 — die WAAGERECHTE Achse.
+ *
+ * Die erste Runde dieser Probe hat die Leiste nur senkrecht vermessen. Das
+ * Raster laeuft aber auch zur Seite aus dem Fenster: `repeat(4, 1fr)` kann
+ * seine Spalten nicht unter die Min-Inhalt-Breite eines Reiters druecken,
+ * solange dessen Beschriftung `white-space: nowrap` traegt. Gemessen am
+ * Buendel zu 4df04c1 betrug `scrollWidth` deshalb bei JEDER Telefonbreite
+ * 408px — bei 320px Fensterbreite liegt die vierte Spalte (x 308..400) damit
+ * ganz ausserhalb der Scheibe, ihre Mitte bei x=354. Dort antwortet
+ * `elementFromPoint` mit `null`, und zwar nicht, weil etwas darueberliegt,
+ * sondern weil der Punkt das Fenster verlassen hat: sechs Ansichten
+ * (Fraktionen, Quests, Wiki, Shops, DM Screen, Daten) waren unerreichbar. Bei
+ * 360px und 390px war dieselbe Ursache milder sichtbar — Ueberhang 48px bzw.
+ * 18px, die rechte Spalte angeschnitten.
+ *
+ * ZUSICHERUNG 6 prueft deshalb `scrollWidth <= clientWidth`: die Leiste darf
+ * nicht breiter sein als das Fenster. Ein waagerechtes Mausrad erreicht die
+ * letzte Spalte zwar, aber dann verlaesst die erste das Fenster — es sind nie
+ * alle 24 gleichzeitig da, und nichts in der Leiste deutet auf diese Geste hin.
+ *
+ * ZUSICHERUNG 7 prueft, dass keine Beschriftung aus ihrem EIGENEN Knopf
+ * laeuft. Sie ist die Schranke gegen die naheliegende, falsche Korrektur:
+ * `min-width: 0` allein laesst die Spalten zwar schrumpfen (gemessen:
+ * scrollWidth 408 -> 320, 24/24 erreichbar), aber die Beschriftung behaelt
+ * `nowrap` und quillt dann ueber den Knopfrand auf den Nachbarn — bei 320px
+ * gemessen fuer `dmscreen` (+1px), `soundboard` (+4px) und `sessionprep`
+ * (+6px). Diese Zusicherung ist am Stand VOR der Korrektur gruen; sie ist kein
+ * Nachweis, sondern ein Riegel, der genau diese halbe Loesung ausschliesst.
+ *
+ * @param {object} m Ergebnis von messeLeiste()
+ * @param {number} breite Fensterbreite
+ * @param {string} kennung Zustandsname fuer die Fehlermeldung
+ */
+function pruefeWaagerechteAchse(m, breite, kennung) {
+    // Zusicherung 6 — die Leiste bleibt im Fenster.
+    expect(
+        m.navInhaltBreite - m.navSichtBreite,
+        `${kennung}: bei ${breite}px Fensterbreite muss das Reiterraster waagerecht ` +
+            `hineinpassen (Inhalt ${m.navInhaltBreite}px, Sichtfeld ${m.navSichtBreite}px). ` +
+            `Ausserhalb liegende Reitermitten: ` +
+            JSON.stringify(
+                m.reiter.filter(r => !r.imFensterWaagerecht).map(r => `${r.view} x=${r.mitte[0]}`)
+            )
+    ).toBeLessThanOrEqual(0);
+
+    // Zusicherung 7 — keine Beschriftung quillt aus ihrem Knopf.
+    expect(
+        m.reiter.filter(r => r.textUeberlauf > 0).map(r => `${r.view} +${r.textUeberlauf}px`),
+        `${kennung}: Beschriftungen laufen aus ihrem eigenen Knopf heraus`
+    ).toEqual([]);
+}
+
 /* ====================================================================
    ZUSICHERUNG 1-4 — die beiden Telefonfenster, alle vier Themes.
    ==================================================================== */
@@ -438,7 +512,8 @@ test.describe('M1 — alle 24 Ansichten auf dem Telefon', () => {
                     console.log(
                         `[M1] ${breite}x${hoehe} ${theme} ${zustand}: Leiste ${erste.leisteHoehe}px ` +
                             `(oben ${erste.leisteOben}), Raster Sicht ${erste.navSichtHoehe}px / ` +
-                            `Inhalt ${erste.navInhaltHoehe}px, erreichbar ` +
+                            `Inhalt ${erste.navInhaltHoehe}px, waagerecht ` +
+                            `${erste.navSichtBreite}px / ${erste.navInhaltBreite}px, erreichbar ` +
                             `${erste.reiter.filter(r => r.erreichbar).length}/${erste.reiter.length}, ` +
                             `Ueberlapper ${JSON.stringify(erste.ueberlapper)}`
                     );
@@ -447,6 +522,8 @@ test.describe('M1 — alle 24 Ansichten auf dem Telefon', () => {
                         erste.reiter.length,
                         `${zustand}: die Leiste muss alle Ansichten fuehren`
                     ).toBe(ANZAHL_ANSICHTEN);
+
+                    pruefeWaagerechteAchse(erste, breite, `${zustand}`);
 
                     // Zusicherung 3 — der Platz ist da, also darf die Leiste ihn nehmen.
                     expect(
@@ -595,4 +672,79 @@ test.describe('M1 — kurzes Fenster: das Mausrad reicht', () => {
             `nicht erreichbare Reiter (${lauf.erreicht.size}/${ANZAHL_ANSICHTEN})`
         ).toEqual([]);
     });
+});
+
+/* ====================================================================
+   ZUSICHERUNG 6/7 — das ENGE Telefon, auf dem die waagerechte Achse bricht.
+   ====================================================================
+   Die erste Runde dieser Probe hat 360px und 390px gemessen und daraus „alle
+   24 Ansichten auf dem Telefon" geschlossen. Bei 320px — der Breite, die
+   CLAUDE.md als Mobil-Pruefbreite nennt — stimmte der Satz nicht: die vierte
+   Rasterspalte lag vollstaendig ausserhalb des Fensters, erreichbar waren 18
+   von 24. Ein Fall, der dieselbe Zusicherung bei derselben Fenstermenge
+   wiederholt, haette das nie gemeldet; deshalb steht hier eine eigene
+   Fenstermenge und nicht nur eine weitere Zeile in der alten.
+
+   Was hier NICHT gefordert wird: dass der Rasterinhalt senkrecht ohne Scrollen
+   hineinpasst. Bei 320x568 ist das Fenster dafuer zu kurz (gemessen 452px
+   Inhalt gegen 368px Sichtfeld), und genau dafuer gibt es den
+   `overflow`-Rueckfall, den der Rad-Durchlauf unten mitprueft. Gefordert wird,
+   dass das Raster WAAGERECHT hineinpasst — dort gibt es keinen Rueckfall, der
+   den Nutzer je erreicht. */
+test.describe('M1 — enges Telefon: die Leiste bleibt im Fenster', () => {
+    for (const theme of THEMES) {
+        for (const [breite, hoehe] of ENGE_FENSTER) {
+            test(`${breite}x${hoehe}, Theme ${theme}: alle 24 Reiter erreichbar`, async ({
+                page
+            }) => {
+                await page.setViewportSize({ width: breite, height: hoehe });
+                await mobilLaden(page, theme);
+
+                for (const zustand of ['schlicht', 'voll']) {
+                    await leisteSchliessen(page);
+                    if (zustand === 'voll') await vollerZustand(page);
+                    await leisteOeffnen(page);
+
+                    const m = await page.evaluate(messeLeiste);
+                    console.log(
+                        `[M1] ${breite}x${hoehe} ${theme} ${zustand}: waagerecht Sichtfeld ` +
+                            `${m.navSichtBreite}px / Inhalt ${m.navInhaltBreite}px, senkrecht ` +
+                            `${m.navSichtHoehe}px / ${m.navInhaltHoehe}px, erreichbar ` +
+                            `${m.reiter.filter(r => r.erreichbar).length}/${m.reiter.length}`
+                    );
+
+                    expect(
+                        m.reiter.length,
+                        `${zustand}: die Leiste muss alle Ansichten fuehren`
+                    ).toBe(ANZAHL_ANSICHTEN);
+
+                    pruefeWaagerechteAchse(m, breite, zustand);
+
+                    // Die Tippflaeche bleibt fingergross — auch hier. Enger heisst
+                    // nicht kleiner als ein Daumen.
+                    const zuKlein = m.reiter
+                        .filter(r => r.hoehe < MIN_TIPPFLAECHE || r.breite < MIN_TIPPFLAECHE)
+                        .map(r => `${r.view} ${r.breite}x${r.hoehe}px`);
+                    expect(zuKlein, `${zustand}: Tippflaechen unter ${MIN_TIPPFLAECHE}px`).toEqual(
+                        []
+                    );
+
+                    expect(
+                        m.ueberlapper.map(u => `${u.was} deckt ${u.deckung}px² (z=${u.z})`),
+                        `${zustand}: Schwebeelemente ueber der ausgefahrenen Leiste`
+                    ).toEqual([]);
+
+                    const lauf = await radDurchlauf(page);
+                    console.log(
+                        `[M1] ${breite}x${hoehe} ${theme} ${zustand}: Rad-Durchlauf ` +
+                            `${lauf.runden} Runden, erreicht ${lauf.erreicht.size}/${ANZAHL_ANSICHTEN}`
+                    );
+                    expect(
+                        lauf.offen,
+                        `${zustand}: nicht erreichbare Reiter (${lauf.erreicht.size}/${ANZAHL_ANSICHTEN})`
+                    ).toEqual([]);
+                }
+            });
+        }
+    }
 });
