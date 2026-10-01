@@ -432,6 +432,7 @@ function deleteEntity(id) {
 | `Strg+Y`   | Redo                                           |
 | `Strg+S`   | Save                                           |
 | `Strg+K/F` | Focus global search                            |
+| `Strg+Shift+K`   | Command palette (`Strg+.` is the Firefox-safe alternative) |
 | `R`        | Quick roll d20                                 |
 | `T`        | Toggle session timer                           |
 | `L`        | Toggle event log (persistent mode)             |
@@ -443,6 +444,8 @@ function deleteEntity(id) {
 | `Shift+N`  | New round (Initiative)                         |
 | `Space`    | Next turn (Initiative)                         |
 | `Escape`   | Close overlays/modals                          |
+| `Entf`/`Backspace` | Delete selected node (Network view only)     |
+| `Alt+1/2/4/6/8`  | Quick roll d12/d20/d4/d6/d8                    |
 | `Alt+Shift+1..5` | Activate Soundboard scene in quick-slot 1–5 (D-03) |
 | `Alt+Shift+0`    | Toggle Soundboard mute (D-03)                  |
 

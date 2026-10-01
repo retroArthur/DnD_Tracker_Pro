@@ -3918,3 +3918,95 @@ npx playwright test tests/e2e/features/sticky-stapel.spec.js tests/e2e/features/
 ```
 
 ---
+
+## U6-R3-01 — Abnahme der Höhenbudget-Korrektur: der Kurzfenster-Befund, auseinandergerechnet
+
+**Status: BEANTWORTET, nichts geändert.** Aufgenommen am 2026-10-01 bei der Abnahme der Runde 2.
+Der Prüfbefund lautete: *„Kurze Fenster, vor allem Telefon im Querformat: die gemessene
+Umrahmung frisst die Schale auf — 0 anklickbare Einträge, Suchfeld nicht treffbar."* Er ist in
+zwei Hälften zu teilen; nur eine davon ist überhaupt ein Befund, und die gehört nicht dieser
+Runde.
+
+Alle Zahlen am gebauten Bündel gemessen, Saatgut mit 24 Einträgen je Liste, A/B im SELBEN
+Bündel: der Vorher-Zustand wird durch eine Stilregel nachgestellt, die genau die eine geänderte
+Zeile zurückdreht (`height: calc(100vh - 120px)` an den fünf Schalen). Skripte unter
+`<scratch>/uat-budget/abnahme/` (`menschlich.mjs`, `regress2.mjs`, `kurz-innen.mjs`,
+`mobil-360.mjs`, `mobil-probe.mjs`).
+
+### (1) „0 anklickbare Einträge" — richtig gemessen, aber vorbestehend
+
+Bei Breiten **bis 900px** zusammen mit **etwa 390px Fensterhöhe** (844x390 und 900x390, beides
+Desktop-Layout, einspaltiger Zweig `@media (max-width: 900px)`) erreicht ein Mausrad **0 von 24**
+Einträgen — **mit dem gemessenen Budget und mit der zurückgedrehten 120px gleichermaßen**, über
+dieselbe Radfolge (Ruhe, Seite blättern, fünf Etappen über der Master-Spalte).
+
+Die Ursache ist nicht das Budget: die umgebrochene Werkzeugleiste der Ansicht ist bei diesen
+Breiten **157px** hoch und damit so hoch wie die ganze Schale (157px bei 844x390). Die
+Master-Spalte landet dadurch unter der `overflow: hidden`-Kante der Schale — vorher mit 113px
+Höhe unterhalb des Fensterrands, nachher mit 32px direkt an der Kante. In beiden Fällen bleibt
+nichts zu klicken.
+
+**Methodenhinweis, der hier den Unterschied macht:** `scrollIntoViewIfNeeded()` eines
+Testwerkzeugs scrollt eine Schale mit `overflow: hidden` **programmatisch** und meldet dann
+„Klick erfolgreich". Ein Mausrad kann das nicht. Wer in diesem Randfall mit
+`scrollIntoViewIfNeeded` prüft, misst eine Erreichbarkeit, die es am Tisch nicht gibt. Gemessen
+wurde deshalb ausschließlich mit `mouse.wheel`.
+
+### (2) „Suchfeld nicht treffbar" — reproduziert nicht
+
+In allen acht gemessenen Kurzfenstern (844x390, 740x360, 667x375, 900x390, 1024x600, 1280x400,
+1366x500, 390x844), in beiden Varianten, antwortet `elementFromPoint` auf der Mitte des
+Suchfelds mit dem Suchfeld: **frei**. Ebenso in 128 von 128 Zuständen der Desktop-Matrix (vier
+Ansichten x vier Breiten x zwei Höhen x mit/ohne Band x gescrollt/oben) und in 24 von 24
+Mobil-Zuständen. Die Hälfte des Befunds ist gegenstandslos.
+
+### (3) Was dieser Runde wirklich zuzurechnen ist: der Fluchtweg der Seite ist weg
+
+Vor der Korrektur hatte die Seite in kurzen Fenstern einen Überhang (113px bei 844x390, 151px
+im Mobil-Layout), und der Nutzer konnte die Seite blättern, um an die gequetschte Liste zu
+kommen. Jetzt ist der Überhang 0 — das IST die Korrektur — und damit auch dieser Weg. Der Preis,
+beziffert:
+
+| Fenster | vorher erreichbar | jetzt erreichbar |
+| ------- | ----------------- | ---------------- |
+| 1920x1080 | 13 von 24 | 12 von 24 |
+| 1440x800 | 13 von 24 | 12 von 24 |
+| 1024x600 | 10 von 24 | 9 von 24 |
+| 1280x400 | 5 von 24 | 2 von 24 |
+| 900x390 / 844x390 | 0 von 24 | 0 von 24 |
+
+(Vereinigungsmenge über dieselbe feste Radfolge; ab 600px Fensterhöhe ist der Unterschied genau
+ein Eintrag.)
+
+**Mobil, 360px Breite, mit stehendem Umzugs-Band** ist der sichtbarste Fall: die Umrahmung ist
+dort 346px von 740px Fensterhöhe (Band allein 157px), die Schale also 394 statt 620px. Die
+Werkzeugleiste nimmt davon 256 bis 328px, die Listenspalte behält **126px (NSCs), 54px (Truhe),
+201px (Orte)** statt vorher 352/280/427px. In zwei der vier Ansichten liegt die geometrische
+Mitte des letzten Eintrags danach hinter der Filterzeile der Werkzeugleiste; anklickbar bleibt
+er über seinen unteren Rand. **Ohne Band sind alle 24 Mobil-Zustände sauber** (Umrahmung 210px,
+Überhang 0, Suchfeld frei, letzter Eintrag getroffen).
+
+### (4) Nebenbefund derselben Messung: die Reiter-Leiste im Mobil-Layout ist unerreichbar
+
+`.app-header` ist im Mobil-Layout `position: fixed` und **357px hoch**, sichtbar bleibt davon
+nur ein 56px-Streifen am unteren Fensterrand. Das Reiter-Raster liegt damit **127 bis 301px
+unter** der Fensterkante und ist mit einem Klick nicht erreichbar — gemessen bei 390x844,
+700x800 und 360x740, **auf den Pixel gleich in beiden Varianten** (Reiter 915..971 bei 844px
+Fensterhöhe). Vorbestehend, vom Höhenbudget unabhängig; ein Ansichtswechsel im Mobil-Layout
+gelingt in diesen Fenstern nur über die Kommandopalette oder die Tastatur.
+
+**Zu entscheiden bleibt** (zusammen mit U6-R2-01 Punkt 3, es ist dieselbe Entscheidung): eine
+Untergrenze an den fünf Schalen — dann scrollt die Seite im Grenzfall wieder und die
+Werkzeugleiste kann dort wieder unter die Kopfzeile rutschen —, oder die Werkzeugleiste bei
+kleinen Breiten niedriger bauen, was den Randfall an der Wurzel auflöst und auch Punkt (1)
+mitnimmt.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/hoehenbudget.spec.js   # 23 Faelle
+UAT_SCREENS=1 npx playwright test tests/e2e/features/uat-funde-screens.spec.js   # 28 Bilder
+```
+
+---
