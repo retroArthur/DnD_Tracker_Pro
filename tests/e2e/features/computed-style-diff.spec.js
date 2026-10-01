@@ -154,7 +154,30 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // aus der Erfassung gefallen waren. Sie standen dort ueber mehrere Wellen hinweg und waren damit
 // genau das, was der Absatz oben verbietet. Statt sie weiterzuschleppen ist der Sollstand
 // REGULAER NEU ERHOBEN (`UPDATE_STYLE_BASELINE=1`) und schluesselweise gegen den vorigen
-// verglichen; die Zu-/Abgaenge und Digest-Aenderungen stehen einzeln im Commit der Neuerhebung.
+// verglichen — Zu- und Abgaenge einzeln benannt, nicht gezaehlt:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl Bestiar
+//   --------------  --------  --------  ------------------  -------------------
+//   standard               0        14                   0          129 -> 115
+//   narrow                 0        35                   0          115 ->  80
+//   reducedMotion          0        14                   0          129 -> 115
+//
+//   63 Meldungen an 49 verschiedenen Schluesseln (standard und reducedMotion nennen dieselben
+//   14). ALLE 63 liegen in der Bestiar-Ansicht; 54 tragen `bestiary` im Klassennamen, die
+//   restlichen 9 sind `span.sr-only#8` bis `#14` aus genau denselben Listenzeilen. KEIN Abgang
+//   darueber hinaus, KEIN Zugang, und an keinem weiterhin erfassten Element hat sich ein
+//   berechneter Wert bewegt (0 Digest-Aenderungen in allen drei Durchgaengen). Das war die
+//   Behauptung der beiden Ausnahmelisten, und sie haelt — geprueft, nicht geglaubt.
+//
+// Dass die Elementzahl der Bestiar-Ansicht dabei SINKT, ist kein Stilverlust, sondern der
+// ungeloeste Befund hinter der geteilten Scroll-Maschinerie (`virtual-scroll.js` im `ui/`-
+// Verzeichnis — der vollstaendige Pfad steht hier ABSICHTLICH nicht: das Abdeckungs-Gate in
+// tests/unit/module-test-coverage.test.js zaehlt jede woertliche Pfadnennung in einer Testdatei
+// als Abdeckung, und diese Erwaehnung ist keine): deren Platzrechnung nimmt
+// `container.clientHeight`, sonst `parent.clientHeight - padY`, sonst den festen Rueckfall 400 —
+// ein Fixpunkt ohne Bezug zum verfuegbaren Platz, der bei GROESSERER Schale WENIGER Zeilen
+// rendert. Gemessen und offen; eine
+// eigene Einheit. Der Sollstand hier bildet den Istzustand ab, er rechtfertigt ihn nicht.
 //
 // Die Mechanik (`isExpectedDeviation()` mit dem `durchgang`-Parameter) bleibt stehen, damit die
 // naechste Welle, die berechnete Stile absichtlich aendert, sie wieder benutzen kann — eine leere
