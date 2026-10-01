@@ -1669,3 +1669,238 @@ test.describe('M1 — Gegenprobe: der alte Sitz des Ereignis-Logs meldet den Bef
         }
     });
 });
+
+/* ====================================================================
+   ZUSICHERUNG 12 UND 13 — DIESELBEN FRAGEN, ABER MIT GEFUELLTER KAMPAGNE.
+   ====================================================================
+   WARUM DAS EINE EIGENE ZUSICHERUNG BRAUCHT UND KEINE WIEDERHOLUNG IST.
+   Die Zusicherungen 1 bis 10 laden mit `mobilLaden(page, theme)` — also mit
+   dem Leerzustand `SAAT`, deren Kommentar das ausdruecklich festhaelt ("Daten
+   braucht diese Probe nicht"). Fuer die Leiste selbst ist das richtig: ihr
+   Raster haengt an der Zahl der Reiter, nicht an der Zahl der Datensaetze.
+   Fuer die beiden Fragen hier gilt das NICHT:
+
+     ERREICHBARKEIT  Auf dem Leerzustand ist jede Ansicht kurz, die Seite
+                     scrollt nicht, und der Umschalter sitzt immer an derselben
+                     Stelle. Mit Daten scrollt die Seite, und die
+                     bodenverankerten Schweber stehen in einem anderen
+                     Verhaeltnis zur eingeklappten Leiste.
+     STREIFEN        Die beiden Panels, die den Streifen ueberhaupt bedecken
+                     koennen, werden von DATEN hoch: das Wuerfel-Panel traegt
+                     die Wurfgeschichte (`diceHistory`), die Schnellreferenz
+                     die eigenen Eintraege (`quickRefCustom`). Auf leerer Saat
+                     sind beide auf ihrer Mindesthoehe — die Flaechenmessung
+                     ist damit am schwaechsten Fall geprueft, nicht am
+                     schwersten. `SAAT_GEFUELLT` weiter oben hilft hier nicht:
+                     sie fuehrt weder `diceHistory` noch `quickRefCustom`.
+
+   Das ist genau die Falle, die in diesem Projekt schon einmal einen Fehler
+   drei Wochen getragen hat (die Listen-Schalen: der Verlust begann ab dem
+   10. Eintrag, die Testseeds waren kuerzer). Darum steht in beiden
+   Zusicherungen eine VORBEDINGUNG, die belegt, dass die Saat angekommen ist.
+
+   WARUM 320x700. Das engste gebraeuchliche Geraet und damit der Fall, in dem
+   die Leiste am wenigsten Platz hat; die Zusicherung mit den 24 echten Klicks
+   weiter oben laeuft bei 390x844. Der Streifen bekommt zusaetzlich 740x360,
+   weil dort die Leiste scrollen MUSS und der Streifen am breitesten ist (144
+   Tastpunkte statt 66).
+
+   ROT OHNE DIE KORREKTUR — auf DIESER Saat gemessen, nicht uebernommen:
+
+     Zusicherung          Zwang                             Befund
+     ------------------   -------------------------------   -------------------
+     12 Erreichbarkeit    Deckel 300px UND                  20 von 24; offen:
+                          `.nav-tabs { overflow: hidden }`  soundboard,
+                                                            dicestats,
+                                                            sessionprep, data
+     13 Streifen 320x700  `.qref-fab { bottom: 10px }`      2250px2, 7 von 66
+     13 Streifen 740x360  `.qref-fab { bottom: 10px }`      2250px2, 7 von 144
+
+   ZWEI MESSERGEBNISSE, DIE DER ERWARTUNG WIDERSPRACHEN, und beide gehoeren
+   hierher, weil sie erklaeren, warum die Zwaenge so und nicht einfacher sind:
+
+     (a) DER DECKEL ALLEIN GENUEGT NICHT. Die Gegenprobe zu Zusicherung 8
+         erzwingt nur das Token `--mobile-nav-max-height: 300px` und sieht damit
+         ihren Befund — sie misst `erreichbar` in EINEM Augenblick, ohne zu
+         rollen. Zusicherung 12 rollt je Reiter nach (`radeln()`), und mit dem
+         `overflow`-Rueckfall, den M1 eingebaut hat, bleibt dann JEDER Reiter
+         erreichbar: gemessen 24 von 24 TROTZ Deckel. Erst OHNE den Rueckfall
+         entsteht der Verlust — und das ist genau der Zustand von vor M1, also
+         der richtige Zwang. Der erste, schwaechere Zwang machte diese
+         Zusicherung nicht rot und belegte deshalb nichts; er wurde verworfen.
+     (b) DIE KUGEL AM ALTEN SITZ BLOCKIERT DEN UMSCHALTER NICHT. `.qref-fab`
+         mit `bottom: 10px` deckt 2250px2 des Streifens (Zusicherung 13 sieht
+         das), aber nicht die MITTE der Umschalter-Zeile — Zusicherung 12 bleibt
+         unter diesem Zwang gruen (24 von 24). Die beiden Zusicherungen messen
+         also wirklich Verschiedenes, und keine ersetzt die andere. */
+
+/** Saat fuer die beiden Zusicherungen unten: gefuellt UND mit den zwei
+ *  Sammlungen, die die bodenverankerten Panels in die Hoehe treiben.
+ *  Getrennt von `SAAT_GEFUELLT` gehalten, damit Zusicherung 11 ihre eigenen
+ *  Bedingungen behaelt. */
+const SAAT_SCHWER = {
+    ...SAAT_GEFUELLT,
+    /* 12 Wuerfe — das Wuerfel-Panel zeigt die letzten fuenf, und erst mit
+       Geschichte erreicht es seine volle Hoehe. */
+    diceHistory: Array.from({ length: 12 }, (_, i) => ({
+        id: i + 1,
+        formula: '1d20+7',
+        result: (i % 20) + 1,
+        total: (i % 20) + 8,
+        rolls: [(i % 20) + 1],
+        label: 'Wurf mit laengerem Etikett ' + (i + 1),
+        timestamp: 1760000000000 - i * 60000
+    })),
+    /* Drei eigene Eintraege in der Schnellreferenz, aufgeklappt — dasselbe
+       Argument. */
+    quickRefCustom: Array.from({ length: 3 }, (_, i) => ({
+        id: i + 1,
+        title: 'Eigener Eintrag mit langem Titel ' + (i + 1),
+        content: '<p>Inhalt mit genug Text, dass er in einem schmalen Fenster umbricht.</p>',
+        expanded: true
+    })),
+    /* Ein laufender Kampf — die Initiative ist die Ansicht mit den meisten
+       bodenverankerten Elementen gleichzeitig. */
+    initiative: {
+        combatants: Array.from({ length: 10 }, (_, i) => ({
+            id: i + 1,
+            name: 'Kaempfer mit langem Namen ' + (i + 1),
+            initiative: 20 - i,
+            currentHp: 20,
+            maxHp: 30,
+            ac: 15,
+            type: i % 2 ? 'player' : 'enemy'
+        })),
+        currentTurn: 0,
+        round: 3
+    }
+};
+
+/** Belegt im Browser, dass die schwere Saat angekommen ist. */
+function messeSchwereFuellung() {
+    // @ts-ignore — globaler Datenkern
+    const D = window.D || {};
+    return {
+        figuren: (D.characters || []).length,
+        nscs: (D.npcs || []).length,
+        auftraege: (D.quests || []).length,
+        wuerfe: (D.diceHistory || []).length,
+        qrefEigene: (D.quickRefCustom || []).length,
+        kaempfer: ((D.initiative || {}).combatants || []).length
+    };
+}
+
+test.describe('M1 — mit gefuellter Kampagne: alle 24 per echtem Klick', () => {
+    test('320x700: 24 echte Klicks auf einer gefuellten Kampagne', async ({ page }) => {
+        test.setTimeout(180000);
+        await page.setViewportSize({ width: 320, height: 700 });
+        await mobilLaden(page, THEMES[0], SAAT_SCHWER);
+
+        /* VORBEDINGUNG — ohne sie misst diese Zusicherung den Leerzustand
+           und ist eine Dublette der Zusicherung weiter oben. */
+        const f = await page.evaluate(messeSchwereFuellung);
+        expect(
+            { figuren: f.figuren >= 6, nscs: f.nscs >= 14, kaempfer: f.kaempfer >= 10 },
+            `Vorbedingung: Fuellstand ${JSON.stringify(f)}`
+        ).toEqual({ figuren: true, nscs: true, kaempfer: true });
+
+        const ansichten = await page.evaluate(() =>
+            Array.from(document.querySelectorAll('.nav-tab[data-view]')).map(t => t.dataset.view)
+        );
+        expect(ansichten.length, 'alle Ansichten muessen gefuehrt werden').toBe(ANZAHL_ANSICHTEN);
+
+        const gescheitert = [];
+        for (const view of ansichten) {
+            /* Die Leiste JEDES Mal neu ueber den echten Umschalter oeffnen —
+               `leisteOeffnen()` prueft dabei selbst, dass der Weg dorthin
+               nicht von einem Schweber verdeckt ist. Auf einer gefuellten
+               Kampagne ist genau das die Frage. */
+            await leisteOeffnen(page);
+            await radeln(page, -3000);
+            let treffer = null;
+            let letzterStand = null;
+            for (let i = 0; i < 30; i++) {
+                const m = await page.evaluate(messeLeiste);
+                const r = m.reiter.find(x => x.view === view);
+                if (r && r.erreichbar) {
+                    treffer = r;
+                    break;
+                }
+                if (letzterStand !== null && m.navRollstand === letzterStand) break;
+                letzterStand = m.navRollstand;
+                await radeln(page, 140);
+            }
+            if (!treffer) {
+                gescheitert.push(`${view}: nicht erreichbar`);
+                continue;
+            }
+            await page.mouse.click(treffer.mitte[0], treffer.mitte[1]);
+            await page.waitForTimeout(300);
+            const aktiv = await page.evaluate(
+                v => !!document.querySelector(`#view-${v}.active`),
+                view
+            );
+            if (!aktiv) gescheitert.push(`${view}: Klick wechselte die Ansicht nicht`);
+        }
+        console.log(
+            `[M1-gefuellt] 320x700: ${ansichten.length - gescheitert.length}/` +
+                `${ANZAHL_ANSICHTEN} per echtem Klick erreicht`
+        );
+        expect(gescheitert, 'Reiter ohne Wirkung auf einer gefuellten Kampagne').toEqual([]);
+    });
+});
+
+test.describe('M1 — mit gefuellter Kampagne: der Streifen bleibt frei', () => {
+    for (const [breite, hoehe] of [
+        [320, 700],
+        [740, 360]
+    ]) {
+        test(`${breite}x${hoehe}: kein Schweber auf dem Streifen, gefuellte Kampagne`, async ({
+            page
+        }) => {
+            test.setTimeout(90000);
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await mobilLaden(page, THEMES[0], SAAT_SCHWER);
+
+            // VORBEDINGUNG — die Daten, die die Panels hoch machen, sind da.
+            const f = await page.evaluate(messeSchwereFuellung);
+            expect(
+                { wuerfe: f.wuerfe >= 12, qrefEigene: f.qrefEigene >= 3 },
+                `Vorbedingung: ohne Wurfgeschichte und eigene Eintraege stehen die ` +
+                    `beiden Panels auf ihrer Mindesthoehe — Fuellstand ${JSON.stringify(f)}`
+            ).toEqual({ wuerfe: true, qrefEigene: true });
+
+            for (const zustand of ['schlicht', 'voll']) {
+                if (zustand === 'voll') await alleSchweberOffen(page);
+
+                const m = await page.evaluate(messeStreifen, STREIFEN_SCHRITT);
+                expect(m.fehlt, `${zustand}: Leiste oder Umschalter fehlt`).toBe(false);
+                console.log(
+                    `[M1-Streifen-gefuellt] ${breite}x${hoehe} ${zustand}: Streifen ` +
+                        `h=${m.streifen.hoehe}px, Ueberlapper ${m.ueberlapper.length}, ` +
+                        `fremd ${m.fremd.length} von ${m.anzahlPunkte}`
+                );
+
+                // Dieselben Vorbedingungen wie bei Zusicherung 9/10.
+                expect(m.navOffen, `${zustand}: die Leiste muss eingeklappt stehen`).toBe(false);
+                expect(
+                    m.streifen.hoehe,
+                    `${zustand}: der Streifen muss die Daumengroesse haben (${m.streifen.hoehe}px)`
+                ).toBeGreaterThanOrEqual(MIN_TIPPFLAECHE);
+
+                // A — FLAECHE.
+                expect(
+                    m.ueberlapper.map(u => `${u.was} deckt ${u.deckung}px2 (z=${u.z})`),
+                    `${zustand}: Schwebeelemente auf dem Streifen, gefuellte Kampagne`
+                ).toEqual([]);
+
+                // B — TASTPUNKTE ueber die ganze Breite.
+                expect(
+                    m.fremd.map(x => `(${x.x},${x.y}) -> ${x.obenauf}`),
+                    `${zustand}: Tastpunkte, die NICHT mit der Leiste antworten ` +
+                        `(${m.fremd.length} von ${m.anzahlPunkte})`
+                ).toEqual([]);
+            }
+        });
+    }
+});

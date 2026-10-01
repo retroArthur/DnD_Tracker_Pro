@@ -251,6 +251,11 @@ const DESKTOP_FENSTER = [
     [1280, 800]
 ];
 
+/* Die vier Themes der App, fuer ZUSICHERUNG 6 weiter unten. Die fuenf
+   Zusicherungen darueber messen nur `dark` — das setzt die Saat, und
+   `setTheme()` rufen sie nie. */
+const THEMES = ['dark', 'light', 'sepia', 'contrast'];
+
 /* Drei Wuerfelformeln, von kurz nach lang, fuer ZUSICHERUNG 5. Die laengste ist
    nicht erfunden: `4d6kh3` steht so im Platzhalter des Feldes
    (assets/templates/view-tools.html), und einen zweiten Wuerfelsatz plus festen
@@ -964,4 +969,114 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             ).toBe(true);
         });
     }
+
+    /* ZUSICHERUNG 6 — DIE VIER THEMES.
+       ------------------------------------------------------------------
+       WAS ZUSICHERUNG 1 UND 2 NICHT SEHEN. Die Saat setzt `settings.theme`
+       auf `dark` und ruft `setTheme()` nie. Alle fuenf Zusicherungen darueber
+       messen deshalb GENAU EIN Theme. Der Kopfkommentar dieser Datei behauptet
+       seit Runde 1, die Zahlen seien in `light`, `sepia` und `contrast` auf den
+       Bildpunkt dieselben — das war eine einmalige Messung von damals, und
+       keine Zusicherung hielt sie fest. Ein Theme, das kuenftig eine
+       Schriftgroesse, eine Rahmenbreite oder einen Innenabstand verschiebt,
+       vergroessert die min-content-Breite der sechs Taeter und bringt den
+       Ueberhang zurueck, ohne dass eine der fuenf Zusicherungen darueber
+       anschlaegt.
+
+       WARUM 320x700 UND NUR DIESE BREITE. Dort war der Ueberhang am groessten
+       (Dashboard 416px von 320px Fensterbreite, also mehr als die doppelte
+       Seite) und dort schlaegt eine Verbreiterung der min-content-Breite
+       zuerst durch. Die drei weiteren Fenster tragen in der Theme-Achse keine
+       eigene Aussage — nachgemessen, siehe Tabelle unten: die Zahlen sind je
+       Fenster ueber alle vier Themes identisch. Vier Fenster x vier Themes
+       waeren 16 Durchlaeufe fuer dieselbe Aussage.
+
+       ROT OHNE DIE KORREKTUR. Die vier CSS-Dateien der Q1-Korrektur auf
+       f6cc6f7 zurueckgedreht (`dashboard.css`, `core.css`, `dice.css`,
+       `initiative.css`), neu gebaut, DIESE Zusicherung dagegen gemessen —
+       gefuellte Saat, Falten offen, Ueberhang/Zahl der Elemente ausserhalb:
+
+         Ansicht      dark       light      sepia      contrast
+         ----------   --------   --------   --------   --------
+         Dashboard    416/71     416/71     416/71     416/71
+         Initiative   244/94     244/94     244/94     244/94
+         Fraktionen   116/24     116/24     116/24     116/24
+         Wuerfel       72/4       72/4       72/4       72/4
+         Quests         0/48       0/48       0/48       0/48
+         uebrige 19     0/0        0/0        0/0        0/0
+
+       Die Gleichheit ueber die Spalten ist der Befund, nicht der Nebeneffekt:
+       die Ursachen sind Raster und Flex-Minima, keine Farben. Genau DARUM
+       genuegt ein Fenster — und genau darum muss die Gleichheit zugesichert
+       sein statt behauptet. */
+    test('(6) kein Ueberhang in allen 24 Ansichten in allen vier Themes bei 320x700', async ({
+        page
+    }) => {
+        test.setTimeout(150000);
+        await page.setViewportSize({ width: 320, height: 700 });
+        await appLaden(page);
+
+        /* VORBEDINGUNG — die Saat muss angekommen sein. Ohne sie messen die
+           vier Theme-Durchlaeufe vier Mal den Leerstand, und der ist in allen
+           24 Ansichten 0 (bis auf das Formelfeld, siehe Kopfkommentar). */
+        for (const v of ['dashboard', 'initiative', 'dice', 'fraktionen', 'quests']) {
+            await reiterWechseln(page, v);
+        }
+        const fuellung = await page.evaluate(messeFuellung);
+        expect(
+            {
+                kaempfer: fuellung.kaempfer >= 10,
+                fraktionen: fuellung.fraktionen >= 5,
+                dashFiguren: fuellung.dashFiguren > 0,
+                initZeilen: fuellung.initZeilen > 0,
+                frKarten: fuellung.frKarten > 0
+            },
+            `Vorbedingung: Fuellstand ${JSON.stringify(fuellung)} — auf leerer ` +
+                `Kampagne ist der Ueberhang 0 und diese Zusicherung waere blind`
+        ).toEqual({
+            kaempfer: true,
+            fraktionen: true,
+            dashFiguren: true,
+            initZeilen: true,
+            frKarten: true
+        });
+
+        /** @type {Array<string>} */
+        const schlecht = [];
+        for (const theme of THEMES) {
+            const gesetzt = await page.evaluate(t => {
+                // @ts-ignore — global aus dem Theme-Modul
+                if (typeof window.setTheme === 'function') window.setTheme(t);
+                return document.documentElement.getAttribute('data-theme');
+            }, theme);
+            /* Erst der Beweis, dass der Wechsel gegriffen hat. Ohne ihn
+               messen vier Durchlaeufe vier Mal dasselbe Theme. */
+            expect(gesetzt, `Theme ${theme} wurde nicht gesetzt`).toBe(theme);
+            await page.waitForTimeout(250);
+
+            for (const v of ANSICHTEN) {
+                await reiterWechseln(page, v);
+                await faltenOeffnen(page);
+                const m = await page.evaluate(messeUeberhang);
+                if (m.ueberhangX > 0 || m.aussenAnzahl > 0) {
+                    schlecht.push(
+                        `${theme}/${v}: ${m.ueberhangX}px, ${m.aussenAnzahl} Elemente ` +
+                            `ausserhalb (${m.aussen.map(t => t.sel).join(' | ')})`
+                    );
+                }
+            }
+            console.log(
+                `[Q1] 320x700 Theme ${theme}: ` +
+                    `${ANSICHTEN.length - schlecht.filter(s => s.startsWith(theme + '/')).length}` +
+                    `/${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb`
+            );
+        }
+
+        /* Beide Richtungen in einer Zusicherung: nichts scrollt seitwaerts UND
+           nichts liegt rechts des Fensterrands — fuer jedes der vier Themes. */
+        expect(
+            schlecht,
+            'Ansichten mit Ueberhang oder Elementen rechts des Fensterrands bei 320x700'
+        ).toEqual([]);
+    });
 });
