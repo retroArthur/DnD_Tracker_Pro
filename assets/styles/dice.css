@@ -101,6 +101,36 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    /* Q1 Runde 2 — DIE REIHE DARF UMBRECHEN, DAMIT DAS FELD BREIT BLEIBEN KANN.
+       Die Reihe war `nowrap`. Auf 320px standen ihr 242px Innenraum zur
+       Verfuegung, und davon gingen 155px an die drei festen Kinder (Anzahl 50,
+       "x" 11, Wurfknopf 50, Wiederholknopf 44) plus 32px Abstaende — fuer das
+       Formelfeld blieben 55px. `min-width: 0` weiter unten hatte den
+       Seitenueberhang beseitigt, aber gegen Lesbarkeit getauscht: in 53px
+       Innenbreite steht nicht einmal `1d20` (59px Textbreite in
+       `var(--font-mono)`), und `4d6kh3+2d8+5` braucht 130px.
+
+       Mit `wrap` fallen die beiden Knoepfe in eine zweite Zeile, sobald das Feld
+       seine Sollbreite nicht neben ihnen bekommt (`flex-basis` am Feld, siehe
+       dort). Gemessen am gebauten Buendel, Feldbreite auszen/innen: 165/163px
+       bei 320x700, 205/203px bei 360x740, 177/175px bei 390x844 — alle drei
+       Probeformeln passen (die laengste braucht 130px). Die Reihe wird dort
+       zweizeilig, 62px hoch wird 111px bzw. 114px.
+       Bei 740x360 (gedrehtes Telefon) und auf dem Desktop bleibt es EINE Zeile,
+       denn `wrap` bricht nur um, wenn der Platz fehlt: 668x62px Reihe,
+       455/453px Feld, jedes Kind auf demselben Bildpunkt wie vorher —
+       nachgemessen bei 1440x900, 1280x800 und 740x360, vorher gegen nachher.
+
+       `justify-content: flex-end`, damit die Knoepfe auch in der zweiten Zeile
+       am rechten Rand stehen, wo sie vorher am Ende der einen Zeile standen. In
+       der ersten Zeile aendert es nichts, weil das wachsende Feld dort keinen
+       freien Platz uebrig laesst.
+
+       WARUM NICHT STATT DESSEN DIE KNOEPFE SCHRUMPFEN: 44px ist die
+       Mindest-Tippflaeche (M1). Und warum nicht `overflow-x` an der Reihe: ein
+       Eingabefeld, das man erst heranschieben muss, ist keine Eingabe. */
+    flex-wrap: wrap;
+    justify-content: flex-end;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -124,7 +154,24 @@
 }
 
 .dice-formula {
-    flex: 1;
+    /* Q1 Runde 2 — SOLLBREITE 160px, UND SIE IST BEIDSEITIG EINGEKLEMMT.
+       Vorher stand hier `flex: 1`, also `flex-basis: 0%`: das Feld verlangte
+       nichts und bekam nur, was nach den festen Kindern uebrig blieb. Mit
+       `flex-wrap` an der Reihe (siehe `.dice-input-group`) wird die Sollbreite
+       zum Umbruchhebel — sie entscheidet, ob die Knoepfe noch daneben passen.
+
+       WOHER DIE 160px, denn eine Flex-Basis ohne Begruendung ist eine
+       Zauberzahl. UNTERGRENZE: `4d6kh3+2d8+5`, die laengste Formel, die der
+       Platzhalter des Feldes nahelegt, ist in `var(--font-mono)` bei 1em 130px
+       breit; dazu 2x12px Innenabstand und 2x1px Rahmen = 156px. OBERGRENZE: bei
+       320px hat die Reihe 242px Innenraum, davon nimmt das Paar Anzahl+"x" mit
+       Abstaenden 77px — mehr als 165px darf das Feld also nicht verlangen, sonst
+       faellt es selbst in die zweite Zeile und die Knoepfe stehen allein in der
+       ersten. 160 liegt zwischen 156 und 165.
+       Das Feld WAECHST ueber diese Basis hinaus (`flex-grow: 1`): gemessene
+       Auszenbreite 165px bei 320x700, 205px bei 360x740, 177px bei 390x844 und
+       455px bei 740x360 wie auf dem Desktop. */
+    flex: 1 1 160px;
     /* Q1 — DAS FORMELFELD DARF SCHRUMPFEN.
        `flex: 1` setzt `flex-shrink: 1`, aber das reichte nicht: `min-width`
        steht per Vorgabe auf `auto`, und bei einem Flex-Element ist das das
@@ -136,9 +183,23 @@
        dem Fenster: Seitenueberhang 72px bei 320x700, 32px bei 360x740, 2px bei
        390x844 — in allen vier Themes gleich. `min-width: 0` nimmt dem Feld
        diese Schranke; die Knoepfe behalten ihre feste Breite, das Feld gibt
-       nach. Bei 320px bleiben ihm rund 56px — eng, aber die Formel steht beim
-       Tippen am rechten Rand, und ein Feld, das man sehen kann, ist mehr als
-       eines, das ausserhalb liegt.
+       nach.
+
+       BERICHTIGUNG (Runde 2): hier stand weiter "Bei 320px bleiben ihm rund
+       56px — eng, aber die Formel steht beim Tippen am rechten Rand, und ein
+       Feld, das man sehen kann, ist mehr als eines, das ausserhalb liegt." Das
+       war nachgemessen falsch und als Abwaegung unzulaessig. Gemessen waren es
+       55px auszen, 53px innen, und darin stand nicht einmal `1d20` vollstaendig
+       (59px Textbreite) — die Formel stand also nicht "am rechten Rand", sie war
+       abgeschnitten. Die Schranke ist nicht "sichtbar gegen ausserhalb", sondern
+       beides: das Feld liegt im Fenster UND die Formel liegt im Feld. Dafuer
+       sorgt jetzt `flex-wrap` an `.dice-input-group` samt `flex-basis` oben;
+       `min-width: 0` hier bleibt notwendig, denn ohne es koennte das Feld auch
+       auf einer eigenen Zeile seine 215px nicht aufgeben. ZUSICHERUNG 5 in
+       tests/e2e/features/quer-ueberhang.spec.js haelt die Lesbarkeit fest; die
+       beiden aelteren Zusicherungen dort waren dagegen blind, weil ein 55px
+       schmales Feld bequem ins Fenster passt.
+
        Dies ist der einzige der vier Q1-Faelle, der kein Raster ist; die drei
        anderen sitzen in dashboard.css, initiative.css und core.css. */
     min-width: 0;
