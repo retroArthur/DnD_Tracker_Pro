@@ -147,7 +147,62 @@
             border-radius: var(--radius-md);
             padding: 8px 12px;
         }
-        
+
+        /* ============================================================
+           Q1 — DIE KAMPFZEILE BRICHT AUF DEM TELEFON UM
+           ============================================================
+           Die sechste Spalte der Desktop-Vorlage oben ist `auto` und traegt
+           `.init-right`: Trefferpunktanzeige plus sechs Knoepfe in einer
+           `flex-wrap: nowrap`-Reihe. Das automatische Minimum einer
+           `auto`-Spalte ist die min-content-Breite ihres Inhalts, und die ist
+           bei dieser Knopfreihe 379px — gemessen am gebauten Buendel mit
+           GEFUELLTER Kampagne (10 Kaempfern). Die Zeile selbst war 300px breit.
+           Seitenueberhang: 244px bei 320x700, 204px bei 360x740, 174px bei
+           390x844, in allen vier Themes auf den Bildpunkt gleich. Auf einer
+           LEEREN Kampagne gibt es keine Zeile und damit keinen Fehler — die
+           Probe (tests/e2e/features/quer-ueberhang.spec.js) faehrt deshalb mit
+           Daten.
+
+           WARUM UMBRECHEN UND NICHT SCHRUMPFEN. Hier hilft kein
+           `minmax(0, 1fr)` wie bei den beiden Raster-Faellen dieser Runde: die
+           sechs Knoepfe sind Tippflaechen von mindestens 44px (M1), und 379px
+           auf 140px zu pressen hiesse, sie unter die Fingergroesse zu druecken.
+           Was auf dem Telefon fehlt, ist Breite — also bekommt die Knopfreihe
+           eine eigene Zeile und darf darin umbrechen. Die erste Zeile behaelt
+           Griff, Initiative, Ruestungsklasse und Namen; `minmax(0, 1fr)` an der
+           Namensspalte, weil `1fr` (= `minmax(auto, 1fr)`) sonst dasselbe
+           min-content-Minimum traegt wie die Spalte, die hier gerade behoben
+           wird.
+
+           WARUM AUCH DIE ZAUBERSLOTS. Sie sind das fuenfte Kind jeder Zeile
+           (`.init-spell-slots` oder, bei Nichtzauberern, der leere Platzhalter
+           `.init-spell-slots-placeholder` — features/initiative.js). Ohne
+           eigene Zeilenanweisung fiele sie bei vier Spalten in die 30px breite
+           Griffspalte der zweiten Zeile. `.init-spell-slots` bringt seinen
+           `flex-wrap: wrap` schon mit.
+
+           WARUM AM LAYOUTPROFIL UND NICHT AN EINER MEDIA QUERY. Das
+           Mobil-Layout dieser App haengt an `[data-layout="mobile"]`, nicht an
+           einer Fensterbreite — ein gedrehtes Telefon (740x360) ist mobil,
+           obwohl es breiter ist als die 900px-Grenze. Die drei erlaubten
+           CSS-Grenzen (600/900/1200) bleiben davon unberuehrt. Bei 740x360 ragt
+           die Zeile auch ohne Korrektur nicht hinaus; der Umbruch dort ist
+           Folge derselben Regel und von der Probe mitgedeckt. */
+        [data-layout="mobile"] .init-entry {
+            grid-template-columns: 30px 50px 40px minmax(0, 1fr);
+        }
+
+        [data-layout="mobile"] .init-entry > .init-spell-slots,
+        [data-layout="mobile"] .init-entry > .init-spell-slots-placeholder {
+            grid-column: 1 / -1;
+        }
+
+        [data-layout="mobile"] .init-entry > .init-right {
+            grid-column: 1 / -1;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .init-entry.active {
             border-color: var(--gold);
             background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent) 0%, var(--bg-card) 100%);

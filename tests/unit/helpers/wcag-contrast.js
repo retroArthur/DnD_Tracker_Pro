@@ -500,7 +500,7 @@ function mixOver(hex, p, surfaceHex) {
  *   rgba(r, g, b, a)                       ->  a*Farbe + (1-a)*Flaeche
  *
  * Gebraucht ab Welle 2 fuer die 108 Toenungsstellen, schon jetzt fuer
- * dice.css:371 und dmscreen.css:1728-1732, wo die color-mix-Variante bereits
+ * dice.css:388 und dmscreen.css:1728-1732, wo die color-mix-Variante bereits
  * im Baum steht.
  */
 function resolveOver(value, pal, surfaceHex) {

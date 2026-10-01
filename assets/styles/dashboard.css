@@ -822,6 +822,41 @@
 
 .dash {
     display: grid;
+    /* Q1 — DIE EINE SPALTE, AUSDRUECKLICH UND BEI NULL ABGEFANGEN.
+       Hier stand nur `display: grid` ohne `grid-template-columns`. Die einzige
+       Spalte war damit implizit, also `grid-auto-columns: auto` — und das
+       automatische Minimum einer `auto`-Spalte ist die min-content-Breite ihres
+       Inhalts, nicht null. Gemessen am gebauten Buendel mit GEFUELLTER Kampagne
+       loeste sie zu 710px auf, waehrend `.dash` selbst 300/340/370px breit war:
+       Seitenueberhang 416px bei 320x700, 376px bei 360x740, 346px bei 390x844,
+       in allen vier Themes auf den Bildpunkt gleich. Auf einer LEEREN Kampagne
+       war der Ueberhang 0 — ohne Inhalt gibt es keine min-content-Breite, der
+       die Spalte folgen koennte. Genau deshalb faehrt die Probe zu dieser Regel
+       (tests/e2e/features/quer-ueberhang.spec.js) mit Daten.
+
+       WOHER DIE 710px KOMMEN, denn die Zahl sieht nach nichts aus:
+       `.dash-party-grid` weiter unten traegt `max-width: 720px`. Das ist eine
+       DEFINITE Maximalbreite, und `repeat(auto-fill, minmax(160px, 1fr))`
+       rechnet seine Wiederholungen dagegen, solange die eigene Breite unbestimmt
+       ist (so bei der min-content-Messung des Elternteils): floor((720+12) /
+       (160+12)) = 4 Spalten. 4x160 + 3x12 Abstand + 2x16 Innenabstand + 2x1
+       Rahmen = 710. Hat `.dash-party` dagegen eine bestimmte Breite, rechnet
+       dasselbe `auto-fill` gegen diese und liefert EINE Spalte — die Schranke
+       hier ist also alles, was fehlte. Das `max-width: 720px` bleibt deshalb
+       unangetastet; es ist nicht die Ursache, sondern nur ihr Zahlenlieferant.
+
+       `minmax(0, 1fr)`, nicht `1fr`: `1fr` ist `minmax(auto, 1fr)` und traegt
+       dasselbe `auto`-Minimum wie die implizite Spalte, aendert also nichts.
+       Dieselbe Bauart in der anderen Achse steht als
+       `grid-template-rows: minmax(0, 1fr)` an der Master-Detail-Regel in
+       core.css; die Begruendung dort gilt hier sinngleich.
+
+       AM DESKTOP AENDERT DIE ZEILE NICHTS: bei 1440x900 und 1280x800 ist die
+       Geometrie aller 24 Ansichten vorher/nachher auf den Bildpunkt gleich
+       (nachgemessen fuer jedes Element mit Klasse). Die `auto`-Spalte wurde dort
+       ohnehin auf die Containerbreite gestreckt, weil 710px kleiner sind als der
+       freie Platz. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     max-width: 1200px;
     margin: 0 auto;

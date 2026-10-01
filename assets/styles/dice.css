@@ -125,6 +125,23 @@
 
 .dice-formula {
     flex: 1;
+    /* Q1 — DAS FORMELFELD DARF SCHRUMPFEN.
+       `flex: 1` setzt `flex-shrink: 1`, aber das reichte nicht: `min-width`
+       steht per Vorgabe auf `auto`, und bei einem Flex-Element ist das das
+       inhaltsbasierte Minimum. Bei einem `<input>` ist dieses Minimum die
+       intrinsische Feldbreite aus der `size`-Vorgabe (Chrome: 20 Zeichen) —
+       hier, in `var(--font-mono)` bei 1em, gemessene 215px. Das Feld konnte
+       also gar nicht schrumpfen, und die nowrap-Reihe `.dice-input-group`
+       (Anzahl 50px, ×, Feld, Wuerfelknopf 50px, Wiederholknopf 44px) ragte aus
+       dem Fenster: Seitenueberhang 72px bei 320x700, 32px bei 360x740, 2px bei
+       390x844 — in allen vier Themes gleich. `min-width: 0` nimmt dem Feld
+       diese Schranke; die Knoepfe behalten ihre feste Breite, das Feld gibt
+       nach. Bei 320px bleiben ihm rund 56px — eng, aber die Formel steht beim
+       Tippen am rechten Rand, und ein Feld, das man sehen kann, ist mehr als
+       eines, das ausserhalb liegt.
+       Dies ist der einzige der vier Q1-Faelle, der kein Raster ist; die drei
+       anderen sitzen in dashboard.css, initiative.css und core.css. */
+    min-width: 0;
     padding: 10px 12px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);

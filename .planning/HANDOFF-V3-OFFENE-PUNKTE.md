@@ -430,10 +430,10 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
-| `initiative.css:595` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:735` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
-| `initiative.css:752` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:756` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
+| `initiative.css:650` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:790` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
+| `initiative.css:807` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:811` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
 | `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -500,12 +500,12 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `dmscreen.css:1163` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
-| `initiative.css:175` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:207` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:235` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:236` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1263` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1264` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:230` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:262` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:290` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:291` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:1318` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1319` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
@@ -538,7 +538,7 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:661` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `dice.css:678` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:606` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
@@ -600,10 +600,10 @@ dashboard.css
   502  .enc-save-box.active .enc-save-label
   706  .icon-btn.danger:hover
   707  .icon-btn.success:hover
- 1140  .dash-timer-time
- 1479  .qref-chip.danger
+ 1175  .dash-timer-time
+ 1514  .qref-chip.danger
 dice.css
-  349  .dice-fav-item:hover .fav-del
+  366  .dice-fav-item:hover .fav-del
 dmscreen.css
    86  .dice-fav-btn .fav-name
   274  .condition-tooltip-title
@@ -633,11 +633,11 @@ file-backup.css
 initiative.css
    72  .bf-xp
   111  .init-entry.lair .init-name
-  237  .init-hp-value.critical
-  307  .death-saves-label
- 1156  .la-label
- 1197  .lr-label
- 1265  .init-mob-alive.critical
+  292  .init-hp-value.critical
+  362  .death-saves-label
+ 1211  .la-label
+ 1252  .lr-label
+ 1320  .init-mob-alive.critical
 loot.css
   297  .shop-cat-badge.item
   475  .si-tag-v

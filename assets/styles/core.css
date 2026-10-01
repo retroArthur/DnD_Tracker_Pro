@@ -2398,7 +2398,39 @@
             .enc-layout,
             .bestiary-layout,
             .fr-layout {
-                grid-template-columns: 1fr;
+                /* Q1 — `minmax(0, 1fr)` statt `1fr`. `1fr` ist die Kurzform von
+                   `minmax(auto, 1fr)`, und das `auto` als Minimum ist die
+                   min-content-Breite des Inhalts: die Spalte kann also GROESSER
+                   werden als das Raster, obwohl sie dessen ganzen Platz nehmen
+                   soll. Gemessen am gebauten Buendel mit GEFUELLTER Kampagne
+                   traf es die Fraktionen: `.fr-layout` war 300px breit, seine
+                   einzige Spalte loeste zu 426px auf (min-content der
+                   Fraktionskarten, einer `flex-wrap: nowrap`-Reihe), und die
+                   Seite scrollte seitwaerts — 116px bei 320x700, 76px bei
+                   360x740, 46px bei 390x844, in allen vier Themes gleich. Auf
+                   einer LEEREN Kampagne war der Ueberhang 0; der Fehler
+                   braucht Karten, um sich zu zeigen.
+
+                   Die uebrigen sechs Schalen derselben Regel ragten nicht
+                   hinaus, weil die min-content-Breite ihrer Listen unter der
+                   Fensterbreite blieb. Die Korrektur steht trotzdem hier an der
+                   gemeinsamen Regel und nicht als Einzelfall an `.fr-layout`:
+                   die Bauart ist in allen sieben dieselbe, und welche Liste
+                   morgen eine Knopfreihe mehr traegt, entscheidet nicht die
+                   Kaskade.
+
+                   Die Gegenstueck-Zeile in der anderen Achse —
+                   `grid-template-rows: minmax(0, 1fr)` am Desktop-Zweig weiter
+                   oben — traegt dieselbe Begruendung; dort war es die Zeile,
+                   die dem hoechsten Kind folgte.
+
+                   Der Desktop-Zweig (`1fr 825px` / `1fr 520px`) bleibt
+                   UNANGETASTET: bei 1440x900 und 1280x800 ragt heute nichts
+                   hinaus, und `minmax(0, 1fr)` haette dort die Master-Spalte
+                   unter ihre min-content-Breite druecken koennen. Die Probe
+                   haelt beides fest (24/24 ohne Ueberhang, zwei Spalten je
+                   Schale). */
+                grid-template-columns: minmax(0, 1fr);
                 overflow: visible;
             }
         }
