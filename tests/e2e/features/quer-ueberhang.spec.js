@@ -45,6 +45,27 @@
  *               wieder die min-content-Breite, hier 426px aus den
  *               Fraktionskarten.
  *
+ * ZWEI WEITERE, die erst ZUSICHERUNG 2 sichtbar gemacht hat. Beide standen
+ * schon vor dieser Runde im Baum; die Seite scrollte bei ihnen NICHT, der
+ * Inhalt lag aber trotzdem ausserhalb. Genau dafuer gibt es die zweite
+ * Zusicherung:
+ *
+ *   Quests      `.quest-title-row` ist `flex: 1` in `.quest-header`
+ *               (`justify-content: space-between`), hatte aber `min-width: auto`
+ *               und konnte deshalb nicht unter ihre min-content-Breite von
+ *               303px schrumpfen. Die Done/Loot-Marken daneben wurden
+ *               hinausgedrueckt und von `.quest-item { overflow: hidden }`
+ *               abgeschnitten: bei 320x700 lagen sie VOLLSTAENDIG draussen
+ *               (Beginn x=328 in einem 320px breiten Fenster) und waren damit
+ *               nicht antippbar. Das Dokument meldete 0 Ueberhang — der Fall,
+ *               vor dem Zusicherung 2 steht.
+ *   Wuerfel     `#dice-char-select` in `.dice-char-header`, dieselbe Bauart wie
+ *               `.dice-formula`: `flex: 1` ohne `min-width: 0`, und das
+ *               inhaltsbasierte Minimum einer Auswahlliste ist die Breite ihres
+ *               laengsten Eintrags. Der "🎯 Init"-Knopf daneben rutschte
+ *               hinaus. Sichtbar erst mit AUFGEKLAPPTER Falte, siehe
+ *               `faltenOeffnen()` weiter unten.
+ *
  * ROT OHNE DIE KORREKTUR, von DIESER Probe an HEAD f6cc6f7 gemessen (Theme
  * `dark`; dieselbe Saat in `light`, `sepia` und `contrast` ergab auf den
  * Bildpunkt dieselben Zahlen — die Ursachen sind Raster, nicht Farbe). "n" =
@@ -59,8 +80,17 @@
  *   Fraktionen  116px (n=24)      76px (n=24)      46px (n=19)   0
  *   uebrige 20  0                0                0              0
  *
+ * Und die beiden GEKLIPPTEN, nach den vier Raster-/Flex-Korrekturen und mit
+ * aufgeklappten Falten gemessen — Spalte 1 ist der Ueberhang des Dokuments,
+ * Spalte 2 die Zahl der Elemente ausserhalb:
+ *
+ *   Ansicht     320x700          360x740          390x844        740x360
+ *   ---------   --------------   --------------   -------------  -------
+ *   Quests      0px (n=48)       0px (n=32)       0px (n=24)     0
+ *   Wuerfel     50px (n=1)       10px (n=1)       0px (n=0)      0
+ *
  * 740x360 (Telefon im Querformat) ist auch ohne Korrektur frei: 740px Breite
- * liegen ueber allen vier min-content-Schranken. Der Fall bleibt trotzdem in
+ * liegen ueber allen sechs min-content-Schranken. Der Fall bleibt trotzdem in
  * der Probe, weil er die einzige Breite ist, bei der das Mobil-Profil gilt und
  * das Fenster dennoch breit ist — eine Korrektur, die dort etwas kaputt macht,
  * faellt nur hier auf.
@@ -75,8 +105,9 @@
  *
  * Betroffene Quellen: `assets/styles/dashboard.css` (`.dash`),
  * `assets/styles/initiative.css` (Mobil-Zweig von `.init-entry`),
- * `assets/styles/dice.css` (`.dice-formula`), `assets/styles/core.css`
- * (Master-Detail-Familie unter 900px).
+ * `assets/styles/dice.css` (`.dice-formula`, `.dice-char-header select`),
+ * `assets/styles/core.css` (Master-Detail-Familie unter 900px,
+ * `.quest-title-row`).
  */
 import { test, expect } from '@playwright/test';
 
@@ -422,6 +453,32 @@ async function reiterWechseln(page, name) {
 }
 
 /**
+ * Klappt JEDE `<details>`-Falte der aktiven Ansicht auf.
+ *
+ * WARUM DAS NOETIG IST UND KEINE UEBERGENAUIGKEIT. Chrome gibt dem Inhalt
+ * einer geschlossenen `<details>` `content-visibility: hidden`: er wird
+ * ausgelegt, aber nicht gezeichnet UND traegt nichts zum Scrollueberlauf des
+ * Dokuments bei. Ein Ueberhang hinter einer zugeklappten Falte ist deshalb an
+ * `scrollWidth - clientWidth` NICHT zu sehen — er erscheint in der Sekunde, in
+ * der der Spielleiter die Falte antippt. Genau so war es bei den
+ * Charakter-Wuerfen: zugeklappt meldete das Dokument 0, aufgeklappt 50px bei
+ * 320x700 und 10px bei 360x740. Eine Probe, die nur den Grundzustand misst,
+ * waere fuer jede gefaltete Flaeche der App blind.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function faltenOeffnen(page) {
+    await page.evaluate(() => {
+        const aktiv = document.querySelector('.view.active');
+        if (!aktiv) return;
+        aktiv.querySelectorAll('details').forEach(d => {
+            d.open = true;
+        });
+    });
+    await page.waitForTimeout(200);
+}
+
+/**
  * Ueberhang in X und JEDES Element der aktiven Ansicht, das rechts des
  * Fensterrands endet. Laeuft IM Browser.
  */
@@ -473,13 +530,15 @@ function messeFuellung() {
         auftraege: (D.quests || []).length,
         kaempfer: ((D.initiative || {}).combatants || []).length,
         fraktionen: (D.factions || []).length,
-        /* Gerendert, nicht nur gespeichert: genau diese vier Knoten trugen die
-           vier Ursachen. Waere die Saat nicht angekommen, waeren sie leer und
+        /* Gerendert, nicht nur gespeichert: genau diese Knoten trugen die
+           sechs Ursachen. Waere die Saat nicht angekommen, waeren sie leer und
            die Ueberhang-Zusicherung waere gruen, ohne etwas zu belegen. */
         dashFiguren: zahl('#view-dashboard .dash-char'),
         initZeilen: zahl('#view-initiative .init-entry'),
         frKarten: zahl('#view-fraktionen .fr-faction-card'),
-        wuerfelFeld: zahl('#view-dice .dice-formula')
+        wuerfelFeld: zahl('#view-dice .dice-formula'),
+        questZeilen: zahl('#view-quests .quest-title-row'),
+        wuerfelWahl: zahl('#view-dice #dice-char-select')
     };
 }
 
@@ -496,6 +555,7 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             const befund = {};
             for (const v of ANSICHTEN) {
                 await reiterWechseln(page, v);
+                await faltenOeffnen(page);
                 befund[v] = await page.evaluate(messeUeberhang);
             }
 
@@ -545,9 +605,9 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
         test.setTimeout(60000);
         await page.setViewportSize({ width: 320, height: 700 });
         await appLaden(page);
-        /* Die vier Taeter-Ansichten einmal anfahren, damit ihre Knoten
+        /* Die fuenf Taeter-Ansichten einmal anfahren, damit ihre Knoten
            tatsaechlich gerendert sind. */
-        for (const v of ['dashboard', 'initiative', 'dice', 'fraktionen']) {
+        for (const v of ['dashboard', 'initiative', 'dice', 'fraktionen', 'quests']) {
             await reiterWechseln(page, v);
         }
         const f = await page.evaluate(messeFuellung);
@@ -579,14 +639,18 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                 dashFiguren: f.dashFiguren >= 5,
                 initZeilen: f.initZeilen >= 10,
                 frKarten: f.frKarten >= 5,
-                wuerfelFeld: f.wuerfelFeld >= 1
+                wuerfelFeld: f.wuerfelFeld >= 1,
+                questZeilen: f.questZeilen >= 8,
+                wuerfelWahl: f.wuerfelWahl >= 1
             },
-            `gerenderte Knoten ${JSON.stringify(f)} — genau diese vier trugen die vier Ursachen`
+            `gerenderte Knoten ${JSON.stringify(f)} — genau diese sechs trugen die sechs Ursachen`
         ).toEqual({
             dashFiguren: true,
             initZeilen: true,
             frKarten: true,
-            wuerfelFeld: true
+            wuerfelFeld: true,
+            questZeilen: true,
+            wuerfelWahl: true
         });
     });
 
@@ -600,6 +664,7 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             const befund = {};
             for (const v of ANSICHTEN) {
                 await reiterWechseln(page, v);
+                await faltenOeffnen(page);
                 befund[v] = await page.evaluate(messeUeberhang);
             }
             const schlecht = ANSICHTEN.filter(v => befund[v].ueberhangX > 0);
