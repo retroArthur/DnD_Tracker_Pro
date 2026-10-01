@@ -1664,6 +1664,90 @@
             max-height: calc(100vh - 120px - var(--mobile-nav-rest, 56px));
         }
 
+        /* ============================================================
+           Q2 NACHTRAG — DAS EREIGNIS-LOG GEHOERT ZUM SELBEN STAPEL.
+           ============================================================
+           DIE REGEL DARUEBER HAT DEN FEHLER VERSCHOBEN, NICHT BESEITIGT. Sie
+           hebt die Kugel vom Umschalter-Streifen weg — und setzt sie damit in
+           das Band des Ereignis-Logs, das 80px ueber dem Fensterrand steht
+           (party.css, `@media (max-width: 900px)`), mit `--z-toast` (4000) ueber
+           allem und `pointer-events: auto` an jedem Eintrag. Gemessen am Buendel
+           zu 8ebf6f5 gegen dasselbe Buendel ohne die zwei Regeln darueber,
+           gefuellte Kampagne, Leiste eingeklappt, senkrechtes Abtasten der
+           Kugelmitte plus ein echter `mouse.click` auf dieselbe Stelle:
+
+             Fenster    Kugel vorher          Kugel nachher
+             --------   -------------------   -----------------------------
+             320x700    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+             360x740    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+             390x844    frei 50/50, Klick ja  frei 50/50, aber null Reserve
+                                              (Kugelmitte x=355 genau auf der
+                                              rechten Logkante 35+320)
+
+           DIE FAMILIE, NICHT DIE KUGEL. Derselbe Messlauf am Wuerfel-Knopf unten
+           links: frei 10/48, Klick tot — VOR und NACH der Regel darueber gleich.
+           Das Log lag dort schon immer drauf (`bottom: 80px` gegen einen Knopf,
+           der von 70 bis 118 reicht). Die Zusicherung 9/10 konnte das nicht
+           sehen, weil beides UEBER dem Streifen liegt. Also wandert nicht noch
+           ein einzelner Schweber, sondern das Log selbst — es ist das Element,
+           das auf allen anderen liegt.
+
+           DERSELBE ABSTAND, NUR ZU EINER ANDEREN KANTE. 80px behaelt das Log;
+           sie zaehlen jetzt ab dem Streifen statt ab dem Fensterrand. Das ist
+           genau die Umrechnung, die die Regel darueber fuer die Kugel macht, und
+           sie reicht fuer beide Knoepfe: Oberkante der Kugel liegt bei
+           Streifen+60, die des Wuerfel-Knopfes bei 118 — die Unterkante des Logs
+           bei Streifen+80 (gemessen 136) bleibt ueber beiden. Nachgemessen in
+           sechs Fenstern und vier Themes: Kugel 50/50 und Wuerfel-Knopf 48/48
+           frei, beide Klicks kommen an.
+
+           WARUM AUCH EIN DECKEL, und warum als `min()`. Nur hochschieben hat
+           einen gemessenen Preis: bei 320x568 reichte das Log danach bis 32px
+           unter den Fensterrand und machte SECHS der sieben Knoepfe der
+           Mobil-Kopfzeile unerreichbar; bei 740x360 hing es 176px oben aus dem
+           Fenster (vorher 120px). Das waere der Tausch von zwei Knoepfen unten
+           gegen sieben oben — und genau der Fall, den setzeMobilKopfHoehe()
+           in `ui/editors/rich-text-insert.js` schon einmal benannt hat ("die
+           Mobil-Kopfzeile traegt Suche, Rueckgaengig, Schnellnotizen, Theme,
+           Layout UND den einzigen Mobil-Weg zum Kampfprotokoll"). Der Deckel ist
+           deshalb genau der Platz zwischen Kopfzeile und neuem Sitz, und `min()`
+           sorgt dafuer, dass er nur KLEMMT und nie waechst: 300/400px sind die
+           Werte aus party.css, der Deckel kann sie nur unterschreiten. Gemessen
+           greift er in genau zwei der sechs Fenster (320x568: 400 -> 368,
+           740x360: 400 -> 160) und laesst die vier anderen auf ihren 400px.
+           Bei 740x360 raeumt er zugleich zwei vorbestehende Fehler ab: das Log
+           haengt nicht mehr aus dem Fenster, und `div.mobile-timer` in der
+           Kopfzeile ist wieder anklickbar (vorher antwortete dort
+           `div.event-log-time`).
+
+           WARUM KEIN ZWEITES TOKEN AUS DEM MESSLAUF. Beide Zahlen, die der
+           Deckel braucht, liegen schon als gemessene Tokens bereit:
+           --mobile-nav-rest (Streifen) und --mobile-header-height (Kopfzeile).
+           Die beiden --mobile-log-*-Eigenschaften hier sind KEINE Glieder der
+           Messkette, sondern reine Rechenzwischenschritte dieser zwei Regeln —
+           sie halten die 80 an einer Stelle und machen den Deckel an der
+           `.persistent`-Regel lesbar, die auf demselben Element sitzt.
+
+           WARUM NICHT STATTDESSEN DIE KUGEL UEBER DAS LOG STAPELN. Das Log liegt
+           mit --z-toast bewusst ueber allem (nachzulesen im M1-Abschnitt weiter
+           oben: "daran soll sich nichts aendern"), und es wuerde den Wuerfel-Knopf
+           ohnehin nicht freiraeumen. Und waagerecht ausweichen geht nicht: bei
+           320px Breite ist das Log 288px breit und laesst rechts 16px — die
+           Kugel braucht 50.
+           ============================================================ */
+        [data-layout="mobile"] .event-log {
+            --mobile-log-bottom: calc(var(--mobile-nav-rest, 56px) + 80px);
+            --mobile-log-space: calc(
+                100vh - var(--mobile-log-bottom) - var(--mobile-header-height, 64px)
+            );
+            bottom: var(--mobile-log-bottom);
+            max-height: min(300px, var(--mobile-log-space));
+        }
+
+        [data-layout="mobile"] .event-log.persistent {
+            max-height: min(400px, var(--mobile-log-space));
+        }
+
         [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-trigger,
         [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-panel,
         [data-layout="mobile"]:has(.app-header.nav-open) .qref-fab,
