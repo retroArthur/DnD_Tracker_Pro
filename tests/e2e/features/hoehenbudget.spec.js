@@ -111,15 +111,21 @@ const ANSICHTEN = [
  * `waitForAppReady()` wartet auf eine SICHTBARE `.app-title` — es lief dort in
  * die Zeitgrenze. Derselbe Griff wie in sticky-stapel.spec.js.
  *
+ * `opts.saatZusatz` legt weitere Felder in die Saat — gebraucht fuer die
+ * Initiative, die als EINZIGE Buehne dieser Datei wirklich scrollt.
+ *
  * @param {import('@playwright/test').Page} page
- * @param {{weitere?: Record<string,string>, mobil?: boolean}} [opts]
+ * @param {{weitere?: Record<string,string>, mobil?: boolean, saatZusatz?: object}} [opts]
  */
 async function appLaden(page, opts) {
     const o = opts || {};
     await page.addInitScript(
         arg => {
             try {
-                localStorage.setItem('dnd-tracker-v4', JSON.stringify(arg.saat));
+                localStorage.setItem(
+                    'dnd-tracker-v4',
+                    JSON.stringify(Object.assign({}, arg.saat, arg.zusatz))
+                );
                 for (const schluessel of Object.keys(arg.weitere)) {
                     localStorage.setItem(schluessel, arg.weitere[schluessel]);
                 }
@@ -127,7 +133,7 @@ async function appLaden(page, opts) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        { saat: SAAT, weitere: o.weitere || {} }
+        { saat: SAAT, weitere: o.weitere || {}, zusatz: o.saatZusatz || {} }
     );
     await page.goto(APP_URL);
     if (o.mobil) {
@@ -910,5 +916,157 @@ test.describe('Werkzeugleiste bei Telefonbreite: das Suchfeld bleibt drin', () =
         expect(hoehen.join(' '), `gemessen: ${hoehen.join(' ')}`).toMatch(
             /^locations=74 npcs=74 loot=\d+ encounter=74 bestiary=74$/
         );
+    });
+});
+
+/* ====================================================================
+   DAS DIVERGENZ-BAND AUF EINER BUEHNE, DIE WIRKLICH SCROLLT.
+   ====================================================================
+   Die vier Faelle des Divergenz-Pfads oben in dieser Datei messen alle in den
+   fuenf Listen-Schalen — und die koennen seit U6 nicht mehr scrollen
+   (Seitenueberhang 0). Ein Anheft-Versatz ist dort folgenlos, und genau deshalb
+   blieb EINE der vier Stellen, die der Kopfkommentar des Divergenz-Abschnitts
+   als ungedeckt nennt, in Wahrheit weiter ungedeckt: das `max(bottom)` ueber
+   BEIDE Baender in Glied 1 (`updateStickyOffsets()`,
+   ui/editors/rich-text-insert.js).
+
+   Nachgewiesen per Mutationsprobe am gebauten Buendel: nimmt man
+   `document.querySelector('.divergence-banner')` aus dem Band-Feld heraus —
+   also genau der Zustand vor der Korrektur —, bleiben hoehenbudget.spec.js
+   (14/14) UND die volle Playwright-Suite zahlengleich gruen. Die Zeile traegt
+   trotzdem; gemessen in der Initiative mit 10 Kombattanten, 1440x800, Band ueber
+   seinen echten Einstieg aufgeschaltet, auf y=700 gescrollt:
+
+     Zustand          Glied 1   bandDecktKopf  App-Titel                 globale Suche
+     ---------------  --------  -------------  ------------------------  --------------------------------
+     mit der Zeile      40px          0px      frei                      frei
+     ohne die Zeile      0px         40px      verdeckt von STRONG.      verdeckt von SPAN.divergence-...
+
+   In derselben Probe meldete die Orte-Ansicht in BEIDEN Zustaenden 0px — die
+   Buehne entscheidet, nicht die Zusicherung. Deshalb steht dieser Abschnitt auf
+   der Initiative; es ist dieselbe Buehne wie in sticky-stapel.spec.js, nur mit
+   dem zweiten Band statt dem Hinweisband.
+
+   Der zweite Fall nimmt den Rueckweg mit: der Handler
+   `dismiss-divergence-banner` (systems/migration/migration-wizard.js) nimmt die
+   Klasse mit dem Band zurueck. Kein Test hat diesen Pfad bisher angefasst —
+   bliebe die Klasse stehen, hielte die Gegenrechnung die 40px eines nicht mehr
+   vorhandenen Bands frei, und das Hoehenbudget waere um dieselben 40px zu klein.
+*/
+test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
+    /** Zehn Kombattanten: genug Listenhoehe, damit die Seite ueberhaupt scrollt. */
+    const KOMBATTANTEN = [
+        'Danuel von Bruchstein',
+        'Goblin Scharfschuetze',
+        'Ork Anfuehrer Gorruk',
+        'Lyra Sonnenschein',
+        'Wolf Alpha',
+        'Thorin Eisenfaust',
+        'Banditenhauptmann',
+        'Skelettkrieger',
+        'Magierin Vex',
+        'Riesenspinne'
+    ].map((name, i) => ({
+        id: i + 1,
+        name,
+        initiative: 24 - i,
+        initBonus: 2,
+        maxHp: 30,
+        currentHp: 30,
+        ac: 15,
+        type: i % 3 === 0 ? 'player' : 'monster',
+        effects: []
+    }));
+
+    const INITIATIVE_SAAT = {
+        initiative: { combatants: KOMBATTANTEN, currentTurn: 0, round: 3, active: true }
+    };
+    const DIVERGENZ = {
+        'migration-divergence-since': JSON.stringify({ date: '2026-08-15' })
+    };
+
+    test('gescrollt bleibt die Kopfzeile unter dem Divergenz-Band frei', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 800 });
+        await appLaden(page, { weitere: DIVERGENZ, saatZusatz: INITIATIVE_SAAT });
+
+        // Vorbedingung 1: der richtige Zweig, nicht das Hinweisband.
+        const zweig = await page.evaluate(() => ({
+            divergenz: !!document.querySelector('.divergence-banner'),
+            hinweis: !!document.querySelector('.migration-hint-banner')
+        }));
+        expect(
+            zweig,
+            `startMigrationFileSide() muss den Divergenz-Zweig waehlen (${JSON.stringify(zweig)})`
+        ).toEqual({ divergenz: true, hinweis: false });
+
+        await page.evaluate(() => window.switchView('initiative'));
+        await page.waitForTimeout(600);
+
+        // Vorbedingung 2: diese Buehne MUSS scrollen — sonst misst der Fall nichts.
+        const oben = await page.evaluate(messeBudget, ['#kein-suchfeld', '#init-list']);
+        expect(
+            oben.ueberhang,
+            `die Initiative muss einen Scrollweg haben (Ueberhang ${oben.ueberhang}px, ${oben.anzahl} Kombattanten) — ohne ihn ist ein Anheft-Versatz folgenlos`
+        ).toBeGreaterThan(100);
+        expect(oben.bandKlasse, 'und das Divergenz-Band muss stehen').toBe('divergence-banner');
+
+        await page.mouse.move(720, 500);
+        for (let i = 0; i < 20; i++) await page.mouse.wheel(0, 400);
+        await page.waitForTimeout(400);
+
+        const m = await page.evaluate(messeBudget, ['#kein-suchfeld', '#init-list']);
+        console.log(`[U6] Divergenz auf der Initiative, gescrollt: ${JSON.stringify(m)}`);
+
+        // Vorbedingung 3: wirklich gescrollt.
+        expect(m.scrollY, `es muss wirklich gescrollt worden sein (scrollY ${m.scrollY})`).toBe(
+            oben.ueberhang
+        );
+
+        // Glied 1 traegt die Bandhoehe — das ist die ungedeckte Zeile.
+        expect(
+            m.bandDecktKopf,
+            `das Band deckt die Kopfzeile um ${m.bandDecktKopf}px (Band ${m.bandHoehe}px)`
+        ).toBe(0);
+        expect(m.appTitel, `App-Titel ${m.appTitel}`).toBe('frei');
+        expect(m.globaleSuche, `globale Suche ${m.globaleSuche}`).toBe('frei');
+    });
+
+    test('der Abschalt-Knopf nimmt die Gegenrechnung mit dem Band zurueck', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 800 });
+        await appLaden(page, { weitere: DIVERGENZ, saatZusatz: INITIATIVE_SAAT });
+        await page.evaluate(() => window.switchView('locations'));
+        await page.waitForTimeout(400);
+
+        const vor = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+        expect(vor.bandKlasse, 'der Fall beginnt mit stehendem Divergenz-Band').toBe(
+            'divergence-banner'
+        );
+        expect(vor.klasseDivergenz, 'und gesetzter Gegenrechnung').toBe(true);
+        expect(vor.koerperOben, `Innenabstand ${vor.koerperOben}`).toBe(`${vor.bandHoehe}px`);
+
+        // Der echte Weg des Nutzers: der Knopf im Band.
+        await page.locator('[data-action="dismiss-divergence-banner"]').click();
+        await page.waitForTimeout(500);
+
+        const nach = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+        console.log(
+            `[U6] Abschalt-Knopf: vorher Band ${vor.bandHoehe}px / ${vor.koerperOben} / Rahmen ${vor.rahmen}, nachher ${JSON.stringify(nach)}`
+        );
+
+        expect(nach.bandDa, 'das Band muss weg sein').toBe(false);
+        expect(
+            nach.klasseDivergenz,
+            `body.has-divergence-banner muss MIT dem Band gehen (Innenabstand ${nach.koerperOben})`
+        ).toBe(false);
+        expect(nach.koerperOben, `der Innenabstand muss auf 0 zurueck (${nach.koerperOben})`).toBe(
+            '0px'
+        );
+        // Und das Hoehenbudget gibt die Bandhoehe frei.
+        expect(
+            parseFloat(nach.rahmen),
+            `der Rahmen muss um die Bandhoehe schrumpfen (vorher ${vor.rahmen}, jetzt ${nach.rahmen}, Band ${vor.bandHoehe}px)`
+        ).toBe(parseFloat(vor.rahmen) - vor.bandHoehe);
+        expect(nach.ueberhang, `Seitenueberhang ${nach.ueberhang}px`).toBe(0);
+        expect(nach.suchfeld, `Suchfeld ${nach.suchfeld}`).toBe('frei');
     });
 });
