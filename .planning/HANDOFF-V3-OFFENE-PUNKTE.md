@@ -538,7 +538,7 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:691` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `dice.css:752` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:606` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
@@ -603,7 +603,7 @@ dashboard.css
  1175  .dash-timer-time
  1514  .qref-chip.danger
 dice.css
-  366  .dice-fav-item:hover .fav-del
+  427  .dice-fav-item:hover .fav-del
 dmscreen.css
    86  .dice-fav-btn .fav-name
   274  .condition-tooltip-title
