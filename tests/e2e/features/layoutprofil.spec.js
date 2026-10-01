@@ -307,8 +307,14 @@ function messeProfil() {
         mobilKopf: kasten('.mobile-header'),
         reiterGesamt: reiter.length,
         reiterSichtbar: sichtbar.length,
+        fensterB: window.innerWidth,
         fensterH: window.innerHeight,
-        ueberhang: Math.round(de.scrollHeight - de.clientHeight)
+        ueberhang: Math.round(de.scrollHeight - de.clientHeight),
+        /* Der SEITWAERTS-Ueberhang. Er ist die harte Messgroesse des
+           Querformat-Falls: im Desktop-Profil passt die Kopfzeile in ein 844px
+           breites, 390px flaches Fenster nicht, die Seite scrollt in X, und
+           seitwaerts scrollen ist am Spieltisch keine Bedienung. */
+        ueberhangX: Math.max(0, Math.round(de.scrollWidth - de.clientWidth))
     };
 }
 
@@ -579,6 +585,191 @@ test.describe('Layoutprofil folgt dem Fenster (M2a)', () => {
             expect(nachher.gewaehlt, 'die gespeicherte Wahl darf nicht kippen').toBe(wahl);
         });
     }
+});
+
+// ============================================================
+// (a2) Das Querformat gehoert noch zum Telefon
+// ============================================================
+/**
+ * DER RUECKSCHLAG DER KORREKTUR (a). GEMESSEN am Buendel zu 960b32b, eigenes
+ * Playwright/Chromium, je frisch geladen, 900ms nach dem Drehen:
+ *
+ *   Geraet      hoch -> quer        Kopf quer      Mobil-Kopf   Ueberhang X
+ *   ---------   -----------------   ------------   ----------   -----------
+ *   390x844     mobile -> DESKTOP   152px @ 61px   0px          184px
+ *   393x852     mobile -> DESKTOP   152px @ 61px   0px          176px
+ *   430x932     mobile -> DESKTOP   152px @ 61px   0px           96px
+ *   360x740     mobile -> mobile    —              64px           0px
+ *
+ * Mit dem 61px hohen Umzugs-Band sind das 213 von 390 Bildpunkten feste
+ * Kopf-Moeblierung (55% des Fensters), ein sichtbarer Reiter von 24 — und eine
+ * Seite, die seitwaerts scrollt. Vor (a) war dieser Zustand nach dem Drehen
+ * unerreichbar, weil das Profil nur beim Laden gewaehlt wurde; (a) hat ihn
+ * geschaffen. 740x360 bleibt mobil: dieselbe Geste, zwei Ergebnisse.
+ *
+ * URSACHE. `layoutAusFenster()` entschied allein an `window.innerWidth <= 768`.
+ * Die gaengige Telefonklasse ist im Querformat 740..956px breit und faellt
+ * damit auf die Desktop-Seite.
+ *
+ * DIE ENTSCHEIDUNG. Die Regel bekommt eine zweite, von der ersten unabhaengige
+ * Bedingung: ein Fenster, dessen KURZE Seite in die Telefonklasse faellt und
+ * dessen LANGE Seite darunter bleibt, ist ein gedrehtes Telefon. Die Regel
+ * bleibt ZUSTANDSLOS — `loadLayout()` und der Fensterbeobachter benutzen
+ * dieselbe Funktion, und ein direkt im Querformat geladenes Telefon muss
+ * dasselbe Profil bekommen wie ein gedrehtes. Eine Hysterese ("das Mobil-Profil
+ * erst oberhalb von 1000px verlassen") haette genau das gebrochen.
+ *
+ * DIE GEGENPROBE IST DER TEIL, DER WEHTUT. Ein kurzes, breites Desktop-Fenster
+ * (1440x450) hat dieselbe kurze Seite wie ein gedrehtes Telefon. Es darf NICHT
+ * ins Mobil-Profil fallen — deshalb die Schranke auf der langen Seite, und
+ * deshalb stehen 1440x450, 1280x400, 1024x768 und 901x700 unten als Waechter.
+ */
+const QUER_FENSTER = [
+    [390, 844],
+    [393, 852],
+    [430, 932]
+];
+
+/* Fenster, die NICHT mobil werden duerfen. 1440x450 und 1280x400 nennt der
+   Pruefbefund ausdruecklich als Gegenprobe (kurze Seite wie ein gedrehtes
+   Telefon, lange Seite weit darueber); 1024x768 ist ein Tablet im Querformat,
+   901x700 der Fall, den `hoehenbudget.spec.js` einen Bildpunkt oberhalb der
+   Schmalfassung festnagelt. */
+const KURZE_DESKTOP_FENSTER = [
+    [1440, 450],
+    [1280, 400],
+    [1024, 768],
+    [901, 700]
+];
+
+test.describe('Das Querformat gehoert noch zum Telefon (M2a-Nachtrag)', () => {
+    for (const theme of THEMES) {
+        test(`Drehen ins Querformat bleibt im Mobil-Profil: ${theme}`, async ({ page }) => {
+            await page.setViewportSize({ width: 390, height: 844 });
+            await appLaden(page, theme);
+
+            const hoch = await page.evaluate(messeProfil);
+            expect(hoch.layout, 'der Fall beginnt im Mobil-Profil').toBe('mobile');
+            expect(hoch.gewaehlt, 'der Fall beginnt OHNE ausdrueckliche Wahl').toBeNull();
+
+            await fensterZiehen(page, 844, 390);
+            const quer = await page.evaluate(messeProfil);
+            console.log(
+                `[M2a2] ${theme} 390x844 -> 844x390: hoch ${JSON.stringify(hoch)}, quer ${JSON.stringify(quer)}`
+            );
+
+            // (1) Das Profil bleibt. 844px Breite sind kein Schreibtisch.
+            expect(
+                quer.layout,
+                `das Drehen hat das Mobil-Profil verlassen: "${quer.layout}", Desktop-Kopfzeile ${quer.kopf.hoehe}px an Oberkante ${quer.kopf.oben}px, ${quer.reiterSichtbar} von ${quer.reiterGesamt} Reitern sichtbar`
+            ).toBe('mobile');
+
+            // (2) Die Mobil-Kopfzeile traegt Suche, Rueckgaengig und den Weg
+            //     zum Kampfprotokoll (U5) — ohne sie ist das Querformat blind.
+            expect(
+                quer.mobilKopf.hoehe,
+                `die Mobil-Kopfzeile ist ${quer.mobilKopf.hoehe}px hoch`
+            ).toBeGreaterThan(0);
+
+            // (3) Und nichts scrollt seitwaerts.
+            expect(
+                quer.ueberhangX,
+                `die Seite ragt ${quer.ueberhangX}px ueber die Fensterbreite (${quer.fensterB}px) hinaus`
+            ).toBe(0);
+
+            // (4) Zurueckdrehen heilt — und schreibt nichts fest.
+            await fensterZiehen(page, 390, 844);
+            const zurueck = await page.evaluate(messeProfil);
+            expect(zurueck.layout, `Zurueckdrehen ergab "${zurueck.layout}"`).toBe('mobile');
+            expect(
+                zurueck.gewaehlt,
+                'das Drehen hat eine Wahl in D.settings.layout festgeschrieben'
+            ).toBeNull();
+        });
+    }
+
+    for (const [b, h] of QUER_FENSTER) {
+        test(`Drehen bleibt mobil bei ${b}x${h} -> ${h}x${b}`, async ({ page }) => {
+            await page.setViewportSize({ width: b, height: h });
+            await appLaden(page);
+            expect((await page.evaluate(messeProfil)).layout, 'hoch beginnt mobil').toBe('mobile');
+
+            await fensterZiehen(page, h, b);
+            const quer = await page.evaluate(messeProfil);
+            console.log(`[M2a2] ${b}x${h} -> ${h}x${b}: ${JSON.stringify(quer)}`);
+            expect(quer.layout, `quer ergab "${quer.layout}"`).toBe('mobile');
+            expect(quer.ueberhangX, `Seitenueberhang ${quer.ueberhangX}px`).toBe(0);
+            expect(quer.mobilKopf.hoehe, 'Mobil-Kopfzeile fehlt').toBeGreaterThan(0);
+        });
+
+        /* DIESELBE GROESSE, ANDERER WEG. Die Regel ist zustandslos, also muss
+           ein direkt im Querformat GELADENES Telefon dasselbe Profil bekommen
+           wie ein gedrehtes. Ohne diesen Fall waere eine Hysterese zulaessig,
+           und dann haengt das Ergebnis daran, wie der Spielleiter das Geraet
+           gerade in der Hand hielt, als er die App oeffnete. */
+        test(`direkt im Querformat geladen ist ebenfalls mobil: ${h}x${b}`, async ({ page }) => {
+            await page.setViewportSize({ width: h, height: b });
+            await appLaden(page);
+            const m = await page.evaluate(messeProfil);
+            console.log(`[M2a2] direkt ${h}x${b}: ${JSON.stringify(m)}`);
+            expect(
+                m.layout,
+                `loadLayout() waehlte "${m.layout}" fuer ${h}x${b} — ein gedrehtes Telefon`
+            ).toBe('mobile');
+            expect(m.ueberhangX, `Seitenueberhang ${m.ueberhangX}px`).toBe(0);
+        });
+    }
+
+    /* WAECHTER, nicht roter Nachweis: diese Faelle halten schon vor der
+       Korrektur. Sie stehen hier, weil die Korrektur sie brechen KOENNTE —
+       eine Regel, die nur auf die kurze Seite sieht, zieht jedes flache
+       Desktop-Fenster mit ins Mobil-Profil. */
+    for (const [b, h] of KURZE_DESKTOP_FENSTER) {
+        test(`ein kurzes, breites Desktop-Fenster bleibt Desktop: ${b}x${h}`, async ({ page }) => {
+            await page.setViewportSize({ width: 1440, height: 900 });
+            await appLaden(page);
+            expect((await page.evaluate(messeProfil)).layout, 'der Fall beginnt Desktop').toBe(
+                'desktop'
+            );
+
+            await fensterZiehen(page, b, h);
+            const nachher = await page.evaluate(messeProfil);
+            console.log(`[M2a2] Waechter 1440x900 -> ${b}x${h}: ${JSON.stringify(nachher)}`);
+            expect(
+                nachher.layout,
+                `${b}x${h} ist in das Mobil-Profil gefallen (Mobil-Kopfzeile ${nachher.mobilKopf.hoehe}px) — ein ${b}px breites Fenster ist kein Telefon`
+            ).toBe('desktop');
+            expect(
+                nachher.mobilKopf.hoehe,
+                `die Mobil-Kopfzeile steht mit ${nachher.mobilKopf.hoehe}px`
+            ).toBe(0);
+        });
+
+        /* UND direkt geladen, damit loadLayout() dieselbe Antwort gibt. */
+        test(`direkt geladen bleibt ${b}x${h} ebenfalls Desktop`, async ({ page }) => {
+            await page.setViewportSize({ width: b, height: h });
+            await appLaden(page);
+            const m = await page.evaluate(messeProfil);
+            console.log(`[M2a2] Waechter direkt ${b}x${h}: ${JSON.stringify(m)}`);
+            expect(m.layout, `loadLayout() waehlte "${m.layout}" fuer ${b}x${h}`).toBe('desktop');
+        });
+    }
+
+    test('eine ausdrueckliche Wahl (desktop) ueberlebt das Drehen', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await appLaden(page);
+        await page.evaluate(() => window.setLayout('desktop'));
+        await page.waitForTimeout(400);
+        expect((await page.evaluate(messeProfil)).gewaehlt, 'die Wahl muss stehen').toBe('desktop');
+
+        await fensterZiehen(page, 844, 390);
+        const quer = await page.evaluate(messeProfil);
+        console.log(`[M2a2] Wahl desktop, gedreht: ${JSON.stringify(quer)}`);
+        expect(quer.layout, `das Drehen hat die Wahl auf "${quer.layout}" ueberschrieben`).toBe(
+            'desktop'
+        );
+        expect(quer.gewaehlt, 'die gespeicherte Wahl darf nicht kippen').toBe('desktop');
+    });
 });
 
 // ============================================================
