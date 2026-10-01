@@ -1081,3 +1081,197 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
         expect(nach.suchfeld, `Suchfeld ${nach.suchfeld}`).toBe('frei');
     });
 });
+
+/* ====================================================================
+   DIE MESSMATRIX IN DER SUITE (M3c).
+   ====================================================================
+   Bis M3c prueften die Faelle oben in dieser Datei ALLE bei 1440x800. Die
+   Matrix, mit der die Korrektur ueberhaupt gefunden wurde, steckte nur in einem
+   Messskript im Scratchpad: 4 Ansichten x 4 Breiten (1920/1440/1280/900) x 2
+   Fensterhoehen (900/700) x mit/ohne Band x gescrollt/oben = 128 Zustaende,
+   Laufzeit rund 2 Minuten. Ein Nachweis, der nur im Arbeitsverzeichnis seines
+   Autors liegt, ist kein Nachweis — die Luecke, die er geschlossen hat, kann
+   morgen zurueckkommen, ohne dass etwas rot wird.
+
+   WAS HIER LAEUFT: 64 der 128 Zustaende, als 8 Faelle zu je 8 Zustaenden
+   (4 Ansichten x oben/gescrollt). Die Zuschnitt-Achsen einzeln:
+
+     Breite    1280 und 900. GEMESSEN am Buendel zu fef3afb lagen 1920, 1440 und
+               1280 in allen 96 ihrer Zustaende auf demselben Wert (Ueberhang
+               14px ohne Band, 75px mit Band); 900 war der abweichende Fall
+               (52px / 113px) und zugleich der schlimmste. 1280 ist die untere
+               Kante dieses Plateaus, 900 der Ausreisser.
+               WEGGELASSEN: 1920 und 1440. 1440 pruefen die fuenf Faelle oben in
+               dieser Datei ohnehin, bei beiden Bandzustaenden. 1920 ist der
+               dritte Messpunkt desselben Plateaus und haette in allen 32 seiner
+               Zustaende dasselbe gemeldet wie 1280 — fuer ein Viertel der
+               Laufzeit. Das Budget haengt per Konstruktion an einer MESSUNG und
+               nicht an einer Breakpoint-Grenze; eine dritte Probe auf derselben
+               Flaeche kann deshalb nichts Neues zeigen.
+
+     Hoehe     900 UND 700, beide behalten. 700 ist der enge Fall: mit stehendem
+               Band beginnt die Schale dort erst bei 195px, und genau dort lag
+               der Radpunkt der urspruenglichen Messung auf der Werkzeugleiste
+               statt auf der Liste (siehe reiterUndRollen()). 900 ist der
+               geraeumige Gegenpol.
+
+     Band      mit UND ohne, beide behalten. Das Band ist der Normalfall am
+               Spieltisch und der groessere Teil des Fehlers (75-113px); "ohne"
+               ist der kleinere, aeltere Teil desselben Fehlers (14-52px). Eine
+               der beiden Haelften zu streichen hiesse, die halbe Korrektur
+               unbewacht zu lassen.
+
+     Scrollen  oben UND gescrollt, beide behalten. Ungescrollt belegt die
+               Gegenrechnung des Bands am Seiteninhalt, gescrollt die
+               Anheft-Versatzkette. Es sind zwei verschiedene Mechanismen.
+
+     Ansichten alle vier. Die Schalen tragen VIER unabhaengige
+               `height: calc(100vh - var(--view-frame-height, ..))`-Deklarationen
+               in drei Stilblaettern (core.css, npcs.css zweimal,
+               encounters.css); eine davon weglassen heisst, eine davon
+               ungeprueft lassen.
+
+   Gemessen werden je Zustand dieselben vier Groessen wie im Messskript:
+   Seitenueberhang, Treffer auf das Suchfeld der Werkzeugleiste, Freiheit der
+   Kopfzeile (App-Titel und globale Suche) und Erreichbarkeit des letzten von 24
+   Eintraegen. Die vierte wird nur im GESCROLLTEN Zustand verlangt, aus einem
+   gemessenen Grund — Begruendung an befundeAus(). Jeder Fall sammelt ALLE seine
+   Befunde und meldet sie zusammen; ein Fall, der beim ersten Befund abbricht,
+   verschweigt die anderen sieben Zustaende.
+
+   Und weil eine Probe, die nie rot war, nichts beweist: der letzte Fall dieses
+   Abschnitts zwingt das Token auf die alte verdrahtete 120px zurueck und
+   verlangt, dass die Matrix genau dann Befunde meldet. */
+const MATRIX_BREITEN = [1280, 900];
+const MATRIX_HOEHEN = [900, 700];
+
+/**
+ * Faehrt eine Ansicht an und stellt den gewuenschten Scrollzustand her.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} reiter
+ * @param {string} listenSel
+ * @param {boolean} gescrollt
+ */
+async function zustandHerstellen(page, reiter, listenSel, gescrollt) {
+    if (gescrollt) {
+        await reiterUndRollen(page, reiter, listenSel);
+        return;
+    }
+    await page.evaluate(n => window.switchView(n), reiter);
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(200);
+}
+
+/**
+ * Prueft eine Messung gegen die vier Zusicherungen und liefert die Befunde.
+ *
+ * `letzterPruefen` schaltet die VIERTE Zusicherung (Erreichbarkeit des letzten
+ * von 24 Eintraegen) zu — sie gilt NUR im gescrollten Zustand. Das ist beim
+ * ersten Lauf dieser Matrix gemessen worden, nicht vorher gewusst: ungescrollt
+ * meldete sie in allen 8 Faellen je 4 Befunde (z.B. "1280x900 MIT Band oben
+ * locations: letzter Eintrag 2148..2222px AUSSERHALB NICHT-KLICKBAR", einen je
+ * Ansicht) — und das ist richtig so. Am Listenanfang liegt der 24. Eintrag
+ * legitim unter der Falz; ihn dort zu verlangen hiesse zu verlangen, dass die
+ * ganze Liste in die Schale passt, und das verspricht das Hoehenbudget nicht.
+ * Versprochen ist, dass die Liste SELBST scrollt und ihr Ende erreichbar
+ * BLEIBT — genau das misst der gescrollte Zustand. Die drei anderen
+ * Zusicherungen (Ueberhang, Werkzeugleiste, Kopfzeile) gelten in beiden
+ * Zustaenden und waren im selben Lauf in beiden gruen.
+ *
+ * @param {string} marke
+ * @param {any} m Ergebnis von messeBudget()
+ * @param {boolean} [letzterPruefen] Erreichbarkeit des letzten Eintrags mitpruefen
+ * @returns {string[]}
+ */
+function befundeAus(marke, m, letzterPruefen = true) {
+    const befunde = [];
+    if (m.anzahl !== ANZAHL) {
+        befunde.push(`${marke}: ${m.anzahl} statt ${ANZAHL} Eintraege gerendert`);
+    }
+    if (m.ueberhang !== 0) {
+        befunde.push(`${marke}: Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen})`);
+    }
+    if (m.suchfeld !== 'frei') {
+        befunde.push(
+            `${marke}: Suchfeld ${m.suchfeld} (Kopfzeile deckt die Leiste um ${m.kopfDecktLeiste}px)`
+        );
+    }
+    if (m.appTitel !== 'frei') befunde.push(`${marke}: App-Titel ${m.appTitel}`);
+    if (m.globaleSuche !== 'frei') befunde.push(`${marke}: globale Suche ${m.globaleSuche}`);
+    if (letzterPruefen && (!m.letzterImFenster || !m.letzterKlickbar)) {
+        befunde.push(
+            `${marke}: letzter Eintrag ${m.letzterOben}..${m.letzterUnten}px` +
+                `${m.letzterImFenster ? '' : ' AUSSERHALB'}` +
+                `${m.letzterKlickbar ? '' : ' NICHT-KLICKBAR'}`
+        );
+    }
+    return befunde;
+}
+
+test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
+    test('Gegenprobe: mit der alten verdrahteten 120px meldet die Matrix den Befund', async ({
+        page
+    }) => {
+        // Der rote Nachweis fuer die Matrix selbst. Ohne ihn waere sie eine Probe,
+        // die seit ihrer Geburt gruen ist und von der niemand weiss, ob sie
+        // ueberhaupt etwas messen kann. Gefahren wird die schlimmste Ecke der
+        // Matrix — die KLEINSTE Breite und die KLEINSTE Hoehe ihrer eigenen
+        // Achsen, mit Band, gescrollt. Die Zahlen kommen aus MATRIX_BREITEN und
+        // MATRIX_HOEHEN statt verdrahtet zu sein: wird der Zuschnitt enger
+        // gezogen, wandert die Gegenprobe mit.
+        //
+        // Das Token wird per Stilblatt mit `!important` ueberschrieben, nicht per
+        // Inline-Stil: `setzeRahmenHoehe()` schreibt bei jedem Lauf der Kette
+        // einen neuen Inline-Wert, ein Inline-Zwang waere also beim naechsten
+        // resize weg. Das `!important` eines Stilblatts schlaegt den
+        // nicht-wichtigen Inline-Wert dauerhaft. Es faellt NICHT in die
+        // !important-Ratsche: die zaehlt die Quelldateien unter assets/styles/.
+        test.setTimeout(60000);
+        const breite = Math.min(...MATRIX_BREITEN);
+        const hoehe = Math.min(...MATRIX_HOEHEN);
+        await page.setViewportSize({ width: breite, height: hoehe });
+        await appLaden(page);
+
+        const [reiter, , suchSel, listenSel] = ANSICHTEN[0];
+        await zustandHerstellen(page, reiter, listenSel, true);
+        const gemessen = await page.evaluate(messeBudget, [suchSel, listenSel]);
+        expect(
+            befundeAus('gemessenes Budget', gemessen),
+            'die Matrix muss mit dem gemessenen Budget befundfrei sein, sonst misst diese ' +
+                'Gegenprobe nur einen vorbestehenden Fehler'
+        ).toEqual([]);
+
+        await page.addStyleTag({
+            content: ':root { --view-frame-height: 120px !important; }'
+        });
+        await page.waitForTimeout(300);
+        await zustandHerstellen(page, reiter, listenSel, true);
+        const verdrahtet = await page.evaluate(messeBudget, [suchSel, listenSel]);
+        const befunde = befundeAus('verdrahtete 120px', verdrahtet);
+        console.log(
+            `[M3c] Gegenprobe ${breite}x${hoehe} mit Band, gescrollt — gemessen: Rahmen ` +
+                `${gemessen.rahmen}, ` +
+                `Ueberhang ${gemessen.ueberhang}px, Suchfeld ${gemessen.suchfeld} | ` +
+                `verdrahtet: Rahmen ${verdrahtet.rahmen}, Ueberhang ${verdrahtet.ueberhang}px, ` +
+                `Suchfeld ${verdrahtet.suchfeld}, KopfDecktLeiste ${verdrahtet.kopfDecktLeiste}px, ` +
+                `Befunde ${befunde.length}`
+        );
+
+        // Erst der Beweis, dass der Zwang ueberhaupt gegriffen hat.
+        expect(
+            verdrahtet.rahmen,
+            `das Token muss auf 120px zu zwingen sein (es steht auf ${verdrahtet.rahmen})`
+        ).toBe('120px');
+        // Und dann: die Matrix sieht es.
+        expect(
+            verdrahtet.ueberhang,
+            `mit der verdrahteten 120px muss ein Seitenueberhang entstehen ` +
+                `(gemessen ${verdrahtet.ueberhang}px)`
+        ).toBeGreaterThan(0);
+        expect(
+            befunde.length,
+            'die Matrix-Zusicherungen muessen den verdrahteten Zustand melden — sie melden nichts'
+        ).toBeGreaterThan(0);
+    });
+});
