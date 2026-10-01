@@ -377,6 +377,58 @@ test.describe('U5: Einstieg im Mobil-Layout', () => {
     });
 });
 
+test.describe('U5: Mobil-Kopf bei 360 px', () => {
+    // Das engste Fenster der Linse. Der Einstieg zum Protokoll ist das SIEBENTE
+    // Bedienelement im Mobil-Kopf — hier wird geprueft, dass dafuer keines der
+    // anderen sechs hinausgeschoben wird.
+    test.use({ viewport: { width: 360, height: 740 } });
+
+    test('alle sieben Bedienelemente bleiben im Kopf — keines wird hinausgeschoben', async ({
+        page
+    }) => {
+        await ladeApp(page);
+
+        const messwert = await page.evaluate(() => {
+            const kopf = document.querySelector('.mobile-header');
+            if (!kopf) return { fehlt: true };
+            const kr = kopf.getBoundingClientRect();
+            const teile = [...kopf.querySelectorAll('button, .mobile-timer')].map(e => {
+                const r = e.getBoundingClientRect();
+                return {
+                    was: e.id || e.title || String(e.className).split(' ')[0],
+                    rausRechts: Math.max(0, Math.round(r.right - kr.right)),
+                    hoehe: Math.round(r.height)
+                };
+            });
+            return {
+                fehlt: false,
+                anzahl: teile.length,
+                ueberlauf: kopf.scrollWidth - kopf.clientWidth,
+                hinausgeschoben: teile.filter(t => t.rausRechts > 0),
+                protokollDabei: teile.some(t => t.was === 'kampflog-toggle-mobil'),
+                kleinsteHoehe: Math.min(...teile.map(t => t.hoehe))
+            };
+        });
+
+        console.log(
+            `[U5-14] Mobil-Kopf bei 360px: ${messwert.anzahl} Bedienelemente · Überlauf ` +
+                `${messwert.ueberlauf}px · hinausgeschoben: ` +
+                `${JSON.stringify(messwert.hinausgeschoben)} · Protokoll-Einstieg dabei: ` +
+                `${messwert.protokollDabei} · kleinste Tippfläche: ${messwert.kleinsteHoehe}px hoch`
+        );
+
+        expect(messwert.fehlt).toBe(false);
+        // Der Einstieg muss hier stehen (das ist der Befund) …
+        expect(messwert.protokollDabei).toBe(true);
+        // … und er darf dabei nichts anderes unerreichbar machen. Ohne den
+        // Innenabstands-Schritt unter 400px (assets/styles/core.css) ragte der
+        // Theme-Knopf 29px aus dem Kopf.
+        expect(messwert.hinausgeschoben).toEqual([]);
+        expect(messwert.ueberlauf).toBe(0);
+        expect(messwert.kleinsteHoehe).toBeGreaterThanOrEqual(32);
+    });
+});
+
 test.describe('U5: Loeschen raeumt das Protokoll mit', () => {
     test('"Alle Daten löschen" laesst keinen Kampagneninhalt im Protokoll stehen', async ({
         page
