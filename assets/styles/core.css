@@ -88,10 +88,15 @@
            Mobil-Layout ausgeblendet ist und es sonst NULL sichtbare Wege zum Panel
            gab. Bei 360px passten sieben mit 8px Innenabstand nicht mehr — gemessen
            ragte der Theme-Knopf 29px aus dem Kopf heraus und war nicht mehr
-           erreichbar. Enger statt unerreichbar: unterhalb von 400px schrumpfen die
+           erreichbar. Enger statt unerreichbar: unterhalb von 600px schrumpfen die
            Innenabstaende, die Hoehe der Tippflaeche (43px) bleibt unberuehrt, und
-           kein Bedienelement verschwindet. */
-        @media (max-width: 400px) {
+           kein Bedienelement verschwindet.
+           600px und nicht 400px, obwohl der Engpass erst bei ~400px beginnt: F-12
+           (tests/unit/design-consistency.test.js) laesst genau DREI Grenzen zu —
+           600, 900, 1200. Eine vierte waere der Anfang der Leiter, die diese
+           Ratsche gerade verhindert. Zwischen 400 und 600px sind die Knoepfe damit
+           etwas schmaler als noetig; das ist der guenstigere Handel. */
+        @media (max-width: 600px) {
             [data-layout="mobile"] .mobile-header {
                 padding: 10px 8px;
             }

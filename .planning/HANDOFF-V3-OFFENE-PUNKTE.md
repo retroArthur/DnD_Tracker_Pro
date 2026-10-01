@@ -427,8 +427,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1265` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1270` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:595` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:735` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -539,7 +539,7 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:661` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `core.css:583` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `core.css:606` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
@@ -578,9 +578,9 @@ core.css
    75  [data-layout="mobile"] #mobile-timer-display
    79  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
    83  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1161  .char-card-currency
- 1937  .quest-reward-item-tag .remove-btn:hover
- 1930  .quest-reward-item-tag .remove-btn
+ 1184  .char-card-currency
+ 1960  .quest-reward-item-tag .remove-btn:hover
+ 1953  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
