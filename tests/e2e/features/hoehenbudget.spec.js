@@ -358,6 +358,100 @@ test.describe('Hoehenbudget der Listen-Schalen (U6)', () => {
     });
 
     /* ================================================================
+       DER FENSTERWECHSEL NACH dem Laden — die veraltete Gegenrechnung.
+       ================================================================
+       Die Hoehe der beiden festen Baender wurde bisher GENAU EINMAL gemessen,
+       bei ihrer Erzeugung (`showMigrationHintBanner()` /
+       `showDivergenceBanner()` in systems/migration/migration-wizard.js), und in
+       `--migration-hint-height` bzw. `--divergence-banner-height` abgelegt. Die
+       Hoehe haengt aber an der Fensterbreite: das Hinweisband bricht um.
+
+       Gemessen am Buendel zu 6b275e1, Orte, Band steht, KEIN Scrollen, das
+       Fenster erst NACH dem Laden verkleinert:
+
+         1440x800 -> 390x844   Band 61 -> 157px, Token bleibt 61px,
+                               body padding-top bleibt 61px,
+                               Glied 1 folgt korrekt auf 157px
+                               -> Kopfzeile 157..391, Werkzeugleiste 305..379
+                               -> kopfDecktLeiste 74 von 74px
+         1440x800 -> 500x800   Band 61 -> 80px   -> kopfDecktLeiste  9px
+         1920x900 -> 700x700   Band 61 -> 61px (kein Umbruch) -> 0px
+
+       Die Werkzeugleiste liegt bei 390px also VOLLSTAENDIG hinter der
+       angehefteten Kopfzeile, und zwar UNGESCROLLT, wo weder ein Scrollweg noch
+       ein Anheft-Versatz etwas daran aendern kann. Ursache nachgewiesen: setzt
+       man im selben Zustand `--migration-hint-height` auf die Isthoehe und laesst
+       updateStickyOffsets() erneut laufen, geht der body-Innenabstand auf 157px,
+       der Rahmen von 315 auf 411px und kopfDecktLeiste von 74 auf 0.
+
+       Weil das Hoehenbudget (Glied 0) denselben body-Innenabstand MITLIEST, war
+       mit der Gegenrechnung auch das Budget falsch — deshalb gehoert dieser Fall
+       hierher und nicht in sticky-stapel.spec.js.
+
+       Die 128 Zustaende der uebrigen Faelle konnten das nicht sehen: sie setzen
+       das Fenster alle VOR dem Laden, und dann ist die Einmal-Messung richtig.
+       Der DM trifft es beim Andocken des Laptops oder beim Teilen des Fensters.
+
+       Das Divergenz-Band haengt an derselben Einmal-Messung, kann aber nicht
+       umbrechen (`height: 40px` + `white-space: nowrap` + Ellipse,
+       migration.css) — nachgemessen 40px bei 1440, 520 und 390px Breite. Die
+       Korrektur fasst es symmetrisch mit; die Faelle unten messen das Band, das
+       sich wirklich bewegt. */
+    for (const [von, nach, umbruchErwartet] of [
+        [[1440, 800], [390, 844], true],
+        [[1440, 800], [500, 800], true],
+        [[1920, 900], [700, 700], false]
+    ]) {
+        test(`ein Fensterwechsel nach dem Laden laesst die Gegenrechnung nicht veralten: ${von.join('x')} -> ${nach.join('x')}`, async ({
+            page
+        }) => {
+            await page.setViewportSize({ width: von[0], height: von[1] });
+            await appLaden(page);
+            await page.evaluate(() => window.switchView('locations'));
+            await page.waitForTimeout(400);
+
+            const vorher = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+            expect(vorher.bandHoehe, 'der Fall beginnt mit stehendem Band').toBeGreaterThan(0);
+            expect(
+                vorher.kopfDecktLeiste,
+                `vor dem Wechsel muss alles heil sein (${vorher.kopfDecktLeiste}px)`
+            ).toBe(0);
+
+            // Der Wechsel. core/init.js haengt updateStickyOffsets() entprellt
+            // (200ms) am resize-Ereignis — die Wartezeit liegt darueber.
+            await page.setViewportSize({ width: nach[0], height: nach[1] });
+            await page.waitForTimeout(1200);
+
+            const m = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+            console.log(
+                `[U6] Wechsel ${von.join('x')} -> ${nach.join('x')}: vorher Band ${vorher.bandHoehe}px / ${vorher.koerperOben}, nachher ${JSON.stringify(m)}`
+            );
+
+            if (umbruchErwartet) {
+                expect(
+                    m.bandHoehe,
+                    `das Band muss im schmaleren Fenster umbrechen (vorher ${vorher.bandHoehe}px, jetzt ${m.bandHoehe}px) — sonst misst dieser Fall nichts`
+                ).toBeGreaterThan(vorher.bandHoehe);
+            }
+
+            // (a) Die Gegenrechnung am Seiteninhalt muss der Isthoehe folgen.
+            expect(
+                m.koerperOben,
+                `der body-Innenabstand muss die neue Bandhoehe tragen (${m.koerperOben} bei ${m.bandHoehe}px Band)`
+            ).toBe(`${m.bandHoehe}px`);
+
+            // (b) Damit bleibt die Werkzeugleiste vor der Kopfzeile frei.
+            expect(
+                m.kopfDecktLeiste,
+                `die Kopfzeile deckt die Werkzeugleiste um ${m.kopfDecktLeiste}px (Band ${m.bandHoehe}px, Innenabstand ${m.koerperOben}, Rahmen ${m.rahmen})`
+            ).toBe(0);
+
+            // (c) Und das Hoehenbudget, das denselben Innenabstand mitliest.
+            expect(m.ueberhang, `Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen})`).toBe(0);
+        });
+    }
+
+    /* ================================================================
        DAS ZWEITE FESTE BAND — der Divergenz-Pfad.
        ================================================================
        Die drei Faelle oben fahren alle das Umzugs-Hinweisband. Das zweite
