@@ -702,8 +702,25 @@
 @media (max-width: 900px) {
     .section-toolbar {
         flex-wrap: wrap;
+        /* Eine Leiste, die umbrechen DARF, kann keine feste Hoehe haben: die
+           verdrahtete `height: 74px` oben blieb beim Umbruch stehen, und das
+           Suchfeld (`order: 3`, `flex: 1 1 100%`) ragte darunter heraus — 55px
+           bei Orte/NSCs/Begegnungen, 52px beim Bestiar. Dort liegt es hinter dem
+           Inhalt, der unter der Leiste beginnt: gemessen bei 390/540/600px
+           antwortete elementFromPoint fuer Begegnungen mit SPAN.card-title und
+           fuer das Bestiar mit DIV.bestiary-list-item, und ein echter Mausklick
+           kam nicht an (Wert blieb leer, aktives Element BODY). Orte und NSCs
+           tippten nur, weil ihr Feld zufaellig auf Leerraum fiel.
+           `min-height` statt `height` haelt den ungebrochenen Fall unveraendert
+           (ueber 900px gilt `flex-wrap: nowrap`, gemessen weiter 74px).
+           Die Truhe fuehrt dieselben zwei Zeilen seit laengerem lokal
+           (`.loot-view .section-toolbar`, loot.css) — gegen ueberlaufende
+           Filter-Chips, aus demselben Grund; sie war die einzige heile der
+           fuenf. */
+        height: auto;
+        min-height: 74px;
     }
-    
+
     .section-toolbar-identity {
         width: auto;
     }
