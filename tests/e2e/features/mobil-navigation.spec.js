@@ -764,3 +764,95 @@ test.describe('M1 — enges Telefon: die Leiste bleibt im Fenster', () => {
         }
     }
 });
+
+/* ====================================================================
+   GEGENPROBE ZU URSACHE A — der Deckel von vor M1, wirklich hergestellt.
+   ====================================================================
+   WARUM SIE FEHLTE. Die acht Zusicherungen oben sind seit ihrer Geburt gruen.
+   Dass sie den Deckel UEBERHAUPT messen koennen, stand nirgends belegt: eine
+   Probe, die den Zustand vor der Korrektur nie herstellt, kann eine Ruecknahme
+   der Korrektur nur dann melden, wenn jemand sie zufaellig genau so
+   zurueckdreht, wie sie es erwartet. Die Hoehenbudget-Probe fuehrt fuer ihren
+   eigenen Befund genau so eine Gegenprobe (`--view-frame-height` auf die alte
+   verdrahtete Zahl gezwungen); hier fehlte das Gegenstueck.
+
+   WIE DER ALTE ZUSTAND HERGESTELLT WIRD. Nicht durch Ueberschreiben von
+   `max-height` an `.nav-tabs`, sondern durch Zwang auf das Token, das die Regel
+   dort liest (`max-height: var(--mobile-nav-max-height, 300px)`): ein
+   Stilblatt mit `!important` auf `:root` schlaegt den nicht-wichtigen
+   Inline-Wert, den setzeMobilLeistenDeckel() bei jedem Lauf der Kette neu
+   schreibt. Ein Inline-Zwang waere beim naechsten `resize` weg. Das
+   `!important` faellt NICHT in die Ratsche: die zaehlt die Quelldateien unter
+   assets/styles/, nicht die Stilblaetter eines Testlaufs.
+
+   GEMESSEN am Buendel zu 89f4b72, kleinstes Fenster aus FENSTER (360x740),
+   schlichter Zustand, Leiste ausgefahren:
+
+     Zustand                       Sichtfeld  Rasterinhalt  erreichbar
+     ---------------------------   ---------  ------------  ----------
+     gemessenes Token (M1)            444px         444px       24/24
+     erzwungene 300px (vor M1)        300px         444px       20/24
+
+   Die vier, die dabei herausfallen, sind die unterste Reihe — genau die vier,
+   die der Kopfkommentar als dauerhaft hinter dem `overflow` liegend nennt.
+
+   WAS SIE NICHT IST: eine zweite Fassung der Zusicherung 3. Die prueft, dass
+   das Raster hineinpasst. Diese hier prueft, dass die Messung es MERKT, wenn es
+   nicht hineinpasst. Ohne den ersten Teil (die Vorbedingung) wuerde sie einen
+   vorbestehenden Fehler als Erfolg verbuchen — deshalb steht er davor.
+   ==================================================================== */
+test.describe('M1 — Gegenprobe: der Deckel von vor M1 meldet den Befund', () => {
+    test('360x740: erzwungene 300px schneiden die unterste Reihe ab', async ({ page }) => {
+        test.setTimeout(90000);
+        // Kleinstes Fenster der eigenen Achse — wird FENSTER enger gezogen,
+        // wandert die Gegenprobe mit, statt eine verdrahtete Zahl zu fuehren.
+        const [breite, hoehe] = FENSTER.reduce((a, b) => (b[1] < a[1] ? b : a));
+        await page.setViewportSize({ width: breite, height: hoehe });
+        await mobilLaden(page, THEMES[0]);
+        await leisteOeffnen(page);
+
+        // VORBEDINGUNG — ohne sie misst die Gegenprobe nur einen vorbestehenden
+        // Fehler. Das gemessene Token MUSS das Raster ohne Scrollen fassen und
+        // alle 24 Reiter erreichbar halten.
+        const gemessen = await page.evaluate(messeLeiste);
+        const gemessenErreichbar = gemessen.reiter.filter(r => r.erreichbar).length;
+        expect(
+            gemessen.navInhaltHoehe - gemessen.navSichtHoehe,
+            `Vorbedingung: mit dem gemessenen Token muss das Raster hineinpassen ` +
+                `(Inhalt ${gemessen.navInhaltHoehe}px, Sichtfeld ${gemessen.navSichtHoehe}px)`
+        ).toBeLessThanOrEqual(0);
+        expect(
+            gemessenErreichbar,
+            `Vorbedingung: mit dem gemessenen Token muessen alle ${ANZAHL_ANSICHTEN} ` +
+                `erreichbar sein (${gemessenErreichbar})`
+        ).toBe(ANZAHL_ANSICHTEN);
+
+        // Und jetzt der Zustand von vor M1.
+        await page.waitForTimeout(300);
+        const verdrahtet = await page.evaluate(messeLeiste);
+        const verdrahtetErreichbar = verdrahtet.reiter.filter(r => r.erreichbar).length;
+        console.log(
+            `[M1-Gegenprobe] ${breite}x${hoehe}: gemessen Sichtfeld ` +
+                `${gemessen.navSichtHoehe}px / Inhalt ${gemessen.navInhaltHoehe}px, ` +
+                `erreichbar ${gemessenErreichbar}/${ANZAHL_ANSICHTEN} | verdrahtet Sichtfeld ` +
+                `${verdrahtet.navSichtHoehe}px / Inhalt ${verdrahtet.navInhaltHoehe}px, ` +
+                `erreichbar ${verdrahtetErreichbar}/${ANZAHL_ANSICHTEN}`
+        );
+
+        // Erst der Beweis, dass der Zwang ueberhaupt gegriffen hat.
+        expect(
+            verdrahtet.navSichtHoehe,
+            `der Deckel muss auf 300px zu zwingen sein (Sichtfeld ${verdrahtet.navSichtHoehe}px)`
+        ).toBe(300);
+        // Und dann: die Messung sieht den Befund.
+        expect(
+            verdrahtet.navInhaltHoehe - verdrahtet.navSichtHoehe,
+            `mit 300px muss ein Ueberhang entstehen (Inhalt ${verdrahtet.navInhaltHoehe}px)`
+        ).toBeGreaterThan(0);
+        expect(
+            verdrahtetErreichbar,
+            `mit 300px duerfen NICHT mehr alle ${ANZAHL_ANSICHTEN} erreichbar sein ` +
+                `(${verdrahtetErreichbar})`
+        ).toBeLessThan(ANZAHL_ANSICHTEN);
+    });
+});
