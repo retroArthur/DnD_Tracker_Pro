@@ -98,18 +98,47 @@ const ANSICHTEN = [
 /**
  * Oeffnet die App mit gefuellten Listen. Das Umzugs-Band wird bewusst NICHT
  * unterdrueckt (siehe Kopfkommentar).
+ *
+ * `opts.weitere` legt VOR dem Laden weitere localStorage-Schluessel ab — der
+ * Weg, auf dem der Divergenz-Zweig von `startMigrationFileSide()` betreten
+ * wird (`migration-divergence-since`). Nur so faellt die Verzweigung dort, wo
+ * sie im Betrieb faellt; ein nachtraeglicher Aufruf von
+ * `showDivergenceBanner()` wuerde den Einstieg ueberspringen.
+ *
+ * `opts.mobil` laesst den Wartepunkt von `waitForAppReady()` weg und wartet nur
+ * auf die Bereitschaftsmarkierung. Im Mobil-Layout ist die Desktop-Kopfzeile
+ * ausgeblendet (`[data-layout="mobile"] .header-actions { display: none }`), und
+ * `waitForAppReady()` wartet auf eine SICHTBARE `.app-title` — es lief dort in
+ * die Zeitgrenze. Derselbe Griff wie in sticky-stapel.spec.js.
+ *
  * @param {import('@playwright/test').Page} page
+ * @param {{weitere?: Record<string,string>, mobil?: boolean}} [opts]
  */
-async function appLaden(page) {
-    await page.addInitScript(saat => {
-        try {
-            localStorage.setItem('dnd-tracker-v4', JSON.stringify(saat));
-        } catch {
-            // file://-localStorage ist je Browserbau unterschiedlich streng.
-        }
-    }, SAAT);
+async function appLaden(page, opts) {
+    const o = opts || {};
+    await page.addInitScript(
+        arg => {
+            try {
+                localStorage.setItem('dnd-tracker-v4', JSON.stringify(arg.saat));
+                for (const schluessel of Object.keys(arg.weitere)) {
+                    localStorage.setItem(schluessel, arg.weitere[schluessel]);
+                }
+            } catch {
+                // file://-localStorage ist je Browserbau unterschiedlich streng.
+            }
+        },
+        { saat: SAAT, weitere: o.weitere || {} }
+    );
     await page.goto(APP_URL);
-    await waitForAppReady(page);
+    if (o.mobil) {
+        await page.waitForFunction(
+            () => document.documentElement.dataset.appReady === 'true',
+            null,
+            { timeout: 15000 }
+        );
+    } else {
+        await waitForAppReady(page);
+    }
     await page.waitForTimeout(500);
 }
 
@@ -188,11 +217,20 @@ function messeBudget(sel) {
         ueberhang: Math.round(de.scrollHeight - de.clientHeight),
         scrollY: Math.round(window.scrollY),
         bandDa: !!band,
+        bandKlasse: band ? String(band.className).split(' ')[0] : '(keins)',
         bandHoehe: band ? Math.round(band.getBoundingClientRect().height) : 0,
         rahmen: getComputedStyle(de).getPropertyValue('--view-frame-height').trim() || '(keins)',
+        layout: de.dataset.layout || '(keins)',
+        klasseHinweis: document.body.classList.contains('has-migration-hint'),
+        klasseDivergenz: document.body.classList.contains('has-divergence-banner'),
+        koerperOben: getComputedStyle(document.body).paddingTop,
         kopfDecktLeiste: ue(
             kopf ? kopf.getBoundingClientRect() : null,
             leiste ? leiste.getBoundingClientRect() : null
+        ),
+        bandDecktKopf: ue(
+            band ? band.getBoundingClientRect() : null,
+            kopf ? kopf.getBoundingClientRect() : null
         ),
         suchfeld: treffer(such),
         appTitel: treffer(document.querySelector('.app-title')),
@@ -318,4 +356,180 @@ test.describe('Hoehenbudget der Listen-Schalen (U6)', () => {
         expect(m.ueberhang, `Seitenueberhang ${m.ueberhang}px bei ${m.bandHoehe}px Band`).toBe(0);
         expect(m.suchfeld, `Suchfeld ${m.suchfeld}`).toBe('frei');
     });
+
+    /* ================================================================
+       DAS ZWEITE FESTE BAND — der Divergenz-Pfad.
+       ================================================================
+       Die drei Faelle oben fahren alle das Umzugs-Hinweisband. Das zweite
+       feste Band am Fensterkopf, `.divergence-banner`, kam bis zu dieser
+       Runde in KEINEM Test je auf den Schirm: `grep -rn "divergence" tests/`
+       traf nur Quelltext-Belege und die Rueckfall-Zweige der Waehler
+       (`.migration-hint-banner || .divergence-banner`) in dieser Datei und in
+       sticky-stapel.spec.js — und in beiden stand der Hinweis, der Zweig lief
+       also nie.
+
+       Damit waren vier Stellen ungedeckt, die zusammen einen Fall tragen:
+         - `body.has-divergence-banner { padding-top }` (migration.css)
+         - die gemessene `--divergence-banner-height`
+         - das `max(bottom)` ueber BEIDE Baender in Glied 1
+         - `classList.remove('has-migration-hint')` in startMigrationFlow()
+       Gemessen am Buendel mit zurueckgedrehter Korrektur (1440x800, Orte,
+       ungescrollt wie gescrollt): Band deckt die Kopfzeile 40px, App-Titel
+       antwortet mit STRONG, globale Suche mit SPAN.divergence-banner-text,
+       Rahmen 134px statt 174px. Die volle Playwright-Suite blieb dabei gruen.
+
+       BETRETEN WIRD DER ZWEIG UEBER SEINEN ECHTEN EINSTIEG: ein vorbelegtes
+       `migration-divergence-since` laesst startMigrationFileSide() den
+       Divergenz-Zweig waehlen UND den Hinweis unterdruecken (`if
+       (!divergenceSince) showMigrationHintBanner()`). Ein direkter Aufruf von
+       showDivergenceBanner() wuerde genau diese Verzweigung ueberspringen. */
+    test('der Divergenz-Pfad: das zweite feste Band haelt Kopfzeile und Seite frei', async ({
+        page
+    }) => {
+        await page.setViewportSize({ width: 1440, height: 800 });
+        await appLaden(page, {
+            weitere: { 'migration-divergence-since': JSON.stringify({ date: '2026-08-15' }) }
+        });
+
+        // Vorbedingung: der richtige Zweig, nicht der Hinweis.
+        const zweig = await page.evaluate(() => ({
+            divergenz: !!document.querySelector('.divergence-banner'),
+            hinweis: !!document.querySelector('.migration-hint-banner')
+        }));
+        expect(
+            zweig,
+            `startMigrationFileSide() muss den Divergenz-Zweig waehlen (${JSON.stringify(zweig)})`
+        ).toEqual({ divergenz: true, hinweis: false });
+
+        // Ungescrollt UND gescrollt: ohne die Gegenrechnung am Seiteninhalt
+        // verdeckt das `position: fixed`-Band die Kopfzeile in BEIDEN Lagen.
+        for (const lage of ['oben', 'gescrollt']) {
+            if (lage === 'oben') {
+                await page.evaluate(() => window.switchView('locations'));
+                await page.waitForTimeout(400);
+            } else {
+                await reiterUndRollen(page, 'locations', '#locations-list');
+            }
+            const m = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+            console.log(`[U6] Divergenz-Band, ${lage}: ${JSON.stringify(m)}`);
+
+            expect(m.bandKlasse, `${lage}: es muss das Divergenz-Band sein`).toBe(
+                'divergence-banner'
+            );
+            expect(m.bandHoehe, `${lage}: das Band muss eine Hoehe haben`).toBeGreaterThan(0);
+            expect(
+                m.klasseDivergenz,
+                `${lage}: body.has-divergence-banner fehlt (padding-top ${m.koerperOben})`
+            ).toBe(true);
+            expect(
+                m.koerperOben,
+                `${lage}: die Gegenrechnung am Seiteninhalt muss die Bandhoehe tragen (${m.koerperOben} bei ${m.bandHoehe}px Band)`
+            ).toBe(`${m.bandHoehe}px`);
+            expect(
+                m.ueberhang,
+                `${lage}: Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen})`
+            ).toBe(0);
+            expect(
+                m.bandDecktKopf,
+                `${lage}: das Band deckt die Kopfzeile um ${m.bandDecktKopf}px`
+            ).toBe(0);
+            expect(m.appTitel, `${lage}: App-Titel ${m.appTitel}`).toBe('frei');
+            expect(m.globaleSuche, `${lage}: globale Suche ${m.globaleSuche}`).toBe('frei');
+            expect(m.suchfeld, `${lage}: Suchfeld der Werkzeugleiste ${m.suchfeld}`).toBe('frei');
+        }
+    });
+
+    test('der Uebergang Hinweis -> Divergenz laesst keine Klasse stehen', async ({ page }) => {
+        // Der 21px-Nachlauf: startMigrationFlow() entfernte das Hinweisband,
+        // liess aber `body.has-migration-hint` stehen. Die Regel hielt dann
+        // weiter die 61px des verschwundenen Hinweises frei, waehrend das
+        // Divergenz-Banner nur 40px hoch ist — 21px Luft ueber der Kopfzeile
+        // und, seit das Hoehenbudget daran haengt, 21px Seitenueberhang.
+        await page.setViewportSize({ width: 1440, height: 800 });
+        await appLaden(page);
+
+        const vor = await page.evaluate(() => ({
+            hinweis: !!document.querySelector('.migration-hint-banner'),
+            klasseHinweis: document.body.classList.contains('has-migration-hint'),
+            koerperOben: getComputedStyle(document.body).paddingTop
+        }));
+        expect(vor.hinweis, 'der Fall beginnt mit stehendem Hinweisband').toBe(true);
+        expect(vor.klasseHinweis, 'und mit gesetzter Gegenrechnung').toBe(true);
+
+        await page.evaluate(() => window.switchView('locations'));
+        await page.waitForTimeout(300);
+        // Der echte Weg: der Knopf im Hinweisband ruft startMigrationFlow().
+        await page.evaluate(() => window.startMigrationFlow());
+        await page.waitForTimeout(600);
+        await reiterUndRollen(page, 'locations', '#locations-list');
+
+        const m = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+        console.log(`[U6] Uebergang (vorher ${JSON.stringify(vor)}): ${JSON.stringify(m)}`);
+
+        expect(m.bandKlasse, 'nach dem Uebergang steht das Divergenz-Band').toBe(
+            'divergence-banner'
+        );
+        expect(
+            m.klasseHinweis,
+            `body.has-migration-hint muss MIT dem Band gehen (padding-top ${m.koerperOben} bei ${m.bandHoehe}px Band)`
+        ).toBe(false);
+        expect(m.klasseDivergenz, 'und die des Divergenz-Bands an seine Stelle treten').toBe(true);
+        expect(
+            m.koerperOben,
+            `die Gegenrechnung muss die neue Bandhoehe tragen (${m.koerperOben} bei ${m.bandHoehe}px)`
+        ).toBe(`${m.bandHoehe}px`);
+        expect(m.ueberhang, `Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen})`).toBe(0);
+        expect(m.bandDecktKopf, `Band deckt Kopfzeile ${m.bandDecktKopf}px`).toBe(0);
+        expect(m.suchfeld, `Suchfeld ${m.suchfeld}`).toBe('frei');
+    });
+
+    /* ================================================================
+       DER MOBIL-ZWEIG — Glied 0 wird BESETZT, nicht abgeraeumt.
+       ================================================================
+       updateStickyOffsets() raeumt im Mobil-Zweig die drei Anheft-Glieder ab
+       (sticky-stapel.spec.js sichert das ausdruecklich zu: drei leere Werte)
+       und besetzt Glied 0 trotzdem — fuer die Schalenhoehe gibt es dort keine
+       spezifischere Mobil-Regel, die an seine Stelle treten koennte. Genau
+       diese Asymmetrie war ungedeckt: alle harten Zusicherungen am Token lagen
+       bei 1440x800, also im Desktop-Zweig.
+
+       Gemessen am Buendel mit entferntem `setzeRahmenHoehe(root, 0)` (Orte, 24
+       Eintraege, Band steht, per Mausrad gescrollt): bei 700x800 Rahmen
+       "(keins)" -> Rueckfall 134px und 137px Seitenueberhang, bei 390x844
+       233px Ueberhang und das Suchfeld antwortete mit
+       DIV.migration-hint-banner. Die volle Playwright-Suite blieb dabei gruen. */
+    for (const [breite, hoehe] of [
+        [390, 844],
+        [700, 800]
+    ]) {
+        test(`im Mobil-Layout ist Glied 0 besetzt: ${breite}x${hoehe}`, async ({ page }) => {
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await appLaden(page, { mobil: true });
+
+            // Die Navigationsgruppen sind im Mobil-Kopf nicht sichtbar — der
+            // Reiterwechsel laeuft deshalb ueber switchView(), wie in der App
+            // selbst aus dem Mobil-Menue heraus.
+            await page.evaluate(() => window.switchView('locations'));
+            await page.waitForTimeout(400);
+            await reiterUndRollen(page, 'locations', '#locations-list');
+
+            const m = await page.evaluate(messeBudget, ['#loc-search', '#locations-list']);
+            console.log(`[U6] Mobil ${breite}x${hoehe}: ${JSON.stringify(m)}`);
+
+            expect(m.layout, `${breite}px muessen das Mobil-Layout waehlen`).toBe('mobile');
+            expect(m.bandHoehe, 'das Band muss stehen').toBeGreaterThan(0);
+            // Die Zusicherung, die sticky-stapel.spec.js nicht leisten kann:
+            // drei Glieder abgeraeumt, Glied 0 besetzt.
+            expect(
+                m.rahmen,
+                `--view-frame-height darf im Mobil-Layout nicht leer sein (Ueberhang ${m.ueberhang}px)`
+            ).not.toBe('(keins)');
+            expect(
+                m.ueberhang,
+                `Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen}, Band ${m.bandHoehe}px)`
+            ).toBe(0);
+            expect(m.suchfeld, `Suchfeld ${m.suchfeld}`).toBe('frei');
+            expect(m.anzahl, 'die Liste muss gefuellt sein').toBe(ANZAHL);
+        });
+    }
 });
