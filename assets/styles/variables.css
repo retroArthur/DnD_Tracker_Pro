@@ -1583,6 +1583,87 @@
             );
         }
 
+        /* ============================================================
+           Q2 — DER UMSCHALTER-STREIFEN GEHOERT DEM UMSCHALTER.
+           ============================================================
+           Die Regel darunter verbirgt die Schweber, solange die Leiste
+           AUSGEFAHREN ist. Der EINGEKLAPPTE Zustand ist davon nicht erfasst —
+           und das ist der Zustand, in dem der Spielleiter die App die meiste
+           Zeit sieht. Von der Leiste bleibt dann die Umschalter-Zeile stehen:
+           56px am unteren Fensterrand (`translateY(calc(100% - 56px))` oben).
+
+           GEMESSEN am Buendel zu 93a765e, Mobil-Layout, Leiste eingeklappt,
+           gefuellte Kampagne. In allen vier Themes gleich — es ist Geometrie,
+           keine Farbe. Breiter Filter ueber JEDES sichtbare `position:
+           fixed`-Element ausserhalb der Leiste, nicht eine Namensliste; er fand
+           in sechs Fenstern genau einen Taeter:
+
+             390x844 / 360x740 / 320x740 / 320x700 / 320x568
+                                      .qref-fab   2250px² Deckung
+             740x360                  .qref-fab   1750px² Deckung
+
+           Die MITTE der Zeile blieb dabei frei (`elementFromPoint` antwortete
+           dort mit `div.mobile-nav-toggle`), die Navigation funktionierte also.
+           Ein Daumen aber, der die RECHTE Seite des Streifens trifft — bei
+           Rechtshaendern die naheliegende Stelle —, oeffnete die
+           Schnellreferenz statt der Navigation. Genau deshalb tastet die Probe
+           (`mobil-navigation.spec.js`, Zusicherung 9/10) ein Raster ueber die
+           ganze Streifenbreite ab und nicht nur die Mitte: eine Probe, die nur
+           die Mitte kennt, waere gegen diesen Fehler ab Geburt gruen.
+
+           WARUM AUSWEICHEN UND NICHT VERSTECKEN. Beim ausgefahrenen Zustand war
+           Verstecken richtig: er dauert genau die Navigationsgeste. Hier waere
+           es die Loeschung der Schnellreferenz vom Telefon, denn der
+           eingeklappte Zustand ist der Normalzustand. Die Leiste schmaler zu
+           machen ist ebenfalls keine Option: 56px IST die Daumengroesse
+           (Zusicherung 4 verlangt mindestens 44px).
+
+           WARUM DAS TOKEN UND KEINE ZAHL. `--mobile-nav-rest` kommt aus
+           setzeMobilLeistenDeckel() (Glied 5) und ist die GEMESSENE Hoehe der
+           Umschalter-Zeile; `.kplog-panel` darueber liest es schon. Eine
+           verdrahtete 70 wuerde still wieder ueberlappen, sobald die Zeile
+           waechst — groessere Schrift, mehr Polster, ein Theme mit anderer
+           Zeilenhoehe. Der Rueckfall 56px ist nicht geraten, sondern genau die
+           Zahl aus der `translateY`-Formel daneben: er deckt den Fall, dass die
+           Messkette noch nicht gelaufen ist, und liegt mit 56 gegen gemessene
+           55 auf der sicheren Seite.
+
+           WARUM AUCH DAS PANEL MITGEHT. Kugel und Panel sind ein Paar: das
+           Panel sitzt 10px ueber der Oberkante der Kugel (bei <=600px Breite
+           `bottom: 70px` gegen `bottom: 10px` + 50px Hoehe). NUR die Kugel zu
+           heben legt sie auf ihr eigenes Panel — nachgemessen mit genau dieser
+           halben Korrektur: 46px Ueberschnitt (2300px²) bei 360x740 und
+           320x568, 36px (1800px²) bei 740x360. Also wandert das Paar gemeinsam,
+           und `max-height` gibt denselben Betrag wieder ab. Die 120px dort sind
+           "70px unten + 50px Luft oben"; weil der Abzug mitwaechst, bleibt die
+           50px-Decke des Panels unberuehrt: gemessen liegt seine Oberkante
+           vorher wie nachher nie hoeher als 50px unter dem Fensterrand
+           (320x568: 60 -> 50, 740x360: 40 -> 50, 360x740 inhaltsgebunden:
+           232 -> 176).
+
+           EINE Geometrie statt zweier Breitenzweige: die Basisregeln in
+           dashboard.css unterscheiden <=600px (10/70) von darueber (20/80). Im
+           Mobil-Layout zaehlt nicht der Abstand zum Fensterrand, sondern der
+           zum Streifen — und der ist auf jeder Telefonbreite derselbe. Die
+           Spezifitaet 0-2-0 dieser beiden Regeln schlaegt beide Basiszweige
+           (0-1-0) unabhaengig von der Reihenfolge der Dateien.
+
+           NUR IM MOBIL-LAYOUT. `[data-layout="mobile"]` ist eine Profilwahl des
+           Nutzers und an keine Media Query gebunden; auf dem Desktop bleiben
+           alle sechs Schweber damit unberuehrt (nachgemessen bei 1280x800,
+           1024x768, 880x700 und 560x700 — identische Kaesten vorher/nachher,
+           einschliesslich der 560px, wo die 600px-Media-Query greift, das
+           Desktop-Layout aber keine Bodenleiste hat).
+           ============================================================ */
+        [data-layout="mobile"] .qref-fab {
+            bottom: calc(var(--mobile-nav-rest, 56px) + 10px);
+        }
+
+        [data-layout="mobile"] .qref-panel {
+            bottom: calc(var(--mobile-nav-rest, 56px) + 70px);
+            max-height: calc(100vh - 120px - var(--mobile-nav-rest, 56px));
+        }
+
         [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-trigger,
         [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-panel,
         [data-layout="mobile"]:has(.app-header.nav-open) .qref-fab,
