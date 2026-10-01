@@ -425,8 +425,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:497` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:510` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `bestiary.css:532` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:545` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
 | `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
@@ -572,7 +572,7 @@ sie als unerreichbar abschreibt.
 
 ```
 bestiary.css
-  146  .bestiary-fav.active
+  153  .bestiary-fav.active
 core.css
    17  [data-layout="mobile"] .mobile-nav-toggle-text
    75  [data-layout="mobile"] #mobile-timer-display

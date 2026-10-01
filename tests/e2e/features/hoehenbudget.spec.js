@@ -603,10 +603,13 @@ test.describe('Hoehenbudget der fuenften Schale: Bestiar schmal (U6)', () => {
                     document.querySelector('.bestiary-detail').getBoundingClientRect().height
                 )
             }));
-            // Das Bestiar bringt seine Liste selbst mit (SRD, gemessen 13
-            // Eintraege bei leeren Filtern) — hier wird nichts gesaet. Den
-            // Ueberhang treibt ohnehin der Statblock, nicht die Liste.
-            expect(vorher.posten, 'das Bestiar muss Eintraege fuehren').toBeGreaterThan(10);
+            // Das Bestiar bringt seine Liste selbst mit (SRD) — hier wird
+            // nichts gesaet. Auf die ANZAHL der Eintraege wird bewusst nicht
+            // gezielt: die Liste rendert nur ihr sichtbares Fenster, und das
+            // haengt an genau der Schalenhoehe, die hier geprueft wird
+            // (gemessen 13 Eintraege vor, 8 nach der Korrektur). Den Ueberhang
+            // treibt ohnehin der Statblock, nicht die Liste.
+            expect(vorher.posten, 'das Bestiar muss Eintraege fuehren').toBeGreaterThan(0);
             expect(vorher.detail, 'der Statblock muss Hoehe haben').toBeGreaterThan(200);
 
             await reiterUndRollen(page, 'bestiary', '#bestiary-list');

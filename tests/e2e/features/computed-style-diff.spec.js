@@ -181,8 +181,66 @@ const EXPECTED_DEVIATION_KEYS = [
     'span.sr-only#14'
 ];
 
-function isExpectedDeviation(elementKey) {
-    return EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag));
+// NUR fuer den schmalen Durchgang (375x812). Dieselbe Ursache eine Stufe weiter: das Bestiar war
+// die einzige der fuenf Schalen, die ihr Hoehenbudget unter 900px und im Mobil-Layout wieder aufgab
+// (`height: auto; overflow: visible`, zwei Fassungen in bestiary.css). Die SEITE scrollte dann, und
+// die Werkzeugleiste der Ansicht fuhr vollstaendig aus dem Fenster — gemessen am Buendel zu
+// b09550b, Bestiar mit gewaehltem Monster, per Mausrad bis zum Anschlag: 900x700 Seitenueberhang
+// 697px, Leiste bei -474..-400, `elementFromPoint` auf das Suchfeld antwortete mit "nichts". Seit
+// Runde 1 behaelt die Schale ihr Budget und `.bestiary-layout` scrollt selbst. Die Liste ist damit
+// an die Schalenhoehe gebunden statt an den Inhalt, und der VirtualScroll rendert bei 375x812 vier
+// Zeilen weniger (#9..#12) — am gebauten Buendel nachgezaehlt, nicht geschaetzt.
+//
+// WARUM GETRENNT VON DER LISTE OBEN: die vier Zeilen sind im Sollstand in ALLEN DREI Durchgaengen
+// erfasst (standard, narrow, reducedMotion — am JSON nachgezaehlt). Eine Ausnahme in der globalen
+// Liste haette sie auch in den beiden breiten Durchgaengen ausgeblendet, wo sich nichts geaendert
+// hat und wo sie weiter bewacht gehoeren. Deshalb nimmt isExpectedDeviation() seit Runde 1 den
+// Durchgang mit.
+//
+// Die Teilstrings tragen weiterhin kein Ansichtspraefix (siehe oben). 24 der 28 tragen `bestiary`
+// im Klassennamen; `span.sr-only#9` bis `#12` kommen im gesamten Sollstand NUR im Bestiar vor —
+// am JSON nachgezaehlt, in allen drei Durchgaengen.
+const EXPECTED_DEVIATION_KEYS_NARROW = [
+    'button.bestiary-fav#9',
+    'button.bestiary-fav#10',
+    'button.bestiary-fav#11',
+    'button.bestiary-fav#12',
+    'div.bestiary-list-item#9',
+    'div.bestiary-list-item#10',
+    'div.bestiary-list-item#11',
+    'div.bestiary-list-item#12',
+    'span.bestiary-badge.srd#9',
+    'span.bestiary-badge.srd#10',
+    'span.bestiary-badge.srd#11',
+    'span.bestiary-badge.srd#12',
+    'span.bestiary-cr#9',
+    'span.bestiary-cr#10',
+    'span.bestiary-cr#11',
+    'span.bestiary-cr#12',
+    'span.bestiary-name#9',
+    'span.bestiary-name#10',
+    'span.bestiary-name#11',
+    'span.bestiary-name#12',
+    'span.bestiary-type#9',
+    'span.bestiary-type#10',
+    'span.bestiary-type#11',
+    'span.bestiary-type#12',
+    'span.sr-only#9',
+    'span.sr-only#10',
+    'span.sr-only#11',
+    'span.sr-only#12'
+];
+
+/**
+ * @param {string} elementKey Element-Schluessel OHNE Ansichtspraefix
+ * @param {string} [durchgang] 'standard' | 'narrow' | 'reducedMotion'
+ */
+function isExpectedDeviation(elementKey, durchgang) {
+    if (EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag))) return true;
+    return (
+        durchgang === 'narrow' &&
+        EXPECTED_DEVIATION_KEYS_NARROW.some(frag => elementKey.includes(frag))
+    );
 }
 
 // Versionierter Sollstand (Kurzform/Digest, Checkpoint-Entscheidung C) — NICHT unter dem per
@@ -396,11 +454,18 @@ async function runPass(page) {
  * nennen); ein Schluessel, der im Vorlauf vorhanden war und jetzt nicht mehr erfasst wird (Element
  * verschwunden); und ein Schluessel, der im Vorlauf fehlte und jetzt erfasst wird (Element neu
  * erschienen). Alle drei unterliegen derselben Erwartungsliste.
+ *
+ * `durchgang` benennt den Durchgang ('standard' | 'narrow' | 'reducedMotion') und entscheidet, ob
+ * die NUR fuer den schmalen Durchgang geltenden Ausnahmen greifen (siehe
+ * EXPECTED_DEVIATION_KEYS_NARROW). Ohne diesen Parameter waere jede Ausnahme global, und eine
+ * Ausnahme, die nur in einem Durchgang gebraucht wird, blendete die beiden anderen mit aus.
+ *
  * @param {object|null} previousDigestPass
  * @param {object} currentDigestPass
+ * @param {string} durchgang
  * @returns {string[]}
  */
-function diffPass(previousDigestPass, currentDigestPass) {
+function diffPass(previousDigestPass, currentDigestPass, durchgang) {
     if (!previousDigestPass) return [];
     const unexpected = [];
     for (const viewId of Object.keys(currentDigestPass)) {
@@ -414,13 +479,13 @@ function diffPass(previousDigestPass, currentDigestPass) {
             if (prevDigest === undefined) continue; // Art 3, separat unten behandelt
             if (prevDigest !== currView.digests[key]) {
                 const entry = `${viewId}/${key}: Digest geaendert (Werte im lokalen Vollabzug ${FULL_CAPTURE_PATH_REL})`;
-                if (!isExpectedDeviation(key)) unexpected.push(entry);
+                if (!isExpectedDeviation(key, durchgang)) unexpected.push(entry);
             }
         }
 
         // Art 2: Schluessel im Vorlauf vorhanden, jetzt nicht mehr erfasst (Element verschwunden)
         for (const key of prevView.keys) {
-            if (!(key in currView.digests) && !isExpectedDeviation(key)) {
+            if (!(key in currView.digests) && !isExpectedDeviation(key, durchgang)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf vorhanden, jetzt nicht mehr erfasst`);
             }
         }
@@ -429,7 +494,7 @@ function diffPass(previousDigestPass, currentDigestPass) {
         // die Richtung, in der die schwerste Regression dieser Phase gewirkt hat
         // (.init-mob-dmg-inputs.hidden geloescht -> Element wurde sichtbar).
         for (const key of currView.keys) {
-            if (!(key in prevView.digests) && !isExpectedDeviation(key)) {
+            if (!(key in prevView.digests) && !isExpectedDeviation(key, durchgang)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf nicht vorhanden, jetzt neu erfasst`);
             }
         }
@@ -450,7 +515,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentFullCapture.standard = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.standard : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.standard : null, digestPass, 'standard');
         currentBaseline.standard = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (Standard):\n${unexpected.join('\n')}`).toEqual([]);
@@ -479,7 +544,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentFullCapture.narrow = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.narrow : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.narrow : null, digestPass, 'narrow');
         currentBaseline.narrow = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (schmales Layout):\n${unexpected.join('\n')}`).toEqual([]);
@@ -500,7 +565,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentFullCapture.reducedMotion = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.reducedMotion : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.reducedMotion : null, digestPass, 'reducedMotion');
         currentBaseline.reducedMotion = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (reduzierte Bewegung):\n${unexpected.join('\n')}`).toEqual([]);
