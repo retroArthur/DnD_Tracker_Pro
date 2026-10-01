@@ -521,7 +521,26 @@ const SAAT = {
     },
     tags: reihe(6, i => ({ id: i, name: `Schlagwort ${zz(i)}`, color: '#c8a44a' })),
     filters: [],
-    soundboard: { scenes: [] },
+    /* ACHT KLANGSZENEN, DIE ERSTEN FUENF AUF DEN SCHNELLPLAETZEN.
+       Hier stand `{ scenes: [] }`. Die Soundboard-Ansicht rendert daraus ihre
+       Leerflaeche — nachgemessen 22 Knoten gegen 330 mit Szenen. Die Probe lief
+       damit ueber 24 Ansichten, von denen EINE leer war: fuer sie war die
+       Ueberhang-Zusicherung vakant, weil es nichts gab, das hinausragen
+       koennte. Genau die Blindheit, gegen die der Kopfkommentar dieser Datei
+       argumentiert, eine Ebene tiefer.
+       Die Ansicht ist mit Szenen gemessen SAUBER (0px Ueberhang, 0 Elemente
+       ausserhalb, in allen vier Fenstern und allen vier Themes) — es wird also
+       kein Fehler zugedeckt, sondern eine vakante Zusicherung besetzt.
+       `slot` 1..5 belegt die Schnellplaetze (Alt+Shift+1..5), drei Spuren je
+       Szene und lange Namen sind der breitere Fall. */
+    soundboard: {
+        scenes: reihe(8, i => ({
+            id: i,
+            name: `Klangszene mit einem ziemlich langen Namen ${zz(i)}`,
+            slot: i <= 5 ? i : null,
+            tracks: reihe(3, j => ({ blobId: `blob-${zz(i)}-${zz(j)}`, volume: 0.6 }))
+        }))
+    },
     dmScreenNotes: 'Notizen des Spielleiters mit genug Text.',
     _nextId: {
         characters: 99,
@@ -656,6 +675,10 @@ function messeFuellung() {
         auftraege: (D.quests || []).length,
         kaempfer: ((D.initiative || {}).combatants || []).length,
         fraktionen: (D.factions || []).length,
+        /* Faellt die Saat je auf `{ scenes: [] }` zurueck, rendert die
+           Soundboard-Ansicht ihre Leerflaeche und ist aus der Ueberhang-Probe
+           faktisch heraus, ohne dass eine Zusicherung das meldet. */
+        szenen: ((D.soundboard || {}).scenes || []).length,
         /* Gerendert, nicht nur gespeichert: genau diese Knoten trugen die
            sechs Ursachen. Waere die Saat nicht angekommen, waeren sie leer und
            die Ueberhang-Zusicherung waere gruen, ohne etwas zu belegen. */
@@ -791,7 +814,11 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                 orte: f.orte >= 10,
                 auftraege: f.auftraege >= 8,
                 kaempfer: f.kaempfer >= 10,
-                fraktionen: f.fraktionen >= 5
+                fraktionen: f.fraktionen >= 5,
+                /* Die Soundboard-Ansicht war bis zu dieser Runde die eine der
+                   24, die leer durch die Probe lief — siehe Kommentar an
+                   `soundboard` in der Saat. */
+                szenen: f.szenen >= 8
             },
             `Fuellstand ${JSON.stringify(f)} — auf leerer Kampagne ist der Ueberhang 0 und Zusicherung 1 waere blind`
         ).toEqual({
@@ -800,7 +827,8 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             orte: true,
             auftraege: true,
             kaempfer: true,
-            fraktionen: true
+            fraktionen: true,
+            szenen: true
         });
 
         // ZUSICHERUNG 4 — und sie sind gerendert, nicht nur gespeichert.
