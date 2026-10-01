@@ -3862,6 +3862,10 @@ ist. Gemessen am gebauten Bündel mit dem Abnahme-Saatgut (24 Einträge je Liste
 
 ### (1) Die Stapelregel für zwei gleichzeitige Bänder ist tot
 
+> **ERLEDIGT in M3a (2026-10-01): die Regel ist gestrichen.** Die unten offen gelassene
+> Entscheidung fiel auf *entfernen*, aus drei gemessenen Gründen — siehe Abschnitt
+> „M3 — Tote Regel, Wächter-Ausnahmen und die Messmatrix“ am Ende dieser Akte.
+
 `.migration-hint-banner ~ .divergence-banner { top: 48px }` (`assets/styles/migration.css`)
 soll das zweite feste Band unter das erste schieben. Der Geschwisterwähler trifft nie:
 `showDivergenceBanner()` hängt sein Band als `document.body.firstChild` ein, also **vor** dem
@@ -4293,8 +4297,10 @@ derselben Zahl hing die Platzhaltung `.main-content { padding-top }`, die auf ve
 gegen eine 64px hohe Kopfzeile stand.
 
 Die tote Geschwisterregel `.migration-hint-banner ~ .divergence-banner { top: 48px }` aus
-U6-R4-01 Punkt (1) bleibt davon **unberührt** und damit offen: sie regelt einen Zustand, der im
-Betrieb nicht eintritt; die neue Ausweichregel gilt für beide Bänder einzeln.
+U6-R4-01 Punkt (1) blieb davon **unberührt** und damit offen: sie regelt einen Zustand, der im
+Betrieb nicht eintritt; die neue Ausweichregel gilt für beide Bänder einzeln. **M3a hat sie
+gestrichen** — und dabei gemessen, dass sie, zum Treffen gebracht, genau diese Ausweichregel
+geschlagen hätte (gleiche Spezifität (0,2,0), aber später in der Datei).
 
 ### Gemessene Wirkung
 
@@ -4475,5 +4481,212 @@ der Reservierung des Leistenplatzes liegen.
 PYTHONIOENCODING=utf-8 python build.py
 npx playwright test tests/e2e/features/layoutprofil.spec.js   # 48 Faelle
 ```
+
+---
+
+## M3 — Tote Regel, Wächter-Ausnahmen und die Messmatrix (2026-10-01, erledigt)
+
+Drei benannte Restposten aus den Runden davor. Alle drei waren Schulden am **Nachweisnetz**, nicht
+am Produkt: eine Regel, die eine Ordnung behauptete, die es nicht gibt; eine Ausnahmeliste, die
+über mehrere Wellen hinweg etwas ausnahm; und eine Messmatrix, die die wichtigste Korrektur der
+Runde gefunden hat und danach im Scratchpad liegen blieb.
+
+### (a) Die Stapelregel der zwei Kopfbänder ist gestrichen
+
+Schließt **U6-R4-01 Punkt (1)** (die Unterüberschrift „(1) Die Stapelregel für zwei
+gleichzeitige Bänder ist tot“ unter `## U6-R2-01` weiter oben — dieselbe Stelle, zwei Namen
+in dieser Akte) und den dortigen Nachtrag „bleibt davon unberührt und damit offen".
+Die Entscheidung, die dort offen gelassen war („entfernen **oder** die Einfügereihenfolge umdrehen
+und die 48px durch `var(--migration-hint-height)` ersetzen"), fiel auf **entfernen** — aus drei
+gemessenen Gründen, nicht aus Geschmack. Gemessen am Bündel zu `b256750`, dark, 1440x800 und
+390x800, die CSSOM nach dem Wähler und die Bänder nach ihrem berechneten `top` gefragt:
+
+| Zustand | Index Divergenz / Hinweis | Wähler trifft | Divergenz `top` |
+| --- | --- | --- | --- |
+| Zweig „noch nicht umgezogen" (nur Hinweis) | −1 / 0 | 0 | (kein Band) |
+| Zweig „bereits umgezogen" (nur Divergenz) | 0 / −1 | 0 | 0px |
+| gestapelt, Hinweis zuerst → dann Divergenz | 0 / 1 | **0** | 0px |
+| gestapelt, Divergenz zuerst → dann Hinweis | 1 / 0 | 1 | **48px** |
+
+1. **Der Zustand tritt im Betrieb nicht ein.** Der `file://`-Einstieg verzweigt entweder/oder
+   (Zeile 1 und 2). Die einzige Stelle, an der beide Bänder gleichzeitig hängen, liegt synchron
+   innerhalb des Umzugs-Starts (Divergenz anlegen, dann Hinweis entfernen) — dazwischen rechnet der
+   Browser kein Layout.
+2. **Die Dokumentreihenfolge schlägt den Wähler.** Beide Bänder hängen per
+   `insertBefore(.., body.firstChild)` ein; das **später** eingehängte steht damit **vor** dem
+   früheren. In der Reihenfolge, die der Code erzeugen würde, liegt das Divergenzband auf Index 0
+   und der Hinweis auf Index 1 — `~` verlangt das Gegenteil und trifft 0 Elemente (Zeile 3).
+3. **Die 48px wären in jeder gemessenen Lage falsch.** Das Hinweisband ist bei 1440 Breite **61px**
+   hoch, bei 390 Breite **117px** — nie 48. In der einzigen Reihenfolge, in der der Wähler trifft
+   (Zeile 4), setzte er das Divergenzband also 13px (1440) bzw. 69px (390) **in** das Hinweisband
+   hinein. Auf Telefonbreite schlimmer: die Regel gewinnt gegen
+   `[data-layout="mobile"] .divergence-banner { top: var(--mobile-header-height) }` — gleiche
+   Spezifität (0,2,0), aber später in der Datei — und zieht das Band aus dem Ausweichplatz **zurück
+   unter die Mobil-Kopfzeile**, genau der Fehler, den M2c behoben hat.
+
+Und ein brauchbares gestapeltes Layout gäbe es auch mit richtiger Zahl nicht:
+`body.has-migration-hint` und `body.has-divergence-banner` setzen **beide** `padding-top` auf
+`body`, die spätere gewinnt — gemessen 40px Innenabstand für 101px Band. Die eine Regel hat nie ein
+Layout hergestellt, das sie hätte retten können.
+
+### (b) Der Stil-Sollstand ist regulär neu erhoben, die Ausnahmeliste ist leer
+
+`EXPECTED_DEVIATION_KEYS` (14) und `EXPECTED_DEVIATION_KEYS_NARROW` (35) in
+`tests/e2e/features/computed-style-diff.spec.js` trugen zusammen **49** Schlüssel: Bestiar-
+Listenzeilen, die durch die Höhenbudget-Korrektur (U6) und die beiden Platzgewinne aus M2 aus der
+Erfassung gefallen waren. Die Datei verlangt selbst, dass ein Eintrag nur für die Dauer genau der
+Welle stehen bleibt, die die Änderung herbeiführt. Statt sie weiterzuschleppen: Sollstand neu
+erhoben (`UPDATE_STYLE_BASELINE=1`), **schlüsselweise** verglichen, Listen geleert.
+
+| Durchgang | Zugänge | Abgänge | Digest-Änderungen | Elementzahl Bestiar |
+| --- | --- | --- | --- | --- |
+| standard | 0 | 14 | 0 | 129 → 115 |
+| narrow | 0 | 35 | 0 | 115 → 80 |
+| reducedMotion | 0 | 14 | 0 | 129 → 115 |
+
+63 Meldungen an **49** verschiedenen Schlüsseln (standard und reducedMotion nennen dieselben 14).
+Die Abgänge sind in jedem Durchgang dieselben sieben Signaturen (`button.bestiary-fav`,
+`div.bestiary-list-item`, `span.bestiary-badge.srd`, `span.bestiary-cr`, `span.bestiary-name`,
+`span.bestiary-type`, `span.sr-only`) für die Zeilen `#13`/`#14` bzw. `#8` bis `#12`. Gegenprobe:
+**0** Abgänge außerhalb der Bestiar-Ansicht; die 9 ohne `bestiary` im Klassennamen sind
+`span.sr-only#8` bis `#14` aus genau denselben Zeilen. **Kein** Abgang darüber hinaus, **kein**
+Zugang, und **null** Digest-Änderungen an gemeinsamen Schlüsseln — an keinem weiterhin erfassten
+Element hat sich ein berechneter Wert bewegt. Das war die Behauptung der beiden Listen; sie ist
+jetzt geprüft statt geglaubt.
+
+**Weg der Erhebung**, damit es nachvollziehbar bleibt: die Schreibsperre verhindert richtigerweise,
+dass ein roter Lauf seinen eigenen Befund festschreibt. Der Sollstand wurde deshalb mit den **noch**
+gefüllten Listen und gesetztem Schalter geschrieben, danach die leere Fassung wiederhergestellt und
+der Lauf wiederholt — grün, ohne eine einzige Ausnahme. Die Mechanik
+(`isExpectedDeviation()` mit dem `durchgang`-Parameter) bleibt stehen; die Listen sind **absichtlich
+leer, nicht abwesend**.
+
+### (c) Die Messmatrix läuft in der Suite
+
+`tests/e2e/features/hoehenbudget.spec.js` prüfte bis M3 **alles** bei 1440x800. Die Matrix, mit der
+die Korrektur gefunden wurde (128 Zustände, rund 2 Minuten), lag nur als Messskript im Scratchpad.
+Jetzt stehen **64 der 128** Zustände in der Suite, als 8 Fälle zu je 8 Zuständen (4 Ansichten ×
+oben/gescrollt). Alle 64 befundfrei: Seitenüberhang 0px, Suchfeld `frei`, App-Titel und globale
+Suche `frei`, letzter von 24 Einträgen gescrollt erreichbar.
+
+| Fenster | mit Band (61px) | ohne Band |
+| --- | --- | --- |
+| 1280x900 | Rahmen 195px | Rahmen 134px |
+| 1280x700 | Rahmen 195px | Rahmen 134px |
+| 900x900 | Rahmen 233px | Rahmen 172px |
+| 900x700 | Rahmen 233px | Rahmen 172px |
+
+**Was weggelassen ist, und warum** — nicht still, sondern im Testkommentar: die Breiten **1920 und
+1440**. 1920/1440/1280 lagen am Bündel zu `fef3afb` in allen 96 ihrer Zustände auf demselben Wert
+(14px Überhang ohne Band, 75px mit Band); 900 war der Ausreißer (52 / 113) und der schlimmste Fall.
+1440 prüfen die fünf Fälle oben in derselben Datei ohnehin in beiden Bandzuständen, und 1920 ist der
+dritte Messpunkt desselben Plateaus für ein Viertel der Laufzeit. Das Budget hängt per Konstruktion
+an einer **Messung** und nicht an einer Breakpoint-Grenze; eine dritte Probe auf derselben Fläche
+kann nichts Neues zeigen. Alle anderen Achsen bleiben vollständig: beide Fensterhöhen, beide
+Bandzustände, beide Scrollzustände, alle vier Ansichten (vier unabhängige
+`calc(100vh - var(--view-frame-height, ..))`-Deklarationen in drei Stilblättern).
+
+**Die Gegenprobe ist der rote Nachweis.** Eine Probe, die seit ihrer Geburt grün ist, beweist
+nichts. Der letzte Fall des Abschnitts zwingt `--view-frame-height` auf die alte verdrahtete 120px
+zurück und fährt die schlimmste Ecke der Matrix (kleinste Breite × kleinste Höhe ihrer eigenen
+Achsen, mit Band, gescrollt — die Zahlen kommen aus `MATRIX_BREITEN`/`MATRIX_HOEHEN`, nicht
+verdrahtet). Gemessen bei 900x700:
+
+| | Rahmen | Überhang | Suchfeld | Kopfzeile deckt Leiste | Befunde |
+| --- | --- | --- | --- | --- | --- |
+| gemessenes Budget | 233px | 0px | frei | 0px | 0 |
+| verdrahtete 120px | 120px | **113px** | **verdeckt von `BUTTON.nav-group-btn`** | 103px | 2 |
+
+Die 113px und die Verdeckung durch `BUTTON.nav-group-btn` sind Zeichen für Zeichen die Zahlen, die
+der Kopfkommentar der Datei als historischen Befund bei 900 Breite nennt. Der Zwang läuft per
+Stilblatt mit `!important`, nicht per Inline-Stil: `setzeRahmenHoehe()` schreibt bei jedem Lauf der
+Kette einen neuen Inline-Wert, ein Inline-Zwang wäre beim nächsten `resize` weg. Die
+`!important`-Ratsche bleibt unberührt — die zählt die Quelldateien unter `assets/styles/`.
+
+### Ein Befund an der Matrix selbst, im ersten Lauf gemessen
+
+Ungescrollt meldete die vierte Zusicherung (letzter Eintrag erreichbar) in allen 8 Fällen je 4
+Befunde — „1280x900 MIT Band oben locations: letzter Eintrag 2148..2222px AUSSERHALB
+NICHT-KLICKBAR", einen je Ansicht, 32 insgesamt. **Das ist richtig so:** am Listenanfang liegt der
+24. Eintrag legitim unter der Falz. Sie dort zu verlangen hieße zu verlangen, dass die ganze Liste
+in die Schale passt, und das verspricht das Höhenbudget nicht; versprochen ist, dass die Liste
+**selbst** scrollt und ihr Ende erreichbar **bleibt**. Die Zusicherung gilt deshalb nur im
+gescrollten Zustand, mit der Begründung an `befundeAus()` statt nur im Commit. Die drei anderen
+Zusicherungen gelten in beiden Zuständen und waren im selben Lauf in beiden grün.
+
+### Gemessene Wirkung
+
+Die Streichung aus (a) ist **nachweislich verhaltensneutral**. Zwei Bündel gebaut (vor und nach der
+Streichung) und dieselbe Messung zweimal gefahren: **6 Fenstergrößen × 4 Themes × beide
+Bandzweige = 48 Zustände**, je Zustand Bandhöhe, berechnetes `top` beider Bänder,
+`body { padding-top }`, `--view-frame-height`, `--sticky-top-header`, Seitenüberhang, Schalenhöhe und
+die Trefferzahl des Geschwisterwählers. **Zeilenweise identisch in allen 48 Zuständen**, Wähler
+überall 0. Das ist genau das, was die Streichung einer Regel bewirken darf, die nie getroffen hat.
+
+| | 1440x800 | 1280x900 | 900x700 | 390x844 | 360x740 | 740x360 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Layout | desktop | desktop | desktop | mobile | mobile | mobile |
+| Hinweisband (Höhe @ `top`) | 61 @ 0 | 61 @ 0 | 61 @ 0 | 117 @ 64 | 94 @ 64 | 61 @ 64 |
+| Divergenzband (Höhe @ `top`) | 40 @ 0 | 40 @ 0 | 40 @ 0 | 40 @ 64 | 40 @ 64 | 40 @ 64 |
+| Rahmen mit Hinweis | 195px | 195px | 233px | 261px | 238px | 205px |
+| Rahmen mit Divergenz | 174px | 174px | 212px | 184px | 184px | 184px |
+| Wähler trifft | 0 | 0 | 0 | 0 | 0 | 0 |
+
+In allen vier Themes auf den Bildpunkt gleich (die Tabelle zeigt `dark`; die anderen drei Spalten
+der Messung sind zeilengleich). Die beiden `top`-Werte 0 und 64 sind die Aussage: im Desktop sitzt
+das Band am Fensterrand, im Mobil-Layout weicht es unter die 64px hohe Mobil-Kopfzeile aus (M2c) —
+und zwar in **beiden** Zweigen gleich, also auch das Divergenzband, das die gestrichene Regel bei
+Treffer auf 48px gezogen hätte.
+
+Diese Probe steht auf der Startansicht und misst **Bandgeometrie**, nicht das Höhenbudget der
+Schalen; das messen die 64 Zustände aus (c). (b) und (c) fassen keinen Produktionscode an.
+
+### Die Zusicherungen
+
+- `tests/e2e/features/baender-stapel.spec.js` — **4 neue Fälle**, davon **1 vorher rot**. Die drei
+  grünen sind absichtlich grün: sie halten die Unerreichbarkeit fest (beide Produktionszweige, der
+  erzwungene Stapel samt Dokumentreihenfolge), und ohne sie wäre der vierte eine bloße
+  Quelltextprüfung. Der vierte fragt `document.styleSheets` des gebauten Bündels, nicht
+  `migration.css` per `grep` — die App läuft gegen das Bündel, in dem alle 20 Stilblätter
+  zusammenlaufen. Die Kommaliste jedes Wählers wird dabei einzeln geprüft, sonst meldete die
+  M2c-Gruppe `[data-layout="mobile"] .migration-hint-banner, [data-layout="mobile"]
+  .divergence-banner` einen Stapelzustand, den sie nicht beschreibt (erst gemessen: 2 Regeln, davon
+  1 falsch positiv).
+- `tests/e2e/features/hoehenbudget.spec.js` — **9 neue Fälle** (8 Matrix-Fälle à 8 Zustände + die
+  Gegenprobe), 25 → **33 Fälle**, Laufzeit 24,5s → **43,3s**.
+- `tests/e2e/features/computed-style-diff.spec.js` — keine neuen Fälle, aber die drei bestehenden
+  bewachen wieder 49 Schlüssel mehr.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/baender-stapel.spec.js        # 4 Faelle
+npx playwright test tests/e2e/features/hoehenbudget.spec.js          # 33 Faelle
+npx playwright test tests/e2e/features/computed-style-diff.spec.js   # 3 Faelle, seriell
+```
+
+### Offen geblieben
+
+- **Die Listenspalte des Bestiars folgt der Schale nicht** — unverändert offen aus M2, und durch (b)
+  jetzt auch im Stil-Sollstand sichtbar: die Elementzahl der Bestiar-Ansicht sinkt 129 → 115
+  (breit) und 115 → 80 (schmal), weil die Platzrechnung der geteilten Scroll-Maschinerie
+  (`container.clientHeight`, sonst `parent.clientHeight - padY`, sonst fester Rückfall 400) bei
+  **größerer** Schale **weniger** Zeilen rendert. Der Sollstand bildet diesen Istzustand ab, er
+  rechtfertigt ihn nicht. Eigene Einheit.
+- **`.event-log-entry { pointer-events: auto }`** gilt auch im flüchtigen Modus — unverändert offen
+  aus M1, zwei Zeilen wert. Ändert Desktop-Verhalten, deshalb weiter außerhalb des gemessenen
+  Netzes.
+- **`.qref-fab` überlappt den 56px-Streifen der eingeklappten Leiste** — unverändert offen aus M1.
+  Saubere Behebung: `--mobile-nav-rest` auch von ihrem `bottom` abziehen.
+- **Sehr kurze Fenster** (U6-R4-01 Punkt 3) — unverändert offen; M2 entspannt den Fall, hebt ihn
+  nicht auf. Die Matrix aus (c) deckt ihn **nicht** ab: ihre kleinste Fensterhöhe ist 700px. Das ist
+  Absicht und keine Lücke — ein Fall, dessen Zusicherung noch nicht entschieden ist, kann nicht
+  bewacht werden.
+- **`npm run check` bleibt rot**, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  vorbestehend nicht prettier-konform ist. Unverändert. Die drei in dieser Runde angefassten
+  Testdateien sind einzeln prettier-konform; `assets/styles/migration.css` war es schon vorher
+  nicht und bleibt unformatiert, damit die Streichung nicht in einer Umformatierung der ganzen Datei
+  verschwindet.
 
 ---
