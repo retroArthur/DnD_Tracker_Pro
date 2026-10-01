@@ -3848,3 +3848,73 @@ Ablichtungsdatei wird an **genau einem** Block beanstandet (die kompakt geschrie
 `welle-2-screens.spec.js` beanstandet werden. Sie bleibt stilgleich mit ihren Geschwistern.
 
 ---
+
+## U6-R2-01 — Drei Restbeobachtungen aus der Höhenbudget-Korrektur, Runde 2
+
+**Status: FESTGEHALTEN, nicht angefasst.** Aufgenommen am 2026-10-01, nach den beiden
+Korrekturen `fix(UAT): die Bandhoehe wird nachgemessen, nicht geglaubt` und
+`fix(UAT): die umbrechende Werkzeugleiste behaelt ihr Suchfeld`.
+
+Alle drei sind **vorbestehend** und keine Folge dieser Runde. Sie stehen hier, weil die Runde
+sie gemessen hat und weil (3) die Form eines neuen Fehlerbildes hat, auch wenn die Ursache alt
+ist. Gemessen am gebauten Bündel mit dem Abnahme-Saatgut (24 Einträge je Liste), Skript
+`r4-rest.mjs`.
+
+### (1) Die Stapelregel für zwei gleichzeitige Bänder ist tot
+
+`.migration-hint-banner ~ .divergence-banner { top: 48px }` (`assets/styles/migration.css`)
+soll das zweite feste Band unter das erste schieben. Der Geschwisterwähler trifft nie:
+`showDivergenceBanner()` hängt sein Band als `document.body.firstChild` ein, also **vor** dem
+Hinweisband — es ist kein nachfolgendes Geschwister. Gemessen bei 390x844 mit beiden Bändern:
+Hinweisband `0..157`, Divergenzband `0..40`, also vollständig übereinander.
+
+Folgenlos im Betrieb: `startMigrationFileSide()` verzweigt entweder/oder, und
+`startMigrationFlow()` entfernt den Hinweis im selben synchronen Block. Die beiden Bänder
+koexistieren nicht. Glied 1 rechnet ohnehin `max(bottom)` über beide und wäre auch im
+gestapelten Fall richtig; der Seitenüberhang blieb in der Messung 0.
+
+**Zu entscheiden bleibt:** die tote Regel entfernen (sie behauptet eine Ordnung, die es nicht
+gibt) oder die Einfügereihenfolge umdrehen und die 48px durch
+`var(--migration-hint-height)` ersetzen.
+
+### (2) Das Layoutprofil wird nur beim Start gewählt, nicht beim Verkleinern
+
+`loadLayout()` (`ui/layout-profiles.js`) wählt bei `innerWidth <= 768` selbst `mobile`; ein
+`resize` ändert daran nichts. Zieht der DM ein Desktop-Fenster auf Telefonbreite, bleibt
+`data-layout="desktop"`, und damit bleibt die Desktop-Kopfzeile stehen — bei 390px Breite ist
+sie **234px** hoch (`157..391`), weil ihre Zeilen umbrechen.
+
+Gemessen 1440x800 -> 390x844: Umrahmung 195 -> **411px**, Schalenhöhe 605 -> 433px von 844.
+Der Seitenüberhang bleibt 0, die Werkzeugleiste bleibt frei (das ist die Korrektur dieser
+Runde) — die Ansicht wird nur schmal und hoch zugleich bedient, statt in das Mobil-Layout zu
+wechseln, das für diese Breite gebaut ist. Dasselbe Fenster **vor** dem Laden gesetzt wählt
+`mobile` und kommt auf 250px Umrahmung.
+
+**Zu entscheiden bleibt:** soll das Profil dem Fenster folgen, oder ist die einmalige Wahl
+gewollt (sie überlebt einen Wechsel von Hand, was ein Argument dafür ist)?
+
+### (3) Sehr kurze Fenster lassen von der Schale fast nichts übrig
+
+Weil die Umrahmung jetzt **gemessen** statt verdrahtet ist, kann sie im Grenzfall fast die
+ganze Fensterhöhe aufbrauchen. Gemessen bei 390x420 (Desktop-Layout nach Punkt 2, Band steht):
+Umrahmung 411px von 420 Fensterhöhe, **Schalenhöhe 9px**. Der Seitenüberhang ist 0 — die
+Zusicherung von U6 hält —, aber die Liste ist unbenutzbar.
+
+Die verdrahteten 120px gaben dort 300px Schalenhöhe, dafür lag die Werkzeugleiste hinter der
+Kopfzeile: es ist ein Tausch, kein Rückschritt, und 420px Fensterhöhe ist ein Randfall. Nicht
+von einem Test gedeckt — die Fälle in `tests/e2e/features/hoehenbudget.spec.js` messen bei 700
+bis 900px Höhe.
+
+**Zu entscheiden bleibt:** eine `min-height`-Untergrenze an den fünf Schalen (dann scrollt die
+Seite im Grenzfall wieder, und der Anheft-Versatz muss es tragen), oder Punkt 2 lösen und den
+Grenzfall damit auflösen.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/hoehenbudget.spec.js   # 23 Faelle
+npx playwright test tests/e2e/features/sticky-stapel.spec.js tests/e2e/features/ansichts-schalen.spec.js
+```
+
+---
