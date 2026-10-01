@@ -386,10 +386,14 @@ body.has-migration-hint {
    Token bei jedem Lauf.
 
    Das Divergenz-Banner steht symmetrisch mit: derselbe feste Block am selben
-   Platz. Die Regel `.migration-hint-banner ~ .divergence-banner` weiter unten
-   bleibt unberuehrt — sie gilt fuer beide Baender gleichzeitig, und dieser
-   Zustand kann im Betrieb nicht eintreten (startMigrationFileSide() verzweigt
-   entweder/oder). */
+   Platz. Dass beide Baender nie gleichzeitig stehen, stand hier bis M3a nur als
+   Behauptung — es ist jetzt gemessen und bewacht, und die Regel, die den
+   gestapelten Zustand zu behandeln vorgab, ist weg (Begruendung am Ende dieser
+   Datei). WICHTIG fuer diese Gruppe hier: ihre Spezifitaet ist (0,2,0), und sie
+   war die VORLETZTE Regel mit dieser Spezifitaet auf `.divergence-banner` —
+   eine neue Regel weiter unten in der Datei schlaegt sie, auch ohne
+   `!important`. Genau so gewann die gestrichene Geschwisterregel gegen dieses
+   Ausweichen. */
 [data-layout="mobile"] .migration-hint-banner,
 [data-layout="mobile"] .divergence-banner {
     top: var(--mobile-header-height, 64px);
@@ -453,7 +457,47 @@ body.has-divergence-banner {
     padding-top: var(--divergence-banner-height, 40px);
 }
 
-/* Wenn beide Banner sichtbar sind, zweiten nach unten verschieben */
-.migration-hint-banner ~ .divergence-banner {
-    top: 48px;
-}
+/* ----------------------------------------------------------------
+   M3a — HIER STAND EINE REGEL FUER DEN GESTAPELTEN BANDZUSTAND. SIE IST WEG.
+   ----------------------------------------------------------------
+   `.migration-hint-banner ~ .divergence-banner { top: 48px }`, mit dem
+   Kommentar "Wenn beide Banner sichtbar sind, zweiten nach unten verschieben".
+   Sie hat nie gewirkt, und sie haette auch nicht gewirkt, wenn man sie zum
+   Treffen gebracht haette. GEMESSEN am Buendel zu b256750 (dark, 1440x800 und
+   390x800, die CSSOM nach dem Waehler und die Baender nach ihrem berechneten
+   `top` gefragt), drei unabhaengige Gruende:
+
+   1. DER ZUSTAND TRITT IM BETRIEB NICHT EIN. Der file://-Einstieg verzweigt
+      entweder/oder: mit Umzugs-Datum im Speicher kommt das Divergenz-Band und
+      der Hinweis nicht, ohne kommt der Hinweis und das Divergenz-Band nicht.
+      Die einzige Stelle, an der beide gleichzeitig haengen, liegt synchron
+      innerhalb des Umzugs-Starts (Divergenz anlegen, dann Hinweis entfernen) —
+      dazwischen rechnet der Browser kein Layout.
+
+   2. DIE DOKUMENTREIHENFOLGE SCHLAEGT DEN WAEHLER. Beide Baender werden mit
+      `insertBefore(.., body.firstChild)` eingehaengt; das spaeter eingehaengte
+      steht damit VOR dem frueheren. In der Reihenfolge, die der Code erzeugen
+      wuerde (Hinweis zuerst, Divergenz danach), liegt das Divergenz-Band auf
+      Index 0 und der Hinweis auf Index 1 — `~` verlangt das Gegenteil und
+      trifft 0 Elemente.
+
+   3. DIE 48px WAEREN IN JEDER GEMESSENEN LAGE FALSCH. Das Hinweisband ist bei
+      1440 Breite 61px hoch, bei 390 Breite 117px — nie 48. In der einzigen
+      Reihenfolge, in der der Waehler trifft, setzte er das Divergenz-Band also
+      13px (1440) bzw. 69px (390) IN das Hinweisband hinein. Auf Telefonbreite
+      schlimmer: die Regel gewinnt gegen `[data-layout="mobile"]
+      .divergence-banner { top: var(--mobile-header-height) }` oben (gleiche
+      Spezifitaet (0,2,0), aber spaeter in der Datei) und zieht das Band aus dem
+      Ausweichplatz zurueck UNTER die Mobil-Kopfzeile — genau der Fehler, den
+      M2c behoben hat.
+
+   Und ein brauchbares gestapeltes Layout gaebe es auch mit richtiger Zahl
+   nicht: `body.has-migration-hint` und `body.has-divergence-banner` setzen
+   BEIDE `padding-top` auf `body`, die spaetere gewinnt (gemessen 40px fuer
+   101px Band). Deshalb GESTRICHEN statt die Einfuegereihenfolge zu drehen —
+   das haette eine falsche Zahl und die M2c-Verschiebung gegen sich aktiviert.
+
+   Bewacht von `tests/e2e/features/baender-stapel.spec.js`: drei Faelle halten
+   die Unerreichbarkeit fest (beide Produktionszweige, erzwungener Stapel), der
+   vierte fragt die CSSOM des Buendels und faellt, sobald wieder eine Regel
+   einen gestapelten Bandzustand zu behandeln vorgibt. */
