@@ -4564,10 +4564,33 @@ leer, nicht abwesend**.
 ### (c) Die Messmatrix läuft in der Suite
 
 `tests/e2e/features/hoehenbudget.spec.js` prüfte bis M3 **alles** bei 1440x800. Die Matrix, mit der
-die Korrektur gefunden wurde (128 Zustände, rund 2 Minuten), lag nur als Messskript im Scratchpad.
-Jetzt stehen **64 der 128** Zustände in der Suite, als 8 Fälle zu je 8 Zuständen (4 Ansichten ×
-oben/gescrollt). Alle 64 befundfrei: Seitenüberhang 0px, Suchfeld `frei`, App-Titel und globale
-Suche `frei`, letzter von 24 Einträgen gescrollt erreichbar.
+die Korrektur gefunden wurde (rund 2 Minuten), lag nur als Messskript im Scratchpad. Jetzt stehen
+**80 der 160** Zustände in der Suite, als 8 Fälle zu je 10 Zuständen (5 Ansichten × oben/gescrollt).
+Alle 80 befundfrei: Seitenüberhang 0px, Suchfeld `frei`, App-Titel und globale Suche `frei`, letzter
+Eintrag gescrollt erreichbar.
+
+> **Berichtigung (Runde 1).** Hier stand „64 der 128 Zustände … 4 Ansichten" und daneben die
+> Behauptung, alle anderen Achsen blieben vollständig — „alle vier Ansichten (vier unabhängige
+> `calc(100vh - var(--view-frame-height, ..))`-Deklarationen in drei Stilblättern)". Gezählt sind es
+> **fünf** Deklarationen in **vier** Stilblättern (`bestiary.css:25`, `core.css:2276`,
+> `encounters.css:932`, `npcs.css:10`, `npcs.css:439`). Die fünfte Schale (Bestiar) lief nicht mit,
+> und die Auslassung war als Vollständigkeit ausgewiesen — der schlimmere der beiden Fehler, denn
+> eine so ausgewiesene Lücke sucht niemand. Die 128 stammen aus dem Messskript, das ebenfalls nur
+> vier Ansichten fuhr; mit der fünften sind es 160. Behoben wurde die **Lücke**, nicht nur die Zahl:
+> die Matrix fährt jetzt alle fünf, und `tests/unit/schalen-aktenlage.test.js` hält den Zensus der
+> Stilblätter maschinell gegen den Kommentar der Matrix — eine sechste Schale macht beides rot.
+> Vorher gemessen (eigenes Skript, dieselben 16 Bestiar-Zustände): Überhang 0px, Suchfeld, App-Titel
+> und globale Suche `frei`, Kopfzeile deckt die Leiste 0px in **allen 16**; gescrollt steht der
+> letzte gerenderte Eintrag in allen 16 im Fenster und ist anklickbar. Es gab also keine verdeckte
+> Regression, nur eine ungedeckte Deklaration.
+
+Die fünfte Schale fährt in zwei Punkten anders, und das steht in `MATRIX_ANSICHTEN` statt in einer
+Ausnahmeliste: das Bestiar bringt seine Liste selbst mit (SRD) und rendert sie hinter einer
+VirtualScroll-Hülle, weshalb `#bestiary-list` genau **ein** Kind führt (gemessen in allen 16
+Zuständen) und `messeBudget()` einen eigenen Einträge-Wähler bekommt — ohne ihn würde die vierte
+Zusicherung die Hülle messen und wäre immer grün. Und die Zahl der gerenderten Einträge hängt an
+genau der Schalenhöhe, die geprüft wird (gemessen **7 bis 18**), weshalb dort „mindestens einer"
+statt der festen 24 gilt.
 
 | Fenster | mit Band (61px) | ohne Band |
 | --- | --- | --- |
@@ -4582,9 +4605,10 @@ Suche `frei`, letzter von 24 Einträgen gescrollt erreichbar.
 1440 prüfen die fünf Fälle oben in derselben Datei ohnehin in beiden Bandzuständen, und 1920 ist der
 dritte Messpunkt desselben Plateaus für ein Viertel der Laufzeit. Das Budget hängt per Konstruktion
 an einer **Messung** und nicht an einer Breakpoint-Grenze; eine dritte Probe auf derselben Fläche
-kann nichts Neues zeigen. Alle anderen Achsen bleiben vollständig: beide Fensterhöhen, beide
-Bandzustände, beide Scrollzustände, alle vier Ansichten (vier unabhängige
-`calc(100vh - var(--view-frame-height, ..))`-Deklarationen in drei Stilblättern).
+kann nichts Neues zeigen. (Die 96 sind die Zustandszahl jener Messung, die vier Ansichten fuhr.)
+Alle anderen Achsen bleiben vollständig: beide Fensterhöhen, beide Bandzustände, beide
+Scrollzustände, alle **fünf** Ansichten (fünf unabhängige
+`calc(100vh - var(--view-frame-height, ..))`-Deklarationen in vier Stilblättern).
 
 **Die Gegenprobe ist der rote Nachweis.** Eine Probe, die seit ihrer Geburt grün ist, beweist
 nichts. Der letzte Fall des Abschnitts zwingt `--view-frame-height` auf die alte verdrahtete 120px
@@ -4612,7 +4636,10 @@ NICHT-KLICKBAR", einen je Ansicht, 32 insgesamt. **Das ist richtig so:** am List
 in die Schale passt, und das verspricht das Höhenbudget nicht; versprochen ist, dass die Liste
 **selbst** scrollt und ihr Ende erreichbar **bleibt**. Die Zusicherung gilt deshalb nur im
 gescrollten Zustand, mit der Begründung an `befundeAus()` statt nur im Commit. Die drei anderen
-Zusicherungen gelten in beiden Zuständen und waren im selben Lauf in beiden grün.
+Zusicherungen gelten in beiden Zuständen und waren im selben Lauf in beiden grün. (Die Zahlen sind
+die des ersten Laufs mit vier Ansichten. Das in Runde 1 nachgezogene Bestiar verhält sich gleich:
+ungescrollt liegt sein letzter gerenderter Eintrag in **12 von 16** Zuständen unter der Falz,
+gescrollt steht er in allen 16 im Fenster.)
 
 ### Gemessene Wirkung
 
@@ -4639,7 +4666,7 @@ und zwar in **beiden** Zweigen gleich, also auch das Divergenzband, das die gest
 Treffer auf 48px gezogen hätte.
 
 Diese Probe steht auf der Startansicht und misst **Bandgeometrie**, nicht das Höhenbudget der
-Schalen; das messen die 64 Zustände aus (c). (b) und (c) fassen keinen Produktionscode an.
+Schalen; das messen die 80 Zustände aus (c). (b) und (c) fassen keinen Produktionscode an.
 
 ### Die Zusicherungen
 
@@ -4652,8 +4679,11 @@ Schalen; das messen die 64 Zustände aus (c). (b) und (c) fassen keinen Produkti
   M2c-Gruppe `[data-layout="mobile"] .migration-hint-banner, [data-layout="mobile"]
   .divergence-banner` einen Stapelzustand, den sie nicht beschreibt (erst gemessen: 2 Regeln, davon
   1 falsch positiv).
-- `tests/e2e/features/hoehenbudget.spec.js` — **9 neue Fälle** (8 Matrix-Fälle à 8 Zustände + die
-  Gegenprobe), 25 → **33 Fälle**, Laufzeit 24,5s → **43,3s**.
+- `tests/e2e/features/hoehenbudget.spec.js` — **9 neue Fälle** (8 Matrix-Fälle à 10 Zustände + die
+  Gegenprobe), 25 → **33 Fälle**, Laufzeit 24,5s → **46,9s** (43,3s mit vier Ansichten; die fünfte
+  kostet rund 3,6s).
+- `tests/unit/schalen-aktenlage.test.js` — **2 neue Fälle** (Runde 1), 2 → **4**: die Deckung der
+  Messmatrix über alle fünf Schalen und der Zensus der Stilblätter gegen den Kommentar der Matrix.
 - `tests/e2e/features/computed-style-diff.spec.js` — keine neuen Fälle, aber die drei bestehenden
   bewachen wieder 49 Schlüssel mehr.
 
