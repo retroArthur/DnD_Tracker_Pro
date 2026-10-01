@@ -651,8 +651,36 @@ async function saveToIndexedDBFallback(key, dataString, opts) {
     return key;
 }
 /**
+ * Entfernt ALLE localStorage-Schluessel einer Kampagne: Daten, `_ts`, `_rev` — und das
+ * Kampfprotokoll.
+ *
+ * UAT-Befund U5 (Pruefrunde 1): der Loeschdialog verspricht woertlich "ALLE Kampagnendaten
+ * unwiderruflich", hier standen aber nur die ersten drei Zeilen. Der von U5 angelegte vierte
+ * Schluessel traegt Protokolleintraege und damit NAMEN von Charakteren, NSCs und Monstern —
+ * er blieb liegen, wurde beim naechsten Start wieder gelesen und stand im Panel direkt unter
+ * der Zeile "Alle Daten geloescht". Derselbe Pfad traegt deleteCampaign(); dort war es
+ * zusaetzlich ein verwaister Eintrag, den nie wieder jemand aufgeraeumt hat.
+ *
+ * Der Zusatz kommt aus dem Protokollmodul (features/combat-log/) und wird hier NICHT
+ * abgeschrieben: zwei Abschriften derselben Zeichenkette sind genau die Drift, die den Befund
+ * erzeugt hat. Fehlt das Modul (Unit-Lagen, die es nicht laden), gibt es auch keinen
+ * Protokollschluessel — dann bleibt dieser Schritt aus.
+ * Wirft wie StorageAPI.remove(); der Aufrufer meldet die Stufe 'localStorage'.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ */
+function removeLocalCampaignKeys(key) {
+    StorageAPI.remove(key);
+    StorageAPI.remove(key + '_ts');
+    StorageAPI.remove(key + '_rev');
+    const protokollZusatz = window.KPLOG_SCHLUESSEL_SUFFIX;
+    if (typeof protokollZusatz === 'string' && protokollZusatz !== '') {
+        StorageAPI.remove(key + protokollZusatz);
+    }
+}
+/**
  * Entfernt alle gespeicherten Kopien einer Kampagne: IndexedDB ZUERST (bestaetigter Commit,
- * strict), erst danach localStorage (Daten, _ts, _rev). Scheitert der IDB-Delete, bleibt
+ * strict), erst danach localStorage (Daten, _ts, _rev, Kampfprotokoll). Scheitert der
+ * IDB-Delete, bleibt
  * localStorage unangetastet — sonst holte load() eine womoeglich aeltere IDB-Kopie zurueck.
  * Wirft nie.
  *
@@ -689,9 +717,7 @@ async function removeCampaignData(key) {
         }
     }
     try {
-        StorageAPI.remove(key);
-        StorageAPI.remove(key + '_ts');
-        StorageAPI.remove(key + '_rev');
+        removeLocalCampaignKeys(key);
     } catch (error) {
         return { success: false, stage: 'localStorage', error };
     }
@@ -732,9 +758,7 @@ function confirmLocalOnlyCampaignRemoval(key, label) {
     }
     if (!bestaetigt) return { removed: false };
     try {
-        StorageAPI.remove(key);
-        StorageAPI.remove(key + '_ts');
-        StorageAPI.remove(key + '_rev');
+        removeLocalCampaignKeys(key);
     } catch (error) {
         return { removed: false, error };
     }

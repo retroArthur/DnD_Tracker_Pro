@@ -63,6 +63,17 @@ const KPLOG_KATEGORIEN = ['system', 'kampf'];
 // ebenso viele JSON.stringify-Durchlaeufe ueber den ganzen Puffer.
 const KPLOG_SCHREIB_VERZOEGERUNG = 400;
 
+// Der Zusatz, der den Protokollschluessel aus dem Kampagnenschluessel ableitet.
+// EXPORTIERT (nach window), weil die Loeschpfade in
+// systems/spellslots/persistence.js ihn brauchen: removeCampaignData() raeumt
+// die Schluessel EINER Kampagne auf, und dieser hier traegt Namen von
+// Charakteren, NSCs und Monstern. Solange er dort fehlte, ueberlebte
+// Kampagneninhalt die ausdrueckliche Loeschung ("Alle Daten loeschen") und
+// stand nach dem Neustart wieder im Panel. Eine zweite Abschrift der
+// Zeichenkette dort waere genau die Drift, die den Befund erzeugt hat — deshalb
+// steht sie hier einmal.
+const KPLOG_SCHLUESSEL_SUFFIX = '::kampfprotokoll';
+
 let kpLogPuffer = [];
 let kpLogNaechsteNr = 1;
 let kpLogSchreibTimer = null;
@@ -80,7 +91,7 @@ function kpLogSpeicherSchluessel() {
     if (!basis && typeof window !== 'undefined') {
         basis = window.APP_CONFIG?.STORAGE_KEY || null;
     }
-    return (basis || 'dnd-tracker-v4') + '::kampfprotokoll';
+    return (basis || 'dnd-tracker-v4') + KPLOG_SCHLUESSEL_SUFFIX;
 }
 
 /**
@@ -248,6 +259,7 @@ function clearCombatLog() {
 
 if (typeof window !== 'undefined') {
     window.KPLOG_DECKEL = KPLOG_DECKEL;
+    window.KPLOG_SCHLUESSEL_SUFFIX = KPLOG_SCHLUESSEL_SUFFIX;
     window.KPLOG_KATEGORIEN = KPLOG_KATEGORIEN;
     window.KPLOG_STANDARD_KATEGORIE = KPLOG_STANDARD_KATEGORIE;
     window.kpLogSpeicherSchluessel = kpLogSpeicherSchluessel;
