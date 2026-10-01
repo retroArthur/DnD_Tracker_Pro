@@ -863,3 +863,346 @@ test.describe('M1 — Gegenprobe: der Deckel von vor M1 meldet den Befund', () =
         ).toBeLessThan(ANZAHL_ANSICHTEN);
     });
 });
+
+/* ====================================================================
+   ZUSICHERUNG 9/10 — DER UMSCHALTER-STREIFEN GEHOERT DEM UMSCHALTER.
+   ====================================================================
+   WAS DIE ACHT ZUSICHERUNGEN DARUEBER NICHT PRUEFEN. Sie messen die
+   AUSGEFAHRENE Leiste. Der Zustand, in dem der Spielleiter die App die meiste
+   Zeit sieht, ist der EINGEKLAPPTE: die Leiste steht auf
+   `transform: translateY(calc(100% - 56px))`, sichtbar bleibt genau die
+   Umschalter-Zeile am unteren Fensterrand. Wer dort etwas hinlegt, verschiebt
+   nicht die Navigation, sondern ERSETZT sie — ein Daumen, der den Streifen
+   trifft, loest eine andere Handlung aus.
+
+   `leisteOeffnen()` prueft diesen Streifen schon, aber nur auf SEINER MITTE.
+   Genau dort war er frei: `elementFromPoint` antwortete auf der Mitte mit
+   `div.mobile-nav-toggle`, und deshalb galt der Weg in die Leiste als in
+   Ordnung. Die Schnellreferenz-Kugel sitzt aber RECHTS UNTEN. Eine Probe, die
+   nur die Mitte kennt, ist gegen sie ab Geburt gruen — darum tastet diese hier
+   ein RASTER ueber die ganze Streifenbreite ab (Schritt 16px, also enger als
+   jedes Element, das groesser als 16px ist, plus die beiden Randpunkte), in drei
+   Zeilen auf 20/50/80 % der Streifenhoehe.
+
+   GEMESSEN am Buendel zu 93a765e, Mobil-Layout, Leiste EINGEKLAPPT, je Fenster
+   in allen vier Themes und in beiden Zustaenden (schlicht und voll, also
+   Ereignis-Log im Dauermodus mit fuenf Meldungen, Kampfprotokoll,
+   Schnellreferenz und Wuerfel-Panel offen) — die Zahlen waren in allen vier
+   Themes und beiden Zustaenden identisch, weil es um Geometrie geht und nicht
+   um Farbe:
+
+     Fenster    Streifen  Decker       Deckung   fremde Tastpunkte
+     --------   --------  -----------  --------  -----------------
+     390x844      55px    .qref-fab    2250px²   7 von 78
+     360x740      55px    .qref-fab    2250px²   7 von 72
+     320x568      55px    .qref-fab    2250px²   7 von 66
+     320x740      55px    .qref-fab    2250px²   7 von 66
+     320x700      55px    .qref-fab    2250px²   7 von 66
+     740x360      55px    .qref-fab    1750px²   6 von 144
+
+   Die 320x700 steht hier nur als Nachweis, dass die Zwischenhoehe nichts
+   Eigenes beitraegt; die Fenstermenge der Probe kommt aus den Konstanten dieser
+   Datei, damit sie mitwandert, wenn jemand sie enger zieht.
+
+   NUR EIN TAETER, und das ist selbst ein Befund. Der breite Filter unten nimmt
+   JEDES sichtbare `position: fixed`-Element ausserhalb der Leiste, nicht eine
+   Namensliste. Er fand in allen sechs Fenstern genau `.qref-fab`. Die fuenf
+   uebrigen bodenverankerten Schweber halten den Streifen bereits frei, jeder auf
+   eigene Weise, gemessener Abstand zum unteren Fensterrand:
+
+     .floating-dice-trigger   70px   dice.css, @media (max-width: 900px)
+     #event-log               80px   party.css, @media (max-width: 900px)
+     .qref-panel              70px   dashboard.css, @media (max-width: 600px)
+     .floating-dice-panel    130px   dice.css, @media (max-width: 900px)
+     .kplog-panel             76px   oben verankert, Hoehe minus --mobile-nav-rest
+                                     (variables.css, aus der Vorrunde)
+
+   Die Kugel ist die einzige, die unter 56px blieb (10px bei <=600px Breite,
+   20px darueber) — sie hat die Mobil-Behandlung, die ihr Gegenstueck unten links
+   laengst hat, nie bekommen.
+
+   ZWEI UNABHAENGIGE ZUSICHERUNGEN, weil zwei verschiedene Dinge schiefgehen:
+     A  FLAECHE — kein sichtbares Schwebeelement schneidet den Streifen.
+        Greift auch bei `pointer-events: none`: so ein Element laesst den Tipp
+        durch, verdeckt die Umschalter-Zeile aber genauso.
+     B  TASTPUNKTE — jeder Punkt des Rasters antwortet mit der Leiste. Das ist
+        die Frage, die der Daumen stellt.
+   ==================================================================== */
+
+/* Die Fenstermenge: alle Telefonfenster dieser Datei. Abgeleitet und nicht neu
+   getippt — wer FENSTER/ENGE_FENSTER aendert, aendert diese Probe mit. */
+const STREIFEN_FENSTER = [...FENSTER, KURZES_FENSTER, ...ENGE_FENSTER];
+
+/** Rasterschritt des Abtastens, waagerecht. Enger als jedes Element > 16px. */
+const STREIFEN_SCHRITT = 16;
+
+/**
+ * Oeffnet ZUSAETZLICH zum vollen Zustand die beiden Panels, die an einem
+ * bodenverankerten Schweber haengen. `vollerZustand()` laesst sie zu — fuer die
+ * ausgefahrene Leiste ist das richtig, weil die Regel dort alles verbirgt. Am
+ * EINGEKLAPPTEN Streifen sind sie der schwerere Fall und muessen offen stehen.
+ * @param {import('@playwright/test').Page} page
+ */
+async function alleSchweberOffen(page) {
+    await vollerZustand(page);
+    await page.evaluate(() => {
+        // @ts-ignore — global aus der Schnellreferenz
+        if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
+        // @ts-ignore — global aus dem Wuerfel-Kern
+        if (typeof window.toggleFloatingDice === 'function') window.toggleFloatingDice();
+    });
+    await page.waitForTimeout(400);
+    const offen = await page.evaluate(() => ({
+        qref: !!document.querySelector('.qref-panel.active'),
+        wuerfel: !!document.querySelector('.floating-dice-panel.show')
+    }));
+    expect(offen.qref, 'die Schnellreferenz liess sich nicht oeffnen').toBe(true);
+    expect(offen.wuerfel, 'das Wuerfel-Panel liess sich nicht oeffnen').toBe(true);
+}
+
+/**
+ * Laeuft im Browser. Misst den Streifen der EINGEKLAPPTEN Leiste, jedes
+ * sichtbare Schwebeelement, das ihn schneidet, und ein Raster von Tastpunkten
+ * ueber seine ganze Breite.
+ *
+ * Reine Funktion ihrer Umgebung, kein Zugriff auf Modul-Scope — sie wird
+ * serialisiert. Der Rasterschritt kommt deshalb als Argument.
+ * @param {number} schritt
+ */
+function messeStreifen(schritt) {
+    const bez = e => {
+        if (!e) return 'nichts';
+        const id = e.id ? '#' + e.id : '';
+        const kl =
+            typeof e.className === 'string' && e.className.trim()
+                ? '.' + e.className.trim().split(/\s+/).join('.')
+                : '';
+        return e.tagName.toLowerCase() + id + kl;
+    };
+    const kopf = document.querySelector('.app-header');
+    const umschalter = document.querySelector('.mobile-nav-toggle');
+    if (!kopf || !umschalter) return { fehlt: true };
+    const kr = kopf.getBoundingClientRect();
+    const ur = umschalter.getBoundingClientRect();
+
+    /* Der Streifen ist der SICHTBARE Rest der eingeklappten Leiste: waagerecht
+       ihre volle Breite, senkrecht von der Oberkante der Umschalter-Zeile bis
+       zum unteren Fensterrand. Gemessen und nicht aus den 56px der
+       `translateY`-Formel gerechnet — die Zeile traegt keine gesetzte Hoehe. */
+    const streifen = {
+        links: Math.round(kr.left),
+        rechts: Math.round(kr.right),
+        oben: Math.round(ur.top),
+        unten: Math.round(Math.min(kr.bottom, window.innerHeight))
+    };
+    streifen.hoehe = streifen.unten - streifen.oben;
+
+    /* A — FLAECHE. Breiter Filter: jedes sichtbare `position: fixed`-Element
+       ausserhalb der Leiste, keine Namensliste. Ein neuer Schweber faellt damit
+       von selbst auf, statt stillschweigend durchzulaufen. */
+    const ueberlapper = Array.from(document.body.querySelectorAll('*'))
+        .filter(e => {
+            if (e === kopf || kopf.contains(e)) return false;
+            const cs = getComputedStyle(e);
+            if (cs.position !== 'fixed') return false;
+            if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+            if (parseFloat(cs.opacity) === 0) return false;
+            const r = e.getBoundingClientRect();
+            if (r.width <= 0 || r.height <= 0) return false;
+            return (
+                r.bottom > streifen.oben &&
+                r.top < streifen.unten &&
+                r.right > streifen.links &&
+                r.left < streifen.rechts
+            );
+        })
+        .map(e => {
+            const r = e.getBoundingClientRect();
+            const cs = getComputedStyle(e);
+            return {
+                was: bez(e),
+                z: cs.zIndex,
+                zeiger: cs.pointerEvents,
+                abstandUnten: Math.round(window.innerHeight - r.bottom),
+                deckung: Math.round(
+                    Math.max(
+                        0,
+                        Math.min(r.bottom, streifen.unten) - Math.max(r.top, streifen.oben)
+                    ) *
+                        Math.max(
+                            0,
+                            Math.min(r.right, streifen.rechts) - Math.max(r.left, streifen.links)
+                        )
+                )
+            };
+        })
+        // Nur echte Ueberlappungen melden, keine Beruehrung auf Kante.
+        .filter(u => u.deckung > 0);
+
+    /* B — TASTPUNKTE. Raster ueber die GANZE Breite plus die beiden Randpunkte;
+       drei Zeilen, damit auch ein flaches Element in der oberen oder unteren
+       Haelfte des Streifens auffaellt. */
+    const xs = new Set([streifen.links + 4, streifen.rechts - 4]);
+    for (let x = streifen.links + schritt / 2; x < streifen.rechts; x += schritt) {
+        xs.add(Math.round(x));
+    }
+    const punkte = [];
+    for (const x of [...xs].sort((a, b) => a - b)) {
+        for (const anteil of [0.2, 0.5, 0.8]) {
+            const y = Math.round(streifen.oben + anteil * streifen.hoehe);
+            const el = document.elementFromPoint(x, y);
+            punkte.push({
+                x,
+                y,
+                leiste: !!el && (el === kopf || kopf.contains(el)),
+                umschalter: !!el && (el === umschalter || umschalter.contains(el)),
+                obenauf: bez(el)
+            });
+        }
+    }
+
+    return {
+        fehlt: false,
+        navOffen: !!document.querySelector('.app-header.nav-open'),
+        token: getComputedStyle(document.documentElement)
+            .getPropertyValue('--mobile-nav-rest')
+            .trim(),
+        streifen,
+        ueberlapper,
+        anzahlPunkte: punkte.length,
+        aufUmschalter: punkte.filter(p => p.umschalter).length,
+        fremd: punkte.filter(p => !p.leiste)
+    };
+}
+
+test.describe('M1 — der Streifen der eingeklappten Leiste gehoert dem Umschalter', () => {
+    for (const theme of THEMES) {
+        for (const [breite, hoehe] of STREIFEN_FENSTER) {
+            test(`${breite}x${hoehe}, Theme ${theme}: kein Schweber auf dem Streifen`, async ({
+                page
+            }) => {
+                await page.setViewportSize({ width: breite, height: hoehe });
+                await mobilLaden(page, theme);
+
+                for (const zustand of ['schlicht', 'voll']) {
+                    if (zustand === 'voll') await alleSchweberOffen(page);
+
+                    const m = await page.evaluate(messeStreifen, STREIFEN_SCHRITT);
+                    expect(m.fehlt, `${zustand}: Leiste oder Umschalter fehlt`).toBe(false);
+
+                    console.log(
+                        `[M1-Streifen] ${breite}x${hoehe} ${theme} ${zustand}: Streifen ` +
+                            `h=${m.streifen.hoehe}px [${m.streifen.links}..${m.streifen.rechts}] ` +
+                            `y ${m.streifen.oben}..${m.streifen.unten}, Token ` +
+                            `${m.token || '(leer)'}, Ueberlapper ${m.ueberlapper.length}, ` +
+                            `auf dem Umschalter ${m.aufUmschalter}/${m.anzahlPunkte}, ` +
+                            `fremd ${m.fremd.length}`
+                    );
+
+                    /* VORBEDINGUNG. Ohne sie koennte die Probe einen Streifen
+                       der Hoehe 0 messen und zufrieden sein. Die Leiste MUSS
+                       eingeklappt stehen — das ist der Zustand, um den es
+                       geht — und der Streifen muss die Daumengroesse haben,
+                       auf die ihn `translateY(calc(100% - 56px))` festlegt. */
+                    expect(
+                        m.navOffen,
+                        `${zustand}: die Leiste muss fuer diese Probe eingeklappt stehen`
+                    ).toBe(false);
+                    expect(
+                        m.streifen.hoehe,
+                        `${zustand}: der Streifen muss die Daumengroesse haben ` +
+                            `(${m.streifen.hoehe}px)`
+                    ).toBeGreaterThanOrEqual(MIN_TIPPFLAECHE);
+
+                    // A — FLAECHE.
+                    expect(
+                        m.ueberlapper.map(
+                            u =>
+                                `${u.was} deckt ${u.deckung}px² (z=${u.z}, ` +
+                                `${u.abstandUnten}px ueber dem Fensterrand)`
+                        ),
+                        `${zustand}: Schwebeelemente auf dem Streifen der eingeklappten Leiste`
+                    ).toEqual([]);
+
+                    // B — TASTPUNKTE, ueber die ganze Breite.
+                    expect(
+                        m.fremd.map(f => `(${f.x},${f.y}) -> ${f.obenauf}`),
+                        `${zustand}: Tastpunkte auf dem Streifen, die NICHT mit der Leiste ` +
+                            `antworten (${m.fremd.length} von ${m.anzahlPunkte})`
+                    ).toEqual([]);
+                }
+            });
+        }
+    }
+});
+
+/* ====================================================================
+   GEGENPROBE ZUM STREIFEN — der alte Sitz der Kugel meldet den Befund.
+   ====================================================================
+   Dieselbe Begruendung wie bei der Gegenprobe zum Deckel darueber: eine Probe,
+   die den Zustand VOR der Korrektur nie herstellt, belegt nicht, dass sie ihn
+   sehen koennte. Hier ist der alte Zustand eine einzige Zahl — die Kugel sass
+   im Mobil-Layout 10px ueber dem unteren Fensterrand statt ueber dem Streifen.
+
+   Erzwungen wird er mit `!important` auf `.qref-fab`, weil die Korrektur selbst
+   eine Regel mit Attributselektor ist (`[data-layout="mobile"] .qref-fab`,
+   Spezifitaet 0-2-0) und von einem gewoehnlichen Stilblatt nicht geschlagen
+   wird. Das `!important` faellt NICHT in die Ratsche: die zaehlt die
+   Quelldateien unter assets/styles/, nicht die Stilblaetter eines Testlaufs.
+
+   GEMESSEN am Buendel zu 93a765e, 360x740, Theme dark, schlichter Zustand:
+
+     Zustand                        Decker      Deckung   fremde Tastpunkte
+     ----------------------------   ---------   -------   -----------------
+     ueber dem Streifen (Q2)        -                 0   0 von 72
+     10px ueber dem Rand (vorher)   .qref-fab   2250px²   7 von 72
+   ==================================================================== */
+test.describe('M1 — Gegenprobe: der alte Sitz der Kugel meldet den Befund', () => {
+    test('360x740: 10px ueber dem Fensterrand decken den Streifen wieder', async ({ page }) => {
+        // Kleinstes Fenster der eigenen Achse — wandert mit, statt eine
+        // verdrahtete Zahl zu fuehren.
+        const [breite, hoehe] = FENSTER.reduce((a, b) => (b[1] < a[1] ? b : a));
+        await page.setViewportSize({ width: breite, height: hoehe });
+        await mobilLaden(page, THEMES[0]);
+
+        // VORBEDINGUNG — der Streifen ist frei. Ohne sie wuerde die Gegenprobe
+        // einen vorbestehenden Fehler als Erfolg verbuchen.
+        const frei = await page.evaluate(messeStreifen, STREIFEN_SCHRITT);
+        expect(
+            frei.ueberlapper.map(u => `${u.was} ${u.deckung}px²`),
+            'Vorbedingung: der Streifen muss frei sein'
+        ).toEqual([]);
+        expect(
+            frei.fremd.length,
+            `Vorbedingung: alle Tastpunkte muessen mit der Leiste antworten ` +
+                `(${frei.fremd.length} fremde)`
+        ).toBe(0);
+
+        // Und jetzt der Sitz von vorher.
+        await page.addStyleTag({ content: '.qref-fab { bottom: 10px !important; }' });
+        await page.waitForTimeout(300);
+        const alt = await page.evaluate(messeStreifen, STREIFEN_SCHRITT);
+        console.log(
+            `[M1-Streifen-Gegenprobe] ${breite}x${hoehe}: frei Ueberlapper ` +
+                `${frei.ueberlapper.length}/fremd ${frei.fremd.length} | alt Ueberlapper ` +
+                `${alt.ueberlapper.map(u => u.was + ' ' + u.deckung + 'px²').join(',')}/fremd ` +
+                `${alt.fremd.length} von ${alt.anzahlPunkte}`
+        );
+
+        // Erst der Beweis, dass der Zwang gegriffen hat.
+        const kugel = alt.ueberlapper.find(u => u.was.includes('qref-fab'));
+        expect(
+            kugel ? kugel.abstandUnten : null,
+            'der alte Sitz muss zu erzwingen sein (10px ueber dem Fensterrand)'
+        ).toBe(10);
+        // Und dann: BEIDE Zusicherungen sehen den Befund.
+        expect(
+            kugel.deckung,
+            `die Flaechen-Zusicherung muss den Decker melden (${kugel.deckung}px²)`
+        ).toBeGreaterThan(0);
+        expect(
+            alt.fremd.length,
+            `die Tastpunkt-Zusicherung muss fremde Punkte melden (${alt.fremd.length})`
+        ).toBeGreaterThan(0);
+    });
+});
