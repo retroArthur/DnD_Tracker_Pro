@@ -1585,6 +1585,54 @@
             justify-content: center;
             display: flex;
             align-items: center;
+            /* ============================================================
+               M1 — DIE WAAGERECHTE ACHSE. Dieselbe Strenge wie beim Deckel
+               darueber, eine Vierteldrehung weiter.
+               ============================================================
+               `.nav-tabs` steht auf `repeat(4, 1fr)`. Ein `1fr` ist
+               `minmax(auto, 1fr)`, und `auto` loest als Mindestbreite die
+               MIN-INHALT-Breite des Rasterkindes auf. Solange die
+               Beschriftung aus core.css `white-space: nowrap` erbt, ist das
+               die volle Textbreite — die Spalten konnten gar nicht schrumpfen.
+               Gemessen am Buendel zu 4df04c1: `scrollWidth` 408px bei JEDER
+               Telefonbreite. Bei 320px lag die vierte Spalte (x 308..400)
+               damit ganz ausserhalb der Scheibe; `elementFromPoint` antwortete
+               auf ihrer Mitte (x=354) mit `null`, und Fraktionen, Quests,
+               Wiki, Shops, DM Screen und Daten waren unerreichbar — 18 von 24.
+               Bei 360px und 390px war die rechte Spalte angeschnitten
+               (Ueberhang 48px bzw. 18px).
+
+               `min-width: 0` nimmt der Spalte diese Mindestbreite. Allein
+               genuegt es NICHT: die Beschriftung behaelt dann `nowrap` und
+               quillt ueber den Knopfrand auf den Nachbarn (gemessen bei 320px:
+               dmscreen +1px, soundboard +4px, sessionprep +6px). Deshalb
+               bricht der Text hier um. `overflow-wrap: anywhere` ist die
+               funktionale Zusage — es ist die einzige der drei Angaben, die
+               auch die Min-Inhalt-Breite senkt, und bricht notfalls mitten im
+               Wort. `hyphens: auto` ist nur die Form: mit `lang="de"` am
+               Wurzelelement wird aus „Soundboar|d" ein „Sound-|board". Faellt
+               die Silbentrennung aus, bleibt der Umbruch trotzdem richtig.
+
+               WAS NICHT GEWAEHLT WURDE. Eine Ellipse (`text-overflow`) haette
+               die Beschriftung abgeschnitten — am Tisch muss „wo ist das
+               Soundboard" durch Hinsehen beantwortbar sein, und „Soundb…" ist
+               kein Hinsehen. Drei Spalten unter 360px waeren 568px hohes
+               Raster bei 368px Sichtfeld gewesen, also mehr Wischen statt
+               weniger. Eine kleinere Schrift oder Tippflaeche kam aus dem
+               Grund nicht in Frage, der schon beim Deckel galt: unter 44px
+               trifft ein Daumen nicht mehr zuverlaessig.
+
+               GEMESSEN danach, in allen vier Themes auf den Bildpunkt gleich:
+               `scrollWidth` == `clientWidth` bei 320/360/390/700/740, 24/24
+               erreichbar, kein Textueberlauf, kleinste Tippflaeche 72x56px bei
+               320px Breite (vorher 86x56 — aber sechs Reiter ausserhalb des
+               Fensters). Zwei Beschriftungen laufen dort auf zwei Zeilen und
+               machen ihren Reiter 64px hoch. */
+            min-width: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+            line-height: 1.15;
         }
         
         [data-layout="mobile"] .nav-tab.active {
