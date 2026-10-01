@@ -113,8 +113,13 @@ async function oeffneInitiative(page) {
  * Oeffnet die Initiative in einem SCHMALEN Fenster und zieht es danach gross —
  * der Weg des DM, der die App auf einem kleinen Fenster zum ersten Mal oeffnet:
  * `loadLayout()` (ui/layout-profiles.js) waehlt bei `innerWidth <= 768` selbst
- * 'mobile', und das Grossziehen aendert daran nichts, es feuert nur das
- * resize-Ereignis.
+ * 'mobile'.
+ *
+ * SEIT M2a (2026-10) aendert das Grossziehen daran etwas: `autoLayoutNachFenster()`
+ * laesst das Profil dem Fenster folgen, solange der Nutzer keines gewaehlt hat —
+ * und dieser Weg waehlt keines. Nach dem Grossziehen steht das Profil also auf
+ * 'desktop', nicht mehr auf 'mobile'. Fall A unten traegt diese Aenderung nach;
+ * seine Begruendung steht dort.
  *
  * `waitForAppReady()` ist hier NICHT benutzbar: es wartet auf eine SICHTBARE
  * `.app-title`, und im Mobil-Layout ist die Desktop-Kopfzeile ausgeblendet
@@ -379,19 +384,45 @@ test.describe('Angeheftete Ebenen auf der Initiative', function () {
             await page.evaluate(() => window.scrollTo(0, 0));
         }
 
-        // FALL A — der gemeldete Weg: schmal geoeffnet (loadLayout waehlt Mobil),
-        // Fenster gross gezogen, Layout-Schalter geklickt. Kein gespeicherter
-        // Layout-Wert, kein Eingriff ins DOM.
+        /* FALL A — der gemeldete Weg: schmal geoeffnet (loadLayout waehlt Mobil),
+           Fenster gross gezogen. Kein gespeicherter Layout-Wert, kein Eingriff
+           ins DOM.
+
+           NACHGETRAGEN MIT M2a (2026-10), weil sich das Verhalten geaendert hat
+           und nicht, damit der Fall gruen wird. Hier stand nach dem Grossziehen
+           `expect(layout).toBe('mobile')` und danach EIN Schalterklick, der nach
+           Desktop fuehrte. Seit das Profil dem Fenster folgt, solange der Nutzer
+           keines gewaehlt hat, steht es nach dem Grossziehen von selbst auf
+           'desktop' — und dieser Weg waehlt keines. Die Zusicherung wird damit
+           STAERKER, nicht schwaecher: die Versatzkette muss schon ohne jeden
+           Klick vollstaendig besetzt sein.
+
+           Was dadurch nicht verlorengeht, steht unten weiter drin: der leere
+           Mobil-Zustand der drei Glieder (jetzt nach dem ERSTEN Schalterklick
+           gemessen, der eine ausdrueckliche Wahl setzt) und der Rueckweg nach
+           Desktop ueber den Schalter. */
         await oeffneSchmalUndZieheGross(page, BREITE);
+        const autoStart = await page.evaluate(leseGlieder);
+        expect(
+            autoStart.layout,
+            'Fall A: das Profil folgt dem gross gezogenen Fenster (M2a)'
+        ).toBe('desktop');
+        await pruefeDesktop('Fall A, automatisch');
+
+        // Hin nach Mobil — jetzt per Schalter, also mit ausdruecklicher Wahl.
+        await klickeLayoutSchalter(page);
+        await page.waitForTimeout(400);
         const mobilStart = await page.evaluate(leseGlieder);
-        expect(mobilStart.layout, 'Fall A: loadLayout() waehlt bei 700px Mobil').toBe('mobile');
+        expect(mobilStart.layout, 'Fall A: der Schalter fuehrt nach Mobil').toBe('mobile');
         expect(
             [mobilStart.header, mobilStart.runden, mobilStart.aktionen],
             `Fall A: im Mobil-Layout steht kein Glied (${JSON.stringify(mobilStart)})`
         ).toEqual(['', '', '']);
+
+        // Und zurueck.
         await klickeLayoutSchalter(page);
         await page.waitForTimeout(400);
-        await pruefeDesktop('Fall A');
+        await pruefeDesktop('Fall A, per Schalter');
 
         // FALL B — zweimal nach Mobil und zurueck, mit einer Fenstergroessen-
         // aenderung dazwischen. Die ist der entscheidende Schritt: erst das

@@ -143,7 +143,20 @@ async function initSteps() {
 
     // Sticky-Header-Höhe für Initiative-Controls berechnen
     updateStickyOffsets();
-    window.addEventListener('resize', debounce(updateStickyOffsets, 200));
+    // EIN entprellter Fensterbeobachter für beides (M2a). Die Reihenfolge ist
+    // zwingend: autoLayoutNachFenster() setzt ggf. data-layout, und der
+    // Mobil-/Desktop-Zweig von updateStickyOffsets() verzweigt an genau diesem
+    // Attribut — umgekehrt würde die Versatzkette für das alte Profil gemessen.
+    // Ein zweiter Beobachter daneben wäre eine zweite Messung je Wechsel.
+    window.addEventListener(
+        'resize',
+        debounce(() => {
+            if (typeof window.autoLayoutNachFenster === 'function') {
+                window.autoLayoutNachFenster();
+            }
+            updateStickyOffsets();
+        }, 200)
+    );
 
     // Encounter-Runde aus Daten laden
     encounterRound = D.initiative?.round || 1;
