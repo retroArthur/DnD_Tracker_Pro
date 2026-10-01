@@ -9,15 +9,31 @@
  * dieser App die Knoepfe sitzen (Trefferpunkte, Effekte, Entfernen).
  *
  * WARUM MIT GEFUELLTER KAMPAGNE, UND WARUM DAS DER KERN DER PROBE IST.
- * Auf einer LEEREN Kampagne ist der Ueberhang in allen 24 Ansichten NULL. Jede
- * der vier Ursachen unten ist eine Rasterspalte, deren automatisches Minimum
- * der min-content-Breite ihres INHALTS folgt — ohne Inhalt gibt es nichts, dem
- * sie folgen koennte. Eine Probe mit kurzer Saat waere also gruen und zugleich
- * blind. Derselbe Fehler hat in diesem Projekt schon einmal drei Wochen
- * getragen (die Listen-Schalen: der Verlust begann ab dem 10. Eintrag, die
- * Testseeds waren kuerzer). Darum steht hier neben der Ueberhang-Zusicherung
- * eine zweite, die BELEGT, dass die Saat angekommen ist — faellt sie je
- * wieder auf Leerstand zurueck, schlaegt die Probe an statt stillzuhalten.
+ * Fuenf der sechs Ursachen unten sind datenabhaengig: eine Rasterspalte oder
+ * eine Flex-Reihe, deren automatisches Minimum der min-content-Breite ihres
+ * INHALTS folgt — ohne Inhalt gibt es nichts, dem sie folgen koennte. Auf einer
+ * leeren Kampagne messen sie 0, und eine Probe mit kurzer Saat waere bei ihnen
+ * gruen und zugleich blind. Derselbe Fehler hat in diesem Projekt schon einmal
+ * drei Wochen getragen (die Listen-Schalen: der Verlust begann ab dem 10.
+ * Eintrag, die Testseeds waren kuerzer). Darum steht hier neben der
+ * Ueberhang-Zusicherung eine zweite, die BELEGT, dass die Saat angekommen ist —
+ * faellt sie je wieder auf Leerstand zurueck, schlaegt die Probe an statt
+ * stillzuhalten.
+ *
+ *   BERICHTIGUNG (Runde 1): hier stand "Auf einer LEEREN Kampagne ist der
+ *   Ueberhang in allen 24 Ansichten NULL" und "Jede der vier Ursachen ist eine
+ *   Rasterspalte". Beides war zu weit gefasst. Nachgemessen am gebauten Buendel
+ *   mit dem CSS von f6cc6f7, Mobil-Profil, alle Falten aufgeklappt, in zwei
+ *   Varianten von Leerstand (Saat mit 0 Datensaetzen je Sammlung und ein
+ *   voellig frisches Browserprofil ohne jeden localStorage-Eintrag): die
+ *   Wuerfel-Ansicht ragt auch bei 0 Datensaetzen 72px hinaus (320x700) bzw. 2px
+ *   (390x844), die uebrigen 23 messen 0. Grund: Fall 4, `.dice-formula`, ist
+ *   kein Raster, und das inhaltsbasierte Minimum eines Formularfelds haengt
+ *   nicht an der Kampagne, sondern an der `size`-Vorgabe des `<input>`. Die
+ *   Saat und die Zusicherungen bleiben davon unberuehrt — die anderen fuenf
+ *   Faelle brauchen die Daten weiterhin, und ohne sie waere die Probe genau so
+ *   blind wie beschrieben. Falsch war nur die Begruendung, und die ist die
+ *   Stelle, die kuenftigen Lesern erklaert, warum die Saat bleiben muss.
  *
  * VIER URSACHEN, VIER ANSICHTEN, EINS ZU EINS ZUGEORDNET. Jede Korrektur
  * einzeln eingespielt und gemessen (320x700, gefuellte Saat): sie behebt genau
@@ -156,6 +172,14 @@ const DESKTOP_FENSTER = [
     [1440, 900],
     [1280, 800]
 ];
+
+/* Drei Wuerfelformeln, von kurz nach lang, fuer ZUSICHERUNG 5. Die laengste ist
+   nicht erfunden: `4d6kh3` steht so im Platzhalter des Feldes
+   (assets/templates/view-tools.html), und einen zweiten Wuerfelsatz plus festen
+   Zuschlag anzuhaengen ist der Alltag einer Schadensformel. Die kuerzeste,
+   `1d20`, ist die Untergrenze: ein Feld, in dem nicht einmal sie vollstaendig
+   steht, ist kein Eingabefeld mehr. */
+const FORMELN = ['1d20', '2d20+5', '4d6kh3+2d8+5'];
 
 const zz = i => String(i).padStart(2, '0');
 const reihe = (n, f) => Array.from({ length: n }, (_, i) => f(i + 1));
@@ -542,6 +566,32 @@ function messeFuellung() {
     };
 }
 
+/**
+ * Lage UND Lesbarkeit des Wuerfel-Formelfelds. Laeuft IM Browser.
+ *
+ * `scrollWidth > clientWidth` an einem `<input>` heiszt: der eingetippte Text
+ * ist breiter als die sichtbare Flaeche, das Feld scrollt intern, und man sieht
+ * nur einen Ausschnitt seiner eigenen Formel. Das ist etwas anderes als
+ * Ueberhang — das Feld liegt dabei vollstaendig im Fenster. Genau deshalb
+ * braucht es diese Messung neben den beiden oberen: Zusicherung 1 und 2 sind
+ * fuer ein 55px schmales Feld blind, weil 55px bequem ins Fenster passen.
+ */
+function messeFormelfeld() {
+    const f = /** @type {HTMLInputElement|null} */ (
+        document.querySelector('#view-dice .dice-formula')
+    );
+    if (!f) return null;
+    const b = f.getBoundingClientRect();
+    return {
+        scrollW: f.scrollWidth,
+        clientW: f.clientWidth,
+        breite: Math.round(b.width),
+        rechts: Math.round(b.right),
+        fenster: window.innerWidth,
+        wert: f.value
+    };
+}
+
 test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
     for (const [breite, hoehe] of FENSTER) {
         test(`(1) kein Ueberhang in allen 24 Ansichten bei ${breite}x${hoehe}`, async ({
@@ -700,6 +750,94 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                     '.fr-layout': 2
                 }
             );
+        });
+    }
+
+    /* ZUSICHERUNG 5 — DAS FORMELFELD MUSS NICHT NUR IM FENSTER LIEGEN,
+       MAN MUSS AUCH LESEN KOENNEN, WAS DRINSTEHT.
+       ------------------------------------------------------------------
+       Die Korrektur an `.dice-formula` (`min-width: 0`) hat den Ueberhang der
+       Wuerfel-Ansicht beseitigt, indem sie das Feld schrumpfen liess — und in
+       der nowrap-Reihe `.dice-input-group` blieben bei 320px genau 55px uebrig
+       (242px Innenraum minus Anzahl 50, "x" 11, Wurfknopf 50, Wiederholknopf 44
+       und vier Abstaende a 8 = 155 + 32). In 53px Innenbreite steht nicht einmal
+       `1d20` vollstaendig: gemessen 59px Textbreite. Ueberhang war damit gegen
+       Lesbarkeit getauscht, und ZUSICHERUNG 1 UND 2 SIND DAGEGEN BLIND — ein
+       55px schmales Feld liegt bequem im Fenster, es scrollt nur innen.
+       Deshalb steht hier eine eigene Zusicherung, die nicht die Lage misst,
+       sondern `scrollWidth <= clientWidth`: passt der Text ins Feld.
+
+       ROT OHNE DIE KORREKTUR (`flex-wrap: wrap` an `.dice-input-group`,
+       `flex-basis` am Feld), von DIESER Zusicherung am gebauten Buendel mit
+       gefuellter Kampagne gemessen — Innenbreite des Feldes gegen die
+       Textbreite der drei Formeln:
+
+         Fenster   Feld innen   1d20   2d20+5   4d6kh3+2d8+5
+         -------   ----------   ----   ------   ------------
+         320x700         53px   59 ✗     77 ✗         130 ✗
+         360x740         93px   93 ✓     93 ✓         130 ✗
+         390x844        123px  123 ✓    123 ✓         130 ✗
+         740x360        453px      ✓        ✓             ✓
+
+       (Bei 360 und 390 meldet Chrome fuer die kurzen Formeln `scrollWidth ==
+       clientWidth`, weil der Text hineinpasst; die Spalte zeigt dort also die
+       Feldbreite, nicht die Textbreite. Rot sind die mit ✗.)
+
+       Die zweite Zusicherung unten haelt die GEGENRICHTUNG fest: das Feld darf
+       nicht wieder breiter werden als das Fenster. Ohne sie waere ein Rueckfall
+       auf den Zustand vor Runde 1 (Feld 215px, rechte Kante bei x=331 in einem
+       320px breiten Fenster, Wurf- und Wiederholknopf ganz drauszen) hier
+       gruen. Beide Richtungen zusammen sind die Schranke: das Feld passt INS
+       Fenster UND die Formel passt INS Feld. */
+    for (const [breite, hoehe] of FENSTER) {
+        test(`(4) das Wuerfel-Formelfeld bleibt lesbar bei ${breite}x${hoehe}`, async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await appLaden(page);
+            await reiterWechseln(page, 'dice');
+            await faltenOeffnen(page);
+
+            /** @type {Record<string, any>} */
+            const gemessen = {};
+            for (const formel of FORMELN) {
+                await page.fill('#view-dice .dice-formula', formel);
+                await page.waitForTimeout(80);
+                gemessen[formel] = await page.evaluate(messeFormelfeld);
+            }
+
+            const leer = FORMELN.filter(f => !gemessen[f]);
+            expect(leer, `Formelfeld gefunden bei ${breite}x${hoehe}`).toEqual([]);
+
+            console.log(
+                `[Q1] Formelfeld ${breite}x${hoehe}: innen ${gemessen[FORMELN[0]].clientW}px, ` +
+                    FORMELN.map(
+                        f =>
+                            `"${f}" ${gemessen[f].scrollW}px${gemessen[f].scrollW > gemessen[f].clientW + 1 ? ' ZU BREIT' : ''}`
+                    ).join(', ')
+            );
+
+            /* Die Formel passt ins Feld. 1px Toleranz wie bei den Messungen
+               oben: Rahmen und Zeichenvorschuebe loesen zu nicht-ganzen
+               Bildpunkten auf. */
+            const abgeschnitten = FORMELN.filter(
+                f => gemessen[f].scrollW > gemessen[f].clientW + 1
+            );
+            expect(
+                abgeschnitten.map(
+                    f =>
+                        `"${f}" braucht ${gemessen[f].scrollW}px, Feld hat ${gemessen[f].clientW}px`
+                ),
+                `Formeln, die bei ${breite}x${hoehe} nicht ins Feld passen — Ueberhang gegen Lesbarkeit getauscht ist nicht behoben`
+            ).toEqual([]);
+
+            /* Und das Feld passt ins Fenster — die Gegenrichtung. */
+            const letzte = gemessen[FORMELN[FORMELN.length - 1]];
+            expect(
+                letzte.rechts <= letzte.fenster + 1,
+                `rechte Kante des Formelfelds bei ${breite}x${hoehe}: x=${letzte.rechts} in einem ${letzte.fenster}px breiten Fenster`
+            ).toBe(true);
         });
     }
 });
