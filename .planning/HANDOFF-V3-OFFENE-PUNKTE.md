@@ -4830,6 +4830,33 @@ python -m pytest tests/build/                                          # 30 Fael
 
 ### Offen geblieben
 
+- **NEU UND SCHWER: die Start-Ansicht scrollt auf dem Telefon seitwärts.** Gefunden in dieser
+  Abnahme, **nicht** von M1/M2/M3 verursacht (`assets/styles/dashboard.css` wurde in keiner der
+  drei Einheiten angefasst) und von keiner Zusicherung gedeckt — die waagerechte Achse ist bisher
+  nur an der Navigationsleiste gemessen (M1 Runde 2), nicht am Seiteninhalt.
+
+  **Ursache, isoliert:** `.dash { display: grid }` (dashboard.css:823) gibt **keine**
+  `grid-template-columns` an. Die einzige implizite Spalte wird dadurch `auto` dimensioniert, also
+  auf ihre **max-content**-Breite — und die ist durch `.dash-party-grid { max-width: 720px }` mit
+  `repeat(auto-fill, minmax(160px, 1fr))` konstant **710px**, unabhängig vom Fenster. Der
+  Rasterbehälter ist 340px breit, seine Inhalte sind 710px breit.
+
+  | Fenster | Seitenüberhang X | `.dash`-Spalte | `.dash-party` | Karten je Reihe |
+  | --- | --- | --- | --- | --- |
+  | 320x700 | **416px** | 710px | 710px | 4 (angeschnitten) |
+  | 360x740 | **376px** | 710px | 710px | 4 (angeschnitten) |
+  | 390x844 | **346px** | 710px | 710px | 4 (angeschnitten) |
+  | 740x360 | 0px | 710px | 710px | 4 |
+
+  **Gegenprobe, die die Ursache belegt:** mit erzwungenem
+  `.dash { grid-template-columns: minmax(0, 1fr) }` fällt der Überhang in allen drei
+  Telefonfenstern auf **0**, die Spalte auf 268/308/338px, und die Partykarten brechen auf **eine je
+  Reihe** um.
+
+  **Hier NICHT behoben**, weil es eine Abnahmerunde ist: die Korrektur ändert die Dashboard-Lage in
+  allen vier Themes und braucht eine eigene Messmatrix plus die Entscheidung, ob eine Karte je Reihe
+  bei 320-390px gewollt ist oder `minmax(140px, 1fr)` mit zwei je Reihe. Eigene Einheit — aber die
+  dringendste: die Start-Ansicht ist das Erste, was der Spielleiter auf dem Telefon sieht.
 - **`.qref-fab` liegt auf dem 56px-Streifen der eingeklappten Leiste** — unverändert offen aus M1,
   jetzt beziffert: gemessen **2250 px² Deckung** bei 360x740, 390x844 und 320x700, **1750 px²** bei
   740x360. Die **Mitte** der Umschalter-Zeile bleibt in allen vier Fenstern frei, die Navigation
