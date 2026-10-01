@@ -533,3 +533,129 @@ test.describe('Hoehenbudget der Listen-Schalen (U6)', () => {
         });
     }
 });
+
+/* ====================================================================
+   DIE FUENFTE SCHALE IN IHREN BEIDEN SCHMALFASSUNGEN.
+   ====================================================================
+   Das Bestiar ist die einzige der fuenf Schalen, die ihr Hoehenbudget unter
+   900px und im Mobil-Layout wieder aufgab: `height: auto; overflow: visible`
+   in zwei Fassungen (bestiary.css, `@media (max-width: 900px)` und
+   `[data-layout="mobile"]`). Die Zeilen sind aelter als das Budget — sie
+   stehen wortgleich schon zu fef3afb —, aber sie reproduzieren genau das
+   Symptom, gegen das das Budget angetreten ist, und zwar in der schlimmsten
+   Form: NICHT eine teilweise verdeckte Werkzeugleiste, sondern eine, die
+   vollstaendig aus dem Fenster scrollt.
+
+   GEMESSEN am Buendel zu c14a968 (Bestiar, erstes Monster gewaehlt, per
+   Mausrad bis zum Anschlag; 901px als Gegenprobe EINEN Bildpunkt oberhalb der
+   Schmalfassung):
+
+     Fenster    Ueberhang  Werkzeugleiste   elementFromPoint aufs Suchfeld
+     --------   ---------  --------------   ------------------------------
+     901x700          0    229..303         INPUT.toolbar-search
+     900x700        697    -474..-400       nichts
+     900x900        497    -274..-200       nichts
+     768x800        650    -529..-455       nichts
+     390x844        766    -549..-475       nichts
+
+   Ohne gewaehltes Monster ist derselbe Zustand milder, aber nicht heil:
+   900x700 Ueberhang 206px (mit Band) / 145px (ohne), Kopfzeile deckt die
+   Werkzeugleiste 30px / 74px, Suchfeld antwortet mit DIV.app-header-top.
+
+   DIE KORREKTUR nimmt der Schmalfassung nicht das gewollte Verhalten (das
+   Detail steht dort UNTER der Liste, siehe den Kommentar an der
+   Detail-Panel-Regel in core.css — das bleibt), sondern nur den Ort der
+   Scrollkante: sie wandert von der Seite in das Raster. Die Schale behaelt
+   das gemessene Budget, `.bestiary-layout` scrollt selbst, und seine Zeilen
+   gehen von `minmax(0, 1fr)` auf `auto` — sonst bekaeme der Master nur den
+   Rest, den der 646px hohe Statblock uebriglaesst (gemessen 32px).
+
+   NICHT Gegenstand dieses Falls: bei 600px und darunter ueberlaeuft das
+   Suchfeld die verdrahtete `height: 74px` der `.section-toolbar`
+   (editors.css:528) um 52-55px, weil die Leiste ab 900px umbricht. Das trifft
+   vier der fuenf Ansichten gleichermassen, steht mit und ohne diese Korrektur
+   gleich da und ist ein eigener Befund. Deshalb messen die Faelle unten bei
+   900 und 768px, wo der Treffer nicht davon ueberlagert wird. */
+test.describe('Hoehenbudget der fuenften Schale: Bestiar schmal (U6)', () => {
+    for (const [breite, hoehe] of [
+        [900, 700],
+        [900, 900],
+        [768, 800]
+    ]) {
+        const mobil = breite <= 768;
+        test(`die Werkzeugleiste bleibt im Fenster: ${breite}x${hoehe}`, async ({ page }) => {
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await appLaden(page, { mobil });
+
+            await page.evaluate(() => window.switchView('bestiary'));
+            await page.waitForTimeout(700);
+            // Mit gewaehltem Monster: erst der Statblock macht den Inhalt so
+            // hoch, dass die Leiste ganz aus dem Fenster faehrt.
+            await page.evaluate(() => {
+                const erster = document.querySelector('#bestiary-list .bestiary-list-item');
+                if (erster) erster.click();
+            });
+            await page.waitForTimeout(500);
+
+            const vorher = await page.evaluate(() => ({
+                posten: document.querySelectorAll('#bestiary-list .bestiary-list-item').length,
+                detail: Math.round(
+                    document.querySelector('.bestiary-detail').getBoundingClientRect().height
+                )
+            }));
+            // Das Bestiar bringt seine Liste selbst mit (SRD, gemessen 13
+            // Eintraege bei leeren Filtern) — hier wird nichts gesaet. Den
+            // Ueberhang treibt ohnehin der Statblock, nicht die Liste.
+            expect(vorher.posten, 'das Bestiar muss Eintraege fuehren').toBeGreaterThan(10);
+            expect(vorher.detail, 'der Statblock muss Hoehe haben').toBeGreaterThan(200);
+
+            await reiterUndRollen(page, 'bestiary', '#bestiary-list');
+            const m = await page.evaluate(messeBudget, ['#bestiary-search', '#bestiary-list']);
+            const leiste = await page.evaluate(() => {
+                const l = document.querySelector('.bestiary-view.active .section-toolbar');
+                const r = l.getBoundingClientRect();
+                return { oben: Math.round(r.top), unten: Math.round(r.bottom) };
+            });
+            console.log(
+                `[U6] Bestiar ${breite}x${hoehe}: Leiste ${leiste.oben}..${leiste.unten}, ${JSON.stringify(m)}`
+            );
+
+            expect(
+                m.ueberhang,
+                `Seitenueberhang ${m.ueberhang}px (Rahmen ${m.rahmen}, Leiste ${leiste.oben}..${leiste.unten})`
+            ).toBe(0);
+            expect(
+                leiste.oben,
+                `die Werkzeugleiste darf nicht ueber den Fensterrand fahren (${leiste.oben}..${leiste.unten})`
+            ).toBeGreaterThanOrEqual(0);
+            expect(
+                m.suchfeld,
+                `Suchfeld ${m.suchfeld} (Leiste ${leiste.oben}..${leiste.unten})`
+            ).toBe('frei');
+            expect(
+                m.kopfDecktLeiste,
+                `Kopfzeile deckt die Werkzeugleiste um ${m.kopfDecktLeiste}px`
+            ).toBe(0);
+        });
+    }
+
+    test('die Gegenprobe einen Bildpunkt oberhalb der Schmalfassung: 901x700', async ({ page }) => {
+        // Beweist, dass die Faelle oben die Schmalfassung treffen und nicht
+        // irgendeinen allgemeinen Zustand: bei 901px gilt die Regel nicht, und
+        // dort war schon vor der Korrektur alles heil.
+        await page.setViewportSize({ width: 901, height: 700 });
+        await appLaden(page);
+        await page.evaluate(() => window.switchView('bestiary'));
+        await page.waitForTimeout(700);
+        await page.evaluate(() => {
+            const erster = document.querySelector('#bestiary-list .bestiary-list-item');
+            if (erster) erster.click();
+        });
+        await page.waitForTimeout(500);
+        await reiterUndRollen(page, 'bestiary', '#bestiary-list');
+        const m = await page.evaluate(messeBudget, ['#bestiary-search', '#bestiary-list']);
+        console.log(`[U6] Bestiar 901x700 (Gegenprobe): ${JSON.stringify(m)}`);
+        expect(m.ueberhang, `Seitenueberhang ${m.ueberhang}px`).toBe(0);
+        expect(m.suchfeld, `Suchfeld ${m.suchfeld}`).toBe('frei');
+    });
+});
