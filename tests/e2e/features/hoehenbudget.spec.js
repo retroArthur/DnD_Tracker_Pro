@@ -756,3 +756,159 @@ test.describe('Hoehenbudget der fuenften Schale: Bestiar schmal (U6)', () => {
         expect(m.suchfeld, `Suchfeld ${m.suchfeld}`).toBe('frei');
     });
 });
+
+/* ====================================================================
+   DIE WERKZEUGLEISTE BEI TELEFONBREITE — das Suchfeld faellt heraus.
+   ====================================================================
+   Der zweite, von U6 unabhaengige Befund derselben Messreihe. `.section-toolbar`
+   fuehrt eine verdrahtete `height: 74px` (editors.css), waehrend dieselbe Leiste
+   ab `@media (max-width: 900px)` auf `flex-wrap: wrap` geht und das Suchfeld in
+   eine zweite Zeile schickt (`flex: 1 1 100%`, `order: 3`). Die Zeile wird
+   umgebrochen, die Hoehe nicht nachgezogen — das Feld ragt unter die Leiste und
+   liegt dort hinter dem Inhalt, der darunter beginnt.
+
+   GEMESSEN am Buendel zu 6b275e1 (alle fuenf Ansichten, echter Mausklick auf die
+   Feldmitte und anschliessendes Tippen):
+
+     Breite  Ansicht     Ueberlauf  elementFromPoint        echter Klick
+     ------  ----------  ---------  ----------------------  ------------
+     390     Orte          +55px    frei (Leerraum)         tippt
+     390     NSCs          +55px    frei (Leerraum)         tippt
+     390     Truhe        -199px    frei                    tippt
+     390     Begegnungen   +55px    SPAN.card-title         VERSCHLUCKT
+     390     Bestiar       +52px    DIV.bestiary-list-item  VERSCHLUCKT
+     540/600 dasselbe Bild (+55/+52px, zwei verschluckte Klicks)
+     680/768 Ueberlauf +27px, alle fuenf tippen noch
+
+   Die Truhe ist heil, weil loot.css die fehlende Zeile schon lokal fuehrt
+   (`.loot-view .section-toolbar { height: auto; min-height: 74px }`) — gegen
+   ueberlaufende Filter-Chips, aus demselben Grund. Orte und NSCs tippen nur
+   deshalb, weil ihr Feld zufaellig auf Leerraum faellt; der Ueberlauf ist
+   derselbe, und ein etwas laengerer Listeneintrag verschiebt sie in dieselbe
+   Lage wie Begegnungen.
+
+   VORBESTEHEND, nicht von U6 verursacht: mit wieder eingeschaltetem altem
+   Bestiar-CSS steht bei 390x844 derselbe Befund (verdeckt von
+   DIV.bestiary-list-item, Klick verschluckt).
+
+   DIE KORREKTUR zieht die Zeile der Truhe in die Media-Query, wo der Umbruch
+   herkommt — eine Leiste, die umbrechen darf, kann keine feste Hoehe haben.
+   `min-height: 74px` haelt den ungebrochenen Fall unveraendert.
+
+   680 und 768px sind bewusst NICHT eigene Faelle: dort ist der Ueberlauf mit
+   27px kleiner, aber vorhanden. Die Faelle unten messen bei 390/540/600, wo er
+   die Bedienbarkeit wirklich kostet; die Zusicherung `ueberlauf <= 0` deckt die
+   breiteren Umbruchlagen der Sache nach mit ab. */
+test.describe('Werkzeugleiste bei Telefonbreite: das Suchfeld bleibt drin', () => {
+    /** Die fuenf Ansichten MIT dem Bestiar — es traegt einen der beiden Treffer. */
+    const FUENF = [
+        ['locations', '#loc-search'],
+        ['npcs', '#npc-search'],
+        ['loot', '#loot-search'],
+        ['encounter', '#enc-search'],
+        ['bestiary', '#bestiary-search']
+    ];
+
+    /** Geometrie und Treffertest am Suchfeld. Laeuft IM Browser. */
+    function messeLeiste(sel) {
+        const such = document.querySelector(sel);
+        if (!such) return { fehlt: true };
+        const leiste = such.closest('.section-toolbar');
+        const lr = leiste.getBoundingClientRect();
+        const sr = such.getBoundingClientRect();
+        const e = document.elementFromPoint(sr.left + sr.width / 2, sr.top + sr.height / 2);
+        return {
+            leiste: Math.round(lr.top) + '..' + Math.round(lr.bottom),
+            leisteHoehe: Math.round(lr.height),
+            feld: Math.round(sr.top) + '..' + Math.round(sr.bottom),
+            ueberlauf: Math.round(sr.bottom - lr.bottom),
+            treffer: !e
+                ? 'nichts'
+                : e === such || such.contains(e)
+                  ? 'frei'
+                  : 'verdeckt von ' + e.tagName + '.' + String(e.className).split(' ')[0],
+            mitte: [Math.round(sr.left + sr.width / 2), Math.round(sr.top + sr.height / 2)]
+        };
+    }
+
+    /** Raeumt das Suchfeld wieder leer und meldet, ob der Klick angekommen ist. */
+    function pruefeTippen(sel) {
+        const x = document.querySelector(sel);
+        const ok = x === document.activeElement && x.value === 'Dra';
+        if (x.value) {
+            x.value = '';
+            x.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        return ok
+            ? 'tippt'
+            : 'verschluckt (aktiv=' +
+                  document.activeElement.tagName +
+                  '.' +
+                  String(document.activeElement.className).split(' ')[0] +
+                  ')';
+    }
+
+    for (const [breite, hoehe] of [
+        [390, 844],
+        [540, 800],
+        [600, 800]
+    ]) {
+        test(`alle fuenf Ansichten: ${breite}x${hoehe}`, async ({ page }) => {
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await appLaden(page, { mobil: true });
+
+            const befunde = [];
+            for (const [reiter, suchSel] of FUENF) {
+                await page.evaluate(n => window.switchView(n), reiter);
+                await page.waitForTimeout(600);
+
+                const g = await page.evaluate(messeLeiste, suchSel);
+                expect(g.fehlt, `${reiter}: kein Suchfeld gefunden`).toBeFalsy();
+
+                // Der echte Klick — eine Geometrie-Zusicherung allein wuerde nicht
+                // belegen, dass der DM das Feld auch treffen kann.
+                await page.mouse.click(g.mitte[0], g.mitte[1]);
+                await page.keyboard.type('Dra');
+                await page.waitForTimeout(200);
+                const tipp = await page.evaluate(pruefeTippen, suchSel);
+
+                console.log(
+                    `[LEISTE] ${breite}x${hoehe} ${reiter}: Leiste ${g.leiste} (h${g.leisteHoehe}), Feld ${g.feld}, Ueberlauf ${g.ueberlauf}px -> ${g.treffer} | ${tipp}`
+                );
+
+                if (g.ueberlauf > 0) {
+                    befunde.push(
+                        `${reiter}: Feld ragt ${g.ueberlauf}px unter die Leiste (Leiste ${g.leiste}, Feld ${g.feld})`
+                    );
+                }
+                if (g.treffer !== 'frei') befunde.push(`${reiter}: ${g.treffer}`);
+                if (tipp !== 'tippt') befunde.push(`${reiter}: Klick ${tipp}`);
+            }
+            expect(befunde, befunde.join(' | ')).toEqual([]);
+        });
+    }
+
+    test('die Gegenprobe oberhalb des Umbruchs: 1280x800 bleibt eine Zeile', async ({ page }) => {
+        // Belegt, dass die Korrektur dem ungebrochenen Fall nichts nimmt: ueber
+        // 900px gilt `flex-wrap: nowrap`, und `min-height: 74px` haelt die
+        // gemessene Hoehe der vier Einzeiler bei genau 74px.
+        await page.setViewportSize({ width: 1280, height: 800 });
+        await appLaden(page);
+        const hoehen = [];
+        for (const [reiter, suchSel] of FUENF) {
+            await page.evaluate(n => window.switchView(n), reiter);
+            await page.waitForTimeout(500);
+            const g = await page.evaluate(messeLeiste, suchSel);
+            console.log(
+                `[LEISTE] 1280x800 ${reiter}: Hoehe ${g.leisteHoehe}px, Ueberlauf ${g.ueberlauf}px`
+            );
+            hoehen.push(`${reiter}=${g.leisteHoehe}`);
+            expect(g.ueberlauf, `${reiter}: Ueberlauf ${g.ueberlauf}px`).toBeLessThanOrEqual(0);
+        }
+        // Die Truhe fuehrt ihre Chips in mehreren Zeilen und ist deshalb hoeher —
+        // sie hat die Zeile `height: auto` schon vor dieser Korrektur.
+        expect(hoehen.join(' '), `gemessen: ${hoehen.join(' ')}`).toMatch(
+            /^locations=74 npcs=74 loot=\d+ encounter=74 bestiary=74$/
+        );
+    });
+});
