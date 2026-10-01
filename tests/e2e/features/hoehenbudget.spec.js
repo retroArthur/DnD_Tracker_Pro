@@ -402,10 +402,21 @@ test.describe('Hoehenbudget der Listen-Schalen (U6)', () => {
        umbrechen (`height: 40px` + `white-space: nowrap` + Ellipse,
        migration.css) — nachgemessen 40px bei 1440, 520 und 390px Breite. Die
        Korrektur fasst es symmetrisch mit; die Faelle unten messen das Band, das
-       sich wirklich bewegt. */
+       sich wirklich bewegt.
+
+       UMBRUCHERWARTUNG GEAENDERT MIT M2c (2026-10): der Fall 1440x800 -> 500x800
+       stand hier mit `true`, weil das Band bei 500px Breite auf 80px umbrach.
+       Seit der Hinweis unter 600px Breite kurz gefasst wird (migration.css), ist
+       er dort ein 61px-Einzeiler — der Umbruch, den dieser Fall als VORBEDINGUNG
+       verlangte, findet nicht mehr statt. Das ist eine Verhaltensaenderung, nicht
+       ein Fehlschlag: die drei Zusicherungen (a)(b)(c) des Falls bleiben
+       unveraendert und gelten weiter. Damit die Vorbedingung "Band bricht wirklich
+       um" nicht an einem einzigen Fenster haengt, kommt 1440x800 -> 360x740 als
+       vierter Fall hinzu (gemessen 61 -> 94px). */
     for (const [von, nach, umbruchErwartet] of [
         [[1440, 800], [390, 844], true],
-        [[1440, 800], [500, 800], true],
+        [[1440, 800], [360, 740], true],
+        [[1440, 800], [500, 800], false],
         [[1920, 900], [700, 700], false]
     ]) {
         test(`ein Fensterwechsel nach dem Laden laesst die Gegenrechnung nicht veralten: ${von.join('x')} -> ${nach.join('x')}`, async ({

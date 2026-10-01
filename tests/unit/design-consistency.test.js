@@ -68,6 +68,17 @@ describe('F-01 — Custom Properties', () => {
     // 444px Rasterinhalt; ein Hoehenbudget des Kampfprotokolls, das den
     // Umschalter ueberdeckte) — ein CSS-Standardwert dafuer waere wieder genau
     // diese Zahl.
+    //
+    // --mobile-header-height (M2c) kommt aus demselben Messlauf und wird wie die
+    // beiden M1-Tokens NUR im Mobil-Zweig besetzt: es ist die gemessene Hoehe
+    // der festen Mobil-Kopfzeile. Zwei Regeln lesen es — die Platzhaltung
+    // `.main-content { padding-top }` (variables.css; dort standen verdrahtete
+    // 60px gegen eine 64px hohe Kopfzeile) und der Ausweichversatz der beiden
+    // festen Baender (migration.css; dort lagen sie bis dahin UNTER der
+    // Kopfzeile, und "Zum App-Umzug" war bei 390px Breite nicht anklickbar). Die
+    // Kopfzeile hat keine gesetzte Hoehe, sondern Innenabstand um eine
+    // Knopfreihe — ein CSS-Standardwert dafuer waere wieder eine Zahl, die bei
+    // der naechsten Aenderung an Knopf, Schrift oder Innenabstand falsch ist.
     const RUNTIME_TOKENS = new Set([
         '--hp-pct',
         '--map-zoom',
@@ -78,7 +89,8 @@ describe('F-01 — Custom Properties', () => {
         '--sticky-top-actions',
         '--view-frame-height',
         '--mobile-nav-max-height',
-        '--mobile-nav-rest'
+        '--mobile-nav-rest',
+        '--mobile-header-height'
     ]);
 
     /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal

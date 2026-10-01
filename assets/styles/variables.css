@@ -1451,6 +1451,26 @@
         /* Mobile Layout Overrides */
         [data-layout="mobile"] body {
             font-size: var(--font-size-base);
+            /* M2b — DIE EINZIGE Reservierung fuer die feste Leiste am unteren
+               Fensterrand. `.app-header` faehrt dort auf
+               `translateY(calc(100% - 56px))` ein; sichtbar bleibt genau die
+               56px hohe Umschalter-Zeile, die 70px lassen 14px Luft darueber.
+               Bis 2026-10 hielt zusaetzlich `.main-content { margin-bottom:
+               70px }` denselben Platz frei — 140px fuer einen 56px-Streifen.
+               Die Hoehenbudget-Kette zaehlt beides mit (setzeRahmenHoehe()
+               liest body-Innenabstand UND .main-content-Raender), das Ergebnis
+               stimmte also; dem Inhalt gingen die 70px aber doppelt verloren.
+               GEMESSEN in allen vier Listen-Ansichten x zwei Telefonfenstern x
+               vier Themes: 94px totes Feld zwischen Schalenunterkante und
+               Leistenoberkante, und die Listenspalte — der Bereich, der
+               wirklich scrollt — war bei 360x740 nur 54px (Truhe), 88px
+               (Begegnungen), 126px (NSCs) bzw. 201px (Orte) hoch, bei
+               Eintragshoehen von 70-74px.
+               WARUM DIESE BLEIBT und nicht die andere: die Leiste ist
+               `position: fixed` zum Fenster und liegt ueber dem GANZEN
+               Dokument, nicht nur ueber `.main-content`. Der body-Innenabstand
+               ist die Reservierung, die alles abdeckt; der Rand an
+               `.main-content` deckte nur diesen einen Behaelter. */
             padding-bottom: 70px;
         }
         
@@ -1647,8 +1667,21 @@
         
         [data-layout="mobile"] .main-content {
             padding: var(--content-padding);
-            padding-top: 60px;
-            margin-bottom: 70px;
+            /* M2c — Platzhaltung fuer die feste Mobil-Kopfzeile, GEMESSEN statt
+               verdrahtet. Hier standen 60px gegen eine 64px hohe Kopfzeile: 4px
+               zu wenig. Das fiel nicht auf, solange die Kopfzeile ueber dem
+               Umzugs-Band lag statt ueber dem Inhalt — seit das Band unter sie
+               ausweicht (migration.css), ist die Oberkante des Inhalts genau
+               diese Zahl. Die Kopfzeile hat keine gesetzte Hoehe (Innenabstand
+               um eine Knopfreihe), deshalb kommt sie aus setzeMobilKopfHoehe();
+               die Begruendung steht dort. Der Rueckfall 64px ist die gemessene
+               Isthoehe bei 320-700px Breite. */
+            padding-top: var(--mobile-header-height, 64px);
+            /* M2b — HIER STAND `margin-bottom: 70px`, die zweite Reservierung
+               fuer dieselbe feste Leiste. Sie ist entfallen; die Begruendung,
+               warum der body-Innenabstand die bleibende ist, steht an
+               `[data-layout="mobile"] body` weiter oben. Nichts tritt an diese
+               Stelle: der Platz IST schon reserviert. */
         }
         
         [data-layout="mobile"] .party-grid,

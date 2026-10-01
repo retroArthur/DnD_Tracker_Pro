@@ -1379,6 +1379,7 @@ export default {
     "setTrackVolume": 'readonly',
     "setViewCount": 'readonly',
     "setupDMScreenLiveSync": 'readonly',
+    "setzeMobilKopfHoehe": 'readonly',
     "setzeMobilLeistenDeckel": 'readonly',
     "setzeRahmenHoehe": 'readonly',
     "setzeRuf": 'readonly',

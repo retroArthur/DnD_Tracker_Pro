@@ -109,21 +109,27 @@
  * ZWEI Tippreihen zu je 44px: die darf nichts schrumpfen, es ist dieselbe
  * Daumen-Begruendung wie bei den 56px-Reitern in M1.
  *
- * NICHT GEGENSTAND DIESER EINHEIT, hier aber gemessen und deshalb benannt: im
- * Mobil-Layout liegt die Mobil-Kopfzeile AUF dem Band. Beide sind
- * `position: fixed; top: 0` auf `--z-panel` (600); die Mobil-Kopfzeile steht
- * spaeter im Dokument und gewinnt. GEMESSEN bei 390x844 mit
+ * DAZU KAM EIN ZWEITER BEFUND AM BAND, den (c) nicht wegkuerzen durfte, sondern
+ * mitnehmen musste: im Mobil-Layout liegt die MOBIL-KOPFZEILE AUF dem Band.
+ * Beide sind `position: fixed; top: 0` auf `--z-panel` (600), und die Kopfzeile
+ * gewinnt, weil sie spaeter im Dokument steht. GEMESSEN bei 390x844 mit
  * `elementsFromPoint` auf der Mitte von "Zum App-Umzug" (Kasten 237,28,137x44):
- * obenauf liegt der klassenlose Flex-Behaelter der Mobil-Kopfzeile (Kasten
- * 266,10,116x43, `.mobile-header` 0,0,390x64). Der Knopf ist dort also nicht
- * anklickbar. Bei 320 und 360px Breite bricht er in die zweite Bandreihe und
- * ist frei; der SCHLIESSKNOPF ist bei allen drei Breiten frei. Diese
- * Ueberlappung stand schon als offener Befund aus M1 ("Vorbestehend, von M1
- * unberuehrt") und bleibt es: sie saubermachen heisst, zwei feste Bloecke neu
- * zu stapeln UND die Platzhaltung `.main-content { padding-top: 60px }` gegen
- * die wahren 64px der Mobil-Kopfzeile zu richten — eine Einheit fuer sich. Die
- * Faelle unten zeigen deshalb den Schliessknopf als erreichbar und den
- * Umzugs-Knopf nur im BREITEN Fenster, wo es keine Mobil-Kopfzeile gibt.
+ * obenauf lag der klassenlose Flex-Behaelter der Mobil-Kopfzeile (Kasten
+ * 266,10,116x43, `.mobile-header` 0,0,390x64) — der Knopf war dort nicht
+ * anklickbar. Bei 320 und 360px Breite brach er in die zweite Bandreihe aus und
+ * war frei: ein Zufall der Umbruchhoehe, kein Entwurf. Genau dieser Zufall
+ * KIPPTE durch die Kuerzung — mit dem kurzen Text stieg die zweite Reihe auf
+ * y 41..85, und bei 320/360px war dann auch der SCHLIESSKNOPF verdeckt
+ * (gemessen: "verdeckt von DIV.mobile-header"). Eine Kuerzung, die das Band
+ * unbedienbar macht, ist keine Verbesserung.
+ *
+ * Das Band weicht deshalb im Mobil-Layout unter die Kopfzeile aus
+ * (`top: var(--mobile-header-height)`, migration.css) — und nicht umgekehrt: die
+ * Mobil-Kopfzeile traegt Suche, Rueckgaengig, Schnellnotizen, Theme, Layout UND
+ * den einzigen Mobil-Einstieg ins Kampfprotokoll (U5). Die Hoehe ist GEMESSEN
+ * (`setzeMobilKopfHoehe()`), weil die Kopfzeile keine gesetzte Hoehe hat; an
+ * derselben Zahl haengt die Platzhaltung `.main-content { padding-top }`, die
+ * bis dahin auf verdrahteten 60px gegen eine 64px hohe Kopfzeile stand.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WARUM PER MAUSRAD. Ein gesetztes `scrollTop` und ein `scrollIntoView()`
@@ -392,10 +398,24 @@ function messeBand() {
             : 'verdeckt von ' + e.tagName + '.' + String(e.className).split(' ')[0];
     };
     const text = band.querySelector('.migration-hint-text');
+    const br = band.getBoundingClientRect();
+    const mobilKopf = document.querySelector('.mobile-header');
+    const inhalt = document.querySelector('.main-content');
+    // Oberkante des INHALTS, nicht des Behaelters: `.main-content` beginnt am
+    // Bandende, sein Innenabstand haelt die Mobil-Kopfzeile frei.
+    let inhaltOben = null;
+    if (inhalt) {
+        const ir = inhalt.getBoundingClientRect();
+        inhaltOben = Math.round(ir.top + (parseFloat(getComputedStyle(inhalt).paddingTop) || 0));
+    }
     return {
         da: true,
-        hoehe: Math.round(band.getBoundingClientRect().height),
-        anteil: Math.round((band.getBoundingClientRect().height / window.innerHeight) * 100),
+        oben: Math.round(br.top),
+        unten: Math.round(br.bottom),
+        hoehe: Math.round(br.height),
+        anteil: Math.round((br.height / window.innerHeight) * 100),
+        mobilKopfUnten: mobilKopf ? Math.round(mobilKopf.getBoundingClientRect().bottom) : 0,
+        inhaltOben,
         textHoehe: text ? Math.round(text.getBoundingClientRect().height) : 0,
         textInhalt: text ? text.innerText.replace(/\s+/g, ' ').trim() : '',
         umzug: treffer(band.querySelector('.migration-hint-link')),
@@ -678,10 +698,13 @@ test.describe('Umzugs-Hinweisband auf Telefonbreite (M2c)', () => {
                 `das Band ist ${m.hoehe}px hoch (${m.anteil}% des Fensters), Text allein ${m.textHoehe}px: "${m.textInhalt}"`
             ).toBeLessThanOrEqual(BAND_DECKEL);
 
-            // Der Hinweis bleibt ein Hinweis MIT Ausweg: der Schliessknopf muss
-            // erreichbar bleiben, sonst waere das Band kuerzer und nicht
-            // loszuwerden. Der Umzugs-Knopf wird hier NICHT geprueft — er liegt
-            // auf Telefonbreite unter der Mobil-Kopfzeile, siehe Kopfkommentar.
+            // Der Hinweis bleibt ein Hinweis MIT Ausweg: BEIDE Knoepfe muessen
+            // erreichbar bleiben, sonst waere das Band nur kuerzer und nicht
+            // besser. Das ist die Zusicherung gegen die Ueberlappung mit der
+            // Mobil-Kopfzeile (siehe Kopfkommentar) — vor der Korrektur war der
+            // Umzugs-Knopf bei 390px verdeckt und der Schliessknopf kippte bei
+            // 320/360px mit der Kuerzung hinterher.
+            expect(m.umzug, `"Zum App-Umzug" ist ${m.umzug}`).toBe('frei');
             expect(m.schliessen, `der Schliessknopf ist ${m.schliessen}`).toBe('frei');
 
             // Und die Gegenrechnung am Seiteninhalt traegt die neue Isthoehe —
@@ -690,6 +713,20 @@ test.describe('Umzugs-Hinweisband auf Telefonbreite (M2c)', () => {
                 m.koerperOben,
                 `der body-Innenabstand muss die Bandhoehe tragen (${m.koerperOben} bei ${m.hoehe}px Band)`
             ).toBe(`${m.hoehe}px`);
+
+            // Die beiden festen Kopfbloecke stehen UEBEREINANDER, nicht
+            // aufeinander: das Band beginnt an der Unterkante der Mobil-Kopfzeile.
+            expect(
+                m.oben,
+                `das Band beginnt bei ${m.oben}px, die Mobil-Kopfzeile endet bei ${m.mobilKopfUnten}px`
+            ).toBe(m.mobilKopfUnten);
+
+            // Und es endet, wo der Inhalt anfaengt — kein Bildpunkt Ueberdeckung,
+            // kein Bildpunkt Leerlauf.
+            expect(
+                m.inhaltOben,
+                `das Band endet bei ${m.unten}px, der Inhalt beginnt bei ${m.inhaltOben}px`
+            ).toBe(m.unten);
         });
     }
 
@@ -703,6 +740,7 @@ test.describe('Umzugs-Hinweisband auf Telefonbreite (M2c)', () => {
             expect(m.hoehe, `Band ${m.hoehe}px, Text "${m.textInhalt}"`).toBeLessThanOrEqual(
                 BAND_DECKEL
             );
+            expect(m.umzug, `"Zum App-Umzug" ist ${m.umzug}`).toBe('frei');
             expect(m.schliessen, `der Schliessknopf ist ${m.schliessen}`).toBe('frei');
         });
     }

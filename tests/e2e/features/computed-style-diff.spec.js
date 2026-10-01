@@ -197,10 +197,38 @@ const EXPECTED_DEVIATION_KEYS = [
 // hat und wo sie weiter bewacht gehoeren. Deshalb nimmt isExpectedDeviation() seit Runde 1 den
 // Durchgang mit.
 //
-// Die Teilstrings tragen weiterhin kein Ansichtspraefix (siehe oben). 24 der 28 tragen `bestiary`
-// im Klassennamen; `span.sr-only#9` bis `#12` kommen im gesamten Sollstand NUR im Bestiar vor —
+// Die Teilstrings tragen weiterhin kein Ansichtspraefix (siehe oben). 30 der 35 tragen `bestiary`
+// im Klassennamen; `span.sr-only#8` bis `#12` kommen im gesamten Sollstand NUR im Bestiar vor —
 // am JSON nachgezaehlt, in allen drei Durchgaengen.
+//
+// ERWEITERT MIT M2 (2026-10) um die SIEBTE Zeile, `#8` — dieselbe Ursache eine Stufe weiter.
+// M2b/M2c geben der Schale im Mobil-Layout 108px zurueck (zweite Reservierung des Leistenplatzes
+// entfallen, Hinweisband auf Telefonbreite kurz gefasst): bei 375x812 waechst `.bestiary-view` von
+// 466 auf 574px. Dass die Liste davon SCHRUMPFT (Sichtfeld 400 -> 122px, gerenderte Zeilen 13 -> 8),
+// liegt NICHT an der Schale, sondern an `VirtualScroll.create()` (ui/virtual-scroll.js): es nimmt
+// `container.clientHeight`, sonst `parent.clientHeight - padY`, sonst den festen Rueckfall 400. In
+// der Schmalfassung ist `.bestiary-master` inhaltsgetrieben (`grid-template-rows: auto`,
+// `overflow-y: visible`), also liefert die Messung einen Wert, der von der vorigen Messung abhaengt
+// — ein Fixpunkt ohne Bezug zum verfuegbaren Platz. Die 400px vorher waren genau dieser feste
+// Rueckfall, nicht eine Messung: mit der groesseren Schale greift jetzt der zweite Zweig und liefert
+// 122px, wo ~228px frei sind.
+//
+// GEMESSEN, dass dabei keine Funktion verlorengeht (je drei Telefonfenster vor und nach der
+// Aenderung, Rad bis zum Anschlag ueber der Liste): die Liste scrollt in allen sechs Zustaenden bis
+// an ihr Ende, das letzte Monster (Kraken) liegt im Fenster und ist anklickbar. Und der Wert ist
+// auch NACH der Aenderung nicht einheitlich — 400px bei 360x740, 122px bei 375x812, 127px bei
+// 390x844 —, er war also nie eine Eigenschaft des Entwurfs. Das Hoehenbudget der Schmalfassung des
+// Bestiars gerade zu ruecken heisst, dieser geteilten Maschinerie eine echte Platzrechnung zu geben;
+// das ist eine Einheit fuer sich und steht als offener Befund. Hier wird nur der eine Schluessel
+// benannt, der dadurch aus der Erfassung faellt — alles andere bleibt bewacht.
 const EXPECTED_DEVIATION_KEYS_NARROW = [
+    'button.bestiary-fav#8',
+    'div.bestiary-list-item#8',
+    'span.bestiary-badge.srd#8',
+    'span.bestiary-cr#8',
+    'span.bestiary-name#8',
+    'span.bestiary-type#8',
+    'span.sr-only#8',
     'button.bestiary-fav#9',
     'button.bestiary-fav#10',
     'button.bestiary-fav#11',

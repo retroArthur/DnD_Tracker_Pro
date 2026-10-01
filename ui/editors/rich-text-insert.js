@@ -850,6 +850,54 @@ function setzeMobilLeistenDeckel(root, kopf) {
 }
 
 /**
+ * Hoehe der Mobil-Kopfzeile (M2c, Glied 6).
+ *
+ * WAS SIE TRAEGT. Im Mobil-Layout sind ZWEI Bloecke `position: fixed; top: 0`
+ * auf --z-panel (600): die Mobil-Kopfzeile und — sofern es steht — das
+ * Umzugs-Hinweisband bzw. das Divergenz-Banner. Sie lagen uebereinander, und die
+ * Kopfzeile gewann, weil sie spaeter im Dokument steht. GEMESSEN am Buendel zu
+ * f58699b bei 390x844 mit `elementsFromPoint` auf der Mitte von "Zum App-Umzug"
+ * (Kasten 237,28,137x44): obenauf lag der klassenlose Flex-Behaelter der
+ * Mobil-Kopfzeile (Kasten 266,10,116x43). Der Knopf war dort nicht anklickbar.
+ *
+ * Das Band weicht deshalb UNTER die Kopfzeile aus (`[data-layout="mobile"]
+ * .migration-hint-banner { top: var(--mobile-header-height) }`, migration.css) —
+ * nicht umgekehrt: die Mobil-Kopfzeile traegt Suche, Rueckgaengig,
+ * Schnellnotizen, Theme, Layout UND den einzigen Mobil-Weg zum Kampfprotokoll
+ * (U5). Ein Band darueber zu legen macht sie alle unerreichbar, und zwar fuer
+ * die ganze Sitzung.
+ *
+ * WARUM GEMESSEN. Die Kopfzeile hat keine gesetzte Hoehe: sie ist
+ * `padding: 10px 12px` (unter 600px Breite `10px 8px`) um eine Reihe Knoepfe mit
+ * `font-size: 1.3em`. Gemessen 64px bei 320-700px Breite — aber jede Aenderung
+ * an Knopfgroesse, Schrift oder Innenabstand verschiebt das, und an derselben
+ * Zahl haengt die Platzhaltung `.main-content { padding-top }`. Genau diese
+ * Platzhaltung stand bis 2026-10 auf verdrahteten 60px gegen eine 64px hohe
+ * Kopfzeile: 4px zu wenig, die ohne Band niemandem auffielen (die Kopfzeile lag
+ * ueber dem Band, nicht ueber dem Inhalt) und mit Band an der Oberkante des
+ * Inhalts gebissen haetten.
+ *
+ * Nicht zirkulaer: die Kopfzeile ist `position: fixed`, steht also ausserhalb
+ * des Flusses — ihre Hoehe haengt nicht an der Platzhaltung, die sie setzt.
+ *
+ * Der Rueckfallwert 64px an den beiden Fundstellen ist NICHT die Wahrheit,
+ * sondern die gemessene Isthoehe bei 320-700px Breite; im Betrieb kommt er nie
+ * zum Zug, weil der Mobil-Zweig das Token bei jedem Lauf besetzt. Auf dem
+ * Rueckweg nach Desktop wird es NICHT abgeraeumt — wie bei
+ * --mobile-nav-max-height haengen alle lesenden Regeln selbst an
+ * `[data-layout="mobile"]`.
+ *
+ * @param {HTMLElement} root `document.documentElement`, Traeger der Tokens
+ */
+function setzeMobilKopfHoehe(root) {
+    const kopf = document.querySelector('.mobile-header');
+    if (!kopf) return;
+    const hoehe = Math.round(kopf.getBoundingClientRect().height);
+    if (hoehe === 0) return;
+    root.style.setProperty('--mobile-header-height', hoehe + 'px');
+}
+
+/**
  * Setzt die Versatzkette der angehefteten Ebenen (U3) und das Hoehenbudget der
  * Listen-Schalen (U6).
  *
@@ -963,6 +1011,10 @@ function updateStickyOffsets() {
         root.style.removeProperty('--sticky-top-header');
         root.style.removeProperty('--sticky-top-round');
         root.style.removeProperty('--sticky-top-actions');
+        // Glied 6 — Hoehe der Mobil-Kopfzeile (M2c). MUSS vor setzeRahmenHoehe()
+        // stehen: die Platzhaltung `.main-content { padding-top }` liest dieses
+        // Token, und setzeRahmenHoehe() liest jene Platzhaltung.
+        setzeMobilKopfHoehe(root);
         // Glied 0 wird dagegen BESETZT, nicht abgeraeumt: fuer die Schalenhoehe
         // gibt es keine spezifischere Mobil-Regel, die an seine Stelle treten
         // koennte (nur `.bestiary-view` setzt dort `height: auto`). Hier geht 0

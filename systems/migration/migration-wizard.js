@@ -845,10 +845,16 @@ function showMigrationHintBanner() {
     banner.id = 'migration-hint-banner';
     banner.className = 'migration-hint-banner';
     banner.setAttribute('role', 'banner');
+    // Zwei Fassungen desselben Hinweises (M2c): eine kurze fuer Telefonbreite,
+    // die lange fuer alles darueber. Welche sichtbar ist, entscheidet EINE Regel
+    // in migration.css an der 600px-Grenze — der lange Satz bleibt auf dem
+    // Desktop Zeichen fuer Zeichen derselbe wie bisher. Begruendung und die
+    // gemessenen Bandhoehen stehen dort.
     banner.innerHTML = `
         <span class="migration-hint-text">
-            Die D&amp;D Tracker App ist jetzt als installierbare Web-App verf&#252;gbar &#8212;
-            Daten k&#246;nnen verlustfrei umgezogen werden.
+            <span class="migration-hint-kurz">Jetzt als Web-App installierbar.</span>
+            <span class="migration-hint-lang">Die D&amp;D Tracker App ist jetzt als installierbare Web-App verf&#252;gbar &#8212;
+            Daten k&#246;nnen verlustfrei umgezogen werden.</span>
         </span>
         <button class="btn btn-text migration-hint-link" data-action="start-migration-flow">Zum App-Umzug</button>
         <button class="btn btn-icon migration-hint-close" aria-label="Hinweis schlie&#223;en" data-action="close-migration-hint">&#x2715;</button>
