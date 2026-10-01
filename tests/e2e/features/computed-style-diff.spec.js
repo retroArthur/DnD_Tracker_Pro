@@ -147,7 +147,39 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // ausnimmt, ist eine stille Freigabe: sie wuerde ab dem naechsten Lauf echte Befunde an genau
 // diesen Schluesseln verschlucken. Jeder Eintrag ist ein Teilstring, der gegen den
 // Element-Schluessel geprueft wird.
-const EXPECTED_DEVIATION_KEYS = [];
+// U6 (Hoehenbudget der Listen-Schalen): die fuenf Master-Detail-Schalen rechnen ihre Hoehe nicht
+// mehr gegen die verdrahtete 120px, sondern gegen die GEMESSENE Umrahmung
+// (`--view-frame-height`, updateStickyOffsets()). Mit stehendem Umzugs-Band — dem Normalfall unter
+// file://, und dem Zustand, in dem dieser Durchgang laeuft — ist die Umrahmung 195px statt 120px,
+// die Bestiar-Schale also 525 statt 600px hoch und ihre Liste 439 statt 514px. Der VirtualScroll
+// des Bestiars (`VirtualScroll.create(container, filtered, renderBestiaryListItem, 52)`,
+// features/bestiary/bestiary-render.js) rendert daraus 13 statt 15 Zeilen — gemessen am gebauten
+// Buendel bei 1280x720, Gegenprobe mit auf 120px gezwungenem Token. Die beiden letzten Zeilen und
+// ihre je sechs Kindelemente verschwinden damit aus der Erfassung. Das ist KEIN Stilverlust: die
+// 75px, die hier wegfallen, waren genau der Seitenueberhang, auf dem die Werkzeugleiste unter die
+// Kopfzeile rutschte. Der versionierte Sollstand bleibt unangetastet; nur diese 14 Schluessel sind
+// benannt ausgenommen, alles andere bleibt bewacht.
+// Die Teilstrings tragen KEIN Ansichtspraefix: isExpectedDeviation() wird mit dem Element-
+// schluessel allein aufgerufen, nicht mit `ansicht/schluessel` (am Aufruf in diffPass()
+// nachgelesen — ein Praefix hier nimmt nichts aus). Zwoelf der vierzehn tragen `bestiary` im
+// Klassennamen und sind damit ohnehin ansichtsgebunden; `span.sr-only#13/#14` kommt im
+// gesamten Sollstand NUR im Bestiar vor (am JSON nachgezaehlt, standard und reducedMotion).
+const EXPECTED_DEVIATION_KEYS = [
+    'button.bestiary-fav#13',
+    'button.bestiary-fav#14',
+    'div.bestiary-list-item#13',
+    'div.bestiary-list-item#14',
+    'span.bestiary-badge.srd#13',
+    'span.bestiary-badge.srd#14',
+    'span.bestiary-cr#13',
+    'span.bestiary-cr#14',
+    'span.bestiary-name#13',
+    'span.bestiary-name#14',
+    'span.bestiary-type#13',
+    'span.bestiary-type#14',
+    'span.sr-only#13',
+    'span.sr-only#14'
+];
 
 function isExpectedDeviation(elementKey) {
     return EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag));
