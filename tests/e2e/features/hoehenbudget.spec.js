@@ -1210,6 +1210,62 @@ function befundeAus(marke, m, letzterPruefen = true) {
 }
 
 test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
+    for (const hoehe of MATRIX_HOEHEN) {
+        for (const breite of MATRIX_BREITEN) {
+            for (const mitBand of [true, false]) {
+                test(`${breite}x${hoehe} ${mitBand ? 'mit' : 'ohne'} Band — vier Ansichten, oben und gescrollt`, async ({
+                    page
+                }) => {
+                    // Acht Zustaende mit je 40 Radrunden: die 30s-Grenze der
+                    // Konfiguration traegt das nicht.
+                    test.setTimeout(120000);
+                    await page.setViewportSize({ width: breite, height: hoehe });
+                    await appLaden(page);
+
+                    // Vorbedingung: das Band muss erst stehen — auch fuer die
+                    // "ohne"-Haelfte, die es gleich ueber seinen eigenen Knopf schliesst.
+                    expect(
+                        await page.evaluate(
+                            () => !!document.querySelector('.migration-hint-banner')
+                        ),
+                        'das Umzugs-Band muss zu Beginn stehen'
+                    ).toBe(true);
+                    if (!mitBand) await bandSchliessen(page);
+                    expect(
+                        await page.evaluate(
+                            () => !!document.querySelector('.migration-hint-banner')
+                        ),
+                        `Bandzustand ${mitBand ? 'MIT' : 'ohne'} Band nicht hergestellt`
+                    ).toBe(mitBand);
+
+                    const befunde = [];
+                    const protokoll = [];
+                    for (const [reiter, , suchSel, listenSel] of ANSICHTEN) {
+                        for (const gescrollt of [false, true]) {
+                            await zustandHerstellen(page, reiter, listenSel, gescrollt);
+                            const m = await page.evaluate(messeBudget, [suchSel, listenSel]);
+                            const marke =
+                                `${breite}x${hoehe} ${mitBand ? 'MIT Band ' : 'ohne Band'} ` +
+                                `${gescrollt ? 'gescrollt' : 'oben'} ${reiter}`;
+                            protokoll.push(
+                                `${marke} | Ueberhang ${m.ueberhang}px | Rahmen ${m.rahmen} | ` +
+                                    `Band ${m.bandHoehe}px | KopfDecktLeiste ${m.kopfDecktLeiste}px | ` +
+                                    `Suchfeld ${m.suchfeld} | letzter(${m.anzahl}) ` +
+                                    `${m.letzterOben}..${m.letzterUnten}`
+                            );
+                            befunde.push(...befundeAus(marke, m, gescrollt));
+                        }
+                    }
+                    console.log(`[M3c]\n${protokoll.join('\n')}`);
+                    expect(
+                        befunde,
+                        `${befunde.length} Befund(e) in 8 Zustaenden:\n${befunde.join('\n')}`
+                    ).toEqual([]);
+                });
+            }
+        }
+    }
+
     test('Gegenprobe: mit der alten verdrahteten 120px meldet die Matrix den Befund', async ({
         page
     }) => {
