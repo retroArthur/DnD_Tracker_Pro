@@ -7308,7 +7308,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dashboard.css', zeile: 1198, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 2140, stufe: 3,
+        { datei: 'dashboard.css', zeile: 2149, stufe: 3,
           pfad: '.kplog-panel',
           vorher:
               'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +

@@ -2126,14 +2126,23 @@
    beide Panels duerfen gleichzeitig offen stehen, und `.qref-panel` haengt an
    bottom: 80px. Zwei Fenster, die sich gegenseitig verdecken, waeren
    schlechter als eines, das man findet.
+
+   DIE OBERKANTE KOMMT AUS DER VERSATZKETTE (U3), nicht aus einer festen Zahl.
+   `--sticky-top-round` ist genau "Hoehe des Umzugs-Bands + Hoehe der
+   Kopfzeile", von updateStickyOffsets() zur Laufzeit GEMESSEN. Mit der festen
+   92px aus dem ersten Wurf schnitt das Panel der Kopfzeile ~8px ab, sobald das
+   Umzugs-Hinweisband stand (`body.has-migration-hint` schiebt alles nach
+   unten) — im Browser gesehen, nicht vermutet. Der Rueckfallwert 75px ist
+   derselbe wie bei der Runden-Leiste (dmscreen.css), die 12px sind der
+   Abstand darunter.
    ============================================================ */
 
 .kplog-panel {
     position: fixed;
-    top: 92px;
+    top: calc(var(--sticky-top-round, 75px) + 12px);
     right: 20px;
     width: 380px;
-    max-height: calc(100vh - 132px);
+    max-height: calc(100vh - var(--sticky-top-round, 75px) - 44px);
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -2333,11 +2342,11 @@
    (editors.css) und in core.css — kein neuer Knick im Layout. */
 @media (max-width: 900px) {
     .kplog-panel {
-        top: 72px;
+        top: calc(var(--sticky-top-round, 60px) + 8px);
         left: 12px;
         right: 12px;
         width: auto;
-        max-height: calc(100vh - 100px);
+        max-height: calc(100vh - var(--sticky-top-round, 60px) - 28px);
     }
 }
 
