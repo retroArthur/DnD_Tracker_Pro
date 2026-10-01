@@ -107,6 +107,8 @@ export default {
     "KPLOG_SCHREIB_VERZOEGERUNG": 'readonly',
     "KPLOG_STANDARD_KATEGORIE": 'readonly',
     "LAYOUT_MOBIL_GRENZE": 'readonly',
+    "LAYOUT_QUER_KURZE_SEITE": 'readonly',
+    "LAYOUT_QUER_LANGE_SEITE": 'readonly',
     "LINK_CATS": 'readonly',
     "LINK_ICONS": 'readonly',
     "LOC_ICONS": 'readonly',

@@ -14,9 +14,60 @@
    erlaubten CSS-Grenzen (600/900/1200) bleiben davon unberuehrt. */
 const LAYOUT_MOBIL_GRENZE = 768;
 
-/** Das Profil, das zur aktuellen Fensterbreite passt. */
+/* Die KURZE Seite, bis zu der ein Fenster ein gedrehtes Telefon sein kann. Die
+   gaengige Telefonklasse ist im Hochformat 320..448 CSS-Bildpunkte breit (320
+   beim kleinsten iPhone SE, 448 beim groessten Android-Riegel); 480 laesst
+   Luft nach oben und bleibt unter jeder Tablet-Hochformatbreite. */
+const LAYOUT_QUER_KURZE_SEITE = 480;
+
+/* Die LANGE Seite, bis zu der dasselbe gilt. Dieselben Geraete sind im
+   Querformat 568..956 Bildpunkte breit. Diese Schranke ist der Teil, der ein
+   gedrehtes Telefon von einem flachen, breiten Desktop-Fenster trennt: 1440x450
+   hat dieselbe kurze Seite (450) wie ein gedrehtes Telefon, aber eine lange
+   Seite weit darueber. GEMESSEN als Gegenprobe: 1440x450, 1280x400, 1024x768
+   und 901x700 bleiben Desktop. */
+const LAYOUT_QUER_LANGE_SEITE = 1000;
+
+/**
+ * Das Profil, das zur aktuellen Fenstergroesse passt.
+ *
+ * ZWEI UNABHAENGIGE BEDINGUNGEN, und beide sind noetig.
+ *
+ * (1) `innerWidth <= 768` — die Grenze, die loadLayout() seit je benutzt. Sie
+ *     faengt jedes Telefon im Hochformat und jedes schmal gezogene Fenster.
+ *
+ * (2) Kurze Seite <= 480 UND lange Seite <= 1000 — das gedrehte Telefon. Allein
+ *     mit (1) fiel es auf die Desktop-Seite, weil es im Querformat 740..956px
+ *     BREIT ist. GEMESSEN am Buendel zu 960b32b: 390x844 -> 844x390 wechselte
+ *     nach Desktop, Kopfzeile 152px an Oberkante 61px (mit dem 61px hohen
+ *     Umzugs-Band also 213 von 390 Bildpunkten, 55% des Fensters), ein
+ *     sichtbarer Reiter von 24, und 184px Seitenueberhang in X. 852x393 ergab
+ *     176px, 932x430 ergab 96px. 740x360 blieb mobil — dieselbe Geste, zwei
+ *     Ergebnisse.
+ *
+ * WARUM ZUSTANDSLOS UND KEINE HYSTERESE. Diese Funktion traegt BEIDE Wege:
+ * loadLayout() beim Start und autoLayoutNachFenster() am Fensterbeobachter. Eine
+ * Hysterese ("das Mobil-Profil erst oberhalb von 1000px verlassen") haette die
+ * beiden auseinanderlaufen lassen: ein direkt im Querformat geoeffnetes Telefon
+ * bekaeme Desktop, ein gedrehtes Mobil — das Ergebnis haengt dann daran, wie der
+ * Spielleiter das Geraet in der Hand hielt, als er die App oeffnete. Die Regel
+ * sieht deshalb nur auf die Fenstergroesse, nie auf das, was gerade gilt.
+ *
+ * WARUM NICHT NUR DIE HOEHE. Der naechstliegende Griff waere
+ * `innerWidth <= 768 || innerHeight <= 500`. Er ist falsch: er zieht jedes
+ * flache Desktop-Fenster mit. GEMESSEN, 1440x450 — ein halb zugeschobenes
+ * Browserfenster auf einem breiten Schirm — faellt damit ins Mobil-Profil,
+ * obwohl dort 1440px Breite fuer das volle Raster bereitstehen. Die Schranke auf
+ * der langen Seite ist genau die Antwort darauf.
+ */
 function layoutAusFenster() {
-    return window.innerWidth <= LAYOUT_MOBIL_GRENZE ? 'mobile' : 'desktop';
+    const breite = window.innerWidth;
+    const hoehe = window.innerHeight;
+    if (breite <= LAYOUT_MOBIL_GRENZE) return 'mobile';
+    const kurz = Math.min(breite, hoehe);
+    const lang = Math.max(breite, hoehe);
+    if (kurz <= LAYOUT_QUER_KURZE_SEITE && lang <= LAYOUT_QUER_LANGE_SEITE) return 'mobile';
+    return 'desktop';
 }
 
 function setLayout(layout) {

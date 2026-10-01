@@ -147,7 +147,11 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
 
 const THEMES = ['dark', 'light', 'sepia', 'contrast'];
 
-/** Die beiden Telefonfenster des Auftrags. */
+/* Die beiden Telefonfenster des Auftrags. Das QUERFORMAT (844x390) steht hier
+   ABSICHTLICH NICHT: die Zusicherung dieses Blocks lautet "Platz fuer zwei
+   Eintraege", und die haelt bei 390px Fensterhoehe nicht — aus Gruenden, die
+   nicht an der Reservierung des Leistenplatzes liegen. Siehe den Block (a2) und
+   dort den Fall "im Querformat bleibt die Liste eng". */
 const FENSTER = [
     [390, 844],
     [360, 740]
@@ -754,6 +758,117 @@ test.describe('Das Querformat gehoert noch zum Telefon (M2a-Nachtrag)', () => {
             expect(m.layout, `loadLayout() waehlte "${m.layout}" fuer ${b}x${h}`).toBe('desktop');
         });
     }
+
+    /**
+     * DIE GEGENRECHNUNG, UND SIE IST UNBEQUEM.
+     *
+     * Die Korrektur fuehrt das gedrehte Telefon neu ins Mobil-Profil. Also
+     * gehoert hierher die Frage, ob das Mobil-Profil bei 390px FENSTERHOEHE
+     * ueberhaupt traegt. Antwort: fuer die Kopf- und Fussmoeblierung ja, fuer
+     * die Listenspalte NEIN — und das Zweite ist VORBESTEHEND, nicht von dieser
+     * Korrektur gemacht.
+     *
+     * GEMESSEN, `.npc-view.active` bei 844x390 im Mobil-Profil, 24 Eintraege:
+     *
+     *   erreicht ueber            Rahmen   Schale   Leiste   Liste   letzter
+     *   -----------------------   ------   ------   ------   -----   -------
+     *   Drehen (neue Regel)       205px    185px    158px     15px   nein
+     *   Layout-Schalter (alt)     205px    185px    158px     15px   nein
+     *
+     * Auf den Bildpunkt gleich. Der Weg ins Profil ist also unbeteiligt; es ist
+     * die Rechnung selbst: 390px Fenster minus 205px gemessener Moeblierung
+     * (61px Umzugs-Band + 64px Mobil-Kopfzeile + 56px Leistenstreifen +
+     * Innenabstand) lassen 185px Schale, und `.section-toolbar` allein braucht
+     * davon 158px (zwei Zeilen Suchfeld/Filter, `min-height: 74px`,
+     * `flex: 0 1 auto`). Fuer die Liste bleiben 15px. Weil die Schale
+     * `overflow: hidden` fuehrt, scrollt auch die SEITE nicht (Ueberhang 0) —
+     * der letzte von 24 Eintraegen ist nicht erreichbar.
+     *
+     * WARUM TROTZDEM MOBIL. Im Desktop-Profil ist dieselbe Schale noch kleiner
+     * (Rahmen 239px, Schale 151px) UND es kommen 184px Seitenueberhang sowie
+     * eine 152px hohe Kopfzeile mit einem sichtbaren Reiter von 24 dazu. Mobil
+     * ist der strikt bessere der zwei Zustaende: Suche, Rueckgaengig und der Weg
+     * zum Kampfprotokoll sind erreichbar, der Daumen findet die Navigation
+     * unten, und nichts scrollt seitwaerts. Es ist nur nicht gut.
+     *
+     * WARUM NICHT HIER MITBEHOBEN. Die Abhilfe waere, die Schale in kurzen
+     * Fenstern nicht zu kappen (`height: auto`, die Seite scrollt) — und diese
+     * Zeile fuehren FUENF Geschwisterschalen gemeinsam, bewacht von
+     * `tests/unit/schalen-aktenlage.test.js`, das genau darauf besteht. Das ist
+     * eine eigene Messung ueber fuenf Ansichten und vier Themes und gehoert
+     * nicht in dieselbe Runde wie die Profilwahl. Offener Punkt.
+     *
+     * DIESER FALL nagelt deshalb fest, was die Korrektur WIRKLICH zusichert,
+     * und nichts darueber hinaus.
+     */
+    test('im Querformat traegt die Moeblierung, die Liste bleibt eng', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await appLaden(page);
+        await fensterZiehen(page, 844, 390);
+        await page.evaluate(() => window.switchView('npcs'));
+        await page.waitForTimeout(500);
+
+        const m = await page.evaluate(() => {
+            const de = document.documentElement;
+            const schale = document.querySelector('.npc-view.active');
+            /* AUSDRUECKLICH aus der aktiven Schale heraus: `.section-toolbar`
+               kommt je Ansicht einmal vor, und die erste im Dokument gehoert
+               einer ausgeblendeten — die misst 0px und machte die Schranke
+               unten zahnlos. */
+            const leiste = schale ? schale.querySelector('.section-toolbar') : null;
+            const streifen = document.querySelector('.mobile-nav-toggle');
+            const mobilKopf = document.querySelector('.mobile-header');
+            const h = e => (e ? Math.round(e.getBoundingClientRect().height) : null);
+            const koerper = getComputedStyle(document.body);
+            return {
+                layout: de.dataset.layout,
+                rahmen: getComputedStyle(de).getPropertyValue('--view-frame-height').trim(),
+                schale: h(schale),
+                leiste: h(leiste),
+                mobilKopf: h(mobilKopf),
+                streifen: h(streifen),
+                koerperUnten: Math.round(parseFloat(koerper.paddingBottom) || 0),
+                inhaltUnten: (() => {
+                    const i = document.querySelector('.main-content');
+                    return i ? Math.round(parseFloat(getComputedStyle(i).marginBottom) || 0) : null;
+                })(),
+                ueberhangX: Math.max(0, Math.round(de.scrollWidth - de.clientWidth))
+            };
+        });
+        console.log(`[M2a2] Querformat-Schale 844x390: ${JSON.stringify(m)}`);
+
+        // (1) Das Profil haelt — das ist die Korrektur.
+        expect(m.layout, `Profil "${m.layout}"`).toBe('mobile');
+
+        // (2) Nichts scrollt seitwaerts. Das ist der Gewinn gegen die 184px.
+        expect(m.ueberhangX, `Seitenueberhang ${m.ueberhangX}px`).toBe(0);
+
+        // (3) Die Mobil-Kopfzeile traegt Suche und Rueckgaengig (U5), der
+        //     Leistenstreifen die Navigation in Daumenreichweite (M1).
+        expect(m.mobilKopf, `Mobil-Kopfzeile ${m.mobilKopf}px`).toBeGreaterThan(0);
+        expect(m.streifen, `Leistenstreifen ${m.streifen}px`).toBeGreaterThan(0);
+
+        // (4) Und der Leistenplatz bleibt EINMAL reserviert — die Zusicherung
+        //     aus (b) gilt auch im Querformat.
+        expect(
+            [m.koerperUnten > 0, m.inhaltUnten > 0],
+            `Reservierung: body ${m.koerperUnten}px, .main-content ${m.inhaltUnten}px — beide zugleich waere die doppelte`
+        ).toEqual([true, false]);
+
+        /* (5) DER OFFENE PUNKT, als Ratsche nach OBEN. Die Werkzeugleiste
+               nimmt heute 158 von 185px Schale; wird es MEHR, verschwindet die
+               Liste vollstaendig. Wird es weniger, soll dieser Fall auffallen
+               und die Zahl hier mitwandern — bis die Schale in kurzen Fenstern
+               nicht mehr gekappt wird. Kein Soll-Zustand, eine Grenze. */
+        expect(
+            m.leiste,
+            `die Werkzeugleiste misst ${m.leiste}px — 0 hiesse, der Messgriff hat die falsche (ausgeblendete) Leiste erwischt und die Schranke waere zahnlos`
+        ).toBeGreaterThan(100);
+        expect(
+            m.leiste,
+            `die Werkzeugleiste nimmt ${m.leiste} von ${m.schale}px Schale (Rahmen ${m.rahmen})`
+        ).toBeLessThanOrEqual(170);
+    });
 
     test('eine ausdrueckliche Wahl (desktop) ueberlebt das Drehen', async ({ page }) => {
         await page.setViewportSize({ width: 390, height: 844 });
