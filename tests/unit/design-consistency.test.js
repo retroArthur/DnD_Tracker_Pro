@@ -11599,11 +11599,40 @@ describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () 
     }
 
     test('GEGENPROBE: der Scan liest ueberhaupt Bewegungsdeklarationen', () => {
-        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Regex ein
-        // gruener Test — genau der Fehler, den F-01b gemacht hat (siehe den
-        // entfernten rgba()-Block oben): inhaltsleer gruen statt rot.
+        // Ohne sie waere ein LEERER DATEISATZ ein gruener Test — genau der
+        // Fehler, den F-01b gemacht hat (siehe den entfernten rgba()-Block
+        // oben): inhaltsleer gruen statt rot. Eine kaputte Haupt-Regex faengt
+        // sie NICHT; dafuer ist die SELBSTPROBE unten da.
         expect(cssFiles.length).toBeGreaterThan(DATEI_SCHRANKE);
         expect(bewegungsDeklarationen()).toBeGreaterThan(BEWEGUNGS_SCHRANKE);
+    });
+
+    /* ACHT PROBEN FUER DIE HAUPT-REGEX — feste Zeichenketten, kein Dateizugriff
+       Beide Richtungen, weil eine Regex in beide Richtungen kippen kann: die
+       ersten vier MUESSEN treffen (darunter `all` an zweiter Stelle einer
+       Kommaliste — im Baum gibt es das heute nicht, und genau darum bemerkt
+       niemand eine zu enge Zeichenklasse), die letzten vier duerfen NICHT
+       treffen (darunter `all` in der Wortmitte, der Grund fuer die
+       Wortgrenzen). */
+    const SAMMELBEWEGUNG_PROBEN = [
+        ['a{transition: all 0.2s ease}', 1],
+        ['a{transition-property: all}', 1],
+        ['a{transition:all .15s}', 1],
+        ['a{transition: opacity .2s ease, all .3s ease}', 1],
+        ['a{transition: opacity 0.2s ease}', 0],
+        ['a{transition: box-shadow .2s ease, color .2s ease}', 0],
+        ['a{font-family: Tallow}', 0],
+        ['a{transition: small-caps .2s}', 0]
+    ];
+
+    function selbstprobeBefunde(regex) {
+        return SAMMELBEWEGUNG_PROBEN.filter(p => (p[0].match(regex) || []).length !== p[1]).map(
+            p => `${p[0]} — erwartet ${p[1]} Treffer, erhalten ${(p[0].match(regex) || []).length}`
+        );
+    }
+
+    test('SELBSTPROBE: die Haupt-Regex trifft die Sammelbewegung — und nur sie', () => {
+        expect(selbstprobeBefunde(SAMMELBEWEGUNG)).toEqual([]);
     });
 
     /* SECHS BESCHAEDIGUNGEN DER HAUPT-REGEX
@@ -11644,7 +11673,11 @@ describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () 
         if (cssFiles.length <= DATEI_SCHRANKE || bewegungsDeklarationen() <= BEWEGUNGS_SCHRANKE) {
             erkannt.push('GEGENPROBE');
         }
-        // Waechter 2, SELBSTPROBE: fehlt noch. Hier entsteht sie.
+        // Waechter 2, SELBSTPROBE: prueft die Regex selbst, an festen
+        // Zeichenketten. Sie ist die einzige, die eine Beschaedigung sieht.
+        if (selbstprobeBefunde(regex).length > 0) {
+            erkannt.push('SELBSTPROBE');
+        }
         return erkannt;
     }
 
