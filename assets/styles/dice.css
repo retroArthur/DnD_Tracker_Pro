@@ -68,7 +68,7 @@
     font-size: 1.1em;
     font-weight: 700;
     color: var(--text);
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -225,7 +225,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.4em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-roll-btn:hover {
@@ -242,7 +242,7 @@
     cursor: pointer;
     font-size: 1.2em;
     color: var(--text);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-reroll-btn:hover {
@@ -267,7 +267,7 @@
     font-size: 0.9em;
     color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-chip:hover {
@@ -314,7 +314,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.3em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dmg-chip:hover {
@@ -399,7 +399,7 @@
     padding: 8px 12px;
     cursor: pointer;
     font-size: 0.85em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -418,7 +418,7 @@
     color: var(--text-dim);
     font-size: 0.9em;
     opacity: 0.5;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     cursor: pointer;
 }
 
@@ -436,7 +436,7 @@
     color: var(--text-dim);
     font-size: 1.2em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -570,7 +570,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-attr:hover {
@@ -644,7 +644,7 @@
     align-items: center; /* F-18: aus der Dublette uebernommen */
     gap: 8px; /* F-18: aus der Dublette uebernommen */
     cursor: pointer; /* F-18: aus der Dublette uebernommen */
-    transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
+    transition: var(--trans-std); /* F-18: aus der Dublette uebernommen */
 }
 
 .dice-history-result {
@@ -798,7 +798,7 @@
     font-size: 1.2em;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-close:hover {
@@ -869,7 +869,7 @@
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-die:hover {
@@ -967,7 +967,7 @@
     color: var(--text);
     cursor: pointer;
     font-size: 0.8em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-quick:hover {
@@ -1027,7 +1027,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-roll-btn:hover {
@@ -1071,7 +1071,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     min-width: 40px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-history-item:hover {
