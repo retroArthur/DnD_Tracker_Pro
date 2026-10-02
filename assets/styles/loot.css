@@ -29,7 +29,7 @@
             color: var(--text-dim);
             font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .loot-tag-filter-btn:hover {
@@ -210,7 +210,7 @@
             background: var(--bg-dark);
             color: var(--text-dim);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .shop-meta-tag:hover {
@@ -273,7 +273,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--trans-std);
             user-select: none;
         }
 
@@ -332,7 +332,7 @@
             border: 1px solid var(--border);
             color: var(--text);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--trans-std);
             user-select: none;
         }
 
@@ -369,7 +369,7 @@
         .si-item {
             background: var(--bg-dark);
             border-left: 3px solid var(--text-dim);
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .si-item.weapon { border-left-color: var(--red); }
@@ -611,7 +611,7 @@
             color: var(--gold-text);
             border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .si-cart-btn:hover {
@@ -833,7 +833,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .handout-checkbox-label:hover {
