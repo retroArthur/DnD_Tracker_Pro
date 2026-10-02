@@ -11489,3 +11489,112 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Bewegung ist in dieser App vollstaendig unbewacht. Keiner der Tests in
+       dieser Datei nennt `transition`, eine Dauer oder eine Kurve (gemessen:
+       `grep -n transition` trifft vier Stellen, alle vier sind Prosa in den
+       Schatten-Ratschen R-19/R-20). Der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) hasht zwoelf
+       Eigenschaften — color, backgroundColor, borderColor, borderRadius,
+       padding, margin, fontSize, fontWeight, boxShadow, opacity, display,
+       textAlign — und `transition` ist keine davon. Und
+       tools/css-usage-report.js zaehlt `transition: all` in einen Bericht,
+       ohne je etwas zuzusichern. Eine Umstellung der Bewegung erzeugt deshalb
+       NULL Pruefunterschied in allen 3549 Digests des Sollstands: ein
+       `--trans-std`, das versehentlich `color` auslaesst, faellt keiner
+       Automatik auf. Darum steht diese Ratsche VOR der Umstellung und wird rot
+       bewiesen — eine Ratsche, die danach entsteht, prueft nur noch, was
+       ohnehin dasteht.
+
+       AUSGANGSWERT: 134 Deklarationen in 10 Dateien (erhoben am 2026-10-02 an
+       33dab42, mit dieser Zaehlart). Verteilung: dashboard.css 23, dice.css 19,
+       core.css 16, encounters.css 15, tools.css 13, npcs.css 11, party.css 11,
+       initiative.css 10, dmscreen.css 8, loot.css 8. Diese Zahl darf nur
+       SINKEN, Ziel ist 0.
+
+       Warum kommentarfrei gelesen wird, obwohl es heute keinen Unterschied
+       macht: nachgemessen enthaelt KEIN Kommentar im Baum eine Zeichenfolge,
+       die diese Regex trifft (roh 134, kommentarfrei 134, Differenz 0) — die
+       Annahme, Welle-2-/Welle-3-Notizen nennten `transition: all` im
+       Prosatext, trifft nicht zu. Die Entfernung bleibt trotzdem Pflicht,
+       weil die folgenden Schritte an jede umgestellte Regel einen Kommentar
+       schreiben, der den alten Wert nennt: ohne Entfernung wuerde die Ratsche
+       genau die Erklaerung ihrer eigenen Erfuellung als Verstoss zaehlen. Das
+       ist die Falle, die in Welle 1 dreimal zugeschnappt ist (siehe die
+       Warnung ueber F-01).
+
+       Warum auch `transition-property` geprueft wird, obwohl es heute null
+       solche Deklarationen gibt: sonst geht die Luecke beim naechsten
+       Umschreiben auf. `transition-property: all` ist dieselbe Aussage in
+       zwei Zeilen. */
+
+    // ESCAPE-LUKE: braeuchte eine Regel wirklich die Sammelbewegung, gehoert
+    // sie hier hinein — als `datei.css:zeile`, mit Begruendung, sichtbar im
+    // Diff. Form wie EXEC_COMMAND_ALLOWLIST in
+    // tests/e2e/features/editor-floating.spec.js: bewusst LEER, nicht
+    // abwesend. Der Sinn von `all` ist ja gerade, dass niemand aufschreiben
+    // muss, was sich bewegt — und genau das ist der Befund.
+    const SAMMELBEWEGUNG_GEDULDET = [];
+
+    const SAMMELBEWEGUNG = /transition(?:-property)?\s*:\s*[^;}]*\ball\b/g;
+
+    /**
+     * Kommentare entfernen, ohne Zeilennummern zu verschieben: der Inhalt wird
+     * durch Leerzeichen ersetzt, die Zeilenumbrueche bleiben stehen. Das
+     * globale withoutComments() oben taugt zum Zaehlen, nicht zum Verorten —
+     * nach ihm zeigt jede Zeilenangabe hinter dem ersten Kommentar daneben,
+     * und eine Fehlermeldung mit falscher Zeile kostet mehr Zeit als keine.
+     */
+    function ohneKommentareZeilentreu(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    function sammelbewegungsStellen() {
+        const stellen = [];
+        cssFiles.forEach(f => {
+            const code = ohneKommentareZeilentreu(f.content);
+            for (const m of code.matchAll(SAMMELBEWEGUNG)) {
+                const zeile = code.slice(0, m.index).split('\n').length;
+                stellen.push({
+                    anker: `${f.name}:${zeile}`,
+                    deklaration: m[0].replace(/\s+/g, ' ').trim()
+                });
+            }
+        });
+        return stellen;
+    }
+
+    test('keine Regel unter assets/styles/ erklaert ihre Bewegung als `all`', () => {
+        const befunde = sammelbewegungsStellen()
+            .filter(s => !SAMMELBEWEGUNG_GEDULDET.includes(s.anker))
+            .map(
+                s =>
+                    `${s.anker} { ${s.deklaration} } — bewegt ALLES, auch was ` +
+                    `niemand bewegen wollte (Rahmenbreite, Fokusring, ` +
+                    `Schriftgewicht); gehoert auf eine benannte ` +
+                    `Uebergangs-Liste (var(--trans-std) / --trans-fast / --trans-slow)`
+            );
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('GEGENPROBE: der Scan liest ueberhaupt Bewegungsdeklarationen', () => {
+        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Regex ein
+        // gruener Test — genau der Fehler, den F-01b gemacht hat (siehe den
+        // entfernten rgba()-Block oben): inhaltsleer gruen statt rot.
+        expect(cssFiles.length).toBeGreaterThan(15);
+        const bewegung = cssFiles.reduce(
+            (n, f) => n + (withoutComments(f.content).match(/transition\s*:/g) || []).length,
+            0
+        );
+        expect(bewegung).toBeGreaterThan(200);
+    });
+
+    test('jeder Eintrag in SAMMELBEWEGUNG_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set(sammelbewegungsStellen().map(s => s.anker));
+        expect(SAMMELBEWEGUNG_GEDULDET.filter(a => !vorhanden.has(a))).toEqual([]);
+    });
+});
