@@ -33,7 +33,7 @@
     border-radius: var(--radius-lg);
     font-size: 0.8em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     color: var(--text-dim);
 }
 
@@ -65,7 +65,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 /* Tinte wechselt mit der Flaeche (R-03): var(--on-green) faellt auf
@@ -254,7 +254,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .npc-detail-btn:hover {
@@ -339,7 +339,7 @@
     border-radius: var(--radius-md);
     font-size: 0.8em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .npc-link:hover {
@@ -461,7 +461,7 @@
     cursor: pointer;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .loot-filter-chip:hover {
@@ -482,7 +482,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 /* Tinte wechselt mit der Flaeche (R-03), wie bei .npc-add-btn:hover. */
@@ -643,7 +643,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .loot-detail-btn:hover {
@@ -756,7 +756,7 @@
             background: var(--bg-elevated);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .loc-npc-item:hover {
@@ -803,7 +803,7 @@
             border-radius: var(--radius-md);
             font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
             display: inline-flex; /* F-18: aus der Dublette uebernommen */
             align-items: center; /* F-18: aus der Dublette uebernommen */
             gap: 4px; /* F-18: aus der Dublette uebernommen */
@@ -925,7 +925,7 @@
             font-size: 0.85em;
             color: var(--cyan-text);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .npc-tag:hover {
@@ -1109,7 +1109,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            transition: all 0.2s;
+            transition: var(--trans-std);
             font-size: 0.7em; /* F-18: aus der Dublette uebernommen */
         }
         
