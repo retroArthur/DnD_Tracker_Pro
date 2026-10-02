@@ -53,13 +53,13 @@ function applyHpChange(action) {
             remaining -= absorbed;
         }
         entity[hpCurrentKey] = Math.max(0, currentHp - remaining);
-        showToast(`💔 ${value} Schaden (${entity.name})`);
+        showToast(`💔 ${value} Schaden (${entity.name})`, 'success', { kategorie: 'kampf' });
     } else if (action === 'heal') {
         entity[hpCurrentKey] = Math.min(maxHp, currentHp + value);
-        showToast(`💚 ${value} geheilt (${entity.name})`);
+        showToast(`💚 ${value} geheilt (${entity.name})`, 'success', { kategorie: 'kampf' });
     } else if (action === 'temp') {
         entity.tempHp = Math.max(entity.tempHp || 0, value);
-        showToast(`🛡️ ${value} temp HP (${entity.name})`);
+        showToast(`🛡️ ${value} temp HP (${entity.name})`, 'success', { kategorie: 'kampf' });
     }
     // Update display
     const newCurrent = entity[hpCurrentKey] || 0;

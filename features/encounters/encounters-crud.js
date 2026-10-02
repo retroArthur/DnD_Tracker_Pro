@@ -315,7 +315,7 @@ function addEncToInit(id) {
         effects: []
     });
     sortInit();
-    showToast('Zu Initiative hinzugefügt');
+    showToast('Zu Initiative hinzugefügt', 'success', { kategorie: 'kampf' });
 }
 // Encounter Language Dropdown Functions
 function toggleEncLangDropdown() {

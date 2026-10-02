@@ -38,9 +38,60 @@ const cssCode = withoutComments(cssAll);
 const tplFiles = readAll('assets/templates', '.html');
 
 describe('F-01 — Custom Properties', () => {
-    // Diese drei werden zur Laufzeit per element.style.setProperty gesetzt und
-    // haben im CSS bewusst keine Definition.
-    const RUNTIME_TOKENS = new Set(['--hp-pct', '--map-zoom', '--migration-hint-height']);
+    // Diese werden zur Laufzeit per element.style.setProperty gesetzt und haben
+    // im CSS bewusst keine Definition. Achtung: die Regex unten prueft den
+    // Fallback NICHT — ein `var(--x, 0px)` ohne Definition faellt ebenfalls
+    // durch, trotz des Testnamens. Deshalb stehen hier auch Tokens, die an
+    // ihren Fundstellen einen Fallback tragen.
+    //
+    // Die drei --sticky-top-* sind die Glieder der Versatzkette (U3): jedes ist
+    // eine GEMESSENE Hoehe (festes Umzugs-Band, Kopfzeile, Runden-Leiste), die
+    // updateStickyOffsets() in ui/editors/rich-text-insert.js auf <html> setzt.
+    // Ein CSS-Standardwert dafuer waere genau der fest verdrahtete Wert, den
+    // der Befund als falsch erwiesen hat; die Fallbacks an den Fundstellen sind
+    // nur der Zustand VOR dem ersten Lauf der Funktion. Dass Tokenname in CSS
+    // und JS uebereinstimmen, sichert der Test "KERNBELEG U3: die drei
+    // Anheft-Versaetze kommen aus der Versatzkette" — nicht diese Liste.
+    //
+    // --view-frame-height (U6) kommt aus derselben Messung, ist aber keine
+    // Oberkante, sondern die GESAMTHOEHE der Umrahmung der Listen-Schalen
+    // ("Band-Gegenrechnung am body + Kopfzeile + Innenabstand von
+    // .main-content"). --divergence-banner-height ist die gemessene Hoehe des
+    // Divergenz-Banners, das Gegenstueck zu --migration-hint-height.
+    //
+    // --mobile-nav-max-height und --mobile-nav-rest (M1) kommen aus demselben
+    // Messlauf, werden aber NUR im Mobil-Zweig besetzt: das erste ist der
+    // Hoehendeckel der ausgefahrenen Navigationsleiste ("Fensterhoehe minus die
+    // festen Kopfbloecke minus die Umschalter-Zeile minus Luft"), das zweite die
+    // Hoehe des Streifens, den die EINGEKLAPPTE Leiste immer belegt. Beide
+    // ersetzen verdrahtete Zahlen, die im Browser falsch waren (300px Deckel bei
+    // 444px Rasterinhalt; ein Hoehenbudget des Kampfprotokolls, das den
+    // Umschalter ueberdeckte) — ein CSS-Standardwert dafuer waere wieder genau
+    // diese Zahl.
+    //
+    // --mobile-header-height (M2c) kommt aus demselben Messlauf und wird wie die
+    // beiden M1-Tokens NUR im Mobil-Zweig besetzt: es ist die gemessene Hoehe
+    // der festen Mobil-Kopfzeile. Zwei Regeln lesen es — die Platzhaltung
+    // `.main-content { padding-top }` (variables.css; dort standen verdrahtete
+    // 60px gegen eine 64px hohe Kopfzeile) und der Ausweichversatz der beiden
+    // festen Baender (migration.css; dort lagen sie bis dahin UNTER der
+    // Kopfzeile, und "Zum App-Umzug" war bei 390px Breite nicht anklickbar). Die
+    // Kopfzeile hat keine gesetzte Hoehe, sondern Innenabstand um eine
+    // Knopfreihe — ein CSS-Standardwert dafuer waere wieder eine Zahl, die bei
+    // der naechsten Aenderung an Knopf, Schrift oder Innenabstand falsch ist.
+    const RUNTIME_TOKENS = new Set([
+        '--hp-pct',
+        '--map-zoom',
+        '--migration-hint-height',
+        '--divergence-banner-height',
+        '--sticky-top-header',
+        '--sticky-top-round',
+        '--sticky-top-actions',
+        '--view-frame-height',
+        '--mobile-nav-max-height',
+        '--mobile-nav-rest',
+        '--mobile-header-height'
+    ]);
 
     /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal
        zugeschnappt (W1-B in variables.css, W1-C in pwa.css, W1-E in core.css).
@@ -558,8 +609,18 @@ describe('F-06 — drei Radien', () => {
 
 describe('F-19 — Stapel-Leiter', () => {
     // Die Reihenfolge ist am gebauten Buendel nachgemessen worden:
-    // 100 -> 300 -> 600 -> 1000 -> 2000 -> 3000 -> 4000.
+    // 98 -> 99 -> 100 -> 300 -> 600 -> 1000 -> 2000 -> 3000 -> 4000.
+    //
+    // Die beiden untersten Sprossen sind in U3 nachgezogen worden. F-19 hatte
+    // Kopfzeile, Runden-Leiste und Aktionsleiste auf die EINE Sprosse
+    // --z-sticky gelegt; bei Gleichstand entscheidet die Dokumentreihenfolge,
+    // und die ist die exakte Umkehrung der Absicht (gemessen: 23 von 25
+    // Nav-Menueeintraegen unerreichbar). Sie stehen hier mit in der Leiter,
+    // damit ein kuenftiges Zusammenschieben auffaellt statt nur unbemerkt
+    // durchzugehen.
     const TIERS = [
+        '--z-sticky-3',
+        '--z-sticky-2',
         '--z-sticky',
         '--z-dropdown',
         '--z-panel',
@@ -588,6 +649,138 @@ describe('F-19 — Stapel-Leiter', () => {
         const roh = [...cssCode.matchAll(/z-index:\s*(\d+)/g)].map(m => parseInt(m[1], 10));
         const global = roh.filter(v => v > 20);
         expect(global).toEqual([]);
+    });
+
+    test('KERNBELEG U3: die drei angehefteten Ebenen tragen drei VERSCHIEDENE Sprossen', () => {
+        // Der eigentliche Befund war nicht ein falscher Wert, sondern DREI
+        // GLEICHE. Ein Test auf die Leiter allein haette ihn nicht gefunden:
+        // die Leiter war in Ordnung, nur alle drei Regeln zeigten auf dieselbe
+        // Sprosse. Geprueft wird deshalb, WELCHE Sprosse jede der drei Regeln
+        // traegt, und dass deren Werte streng fallend sind.
+        const blockVon = sel => {
+            const escaped = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const m = cssCode.match(new RegExp(`(?:^|\\}|\\*/)\\s*${escaped}\\s*\\{([^{}]*)\\}`, 'm'));
+            return m ? m[1] : null;
+        };
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        const wertVon = token => {
+            const m = vars.match(new RegExp(`${token}:\\s*(\\d+)`));
+            return m ? parseInt(m[1], 10) : null;
+        };
+
+        // Reihenfolge = Absicht: Kopfzeile oben, Aktionsleiste unten.
+        // Jest kennt kein Meldungsargument an expect() — der Befund steckt
+        // deshalb IM verglichenen Wert, damit der Diff ihn benennt.
+        const ebenen = [
+            ['.app-header', '--z-sticky'],
+            ['.encounter-controls', '--z-sticky-2'],
+            ['#quick-actions-bar', '--z-sticky-3']
+        ];
+        const ist = ebenen.map(([sel, token]) => {
+            const body = blockVon(sel);
+            const traegt = body !== null && new RegExp(`z-index:\\s*var\\(${token}\\)`).test(body);
+            return `${sel} -> ${body === null ? 'Regelblock fehlt' : traegt ? token : 'andere/keine Sprosse'}`;
+        });
+        expect(ist).toEqual(ebenen.map(([sel, token]) => `${sel} -> ${token}`));
+
+        const werte = ebenen.map(([, token]) => wertVon(token));
+        expect(werte.filter(w => w === null)).toEqual([]);
+        expect(`${new Set(werte).size} verschiedene Werte in ${werte}`).toBe(`3 verschiedene Werte in ${werte}`);
+        expect(werte).toEqual([...werte].sort((a, b) => b - a));
+    });
+
+    test('KERNBELEG U3: die drei Anheft-Versaetze kommen aus der Versatzkette', () => {
+        // Jeder der drei `top`-Werte muss aus einem Kettenglied kommen, das
+        // updateStickyOffsets() zur Laufzeit messend setzt. Ein fest
+        // verdrahteter Wert war der zweite Teil des Befunds: die Runden-Leiste
+        // bricht um, ihre Hoehe ist keine Konstante, und der verdrahtete
+        // `top: 145px` der Aktionsleiste schnitt sie um 35-94px.
+        const blockVon = sel => {
+            const escaped = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const m = cssCode.match(new RegExp(`(?:^|\\}|\\*/)\\s*${escaped}\\s*\\{([^{}]*)\\}`, 'm'));
+            return m ? m[1] : null;
+        };
+        const glieder = [
+            ['.app-header', '--sticky-top-header'],
+            ['.encounter-controls', '--sticky-top-round'],
+            ['#quick-actions-bar', '--sticky-top-actions']
+        ];
+        const ist = glieder.map(([sel, token]) => {
+            const body = blockVon(sel);
+            const traegt = body !== null && new RegExp(`top:\\s*var\\(${token}\\s*,`).test(body);
+            return `${sel} -> ${body === null ? 'Regelblock fehlt' : traegt ? token : 'fester Wert oder anderes Glied'}`;
+        });
+        expect(ist).toEqual(glieder.map(([sel, token]) => `${sel} -> ${token}`));
+
+        // Und die Kette hat wirklich drei Glieder — das war der Kern des
+        // Befunds: sie hatte nur EINES.
+        const js = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'ui', 'editors', 'rich-text-insert.js'),
+            'utf8'
+        );
+        const gesetzt = ['--sticky-top-header', '--sticky-top-round', '--sticky-top-actions']
+            .filter(token => js.includes(`'${token}'`));
+        expect(gesetzt).toEqual(['--sticky-top-header', '--sticky-top-round', '--sticky-top-actions']);
+        // Das alte Token hat NIE ein Verbraucher gelesen und ist entfallen.
+        // Geprueft wird der SETZENDE Aufruf und der LESENDE var()-Zugriff, nicht
+        // die bloesse Nennung — der Kopfkommentar der Funktion erklaert, warum
+        // das Token weg ist, und nennt es dabei (dieselbe Kommentarfalle wie bei
+        // var() in CSS-Kommentaren, siehe F-01).
+        expect(js).not.toContain("setProperty('--header-height'");
+        expect(cssAll).not.toContain('var(--header-height)');
+
+        // TEIL (4) — jede Stelle, die `data-layout` UMSCHREIBT, muss die Kette
+        // danach neu rechnen. Der Mobil-Zweig von updateStickyOffsets() raeumt
+        // alle drei Glieder per removeProperty() ab; wer das Attribut zurueck auf
+        // 'desktop' setzt, ohne neu zu rechnen, laesst die CSS-Rueckfallwerte
+        // 0px/75px/145px wieder gewinnen — also genau die verdrahteten Werte,
+        // gegen die der erste Teil dieses Belegs gerichtet ist. Gemessen war das
+        // der Rueckweg aus dem Mobil-Layout: Band deckt die Kopfzeile um 61px,
+        // App-Titel und globale Suche antworten mit SPAN.migration-hint-text.
+        //
+        // setLayout() wird hier GELESEN, nicht bloss erwaehnt: der Rumpf wird aus
+        // ui/layout-profiles.js geschnitten und auf den Aufruf geprueft. Damit
+        // steht der Modulpfad in AUSFUEHRBAREM Code — die Bedingung, unter der
+        // dieses Modul aus der Ausnahmeliste des Abdeckungs-Gates gestrichen ist.
+        const layoutJs = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'ui', 'layout-profiles.js'),
+            'utf8'
+        );
+        // Kommentare werden ABGESCHNITTEN, bevor gesucht wird: der Rumpf erklaert
+        // den Aufruf ausfuehrlich und nennt ihn dabei. Ohne dieses Abschneiden
+        // haelt der Erklaertext die Ratsche gruen, auch wenn der Aufruf fehlt —
+        // nachgemessen, indem der Aufruf probeweise entfernt wurde (die Ratsche
+        // blieb gruen, bis das Abschneiden hier stand). Dieselbe Kommentarfalle
+        // wie bei var() in CSS-Kommentaren, siehe F-01.
+        const ohneKommentare = text =>
+            text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+        const rumpfVon = name => {
+            const start = layoutJs.indexOf(`function ${name}(`);
+            if (start === -1) return null;
+            const ende = layoutJs.indexOf('\n}', start);
+            return ende === -1 ? null : ohneKommentare(layoutJs.slice(start, ende));
+        };
+        const setLayoutRumpf = rumpfVon('setLayout');
+        expect(setLayoutRumpf === null ? 'setLayout() nicht gefunden' : 'setLayout() gefunden').toBe(
+            'setLayout() gefunden'
+        );
+        expect(
+            /updateStickyOffsets\s*\(/.test(String(setLayoutRumpf))
+                ? 'setLayout -> rechnet die Kette neu'
+                : 'setLayout -> laesst die Kette stehen'
+        ).toBe('setLayout -> rechnet die Kette neu');
+
+        // loadLayout() braucht den Aufruf NICHT: core/init.js setzt das Attribut
+        // ueber loadLayout() und ruft updateStickyOffsets() danach selbst auf.
+        // Geprueft wird diese Reihenfolge, damit die Begruendung nicht verfaellt.
+        const initJs = fs.readFileSync(path.join(__dirname, '..', '..', 'core', 'init.js'), 'utf8');
+        const posLoad = initJs.indexOf('loadLayout()');
+        const posKette = initJs.indexOf('updateStickyOffsets()');
+        expect(
+            posLoad !== -1 && posKette !== -1 && posLoad < posKette
+                ? 'core/init.js: loadLayout() vor updateStickyOffsets()'
+                : `core/init.js: Reihenfolge ${posLoad}/${posKette}`
+        ).toBe('core/init.js: loadLayout() vor updateStickyOffsets()');
     });
 
     test('KERNBELEG: schwebende Editor-Werkzeuge liegen ueber Overlays', () => {
@@ -979,7 +1172,17 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     // gemessene Ausgangswert um eins. Eine weitere Senkung um eins wird in
     // Phase 19 erwartet (D-51) — jede Senkung nennt ihren eigenen gemessenen
     // Ausgangswert.
-    const INLINE_MAX = 256;
+    // Gesenkt am 2026-10-02 (C1): 256 -> 254. Die zwei Knopfgruppen der
+    // Mobil-Kopfzeile (assets/templates/modals-tools.html) trugen je einen
+    // Inline-Stil mit `display: flex; gap: 8px; align-items: center`. Sie sind
+    // zur Klasse `.mobile-header-group` geworden, WEIL der Zwischenraum auf
+    // Telefonbreiten enger werden muss und ein Inline-Stil von keiner
+    // Medienabfrage erreicht wird — die Senkung ist das Nebenergebnis, nicht
+    // der Zweck. Gemessener Ausgangswert danach: 254, gezaehlt mit derselben
+    // Regex ueber dieselben Dateien. Der erklaerende Kommentar im Markup nennt
+    // den Attributnamen absichtlich nicht aus: die Regex zaehlt sein Vorkommen
+    // auch dort, und die Senkung waere sonst um eins zu klein.
+    const INLINE_MAX = 254;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
@@ -1075,6 +1278,124 @@ describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
 
     test('die Zahl regelfreier dms-Klassen aus class-Attributen steigt nicht wieder', () => {
         expect(unstyledDmsClasses().length).toBeLessThanOrEqual(DMS_UNSTYLED_MAX);
+    });
+});
+
+describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
+    // Fundstelle: showTimelineModal() hat die Schale von Hand nachgebaut und
+    // dabei ZWEI Namen erfunden, die es in diesem Baum nie gab — `active` als
+    // Sichtschalter (der heisst `show`; `git log -S'modal-overlay.active'
+    // --all` ist leer) und `modal-box` als Kartenklasse (0 CSS-Regeln,
+    // genau ein Vorkommen im ganzen Baum). Beides zusammen ergab einen
+    // Dialog mit display:none, opacity:0 und einem Rechteck von 0x0 —
+    // stumm, seit d05ce45 vom 15.06.2026.
+    //
+    // Derselbe Defekt steckte drei Tage spaeter im NPC-Generator und wurde
+    // dort von der menschlichen Abnahme gefunden (0d38bdc/4cb9a5b/85d0719).
+    // Dass er sich wiederholen konnte, liegt daran, dass NICHTS den Vertrag
+    // der Schale geprueft hat. Genau das tun die fuenf Faelle hier.
+
+    // Die Klassen, aus denen die Schale besteht. Reihenfolge = Verschachtelung.
+    const SCHALE = [
+        'modal-overlay',
+        'modal',
+        'modal-header',
+        'modal-title',
+        'modal-body',
+        'modal-footer',
+        'modal-close'
+    ];
+
+    // Regelfrei geblieben, namentlich und mit Grund — KEINE stille Freigabe:
+    // .modal-body und .modal-footer tragen in 12 Modulen und 4 Templates
+    // ueberhaupt keine eigene Gestaltung. Gemessen am Buendel vom 2026-10-01
+    // richtet das heute keinen sichtbaren Schaden an, weil .modal selbst
+    // padding, max-height und overflow-y fuehrt und die Fusszeile aus
+    // .btn-Knoepfen besteht. Sie zu gestalten waere eine Designentscheidung
+    // ueber 19 Modale und gehoert nicht in eine Fehlerkorrektur. Diese Liste
+    // darf nur KUERZER werden.
+    const OHNE_REGEL_GEFUEHRT = ['modal-body', 'modal-footer'];
+
+    // Formular-Primitive: dieselbe Fehlerklasse, andere Namen. Beide kommen
+    // aus drei Modulen (timeline-render.js 6x, session-prep-render.js 8x,
+    // npc-generator.js 2x) und hatten bis 2026-10-01 keine einzige Regel.
+    const FORMULAR_PRIMITIVE = ['form-label', 'form-control'];
+
+    function hatSelektor(cls) {
+        return new RegExp(`\\.${cls}(?![\\w-])`).test(cssCode);
+    }
+
+    /** Alle class="…"-Werte des Quellbaums, Interpolationen ausgeblendet. */
+    function klassenWerte() {
+        const out = [];
+        [...sourceJs(), ...tplFiles].forEach(f => {
+            for (const m of f.content.matchAll(/class=(["'])([\s\S]*?)\1/g)) {
+                out.push({ datei: f.name, wert: m[2].replace(/\$\{[^}]*\}/g, ' ') });
+            }
+        });
+        return out;
+    }
+
+    test('kein Sichtschalter heisst "active" — der Schalter der Schale ist "show"', () => {
+        const falsch = klassenWerte()
+            .filter(e => /\bmodal-overlay\b/.test(e.wert) && /\bactive\b/.test(e.wert))
+            .map(e => `${e.datei}: class="${e.wert.trim()}"`);
+        expect(falsch).toEqual([]);
+        // Gegenprobe: es gibt auch keinen Selektor, der `active` bedienen wuerde.
+        expect(/\.modal-overlay\.active/.test(cssCode)).toBe(false);
+    });
+
+    test('die Kartenklasse heisst "modal" — "modal-box" gibt es nicht mehr', () => {
+        const treffer = klassenWerte()
+            .filter(e => /\bmodal-box\b/.test(e.wert))
+            .map(e => e.datei);
+        expect(treffer).toEqual([]);
+        expect(hatSelektor('modal-box')).toBe(false);
+    });
+
+    test('jede Datei, die eine Modal-Schale baut, macht sie ueber showModal() sichtbar', () => {
+        const ohne = sourceJs()
+            .filter(f => /class=(["'])[^"']*\bmodal-overlay\b[^"']*\1/.test(f.content))
+            .filter(f => !/showModal\s*\(/.test(f.content))
+            .map(f => f.name);
+        expect(ohne).toEqual([]);
+    });
+
+    test('jede Klasse der Schale hat eine CSS-Regel, ausser den namentlich gefuehrten', () => {
+        const ohne = SCHALE.filter(c => !hatSelektor(c));
+        expect(ohne.sort()).toEqual([...OHNE_REGEL_GEFUEHRT].sort());
+    });
+
+    test('die Formular-Primitive haben eine CSS-Regel', () => {
+        const ohne = FORMULAR_PRIMITIVE.filter(c => !hatSelektor(c));
+        expect(ohne).toEqual([]);
+    });
+
+    test('jede Modal-Schale traegt eine Karte mit der Klasse "modal", ausser der gefuehrten', () => {
+        // Die dritte Auflage desselben Fehlers, namentlich gefuehrt statt
+        // stillschweigend hingenommen: features/session-prep/session-prep-render.js
+        // baut die Schale richtig (modal-overlay + showModal()), nennt die Karte
+        // aber `modal-content modal-large` — und `.modal-content` hat im ganzen
+        // Baum nur EINE Regel, und die haengt an `#calculator-modal`. Gemessen
+        // am Buendel vom 2026-10-01 bei 1440x900: Hintergrund rgba(0,0,0,0),
+        // Rahmen 0px none, padding 0px, max-height none, overflow-y visible —
+        // die Karte ist 1210px hoch, beginnt bei y=-155 und ragt 155px unter
+        // den Fensterrand; das Formular liegt ohne Flaeche auf der
+        // weichgezeichneten Seite. Dazu zeigt ihr Schliessknopf auf
+        // data-action="close-modal", und dieser Schluessel ist in KEINEM
+        // ui/actions/*.js registriert — das x schliesst nichts (nachgeklickt).
+        // Das ist ein eigener Vorgang mit eigenem roten Nachweis; hier steht
+        // es, damit es nicht verloren geht. Diese Liste darf nur KUERZER werden.
+        // Der Pfad steht bewusst in AUSFUEHRBAREM Code und nicht nur im
+        // Erklaertext: nur so ist das Modul im Sinne von
+        // tests/unit/module-test-coverage.test.js wirklich beurteilt (dieselbe
+        // Unterscheidung wie bei R-07/R-09 am 2026-09-28).
+        const KARTE_GEFUEHRT = ['features/session-prep/session-prep-render.js'];
+        const ohne = sourceJs()
+            .filter(f => /class=(["'])[^"']*\bmodal-overlay\b[^"']*\1/.test(f.content))
+            .filter(f => !/class=(["'])modal(?:\s[^"']*)?\1/.test(f.content))
+            .map(f => path.relative(REPO, f.name).split(path.sep).join('/'));
+        expect(ohne.sort()).toEqual([...KARTE_GEFUEHRT].sort());
     });
 });
 
@@ -6883,7 +7204,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            zeilenbasierter grep sechs Literale verliert. */
         {
             datei: 'dice.css',
-            zeile: 628,
+            zeile: 755,
             pfad: '.floating-dice-panel',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
@@ -6903,14 +7224,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            als uebersehener Rest gilt. */
         {
             datei: 'dice.css',
-            zeile: 587,
+            zeile: 714,
             pfad: '@keyframes floatingPulse >> 0%, 100%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
         },
         {
             datei: 'dice.css',
-            zeile: 588,
+            zeile: 715,
             pfad: '@keyframes floatingPulse >> 50%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
@@ -6952,7 +7273,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            diesen Wert traegt. */
         {
             datei: 'dice.css',
-            zeile: 564,
+            zeile: 691,
             pfad: '.floating-dice-trigger',
             lage: '0 0 0 0 rgba(220, 38, 38, 0.4)',
             grund: 'Ruhelage der Pulsanimation, wortgleich mit dem 0-%-Bild'
@@ -6999,46 +7320,53 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'command-palette.css', zeile: 32, stufe: 3,
           pfad: '.cp-box',
           vorher: '0 16px 48px rgba(0, 0, 0, 0.6)' },
-        { datei: 'core.css', zeile: 146, stufe: 3,
+        { datei: 'core.css', zeile: 271, stufe: 3,
           pfad: '#quicknotes-modal .modal',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.6)' },
-        { datei: 'core.css', zeile: 390, stufe: 3,
+        { datei: 'core.css', zeile: 515, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 902, stufe: 2,
+        { datei: 'core.css', zeile: 1122, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1410, stufe: 1,
+        { datei: 'core.css', zeile: 1658, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1489, stufe: 3,
+        { datei: 'core.css', zeile: 1737, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
         { datei: 'dashboard.css', zeile: 784, stufe: 2,
           pfad: '.conflict-banner',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 867, stufe: 2,
+        { datei: 'dashboard.css', zeile: 902, stufe: 2,
           pfad: '.dash-char:hover',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 1174, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1209, stufe: 2,
           pfad: '.qref-fab',
           vorher: '0 4px 12px rgba(0,0,0,0.4)' },
-        { datei: 'dashboard.css', zeile: 1181, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1216, stufe: 2,
           pfad: '.qref-fab:hover',
           vorher: '0 6px 20px rgba(212,175,55,0.4)' },
-        { datei: 'dashboard.css', zeile: 1198, stufe: 3,
+        { datei: 'dashboard.css', zeile: 1233, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
+        { datei: 'dashboard.css', zeile: 2184, stufe: 3,
+          pfad: '.kplog-panel',
+          vorher:
+              'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +
+              'getragen. Das Kampfprotokoll-Panel ist nach .qref-panel gebaut (dieselbe ' +
+              'Datei, gut 900 Zeilen darueber) und uebernimmt dessen Stufe 3: frei ' +
+              'schwebendes Panel mit Radius --radius-lg' },
         { datei: 'dice.css', zeile: 79, stufe: 2,
           pfad: '.dice-die:hover',
           vorher: '0 4px 16px rgba(0,0,0,0.3)' },
-        { datei: 'dice.css', zeile: 564, stufe: 2,
+        { datei: 'dice.css', zeile: 691, stufe: 2,
           pfad: '.floating-dice-trigger',
           vorher: '0 4px 16px rgba(220, 38, 38, 0.4)' },
-        { datei: 'dice.css', zeile: 573, stufe: 3,
+        { datei: 'dice.css', zeile: 700, stufe: 3,
           pfad: '.floating-dice-trigger:hover',
           vorher: '0 6px 24px rgba(220, 38, 38, 0.5)' },
-        { datei: 'dice.css', zeile: 628, stufe: 3,
+        { datei: 'dice.css', zeile: 755, stufe: 3,
           pfad: '.floating-dice-panel',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.5)' },
         { datei: 'dmscreen.css', zeile: 50, stufe: 3,
@@ -7092,12 +7420,16 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'encounters.css', zeile: 645, stufe: 2,
           pfad: '.calc-favorites-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 1385, stufe: 2,
+        // Anker 1385 -> 1388: die Begruendung am Hoehenbudget von
+        // .enc-view.active (U6) ist 3 Zeilen weiter oben eingefuegt.
+        { datei: 'encounters.css', zeile: 1388, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
         // (Pruefung W3-E, Runde 1) ist 23 Zeilen weiter oben eingefuegt.
-        { datei: 'initiative.css', zeile: 1078, stufe: 'drawer',
+        // Anker 1133 -> 1216: die zwei Begruendungen an den Zustandsflaechen
+        // der Kampfzeile (Q1, Runde 2) sind 83 Zeilen weiter oben eingefuegt.
+        { datei: 'initiative.css', zeile: 1216, stufe: 'drawer',
           pfad: '.init-statblock-content',
           vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
         { datei: 'loot.css', zeile: 313, stufe: 1,
@@ -7106,10 +7438,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'loot.css', zeile: 353, stufe: 1,
           pfad: '.shop-sort-btn.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
-        { datei: 'npcs.css', zeile: 938, stufe: 3,
+        // Anker 938 -> 944 und 1067 -> 1073: die Begruendungen am
+        // Hoehenbudget von .npc-view.active und .loot-view.active (U6) sind
+        // zusammen 6 Zeilen weiter oben eingefuegt.
+        { datei: 'npcs.css', zeile: 944, stufe: 3,
           pfad: '.npc-popup',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'npcs.css', zeile: 1067, stufe: 1,
+        { datei: 'npcs.css', zeile: 1073, stufe: 1,
           pfad: '.npc-list-tag.clickable:hover',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
         { datei: 'party.css', zeile: 390, stufe: 1,
@@ -7375,10 +7710,17 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
        selbst.
        ------------------------------------------------------------------- */
 
-    /** Die drei Stellen, an denen ein Schatten im JavaScript ein Literal
+    /** Die ZWEI Stellen, an denen ein Schatten im JavaScript ein Literal
      *  bleiben DARF. Namentlich, mit Grund, und jede wird genau einmal
      *  getroffen — dieselbe Zucht wie bei AUSNAHMEN oben, und aus demselben
-     *  Grund: eine Ausnahme, die ins Leere zeigt, ist Altlast. */
+     *  Grund: eine Ausnahme, die ins Leere zeigt, ist Altlast.
+     *
+     *  ES WAREN DREI. Die dritte war utils/utilities.js:707, der Notfall-Toast
+     *  (`0 4px 12px rgba(0,0,0,0.15)` in einer Inline-Stilzeichenkette). U5 hat
+     *  den Alt-#toast-Knoten abgeschaltet — er schrieb jede Meldung ein zweites
+     *  Mal, mittig oben, ueber allem —, und damit ist die Ausnahme verwaist.
+     *  Sie ist gestrichen statt stehengelassen: genau das verlangt der
+     *  Kopfkommentar dieser Liste. Von drei auf zwei, nachgezaehlt. */
     const JS_AUSNAHMEN = [
         {
             datei: 'features/shops/shop-export.js',
@@ -7393,14 +7735,6 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
             zeile: 486,
             wert: 'none',
             grund: 'Druckregel desselben Handouts'
-        },
-        {
-            datei: 'utils/utilities.js',
-            zeile: 707,
-            wert: '0 4px 12px rgba(0,0,0,0.15)',
-            grund:
-                'Notfall-Toast (der Alt-#toast aus W2-E-05) — eine Inline-Stilzeichenkette, ' +
-                'die laeuft, wenn die App schon halb steht; ein var() koennte dort leer sein'
         }
     ];
 
@@ -7478,7 +7812,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
             anzahl: R19_ZIEL,
             stichprobe: []
         });
-        expect(JS_AUSNAHMEN.length).toBe(3);
+        expect(JS_AUSNAHMEN.length).toBe(2);
     });
 
     /* -------------------------------------------------------------------
@@ -7518,14 +7852,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
        gleich und dieser Test gruen. Waechst sie, ist eine neue ungeregelte
        Stelle entstanden.
        ------------------------------------------------------------------- */
-    test('der Bestand ist der gemessene: 71 box-shadow, 8 text-shadow, 1 drop-shadow', () => {
+    test('der Bestand ist der gemessene: 72 box-shadow, 8 text-shadow, 1 drop-shadow', () => {
         const zahl = prop => alleSchatten.filter(d => prop.test(d.prop)).length;
         expect({
             box: zahl(/box-shadow$/),
             text: zahl(/text-shadow$/),
             drop: zahl(/filter$/),
             lagen: lagen().length
-        }).toEqual({ box: 71, text: 8, drop: 1, lagen: 86 });
+        }).toEqual({ box: 72, text: 8, drop: 1, lagen: 87 });
     });
 
     /* -------------------------------------------------------------------
@@ -7799,8 +8133,8 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'core.css', zeile: 453, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold', farbe: '#d4af37' },
         { datei: 'dashboard.css', zeile: 34, sel: '.dice-result.crit-effect', radius: 30, vorher: 0.5, rolle: '--green' },
         { datei: 'dashboard.css', zeile: 40, sel: '.dice-result.fail-effect', radius: 30, vorher: 0.5, rolle: '--red' },
-        { datei: 'dice.css', zeile: 573, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
-        { datei: 'dice.css', zeile: 788, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 700, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 818, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
         { datei: 'dmscreen.css', zeile: 1008, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dmscreen.css', zeile: 1019, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red', farbe: '#ef4444' },
         { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
@@ -8151,8 +8485,8 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(new Set(soll).size).toBe(14);
     });
 
-    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 14 Gluehlagen', () => {
-        expect({ dekl: SCHATTEN.length, gluehe: gluehlagen().length }).toEqual({ dekl: 71, gluehe: 14 });
+    test('dieselbe Menge wie R-19: 72 box-shadow-Deklarationen, 14 Gluehlagen', () => {
+        expect({ dekl: SCHATTEN.length, gluehe: gluehlagen().length }).toEqual({ dekl: 72, gluehe: 14 });
     });
 
     test('die vierzehn Radien bleiben unberuehrt (W3-D-03): 4/4/6/6/8/8/10/12/12/12/12/20/30/30', () => {
@@ -8376,7 +8710,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
        faellt jede Regel mit `border` in genau eine von fuenf Klassen, jede
        Klasse hat eine Zahl, und die Summe ist eine Aussage.
        ------------------------------------------------------------------- */
-    test('jede Schattenregel mit Rahmen faellt in eine der sechs Klassen: 13/6/3/5/14/1', () => {
+    test('jede Schattenregel mit Rahmen faellt in eine der sechs Klassen: 14/6/3/5/14/1', () => {
         const nb = rahmenNachbarn();
         const zahl = k => nb.filter(n => n.klasse === k).length;
         expect({
@@ -8386,9 +8720,9 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             farbig: zahl('farbig'),
             nurFarbe: zahl('nurFarbe'),
             ohne: zahl('ohne')
-        }).toEqual({ border: 13, goldVoll: 6, goldMix: 3, farbig: 5, nurFarbe: 14, ohne: 1 });
+        }).toEqual({ border: 14, goldVoll: 6, goldMix: 3, farbig: 5, nurFarbe: 14, ohne: 1 });
         // Kein Auffangbecken: die sechs Klassen sind alle Klassen.
-        expect(nb.length).toBe(42);
+        expect(nb.length).toBe(43);
         expect(
             nb.filter(
                 n =>
@@ -8397,9 +8731,11 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
                     )
             )
         ).toEqual([]);
-        // 41 tragen einen SICHTBAREN Rahmen; die 42. ist
+        // 42 tragen einen SICHTBAREN Rahmen; die 43. ist
         // `border: none !important` neben `box-shadow: none !important`.
-        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(41);
+        // Die 42. ist .kplog-panel (U5): 1px solid var(--border) neben
+        // var(--shadow-3) — dieselbe Konstruktion wie .qref-panel.
+        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(42);
         expect(nb.filter(n => n.klasse === 'ohne').map(n => `${n.datei} {${n.sel}}`)).toEqual([
             'encounters.css {#calculator-modal}'
         ]);
@@ -9175,8 +9511,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         { datei: 'dashboard.css', zeile: 67, sel: '.dice-fail', marke: '.dice-fail', radius: 10, vorher: 0.5, rolle: '--red', farbe: null },
         { datei: 'dice.css', zeile: 31, sel: '.dice-hero-result.crit', marke: '.dice-hero-result.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dice.css', zeile: 36, sel: '.dice-hero-result.fail', marke: '.dice-hero-result.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' },
-        { datei: 'dice.css', zeile: 705, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
-        { datei: 'dice.css', zeile: 711, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
+        { datei: 'dice.css', zeile: 832, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 838, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
     ];
 
     /* -------------------------------------------------------------------
@@ -9208,7 +9544,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dice.css',
-            zeile: 583,
+            zeile: 710,
             sel: '.floating-dice-trigger svg',
             marke: '.floating-dice-trigger svg',
             wert: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
@@ -9273,8 +9609,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         expect(RING_STELLEN.length).toBe(5);
     });
 
-    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 8 Ringlagen', () => {
-        expect({ dekl: BOX.length, ringe: ringlagen().length }).toEqual({ dekl: 71, ringe: 8 });
+    test('dieselbe Menge wie R-19: 72 box-shadow-Deklarationen, 8 Ringlagen', () => {
+        expect({ dekl: BOX.length, ringe: ringlagen().length }).toEqual({ dekl: 72, ringe: 8 });
     });
 
     test('jede Marke ist ein Ausschnitt ihres gemessenen Selektors', () => {

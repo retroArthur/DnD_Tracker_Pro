@@ -633,16 +633,45 @@ function formatDate(date, options = { year: 'numeric', month: 'short', day: 'num
     }
 }
 /**
- * Zeigt einen Event-Log-Eintrag an (ersetzt Toast)
+ * Zeigt einen Event-Log-Eintrag an UND schreibt ihn ins Kampfprotokoll (U5).
+ *
+ * DIE ANZEIGE IST FLUECHTIG, DAS PROTOKOLL IST ES NICHT. Der Eintrag im
+ * `#event-log` verblasst nach `duration` (Standard 2000 ms) und der Kasten
+ * haelt hoechstens fuenf davon gleichzeitig — das ist beabsichtigt und bleibt
+ * so, es ist eine Randmeldung und kein Fenster. Jede Meldung wandert ausserdem
+ * in den Ringpuffer von features/combat-log/combat-log-core.js, der 200
+ * Eintraege haelt und den Neustart ueberlebt. Damit hat die Frage "was hat der
+ * zweite Wurf ergeben?" wieder eine Antwort.
+ *
+ * DER DRITTE PARAMETER NIMMT ZWEI FORMEN AN, und zwar aus einem Grund: von 442
+ * Aufrufstellen im Baum uebergeben nur eine Handvoll ueberhaupt eine Dauer. Ein
+ * neuer VIERTER Parameter haette an jeder Kampfstelle ein `undefined` als
+ * Platzhalter fuer die Dauer erzwungen (`showToast(t, 'info', undefined,
+ * 'kampf')`) — schlechter zu lesen als ein Objekt, und leicht falsch zu tippen.
+ * Eine Zahl bleibt die Dauer (Altweg, unveraendert), ein Objekt traegt
+ * `{ dauer, kategorie }`.
+ *
  * @param msg - Nachricht
- * @param type - Nachrichtentyp
- * @param duration - Anzeigedauer in ms (Standard: APP_CONFIG.TOAST_DURATION)
+ * @param type - Nachrichtentyp (success | error | warning | info)
+ * @param options - Zahl = Anzeigedauer in ms (Altweg), oder
+ *                  `{ dauer?: number, kategorie?: 'kampf'|'system' }`
  */
-function showToast(
-    msg = '✓ Gespeichert',
-    type = 'success',
-    duration = window.APP_CONFIG?.TOAST_DURATION || 2000
-) {
+function showToast(msg = '✓ Gespeichert', type = 'success', options = undefined) {
+    const standardDauer = window.APP_CONFIG?.TOAST_DURATION || 2000;
+    let duration = standardDauer;
+    let kategorie = window.KPLOG_STANDARD_KATEGORIE || 'system';
+    if (typeof options === 'number') {
+        duration = options;
+    } else if (options && typeof options === 'object') {
+        if (typeof options.dauer === 'number') duration = options.dauer;
+        if (typeof options.kategorie === 'string') kategorie = options.kategorie;
+    }
+    // Das Protokoll wird VOR der Anzeige beschickt und unabhaengig von ihr: sonst
+    // verliert eine Meldung, die vor dem Einhaengen der Templates ausgeloest wird
+    // (Startfehler, Speicherwarnung), genau den Eintrag, den man hinterher sucht.
+    if (typeof window.pushCombatLog === 'function') {
+        window.pushCombatLog(msg, type, kategorie);
+    }
     const log = $('event-log');
     if (!log) return;
     // Icons für verschiedene Typen
@@ -697,33 +726,21 @@ function showToast(
             setTimeout(() => entry.remove(), 400);
         }, duration);
     }
-    // Backward compatibility: Update legacy #toast element for E2E tests
-    // getElementById statt $() — Element wird absichtlich bei Bedarf erzeugt, keine DEBUG-Warnung
-    let toast = document.getElementById('toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast';
-        toast.style.cssText =
-            'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 24px;border-radius:8px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.className = `toast ${type}`;
-    toast.style.display = 'block';
-    // Set background color based on type
-    const bgColors = {
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
-        info: '#3b82f6'
-    };
-    toast.style.backgroundColor = bgColors[type] || bgColors.success;
-    toast.style.color = '#ffffff';
-    if (!isPersistent) {
-        setTimeout(() => {
-            if (toast) toast.style.display = 'none';
-        }, duration);
-    }
+    // ABGESCHALTET (U5): hier stand eine ZWEITE Blase. Ein per JS erzeugtes
+    // `#toast` mit eigenem Inline-Stil, eigenen Hex-Farben und eigenem
+    // z-index 10000 schrieb JEDE Meldung ein zweites Mal — mittig oben, ueber
+    // allem, laut eigenem Kommentar "for E2E tests". Der Spielleiter sah also
+    // jede Meldung doppelt, an zwei Stellen, in zwei Gestalten.
+    //
+    // Es war auch technisch die schlechtere Haelfte: EIN geteilter Knoten fuer
+    // alle Meldungen, den jede naechste ueberschrieb. Genau daran haengt der
+    // lange Kommentar in tests/e2e/helpers/test-utils.js — drei fruehere
+    // Untersuchungen dort drehen sich darum, welcher frueh feuernde save()
+    // den geteilten Knoten "stomps", bevor eine Zusicherung ihn liest. Mit dem
+    // Ereignis-Log (ein Knoten je Meldung) und dem Kampfprotokoll (Ringpuffer)
+    // kann nichts mehr ueberschrieben werden — die Zusicherungen dieser zehn
+    // Spec-Dateien haengen seit U5 an `#event-log` bzw. am Puffer und sind
+    // dadurch strenger, nicht schwaecher.
 }
 /**
  * Toggle Event-Log persistent mode

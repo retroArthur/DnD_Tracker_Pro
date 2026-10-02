@@ -357,7 +357,7 @@ function startRoundTimer() {
             if (display)
                 display.innerHTML = `<span style="color:var(--green);">✓ ${rounds} Runden abgeschlossen!</span>`;
             stopRoundTimer();
-            showToast(`⚔️ ${rounds} Kampfrunden beendet!`);
+            showToast(`⚔️ ${rounds} Kampfrunden beendet!`, 'success', { kategorie: 'kampf' });
             return;
         }
         const display = $('round-timer-display');

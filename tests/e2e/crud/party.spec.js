@@ -7,7 +7,8 @@ import {
     selectOption,
     generateTestName,
     performUndo,
-    seedCleanSession
+    seedCleanSession,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -158,14 +159,13 @@ test.describe('Party - Charakter CRUD', () => {
 
             await fillField(page, 'char-player', 'Spieler');
             await page.click('[data-action="call"][data-value="saveCharacter"]');
-            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf
-            // die konkrete Bedingung ersetzt (#toast.error — showToast(msg,'error',...) aus
-            // utils/validation.js setzt className `toast error`) — diese Race wurde in 08-02 gefixt
-            // (Onboarding-/Backup-Toast stach zuvor die Validierungsfehler-Meldung).
-            await page.waitForSelector('#toast.error', { timeout: 3000 });
-
-            const toast = page.locator('#toast');
-            await expect(toast).toBeVisible();
+            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch eine
+            // Wartefunktion auf die konkrete Bedingung ersetzt.
+            // U5: die Bedingung heisst jetzt `.event-log-entry.error` statt
+            // `#toast.error` — siehe die ausfuehrliche Begruendung in
+            // tests/e2e/crud/npcs.spec.js an der gleichlautenden Stelle.
+            const meldung = await waitForLogEntry(page, { typ: 'error' });
+            await expect(meldung).toBeVisible();
         });
     });
 

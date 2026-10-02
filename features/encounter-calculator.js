@@ -931,7 +931,9 @@ function addCalculatorToInitiative() {
     hideCalculatorModal();
     window.switchView('initiative');
     if (typeof window.renderInit === 'function') window.renderInit();
-    showToast(`${addedCount} Monster zur Initiative hinzugefügt`);
+    showToast(`${addedCount} Monster zur Initiative hinzugefügt`, 'success', {
+        kategorie: 'kampf'
+    });
 }
 // Default HP by CR (rough estimates)
 function getDefaultHPForCR(cr) {
@@ -1258,7 +1260,7 @@ function importEncounterMonsters(encId) {
     });
     renderCalculatorModal();
     recalculateEncounter();
-    showToast(`"${encounter.name}" (CR ${cr}) hinzugefügt`);
+    showToast(`"${encounter.name}" (CR ${cr}) hinzugefügt`, 'success', { kategorie: 'kampf' });
 }
 function renderEncounterCalculator() {
     // Legacy function - now just shows modal

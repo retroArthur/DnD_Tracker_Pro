@@ -900,6 +900,23 @@ function copyData() {
         }
     }
 }
+/**
+ * Leert den Puffer des Kampfprotokolls, nachdem Kampagnendaten entfernt wurden.
+ *
+ * UAT-Befund U5 (Pruefrunde 1): das Entfernen des Speicherschluessels allein genuegt NICHT.
+ * Der Puffer liegt als Modulvariable im Speicher (features/combat-log/, bewusst nicht in `D`,
+ * weil pushUndo() das ganze `D` serialisiert), und jede weitere Meldung schreibt ihn
+ * vollstaendig zurueck — die Erfolgsmeldung gleich unter diesem Aufruf tut das, und zwar
+ * innerhalb der 1000 ms bis zum Neuladen. Ohne dieses Leeren standen die Namen von
+ * Charakteren, NSCs und Monstern nach dem Neustart wieder im Panel, direkt unter der Zeile
+ * "Alle Daten geloescht".
+ *
+ * Nur auf den Pfaden gerufen, auf denen wirklich geloescht wurde: ein gescheiterter Loeschlauf
+ * loescht nichts, also darf er auch das Protokoll nicht wegwerfen.
+ */
+function leereKampfprotokollNachLoeschung() {
+    if (typeof window.clearCombatLog === 'function') window.clearCombatLog();
+}
 // async (Code-Review 2026-09-21, R10): die Sicherheitskopie ist COMMITTET, bevor irgendetwas
 // entfernt wird; entfernt werden beide Kopien (IndexedDB und localStorage) — frueher holte
 // load() die Kampagne aus IndexedDB zurueck. Der data-action-'call'-Dispatcher ignoriert das
@@ -944,6 +961,7 @@ async function clearStorage() {
             ? await window.removeCampaignData(key)
             : null;
     if (result && result.success) {
+        leereKampfprotokollNachLoeschung();
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
         return;
@@ -962,6 +980,7 @@ async function clearStorage() {
         typeof window.confirmLocalOnlyCampaignRemoval === 'function' &&
         window.confirmLocalOnlyCampaignRemoval(key).removed
     ) {
+        leereKampfprotokollNachLoeschung();
         showToast(
             '⚠️ Nur die lokalen Daten wurden gelöscht. Die IndexedDB-Kopie konnte nicht ' +
                 'entfernt werden und kann beim nächsten Start wieder auftauchen.',

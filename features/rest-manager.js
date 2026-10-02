@@ -261,11 +261,12 @@ function applyRest() {
     renderInit();
     // Feedback
     if (isLongRest) {
-        showToast(`🌙 Lange Rast: ${totalHealed} HP geheilt`, 'success');
+        showToast(`🌙 Lange Rast: ${totalHealed} HP geheilt`, 'success', { kategorie: 'kampf' });
     } else {
         showToast(
             `⏰ Kurze Rast: ${totalHealed} HP geheilt (${hitDiceSpent} Trefferwürfel)`,
-            'success'
+            'success',
+            { kategorie: 'kampf' }
         );
     }
 }
@@ -276,12 +277,12 @@ function quickShortRest(charId) {
     const maxHp = char.hpMax ?? char.hp ?? 1;
     const currentHp = char.hpCurrent ?? char.hp ?? 0;
     if (currentHp >= maxHp) {
-        showToast(`${char.name} ist bereits bei voller HP`, 'info');
+        showToast(`${char.name} ist bereits bei voller HP`, 'info', { kategorie: 'kampf' });
         return;
     }
     const currentHD = char.hitDice ?? char.level ?? 1;
     if (currentHD <= 0) {
-        showToast(`${char.name} hat keine Trefferwürfel mehr`, 'warning');
+        showToast(`${char.name} hat keine Trefferwürfel mehr`, 'warning', { kategorie: 'kampf' });
         return;
     }
     const hitDieType = getHitDieType(char.class);
@@ -295,7 +296,9 @@ function quickShortRest(charId) {
     const renderParty = window.renderParty;
     save();
     renderParty();
-    showToast(`${char.name}: +${actualHeal} HP (d${hitDieType}+${conMod})`, 'success');
+    showToast(`${char.name}: +${actualHeal} HP (d${hitDieType}+${conMod})`, 'success', {
+        kategorie: 'kampf'
+    });
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

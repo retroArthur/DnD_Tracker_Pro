@@ -289,7 +289,11 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # (dmscreen-render.js aufgeteilt, D-02/D-04)
         # Code-Review 2026-09-21, Einheit U3 (R04): 'utils/idb-tx.js' neu registriert
         # (IndexedDB-Schreibbestaetigung, direkt nach utils/basic.js)
-        assert len(modules) == 137, f"Erwartet 137 Module, gefunden {len(modules)}"
+        # UAT-Korrekturen, Einheit U5: 'features/combat-log/combat-log-core.js' und
+        # 'features/combat-log/combat-log-render.js' neu registriert (Kampfprotokoll —
+        # Ringpuffer und Panel). Der Kern steht VOR dem Fenster (das Fenster liest
+        # getCombatLog()), beide nach utils/performance-extras.js und vor den ui/-Modulen.
+        assert len(modules) == 139, f"Erwartet 139 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

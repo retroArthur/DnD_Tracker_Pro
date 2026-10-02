@@ -172,7 +172,9 @@ function addBestiaryToInitiative(id, source) {
     if (typeof window.save === 'function') window.save();
     if (typeof window.switchView === 'function') window.switchView('initiative');
     if (typeof window.renderInit === 'function') window.renderInit();
-    showToast(count + '\xd7 ' + monster.name + ' zur Initiative hinzugef\xfcgt');
+    showToast(count + '\xd7 ' + monster.name + ' zur Initiative hinzugef\xfcgt', 'success', {
+        kategorie: 'kampf'
+    });
 }
 
 // ============================================================

@@ -43,8 +43,45 @@
             z-index: var(--z-panel);
             align-items: center;
             justify-content: space-between;
+            /* C1 — DAS SICHERHEITSNETZ: eine fest sitzende Leiste darf nichts
+               aus dem Fenster schieben.
+               `justify-content: space-between` verteilt nur FREIEN Platz; ist
+               die Summe der Kinder groesser als die Leiste, tut es gar nichts
+               mehr, und der Ueberschuss laeuft bei `flex-wrap: nowrap` nach
+               rechts hinaus. Weil die Leiste `position: fixed` ist, scrollt dort
+               nichts hin: was ueber dem rechten Rand liegt, ist UNERREICHBAR.
+               Genau das meldete der CI-Lauf 36966941474 achtmal (320x568 und
+               320x740, alle vier Themes) als `button.mobile-search-btn ->
+               nichts` — `elementFromPoint` auf der Knopfmitte fand nichts, weil
+               die Mitte bei x=325 in einem 320px-Fenster lag.
+               Mit `wrap` ist dieser Zustand nicht mehr herstellbar: passt eine
+               Gruppe nicht, ruecht sie in eine zweite Zeile und bleibt
+               bedienbar. Der Umbruch ist INTRINSISCH und kostet nur dort Hoehe,
+               wo die Alternative ein unerreichbarer Knopf waere — gemessen
+               greift er nach den drei Zeilen darunter (engerer Zwischenraum,
+               schmalerer Zaehler, ausgeblendete Sekunden) bei 320px NICHT mehr.
+               WARUM DIE HOEHE HIER ZAEHLT: `--mobile-header-height` wird aus der
+               gemessenen Isthoehe dieser Leiste gesetzt (setzeMobilKopfHoehe())
+               und geht als `.main-content { padding-top }` in
+               `--view-frame-height` ein — also direkt von der Hoehe der
+               Listen-Schalen ab. Eine Leiste, die regelhaft zweizeilig waere,
+               verschaerfte damit genau den Befund, den die Deckelung der
+               Werkzeugleiste weiter unten behebt. Deshalb Umbruch als Netz UND
+               Zahlen, die ihn nicht brauchen — nicht Umbruch statt Zahlen. */
+            flex-wrap: wrap;
+            row-gap: 6px;
         }
-        
+
+        /* C1 — die zwei Knopfgruppen der Mobil-Kopfzeile. Stand bis hierher als
+           `style="display: flex; gap: 8px; align-items: center"` im Markup und
+           war damit fuer keine Medienabfrage erreichbar; der Zwischenraum muss
+           auf Telefonbreiten enger werden (siehe @media weiter unten). */
+        [data-layout="mobile"] .mobile-header-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         [data-layout="mobile"] .mobile-search-btn {
             background: none;
             border: none;
@@ -82,7 +119,95 @@
         [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display {
             color: var(--yellow);
         }
-        
+
+        /* Der Mobil-Kopf traegt seit der Pruefrunde 1 sieben Bedienelemente: der
+           Einstieg zum Kampfprotokoll gehoert dazu, weil .header-actions im
+           Mobil-Layout ausgeblendet ist und es sonst NULL sichtbare Wege zum Panel
+           gab. Bei 360px passten sieben mit 8px Innenabstand nicht mehr — gemessen
+           ragte der Theme-Knopf 29px aus dem Kopf heraus und war nicht mehr
+           erreichbar. Enger statt unerreichbar: unterhalb von 600px schrumpfen die
+           Innenabstaende, die Hoehe der Tippflaeche (43px) bleibt unberuehrt, und
+           kein Bedienelement verschwindet.
+           600px und nicht 400px, obwohl der Engpass erst bei ~400px beginnt: F-12
+           (tests/unit/design-consistency.test.js) laesst genau DREI Grenzen zu —
+           600, 900, 1200. Eine vierte waere der Anfang der Leiter, die diese
+           Ratsche gerade verhindert. Zwischen 400 und 600px sind die Knoepfe damit
+           etwas schmaler als noetig; das ist der guenstigere Handel.
+
+           C1 — DIE RECHNUNG, DIE DAZU FEHLTE, und warum die Leiste trotz dieses
+           Schrittes noch ueberbucht war. Gemessen am gebauten Buendel bei 320px
+           Fensterbreite (Innenabstand 2x8px, also 304px Inhaltsbreite):
+
+             6 Symbolknoepfe   219.6px   (36.6 / 36.6 / 36.6 / 36.6 / 27.1 / 36.6)
+             Sitzungszaehler    87.6px   ("00:00:00" 61.6 + 24 Innen + 2 Rahmen)
+             2x2 Zwischenraum   32.0px
+             ------------------------------------
+             Summe             339.2px   in 304px  ->  25.7px ZU VIEL
+
+           Der Ueberschuss lag schon vor dieser Runde rechts des Fensterrands;
+           die Probe sah ihn nur nicht, weil sie `elementFromPoint` auf der
+           KNOPFMITTE fragt und die bei x=319 noch knapp drinnen lag — 0.8px
+           Reserve. Unter der Linux-Schriftmetrik ist der Zaehler 5.6px breiter
+           ("00:00:00" in DejaVu Sans Mono statt Consolas; nachgestellt mit
+           Courier New, 0.600em gegen 0.550em Vorschub), die Mitte wandert auf
+           x=325, und die Antwort ist `nichts`. Das sind die acht CI-Faelle.
+           Und der blockierte Knopf ist NICHT der Suchknopf, obwohl die Meldung
+           `button.mobile-search-btn` lautet: alle sieben teilen diese Klasse,
+           der rechte ist der Theme-Knopf.
+
+           DREI ZAHLEN, die den Ueberschuss aufloesen, und keine davon nimmt
+           Tippflaeche:
+             Zwischenraum 8 -> 4px          -16.0px   (toter Raum, keine Flaeche)
+             Zaehler-Innenabstand 12 -> 6px -12.0px   (Kasten bleibt, Hoehe bleibt)
+             Sekunden ausgeblendet          -23.1px   (acht Zeichen -> fuenf)
+             ------------------------------------
+                                            -51.1px  ->  Summe 288.1px, 15.9px frei
+           Unter der Linux-Metrik: 291.6px, 12.4px frei. Die sechs Knopfbreiten
+           aendern sich dabei um KEINEN Bildpunkt — ihre Glyphen kommen aus der
+           Symbolschrift des Betriebssystems, nicht aus --font-ui (gemessen: 12
+           von 13 Symbolcodepunkten sind in Segoe UI, Verdana und einer
+           Nullschrift bildpunktgleich).
+           WARUM DIE KNOEPFE NICHT AUF 44px WACHSEN, obwohl das die Schranke der
+           Mobil-Runde ist: 6x44 + 16 Zwischenraum + 56 Zaehler sind 336px in
+           304px. Die 44px sind an den Reitern der Navigationsleiste gesichert
+           (.nav-tab, M1), nicht an diesen sieben — heute ist KEINES der sieben
+           44px breit oder hoch (36.6x43, der Layout-Knopf 27.1x43). Diese Runde
+           macht sie nicht kleiner; groesser kann sie hier nur machen, wer dem
+           Zaehler oder einem Knopf den Platz nimmt. */
+        @media (max-width: 600px) {
+            [data-layout="mobile"] .mobile-header {
+                padding: 10px 8px;
+            }
+
+            [data-layout="mobile"] .mobile-search-btn {
+                padding: 8px 4px;
+            }
+
+            /* Enger, nicht kleiner: 4px toter Raum zwischen zwei 36.6px breiten
+               Tippflaechen statt 8px. Die Flaechen selbst bleiben unberuehrt. */
+            [data-layout="mobile"] .mobile-header-group {
+                gap: 4px;
+            }
+
+            /* Der Kasten des Zaehlers bleibt (er ist tippbar und muss danach
+               aussehen), nur sein waagerechter Innenabstand gibt nach. Die
+               senkrechten 6px bleiben: sie tragen die Hoehe der Tippflaeche. */
+            [data-layout="mobile"] .mobile-timer {
+                padding: 6px 6px;
+            }
+
+            /* Auf Telefonbreiten zeigt der Sitzungszaehler Stunden und Minuten.
+               Die Sekunden eines SITZUNGS-zaehlers sind am Tisch keine
+               Information — gefragt ist "wie lange spielen wir schon" —, kosten
+               hier aber 23.1px von 304px und damit genau den Platz, der dem
+               rechten Knopf fehlte. Die Vollform steht unveraendert in der
+               Desktop-Kopfzeile (#session-timer-display). Die Trennung in zwei
+               Knoten macht schreibeMobilZeit() in systems/session-timer.js. */
+            [data-layout="mobile"] .mobile-timer-seconds {
+                display: none;
+            }
+        }
+
         /* Desktop keeps everything as-is */
         [data-layout="desktop"] .mobile-header {
             display: none;
@@ -289,8 +414,8 @@
             border-bottom: 1px solid var(--border);
             padding: 8px 16px;
             position: sticky;
-            top: 0;
-            z-index: var(--z-sticky);
+            top: var(--sticky-top-header, 0px); /* Glied 1: Hoehe des festen Umzugs-Bands, 0 ohne Band (updateStickyOffsets) */
+            z-index: var(--z-sticky); /* oberste der drei angehefteten Ebenen — siehe variables.css */
         }
         
         .app-header-top {
@@ -595,6 +720,101 @@
         }
         
         .form-group textarea { min-height: 60px; resize: vertical; }
+
+        /* FORMULAR-PRIMITIVE .form-label / .form-control (U4, 2026-10-01).
+           Beide Namen kommen aus drei Modulen — timeline-render.js (6x),
+           session-prep-render.js (8x), npc-generator.js (2x) — und hatten bis
+           heute KEINE einzige CSS-Regel im ganzen Baum. Die Folge war am
+           Browser messbar: die Felder standen in nativer Darstellung (2px
+           inset, rgb(59,59,59), Eigenbreite 173px statt 100 %), #tl-form-jahr
+           ragte dadurch 68px aus der 500px-Modalkarte, und jede Beschriftung
+           stand als display:inline NEBEN ihrem Feld statt darueber.
+
+           WARUM NEUE REGELN UND KEINE UMHAENGUNG AUF .form-group: .form-control
+           steht durchweg als ZWEITKLASSE neben modulspezifischen Namen
+           (.npcg-select, .wp-szene-titel, .wp-textarea), und die tragenden
+           Umschlaege heissen .tl-form-col / .wp-form-col und fuehren eigene
+           Flex-Werte. Ein zusaetzliches .form-group an diesen Umschlaegen
+           haette sein `margin-bottom: 10px` auf Zeilen gelegt, die schon
+           `margin-bottom: 12px` von .tl-form-row erben, und haette die
+           Elementmenge des F-18-bewachten Blocks `.form-group label` fuer
+           reine Kosmetik vergroessert. Die Werte hier sind DIESELBEN wie im
+           .form-group-Paar darueber — eine Dublette ist das nicht, weil die
+           Selektoren verschieden sind und keine Regel doppelt steht.
+
+           REIHENFOLGE IST ABSICHT: core.css ist der 3. @import. Die
+           modulspezifischen Regeln gleicher Spezifitaet (0,1,0) in welt.css
+           (20. @import) und tools.css gewinnen also weiterhin — nachgemessen
+           an .npcg-select, dessen eigene Breite unveraendert bleibt. */
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--gold);
+        }
+
+        /* .form-select / .form-input SIND DERSELBE BEFUND WIE .form-control EINEN
+           ABSATZ WEITER OBEN, nur eine Runde spaeter gefunden (C2, 2026-10-02).
+           Beide Namen kommen aus features/reise/ — vier `select.form-select`
+           (reise-render.js:77/81/93/97), drei `input.form-input`
+           (reise-render.js:85/101 und reise-crud.js:308) — und hatten im ganzen
+           Baum KEINE Regel. Gemessen stand jedes der sieben Felder in nativer
+           Darstellung: rgb(59,59,59) Flaeche, rgb(133,133,133) Rahmen, 0px
+           Radius, 0px Innenabstand, 13.3333px aus `font: -webkit-small-control`,
+           also der SYSTEMSCHRIFT des Betriebssystems statt --font-ui.
+
+           WARUM DAS NICHT NUR KOSMETIK IST: genau diese vier Auswahlfelder
+           standen im CI-Lauf 36966941474 unter den 24 abweichenden Digests des
+           Stil-Waechters, und zwar OHNE jede Schriftmetrik-Beteiligung — ihr
+           erfasster Stil war das Formularthema von `ubuntu-latest`, nicht die
+           Gestalt dieser App. Die zugehoerige Zusicherung steht in
+           tests/e2e/features/computed-style-diff.spec.js
+           (assertKeineUaBedienelemente) und haelt die Luecke ab jetzt zu.
+
+           DIESELBEN WERTE WIE .form-control, deshalb DERSELBE Selektorblock und
+           keine zweite Regel: eine Dublette (F-18-Ratsche) entstuende sonst
+           woertlich. `width: 100%` ist hier zusaetzlich ein Platzgewinn — die
+           Felder tragen damit keine Eigenbreite mehr in das min-content ihrer
+           Zeile (.rs-config-row ist eine umbrechende Flexzeile). */
+        .form-control,
+        .form-select,
+        .form-input {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        textarea.form-control { min-height: 60px; resize: vertical; }
+
+        /* MODAL-SCHLIESSKNOPF (U4, 2026-10-01). .modal-close steht in sieben
+           Modalen (zwei Templates, fuenf JS-Module) und hatte null Regeln —
+           gemessen war es der graue Systemknopf des Browsers: 2px outset,
+           rgb(107,107,107), cursor default. Die einzige verwandte Regel war
+           `.char-modal-close` (nur Positionierung); die beruehrt diese hier
+           nicht, weil party-details.js ausschliesslich den char-Namen setzt.
+           Die Regel steht hier und nicht bei .modal-header in dashboard.css,
+           weil sie ohne die Kopfzeile funktionieren muss: markdown-import-
+           export.js und party-details.js setzen den Knopf auch ausserhalb. */
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 22px;
+            line-height: 1;
+            padding: 0 4px;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .modal-close:hover { color: var(--gold); }
+
         .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-group { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
         
@@ -966,6 +1186,34 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            /* C1 — EIN LANGER FIGURENNAME DARF UMBRECHEN, AUCH IM WORT.
+               Die min-content-Breite der Charakterkarte wird von GENAU EINEM
+               Kind getrieben: `.char-card-header`. Belegt mit einer Ausblendprobe
+               am gebauten Buendel (jedes Kind einzeln auf `display: none`, Karte
+               auf `width: min-content`): ohne `.char-card-body` aendert sich die
+               Mindestbreite um 0px, ohne den Kopf um 98.53px. Der Kopf ist eine
+               nowrap-Flexzeile aus Bildnis 40px + `.char-card-info` +
+               Trefferpunkten 60px, und `.char-card-info` traegt trotz
+               `min-width: 0` seine eigene min-content-Breite in die Summe:
+               `min-width: 0` senkt nur den Boden, unter den ein Flex-Element
+               schrumpfen DARF — es nimmt dem Element nicht seinen
+               min-content-Beitrag.
+               Dieser Beitrag war 135.02px und kam aus dem laengsten einzelnen
+               WORT des Namens. `overflow-wrap: anywhere` ist die einzige
+               Eigenschaft, die die intrinsische Mindestbreite von Text
+               tatsaechlich senkt (`overflow-wrap: break-word` tut das
+               ausdruecklich NICHT) — gemessen faellt die Mindestbreite der ganzen
+               Karte damit 285.02 -> 222.16px (Segoe UI) und 304.88 -> 233.88px
+               (Verdana als Nachstellung der Linux-Metrik, Faktor 1.155). In
+               einer 300px-Spalte sind das 66px Luft statt 4.88px Ueberlauf.
+               Das ist die inhaltliche Haelfte der Korrektur; die strukturelle
+               steht an `--grid-columns` (variables.css). Beide zusammen, nicht
+               eine davon: `minmax(0, 1fr)` allein haelt die Spalte im Raster und
+               laesst den Namen aus der KARTE laufen, `overflow-wrap` allein
+               laesst eine spaeter wieder zu breite Karte das Raster sprengen.
+               Am Desktop aendert die Zeile nichts, solange der Name passt — sie
+               greift erst, wenn ein Wort allein breiter ist als die Zeile. */
+            overflow-wrap: anywhere;
         }
 
         .char-card-name .drag-handle {
@@ -1878,7 +2126,38 @@
         
         .quest-header:hover { background: var(--bg-hover); }
         
-        .quest-title-row { display: flex; align-items: center; gap: 8px; flex: 1; }
+        /* Q1 — DIE TITELZEILE DARF SCHRUMPFEN UND UMBRECHEN.
+           `flex: 1` setzt `flex-shrink: 1`, aber `min-width` steht per Vorgabe
+           auf `auto`, und bei einem Flex-Element ist das das inhaltsbasierte
+           Minimum: Griff, Anheft-Knopf, Titel, Typ-Marke und der Auftraggeber
+           ergaben zusammen 303px. In einer 296px breiten `.quest-header`
+           (`justify-content: space-between`) konnte die Zeile nicht nachgeben,
+           und die Done/Loot-Marken rechts davon wurden hinausgedrueckt.
+           `.quest-item { overflow: hidden }` schnitt sie dann ab — gemessen am
+           gebauten Buendel mit GEFUELLTER Kampagne begannen sie bei 320x700 bei
+           x=328, lagen also VOLLSTAENDIG ausserhalb eines 320px breiten
+           Fensters und waren nicht antippbar. Das Dokument meldete dabei 0
+           Ueberhang; der Fehler war nur an den einzelnen Elementen zu sehen
+           (48 bei 320x700, 32 bei 360x740, 24 bei 390x844).
+
+           WARUM BEIDES, `min-width: 0` UND `flex-wrap: wrap`. `min-width: 0`
+           allein loest die Marken frei, verschiebt den Fehler aber eine Ebene
+           nach innen: die Titelzeile ist dann 137px breit, und der
+           Auftraggeber-Verweis darin hat selbst 117px min-content (das Wort
+           "Nichtspielerfigur") — er ragte weiter hinaus. Mit `wrap` legt sich
+           der Verweis in eine zweite Zeile und passt. Das ist der Unterschied
+           zwischen frei und versteckt: nichts wird abgeschnitten, alles bleibt
+           erreichbar.
+
+           WARUM NICHT `overflow: hidden; text-overflow: ellipsis` am Verweis,
+           was die App an `.init-name` und `.fr-card-name` tut: dort kuerzt es
+           einen NAMEN, der im Detail daneben vollstaendig steht. Hier waere es
+           der einzige Ort, an dem der Auftraggeber in der Liste auftaucht.
+
+           Gilt in jeder Breite, nicht nur im Mobil-Profil: die Zeile bricht nur
+           um, wenn der Platz fehlt. Bei 1440x900 und 1280x800 ist die Geometrie
+           aller 24 Ansichten vorher/nachher auf den Bildpunkt gleich. */
+        .quest-title-row { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; flex-wrap: wrap; }
         .quest-title { font-weight: 600; color: var(--text); }
         .quest-item.completed .quest-title { text-decoration: line-through; }
         
@@ -2159,11 +2438,283 @@
         /* ============================================================
            LOCATIONS VIEW - Master-Detail Layout (Redesigned)
            ============================================================ */
+        /* DAS HOEHENBUDGET KOMMT AUS DER MESSUNG, NICHT AUS EINER ZAHL (U6).
+           `--view-frame-height` ist "Band-Gegenrechnung am body + Kopfzeile +
+           Innenabstand von .main-content", von updateStickyOffsets() in
+           ui/editors/rich-text-insert.js zur Laufzeit gemessen. Hier stand
+           `calc(100vh - 120px)`, waehrend die Umrahmung 134px hoch ist (102
+           Kopfzeile + 16 + 16) — und mit stehendem Umzugs-Band 195px. Gemessen
+           am Buendel zu fef3afb, 128 Zustaende: Seitenueberhang 14px ohne Band
+           (ab 1280 Breite), 52px bei 900, 75px mit Band (ab 1280), 113px bei
+           900; in 128 von 128 Zustaenden groesser als 0. Der Ueberhang ist der
+           Weg, auf dem die Seite ueberhaupt scrollt — und damit der, auf dem die
+           Werkzeugleiste unter die angeheftete Kopfzeile rutscht (59px ab 1280,
+           74-103px bei 900; das Suchfeld antwortete auf elementFromPoint mit
+           BUTTON.nav-group-btn). Der Rueckfall 134px ist nur der Zustand VOR dem
+           ersten Lauf der Funktion; sie besetzt das Token in beiden
+           Layout-Zweigen, damit er im Betrieb nie zum Zug kommt.
+           Dieselbe Zeile fuehren die vier Geschwister: npcs.css
+           (.npc-view/.loot-view), encounters.css (.enc-view), bestiary.css
+           (.bestiary-view) — bewacht von tests/unit/schalen-aktenlage.test.js. */
         .loc-view.active {
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 120px);
+            height: calc(100vh - var(--view-frame-height, 134px));
             overflow: hidden;
+        }
+
+        /* ============================================================
+           C1/R1 — WENIGER LEISTE STATT MEHR ROLLBEREICH
+           ============================================================
+           Die fuenf Schalen darueber haben eine FESTE Hoehe. Was die
+           Werkzeugleiste darin nimmt, fehlt der Liste bildpunktgenau — die
+           Beziehung ist linear und gemessen:
+               Spaltenhoehe = Schalenhoehe - Leistenhoehe - 12px
+           Und die Leistenhoehe ist keine Konstante: unter 900px darf die Leiste
+           umbrechen (`flex-wrap: wrap`, editors.css), also haengt ihre Hoehe an
+           der Breite ihrer Beschriftungen. Der CI-Lauf 36966941474 hat das
+           gemeldet: die Truhe bei 360x740 mit Leiste 357 von 505px Schale,
+           Listenspalte 136px bei 74px Eintragshoehe.
+
+           HIER STAND EIN DECKEL (`max-height: 60%; min-height: 0;
+           overflow-y: auto`), und er war das falsche Werkzeug. Seine eigene
+           Begruendung behauptete, er greife "in KEINEM gemessenen Zustand" —
+           gemessen waren aber nur 360x740 und 390x844. Bei 320x568 ist die
+           Schale 330px hoch, 60% davon 198px, und die Leiste braucht mehr. Am
+           gebauten Buendel, gefuellte Kampagne, UNTER DER OERTLICHEN SCHRIFT
+           (Segoe UI/Consolas — kein Linux noetig), waren vier der fuenf Schalen
+           betroffen:
+               Truhe       Bedarf 294 in 198  ->  rollt  98   8 Bedienelemente ab
+               NSCs        Bedarf 323 in 198  ->  rollt 127   7 Bedienelemente ab
+               Orte        Bedarf 251 in 198  ->  rollt  55   5 Bedienelemente ab
+               Begegnungen Bedarf 264 in 198  ->  rollt  68   6 Bedienelemente ab
+           Abgeklemmt waren unter anderem die Filterchips "Edelsteine", "Ringe",
+           "Amulette", "Wundersame Gegenstaende", "Sonstiges", der Knopf
+           "Verteilen" und beide Austausch-Knoepfe — erreichbar nur ueber einen
+           2px breiten Rollbalken in einer Leiste, die sonst nirgends in dieser
+           App rollt. Der Deckel tauschte "zu wenig Liste" gegen "unerreichbare
+           Bedienelemente". Das ist kein Boden, das ist eine Falltuer.
+
+           AN SEINER STELLE STEHEN ZWEI SAETZE.
+           (1) Die Leiste gibt nicht nach — `flex-shrink: 0`. Der 74px-Boden aus
+               editors.css ist eine AUSDRUECKLICHE `min-height` und ersetzt damit
+               das inhaltsbasierte `auto`; ohne diese Zeile konnte die Leiste als
+               Flex-Element bis auf 74px schrumpfen und ihren Inhalt ueber die
+               Liste schieben (gemessen: Begegnungen bei 320x568, 4px Ueberlauf).
+               Elastisch ist die Liste, nicht die Leiste — die Liste rollt, und
+               zwar an der Stelle, an der jeder Nutzer das erwartet.
+           (2) Die Leiste wird KUERZER, statt mehr Rollbereich zu bekommen: die
+               Chipreihe ist unter 900px ein einzeiliger Rollstreifen (Regel
+               weiter unten). Danach, dieselbe Messung, dieselbe Saat:
+               Truhe 294 -> 193, NSCs 323 -> 219, Orte 251 -> 182, Begegnungen
+               264 -> 231 Bildpunkte Bedarf. In 25 gemessenen Zustaenden
+               (5 Schalen x 5 Fenster, je unter der oertlichen UND der breiten
+               Schrift) rollt keine Leiste mehr und kein Bedienelement liegt
+               ausserhalb seines Kastens.
+           Was den Platz der Liste jetzt bewacht, ist keine Mechanik, die im
+           Stillen degradiert, sondern eine Zusicherung, die rot wird:
+           tests/e2e/features/breite-schrift.spec.js (3) und (4) verlangen
+           `scrollHeight === clientHeight` an der Leiste und messen die Reserve
+           der Listenspalte. Ein lauter Fehlschlag ist besser als ein
+           Rollbalken, den niemand findet.
+
+           WAS BEI 320x568 BLEIBT, offen gesagt: die Schale ist dort 330px hoch,
+           eine dreizeilige Leiste (Titel+Aktion / Suche / Filterstreifen)
+           braucht rund 195px, und zwei Truhen-Eintraege brauchen 148px. 195 +
+           148 + 12 sind 355 > 330 — zwei Eintraege passen bei dieser Fensterhoehe
+           NICHT, und keine Zahl an dieser Regel aendert das. Ein Eintrag ist
+           vollstaendig sichtbar (123 gegen 74px), die Liste rollt. Zwei
+           Eintraege sind bei 320x700 und darueber gesichert (255px Spalte).
+           NUR IM MOBIL-PROFIL: am Schreibtisch gilt `flex-wrap: nowrap` und die
+           Leiste ist gemessen konstant 74px hoch — ohne Umbruch gibt es nichts
+           zu schuetzen. */
+        [data-layout="mobile"] .loc-view.active > .section-toolbar,
+        [data-layout="mobile"] .npc-view.active > .section-toolbar,
+        [data-layout="mobile"] .loot-view.active > .section-toolbar,
+        [data-layout="mobile"] .enc-view.active > .section-toolbar,
+        [data-layout="mobile"] .bestiary-view.active > .section-toolbar {
+            flex-shrink: 0;
+        }
+
+        /* ============================================================
+           C1/R1 — DIE CHIPREIHE IST EIN EINZEILIGER ROLLSTREIFEN
+           ============================================================
+           Die vier Chipreihen sind der groesste Posten jeder Leiste, und sie
+           sind alle vier DATENGETRIEBEN: die Truhe fuehrt zehn feste
+           Kategorien, die NSCs die ersten fuenf Orte, die Orte alle
+           `D.filters`, die Begegnungen die ersten fuenf Kreaturtypen (je plus
+           ein "Mehr..."-Auswahlfeld). Ihre Hoehe haengt damit am Inhalt der
+           Kampagne — und bei umbrechender Reihe geht jede zusaetzliche Zeile
+           1:1 von der Listenspalte ab. Gemessen am gebauten Buendel, gefuellte
+           Kampagne, bei 320px Fensterbreite:
+               Truhe         10 Chips   129px  (4 Zeilen)
+               NSCs           7 Kinder  138px
+               Orte           9 Chips    98px
+               Begegnungen    7 Kinder   67px
+           Als EINZEILIGER Rollstreifen messen dieselben Reihen 28 / 34 / 29 /
+           34px. Das sind zwischen 33 und 104 Bildpunkte, die an die Liste
+           zurueckgehen, und der Betrag haengt nicht mehr an der Zahl der Chips.
+           WARUM SEITWAERTS ROLLEN HIER RICHTIG IST und beim Deckel darueber
+           falsch war: eine waagerecht rollende Chipreihe ist die gelaeufige
+           Gestalt auf dem Telefon — der angeschnittene Chip am rechten Rand IST
+           die Aufforderung, und derselbe Streifen steht in dieser App schon an
+           `.nav-tabs` (gleiche 4px-Balkengestalt, weiter oben). Eine SENKRECHT
+           rollende Werkzeugleiste gibt es nirgends sonst; niemand sucht dort
+           einen Rollbalken.
+           DIE ANDERE MOEGLICHKEIT WAR, die Chips hinter einen Filterknopf zu
+           legen — einen Aufklapper, der die zehn Kategorien erst auf Antippen
+           zeigt. Sie ist bewusst nicht gewaehlt: ein Aufklapper braucht einen
+           neuen Zustand (offen/zu), eine neue Handlung, eine Flaeche zum
+           Schliessen und eine Entscheidung darueber, was geschieht, wenn der
+           Spielleiter mitten im Kampf daneben tippt — und er verbirgt, WELCHER
+           Filter gerade aktiv ist, also genau die Angabe, die am Tisch zaehlt
+           ("warum sehe ich nur drei Gegenstaende?"). Der Streifen zeigt den
+           aktiven Chip weiter, kostet keine Zeile Verhaltenslogik und bringt
+           dieselben Bildpunkte. Wird die Reihe eines Tages zu lang zum Rollen,
+           ist der Aufklapper der naechste Schritt — nicht der erste.
+           WAS DER 4px-BALKEN LEISTET UND WAS NICHT — nachgemessen, nicht
+           angenommen: dieser Browser legt den Balken UEBER den Inhalt. Der
+           Streifen ist mit der Regel 28px hoch und ohne sie auch; selbst
+           `height: 16px !important` aendert `offsetHeight - clientHeight` nicht
+           von 0. Die Regel ist deshalb KEINE Aufforderung, auf die man sich
+           verlassen kann — das ist der angeschnittene Chip am rechten Rand. Sie
+           ist eine SCHRANKE: wo eine Plattform einen Platz belegenden Balken
+           zeichnet (klassische Rollbalken unter Linux messen rund 15px), ist er
+           hier 4px statt 15px hoch. Gestalt und Begruendung sind dieselben wie
+           an `.nav-tabs` weiter oben. Beide Faelle deckt die Zusicherung ab:
+           sie fragt nach der Reserve der Listenspalte, nicht nach der
+           Streifenhoehe.
+           WARUM `max-width: 900px` UND NICHT `[data-layout="mobile"]`: der
+           Umbruch der Leiste selbst haengt an genau dieser Grenze
+           (`.section-toolbar { flex-wrap: wrap }`, editors.css). Die Bedingung,
+           die das Problem erzeugt, ist die Fensterbreite — nicht das gewaehlte
+           Layoutprofil. So gilt die Regel auch, wenn jemand bei 320px das
+           Schreibtisch-Profil erzwingt.
+           WARUM ZWEI KLASSEN IM SELEKTOR: npcs.css, encounters.css und loot.css
+           laden NACH core.css und setzen dort `flex-wrap: wrap` mit einer
+           Klasse. Eine Medienabfrage erhoeht die Spezifitaet nicht — mit einer
+           Klasse verlieren diese Regeln hier gegen die spaeteren. `.loot-view
+           .loot-filter-chips` ist der kleinste Selektor, der gewinnt, ohne
+           `!important` zu brauchen (die Ratsche F-18 zaehlt die mit).
+           WARUM `min-width: 0` AM STREIFEN: ein Rollbehaelter hat nach
+           Spezifikation die automatische Mindestgroesse 0, die Zeile ist also
+           ein Guertel und keine Notwendigkeit — sie steht da, damit die
+           Mindestbreite des Streifens auch dann nicht aus seinem Inhalt kommt,
+           wenn eine spaetere Regel `overflow` wieder aendert. Ohne sie waere der
+           Weg zu einem seitlichen Seitenueberhang offen (gemessen: 0px in allen
+           25 Zustaenden).
+           WARUM `flex: 0 0 auto` UND `white-space: nowrap` AN DEN KINDERN: in
+           einer nowrap-Reihe wuerden sie sonst zusammengedrueckt, ihren Text
+           innen umbrechen und den Streifen wieder hoeher machen — statt zu
+           rollen. Nur die Truhen-Chips trugen `nowrap` schon.
+           DIE REIHE ENTHAELT NICHT NUR CHIPS (C1/R2) — und genau diese Annahme
+           hat in Runde 1 einen Fehler erzeugt. Die NSCs und die Begegnungen
+           fuehren ab dem sechsten Eintrag ein Auswahlfeld "Mehr..."
+           (`npc-render.js`, `encounters-render.js`), und ueber das sind die
+           Orte 6..n bzw. die Kreaturtypen ab dem sechsten UEBERHAUPT ERST
+           erreichbar. Die erste Fassung dieser Regel gab die Schranke nur den
+           vier Chipklassen; das Auswahlfeld daneben behielt damit den
+           Voreinstellungswert `flex-shrink: 1` und saugte als EINZIGES
+           schrumpfbares Kind die gesamte Schrumpfung der Reihe auf — gemessen
+           26px statt 159px (Segoe UI) bzw. 178px (breite Schrift) in allen
+           Telefonfenstern, also ein Kasten mit dem Chevron und keinem Zeichen
+           Text (Innenabstand 7px 12px laesst bei 26px Gesamtbreite zwei
+           Bildpunkte). Der Streifen rollte dabei, nichts lag ausserhalb, der
+           Seitenueberhang blieb 0: der Mangel war durch keine der beiden
+           damaligen Zahlen von Fall (4) zu sehen. Ein Rollstreifen rollt,
+           damit seine Bedienelemente ihre Breite BEHALTEN; dass eines von
+           ihnen fuer die anderen bezahlt, ist das Gegenteil seines Zwecks.
+           WARUM `> select` NACH TAG UND NICHT `.npc-filter-select` NACH KLASSE:
+           der Tag sagt, WAS das Kind ist, und gilt unabhaengig davon, wie seine
+           Klasse eines Tages heisst oder ob die Truhe und die Orte spaeter auch
+           eines bekommen (beide haben heute keines). Die vier Zeilen decken
+           damit alle vier Reihen ab, nicht nur die zwei mit heutigem Befund.
+           WARUM NICHT `> *`, was noch allgemeiner waere: der Teilselektor `*`
+           als Subjekt nimmt der F-18-Ratsche die Urteilsfaehigkeit. Sie
+           vergleicht Paare gleicher Spezifitaet am rechten Teilselektor; ein
+           `*` passt dort auf JEDES Element des Bestands, und die Ratsche meldete
+           prompt vier Paare gegen `.editor-toolbar .editor-btn` (0,2,0 gegen
+           0,2,0 auf `flex-shrink`) — frei erfunden, denn ein `.editor-btn` ist
+           nie ein Kind dieser Reihe, aber statisch nicht widerlegbar. Mit vier
+           erfundenen Paaren im eingefrorenen Stand waere jede kuenftige
+           `flex`-Aenderung gleicher Spezifitaet ein neuer Befund an dieser
+           Regel. Die Allgemeinheit, die `> *` gebracht haette, leistet
+           stattdessen eine Zusicherung: breite-schrift.spec.js (4),
+           ZUSICHERUNG 4 prueft JEDES Kind jedes Streifens in vier Fenstern
+           gegen seinen Inhaltsbedarf und wird rot, sobald ein kuenftiges Kind
+           ungeschuetzt bleibt. Eine laufende Messung ist hier der bessere
+           Waechter als ein Selektor, der nichts mehr unterscheidet.
+           SPEZIFITAET: `.npc-view .npc-filter-chips > select` ist 0,2,1 und
+           gewinnt damit gegen `.npc-filter-select` (0,1,0) in npcs.css und
+           `.enc-filter-select` in encounters.css, die beide NACH core.css
+           laden. Kein `!important` (Ratsche F-18). */
+        @media (max-width: 900px) {
+            .loot-view .loot-filter-chips,
+            .npc-view .npc-filter-chips,
+            .loc-view .loc-filter-chips,
+            .enc-view .enc-filter-chips {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                min-width: 0;
+            }
+
+            .loot-view .loot-filter-chip,
+            .npc-view .npc-filter-chip,
+            .loc-view .loc-filter-chip,
+            .enc-view .enc-filter-chip,
+            .loot-view .loot-filter-chips > select,
+            .npc-view .npc-filter-chips > select,
+            .loc-view .loc-filter-chips > select,
+            .enc-view .enc-filter-chips > select {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            /* DIE ZEILE, DIE DER STREIFEN AN SEINEM ELTERNTEIL BRAUCHT — und
+               ohne die er einen neuen Fehler erzeugte. `.section-toolbar-filters`
+               ist unter 900px `flex: 1 1 auto` (editors.css). Enthaelt sie einen
+               nowrap-Streifen, ist ihre max-content-Breite die Summe ALLER
+               Chips, und ohne `min-width: 0` schrumpft sie nicht darunter:
+               gemessen bei 740x360 wurde die Filtergruppe der NSCs 1042px breit
+               in einer 718px schmalen Leiste, die Leiste lief ueber, und
+               `.npc-view { overflow: hidden }` schnitt bei 730px ab — vier
+               Elemente rechts des Fensterrands, ohne Rollachse, also wirklich
+               unerreichbar. Mit der Zeile sind es 0 (quer-ueberhang.spec.js (1),
+               740x360).
+               Die Truhe ist der Beweis, dass genau diese Zeile fehlte: sie
+               fuehrt `min-width: 0` an ihrer Filtergruppe schon lange (loot.css)
+               und war als einzige der vier nicht betroffen. Sie steht hier mit,
+               damit die Begruendung an einer Stelle steht und nicht an einer
+               Zeile in einer anderen Datei haengt. */
+            .loot-view .section-toolbar-filters,
+            .npc-view .section-toolbar-filters,
+            .loc-view .section-toolbar-filters,
+            .enc-view .section-toolbar-filters {
+                min-width: 0;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar,
+            .npc-view .npc-filter-chips::-webkit-scrollbar,
+            .loc-view .loc-filter-chips::-webkit-scrollbar,
+            .enc-view .enc-filter-chips::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar-track,
+            .npc-view .npc-filter-chips::-webkit-scrollbar-track,
+            .loc-view .loc-filter-chips::-webkit-scrollbar-track,
+            .enc-view .enc-filter-chips::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar-thumb,
+            .npc-view .npc-filter-chips::-webkit-scrollbar-thumb,
+            .loc-view .loc-filter-chips::-webkit-scrollbar-thumb,
+            .enc-view .enc-filter-chips::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: var(--radius-sm);
+            }
         }
 
         .loc-toolbar button,
@@ -2287,7 +2838,39 @@
             .enc-layout,
             .bestiary-layout,
             .fr-layout {
-                grid-template-columns: 1fr;
+                /* Q1 — `minmax(0, 1fr)` statt `1fr`. `1fr` ist die Kurzform von
+                   `minmax(auto, 1fr)`, und das `auto` als Minimum ist die
+                   min-content-Breite des Inhalts: die Spalte kann also GROESSER
+                   werden als das Raster, obwohl sie dessen ganzen Platz nehmen
+                   soll. Gemessen am gebauten Buendel mit GEFUELLTER Kampagne
+                   traf es die Fraktionen: `.fr-layout` war 300px breit, seine
+                   einzige Spalte loeste zu 426px auf (min-content der
+                   Fraktionskarten, einer `flex-wrap: nowrap`-Reihe), und die
+                   Seite scrollte seitwaerts — 116px bei 320x700, 76px bei
+                   360x740, 46px bei 390x844, in allen vier Themes gleich. Auf
+                   einer LEEREN Kampagne war der Ueberhang 0; der Fehler
+                   braucht Karten, um sich zu zeigen.
+
+                   Die uebrigen sechs Schalen derselben Regel ragten nicht
+                   hinaus, weil die min-content-Breite ihrer Listen unter der
+                   Fensterbreite blieb. Die Korrektur steht trotzdem hier an der
+                   gemeinsamen Regel und nicht als Einzelfall an `.fr-layout`:
+                   die Bauart ist in allen sieben dieselbe, und welche Liste
+                   morgen eine Knopfreihe mehr traegt, entscheidet nicht die
+                   Kaskade.
+
+                   Die Gegenstueck-Zeile in der anderen Achse —
+                   `grid-template-rows: minmax(0, 1fr)` am Desktop-Zweig weiter
+                   oben — traegt dieselbe Begruendung; dort war es die Zeile,
+                   die dem hoechsten Kind folgte.
+
+                   Der Desktop-Zweig (`1fr 825px` / `1fr 520px`) bleibt
+                   UNANGETASTET: bei 1440x900 und 1280x800 ragt heute nichts
+                   hinaus, und `minmax(0, 1fr)` haette dort die Master-Spalte
+                   unter ihre min-content-Breite druecken koennen. Die Probe
+                   haelt beides fest (24/24 ohne Ueberhang, zwei Spalten je
+                   Schale). */
+                grid-template-columns: minmax(0, 1fr);
                 overflow: visible;
             }
         }

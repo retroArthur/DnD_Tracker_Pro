@@ -44,9 +44,14 @@ async function importCampaignFile(page, payload) {
         buffer: Buffer.from(JSON.stringify(payload))
     });
     // importDataGlobal() liest die Datei asynchron per FileReader ein und
-    // rendert danach neu — auf den Import-Toast warten statt fester Wartezeit.
+    // rendert danach neu — auf die Import-Meldung warten statt fester Wartezeit.
+    // U5: im Kampfprotokoll statt im abgeschalteten Alt-Knoten #toast; der
+    // Ringpuffer verliert die Meldung nicht.
     await page.waitForFunction(
-        () => document.querySelector('#toast')?.textContent?.includes('Import OK'),
+        () =>
+            (typeof window.getCombatLog === 'function' ? window.getCombatLog() : []).some(e =>
+                String(e.text).includes('Import OK')
+            ),
         { timeout: 10000 }
     );
 }

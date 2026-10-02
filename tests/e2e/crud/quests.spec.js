@@ -7,7 +7,8 @@ import {
     selectOption,
     generateTestName,
     performUndo,
-    seedCleanSession
+    seedCleanSession,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -98,7 +99,9 @@ test.describe('Quests - CRUD Operationen', () => {
             // Schema-Feldnamen (`${field}: Pflichtfeld fehlt`); VALIDATION_SCHEMAS.quest.title
             // ist der englische Schluessel "title" (utils/validation.js:62), nicht das
             // deutsche Wort "Titel" — die Meldung lautet also "title: Pflichtfeld fehlt".
-            await expect(page.locator('#toast')).toContainText('title');
+            // U5: im Ereignis-Log statt im abgeschalteten Alt-Knoten #toast.
+            const meldung = await waitForLogEntry(page, { typ: 'error', text: 'title' });
+            await expect(meldung).toBeVisible();
         });
     });
 

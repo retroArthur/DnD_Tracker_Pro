@@ -255,6 +255,65 @@
     min-width: 200px;
 }
 
+/* ----------------------------------------------------------------
+   M2c — DER HINWEIS WIRD AUF TELEFONBREITE KURZ GEFASST.
+   ----------------------------------------------------------------
+   Das Band war auf Telefonbreite das teuerste Element der Seite. GEMESSEN am
+   Buendel zu f58699b, Bandhoehe je Fensterbreite:
+
+     Breite   320   360   390   480   500   600   700   900   1280
+     Hoehe    136   136   157   101    80    61    61    61     61
+
+   157px bei 390px Breite sind 19% des Fensters fuer EINEN Satz, in allen vier
+   Themes gleich. Ursache ist der Umbruch: `.migration-hint-text` hat
+   `min-width: 200px` und `flex: 1`, und die drei Kinder umbrechen bei
+   `flex-wrap: wrap`. Bei 390px blieb der Schliessknopf allein in einer zweiten
+   Reihe (Text 84px = vier Zeilen + 44px Knopfreihe + 12px Zwischenraum + 16px
+   Innenabstand = 157px); bei 360px wanderten beide Knoepfe in die zweite Reihe
+   (Text 63px = drei Zeilen + 44 + 12 + 16 = 136px).
+
+   VIER FASSUNGEN GEGENEINANDER GEMESSEN (je Fenster frisch geladen):
+
+     Fassung                              320   360   390   480   500
+     ---------------------------------    ---   ---   ---   ---   ---
+     Ist                                  136   136   157   101    80
+     nur Text auf zwei Zeilen geklammert   115   115   117    61    61
+     kurzer Text statt des langen           94    94   117    61    61
+     beides                                 94    94   117    61    61
+
+   Die Klammer (`-webkit-line-clamp`) bringt nichts, was der kurze Text nicht
+   schon bringt — die beiden letzten Zeilen sind gleich. Sie bleibt deshalb weg;
+   ein vendor-praefigierter display-Wert fuer null Wirkung ist Ballast.
+
+   Was danach uebrig bleibt, sind ZWEI Tippreihen zu je 44px (Umzugs- und
+   Schliessknopf). Die darf nichts schrumpfen: es ist dieselbe Begruendung wie
+   bei den 56px-Reitern in M1 — der Nutzer ist Spielleiter am Tisch und bedient
+   die App mit dem Daumen, unter 44px trifft der nicht mehr zuverlaessig.
+
+   WARUM ZWEI SPANS UND NICHT EIN GEKUERZTER SATZ: so bleibt der lange Satz auf
+   dem Desktop Zeichen fuer Zeichen derselbe wie bisher. Verloren geht auf dem
+   Telefon nur der erklaerende Halbsatz; die Kernaussage und der Weg dorthin
+   ("Zum App-Umzug") bleiben stehen, und der Assistent dahinter erklaert den
+   Rest. Es ist ein Hinweis, kein Dialog.
+
+   WARUM GENAU 600px: das ist eine der drei erlaubten Breakpoint-Grenzen des
+   Projekts (600/900/1200, bewacht von design-consistency.test.js F-12). Sie
+   deckt die gemessene Verbesserung vollstaendig ab — ab 480px ist das Band mit
+   dem kurzen Text schon beim Einzeiler von 61px. */
+.migration-hint-kurz {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .migration-hint-kurz {
+        display: inline;
+    }
+
+    .migration-hint-lang {
+        display: none;
+    }
+}
+
 .migration-hint-link {
     font-size: 14px;
     color: var(--gold-text);
@@ -296,6 +355,48 @@
    gesetzt und vom close-migration-hint-Handler wieder entfernt. */
 body.has-migration-hint {
     padding-top: var(--migration-hint-height, 48px);
+}
+
+/* ----------------------------------------------------------------
+   M2c — IM MOBIL-LAYOUT WEICHT DAS BAND UNTER DIE MOBIL-KOPFZEILE AUS.
+   ----------------------------------------------------------------
+   Beide Baender sind `position: fixed; top: 0` auf --z-panel (600) — und die
+   Mobil-Kopfzeile ist es auch. Sie lagen uebereinander, und die Kopfzeile
+   gewann, weil sie spaeter im Dokument steht. GEMESSEN am Buendel zu f58699b bei
+   390x844 mit `elementsFromPoint` auf der Mitte von "Zum App-Umzug" (Kasten
+   237,28,137x44): obenauf lag der klassenlose Flex-Behaelter der Mobil-Kopfzeile
+   (Kasten 266,10,116x43, `.mobile-header` 0,0,390x64). Der Knopf war dort nicht
+   anklickbar. Bei 320 und 360px Breite brach er in die zweite Bandreihe aus und
+   war frei — ein Zufall der Umbruchhoehe, kein Entwurf: nachdem der Hinweis auf
+   Telefonbreite kuerzer gefasst wurde (oben), stieg die zweite Reihe auf
+   y 41..85 und lag damit ihrerseits unter der 64px hohen Kopfzeile. Dann war
+   auch der Schliessknopf verdeckt ("verdeckt von DIV.mobile-header").
+
+   WARUM DAS BAND AUSWEICHT UND NICHT DIE KOPFZEILE: die Mobil-Kopfzeile traegt
+   Suche, Rueckgaengig, Schnellnotizen, Theme, Layout UND den einzigen
+   Mobil-Einstieg ins Kampfprotokoll (U5). Ein Band darueber zu legen macht sie
+   alle unerreichbar, und zwar fuer die ganze Sitzung. Das Band ist ein
+   voruebergehender Hinweis.
+
+   Die Gegenrechnung am Seiteninhalt stimmt dabei ohne Zutun: `body.has-*` haelt
+   die BANDHOEHE frei, `.main-content { padding-top }` die KOPFZEILENHOEHE
+   (variables.css, dasselbe Token) — zusammen genau die Unterkante des
+   verschobenen Bands. Der Rueckfall 64px ist die gemessene Isthoehe der
+   Kopfzeile bei 320-700px Breite; im Betrieb besetzt setzeMobilKopfHoehe() das
+   Token bei jedem Lauf.
+
+   Das Divergenz-Banner steht symmetrisch mit: derselbe feste Block am selben
+   Platz. Dass beide Baender nie gleichzeitig stehen, stand hier bis M3a nur als
+   Behauptung — es ist jetzt gemessen und bewacht, und die Regel, die den
+   gestapelten Zustand zu behandeln vorgab, ist weg (Begruendung am Ende dieser
+   Datei). WICHTIG fuer diese Gruppe hier: ihre Spezifitaet ist (0,2,0), und sie
+   war die VORLETZTE Regel mit dieser Spezifitaet auf `.divergence-banner` —
+   eine neue Regel weiter unten in der Datei schlaegt sie, auch ohne
+   `!important`. Genau so gewann die gestrichene Geschwisterregel gegen dieses
+   Ausweichen. */
+[data-layout="mobile"] .migration-hint-banner,
+[data-layout="mobile"] .divergence-banner {
+    top: var(--mobile-header-height, 64px);
 }
 
 /* ========================================
@@ -345,7 +446,58 @@ body.has-migration-hint {
     color: var(--text, var(--text));
 }
 
-/* Wenn beide Banner sichtbar sind, zweiten nach unten verschieben */
-.migration-hint-banner ~ .divergence-banner {
-    top: 48px;
+/* U6: dieselbe Gegenrechnung wie beim Hinweisband — sie fehlte hier, und ohne
+   sie deckte das `position: fixed`-Banner die Kopfzeile auch UNGESCROLLT zu, wo
+   kein Anheft-Versatz etwas ausrichtet. Seit das Hoehenbudget der Listen-Schalen
+   (`--view-frame-height`) aus derselben Messung kommt, haengt auch der
+   Seitenueberhang daran. Klasse wird von showDivergenceBanner() gesetzt und vom
+   dismiss-divergence-banner-Handler wieder entfernt; die Hoehe ist gemessen, der
+   Rueckfall 40px ist der CSS-Wert fuer den ungebrochenen Einzeiler. */
+body.has-divergence-banner {
+    padding-top: var(--divergence-banner-height, 40px);
 }
+
+/* ----------------------------------------------------------------
+   M3a — HIER STAND EINE REGEL FUER DEN GESTAPELTEN BANDZUSTAND. SIE IST WEG.
+   ----------------------------------------------------------------
+   `.migration-hint-banner ~ .divergence-banner { top: 48px }`, mit dem
+   Kommentar "Wenn beide Banner sichtbar sind, zweiten nach unten verschieben".
+   Sie hat nie gewirkt, und sie haette auch nicht gewirkt, wenn man sie zum
+   Treffen gebracht haette. GEMESSEN am Buendel zu b256750 (dark, 1440x800 und
+   390x800, die CSSOM nach dem Waehler und die Baender nach ihrem berechneten
+   `top` gefragt), drei unabhaengige Gruende:
+
+   1. DER ZUSTAND TRITT IM BETRIEB NICHT EIN. Der file://-Einstieg verzweigt
+      entweder/oder: mit Umzugs-Datum im Speicher kommt das Divergenz-Band und
+      der Hinweis nicht, ohne kommt der Hinweis und das Divergenz-Band nicht.
+      Die einzige Stelle, an der beide gleichzeitig haengen, liegt synchron
+      innerhalb des Umzugs-Starts (Divergenz anlegen, dann Hinweis entfernen) —
+      dazwischen rechnet der Browser kein Layout.
+
+   2. DIE DOKUMENTREIHENFOLGE SCHLAEGT DEN WAEHLER. Beide Baender werden mit
+      `insertBefore(.., body.firstChild)` eingehaengt; das spaeter eingehaengte
+      steht damit VOR dem frueheren. In der Reihenfolge, die der Code erzeugen
+      wuerde (Hinweis zuerst, Divergenz danach), liegt das Divergenz-Band auf
+      Index 0 und der Hinweis auf Index 1 — `~` verlangt das Gegenteil und
+      trifft 0 Elemente.
+
+   3. DIE 48px WAEREN IN JEDER GEMESSENEN LAGE FALSCH. Das Hinweisband ist bei
+      1440 Breite 61px hoch, bei 390 Breite 117px — nie 48. In der einzigen
+      Reihenfolge, in der der Waehler trifft, setzte er das Divergenz-Band also
+      13px (1440) bzw. 69px (390) IN das Hinweisband hinein. Auf Telefonbreite
+      schlimmer: die Regel gewinnt gegen `[data-layout="mobile"]
+      .divergence-banner { top: var(--mobile-header-height) }` oben (gleiche
+      Spezifitaet (0,2,0), aber spaeter in der Datei) und zieht das Band aus dem
+      Ausweichplatz zurueck UNTER die Mobil-Kopfzeile — genau der Fehler, den
+      M2c behoben hat.
+
+   Und ein brauchbares gestapeltes Layout gaebe es auch mit richtiger Zahl
+   nicht: `body.has-migration-hint` und `body.has-divergence-banner` setzen
+   BEIDE `padding-top` auf `body`, die spaetere gewinnt (gemessen 40px fuer
+   101px Band). Deshalb GESTRICHEN statt die Einfuegereihenfolge zu drehen —
+   das haette eine falsche Zahl und die M2c-Verschiebung gegen sich aktiviert.
+
+   Bewacht von `tests/e2e/features/baender-stapel.spec.js`: drei Faelle halten
+   die Unerreichbarkeit fest (beide Produktionszweige, erzwungener Stapel), der
+   vierte fragt die CSSOM des Buendels und faellt, sobald wieder eine Regel
+   einen gestapelten Bandzustand zu behandeln vorgibt. */
