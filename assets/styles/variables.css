@@ -1321,6 +1321,107 @@
             --scrim-70: color-mix(in srgb, #000 70%, transparent);
             --scrim-75: color-mix(in srgb, #000 75%, transparent);
             --scrim-85: color-mix(in srgb, #000 85%, transparent);
+
+            /* ------------------------------------------------------------
+               Design-Handoff v3, Welle 4, Schritt 1 — die Bewegungsleiter
+               ------------------------------------------------------------
+               WARUM HIER UND NICHT IN DEN THEME-BLOECKEN: dieselbe Begruendung
+               wie fuer den ganzen Aliasblock oben — eine Kopie in jedem Theme
+               waeren vier Stellen zum Auseinanderdriften. Bewegung ist
+               ueberdies themenblind: kein Theme laeuft schneller als ein
+               anderes. F-01 prueft beides (jeder Tokenverweis hat eine
+               Definition, und nichts wandert hinter den Alias).
+               ACHTUNG: hier darf kein Platzhalter in var-Klammern stehen. F-01
+               liest die Dateien MIT Kommentaren; aus einem erklaerenden
+               Platzhalter in var-Schreibweise liest seine Regex einen
+               Tokennamen heraus und meldet ihn als undefiniert. Beim ersten
+               Lauf dieses Blocks ist genau das passiert — Tokennamen im
+               Kommentar also ausschreiben oder die Klammern weglassen.
+
+               DIE DREI DAUERN SIND DER BESTAND, nicht ein Wunschbild. Paragraph
+               3.5 des Handoffs nennt 120ms fuer --dur-fast; gemessen fuehrt der
+               Baum an dieser Sprosse 150ms mit 82 Vorkommen gegen 8 bei 120ms.
+               150ms gewinnt, weil Arbeitsregel 1 "Refactoring im Bestand, kein
+               Redesign" heisst: damit aendern 21 von 275 Dauer-Segmenten ihr
+               Tempo (8 %) statt 91 (33 %). Dieselbe Entscheidung steht als
+               D-39 in der Befundlage.
+
+               --ease TRAEGT `ease`, also den Browser-Standard. Nicht aus
+               Bequemlichkeit: eine eigene Kurve wuerde die App in 134 Segmente
+               mit neuer Kurve und 141 beim Standard spalten — genau die
+               Zersplitterung, die diese Welle beendet. Der Token entsteht
+               trotzdem, damit die Kurve EINEN Namen hat und ein spaeterer
+               Wechsel eine Zeile ist statt 275.
+
+               DIE SIEBEN EIGENSCHAFTEN der Uebergangs-Listen sind abgezaehlt,
+               nicht geraten: background-color, border-color, color, opacity,
+               transform, box-shadow, filter. Das ist alles, was die 134
+               heutigen Sammelbewegungen tatsaechlich bewegen — gemessen, nicht
+               vermutet.
+               BEWUSST NICHT DABEI: outline-width und outline-offset. Heute
+               waechst der Fokusring an .btn und .rt-dice-btn ueber 200ms von 0
+               auf 2px, weil `all` ihn mittraegt. Ein Fokusring soll sofort da
+               sein. Entscheidend ist die Vorausschau: Welle 6 fuehrt
+               :focus-visible als Weltregel ein — stuende outline-* hier, wuerde
+               danach JEDES Element der App seinen Ring animieren.
+               EBENFALLS NICHT DABEI: font-weight. Zwei Stellen (.nav-tab.active
+               und .nav-group-btn.has-active, je 500 -> 600) lassen das Gewicht
+               kuenftig springen statt laufen. Eine Interpolation ueber eine
+               Stufe sieht niemand; der ENDWERT bleibt 600, der Stil-Sollstand
+               meldet hier also korrekt keinen Unterschied.
+               UND NICHT DABEI: text-shadow. Es traegt nur an zwei Stellen
+               (.dice-hero-result, .fdp-number) etwas und wird dort einzeln
+               angehaengt — in der Weltliste waere es 134-mal wirkungslos.
+
+               --trans-reveal laeuft auf --dur-slow, nicht auf --dur, und hat
+               GENAU EINEN Verbraucher: .floating-dice-panel (dice.css). Der
+               Unterschied ist nicht Kosmetik, sondern Funktion, im Browser
+               gemessen: das Panel haelt heute beim Ausblenden die ganzen 300ms
+               `visibility: visible`, waehrend die Deckkraft 1 -> 0 laeuft — die
+               Ausblende ist zu sehen. Ohne `visibility` in der Liste springt es
+               schon bei 60ms auf `hidden`, bei einer Deckkraft von noch 0,89:
+               das Panel verschwindet schlagartig. Mit --dur statt --dur-slow
+               waere es nach 200ms weg, waehrend die Deckkraft noch laeuft —
+               derselbe Fehler, nur spaeter. */
+            --dur-fast: 150ms;
+            --dur: 200ms;
+            --dur-slow: 300ms;
+            --ease: ease;
+            --trans-std:
+                background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                color var(--dur) var(--ease), opacity var(--dur) var(--ease),
+                transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+                filter var(--dur) var(--ease);
+            --trans-fast:
+                background-color var(--dur-fast) var(--ease),
+                border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+                opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
+            --trans-slow:
+                background-color var(--dur-slow) var(--ease),
+                border-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease),
+                opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease),
+                box-shadow var(--dur-slow) var(--ease), filter var(--dur-slow) var(--ease);
+            --trans-reveal: var(--trans-slow), visibility var(--dur-slow) var(--ease);
+
+            /* ------------------------------------------------------------
+               Welle 4, Schritt 1 — ZWEI vorgezogene Schriftgroessen (E3)
+               ------------------------------------------------------------
+               Diese beiden gehoeren der Schrift-Skala der Welle 5 (Paragraph
+               3.7: xs 11, sm 12, md 14, lg 16, xl 20). Vorgezogen sind NUR
+               diese zwei, nicht die Skala: der Chip- und der Marken-Vertrag
+               dieser Welle lesen --text-sm und --text-xs, und F-01 wuerde ohne
+               Definition rot — ein roter Lauf, der nach einem Fehler in der
+               eigenen Arbeit aussieht und keiner ist.
+               px, nicht rem: F-03 sichert zu, dass ausserhalb von fonts.css
+               kein rem steht, damit gleich gemeinte Groessen beim Zoomen nicht
+               auseinanderlaufen und die Browser-Grundgroesse des Nutzers
+               unangetastet bleibt.
+               Die drei fehlenden Sprossen (--text-md, --text-lg, --text-xl)
+               und die --leading-* entstehen in Welle 5. Wer sie hier
+               nachtraegt, nimmt der naechsten Welle ihren roten Nachweis. */
+            --text-xs: 11px;
+            --text-sm: 12px;
         }
 
         /* ============================================================
