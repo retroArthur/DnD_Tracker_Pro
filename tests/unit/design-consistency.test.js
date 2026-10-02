@@ -12101,3 +12101,642 @@ describe('W4-R-02 — Ausblenden mit visibility: keine unsichtbare Ausblende (Ra
         expect(Object.keys(AUSBLENDE_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
     });
 });
+
+describe('W4-R-03 — tragende Eigenschaften: eine benannte Liste darf nichts fallen lassen (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Diese Welle hat 134 `transition: all` durch benannte Listen mit sieben
+       Eigenschaften ersetzt. `all` trug alles kostenlos mit; eine benannte
+       Liste traegt nur, was sie nennt. W4-R-01 ZAEHLT nur das `all` und ist
+       genau dann gruen, wenn die Umstellung geschehen ist — ob dabei etwas
+       Tragendes verloren ging, sieht sie nicht. W4-R-02 faengt die EINE
+       Eigenschaft, deren Verlust unsichtbar ist (`visibility`). Niemand faengt
+       eine Eigenschaft, deren Verlust bloss falsch ist. Der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) kann es nicht: er hasht
+       zwoelf ENDWERTE, und ein Uebergang aendert keinen Endwert.
+
+       WARUM SIE ZWEIFACH EINGEGRENZT IST — gemessen, nicht gewaehlt. Die
+       breite Fassung dieser Frage ("jede Eigenschaft, die irgendeine LEBENDE
+       Zustandsform einer bewegten Regel aendert") liefert am 2026-10-02 ueber
+       den ganzen Baum 69 Befunde:
+         26  outline-width / -color / -offset — bewusst draussen (O-13): ein
+             Fokusring soll sofort da sein, und Welle 6 fuehrt
+             `:focus-visible` als Weltregel ein. Stuende `outline-*` in einer
+             Liste, animierte danach JEDES Element seinen Ring.
+          7  font-weight — bewusst draussen (O-14): 500 -> 600 ist eine
+             Interpolation ueber eine Stufe, die niemand sieht.
+         36  Reste aus HANDGESCHRIEBENEN, engen Listen, die es vor dieser
+             Welle schon gab und die nicht ihr Gegenstand sind.
+       Eine Ratsche mit einer Erlaubnisliste von 60 Eintraegen bewacht nichts.
+       Darum: (1) nur Regeln, die eine der BENANNTEN Listen DIESER Welle
+       fuehren (`var(--trans-…)`, 134 Verbraucher in 10 Dateien; die zwei
+       weiteren Vorkommen in variables.css sind die Tokendefinitionen selbst),
+       und (2) nur die zwei Mechanismen, in denen der Verlust zu sehen ist und
+       sonst niemand hinschaut: die Krit-Glut (`text-shadow`) und die
+       Zieh-Anzeige (`.drag-over` / `.dragging`).
+
+       AUSGANGSWERT: 3 Anker, 4 Eigenschaften, 6 Meldungen (erhoben am
+       2026-10-02 an 0b57ae1, mit dieser Zaehlart). Der Anker ist die ERSTE
+       ZEILE DER REGEL, nicht die der transition-Deklaration — so berichtet
+       regelnMitRumpf(), und eine Fehlermeldung mit einer Zeile, die man erst
+       umrechnen muss, kostet mehr als sie einbringt:
+         dice.css:21   .dice-hero-result  text-shadow       (Deklaration :26)
+         dice.css:822  .fdp-number        text-shadow       (Deklaration :827)
+         core.css:456  .nav-tab           border-left-width,
+                                          margin-left       (Deklaration :466)
+       Vier der sechs Meldungen stammen aus Teil 1 — `.crit` und `.fail`
+       melden je dieselbe fehlende Eigenschaft —, zwei aus Teil 2. Alle drei
+       Anker sind als LEBEND belegt, nicht vermutet: `.crit`/`.fail` schaltet
+       features/dice/dice-core.js per classList auf genau diesen zwei
+       Elementen (in displayDiceResult() und updateFloatingResult()),
+       `drag-over` schaltet ui/lazy-loading.js:71 auf `.nav-tab`. Diese Zahl
+       darf nur SINKEN, Ziel ist 0.
+
+       ZWEI BEFUNDE LIEGEN BEWUSST AUSSERHALB und stehen NICHT in der
+       Erlaubnisliste, sondern ausserhalb des Geltungsbereichs:
+         dmscreen.css:1134  [data-sortable]      `.drag-over` setzt
+                            `border-color`, die handgeschriebene Liste
+                            (transform/opacity/box-shadow) traegt es nicht
+         dmscreen.css:2265  .dms-config-item     `.drag-over` setzt
+                            `border-top`, `.dragging` setzt `opacity`, die
+                            Liste traegt nur `background`
+       Beide fuehren enge Listen von VOR dieser Welle. Sie hier zu reparieren
+       hiesse, den Geltungsbereich von Schritt 4 um zwei Stellen zu erweitern,
+       ohne dass ein Plan sie nennt. Stattdessen sind sie durch die Eingrenzung
+       (1) draussen — und an dem Tag, an dem jemand sie auf eine benannte Liste
+       stellt, wird diese Ratsche rot und verlangt, dass die Eigenschaften
+       mitkommen. Das ist der richtige Zeitpunkt, nicht dieser.
+
+       TEIL 3 BEWACHT DIE RICHTUNG, DIE W4-R-02 NICHT KANN. W4-R-02 fragt, ob
+       jede Ausblende `visibility` traegt. Niemand fragt, ob jeder Traeger
+       einer Reveal-Liste ueberhaupt ausblendet — und genau das war die Sorge
+       des Plans ("sonst wandert die Reveal-Liste unbemerkt weiter"). Der dort
+       vorgesehene Wortlaut "genau EINE Regel fuehrt var(--trans-reveal)" war
+       schon falsch, als er geschrieben wurde: es sind drei Verbraucher
+       (dice.css:694, dice.css:761, dashboard.css:1211), und alle drei
+       brauchen ihn. Eine Ratsche auf eine Stueckzahl ist nur so gut wie die
+       Zahl; diese prueft die Eigenschaft. Teil 3 ist heute GRUEN — sein roter
+       Nachweis liegt in der MUTATIONSPROBE weiter unten, die ihm eine
+       Reveal-Liste auf einer Regel ohne Ausblende vorlegt. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile|subjekt|eigenschaft`, Wert =
+    // Begruendung. Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01 und
+    // AUSBLENDE_GEDULDET in W4-R-02: bewusst LEER, nicht abwesend. Wer eine
+    // Eigenschaft absichtlich springen laesst, schreibt den Grund hierher —
+    // dann steht er im Diff.
+    const TRAGEND_GEDULDET = {};
+
+    /** Alle Bewegungs-Tokens, rekursiv bis zum Literal aufgeloest. Eigene
+     *  Fassung, weil die in W4-R-02 in dessen describe eingeschlossen ist;
+     *  dieselbe Rechnung, und die SELBSTPROBE unten prueft sie. */
+    function bewegungsTokens3() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of withoutComments(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = { ...roh };
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Auf oberster Ebene trennen — `var(--x, y)` und `rgba(…)` enthalten
+     *  Kommas, die keine Segmentgrenzen sind. */
+    function trenneOben(wert, zeichen) {
+        const out = [];
+        let tiefe = 0;
+        let buf = '';
+        for (const c of wert) {
+            if (c === '(') tiefe++;
+            else if (c === ')') tiefe--;
+            if (c === zeichen && tiefe === 0) {
+                out.push(buf);
+                buf = '';
+                continue;
+            }
+            buf += c;
+        }
+        if (buf.trim()) out.push(buf);
+        return out;
+    }
+
+    /** Die Eigenschaftsnamen einer transition-Kurzschreibweise, Tokens
+     *  aufgeloest. `var(--trans-std)` wird zu sieben Namen. */
+    function listenEigenschaften(wert, tokens) {
+        const voll = wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+            tokens[name] !== undefined ? tokens[name] : ganz
+        );
+        return trenneOben(voll, ',')
+            .map(s => s.trim().split(/\s+/)[0])
+            .filter(Boolean);
+    }
+
+    /** Kurzschreibweisen in die Langform, soweit fuer diesen Block gebraucht.
+     *  Ohne sie zaehlte `border-left: 2px solid var(--gold)` als die
+     *  Eigenschaft `border-left`, die in keiner Uebergangs-Liste der Welt
+     *  steht — und die Ratsche meldete einen Befund, den niemand beheben
+     *  kann. */
+    const KURZFORM = {
+        border: ['border-width', 'border-style', 'border-color'],
+        'border-left': ['border-left-width', 'border-left-style', 'border-left-color'],
+        'border-right': ['border-right-width', 'border-right-style', 'border-right-color'],
+        'border-top': ['border-top-width', 'border-top-style', 'border-top-color'],
+        'border-bottom': ['border-bottom-width', 'border-bottom-style', 'border-bottom-color'],
+        background: ['background-color', 'background-image', 'background-position'],
+        outline: ['outline-width', 'outline-style', 'outline-color']
+    };
+    const entfalte = prop => KURZFORM[prop] || [prop];
+
+    /** Eigenschaften, die nicht interpolieren oder deren Sprung Absicht ist.
+     *  Bewusst kurz und bewusst begruendet: `-style` kennt keine
+     *  Zwischenwerte, `z-index`/`cursor`/`display`/`pointer-events` auch
+     *  nicht, `background-image`/`-position` entstehen nur als Beiprodukt der
+     *  Entfaltung von `background` und werden an keiner der gefuehrten
+     *  Stellen wirklich geaendert. */
+    const SPRINGT = new Set([
+        'border-style',
+        'border-left-style',
+        'border-right-style',
+        'border-top-style',
+        'border-bottom-style',
+        'outline-style',
+        'z-index',
+        'cursor',
+        'display',
+        'pointer-events',
+        'position',
+        'background-image',
+        'background-position',
+        'user-select',
+        '-webkit-user-select',
+        'overflow',
+        'visibility',
+        'transition',
+        'animation',
+        'will-change',
+        'content'
+    ]);
+
+    /** Deckt die Eigenschaftsliste `liste` die Eigenschaft `p` ab? `all`
+     *  deckt alles; `border-color` deckt `border-top-color` und seine drei
+     *  Geschwister; `background` deckt `background-color`. Ohne diese
+     *  Verwandtschaften meldete die Ratsche `.nav-tab.drag-over`s
+     *  `border-left-color` als Befund, obwohl `--trans-std` es ueber
+     *  `border-color` sehr wohl bewegt. */
+    function gedeckt(liste, p) {
+        const vorhanden = new Set();
+        liste.forEach(lp => {
+            vorhanden.add(lp);
+            entfalte(lp).forEach(x => vorhanden.add(x));
+        });
+        if (vorhanden.has('all') || vorhanden.has(p)) return true;
+        if (/^border-(?:left|right|top|bottom)-color$/.test(p) && vorhanden.has('border-color'))
+            return true;
+        if (/^border-(?:left|right|top|bottom)-width$/.test(p) && vorhanden.has('border-width'))
+            return true;
+        if (/^margin-/.test(p) && vorhanden.has('margin')) return true;
+        if (/^padding-/.test(p) && vorhanden.has('padding')) return true;
+        if (p === 'background-color' && vorhanden.has('background')) return true;
+        return false;
+    }
+
+    /** Das Subjekt-Kompound eines Selektors: der letzte Teil ueber alle vier
+     *  Kombinatoren. Gleiche Rechnung wie im R-23- und im W4-R-02-Block; hier
+     *  eigenstaendig, weil beide dortigen Fassungen eingeschlossen sind. */
+    const subjekt3 = sel =>
+        sel
+            .split(/\s*[\s>+~]\s*/)
+            .filter(Boolean)
+            .pop() || '';
+
+    const TRANSITION_RE3 = /(?:^|[;{\s])transition\s*:\s*([^;}]+)/;
+
+    function alleRegeln3() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => out.push({ datei: f.name, ...r }))
+        );
+        return out;
+    }
+
+    /** Alle Deklarationen eines Rumpfs als [prop, wert]. */
+    function deklarationen(rumpf) {
+        return trenneOben(rumpf, ';')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .map(s => {
+                const i = s.indexOf(':');
+                return i < 0 ? null : [s.slice(0, i).trim(), s.slice(i + 1).trim()];
+            })
+            .filter(d => d && /^-?[a-zA-Z]/.test(d[0]) && !d[0].startsWith('--'));
+    }
+
+    /** Regeln, die eine BENANNTE Liste dieser Welle fuehren — das ist die
+     *  erste der zwei Eingrenzungen. Die Tokendefinitionen in variables.css
+     *  fallen heraus, weil sie keine `transition:`-Deklaration sind. */
+    function benannteTraeger(regeln) {
+        const tokens = bewegungsTokens3();
+        const out = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE3.exec(r.rumpf);
+            if (!m) return;
+            const wert = m[1].replace(/\s+/g, ' ').trim();
+            if (!/var\(\s*--trans-/.test(wert)) return;
+            out.push({
+                anker: `${r.datei}:${r.zeile}`,
+                sel: r.sel,
+                wert,
+                liste: listenEigenschaften(wert, tokens),
+                subs: [
+                    ...new Set(
+                        r.sel
+                            .split(',')
+                            .map(s => subjekt3(s.trim()))
+                            .filter(Boolean)
+                    )
+                ]
+            });
+        });
+        return out;
+    }
+
+    /**
+     * Der gemeinsame Kern von Teil 1 und Teil 2: welche Eigenschaft aendert
+     * eine Zustandsform, die die Grundregel nicht bewegt?
+     *
+     * `erkenneZustand(zusatz)` entscheidet, was als Zustandsform zaehlt — das
+     * ist die zweite Eingrenzung und der einzige Unterschied zwischen den zwei
+     * Teilen. `filterProp` schraenkt zusaetzlich auf die beobachtete
+     * Eigenschaft ein (Teil 1: nur `text-shadow`; Teil 2: alles, was die
+     * Zieh-Form setzt).
+     */
+    function verlorene(regeln, erkenneZustand, filterProp) {
+        const befunde = [];
+        const gebraucht = new Set();
+        benannteTraeger(regeln).forEach(t => {
+            t.subs.forEach(sub => {
+                if (sub.includes('::')) return;
+                regeln.forEach(z => {
+                    z.sel
+                        .split(',')
+                        .map(s => subjekt3(s.trim()))
+                        .filter(Boolean)
+                        .forEach(zs => {
+                            if (zs.includes('::') || !zs.startsWith(sub) || zs.length <= sub.length)
+                                return;
+                            const zusatz = zs.slice(sub.length);
+                            // Der Zusatz MUSS mit einem Kompound-Trenner
+                            // beginnen, sonst ist `.nav-tabs` eine
+                            // Zustandsform von `.nav-tab`.
+                            if (!/^[.:[]/.test(zusatz)) return;
+                            if (!erkenneZustand(zusatz)) return;
+                            deklarationen(z.rumpf).forEach(([prop, wert]) => {
+                                entfalte(prop).forEach(p => {
+                                    if (SPRINGT.has(p) || SPRINGT.has(prop)) return;
+                                    if (!filterProp(p, prop)) return;
+                                    if (gedeckt(t.liste, p)) return;
+                                    const schluessel = `${t.anker}|${sub}|${p}`;
+                                    if (TRAGEND_GEDULDET[schluessel]) {
+                                        gebraucht.add(schluessel);
+                                        return;
+                                    }
+                                    befunde.push(
+                                        `${t.anker} { ${sub} } fuehrt \`${t.wert}\` und bewegt ` +
+                                            `damit ${p} NICHT — aber ${z.datei}:${z.zeile} ` +
+                                            `(${zs}) aendert es (\`${prop}: ${wert}\`). Die ` +
+                                            `Eigenschaft springt, seit die Sammelbewegung weg ` +
+                                            `ist; sie gehoert an die Liste angehaengt`
+                                    );
+                                });
+                            });
+                        });
+                });
+            });
+        });
+        return { befunde: [...new Set(befunde)], gebraucht };
+    }
+
+    // ------------------------------------------------------------------
+    // TEIL 1 — die Krit-Glut
+    // ------------------------------------------------------------------
+    /* `text-shadow` steht ABSICHTLICH in keiner der Uebergangs-Listen: es
+       traegt im ganzen Baum nur an zwei Stellen etwas, in einer Weltliste
+       waere es 134-mal wirkungslos. Genau das sagt der Tokenblock in
+       variables.css. Dass es dafuer an diesen zwei Stellen EINZELN angehaengt
+       ist, sichert bis heute nichts — das ist diese Zusicherung. */
+    const glutBefunde = () =>
+        verlorene(
+            alleRegeln3(),
+            () => true,
+            p => p === 'text-shadow'
+        );
+
+    test('Teil 1: wo ein Zustand text-shadow setzt, fuehrt die benannte Liste text-shadow', () => {
+        expect(glutBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 2 — die Zieh-Anzeige
+    // ------------------------------------------------------------------
+    /* `drag-over` und `dragging` sind die zwei Haelften desselben Vorgangs
+       (Ziel und gezogenes Element) und die einzigen Zustandsklassen im Baum,
+       die es ohne laufendes Ziehen gar nicht geben KANN — sie werden
+       ausschliesslich von JS gesetzt (ui/lazy-loading.js:63/71/76/81,
+       features/dmscreen/dmscreen-config.js, features/initiative-extras.js,
+       utils/performance-extras.js). Darum braucht dieser Teil keine
+       Lebendigkeitsprobe: die Klasse selbst ist der Beweis. */
+    const ZIEH_ZUSTAND = /\.(?:drag-over|dragging)\b/;
+    const ziehBefunde = () =>
+        verlorene(
+            alleRegeln3(),
+            z => ZIEH_ZUSTAND.test(z),
+            () => true
+        );
+
+    test('Teil 2: wo eine Zieh-Form Geometrie aendert, fuehrt die benannte Liste sie mit', () => {
+        expect(ziehBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 3 — die Reveal-Listen wandern nicht weiter
+    // ------------------------------------------------------------------
+    /** Traeger einer Reveal-Liste, die fuer kein Subjekt ihrer Selektoren
+     *  eine Regel finden, die mit `opacity: 0` UND `visibility: hidden`
+     *  ausblendet. Als reine Funktion ueber eine Regelliste geschrieben, damit
+     *  die MUTATIONSPROBE ihr synthetische Regeln vorlegen kann. */
+    function revealBefunde(regeln) {
+        const befunde = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE3.exec(r.rumpf);
+            if (!m) return;
+            const wert = m[1].replace(/\s+/g, ' ').trim();
+            if (!/var\(\s*--trans-reveal/.test(wert)) return;
+            const subs = [
+                ...new Set(
+                    r.sel
+                        .split(',')
+                        .map(s => subjekt3(s.trim()))
+                        .filter(Boolean)
+                )
+            ];
+            const blendetAus = subs.some(sub =>
+                regeln.some(
+                    z =>
+                        z.sel
+                            .split(',')
+                            .map(s => subjekt3(s.trim()))
+                            .includes(sub) &&
+                        /(?:^|[;{\s])opacity\s*:\s*0\s*(?:;|$)/.test(z.rumpf) &&
+                        /(?:^|[;{\s])visibility\s*:\s*hidden/.test(z.rumpf)
+                )
+            );
+            if (blendetAus) return;
+            befunde.push(
+                `${r.datei}:${r.zeile} (${r.sel}) fuehrt \`${wert}\`, blendet aber nirgends ` +
+                    `mit opacity: 0 + visibility: hidden aus — die Reveal-Liste traegt hier ` +
+                    `ein visibility-Segment, das nichts bewegt. Entweder gehoert die Regel auf ` +
+                    `var(--trans-std) / --trans-slow, oder die Ausblende fehlt`
+            );
+        });
+        return befunde;
+    }
+
+    test('Teil 3: jeder Traeger einer Reveal-Liste blendet wirklich aus', () => {
+        expect(revealBefunde(alleRegeln3()).sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // GEGENPROBEN — ein leerer Dateisatz darf kein gruener Test sein
+    // ------------------------------------------------------------------
+    // Schranken benannt, weil die MUTATIONSPROBEN dasselbe Urteil nachstellen.
+    const TRAEGER_SCHRANKE = 100; // 134 am 2026-10-02
+    const GLUT_SCHRANKE = 4; // 8 Regeln setzen text-shadow
+    const ZIEH_SCHRANKE = 4; // 6 Regeln fuehren .drag-over / .dragging
+    const REVEAL_SCHRANKE = 3; // 3 Verbraucher
+
+    function erhebung3() {
+        const regeln = alleRegeln3();
+        return {
+            traeger: benannteTraeger(regeln).length,
+            glut: regeln.filter(r => /(?:^|[;{\s])text-shadow\s*:/.test(r.rumpf)).length,
+            zieh: regeln.filter(r => ZIEH_ZUSTAND.test(r.sel)).length,
+            reveal: regeln.filter(r => {
+                const m = TRANSITION_RE3.exec(r.rumpf);
+                return m && /var\(\s*--trans-reveal/.test(m[1]);
+            }).length
+        };
+    }
+
+    test('GEGENPROBE: der Scan findet Traeger, Glut-Stellen, Zieh-Formen und Reveal-Traeger', () => {
+        const e = erhebung3();
+        expect(cssFiles.length).toBeGreaterThan(15);
+        expect(e.traeger).toBeGreaterThanOrEqual(TRAEGER_SCHRANKE);
+        expect(e.glut).toBeGreaterThanOrEqual(GLUT_SCHRANKE);
+        expect(e.zieh).toBeGreaterThanOrEqual(ZIEH_SCHRANKE);
+        expect(e.reveal).toBeGreaterThanOrEqual(REVEAL_SCHRANKE);
+    });
+
+    // ------------------------------------------------------------------
+    // SELBSTPROBEN — feste Zeichenketten, kein Dateizugriff
+    // ------------------------------------------------------------------
+    /* Beide Richtungen, weil die Deckungsrechnung in beide Richtungen kippen
+       kann: eine zu grosszuegige Fassung erklaert alles fuer gedeckt und macht
+       die Ratsche inhaltsleer gruen, eine zu strenge meldet Befunde, die
+       niemand beheben kann (`border-left` steht in keiner Liste der Welt). */
+    const DECKUNGS_PROBEN = [
+        [['all'], 'text-shadow', true],
+        [['border-color'], 'border-left-color', true],
+        [['border-color'], 'border-left-width', false],
+        [['border-width'], 'border-top-width', true],
+        [['background'], 'background-color', true],
+        [['background-color'], 'background-color', true],
+        [['margin'], 'margin-left', true],
+        [['border-left'], 'border-left-width', true],
+        [
+            [
+                'background-color',
+                'border-color',
+                'color',
+                'opacity',
+                'transform',
+                'box-shadow',
+                'filter'
+            ],
+            'text-shadow',
+            false
+        ],
+        [
+            [
+                'background-color',
+                'border-color',
+                'color',
+                'opacity',
+                'transform',
+                'box-shadow',
+                'filter'
+            ],
+            'margin-left',
+            false
+        ],
+        [['opacity'], 'opacity', true],
+        [['opacity'], 'transform', false]
+    ];
+
+    function deckungsprobeBefunde(fn) {
+        return DECKUNGS_PROBEN.filter(p => fn(p[0], p[1]) !== p[2]).map(
+            p => `[${p[0].join(',')}] deckt ${p[1]} — erwartet ${p[2]}, erhalten ${fn(p[0], p[1])}`
+        );
+    }
+
+    test('SELBSTPROBE: die Deckungsrechnung urteilt in beide Richtungen richtig', () => {
+        expect(deckungsprobeBefunde(gedeckt)).toEqual([]);
+    });
+
+    /* Die Tokens muessen bis zum Literal auflaufen, sonst liest die Ratsche
+       `var(--trans-std)` als EINE Eigenschaft namens `var(--trans-std)` und
+       erklaert nichts fuer gedeckt — sie waere dann rot an allen 134 Stellen
+       und zugleich blind fuer den echten Befund. */
+    test('SELBSTPROBE: var(--trans-std) loest zu seinen sieben Eigenschaften auf', () => {
+        const tokens = bewegungsTokens3();
+        expect(listenEigenschaften('var(--trans-std)', tokens).sort()).toEqual(
+            [
+                'background-color',
+                'border-color',
+                'box-shadow',
+                'color',
+                'filter',
+                'opacity',
+                'transform'
+            ].sort()
+        );
+        expect(listenEigenschaften('var(--trans-reveal)', tokens)).toContain('visibility');
+        expect(listenEigenschaften('var(--trans-slow), text-shadow 300ms ease', tokens)).toContain(
+            'text-shadow'
+        );
+    });
+
+    // ------------------------------------------------------------------
+    // MUTATIONSPROBEN
+    // ------------------------------------------------------------------
+    /* VIER BESCHAEDIGUNGEN DER DECKUNGSRECHNUNG. Welcher Waechter erkennt eine
+       beschaedigte Fassung als beschaedigt? Nicht die drei Haupttests: eine
+       Rechnung, die alles fuer gedeckt erklaert, macht sie GRUEN — und gruen
+       ist das erklaerte Ziel. Nicht die GEGENPROBE: sie zaehlt Regeln und
+       liest `gedeckt` nie. Nur die SELBSTPROBE. */
+    const BESCHAEDIGUNGEN_DECKUNG = [
+        ['erklaert alles fuer gedeckt', () => true],
+        ['erklaert nichts fuer gedeckt', () => false],
+        [
+            'Verwandtschaften verloren (nur noch Gleichheit)',
+            (liste, p) => liste.includes(p) || liste.includes('all')
+        ],
+        [
+            'Kurzform-Entfaltung verloren',
+            (liste, p) => {
+                const v = new Set(liste);
+                if (v.has('all') || v.has(p)) return true;
+                if (/^border-(?:left|right|top|bottom)-color$/.test(p) && v.has('border-color'))
+                    return true;
+                if (/^border-(?:left|right|top|bottom)-width$/.test(p) && v.has('border-width'))
+                    return true;
+                if (/^margin-/.test(p) && v.has('margin')) return true;
+                if (/^padding-/.test(p) && v.has('padding')) return true;
+                if (p === 'background-color' && v.has('background')) return true;
+                return false;
+            }
+        ]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Deckungsrechnung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_DECKUNG.filter(
+            b => deckungsprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; die drei Haupttests koennen es ` +
+                `nicht (mehr Deckung = gruener Test), und die GEGENPROBE zaehlt Regeln`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    /* DER ROTE NACHWEIS FUER TEIL 3. Er ist heute gruen — drei Verbraucher,
+       alle drei blenden aus. Ohne diese Probe waere nicht zu unterscheiden,
+       ob er urteilt oder nur nichts findet. Also bekommt er synthetische
+       Regeln vorgelegt: eine Reveal-Liste auf einer Regel ohne Ausblende MUSS
+       einen Befund erzeugen, eine mit Ausblende darf keinen. */
+    const REVEAL_PROBEN = [
+        [
+            'Reveal-Liste ohne jede Ausblende',
+            [{ datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' }],
+            1
+        ],
+        [
+            'Reveal-Liste mit Ausblende am gleichen Subjekt',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.x .a', rumpf: 'opacity: 0; visibility: hidden;' }
+            ],
+            0
+        ],
+        [
+            'Ausblende an einem ANDEREN Subjekt zaehlt nicht',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.b', rumpf: 'opacity: 0; visibility: hidden;' }
+            ],
+            1
+        ],
+        [
+            'nur opacity: 0, kein visibility: hidden — keine Ausblende',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.a', rumpf: 'opacity: 0;' }
+            ],
+            1
+        ],
+        [
+            'eine gewoehnliche Liste ist kein Reveal-Traeger',
+            [{ datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-std);' }],
+            0
+        ],
+        [
+            'auch --trans-reveal-std zaehlt als Reveal-Traeger',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 1,
+                    sel: '.a',
+                    rumpf: 'transition: var(--trans-reveal-std);'
+                }
+            ],
+            1
+        ]
+    ];
+
+    test('MUTATIONSPROBE: Teil 3 urteilt — synthetische Regeln, beide Richtungen', () => {
+        const falsch = REVEAL_PROBEN.filter(p => revealBefunde(p[1]).length !== p[2]).map(
+            p => `${p[0]} — erwartet ${p[2]} Befunde, erhalten ${revealBefunde(p[1]).length}`
+        );
+        expect(falsch.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in TRAGEND_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const gebraucht = new Set([...glutBefunde().gebraucht, ...ziehBefunde().gebraucht]);
+        expect(Object.keys(TRAGEND_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
