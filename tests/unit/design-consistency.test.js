@@ -12765,3 +12765,577 @@ describe('W4-R-03 — tragende Eigenschaften: eine benannte Liste darf nichts fa
         expect(Object.keys(TRAGEND_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
     });
 });
+
+describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Dieselbe Begruendung wie bei W4-R-01, nur eine Stufe feiner: `transition`
+       ist keine der zwoelf Eigenschaften, die der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) hasht, und eine Dauer
+       erst gar nicht. Eine Umstellung von `0.12s` auf `var(--dur-fast)`
+       aendert KEINEN Endwert — sie aendert nur, wie lange der Weg dorthin
+       dauert. In allen 3549 Digests des Sollstands erzeugt dieser Schritt null
+       Unterschied, und kein anderer Test im Baum nennt eine Dauer. Die Ratsche
+       ist also die einzige Stelle, an der ueberhaupt etwas nachgewiesen werden
+       kann, und sie steht deshalb VOR der Umstellung.
+
+       AUSGANGSWERT: 141 Zeit-Literale in 102 `transition`-Deklarationen, dazu
+       EINES in einer `transition-duration` (die benannte Ausnahme unten),
+       verteilt auf 19 Dateien (erhoben am 2026-10-02 an a5976d1, mit dieser
+       Zaehlart): party.css 28, dmscreen.css 25, core.css 15 (14 + die
+       Ausnahme), initiative.css 14, spells.css 13, dashboard.css 9,
+       editors.css 6, tools.css 6, encounters.css 5, migration.css 4,
+       file-backup.css 3, loot.css 3, bestiary.css 2, npcs.css 2, pwa.css 2,
+       welt.css 2, command-palette.css 1, dice.css 1, variables.css 1. Diese
+       Zahl darf nur SINKEN, Ziel ist 0.
+
+       Die 134 Deklarationen, die W4-R-01 von `all` auf eine benannte Liste
+       gebracht hat, sind hier NICHT mehr enthalten: sie fuehren ihre Dauer
+       schon ueber var(--dur*). 275 Segmente hatte die Vermessung an 33dab42
+       gezaehlt, 134 davon sind erledigt, 141 bleiben — die Zahlen gehen genau
+       auf.
+
+       WAS TEIL 2 ZUSAETZLICH LEISTET, und warum Teil 1 allein zu wenig ist:
+       "keine Zeit als Literal" ist mit `var(--dauer-schnell)` erfuellt — einem
+       Token, das es nicht gibt. Der Uebergang fiele still auf 0s zurueck und
+       jede Bewegung spraenge, ohne dass irgendetwas rot wird (F-01 bewacht
+       `var(--x)` ohne Definition, aber nur fuer die Tokens, die in seiner
+       Liste stehen). Teil 2 prueft deshalb die HERKUNFT jeder Dauer: sie muss
+       aus einer der drei Sprossen kommen. Das schliesst zugleich die zweite
+       Luecke — eine vierte Sprosse (`--dur-xslow: 500ms`) waere nach Teil 1
+       in Ordnung und wuerde die Leiter wieder aufspalten, die dieser Schritt
+       gerade zusammenfuehrt.
+
+       WARUM NICHT "die Dauer IST 150, 200 oder 300 ms": weil `0.15s` diese
+       Pruefung bestehen wuerde. Gemessen sind 61 der 141 Segmente schon heute
+       bei 0.15s und 48 bei 0.2s — eine Pruefung auf den WERT waere zu 77 %
+       gruen, bevor ein Zeichen geaendert ist. Geprueft wird deshalb der
+       Tokenverweis, nicht die Zahl.
+
+       E1 (150 ms fuer --dur-fast) UND SEINE FOLGE, vorab gemessen: von den 141
+       Segmenten aendern genau 21 ihr Tempo — 3x 0.08s, 7x 0.1s, 8x 0.12s
+       (alle auf --dur-fast = 150 ms), 2x 0.25s (auf --dur = 200 ms) und 1x
+       0.5s (auf --dur-slow = 300 ms). Das ist die Zahl aus E1. Die 0.25s
+       liegen genau zwischen zwei Sprossen; sie gehen auf die SCHNELLERE, weil
+       200 ms der Hausstandard ist, den nach W4-R-01 bereits 112 weitere
+       Segmente fuehren.
+
+       UMFANG (O-02): `animation`-Dauern bleiben Literale und sind hier
+       ausdruecklich draussen — 18 Literale, davon sieben Lauf- und
+       Dauerschleifen von 400 ms bis 3 s, die auf einer Drei-Sprossen-Leiter
+       nicht abbildbar sind. Teil 3 macht diese Grenze sichtbar, statt sie
+       bloss zu behaupten: er zieht die Volkszaehlung aller Zeit-Literale des
+       Baums und laesst genau drei Toepfe zu.
+
+       HANDOFF-/PLAN-KORREKTUR, gemessen: der Schritttext nennt "die zwei
+       Literale im reduced-motion-Block (core.css:3325/3327)" als Ausnahmen
+       dieser Pruefung. Nur eines der beiden ist ueberhaupt ein Fall fuer sie:
+       :3327 ist `transition-duration: 0.01ms !important`, :3325 ist
+       `animation-duration: 0.01ms !important` und faellt schon unter die
+       Sammel-Ausnahme fuer `animation`. In der Erlaubnisliste steht deshalb
+       EIN Eintrag, nicht zwei — zwei waeren einer, der nie gebraucht wird, und
+       die Verwesungsprobe unten wuerde ihn melden. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile`, Wert = Begruendung. Form wie
+    // SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in W4-R-02 und
+    // TRAGEND_GEDULDET in W4-R-03. Hier bewusst NICHT leer: der
+    // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
+    // Gestaltungsmittel ist, sondern eine Abschaltung.
+    const DAUER_GEDULDET = {
+        'core.css:3327':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3323) schaltet ' +
+            'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
+            'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
+            'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
+            'wuerde die Abschaltung an die Gestaltung koppeln.'
+    };
+
+    /** Die Leiter. GENAU drei Sprossen — eine vierte waere die Aufspaltung,
+     *  die dieser Schritt beendet. Die Werte stehen hier fuer die SELBSTPROBE;
+     *  geurteilt wird ueber die Tokennamen. */
+    const LEITER = { '--dur-fast': 150, '--dur': 200, '--dur-slow': 300 };
+
+    /** Ein Zeit-Literal. Zeichengleich mit der Regex, aus der die
+     *  AUSGANGSWERTE oben erhoben sind — eine zweite Zaehlart waere eine
+     *  zweite Zahl. Der Schutz davor schliesst `--dur-slow` (kein Ziffernteil)
+     *  und die Bruchteile in `cubic-bezier(0.4, 0, 0.2, 1)` (ohne Einheit)
+     *  aus. */
+    const ZEIT_LITERAL = /(?<![\w.-])(\d*\.?\d+)(ms|s)\b/g;
+
+    /** Kommentare entfernen, ohne Zeilennummern zu verschieben. Eigene
+     *  Fassung, weil die in W4-R-01 in dessen describe eingeschlossen ist; das
+     *  globale withoutComments() taugt zum Zaehlen, nicht zum Verorten. */
+    function ohneKommentareZeilentreu4(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    /** Deklarationen einer Datei, zeilentreu: {prop, wert, zeile}. Eigene
+     *  Zerlegung, weil regelnMitRumpf() den Rumpf als Ganzes liefert und eine
+     *  Fehlermeldung ohne die Zeile der DEKLARATION hier nichts wert waere.
+     *  Klammerzaehlend: ein Selektor (`.btn:hover`) und ein At-Regel-Kopf
+     *  (`@media (max-width: 600px)`) enden auf `{` und werden nie abgegeben —
+     *  sonst lieferte jeder Pseudoklassen-Selektor eine Schein-Deklaration.
+     *  Genau das prueft die SELBSTPROBE unten. */
+    function deklarationen(css) {
+        const code = ohneKommentareZeilentreu4(css);
+        const out = [];
+        let puffer = '';
+        let zeile = 1;
+        let pufferZeile = 1;
+        let tiefe = 0;
+        const abgeben = () => {
+            const t = puffer.trim();
+            const c = t.indexOf(':');
+            if (tiefe > 0 && c > 0) {
+                const prop = t.slice(0, c).trim();
+                if (/^(?:--|-)?[a-zA-Z][\w-]*$/.test(prop))
+                    out.push({ prop, wert: t.slice(c + 1).trim(), zeile: pufferZeile });
+            }
+            puffer = '';
+            pufferZeile = zeile;
+        };
+        for (let i = 0; i < code.length; i++) {
+            const ch = code[i];
+            if (ch === '\n') {
+                zeile++;
+                puffer += ch;
+                continue;
+            }
+            if (ch === '{') {
+                tiefe++;
+                puffer = '';
+                pufferZeile = zeile;
+                continue;
+            }
+            if (ch === '}') {
+                abgeben();
+                tiefe--;
+                puffer = '';
+                pufferZeile = zeile;
+                continue;
+            }
+            if (ch === ';') {
+                abgeben();
+                continue;
+            }
+            puffer += ch;
+            if (!puffer.trim()) pufferZeile = zeile;
+        }
+        return out;
+    }
+
+    function alleDeklarationen() {
+        const out = [];
+        cssFiles.forEach(f =>
+            deklarationen(f.content).forEach(d => out.push({ datei: f.name, ...d }))
+        );
+        return out;
+    }
+
+    const istUebergang = prop => /^(?:-webkit-)?transition/.test(prop);
+    const istAnimation = prop => /^(?:-webkit-)?animation/.test(prop);
+    const istUebergangsListe = prop => /^--trans/.test(prop);
+
+    // ------------------------------------------------------------------
+    // TEIL 1: keine Zeit als Literal
+    // ------------------------------------------------------------------
+    function literalBefunde(decls) {
+        const befunde = [];
+        const gebraucht = new Set();
+        decls.forEach(d => {
+            if (!istUebergang(d.prop) && !istUebergangsListe(d.prop)) return;
+            const lits = [...d.wert.matchAll(ZEIT_LITERAL)].map(m => m[0]);
+            if (!lits.length) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (DAUER_GEDULDET[anker]) {
+                gebraucht.add(anker);
+                return;
+            }
+            befunde.push(
+                `${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')} — Zeit als Literal ` +
+                    `(${lits.join(', ')}). Gehoert auf die Leiter: var(--dur-fast) 150ms, ` +
+                    `var(--dur) 200ms, var(--dur-slow) 300ms`
+            );
+        });
+        return { befunde, gebraucht };
+    }
+
+    test('in keiner transition und in keiner --trans-Liste steht eine Zeit als Literal', () => {
+        expect(literalBefunde(alleDeklarationen()).befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 2: die Herkunft jeder Dauer
+    // ------------------------------------------------------------------
+    /** Alle Bewegungs-Tokens, rekursiv aufgeloest — AUSSER den drei Sprossen,
+     *  die stehen bleiben. Nur so ist nach der Aufloesung noch zu sehen, WOHER
+     *  eine Dauer kommt; ein bis zum Literal aufgelaufener Wert sieht
+     *  hinterher aus wie ein handgeschriebenes `0.2s`. */
+    function tokensOhneLeiter() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu4(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = {};
+        Object.keys(roh).forEach(n => {
+            if (LEITER[n] === undefined) auf[n] = roh[n];
+        });
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Trennung an Kommas der OBERSTEN Ebene. Ein naives split(',') zerlegt
+     *  `cubic-bezier(0.4, 0, 0.2, 1)` in vier Stuecke und erfindet drei
+     *  Segmente ohne Eigenschaft. Im Baum steht heute keine solche Kurve mehr
+     *  (O-04 hat die letzte aufgeloest) — die Zerlegung darf aber nicht davon
+     *  abhaengen, dass das so bleibt. */
+    function kommasObenTrennen(wert) {
+        const out = [];
+        let tiefe = 0;
+        let buf = '';
+        for (const ch of wert) {
+            if (ch === '(') tiefe++;
+            else if (ch === ')') tiefe--;
+            if (ch === ',' && tiefe === 0) {
+                out.push(buf);
+                buf = '';
+                continue;
+            }
+            buf += ch;
+        }
+        if (buf.trim()) out.push(buf);
+        return out.map(s => s.trim()).filter(Boolean);
+    }
+
+    /** Die Zeit-Scheiben eines Segments, in der Reihenfolge der
+     *  Kurzschreibweise: die erste ist die Dauer, eine zweite waere die
+     *  Verzoegerung. Eine Scheibe ist entweder ein Literal oder ein
+     *  Tokenverweis — alles andere (Eigenschaftsname, Kurve) faellt weg. */
+    function zeitScheiben(segment) {
+        return segment
+            .split(/\s+/)
+            .filter(Boolean)
+            .filter(
+                s => new RegExp(ZEIT_LITERAL.source).test(s) || /^var\(\s*--[\w-]+\s*\)$/.test(s)
+            );
+    }
+
+    function herkunftBefunde(decls) {
+        const tokens = tokensOhneLeiter();
+        const befunde = [];
+        decls.forEach(d => {
+            if (!istUebergang(d.prop)) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (DAUER_GEDULDET[anker]) return;
+            const voll = d.wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                tokens[name] !== undefined ? tokens[name] : ganz
+            );
+            const segs = kommasObenTrennen(voll);
+            let mitDauer = 0;
+            segs.forEach(seg => {
+                const scheiben = zeitScheiben(seg);
+                if (!scheiben.length) return;
+                mitDauer++;
+                const dauer = scheiben[0];
+                const m = /^var\(\s*(--[\w-]+)\s*\)$/.exec(dauer);
+                if (m && LEITER[m[1]] !== undefined) return;
+                befunde.push(
+                    `${anker} { ${seg.trim()} } — die Dauer kommt nicht aus der Leiter, ` +
+                        `sondern aus ${
+                            m ? `dem unbekannten Token ${m[1]}` : `dem Literal ${dauer}`
+                        }. Erlaubt sind var(--dur-fast), var(--dur), var(--dur-slow)`
+                );
+            });
+            if (!mitDauer)
+                befunde.push(
+                    `${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')} — fuehrt ueberhaupt ` +
+                        `keine Dauer. Ohne Dauer ist der Standard 0s: der Uebergang springt, ` +
+                        `und Teil 1 sieht das nicht (kein Literal ist auch keine Zeit)`
+                );
+        });
+        return befunde;
+    }
+
+    test('jede Dauer einer transition kommt aus einer der drei Sprossen', () => {
+        expect(herkunftBefunde(alleDeklarationen()).sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 3: die Umfangsgrenze (O-02)
+    // ------------------------------------------------------------------
+    test('UMFANGSGRENZE: Zeit-Literale stehen nur in den drei Sprossen und in animation*', () => {
+        /* Diese Volkszaehlung ist die einzige Stelle, an der die
+           Sammel-Ausnahme fuer `animation` ueberhaupt sichtbar wird. Ohne sie
+           waere "wir lassen animation in Ruhe" eine Behauptung in Prosa — und
+           eine Luecke: eine Dauer, die aus einer transition in eine animation
+           umzieht, waere nach Teil 1 und Teil 2 in Ordnung. */
+        const fremd = [];
+        alleDeklarationen().forEach(d => {
+            if (!new RegExp(ZEIT_LITERAL.source).test(d.wert)) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (LEITER[d.prop] !== undefined) return; // die drei Sprossen selbst
+            if (istAnimation(d.prop)) return; // O-02
+            if (DAUER_GEDULDET[anker]) return;
+            fremd.push(`${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')}`);
+        });
+        expect(fremd.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // WAECHTER DER RATSCHE SELBST
+    // ------------------------------------------------------------------
+    // Schranken benannt, weil die GEGENPROBE sie gegen den inhaltsleer-gruenen
+    // Lauf haelt: zwei Kopien einer Zahl sind zwei Zahlen, die auseinander
+    // laufen koennen.
+    const UEBERGAENGE_SCHRANKE = 200; // Ist-Wert 237
+    const DAUER_SEGMENTE_SCHRANKE = 200; // Ist-Wert 275 (134 ueber Token, 141 als Literal)
+    const ANIMATION_LITERALE_SCHRANKE = 15; // Ist-Wert 18
+
+    function erhebung4() {
+        const decls = alleDeklarationen();
+        const tokens = tokensOhneLeiter();
+        let uebergaenge = 0;
+        let segmenteMitDauer = 0;
+        let animLiterale = 0;
+        decls.forEach(d => {
+            if (istAnimation(d.prop)) animLiterale += [...d.wert.matchAll(ZEIT_LITERAL)].length;
+            if (!istUebergang(d.prop)) return;
+            uebergaenge++;
+            const voll = d.wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                tokens[name] !== undefined ? tokens[name] : ganz
+            );
+            kommasObenTrennen(voll).forEach(seg => {
+                if (zeitScheiben(seg).length) segmenteMitDauer++;
+            });
+        });
+        return { uebergaenge, segmenteMitDauer, animLiterale };
+    }
+
+    test('GEGENPROBE: der Scan findet Uebergaenge, Dauer-Segmente und animation-Literale', () => {
+        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Zerlegung ein
+        // GRUENER Lauf — inhaltsleer gruen statt rot, genau der Fehler, den
+        // F-01b gemacht hat.
+        const e = erhebung4();
+        expect(e.uebergaenge).toBeGreaterThanOrEqual(UEBERGAENGE_SCHRANKE);
+        expect(e.segmenteMitDauer).toBeGreaterThanOrEqual(DAUER_SEGMENTE_SCHRANKE);
+        expect(e.animLiterale).toBeGreaterThanOrEqual(ANIMATION_LITERALE_SCHRANKE);
+    });
+
+    /* PROBEN FUER DIE LITERAL-ERKENNUNG — feste Zeichenketten, kein
+       Dateizugriff. Beide Richtungen, weil die Erkennung in beide Richtungen
+       kippen kann: eine zu weite Regex zaehlt die Bruchteile einer Kurve als
+       Dauer, eine zu enge uebersieht `.5s` oder `200ms`. */
+    const LITERAL_PROBEN = [
+        ['transform 0.15s', ['0.15s']],
+        ['opacity 200ms', ['200ms']],
+        ['opacity .5s', ['.5s']],
+        ['background 0.2s ease 0.1s', ['0.2s', '0.1s']],
+        ['opacity var(--dur) var(--ease)', []],
+        ['var(--trans-std)', []],
+        ['transform var(--dur-slow) cubic-bezier(0.4, 0, 0.2, 1)', []],
+        ['max-height 0.3s, padding 0.3s', ['0.3s', '0.3s']],
+        ['transform 0.25s ease, opacity 0.25s ease', ['0.25s', '0.25s']],
+        ['none', []],
+        ['stroke-dashoffset 0.5s ease', ['0.5s']],
+        ['0.01ms !important', ['0.01ms']]
+    ];
+
+    function literalprobeBefunde(erkenner) {
+        return LITERAL_PROBEN.flatMap(([wert, soll]) => {
+            const ist = erkenner(wert);
+            return JSON.stringify(ist) === JSON.stringify(soll)
+                ? []
+                : [`"${wert}" — erwartet ${JSON.stringify(soll)}, erhalten ` + JSON.stringify(ist)];
+        });
+    }
+
+    const literalErkenner = wert => [...wert.matchAll(ZEIT_LITERAL)].map(m => m[0]);
+
+    test('SELBSTPROBE: die Literal-Erkennung urteilt in beide Richtungen richtig', () => {
+        expect(literalprobeBefunde(literalErkenner)).toEqual([]);
+    });
+
+    test('SELBSTPROBE: die Zerlegung erfindet aus Selektoren und At-Regeln keine Dauer', () => {
+        /* Der gefaehrlichste Fehler dieser Zerlegung ist nicht, etwas zu
+           uebersehen, sondern etwas zu ERFINDEN: ein Pseudoklassen-Selektor
+           und ein @media-Kopf tragen beide einen Doppelpunkt. Wuerden sie als
+           Deklaration gelesen, stuenden in der Volkszaehlung von Teil 3
+           Befunde, die es nicht gibt — und jemand wuerde CSS anfassen, um
+           einen Messfehler zu beheben. */
+        const synth = [
+            '.a:hover { color: red; }',
+            '@media (max-width: 600px) { .b { transition: opacity 0.2s; } }',
+            '.c { /* 0.3s im Kommentar */ transition: var(--trans-std); }',
+            '@keyframes probe { 0% { opacity: 0; } 100% { opacity: 1; } }'
+        ].join('\n');
+        const d = deklarationen(synth);
+        expect(d.filter(x => x.prop === 'a' || x.prop === 'max-width')).toEqual([]);
+        expect(d.filter(x => istUebergang(x.prop)).map(x => x.wert)).toEqual([
+            'opacity 0.2s',
+            'var(--trans-std)'
+        ]);
+        // Die Zeile der Deklaration, nicht die des Regelkopfs — und der
+        // Kommentar davor verschiebt sie nicht.
+        expect(d.find(x => x.wert === 'var(--trans-std)').zeile).toBe(3);
+    });
+
+    test('SELBSTPROBE: die drei Sprossen loesen auf 150/200/300 ms auf', () => {
+        /* Die Leiter steht in zwei Fassungen im Baum: als Token in
+           variables.css und als LEITER hier. Ohne diese Probe koennten beide
+           auseinander laufen, und Teil 2 wuerde Tokennamen anerkennen, hinter
+           denen etwas anderes steht als in seinem Kommentar. */
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu4(f.content).matchAll(
+                /(--dur[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].trim();
+            }
+        });
+        expect(Object.keys(roh).sort()).toEqual(['--dur', '--dur-fast', '--dur-slow']);
+        const ms = txt => {
+            const m = /^([\d.]+)(ms|s)$/.exec(txt);
+            return m ? Math.round(parseFloat(m[1]) * (m[2] === 's' ? 1000 : 1)) : null;
+        };
+        Object.keys(LEITER).forEach(n => expect(ms(roh[n])).toBe(LEITER[n]));
+        // Und die Sprossen sind verschieden — eine Leiter mit zwei gleichen
+        // Sprossen waere keine.
+        expect([...new Set(Object.values(LEITER))].length).toBe(3);
+    });
+
+    /* BESCHAEDIGUNGEN DER LITERAL-ERKENNUNG
+       Jede veraendert, was erkannt wird; keine veraendert, was erhebung4()
+       zaehlt. Die Haupttests koennen eine Beschaedigung NICHT bemerken: eine
+       Erkennung, die nichts mehr findet, macht Teil 1 und Teil 3 gruen. Also
+       muss die SELBSTPROBE sie fangen. */
+    const BESCHAEDIGUNGEN_LIT = [
+        [
+            'nur Sekunden, keine Millisekunden',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d*\.?\d+)s\b/g)].map(m => m[0])
+        ],
+        [
+            'Ziffernteil ohne Bruchteil',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d+)(ms|s)\b/g)].map(m => m[0])
+        ],
+        [
+            'nur das erste Literal',
+            wert => [...wert.matchAll(ZEIT_LITERAL)].map(m => m[0]).slice(0, 1)
+        ],
+        [
+            'Einheit nicht verlangt',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d*\.?\d+)/g)].map(m => m[0])
+        ]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Literal-Erkennung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_LIT.filter(
+            b => literalprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; die Haupttests koennen es nicht ` +
+                `(weniger erkannte Literale = gruener Test), und die GEGENPROBE zaehlt ` +
+                `Segmente, nicht Literale`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    /* BESCHAEDIGUNGEN DER HERKUNFTSRECHNUNG — synthetische Deklarationen,
+       beide Richtungen. Teil 2 ist die einzige Zusicherung, die einen
+       Tokenverweis von einem Literal unterscheidet; kippt sie, bleibt nur noch
+       Teil 1, und `var(--dauer-schnell)` waere wieder in Ordnung. */
+    const HERKUNFT_PROBEN = [
+        [
+            'Literal statt Sprosse',
+            [{ datei: 'p.css', zeile: 1, prop: 'transition', wert: 'opacity 0.2s' }],
+            1
+        ],
+        [
+            'unbekanntes Token',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 2,
+                    prop: 'transition',
+                    wert: 'opacity var(--dauer-schnell)'
+                }
+            ],
+            1
+        ],
+        [
+            'Sprosse — kein Befund',
+            [{ datei: 'p.css', zeile: 3, prop: 'transition', wert: 'opacity var(--dur)' }],
+            0
+        ],
+        [
+            'Liste aus der Leiter — kein Befund',
+            [{ datei: 'p.css', zeile: 4, prop: 'transition', wert: 'var(--trans-std)' }],
+            0
+        ],
+        ['ganz ohne Dauer', [{ datei: 'p.css', zeile: 5, prop: 'transition', wert: 'opacity' }], 1],
+        [
+            'zwei Segmente, eines falsch',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 6,
+                    prop: 'transition',
+                    wert: 'opacity var(--dur), color 0.2s'
+                }
+            ],
+            1
+        ],
+        [
+            'die Ausnahme wird geachtet',
+            [
+                {
+                    datei: 'core.css',
+                    zeile: 3327,
+                    prop: 'transition-duration',
+                    wert: '0.01ms !important'
+                }
+            ],
+            0
+        ],
+        [
+            'Verzoegerung ist keine Dauer',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 7,
+                    prop: 'transition',
+                    wert: 'opacity var(--dur) ease 0.1s'
+                }
+            ],
+            0
+        ]
+    ];
+
+    test('MUTATIONSPROBE: die Herkunftsrechnung urteilt — synthetische Deklarationen', () => {
+        const falsch = HERKUNFT_PROBEN.filter(p => herkunftBefunde(p[1]).length !== p[2]).map(
+            p => `${p[0]} — erwartet ${p[2]} Befunde, erhalten ${herkunftBefunde(p[1]).length}`
+        );
+        expect(falsch.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in DAUER_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const { gebraucht } = literalBefunde(alleDeklarationen());
+        expect(Object.keys(DAUER_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
