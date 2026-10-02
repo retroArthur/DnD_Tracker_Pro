@@ -11682,7 +11682,9 @@ describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () 
     }
 
     test('MUTATIONSPROBE: eine beschaedigte Haupt-Regex faellt mindestens einem Waechter auf', () => {
-        const unentdeckt = BESCHAEDIGUNGEN.filter(b => erkennenBeschaedigung(b[1]).length === 0).map(
+        const unentdeckt = BESCHAEDIGUNGEN.filter(
+            b => erkennenBeschaedigung(b[1]).length === 0
+        ).map(
             b =>
                 `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
                 `(weniger Treffer = gruener Test), und die GEGENPROBE zaehlt mit ` +
