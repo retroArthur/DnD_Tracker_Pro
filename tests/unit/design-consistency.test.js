@@ -11717,9 +11717,14 @@ describe('W4-R-02 — Ausblenden mit visibility: keine unsichtbare Ausblende (Ra
 
        GEMESSEN AN DEN ZWEI STELLEN, DIE DEN TEST AUSGELOEST HABEN (gefuellte
        Kampagne, 390x844, data-layout=mobile, Abtastung beim Oeffnen der
-       Mobil-Navigation; `nav-open` schaltet utils/performance-extras.js:37 zur
-       Laufzeit, versteckt wird in variables.css ueber sechs Schweber auf
-       einmal):
+       Mobil-Navigation; `nav-open` schaltet toggleMobileNav() in
+       performance-extras.js (im utils/-Verzeichnis), Zeile 37, zur Laufzeit —
+       der Modulpfad steht hier bewusst OHNE sein Verzeichnis davor, genau wie
+       in css-deletion-audit.test.js:146, weil das Abdeckungs-Gate
+       (tests/unit/module-test-coverage.test.js) den woertlichen
+       loader.js-Pfad in einer Testdatei als "Modul ist angefasst" liest und
+       eine Erwaehnung in Prosa keine Abdeckung ist; versteckt wird in
+       variables.css ueber sechs Schweber auf einmal):
          .qref-fab               VORHER  1ms 1,00/visible ... 201ms 0,02/visible
                                  NACHHER 1ms 1,00/HIDDEN  ... 200ms 0,02/hidden
          .floating-dice-trigger  VORHER  1ms 1,00/visible ... 300ms 0,01/visible

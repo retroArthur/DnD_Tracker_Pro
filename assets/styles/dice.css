@@ -691,7 +691,7 @@
     box-shadow:
         var(--shadow-2),
         0 0 0 0 rgba(220, 38, 38, 0.4);
-    transition: var(--trans-slow);
+    transition: var(--trans-reveal); /* Reveal statt --trans-slow, s. W4-R-02 */
     animation: floatingPulse 3s ease-in-out infinite;
 }
 

@@ -1373,16 +1373,33 @@
                (.dice-hero-result, .fdp-number) etwas und wird dort einzeln
                angehaengt — in der Weltliste waere es 134-mal wirkungslos.
 
-               --trans-reveal laeuft auf --dur-slow, nicht auf --dur, und hat
-               GENAU EINEN Verbraucher: .floating-dice-panel (dice.css). Der
-               Unterschied ist nicht Kosmetik, sondern Funktion, im Browser
-               gemessen: das Panel haelt heute beim Ausblenden die ganzen 300ms
-               `visibility: visible`, waehrend die Deckkraft 1 -> 0 laeuft — die
-               Ausblende ist zu sehen. Ohne `visibility` in der Liste springt es
-               schon bei 60ms auf `hidden`, bei einer Deckkraft von noch 0,89:
-               das Panel verschwindet schlagartig. Mit --dur statt --dur-slow
-               waere es nach 200ms weg, waehrend die Deckkraft noch laeuft —
-               derselbe Fehler, nur spaeter. */
+               DIE ZWEI REVEAL-LISTEN tragen zusaetzlich `visibility` und sind
+               der einzige Grund, warum es sie ueberhaupt gibt. `visibility` ist
+               uebergangsfaehig, aber anders als alles andere: zwischen
+               `visible` und `hidden` liest JEDER Zwischenwert `visible`, der
+               Umschlag passiert erst am Ende der Dauer. Wer gleichzeitig
+               `opacity: 0` und `visibility: hidden` setzt, braucht das — sonst
+               springt die Sichtbarkeit im ERSTEN Bild auf `hidden`, waehrend
+               die Deckkraft unveraendert weiterlaeuft: die Ausblende findet
+               statt, nur sieht sie niemand. Im Browser gemessen am Panel: ohne
+               `visibility` ist es bei 60ms `hidden`, bei einer Deckkraft von
+               noch 0,89.
+               DIE DAUER MUSS PASSEN, sonst ist es derselbe Fehler, nur spaeter:
+               eine 200ms-Liste an einem 300ms-Element verliert die letzten
+               100ms genauso unsichtbar. Darum ZWEI Listen statt einer:
+                 --trans-reveal      laeuft auf --dur-slow (300ms) — das
+                                     Wuerfel-Panel (dice.css) und die rote
+                                     Wuerfelkugel (dice.css)
+                 --trans-reveal-std  laeuft auf --dur (200ms) — die
+                                     Schnellreferenz-Kugel (dashboard.css)
+               Alle drei werden vom selben Zustand versteckt: dem Mobil-Stapel
+               weiter unten in dieser Datei, der sechs Schweber auf einmal
+               ausblendet, sobald die Navigation aufgeht. Die anderen drei
+               (.qref-panel, .event-log, .kplog-panel) fuehren keinen Uebergang
+               und sind immer gesprungen. Gegen alles das steht W4-R-02 in
+               tests/unit/design-consistency.test.js: jede Ausblende, die eine
+               Bewegung fuehrt, muss `visibility` mindestens so lang tragen wie
+               `opacity`. */
             --dur-fast: 150ms;
             --dur: 200ms;
             --dur-slow: 300ms;
@@ -1403,6 +1420,7 @@
                 opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease),
                 box-shadow var(--dur-slow) var(--ease), filter var(--dur-slow) var(--ease);
             --trans-reveal: var(--trans-slow), visibility var(--dur-slow) var(--ease);
+            --trans-reveal-std: var(--trans-std), visibility var(--dur) var(--ease);
 
             /* ------------------------------------------------------------
                Welle 4, Schritt 1 — ZWEI vorgezogene Schriftgroessen (E3)

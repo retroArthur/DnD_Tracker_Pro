@@ -1208,7 +1208,7 @@
     cursor: pointer;
     box-shadow: var(--shadow-2);
     z-index: var(--z-panel);
-    transition: var(--trans-std);
+    transition: var(--trans-reveal-std); /* Reveal statt --trans-std, s. W4-R-02 */
 }
 
 .qref-fab:hover {
