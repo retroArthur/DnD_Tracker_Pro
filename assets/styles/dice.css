@@ -23,7 +23,7 @@
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;
-    transition: var(--trans-slow);
+    transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */
 }
 
 .dice-hero-result.crit {
@@ -824,7 +824,7 @@
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;
-    transition: var(--trans-slow);
+    transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */
 }
 
 .fdp-number.crit {

@@ -12144,12 +12144,35 @@ describe('W4-R-03 — tragende Eigenschaften: eine benannte Liste darf nichts fa
          core.css:456  .nav-tab           border-left-width,
                                           margin-left       (Deklaration :466)
        Vier der sechs Meldungen stammen aus Teil 1 — `.crit` und `.fail`
-       melden je dieselbe fehlende Eigenschaft —, zwei aus Teil 2. Alle drei
-       Anker sind als LEBEND belegt, nicht vermutet: `.crit`/`.fail` schaltet
-       features/dice/dice-core.js per classList auf genau diesen zwei
-       Elementen (in displayDiceResult() und updateFloatingResult()),
-       `drag-over` schaltet ui/lazy-loading.js:71 auf `.nav-tab`. Diese Zahl
+       melden je dieselbe fehlende Eigenschaft —, zwei aus Teil 2. Diese Zahl
        darf nur SINKEN, Ziel ist 0.
+
+       ZUR LEBENDIGKEIT, gemessen und NICHT so, wie der Plan es annahm. Die
+       Modulpfade in diesem Kommentar stehen bewusst OHNE ihr Verzeichnis
+       davor, genau wie in css-deletion-audit.test.js:146 — das
+       Abdeckungs-Gate (tests/unit/module-test-coverage.test.js) liest den
+       woertlichen loader.js-Pfad in einer Testdatei als "Modul ist
+       angefasst", und eine Erwaehnung in Prosa ist keine Abdeckung. Beim
+       ersten Lauf dieses Blocks hat es genau darum vier Module aus seiner
+       Ausnahmeliste streichen wollen.
+       Die zwei Glut-Stellen sind lebend: `.crit`/`.fail` schaltet
+       dice-core.js (im features/dice/-Verzeichnis) per classList auf genau
+       diesen zwei Elementen (in displayDiceResult() und
+       updateFloatingResult()). Die dritte NICHT: der Plan begruendet
+       core.css:466 damit, dass "lazy-loading.js (im ui/-Verzeichnis), Zeile
+       71, `drag-over` live umschaltet" — aber Zeile 51 derselben Funktion
+       verlaesst sie vorher
+       (`if (container.querySelector('.nav-group')) return;`), und
+       assets/templates/header.html gruppiert die Reiter seit der gruppierten
+       Navigation. Die Zuhoerer werden also nie angehaengt, und
+       `.nav-tab.drag-over` ist im ausgelieferten Markup unerreichbar; der
+       Kommentar an der Regelgruppe selbst sagt das seit laengerem ("Legacy —
+       bei gruppierter Nav inaktiv"). Die Eigenschaften gehoeren trotzdem an
+       die Liste: die Regel steht im Baum, sie ist ueber einen ungruppierten
+       Reiterbau wieder erreichbar, und eine Ratsche, die nur bewacht, was
+       heute zufaellig ausgefuehrt wird, bewacht die falsche Menge. Was dieser
+       Befund NICHT hergibt, ist eine sichtbare Wirkung im Browser — sie ist
+       nur zu messen, indem man `.drag-over` von Hand setzt.
 
        ZWEI BEFUNDE LIEGEN BEWUSST AUSSERHALB und stehen NICHT in der
        Erlaubnisliste, sondern ausserhalb des Geltungsbereichs:
@@ -12455,10 +12478,12 @@ describe('W4-R-03 — tragende Eigenschaften: eine benannte Liste darf nichts fa
     /* `drag-over` und `dragging` sind die zwei Haelften desselben Vorgangs
        (Ziel und gezogenes Element) und die einzigen Zustandsklassen im Baum,
        die es ohne laufendes Ziehen gar nicht geben KANN — sie werden
-       ausschliesslich von JS gesetzt (ui/lazy-loading.js:63/71/76/81,
-       features/dmscreen/dmscreen-config.js, features/initiative-extras.js,
-       utils/performance-extras.js). Darum braucht dieser Teil keine
-       Lebendigkeitsprobe: die Klasse selbst ist der Beweis. */
+       ausschliesslich von JS gesetzt: lazy-loading.js (im ui/-Verzeichnis,
+       Zeilen 63/71/76/81), dmscreen-config.js (im features/dmscreen/-
+       Verzeichnis), initiative-extras.js und performance-extras.js (im
+       features/- bzw. utils/-Verzeichnis). Darum braucht dieser Teil keine
+       Lebendigkeitsprobe: die Klasse selbst ist der Beweis. Die Pfade stehen
+       auch hier ohne Verzeichnis davor, s. den Kopfkommentar. */
     const ZIEH_ZUSTAND = /\.(?:drag-over|dragging)\b/;
     const ziehBefunde = () =>
         verlorene(

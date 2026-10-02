@@ -463,14 +463,14 @@
             font-size: 12px;
             font-weight: 500;
             white-space: nowrap;
-            transition: var(--trans-std);
+            transition: var(--trans-std), border-left-width var(--dur) var(--ease), margin-left var(--dur) var(--ease); /* Geometrie des .drag-over-Balkens darunter — s. W4-R-03 */
             flex-shrink: 0;
         }
 
         .nav-tab:hover { background: var(--overlay-mid); color: var(--text); border-color: var(--border); }
         .nav-tab.active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         
-        /* Nav Tab Drag & Drop (Legacy — bei gruppierter Nav inaktiv) */
+        /* Nav Tab Drag & Drop (Legacy — ui/lazy-loading.js:51 verlaesst initNavDragDrop() vor dem Anhaengen, sobald eine .nav-group da ist, und header.html gruppiert: diese drei Regeln sind im ausgelieferten Markup unerreichbar) */
         .nav-tab[draggable="true"] { cursor: grab; }
         .nav-tab.dragging { opacity: 0.4; cursor: grabbing; }
         .nav-tab.drag-over {
