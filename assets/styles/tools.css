@@ -135,9 +135,6 @@
 
 .timer-quick-add,
 .timer-quick-settings {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
     border: 1px solid var(--border);
     background: var(--bg-elevated);
     cursor: pointer;
@@ -229,9 +226,6 @@
 }
 
 .timer-card-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--bg-elevated);
     color: var(--text);

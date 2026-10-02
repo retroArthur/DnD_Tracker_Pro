@@ -1403,9 +1403,6 @@
 }
 
 .dms-dice-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--radius-md);
     background: var(--bg-dark);
     border: 1px solid var(--border);
     color: var(--text);
@@ -1625,8 +1622,6 @@
     }
 
     .dms-dice-btn {
-        width: 36px;
-        height: 36px;
         font-size: 0.75em;
     }
 }

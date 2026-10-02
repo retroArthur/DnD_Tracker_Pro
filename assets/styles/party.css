@@ -2220,12 +2220,8 @@
 }
 
 .rest-hd-btn {
-    width: 24px;
-    height: 24px;
-    padding: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
     color: var(--text);
     cursor: pointer;
     font-size: 14px;

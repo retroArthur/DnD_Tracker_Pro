@@ -225,9 +225,6 @@
             background: var(--bg-elevated);
             border: 1px solid var(--border);
             color: var(--text);
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
             cursor: pointer;
             font-size: 16px;
             transition: var(--trans-std);
@@ -633,9 +630,6 @@
 
         /* Nur-Icon: quadratisch, ohne Kontur, Flaeche >= 36px fuer Beruehrung */
         .btn-icon {
-            padding: 0;
-            width: 36px;
-            height: 36px;
             justify-content: center;
             background: transparent;
             border-color: transparent;
@@ -647,10 +641,6 @@
             color: var(--gold-text);
         }
 
-        .btn-sm.btn-icon {
-            width: 28px;
-            height: 28px;
-        }
 
         /* Der Fokusring war bisher der Browser-Standard und auf dunklem
            Grund kaum zu sehen. */
@@ -1817,9 +1807,6 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-dim);
-            width: 20px;
-            height: 20px;
-            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 12px;
             display: flex;
@@ -3237,9 +3224,6 @@
         }
 
         .loc-detail-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-md);
             border: 1px solid var(--border);
             background: var(--bg-elevated);
             cursor: pointer;
@@ -3328,3 +3312,93 @@
             }
         }
 
+
+        /* ============================================================
+           BAUFORM 1 — ICON-KNOPF: EINE GROESSE, EINE RUNDUNG
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung E2)
+           ============================================================
+           WARUM 36 px UND NICHT DIE 28 AUS PARAGRAPH 3.7. Die Begruendung
+           steht im eigenen Code: ueber .btn-icon oben in dieser Datei stand
+           bis zu dieser Welle woertlich "Flaeche >= 36px fuer Beruehrung", und
+           dashboard.css erzwingt mit `.touch-device .btn` auf
+           Beruehrungsgeraeten 44 px. 28 px wuerde beide Schranken
+           unterschreiten — die eigene Regel und die der Mobil-Runde.
+
+           WAS VORHER STAND, gemessen: ZEHN verschiedene deklarierte Groessen
+           unter 22 quadratischen Icon-Knoepfen —
+             16 (.qref-apply-btn) · 20 (.lr-reset-btn, .spell-tooltip-close) ·
+             24 (.bf-clear, .init-mob-dissolve-btn, .npc-section-btn,
+                 .rest-hd-btn) · 28 (.timer-card-btn) · 32 (.calc-import-btn,
+             .dice-fav-add, .emoji-pick-btn) · 34 (.init-statblock-close,
+             .loc-detail-btn) · 36 (sieben) · 42 (.dms-dice-btn) ·
+             44 (.dice-reroll-btn)
+           und VIER Rundungen: --radius-sm (8x), --radius-md (10x), 50% (3x),
+           keine (1x, .btn-icon erbte die --radius-sm von .btn).
+           14 der 21 Mitglieder aendern damit ihre Groesse, 11 ihre Rundung.
+
+           EINER DER 22 IST KEIN MITGLIED, und das ist gemessen, nicht
+           entschieden: .qref-apply-btn steht INNERHALB eines Textchips, nicht
+           in einer Knopfreihe. Auf 36 px gebracht wuechse der Chip von
+           29,19x96,61 auf 46x116,61 und der Zustandsbereich der
+           Schnellreferenz von 135 auf 306 px. Begruendung und Messwerte stehen
+           an der Regel selbst (dashboard.css). Bei allen anderen 21 ist der
+           Elternteil eine Knopfreihe oder ein Raster und waechst hoechstens um
+           12 px — nachgemessen an je einem Element jeder Klasse.
+
+           WAS NICHT IM VERTRAG STEHT, und warum nicht:
+           · `font-size` — die Knoepfe tragen Zeichen von 11 px bis 1,3em
+             Emoji. Eine gemeinsame Zeichengroesse waere eine Umgestaltung der
+             Zeichen, nicht eine Zusammenfuehrung der Flaechen; Befund D-05
+             nennt "3 Icon-Knopf-Hoehen", die Zeichengroessen sind D-06 und
+             damit Gegenstand der Welle 5.
+           · `display`/`align-items`/`justify-content` — fast alle diese
+             Knoepfe sind Flexkinder, und ein Flexkind blockifiziert
+             `inline-block` zu `block` und `inline-flex` zu `flex`. Ein
+             gemeinsames `display` wuerde also den BERECHNETEN Wert von 13
+             Knoepfen von `block` auf `flex` aendern — eine Aenderung an einer
+             der zwoelf Eigenschaften des Stil-Sollstands, die dieser Schritt
+             nicht zu verantworten hat. Die Zentrierung bleibt dort, wo sie
+             heute steht.
+
+           `padding: 0` gehoert dagegen hinein: in einer festen 36x36-Flaeche
+           schiebt der 6px-12px-Innenabstand von .btn das Zeichen aus der
+           Mitte und laesst nur 12 px Inhaltsbreite uebrig.
+
+           WARUM DIESER BLOCK AM ENDE VON core.css STEHT: er muss NACH .btn
+           stehen (sonst gewinnt dessen Innenabstand und dessen --radius-sm)
+           und nach jeder Mitgliedsregel dieser Datei, weil alle dieselbe
+           Spezifitaet (0,1,0) haben und bei Gleichstand die SPAETERE Regel
+           gewinnt. Die Dateien nach core.css im @import-Hub koennen die Basis
+           weiter ueberstimmen — genau darum darf kein Mitglied seine Groesse
+           wieder selbst setzen. W4-R-06 Teil 1 und 2 halten das fest.
+
+           GESTRICHEN, weil tot: `.btn-sm.btn-icon { 28px }` stand bis hierher
+           in dieser Datei. Gemessen tragen NULL Elemente im Markup und im JS
+           beide Klassen zugleich — die Regel hat nie etwas bemessen.
+           ============================================================ */
+        .btn-icon,
+        .bf-clear,
+        .calc-import-btn,
+        .dice-fav-add,
+        .dice-reroll-btn,
+        .dms-dice-btn,
+        .emoji-pick-btn,
+        .enc-detail-btn,
+        .header-action-btn,
+        .init-mob-dissolve-btn,
+        .init-statblock-close,
+        .loc-detail-btn,
+        .loot-detail-btn,
+        .lr-reset-btn,
+        .npc-detail-btn,
+        .npc-section-btn,
+        .rest-hd-btn,
+        .spell-tooltip-close,
+        .timer-card-btn,
+        .timer-quick-add,
+        .timer-quick-settings {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: var(--radius-md);
+        }

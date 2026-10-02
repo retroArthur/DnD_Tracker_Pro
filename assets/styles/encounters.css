@@ -1122,10 +1122,7 @@
 }
 
 .enc-detail-btn {
-    width: 36px;
-    height: 36px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
     cursor: pointer;
@@ -1630,9 +1627,6 @@
     background: var(--gold);
     border: none;
     color: var(--on-gold);
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;

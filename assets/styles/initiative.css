@@ -77,9 +77,6 @@
             background: transparent;
             border: 1px solid var(--border);
             color: var(--text-dim);
-            width: 24px;
-            height: 24px;
-            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1222,15 +1219,12 @@
     top: 12px;
     right: 12px;
     z-index: 2;
-    width: 34px;
-    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-card);
     color: var(--text-dim);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     font-size: 18px;
     line-height: 1;
     cursor: pointer;
@@ -1360,12 +1354,9 @@
 }
 
 .lr-reset-btn {
-    width: 20px;
-    height: 20px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-dim);
-    border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 0.8em;
     display: flex;
@@ -1483,12 +1474,9 @@
 }
 
 .init-mob-dissolve-btn {
-    width: 24px;
-    height: 24px;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;

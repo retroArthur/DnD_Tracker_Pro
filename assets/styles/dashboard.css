@@ -137,12 +137,9 @@
         }
         
         .emoji-pick-btn {
-            width: 32px;
-            height: 32px;
             font-size: 1.1em;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
             cursor: pointer;
             transition: var(--trans-fast);
         }
@@ -1857,6 +1854,15 @@
     color: var(--red-text);
 }
 
+/* NICHT in der Icon-Knopf-Basisgruppe (core.css), und das ist gemessen:
+   dieser Knopf steht INNERHALB eines Textchips
+   (<span class="qref-condition">Geblendet<button>+</button></span>), nicht in
+   einer Knopfreihe. Auf 36x36 gebracht waechst der Chip von 29,19x96,61 auf
+   46x116,61 und der Zustandsbereich der Schnellreferenz von 135 auf 306 px —
+   er wuerde sich mehr als verdoppeln. Er ist der einzige der 22 vermessenen
+   quadratischen Knoepfe, dessen Elternteil ein Textchip ist; bei allen anderen
+   ist es eine Knopfreihe oder ein Raster, und die waechst hoechstens um 12 px.
+   Die verbleibenden 16 px sind ausgewiesene Restschuld, kein Versehen. */
 .qref-apply-btn {
     width: 16px;
     height: 16px;
