@@ -564,11 +564,46 @@ const SAAT = {
     }
 };
 
+/* Die breitere der beiden Schriftmetriken, die auf der laufenden Plattform zu
+   haben sind — Zusicherung 7 braucht sie. Verdana laeuft 1.1554x breiter als
+   'Segoe UI' (gemessen am Knopftext "+ Neuer Charakter", 14px: 114.75 ->
+   132.59px) und damit einen Prozentpunkt breiter als die Schrift der
+   Linux-Runner (~1.145, am CI-Befund kalibriert). Courier New hat 0.600em
+   Vorschub gegen Consolas 0.550em; DejaVu Sans Mono, das Linux greift, 0.602em.
+   Auf einem Linux-Runner ist Verdana nicht installiert und die Kette faellt auf
+   dieselbe Standardschrift wie die der App — dort misst die Zusicherung also die
+   ECHTE Metrik des Runners. Das `!important` zaehlt nicht in die F-18-Ratsche:
+   die zaehlt assets/styles/, nicht das Stilblatt eines Testlaufs. */
+const BREITE_SCHRIFT =
+    ':root { --font-ui: Verdana, sans-serif !important; ' +
+    '--font-mono: "Courier New", monospace !important; }';
+
 /**
  * Laedt das gebaute Buendel mit der gefuellten Saat.
  * @param {import('@playwright/test').Page} page
+ * @param {{breiteSchrift?: boolean}} [opt] `breiteSchrift` haengt BREITE_SCHRIFT
+ *   als erstes Kopfkind ein — vor den App-Stilen, damit die App ihre Messtokens
+ *   beim Start schon gegen die endgueltige Schrift setzt.
  */
-async function appLaden(page) {
+async function appLaden(page, opt = {}) {
+    if (opt.breiteSchrift) {
+        await page.addInitScript(quelltext => {
+            const einfuegen = () => {
+                if (!document.head) return false;
+                const s = document.createElement('style');
+                s.id = 'breite-schrift-probe';
+                s.textContent = quelltext;
+                document.head.insertBefore(s, document.head.firstChild);
+                return true;
+            };
+            if (!einfuegen()) {
+                const mo = new MutationObserver(() => {
+                    if (einfuegen()) mo.disconnect();
+                });
+                mo.observe(document, { childList: true, subtree: true });
+            }
+        }, BREITE_SCHRIFT);
+    }
     await page.addInitScript(s => {
         try {
             localStorage.setItem('dnd-tracker-v4', JSON.stringify(s));
@@ -1105,6 +1140,109 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
         expect(
             schlecht,
             'Ansichten mit Ueberhang oder Elementen rechts des Fensterrands bei 320x700'
+        ).toEqual([]);
+    });
+
+    /* ZUSICHERUNG 7 — DIESELBEN 24 ANSICHTEN UNTER BREITERER SCHRIFT.
+       ------------------------------------------------------------------
+       WAS DIE SECHS DARUEBER NICHT SEHEN. Sie messen die Schrift der laufenden
+       Plattform. Unter Windows ist das 'Segoe UI' und Consolas; unter Linux
+       fallen BEIDE Erstglieder der App weg (assets/styles/variables.css), und es
+       greifen die fontconfig-Standardschrift bzw. DejaVu Sans Mono — rund 14.5%
+       bzw. 9.5% breiter. Jede inhaltsbasierte Mindestbreite waechst damit.
+       Der CI-Lauf 36966941474 hat genau daran `party: 10px, 5 Elemente
+       ausserhalb` gemeldet, waehrend Zusicherung 1 und 6 unter Windows gruen
+       liefen. Eine Probe, die nur eine Metrik kennt, kann diese Klasse von
+       Fehlern grundsaetzlich nicht finden.
+
+       UND SIE HAT SCHON EINEN GEFUNDEN, der nicht aus dem CI-Lauf stammt: die
+       Korrektur, die `.section-toolbar-actions` im 600px-Block von `width: 100%`
+       auf `width: auto` setzt (editors.css), nahm der Gruppe eine SCHRANKE mit
+       — im DM-Schirm wurde sie unter Verdana 282.73px breit in einer 276px
+       schmalen Zeile, 2px Seitenueberhang, lokal unsichtbar. Behoben mit
+       `max-width: 100%` und `flex-wrap: wrap`; diese Zusicherung ist der
+       Grund, dass es auffiel.
+
+       EIN THEME, NICHT VIER. Zusicherung 6 sichert die Gleichheit ueber die vier
+       Themes; diese hier variiert die Schrift, und beide Achsen zugleich waeren
+       96 Durchlaeufe fuer eine Aussage, die in jeder Achse einzeln steht.
+
+       GEMESSEN am Buendel dieser Runde, 320x700, gefuellte Saat, Falten offen:
+       24/24 ohne Ueberhang und ohne Element ausserhalb — und vor der Korrektur
+       der Charakterkarte loeste die Party-Rasterspalte dort auf 304.875px in
+       einem 300px-Behaelter auf. */
+    test('(7) kein Ueberhang in allen 24 Ansichten unter breiterer Schrift bei 320x700', async ({
+        page
+    }) => {
+        test.setTimeout(90000);
+        await page.setViewportSize({ width: 320, height: 700 });
+        await appLaden(page, { breiteSchrift: true });
+
+        /* VORBEDINGUNG A — die breitere Schrift ist angekommen, oder sie KANN
+           auf dieser Plattform nichts aendern, weil beide Ketten auf dieselbe
+           Standardschrift fallen (so auf den Linux-Runnern). Was sie NICHT sein
+           darf: schmaler als die Windows-Erstwahl — dann waere diese Zusicherung
+           leichter als Zusicherung 1. */
+        const schrift = await page.evaluate(() => {
+            const messe = familie => {
+                const span = document.createElement('span');
+                span.style.cssText =
+                    'position:absolute;left:-9999px;white-space:pre;font-size:14px;font-family:' +
+                    familie;
+                span.textContent = '+ Neuer Charakter';
+                document.body.appendChild(span);
+                const b = span.getBoundingClientRect().width;
+                span.remove();
+                return Math.round(b * 100) / 100;
+            };
+            return { ist: messe('var(--font-ui)'), segoe: messe('"Segoe UI"') };
+        });
+        console.log(
+            `[Q1] breite Schrift: "+ Neuer Charakter" ${schrift.ist}px, in 'Segoe UI' ` +
+                `${schrift.segoe}px (Faktor ${(schrift.ist / schrift.segoe).toFixed(4)})`
+        );
+        expect(
+            schrift.ist,
+            `die Probenschrift ist SCHMALER als 'Segoe UI' (${schrift.ist} gegen ` +
+                `${schrift.segoe}px) — diese Zusicherung waere dann leichter als Zusicherung 1`
+        ).toBeGreaterThanOrEqual(schrift.segoe - 0.5);
+
+        // VORBEDINGUNG B — dieselbe wie bei Zusicherung 6: die Saat muss da sein.
+        for (const v of ['dashboard', 'initiative', 'dice', 'fraktionen', 'quests']) {
+            await reiterWechseln(page, v);
+        }
+        const fuellung = await page.evaluate(messeFuellung);
+        expect(
+            {
+                kaempfer: fuellung.kaempfer >= 10,
+                fraktionen: fuellung.fraktionen >= 5,
+                dashFiguren: fuellung.dashFiguren > 0
+            },
+            `Vorbedingung: Fuellstand ${JSON.stringify(fuellung)} — auf leerer ` +
+                `Kampagne ist der Ueberhang 0 und diese Zusicherung waere blind`
+        ).toEqual({ kaempfer: true, fraktionen: true, dashFiguren: true });
+
+        /** @type {Array<string>} */
+        const schlecht = [];
+        for (const v of ANSICHTEN) {
+            await reiterWechseln(page, v);
+            await faltenOeffnen(page);
+            const m = await page.evaluate(messeUeberhang);
+            if (m.ueberhangX > 0 || m.aussenAnzahl > 0) {
+                schlecht.push(
+                    `${v}: ${m.ueberhangX}px, ${m.aussenAnzahl} Elemente ausserhalb ` +
+                        `(${m.aussen.map(t => `${t.sel} ${t.breite}px@${t.rechts}`).join(' | ')})`
+                );
+            }
+        }
+        console.log(
+            `[Q1] 320x700 breite Schrift: ${ANSICHTEN.length - schlecht.length}/` +
+                `${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb`
+        );
+
+        expect(
+            schlecht,
+            'Ansichten mit Ueberhang oder Elementen rechts des Fensterrands unter breiterer Schrift'
         ).toEqual([]);
     });
 });

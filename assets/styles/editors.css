@@ -778,6 +778,26 @@
        Titel und Aktionen zusammen nicht in eine Zeile passen, und nur dann. */
     .section-toolbar-actions {
         width: auto;
+        /* DIE ZWEI ZEILEN, DIE `width: auto` BRAUCHT — und ohne die es einen
+           neuen Fehler erzeugt hat. `width: 100%` war nicht nur eine
+           Platzverschwendung, es war auch eine SCHRANKE: die Gruppe konnte nie
+           breiter werden als ihre Zeile. Mit `width: auto` nimmt sie ihre
+           max-content-Breite, und `flex-shrink: 0` (Grundregel weiter oben)
+           verbietet ihr, nachzugeben. Gemessen am gebauten Buendel, DM-Schirm
+           bei 320x700 unter Verdana: die Gruppe traegt dort drei Knoepfe
+           ("📋 Profile", "⚙️ Widgets", "🔄") und wurde 282.73px breit in einer
+           276px schmalen Zeile — 2px Seitenueberhang, ein Fehler, den es vor
+           `width: auto` nicht gab und der lokal unsichtbar blieb, weil er die
+           breitere Schriftmetrik braucht.
+           `max-width: 100%` gibt die Schranke zurueck, ohne die Verschwendung:
+           die Gruppe hugt ihren Inhalt, aber nie ueber die Zeile hinaus.
+           `flex-wrap: wrap` ist das Gegenstueck dazu — gedeckelt und
+           unumbrechbar waere sie innen zu eng; so bricht die Knopfreihe um,
+           statt zu klemmen. Beides zusammen gemessen: DM-Schirm 2px -> 0px,
+           und die Zahlen der Truhe (Leiste 296/293px, Spalte 194/197px) auf
+           den Bildpunkt unveraendert. */
+        max-width: 100%;
+        flex-wrap: wrap;
     }
 
     .section-toolbar-filters select {
