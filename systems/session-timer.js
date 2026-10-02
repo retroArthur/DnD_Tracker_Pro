@@ -16,6 +16,53 @@ function formatSessionTime(totalSeconds) {
     const seconds = totalSeconds % 60;
     return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
 }
+/**
+ * Schreibt die Sitzungszeit in die Mobil-Kopfzeile und haelt die SEKUNDEN
+ * dabei in einem eigenen Element (C1).
+ *
+ * WARUM GETRENNT. Die Mobil-Kopfzeile fuehrt sieben Bedienelemente in einer
+ * nicht umbrechenden, fest sitzenden Leiste. Bei 320px Fensterbreite stehen
+ * 304px Inhaltsbreite zur Verfuegung, die sechs Symbolknoepfe nehmen 219.6px,
+ * und fuer den Zaehler bleiben mit 8px Zwischenraum 52.4px. "00:00:00" ist in
+ * `var(--font-mono)` bei 14px 61.6px breit (Consolas, Windows) bzw. 67.2px
+ * (Courier New als Nachstellung von DejaVu Sans Mono, Linux) — plus Rahmen und
+ * Innenabstand 87.6 bzw. 93.2px. Die Leiste war damit auf JEDER Telefonbreite
+ * ueberbucht; unter der Linux-Metrik schob der 5.6px breitere Zaehler die Mitte
+ * des rechten Knopfes von x=319 auf x=325 aus einem 320px-Fenster, und
+ * `elementFromPoint` antwortete dort mit `nichts` (CI-Lauf 36966941474,
+ * 8 Faelle = 2 Fenster x 4 Themes).
+ * Ohne die Sekunden sind es fuenf Zeichen statt acht. Fuer einen SITZUNGS-
+ * zaehler ist das kein Verlust: am Tisch liest der Spielleiter "wie lange
+ * spielen wir schon", und das steht in Stunden und Minuten. Die vollstaendige
+ * Zeit bleibt in der Desktop-Kopfzeile (#session-timer-display) unveraendert
+ * stehen, und ausgeblendet wird erst unterhalb von 600px (core.css).
+ *
+ * WARUM ZWEI KNOTEN UND NICHT innerHTML. Die Anzeige laeuft im Sekundentakt.
+ * `textContent` am Elternteil wuerde das Sekunden-Element beim ersten Tick
+ * loeschen; `innerHTML` waere eine Zeichenkettenmontage im Sekundentakt an
+ * einer Stelle, die keine braucht. Die beiden Knoten werden einmal angelegt
+ * und danach nur noch beschrieben.
+ *
+ * @param {HTMLElement} ziel #mobile-timer-display
+ * @param {string} zeit Vollform "HH:MM:SS" aus formatSessionTime()
+ */
+function schreibeMobilZeit(ziel, zeit) {
+    const schnitt = zeit.lastIndexOf(':');
+    const kopf = schnitt < 0 ? zeit : zeit.slice(0, schnitt);
+    const sekunden = schnitt < 0 ? '' : zeit.slice(schnitt);
+    let sekKnoten = ziel.querySelector('.mobile-timer-seconds');
+    if (!sekKnoten) {
+        // Erststart oder fremd ueberschriebener Teilbaum: neu aufbauen.
+        ziel.textContent = '';
+        ziel.appendChild(document.createTextNode(kopf));
+        sekKnoten = document.createElement('span');
+        sekKnoten.className = 'mobile-timer-seconds';
+        ziel.appendChild(sekKnoten);
+    } else if (ziel.firstChild && ziel.firstChild.nodeType === Node.TEXT_NODE) {
+        ziel.firstChild.nodeValue = kopf;
+    }
+    sekKnoten.textContent = sekunden;
+}
 function updateSessionTimerDisplay() {
     const timeStr = formatSessionTime(sessionTimerSeconds);
     // Desktop Display
@@ -23,7 +70,7 @@ function updateSessionTimerDisplay() {
     if (display) display.textContent = timeStr;
     // Mobile Display
     const mobileDisplay = $('mobile-timer-display');
-    if (mobileDisplay) mobileDisplay.textContent = timeStr;
+    if (mobileDisplay) schreibeMobilZeit(mobileDisplay, timeStr);
 }
 function toggleSessionTimer() {
     const timer = $('session-timer');

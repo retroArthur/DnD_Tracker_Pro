@@ -43,8 +43,45 @@
             z-index: var(--z-panel);
             align-items: center;
             justify-content: space-between;
+            /* C1 — DAS SICHERHEITSNETZ: eine fest sitzende Leiste darf nichts
+               aus dem Fenster schieben.
+               `justify-content: space-between` verteilt nur FREIEN Platz; ist
+               die Summe der Kinder groesser als die Leiste, tut es gar nichts
+               mehr, und der Ueberschuss laeuft bei `flex-wrap: nowrap` nach
+               rechts hinaus. Weil die Leiste `position: fixed` ist, scrollt dort
+               nichts hin: was ueber dem rechten Rand liegt, ist UNERREICHBAR.
+               Genau das meldete der CI-Lauf 36966941474 achtmal (320x568 und
+               320x740, alle vier Themes) als `button.mobile-search-btn ->
+               nichts` — `elementFromPoint` auf der Knopfmitte fand nichts, weil
+               die Mitte bei x=325 in einem 320px-Fenster lag.
+               Mit `wrap` ist dieser Zustand nicht mehr herstellbar: passt eine
+               Gruppe nicht, ruecht sie in eine zweite Zeile und bleibt
+               bedienbar. Der Umbruch ist INTRINSISCH und kostet nur dort Hoehe,
+               wo die Alternative ein unerreichbarer Knopf waere — gemessen
+               greift er nach den drei Zeilen darunter (engerer Zwischenraum,
+               schmalerer Zaehler, ausgeblendete Sekunden) bei 320px NICHT mehr.
+               WARUM DIE HOEHE HIER ZAEHLT: `--mobile-header-height` wird aus der
+               gemessenen Isthoehe dieser Leiste gesetzt (setzeMobilKopfHoehe())
+               und geht als `.main-content { padding-top }` in
+               `--view-frame-height` ein — also direkt von der Hoehe der
+               Listen-Schalen ab. Eine Leiste, die regelhaft zweizeilig waere,
+               verschaerfte damit genau den Befund, den die Deckelung der
+               Werkzeugleiste weiter unten behebt. Deshalb Umbruch als Netz UND
+               Zahlen, die ihn nicht brauchen — nicht Umbruch statt Zahlen. */
+            flex-wrap: wrap;
+            row-gap: 6px;
         }
-        
+
+        /* C1 — die zwei Knopfgruppen der Mobil-Kopfzeile. Stand bis hierher als
+           `style="display: flex; gap: 8px; align-items: center"` im Markup und
+           war damit fuer keine Medienabfrage erreichbar; der Zwischenraum muss
+           auf Telefonbreiten enger werden (siehe @media weiter unten). */
+        [data-layout="mobile"] .mobile-header-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         [data-layout="mobile"] .mobile-search-btn {
             background: none;
             border: none;
@@ -95,7 +132,48 @@
            (tests/unit/design-consistency.test.js) laesst genau DREI Grenzen zu —
            600, 900, 1200. Eine vierte waere der Anfang der Leiter, die diese
            Ratsche gerade verhindert. Zwischen 400 und 600px sind die Knoepfe damit
-           etwas schmaler als noetig; das ist der guenstigere Handel. */
+           etwas schmaler als noetig; das ist der guenstigere Handel.
+
+           C1 — DIE RECHNUNG, DIE DAZU FEHLTE, und warum die Leiste trotz dieses
+           Schrittes noch ueberbucht war. Gemessen am gebauten Buendel bei 320px
+           Fensterbreite (Innenabstand 2x8px, also 304px Inhaltsbreite):
+
+             6 Symbolknoepfe   219.6px   (36.6 / 36.6 / 36.6 / 36.6 / 27.1 / 36.6)
+             Sitzungszaehler    87.6px   ("00:00:00" 61.6 + 24 Innen + 2 Rahmen)
+             2x2 Zwischenraum   32.0px
+             ------------------------------------
+             Summe             339.2px   in 304px  ->  25.7px ZU VIEL
+
+           Der Ueberschuss lag schon vor dieser Runde rechts des Fensterrands;
+           die Probe sah ihn nur nicht, weil sie `elementFromPoint` auf der
+           KNOPFMITTE fragt und die bei x=319 noch knapp drinnen lag — 0.8px
+           Reserve. Unter der Linux-Schriftmetrik ist der Zaehler 5.6px breiter
+           ("00:00:00" in DejaVu Sans Mono statt Consolas; nachgestellt mit
+           Courier New, 0.600em gegen 0.550em Vorschub), die Mitte wandert auf
+           x=325, und die Antwort ist `nichts`. Das sind die acht CI-Faelle.
+           Und der blockierte Knopf ist NICHT der Suchknopf, obwohl die Meldung
+           `button.mobile-search-btn` lautet: alle sieben teilen diese Klasse,
+           der rechte ist der Theme-Knopf.
+
+           DREI ZAHLEN, die den Ueberschuss aufloesen, und keine davon nimmt
+           Tippflaeche:
+             Zwischenraum 8 -> 4px          -16.0px   (toter Raum, keine Flaeche)
+             Zaehler-Innenabstand 12 -> 6px -12.0px   (Kasten bleibt, Hoehe bleibt)
+             Sekunden ausgeblendet          -23.1px   (acht Zeichen -> fuenf)
+             ------------------------------------
+                                            -51.1px  ->  Summe 288.1px, 15.9px frei
+           Unter der Linux-Metrik: 291.6px, 12.4px frei. Die sechs Knopfbreiten
+           aendern sich dabei um KEINEN Bildpunkt — ihre Glyphen kommen aus der
+           Symbolschrift des Betriebssystems, nicht aus --font-ui (gemessen: 12
+           von 13 Symbolcodepunkten sind in Segoe UI, Verdana und einer
+           Nullschrift bildpunktgleich).
+           WARUM DIE KNOEPFE NICHT AUF 44px WACHSEN, obwohl das die Schranke der
+           Mobil-Runde ist: 6x44 + 16 Zwischenraum + 56 Zaehler sind 336px in
+           304px. Die 44px sind an den Reitern der Navigationsleiste gesichert
+           (.nav-tab, M1), nicht an diesen sieben — heute ist KEINES der sieben
+           44px breit oder hoch (36.6x43, der Layout-Knopf 27.1x43). Diese Runde
+           macht sie nicht kleiner; groesser kann sie hier nur machen, wer dem
+           Zaehler oder einem Knopf den Platz nimmt. */
         @media (max-width: 600px) {
             [data-layout="mobile"] .mobile-header {
                 padding: 10px 8px;
@@ -103,6 +181,30 @@
 
             [data-layout="mobile"] .mobile-search-btn {
                 padding: 8px 4px;
+            }
+
+            /* Enger, nicht kleiner: 4px toter Raum zwischen zwei 36.6px breiten
+               Tippflaechen statt 8px. Die Flaechen selbst bleiben unberuehrt. */
+            [data-layout="mobile"] .mobile-header-group {
+                gap: 4px;
+            }
+
+            /* Der Kasten des Zaehlers bleibt (er ist tippbar und muss danach
+               aussehen), nur sein waagerechter Innenabstand gibt nach. Die
+               senkrechten 6px bleiben: sie tragen die Hoehe der Tippflaeche. */
+            [data-layout="mobile"] .mobile-timer {
+                padding: 6px 6px;
+            }
+
+            /* Auf Telefonbreiten zeigt der Sitzungszaehler Stunden und Minuten.
+               Die Sekunden eines SITZUNGS-zaehlers sind am Tisch keine
+               Information — gefragt ist "wie lange spielen wir schon" —, kosten
+               hier aber 23.1px von 304px und damit genau den Platz, der dem
+               rechten Knopf fehlte. Die Vollform steht unveraendert in der
+               Desktop-Kopfzeile (#session-timer-display). Die Trennung in zwei
+               Knoten macht schreibeMobilZeit() in systems/session-timer.js. */
+            [data-layout="mobile"] .mobile-timer-seconds {
+                display: none;
             }
         }
 

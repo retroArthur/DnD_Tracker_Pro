@@ -1172,7 +1172,17 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     // gemessene Ausgangswert um eins. Eine weitere Senkung um eins wird in
     // Phase 19 erwartet (D-51) — jede Senkung nennt ihren eigenen gemessenen
     // Ausgangswert.
-    const INLINE_MAX = 256;
+    // Gesenkt am 2026-10-02 (C1): 256 -> 254. Die zwei Knopfgruppen der
+    // Mobil-Kopfzeile (assets/templates/modals-tools.html) trugen je einen
+    // Inline-Stil mit `display: flex; gap: 8px; align-items: center`. Sie sind
+    // zur Klasse `.mobile-header-group` geworden, WEIL der Zwischenraum auf
+    // Telefonbreiten enger werden muss und ein Inline-Stil von keiner
+    // Medienabfrage erreicht wird — die Senkung ist das Nebenergebnis, nicht
+    // der Zweck. Gemessener Ausgangswert danach: 254, gezaehlt mit derselben
+    // Regex ueber dieselben Dateien. Der erklaerende Kommentar im Markup nennt
+    // den Attributnamen absichtlich nicht aus: die Regex zaehlt sein Vorkommen
+    // auch dort, und die Senkung waere sonst um eins zu klein.
+    const INLINE_MAX = 254;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
