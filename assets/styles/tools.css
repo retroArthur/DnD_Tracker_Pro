@@ -962,11 +962,6 @@
     padding-left: 10px;
 }
 
-@keyframes timerPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
 .concentration-inline .conc-spell {
     font-weight: 600;
     max-width: 120px;

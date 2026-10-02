@@ -499,7 +499,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1163` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:1155` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:274` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:306` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:334` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -523,8 +523,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:192` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1381` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1394` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1373` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1386` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:295` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -610,10 +610,10 @@ dmscreen.css
   394  .notes-search-date
   524  .session-tag-remove:hover
   670  .quick-ref-section-title
- 1283  .dms-stat-warning .dms-stat-value
- 2375  .dms-profile-check
- 2401  .dms-profile-save
- 2405  .dms-profile-save .dms-profile-name
+ 1275  .dms-stat-warning .dms-stat-value
+ 2367  .dms-profile-check
+ 2393  .dms-profile-save
+ 2397  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
@@ -660,8 +660,8 @@ spells.css
 tools.css
   261  .timer-card-time
   455  .rt-result-label
- 1159  .breadcrumb-item:hover
- 1472  .sb-remove-btn:hover
+ 1154  .breadcrumb-item:hover
+ 1467  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3

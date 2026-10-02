@@ -911,10 +911,6 @@
             pointer-events: auto;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
         /* ============================================================
            PERFORMANCE-OPTIMIERUNGEN (CSS)
            ============================================================ */
@@ -1089,10 +1085,6 @@
             border-color: var(--gold);
             box-shadow: var(--ring-gold);
             outline: none; /* F-18: aus der Dublette uebernommen */
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         
         /* Smooth Scrollbar */

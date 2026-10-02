@@ -7255,7 +7255,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
         {
             datei: 'dmscreen.css',
-            zeile: 1150,
+            zeile: 1142,
             pfad: '[data-sortable].drag-over',
             lage: '0 0 0 2px var(--gold)',
             grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
@@ -7384,22 +7384,22 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 872, stufe: 2,
           pfad: '.export-dropdown-content',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 972, stufe: 1,
+        { datei: 'dmscreen.css', zeile: 968, stufe: 1,
           pfad: '[data-tooltip]::after',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 996, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 992, stufe: 2,
           pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
-        { datei: 'dmscreen.css', zeile: 1144, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1136, stufe: 2,
           pfad: '[data-sortable].dragging',
           vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 1150, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1142, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2196, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2188, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2449, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2441, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
         { datei: 'editors.css', zeile: 222, stufe: 3,
@@ -7483,10 +7483,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'spells.css', zeile: 563, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1180, stufe: 3,
+        { datei: 'tools.css', zeile: 1175, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1359, stufe: 2,
+        { datei: 'tools.css', zeile: 1354, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -9437,7 +9437,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
     const RING_STELLEN = [
         {
             datei: 'dmscreen.css',
-            zeile: 1090,
+            zeile: 1086,
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
             marke: '.form-group input:focus',
             vorher: { dicke: 3, deckung: 0.1, farbe: '#d4af37' },
@@ -9477,7 +9477,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1150,
+            zeile: 1142,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
             vorher: { dicke: 2, deckung: 1.0, farbe: null },
@@ -9536,7 +9536,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1324,
+            zeile: 1316,
             sel: '.dms-hp-text',
             marke: '.dms-hp-text',
             wert: '0 1px 2px rgba(0,0,0,0.5)',
