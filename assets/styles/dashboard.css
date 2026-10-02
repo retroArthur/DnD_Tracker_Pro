@@ -80,7 +80,7 @@
             cursor: pointer;
             font-size: 0.8em;
             text-align: left;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .dice-skill-btn:hover {
@@ -108,7 +108,7 @@
             font-family: var(--font-mono);
             color: var(--cyan-text);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .dice-formula-chip:hover {
@@ -183,7 +183,7 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .campaign-item:hover { border-color: var(--gold); }
@@ -281,7 +281,7 @@
             border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
             font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
             text-decoration: none; /* F-18: aus der Dublette uebernommen */
-            transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
+            transition: var(--trans-std); /* F-18: aus der Dublette uebernommen */
         }
         
         .wiki-link:hover {
@@ -326,7 +326,7 @@
             align-items: center;
             justify-content: center;
             color: var(--text-dim);
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .slot-pip.filled {
@@ -471,7 +471,7 @@
             background: var(--bg-dark);
             border-radius: var(--radius-md);
             border: 1px solid transparent;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .enc-save-box.active {
@@ -563,7 +563,7 @@
             border-radius: var(--radius-lg);
             font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .char-resistance-chip:hover {
@@ -617,7 +617,7 @@
             color: var(--text);
             border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .monster-template-btn:hover {
@@ -893,7 +893,7 @@
     padding: 10px 8px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     position: relative;
 }
 
@@ -987,7 +987,7 @@
     padding: 12px 16px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     min-width: 80px;
 }
 
@@ -1025,7 +1025,7 @@
     color: var(--text);
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dash-quick-btn:hover {
@@ -1208,7 +1208,7 @@
     cursor: pointer;
     box-shadow: var(--shadow-2);
     z-index: var(--z-panel);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-fab:hover {
@@ -1276,7 +1276,7 @@
     color: var(--text);
     cursor: pointer;
     font-size: 1em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-btn:hover {
@@ -1393,7 +1393,7 @@
     min-width: 48px;
     cursor: help;
     font-weight: 700;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-sg:hover {
@@ -1536,7 +1536,7 @@
     border-radius: var(--radius-md);
     font-weight: 700;
     cursor: help;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-ex:hover {
@@ -1586,7 +1586,7 @@
     padding: 8px 16px;
     color: var(--text-dim);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-btn-add:hover {
@@ -1692,7 +1692,7 @@
     text-align: center; /* F-18: aus der Dublette uebernommen */
     cursor: pointer; /* F-18: aus der Dublette uebernommen */
     color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
-    transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
+    transition: var(--trans-std); /* F-18: aus der Dublette uebernommen */
     white-space: nowrap; /* F-18: aus der Dublette uebernommen */
 }
 
@@ -1839,7 +1839,7 @@
     border-radius: var(--radius-sm);
     font-size: 0.8em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-condition:hover {
@@ -2045,7 +2045,7 @@
     font-family: var(--font-mono);
     font-size: 0.9em;
     font-weight: 600;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-dice-formula:hover {
@@ -2086,7 +2086,7 @@
     cursor: pointer;
     font-size: 0.8em;
     font-weight: 600;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .qref-dice-btn:hover {
@@ -2240,7 +2240,7 @@
     color: var(--text);
     cursor: pointer;
     font-size: 0.9em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .kplog-btn:hover {
