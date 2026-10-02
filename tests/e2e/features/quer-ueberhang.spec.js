@@ -673,7 +673,42 @@ function messeUeberhang() {
             .join('');
         return s;
     };
+    /**
+     * DIE EINE AUSNAHME, und warum sie den Waechter nicht aufweicht (C1/R1).
+     *
+     * Zusicherung 2 sagt: "versteckter Ueberlauf ist kein behobener". Das
+     * stimmt — ein `overflow: hidden` am Vorfahren macht den Seitenueberhang
+     * gruen und laesst den Knopf trotzdem unerreichbar. Ein `overflow-x: auto`
+     * ist aber nicht dasselbe: dort IST der Inhalt erreichbar, man rollt ihn
+     * heran. Die Chipreihen der vier Listen-Schalen sind seit C1/R1 genau das —
+     * ein einzeiliger Rollstreifen statt vier Umbruchzeilen (core.css), weil
+     * die Umbruchzeilen der Listenspalte ihren Platz nahmen.
+     *
+     * Die Ausnahme ist deshalb an DREI Bedingungen gebunden:
+     *   (a) ein Vorfahre rollt auf der X-Achse AUSDRUECKLICH (`auto`/`scroll`,
+     *       nie `hidden`),
+     *   (b) er rollt TATSAECHLICH (`scrollWidth > clientWidth`) — eine
+     *       Rollachse ohne Inhalt dahinter entschuldigt nichts,
+     *   (c) und sein EIGENER rechter Rand liegt im Fenster. Ragt der Behaelter
+     *       selbst hinaus, ist er der Befund und keine Entschuldigung.
+     * Was unter die Ausnahme fiele, wird nicht verschwiegen, sondern als
+     * `imStreifen` gezaehlt und ausgegeben: eine Ausnahme, die in der Ausgabe
+     * nicht auftaucht, ist eine stille Freigabe.
+     */
+    const rollstreifen = e => {
+        let p = e.parentElement;
+        while (p && p !== de) {
+            const cs = getComputedStyle(p);
+            if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') {
+                const pb = p.getBoundingClientRect();
+                if (p.scrollWidth > p.clientWidth && pb.right <= window.innerWidth + 1) return p;
+            }
+            p = p.parentElement;
+        }
+        return null;
+    };
     const aussen = [];
+    const imStreifen = [];
     const aktiv = document.querySelector('.view.active');
     if (aktiv) {
         for (const e of aktiv.querySelectorAll('*')) {
@@ -681,10 +716,12 @@ function messeUeberhang() {
             /* 1px Toleranz: Rahmen und Zwischenraeume loesen zu nicht-ganzen
                Bildpunkten auf, und ein halber Bildpunkt ist kein Ueberhang. */
             if (b.width > 0 && b.right > window.innerWidth + 1) {
-                aussen.push({
+                const streifen = rollstreifen(e);
+                (streifen ? imStreifen : aussen).push({
                     sel: kurz(e),
                     breite: Math.round(b.width),
-                    rechts: Math.round(b.right)
+                    rechts: Math.round(b.right),
+                    streifen: streifen ? kurz(streifen) : null
                 });
             }
         }
@@ -694,7 +731,9 @@ function messeUeberhang() {
         ueberhangX: Math.max(0, Math.round(de.scrollWidth - de.clientWidth)),
         layout: de.dataset.layout || '(keins)',
         aussenAnzahl: aussen.length,
-        aussen: aussen.slice(0, 3)
+        aussen: aussen.slice(0, 3),
+        imStreifenAnzahl: imStreifen.length,
+        imStreifen: imStreifen.slice(0, 3)
     };
 }
 
@@ -788,6 +827,7 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             }
 
             const schlecht = ANSICHTEN.filter(v => befund[v].ueberhangX > 0);
+            const inStreifen = ANSICHTEN.filter(v => befund[v].imStreifenAnzahl > 0);
             console.log(
                 `[Q1] ${breite}x${hoehe} (Layout ${befund.dashboard.layout}): ` +
                     `${ANSICHTEN.length - schlecht.length}/${ANSICHTEN.length} ohne Ueberhang` +
@@ -801,6 +841,16 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                                           .map(t => `${t.sel} ${t.breite}px`)
                                           .join(' | ') +
                                       ')'
+                              )
+                              .join('; ')
+                        : '') +
+                    (inStreifen.length
+                        ? ' · in Rollstreifen (erlaubt): ' +
+                          inStreifen
+                              .map(
+                                  v =>
+                                      `${v} ${befund[v].imStreifenAnzahl}x in ` +
+                                      `${befund[v].imStreifen[0] && befund[v].imStreifen[0].streifen}`
                               )
                               .join('; ')
                         : '')
@@ -820,7 +870,12 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             /* ZUSICHERUNG 2 — und zwar, weil es passt, nicht weil es versteckt
                ist. Ein `overflow-x: hidden` an einem Vorfahren macht
                Zusicherung 1 gruen und laesst die Knoepfe trotzdem ausserhalb
-               liegen; diese Zusicherung sieht auf jedes Element einzeln. */
+               liegen; diese Zusicherung sieht auf jedes Element einzeln.
+               EINE AUSNAHME, seit C1/R1: ein Element in einem ausdruecklich
+               waagerecht rollenden Behaelter zaehlt nicht als ausserhalb — es
+               ist erreichbar, man rollt es heran. Die drei Bedingungen und die
+               Gegenbuchung (`imStreifen`, oben mit ausgegeben) stehen an
+               messeUeberhang(). */
             const verdeckt = ANSICHTEN.filter(v => befund[v].aussenAnzahl > 0);
             expect(
                 verdeckt.map(v => `${v}=${befund[v].aussenAnzahl} Elemente`),
@@ -1117,6 +1172,7 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
             expect(gesetzt, `Theme ${theme} wurde nicht gesetzt`).toBe(theme);
             await page.waitForTimeout(250);
 
+            let streifen = 0;
             for (const v of ANSICHTEN) {
                 await reiterWechseln(page, v);
                 await faltenOeffnen(page);
@@ -1127,11 +1183,13 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                             `ausserhalb (${m.aussen.map(t => t.sel).join(' | ')})`
                     );
                 }
+                streifen += m.imStreifenAnzahl;
             }
             console.log(
                 `[Q1] 320x700 Theme ${theme}: ` +
                     `${ANSICHTEN.length - schlecht.filter(s => s.startsWith(theme + '/')).length}` +
-                    `/${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb`
+                    `/${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb` +
+                    ` (${streifen} Elemente in Rollstreifen, erlaubt)`
             );
         }
 
@@ -1224,6 +1282,9 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
 
         /** @type {Array<string>} */
         const schlecht = [];
+        /** Die Gegenbuchung zur Ausnahme — siehe messeUeberhang(). */
+        /** @type {Array<string>} */
+        const streifen = [];
         for (const v of ANSICHTEN) {
             await reiterWechseln(page, v);
             await faltenOeffnen(page);
@@ -1234,10 +1295,16 @@ test.describe('Seitlicher Ueberhang auf Telefonbreiten (Q1)', () => {
                         `(${m.aussen.map(t => `${t.sel} ${t.breite}px@${t.rechts}`).join(' | ')})`
                 );
             }
+            if (m.imStreifenAnzahl > 0) {
+                streifen.push(
+                    `${v}: ${m.imStreifenAnzahl} in ${m.imStreifen[0] && m.imStreifen[0].streifen}`
+                );
+            }
         }
         console.log(
             `[Q1] 320x700 breite Schrift: ${ANSICHTEN.length - schlecht.length}/` +
-                `${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb`
+                `${ANSICHTEN.length} ohne Ueberhang und ohne Element ausserhalb` +
+                (streifen.length ? ` — in Rollstreifen (erlaubt): ${streifen.join('; ')}` : '')
         );
 
         expect(

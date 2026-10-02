@@ -2439,7 +2439,7 @@
         }
 
         /* ============================================================
-           C1 — DIE WERKZEUGLEISTE DARF DER LISTE NICHT DEN PLATZ NEHMEN
+           C1/R1 — WENIGER LEISTE STATT MEHR ROLLBEREICH
            ============================================================
            Die fuenf Schalen darueber haben eine FESTE Hoehe. Was die
            Werkzeugleiste darin nimmt, fehlt der Liste bildpunktgenau — die
@@ -2447,48 +2447,204 @@
                Spaltenhoehe = Schalenhoehe - Leistenhoehe - 12px
            Und die Leistenhoehe ist keine Konstante: unter 900px darf die Leiste
            umbrechen (`flex-wrap: wrap`, editors.css), also haengt ihre Hoehe an
-           der Breite ihrer Beschriftungen — und damit an der Schriftmetrik des
-           Betriebssystems. Der CI-Lauf 36966941474 hat genau das gemeldet: die
-           Truhe bei 360x740 mit Leiste 357 von 505px Schale, Listenspalte 136px
-           bei einer Eintragshoehe von 74px — kein Platz fuer den zweiten
-           Eintrag. Unter Windows messen dieselben Stellen 328 und 162px. Die
-           Zusicherung (layoutprofil.spec.js, M2b) ist dabei nicht zu streng: sie
-           verlangt `2 * eintragHoehe` und rechnet also selbst mit, was ein
-           Eintrag tatsaechlich hoch ist.
-           ZWEI ZAHLEN haben die Leiste kleiner gemacht — die Aktionsgruppe teilt
-           die Titelzeile (editors.css, -32px) und kein Filterchip ist breiter als
-           45% seiner Reihe (loot.css, -34px unter der breiten Metrik). Zusammen
-           steht die Truhen-Leiste danach bei 296px (Segoe UI) und 293px
-           (Verdana) — die Leiste ist also nicht nur kleiner, sondern nahezu
-           schriftunabhaengig geworden.
-           DIESE REGEL IST DER BODEN DARUNTER, nicht der Hebel. Sie greift
-           heute in KEINEM gemessenen Zustand (296 und 293 liegen unter 60% von
-           502px = 301px; bei 390x844 sind 60% 350px). Sie greift erst, wenn eine
-           noch breiter laufende Schrift, eine laengere Uebersetzung oder ein
-           weiterer Filter die Leiste doch wieder aufblaeht — und dann nimmt sie
-           den Zuwachs in ihren EIGENEN Rollbereich statt aus der Liste. Damit
-           gilt unabhaengig von jeder Metrik: die Liste behaelt mindestens 40%
-           der Schale minus 12px, bei 360x740 also 189px fuer verlangte 148px.
-           WARUM `overflow-y: auto` DAZUGEHOERT: ohne sie wuerde die gedeckelte
-           Leiste ihren Inhalt nach unten hinausschieben, und die Schale
-           (`overflow: hidden`) schnitte ihn ab — die unteren Filterchips waeren
-           unsichtbar UND unerreichbar. Das ist derselbe Fehler, den die feste
-           `height: 74px` an `.section-toolbar` einmal hatte (editors.css).
-           WARUM `min-height: 0`: der 74px-Boden aus editors.css ist ein
-           MINIMUM und schlaegt keinen Deckel; die Zeile hier nimmt der Leiste
-           nur ihr inhaltsbasiertes Schrumpfverbot als Flex-Element, damit der
-           Deckel ueberhaupt wirken kann.
-           NUR IM MOBIL-PROFIL: am Schreibtisch gilt `flex-wrap: nowrap`, die
-           Leiste ist dort gemessen konstant 74px hoch und hat keinen Grund zu
-           wachsen. Ein Deckel waere dort eine Regel ohne Fall. */
+           der Breite ihrer Beschriftungen. Der CI-Lauf 36966941474 hat das
+           gemeldet: die Truhe bei 360x740 mit Leiste 357 von 505px Schale,
+           Listenspalte 136px bei 74px Eintragshoehe.
+
+           HIER STAND EIN DECKEL (`max-height: 60%; min-height: 0;
+           overflow-y: auto`), und er war das falsche Werkzeug. Seine eigene
+           Begruendung behauptete, er greife "in KEINEM gemessenen Zustand" —
+           gemessen waren aber nur 360x740 und 390x844. Bei 320x568 ist die
+           Schale 330px hoch, 60% davon 198px, und die Leiste braucht mehr. Am
+           gebauten Buendel, gefuellte Kampagne, UNTER DER OERTLICHEN SCHRIFT
+           (Segoe UI/Consolas — kein Linux noetig), waren vier der fuenf Schalen
+           betroffen:
+               Truhe       Bedarf 294 in 198  ->  rollt  98   8 Bedienelemente ab
+               NSCs        Bedarf 323 in 198  ->  rollt 127   7 Bedienelemente ab
+               Orte        Bedarf 251 in 198  ->  rollt  55   5 Bedienelemente ab
+               Begegnungen Bedarf 264 in 198  ->  rollt  68   6 Bedienelemente ab
+           Abgeklemmt waren unter anderem die Filterchips "Edelsteine", "Ringe",
+           "Amulette", "Wundersame Gegenstaende", "Sonstiges", der Knopf
+           "Verteilen" und beide Austausch-Knoepfe — erreichbar nur ueber einen
+           2px breiten Rollbalken in einer Leiste, die sonst nirgends in dieser
+           App rollt. Der Deckel tauschte "zu wenig Liste" gegen "unerreichbare
+           Bedienelemente". Das ist kein Boden, das ist eine Falltuer.
+
+           AN SEINER STELLE STEHEN ZWEI SAETZE.
+           (1) Die Leiste gibt nicht nach — `flex-shrink: 0`. Der 74px-Boden aus
+               editors.css ist eine AUSDRUECKLICHE `min-height` und ersetzt damit
+               das inhaltsbasierte `auto`; ohne diese Zeile konnte die Leiste als
+               Flex-Element bis auf 74px schrumpfen und ihren Inhalt ueber die
+               Liste schieben (gemessen: Begegnungen bei 320x568, 4px Ueberlauf).
+               Elastisch ist die Liste, nicht die Leiste — die Liste rollt, und
+               zwar an der Stelle, an der jeder Nutzer das erwartet.
+           (2) Die Leiste wird KUERZER, statt mehr Rollbereich zu bekommen: die
+               Chipreihe ist unter 900px ein einzeiliger Rollstreifen (Regel
+               weiter unten). Danach, dieselbe Messung, dieselbe Saat:
+               Truhe 294 -> 193, NSCs 323 -> 219, Orte 251 -> 182, Begegnungen
+               264 -> 231 Bildpunkte Bedarf. In 25 gemessenen Zustaenden
+               (5 Schalen x 5 Fenster, je unter der oertlichen UND der breiten
+               Schrift) rollt keine Leiste mehr und kein Bedienelement liegt
+               ausserhalb seines Kastens.
+           Was den Platz der Liste jetzt bewacht, ist keine Mechanik, die im
+           Stillen degradiert, sondern eine Zusicherung, die rot wird:
+           tests/e2e/features/breite-schrift.spec.js (3) und (4) verlangen
+           `scrollHeight === clientHeight` an der Leiste und messen die Reserve
+           der Listenspalte. Ein lauter Fehlschlag ist besser als ein
+           Rollbalken, den niemand findet.
+
+           WAS BEI 320x568 BLEIBT, offen gesagt: die Schale ist dort 330px hoch,
+           eine dreizeilige Leiste (Titel+Aktion / Suche / Filterstreifen)
+           braucht rund 195px, und zwei Truhen-Eintraege brauchen 148px. 195 +
+           148 + 12 sind 355 > 330 — zwei Eintraege passen bei dieser Fensterhoehe
+           NICHT, und keine Zahl an dieser Regel aendert das. Ein Eintrag ist
+           vollstaendig sichtbar (123 gegen 74px), die Liste rollt. Zwei
+           Eintraege sind bei 320x700 und darueber gesichert (255px Spalte).
+           NUR IM MOBIL-PROFIL: am Schreibtisch gilt `flex-wrap: nowrap` und die
+           Leiste ist gemessen konstant 74px hoch — ohne Umbruch gibt es nichts
+           zu schuetzen. */
         [data-layout="mobile"] .loc-view.active > .section-toolbar,
         [data-layout="mobile"] .npc-view.active > .section-toolbar,
         [data-layout="mobile"] .loot-view.active > .section-toolbar,
         [data-layout="mobile"] .enc-view.active > .section-toolbar,
         [data-layout="mobile"] .bestiary-view.active > .section-toolbar {
-            max-height: 60%;
-            min-height: 0;
-            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* ============================================================
+           C1/R1 — DIE CHIPREIHE IST EIN EINZEILIGER ROLLSTREIFEN
+           ============================================================
+           Die vier Chipreihen sind der groesste Posten jeder Leiste, und sie
+           sind alle vier DATENGETRIEBEN: die Truhe fuehrt zehn feste
+           Kategorien, die NSCs die ersten fuenf Orte, die Orte alle
+           `D.filters`, die Begegnungen die ersten fuenf Kreaturtypen (je plus
+           ein "Mehr..."-Auswahlfeld). Ihre Hoehe haengt damit am Inhalt der
+           Kampagne — und bei umbrechender Reihe geht jede zusaetzliche Zeile
+           1:1 von der Listenspalte ab. Gemessen am gebauten Buendel, gefuellte
+           Kampagne, bei 320px Fensterbreite:
+               Truhe         10 Chips   129px  (4 Zeilen)
+               NSCs           7 Kinder  138px
+               Orte           9 Chips    98px
+               Begegnungen    7 Kinder   67px
+           Als EINZEILIGER Rollstreifen messen dieselben Reihen 28 / 34 / 29 /
+           34px. Das sind zwischen 33 und 104 Bildpunkte, die an die Liste
+           zurueckgehen, und der Betrag haengt nicht mehr an der Zahl der Chips.
+           WARUM SEITWAERTS ROLLEN HIER RICHTIG IST und beim Deckel darueber
+           falsch war: eine waagerecht rollende Chipreihe ist die gelaeufige
+           Gestalt auf dem Telefon — der angeschnittene Chip am rechten Rand IST
+           die Aufforderung, und derselbe Streifen steht in dieser App schon an
+           `.nav-tabs` (gleiche 4px-Balkengestalt, weiter oben). Eine SENKRECHT
+           rollende Werkzeugleiste gibt es nirgends sonst; niemand sucht dort
+           einen Rollbalken.
+           DIE ANDERE MOEGLICHKEIT WAR, die Chips hinter einen Filterknopf zu
+           legen — einen Aufklapper, der die zehn Kategorien erst auf Antippen
+           zeigt. Sie ist bewusst nicht gewaehlt: ein Aufklapper braucht einen
+           neuen Zustand (offen/zu), eine neue Handlung, eine Flaeche zum
+           Schliessen und eine Entscheidung darueber, was geschieht, wenn der
+           Spielleiter mitten im Kampf daneben tippt — und er verbirgt, WELCHER
+           Filter gerade aktiv ist, also genau die Angabe, die am Tisch zaehlt
+           ("warum sehe ich nur drei Gegenstaende?"). Der Streifen zeigt den
+           aktiven Chip weiter, kostet keine Zeile Verhaltenslogik und bringt
+           dieselben Bildpunkte. Wird die Reihe eines Tages zu lang zum Rollen,
+           ist der Aufklapper der naechste Schritt — nicht der erste.
+           WAS DER 4px-BALKEN LEISTET UND WAS NICHT — nachgemessen, nicht
+           angenommen: dieser Browser legt den Balken UEBER den Inhalt. Der
+           Streifen ist mit der Regel 28px hoch und ohne sie auch; selbst
+           `height: 16px !important` aendert `offsetHeight - clientHeight` nicht
+           von 0. Die Regel ist deshalb KEINE Aufforderung, auf die man sich
+           verlassen kann — das ist der angeschnittene Chip am rechten Rand. Sie
+           ist eine SCHRANKE: wo eine Plattform einen Platz belegenden Balken
+           zeichnet (klassische Rollbalken unter Linux messen rund 15px), ist er
+           hier 4px statt 15px hoch. Gestalt und Begruendung sind dieselben wie
+           an `.nav-tabs` weiter oben. Beide Faelle deckt die Zusicherung ab:
+           sie fragt nach der Reserve der Listenspalte, nicht nach der
+           Streifenhoehe.
+           WARUM `max-width: 900px` UND NICHT `[data-layout="mobile"]`: der
+           Umbruch der Leiste selbst haengt an genau dieser Grenze
+           (`.section-toolbar { flex-wrap: wrap }`, editors.css). Die Bedingung,
+           die das Problem erzeugt, ist die Fensterbreite — nicht das gewaehlte
+           Layoutprofil. So gilt die Regel auch, wenn jemand bei 320px das
+           Schreibtisch-Profil erzwingt.
+           WARUM ZWEI KLASSEN IM SELEKTOR: npcs.css, encounters.css und loot.css
+           laden NACH core.css und setzen dort `flex-wrap: wrap` mit einer
+           Klasse. Eine Medienabfrage erhoeht die Spezifitaet nicht — mit einer
+           Klasse verlieren diese Regeln hier gegen die spaeteren. `.loot-view
+           .loot-filter-chips` ist der kleinste Selektor, der gewinnt, ohne
+           `!important` zu brauchen (die Ratsche F-18 zaehlt die mit).
+           WARUM `min-width: 0` AM STREIFEN: ein Rollbehaelter hat nach
+           Spezifikation die automatische Mindestgroesse 0, die Zeile ist also
+           ein Guertel und keine Notwendigkeit — sie steht da, damit die
+           Mindestbreite des Streifens auch dann nicht aus seinem Inhalt kommt,
+           wenn eine spaetere Regel `overflow` wieder aendert. Ohne sie waere der
+           Weg zu einem seitlichen Seitenueberhang offen (gemessen: 0px in allen
+           25 Zustaenden).
+           WARUM `flex: 0 0 auto` UND `white-space: nowrap` AN DEN CHIPS: in
+           einer nowrap-Reihe wuerden sie sonst zusammengedrueckt, ihren Text
+           innen umbrechen und den Streifen wieder hoeher machen — statt zu
+           rollen. Nur die Truhen-Chips trugen `nowrap` schon. */
+        @media (max-width: 900px) {
+            .loot-view .loot-filter-chips,
+            .npc-view .npc-filter-chips,
+            .loc-view .loc-filter-chips,
+            .enc-view .enc-filter-chips {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                min-width: 0;
+            }
+
+            .loot-view .loot-filter-chip,
+            .npc-view .npc-filter-chip,
+            .loc-view .loc-filter-chip,
+            .enc-view .enc-filter-chip {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            /* DIE ZEILE, DIE DER STREIFEN AN SEINEM ELTERNTEIL BRAUCHT — und
+               ohne die er einen neuen Fehler erzeugte. `.section-toolbar-filters`
+               ist unter 900px `flex: 1 1 auto` (editors.css). Enthaelt sie einen
+               nowrap-Streifen, ist ihre max-content-Breite die Summe ALLER
+               Chips, und ohne `min-width: 0` schrumpft sie nicht darunter:
+               gemessen bei 740x360 wurde die Filtergruppe der NSCs 1042px breit
+               in einer 718px schmalen Leiste, die Leiste lief ueber, und
+               `.npc-view { overflow: hidden }` schnitt bei 730px ab — vier
+               Elemente rechts des Fensterrands, ohne Rollachse, also wirklich
+               unerreichbar. Mit der Zeile sind es 0 (quer-ueberhang.spec.js (1),
+               740x360).
+               Die Truhe ist der Beweis, dass genau diese Zeile fehlte: sie
+               fuehrt `min-width: 0` an ihrer Filtergruppe schon lange (loot.css)
+               und war als einzige der vier nicht betroffen. Sie steht hier mit,
+               damit die Begruendung an einer Stelle steht und nicht an einer
+               Zeile in einer anderen Datei haengt. */
+            .loot-view .section-toolbar-filters,
+            .npc-view .section-toolbar-filters,
+            .loc-view .section-toolbar-filters,
+            .enc-view .section-toolbar-filters {
+                min-width: 0;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar,
+            .npc-view .npc-filter-chips::-webkit-scrollbar,
+            .loc-view .loc-filter-chips::-webkit-scrollbar,
+            .enc-view .enc-filter-chips::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar-track,
+            .npc-view .npc-filter-chips::-webkit-scrollbar-track,
+            .loc-view .loc-filter-chips::-webkit-scrollbar-track,
+            .enc-view .enc-filter-chips::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .loot-view .loot-filter-chips::-webkit-scrollbar-thumb,
+            .npc-view .npc-filter-chips::-webkit-scrollbar-thumb,
+            .loc-view .loc-filter-chips::-webkit-scrollbar-thumb,
+            .enc-view .enc-filter-chips::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: var(--radius-sm);
+            }
         }
 
         .loc-toolbar button,

@@ -892,32 +892,26 @@
     row-gap: 6px;
 }
 
-/* C1 — KEIN FILTERCHIP IST BREITER ALS 45% SEINER REIHE.
-   Die zehn Kategoriechips sind der groesste Posten der Truhen-Werkzeugleiste:
-   gemessen am gebauten Buendel bei 360x740 (gefuellte Kampagne) 129 von 328px,
-   unter der Linux-Schriftmetrik (nachgestellt mit Verdana) 163 von 359px. Jede
-   zusaetzliche Umbruchzeile geht 1:1 von der Listenspalte ab, denn die Schale
-   hat eine feste Hoehe (`.loot-view.active`, npcs.css).
-   Der Grund fuer die fuenfte Zeile war EIN Chip: "✨ Wundersame Gegenstaende"
-   ist 188px breit, unter Verdana 207px — bei 314px Reihenbreite also 60 bzw.
-   66% der Reihe fuer eine von zehn Kategorien. Ein Chip, der zwei Drittel der
-   Zeile nimmt, laesst sich mit keinem anderen zusammenpacken; er erzwingt eine
-   eigene Zeile und schiebt den Rest weiter.
-   Mit dem Deckel bleibt die Reihe unter BEIDEN Metriken bei 129px — vier
-   Zeilen, unabhaengig von der Schrift (gemessen: 129px mit Segoe UI UND mit
-   Verdana). Genau EIN Chip wird dabei gekuerzt; der zweitbreiteste ("📜
-   Schriftrollen", 109px) bleibt unberuehrt.
-   45% und nicht eine Bildpunktzahl: der Deckel ist eine Aussage ueber das
-   Verhaeltnis zur Reihe, nicht ueber eine Fensterbreite, und waechst mit ihr.
-   `white-space: nowrap` ist die Voraussetzung fuer `text-overflow: ellipsis`
-   und aendert sonst nichts: die Chips waren schon unumbrochen, weil ihre
-   Breite aus dem max-content ihres Inhalts kam.
-   Die Geschwisterreihe der Orte (`.loc-filter-chip`) bekommt den Deckel NICHT:
-   ihre Werkzeugleiste misst 149px von 502px Schale, und ihr breitestes Etikett
-   bleibt unter 45%. Eine Regel ohne Fall waere hier nur Ballast. */
+/* C1/R1 — DIE CHIPS BLEIBEN UNUMBROCHEN, ABER UNGEKUERZT.
+   Hier stand `max-width: 45%; overflow: hidden; text-overflow: ellipsis`. Der
+   Deckel hatte einen klaren Fall: "✨ Wundersame Gegenstaende" ist 188px breit
+   (unter breiter Schrift 207px) und erzwang bei 314px Reihenbreite als einziger
+   Chip eine fuenfte Umbruchzeile; der Deckel drueckte die Reihe auf 129px.
+   DIESER FALL IST ENTFALLEN. Seit die Reihe unter 900px ein einzeiliger
+   Rollstreifen ist (core.css, C1/R1), haengt ihre Hoehe NICHT MEHR an der
+   Breite der Chips: gemessen 28px, mit zehn Chips wie mit zwanzig, unter
+   Segoe UI wie unter Verdana. Eine Kuerzung kauft damit keinen Bildpunkt mehr
+   — sie kostet nur den Rest des Etiketts. Und in einem Streifen, der ohnehin
+   eine Rollachse hat, ist das reiner Verlust: der Nutzer kann die Breite nicht
+   zurueckholen, scrollen koennte er.
+   `white-space: nowrap` BLEIBT, und es ist jetzt tragend statt bloss
+   vorbereitend: in der nowrap-Reihe des Streifens wuerde ein Chip ohne diese
+   Zeile zusammengedrueckt und braeche seinen Text innen um — der Streifen waere
+   wieder hoch, statt zu rollen. Die drei Geschwisterreihen bekommen dieselbe
+   Zeile in der Streifen-Regel (core.css). Hier steht sie ausserhalb jeder
+   Medienabfrage, weil die Truhen-Leiste als einzige der fuenf AUCH oberhalb von
+   900px umbrechen darf (`.loot-view .section-toolbar`, weiter oben) — dort gibt
+   es keinen Streifen, der sie mitbringt. */
 .loot-view .loot-filter-chip {
-    max-width: 45%;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
