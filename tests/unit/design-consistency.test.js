@@ -13339,3 +13339,361 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
         expect(Object.keys(DAUER_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
     });
 });
+
+describe('W4-R-05 — tote Bewegung: jeder @keyframes-Name lebt, keiner doppelt (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Ein `@keyframes`-Block, den niemand aufruft, ist vollkommen lautlos: er
+       erzeugt keine Regel, keinen Stil, keine Meldung. Umgekehrt ist ein
+       `animation: xyz 1s` auf einen Namen, den es nicht gibt, genauso lautlos
+       — die Bewegung findet einfach nicht statt. Beide Richtungen sind heute
+       von nichts bewacht: DUBLETTEN_MAX = 0 (R-05) nimmt
+       @keyframes-Schritte ausdruecklich aus (`if
+       (/^(?:\d+%|from|to)$/.test(sel)) return;`), weshalb `spin` zweimal
+       dastehen kann, ohne als Dublette zu zaehlen; und der Stil-Sollstand
+       hasht Endwerte, die eine fehlende Animation gar nicht veraendert.
+
+       AUSGANGSWERT (erhoben am 2026-10-02 an 9e1d446): 18 Bloecke, 17 Namen,
+       15 davon ueber eine CSS-animation-Deklaration erreicht. Unverwendet
+       sind ZWEI Namen in DREI Bloecken: `spin` (dmscreen.css:914 UND
+       dmscreen.css:1094 — derselbe Rumpf, zweimal) und `timerPulse`
+       (tools.css:965). Kein verwendeter Name ist undefiniert. Ziel: 15
+       Bloecke, 15 Namen, 0 unverwendet, 0 doppelt.
+
+       WAS ALS VERWENDUNG ZAEHLT — und was ausdruecklich nicht:
+       (1) Der Name steht in einem `animation`- oder
+           `animation-name`-WERT in assets/styles/*.css. Das ist die
+           belastbare Quelle; 15 der 17 Namen haengen daran.
+       (2) Der Name steht in einem Quellmodul oder Template in einer
+           ANIMATIONS-ZUWEISUNG (`style.animation = '...'`,
+           `animationName = '...'`, `style="animation: ..."`). Heute aendert
+           (2) an keinem Urteil etwas — jeder der 15 lebenden Namen steht
+           schon in (1) —, aber ohne (2) waere eine kuenftige, nur aus JS
+           gesetzte Animation ein Fehlalarm, und ein Fehlalarm kostet genau
+           einmal Vertrauen.
+       (3) NICHT als Verwendung zaehlt die blosse ERWAEHNUNG des Namens
+           irgendwo im Baum. Das ist kein Feinschliff, sondern der Grund,
+           warum die erste Fassung dieser Erhebung `spin` als "verwendet"
+           gemeldet hat: das Wort kommt im ganzen Baum ausserhalb des CSS
+           GENAU EINMAL vor, naemlich in einem Kommentar in DIESER Datei
+           (Zeile 8992, der R-32-Block erklaert dort, welche Namen keine
+           Endposition setzen). Eine Ratsche, die sich durch ihren eigenen
+           Erklaertext gruen macht, bewacht nichts. Deshalb liest (2) nur die
+           ausgelieferten Verzeichnisse und ausdruecklich NICHT tests/.
+
+       WARUM BEIDE HAELFTEN IN EINER RATSCHE: `spin` ist beides zugleich —
+       unverwendet UND zweimal definiert. Zwei getrennte Ratschen wuerden
+       denselben Befund zweimal melden und nach dem Loeschen beide gruen
+       werden, ohne dass jemand sagen koennte, welche von ihnen die Aussage
+       haelt. Die Doppelprüfung ist zudem die Luecke, die DUBLETTEN_MAX
+       offenlaesst.
+
+       ACHTUNG FUER SPAETERE WELLEN: dies ist der erste Schritt der Welle 4,
+       der Zeilen ENTFERNT. Ab hier verschieben sich R-06-Anker in
+       dmscreen.css und tools.css; sie werden im Loesch-Commit mit
+       `node tools/sync-aktenlage-anker.js --write` nachgezogen und mit
+       `--check` belegt. */
+
+    // ESCAPE-LUKE: Schluessel = Name, Wert = Begruendung. Form wie
+    // SAMMELBEWEGUNG_GEDULDET in W4-R-01 und DAUER_GEDULDET in W4-R-04.
+    // Bewusst LEER, nicht abwesend: ein Bewegungsmuster, das niemand aufruft,
+    // hat keinen Grund dazubleiben — und wenn doch, steht er hier.
+    const TOTE_BEWEGUNG_GEDULDET = {};
+
+    // Verzeichnisse, die ausgeliefert werden. tests/ ist bewusst NICHT dabei
+    // (siehe (3) oben), tools/ und dist/ auch nicht: ein Werkzeug, das einen
+    // Namen in einem Bericht nennt, benutzt ihn nicht, und dist/ ist das
+    // Erzeugnis dieser Quellen.
+    const QUELLVERZEICHNISSE = [
+        'core',
+        'utils',
+        'systems',
+        'render',
+        'features',
+        'ui',
+        path.join('assets', 'templates')
+    ];
+    const QUELLDATEIEN = ['loader.js', 'sw.js'];
+
+    /** Kommentare entfernen, ohne Zeilennummern zu verschieben. */
+    function ohneKommentareZeilentreu5(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    /** Alle @keyframes-Bloecke: {datei, zeile, name}. */
+    function keyframesBloecke() {
+        const out = [];
+        cssFiles.forEach(f => {
+            const code = ohneKommentareZeilentreu5(f.content);
+            for (const m of code.matchAll(/@(?:-webkit-)?keyframes\s+([\w-]+)/g)) {
+                out.push({
+                    datei: f.name,
+                    zeile: code.slice(0, m.index).split('\n').length,
+                    name: m[1]
+                });
+            }
+        });
+        return out;
+    }
+
+    /** Alle animation-Werte aus dem CSS (Kurz- und Langschreibweise). */
+    function animationsWerteCss() {
+        const out = [];
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu5(f.content).matchAll(
+                /(?:^|[;{\s])(?:-webkit-)?animation(?:-name)?\s*:\s*([^;}]+)/g
+            )) {
+                out.push(m[1].replace(/\s+/g, ' ').trim());
+            }
+        });
+        return out;
+    }
+
+    /** Animations-Zuweisungen in den ausgelieferten Quellen: der Text rechts
+     *  von `animation`/`animationName`/`animation-name` bis zum Ende der
+     *  Zuweisung. KEIN blosser Wortfund — siehe (3) im Kopfkommentar. */
+    function animationsZuweisungenQuellen() {
+        const dateien = [];
+        const sammle = dir => {
+            if (!fs.existsSync(dir)) return;
+            fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) sammle(p);
+                else if (/\.(js|html)$/.test(e.name)) dateien.push(p);
+            });
+        };
+        QUELLVERZEICHNISSE.forEach(d => sammle(path.join(REPO, d)));
+        QUELLDATEIEN.forEach(f => {
+            const p = path.join(REPO, f);
+            if (fs.existsSync(p)) dateien.push(p);
+        });
+        const out = [];
+        dateien.forEach(p => {
+            const txt = fs.readFileSync(p, 'utf8');
+            for (const m of txt.matchAll(/animation(?:Name|-name)?\s*[:=]\s*([^;}\n]{0,120})/g)) {
+                out.push({ datei: path.relative(REPO, p).replace(/\\/g, '/'), wert: m[1] });
+            }
+        });
+        return out;
+    }
+
+    /** Verwendet ein Wert diesen Namen? Ganzes Wort, damit `pulse` nicht in
+     *  `dms-live-pulse` trifft und umgekehrt. */
+    const nennt = (wert, name) =>
+        new RegExp(`(?:^|[^\\w-])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^\\w-]|$)`).test(
+            wert
+        );
+
+    function erhebung5() {
+        const bloecke = keyframesBloecke();
+        const namen = [...new Set(bloecke.map(b => b.name))];
+        const werteCss = animationsWerteCss();
+        const zuweisungen = animationsZuweisungenQuellen();
+        const quellen = {};
+        namen.forEach(n => {
+            const css = werteCss.filter(w => nennt(w, n)).length;
+            const js = zuweisungen.filter(z => nennt(z.wert, n));
+            quellen[n] = { css, js: js.length, jsDateien: [...new Set(js.map(z => z.datei))] };
+        });
+        const verwendet = namen.filter(n => quellen[n].css > 0 || quellen[n].js > 0);
+        // Die andere Richtung: ein animation-Wert, dessen Name nirgends
+        // definiert ist. Nur Werte mit genau einem auswertbaren Namen werden
+        // befragt — `none`, Dauern und Kurven sind keine Namen.
+        const SCHLUESSELWORTE = new Set([
+            'none',
+            'normal',
+            'reverse',
+            'alternate',
+            'alternate-reverse',
+            'forwards',
+            'backwards',
+            'both',
+            'running',
+            'paused',
+            'infinite',
+            'linear',
+            'ease',
+            'ease-in',
+            'ease-out',
+            'ease-in-out',
+            'step-start',
+            'step-end',
+            'initial',
+            'inherit',
+            'unset',
+            'revert'
+        ]);
+        const undefinierte = [];
+        werteCss.forEach(w => {
+            w.split(',').forEach(teil => {
+                teil.trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .forEach(tok => {
+                        if (/^[\d.]/.test(tok) || tok.includes('(') || tok.startsWith('var'))
+                            return;
+                        if (SCHLUESSELWORTE.has(tok.toLowerCase())) return;
+                        if (!/^[\w-]+$/.test(tok)) return;
+                        if (!namen.includes(tok)) undefinierte.push(`${tok} (in "${w}")`);
+                    });
+            });
+        });
+        return { bloecke, namen, verwendet, quellen, undefinierte: [...new Set(undefinierte)] };
+    }
+
+    test('jeder @keyframes-Name wird mindestens einmal verwendet', () => {
+        const e = erhebung5();
+        const tot = e.namen
+            .filter(n => !e.verwendet.includes(n))
+            .filter(n => !TOTE_BEWEGUNG_GEDULDET[n])
+            .map(n => {
+                const orte = e.bloecke
+                    .filter(b => b.name === n)
+                    .map(b => `${b.datei}:${b.zeile}`)
+                    .join(', ');
+                return (
+                    `@keyframes ${n} (${orte}) wird von keiner animation-Deklaration und ` +
+                    `von keiner Animations-Zuweisung in den Quellen erreicht — toter ` +
+                    `Bewegungscode`
+                );
+            });
+        expect(tot.sort()).toEqual([]);
+    });
+
+    test('kein @keyframes-Name ist zweimal definiert', () => {
+        const e = erhebung5();
+        const doppelt = e.namen
+            .filter(n => e.bloecke.filter(b => b.name === n).length > 1)
+            .map(n => {
+                const orte = e.bloecke.filter(b => b.name === n).map(b => `${b.datei}:${b.zeile}`);
+                return (
+                    `@keyframes ${n} ist ${orte.length}x definiert (${orte.join(', ')}) — ` +
+                    `der spaetere Block gewinnt, der fruehere ist unerreichbar. R-05 sieht ` +
+                    `das nicht: DUBLETTEN_MAX nimmt @keyframes-Schritte aus`
+                );
+            });
+        expect(doppelt.sort()).toEqual([]);
+    });
+
+    test('kein verwendeter Name ist undefiniert', () => {
+        /* Die andere Richtung, heute gruen: ein `animation: xyz 1s` auf einen
+           Namen ohne Block bewegt nichts und meldet nichts. Ihr roter Nachweis
+           liegt in der MUTATIONSPROBE unten. */
+        expect(erhebung5().undefinierte.sort()).toEqual([]);
+    });
+
+    // Schranken benannt, weil die GEGENPROBE sie gegen den inhaltsleer-gruenen
+    // Lauf haelt.
+    const BLOECKE_SCHRANKE = 12; // Ist-Wert 18, nach dem Loeschen 15
+    const CSS_VERWENDUNGEN_SCHRANKE = 12; // Ist-Wert 15
+
+    test('GEGENPROBE: der Scan findet Bloecke und echte CSS-Verwendungen', () => {
+        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Regex ein
+        // GRUENER Lauf: keine Bloecke = keine toten Bloecke.
+        const e = erhebung5();
+        expect(e.bloecke.length).toBeGreaterThanOrEqual(BLOECKE_SCHRANKE);
+        expect(e.namen.filter(n => e.quellen[n].css > 0).length).toBeGreaterThanOrEqual(
+            CSS_VERWENDUNGEN_SCHRANKE
+        );
+    });
+
+    test('GEGENPROBE: tests/ ist keine Verwendungsquelle, die Quellen sind nicht leer', () => {
+        /* Die wichtigste Eigenschaft dieser Ratsche, und die am leichtesten zu
+           verlierende. DIESE Datei nennt `spin` in einem Kommentar (R-32-Block)
+           — die erste Fassung der Erhebung hat den Namen deshalb als
+           "verwendet" gemeldet und den toten Block gedeckt. Der erste Teil
+           haelt fest, dass tests/ nicht in den Quellen steht. Der zweite
+           haelt fest, dass Quelle (2) nicht INERT ist: wuerde sie nichts
+           finden, waere die Zusicherung "auch JS-Animationen zaehlen" eine
+           Behauptung, und ein kuenftiger Fehlalarm faende keinen Waechter.
+           Gemessen am 2026-10-02: 153 Quelldateien, 6 Zuweisungen
+           (`pulse 0.3s ease-out` und `none` in initiative-combat-widgets.js
+           und random-tables.js). */
+        expect(QUELLVERZEICHNISSE.some(d => /^tests/.test(d))).toBe(false);
+        expect(QUELLDATEIEN.some(d => /^tests/.test(d))).toBe(false);
+        const zuweisungen = animationsZuweisungenQuellen();
+        expect(zuweisungen.filter(z => z.datei.startsWith('tests/'))).toEqual([]);
+        expect(zuweisungen.length).toBeGreaterThanOrEqual(3);
+    });
+
+    /* PROBEN FUER DIE VERWENDUNGS-ERKENNUNG — feste Zeichenketten, kein
+       Dateizugriff. Beide Richtungen, weil sie in beide Richtungen kippen
+       kann: ein blosser Wortfund deckt toten Code (genau der Fehler der ersten
+       Fassung), eine zu enge Lesart erzeugt Fehlalarme fuer Namen, die nur in
+       der Kurzschreibweise an zweiter Stelle stehen. */
+    const NENNT_PROBEN = [
+        ['spin 1s linear infinite', 'spin', true],
+        ['1s linear infinite spin', 'spin', true],
+        ['dms-live-pulse 2s ease-in-out infinite', 'pulse', false],
+        ['pulse 2s infinite', 'dms-live-pulse', false],
+        ['fadeIn 0.3s ease', 'fadeIn', true],
+        ['fadeInStep 0.3s', 'fadeIn', false],
+        ['none', 'spin', false],
+        ['timerPulse', 'timerPulse', true],
+        ['a 1s, timerPulse 2s', 'timerPulse', true],
+        ['my-spin 1s', 'spin', false]
+    ];
+
+    function nenntProbeBefunde(f) {
+        return NENNT_PROBEN.filter(([w, n, soll]) => f(w, n) !== soll).map(
+            ([w, n, soll]) => `"${w}" / ${n}: erwartet ${soll}, erhalten ${f(w, n)}`
+        );
+    }
+
+    test('SELBSTPROBE: die Verwendungs-Erkennung urteilt in beide Richtungen', () => {
+        expect(nenntProbeBefunde(nennt)).toEqual([]);
+    });
+
+    const BESCHAEDIGUNGEN_NENNT = [
+        ['Teilwort erlaubt (kein Wortrand)', (w, n) => w.includes(n)],
+        ['nur das erste Wort des Wertes gelesen', (w, n) => w.split(/\s+/)[0] === n],
+        ['Bindestrich als Wortrand behandelt', (w, n) => new RegExp(`\\b${n}\\b`).test(w)]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Verwendungs-Erkennung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_NENNT.filter(
+            b => nenntProbeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(eine zu weite Erkennung macht toten Code lebendig = gruener Test)`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    test('MUTATIONSPROBE: die Gegenrichtung urteilt — synthetische animation-Werte', () => {
+        /* Der roten Nachweis fuer "kein verwendeter Name ist undefiniert":
+           dieselbe Rechnung, auf eine Namensliste und Werte angewandt, die hier
+           stehen. Ohne ihn waere der dritte Test eine Behauptung, die nie
+           geurteilt hat. */
+        const SCHLUESSELWORTE = new Set(['none', 'infinite', 'linear', 'ease', 'ease-in-out']);
+        const pruefe = (namen, werte) => {
+            const out = [];
+            werte.forEach(w =>
+                w.split(',').forEach(teil =>
+                    teil
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .forEach(tok => {
+                            if (/^[\d.]/.test(tok) || tok.includes('(')) return;
+                            if (SCHLUESSELWORTE.has(tok.toLowerCase())) return;
+                            if (!/^[\w-]+$/.test(tok)) return;
+                            if (!namen.includes(tok)) out.push(tok);
+                        })
+                )
+            );
+            return [...new Set(out)];
+        };
+        expect(pruefe(['spin'], ['spin 1s linear infinite'])).toEqual([]);
+        expect(pruefe(['spin'], ['sping 1s linear'])).toEqual(['sping']);
+        expect(pruefe([], ['none'])).toEqual([]);
+        expect(pruefe(['a'], ['a 1s, b 2s'])).toEqual(['b']);
+    });
+
+    test('jeder Eintrag in TOTE_BEWEGUNG_GEDULDET trifft einen Namen, den es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const namen = erhebung5().namen;
+        expect(Object.keys(TOTE_BEWEGUNG_GEDULDET).filter(n => !namen.includes(n))).toEqual([]);
+    });
+});
