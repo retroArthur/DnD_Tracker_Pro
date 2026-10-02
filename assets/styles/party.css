@@ -1721,13 +1721,10 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: var(--trans-std);
-    font-size: 0.85em;
 }
 
 .cf-chip:hover {

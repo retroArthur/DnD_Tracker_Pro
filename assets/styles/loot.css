@@ -55,11 +55,8 @@
         .loot-tag-chip {
             display: inline-flex;
             align-items: center;
-            padding: 4px 10px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
             cursor: pointer;
             transition: var(--trans-fast);
             user-select: none;
@@ -267,9 +264,6 @@
         }
         
         .shop-cat-badge {
-            font-size: 0.8em;
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
             background: var(--bg-card);
             border: 1px solid var(--border);
             cursor: pointer;
@@ -309,7 +303,6 @@
             background: var(--gold);
             color: var(--on-gold);
             border-color: var(--gold);
-            font-weight: bold;
             box-shadow: var(--shadow-1);
         }
 

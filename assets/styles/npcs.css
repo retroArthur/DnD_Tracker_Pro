@@ -27,11 +27,8 @@
 }
 
 .npc-filter-chip {
-    padding: 5px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 0.8em;
     cursor: pointer;
     transition: var(--trans-std);
     color: var(--text-dim);
@@ -447,9 +444,6 @@
 }
 
 .loot-filter-chip {
-    padding: 4px 12px;
-    border-radius: var(--radius-lg);
-    font-size: 0.85em;
     cursor: pointer;
     background: var(--bg-dark);
     border: 1px solid var(--border);

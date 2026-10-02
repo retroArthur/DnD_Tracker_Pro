@@ -115,9 +115,6 @@
 .timer-preset-btn {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 6px 12px;
-    font-size: 0.85em;
     cursor: pointer;
     transition: var(--trans-std);
     color: var(--text);
@@ -1766,12 +1763,6 @@
     align-items: center;
 }
 
-.ds-rate-chip {
-    padding: 4px 12px;
-    border-radius: var(--radius-lg);
-    font-size: 14px;
-    font-weight: 600;
-}
 
 .ds-rate-chip.ds-crit {
     /* Schritt 10, Fall 5 — Toenung derselben Rolle (D-4). Gemessen, min ueber

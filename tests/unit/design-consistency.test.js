@@ -7204,7 +7204,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            zeilenbasierter grep sechs Literale verliert. */
         {
             datei: 'dice.css',
-            zeile: 749,
+            zeile: 746,
             pfad: '.floating-dice-panel',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
@@ -7224,14 +7224,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            als uebersehener Rest gilt. */
         {
             datei: 'dice.css',
-            zeile: 708,
+            zeile: 705,
             pfad: '@keyframes floatingPulse >> 0%, 100%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
         },
         {
             datei: 'dice.css',
-            zeile: 709,
+            zeile: 706,
             pfad: '@keyframes floatingPulse >> 50%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
@@ -7273,7 +7273,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            diesen Wert traegt. */
         {
             datei: 'dice.css',
-            zeile: 685,
+            zeile: 682,
             pfad: '.floating-dice-trigger',
             lage: '0 0 0 0 rgba(220, 38, 38, 0.4)',
             grund: 'Ruhelage der Pulsanimation, wortgleich mit dem 0-%-Bild'
@@ -7326,31 +7326,31 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 512, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 1112, stufe: 2,
+        { datei: 'core.css', zeile: 1106, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1648, stufe: 1,
+        { datei: 'core.css', zeile: 1642, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1727, stufe: 3,
+        { datei: 'core.css', zeile: 1721, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 781, stufe: 2,
+        { datei: 'dashboard.css', zeile: 775, stufe: 2,
           pfad: '.conflict-banner',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 899, stufe: 2,
+        { datei: 'dashboard.css', zeile: 893, stufe: 2,
           pfad: '.dash-char:hover',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 1206, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1200, stufe: 2,
           pfad: '.qref-fab',
           vorher: '0 4px 12px rgba(0,0,0,0.4)' },
-        { datei: 'dashboard.css', zeile: 1213, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1207, stufe: 2,
           pfad: '.qref-fab:hover',
           vorher: '0 6px 20px rgba(212,175,55,0.4)' },
-        { datei: 'dashboard.css', zeile: 1230, stufe: 3,
+        { datei: 'dashboard.css', zeile: 1224, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 2190, stufe: 3,
+        { datei: 'dashboard.css', zeile: 2184, stufe: 3,
           pfad: '.kplog-panel',
           vorher:
               'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +
@@ -7360,13 +7360,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dice.css', zeile: 79, stufe: 2,
           pfad: '.dice-die:hover',
           vorher: '0 4px 16px rgba(0,0,0,0.3)' },
-        { datei: 'dice.css', zeile: 685, stufe: 2,
+        { datei: 'dice.css', zeile: 682, stufe: 2,
           pfad: '.floating-dice-trigger',
           vorher: '0 4px 16px rgba(220, 38, 38, 0.4)' },
-        { datei: 'dice.css', zeile: 694, stufe: 3,
+        { datei: 'dice.css', zeile: 691, stufe: 3,
           pfad: '.floating-dice-trigger:hover',
           vorher: '0 6px 24px rgba(220, 38, 38, 0.5)' },
-        { datei: 'dice.css', zeile: 749, stufe: 3,
+        { datei: 'dice.css', zeile: 746, stufe: 3,
           pfad: '.floating-dice-panel',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.5)' },
         { datei: 'dmscreen.css', zeile: 50, stufe: 3,
@@ -7422,7 +7422,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1385 -> 1388: die Begruendung am Hoehenbudget von
         // .enc-view.active (U6) ist 3 Zeilen weiter oben eingefuegt.
-        { datei: 'encounters.css', zeile: 1385, stufe: 2,
+        { datei: 'encounters.css', zeile: 1382, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
@@ -7432,19 +7432,19 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'initiative.css', zeile: 1213, stufe: 'drawer',
           pfad: '.init-statblock-content',
           vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
-        { datei: 'loot.css', zeile: 313, stufe: 1,
+        { datei: 'loot.css', zeile: 306, stufe: 1,
           pfad: '.shop-cat-badge.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
-        { datei: 'loot.css', zeile: 353, stufe: 1,
+        { datei: 'loot.css', zeile: 346, stufe: 1,
           pfad: '.shop-sort-btn.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
         // Anker 938 -> 944 und 1067 -> 1073: die Begruendungen am
         // Hoehenbudget von .npc-view.active und .loot-view.active (U6) sind
         // zusammen 6 Zeilen weiter oben eingefuegt.
-        { datei: 'npcs.css', zeile: 933, stufe: 3,
+        { datei: 'npcs.css', zeile: 927, stufe: 3,
           pfad: '.npc-popup',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'npcs.css', zeile: 1062, stufe: 1,
+        { datei: 'npcs.css', zeile: 1056, stufe: 1,
           pfad: '.npc-list-tag.clickable:hover',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
         { datei: 'party.css', zeile: 390, stufe: 1,
@@ -7483,10 +7483,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'spells.css', zeile: 563, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1169, stufe: 3,
+        { datei: 'tools.css', zeile: 1166, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1348, stufe: 2,
+        { datei: 'tools.css', zeile: 1345, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -8133,8 +8133,8 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'core.css', zeile: 450, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold', farbe: '#d4af37' },
         { datei: 'dashboard.css', zeile: 34, sel: '.dice-result.crit-effect', radius: 30, vorher: 0.5, rolle: '--green' },
         { datei: 'dashboard.css', zeile: 40, sel: '.dice-result.fail-effect', radius: 30, vorher: 0.5, rolle: '--red' },
-        { datei: 'dice.css', zeile: 694, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
-        { datei: 'dice.css', zeile: 812, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 691, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 809, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
         { datei: 'dmscreen.css', zeile: 1008, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dmscreen.css', zeile: 1019, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red', farbe: '#ef4444' },
         { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
@@ -8143,7 +8143,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
-        { datei: 'tools.css', zeile: 1020, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
+        { datei: 'tools.css', zeile: 1017, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
     ];
     const gluehSchluessel = e => `${e.datei} {${e.sel}}`;
 
@@ -9511,8 +9511,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         { datei: 'dashboard.css', zeile: 67, sel: '.dice-fail', marke: '.dice-fail', radius: 10, vorher: 0.5, rolle: '--red', farbe: null },
         { datei: 'dice.css', zeile: 31, sel: '.dice-hero-result.crit', marke: '.dice-hero-result.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dice.css', zeile: 36, sel: '.dice-hero-result.fail', marke: '.dice-hero-result.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' },
-        { datei: 'dice.css', zeile: 826, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
-        { datei: 'dice.css', zeile: 832, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
+        { datei: 'dice.css', zeile: 823, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 829, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
     ];
 
     /* -------------------------------------------------------------------
@@ -9544,7 +9544,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dice.css',
-            zeile: 704,
+            zeile: 701,
             sel: '.floating-dice-trigger svg',
             marke: '.floating-dice-trigger svg',
             wert: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
@@ -12841,8 +12841,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3311':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3307) schaltet ' +
+        'core.css:3293':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3289) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13304,7 +13304,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3311,
+                    zeile: 3293,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }

@@ -828,9 +828,6 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 3px 8px;
-            border-radius: var(--radius-lg);
-            font-size: 11px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
         }
@@ -1013,9 +1010,6 @@
         .tag-cyan { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); color: var(--cyan-text); }
         
         .link-chip {
-            font-size: 0.75em;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
             background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent);
             color: var(--blue-text);
             cursor: pointer;
@@ -2312,11 +2306,8 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            padding: 5px 10px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.82em;
             color: var(--text-dim);
             cursor: pointer;
             transition: var(--trans-std);
@@ -2350,11 +2341,8 @@
            (und deshalb auch per Tastatur erreichbar). */
 
         .filter-chip {
-            padding: 4px 10px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 11px;
             cursor: pointer;
             transition: var(--trans-std);
         }
@@ -2719,11 +2707,8 @@
         }
 
         .loc-filter-chip {
-            padding: 5px 12px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
             cursor: pointer;
             transition: var(--trans-std);
         }
@@ -3275,10 +3260,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 4px 10px;
             background: var(--bg-dark);
-            border-radius: var(--radius-lg);
-            font-size: 0.85em;
             color: var(--text);
             cursor: pointer;
             transition: var(--trans-std);
@@ -3401,4 +3383,85 @@
             height: 36px;
             padding: 0;
             border-radius: var(--radius-md);
+        }
+
+        /* ============================================================
+           BAUFORM 2 — CHIP: EINE PILLE, EINE SCHRIFT
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung E3)
+           ============================================================
+           WAS VORHER STAND, am gebauten Buendel gemessen (befuellte Kampagne,
+           1440px, vier Themes): 136 gerenderte Chips in 12 Klassen mit ACHT
+           verschiedenen Hoehen, ACHT Schriftgroessen, ZWEI Rundungen und DREI
+           Gewichten. KEIN einziger Chip lag auf dem Sollwert aus Paragraph 3.7.
+
+           DER VERTRAG: Hoehe 26 px, Innenabstand 3px 10px, --text-sm/500,
+           Rundung 999px. Die 999 sind die Pillen-Schreibweise, die dieser Baum
+           schon an sieben Stellen fuehrt (tools.css, welt.css) — kein neues
+           Mittel, nur ein weiterer Ort.
+
+           WARUM `line-height: 18px` UND NICHT `height: 26px` ODER
+           `min-height: 26px`. Die Hoehe muss von innen kommen, nicht von aussen:
+           18 + 3 + 3 + 2 (Rahmen) = 26. Eine feste Hoehe schneidet den Inhalt
+           ab, sobald jemand ein zweizeiliges Etikett einsetzt; ein min-height
+           dagegen zentriert nichts — und die meisten dieser Chips sind
+           Flexkinder, die ihr `inline-block` auf `block` blockifizieren. Dort
+           saesse der Text bei min-height oben statt in der Mitte. Mit der
+           Zeilenhoehe traegt der Zeilenkasten selbst die Mitte, gleich ob das
+           Element `block` oder `flex` rechnet.
+           Chips OHNE Rahmen (.link-chip, .loc-npc-chip) kommen damit auf 24
+           statt 26 px. Das ist bewusst: die zwei Bildpunkte sind der Rahmen,
+           den sie nicht haben, und ein Ausgleich dafuer waere eine zweite
+           Sonderregel — genau das, was diese Gruppe beendet.
+
+           WARUM DIE SCHRIFT-TOKENS HIER SCHON STEHEN: --text-sm und --text-xs
+           sind die EINZIGEN zwei Sprossen, die Welle 4 aus der Skala der Welle 5
+           vorzieht (E3). Ohne sie waere F-01 rot ("kein Token ohne Definition,
+           Fallback oder Laufzeitquelle") und Paragraph 3.7 gar nicht
+           ausfuehrbar. Die drei fehlenden Sprossen und die --leading-*
+           entstehen in Welle 5.
+           (Der Tokenname ist hier bewusst nicht als var()-Aufruf geschrieben:
+           F-01 liest den Quelltext MIT Kommentaren und zaehlte einen
+           Platzhalter in dieser Erklaerung als undefiniertes Token — der Test
+           warnt in seinem eigenen Kopf genau davor.)
+
+           NICHT DABEI, und jedesmal gemessen statt entschieden:
+           · .dmg-chip (40x40 quadratisch, Radius 8, 1,3em Emoji) und
+             .spell-comp (24x24, ohne Innenabstand, ohne cursor) sind nach O-06
+             keine Chips. Auf den Chipvertrag gebracht verlore .dmg-chip 14 px
+             Hoehe und 8,8 px Schriftgroesse — das Emoji waere unlesbar.
+           · .condition-tag ist ein Zustandsmarker und steht in keiner
+             Planliste; er bleibt ausgewiesene Restschuld.
+
+           .timer-preset-btn IST DABEI, obwohl der Plan nur .timer-preset-chip
+           nennt: beide teilen EINE Regel, und gemessen hat .timer-preset-chip
+           NULL Verwendungen im Markup und im JS, .timer-preset-btn genau eine.
+           Nur den toten Namen aufzunehmen hiesse, die Geometrie am einzigen
+           lebenden Selektor stehen zu lassen.
+
+           Die Gruppe steht am Ende von core.css, aus demselben Grund wie die
+           Icon-Knopf-Gruppe darueber. W4-R-06 Teil 3 und 4 halten sie fest.
+           ============================================================ */
+        .chip,
+        .filter-chip,
+        .npc-filter-chip,
+        .loc-filter-chip,
+        .enc-filter-chip,
+        .loot-filter-chip,
+        .dice-chip,
+        .shop-cat-badge,
+        .filter-toggle,
+        .loc-npc-chip,
+        .cf-chip,
+        .ds-rate-chip,
+        .link-chip,
+        .loot-tag-chip,
+        .timer-preset-chip,
+        .timer-preset-btn,
+        .char-resistance-chip,
+        .dice-formula-chip {
+            line-height: 18px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: var(--text-sm);
+            font-weight: 500;
         }

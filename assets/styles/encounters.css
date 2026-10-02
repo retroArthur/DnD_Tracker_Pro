@@ -948,11 +948,8 @@
 }
 
 .enc-filter-chip {
-    padding: 4px 12px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 0.8em;
     color: var(--text-dim);
     cursor: pointer;
     transition: var(--trans-std);

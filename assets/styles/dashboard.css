@@ -100,11 +100,8 @@
         .dice-history-notation { color: var(--cyan-text); font-family: var(--font-mono); flex: 1; }
         
         .dice-formula-chip {
-            padding: 4px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.8em;
             font-family: var(--font-mono);
             color: var(--cyan-text);
             cursor: pointer;
@@ -554,11 +551,8 @@
         }
         
         .char-resistance-chip {
-            padding: 4px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
             cursor: pointer;
             transition: var(--trans-std);
         }
