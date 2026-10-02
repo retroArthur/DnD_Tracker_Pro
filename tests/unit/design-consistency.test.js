@@ -11579,16 +11579,83 @@ describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () 
         expect(befunde.sort()).toEqual([]);
     });
 
+    // Schranken der GEGENPROBE, benannt, weil die MUTATIONSPROBE unten
+    // dasselbe Urteil nachstellen muss: zwei Kopien derselben Zahl waeren zwei
+    // Zahlen, die auseinanderlaufen koennen.
+    const DATEI_SCHRANKE = 15;
+    const BEWEGUNGS_SCHRANKE = 200;
+
+    /**
+     * Zahl aller Bewegungsdeklarationen im Baum — mit einer EIGENEN, von
+     * SAMMELBEWEGUNG unabhaengigen Regex. Genau diese Unabhaengigkeit ist der
+     * Grund, warum die GEGENPROBE einen leeren Dateisatz bemerkt, eine
+     * beschaedigte Haupt-Regex aber nicht. Ist 236 am 2026-10-02.
+     */
+    function bewegungsDeklarationen() {
+        return cssFiles.reduce(
+            (n, f) => n + (withoutComments(f.content).match(/transition\s*:/g) || []).length,
+            0
+        );
+    }
+
     test('GEGENPROBE: der Scan liest ueberhaupt Bewegungsdeklarationen', () => {
         // Ohne sie waere ein leerer Dateisatz oder eine kaputte Regex ein
         // gruener Test — genau der Fehler, den F-01b gemacht hat (siehe den
         // entfernten rgba()-Block oben): inhaltsleer gruen statt rot.
-        expect(cssFiles.length).toBeGreaterThan(15);
-        const bewegung = cssFiles.reduce(
-            (n, f) => n + (withoutComments(f.content).match(/transition\s*:/g) || []).length,
-            0
+        expect(cssFiles.length).toBeGreaterThan(DATEI_SCHRANKE);
+        expect(bewegungsDeklarationen()).toBeGreaterThan(BEWEGUNGS_SCHRANKE);
+    });
+
+    /* SECHS BESCHAEDIGUNGEN DER HAUPT-REGEX
+       Die ersten drei stammen aus dem Pruefbefund zu W4-R-01, die anderen drei
+       sind naheliegende Nachbarn. Jede veraendert, was SAMMELBEWEGUNG trifft;
+       KEINE veraendert, was bewegungsDeklarationen() zaehlt. */
+    const BESCHAEDIGUNGEN = [
+        [
+            'Tippfehler im Schluesselwort (\\ball\\b -> \\bal\\b)',
+            /transition(?:-property)?\s*:\s*[^;}]*\bal\b/g
+        ],
+        [
+            'Wortgrenze verschoben (\\ball\\b -> \\balle\\b)',
+            /transition(?:-property)?\s*:\s*[^;}]*\balle\b/g
+        ],
+        ['Zeichenklasse verengt ([^;}] -> [^ ])', /transition(?:-property)?\s*:\s*[^ ]*\ball\b/g],
+        ['Eigenschaftsname vertippt (transitin)', /transitin(?:-property)?\s*:\s*[^;}]*\ball\b/g],
+        [
+            'Wortgrenzen ganz verloren (\\ball\\b -> all)',
+            /transition(?:-property)?\s*:\s*[^;}]*all/g
+        ],
+        ['-property-Zweig verloren', /transition\s*:\s*[^;}]*\ball\b/g]
+    ];
+
+    /**
+     * Welcher Waechter DIESES Blocks erkennt eine beschaedigte Haupt-Regex als
+     * beschaedigt? Nicht der Haupttest: eine Regex, die nichts mehr trifft,
+     * macht ihn GRUEN — und gruen ist das erklaerte Ziel dieser Ratsche. Heute
+     * steht er rot bei 134 und beweist damit selbst, dass die Regex traegt; ab
+     * Schritt 3 steht er gruen bei 0, und dann ist "Regex kaputt" von
+     * "Vertrag erfuellt" nicht mehr zu unterscheiden. Also muss ein anderer
+     * Waechter die Regex SELBST pruefen.
+     */
+    function erkennenBeschaedigung(regex) {
+        const erkannt = [];
+        // Waechter 1, GEGENPROBE: zaehlt mit eigener Regex und liest `regex`
+        // nie — deshalb faellt ihr keine Beschaedigung auf. Das ist der Befund.
+        if (cssFiles.length <= DATEI_SCHRANKE || bewegungsDeklarationen() <= BEWEGUNGS_SCHRANKE) {
+            erkannt.push('GEGENPROBE');
+        }
+        // Waechter 2, SELBSTPROBE: fehlt noch. Hier entsteht sie.
+        return erkannt;
+    }
+
+    test('MUTATIONSPROBE: eine beschaedigte Haupt-Regex faellt mindestens einem Waechter auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN.filter(b => erkennenBeschaedigung(b[1]).length === 0).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(weniger Treffer = gruener Test), und die GEGENPROBE zaehlt mit ` +
+                `eigener Regex weiter ${bewegungsDeklarationen()} > ${BEWEGUNGS_SCHRANKE}`
         );
-        expect(bewegung).toBeGreaterThan(200);
+        expect(unentdeckt.sort()).toEqual([]);
     });
 
     test('jeder Eintrag in SAMMELBEWEGUNG_GEDULDET trifft eine Stelle, die es gibt', () => {
