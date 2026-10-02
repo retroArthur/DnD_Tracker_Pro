@@ -183,6 +183,40 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // naechste Welle, die berechnete Stile absichtlich aendert, sie wieder benutzen kann — eine leere
 // Liste ist der Normalzustand, keine fehlende Einrichtung.
 
+// ZWEITE REGULAERE NEUERHEBUNG, C1 (2026-10-02). Dieselbe Mechanik wie bei M3b, derselbe
+// schluesselweise Vergleich gegen den vorigen Sollstand:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl
+//   --------------  --------  --------  ------------------  -----------
+//   standard               0         0                   0  unveraendert
+//   narrow                 0         0                  14  unveraendert
+//   reducedMotion          0         0                   0  unveraendert
+//
+// Die 14 liegen alle im schmalen Durchgang und sind 13x `div.section-toolbar-actions#0` (npcs,
+// locations, quests, encounter, loot, shops, spells, links, dmscreen, bestiary, sessionprep,
+// kalender, fraktionen) plus `npcs/button.btn.btn-secondary.npcg-trigger-btn#0`. In ALLEN 14 ist
+// die einzige bewegte Eigenschaft `margin` — nachgemessen am gebauten Buendel bei 375x812 im
+// Mobil-Profil, mit und ohne die Aenderung:
+//
+//   npcs       actions  margin 0px                    -> 0px 0px 0px 31.6719px
+//              trigger  margin 0px 0px 0px 128.734px  -> 0px
+//   locations  actions  margin 0px                    -> 0px 0px 0px 126.656px
+//   loot       actions  margin 0px                    -> 0px 0px 0px 153.797px
+//   fraktionen actions  margin 0px                    -> 0px 0px 0px 28.6406px
+//
+// URSACHE UND WARUM DAS KEIN GESTALTBEFUND IST: `.section-toolbar-actions` traegt
+// `margin-left: auto` (editors.css). Chromium loest ein `auto` in `getComputedStyle().margin`
+// zum BENUTZTEN Wert in Bildpunkten auf, und der benutzte Wert eines auto-Rands in einer
+// Flexzeile IST der uebrige Platz der Zeile. Bis zu dieser Runde stand die Gruppe im 600px-Block
+// auf `width: 100%`, hatte also keinen uebrigen Platz (margin 0px) und schob ihn an den
+// auto-Rand des Knopfes DARIN weiter (128.734px). Jetzt steht sie auf `width: auto` und nimmt
+// ihn selbst. Es hat sich keine Farbe, kein Rahmen, kein Schatten, kein Innenabstand und keine
+// Schriftgroesse bewegt — nur die Stelle, an der derselbe uebrige Platz verbucht wird. Die
+// Aenderung selbst ist gewollt: sie gibt der Listenspalte der Truhe 32px zurueck (siehe
+// tests/e2e/features/breite-schrift.spec.js).
+// Dass ein auto-Rand in diesem Sollstand ueberhaupt als Gestaltwert gefuehrt wird, ist ein
+// eigener, offener Befund dieses CI-Laufs und nicht Sache dieser Einheit.
+
 // Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
 /** @type {string[]} */
 const EXPECTED_DEVIATION_KEYS = [];
