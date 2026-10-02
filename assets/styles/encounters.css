@@ -140,7 +140,7 @@
     cursor: pointer;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-close:hover {
@@ -204,7 +204,7 @@
     border-radius: var(--radius-sm);
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-card-btn:hover {
@@ -252,7 +252,7 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     white-space: nowrap;
 }
 
@@ -301,7 +301,7 @@
     cursor: pointer;
     font-size: 12px;
     opacity: 0.6;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-list-remove:hover {
@@ -619,7 +619,7 @@
     font-size: 0.8em;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-budget-apply:hover {
@@ -726,7 +726,7 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -815,7 +815,7 @@
     color: var(--text-dim);
     font-size: 11px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     white-space: nowrap;
 }
 
@@ -851,7 +851,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     position: relative;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-lair-slider::before {
@@ -863,7 +863,7 @@
     background: var(--text-dim);
     top: 2px;
     left: 2px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-lair-toggle input:checked + .calc-lair-slider {
@@ -955,7 +955,7 @@
     font-size: 0.8em;
     color: var(--text-dim);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-filter-chip:hover {
@@ -986,7 +986,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-add-btn:hover {
@@ -1132,7 +1132,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-detail-btn:hover {
@@ -1575,7 +1575,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 10px 12px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-import-card:hover {
@@ -1636,7 +1636,7 @@
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
