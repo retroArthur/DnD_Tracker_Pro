@@ -151,7 +151,7 @@
             gap: 12px;
             padding: 12px 16px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background var(--dur);
         }
         
         .shop-header:hover {
@@ -169,7 +169,7 @@
         .shop-toggle {
             color: var(--text-dim);
             font-size: 0.8em;
-            transition: transform 0.2s;
+            transition: transform var(--dur);
         }
         
         .shop-icon {
@@ -385,7 +385,7 @@
             padding: 8px 10px;
             gap: 8px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background var(--dur-fast);
         }
         
         .si-main:hover {

@@ -1066,7 +1066,7 @@
         .npc-list-tag.info { background: var(--cyan); color: var(--on-cyan); }
         .npc-list-tag.clickable { 
             cursor: pointer; 
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: transform var(--dur-fast), box-shadow var(--dur-fast);
         }
         .npc-list-tag.clickable:hover { 
             transform: scale(1.05); 

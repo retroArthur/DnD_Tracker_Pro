@@ -136,7 +136,7 @@
     flex-shrink: 0;
     line-height: 1;
     border-radius: var(--radius-sm);
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
     /* Minimum tap zone: ~32x32px via padding */
     min-width: 28px;
     min-height: 28px;
@@ -383,7 +383,7 @@
     color: var(--parchment-ink-link);
     cursor: pointer;
     text-decoration: underline dotted;
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
 }
 
 .bestiary-statblock .bestiary-dice:hover {

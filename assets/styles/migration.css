@@ -56,7 +56,7 @@
     height: 8px;
     border-radius: 50%;
     background: var(--text-dim, var(--text-dim));
-    transition: background 0.2s ease, box-shadow 0.2s ease;
+    transition: background var(--dur) ease, box-shadow var(--dur) ease;
     flex-shrink: 0;
 }
 
@@ -129,7 +129,7 @@
     gap: 8px;
     padding: 24px 16px;
     cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition: border-color var(--dur) ease, background var(--dur) ease;
     text-align: center;
 }
 

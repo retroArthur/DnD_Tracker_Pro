@@ -65,7 +65,7 @@
     color: var(--yellow-text);
     font-size: 12px;
     background: transparent;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
 }
 
 .backup-warning-indicator:hover {
@@ -248,7 +248,7 @@
     border-radius: var(--radius-sm);
     border: 1px solid;
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition: background var(--dur-fast), color var(--dur-fast);
     min-height: 32px;
 }
 

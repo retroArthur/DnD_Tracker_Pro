@@ -354,7 +354,7 @@
             border-radius: var(--radius-md);
             padding: 8px 4px;
             text-align: center;
-            transition: border-color 0.2s;
+            transition: border-color var(--dur);
         }
         
         .char-attr-box:focus-within {
@@ -410,7 +410,7 @@
             background: var(--bg-dark);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background var(--dur);
             border: 1px solid var(--border); /* F-18: aus der Dublette uebernommen */
             font-size: 0.82em; /* F-18: aus der Dublette uebernommen */
             user-select: none; /* F-18: aus der Dublette uebernommen */
@@ -780,7 +780,7 @@
             justify-content: space-between;
             z-index: var(--z-modal);
             transform: translateY(-100%);
-            transition: transform 0.3s ease;
+            transition: transform var(--dur-slow) ease;
             box-shadow: var(--shadow-2);
         }
         
@@ -954,7 +954,7 @@
 
 .dash-char-hp-bar {
     height: 100%;
-    transition: width 0.3s;
+    transition: width var(--dur-slow);
 }
 
 .dash-char-hp-bar.healthy { background: var(--green); }
@@ -1098,7 +1098,7 @@
     padding: 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background var(--dur);
 }
 
 .dash-quest:hover {
@@ -1134,7 +1134,7 @@
     padding: 8px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background var(--dur);
 }
 
 .dash-session:hover {
@@ -1711,7 +1711,7 @@
     justify-content: space-between;
     padding: 10px 12px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background var(--dur);
 }
 
 .qref-section-header:hover {
@@ -1730,7 +1730,7 @@
 .qref-collapse-icon {
     color: var(--text-dim);
     font-size: 0.8em;
-    transition: transform 0.2s;
+    transition: transform var(--dur);
 }
 
 .qref-section.collapsed .qref-collapse-icon {
@@ -1870,7 +1870,7 @@
     font-weight: bold;
     line-height: 1;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity var(--dur);
 }
 
 .qref-condition:hover .qref-apply-btn {

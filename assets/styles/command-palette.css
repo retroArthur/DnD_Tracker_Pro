@@ -99,7 +99,7 @@
     min-height: 48px;
     cursor: pointer;
     border-left: 2px solid transparent;
-    transition: background 0.1s ease;
+    transition: background var(--dur-fast) ease;
     user-select: none;
 }
 

@@ -19,7 +19,7 @@
         
         [data-layout="mobile"] .mobile-nav-toggle-icon {
             font-size: 18px;
-            transition: transform 0.3s ease;
+            transition: transform var(--dur-slow) ease;
         }
         
         [data-layout="mobile"] .app-header.nav-open .mobile-nav-toggle-icon {
@@ -253,7 +253,7 @@
             pointer-events: none;
             z-index: var(--z-modal);
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: opacity var(--dur) ease;
         }
         
         #quicknotes-modal.show {
@@ -270,7 +270,7 @@
             pointer-events: auto;
             box-shadow: var(--shadow-3);
             transform: translateY(-10px);
-            transition: transform 0.2s ease;
+            transition: transform var(--dur) ease;
         }
         
         #quicknotes-modal.show .modal {
@@ -810,7 +810,7 @@
             line-height: 1;
             padding: 0 4px;
             cursor: pointer;
-            transition: color 0.15s;
+            transition: color var(--dur-fast);
         }
 
         .modal-close:hover { color: var(--gold); }
@@ -1001,7 +1001,7 @@
             background: var(--bg-elevated);
             color: var(--text-dim);
             margin: 2px;
-            transition: transform 0.15s, filter 0.15s;
+            transition: transform var(--dur-fast), filter var(--dur-fast);
         }
         
         .tag.clickable {
@@ -1260,7 +1260,7 @@
 
         .char-card-hp-fill {
             height: 100%;
-            transition: width 0.3s;
+            transition: width var(--dur-slow);
         }
 
         .char-card-hp-fill.healthy { background: var(--green); }
@@ -1617,7 +1617,7 @@
         .char-expand-icon {
             font-size: 0.7em;
             color: var(--text-dim);
-            transition: transform 0.2s;
+            transition: transform var(--dur);
         }
         
         .char-inventory-box.expanded .char-expand-icon {
@@ -1628,7 +1628,7 @@
             max-height: 0;
             overflow: hidden;
             padding: 0 10px;
-            transition: max-height 0.3s, padding 0.3s;
+            transition: max-height var(--dur-slow), padding var(--dur-slow);
         }
         
         .char-inventory-box.expanded .char-inventory-content {
@@ -1643,7 +1643,7 @@
             margin: 2px;
             border-radius: var(--radius-sm);
             font-size: 0.75em;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: transform var(--dur-fast), box-shadow var(--dur-fast);
             background: var(--bg-elevated); /* F-18: aus der Dublette uebernommen */
             color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
             cursor: pointer; /* F-18: aus der Dublette uebernommen */
@@ -2121,7 +2121,7 @@
             align-items: center;
             padding: 10px 12px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background var(--dur);
         }
         
         .quest-header:hover { background: var(--bg-hover); }
@@ -2422,7 +2422,7 @@
             padding: 2px 6px;
             font-size: 0.85em;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity var(--dur);
         }
         
         .search-wrapper:hover .search-clear-btn,

@@ -766,7 +766,7 @@
         .wiki-tree-toggle {
             font-size: 10px;
             color: var(--text-dim);
-            transition: transform 0.2s;
+            transition: transform var(--dur);
             width: 12px;
         }
         
@@ -867,7 +867,7 @@
             padding: 4px;
             margin: -4px 4px -4px -4px;
             border-radius: var(--radius-sm);
-            transition: transform 0.2s, background 0.15s;
+            transition: transform var(--dur), background var(--dur-fast);
         }
         
         .wiki-tree-item.has-children > .wiki-tree-item-toggle:hover {
@@ -1207,7 +1207,7 @@
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.95em;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color var(--dur), box-shadow var(--dur);
 }
 
 .cf-panel .cf-field input:focus,
@@ -1643,7 +1643,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: border-color 0.2s;
+    transition: border-color var(--dur);
 }
 
 .cf-languages-block .cf-lang-trigger:hover {
@@ -1651,7 +1651,7 @@
 }
 
 .cf-languages-block .cf-lang-arrow {
-    transition: transform 0.2s;
+    transition: transform var(--dur);
 }
 
 .cf-languages-block.open .cf-lang-arrow {
@@ -1758,7 +1758,7 @@
     gap: 8px;
     padding: 10px 12px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
 }
 
 .cf-lang-item:hover {
@@ -1995,7 +1995,7 @@
 .party-hp-fill {
     height: 100%;
     border-radius: var(--radius-sm);
-    transition: width 0.3s;
+    transition: width var(--dur-slow);
 }
 
 .party-hp-fill.healthy { background: var(--green); }
@@ -2433,7 +2433,7 @@
     line-height: 1;
     color: var(--text-dim);
     opacity: 0.6;
-    transition: opacity 0.15s, color 0.15s;
+    transition: opacity var(--dur-fast), color var(--dur-fast);
     flex-shrink: 0;
 }
 
@@ -2514,7 +2514,7 @@
     cursor: pointer;
     padding: 2px 3px;
     border-radius: var(--radius-sm);
-    transition: background 0.1s;
+    transition: background var(--dur-fast);
     user-select: none;
 }
 
@@ -2641,7 +2641,7 @@
     color: var(--text-dim);
     cursor: pointer;
     border-radius: var(--radius-sm);
-    transition: color 0.15s, border-color 0.15s;
+    transition: color var(--dur-fast), border-color var(--dur-fast);
 }
 
 .cf-attack-remove:hover {
@@ -2660,7 +2660,7 @@
     justify-content: center;
     cursor: pointer;
     border-radius: var(--radius-sm);
-    transition: background 0.15s, transform 0.08s;
+    transition: background var(--dur-fast), transform var(--dur-fast);
     user-select: none;
 }
 
@@ -2681,7 +2681,7 @@
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-dim);
-    transition: background 0.12s, color 0.12s;
+    transition: background var(--dur-fast), color var(--dur-fast);
     line-height: 1.4;
 }
 
@@ -2696,7 +2696,7 @@
 /* Attribute boxes: make them clickable */
 .char-attr-box.clickable {
     cursor: pointer;
-    transition: background 0.15s, transform 0.08s;
+    transition: background var(--dur-fast), transform var(--dur-fast);
 }
 
 .char-attr-box.clickable:hover {
@@ -2760,7 +2760,7 @@
     border-radius: var(--radius-sm);
     font-size: 0.82em;
     cursor: pointer;
-    transition: background 0.12s;
+    transition: background var(--dur-fast);
     user-select: none;
 }
 
@@ -2775,7 +2775,7 @@
     border: 1.5px solid var(--border);
     flex-shrink: 0;
     background: transparent;
-    transition: background 0.1s, border-color 0.1s;
+    transition: background var(--dur-fast), border-color var(--dur-fast);
 }
 
 .char-skill-item.proficient .char-skill-item-dot {
@@ -2932,7 +2932,7 @@
     border: 1px solid var(--border);
     color: var(--gold-text);
     font-weight: 600;
-    transition: background 0.12s, transform 0.08s;
+    transition: background var(--dur-fast), transform var(--dur-fast);
 }
 
 .char-attack-entry .bestiary-dice:hover {
@@ -2998,7 +2998,7 @@
     height: 100%;
     background: linear-gradient(90deg, var(--gold), var(--gold));
     border-radius: var(--radius-sm);
-    transition: width 0.3s;
+    transition: width var(--dur-slow);
 }
 
 /* Level-up hint badge (D-11: hint only, never auto-bump) */
@@ -3063,7 +3063,7 @@
         visibility: hidden;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.12s, visibility 0.12s;
+        transition: opacity var(--dur-fast), visibility var(--dur-fast);
     }
 
     /* Hover der Attribut-Check-Zeile → V/N einblenden */

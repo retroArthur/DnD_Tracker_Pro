@@ -22,7 +22,7 @@
     cursor: pointer;
     white-space: nowrap;
     min-height: 28px;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
 .pwa-install-btn:hover {

@@ -493,7 +493,7 @@
     font-size: 1em;
     padding: 2px 6px;
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
 }
 
 .dice-history-clear:hover {

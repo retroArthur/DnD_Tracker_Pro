@@ -231,7 +231,7 @@
     padding: 6px 10px;
     border-radius: var(--radius-sm);
     font-size: 13px;
-    transition: border-color 0.2s;
+    transition: border-color var(--dur);
 }
 
 .calc-input:focus {
@@ -663,7 +663,7 @@
     gap: 8px;
     padding: 8px 12px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
     font-size: 0.85em;
     border: none;
     background: none;
@@ -1350,7 +1350,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color var(--dur);
 }
 
 .enc-lang-trigger:hover {
@@ -1365,7 +1365,7 @@
 .enc-lang-arrow {
     color: var(--text-dim);
     font-size: 0.8em;
-    transition: transform 0.2s;
+    transition: transform var(--dur);
 }
 
 .enc-languages-wrapper.open .enc-lang-arrow {
@@ -1398,7 +1398,7 @@
     gap: 8px;
     padding: 8px 12px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
 }
 
 .enc-lang-item:hover {
