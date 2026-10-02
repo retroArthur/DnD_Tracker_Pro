@@ -13697,3 +13697,404 @@ describe('W4-R-05 — tote Bewegung: jeder @keyframes-Name lebt, keiner doppelt 
         expect(Object.keys(TOTE_BEWEGUNG_GEDULDET).filter(n => !namen.includes(n))).toEqual([]);
     });
 });
+
+
+// Welle 4, Schritt 7 — Konsolidierung der drei Bauformen
+// ==================================================================
+
+describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst sich selbst (Ratsche)', () => {
+    /*  WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT.
+     *
+     *  Die Zusammenfuehrung von Icon-Knopf, Chip und Marke ist die am
+     *  SCHLECHTESTEN abgesicherte Aenderung dieser Welle, und das ist
+     *  gemessen, nicht gefuehlt. Der Stil-Sollstand
+     *  (tests/e2e/features/computed-style-diff.spec.js) hasht zwoelf
+     *  Eigenschaften, und `width`/`height` sind dort AUSDRUECKLICH
+     *  ausgenommen ("haengen am Viewport und am Inhalt"). Die Icon-Knoepfe
+     *  bemessen sich aber genau darueber: .dice-reroll-btn 44, .dms-dice-btn
+     *  42, .btn-icon 36, .npc-section-btn 24, .qref-apply-btn 16. Eine
+     *  Groessenaenderung erzeugt dort also NUR dann einen Befund, wenn sich
+     *  Innenabstand, Rundung oder Schriftgroesse MIT aendern. Fuer .btn-icon
+     *  trafen vor dieser Welle alle drei schon den Sollwert — 36 -> 28 waere
+     *  fuer jede Automatik vollstaendig unsichtbar gewesen.
+     *  Hinzu kommt: .header-action-btn (7 Elemente) liegt AUSSERHALB der
+     *  view-Container, die der Sollstand abtastet, und .dms-live-badge wird
+     *  vom Sollstand uebersprungen, weil es eine Dauer-Animation traegt
+     *  (`if (cs.animationName && cs.animationName !== 'none') return;`).
+     *  Deckung dieser beiden: null.
+     *
+     *  AUSGANGSWERT, am 2026-10-03 gegen HEAD 29bb01d (Zweig design-welle-4)
+     *  erhoben, VOR jeder Zeile Umsetzung — alle sieben Zusicherungen ROT,
+     *  176 bezifferte Befunde, die sechs Proben an der Ratsche selbst gruen:
+     *
+     *    Teil 1   21 von 22 Icon-Knoepfen fehlen in der Selektorliste der
+     *             einzigen Regel, die heute 36 px fuehrt (.btn-icon). Es gibt
+     *             keine Basisgruppe — 10 verschiedene DEKLARIERTE Groessen:
+     *             16 · 20 (2x) · 24 (4x) · 28 · 32 (3x) · 34 (2x) · 36 (8x) ·
+     *             42 · 44, dazu 4 Rundungen: --radius-sm (8x), --radius-md
+     *             (10x), 50% (3x), keine (1x)
+     *    Teil 2   66 eigene Mass-Deklarationen in 24 Regeln
+     *    Teil 3   .chip ist keine Basis einer Familie (keine Regel mit 999px)
+     *    Teil 4   53 eigene Deklarationen an den 18 Chip-Bauformen
+     *             — 8 Innenabstaende, 8 Schriftgroessen, 2 Rundungen
+     *    Teil 5   .badge existiert im ganzen Baum nicht — 0 CSS-Regeln,
+     *             0 Klassen-Token im Markup, 0 im JS
+     *    Teil 6   33 eigene Deklarationen an den 8 Marken
+     *             — Schriftgroessen 7,70 / 10,40 / 11,20 / 11,90 px
+     *    Teil 6b  3 an #bestiary-count (Innenabstand, Rundung, Schriftgroesse)
+     *
+     *  GEGENGERECHNET mit einem zweiten, unabhaengigen Werkzeug — dem
+     *  klammerzaehlenden CSS-Leser der Vermessung statt der Regex dieser
+     *  Ratsche: IKON 69, CHIP 53, MARKE 33. CHIP und MARKE stimmen aufs
+     *  Stueck; die drei Mehrbefunde bei IKON sind die drei Deklarationen von
+     *  `.btn-icon` selbst, die diese Ratsche als Basis UEBERSPRINGT. Zwei
+     *  Rechnungen, die nichts voneinander wissen, nennen also dieselbe Menge.
+     *
+     *  WARUM `font-size` NICHT im Icon-Vertrag STEHT, aber im Chip- und
+     *  Markenvertrag. Die Icon-Knoepfe tragen Zeichen von 11 px bis 1,3em
+     *  Emoji; eine gemeinsame Schriftgroesse waere eine Umgestaltung der
+     *  Zeichen, nicht eine Zusammenfuehrung der Flaechen — und Arbeitsregel 1
+     *  heisst "Refactoring im Bestand, kein Redesign". Der Befund D-05 nennt
+     *  "3 Icon-Knopf-Hoehen", nicht Zeichengroessen; die Zeichengroessen sind
+     *  Gegenstand von D-06 und damit der Welle 5. Bei Chip und Marke ist die
+     *  Schriftgroesse dagegen Teil DES Befundes: 7,70 px an .dms-live-badge
+     *  ist in Paragraph 3.7 ausdruecklich als Fehler markiert (O-15).
+     *
+     *  WARUM NACHBAU VON F-02 UND NICHT NEU ERFUNDEN (O-12). F-02
+     *  ("eine Listenzeile, eine Karte", oben in dieser Datei) macht fuer die
+     *  Listenzeilen-Familie genau das, was hier fuer drei weitere Familien
+     *  gebraucht wird: Basisregel finden, Mitgliedschaft in deren
+     *  Selektorliste pruefen, eigene Deklaration im Mitglied verbieten. Sie
+     *  ist seit Monaten gruen. Die Form ist uebernommen, mit DREI benannten
+     *  Verfeinerungen:
+     *
+     *    (a) `regelnMitKlasse()` statt `ruleBodiesFor()`: letzteres verlangt
+     *        hinter dem Klassennamen ein `,` oder `{` und findet deshalb
+     *        `.shop-cat-badge.active` und `.section-toolbar-actions
+     *        .cart-badge` NICHT — ausgerechnet die zwei Regeln, die die Basis
+     *        ueberstimmen koennen. Zusaetzlich ankert es nur hinter `}` und
+     *        uebersieht damit die ERSTE Regel in einem @media-Block (genau der
+     *        Fall von `.dms-dice-btn`).
+     *    (b) DER ANKER IST EINE RUECKSCHAU, kein verbrauchtes Zeichen. Das ist
+     *        die wichtigste der drei, und sie ist beim Rotlauf dieser Ratsche
+     *        AUFGEFALLEN: `ruleBodiesFor()` ankert mit `(^|\})` und VERBRAUCHT
+     *        dabei die schliessende Klammer der Vorgaengerregel. Zwei
+     *        unmittelbar aufeinander folgende Regeln derselben Klasse kann es
+     *        deshalb nur ABWECHSELND finden — die zweite hat keinen Anker mehr.
+     *        Gemessen: mit verbrauchtem Anker fand Teil 2 64 Befunde, mit
+     *        Rueckschau 69; die fuenf fehlenden waren `.btn-icon` (dreimal,
+     *        als Basis uebersprungen und darum folgenlos) und
+     *        `.npc-detail-btn.small` (width und height) — die Regel steht
+     *        direkt hinter `.npc-detail-btn` und fiel genau in diese Luecke.
+     *        F-02 traegt dieselbe Luecke bis heute; sie ist dort folgenlos,
+     *        weil die fuenf Listenzeilen nicht aneinandergrenzen.
+     *    (c) GEGENSTANDS-Pruefung: eine Regel zaehlt nur dann als "Regel des
+     *        Mitglieds", wenn die Klasse im LETZTEN zusammengesetzten Teil des
+     *        Selektors steht. `.loot-tag-chip input` gestaltet das Kind, nicht
+     *        den Chip — ohne diese Unterscheidung verbietet die Ratsche
+     *        Kindregeln, die mit der Bauform nichts zu tun haben.
+     *
+     *  DIE MITGLIEDERLISTEN STEHEN AUSGESCHRIEBEN und sind mit `toBe(n)`
+     *  geschlossen. Ohne diesen Schluss ist die Ratsche durch WEGLASSEN
+     *  erfuellbar — und genau daran haette die Handoff-Liste mit 10 statt 18
+     *  Chip-Bauformen sechs Familien weiterdriften lassen.
+     */
+
+    // ---- Die drei Mitgliederlisten -------------------------------------
+    //
+    // IKON: die 22 quadratischen <button>-Icon-Knoepfe. Nicht dabei und
+    // bewusst draussen: .slot-pip (18px, Zauberplatz-Punkt, nicht bedienbar)
+    // und .dmg-chip (40px, Schadensart-Emoji, nicht bedienbar). Beide sind
+    // keine Knoepfe; .dmg-chip ist nach O-06 auch kein Chip.
+    const IKON = [
+        'btn-icon',
+        'bf-clear',
+        'calc-import-btn',
+        'dice-fav-add',
+        'dice-reroll-btn',
+        'dms-dice-btn',
+        'emoji-pick-btn',
+        'enc-detail-btn',
+        'header-action-btn',
+        'init-mob-dissolve-btn',
+        'init-statblock-close',
+        'loc-detail-btn',
+        'loot-detail-btn',
+        'lr-reset-btn',
+        'npc-detail-btn',
+        'npc-section-btn',
+        'qref-apply-btn',
+        'rest-hd-btn',
+        'spell-tooltip-close',
+        'timer-card-btn',
+        'timer-quick-add',
+        'timer-quick-settings'
+    ];
+
+    // CHIP: .chip ist die Basis, die anderen 17 sind die Bauformen mit eigener
+    // Geometrie. .timer-preset-btn ist der SIEBZEHNTE und steht hier, obwohl
+    // der Plan 16 nennt: er teilt seine Regel mit .timer-preset-chip, und
+    // gemessen hat .timer-preset-chip NULL Verwendungen im Markup und im JS,
+    // .timer-preset-btn genau eine (features/timers/timers.js:32). Nur
+    // .timer-preset-chip aufzunehmen hiesse, die Geometrie am einzigen
+    // LEBENDEN Selektor stehen zu lassen.
+    // Draussen und begruendet: .dmg-chip und .spell-comp (O-06 — quadratisch,
+    // 40 bzw. 24 px, keine Pillen), .condition-tag (Zustandsmarker; vom Plan
+    // nicht aufgefuehrt, bleibt ausgewiesene Restschuld).
+    const CHIP = [
+        'chip',
+        'filter-chip',
+        'npc-filter-chip',
+        'loc-filter-chip',
+        'enc-filter-chip',
+        'loot-filter-chip',
+        'dice-chip',
+        'shop-cat-badge',
+        'filter-toggle',
+        'loc-npc-chip',
+        'cf-chip',
+        'ds-rate-chip',
+        'link-chip',
+        'loot-tag-chip',
+        'timer-preset-chip',
+        'timer-preset-btn',
+        'char-resistance-chip',
+        'dice-formula-chip'
+    ];
+
+    // MARKE: 8 Klassen. .badge ist die Basis und hat KEINE eigene Regel
+    // daneben (0 Vorkommen im Markup — reine CSS-Alias-Basis, dieselbe Bauart
+    // wie .list-item in F-02). .enc-stat-badge ist nach O-07 KEINE Marke (sie
+    // setzt nur font-size und color, keine Flaeche); .tag und .loc-item-tag
+    // sind nach O-07 dabei, obwohl der Handoff sie nicht nennt.
+    const MARKE = [
+        'section-toolbar-count',
+        'npc-badge',
+        'difficulty-badge',
+        'bestiary-badge',
+        'cart-badge',
+        'dms-live-badge',
+        'tag',
+        'loc-item-tag'
+    ];
+
+    // Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in
+    // W4-R-02, TRAGEND_GEDULDET in W4-R-03 und TOTE_BEWEGUNG_GEDULDET in
+    // W4-R-05: bewusst LEER, nicht abwesend. Wer eine Ausnahme braucht,
+    // schreibt sie mit Begruendung hier hinein — eine Bauform, die ihre
+    // Geometrie wieder selbst setzt, ist der Anfang der naechsten Drift.
+    // Schluessel: `<selektor>||<eigenschaft>`.
+    const EIGENMASS_GEDULDET = {};
+
+    const normSel = s => s.replace(/\s+/g, ' ').trim();
+
+    /**
+     * Alle Regelbloecke, deren Selektorliste das EXAKTE Klassen-Token fuehrt.
+     * Nachbau von ruleBodiesFor() mit den zwei im Kopf begruendeten
+     * Verfeinerungen (Anker auch hinter `{`, exakte Token-Grenze rechts).
+     */
+    function regelnMitKlasse(cls) {
+        const bodies = [];
+        const re = new RegExp(
+            '(?:^|(?<=[{}]))([^{}]*\\.' +
+                cls.replace(/-/g, '[-]') +
+                '(?![-\\w])[^{}]*)\\{([^{}]*)\\}',
+            'g'
+        );
+        for (const m of cssCode.matchAll(re)) {
+            bodies.push({ selectors: normSel(m[1]), body: m[2] });
+        }
+        return bodies;
+    }
+
+    /** Ist `cls` der GEGENSTAND dieses Selektors (letzter zusammengesetzter Teil)? */
+    function istGegenstand(selektor, cls) {
+        const re = new RegExp('\\.' + cls.replace(/-/g, '[-]') + '(?![-\\w])');
+        return selektor
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .some(s => {
+                const letzter =
+                    s
+                        .split(/[\s>+~]+/)
+                        .filter(Boolean)
+                        .pop() || '';
+                return re.test(letzter);
+            });
+    }
+
+    /** Die Basisregel einer Familie: der Block, der `kennzeichen` fuehrt. */
+    function basisregel(basisKlasse, kennzeichen) {
+        return regelnMitKlasse(basisKlasse).find(r => kennzeichen.test(r.body));
+    }
+
+    /** Eigene Mass-Deklarationen eines Mitglieds, ausserhalb der Basis. */
+    function eigenmass(mitglieder, basis, verboten) {
+        const befunde = [];
+        mitglieder.forEach(cls => {
+            regelnMitKlasse(cls).forEach(r => {
+                if (basis && r.selectors === basis.selectors) return; // die Basis selbst
+                if (!istGegenstand(r.selectors, cls)) return; // gestaltet ein Kind
+                for (const m of r.body.matchAll(verboten)) {
+                    const schluessel = `${r.selectors}||${m[2]}`;
+                    if (EIGENMASS_GEDULDET[schluessel]) continue;
+                    befunde.push(schluessel);
+                }
+            });
+        });
+        return [...new Set(befunde)].sort();
+    }
+
+    // `min-width`/`min-height` stehen bewusst NICHT darin: der Zaehlerkreis
+    // (.cart-badge, min-width 18px) und der Leistenzaehler
+    // (.section-toolbar-count, min-width 28px) brauchen eine eigene
+    // Mindestbreite, und die ist keine Bauform-Aussage.
+    const PAD = 'padding(?:-(?:top|right|bottom|left))?';
+    const MASS_IKON = new RegExp('(^|;|\\s)(width|height|' + PAD + '|border-radius)\\s*:', 'g');
+    const MASS_TEXTFORM = new RegExp(
+        '(^|;|\\s)(' + PAD + '|border-radius|font-size|font-weight)\\s*:',
+        'g'
+    );
+
+    // ---- Teil 1 und 2: die Icon-Knoepfe --------------------------------
+
+    test('Teil 1: die 22 Icon-Knoepfe haengen an EINER Basisregel mit 36 px', () => {
+        // E2: 36 px, nicht die 28 aus Paragraph 3.7. Die Begruendung steht im
+        // eigenen Code — ueber .btn-icon in core.css steht woertlich "Flaeche
+        // >= 36px fuer Beruehrung", und dashboard.css erzwingt auf
+        // Beruehrungsgeraeten 44 px. 28 px wuerde beide Schranken
+        // unterschreiten.
+        const basis = basisregel('btn-icon', /width:\s*36px/);
+        expect(basis).toBeDefined();
+        expect(IKON.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        // Der Vertrag selbst: quadratisch, randlos, EINE Rundung.
+        expect(basis.body).toMatch(/height:\s*36px/);
+        expect(basis.body).toMatch(/padding:\s*0/);
+        expect(basis.body).toMatch(/border-radius:\s*var\(--radius-md\)/);
+    });
+
+    test('Teil 2: kein Icon-Knopf bemisst sich in einem eigenen Block', () => {
+        const basis = basisregel('btn-icon', /width:\s*36px/);
+        expect(eigenmass(IKON, basis, MASS_IKON)).toEqual([]);
+    });
+
+    // ---- Teil 3 und 4: die Chips ---------------------------------------
+
+    test('Teil 3: die 17 Chip-Bauformen haengen an .chip und sind Pillen', () => {
+        const basis = basisregel('chip', /border-radius:\s*999px/);
+        expect(basis).toBeDefined();
+        expect(CHIP.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        // E3: die Pillenform JETZT, mit den zwei aus Welle 5 vorgezogenen
+        // Schrift-Tokens. Ohne sie waere F-01 rot ("kein var(--x) ohne
+        // Definition") und Paragraph 3.7 gar nicht ausfuehrbar.
+        expect(basis.body).toMatch(/padding:\s*3px 10px/);
+        expect(basis.body).toMatch(/font-size:\s*var\(--text-sm\)/);
+        expect(basis.body).toMatch(/font-weight:\s*500/);
+        // 18 + 3 + 3 + 2 Rahmen = 26 px, die Hoehe aus Paragraph 3.7. Eine
+        // Zeilenhoehe statt min-height, weil die meisten Bauformen als
+        // Flexkind auf `block` blockifizieren — dort setzt min-height zwar die
+        // Hoehe, aber niemand zentriert den Text darin.
+        expect(basis.body).toMatch(/line-height:\s*18px/);
+    });
+
+    test('Teil 4: kein Chip setzt Innenabstand, Rundung oder Schrift neu', () => {
+        const basis = basisregel('chip', /border-radius:\s*999px/);
+        expect(eigenmass(CHIP, basis, MASS_TEXTFORM)).toEqual([]);
+    });
+
+    // ---- Teil 5 und 6: die Marken --------------------------------------
+
+    test('Teil 5: die 8 Marken haengen an .badge', () => {
+        const basis = basisregel('badge', /border-radius:\s*999px/);
+        expect(basis).toBeDefined();
+        expect(MARKE.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        expect(basis.body).toMatch(/padding:\s*1px 7px/);
+        expect(basis.body).toMatch(/font-size:\s*var\(--text-xs\)/);
+        expect(basis.body).toMatch(/font-weight:\s*600/);
+        expect(basis.body).toMatch(/line-height:\s*16px/); // 16 + 1 + 1 = 18 px
+    });
+
+    test('Teil 6: keine Marke setzt Innenabstand, Rundung oder Schrift neu', () => {
+        const basis = basisregel('badge', /border-radius:\s*999px/);
+        expect(eigenmass(MARKE, basis, MASS_TEXTFORM)).toEqual([]);
+    });
+
+    test('Teil 6b: die ID-Regel #bestiary-count bemisst sich nicht selbst', () => {
+        // Sie ist die EINZIGE ID-Regel in den drei Familien und mit (1,0,0)
+        // stark genug, die Basis zu ueberstimmen. Das Element traegt im Markup
+        // bereits .section-toolbar-count (assets/templates/view-bestiary.html),
+        // es braucht die ID-Regel also nur noch fuer seine Tinte.
+        const regeln = [
+            ...cssCode.matchAll(/(?:^|(?<=[{}]))([^{}]*#bestiary-count[^{}]*)\{([^{}]*)\}/g)
+        ];
+        expect(regeln.length).toBeGreaterThan(0);
+        const befunde = [];
+        regeln.forEach(m => {
+            for (const d of m[2].matchAll(MASS_TEXTFORM)) befunde.push(`${normSel(m[1])}||${d[2]}`);
+        });
+        expect([...new Set(befunde)]).toEqual([]);
+    });
+
+    // ---- Proben an der Ratsche selbst ----------------------------------
+
+    test('SELBSTPROBE: die drei Mitgliederlisten sind geschlossen', () => {
+        // Ohne diese drei Zahlen ist jede der sieben Zusicherungen oben durch
+        // WEGLASSEN erfuellbar: wer ein driftendes Mitglied aus der Liste
+        // streicht, macht die Ratsche gruen, ohne eine Zeile CSS zu aendern.
+        expect(IKON.length).toBe(22);
+        expect(CHIP.length).toBe(18); // 1 Basis + 17 Bauformen
+        expect(MARKE.length).toBe(8);
+        // Keine Klasse steht in zwei Familien.
+        const alle = [...IKON, ...CHIP, ...MARKE];
+        expect(alle.length).toBe(new Set(alle).size);
+    });
+
+    test('GEGENPROBE: jedes genannte Mitglied hat ueberhaupt eine CSS-Regel', () => {
+        // Ein Tippfehler in einer der drei Listen wuerde Teil 2/4/6 still
+        // gruen machen — es gibt dann nichts zu pruefen.
+        const ohne = [...IKON, ...CHIP, ...MARKE].filter(c => regelnMitKlasse(c).length === 0);
+        expect(ohne).toEqual([]);
+    });
+
+    test('GEGENPROBE: die Erhebung meldet einen Verstoss, den es wirklich gibt', () => {
+        // Dieselbe Rechnung wie in Teil 2, auf einer Klasse, die ihre Groesse
+        // garantiert selbst setzt: .slot-pip (18x18, dashboard.css). Sie ist
+        // bewusst KEIN Mitglied — findet die Erhebung sie trotzdem, rechnet
+        // sie richtig; findet sie sie nicht, waere jedes gruene Teil 2
+        // bedeutungslos.
+        expect(eigenmass(['slot-pip'], null, MASS_IKON).length).toBeGreaterThan(0);
+    });
+
+    test('GEGENPROBE: zwei aneinandergrenzende Regeln werden BEIDE gefunden', () => {
+        // Die Probe zur Verfeinerung (b). `.npc-detail-btn` und
+        // `.npc-detail-btn.small` stehen in npcs.css unmittelbar hintereinander
+        // — mit verbrauchtem Anker faellt die zweite durch jedes Raster.
+        const sel = regelnMitKlasse('npc-detail-btn').map(r => r.selectors);
+        expect(sel).toContain('.npc-detail-btn');
+        expect(sel.some(s => s.includes('.npc-detail-btn.small'))).toBe(true);
+    });
+
+    test('GEGENPROBE: die Gegenstands-Pruefung trennt Kind von Gegenstand', () => {
+        expect(istGegenstand('.loot-tag-chip', 'loot-tag-chip')).toBe(true);
+        expect(istGegenstand('.loot-tag-chip.hidden', 'loot-tag-chip')).toBe(true);
+        expect(istGegenstand('.section-toolbar-actions .cart-badge', 'cart-badge')).toBe(true);
+        expect(istGegenstand('.loot-tag-chip input', 'loot-tag-chip')).toBe(false);
+        expect(istGegenstand('.loot-tag-chip input:checked + span', 'loot-tag-chip')).toBe(false);
+        expect(istGegenstand('.a, .loot-tag-chip', 'loot-tag-chip')).toBe(true);
+    });
+
+    test('VERWESUNGSPROBE: jeder Eintrag in EIGENMASS_GEDULDET wird gebraucht', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set();
+        [...IKON, ...CHIP, ...MARKE].forEach(cls => {
+            regelnMitKlasse(cls).forEach(r => {
+                [MASS_IKON, MASS_TEXTFORM].forEach(re => {
+                    for (const m of r.body.matchAll(re)) vorhanden.add(`${r.selectors}||${m[2]}`);
+                });
+            });
+        });
+        expect(Object.keys(EIGENMASS_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+    });
+});
