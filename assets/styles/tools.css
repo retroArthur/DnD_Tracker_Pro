@@ -80,7 +80,7 @@
     background: var(--bg-elevated);
     font-size: 1.4em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,7 +119,7 @@
     padding: 6px 12px;
     font-size: 0.85em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     color: var(--text);
     display: inline-flex;
     align-items: center;
@@ -142,7 +142,7 @@
     background: var(--bg-elevated);
     cursor: pointer;
     font-size: 1.2em;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .timer-quick-add:hover,
@@ -169,7 +169,7 @@
     font-weight: 600;
     color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .timer-time-btn:hover {
@@ -196,7 +196,7 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .timer-card:hover {
@@ -237,7 +237,7 @@
     color: var(--text);
     font-size: 0.85em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,7 +346,7 @@
     border-radius: var(--radius-md);
     margin-bottom: 8px;
     overflow: hidden;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .rt-card:hover, .rt-card.selected {
@@ -391,7 +391,7 @@
     border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .rt-roll-btn:hover {
@@ -578,7 +578,7 @@
     color: var(--text);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--trans-std);
 }
 
 .rt-dice-btn:hover {
@@ -714,7 +714,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    transition: all 0.2s ease;
+    transition: var(--trans-std);
 }
 
 .generator-table-card:hover {
@@ -1067,7 +1067,7 @@
     font-size: 11px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 /* ENTSCHEIDUNG E1, die sechs Goldstellen dieser Datei (Welle 2 Schritt 7).
@@ -1273,7 +1273,7 @@
     padding: 12px 8px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .wiki-template-card:hover {
@@ -1317,7 +1317,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     color: var(--text-dim);
-    transition: all 0.2s;
+    transition: var(--trans-std);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
