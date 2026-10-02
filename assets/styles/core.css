@@ -982,9 +982,6 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.7em;
-            padding: 2px 8px;
-            border-radius: var(--radius-md);
             background: var(--bg-elevated);
             color: var(--text-dim);
             margin: 2px;
@@ -3004,28 +3001,26 @@
             flex-wrap: wrap;
         }
 
-        .loc-item-tag {
-            font-size: 0.65em;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-            /* HIER STEHT ABSICHTLICH KEINE TINTE (Schritt 13, Welle 1,
-               Entscheidung D-7). Diese Regel hat auch keine Flaeche: beides
-               setzt features/locations/locations-render.js zur Laufzeit als
-               Inline-Stil, aus einem vom Nutzer gespeicherten Farbwert: die
-               Flaeche aus der Rolle, die Tinte aus dem zugehoerigen
-               on-Token, mit var(--text) als Rueckfallwert. (Die Tokennamen
-               stehen hier bewusst OHNE var()-Schreibweise — F-01 Test 1
-               liest cssAll samt Kommentaren, und ein Platzhalter in
-               var()-Form wird dort als undefiniertes Token gemeldet.)
-               Gegen einen Inline-Stil gewinnt eine
-               Klassenregel nie; das frueher hier stehende
-               `color: var(--bg-dark)` war deshalb toter Code und sah dabei
-               aus wie die gueltige Tinte (es erreichte auf den acht
-               Akzentflaechen 2,51-9,89, schlechtester Fall --cyan in
-               Sepia). Wer hier wieder eine Farbe eintraegt, aendert nichts
-               an der Darstellung — die Stelle ist im JS. R-09 in
-               tests/unit/design-consistency.test.js meldet es. */
-        }
+        /* .loc-item-tag HAT HIER KEINE EIGENE REGEL MEHR (Welle 4, Schritt 7):
+           ihre Geometrie kommt aus der Marken-Basisgruppe am Ende dieser Datei.
+           Der Block bleibt als Kommentar stehen, weil seine Aussage weiter gilt
+           und weil R-09 auf sie verweist.
+
+           HIER STAND ABSICHTLICH KEINE TINTE (Schritt 13, Welle 1,
+           Entscheidung D-7). Die Regel hatte auch keine Flaeche: beides setzt
+           features/locations/locations-render.js zur Laufzeit als Inline-Stil,
+           aus einem vom Nutzer gespeicherten Farbwert: die Flaeche aus der
+           Rolle, die Tinte aus dem zugehoerigen on-Token, mit --text als
+           Rueckfallwert. (Die Tokennamen stehen hier bewusst OHNE
+           var()-Schreibweise — F-01 Test 1 liest cssAll samt Kommentaren, und
+           ein Platzhalter in var()-Form wird dort als undefiniertes Token
+           gemeldet.) Gegen einen Inline-Stil gewinnt eine Klassenregel nie; das
+           frueher hier stehende `color` auf --bg-dark war deshalb toter Code
+           und sah dabei aus wie die gueltige Tinte (es erreichte auf den acht
+           Akzentflaechen 2,51-9,89, schlechtester Fall --cyan in Sepia). Wer
+           hier wieder eine Farbe eintraegt, aendert nichts an der Darstellung —
+           die Stelle ist im JS. R-09 in
+           tests/unit/design-consistency.test.js meldet es. */
 
         .loc-item-meta {
             font-size: 0.8em;
@@ -3464,4 +3459,68 @@
             border-radius: 999px;
             font-size: var(--text-sm);
             font-weight: 500;
+        }
+
+        /* ============================================================
+           BAUFORM 3 — MARKE: EINE PILLE, EINE LESBARE SCHRIFT
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung O-15)
+           ============================================================
+           WAS VORHER STAND, am gebauten Buendel gemessen: 35 gerenderte Marken
+           mit VIER Hoehen, VIER Schriftgroessen (7,70 / 10,40 / 11,20 /
+           11,90 px), DREI Gewichten und DREI Rundungen.
+
+           DIE 7,70 px SIND DER EIGENTLICHE BEFUND. .dms-live-badge trug
+           `font-size: 0.55em` auf einem Elternteil mit 14 px — Paragraph 3.7
+           markiert das ausdruecklich als Fehler. Es ist zugleich die Stelle mit
+           der schlechtesten Absicherung im ganzen Schritt: der Stil-Sollstand
+           ueberspringt jedes Element mit laufender Animation
+           (`if (cs.animationName && cs.animationName !== 'none') return;`), und
+           diese Marke traegt `dms-live-pulse 2s`. Keine Automatik bestaetigt
+           ihre Korrektur; sie ist von Hand nachgemessen (O-15).
+
+           DER VERTRAG: Hoehe 18 px, Innenabstand 1px 7px, --text-xs/600,
+           Rundung 999px. Die Hoehe kommt wieder von innen —
+           16 + 1 + 1 = 18 —, aus demselben Grund wie beim Chip.
+
+           KEINE TINTE IN DIESER GRUPPE, und das ist Absicht: Paragraph 3.7
+           nennt fuer .badge auch Flaeche und Textfarbe, aber die acht Mitglieder
+           tragen ihre Tinte aus den Wellen 1 und 2 (Rollenfarben, color-mix,
+           --on-<rolle>). Eine gemeinsame Flaeche hier wuerde acht Farbbefunde
+           erzeugen, die dieser Schritt nicht verantwortet — sein
+           Abnahmekriterium verlangt ausdruecklich, dass color, background-color
+           und border-color RUHIG bleiben.
+
+           .badge selbst hat im Markup NULL Vorkommen und daneben keine eigene
+           Regel. Das ist dieselbe Bauart wie .list-item (F-02): eine reine
+           CSS-Basis, auf die die Templates spaeter nachziehen koennen.
+
+           .enc-stat-badge IST KEINE MARKE (O-07): die Regel setzt nur
+           font-size und color, keinen Innenabstand und keine Flaeche. Sie
+           aufzunehmen legte eine Pille um Text, der heute keine hat — eine neue
+           Form, keine Zusammenfuehrung. Dafuer sind .tag und .loc-item-tag
+           dabei, die der Handoff nicht nennt: sie fuehren die Bauart wirklich
+           und waeren sonst die einzigen Marken, die weiterdriften.
+
+           DIE ID-REGEL #bestiary-count ist mitbehandelt, aber NICHT in der
+           Selektorliste: das Element traegt im Markup bereits
+           .section-toolbar-count. Ihre (1,0,0) haetten die Basis sonst
+           ueberstimmt; sie behaelt nur noch ihre Tinte.
+
+           Die Gruppe steht am Ende von core.css, aus demselben Grund wie die
+           zwei Gruppen darueber. W4-R-06 Teil 5, 6 und 6b halten sie fest.
+           ============================================================ */
+        .badge,
+        .section-toolbar-count,
+        .npc-badge,
+        .difficulty-badge,
+        .bestiary-badge,
+        .cart-badge,
+        .dms-live-badge,
+        .tag,
+        .loc-item-tag {
+            line-height: 16px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: var(--text-xs);
+            font-weight: 600;
         }

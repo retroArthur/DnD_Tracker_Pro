@@ -156,9 +156,6 @@
 }
 
 .npc-badge {
-    font-size: 0.75em;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
     background: var(--bg-dark);
 }
 

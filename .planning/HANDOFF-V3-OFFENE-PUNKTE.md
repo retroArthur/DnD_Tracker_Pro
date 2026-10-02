@@ -425,10 +425,10 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:532` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:545` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1427` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1432` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `bestiary.css:525` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:538` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `core.css:1424` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1429` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:234` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:730` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:870` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -572,15 +572,15 @@ sie als unerreichbar abschreibt.
 
 ```
 bestiary.css
-  153  .bestiary-fav.active
+  146  .bestiary-fav.active
 core.css
    17  [data-layout="mobile"] .mobile-nav-toggle-text
   112  [data-layout="mobile"] #mobile-timer-display
   116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
   120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1323  .char-card-currency
- 2096  .quest-reward-item-tag .remove-btn:hover
- 2089  .quest-reward-item-tag .remove-btn
+ 1320  .char-card-currency
+ 2093  .quest-reward-item-tag .remove-btn:hover
+ 2086  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -611,9 +611,9 @@ dmscreen.css
   524  .session-tag-remove:hover
   670  .quick-ref-section-title
  1275  .dms-stat-warning .dms-stat-value
- 2362  .dms-profile-check
- 2388  .dms-profile-save
- 2392  .dms-profile-save .dms-profile-name
+ 2358  .dms-profile-check
+ 2384  .dms-profile-save
+ 2388  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
@@ -641,13 +641,13 @@ initiative.css
 loot.css
   291  .shop-cat-badge.item
   468  .si-tag-v
-  633  .cart-shop-name
-  700  .cart-item-total
+  629  .cart-shop-name
+  696  .cart-item-total
 npcs.css
-  235  .npc-detail-location
-  893  .npc-name
-  974  .npc-popup-name
- 1007  .npc-popup-section-title
+  232  .npc-detail-location
+  890  .npc-name
+  971  .npc-popup-name
+ 1004  .npc-popup-section-title
 party.css
  1979  .party-stat-card.critical .party-stat-value
  2259  .rest-heal-preview
@@ -660,8 +660,8 @@ spells.css
 tools.css
   252  .timer-card-time
   446  .rt-result-label
- 1145  .breadcrumb-item:hover
- 1458  .sb-remove-btn:hover
+ 1141  .breadcrumb-item:hover
+ 1454  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3

@@ -2148,16 +2148,12 @@
 }
 
 .dms-live-badge {
-    font-size: 0.55em;
-    font-weight: 500;
     color: var(--green-text);
     /* Welle 2 Schritt 7: 34,197,94 ist vierfach belegt (--attr-dex in Dark und
        Contrast, --dmg-acid, --know-nature). Nach dem Zweck ist es keins davon,
        sondern die Gruenrolle, die diese Regel als Tinte fuehrt.
        6,75 · 2,42 · 2,29 · 8,96 -> 6,32 · 2,33 · 2,25 · 8,17 (D-4, Schritt 8). */
     background: color-mix(in srgb, var(--green) min(15%, var(--tint-max)), transparent);
-    padding: 3px 8px;
-    border-radius: var(--radius-md);
     animation: dms-live-pulse 2s ease-in-out infinite;
 }
 

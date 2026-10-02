@@ -568,12 +568,8 @@
 }
 
 .section-toolbar-count {
-    font-size: 0.85em;
     color: var(--cyan-text);
-    padding: 3px 10px;
     background: var(--bg-dark);
-    border-radius: var(--radius-lg);
-    font-weight: 600;
     min-width: 28px;
     text-align: center;
 }
@@ -674,10 +670,6 @@
     right: -6px;
     background: var(--red);
     color: var(--on-red);
-    font-size: 0.7em;
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    font-weight: 600;
 }
 
 /* Import/Export Button Group */

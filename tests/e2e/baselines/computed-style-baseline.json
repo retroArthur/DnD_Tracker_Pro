@@ -332,7 +332,7 @@
         "span.drag-handle#0": "eaf54399d2a70de5",
         "span.filled.slot-pip#0": "6271ccae28273887",
         "span.filled.slot-pip#1": "6271ccae28273887",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.slot-pip#0": "5bd7f8a78c84f722",
         "span.slot-pip#1": "5bd7f8a78c84f722"
@@ -460,7 +460,7 @@
         "span.npc-detail-race#0": "86de48a6158976c4",
         "span.npc-detail-role#0": "62053812445fd84f",
         "span.npc-item-race#0": "f0f4ce408e3a7dc0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -546,7 +546,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -594,7 +594,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "label.filter-toggle#0": "a270e07214f682d5",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -666,7 +666,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "748b4a83f973a54f",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -918,7 +918,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -1048,7 +1048,7 @@
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "c9d15b8e90c6bfb6",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.shop-cat-badge.weapon#0": "e7b4954c7cde3e32",
         "span.shop-icon#0": "786b4c7d387f0e27",
@@ -1179,7 +1179,7 @@
         "div.spell-filter-group#2": "1d748c6386e6c184",
         "div.spell-list#0": "1d748c6386e6c184",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.spell-filter-label#0": "120e9c1c6ffe1afd",
         "span.spell-filter-label#1": "120e9c1c6ffe1afd",
@@ -1234,7 +1234,7 @@
         "div.session-filters#0": "1083347c1c2c34d7",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "748b4a83f973a54f",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -1294,7 +1294,7 @@
         "div.wiki-sidebar-header#0": "8e8ae3807d2564df",
         "div.wiki-tree#0": "6218bebdb4c15642",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -1344,7 +1344,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -2179,19 +2179,19 @@
         "label.toolbar-filter-label#1": "7a73aa8512234ad8",
         "select.toolbar-select#0": "fb6dc405d189c726",
         "select.toolbar-select#1": "fb6dc405d189c726",
-        "span.bestiary-badge.srd#0": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#1": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#10": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#11": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#12": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#2": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#3": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#4": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#5": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#6": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#7": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#8": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#9": "eb9d1b067d9fea58",
+        "span.bestiary-badge.srd#0": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#1": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#10": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#11": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#12": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#2": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#3": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#4": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#5": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#6": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#7": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#8": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#9": "ebf45ac7c81d19a5",
         "span.bestiary-cr#0": "2b1b680acda1cadc",
         "span.bestiary-cr#1": "2b1b680acda1cadc",
         "span.bestiary-cr#10": "2b1b680acda1cadc",
@@ -2231,7 +2231,7 @@
         "span.bestiary-type#7": "2b1b680acda1cadc",
         "span.bestiary-type#8": "2b1b680acda1cadc",
         "span.bestiary-type#9": "2b1b680acda1cadc",
-        "span.section-toolbar-count#0": "d73c1aee3c60c826",
+        "span.section-toolbar-count#0": "b8f2c50e1a90613e",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.sr-only#0": "5f1f1273d59e58cc",
         "span.sr-only#1": "5f1f1273d59e58cc",
@@ -2284,7 +2284,7 @@
         "div.wp-empty-state#0": "86c00ebf69756e02",
         "div.wp-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -2335,7 +2335,7 @@
         "div.tl-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
         "p.tl-empty-hint#0": "f8389578ffe2d5c0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.tl-jahreszeit-badge#0": "e60d76093930b291"
       }
@@ -2528,7 +2528,7 @@
         "span.fr-hist-ts#1": "5d6298d176b393f4",
         "span.fr-ruf-badge#0": "5714af6daf1a78f8",
         "span.fr-ruf-value#0": "815f8a5f098c1201",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -2952,7 +2952,7 @@
         "span.drag-handle#0": "eaf54399d2a70de5",
         "span.filled.slot-pip#0": "6271ccae28273887",
         "span.filled.slot-pip#1": "6271ccae28273887",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee",
         "span.slot-pip#0": "5bd7f8a78c84f722",
         "span.slot-pip#1": "5bd7f8a78c84f722"
@@ -3016,7 +3016,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.npc-item-race#0": "f0f4ce408e3a7dc0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3072,7 +3072,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3120,7 +3120,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "label.filter-toggle#0": "a270e07214f682d5",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3184,7 +3184,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "795e41fb513827b5",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3428,7 +3428,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3558,7 +3558,7 @@
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "c9d15b8e90c6bfb6",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee",
         "span.shop-cat-badge.weapon#0": "e7b4954c7cde3e32",
         "span.shop-icon#0": "786b4c7d387f0e27",
@@ -3689,7 +3689,7 @@
         "div.spell-filter-group#2": "1d748c6386e6c184",
         "div.spell-list#0": "1d748c6386e6c184",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee",
         "span.spell-filter-label#0": "120e9c1c6ffe1afd",
         "span.spell-filter-label#1": "120e9c1c6ffe1afd",
@@ -3744,7 +3744,7 @@
         "div.session-filters#0": "1083347c1c2c34d7",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "795e41fb513827b5",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3804,7 +3804,7 @@
         "div.wiki-sidebar-header#0": "8e8ae3807d2564df",
         "div.wiki-tree#0": "6218bebdb4c15642",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -3854,7 +3854,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -4644,14 +4644,14 @@
         "label.toolbar-filter-label#1": "7a73aa8512234ad8",
         "select.toolbar-select#0": "fb6dc405d189c726",
         "select.toolbar-select#1": "fb6dc405d189c726",
-        "span.bestiary-badge.srd#0": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#1": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#2": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#3": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#4": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#5": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#6": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#7": "eb9d1b067d9fea58",
+        "span.bestiary-badge.srd#0": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#1": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#2": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#3": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#4": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#5": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#6": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#7": "ebf45ac7c81d19a5",
         "span.bestiary-cr#0": "2b1b680acda1cadc",
         "span.bestiary-cr#1": "2b1b680acda1cadc",
         "span.bestiary-cr#2": "2b1b680acda1cadc",
@@ -4676,7 +4676,7 @@
         "span.bestiary-type#5": "2b1b680acda1cadc",
         "span.bestiary-type#6": "2b1b680acda1cadc",
         "span.bestiary-type#7": "2b1b680acda1cadc",
-        "span.section-toolbar-count#0": "d73c1aee3c60c826",
+        "span.section-toolbar-count#0": "b8f2c50e1a90613e",
         "span.section-toolbar-title#0": "90346422a28c25ee",
         "span.sr-only#0": "5f1f1273d59e58cc",
         "span.sr-only#1": "5f1f1273d59e58cc",
@@ -4724,7 +4724,7 @@
         "div.wp-empty-state#0": "86c00ebf69756e02",
         "div.wp-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -4775,7 +4775,7 @@
         "div.tl-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
         "p.tl-empty-hint#0": "f8389578ffe2d5c0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee",
         "span.tl-jahreszeit-badge#0": "e60d76093930b291"
       }
@@ -4968,7 +4968,7 @@
         "span.fr-hist-ts#1": "5d6298d176b393f4",
         "span.fr-ruf-badge#0": "5714af6daf1a78f8",
         "span.fr-ruf-value#0": "815f8a5f098c1201",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "90346422a28c25ee"
       }
     },
@@ -5392,7 +5392,7 @@
         "span.drag-handle#0": "eaf54399d2a70de5",
         "span.filled.slot-pip#0": "6271ccae28273887",
         "span.filled.slot-pip#1": "6271ccae28273887",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.slot-pip#0": "5bd7f8a78c84f722",
         "span.slot-pip#1": "5bd7f8a78c84f722"
@@ -5520,7 +5520,7 @@
         "span.npc-detail-race#0": "86de48a6158976c4",
         "span.npc-detail-role#0": "62053812445fd84f",
         "span.npc-item-race#0": "f0f4ce408e3a7dc0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -5606,7 +5606,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -5654,7 +5654,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "label.filter-toggle#0": "a270e07214f682d5",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -5726,7 +5726,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "748b4a83f973a54f",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -5978,7 +5978,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -6108,7 +6108,7 @@
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "c9d15b8e90c6bfb6",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.shop-cat-badge.weapon#0": "e7b4954c7cde3e32",
         "span.shop-icon#0": "786b4c7d387f0e27",
@@ -6239,7 +6239,7 @@
         "div.spell-filter-group#2": "1d748c6386e6c184",
         "div.spell-list#0": "1d748c6386e6c184",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.spell-filter-label#0": "120e9c1c6ffe1afd",
         "span.spell-filter-label#1": "120e9c1c6ffe1afd",
@@ -6294,7 +6294,7 @@
         "div.session-filters#0": "1083347c1c2c34d7",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "748b4a83f973a54f",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -6354,7 +6354,7 @@
         "div.wiki-sidebar-header#0": "8e8ae3807d2564df",
         "div.wiki-tree#0": "6218bebdb4c15642",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -6404,7 +6404,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -7239,19 +7239,19 @@
         "label.toolbar-filter-label#1": "7a73aa8512234ad8",
         "select.toolbar-select#0": "fb6dc405d189c726",
         "select.toolbar-select#1": "fb6dc405d189c726",
-        "span.bestiary-badge.srd#0": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#1": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#10": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#11": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#12": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#2": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#3": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#4": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#5": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#6": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#7": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#8": "eb9d1b067d9fea58",
-        "span.bestiary-badge.srd#9": "eb9d1b067d9fea58",
+        "span.bestiary-badge.srd#0": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#1": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#10": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#11": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#12": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#2": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#3": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#4": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#5": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#6": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#7": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#8": "ebf45ac7c81d19a5",
+        "span.bestiary-badge.srd#9": "ebf45ac7c81d19a5",
         "span.bestiary-cr#0": "2b1b680acda1cadc",
         "span.bestiary-cr#1": "2b1b680acda1cadc",
         "span.bestiary-cr#10": "2b1b680acda1cadc",
@@ -7291,7 +7291,7 @@
         "span.bestiary-type#7": "2b1b680acda1cadc",
         "span.bestiary-type#8": "2b1b680acda1cadc",
         "span.bestiary-type#9": "2b1b680acda1cadc",
-        "span.section-toolbar-count#0": "d73c1aee3c60c826",
+        "span.section-toolbar-count#0": "b8f2c50e1a90613e",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.sr-only#0": "5f1f1273d59e58cc",
         "span.sr-only#1": "5f1f1273d59e58cc",
@@ -7344,7 +7344,7 @@
         "div.wp-empty-state#0": "86c00ebf69756e02",
         "div.wp-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },
@@ -7395,7 +7395,7 @@
         "div.tl-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
         "p.tl-empty-hint#0": "f8389578ffe2d5c0",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996",
         "span.tl-jahreszeit-badge#0": "e60d76093930b291"
       }
@@ -7588,7 +7588,7 @@
         "span.fr-hist-ts#1": "5d6298d176b393f4",
         "span.fr-ruf-badge#0": "5714af6daf1a78f8",
         "span.fr-ruf-value#0": "815f8a5f098c1201",
-        "span.section-toolbar-count#0": "64123d58f13f3c9e",
+        "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
     },

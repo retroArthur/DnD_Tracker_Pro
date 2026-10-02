@@ -7326,13 +7326,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 512, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 1106, stufe: 2,
+        { datei: 'core.css', zeile: 1103, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1642, stufe: 1,
+        { datei: 'core.css', zeile: 1639, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1721, stufe: 3,
+        { datei: 'core.css', zeile: 1718, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
         { datei: 'dashboard.css', zeile: 775, stufe: 2,
@@ -7396,10 +7396,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 1142, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2183, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2179, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2436, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2432, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
         { datei: 'editors.css', zeile: 222, stufe: 3,
@@ -7441,10 +7441,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         // Anker 938 -> 944 und 1067 -> 1073: die Begruendungen am
         // Hoehenbudget von .npc-view.active und .loot-view.active (U6) sind
         // zusammen 6 Zeilen weiter oben eingefuegt.
-        { datei: 'npcs.css', zeile: 927, stufe: 3,
+        { datei: 'npcs.css', zeile: 924, stufe: 3,
           pfad: '.npc-popup',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'npcs.css', zeile: 1056, stufe: 1,
+        { datei: 'npcs.css', zeile: 1053, stufe: 1,
           pfad: '.npc-list-tag.clickable:hover',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
         { datei: 'party.css', zeile: 390, stufe: 1,
@@ -7483,10 +7483,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'spells.css', zeile: 563, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1166, stufe: 3,
+        { datei: 'tools.css', zeile: 1162, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1345, stufe: 2,
+        { datei: 'tools.css', zeile: 1341, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -8143,7 +8143,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
-        { datei: 'tools.css', zeile: 1017, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
+        { datei: 'tools.css', zeile: 1013, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
     ];
     const gluehSchluessel = e => `${e.datei} {${e.sel}}`;
 
@@ -12841,8 +12841,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3293':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3289) schaltet ' +
+        'core.css:3288':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3284) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13304,7 +13304,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3293,
+                    zeile: 3288,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }
