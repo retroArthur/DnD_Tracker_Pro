@@ -1059,6 +1059,34 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            /* C1 — EIN LANGER FIGURENNAME DARF UMBRECHEN, AUCH IM WORT.
+               Die min-content-Breite der Charakterkarte wird von GENAU EINEM
+               Kind getrieben: `.char-card-header`. Belegt mit einer Ausblendprobe
+               am gebauten Buendel (jedes Kind einzeln auf `display: none`, Karte
+               auf `width: min-content`): ohne `.char-card-body` aendert sich die
+               Mindestbreite um 0px, ohne den Kopf um 98.53px. Der Kopf ist eine
+               nowrap-Flexzeile aus Bildnis 40px + `.char-card-info` +
+               Trefferpunkten 60px, und `.char-card-info` traegt trotz
+               `min-width: 0` seine eigene min-content-Breite in die Summe:
+               `min-width: 0` senkt nur den Boden, unter den ein Flex-Element
+               schrumpfen DARF — es nimmt dem Element nicht seinen
+               min-content-Beitrag.
+               Dieser Beitrag war 135.02px und kam aus dem laengsten einzelnen
+               WORT des Namens. `overflow-wrap: anywhere` ist die einzige
+               Eigenschaft, die die intrinsische Mindestbreite von Text
+               tatsaechlich senkt (`overflow-wrap: break-word` tut das
+               ausdruecklich NICHT) — gemessen faellt die Mindestbreite der ganzen
+               Karte damit 285.02 -> 222.16px (Segoe UI) und 304.88 -> 233.88px
+               (Verdana als Nachstellung der Linux-Metrik, Faktor 1.155). In
+               einer 300px-Spalte sind das 66px Luft statt 4.88px Ueberlauf.
+               Das ist die inhaltliche Haelfte der Korrektur; die strukturelle
+               steht an `--grid-columns` (variables.css). Beide zusammen, nicht
+               eine davon: `minmax(0, 1fr)` allein haelt die Spalte im Raster und
+               laesst den Namen aus der KARTE laufen, `overflow-wrap` allein
+               laesst eine spaeter wieder zu breite Karte das Raster sprengen.
+               Am Desktop aendert die Zeile nichts, solange der Name passt — sie
+               greift erst, wenn ein Wort allein breiter ist als die Zeile. */
+            overflow-wrap: anywhere;
         }
 
         .char-card-name .drag-handle {

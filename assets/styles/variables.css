@@ -1438,7 +1438,29 @@
             --nav-position: bottom;
             --content-padding: 10px;
             --card-min-width: 100%;
-            --grid-columns: 1fr;
+            /* C1 — `minmax(0, 1fr)` statt `1fr`. Dieselbe Begruendung wie bei den
+               sieben Master-Detail-Schalen (core.css, Q1) und bei `.dash`
+               (dashboard.css, Q1), jetzt fuer die sieben einspaltigen Raster, die
+               dieses Token lesen (variables.css weiter unten: Party, NSCs, Orte,
+               Begegnungen, Zauber, Auftraege, Truhe): `1fr` ist die Kurzform von
+               `minmax(auto, 1fr)`, und das `auto` als Minimum ist die
+               min-content-Breite des Inhalts. Die eine Spalte kann damit BREITER
+               werden als das Raster, das sie ausfuellen soll.
+               GEMESSEN am gebauten Buendel, gefuellte Kampagne, 320x700: das
+               Party-Raster ist 300px breit, seine Spalte loeste unter der
+               Linux-Schriftmetrik (nachgestellt mit Verdana, Faktor 1.155 am
+               Knopftext) auf 304.88px auf — die min-content-Breite der
+               Charakterkarte. Unter 'Segoe UI' waren es 285.02px, also 14.98px
+               Luft; genau diese 15px hat Linux nicht. Der CI-Lauf 36966941474
+               meldete daraus `party: 10px, 5 Elemente ausserhalb
+               (div#char-1.char-card | ...)`, waehrend dieselbe Probe unter
+               Windows gruen lief.
+               Diese Zeile ist die STRUKTURELLE Haelfte der Korrektur: sie macht
+               es unmoeglich, dass eine einspaltige Mobil-Spalte ihr Raster
+               sprengt, egal wie breit die Schrift laeuft. Die inhaltliche
+               Haelfte steht an `.char-card-name` (core.css) — ohne sie wuerde
+               der Ueberlauf nur von der Seite in die Karte wandern. */
+            --grid-columns: minmax(0, 1fr);
             --font-size-base: 16px;
             --font-size-small: 14px;
             --font-size-title: 1.2em;
