@@ -83,14 +83,26 @@
  * Durchlaeufe derselben Messung). Eine Themenschleife hier vervierfachte die
  * Laufzeit fuer identische Werte.
  *
+ * NACHGETRAGEN IN RUNDE 1 (C1/R1) — Gruppe 4b, Fall (4). Die erste Fassung
+ * dieser Datei bewachte die Listenspalte der Truhe bei 360x740 und verlangte
+ * dazu, dass ein `max-height: 60%`-Deckel an den fuenf Leisten GESETZT ist. Die
+ * Pruefrunde hat belegt, dass dieser Deckel bei 320px greift — und dort vier der
+ * fuenf Leisten um 55 bis 127 Bildpunkte rollen laesst, mit 5 bis 8
+ * Bedienelementen hinter einem 2px-Rollbalken. Unter der OERTLICHEN Schrift,
+ * ohne jede Linux-Metrik. Keine Probe deckte das ab: dieser Fall messte nur
+ * 360x740, layoutprofil.spec.js nur 360 und 390, und die engen Fenster von
+ * mobil-navigation.spec.js pruefen Navigation und Ueberhang, nicht die Leiste.
+ * Fall (4) schliesst die Luecke und kehrt die Forderung um: nicht "ein Deckel
+ * ist gesetzt", sondern "die Leiste rollt nicht und klemmt nichts ab".
+ *
  * Betroffene Quellen: `assets/styles/variables.css` (`--grid-columns` im
  * Mobil-Profil), `assets/styles/core.css` (`.char-card-name`, `.mobile-header`,
- * `.mobile-header-group`, `.mobile-timer`, `.mobile-timer-seconds`, Deckel der
- * Werkzeugleiste in den fuenf Schalen), `assets/styles/party.css`
- * (`.party-leveling-options`), `assets/styles/editors.css`
- * (`.section-toolbar-actions`), `assets/styles/loot.css`
- * (`.loot-view .loot-filter-chip`), `systems/session-timer.js`
- * (`schreibeMobilZeit()`).
+ * `.mobile-header-group`, `.mobile-timer`, `.mobile-timer-seconds`,
+ * `flex-shrink` der Werkzeugleiste in den fuenf Schalen und der Rollstreifen der
+ * vier Chipreihen), `assets/styles/party.css` (`.party-leveling-options`),
+ * `assets/styles/editors.css` (`.section-toolbar-actions`),
+ * `assets/styles/loot.css` (`.loot-view .loot-filter-chip`),
+ * `systems/session-timer.js` (`schreibeMobilZeit()`).
  */
 import { test, expect } from '@playwright/test';
 
@@ -142,13 +154,46 @@ const MIN_SPALTEN_RESERVE = 30;
 const zz = i => String(i).padStart(2, '0');
 const reihe = (n, f) => Array.from({ length: n }, (_, i) => f(i + 1));
 
-/* Saat. Zwei Dinge muessen darin stehen, und nur zwei:
+/* Die vier Etiketten der Ortsfilter und der Kreaturtypen. Sie stehen hier als
+   Konstanten, weil ihre LAENGE Teil der Probe ist: ein Filter heisst in einer
+   echten Kampagne "Tempelbezirk", nicht "A". */
+const FILTERNAMEN = [
+    'Stadt',
+    'Dungeon',
+    'Wildnis',
+    'Tempelbezirk',
+    'Handelsposten',
+    'Unterreich',
+    'Ruinenfeld',
+    'Hafenviertel'
+];
+const KREATURTYPEN = [
+    'Humanoide',
+    'Untote',
+    'Bestien',
+    'Konstrukte',
+    'Aberrationen',
+    'Elementare',
+    'Drachen'
+];
+
+/* Saat. Was darin stehen MUSS, und warum jeweils:
      - Charaktere mit LANGEN Namen. Die Mindestbreite der Charakterkarte kam aus
        dem laengsten einzelnen WORT des Namens; eine kurze Beschriftung bringt
        den Fall der Gruppe 2 gar nicht hervor.
      - 24 Beutestuecke. Die Listenspalte der Truhe kann nur dann zu kurz fuer
        zwei Eintraege sein, wenn ueberhaupt Eintraege da sind; und 24 ist die
        Zahl, mit der layoutprofil.spec.js denselben Fall faehrt.
+     - GEFUELLTE CHIPREIHEN in allen vier Schalen, die eine fuehren (Gruppe 4b,
+       C1/R1). Das ist der Teil, der dieser Saat gefehlt hat und ohne den der
+       Befund nicht sichtbar war: drei der vier Reihen sind datengetrieben —
+       die NSCs zeigen die ersten fuenf EINTRAEGE AUS `locations` (plus ein
+       "Mehr..."-Auswahlfeld ab dem sechsten), die Orte alle `filters`, die
+       Begegnungen die ersten fuenf verschiedenen `creatureType`. Mit
+       `locations: []` und `encounters: []` bestand jede dieser Reihen aus dem
+       einen Chip "Alle" und war 29px hoch statt 98-138px. Eine leere Saat
+       misst hier nicht den Alltag, sondern den Auslieferungszustand.
+       Die Truhe braucht dafuer keine Daten: ihre zehn Kategoriechips sind fest.
    Die Mobil-Kopfzeile (Gruppe 3) haengt an keinen Daten.
    `_version` weit in der Zukunft ueberspringt `migrateData()`, die gefuellte
    `_nextId`-Abbildung verhindert die Fruehstart-Rennen — wie in
@@ -183,10 +228,26 @@ const SAAT = {
         conditions: i % 2 ? ['Vergiftet'] : [],
         spellSlots: { 1: { max: 4, used: 1 }, 2: { max: 3, used: 0 }, 3: { max: 2, used: 0 } }
     })),
-    npcs: [],
-    locations: [],
+    npcs: reihe(12, i => ({
+        id: i,
+        name: `NSC ${zz(i)}`,
+        role: 'Haendler',
+        locationId: ((i - 1) % FILTERNAMEN.length) + 1
+    })),
+    locations: reihe(8, i => ({
+        id: i,
+        name: `Ortschaft am Fluss ${zz(i)}`,
+        type: 'Stadt',
+        filterId: ((i - 1) % FILTERNAMEN.length) + 1
+    })),
+    filters: FILTERNAMEN.map((name, i) => ({ id: i + 1, name, color: 'gold' })),
     quests: [],
-    encounters: [],
+    encounters: reihe(12, i => ({
+        id: i,
+        name: `Begegnung ${zz(i)}`,
+        creatureType: KREATURTYPEN[(i - 1) % KREATURTYPEN.length],
+        monsters: []
+    })),
     spells: [],
     loot: reihe(24, i => ({
         id: i,
@@ -206,6 +267,7 @@ const SAAT = {
         characters: 99,
         npcs: 99,
         locations: 99,
+        filters: 99,
         quests: 99,
         encounters: 99,
         spells: 99,
@@ -513,6 +575,142 @@ function messeListenplatz() {
     };
 }
 
+/**
+ * Gruppe 4b (C1/R1) — klemmt die Werkzeugleiste Bedienelemente ab?
+ *
+ * ZWEI ZAHLEN, und sie sagen Verschiedenes.
+ *
+ * `leisteRollt` (`scrollHeight - clientHeight`) ist die LADENDE. Sie ist > 0,
+ * sobald der Kasten der Leiste kleiner ist als ihr Inhalt — gleich, ob ein
+ * `max-height` ihn deckelt, ein `flex-shrink` ihn zusammendrueckt oder ein
+ * `overflow` ihn abschneidet. Genau das war der Befund: ein `max-height: 60%`
+ * an diesen fuenf Leisten griff bei 320px (Schale 330px, 60% davon 198px) und
+ * legte in vier der fuenf Schalen 5 bis 8 Bedienelemente hinter einen
+ * Rollbereich, den in dieser App niemand erwartet.
+ *
+ * `abgeklemmt` ist die ZWEITE und beantwortet die Frage, die `leisteRollt`
+ * offen laesst: liegt ein Bedienelement ausserhalb eines Kastens, der NICHT
+ * rollt? Dafuer laeuft die Probe von jedem Bedienelement die Vorfahrenkette
+ * hinauf und vergleicht die Kaesten. Ein Element darf ausserhalb liegen — aber
+ * nur, wenn der abschneidende Vorfahre auf DIESER ACHSE ausdruecklich rollt.
+ * Damit ist die waagerechte Rollreihe der Filterchips erlaubt (sie ist die
+ * Gestalt, die den Befund behebt) und ein `overflow: hidden` der Schale nicht.
+ * Diese zweite Zahl war schon VOR der Korrektur gruen, und das ist kein
+ * Versehen: der Deckel schnitt mit `overflow-y: auto` ab, also war alles
+ * formal "erreichbar". Sie ist der Waechter fuer die neue Bauart — `flex-shrink:
+ * 0` kann die Leiste ueber die Schale hinaus wachsen lassen, und DAS faengt
+ * nur sie. Dass sie faengt, ist durch Mutation belegt: mit `max-height: 60%;
+ * overflow-y: hidden` an denselben fuenf Leisten meldet sie bei 320x568 die
+ * abgeschnittenen Chips der Truhe, der NSCs, der Orte und der Begegnungen.
+ *
+ * @param {{schale: string, spalte: string|null, liste: string|null}} sel
+ */
+function messeLeiste(sel) {
+    const schale = document.querySelector(sel.schale);
+    if (!schale) return { da: false, grund: `Schale ${sel.schale} fehlt` };
+    const leiste = schale.querySelector(':scope > .section-toolbar');
+    if (!leiste) return { da: false, grund: 'keine Werkzeugleiste in der Schale' };
+    const kurz = e => {
+        let s = e.tagName.toLowerCase();
+        if (e.id) s += '#' + e.id;
+        s += Array.from(e.classList)
+            .slice(0, 2)
+            .map(c => '.' + c)
+            .join('');
+        return s;
+    };
+    const rollend = w => w === 'auto' || w === 'scroll';
+    const abgeklemmt = [];
+    const teile = Array.from(
+        leiste.querySelectorAll('button, select, input:not([type="file"]), [data-action]')
+    ).filter(e => {
+        const cs = getComputedStyle(e);
+        if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    });
+    for (const e of teile) {
+        /* ZWEI Kaesten, einer je Achse. Trifft die Kette einen ROLLBEHAELTER,
+           der auf seiner Achse abschneidet, dann ist das Element dort
+           erreichbar — und von da an zaehlt fuer diese Achse nicht mehr der
+           Kasten des Elements, sondern der des Rollbehaelters. Ohne diese
+           Uebergabe meldete die Probe die seitwaerts weggerollten Filterchips
+           als abgeklemmt von der Ansicht (`overflow: hidden`), obwohl sie im
+           Streifen eine Rollachse haben. */
+        let kx = e.getBoundingClientRect();
+        let ky = kx;
+        let p = e.parentElement;
+        let befund = null;
+        while (p && p !== document.documentElement && !befund) {
+            const cs = getComputedStyle(p);
+            const pr = p.getBoundingClientRect();
+            if (cs.overflowX !== 'visible' && (kx.right > pr.right + 1 || kx.left < pr.left - 1)) {
+                if (!rollend(cs.overflowX)) befund = { p, achse: 'waagerecht' };
+                else kx = pr;
+            }
+            if (
+                !befund &&
+                cs.overflowY !== 'visible' &&
+                (ky.bottom > pr.bottom + 1 || ky.top < pr.top - 1)
+            ) {
+                if (!rollend(cs.overflowY)) befund = { p, achse: 'senkrecht' };
+                else ky = pr;
+            }
+            p = p.parentElement;
+        }
+        if (befund) {
+            abgeklemmt.push(
+                `${kurz(e)} "${(e.textContent || '').trim().slice(0, 18)}" von ` +
+                    `${kurz(befund.p)} (${befund.achse})`
+            );
+        }
+    }
+    const streifen = leiste.querySelector(
+        '.loot-filter-chips, .npc-filter-chips, .loc-filter-chips, .enc-filter-chips'
+    );
+    const spalte = sel.spalte ? document.querySelector(sel.spalte) : null;
+    const liste = sel.liste ? document.getElementById(sel.liste) : null;
+    const erster = liste && liste.children[0];
+    const eintrag = erster ? Math.round(erster.getBoundingClientRect().height) : 0;
+    return {
+        da: true,
+        layout: document.documentElement.dataset.layout || '(keins)',
+        schaleHoehe: Math.round(schale.getBoundingClientRect().height),
+        leisteHoehe: Math.round(leiste.getBoundingClientRect().height),
+        leisteBedarf: leiste.scrollHeight,
+        leisteRollt: Math.max(0, leiste.scrollHeight - leiste.clientHeight),
+        leisteDeckel: getComputedStyle(leiste).maxHeight,
+        streifenHoehe: streifen ? Math.round(streifen.getBoundingClientRect().height) : null,
+        streifenKinder: streifen ? streifen.children.length : null,
+        streifenRolltX: streifen ? streifen.scrollWidth - streifen.clientWidth : null,
+        spalteHoehe: spalte ? spalte.clientHeight : null,
+        eintragHoehe: eintrag,
+        teile: teile.length,
+        abgeklemmt,
+        ueberhangX: Math.max(
+            0,
+            Math.round(document.documentElement.scrollWidth - document.documentElement.clientWidth)
+        )
+    };
+}
+
+/* Die fuenf Schalen mit fester Hoehe — dieselben fuenf, die der entfallene
+   Deckel adressierte. Orte und Begegnungen tragen in dieser Saat keine
+   Listeneintraege (ihre Listen zeigen Karten, keine Zeilen); ihre Spalte wird
+   deshalb nur berichtet, nicht bewertet. */
+const SCHALEN = [
+    { name: 'loot', schale: '.loot-view.active', spalte: '.loot-master', liste: 'loot-list' },
+    { name: 'npcs', schale: '.npc-view.active', spalte: '.npc-master', liste: 'npc-list' },
+    { name: 'locations', schale: '.loc-view.active', spalte: '.loc-master', liste: 'loc-list' },
+    { name: 'encounter', schale: '.enc-view.active', spalte: '.enc-master', liste: 'enc-list' },
+    {
+        name: 'bestiary',
+        schale: '.bestiary-view.active',
+        spalte: '.bestiary-master',
+        liste: 'bestiary-list'
+    }
+];
+
 /* ====================================================================
    DIE PROBEN
    ==================================================================== */
@@ -687,16 +885,97 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
                 `Rahmen ${m.rahmen})`
         ).toBeGreaterThanOrEqual(MIN_SPALTEN_RESERVE);
 
-        /* ZUSICHERUNG 2 — der Deckel der Werkzeugleiste ist gesetzt. Er ist der
-           Boden unter Zusicherung 1 fuer den Fall, dass eine noch breitere
-           Schrift, eine laengere Uebersetzung oder ein weiterer Filter die
-           Leiste doch wieder aufblaeht: dann nimmt sie den Zuwachs in ihren
-           eigenen Rollbereich statt aus der Liste. Ohne diese Zeile waere
-           Zusicherung 1 eine Momentaufnahme. */
+        /* ZUSICHERUNG 2 — die Leiste zeigt ihren ganzen Inhalt, ohne selbst zu
+           rollen. HIER STAND `expect(m.leisteDeckel).not.toBe('none')` — die
+           Forderung, dass ein `max-height`-Deckel gesetzt IST. Die Forderung war
+           falsch gestellt: ein Deckel macht keinen Platz, er verlegt den Mangel
+           nur dorthin, wo ihn niemand sieht. Bei 320px griff er und legte
+           Bedienelemente hinter einen 2px-Rollbalken (siehe (4)).
+           Diese Zeile verlangt stattdessen, dass der Mangel gar nicht entsteht.
+           Sie ist strenger: sie wird rot, wenn die Leiste waechst — statt das
+           Wachstum stillschweigend zu verstecken. */
         expect(
-            m.leisteDeckel,
-            `die Werkzeugleiste hat max-height: ${m.leisteDeckel} — ohne Deckel kann sie der ` +
-                `Liste beliebig viel Platz nehmen`
-        ).not.toBe('none');
+            m.leisteRollt,
+            `die Werkzeugleiste rollt um ${m.leisteRollt}px (Kasten ${m.leisteHoehe}px, Inhalt ` +
+                `${m.leisteBedarf}px, Deckel ${m.leisteDeckel}) — ihr Inhalt ist nicht ` +
+                `vollstaendig sichtbar`
+        ).toBe(0);
     });
+
+    /* ------------------------------------------------------------------
+       (4) C1/R1 — der eigentliche Befund der Pruefrunde: der entfallene
+       60%-Deckel griff bei 320px und klemmte Bedienelemente ab. Vier Fenster,
+       fuenf Schalen, 20 Zustaende.
+       WARUM DIESE VIER FENSTER: 320x568 und 320x740 sind die zwei Fenster des
+       CI-Befunds; 320x700 ist das dritte, in dem der Deckel unter der
+       oertlichen Schrift nachweislich griff (Truhe rollte 19px, NSCs 48px);
+       360x740 ist das Fenster, in dem CI die Listenspalte gemeldet hat, und
+       damit die Gegenprobe, dass die Korrektur dort nichts verschlechtert.
+       390x844 fehlt bewusst: dort war in keinem Zustand etwas zu messen
+       (Schale 583px, groesste Leiste 201px), und vier Fenster x fuenf Schalen
+       kosten schon vier Seitenladungen.
+       ------------------------------------------------------------------ */
+    for (const [breite, hoehe] of [
+        [320, 568],
+        [320, 700],
+        [320, 740],
+        [360, 740]
+    ]) {
+        test(`(4) die fuenf Werkzeugleisten klemmen bei ${breite}x${hoehe} nichts ab`, async ({
+            page
+        }) => {
+            await page.setViewportSize({ width: breite, height: hoehe });
+            await appLaden(page, true);
+
+            const schrift = await messeSchriftbreite(page, PROBETEXT);
+
+            // VORBEDINGUNG A — wie bei (1).
+            expect(
+                schrift.ist,
+                `die Probenschrift ist SCHMALER als 'Segoe UI' (${schrift.ist} gegen ${schrift.segoe}px)`
+            ).toBeGreaterThanOrEqual(schrift.segoe - 0.5);
+
+            for (const s of SCHALEN) {
+                await reiterWechseln(page, s.name);
+                const m = await page.evaluate(messeLeiste, s);
+
+                console.log(`[C1-Leiste] ${breite}x${hoehe} ${s.name} · ${JSON.stringify(m)}`);
+
+                // VORBEDINGUNG B — Schale und Leiste sind da, im Mobil-Profil.
+                expect(m.da, `${s.name}: ${m.grund}`).toBe(true);
+                expect(m.layout, `${s.name}: der Fall braucht das Mobil-Profil`).toBe('mobile');
+                expect(
+                    m.teile,
+                    `${s.name}: die Leiste traegt ${m.teile} Bedienelemente — zu wenige, um etwas ` +
+                        `abzuklemmen; die Saat greift nicht`
+                ).toBeGreaterThanOrEqual(5);
+
+                /* ZUSICHERUNG 1 — die Leiste rollt nicht. Das ist die Zahl, die
+                   den Befund traegt: vor der Korrektur 98 (Truhe), 127 (NSCs),
+                   55 (Orte) und 68 (Begegnungen) Bildpunkte bei 320x568. */
+                expect(
+                    m.leisteRollt,
+                    `${s.name} bei ${breite}x${hoehe}: die Leiste rollt um ${m.leisteRollt}px ` +
+                        `(Kasten ${m.leisteHoehe}px, Inhalt ${m.leisteBedarf}px, Deckel ` +
+                        `${m.leisteDeckel}, Schale ${m.schaleHoehe}px) — Bedienelemente liegen ` +
+                        `hinter einem Rollbereich, den in dieser App niemand erwartet`
+                ).toBe(0);
+
+                /* ZUSICHERUNG 2 — kein Bedienelement liegt ausserhalb eines
+                   Kastens, der nicht rollt. Siehe Kommentar an messeLeiste(). */
+                expect(
+                    m.abgeklemmt,
+                    `${s.name} bei ${breite}x${hoehe}: ${m.abgeklemmt.length} von ${m.teile} ` +
+                        `Bedienelementen liegen ausserhalb eines nicht rollenden Kastens`
+                ).toEqual([]);
+
+                // ZUSICHERUNG 3 — und die Seite bekommt davon keinen Querstand.
+                expect(
+                    m.ueberhangX,
+                    `${s.name} bei ${breite}x${hoehe}: Seitenueberhang ${m.ueberhangX}px — der ` +
+                        `Rollstreifen der Chipreihe darf seine Breite nicht nach aussen tragen`
+                ).toBe(0);
+            }
+        });
+    }
 });
