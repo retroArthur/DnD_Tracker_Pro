@@ -578,7 +578,7 @@ function messeListenplatz() {
 /**
  * Gruppe 4b (C1/R1) — klemmt die Werkzeugleiste Bedienelemente ab?
  *
- * ZWEI ZAHLEN, und sie sagen Verschiedenes.
+ * DREI ZAHLEN, und sie sagen Verschiedenes.
  *
  * `leisteRollt` (`scrollHeight - clientHeight`) ist die LADENDE. Sie ist > 0,
  * sobald der Kasten der Leiste kleiner ist als ihr Inhalt — gleich, ob ein
@@ -602,6 +602,23 @@ function messeListenplatz() {
  * nur sie. Dass sie faengt, ist durch Mutation belegt: mit `max-height: 60%;
  * overflow-y: hidden` an denselben fuenf Leisten meldet sie bei 320x568 die
  * abgeschnittenen Chips der Truhe, der NSCs, der Orte und der Begegnungen.
+ *
+ * `gequetscht` ist die DRITTE und in Runde 2 nachgetragen. Sie beantwortet die
+ * Frage, die die ersten zwei BEIDE offen lassen: ist ein Bedienelement des
+ * Rollstreifens zwar im Fenster und formal erreichbar, aber so weit
+ * zusammengedrueckt, dass es seine Beschriftung nicht mehr zeigt?
+ * DER BEFUND, DER SIE ERZWUNGEN HAT: der Rollstreifen aus C1/R1 setzte
+ * `flex-wrap: nowrap` an der ganzen Reihe, gab die Schranke `flex: 0 0 auto`
+ * aber NUR den Chips. Das Geschwister `select.npc-filter-select` ("Mehr...",
+ * ueber das die Orte 6..15 ueberhaupt erst erreichbar sind) behielt den
+ * Voreinstellungswert `flex-shrink: 1` und saugte damit die gesamte
+ * Schrumpfung der Reihe auf: gemessen 26px statt 159px (Segoe UI) bzw. 178px
+ * (breite Schrift) in allen Telefonfenstern, also ein Kasten mit nur noch dem
+ * Chevron und keinem Zeichen Text. Die ersten zwei Zahlen waren dabei gruen —
+ * der Streifen rollte, nichts lag ausserhalb, der Seitenueberhang war 0.
+ * Die Annahme, die den Fehler erzeugt hat, war "die Reihe enthaelt nur Chips";
+ * diese Zahl prueft deshalb JEDES Kind des Streifens und nicht eine Liste von
+ * Klassen.
  *
  * @param {{schale: string, spalte: string|null, liste: string|null}} sel
  */
@@ -668,6 +685,42 @@ function messeLeiste(sel) {
     const streifen = leiste.querySelector(
         '.loot-filter-chips, .npc-filter-chips, .loc-filter-chips, .enc-filter-chips'
     );
+    /* DIE DRITTE ZAHL (C1/R2) — ist ein Kind des Rollstreifens SCHMALER als
+       sein Inhalt braucht? Begruendung im Kommentar an messeLeiste().
+       Der Bedarf wird an einem freistehenden Klon gemessen: eine Messbuehne IM
+       Streifen (damit der Klon dieselbe Schrift und dieselben Tokens erbt),
+       darin der Klon mit `width:auto; flex:none`.
+       `scrollWidth > clientWidth` taugt dafuer NICHT: Chromium beschneidet den
+       Text eines zusammengedrueckten <select> ohne eigenen Rollbereich,
+       scrollWidth bleibt gleich clientWidth, und der Mangel bliebe unsichtbar
+       (nachgemessen am Buendel ohne die Korrektur: 26/26 bei 178px Bedarf). */
+    const gequetscht = [];
+    if (streifen) {
+        const buehne = document.createElement('div');
+        buehne.style.cssText =
+            'position:absolute;left:-99999px;top:0;width:auto;display:block;' +
+            'visibility:hidden;pointer-events:none';
+        streifen.appendChild(buehne);
+        for (const kind of Array.from(streifen.children)) {
+            if (kind === buehne) continue;
+            const ist = kind.getBoundingClientRect().width;
+            const klon = /** @type {HTMLElement} */ (kind.cloneNode(true));
+            klon.style.cssText +=
+                ';width:auto;min-width:0;max-width:none;flex:none;position:static';
+            buehne.appendChild(klon);
+            const bedarf = klon.getBoundingClientRect().width;
+            klon.remove();
+            // 1px Toleranz gegen die Rundung des Teilbildpunkt-Rasters.
+            if (bedarf - ist > 1) {
+                gequetscht.push(
+                    `${kurz(kind)} ist ${Math.round(ist * 10) / 10}px breit, braucht ` +
+                        `${Math.round(bedarf * 10) / 10}px (flex-shrink ` +
+                        `${getComputedStyle(kind).flexShrink})`
+                );
+            }
+        }
+        buehne.remove();
+    }
     const spalte = sel.spalte ? document.querySelector(sel.spalte) : null;
     const liste = sel.liste ? document.getElementById(sel.liste) : null;
     const erster = liste && liste.children[0];
@@ -687,6 +740,7 @@ function messeLeiste(sel) {
         eintragHoehe: eintrag,
         teile: teile.length,
         abgeklemmt,
+        gequetscht,
         ueberhangX: Math.max(
             0,
             Math.round(document.documentElement.scrollWidth - document.documentElement.clientWidth)
@@ -975,6 +1029,20 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
                     `${s.name} bei ${breite}x${hoehe}: Seitenueberhang ${m.ueberhangX}px — der ` +
                         `Rollstreifen der Chipreihe darf seine Breite nicht nach aussen tragen`
                 ).toBe(0);
+
+                /* ZUSICHERUNG 4 (C1/R2) — und kein Kind des Rollstreifens ist
+                   schmaler, als sein Inhalt braucht. Erreichbar ist nicht
+                   dasselbe wie lesbar: ein Streifen rollt, damit seine
+                   Bedienelemente ihre Breite BEHALTEN, nicht damit eines von
+                   ihnen fuer die anderen bezahlt. Siehe Kommentar an
+                   messeLeiste(); die Zahl, die sie traegt, ist 26 gegen 178px
+                   am Auswahlfeld "Mehr..." der NSCs. */
+                expect(
+                    m.gequetscht,
+                    `${s.name} bei ${breite}x${hoehe}: ${m.gequetscht.length} von ` +
+                        `${m.streifenKinder} Kindern des Rollstreifens sind zusammengedrueckt ` +
+                        `— sie zeigen ihre Beschriftung nicht mehr`
+                ).toEqual([]);
             }
         });
     }
