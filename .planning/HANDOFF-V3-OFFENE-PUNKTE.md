@@ -427,8 +427,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:532` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:545` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1418` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1423` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1443` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1448` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:733` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:873` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -538,7 +538,7 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:752` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `dice.css:788` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:708` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2693` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2694` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
@@ -578,9 +578,9 @@ core.css
   112  [data-layout="mobile"] #mobile-timer-display
   116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
   120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1314  .char-card-currency
- 2090  .quest-reward-item-tag .remove-btn:hover
- 2083  .quest-reward-item-tag .remove-btn
+ 1339  .char-card-currency
+ 2115  .quest-reward-item-tag .remove-btn:hover
+ 2108  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -4881,5 +4881,20 @@ python -m pytest tests/build/                                          # 30 Fael
 - **`npm run check` bleibt rot**, weil `prettier --check` über den ganzen Baum läuft und der Baum
   vorbestehend nicht prettier-konform ist. Die beiden in dieser Runde angefassten Testdateien sind
   einzeln prettier-konform (`npx prettier --check` je Datei).
+- **Der Verlaufsstreifen der Würfelansicht hat keine Anordnung** — gefunden in C2 (2026-10-02) von
+  der Sonde, die ungestaltete Formularelemente aufspürt. `.dice-history-bar`,
+  `.dice-history-label` und `.dice-history-scroll` stehen einmal im Markup
+  (`assets/templates/view-tools.html:233`) und haben im ganzen Stilbaum **keine einzige Regel**;
+  die drei Kinder stehen deshalb untereinander statt nebeneinander, obwohl die Schwesterleiste
+  `.dice-favorites-bar` direkt darüber eine vollständige Karte ist (dice.css:374). Der vierte
+  Teil, `.dice-history-clear`, ist in C2 behoben — er stand als **graues Systemblech** da
+  (rgb(107,107,107) Fläche, rgb(255,255,255) Rahmen, 13.3333px aus `font:
+  -webkit-small-control`) und war damit plattformabhängig; er trägt jetzt die Gestalt von
+  `.search-clear-btn`. **Bewusst zurückhaltend**, weil die Anordnung des Streifens ein eigener,
+  älterer Befund ist: ein runder 32px-Knopf wie `.dice-fav-add` wäre ein neuer Blickfang an einer
+  Stelle ohne Anordnung gewesen. Saubere Behebung: `.dice-history-bar` an den Selektorblock von
+  `.dice-favorites-bar` hängen (keine Dublette, F-18), `.dice-history-scroll` an den von
+  `.dice-fav-list` plus `flex-wrap: nowrap; overflow-x: auto` — der Streifen ist laut
+  Markup-Kommentar als waagerechter Rollstreifen gedacht.
 
 ---

@@ -54,16 +54,136 @@
  * geloescht, ein bis dahin verborgenes Element wurde sichtbar, also erschien ein NEUER Schluessel,
  * den der alte, einseitige Vergleich stillschweigend uebergangen haette.
  *
- * Alle drei Durchgaenge benutzen `seedPopulatedSession()` statt des leeren Seeds (CR-04, Mangel 4)
+ * Alle vier Durchgaenge benutzen `seedPopulatedSession()` statt des leeren Seeds (CR-04, Mangel 4)
  * — ohne befuellte Daten werden die Entitaets-Markups, auf die geloeschte CSS-Regeln wirken, nie
  * gerendert. Zwei der betroffenen Markups (Shop-Artikelbereich, Fraktions-Ruf-Historie) entstehen
  * zusaetzlich erst im aufgeklappten Shop bzw. bei ausgewaehlter Fraktion — `VIEW_STATE_SETUP`
  * stellt diesen Zustand vor der Erfassung her.
  *
- * Drei Tests = drei Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — alle drei
- * schreiben (bei gesetzter Schreibsperre bzw. immer, im Fall des lokalen Vollabzugs) in dieselbe
- * Datei, und `fullyParallel: true` in playwright.config.js wuerde sie sonst nebenlaeufig ausfuehren
- * und die Datei gegenseitig ueberschreiben.
+ * Vier Tests = vier Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — die
+ * ersten drei schreiben (bei gesetzter Schreibsperre bzw. immer, im Fall des lokalen Vollabzugs)
+ * in dieselbe Datei, und `fullyParallel: true` in playwright.config.js wuerde sie sonst
+ * nebenlaeufig ausfuehren und die Datei gegenseitig ueberschreiben. Der vierte Durchgang schreibt
+ * nichts (siehe dort).
+ *
+ * ===================================================================================
+ * DER SOLLSTAND IST PLATTFORMGEBUNDEN GEWESEN — die Entscheidung von C2 (2026-10-02)
+ * ===================================================================================
+ *
+ * DER BEFUND. CI-Lauf 36966941474 (`ubuntu-latest`) meldete im Durchgang "Standard" 24
+ * abweichende Digests, waehrend dieselbe Suite unter Windows gruen lief: 12x
+ * `div.section-toolbar-actions#0` (npcs, locations, quests, encounter, loot, spells, links,
+ * dmscreen, bestiary, sessionprep, kalender, fraktionen), 7x `button.dmscreen-widget-hide`,
+ * 4x `reise/select.form-select`, 1x `dicestats/span.ds-rate-total`. (Die Meldung nennt 26 —
+ * `toEqual` zaehlt die beiden Array-Klammerzeilen mit.) Weil `mode: 'serial'` gilt, sind die
+ * Durchgaenge "Schmales Layout" und "Emulierte reduzierte Bewegung" dabei UEBERSPRUNGEN worden;
+ * fuer die beiden gibt es bis heute keine Linux-Messung.
+ *
+ * WARUM DAS JETZT ZUM ERSTEN MAL AUFTAUCHTE, und warum es NICHT der Zweig verursacht hat, auf
+ * dem es auffiel: dieser Waechter liegt seit dem 2026-09-09 im Baum (Plan 15-06) und ist bis zum
+ * 2026-10-02 NIE UNTER CI GELAUFEN. `.github/workflows/ci.yml` startet `npx playwright test` nur
+ * bei einem `push` auf `main`/`master` und bei einem `pull_request` GEGEN diese Zweige; seit dem
+ * 2026-09-09 sind 531 Commits auf `main` gelandet, ohne dass dieser Lauf dabei angefahren wurde
+ * (letzter gruener CI-Lauf auf `main`: 2026-08-06, also noch vor der Entstehung dieser Datei).
+ * Der versionierte Sollstand wurde jedes Mal auf dem Windows-Rechner des Entwicklers erhoben —
+ * am 2026-09-11 angelegt, am 2026-09-29, 2026-09-30 und 2026-10-02 neu erhoben, immer mit
+ * `UPDATE_STYLE_BASELINE=1` von Hand, denn der Workflow setzt diesen Schalter nirgends. Ein
+ * bildpunktgenauer Stil-Sollstand, der auf einem Betriebssystem aufgenommen wurde, kann ein
+ * anderes nicht bewerten — der erste Lauf, der ihn auf ein anderes System hielt, war der, der ihn
+ * zerbrach.
+ *
+ * ZWEI URSACHEN, nicht eine. Nachgemessen ueber alle 1213 erfassten Schluessel aller 24
+ * Ansichten, Windows-Istzustand gegen die hier nachgestellte breitere Schriftmetrik (siehe
+ * BREITE_SCHRIFT):
+ *
+ *   (A) 20 der 24 Schluessel bewegten sich, und in ALLEN 20 war die einzige geaenderte
+ *       Eigenschaft `margin`. Keine Farbe, kein Rahmen, kein Schatten, keine Schriftgroesse.
+ *       Alle drei betroffenen Elementarten tragen `margin-left: auto` (editors.css:646,
+ *       dmscreen.css:2424, tools.css:1821), und Chromium loest ein `auto` in
+ *       `getComputedStyle().margin` zum BENUTZTEN Wert in Bildpunkten auf: der uebrige Platz der
+ *       Flexzeile. Der Digest dieser 20 Elemente war eine Textbreitenmessung mit Hashfunktion
+ *       davor. Mitbetroffen und nur deshalb nie aufgefallen: fuenf zentrierte Blockschalen
+ *       (`div.dash`, `div.dice-roller`, `div.timer-hub`, `div.sb-root`, `div.ds-root`) mit
+ *       `margin: 0 auto`, deren benutzter Wert an der FENSTERBREITE haengt — sie waren stabil,
+ *       weil jeder oertliche Lauf dasselbe Fenster hatte. Insgesamt 29 der 1213 Schluessel
+ *       trugen einen aufgeloesten auto-Rand.
+ *
+ *   (B) die restlichen 4 (`reise/select.form-select#0..#3`) bewegten sich unter breiterer Schrift
+ *       NICHT — sie sind eine zweite, von der Schrift unabhaengige Plattformabhaengigkeit.
+ *       `.form-select` hatte im ganzen Quellbaum keine CSS-Regel; die erfassten Werte waren reine
+ *       UA-Formularthemenwerte eines ungestalteten `<select>` (rgb(59,59,59) Flaeche,
+ *       rgb(133,133,133) Rahmen, 13.3333px aus `font: -webkit-small-control`, also der
+ *       SYSTEMSCHRIFT). Chromium gestaltet Formularelemente plattformabhaengig; unter Linux sind
+ *       diese Werte andere.
+ *
+ * DIE ENTSCHEIDUNG, und warum keiner der drei naheliegenden Wege. Der Waechter erfasst ab jetzt
+ * nur noch Werte, die die APP ERKLAERT HAT — den BERECHNETEN Wert, nicht den vom Browser aus einer
+ * Messung abgeleiteten BENUTZTEN:
+ *
+ *   gegen (A): `margin` und `padding` kommen aus `element.computedStyleMap()` statt aus
+ *              `getComputedStyle()`. Ein deklariertes `auto` bleibt dort `auto` (nachgemessen:
+ *              `.section-toolbar-actions` liefert gcs `0px 0px 0px 167.297px`, Map
+ *              `auto 0px 0px 0px`), ein Prozentwert bleibt ein Prozentwert. Siehe
+ *              `berechneteKante()`.
+ *   gegen (B): die sieben ungestalteten Formularelemente der App haben eine CSS-Regel bekommen
+ *              (`.form-select`/`.form-input` in core.css, `.dice-history-clear` in dice.css), und
+ *              `assertKeineUaBedienelemente()` haelt die Luecke zu, indem es jedes erfasste
+ *              Formularelement gegen den reinen UA-Fingerabdruck einer klassenlosen Sonde haelt.
+ *
+ *   WEG (a) des Auftrags — die metrikabhaengigen Eigenschaften herausnehmen — waere viel zu
+ *   grob: `fontSize`, `fontWeight` und `padding` sind in dieser App durchweg in px/em deklariert
+ *   und bewegen sich unter breiterer Schrift nachgemessen um keinen Bildpunkt (0 von 1213). Sie
+ *   zu streichen haette den Waechter fuer 836 Schluessel mit abweichender Schriftgroesse, 256 mit
+ *   abweichendem Schriftgewicht und 518 mit abweichendem Innenabstand blind gemacht, um ein
+ *   Problem zu loesen, das nur `margin` hatte. Der genaue Schnitt ist nicht "Metrik ja/nein",
+ *   sondern "berechnet statt benutzt".
+ *   WEG (b) — ein Sollstand je Plattform — verdoppelte den Vertrag und loeste nichts: der
+ *   Linux-Sollstand muesste in CI erhoben werden, also von genau dem Lauf, den er bewerten soll.
+ *   WEG (c) — der Waechter laeuft nur dort, wo sein Sollstand herkommt — nimmt ihn aus der
+ *   blockierenden Suite heraus und waere damit die laute Fassung einer stillen Freigabe.
+ *
+ * WAS DER WAECHTER DANACH NOCH FAENGT. Alle zwoelf Eigenschaften bleiben in der Liste. Drei
+ * Mutationen am gebauten Buendel belegen das, jede einzeln gemessen im Durchgang "Standard"
+ * (C2, 2026-10-02):
+ *
+ *   (A) `--gold` von #d4af37 auf #d4af38 — eine Stufe im Blaukanal, mit dem Auge nicht zu sehen:
+ *       175 Befunde. Farbaenderungen schlagen unveraendert an.
+ *   (B) `box-shadow: 0 0 4px rgba(0,0,0,0.5)` an `.section-toolbar-actions`, also an GENAU dem
+ *       Element, dessen auto-Rand nicht mehr bewacht wird: 13 Befunde, einer je Ansicht mit
+ *       dieser Leiste. Das Element steht weiter unter Beobachtung; herausgefallen ist nur die
+ *       eine aussagelose Eigenschaft.
+ *   (C) `margin-top: 2px` an derselben Stelle: 13 Befunde. Eine DEKLARIERTE Randaenderung schlaegt
+ *       weiter an — aus `margin: 0` wird `margin: 8px`, aus `margin-left: 12px` wird `auto`,
+ *       beides ist ein anderer berechneter Wert.
+ *
+ * Die beiden beidseitigen Schluesselmengen-Vergleiche (Art 2 und 3) sind unberuehrt, und der
+ * vierte Durchgang faengt ab jetzt zusaetzlich jede KUENFTIGE metrikabhaengige Eigenschaft, die
+ * jemand in PROPERTIES aufnimmt, bevor sie in CI auffaellt.
+ *
+ * WAS ER NICHT MEHR FAENGT. Eine Aenderung, die AUSSCHLIESSLICH den benutzten Wert eines
+ * auto-Randes verschiebt, ohne eine Deklaration anzufassen — also eine Verschiebung des uebrigen
+ * Platzes in einer Flexzeile oder eine andere Zentrierungsbreite. Das ist Absicht und keine
+ * Luecke: ein auto-Rand ist keine Gestaltungsaussage, sondern ein Rechenergebnis, und genau diese
+ * Groesse haben die zustaendigen Proben als EIGENE Aufgabe — layoutprofil.spec.js (Hoehenbudget),
+ * quer-ueberhang.spec.js (Ueberlauf) und breite-schrift.spec.js (Reserve unter breiterer
+ * Schrift) messen Geometrie mit Zahlen, die man lesen kann, statt mit einem Hash. Die Kopfzeile
+ * dieser Datei schliesst `width`/`height` aus demselben Grund schon seit Plan 15-06 aus; ein
+ * aufgeloester auto-Rand IST eine Breite, er stand nur unter einem anderen Namen in der Liste.
+ *
+ * DAS RESTRISIKO AN URSACHE (B), beziffert statt beschwiegen. Welche Eigenschaft der vier
+ * Auswahlfelder sich unter Linux bewegt hat, steht im CI-Protokoll nicht — die Digestform kann
+ * keinen Wert nennen, und nachstellen laesst sich ein Formularthema nicht. Nach der neuen Regel
+ * sind 6 der 12 erfassten Werte von der App erklaert (color, backgroundColor, borderColor,
+ * borderRadius, padding, fontSize — gemessen gegen die klassenlose Sonde: 13.3333px -> 13px,
+ * rgb(59,59,59) -> rgb(13,13,13), rgb(133,133,133) -> rgb(58,58,58), 0px -> 4px, 0px -> 6px 10px).
+ * Die anderen 6 tragen weiter den UA-Wert, aber jeder von ihnen ist entweder der CSS-ANFANGSWERT
+ * (`margin: 0px`, `fontWeight: 400`, `boxShadow: none`, `opacity: 1`) oder eine Konstante aus
+ * Blinks `html.css` (`display: inline-block` am Auswahlfeld und am Zahlenfeld, `textAlign: center`
+ * am Knopf) — keiner davon kommt aus `LayoutTheme`, also aus dem plattformabhaengigen Teil. Die
+ * fuenf wahrscheinlichen Kandidaten sind damit erledigt; bleibt der Befund in CI bestehen, nennt
+ * der lokale Vollabzug die Eigenschaft und die Abhilfe ist eine weitere Deklaration. Vier
+ * Anfangswerte vorsorglich hinzuschreiben waere Rauschen an einer Regel, die vier weitere
+ * Formulare teilt.
  */
 
 import { test, expect } from '@playwright/test';
@@ -236,8 +356,35 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Schriftgroesse bewegt — nur die Stelle, an der derselbe uebrige Platz verbucht wird. Die
 // Aenderung selbst ist gewollt: sie gibt der Listenspalte der Truhe 32px zurueck (siehe
 // tests/e2e/features/breite-schrift.spec.js).
-// Dass ein auto-Rand in diesem Sollstand ueberhaupt als Gestaltwert gefuehrt wird, ist ein
-// eigener, offener Befund dieses CI-Laufs und nicht Sache dieser Einheit.
+// Dass ein auto-Rand in diesem Sollstand ueberhaupt als Gestaltwert gefuehrt wird, war hier noch
+// ein offener Befund. Er ist mit C2 GESCHLOSSEN: `margin` und `padding` kommen jetzt aus
+// `element.computedStyleMap()`, ein deklariertes `auto` bleibt `auto`, und diese 14 Meldungen
+// koennen in dieser Form nicht wiederkehren. Begruendung im Kopfkommentar, Abschnitt
+// "DER SOLLSTAND IST PLATTFORMGEBUNDEN GEWESEN".
+
+// DRITTE REGULAERE NEUERHEBUNG, C2 (2026-10-02) — die Umstellung auf den berechneten Wert und die
+// sieben neuen CSS-Regeln aendern Digests, also wurde der Sollstand erhoben und schluesselweise
+// gegen den vorigen verglichen:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl
+//   --------------  --------  --------  ------------------  -----------
+//   standard               0         0                  36  unveraendert
+//   narrow                 0         0                  36  unveraendert
+//   reducedMotion          0         0                  36  unveraendert
+//
+// Alle drei Durchgaenge nennen DIESELBEN 36 Schluessel, und die 36 gehen restlos in zwei Gruppen
+// auf, die sich nicht ueberschneiden:
+//   29  die Elemente mit einem deklarierten auto-Rand — 13x `div.section-toolbar-actions#0`,
+//       7x `button.dmscreen-widget-hide`, `span.ds-rate-total`, `button.npcg-trigger-btn`,
+//       `button.encounter-reset-btn` und die fuenf zentrierten Blockschalen `div.dash`,
+//       `div.dash-party-grid`, `div.dice-roller`, `div.timer-hub`, `div.sb-root`, `div.ds-root`.
+//       Bei ihnen steht statt einer Bildpunktzahl jetzt `auto` im gehashten Wert.
+//   7   die Formularelemente, die mit dieser Runde erstmals eine CSS-Regel haben:
+//       4x `reise/select.form-select`, 2x `reise/input.form-input`,
+//       `dice/button.dice-history-clear`.
+// KEIN weiterer Schluessel hat sich bewegt, keine Ansicht hat ein Element gewonnen oder verloren.
+// Die Umstellung von `padding` ist dabei nachgemessen ein Nulleingriff: kein einziger der 1213
+// Schluessel aendert sich durch sie allein.
 
 // Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
 /** @type {string[]} */
@@ -355,6 +502,55 @@ function captureViewInBrowser({ viewId, properties, maxElements, uaProbeProperti
         return tag;
     }
 
+    /** Die vier Kantenwerte in der Kurzform, die auch `getComputedStyle().margin` liefert. */
+    function kurzform(vals) {
+        const [t, r, b, l] = vals;
+        if (t === r && r === b && b === l) return t;
+        if (t === b && r === l) return `${t} ${r}`;
+        if (r === l) return `${t} ${r} ${b}`;
+        return `${t} ${r} ${b} ${l}`;
+    }
+
+    /**
+     * Die BERECHNETE Vierer-Kante (`margin` oder `padding`) statt der benutzten.
+     *
+     * `getComputedStyle().margin` liefert in Chromium den BENUTZTEN Wert: ein deklariertes
+     * `margin-left: auto` kommt als Bildpunktzahl zurueck, und die ist der uebrige Platz der
+     * Flexzeile bzw. der Zentrierungsabstand — also eine Breitenmessung, kein Gestaltwert.
+     * `element.computedStyleMap()` liefert dagegen den BERECHNETEN Wert und erhaelt `auto` als
+     * `CSSKeywordValue` (nachgemessen an .section-toolbar-actions: gcs `0px 0px 0px 167.297px`,
+     * Map `auto 0px 0px 0px`). Prozentwerte bleiben dabei Prozentwerte, statt gegen die aktuelle
+     * Behaelterbreite aufgeloest zu werden — derselbe Gewinn.
+     *
+     * `padding` kann kein `auto` tragen und die App benutzt dort heute keinen Prozentwert; die
+     * Umstellung ist dort nachgemessen ein Nulleingriff (0 von 1213 Schluesseln aendern sich).
+     * Sie steht trotzdem hier, weil die REGEL "berechneter, nicht benutzter Wert" gilt und eine
+     * nur halb angewandte Regel die naechste Hand einlaedt, den Fehler auf der anderen Haelfte
+     * wieder einzubauen.
+     *
+     * Rueckfall auf `getComputedStyle`, falls die CSS Typed OM fehlt oder eine Kante nicht
+     * liefert — dann misst der Durchgang wie vorher, statt auszufallen.
+     */
+    function berechneteKante(el, praefix, rueckfall) {
+        if (typeof el.computedStyleMap !== 'function') return rueckfall;
+        let map;
+        try {
+            map = el.computedStyleMap();
+        } catch {
+            return rueckfall;
+        }
+        const vals = ['top', 'right', 'bottom', 'left'].map(seite => {
+            try {
+                const v = map.get(`${praefix}-${seite}`);
+                return v === null || v === undefined ? null : String(v);
+            } catch {
+                return null;
+            }
+        });
+        if (vals.some(v => v === null)) return rueckfall;
+        return kurzform(vals);
+    }
+
     const container = document.getElementById(`view-${viewId}`);
     if (!container) return { found: false, capped: false, elementCount: 0, elements: {}, uaOnly: [] };
 
@@ -414,6 +610,11 @@ function captureViewInBrowser({ viewId, properties, maxElements, uaProbeProperti
         properties.forEach(p => {
             record[p] = cs[p];
         });
+        // Die zwei Kantenwerte UEBERSCHREIBEN: berechneter statt benutzter Wert, Begruendung an
+        // berechneteKante(). Die Reihenfolge innerhalb von PROPERTIES bleibt davon unberuehrt —
+        // digestElement() verkettet nach dieser Liste, nicht nach Einfuegereihenfolge.
+        record.margin = berechneteKante(el, 'margin', cs.margin);
+        record.padding = berechneteKante(el, 'padding', cs.padding);
         elements[key] = record;
     });
 

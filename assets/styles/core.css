@@ -756,7 +756,32 @@
             color: var(--gold);
         }
 
-        .form-control {
+        /* .form-select / .form-input SIND DERSELBE BEFUND WIE .form-control EINEN
+           ABSATZ WEITER OBEN, nur eine Runde spaeter gefunden (C2, 2026-10-02).
+           Beide Namen kommen aus features/reise/ — vier `select.form-select`
+           (reise-render.js:77/81/93/97), drei `input.form-input`
+           (reise-render.js:85/101 und reise-crud.js:308) — und hatten im ganzen
+           Baum KEINE Regel. Gemessen stand jedes der sieben Felder in nativer
+           Darstellung: rgb(59,59,59) Flaeche, rgb(133,133,133) Rahmen, 0px
+           Radius, 0px Innenabstand, 13.3333px aus `font: -webkit-small-control`,
+           also der SYSTEMSCHRIFT des Betriebssystems statt --font-ui.
+
+           WARUM DAS NICHT NUR KOSMETIK IST: genau diese vier Auswahlfelder
+           standen im CI-Lauf 36966941474 unter den 24 abweichenden Digests des
+           Stil-Waechters, und zwar OHNE jede Schriftmetrik-Beteiligung — ihr
+           erfasster Stil war das Formularthema von `ubuntu-latest`, nicht die
+           Gestalt dieser App. Die zugehoerige Zusicherung steht in
+           tests/e2e/features/computed-style-diff.spec.js
+           (assertKeineUaBedienelemente) und haelt die Luecke ab jetzt zu.
+
+           DIESELBEN WERTE WIE .form-control, deshalb DERSELBE Selektorblock und
+           keine zweite Regel: eine Dublette (F-18-Ratsche) entstuende sonst
+           woertlich. `width: 100%` ist hier zusaetzlich ein Platzgewinn — die
+           Felder tragen damit keine Eigenbreite mehr in das min-content ihrer
+           Zeile (.rs-config-row ist eine umbrechende Flexzeile). */
+        .form-control,
+        .form-select,
+        .form-input {
             width: 100%;
             background: var(--bg-dark);
             border: 1px solid var(--border);

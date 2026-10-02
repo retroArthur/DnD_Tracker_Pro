@@ -464,6 +464,42 @@
     background: color-mix(in srgb, var(--gold) min(10%, var(--tint-max)), transparent);
 }
 
+/* DER LEEREN-KNOPF DER WURFHISTORIE (C2, 2026-10-02). Er steht einmal im
+   Markup (assets/templates/view-tools.html) und hatte im ganzen Baum keine
+   Regel — gemessen war es der graue Systemknopf des Browsers: rgb(107,107,107)
+   Flaeche, rgb(255,255,255) Rahmen, 0px Radius, 13.3333px aus
+   `font: -webkit-small-control`. Gefunden hat ihn die Sonde in
+   tests/e2e/features/computed-style-diff.spec.js, die ungestaltete
+   Formularelemente gegen den reinen UA-Fingerabdruck der Plattform haelt; sein
+   erfasster Stil wanderte also mit dem Betriebssystem.
+
+   GESTALT VON .search-clear-btn (core.css), der anderen Leeren-Geste der App,
+   und AUSDRUECKLICH NICHT von .dice-fav-add direkt darueber: dessen runder
+   32px-Knopf mit Rahmen waere hier ein neuer Blickfang an einer Stelle, die ihn
+   nicht traegt — .dice-history-bar, .dice-history-label und
+   .dice-history-scroll haben selbst keine einzige Regel, der Streifen hat also
+   gar keine Anordnung und seine drei Kinder stehen untereinander. Das ist ein
+   EIGENER, aelterer Befund (vier Elemente, einmal im Markup, nirgends im CSS)
+   und gehoert nicht in eine Einheit, die einen CI-Lauf stabilisiert; gefuehrt
+   in .planning/HANDOFF-V3-OFFENE-PUNKTE.md. Diese Regel tut deshalb genau
+   eines: sie nimmt dem Knopf das Systemblech, ohne ihm neue Flaeche zu geben.
+   Uebernommen ist auch die Hover-Tinte var(--red-text); NICHT uebernommen ist
+   das `opacity: 0` von .search-clear-btn — unsichtbar faellt der Knopf aus der
+   Erfassung des Stil-Waechters und das meldet er als verschwundenes Element. */
+.dice-history-clear {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1em;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.dice-history-clear:hover {
+    color: var(--red-text);
+}
+
 /* Character Dice Panel */
 .dice-char-panel {
     padding: 16px;
