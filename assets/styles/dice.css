@@ -23,7 +23,7 @@
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;
-    transition: all 0.3s;
+    transition: var(--trans-slow);
 }
 
 .dice-hero-result.crit {
@@ -691,7 +691,7 @@
     box-shadow:
         var(--shadow-2),
         0 0 0 0 rgba(220, 38, 38, 0.4);
-    transition: all 0.3s ease;
+    transition: var(--trans-slow);
     animation: floatingPulse 3s ease-in-out infinite;
 }
 
@@ -824,7 +824,7 @@
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;
-    transition: all 0.3s;
+    transition: var(--trans-slow);
 }
 
 .fdp-number.crit {

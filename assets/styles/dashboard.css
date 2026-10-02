@@ -716,7 +716,7 @@
             padding: 4px 10px;
             border-radius: var(--radius-md);
             font-size: 0.75em;
-            transition: all 0.3s;
+            transition: var(--trans-slow);
         }
         
         .save-indicator.saving {
