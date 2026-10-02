@@ -2578,10 +2578,51 @@
            wenn eine spaetere Regel `overflow` wieder aendert. Ohne sie waere der
            Weg zu einem seitlichen Seitenueberhang offen (gemessen: 0px in allen
            25 Zustaenden).
-           WARUM `flex: 0 0 auto` UND `white-space: nowrap` AN DEN CHIPS: in
+           WARUM `flex: 0 0 auto` UND `white-space: nowrap` AN DEN KINDERN: in
            einer nowrap-Reihe wuerden sie sonst zusammengedrueckt, ihren Text
            innen umbrechen und den Streifen wieder hoeher machen — statt zu
-           rollen. Nur die Truhen-Chips trugen `nowrap` schon. */
+           rollen. Nur die Truhen-Chips trugen `nowrap` schon.
+           DIE REIHE ENTHAELT NICHT NUR CHIPS (C1/R2) — und genau diese Annahme
+           hat in Runde 1 einen Fehler erzeugt. Die NSCs und die Begegnungen
+           fuehren ab dem sechsten Eintrag ein Auswahlfeld "Mehr..."
+           (`npc-render.js`, `encounters-render.js`), und ueber das sind die
+           Orte 6..n bzw. die Kreaturtypen ab dem sechsten UEBERHAUPT ERST
+           erreichbar. Die erste Fassung dieser Regel gab die Schranke nur den
+           vier Chipklassen; das Auswahlfeld daneben behielt damit den
+           Voreinstellungswert `flex-shrink: 1` und saugte als EINZIGES
+           schrumpfbares Kind die gesamte Schrumpfung der Reihe auf — gemessen
+           26px statt 159px (Segoe UI) bzw. 178px (breite Schrift) in allen
+           Telefonfenstern, also ein Kasten mit dem Chevron und keinem Zeichen
+           Text (Innenabstand 7px 12px laesst bei 26px Gesamtbreite zwei
+           Bildpunkte). Der Streifen rollte dabei, nichts lag ausserhalb, der
+           Seitenueberhang blieb 0: der Mangel war durch keine der beiden
+           damaligen Zahlen von Fall (4) zu sehen. Ein Rollstreifen rollt,
+           damit seine Bedienelemente ihre Breite BEHALTEN; dass eines von
+           ihnen fuer die anderen bezahlt, ist das Gegenteil seines Zwecks.
+           WARUM `> select` NACH TAG UND NICHT `.npc-filter-select` NACH KLASSE:
+           der Tag sagt, WAS das Kind ist, und gilt unabhaengig davon, wie seine
+           Klasse eines Tages heisst oder ob die Truhe und die Orte spaeter auch
+           eines bekommen (beide haben heute keines). Die vier Zeilen decken
+           damit alle vier Reihen ab, nicht nur die zwei mit heutigem Befund.
+           WARUM NICHT `> *`, was noch allgemeiner waere: der Teilselektor `*`
+           als Subjekt nimmt der F-18-Ratsche die Urteilsfaehigkeit. Sie
+           vergleicht Paare gleicher Spezifitaet am rechten Teilselektor; ein
+           `*` passt dort auf JEDES Element des Bestands, und die Ratsche meldete
+           prompt vier Paare gegen `.editor-toolbar .editor-btn` (0,2,0 gegen
+           0,2,0 auf `flex-shrink`) — frei erfunden, denn ein `.editor-btn` ist
+           nie ein Kind dieser Reihe, aber statisch nicht widerlegbar. Mit vier
+           erfundenen Paaren im eingefrorenen Stand waere jede kuenftige
+           `flex`-Aenderung gleicher Spezifitaet ein neuer Befund an dieser
+           Regel. Die Allgemeinheit, die `> *` gebracht haette, leistet
+           stattdessen eine Zusicherung: breite-schrift.spec.js (4),
+           ZUSICHERUNG 4 prueft JEDES Kind jedes Streifens in vier Fenstern
+           gegen seinen Inhaltsbedarf und wird rot, sobald ein kuenftiges Kind
+           ungeschuetzt bleibt. Eine laufende Messung ist hier der bessere
+           Waechter als ein Selektor, der nichts mehr unterscheidet.
+           SPEZIFITAET: `.npc-view .npc-filter-chips > select` ist 0,2,1 und
+           gewinnt damit gegen `.npc-filter-select` (0,1,0) in npcs.css und
+           `.enc-filter-select` in encounters.css, die beide NACH core.css
+           laden. Kein `!important` (Ratsche F-18). */
         @media (max-width: 900px) {
             .loot-view .loot-filter-chips,
             .npc-view .npc-filter-chips,
@@ -2596,7 +2637,11 @@
             .loot-view .loot-filter-chip,
             .npc-view .npc-filter-chip,
             .loc-view .loc-filter-chip,
-            .enc-view .enc-filter-chip {
+            .enc-view .enc-filter-chip,
+            .loot-view .loot-filter-chips > select,
+            .npc-view .npc-filter-chips > select,
+            .loc-view .loc-filter-chips > select,
+            .enc-view .enc-filter-chips > select {
                 flex: 0 0 auto;
                 white-space: nowrap;
             }
