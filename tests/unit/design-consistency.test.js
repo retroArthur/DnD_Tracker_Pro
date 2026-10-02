@@ -11700,3 +11700,399 @@ describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () 
         expect(SAMMELBEWEGUNG_GEDULDET.filter(a => !vorhanden.has(a))).toEqual([]);
     });
 });
+
+describe('W4-R-02 — Ausblenden mit visibility: keine unsichtbare Ausblende (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE NACHTRAEGLICH ENTSTEHT
+       Sie ist der Preis dafuer, dass W4-R-01 die Sammelbewegung nur ZAEHLT.
+       `visibility` ist uebergangsfaehig, aber auf eine Weise, die kein anderer
+       Wert hat: zwischen `visible` und `hidden` liest JEDER Zwischenwert
+       `visible`, der Umschlag passiert erst am Ende der Dauer. Ein
+       `transition: all 0.2s` hat das kostenlos mitgetragen — ein Element, das
+       gleichzeitig `opacity: 0` und `visibility: hidden` bekommt, blieb die
+       ganzen 200ms sichtbar und war am Ende weg. Eine BENANNTE
+       Eigenschaftsliste traegt es nicht mehr, es sei denn, `visibility` steht
+       darin. Dann springt die Sichtbarkeit im ERSTEN Bild auf `hidden`,
+       waehrend die Deckkraft unveraendert weiterlaeuft: die Ausblende findet
+       statt, nur sieht sie niemand.
+
+       GEMESSEN AN DEN ZWEI STELLEN, DIE DEN TEST AUSGELOEST HABEN (gefuellte
+       Kampagne, 390x844, data-layout=mobile, Abtastung beim Oeffnen der
+       Mobil-Navigation; `nav-open` schaltet utils/performance-extras.js:37 zur
+       Laufzeit, versteckt wird in variables.css ueber sechs Schweber auf
+       einmal):
+         .qref-fab               VORHER  1ms 1,00/visible ... 201ms 0,02/visible
+                                 NACHHER 1ms 1,00/HIDDEN  ... 200ms 0,02/hidden
+         .floating-dice-trigger  VORHER  1ms 1,00/visible ... 300ms 0,01/visible
+                                 NACHHER 1ms 1,00/HIDDEN  ... 300ms 0,00/hidden
+       Dieselben Zahlen in der Linux-Nachstellung der CI-Schriftmetrik. Die
+       Gegenrichtung ist unauffaellig: von `hidden` nach `visible` schlaegt
+       `visibility` ohnehin sofort um.
+
+       WARUM ES KEIN BESTEHENDER WAECHTER SIEHT — alle vier Luecken gemessen:
+       W4-R-01 ist GRUEN, weil in den neuen Werten kein `all` mehr steht; der
+       Stil-Sollstand (tests/e2e/features/computed-style-diff.spec.js) hasht
+       zwoelf Eigenschaften, und weder `transition` noch `visibility` ist eine
+       davon; die sechs namentlich gefuehrten Posten des Schritts 4 nennen
+       dice.css:761, dice.css:26, dice.css:827, core.css:466, core.css:558 und
+       tools.css:581 — weder dashboard.css noch dice.css:694; und `visibility`
+       kommt im ganzen Baum nur sechsmal als Deklaration vor, also auch nicht
+       durch Zufall unter die Augen eines anderen Tests.
+
+       WAS SIE ZUSICHERT, in zwei Teilen:
+       (A) Jede Regel, die mit `opacity: 0` UND `visibility: hidden`
+           ausblendet, muss fuer jedes Subjekt ihrer Selektoren, das
+           ueberhaupt eine `transition` fuehrt, `visibility` in dieser
+           Eigenschaftsliste haben. Subjekte OHNE jede Bewegung sind kein
+           Befund: sie sind immer gesprungen und sollen es bleiben (drei der
+           sechs Schweber — .qref-panel, .event-log, .kplog-panel — schalten
+           ueber display und haben nie einen Uebergang gefuehrt).
+       (B) Die Dauer des visibility-Segments muss MINDESTENS so lang sein wie
+           die des opacity-Segments. Ohne (B) waere die Wahl zwischen den
+           Reveal-Tokens eine stille Falle: --trans-reveal laeuft 300ms,
+           --trans-reveal-std 200ms, und ein 300ms-Element mit der
+           200ms-Variante verliert seine letzten 100ms genauso unsichtbar wie
+           ganz ohne `visibility` — derselbe Fehler, nur spaeter. Genau diese
+           Formulierung steht auch im Tokenblock von variables.css.
+
+       WARUM NICHT "GENAU EINE REGEL FUEHRT var(--trans-reveal)": das war der
+       zuerst vorgesehene Wortlaut, und er haette den Befund FESTGESCHRIEBEN —
+       zum Zeitpunkt der Messung fuehrte genau eine Regel den Token, und genau
+       zwei weitere haetten ihn gebraucht. Eine Ratsche auf eine Stueckzahl ist
+       nur so gut wie die Zahl; diese hier prueft die Eigenschaft. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile|subjekt`, Wert = Begruendung.
+    // Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01 und EXEC_COMMAND_ALLOWLIST
+    // im Editor-Netz: bewusst LEER, nicht abwesend. Eine Ausblende, die
+    // absichtlich springen soll, braucht kein `visibility` im Uebergang —
+    // aber dann steht der Grund hier und im Diff.
+    const AUSBLENDE_GEDULDET = {};
+
+    /** Alle Bewegungs-Tokens, rekursiv aufgeloest. --trans-reveal zeigt auf
+     *  --trans-slow, das auf --dur-slow und --ease zeigt: ohne Auflaufen bis
+     *  zum Literal laesst sich keine Dauer vergleichen. */
+    function bewegungsTokens() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of withoutComments(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = { ...roh };
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Eine Dauer in Millisekunden. `0.2s` und `200ms` sind dieselbe Zahl, und
+     *  nur als Zahl sind sie vergleichbar. */
+    function dauerMs(txt) {
+        const m = /^([\d.]+)(ms|s)$/.exec((txt || '').trim());
+        if (!m) return null;
+        return Math.round(parseFloat(m[1]) * (m[2] === 's' ? 1000 : 1));
+    }
+
+    /** Die Segmente einer transition-Kurzschreibweise, Tokens aufgeloest:
+     *  [{ prop, dauer }]. Die Dauer ist der erste Zeitwert des Segments —
+     *  `opacity 0.2s 0.1s` hat Dauer 200, nicht Verzoegerung 100. */
+    function segmente(wert, tokens) {
+        const voll = wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+            tokens[name] !== undefined ? tokens[name] : ganz
+        );
+        return voll
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .map(s => {
+                const teile = s.split(/\s+/);
+                const zeit = teile
+                    .slice(1)
+                    .map(dauerMs)
+                    .filter(d => d !== null);
+                return { prop: teile[0], dauer: zeit.length ? zeit[0] : null };
+            });
+    }
+
+    /** Das Subjekt-Kompound eines Selektors: der letzte Teil, ueber alle vier
+     *  Kombinatoren getrennt. Gleiche Rechnung wie inlineSubjekt() im
+     *  R-23-Block; hier eigenstaendig, weil die dortige Fassung in dessen
+     *  describe eingeschlossen ist. */
+    const subjekt = sel =>
+        sel
+            .split(/\s*[\s>+~]\s*/)
+            .filter(Boolean)
+            .pop() || '';
+
+    /** Erste transition-Kurzschreibweise eines Rumpfs. Der Praefixschutz
+     *  verhindert, dass `-webkit-transition` oder `transition-duration`
+     *  mitgelesen wird. */
+    const TRANSITION_RE = /(?:^|[;{\s])transition\s*:\s*([^;}]+)/;
+
+    function alleRegelnFlach() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => out.push({ datei: f.name, ...r }))
+        );
+        return out;
+    }
+
+    /** Regeln, die ausblenden: opacity auf 0 UND visibility auf hidden im
+     *  SELBEN Rumpf. Beides zusammen ist die Absicht "weich verschwinden" —
+     *  `visibility: hidden` allein (.dms-config-drag-disabled) ist ein
+     *  Platzhalter ohne Bewegung und kein Befund. */
+    function ausblendeRegeln(regeln) {
+        return regeln.filter(
+            r =>
+                /(?:^|[;{\s])opacity\s*:\s*0\s*(?:;|$)/.test(r.rumpf) &&
+                /(?:^|[;{\s])visibility\s*:\s*hidden/.test(r.rumpf)
+        );
+    }
+
+    /** Alle Bewegungsdeklarationen, die GENAU dieses Subjekt treffen — also
+     *  die Grundregel, nicht eine Zustandsform davon. */
+    function bewegungenVon(regeln, sub) {
+        const out = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE.exec(r.rumpf);
+            if (!m) return;
+            const trifft = r.sel
+                .split(',')
+                .map(s => s.trim())
+                .some(s => subjekt(s) === sub);
+            if (trifft) {
+                out.push({
+                    anker: `${r.datei}:${r.zeile}`,
+                    wert: m[1].replace(/\s+/g, ' ').trim()
+                });
+            }
+        });
+        return out;
+    }
+
+    function ausblendeBefunde() {
+        const tokens = bewegungsTokens();
+        const regeln = alleRegelnFlach();
+        const befunde = [];
+        const gebraucht = new Set();
+        ausblendeRegeln(regeln).forEach(r => {
+            const subs = [
+                ...new Set(
+                    r.sel
+                        .split(',')
+                        .map(s => subjekt(s.trim()))
+                        .filter(Boolean)
+                )
+            ];
+            subs.forEach(sub => {
+                bewegungenVon(regeln, sub).forEach(b => {
+                    const segs = segmente(b.wert, tokens);
+                    const sammel = segs.find(s => s.prop === 'all');
+                    const sicht = sammel || segs.find(s => s.prop === 'visibility');
+                    const deck = sammel || segs.find(s => s.prop === 'opacity');
+                    if (!deck) return; // bewegt keine Deckkraft: nichts zu verbergen
+                    const schluessel = `${b.anker}|${sub}`;
+                    let meldung = null;
+                    if (!sicht) {
+                        meldung =
+                            `${b.anker} { ${sub} } bewegt opacity, aber nicht visibility — ` +
+                            `die Ausblende in ${r.datei}:${r.zeile} ist unsichtbar: die ` +
+                            `Sichtbarkeit springt im ersten Bild auf hidden, waehrend die ` +
+                            `Deckkraft noch ${deck.dauer}ms laeuft. Gehoert auf eine ` +
+                            `Reveal-Liste (var(--trans-reveal) / var(--trans-reveal-std))`;
+                    } else if (
+                        sicht.dauer !== null &&
+                        deck.dauer !== null &&
+                        sicht.dauer < deck.dauer
+                    ) {
+                        meldung =
+                            `${b.anker} { ${sub} } fuehrt visibility ${sicht.dauer}ms, aber ` +
+                            `opacity ${deck.dauer}ms — die letzten ` +
+                            `${deck.dauer - sicht.dauer}ms der Ausblende in ` +
+                            `${r.datei}:${r.zeile} sind unsichtbar. Falsches Reveal-Token`;
+                    }
+                    if (!meldung) return;
+                    if (AUSBLENDE_GEDULDET[schluessel]) {
+                        gebraucht.add(schluessel);
+                        return;
+                    }
+                    befunde.push(meldung);
+                });
+            });
+        });
+        return { befunde, gebraucht };
+    }
+
+    test('jede Ausblende mit Bewegung traegt visibility mindestens so lang wie opacity', () => {
+        expect(ausblendeBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // Schranken der GEGENPROBE, benannt, weil die MUTATIONSPROBE dasselbe
+    // Urteil nachstellt: zwei Kopien einer Zahl sind zwei Zahlen, die
+    // auseinanderlaufen koennen.
+    const AUSBLENDE_SCHRANKE = 3;
+    const BEWEGTE_SUBJEKTE_SCHRANKE = 3;
+
+    /** Wie viele Ausblende-Regeln und wie viele davon betroffene, BEWEGTE
+     *  Subjekte findet der Scan? Am 2026-10-02 sind es 3 Regeln
+     *  (dice.css .floating-dice-panel, party.css .char-adv-btns,
+     *  variables.css der Mobil-Stapel aus sechs Schwebern) und 4 bewegte
+     *  Subjekte. */
+    function erhebung() {
+        const regeln = alleRegelnFlach();
+        const aus = ausblendeRegeln(regeln);
+        const bewegt = new Set();
+        aus.forEach(r =>
+            r.sel
+                .split(',')
+                .map(s => subjekt(s.trim()))
+                .filter(Boolean)
+                .forEach(sub => {
+                    if (bewegungenVon(regeln, sub).length) bewegt.add(sub);
+                })
+        );
+        return { regeln: aus.length, bewegteSubjekte: bewegt.size };
+    }
+
+    test('GEGENPROBE: der Scan findet ueberhaupt Ausblenden und bewegte Subjekte', () => {
+        // Ohne sie waere ein leerer Dateisatz oder ein kaputter Regelzerleger
+        // ein GRUENER Test — inhaltsleer gruen statt rot, genau der Fehler, den
+        // F-01b gemacht hat.
+        const e = erhebung();
+        expect(e.regeln).toBeGreaterThanOrEqual(AUSBLENDE_SCHRANKE);
+        expect(e.bewegteSubjekte).toBeGreaterThanOrEqual(BEWEGTE_SUBJEKTE_SCHRANKE);
+    });
+
+    test('GEGENPROBE: niemand umgeht die Pruefung ueber die Langschreibweise', () => {
+        // Dieser Block liest nur `transition:`. `transition-property` waere
+        // dieselbe Aussage in zwei Zeilen und unsichtbar fuer ihn. Heute gibt
+        // es sie nicht; macht jemand sie auf, soll es hier auffallen und nicht
+        // in einem Browser.
+        const lang = [];
+        cssFiles.forEach(f =>
+            withoutComments(f.content)
+                .split('\n')
+                .forEach((z, i) => {
+                    if (/transition-(?:property|delay)\s*:/.test(z))
+                        lang.push(`${f.name}:${i + 1} ${z.trim()}`);
+                })
+        );
+        expect(lang.sort()).toEqual([]);
+    });
+
+    /* PROBEN FUER DIE SEGMENT-ZERLEGUNG — feste Zeichenketten gegen eine feste
+       Tokentabelle, kein Dateizugriff. Beide Richtungen, weil die Zerlegung in
+       beide Richtungen kippen kann: eine zu grobe Trennung liest
+       `0.2s ease, visibility` als EIN Segment, eine zu feine zerschneidet einen
+       Tokenverweis vor seiner Auflaesung. Die LETZTE Probe ist die einzige, die
+       ueberhaupt einen Tokenverweis enthaelt — ohne sie blieb "Tokens werden
+       nicht aufgeloest" von keinem Waechter bemerkt, und genau das hat die
+       MUTATIONSPROBE beim ersten Lauf gemeldet. Die Tabelle ist synthetisch
+       (Praefix --probe-), damit die Proben nicht mitwandern, wenn die
+       Bewegungsleiter in variables.css einmal andere Dauern traegt; dass die
+       ECHTEN Tokens bis zum Literal auflaufen, prueft die SELBSTPROBE darunter. */
+    const PROBE_TOKENS = { '--probe-trans': 'opacity 250ms ease, visibility 250ms ease' };
+    const SEGMENT_PROBEN = [
+        ['opacity 0.12s, visibility 0.12s', { opacity: 120, visibility: 120 }],
+        ['opacity 200ms, visibility 300ms', { opacity: 200, visibility: 300 }],
+        ['all 0.2s', { all: 200 }],
+        ['opacity 0.2s ease 0.1s', { opacity: 200 }],
+        ['background-color 0.2s ease, color 0.2s ease', { 'background-color': 200, color: 200 }],
+        ['var(--probe-trans)', { opacity: 250, visibility: 250 }]
+    ];
+
+    function segmentprobeBefunde(zerleger) {
+        const tokens = PROBE_TOKENS;
+        return SEGMENT_PROBEN.flatMap(([wert, soll]) => {
+            const ist = {};
+            zerleger(wert, tokens).forEach(s => {
+                if (ist[s.prop] === undefined) ist[s.prop] = s.dauer;
+            });
+            return Object.entries(soll)
+                .filter(([p, d]) => ist[p] !== d)
+                .map(([p, d]) => `"${wert}" — ${p}: erwartet ${d}, erhalten ${ist[p]}`);
+        });
+    }
+
+    test('SELBSTPROBE: die Segment-Zerlegung liest Eigenschaft und Dauer richtig', () => {
+        expect(segmentprobeBefunde(segmente)).toEqual([]);
+    });
+
+    test('SELBSTPROBE: die Tokens loesen bis zum Literal auf', () => {
+        const t = bewegungsTokens();
+        // Drei Stufen tief: --trans-reveal -> --trans-slow -> --dur-slow.
+        expect(t['--dur']).toBe('200ms');
+        expect(/var\(/.test(t['--trans-std'] || 'var(')).toBe(false);
+        const reveal = segmente('var(--trans-reveal)', t);
+        expect(reveal.find(s => s.prop === 'visibility')).toBeTruthy();
+        expect(reveal.find(s => s.prop === 'opacity').dauer).toBe(
+            reveal.find(s => s.prop === 'visibility').dauer
+        );
+    });
+
+    /* BESCHAEDIGUNGEN DER SEGMENT-ZERLEGUNG
+       Jede veraendert, was segmente() liest; keine veraendert, was erhebung()
+       zaehlt. Der Haupttest kann eine Beschaedigung NICHT bemerken: eine
+       Zerlegung, die nichts mehr findet, laesst `deck` leer und steigt vorzeitig
+       aus — gruen. Also muss die SELBSTPROBE sie fangen. */
+    const BESCHAEDIGUNGEN_SEG = [
+        [
+            'Tokens werden nicht aufgeloest',
+            wert =>
+                wert
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .map(s => {
+                        const teile = s.split(/\s+/);
+                        return { prop: teile[0], dauer: dauerMs(teile[1]) };
+                    })
+        ],
+        [
+            'Trennung an Leerzeichen statt am Komma',
+            (wert, tokens) =>
+                segmente(wert, tokens).length
+                    ? wert.split(/\s+/).map(s => ({ prop: s, dauer: null }))
+                    : []
+        ],
+        [
+            'Sekunden nicht in Millisekunden umgerechnet',
+            (wert, tokens) =>
+                segmente(wert, tokens).map(s => ({
+                    prop: s.prop,
+                    dauer: s.dauer === null ? null : s.dauer / 1000
+                }))
+        ],
+        ['nur das erste Segment gelesen', (wert, tokens) => segmente(wert, tokens).slice(0, 1)]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Segment-Zerlegung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_SEG.filter(
+            b => segmentprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(weniger gelesene Segmente = gruener Test), und die GEGENPROBE ` +
+                `zaehlt Regeln, nicht Segmente`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in AUSBLENDE_GEDULDET wird gebraucht', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes als
+        // das, was ihr Kommentar behauptet.
+        const { gebraucht } = ausblendeBefunde();
+        expect(Object.keys(AUSBLENDE_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
