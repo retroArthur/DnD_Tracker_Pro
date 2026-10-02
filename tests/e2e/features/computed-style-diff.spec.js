@@ -106,6 +106,28 @@ const PROPERTIES = [
 // Abbruch nicht als "keine Abweichung" erscheint.
 const MAX_ELEMENTS_PER_VIEW = 300;
 
+// Die fuenf Eigenschaften, die das UA-Stilblatt an einem Formularelement SELBST setzt und die es
+// daher NICHT erbt. Sie bilden den Fingerabdruck, mit dem sich ein Formularelement erkennen
+// laesst, das keine einzige App-Regel abbekommen hat — siehe `uaFingerabdruck()` in
+// `captureViewInBrowser()` und die Begruendung im Kopfkommentar (Befund 2).
+const UA_PROBE_PROPERTIES = ['backgroundColor', 'borderColor', 'borderRadius', 'padding', 'fontSize'];
+
+// Nachstellung einer breiter laufenden Schriftmetrik, WOERTLICH dieselbe wie in
+// tests/e2e/features/breite-schrift.spec.js (C1). Die App bestimmt ihre Schriften an genau zwei
+// Stellen (assets/styles/variables.css), und BEIDE Ketten haben einen Gewinner, den es nur unter
+// Windows gibt ('Segoe UI' bzw. Consolas — JetBrains Mono und Fira Code sind auf beiden
+// Plattformen nicht installiert, nachgemessen). Unter Linux greift die fontconfig-Standardschrift
+// bzw. DejaVu Sans Mono, und die laufen rund 14.5 % (UI) bzw. 9.5 % (Mono) breiter. Verdana liegt
+// mit Faktor 1.1554 einen Prozentpunkt UEBER der Linux-UI-Schrift (am CI-Befund kalibriert:
+// ~1.145), Courier New mit 0.600em Vorschub knapp unter DejaVu Sans Mono (0.602em).
+const BREITE_SCHRIFT =
+    ':root { --font-ui: Verdana, sans-serif !important; ' +
+    '--font-mono: "Courier New", monospace !important; }';
+
+// Bezugstext der Vorbedingung des vierten Durchgangs — ein echter Knopftext der Werkzeugleiste.
+// Eine Buchstabenreihe waere kuerzer und damit unempfindlicher.
+const PROBETEXT = '+ Neuer Charakter';
+
 // Ansicht → Zustandsherstellung VOR der Erfassung (Plan 15-13, CR-04 Mangel 4). Zwei der vier von
 // Plan 15-12 wiederhergestellten Markups entstehen erst im aufgeklappten Shop bzw. bei
 // ausgewaehlter Fraktion — ohne diesen Schritt bleiben Artikelbereich und Fraktions-Detailbereich
@@ -288,11 +310,56 @@ const currentFullCapture = {};
  * aktiven Ansicht die feste Eigenschaftsliste. Laeuft im Browser-Kontext
  * (page.evaluate) — reine Funktion ihrer Argumente, kein Zugriff auf
  * Modul-Scope, damit sie serialisierbar bleibt.
- * @param {{viewId: string, properties: string[], maxElements: number}} args
+ * @param {{viewId: string, properties: string[], maxElements: number, uaProbeProperties: string[]}} args
  */
-function captureViewInBrowser({ viewId, properties, maxElements }) {
+function captureViewInBrowser({ viewId, properties, maxElements, uaProbeProperties }) {
+    /**
+     * Reiner UA-Fingerabdruck dieser Plattform und dieses Themas: je Formularelementart ein
+     * klassenloses Sondenelement, verkettet ueber `uaProbeProperties`. Die Sonden haengen am
+     * `body` und nicht in der Ansicht — sie sollen keine Beobachter der App ausloesen, und keine
+     * der fuenf Eigenschaften wird geerbt (das UA-Stilblatt setzt sie am Formularelement selbst,
+     * `font: -webkit-small-control` schlaegt dabei auch die geerbte Schriftgroesse).
+     * SELBSTKALIBRIEREND: kein Zahlenwert steht im Quelltext, der Vergleich holt sich den
+     * Istzustand der laufenden Plattform. Ein Sollstand mit festen Werten waere genau der Fehler,
+     * den dieser Befund beschreibt.
+     */
+    function uaFingerabdruck() {
+        const huelle = document.createElement('div');
+        huelle.setAttribute('aria-hidden', 'true');
+        huelle.style.cssText =
+            'position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+        const arten = {};
+        arten.select = document.createElement('select');
+        arten.textarea = document.createElement('textarea');
+        arten.button = document.createElement('button');
+        ['text', 'number', 'search', 'date', 'color', 'checkbox', 'radio', 'range'].forEach(t => {
+            const el = document.createElement('input');
+            el.type = t;
+            arten[`input-${t}`] = el;
+        });
+        Object.keys(arten).forEach(a => huelle.appendChild(arten[a]));
+        document.body.appendChild(huelle);
+        const fp = {};
+        Object.keys(arten).forEach(a => {
+            const cs = getComputedStyle(arten[a]);
+            fp[a] = uaProbeProperties.map(p => cs[p]).join('␟');
+        });
+        huelle.remove();
+        return fp;
+    }
+
+    /** Elementart im Sinne des Fingerabdrucks — `<input>` traegt sie im type-Attribut. */
+    function artDesElements(el) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'input') return `input-${(el.getAttribute('type') || 'text').toLowerCase()}`;
+        return tag;
+    }
+
     const container = document.getElementById(`view-${viewId}`);
-    if (!container) return { found: false, capped: false, elementCount: 0, elements: {} };
+    if (!container) return { found: false, capped: false, elementCount: 0, elements: {}, uaOnly: [] };
+
+    const fingerabdruck = uaFingerabdruck();
+    const uaOnly = [];
 
     const all = Array.from(container.querySelectorAll('*')).filter(el => el.classList && el.classList.length > 0);
     const visible = all.filter(el => {
@@ -319,6 +386,22 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
         const key = `${signature}#${idx}`;
 
         const cs = getComputedStyle(el);
+
+        // Stimmen alle fuenf UA-gesetzten Eigenschaften mit der Sonde derselben Elementart
+        // ueberein, hat dieses Formularelement keine einzige App-Regel abbekommen: sein
+        // erfasster Stil ist das Formularthema der Plattform, nicht die Gestalt dieser App.
+        // Steht VOR der Animationsschranke, damit ein animiertes ungestaltetes Bedienelement
+        // nicht durchfaellt.
+        const art = artDesElements(el);
+        if (
+            fingerabdruck[art] !== undefined &&
+            uaProbeProperties.map(p => cs[p]).join('␟') === fingerabdruck[art]
+        ) {
+            uaOnly.push(
+                `${key} (${art}): ` + uaProbeProperties.map(p => `${p}=${cs[p]}`).join(' ')
+            );
+        }
+
         // Laufend animierte Elemente NICHT in den Vergleich aufnehmen (Signatur-Index bleibt
         // trotzdem stabil, s.o.): eine CSS-`animation` mit `infinite` (z.B. `.dms-live-badge`,
         // `animation: dms-live-pulse 2s ease-in-out infinite`) liefert je nach Erfassungszeitpunkt
@@ -334,7 +417,7 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
         elements[key] = record;
     });
 
-    return { found: true, capped, elementCount: visible.length, elements };
+    return { found: true, capped, elementCount: visible.length, elements, uaOnly };
 }
 
 // Digestlaenge in Hex-Zeichen (64 Bit) — der volle SHA-256 (64 Hex-Zeichen) waere fuer eine
@@ -390,10 +473,17 @@ function toDigestPass(rawPass) {
  * Codepfad, den ein echter Klick am Ende ausloest (Rendering + `.active`
  * class), nur ohne den Dropdown-Umweg. Nach dem Ansichtswechsel wird — falls
  * registriert — die Zustandsherstellung aus `VIEW_STATE_SETUP` ausgefuehrt.
+ *
+ * `uaBefunde` wird MITGEFUELLT, nicht zurueckgegeben: die Fundliste ungestalteter Formular-
+ * elemente gehoert nicht in den Digestvergleich (sie ist kein Stilwert), muss aber in jedem
+ * Durchgang erhoben und NACH der Digest-Zusicherung geprueft werden. Die Reihenfolge ist
+ * Absicht — bei zwei gleichzeitigen Befunden soll die Abweichung zuerst stehen.
+ *
  * @param {import('@playwright/test').Page} page
+ * @param {string[]} [uaBefunde] Sammelliste fuer ungestaltete Formularelemente
  * @returns {Promise<object>}
  */
-async function runPass(page) {
+async function runPass(page, uaBefunde) {
     const result = {};
     for (const viewId of VIEWS) {
         await page.evaluate(v => {
@@ -420,7 +510,8 @@ async function runPass(page) {
         const captured = await page.evaluate(captureViewInBrowser, {
             viewId,
             properties: PROPERTIES,
-            maxElements: MAX_ELEMENTS_PER_VIEW
+            maxElements: MAX_ELEMENTS_PER_VIEW,
+            uaProbeProperties: UA_PROBE_PROPERTIES
         });
         console.log(
             `[computed-style-diff] ${viewId}: ${captured.elementCount} Elemente erfasst` +
@@ -435,6 +526,9 @@ async function runPass(page) {
                     `gemessene Leerzustand (${MIN_ELEMENTS_ABOVE_EMPTY[viewId]}) — der Durchgang ist ` +
                     `stillschweigend auf einen Leerzustand zurueckgefallen`
             ).toBeGreaterThan(MIN_ELEMENTS_ABOVE_EMPTY[viewId]);
+        }
+        if (uaBefunde && captured.uaOnly) {
+            captured.uaOnly.forEach(e => uaBefunde.push(`${viewId}/${e}`));
         }
         result[viewId] = captured;
     }
@@ -498,12 +592,32 @@ function diffPass(previousDigestPass, currentDigestPass, durchgang) {
     return unexpected;
 }
 
+/**
+ * Zusicherung zum zweiten Befund (siehe Kopfkommentar): kein erfasstes Formularelement darf
+ * seinen Stil vollstaendig vom UA-Stilblatt beziehen. Steht in jedem Durchgang NACH der
+ * Digest-Zusicherung.
+ * @param {string[]} uaBefunde
+ * @param {string} durchgang
+ */
+function assertKeineUaBedienelemente(uaBefunde, durchgang) {
+    expect(
+        uaBefunde,
+        `Ungestaltete Formularelemente (${durchgang}) — alle fuenf UA-gesetzten Eigenschaften ` +
+            `stimmen mit einer klassenlosen Sonde derselben Elementart ueberein, die App hat ` +
+            `diesen Elementen also keine einzige Regel gegeben. Ihr erfasster Stil ist das ` +
+            `Formularthema der Plattform und wandert mit ihr; der Sollstand bewacht hier nicht ` +
+            `die App, sondern den Browserbau. Abhilfe ist eine CSS-Regel, keine Ausnahme:\n` +
+            uaBefunde.join('\n')
+    ).toEqual([]);
+}
+
 test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
     test('Standard', async ({ page }) => {
         await seedPopulatedSession(page);
         await loadApp(page);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         // Lokaler Vollabzug: VOR der Zusicherung geschrieben (auch bei einem roten Lauf verfuegbar
@@ -515,6 +629,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentBaseline.standard = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (Standard):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'Standard');
 
         // Schreibsperre (CR-04, Mangel 2): schreibt NUR wenn noch kein Sollstand existiert oder
         // der Schalter gesetzt ist — UND erst NACH der Zusicherung, damit ein gefundener Befund
@@ -534,7 +649,8 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         });
         await page.waitForTimeout(200);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         currentFullCapture.narrow = passResult;
@@ -544,6 +660,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentBaseline.narrow = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (schmales Layout):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'schmales Layout');
 
         if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
             saveBaseline(currentBaseline);
@@ -555,7 +672,8 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await loadApp(page);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         currentFullCapture.reducedMotion = passResult;
@@ -565,9 +683,120 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentBaseline.reducedMotion = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (reduzierte Bewegung):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'reduzierte Bewegung');
 
         if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
             saveBaseline(currentBaseline);
         }
+    });
+
+    /**
+     * VIERTER DURCHGANG — die Schranke, die diesem Waechter gefehlt hat (C2, 2026-10-02).
+     *
+     * Er vergleicht NICHT gegen den eingecheckten Sollstand, sondern DIESELBE Fassung gegen sich
+     * selbst unter einer breiter laufenden Schriftmetrik. Damit prueft er die Eigenschaft, die
+     * der versionierte Sollstand stillschweigend voraussetzt und die am 2026-10-02 zum ersten Mal
+     * gebrochen war: dass ein erfasster Wert von der Schriftmetrik der Plattform UNABHAENGIG ist.
+     * Jede Eigenschaft, deren Endwert Chromium aus einer Messung ableitet, faellt hier auf —
+     * oertlich, auf dem Entwicklerrechner, in 30 Sekunden, statt erst in CI auf einem anderen
+     * Betriebssystem.
+     *
+     * ZWEI SEITEN, nicht eine: der Durchgang erhebt beide Abzuege selbst, in zwei Seiten
+     * desselben Kontexts. Er haengt damit an keinem Sollstand und an keinem vorigen Fall —
+     * auch ein `--grep`-Lauf nur dieses Falles und ein Lauf mit `UPDATE_STYLE_BASELINE=1` sagen
+     * dasselbe. Der Preis sind zwei zusaetzliche Abzuege (rund 30 s).
+     *
+     * WAS ER AUF EINEM LINUX-RUNNER MISST. Dort ist Verdana nicht installiert und
+     * `Verdana, sans-serif` faellt auf dieselbe Standardschrift wie `'Segoe UI', system-ui,
+     * sans-serif`; dasselbe gilt fuer Courier New gegen DejaVu Sans Mono. Beide Seiten messen dann
+     * dieselbe Metrik und der Fall kann dort NICHTS finden. Das ist kein Mangel, sondern die
+     * Arbeitsteilung: der Fall ist die Schranke fuer den Entwicklerrechner, auf dem die beiden
+     * Windows-Erstwahlen greifen und auf dem der Sollstand erhoben wird. Damit das nicht
+     * stillschweigend passiert, misst die Vorbedingung beide Breiten und SAGT ins Protokoll,
+     * welcher der beiden Faelle vorliegt — ein stiller Uebersprung waere hier dieselbe stille
+     * Freigabe wie eine Ausnahmeliste, die nichts mehr ausnimmt.
+     */
+    test('Breitere Schriftmetrik bewegt den Digest nicht', async ({ page, context }) => {
+        await seedPopulatedSession(page);
+        await loadApp(page);
+        const schmalBefunde = [];
+        const schmal = toDigestPass(await runPass(page, schmalBefunde));
+
+        const breiteSeite = await context.newPage();
+        // Als ERSTES Kopfkind, also vor den App-Stilen: die App setzt ihre Messtokens beim Start
+        // und soll dabei schon die endgueltige Schrift sehen. Dass die Deklaration trotz der
+        // frueheren Stellung gewinnt, leistet das `!important` (keine Ratschenverletzung — die
+        // Ratsche in tests/unit/design-consistency.test.js zaehlt die Quellen unter
+        // assets/styles/, nicht das Stilblatt eines Testlaufs).
+        await breiteSeite.addInitScript(quelltext => {
+            const einfuegen = () => {
+                if (!document.head) return false;
+                const s = document.createElement('style');
+                s.id = 'breite-schrift-probe';
+                s.textContent = quelltext;
+                document.head.insertBefore(s, document.head.firstChild);
+                return true;
+            };
+            if (!einfuegen()) {
+                const mo = new MutationObserver(() => {
+                    if (einfuegen()) mo.disconnect();
+                });
+                mo.observe(document, { childList: true, subtree: true });
+            }
+        }, BREITE_SCHRIFT);
+        await seedPopulatedSession(breiteSeite);
+        await loadApp(breiteSeite);
+
+        // Vorbedingung: ist die Nachstellung angekommen — oder KANN sie auf dieser Plattform
+        // nichts aendern? Beides wird benannt, keines verschwiegen.
+        const breiten = await breiteSeite.evaluate(t => {
+            const messe = familie => {
+                const span = document.createElement('span');
+                span.style.cssText =
+                    'position:absolute;left:-9999px;white-space:pre;font-size:14px;font-family:' +
+                    familie;
+                span.textContent = t;
+                document.body.appendChild(span);
+                const b = span.getBoundingClientRect().width;
+                span.remove();
+                return Math.round(b * 100) / 100;
+            };
+            return { ist: messe('var(--font-ui)'), segoe: messe('"Segoe UI"') };
+        }, PROBETEXT);
+        const faktor = breiten.segoe > 0 ? Math.round((breiten.ist / breiten.segoe) * 10000) / 10000 : 0;
+        if (faktor > 1.02) {
+            console.log(
+                `[computed-style-diff] breite Schrift ANGEKOMMEN: "${PROBETEXT}" ` +
+                    `${breiten.segoe}px -> ${breiten.ist}px (Faktor ${faktor})`
+            );
+        } else {
+            console.log(
+                `[computed-style-diff] breite Schrift AUF DIESER PLATTFORM NICHT NACHSTELLBAR: ` +
+                    `"${PROBETEXT}" misst unter var(--font-ui) ${breiten.ist}px und unter ` +
+                    `"Segoe UI" ${breiten.segoe}px (Faktor ${faktor}) — beide Ketten fallen auf ` +
+                    `dieselbe Schrift. Dieser Fall vergleicht dann zwei gleiche Metriken und kann ` +
+                    `nichts finden; er ist die Schranke fuer den Entwicklerrechner, nicht fuer ` +
+                    `den Runner.`
+            );
+        }
+
+        const breitBefunde = [];
+        const breit = toDigestPass(await runPass(breiteSeite, breitBefunde));
+        await breiteSeite.close();
+
+        // Kein Sollstand im Spiel, also auch keine Erwartungsliste eines Durchgangs: der
+        // Vergleich laeuft unter dem eigenen Namen 'breiteSchrift', und die nur fuer das schmale
+        // Layout geltenden Ausnahmen greifen hier ausdruecklich nicht.
+        const unexpected = diffPass(schmal, breit, 'breiteSchrift');
+        expect(
+            unexpected,
+            `Erfasste Werte haengen an der Schriftmetrik (Faktor ${faktor}). Jeder dieser ` +
+                `Schluessel liefert auf einem Betriebssystem mit anderen Standardschriften einen ` +
+                `anderen Digest — der versionierte Sollstand bewacht dort das Betriebssystem ` +
+                `statt die App. Abhilfe ist, den BERECHNETEN statt den BENUTZTEN Wert zu erfassen ` +
+                `(siehe berechneteKante() in captureViewInBrowser), nicht eine Ausnahme:\n` +
+                unexpected.join('\n')
+        ).toEqual([]);
+        assertKeineUaBedienelemente(breitBefunde, 'breite Schrift');
     });
 });
