@@ -1319,6 +1319,7 @@ export default {
     "scheduleMonsterPreview": 'readonly',
     "schreibeKampfprotokoll": 'readonly',
     "schreibeKampfprotokollVerzoegert": 'readonly',
+    "schreibeMobilZeit": 'readonly',
     "scrollToChar": 'readonly',
     "scrollToTOCHeading": 'readonly',
     "searchActions": 'readonly',

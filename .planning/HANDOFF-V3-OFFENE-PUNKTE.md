@@ -427,15 +427,15 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:532` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:545` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1288` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1293` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1418` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1423` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:733` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:873` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:890` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:894` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2091` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2362` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:684` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -539,9 +539,9 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:752` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `core.css:606` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `core.css:708` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `party.css:2693` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2694` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -575,12 +575,12 @@ bestiary.css
   153  .bestiary-fav.active
 core.css
    17  [data-layout="mobile"] .mobile-nav-toggle-text
-   75  [data-layout="mobile"] #mobile-timer-display
-   79  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
-   83  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1184  .char-card-currency
- 1960  .quest-reward-item-tag .remove-btn:hover
- 1953  .quest-reward-item-tag .remove-btn
+  112  [data-layout="mobile"] #mobile-timer-display
+  116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
+  120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
+ 1314  .char-card-currency
+ 2090  .quest-reward-item-tag .remove-btn:hover
+ 2083  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -650,11 +650,11 @@ npcs.css
  1024  .npc-popup-section-title
 party.css
  1982  .party-stat-card.critical .party-stat-value
- 2249  .rest-heal-preview
- 2255  .rest-hd-restore
- 2631  .cf-attack-remove:hover
- 2780  .char-skill-item.proficient .char-skill-item-name
- 2803  .char-skill-item.expertise .char-skill-item-name
+ 2266  .rest-heal-preview
+ 2272  .rest-hd-restore
+ 2648  .cf-attack-remove:hover
+ 2797  .char-skill-item.proficient .char-skill-item-name
+ 2820  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css

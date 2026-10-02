@@ -37,31 +37,41 @@ function formatSessionTime(totalSeconds) {
  * Zeit bleibt in der Desktop-Kopfzeile (#session-timer-display) unveraendert
  * stehen, und ausgeblendet wird erst unterhalb von 600px (core.css).
  *
- * WARUM ZWEI KNOTEN UND NICHT innerHTML. Die Anzeige laeuft im Sekundentakt.
- * `textContent` am Elternteil wuerde das Sekunden-Element beim ersten Tick
- * loeschen; `innerHTML` waere eine Zeichenkettenmontage im Sekundentakt an
- * einer Stelle, die keine braucht. Die beiden Knoten werden einmal angelegt
- * und danach nur noch beschrieben.
+ * WARUM DIESE FUNKTION NICHTS ANLEGT. Die Anzeige laeuft im Sekundentakt. Ein
+ * `textContent` am Elternteil wuerde das Sekunden-Element bei jedem Tick
+ * loeschen, `innerHTML` waere eine Zeichenkettenmontage im Sekundentakt an
+ * einer Stelle, die keine braucht — und beide Wege muessten Knoten erzeugen.
+ * Die Struktur steht deshalb im Markup
+ * (`assets/templates/modals-tools.html`), und diese Funktion schreibt nur
+ * Werte: den Textknoten davor und das Sekunden-Element. Das hat zwei
+ * Nebenwirkungen, die beide erwuenscht sind — kein `createElement`/
+ * `createTextNode` im Sekundentakt, und kein Bruch in Umgebungen mit
+ * schlankerem DOM (die Mehrfach-Tab-Probe
+ * tests/unit/unload-persistence.test.js laedt dieses Modul gegen ein
+ * Attrappen-`document`, dessen `querySelector` immer `null` liefert; dort
+ * greift der Rueckfall).
+ *
+ * DER RUECKFALL schreibt die Vollform. Fehlt das Sekunden-Element, ist die
+ * sichtbare Zeit einen Tick spaeter wieder vollstaendig statt leer — eine
+ * sichtbare, harmlose Abweichung statt einer stillen leeren Anzeige.
  *
  * @param {HTMLElement} ziel #mobile-timer-display
  * @param {string} zeit Vollform "HH:MM:SS" aus formatSessionTime()
  */
 function schreibeMobilZeit(ziel, zeit) {
+    const sekKnoten = ziel.querySelector && ziel.querySelector('.mobile-timer-seconds');
+    if (!sekKnoten) {
+        ziel.textContent = zeit;
+        return;
+    }
     const schnitt = zeit.lastIndexOf(':');
     const kopf = schnitt < 0 ? zeit : zeit.slice(0, schnitt);
-    const sekunden = schnitt < 0 ? '' : zeit.slice(schnitt);
-    let sekKnoten = ziel.querySelector('.mobile-timer-seconds');
-    if (!sekKnoten) {
-        // Erststart oder fremd ueberschriebener Teilbaum: neu aufbauen.
-        ziel.textContent = '';
-        ziel.appendChild(document.createTextNode(kopf));
-        sekKnoten = document.createElement('span');
-        sekKnoten.className = 'mobile-timer-seconds';
-        ziel.appendChild(sekKnoten);
-    } else if (ziel.firstChild && ziel.firstChild.nodeType === Node.TEXT_NODE) {
+    // nodeType 3 = Textknoten. Die Konstante `Node.TEXT_NODE` steht nicht in
+    // jeder Umgebung zur Verfuegung, in der dieses Modul geladen wird.
+    if (ziel.firstChild && ziel.firstChild.nodeType === 3) {
         ziel.firstChild.nodeValue = kopf;
     }
-    sekKnoten.textContent = sekunden;
+    sekKnoten.textContent = schnitt < 0 ? '' : zeit.slice(schnitt);
 }
 function updateSessionTimerDisplay() {
     const timeStr = formatSessionTime(sessionTimerSeconds);
