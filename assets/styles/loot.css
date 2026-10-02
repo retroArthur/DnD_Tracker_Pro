@@ -61,7 +61,7 @@
             border-radius: var(--radius-lg);
             font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
             user-select: none;
         }
         

@@ -372,7 +372,7 @@
             border: 1px solid var(--purple);
             border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
         }
         
         .init-slot-box.available {
@@ -430,7 +430,7 @@
             border: 2px solid var(--border);
             background: var(--bg-dark);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
         }
 
         .death-save-dot:hover {
@@ -555,7 +555,7 @@
             font-size: 0.75em;
             color: var(--purple-text);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
             margin-top: 4px;
         }
 
@@ -627,7 +627,7 @@
             font-size: 0.7em;
             cursor: pointer;
             opacity: 0.6;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
             margin-top: 4px;
         }
 
@@ -935,7 +935,7 @@
             background: var(--bg-dark);
             border-radius: var(--radius-md);
             border: 1px solid var(--border);
-            transition: all 0.15s;
+            transition: var(--trans-fast);
         }
 
         .npc-relation-item:hover {
@@ -1115,7 +1115,7 @@
             background: transparent;
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
             font-weight: 600;
         }
 
@@ -1371,7 +1371,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
     margin-left: 4px;
 }
 
@@ -1434,7 +1434,7 @@
     color: var(--text-dim);
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
 }
 
 .init-mob-mode-btn.active {
@@ -1494,7 +1494,7 @@
     align-items: center;
     justify-content: center;
     font-size: 0.9em;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
 }
 
 .init-mob-dissolve-btn:hover {

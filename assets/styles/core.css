@@ -1029,7 +1029,7 @@
             background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent);
             color: var(--blue-text);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: var(--trans-fast);
         }
         .link-chip:hover {
             /* Welle 2, Nachtrag. Diese Zustandsregel wechselt NUR die Flaeche;
@@ -1937,7 +1937,7 @@
             border: 1px solid transparent;
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
         }
 
         .assign-spell-item:hover {

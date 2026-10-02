@@ -814,7 +814,7 @@
             cursor: pointer;
             font-size: 0.8em;
             color: var(--text);
-            transition: all 0.15s;
+            transition: var(--trans-fast);
             border-left: 2px solid transparent;
             min-width: 0;
             overflow: hidden;
@@ -1817,7 +1817,7 @@
     cursor: pointer;
     font-size: 0.85em;
     min-width: 32px;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
 }
 
 .cf-notes-panel .cf-notes-toolbar button:hover {
