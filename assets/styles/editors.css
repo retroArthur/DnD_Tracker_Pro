@@ -758,11 +758,28 @@
         justify-content: flex-start;
     }
     
+    /* C1 — DIE PRIMAERE AKTION TEILT DIE ZEILE MIT DEM TITEL.
+       Hier stand `width: 100%; justify-content: flex-end`. Das zwang die Gruppe
+       auf eine EIGENE Zeile der umbrechenden Leiste, obwohl sie dort meist nur
+       einen Knopf traegt: gemessen am gebauten Buendel bei 360x740 (Truhe,
+       gefuellte Kampagne) lag der Titel in einer 24px hohen Zeile mit 218px
+       ungenutztem Rest und "+ Item" (76px breit) in einer 45px hohen darunter —
+       zusammen 77px Leistenhoehe fuer 172px Inhalt. Mit `width: auto` sitzen
+       beide in einer 45px hohen Zeile: die Leiste faellt von 328 auf 296px, und
+       die 32px gehen 1:1 in die Listenspalte (162 -> 194px bei verlangten
+       148px). Das ist der halbe Fehlbetrag des CI-Befunds, und er war reiner
+       Leerraum.
+       `justify-content: flex-end` ist ENTFALLEN, nicht vergessen: bei
+       `width: auto` hat die Gruppe keinen freien Platz zu verteilen, die Regel
+       waere toter Code. Rechts steht sie weiterhin — durch `margin-left: auto`
+       aus dem 900px-Block darueber, und zwar auch dann, wenn sie bei vielen
+       Aktionsknoepfen doch in eine eigene Zeile umbricht. Genau das ist der
+       Rueckfall auf das alte Bild, und er ist intrinsisch: er tritt ein, wenn
+       Titel und Aktionen zusammen nicht in eine Zeile passen, und nur dann. */
     .section-toolbar-actions {
-        width: 100%;
-        justify-content: flex-end;
+        width: auto;
     }
-    
+
     .section-toolbar-filters select {
         flex: 1;
         min-width: 0;

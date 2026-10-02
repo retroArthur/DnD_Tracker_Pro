@@ -2438,6 +2438,59 @@
             overflow: hidden;
         }
 
+        /* ============================================================
+           C1 — DIE WERKZEUGLEISTE DARF DER LISTE NICHT DEN PLATZ NEHMEN
+           ============================================================
+           Die fuenf Schalen darueber haben eine FESTE Hoehe. Was die
+           Werkzeugleiste darin nimmt, fehlt der Liste bildpunktgenau — die
+           Beziehung ist linear und gemessen:
+               Spaltenhoehe = Schalenhoehe - Leistenhoehe - 12px
+           Und die Leistenhoehe ist keine Konstante: unter 900px darf die Leiste
+           umbrechen (`flex-wrap: wrap`, editors.css), also haengt ihre Hoehe an
+           der Breite ihrer Beschriftungen — und damit an der Schriftmetrik des
+           Betriebssystems. Der CI-Lauf 36966941474 hat genau das gemeldet: die
+           Truhe bei 360x740 mit Leiste 357 von 505px Schale, Listenspalte 136px
+           bei einer Eintragshoehe von 74px — kein Platz fuer den zweiten
+           Eintrag. Unter Windows messen dieselben Stellen 328 und 162px. Die
+           Zusicherung (layoutprofil.spec.js, M2b) ist dabei nicht zu streng: sie
+           verlangt `2 * eintragHoehe` und rechnet also selbst mit, was ein
+           Eintrag tatsaechlich hoch ist.
+           ZWEI ZAHLEN haben die Leiste kleiner gemacht — die Aktionsgruppe teilt
+           die Titelzeile (editors.css, -32px) und kein Filterchip ist breiter als
+           45% seiner Reihe (loot.css, -34px unter der breiten Metrik). Zusammen
+           steht die Truhen-Leiste danach bei 296px (Segoe UI) und 293px
+           (Verdana) — die Leiste ist also nicht nur kleiner, sondern nahezu
+           schriftunabhaengig geworden.
+           DIESE REGEL IST DER BODEN DARUNTER, nicht der Hebel. Sie greift
+           heute in KEINEM gemessenen Zustand (296 und 293 liegen unter 60% von
+           502px = 301px; bei 390x844 sind 60% 350px). Sie greift erst, wenn eine
+           noch breiter laufende Schrift, eine laengere Uebersetzung oder ein
+           weiterer Filter die Leiste doch wieder aufblaeht — und dann nimmt sie
+           den Zuwachs in ihren EIGENEN Rollbereich statt aus der Liste. Damit
+           gilt unabhaengig von jeder Metrik: die Liste behaelt mindestens 40%
+           der Schale minus 12px, bei 360x740 also 189px fuer verlangte 148px.
+           WARUM `overflow-y: auto` DAZUGEHOERT: ohne sie wuerde die gedeckelte
+           Leiste ihren Inhalt nach unten hinausschieben, und die Schale
+           (`overflow: hidden`) schnitte ihn ab — die unteren Filterchips waeren
+           unsichtbar UND unerreichbar. Das ist derselbe Fehler, den die feste
+           `height: 74px` an `.section-toolbar` einmal hatte (editors.css).
+           WARUM `min-height: 0`: der 74px-Boden aus editors.css ist ein
+           MINIMUM und schlaegt keinen Deckel; die Zeile hier nimmt der Leiste
+           nur ihr inhaltsbasiertes Schrumpfverbot als Flex-Element, damit der
+           Deckel ueberhaupt wirken kann.
+           NUR IM MOBIL-PROFIL: am Schreibtisch gilt `flex-wrap: nowrap`, die
+           Leiste ist dort gemessen konstant 74px hoch und hat keinen Grund zu
+           wachsen. Ein Deckel waere dort eine Regel ohne Fall. */
+        [data-layout="mobile"] .loc-view.active > .section-toolbar,
+        [data-layout="mobile"] .npc-view.active > .section-toolbar,
+        [data-layout="mobile"] .loot-view.active > .section-toolbar,
+        [data-layout="mobile"] .enc-view.active > .section-toolbar,
+        [data-layout="mobile"] .bestiary-view.active > .section-toolbar {
+            max-height: 60%;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
         .loc-toolbar button,
         .loc-toolbar input,
         .loc-toolbar select,

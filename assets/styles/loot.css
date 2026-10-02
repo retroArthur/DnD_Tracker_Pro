@@ -891,3 +891,33 @@
     align-items: center;
     row-gap: 6px;
 }
+
+/* C1 — KEIN FILTERCHIP IST BREITER ALS 45% SEINER REIHE.
+   Die zehn Kategoriechips sind der groesste Posten der Truhen-Werkzeugleiste:
+   gemessen am gebauten Buendel bei 360x740 (gefuellte Kampagne) 129 von 328px,
+   unter der Linux-Schriftmetrik (nachgestellt mit Verdana) 163 von 359px. Jede
+   zusaetzliche Umbruchzeile geht 1:1 von der Listenspalte ab, denn die Schale
+   hat eine feste Hoehe (`.loot-view.active`, npcs.css).
+   Der Grund fuer die fuenfte Zeile war EIN Chip: "✨ Wundersame Gegenstaende"
+   ist 188px breit, unter Verdana 207px — bei 314px Reihenbreite also 60 bzw.
+   66% der Reihe fuer eine von zehn Kategorien. Ein Chip, der zwei Drittel der
+   Zeile nimmt, laesst sich mit keinem anderen zusammenpacken; er erzwingt eine
+   eigene Zeile und schiebt den Rest weiter.
+   Mit dem Deckel bleibt die Reihe unter BEIDEN Metriken bei 129px — vier
+   Zeilen, unabhaengig von der Schrift (gemessen: 129px mit Segoe UI UND mit
+   Verdana). Genau EIN Chip wird dabei gekuerzt; der zweitbreiteste ("📜
+   Schriftrollen", 109px) bleibt unberuehrt.
+   45% und nicht eine Bildpunktzahl: der Deckel ist eine Aussage ueber das
+   Verhaeltnis zur Reihe, nicht ueber eine Fensterbreite, und waechst mit ihr.
+   `white-space: nowrap` ist die Voraussetzung fuer `text-overflow: ellipsis`
+   und aendert sonst nichts: die Chips waren schon unumbrochen, weil ihre
+   Breite aus dem max-content ihres Inhalts kam.
+   Die Geschwisterreihe der Orte (`.loc-filter-chip`) bekommt den Deckel NICHT:
+   ihre Werkzeugleiste misst 149px von 502px Schale, und ihr breitestes Etikett
+   bleibt unter 45%. Eine Regel ohne Fall waere hier nur Ballast. */
+.loot-view .loot-filter-chip {
+    max-width: 45%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
