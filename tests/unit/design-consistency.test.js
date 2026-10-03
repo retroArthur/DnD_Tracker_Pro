@@ -13892,11 +13892,24 @@ describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst si
 
     // Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in
     // W4-R-02, TRAGEND_GEDULDET in W4-R-03 und TOTE_BEWEGUNG_GEDULDET in
-    // W4-R-05: bewusst LEER, nicht abwesend. Wer eine Ausnahme braucht,
-    // schreibt sie mit Begruendung hier hinein — eine Bauform, die ihre
-    // Geometrie wieder selbst setzt, ist der Anfang der naechsten Drift.
+    // W4-R-05. Anders als jene vier NICHT leer, und das ist der ganze
+    // Unterschied: eine leere Liste macht die VERWESUNGSPROBE unten
+    // bedeutungslos, weil sie nichts zu pruefen hat. Mit dem einen Eintrag
+    // prueft sie wirklich — verschwindet die Hoehe am Zaehlerkreis, meldet sie
+    // den toten Eintrag. Wer eine WEITERE Ausnahme braucht, schreibt sie mit
+    // Begruendung hier hinein; eine Bauform, die ihre Geometrie wieder selbst
+    // setzt, ist der Anfang der naechsten Drift.
     // Schluessel: `<selektor>||<eigenschaft>`.
-    const EIGENMASS_GEDULDET = {};
+    const EIGENMASS_GEDULDET = {
+        // Der Zaehlerkreis an der Werkzeugleiste (loot.css). Er ist ein KREIS
+        // und kein Pillchen: `min-width: 18px` gibt ihm die Mindestbreite,
+        // `height: 18px` die passende Hoehe dazu — ohne sie wuerde er bei
+        // einstelliger Zahl zum Oval. Die Markenbasis traegt dieselben 18 px
+        // ueber line-height 16 + 1 + 1, der Wert weicht also nicht ab, er ist
+        // nur zweimal ausgesprochen. min-width steht aus demselben Grund
+        // ueberhaupt nicht in den beiden Mass-Regexen (Begruendung dort).
+        '.cart-badge||height': 'Zaehlerkreis: Hoehe gehoert zur Mindestbreite, nicht zur Bauform'
+    };
 
     const normSel = s => s.replace(/\s+/g, ' ').trim();
 
@@ -13962,6 +13975,17 @@ describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst si
     // (.cart-badge, min-width 18px) und der Leistenzaehler
     // (.section-toolbar-count, min-width 28px) brauchen eine eigene
     // Mindestbreite, und die ist keine Bauform-Aussage.
+    //
+    // `width|height|line-height` stehen in BEIDEN Listen, und in MASS_TEXTFORM
+    // sind sie nachgetragen: ohne sie war die Hoehe von Chip und Marke von
+    // NICHTS bewacht. Sie ist aber genau das, was deren Abnahmekriterium
+    // herstellt — die 26 px des Chips sind 18 + 3 + 3 + 2, die 18 px der Marke
+    // 16 + 1 + 1, beide aus line-height. Belegt per zeilenneutraler Mutation:
+    // mit der alten Fassung liessen `.loot-filter-chip { height: 40px;
+    // line-height: 34px }` und dasselbe an `.bestiary-badge` die GANZE Ratsche
+    // gruen — und die volle Jest-Suite dazu (75 Suiten, 1963 Tests). Der
+    // Stil-Sollstand (computed-style-diff.spec.js) faengt es auch nicht: er
+    // nimmt width/height ausdruecklich aus und kennt line-height nicht.
     const PAD = 'padding(?:-(?:top|right|bottom|left))?';
     const MASS_IKON = new RegExp('(^|;|\\s)(width|height|' + PAD + '|border-radius)\\s*:', 'g');
     const MASS_TEXTFORM = new RegExp(
