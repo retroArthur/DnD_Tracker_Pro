@@ -13965,7 +13965,7 @@ describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst si
     const PAD = 'padding(?:-(?:top|right|bottom|left))?';
     const MASS_IKON = new RegExp('(^|;|\\s)(width|height|' + PAD + '|border-radius)\\s*:', 'g');
     const MASS_TEXTFORM = new RegExp(
-        '(^|;|\\s)(' + PAD + '|border-radius|font-size|font-weight)\\s*:',
+        '(^|;|\\s)(width|height|line-height|' + PAD + '|border-radius|font-size|font-weight)\\s*:',
         'g'
     );
 
