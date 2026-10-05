@@ -1435,11 +1435,84 @@
                kein rem steht, damit gleich gemeinte Groessen beim Zoomen nicht
                auseinanderlaufen und die Browser-Grundgroesse des Nutzers
                unangetastet bleibt.
-               Die drei fehlenden Sprossen (--text-md, --text-lg, --text-xl)
-               und die --leading-* entstehen in Welle 5. Wer sie hier
-               nachtraegt, nimmt der naechsten Welle ihren roten Nachweis. */
+               Die FEHLENDEN Sprossen entstehen in Welle 5. Dass es drei
+               seien, stand hier falsch — gemessen fehlen SECHS (md, lg, xl,
+               2xl, 3xl, hero) und die drei --leading-*. Sie stehen jetzt im
+               Block darunter; der rote Nachweis der Welle 5 haengt nicht an
+               ihrer Abwesenheit, sondern an den Ratschen W5-R-05/W5-R-06
+               (tests/unit/design-consistency.test.js), die vor ihnen
+               entstanden sind. */
             --text-xs: 11px;
             --text-sm: 12px;
+
+            /* ------------------------------------------------------------
+               Welle 5, Schritt 2 — die SECHS fehlenden Sprossen der
+               Schrift-Skala und die drei Zeilenhoehen
+               ------------------------------------------------------------
+               DIE SKALA IST JETZT VOLLSTAENDIG: 11 / 12 / 14 / 16 / 20 / 26
+               / 34 px plus die begruendete Ausnahme 72 px. Die Rollen aus
+               Paragraph 3.7 des Handoffs:
+                 xs   11  Metazeile, Zaehler, Marke, Tabellenkopf
+                          — NICHTS darunter; das ist die Untergrenze fuer
+                            alles, was gelesen wird
+                 sm   12  Knoepfe, Nav-Reiter, Chips, Tabellenzellen
+                 md   14  Fliesstext, Eingaben, Listenzeilen — der heutige
+                          De-facto-Standard, gemessen 68 px-Deklarationen
+                          auf genau diesem Wert, haeufiger als jeder andere
+                 lg   16  Kartentitel, Modal-Titel, Statblock-Fliesstext
+                 xl   20  Ansichtstitel, Statblock-Name
+                 2xl  26  Dashboard-Kennzahl, Rundenzaehler, Timer-Karte
+                 3xl  34  Timer-Hero
+                 hero 72  NUR das Wuerfelergebnis. Eigene Sprosse und nicht
+                          in die Leiter gerechnet, weil .dice-hero-result
+                          heute 5em traegt — rund 80 px. Auf 34 px zu
+                          ziehen waere eine Umgestaltung, nicht ein Umbau.
+
+               px, nicht rem — dieselbe Begruendung wie bei den zwei
+               vorgezogenen Sprossen oben: F-03 sichert zu, dass ausserhalb
+               von fonts.css kein rem steht, damit gleich gemeinte Groessen
+               beim Zoomen nicht auseinanderlaufen und die Browser-
+               Grundgroesse des Nutzers unangetastet bleibt.
+
+               WARUM IN DIESEM BLOCK UND NICHT IN DEN VIER THEME-BLOECKEN:
+               Schriftgroessen sind themenunabhaengig, und das ist gemessen,
+               nicht angenommen — 3700 Elemente, 0 Abweichung ueber dark,
+               light, sepia und contrast. In einem Theme-Block stehend
+               muesste jeder von vier Bloecken alle neun fuehren, und R-01
+               (Theme-Symmetrie) waere ab der ersten vergessenen Zeile rot.
+
+               DIE DREI ZEILENHOEHEN sind ANGELEGT, aber in dieser Welle
+               NICHT flaechig ausgerollt: nur Regelbloecke, die ohnehin ihre
+               Schriftgroesse aendern, bekommen gleich das passende Leading.
+               Grund: line-height kommt heute in 10 verschiedenen Werten vor
+               (1.5 20x, 1 13x, 1.4 13x, 1.6 9x, 1.2 5x, dazu 1.7, 1.65,
+               1.3 und zwei absolute in px), und der berechnete Zustand
+               zeigt 43 verschiedene Endwerte. Das ist ein eigener Befund in
+               der Groesse einer ganzen Welle und steht nicht in D-06; die
+               Ratschen W5-R-05/W5-R-06 nennen line-height ausdruecklich
+               nicht. Die Tokens anzulegen kostet drei Zeilen und nimmt der
+               spaeteren Arbeit nichts weg — sie flaechig auszurollen kostet
+               eine zweite Welle.
+               1.35 kommt im Bestand heute NICHT vor; die 13 Treffer bei 1.4
+               sind seine naechsten Nachbarn und werden sich beim Umstellen
+               um 0,05em verschieben. Das ist bei 14 px ein Bildpunkt und
+               damit innerhalb der 2-px-Schwelle der Abnahme.
+
+               BEIM ANLEGEN HAT DIESER BLOCK NOCH KEINEN LESER, und das ist
+               die Probe darauf, dass er an der richtigen Stelle steht: ein
+               Token ohne Leser darf NICHTS aendern. Nachgemessen mit
+               tools/typo-baseline.js gegen die Erhebung vor diesem Commit —
+               5 Laeufe, 22155 verglichene Schluessel, 0 Groessen-,
+               0 Gewichts- und 0 Zeilenhoehen-Abweichung. */
+            --text-md: 14px;
+            --text-lg: 16px;
+            --text-xl: 20px;
+            --text-2xl: 26px;
+            --text-3xl: 34px;
+            --text-hero: 72px;
+            --leading-tight: 1.2;
+            --leading-snug: 1.35;
+            --leading-normal: 1.5;
         }
 
         /* ============================================================
