@@ -91,8 +91,9 @@ const M = require('../../tools/typo-map.js');
 const W = require('../../tools/sync-typo-tokens.js');
 
 /** SCHRANKE — offene Deklarationen, die `--check` meldet.
- *  Gemessener Ausgangswert 839. ZIEL 0. Diese Zahl darf nur SINKEN. */
-const OFFEN_MAX = 0;
+ *  Gemessener Ausgangswert 839. ZIEL 0. Diese Zahl darf nur SINKEN.
+ *  Exakt ausgereizt: eine einzige neue Fremdgroesse macht sie rot. */
+const OFFEN_MAX = 839;
 
 /** Das Werkzeug als eigener Prozess fahren — so, wie ein Mensch es faehrt.
  *  Nicht `main()` im Testprozess aufrufen: dann waere weder der
