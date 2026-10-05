@@ -1462,11 +1462,33 @@
                  lg   16  Kartentitel, Modal-Titel, Statblock-Fliesstext
                  xl   20  Ansichtstitel, Statblock-Name
                  2xl  26  Dashboard-Kennzahl, Rundenzaehler, Timer-Karte
-                 3xl  34  Timer-Hero
+                 3xl  34  Timer-Hero — heute 48 px (.timer-hero-time traegt
+                          3em bei einem Elternwert von 16 px). Der Zug ist
+                          also -14 px. Ebenso weit springt die Zahl des
+                          schwebenden Wuerfelpaneels (.fdp-number, auch 3em
+                          = 48 px), die hier bisher gar nicht genannt war.
                  hero 72  NUR das Wuerfelergebnis. Eigene Sprosse und nicht
                           in die Leiter gerechnet, weil .dice-hero-result
-                          heute 5em traegt — rund 80 px. Auf 34 px zu
-                          ziehen waere eine Umgestaltung, nicht ein Umbau.
+                          5em traegt — gemessen 80 px, in dark-1440 und
+                          dark-375 gleich. Auf 34 px zu ziehen waere eine
+                          Umgestaltung, nicht ein Umbau.
+
+               DIESE ZWEI SPROSSEN SIND NOCH NICHT ENTSCHIEDEN. 72 gegen die
+               gemessenen 80 px ist selbst ein Sprung von -8 px, und 34 gegen
+               48 px einer von -14 px — beide ueber der 2-px-Schwelle, die
+               die Abnahme dieser Welle setzt. Der alte Wortlaut nannte die
+               80 px nur, um zu begruenden, warum hero nicht 34 ist, und las
+               sich unter der Ueberschrift "DIE SKALA IST JETZT
+               VOLLSTAENDIG" wie eine abgeschlossene Zuordnung. Sie ist
+               keine: offen ist, ob die beiden Spruenge namentlich
+               freigegeben werden oder ob hero auf 80 px gesetzt und eine
+               Sprosse 48 fuer .timer-hero-time und .fdp-number ergaenzt
+               wird. Das ist eine Gestaltungsentscheidung, keine Umbaufrage.
+               Die vollstaendige Stellenliste — 54 sichtbare Elemente in 26
+               Selektorgruppen springen beim Zug auf die Skala ueber 2 px,
+               davon 44 durch E-3/E-4 gedeckt und 10 nicht — steht im
+               Abschnitt W5-A der Aktenlage
+               (.planning/HANDOFF-V3-OFFENE-PUNKTE.md).
 
                px, nicht rem — dieselbe Begruendung wie bei den zwei
                vorgezogenen Sprossen oben: F-03 sichert zu, dass ausserhalb

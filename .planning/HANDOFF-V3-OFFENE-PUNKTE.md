@@ -4911,10 +4911,14 @@ gegen die die Schritte 3 bis 8 gefahren werden.
   **gefüllter** Kampagne (`seedPopulatedSession`) alle 24 Ansichten plus vier
   Rahmenbereiche, in **drei Zuständen** (Ruhelage · aufgeklappte Formulare,
   Schnellreferenz, Würfelpaneel · Editor-Menüs und Mob-Modus), in vier Themes bei 1440 px
-  und in Dark bei 375 px, und berichtet je Element Größe, Gewicht und Zeilenhöhe.
+  und in Dark bei 375 px, und berichtet je Element **fünf** Felder: Größe, Gewicht,
+  Zeilenhöhe, Sichtbarkeit und eigener Textknoten.
   `--diff` stellt zwei Erhebungen in **Bildpunkten** gegenüber und nennt jede Änderung
   über 2 px einzeln. Das Abnahmekriterium des Handoffs fragt nach Bildpunkten; der
   Stil-Sollstand kennt nur Hashwerte und kann die Frage nicht beantworten.
+- `tests/unit/typo-baseline.test.js` — 25 Fälle am Werkzeug selbst. Es trägt die Abnahme
+  der ganzen Welle und war bis dahin unbewacht; die zwei Befunde, die das gekostet hat,
+  stehen unten unter „Zwei Befunde am Werkzeug".
 - `W5-R-05` und `W5-R-06` in `tests/unit/design-consistency.test.js` — vier Schranken,
   die nur sinken dürfen, dazu sechs bzw. vier Proben an den Ratschen selbst.
 
@@ -4962,7 +4966,123 @@ Im bestehenden Kommentar stand „die drei fehlenden Sprossen (`--text-md`, `--t
 `--text-xl`)". Gemessen fehlten **sechs** — `2xl`, `3xl` und `hero` waren vergessen. Der
 Satz ist berichtigt.
 
+### Zwei Befunde am Werkzeug, in der Prüfrunde W5-A gefunden und behoben
+
+Das Grundlinienwerkzeug stand in der Rolle des Abnahmetors und war selbst ungeprüft. Zwei
+Löcher, beide eigenhändig nachgemessen und beide vor der Behebung rot bewiesen:
+
+**(1) Die geschriebene Grundlinie verlor zwei von fünf Feldern.** `erhebeImBrowser()` erhob
+Sichtbarkeit (`sb`) und eigenen Textknoten (`txt`) — mit einem Kommentar, der sie „den
+Unterschied zwischen einem Befund und einem Fehlalarm" nennt — und das Schreiben warf sie
+weg. Eigener Lauf `--nur dark-375`: 5552 Einträge, alle Tupelbreite 3, Index 3 und 4
+`undefined`. Damit war die Frage, die D-06 überhaupt stellt, aus der Grundlinie **nicht
+beantwortbar**. Dazu standen zwei Summen kommentarlos nebeneinander, die über **dieselbe
+DOM-Menge mit zwei verschiedenen Filtern** rechnen: `unterGrenzeSichtbar` (375 px: 107) und
+`unterGrenzeMitText` (375 px: 229) — die naheliegende Lesart „107 sichtbar, davon 229 mit
+Text" ist arithmetisch unmöglich. Die Kopfzahl der Konsole war `unterGrenzeDom` (249), also
+die größte der drei.
+
+Jetzt: `tupel()` und `TUPEL_BREITE = 5` als benannte, exportierte Stelle, `tupelBreite` im
+Kopf jeder Datei, und `kennzahlen()` weist vier Zahlen aus, jede mit ihrer Bezugsmenge im
+Kommentar. **Am 375-px-Lauf gemessen und aus der Datei selbst nachgerechnet: 249 unter
+11 px im Baum, davon 107 sichtbar, davon 95 mit eigenem Textknoten.** In der Ruhelage
+(1440 px) sind es 153 / 53 / 49 — die 53 und 49 sind unabhängig gegengerechnet.
+
+Rückwärtsverträglich: alle vorher erhobenen Dateien führen Tupelbreite 3, auch die
+eingefrorene Grundlinie der Vermessung in allen fünf Läufen. `vergleiche()` urteilt über
+Sichtbarkeit nur, wenn **beide** Seiten die Flaggen führen. Nachgewiesen: 3-Tupel gegen
+5-Tupel desselben Standes ergibt 5552 verglichene Schlüssel, **0** Sichtbarkeitswechsel,
+Exit 0; gegen die eingefrorene Grundlinie 3637 gemeinsame Schlüssel und 0 Abweichung in
+allen vier Eigenschaften.
+
+**(2) Der Rückgabewert von `--diff` beurteilte nur die Größe.** Fünf eigene Eingaben,
+Rückgabewerte unmaskiert gemessen (vorher → nachher):
+
+| Eingabe | vorher | nachher |
+| --- | --- | --- |
+| kein gemeinsamer Schlüssel, beide Seiten voll | **0**, „OK" | 1 (leerer Vergleich) |
+| jedes Gewicht **und** jede Zeilenhöhe gesprungen | **0**, „OK" | 1 (4 Befunde) |
+| der Lauf fehlt in der neuen Datei | **0**, „OK" | 1 (einseitiger Lauf) |
+| 2000 von 2500 Schlüsseln fehlen | **0**, „OK" | 0, aber in der Schlusszeile beziffert |
+| Kontrolle: Größe +6 px | 1 | 1 |
+
+`befunde` bildet sich jetzt aus sechs Zählern: Größen-Überschreitung, Gewichts-,
+Zeilenhöhen- und Sichtbarkeitswechsel an gemeinsamen Schlüsseln, leerer Vergleich und
+einseitiger Lauf — dazu ein nicht hergestellter Zustand (`offen=false` im Protokoll). Jeder
+Wechsel wird bis 20 Stück **einzeln** genannt, nicht nur summiert; dieselbe Begründung, mit
+der die Größen-Überschreitungen schon einzeln standen.
+
+Zwei Dinge bleiben **bewusst** außerhalb des Urteils und stehen dafür in der Schlusszeile
+unter „NICHT im Urteil":
+
+- **Einseitige Schlüssel.** Die Schlüsselform trägt einen laufenden Index; eine nachladende
+  Liste mit einer Zeile mehr verschiebt alle folgenden. Im Bestand gemessen sind das 1915
+  bzw. 28 Schlüssel — ein Tor, das daran immer rot ist, wird abgeschaltet und schützt danach
+  nichts mehr. `--schluessel-streng` nimmt sie auf Verlangen auf.
+- **„kein Umschalter gefunden"** — siehe den eigenen offenen Punkt unten.
+
+`--egal gewicht,zeilenhoehe,sichtbarkeit` nimmt eine Eigenschaft aus dem Urteil und
+berichtet sie weiter. Schritt 6 stellt 95 Gewichte **absichtlich** um; ohne diesen Ausweg
+wäre der Rückgabewert dort zwangsläufig 1 und das Tor wertlos. Ein unbekannter Wert bricht
+mit 2 ab statt still zu wirken.
+
+Die Schlusszeile nennt jede geprüfte Eigenschaft namentlich. „OK — keine Änderung über
+2 px" klang wie „nichts hat sich bewegt" und bedeutete „die Größe hat sich nicht bewegt".
+
+Wiederholbarkeitsprobe nach der Änderung erneut gefahren: zwei Läufe `dark-375`
+byte-identisch (SHA-256 `23616bad092b530b`).
+
 ### Offen geblieben
+
+- **DIE ZWEI OBERSTEN SPROSSEN SIND NOCH NICHT ENTSCHIEDEN — 54 sichtbare Elemente in 26
+  Selektorgruppen springen über 2 px, 10 davon ungedeckt.** Eigene Rechnung auf gefüllter
+  Kampagne gegen die Skala 11/12/14/16/20/26/34/72, jedes **sichtbare** Element auf die
+  nächste Sprosse gezogen: dark-1440 (alle drei Zustände) **54 Elemente in 26
+  Selektorgruppen** über 2 px, dark-375 **51 in 24**, die reine Ruhelage **46 in 18**.
+  Gedeckt sind 44:
+    - **E-4, 25 Elemente:** 21× SVG-`<text>` der Würfelstatistik 8 → 11 (+3), 4× `.slot-pip`
+      8 → 11 (+3; 18-px-Kreise, `txt=0` gemessen, also ohne Textinhalt).
+    - **E-3, 19 Elemente:** 5× `.empty-state-icon` 56 → 72 (+16); 6× die
+      `*-empty-icon`-Reihe (loot, enc, enc-detail, rt, bestiary-detail) 48 → 34 (-14);
+      `.cf-avatar-placeholder` 40 → 34 (-6); `.dash-char-avatar` und `.loc-detail-icon`
+      28,8 → 26 (-2,8); `.loc-item-icon` und `.npc-item-avatar` 22,4 → 20 (-2,4); dazu die
+      drei Emoji-Knöpfe `.dice-roll-btn` (🎲) und `.timer-ctrl-btn` (▶️ ↺) 22,4 → 20.
+  
+  **Nicht gedeckt, 10 Elemente in 5 Gruppen — ihre namentliche Freigabe steht aus:**
+
+  | Stelle | heute | Ziel | Delta | Anzahl |
+  | --- | --- | --- | --- | --- |
+  | `div.dice-hero-result` (5em) | **80 px** | 72 | **-8** | 1 |
+  | `div.timer-hero-time` (3em) | **48 px** | 34 | **-14** | 1 |
+  | `div.fdp-number#fdp-result` (3em) | **48 px** | 34 | **-14** | 1 |
+  | `div.dms-dice-result` (1,4em) | 22,4 px | 20 | -2,4 | 1 |
+  | `input.attr-input` (1,4em) | 22,4 px | 20 | -2,4 | 6 |
+
+  Alle fünf tragen Text, den jemand liest — keine Emoji, keine Dekoration. Der Kommentar
+  bei `assets/styles/variables.css` (Sprossen `3xl` und `hero`) nennt jetzt je Sprosse den
+  gemessenen Ausgangswert und das Delta und sagt ausdrücklich, dass die Zuordnung **offen**
+  ist; vorher las er sich unter der Überschrift „DIE SKALA IST JETZT VOLLSTÄNDIG" wie
+  abgeschlossen und erwähnte die 80 px nur, um zu begründen, warum `hero` nicht 34 ist.
+  Zwei Wege: die Sprünge namentlich freigeben, oder `--text-hero: 80px` setzen und eine
+  Sprosse 48 für `.timer-hero-time` und `.fdp-number` ergänzen. Das ist eine
+  Gestaltungsentscheidung und gehört vor Schritt 4.
+
+  **Messgenauigkeit, die man kennen muss:** `input.attr-input` wird mit `txt=0` gemessen.
+  Der Wert eines `<input>` ist kein Kindtextknoten — die `txt`-Flagge ist für Formularfelder
+  also kein Lesbarkeitssignal. Für `<input>` entscheidet die Sichtbarkeit allein.
+
+- **9 der 12 Einträge in `FORMULARE` haben gar keinen Umschalter im Markup.** Nachgemessen
+  am 2026-10-05: `data-action="toggle-collapse"` existiert in den Templates nur für
+  `char-form`, `enc-form` und `session-form`. Die neun übrigen (`npc-form`, `loc-form`,
+  `quest-form`, `loot-form`, `wiki-form`, `link-form`, `spell-form`, `shop-form`,
+  `init-form`) melden pro Lauf „kein Umschalter gefunden" — der Zustand „offen" ist für sie
+  also **leer erhoben**, und zwar ohne dass irgendetwas fehlschlägt. Das Protokoll sagt es
+  seit je, nur hat es niemand gezählt; jetzt steht die Zahl in der Schlusszeile von
+  `--diff`. Bewusst **nicht** im Rückgabewert: es ist eine Lücke der Erhebungsbreite, kein
+  Urteil über verglichene Werte, und ein Tor, das daran rot ist, bliebe es bis zur Behebung.
+  Zu klären ist, ob diese Formulare über einen anderen Weg aufgehen (dann gehört der Weg in
+  `erhebeZustandOffen()`) oder ob die Einträge aus `FORMULARE` müssen. **Solange das offen
+  ist, deckt der Zustand „offen" weniger ab, als sein Name verspricht.**
 
 - **DIE GEBÜNDELTEN SCHRIFTDATEIEN SIND DAS FALSCHE TEILSTÜCK — eigene Reparatur,
   ausdrücklich NICHT Teil der Welle 5.** Alle zehn `woff2` unter `assets/fonts/` sind
@@ -5032,11 +5152,25 @@ Satz ist berichtigt.
 node tools/typo-baseline.js --out <datei>.json
 node tools/typo-baseline.js --out <datei>.json --nur dark-375
 
-# Abnahme-Gegenüberstellung, beide Seiten mit derselben Browser-Fassung
+# Abnahme-Gegenüberstellung, beide Seiten mit derselben Browser-Fassung.
+# WAS DER RÜCKGABEWERT BEURTEILT: Größen-Überschreitung über der Schwelle,
+# Gewichts-, Zeilenhöhen- und Sichtbarkeitswechsel an gemeinsamen Schlüsseln,
+# leerer Vergleich (0 gemeinsame Schlüssel), einseitiger Lauf, nicht
+# hergestellter Zustand (offen=false). NICHT im Urteil, aber in der
+# Schlusszeile beziffert: einseitige Schlüssel und nicht gefundene Umschalter.
 node tools/typo-baseline.js --diff <alt>.json <neu>.json
+
+# Absichtlich geänderte Eigenschaft aus dem Urteil nehmen (Schritt 6: 95 Gewichte)
+node tools/typo-baseline.js --diff <alt>.json <neu>.json --egal gewicht
+
+# Zwei Läufe desselben Standes: dann ist jeder einseitige Schlüssel ein Befund
+node tools/typo-baseline.js --diff <alt>.json <neu>.json --schluessel-streng
 
 # Die vier Schranken
 npx jest tests/unit/design-consistency.test.js -t W5-R-0
+
+# Das Werkzeug selbst (25 Fälle)
+npx jest tests/unit/typo-baseline.test.js
 ```
 
 ---
