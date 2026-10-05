@@ -235,8 +235,29 @@ describe('W5-A-02 — der Rueckgabewert von --diff urteilt nicht nur ueber die G
             }
         );
         const r = api.vergleiche(alt, neu, 2);
+        // Zwei, weil beide Dateien ihre eigene Zustandsherstellung
+        // protokollieren — eine Grundlinie, in der nur die alte Seite das
+        // Formular nicht aufbekam, ist genauso unvollstaendig.
         expect(r.zustandNichtHergestellt).toBe(2);
         expect(r.befunde).toBeGreaterThan(0);
+        // Die Seite muss in der Zeile stehen, sonst weiss niemand, welche
+        // Erhebung zu wiederholen ist.
+        const text = r.zeilen.join('\n');
+        expect(text).toMatch(/ZUSTAND NICHT HERGESTELLT \(alt\)/);
+        expect(text).toMatch(/ZUSTAND NICHT HERGESTELLT \(neu\)/);
+    });
+
+    test('ein einseitiges Protokoll nennt nur die betroffene Seite', () => {
+        const alt = erhebung(
+            { 'v|div#0': [16, '400', '21px'] },
+            { protokoll: ['offen/char-form: offen=false'] }
+        );
+        const neu = erhebung({ 'v|div#0': [16, '400', '21px'] }, { protokoll: [] });
+        const r = api.vergleiche(alt, neu, 2);
+        expect(r.zustandNichtHergestellt).toBe(1);
+        const text = r.zeilen.join('\n');
+        expect(text).toMatch(/ZUSTAND NICHT HERGESTELLT \(alt\)/);
+        expect(text).not.toMatch(/ZUSTAND NICHT HERGESTELLT \(neu\)/);
     });
 
     test('ein nicht gefundener Umschalter wird beziffert, ist aber kein Befund', () => {

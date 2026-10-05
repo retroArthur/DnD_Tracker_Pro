@@ -744,10 +744,36 @@ function vergleiche(alt, neu, schwelle, opt = {}) {
         const b = (neu.laeufe || {})[label];
         zeilen.push('');
         zeilen.push('=== Lauf ' + label + ' ===');
-        for (const lauf of [a, b]) {
+        // Beide Seiten einzeln: jede Datei protokolliert ihre eigene
+        // Zustandsherstellung, und eine Grundlinie, in der nur die ALTE Seite
+        // ein Formular nicht aufbekam, ist genauso unvollstaendig wie eine, in
+        // der es die neue war. Die Seite wird in der Zeile genannt, damit man
+        // weiss, welche Erhebung zu wiederholen ist.
+        for (const [seite, lauf] of [
+            ['alt', a],
+            ['neu', b]
+        ]) {
             if (!lauf) continue;
-            zustandNichtHergestellt += zaehleProtokoll(lauf.protokoll, /offen=false/);
-            umschalterFehlt += zaehleProtokoll(lauf.protokoll, /kein Umschalter gefunden/);
+            const offenNein = zaehleProtokoll(lauf.protokoll, /offen=false/);
+            const ohneSchalter = zaehleProtokoll(lauf.protokoll, /kein Umschalter gefunden/);
+            zustandNichtHergestellt += offenNein;
+            umschalterFehlt += ohneSchalter;
+            if (offenNein)
+                zeilen.push(
+                    '  BEFUND ZUSTAND NICHT HERGESTELLT (' +
+                        seite +
+                        '): ' +
+                        offenNein +
+                        'x "offen=false" im Protokoll'
+                );
+            if (ohneSchalter)
+                zeilen.push(
+                    '  kein Umschalter gefunden (' +
+                        seite +
+                        '): ' +
+                        ohneSchalter +
+                        'x — Erhebungsluecke, nicht im Urteil'
+                );
         }
         if (!a || !b) {
             einseitigeLaeufe++;
