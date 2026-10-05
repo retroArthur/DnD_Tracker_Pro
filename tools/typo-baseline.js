@@ -797,7 +797,20 @@ function vergleiche(alt, neu, schwelle, opt = {}) {
         const sichtbarkeit = [];
         for (const k of gemeinsam) {
             const d = Math.round((eb[k][0] - ea[k][0]) * 100) / 100;
-            if (d !== 0) deltas.push({ k, alt: ea[k][0], neu: eb[k][0], d });
+            /* `sb` dient hier NUR der Lesbarkeit des Berichts, nicht dem
+               Urteil: eine Groessenaenderung an einem derzeit verborgenen
+               Element ist genauso eine Aenderung — sie zeigt sich, sobald das
+               Formular aufgeht. Die Zustandserhebung dieses Werkzeugs
+               existiert gerade deshalb. Wer die 2-px-Zusage auf Sichtbares
+               einschraenkte, baeute sich ein Tor, das jede Regression in
+               zugeklappter Oberflaeche durchlaesst. */
+            const sb =
+                eb[k].length >= TUPEL_BREITE
+                    ? eb[k][3] === 1
+                    : ea[k].length >= TUPEL_BREITE
+                      ? ea[k][3] === 1
+                      : null;
+            if (d !== 0) deltas.push({ k, alt: ea[k][0], neu: eb[k][0], d, sb });
             if (String(ea[k][1]) !== String(eb[k][1]))
                 gewicht.push({ k, alt: ea[k][1], neu: eb[k][1] });
             if (String(ea[k][2]) !== String(eb[k][2]))
@@ -844,7 +857,23 @@ function vergleiche(alt, neu, schwelle, opt = {}) {
         const ueber = deltas.filter(x => Math.abs(x.d) > schwelle);
         ueberschreitungen += ueber.length;
         if (ueber.length) {
-            zeilen.push('  UEBER ' + schwelle + ' px (' + ueber.length + ', jede einzeln):');
+            // Die sichtbare Teilmenge steht daneben, weil sie die Frage
+            // beantwortet, die ein Mensch zuerst stellt ("sieht das jemand?")
+            // — gezaehlt wird trotzdem die ganze Menge, siehe Kommentar bei
+            // der Erhebung von `sb` oben.
+            const sichtbareUeber = ueber.filter(x => x.sb === true).length;
+            const unbekannt = ueber.filter(x => x.sb === null).length;
+            zeilen.push(
+                '  UEBER ' +
+                    schwelle +
+                    ' px (' +
+                    ueber.length +
+                    ', davon ' +
+                    sichtbareUeber +
+                    ' sichtbar' +
+                    (unbekannt ? ', ' + unbekannt + ' ohne Sichtbarkeitsangabe' : '') +
+                    ', jede einzeln):'
+            );
             ueber.forEach(x =>
                 zeilen.push(
                     '    ' +
@@ -855,6 +884,11 @@ function vergleiche(alt, neu, schwelle, opt = {}) {
                         ' -> ' +
                         x.neu +
                         '   ' +
+                        (x.sb === true
+                            ? 'sichtbar  '
+                            : x.sb === false
+                              ? 'verborgen '
+                              : '(sb?)     ') +
                         x.k
                 )
             );

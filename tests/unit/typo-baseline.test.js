@@ -296,6 +296,38 @@ describe('W5-A-02 — der Rueckgabewert von --diff urteilt nicht nur ueber die G
         expect(r.befunde).toBeGreaterThan(0);
     });
 
+    test('jede Ueberschreitung nennt ihre Sichtbarkeit, das Urteil bleibt die ganze Menge', () => {
+        // Eine Groessenaenderung an einem derzeit verborgenen Element ist
+        // genauso eine Aenderung — sie zeigt sich, sobald das Formular
+        // aufgeht, und die Zustandserhebung dieses Werkzeugs existiert
+        // gerade deshalb. Die Sichtbarkeit steht im Bericht, nicht im Tor.
+        const alt = erhebung({
+            'v|div#0': [16, '400', '21px', 1, 1],
+            'v|span#0': [16, '400', '21px', 0, 1]
+        });
+        const neu = erhebung({
+            'v|div#0': [22, '400', '21px', 1, 1],
+            'v|span#0': [22, '400', '21px', 0, 1]
+        });
+        const r = api.vergleiche(alt, neu, 2);
+        expect(r.ueberschreitungen).toBe(2);
+        const text = r.zeilen.join('\n');
+        expect(text).toMatch(/UEBER 2 px \(2, davon 1 sichtbar, jede einzeln\)/);
+        expect(text).toMatch(/sichtbar {2}v\|div#0/);
+        expect(text).toMatch(/verborgen v\|span#0/);
+    });
+
+    test('drei-Feld-Grundlinien melden die Ueberschreitung ohne Sichtbarkeitsangabe', () => {
+        const r = api.vergleiche(
+            erhebung({ 'v|div#0': [16, '400', '21px'] }),
+            erhebung({ 'v|div#0': [22, '400', '21px'] }),
+            2
+        );
+        const text = r.zeilen.join('\n');
+        expect(text).toMatch(/1 ohne Sichtbarkeitsangabe/);
+        expect(text).toMatch(/\(sb\?\)/);
+    });
+
     test('Kontrolle: zwei gleiche Erhebungen bleiben ohne Befund', () => {
         const e = { 'v|div#0': [16, '400', '21px', 1, 1], 'v|p#0': [14, '600', '18px', 1, 0] };
         const r = api.vergleiche(erhebung(e), erhebung(e), 2);
