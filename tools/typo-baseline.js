@@ -67,13 +67,41 @@
  *       alle fuenf Laeufe braucht.
  *
  *   node tools/typo-baseline.js --diff <alt.json> <neu.json> [--schwelle 2]
+ *                                [--egal gewicht,zeilenhoehe,sichtbarkeit]
+ *                                [--schluessel-streng]
  *       Stellt zwei Erhebungen Schluessel fuer Schluessel gegenueber und
  *       berichtet je Lauf: Spanne der Groessenaenderung, jede Ueberschreitung
- *       der Schwelle EINZELN, Gewichts- und Zeilenhoehenwechsel, sowie die
- *       Schluessel, die nur in einer der beiden Dateien stehen. Liest auch
- *       die Grundlinie der Vermessung (gleiche Schluesselform
- *       "<ansicht>|<tag.klassen#index>" -> [px, gewicht, zeilenhoehe]).
- *       Rueckgabewert 0, wenn keine Ueberschreitung bleibt, sonst 1.
+ *       der Schwelle EINZELN, Gewichts-, Zeilenhoehen- und
+ *       Sichtbarkeitswechsel, sowie die Schluessel, die nur in einer der
+ *       beiden Dateien stehen. Liest auch die Grundlinie der Vermessung
+ *       (gleiche Schluesselform "<ansicht>|<tag.klassen#index>"; dort und in
+ *       allen vor dem 2026-10-05 erhobenen Dateien ist das Tupel drei Felder
+ *       breit — siehe TUPEL_BREITE).
+ *
+ *       WAS DER RUECKGABEWERT BEURTEILT (und was nicht). Bis zum 2026-10-05
+ *       zaehlte er ausschliesslich Groessen-Ueberschreitungen. Das war ein
+ *       stilles Loch: zwei Erhebungen, in denen JEDES Gewicht und JEDE
+ *       Zeilenhoehe springt, 2000 von 2500 Schluesseln fehlen oder kein
+ *       Schluessel gemeinsam ist, liefen alle mit "OK" und 0 durch —
+ *       nachgemessen, nicht vermutet. Seither bilden sechs Zaehler den
+ *       Rueckgabewert: Groessen-Ueberschreitung, Gewichtswechsel,
+ *       Zeilenhoehenwechsel, Sichtbarkeitswechsel, leerer Vergleich
+ *       (0 gemeinsame Schluessel bei nicht-leeren Seiten) und ein Lauf, der
+ *       nur auf einer Seite steht. Dazu ein nicht hergestellter Zustand
+ *       ("offen=false" im Protokoll).
+ *
+ *       NICHT im Rueckgabewert, aber in jeder Ausgabe beziffert: Schluessel,
+ *       die nur auf einer Seite stehen, und nicht gefundene Umschalter.
+ *       Begruendung an der Fundstelle in vergleiche() — einseitige Schluessel
+ *       sind im Bestand nachgemessen haeufig gutartig, und ein Tor, das
+ *       daran immer rot ist, wird abgeschaltet. `--schluessel-streng` nimmt
+ *       sie auf Verlangen ins Urteil.
+ *
+ *       `--egal` nimmt benannte Eigenschaften aus dem Urteil (sie werden
+ *       weiter berichtet). Dafuer gibt es einen handfesten Grund: Schritt 6
+ *       dieser Welle stellt 95 Schriftgewichte ABSICHTLICH um. Ohne diesen
+ *       Ausweg waere der Rueckgabewert dort zwangslaeufig 1 und das Tor
+ *       wertlos — mit ihm steht die Absicht in der Befehlszeile.
  *
  * Umgebungsvariable TYPO_BASELINE_CHROMIUM: Pfad auf eine Chromium-Binaerdatei,
  * falls die von playwright-core erwartete Revision oertlich nicht liegt. Siehe
@@ -101,6 +129,26 @@ const UNTERGRENZE = 11;
 
 /** Wartezeit nach jedem Zustandswechsel. Siehe Kopfkommentar. */
 const RUHE_MS = 400;
+
+/**
+ * Die Breite des gespeicherten Tupels je Element: [px, gewicht, zeilenhoehe,
+ * sichtbar, eigenerTextknoten].
+ *
+ * WARUM FUENF UND NICHT DREI. Bis zum 2026-10-05 schrieb das Werkzeug nur die
+ * ersten drei Felder, obwohl `erhebeImBrowser()` Sichtbarkeit und Textknoten
+ * erhebt. Folge: aus der Grundlinie war die Frage, die D-06 ueberhaupt stellt
+ * — "wie viel SICHTBARER Text liegt unter 11 px?" — nicht beantwortbar, und
+ * ein Vergleich konnte einen Sichtbarkeitswechsel nicht sehen. Die beiden
+ * Flaggen kosten je Element zwei Zeichen und sind der Unterschied zwischen
+ * einem Befund und einem Fehlalarm (`.slot-pip` ist ein 18px-Kreis mit
+ * font-size 8px und ohne Textinhalt — kein Lesbarkeitsproblem).
+ *
+ * RUECKWAERTSVERTRAEGLICHKEIT: alle vor diesem Datum erhobenen Dateien, auch
+ * die eingefrorene Grundlinie der Vermessung, fuehren Tupelbreite 3. Sie
+ * bleiben lesbar; `vergleiche()` urteilt ueber Sichtbarkeit nur, wenn BEIDE
+ * Seiten die Flaggen fuehren.
+ */
+const TUPEL_BREITE = 5;
 
 /** Die 24 Ansichten, in der Reihenfolge der Navigationsleiste. */
 const ANSICHTEN = [
@@ -425,7 +473,7 @@ async function einLauf(browser, cfg, hilfen) {
         const r = await page.evaluate(erhebeImBrowser, { wurzel, ansicht });
         bereiche[ansicht] = { gefunden: r.gefunden, n: r.elemente.length };
         for (const e of r.elemente) {
-            elemente[e.k] = [e.px, e.fw, e.lh];
+            elemente[e.k] = tupel(e);
             roh.push(e);
         }
     };
@@ -439,24 +487,93 @@ async function einLauf(browser, cfg, hilfen) {
 
     await page.close();
 
-    const sichtbar = roh.filter(e => e.sb);
-    const aufSkala = sichtbar.filter(e => SKALA.includes(e.px)).length;
-    const unterGrenze = roh.filter(e => e.px < UNTERGRENZE);
     return {
         kopf,
         zustaende: cfg.zustaende,
-        anzahl: { dom: roh.length, sichtbar: sichtbar.length },
-        skalaAnteilSichtbar: sichtbar.length
-            ? Math.round((aufSkala / sichtbar.length) * 10000) / 100
-            : 0,
-        unterGrenzeDom: unterGrenze.length,
-        unterGrenzeSichtbar: unterGrenze.filter(e => e.sb).length,
-        unterGrenzeMitText: unterGrenze.filter(e => e.txt).length,
-        minimum: roh.length ? Math.min(...roh.map(e => e.px)) : null,
+        ...kennzahlen(roh),
+        tupelBreite: TUPEL_BREITE,
         protokoll,
         bereiche: sortiereObjekt(bereiche),
         elemente: sortiereObjekt(elemente)
     };
+}
+
+/**
+ * Die gespeicherte Form eines Elements. Eine benannte Stelle, kein Inline-
+ * Ausdruck in `sammeln()`: diese fuenf Felder SIND der Vertrag der
+ * Grundlinie, und ein Vertrag, den man nicht pruefen kann, wurde hier schon
+ * einmal um zwei Felder kleiner geschrieben als gemessen.
+ *
+ * Die Flaggen werden auf 0/1 normalisiert und nicht durchgereicht: ein
+ * `undefined` in der Datei laesst "unsichtbar" nicht von "nicht erhoben"
+ * unterscheiden, und genau diese Unterscheidung traegt den Bericht.
+ */
+function tupel(e) {
+    return [e.px, e.fw, e.lh, e.sb ? 1 : 0, e.txt ? 1 : 0];
+}
+
+/**
+ * Die abgeleiteten Kennzahlen eines Laufes.
+ *
+ * JEDE ZAHL NENNT IHRE BEZUGSMENGE IM NAMEN, und das ist der ganze Sinn der
+ * Auslagerung. Vorher standen `unterGrenzeSichtbar` (375 px: 107) und
+ * `unterGrenzeMitText` (375 px: 229) nebeneinander im selben Objekt; beide
+ * rechnen ueber die DOM-Menge, nur mit verschiedenem Filter, und die
+ * naheliegende Lesart "107 sichtbar, davon 229 mit Text" ist arithmetisch
+ * unmoeglich. Die Zahl, die D-06 verlangt, fehlte: sichtbar UND mit eigenem
+ * Textknoten.
+ */
+function kennzahlen(roh) {
+    const sichtbar = roh.filter(e => e.sb);
+    const aufSkala = sichtbar.filter(e => SKALA.includes(e.px)).length;
+    // Bezugsmenge aller vier unterGrenze-Zahlen: die DOM-Menge des Laufes.
+    const unterGrenze = roh.filter(e => e.px < UNTERGRENZE);
+    return {
+        anzahl: { dom: roh.length, sichtbar: sichtbar.length },
+        skalaAnteilSichtbar: sichtbar.length
+            ? Math.round((aufSkala / sichtbar.length) * 10000) / 100
+            : 0,
+        // ueber die DOM-Menge, einschliesslich verborgener Knoten
+        unterGrenzeDom: unterGrenze.length,
+        // ueber die DOM-Menge, gefiltert auf sichtbar
+        unterGrenzeSichtbar: unterGrenze.filter(e => e.sb).length,
+        // ueber die DOM-Menge, gefiltert auf eigenen Textknoten — NICHT eine
+        // Teilmenge der Zeile darueber, deshalb kann sie groesser sein
+        unterGrenzeMitText: unterGrenze.filter(e => e.txt).length,
+        // der Schnitt beider Filter: das ist der Lesbarkeitsbefund aus D-06
+        unterGrenzeSichtbarMitText: unterGrenze.filter(e => e.sb && e.txt).length,
+        minimum: roh.length ? Math.min(...roh.map(e => e.px)) : null
+    };
+}
+
+/**
+ * Die Konsolenzeile eines Laufes. Vorher meldete sie `unterGrenzeDom` als
+ * Kopfzahl, also die groesste der vier und die einzige, die verborgene Knoten
+ * mitzaehlt — wer nur die Konsole liest, bekam die Zahl, die am wenigsten
+ * ueber Lesbarkeit sagt. Jetzt stehen beide da, jede mit ihrer Bezugsmenge.
+ */
+function kopfzeile(label, k) {
+    return (
+        'Lauf ' +
+        label +
+        ': ' +
+        k.anzahl.dom +
+        ' Elemente (' +
+        k.anzahl.sichtbar +
+        ' sichtbar), auf Skala ' +
+        k.skalaAnteilSichtbar +
+        ' %, unter ' +
+        UNTERGRENZE +
+        'px ' +
+        k.unterGrenzeSichtbarMitText +
+        ' sichtbar mit Text (' +
+        k.unterGrenzeSichtbar +
+        ' sichtbar, ' +
+        k.unterGrenzeDom +
+        ' im Baum), Minimum ' +
+        k.minimum +
+        'px'
+    );
 }
 
 /** Schluessel lexikografisch ordnen. Die Einfuegereihenfolge ist die
@@ -538,24 +655,12 @@ async function erhebe(nurLabel) {
     try {
         for (const cfg of LAEUFE) {
             if (nurLabel && cfg.label !== nurLabel) continue;
-            process.stdout.write('Lauf ' + cfg.label + ' ... ');
+            // Eigene Zeile statt eines Praefixes vor dem Ergebnis: ein Lauf
+            // dauert Minuten, und `kopfzeile()` nennt sein Label selbst.
+            console.log('erhebe ' + cfg.label + ' ...');
             const r = await einLauf(browser, cfg, hilfen);
             ergebnis.laeufe[cfg.label] = r;
-            console.log(
-                r.anzahl.dom +
-                    ' Elemente (' +
-                    r.anzahl.sichtbar +
-                    ' sichtbar), auf Skala ' +
-                    r.skalaAnteilSichtbar +
-                    ' %, unter ' +
-                    UNTERGRENZE +
-                    'px ' +
-                    r.unterGrenzeDom +
-                    ', Minimum ' +
-                    r.minimum +
-                    'px, layout=' +
-                    r.kopf.layout
-            );
+            console.log(kopfzeile(cfg.label, r) + ', layout=' + r.kopf.layout);
         }
     } finally {
         await browser.close();
@@ -567,15 +672,70 @@ async function erhebe(nurLabel) {
 // Vergleich
 // ---------------------------------------------------------------------------
 
+/** Zaehlt, wie oft ein Protokolleintrag eine der beiden Stoerungen meldet.
+ *  Getrennt, weil die eine ein Fehlschlag und die andere eine bekannte
+ *  Erhebungsluecke ist — siehe vergleiche(). */
+function zaehleProtokoll(protokoll, muster) {
+    return (protokoll || []).filter(z => muster.test(String(z))).length;
+}
+
 /**
  * Stellt zwei Erhebungen gegenueber. Die Schwelle ist das Abnahmekriterium
  * des Handoffs ("keine Aenderung ueber 2 px ausser beabsichtigt"); JEDE
  * Ueberschreitung wird EINZELN genannt, weil eine Summe die Frage nicht
  * beantwortet, die das Kriterium stellt.
+ *
+ * `opt.egal` ist eine Liste aus 'gewicht', 'zeilenhoehe' und 'sichtbarkeit':
+ * die genannte Eigenschaft wird weiter berichtet, geht aber nicht in
+ * `befunde`. `opt.schluesselStreng` nimmt umgekehrt die einseitigen
+ * Schluessel mit ins Urteil.
+ *
+ * WAS IN `befunde` GEHT UND WARUM GENAU DAS. Der Rueckgabewert dieses
+ * Werkzeugs traegt die Abnahme der Welle. Bis zum 2026-10-05 zaehlte er nur
+ * Groessen-Ueberschreitungen, und das war an fuenf eigenen Eingaben belegt
+ * folgenlos gruen: jedes Gewicht gesprungen, jede Zeilenhoehe gesprungen,
+ * 2000 von 2500 Schluesseln verschwunden, kein Schluessel gemeinsam, der
+ * ganze Lauf auf einer Seite fehlend — alles "OK".
+ *
+ *   IM URTEIL: Groessen-Ueberschreitung, Gewichts-, Zeilenhoehen- und
+ *   Sichtbarkeitswechsel an GEMEINSAMEN Schluesseln, der leere Vergleich,
+ *   der einseitige Lauf und ein nicht hergestellter Zustand ("offen=false").
+ *   Die letzten drei sind keine Messwerte, sondern die Aussage "hier wurde
+ *   nicht gemessen, was zu messen war" — und die darf nicht als
+ *   unauffaelliger Lauf enden.
+ *
+ *   NICHT IM URTEIL, aber beziffert und in der Schlusszeile genannt:
+ *   einseitige Schluessel und nicht gefundene Umschalter.
+ *     - Einseitige Schluessel sind im Bestand nachgemessen haeufig gutartig
+ *       (die Aktenlage fuehrt 28 bzw. 1915 aus nachladenden Listen — die
+ *       Schluesselform traegt einen laufenden Index, und eine Liste mit einer
+ *       Zeile mehr verschiebt alle folgenden). Ein Tor, das daran immer rot
+ *       ist, wird abgeschaltet und schuetzt danach nichts mehr.
+ *       `--schluessel-streng` nimmt sie fuer den Fall ins Urteil, dass man
+ *       zwei Laeufe desselben Standes vergleicht und Gleichheit erwartet.
+ *     - "kein Umschalter gefunden" betrifft 9 der 12 Eintraege in FORMULARE
+ *       (nachgemessen 2026-10-05: nur char-form, enc-form und session-form
+ *       haben ueberhaupt einen `toggle-collapse`-Umschalter im Markup). Das
+ *       ist eine Luecke der Erhebungsbreite, kein Urteil ueber die
+ *       verglichenen Werte, und als eigener Punkt in der Aktenlage gefuehrt.
+ *
+ * SICHTBARKEIT NUR BEI FUENF-FELD-TUPELN AUF BEIDEN SEITEN. Alle vor dem
+ * 2026-10-05 erhobenen Dateien fuehren drei Felder (auch die eingefrorene
+ * Grundlinie der Vermessung, alle fuenf Laeufe). Ohne diese Bedingung
+ * meldete ein Vergleich gegen sie 3700 erfundene Sichtbarkeitswechsel.
  */
-function vergleiche(alt, neu, schwelle) {
+function vergleiche(alt, neu, schwelle, opt = {}) {
+    const egal = new Set(opt.egal || []);
     const zeilen = [];
     let ueberschreitungen = 0;
+    let gewichtswechsel = 0;
+    let zeilenhoehenwechsel = 0;
+    let sichtbarkeitswechsel = 0;
+    let fehlendeSchluessel = 0;
+    let leereVergleiche = 0;
+    let einseitigeLaeufe = 0;
+    let zustandNichtHergestellt = 0;
+    let umschalterFehlt = 0;
     const labels = [
         ...new Set([...Object.keys(alt.laeufe || {}), ...Object.keys(neu.laeufe || {})])
     ].sort();
@@ -584,8 +744,18 @@ function vergleiche(alt, neu, schwelle) {
         const b = (neu.laeufe || {})[label];
         zeilen.push('');
         zeilen.push('=== Lauf ' + label + ' ===');
+        for (const lauf of [a, b]) {
+            if (!lauf) continue;
+            zustandNichtHergestellt += zaehleProtokoll(lauf.protokoll, /offen=false/);
+            umschalterFehlt += zaehleProtokoll(lauf.protokoll, /kein Umschalter gefunden/);
+        }
         if (!a || !b) {
-            zeilen.push('  nur in ' + (a ? 'alt' : 'neu') + ' vorhanden — kein Vergleich');
+            einseitigeLaeufe++;
+            zeilen.push(
+                '  BEFUND EINSEITIGER LAUF: nur in ' +
+                    (a ? 'alt' : 'neu') +
+                    ' vorhanden — es wurde NICHTS verglichen'
+            );
             continue;
         }
         const ea = a.elemente || {};
@@ -593,10 +763,12 @@ function vergleiche(alt, neu, schwelle) {
         const gemeinsam = Object.keys(ea).filter(k => k in eb);
         const nurAlt = Object.keys(ea).filter(k => !(k in eb));
         const nurNeu = Object.keys(eb).filter(k => !(k in ea));
+        fehlendeSchluessel += nurAlt.length;
 
         const deltas = [];
         const gewicht = [];
         const zeilenhoehe = [];
+        const sichtbarkeit = [];
         for (const k of gemeinsam) {
             const d = Math.round((eb[k][0] - ea[k][0]) * 100) / 100;
             if (d !== 0) deltas.push({ k, alt: ea[k][0], neu: eb[k][0], d });
@@ -604,6 +776,12 @@ function vergleiche(alt, neu, schwelle) {
                 gewicht.push({ k, alt: ea[k][1], neu: eb[k][1] });
             if (String(ea[k][2]) !== String(eb[k][2]))
                 zeilenhoehe.push({ k, alt: ea[k][2], neu: eb[k][2] });
+            if (
+                ea[k].length >= TUPEL_BREITE &&
+                eb[k].length >= TUPEL_BREITE &&
+                ea[k][3] !== eb[k][3]
+            )
+                sichtbarkeit.push({ k, alt: ea[k][3], neu: eb[k][3] });
         }
         deltas.sort((x, y) => Math.abs(y.d) - Math.abs(x.d) || x.k.localeCompare(y.k));
         const spanne = deltas.length
@@ -617,9 +795,26 @@ function vergleiche(alt, neu, schwelle) {
                 '   nur neu: ' +
                 nurNeu.length
         );
+        // Ein Vergleich ohne gemeinsamen Schluessel ist kein unauffaelliger
+        // Lauf, sondern ein misslungener: er hat nichts geprueft, meldete
+        // aber bisher "keine Aenderung".
+        if (gemeinsam.length === 0 && (Object.keys(ea).length || Object.keys(eb).length)) {
+            leereVergleiche++;
+            zeilen.push(
+                '  BEFUND VERGLEICH LEER: beide Seiten tragen Elemente, aber keinen gemeinsamen Schluessel'
+            );
+        }
         zeilen.push('  Groesse geaendert: ' + deltas.length + '   Spanne: ' + spanne);
-        zeilen.push('  Gewicht geaendert: ' + gewicht.length);
-        zeilen.push('  Zeilenhoehe geaendert: ' + zeilenhoehe.length);
+        zeilen.push('  Gewicht geaendert: ' + gewicht.length + istEgal(egal, 'gewicht'));
+        zeilen.push(
+            '  Zeilenhoehe geaendert: ' + zeilenhoehe.length + istEgal(egal, 'zeilenhoehe')
+        );
+        zeilen.push(
+            '  Sichtbarkeit geaendert: ' + sichtbarkeit.length + istEgal(egal, 'sichtbarkeit')
+        );
+        gewichtswechsel += gewicht.length;
+        zeilenhoehenwechsel += zeilenhoehe.length;
+        sichtbarkeitswechsel += sichtbarkeit.length;
         const ueber = deltas.filter(x => Math.abs(x.d) > schwelle);
         ueberschreitungen += ueber.length;
         if (ueber.length) {
@@ -638,6 +833,9 @@ function vergleiche(alt, neu, schwelle) {
                 )
             );
         }
+        nenneWechsel(zeilen, 'Gewichtswechsel', gewicht);
+        nenneWechsel(zeilen, 'Zeilenhoehenwechsel', zeilenhoehe);
+        nenneWechsel(zeilen, 'Sichtbarkeitswechsel', sichtbarkeit);
         if (nurAlt.length) {
             zeilen.push('  nur in alt (bis 20):');
             nurAlt.slice(0, 20).forEach(k => zeilen.push('    ' + k));
@@ -647,7 +845,96 @@ function vergleiche(alt, neu, schwelle) {
             nurNeu.slice(0, 20).forEach(k => zeilen.push('    ' + k));
         }
     }
-    return { zeilen, ueberschreitungen };
+    const befunde =
+        ueberschreitungen +
+        (egal.has('gewicht') ? 0 : gewichtswechsel) +
+        (egal.has('zeilenhoehe') ? 0 : zeilenhoehenwechsel) +
+        (egal.has('sichtbarkeit') ? 0 : sichtbarkeitswechsel) +
+        leereVergleiche +
+        einseitigeLaeufe +
+        zustandNichtHergestellt +
+        (opt.schluesselStreng ? fehlendeSchluessel : 0);
+    return {
+        zeilen,
+        ueberschreitungen,
+        gewichtswechsel,
+        zeilenhoehenwechsel,
+        sichtbarkeitswechsel,
+        fehlendeSchluessel,
+        leereVergleiche,
+        einseitigeLaeufe,
+        zustandNichtHergestellt,
+        umschalterFehlt,
+        egal: [...egal].sort(),
+        schluesselStreng: !!opt.schluesselStreng,
+        befunde
+    };
+}
+
+/** Haengt die Marke an, wenn eine Eigenschaft aus dem Urteil genommen wurde.
+ *  Ohne sie steht eine Zahl in der Ausgabe, von der der Leser nicht wissen
+ *  kann, ob sie gezaehlt hat. */
+function istEgal(egal, name) {
+    return egal.has(name) ? '   (per --egal nicht im Urteil)' : '';
+}
+
+/** Nennt die ersten 20 Wechsel einzeln. Eine Summe allein beantwortet die
+ *  Frage nicht, welche Stelle sich bewegt hat — genau dieselbe Begruendung
+ *  wie bei den Groessen-Ueberschreitungen darueber. */
+function nenneWechsel(zeilen, titel, liste) {
+    if (!liste.length) return;
+    zeilen.push('  ' + titel + ' (' + liste.length + ', bis 20):');
+    liste.slice(0, 20).forEach(x => zeilen.push('    ' + x.alt + ' -> ' + x.neu + '   ' + x.k));
+}
+
+/**
+ * Die Schlusszeile. Sie muss NENNEN, worueber geurteilt wurde: "OK — keine
+ * Aenderung ueber 2 px" klang wie "nichts hat sich bewegt" und bedeutete
+ * "die Groesse hat sich nicht bewegt". Wer daraufhin den Rueckgabewert als
+ * Tor verdrahtet, prueft ein Achtel von dem, was er glaubt.
+ */
+function schlusszeile(r, schwelle) {
+    const nichtImUrteil = [];
+    if (r.fehlendeSchluessel && !r.schluesselStreng)
+        nichtImUrteil.push(
+            r.fehlendeSchluessel + ' nur einseitig vorhandene Schluessel (--schluessel-streng)'
+        );
+    if (r.umschalterFehlt) nichtImUrteil.push(r.umschalterFehlt + ' nicht gefundene Umschalter');
+    for (const name of r.egal) nichtImUrteil.push(name + 'swechsel (per --egal)');
+    const anhang = nichtImUrteil.length
+        ? ' NICHT im Urteil: ' + nichtImUrteil.join(', ') + '.'
+        : '';
+    if (r.befunde === 0) {
+        return (
+            '[typo-baseline --diff] OK — keine Groessenaenderung ueber ' +
+            schwelle +
+            ' px, kein Gewichts-, Zeilenhoehen- oder Sichtbarkeitswechsel, kein leerer ' +
+            'Vergleich, kein einseitiger Lauf, kein nicht hergestellter Zustand.' +
+            anhang
+        );
+    }
+    return (
+        '[typo-baseline --diff] ' +
+        r.befunde +
+        ' Befund(e): ' +
+        r.ueberschreitungen +
+        ' ueber ' +
+        schwelle +
+        ' px, ' +
+        r.gewichtswechsel +
+        ' Gewicht, ' +
+        r.zeilenhoehenwechsel +
+        ' Zeilenhoehe, ' +
+        r.sichtbarkeitswechsel +
+        ' Sichtbarkeit, ' +
+        r.leereVergleiche +
+        ' leerer Vergleich, ' +
+        r.einseitigeLaeufe +
+        ' einseitiger Lauf, ' +
+        r.zustandNichtHergestellt +
+        ' Zustand nicht hergestellt — oben einzeln genannt.' +
+        anhang
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -665,28 +952,39 @@ async function main(argv) {
         const altPfad = argv[i + 1];
         const neuPfad = argv[i + 2];
         if (!altPfad || !neuPfad) {
-            console.error('Aufruf: --diff <alt.json> <neu.json> [--schwelle 2]');
+            console.error(
+                'Aufruf: --diff <alt.json> <neu.json> [--schwelle 2] ' +
+                    '[--egal gewicht,zeilenhoehe,sichtbarkeit] [--schluessel-streng]'
+            );
             return 2;
         }
         const schwelle = parseFloat(argWert(argv, '--schwelle') || '2');
+        const egal = (argWert(argv, '--egal') || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+        const unbekannt = egal.filter(s => !['gewicht', 'zeilenhoehe', 'sichtbarkeit'].includes(s));
+        if (unbekannt.length) {
+            // Harter Abbruch statt stiller Nichtbeachtung: ein vertipptes
+            // `--egal gewichte` wuerde sonst wie eine wirksame Ausnahme
+            // aussehen und der Lauf trotzdem rot — oder, schlimmer, der
+            // Leser glaubt die Ausnahme gelte und sie gilt nicht.
+            console.error('[typo-baseline] unbekanntes --egal: ' + unbekannt.join(', '));
+            return 2;
+        }
         const alt = JSON.parse(fs.readFileSync(altPfad, 'utf8'));
         const neu = JSON.parse(fs.readFileSync(neuPfad, 'utf8'));
         console.log('alt: ' + altPfad + '   (HEAD ' + (alt.head || '?') + ')');
         console.log('neu: ' + neuPfad + '   (HEAD ' + (neu.head || '?') + ')');
         console.log('Schwelle: ' + schwelle + ' px');
-        const { zeilen, ueberschreitungen } = vergleiche(alt, neu, schwelle);
-        console.log(zeilen.join('\n'));
+        const r = vergleiche(alt, neu, schwelle, {
+            egal,
+            schluesselStreng: argv.includes('--schluessel-streng')
+        });
+        console.log(r.zeilen.join('\n'));
         console.log('');
-        console.log(
-            ueberschreitungen === 0
-                ? '[typo-baseline --diff] OK — keine Aenderung ueber ' + schwelle + ' px.'
-                : '[typo-baseline --diff] ' +
-                      ueberschreitungen +
-                      ' Aenderung(en) ueber ' +
-                      schwelle +
-                      ' px — jede oben einzeln genannt.'
-        );
-        return ueberschreitungen === 0 ? 0 : 1;
+        console.log(schlusszeile(r, schwelle));
+        return r.befunde === 0 ? 0 : 1;
     }
 
     const out = argWert(argv, '--out');
@@ -695,6 +993,7 @@ async function main(argv) {
             'Aufruf:\n' +
                 '  node tools/typo-baseline.js --out <datei.json> [--nur <lauf-label>]\n' +
                 '  node tools/typo-baseline.js --diff <alt.json> <neu.json> [--schwelle 2]\n' +
+                '      [--egal gewicht,zeilenhoehe,sichtbarkeit] [--schluessel-streng]\n' +
                 'Laeufe: ' +
                 LAEUFE.map(l => l.label).join(', ')
         );
@@ -736,8 +1035,13 @@ module.exports = {
     SKALA,
     UNTERGRENZE,
     RUHE_MS,
+    TUPEL_BREITE,
+    tupel,
+    kennzahlen,
+    kopfzeile,
     sortiereObjekt,
     vergleiche,
+    schlusszeile,
     erhebe,
     main
 };
