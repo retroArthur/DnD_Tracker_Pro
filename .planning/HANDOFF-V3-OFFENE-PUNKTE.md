@@ -5116,12 +5116,14 @@ byte-identisch (SHA-256 `23616bad092b530b`).
   kein einziges Zeichen der Oberfläche darstellen — genau das ist seit Juni 2026 der Fall.
   Saubere Wächterprobe: für jede `@font-face`-Familie zusichern, dass die Datei a–z, A–Z,
   0–9 und äöüÄÖÜß in ihrer `cmap` führt.
-- **ÜBERGABE AN SCHRITT 3: die Tokenliste von W5-R-05 muss umziehen, nicht kopiert
-  werden.** `SKALA_TOKENS` steht heute im Ratschenblock, weil das Umstellungswerkzeug
-  noch nicht existiert. Sobald `tools/typo-map.js` entsteht, muss die Liste **dorthin
-  wandern** und die Ratsche sie importieren. Zwei hand-synchrone Listen sind in diesem
-  Projekt schon einmal auseinandergelaufen (ARCH-01, deshalb liest `build.py` die
-  Modulliste heute aus `loader.js`). Ein Kommentar an der Fundstelle sagt dasselbe.
+- **~~ÜBERGABE AN SCHRITT 3: die Tokenliste von W5-R-05 muss umziehen, nicht kopiert
+  werden.~~ ERLEDIGT in W5-B.** `SKALA_TOKENS` ist nach `tools/typo-map.js` **verlegt**
+  (nicht kopiert) und wird von der Ratsche importiert; mit ihr die beiden Ausnahmelisten
+  und die Dateiausnahme. `tests/unit/typo-map.test.js` sichert zu, dass in der
+  Ratschendatei keine zweite Aufzählung der Tokennamen entsteht — mit drei einzeln
+  belegten erlaubten Nennungen statt einer Pauschale. Zwei hand-synchrone Listen sind in
+  diesem Projekt schon einmal auseinandergelaufen (ARCH-01, deshalb liest `build.py` die
+  Modulliste heute aus `loader.js`).
 - **UMGEBUNGSMANGEL, kein Befund am Code: die E2E-Suite ist örtlich nicht lauffähig.**
   `playwright-core` 1.57.0 verlangt die Chromium-Revision **1200**; im
   Browser-Zwischenspeicher liegen 1217, 1234 und 1243. `npx playwright test` bricht
@@ -5171,6 +5173,224 @@ npx jest tests/unit/design-consistency.test.js -t W5-R-0
 
 # Das Werkzeug selbst (25 Fälle)
 npx jest tests/unit/typo-baseline.test.js
+```
+
+---
+
+## W5-B — Zuordnungstabelle, Umstellungswerkzeug und sein Wächter (2026-10-06)
+
+**Status: ERLEDIGT.** Zweite Einheit der Welle 5, Schritt 3 des geprüften Plans. Drei
+Commits, **keine Zeile CSS**, **kein Byte Unterschied im gebauten Bündel**. Was entsteht,
+ist das Werkzeug, mit dem Schritt 5 die 839 mechanischen Deklarationen umstellt — und sein
+Wächter, zuerst rot bewiesen.
+
+### Warum das Werkzeug mitcommittet wird und nicht der Diff
+
+Der atomare Commit der Umstellung enthält **nur Werkzeugergebnis**. Alles, worüber ein
+Mensch urteilen muss, steht vorher in eigenen, kleinen Commits. Der Prüfer liest dann
+drei Dateien und einen Bericht statt 839 geänderter Deklarationen.
+
+### Was entstanden ist
+
+- `tools/typo-map.js` — die Zuordnungstabelle (**44 Zeilen**: 28 `em`-Werte, 16
+  px-Literale, auf 8 Sprossen) und die **einzige** Quelle für alles mit zwei Lesern:
+  Tokenliste, `font-size`-Ausnahmen, SVG-Ausnahmen, Dateiausnahme, Schutzliste der
+  Welle-4-Familien, Ikonen-Muster, Kleinst-Grenze. Die Bildpunktwerte der Skala stehen
+  **nicht** darin — `skalaWerte()` liest sie aus `assets/styles/variables.css`.
+- `tools/sync-typo-tokens.js` — `--check` / `--report [--kategorien]` / `--only=<datei>`
+  und der schreibende Lauf. Eigener, klammerzählender Zerleger, der die
+  **Zeichengrenzen** des Wertes mitführt; ein urteilender Zerleger kann das nicht, und
+  zwei unabhängige Rechnungen sind ohnehin verlangt.
+- `tests/unit/typo-map.test.js` — **43 Fälle am Werkzeug**, nicht am Ergebnis.
+
+### Die Rechnung, die `--check` nennt
+
+| Lage | Zahl |
+| --- | --- |
+| `font-size`-Deklarationen im Geltungsbereich (18 Dateien) | **853** |
+| davon bereits auf einer Sprosse (Welle 4) | 2 |
+| davon `inherit` (legt keine Größe fest) | 7 |
+| davon namentlich geduldet, mit Begründung | 5 |
+| davon ohne Tabellenzeile | **0** |
+| davon in einer geschützten Familie | **0** |
+| **OFFEN** | **839** |
+
+**Drei Wege, eine Zahl.** Die 853 nennen (a) der klammerzählende Zerleger des Werkzeugs,
+(b) ein Regex-Zähler im Wächtertest und (c) die Zerlegung der Ratsche W5-R-05, die ihren
+eigenen Zerleger mitbringt. Die 839 stimmen mit `AUSSERHALB_MAX` von W5-R-05 überein —
+zwei getrennt geschriebene Zerleger, dieselbe Menge.
+
+### Der Delta-Bericht, den `--report` schreibt
+
+840 Deklarationen tragen einen Zahlenwert. **31** springen um mehr als 2 px, **809** um
+2 px oder weniger, davon **151** um exakt 0,00 px (die px-Literale, die schon auf einem
+Skalenwert liegen: ihr Text ändert sich, ihr Bildpunkt nicht). Das ist die Liste, die das
+Abnahmekriterium des Handoffs ("keine Änderung > 2 px außer beabsichtigt") namentlich
+braucht und die der Handoff nicht liefert.
+
+**Die 31er-Liste ist gegen eine unabhängige Rechnung abgeglichen**: ein zeilenweiser
+Regex-Zähler aus der Vorab-Vermessung gegen den klammerzählenden Zerleger des Werkzeugs
+nennen **dieselben 31** `Datei:Zeile`-Paare, sortierter Diff **leer**. Zwei Rechnungen,
+die nichts voneinander wissen.
+
+**Die Spalte "alt" ist eine Annahme und wird als solche benannt**: der deklarierte Wert
+bei einer 16-px-Wurzel. Gemessen sitzen nur 723 der 948 `em`-Elemente auf einem
+16-px-Elternwert; bei 225 ist der sichtbare Wert ein Produkt, bis Faktor 0,574. Die
+Tabelle sortiert und lässt abhaken — was auf dem Bildschirm geschieht, misst
+`tools/typo-baseline.js` im Browser in Bildpunkten.
+
+### Zwei Handoff-Zeilen fehlen in der Tabelle, mit Absicht
+
+`26px → --text-2xl` und `34px → --text-3xl` haben **null** Quellstellen. Eine
+Tabellenzeile, die nichts trifft, ist keine Zuordnung, sondern eine Behauptung über einen
+Bestand, den es nicht gibt. Damit sind es 44 Zeilen und nicht 46. Kommt der Wert je vor,
+meldet `--check` ihn als "ohne Zeile" — diese Zusicherung steht auf **0** und ist nicht
+an den Ausgangsbestand gebunden.
+
+### Ein echter Fehler, gefunden und eingefangen
+
+Die erste Fassung des Zerlegers sammelte den Rohtext auf und lief mit dem Original
+auseinander, sobald ein maskierter Kommentar vor der Deklaration stand: `13px` kam als
+`px` an (in `core.css`, Zeile 693, `.form-group label` mit zweizeiligem Kommentar
+darüber). Ein **schreibendes** Werkzeug hätte dort mitten in den Wert geschrieben. Die
+Fassung führt jetzt den absoluten Index mit, und der Wächter prüft die Zeichengrenzen an
+neun Kunstfällen **und an allen 853 echten Stellen einzeln** (`css.slice(von, bis)` muss
+zeichengleich dem gemeldeten Wert sein).
+
+### Die Grenze des Musters, benannt statt verschwiegen
+
+Das Vorbild `tools/sync-editor-toolbars.js` **besitzt** das Markup, das es schreibt, und
+kann deshalb "identisch neu erzeugbar" prüfen. Eine `font-size` steht mitten in
+handgeschriebenem CSS. `--check` kann hier also nur "kein Wert außerhalb der Tokenmenge"
+prüfen — und genau das tut W5-R-05 ohnehin, dauerhaft. **Das Werkzeug ist ein einmaliges
+Umstellungswerkzeug mit Bericht; die dauerhafte Wache sind W5-R-05 und W5-R-06.**
+
+Und die zweite Lehre aus demselben Vorbild: es behauptet in Zeile 18 einen Wächtertest
+(`tests/unit/editor-toolbar-sync.test.js`), den es nicht gibt. Der Wächter dieser Einheit
+prüft deshalb, dass **jeder** von den beiden neuen Dateien genannte Testpfad existiert —
+mit genau einer Ausnahme, und die ist die Pointe: der fehlende Test des Vorbilds wird als
+**fehlend zugesichert**. Entsteht er eines Tages, fällt der Fall und der Kommentar wird
+berichtigt.
+
+### Die Schutzliste: wo eine Ersetzung ein Rückschritt wäre
+
+Der Chip- und Markenvertrag der Welle 4 (W4-R-06) verlangt die Größe an der **Basis** und
+verbietet sie jedem Mitgliedsselektor. Die 53 Chip- und 33 Markenstellen, die der Plan
+nennt, sind damit **erledigt**, nicht ausgenommen — darum steht dort eine 0 und keine
+Ausnahmeliste. Ein Werkzeug, das in einem Mitglied eine `font-size` durch ein Token
+*ersetzt* statt sie zu *entfernen*, macht die Welle 4 rot, und zwar an einer Stelle, die
+wie Fortschritt aussieht. Darum **verweigert** das Werkzeug dort den Dienst (Exit 2).
+
+### Kandidatenmengen: benannt und gezählt, aber nicht geduldet
+
+`--report --kategorien` zählt aus, worüber die Folgeschritte urteilen müssen — die
+Entscheidung selbst bleibt dort, wo sie hingehört:
+
+| Menge | Zahl | Gehört zu |
+| --- | --- | --- |
+| Ikonen und Avatar-Platzhalter (Selektor-Muster) | **73**, davon 18 mit Sprung > 2 px | E-3 |
+| Deklarationen unter 11 px (deklarierter Wert) | **34** | E-4 |
+| Leser der Mobilvergrößerung im Geltungsbereich | **4** (+ 4 in `variables.css`) | E-2 |
+| Geschützte Familien | 18 + 9 Klassen, **0** Eigengrößen | Welle 4 |
+
+**Die 73 sind nicht die 66 des Plans**, und die Differenz ist benannt: die Menge ist über
+die *Größe* nicht zu bestimmen (nur 21 Deklarationen tragen einen Wert ab 32 px, und sechs
+davon sind Zahlen und kein Ikon), sondern über den *Namen*. Ein erster Musterentwurf mit
+`-empty` zählte **91** und zog `.enc-empty-title`, `.detail-empty-text` und
+`.sb-empty-hint` herein — lauter Fließtext in Leerzustands-Kästen, also genau das, was die
+Welle anfassen soll. Nach dem Schärfen sind es 73. Geduldet ist **nichts** davon; der
+Wächter prüft ausdrücklich, dass kein Kandidat in der Dulde-Liste steht.
+
+### Was nicht zur Ratsche gemacht ist, und warum
+
+Die Zahlen 840/31/809/151 sind Eigenschaften des heutigen Bestandes und nach der
+Umstellung alle 0. Härtete man sie ein, müsste der Schritt, der die Welle vollendet,
+seinen eigenen Wächter aufweichen — und ein Wächter, der beim ersten Erfolg gesenkt wird,
+bewacht ab dann nichts. Festgenagelt ist stattdessen die **innere Stimmigkeit** des
+Berichts: die Summe der Lagen gleicht der Gesamtzahl, der Block "> 2 px" hat so viele
+Zeilen wie sein Kopf behauptet, und jede dieser Zeilen trägt wirklich mehr als 2 px. Das
+gilt heute und nach der Umstellung.
+
+### Abnahme
+
+- Roter Nachweis in eigenem Commit (`70c86b5`), Schranke `OFFEN_MAX = 0`:
+  **1 failed / 42 passed**, Ausgabe nennt 853 / 839 beziffert.
+- Schranke **exakt ausgereizt**, nachgemessen: 838 → 1 failed, 839 → 43 passed.
+- `npx jest`: **2048 Tests in 77 Suiten**, alle grün (vorher 2005 in 76).
+- `npm run lint` Exit 0 mit **363** Warnungen · `typecheck` und `typecheck:strict` Exit 0
+  · `python -m pytest tests/build` **30 passed** · beide Builds Exit 0 · beide Wächter OK
+  (`check-f18-kaskade --check`, `sync-aktenlage-anker --check` 0 Abweichungen, 123 Anker).
+- Ratschen unverändert: Dubletten **0**, `!important` **105**, Inline **254**,
+  `transition: all` **0**, W5-R-05 839/603/3, W5-R-06 95.
+- **Das gebaute Bündel ist byteidentisch** mit dem Bau des Vorzustands `a3081be`:
+  `d189459c…` (dev) und `10f35d93…` (prod), erzeugt aus einem `git archive` desselben
+  Commits in einem zweiten Baum. Damit ist jede Bildschirmwirkung ausgeschlossen, bevor
+  irgendein Browser läuft.
+- Grundlinien-Diff gegen die eingefrorene Grundlinie der Vermessung: **18325 verglichene
+  Schlüssel** in 5 Läufen, **0** Größen-, **0** Gewichts-, **0** Zeilenhöhen-, **0**
+  Sichtbarkeitsabweichung, Spanne **0 px**.
+- Linux-Nachstellung (`--modus=verdana`, Faktor 1,155): G3 und G4 vollständig OK, G1 24
+  CI-Schlüssel erfasst, G2 unverändert `npcs:5`/`loot:7` — vorbestehend, und wegen der
+  Byteidentität des Bündels zwangsläufig derselbe Lauf wie am Vorzustand.
+
+### Zwei Beobachtungen am Messaufbau, nicht am Code
+
+- **Die eingefrorene Grundlinie der Vermessung ist kein voll vergleichbarer Maßstab für
+  das committete Werkzeug.** Sie stammt aus den Vorab-Skripten
+  (`20-typo-baseline.mjs`) und trägt ein anderes Dateiformat (`meta`/`elemente` statt
+  `kopf`/`zustaende`), keinen Bündel-SHA und nur die Ruhelage. Daher im Diff: **1915**
+  Schlüssel nur neu (die Zustände "offen" und "mob", die es damals nicht gab) in den zwei
+  Dark-Läufen und **28** Schlüssel nur alt in jedem 1440er-Lauf (vier Bestiar-Listenzeilen:
+  17 statt 13 — dieselben, die W5-A schon benannt hat). Im strengen Modus
+  (`--schluessel-streng`) sind es **112 Befunde, alle einseitige Schlüssel, 0 Größen-,
+  Gewichts-, Zeilenhöhen- oder Sichtbarkeitsabweichung**. Künftige Einheiten sollten
+  Werkzeug gegen Werkzeug vergleichen (Erhebung vor und nach dem Commit, wie W5-A) und
+  die eingefrorene Grundlinie nur als historische Gegenprobe führen.
+- **Die Erhebung ist heute deterministisch**, und das ist gemessen, nicht angenommen: zwei
+  Läufe von `--nur contrast-1440` gegen denselben Baum liefern **byteidentische** Dateien
+  (SHA `35c69cc8…`) und einen Diff mit 0 einseitigen Schlüsseln. Die 18 nicht gefundenen
+  Umschalter aus dem Diff oben liegen damit am Alter der Grundlinie, nicht an einer
+  schwankenden Messung.
+
+### Offen, an die Folgeschritte übergeben
+
+- **Die Entscheidungen E-3 und E-4 sind NICHT getroffen.** Die Kandidatenmengen stehen
+  ausgezählt bereit (73 Ikonen/Avatare, 34 Stellen unter 11 px), geduldet ist keine. Wer
+  sie duldet, trägt sie mit Begründung in `AUSNAHMEN` in `tools/typo-map.js` ein — die
+  Verwesungsprobe von W5-R-05 verlangt, dass jeder Eintrag eine Deklaration trifft.
+- **`EM_MAX` kann 0 nur erreichen, wenn keine geduldete Stelle in `em` stehen bleibt.**
+  W5-R-05b zählt die Einheit **ohne** Rücksicht auf die Dulde-Liste (absichtlich: Schranke
+  1 verlangt ein Token, Schranke 2 verbietet die Einheit). Bleiben die Ikonen bei `3em`,
+  bleibt `EM_MAX` bei deren Zahl stehen. Das muss der urteilende Schritt sehen, bevor er
+  entscheidet — sonst verspricht die Welle eine 0, die ihre eigene Ausnahme verbietet.
+- **Der schreibende Lauf ist noch nie gelaufen.** Seine Richtigkeit ist an neun
+  Kunstfällen und an allen 853 Zeichengrenzen geprüft, aber `fs.writeFileSync` hat in
+  dieser Einheit keine CSS-Datei berührt. Schritt 5 fährt ihn, und zwar mit `--only=` je
+  Datei, damit ein halb gelaufener Lauf nicht zurückgedreht werden muss.
+- **Die Umgebungsmängel aus W5-A bestehen weiter**: `npx playwright test` ist örtlich
+  nicht lauffähig (`playwright-core` 1.57.0 verlangt Chromium-Revision 1200, vorhanden
+  sind 1217/1234/1243). Die Browser-Läufe dieser Einheit sind wieder über
+  `TYPO_BASELINE_CHROMIUM` und `PLAYWRIGHT_BROWSERS_PATH` gefahren; der
+  Browser-Zwischenspeicher des Nutzers ist **nicht** angefasst. `npm run check` bleibt
+  vorbestehend rot, weil `prettier --check` über den ganzen Baum läuft; die drei in dieser
+  Einheit angelegten bzw. geänderten Dateien sind einzeln geprüft — die drei neuen sind
+  prettier-konform, `design-consistency.test.js` war schon an `7e4aa09` nicht konform und
+  ist es unverändert.
+
+### Befehle
+
+```bash
+# Die Rechnung, schreibt nichts, Exit 1 solange eine Stelle offen ist
+node tools/sync-typo-tokens.js --check
+
+# Die Delta-Tabelle und die Kandidatenmengen
+node tools/sync-typo-tokens.js --report --kategorien
+
+# Der schreibende Lauf, gestaffelt je Datei (Schritt 5)
+node tools/sync-typo-tokens.js --only=pwa.css
+
+# Der Wächter (43 Fälle)
+npx jest tests/unit/typo-map.test.js
 ```
 
 ---
