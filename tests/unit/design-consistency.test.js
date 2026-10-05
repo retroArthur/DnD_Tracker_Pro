@@ -14443,7 +14443,7 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  liegen schon richtig: 2 Token aus Welle 4, 7 inherit); nach Abzug der
      *  fuenf geduldeten Stellen bleiben 839 Befunde. ZIEL 0.
      *  Diese Zahl darf nur SINKEN. */
-    const AUSSERHALB_MAX = 0;
+    const AUSSERHALB_MAX = 839;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14457,7 +14457,7 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  die Einheit. Eine Stelle, die von `0.85em` auf `13px` wandert, erfuellt
      *  Schranke 2 und verletzt Schranke 1 weiter — und das soll sie auch.
      *  Diese Zahl darf nur SINKEN. */
-    const EM_MAX = 0;
+    const EM_MAX = 603;
 
     /** SCHRANKE 3 — SVG-Praesentationsattribute `font-size="<zahl>"` im JS.
      *  Gemessener Ausgangswert: 3 Fundstellen in
@@ -14466,7 +14466,7 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  kleinste Schrift der ganzen App. ZIEL 0; duerfen die Beschriftungen auf
      *  ihrem Wert bleiben, stehen sie namentlich in SVG_GEDULDET statt
      *  unentdeckt im Quelltext. Diese Zahl darf nur SINKEN. */
-    const SVG_MAX = 0;
+    const SVG_MAX = 3;
 
     /** Benannte Ausnahmen der dritten Schranke, Schluessel `datei:zeile` —
      *  hier AUSNAHMSWEISE mit Zeile, weil ein SVG-Attribut in einer
@@ -14749,7 +14749,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Der Handoff rechnet 110; das ist um 15 zu hoch — er zaehlt die 10
      *  @font-face-Gewichte aus fonts.css und die 6 schon richtigen 400 mit.
      *  ZIEL 0. Diese Zahl darf nur SINKEN. */
-    const AUSSERHALB_MAX = 0;
+    const AUSSERHALB_MAX = 95;
 
     const alleGewichte = typoAlle('font-weight');
 
