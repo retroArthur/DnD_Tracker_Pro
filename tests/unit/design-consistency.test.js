@@ -14214,7 +14214,21 @@ describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst si
        Elemente unter 11 px, em-Ketten, die Formularschrift des Browsers —
        gehoert in die gemessene Stufe; `tools/typo-baseline.js` erhebt sie und
        stellt zwei Erhebungen in Bildpunkten gegenueber.
+
+   WOHER DIE LISTEN KOMMEN (O-4 / ARCH-01). Die Skalentokens, die beiden
+   Ausnahmelisten und die Dateiausnahme standen im Vorlauf hier, weil
+   `tools/typo-map.js` damals noch nicht existierte; der Kommentar an der
+   Fundstelle sagte den Umzug an. Sie sind jetzt dorthin VERLEGT und werden
+   von hier IMPORTIERT — dieselbe Datei liest auch das Umstellungswerkzeug
+   `tools/sync-typo-tokens.js`. Es gibt also genau eine Liste je Gegenstand.
+   Zwei hand-synchrone Listen sind in diesem Projekt schon einmal
+   auseinandergelaufen (`build.py` trug eine Kopie der Modulliste aus
+   `loader.js`, ARCH-01), und `tests/unit/typo-map.test.js` sichert
+   ausdruecklich zu, dass hier keine zweite Aufzaehlung der Tokennamen
+   entsteht.
    =========================================================================== */
+
+const TYPO_MAP = require('../../tools/typo-map.js');
 
 /** Kommentare zeilentreu leeren. Das globale `withoutComments()` loescht sie
  *  ganz und verschiebt damit jede Zeilennummer — fuer einen Befund, der seine
@@ -14358,51 +14372,51 @@ function typoAnker(d) {
 describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => {
     /** Die Skala. GENAU acht Sprossen (Handoff Paragraph 3.7), davon zwei von
      *  Welle 4 vorgezogen. Geurteilt wird ueber die TOKENNAMEN, nicht ueber
-     *  ihre Werte — welche Zahl hinter `--text-md` steht, entscheidet
+     *  ihre Werte — welche Zahl hinter einer Sprosse steht, entscheidet
      *  `assets/styles/variables.css`, und F-01 wacht darueber, dass der Name
      *  ueberhaupt definiert ist.
      *
-     *  EIN SPAETERER SCHRITT VERLEGT DIESE LISTE nach `tools/typo-map.js` und
-     *  laesst diese Ratsche sie IMPORTIEREN. Bis dahin ist sie hier die
-     *  einzige Quelle — es gibt noch kein zweites Verzeichnis, mit dem sie
-     *  auseinanderlaufen koennte, weil das Umstellungswerkzeug noch nicht
-     *  existiert. Zwei hand-synchrone Listen sind in diesem Projekt schon
-     *  einmal auseinandergelaufen (ARCH-01); genau deshalb darf das Werkzeug
-     *  keine zweite anlegen, sondern muss diese verschieben. */
-    const SKALA_TOKENS = [
-        '--text-xs',
-        '--text-sm',
-        '--text-md',
-        '--text-lg',
-        '--text-xl',
-        '--text-2xl',
-        '--text-3xl',
-        '--text-hero'
-    ];
+     *  VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT. Der
+     *  Vorlauf hielt die Liste hier, weil das Umstellungswerkzeug noch nicht
+     *  existierte; es gab also nie zwei Listen. `typo-map.test.js` prueft,
+     *  dass hier keine zweite entsteht. */
+    const SKALA_TOKENS = TYPO_MAP.SKALA_TOKENS;
 
     /** Was eine Schriftgroesse sein DARF: ein Skalentoken oder `inherit`.
      *  `inherit` bleibt erlaubt, weil es gar keine Groesse FESTLEGT, sondern
      *  eine ueberschreibende Regel zuruecknimmt — die sieben Fundstellen heben
-     *  Groessen auf, die ein Vorfahr gesetzt hat. */
-    const ERLAUBT = new RegExp(`^var\\(\\s*(?:${SKALA_TOKENS.join('|')})\\s*\\)$|^inherit$`);
+     *  Groessen auf, die ein Vorfahr gesetzt hat.
+     *  Aus derselben Quelle wie die Tokenliste: eine zweite Fassung dieses
+     *  Regex waere wieder ein Verzeichnis, das auseinanderlaufen kann. */
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
 
     /** Ein Wert mit der Einheit `em`. Der Vorsatz schliesst `rem` aus: das ist
      *  eine andere Einheit, F-03 urteilt darueber, und eine Schranke, die
      *  beide zaehlt, meint etwas anderes als sie sagt. */
-    const EM_WERT = /(?:^|[\d.\s(])[\d.]+\s*em\b/;
+    const EM_WERT = TYPO_MAP.emRegex();
 
     /**
      * Benannte Ausnahmen. Je Eintrag Datei, Selektor, gemessener Wert und
      * Grund — eine Zeile, die man bestreiten kann. Der Schluessel traegt KEINE
      * Zeilennummer (siehe typoAnker()).
      *
+     * VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT. Der
+     * Grund ist derselbe wie bei der Tokenliste, nur dringender: eine
+     * Ausnahme, die das Umstellungswerkzeug NICHT kennt, waere die
+     * gefaehrlichere Haelfte des Drift-Problems — diese Ratsche wuerde sie
+     * dulden, das Werkzeug sie ueberschreiben.
+     *
      * Dies ist der Ausgangsbestand des Vorlaufs: die fuenf Stellen, deren
      * Verbleib bereits entschieden ist. Die Welle hat weitere zu begruenden —
      * die Emoji- und Avatar-Groessen und die benannten Kleinst-Stellen; jede
      * kommt mit dem Schritt hinzu, der sie beurteilt, und mit ihrer eigenen
-     * Begruendung. Die Liste ist NICHT der Ort, an dem eine unbequeme Stelle
-     * verschwindet: die VERWESUNGSPROBE unten verlangt, dass jeder Eintrag
-     * auch wirklich eine Deklaration trifft.
+     * Begruendung. `node tools/sync-typo-tokens.js --report --kategorien`
+     * zaehlt diese Kandidatenmengen vollstaendig aus, damit der urteilende
+     * Schritt eine Liste vor sich hat und keine Suche — geduldet ist aber
+     * erst, was mit Begruendung in der Liste steht. Die Liste ist NICHT der
+     * Ort, an dem eine unbequeme Stelle verschwindet: die VERWESUNGSPROBE
+     * unten verlangt, dass jeder Eintrag auch wirklich eine Deklaration
+     * trifft.
      *
      * FOLGE FUER DIE ZIELQUOTE, die benannt werden MUSS: weil Ikonen,
      * Avatar-Platzhalter und Browser-Formularschrift bewusst neben der Skala
@@ -14412,31 +14426,7 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      * 63,36 %), und eine Zahl, die beim Aufschreiben schon nicht zu halten
      * ist, wird beim ersten roten Lauf gesenkt statt erfuellt.
      */
-    const FONT_SIZE_GEDULDET = {
-        'dashboard.css||.slot-pip||font-size':
-            '8px. KEINE Schrift: ein Kreis von 18x18 px mit border-radius 50% ' +
-            'und ohne Textinhalt (dashboard.css:311). Gemessen 4 Elemente, alle ' +
-            'ohne eigenen Textknoten. Auf 11 px zu heben aendert nichts ' +
-            'Sichtbares, erzeugt aber vier Treffer im Stil-Sollstand ohne ' +
-            'Nutzen — und wer die Stelle als "Schrift unter 11 px" zaehlt, ' +
-            'rechnet die Zielquote falsch.',
-        'command-palette.css||.cp-result-label||font-size':
-            'var(--font-size-base, 14px). Komponentenleser der ' +
-            'MOBILVERGROESSERUNG, die bewusst stehenbleibt: im Mobil-Profil ' +
-            'wird --font-size-base 16 px, im Desktop-Profil 14 px. Ein ' +
-            'Skalentoken an dieser Stelle naehme der Palette genau diese ' +
-            'Vergroesserung. Der px-Rueckfall ist der Wert fuer den Fall, dass ' +
-            'das Profil-Token fehlt.',
-        'file-backup.css||.backup-entry-name||font-size':
-            'var(--font-size-base, 14px). Dieselbe Begruendung wie ' +
-            '.cp-result-label: Leser der Mobilvergroesserung.',
-        'pwa.css||.pwa-install-btn||font-size':
-            'var(--font-size-small, 12px). Leser der Mobilvergroesserung: ' +
-            '12 px im Desktop-Profil, 14 px im Mobil-Profil.',
-        'pwa.css||.pwa-update-banner||font-size':
-            'var(--font-size-small, 12px). Dieselbe Begruendung wie ' +
-            '.pwa-install-btn.'
-    };
+    const FONT_SIZE_GEDULDET = TYPO_MAP.AUSNAHMEN;
 
     /** SCHRANKE 1 — Deklarationen ausserhalb der Skala.
      *  Gemessener Ausgangswert: 844 von 853 liegen nicht auf der Skala (9
@@ -14473,8 +14463,11 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  Zeichenkette keinen Selektor hat, an dem es haengen koennte. Bewusst
      *  LEER, nicht abwesend (Muster der EXEC_COMMAND_ALLOWLIST): die
      *  Entscheidung ueber die 21 Beschriftungen faellt in einem eigenen
-     *  Schritt, nicht im Vorlauf. */
-    const SVG_GEDULDET = {};
+     *  Schritt, nicht im Vorlauf.
+     *  VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT —
+     *  dieselbe Datei, aus der auch die Tokenliste und die
+     *  font-size-Ausnahmen kommen. */
+    const SVG_GEDULDET = TYPO_MAP.SVG_GEDULDET;
 
     /** Die Quelldateien, in denen ein SVG-Praesentationsattribut stehen kann.
      *  Der Geltungsbereich geht ueber core/features/ui hinaus: 42 der
@@ -14485,9 +14478,11 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  ein eigenstaendiges Druckdokument mit pt-Einheiten und gehoert nicht zur
      *  Bildschirm-Typografie. Die DATEI wird ausgenommen, nicht eine Zahl —
      *  sonst sinkt die Schranke bei der naechsten Aenderung dort von selbst
-     *  und niemand merkt, dass eine Ausnahme stillschweigend gewachsen ist. */
+     *  und niemand merkt, dass eine Ausnahme stillschweigend gewachsen ist.
+     *  Auch diese Ausnahme ist nach `tools/typo-map.js` VERLEGT (O-4): das
+     *  Umstellungswerkzeug muss dieselbe Datei auslassen wie die Ratsche. */
     const JS_VERZEICHNISSE = ['core', 'features', 'ui', 'systems', 'utils', 'render'];
-    const JS_AUSGENOMMEN = ['features/shops/shop-export.js'];
+    const JS_AUSGENOMMEN = TYPO_MAP.AUSGENOMMENE_DATEIEN;
 
     let jsCache = null;
     function jsDateien() {
