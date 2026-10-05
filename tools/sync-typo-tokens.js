@@ -575,6 +575,11 @@ function kategorien(alle) {
             alle.filter(d => d.lage === 'schutz').length +
             ' (Soll: 0)'
     );
+    console.log('  Die 53 Chip- und 33 Markenstellen, die der Plan nennt, sind die von');
+    console.log('  Welle 4 bereits auf diese zwei Basisregeln gezogenen Deklarationen. Sie');
+    console.log('  sind ERLEDIGT, nicht ausgenommen — darum steht hier eine 0 und keine');
+    console.log('  Ausnahmeliste. Was bliebe, waere ein Rueckfall, und den verweigert das');
+    console.log('  Werkzeug (Exit 2), statt ihn durch ein Token zu verdecken.');
 }
 
 /* ===========================================================================
