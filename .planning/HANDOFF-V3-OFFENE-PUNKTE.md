@@ -4898,3 +4898,145 @@ python -m pytest tests/build/                                          # 30 Fael
   Markup-Kommentar als waagerechter Rollstreifen gedacht.
 
 ---
+
+## W5-A — Vorlauf der Welle 5: Grundlinie eingefroren, zwei Ratschen rot bewiesen, Tokens als Nulleingriff (2026-10-05)
+
+**Status: ERLEDIGT.** Erste Einheit der Welle 5 (Schrift). Drei Commits, kein einziger
+Umbau einer bestehenden Deklaration — der Vorlauf legt die Messmittel und die Schranken,
+gegen die die Schritte 3 bis 8 gefahren werden.
+
+### Was entstanden ist
+
+- `tools/typo-baseline.js` — das Grundlinienwerkzeug. Erhebt am gebauten Bündel auf
+  **gefüllter** Kampagne (`seedPopulatedSession`) alle 24 Ansichten plus vier
+  Rahmenbereiche, in **drei Zuständen** (Ruhelage · aufgeklappte Formulare,
+  Schnellreferenz, Würfelpaneel · Editor-Menüs und Mob-Modus), in vier Themes bei 1440 px
+  und in Dark bei 375 px, und berichtet je Element Größe, Gewicht und Zeilenhöhe.
+  `--diff` stellt zwei Erhebungen in **Bildpunkten** gegenüber und nennt jede Änderung
+  über 2 px einzeln. Das Abnahmekriterium des Handoffs fragt nach Bildpunkten; der
+  Stil-Sollstand kennt nur Hashwerte und kann die Frage nicht beantworten.
+- `W5-R-05` und `W5-R-06` in `tests/unit/design-consistency.test.js` — vier Schranken,
+  die nur sinken dürfen, dazu sechs bzw. vier Proben an den Ratschen selbst.
+
+### Die Zahlen, gemessen und zweifach gerechnet
+
+Beide Ratschen zählen mit einem klammerzählenden CSS-Leser; eine Selbstprobe rechnet
+dieselbe Menge mit dem Deklarations-Regex des Handoffs gegen und verlangt dieselbe Zahl.
+
+| Schranke | Ausgangswert | Ziel |
+| --- | --- | --- |
+| W5-R-05a font-size außerhalb der Skala | **839** Befunde von 853 Deklarationen (5 geduldet, 9 schon richtig) | 0 |
+| W5-R-05b font-size in `em` | **603** in 28 verschiedenen Werten | 0 |
+| W5-R-05c SVG-Attribut `font-size="…"` im JS | **3** (dice-stats-render.js, Zeilen 194/210/213) | 0 |
+| W5-R-06 font-weight außerhalb 400/500/600 | **95** von 360 Deklarationen | 0 |
+
+Roter Nachweis in eigenem Commit, mit Schranke 0: `4 failed, 265 passed`. Alle Selbst-,
+Gegen- und Verwesungsproben waren dabei **grün** — die vier roten Zusicherungen sind der
+Befund, nicht ein Fehler im Werkzeug.
+
+**Zwei Zahlen des Handoffs sind falsch** und hier richtiggestellt: `em`-Deklarationen
+**603**, nicht 784; umzustellende Gewichte **95**, nicht 110 (der Handoff zählt die 10
+`@font-face`-Gewichte aus `fonts.css` und die 6 schon richtigen `400` mit).
+Ebenso: `line-height` hat im Geltungsbereich der Ratschen **66** Deklarationen in **10**
+Werten, nicht 67 in 11 — die 67 der Vermessung schließen `variables.css` mit ein.
+
+### Die neun Tokens bewegen nichts, und das ist gemessen
+
+Der Aliasblock in `assets/styles/variables.css` führt jetzt `--text-md` 14 · `--text-lg`
+16 · `--text-xl` 20 · `--text-2xl` 26 · `--text-3xl` 34 · `--text-hero` 72 px und
+`--leading-tight` 1.2 · `--leading-snug` 1.35 · `--leading-normal` 1.5. `--text-xs` (11)
+und `--text-sm` (12) sind unberührt. Ein Token ohne Leser darf nichts ändern, und diese
+Messung ist die Probe darauf, dass der Block an der richtigen Stelle steht:
+
+- Leser-Kontrolle: **0** Fundstellen der neun Tokens im ganzen Baum außer der Definition.
+- `tools/typo-baseline.js`, Erhebung vor und nach dem Commit, dieselbe Browser-Fassung:
+  5 Läufe, **22155** verglichene Schlüssel, **0** Größen-, **0** Gewichts-, **0**
+  Zeilenhöhen-Abweichung, Spanne **0 px**, kein Schlüssel nur auf einer Seite.
+- Stil-Sollstand `tests/e2e/features/computed-style-diff.spec.js`: **4 passed**, also
+  null bewegte Digests — einschließlich des Laufs „Breitere Schriftmetrik bewegt den
+  Digest nicht".
+- Linux-Nachstellung (Verdana, Faktor 1,155): identische Ausgabe vor und nach dem
+  Commit, nachgefahren mit einem Kontrolllauf gegen das Bündel aus dem Vorgänger-Stand.
+
+Im bestehenden Kommentar stand „die drei fehlenden Sprossen (`--text-md`, `--text-lg`,
+`--text-xl`)". Gemessen fehlten **sechs** — `2xl`, `3xl` und `hero` waren vergessen. Der
+Satz ist berichtigt.
+
+### Offen geblieben
+
+- **DIE GEBÜNDELTEN SCHRIFTDATEIEN SIND DAS FALSCHE TEILSTÜCK — eigene Reparatur,
+  ausdrücklich NICHT Teil der Welle 5.** Alle zehn `woff2` unter `assets/fonts/` sind
+  `cyrillic-ext` bzw. `devanagari`; keine enthält einen lateinischen Kleinbuchstaben,
+  eine Ziffer oder einen Umlaut. Inter deckt aus dem lateinischen Alphabet genau drei
+  Zeichen ab: Leerzeichen, A und Ä. Ursache: `tools/fetch-fonts.py` nahm die erste
+  `woff2`-URL der Google-Antwort, und das ist `cyrillic-ext`; der Skript-Fix (WR-12) ist
+  da, aber niemand hat das Skript danach laufen lassen — `git diff` über `assets/fonts/`
+  seit dem einzigen Commit dieser Dateien ist leer. Folge: die Welle 5 fährt **ohne
+  Schriftwechsel**, Segoe UI bleibt. Die Umkehrkosten sind eine Zeile
+  (`--font-ui` wird genau einmal deklariert und genau einmal gelesen, testbewacht durch
+  F-05 mit `expect(uiDecls).toBe(1)`), die Entscheidung ist also nach der Reparatur in
+  einem Einzeiler nachholbar.
+- **„Gebündelt" kommt im `file://`-Betrieb gar nicht an** — derselbe Komplex, eigener
+  Punkt. `build.py` schreibt `url('../fonts/` auf `url('./assets/fonts/` um, also
+  relative Nachbardateien statt `data:`-URI. Das Bündel allein in einen leeren Ordner
+  kopiert und geöffnet: drei `NetworkError`, `document.fonts.load()` falsch. Der Favicon
+  zeigt, dass das Projekt die Konsequenz kennt (`build.py` begründet seinen `data:`-URI
+  ausdrücklich mit dem `file://`-Doppelklick als Hauptmodus) — für die Schriften wurde sie
+  nicht gezogen. Hängt mit dran: die `url()`-Umschreibung in `build.py`, zehn
+  Precache-Pfade in `sw.js` und zwei `cp -r assets/fonts`-Zeilen in `ci.yml`.
+- **Die vier Editor-Schriften des Werkzeugleisten-Menüs sind wirkungslos** (`EDITOR_FONTS`
+  in `core/constants.js`: roboto, inter, poppins, source-sans). Wer im Editor „Inter"
+  wählt, bekommt Arial — den Rückfall. Betrifft gespeicherte Wiki- und Sitzungstexte, in
+  denen schon `font-family`-Auszeichnungen stecken können. Eigener Fehlerbericht, nicht
+  Welle 5.
+- **Nichts im Testnetz prüft Glyphendeckung.** `design-consistency.test.js` und
+  `f18-kaskade.test.js` nehmen `fonts.css` ausdrücklich aus der Betrachtung, und kein
+  E2E-Fall lädt je eine `@font-face`-Familie und sieht nach, ob sie rendert. Eine Schrift
+  kann im Repo liegen, fehlerfrei laden, `document.fonts.check` wahr melden und trotzdem
+  kein einziges Zeichen der Oberfläche darstellen — genau das ist seit Juni 2026 der Fall.
+  Saubere Wächterprobe: für jede `@font-face`-Familie zusichern, dass die Datei a–z, A–Z,
+  0–9 und äöüÄÖÜß in ihrer `cmap` führt.
+- **ÜBERGABE AN SCHRITT 3: die Tokenliste von W5-R-05 muss umziehen, nicht kopiert
+  werden.** `SKALA_TOKENS` steht heute im Ratschenblock, weil das Umstellungswerkzeug
+  noch nicht existiert. Sobald `tools/typo-map.js` entsteht, muss die Liste **dorthin
+  wandern** und die Ratsche sie importieren. Zwei hand-synchrone Listen sind in diesem
+  Projekt schon einmal auseinandergelaufen (ARCH-01, deshalb liest `build.py` die
+  Modulliste heute aus `loader.js`). Ein Kommentar an der Fundstelle sagt dasselbe.
+- **UMGEBUNGSMANGEL, kein Befund am Code: die E2E-Suite ist örtlich nicht lauffähig.**
+  `playwright-core` 1.57.0 verlangt die Chromium-Revision **1200**; im
+  Browser-Zwischenspeicher liegen 1217, 1234 und 1243. `npx playwright test` bricht
+  deshalb bei jedem Fall mit „Executable doesn't exist" ab — unabhängig von jeder
+  Änderung dieser Einheit und auch vor ihr. Die in dieser Einheit nötigen Browser-Läufe
+  sind über zwei Umwege gefahren: `tools/typo-baseline.js` nimmt den Pfad aus
+  `TYPO_BASELINE_CHROMIUM`, und für den Stil-Sollstand zeigte `PLAYWRIGHT_BROWSERS_PATH`
+  auf einen Ordner mit Verzweigungen (`chromium-1200`, `chromium_headless_shell-1200`,
+  `ffmpeg-1011`) auf die vorhandene 1217er Fassung. Der Zwischenspeicher des Nutzers ist
+  dabei **nicht** angefasst worden. Saubere Behebung: `npx playwright install chromium`
+  einmal laufen lassen. **Solange das nicht geschehen ist, ist der Basiswert „595
+  bestanden / 27 übersprungen" nicht ohne Umweg nachvollziehbar** — das sollte vor der
+  nächsten Einheit geklärt sein, weil die Welle 5 Schriftgrößen ändert und das
+  eingefrorene Editor-Testnetz (114 Fälle) ihre Schutzschicht ist.
+- **Die Browser-Fassung bestimmt die Schriftmetrik mit.** Deshalb trägt die Ausgabe des
+  Grundlinienwerkzeugs die benutzte Fassung im Kopf, und der Abnahme-Vergleich muss
+  **beide Seiten mit derselben** erheben. Gegenprobe dieser Einheit: die eingefrorene
+  Grundlinie der Vermessung und eine frische Erhebung unter der 1217er Fassung stimmen
+  auf **3672 gemeinsamen Schlüsseln** in Größe, Gewicht und Zeilenhöhe **vollständig**
+  überein — die Fassungsdrift ist für diese drei Eigenschaften also folgenlos. Die 28
+  Schlüssel, die nur die eingefrorene Grundlinie führt, sind vier Bestiar-Listenzeilen
+  (Nachladen der Liste), kein Größenunterschied.
+
+### Befehle
+
+```bash
+# Grundlinie erheben (Wiederholbarkeitsprobe: zweimal laufen, Dateien byteweise vergleichen)
+node tools/typo-baseline.js --out <datei>.json
+node tools/typo-baseline.js --out <datei>.json --nur dark-375
+
+# Abnahme-Gegenüberstellung, beide Seiten mit derselben Browser-Fassung
+node tools/typo-baseline.js --diff <alt>.json <neu>.json
+
+# Die vier Schranken
+npx jest tests/unit/design-consistency.test.js -t W5-R-0
+```
+
+---
