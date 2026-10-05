@@ -14134,3 +14134,704 @@ describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst si
         expect(Object.keys(EIGENMASS_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5 — die zwei Schrift-Ratschen (W5-R-05, W5-R-06)
+   ===========================================================================
+
+   ZUR NUMMER. Der Handoff nennt sie "R-05" und "R-06". Beide Namen sind in
+   dieser Datei seit Welle 1 belegt (R-05 "die Kaskade entscheidet, nicht die
+   Regel", R-06 "jeder Zeilenanker der Aktenlage trifft seine Deklaration").
+   Die Welle 4 hat dasselbe Problem mit dem Wellen-Vorsatz geloest; das wird
+   hier fortgefuehrt. W5-R-05 und W5-R-06 sind also die Ratschen aus
+   Paragraph 3.7 des Handoffs, nicht Fortsetzungen der Welle-1-Ratschen.
+
+   WARUM SIE VOR DEM CODE ENTSTEHEN. Die Welle 5 stellt 853 font-size- und 95
+   font-weight-Deklarationen um. Keine bestehende Zusicherung urteilt ueber
+   eine Schriftgroesse: F-05 urteilt ueber die FAMILIE, F-03 ueber die EINHEIT
+   (und bleibt gruen, weil die Skala in px steht), F-06 ueber Radien. Der
+   Stil-Sollstand (tests/e2e/features/computed-style-diff.spec.js) hasht
+   `fontSize` und `fontWeight` mit, sieht also eine Bewegung — aber er sieht
+   sie als Hashwert, nicht als Bildpunkte, und er urteilt nicht darueber, OB
+   ein Wert auf der Skala liegt. Ohne die zwei Ratschen unten waere die
+   Umstellung am Tag nach ihrem Abschluss wieder aufweichbar, ohne dass
+   irgendetwas rot wird.
+
+   GEMESSENER AUSGANGSWERT, am 2026-10-05 gegen HEAD 7e4aa09 (Zweig
+   design-welle-4) erhoben, VOR jeder Zeile Umsetzung — unabhaengig von der
+   Vermessung mit einer eigenen Zaehlung nachgerechnet, beide Wege nennen
+   dieselben Zahlen:
+
+     font-size   853 Deklarationen in 18 Dateien
+                 = 603 em (28 verschiedene Werte; haeufigste: 0.85em 121x,
+                   0.9em 97x, 0.8em 91x, 0.75em 66x, 0.7em 39x)
+                 + 237 px (16 verschiedene Werte, 8 bis 32 px)
+                 + 6 var() (davon 2 bereits --text-sm/--text-xs aus Welle 4)
+                 + 7 inherit
+                 -> 844 liegen NICHT auf der Skala, 9 schon (2 Token, 7 inherit)
+     font-weight 360 Deklarationen
+                 = 600 221x, 700 83x, 500 38x, bold 10x, 400 6x,
+                   normal 1x, 300 1x
+                 -> 95 sind umzustellen (83 + 10 + 1 + 1), nicht 110
+     SVG-Attribut 3 Praesentationsattribute `font-size="7|8"` in
+                 features/dice-stats/dice-stats-render.js (194, 210, 213)
+
+   WARUM DIE SVG-ATTRIBUTE HIER MITGEFUEHRT WERDEN, obwohl sie in JS stehen
+   und nicht in CSS: sie erzeugen 21 der 53 in der Ruhelage sichtbaren
+   Elemente unter 11 px — 40 Prozent des Befundes D-06 — und sind weder
+   CSS-Deklaration noch Inline-Stil. Keine CSS-Suche sieht sie, kein
+   Inline-Stil-Zaehler, und der Stil-Sollstand erfasst den berechneten Wert
+   ohne Quellenangabe. Ohne diese dritte Kategorie waere die Zusage "keine
+   Schrift unter 11 px" nach dem naechsten Diagramm-Umbau wieder falsch, und
+   niemand erfuehre es.
+
+   WARUM DIE SCHRANKEN MIT DEM AUSGANGSWERT STARTEN UND NICHT MIT 0.
+   Die Zielwerte sind 0 — aber die Umstellung selbst ist Sache der Schritte 3
+   bis 8 derselben Welle. Eine Schranke von 0 im Vorlauf-Commit laesst die
+   Suite ueber mehrere Commits rot, und eine rote Suite ist in diesem Projekt
+   kein Arbeitszustand, sondern ein blockierendes Tor. Die Form ist deshalb
+   die der bestehenden Ratschen dieser Datei — F-18 (!important 105), F-19
+   (Inline 254), F-20: eine Zahl, die nur SINKEN darf, mit dem gemessenen
+   Ausgangswert als Schranke und dem Ziel daneben. Jeder folgende Schritt
+   senkt sie und nennt seinen eigenen gemessenen Ausgangswert.
+   DASS SIE WIRKLICH GREIFEN, ist mit der Schranke 0 belegt: der Commit
+   "test(W5): die zwei Schrift-Ratschen, rot bewiesen" steht genau dafuer in
+   der Historie, mit der bezifferten Ausgabe 839, 603, 3 und 95 in der
+   Nachricht. Wer die Schranken hier fuer wirkungslos haelt, setzt sie auf 0
+   und sieht dieselbe Ausgabe wieder.
+
+   WAS SIE AUSDRUECKLICH NICHT TUN.
+     - Sie urteilen nicht ueber `line-height`. 66 Deklarationen in 10 Werten
+       sind ein eigener Befund in der Groesse der Welle 3 und stehen nicht in
+       D-06; die Tokens --leading-tight/-snug/-normal entstehen in dieser
+       Welle, ihr flaechiger Einsatz nicht.
+     - Sie urteilen nicht ueber Inline-Typografie in Templates und JS. Das ist
+       Gegenstand eines eigenen Schrittes. F-19 zaehlt heute `style="`-
+       ATTRIBUTE, nicht Deklarationen, und bewegt sich beim Entfernen einer
+       Schriftgroesse nur um die zwei Attribute, die ausschliesslich eine
+       Schriftgroesse tragen (modals-tools.html).
+     - Sie messen nicht im Browser. Was nur der berechnete Zustand zeigt —
+       Elemente unter 11 px, em-Ketten, die Formularschrift des Browsers —
+       gehoert in die gemessene Stufe; `tools/typo-baseline.js` erhebt sie und
+       stellt zwei Erhebungen in Bildpunkten gegenueber.
+   =========================================================================== */
+
+/** Kommentare zeilentreu leeren. Das globale `withoutComments()` loescht sie
+ *  ganz und verschiebt damit jede Zeilennummer — fuer einen Befund, der seine
+ *  Stelle nennen soll, unbrauchbar. Eigene Fassung, weil die gleichnamigen
+ *  Helfer in den Bloecken R-10, R-19 und W4-R-04 dort eingeschlossen sind. */
+function typoOhneKommentare(css) {
+    return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+}
+
+/**
+ * Alle Deklarationen einer Datei MIT ihrem Selektor, ihrem At-Regel-Kontext
+ * und ihrer Zeile.
+ *
+ * Klammerzaehlend statt zeilenweise, aus zwei Gruenden, die beide in diesem
+ * Projekt schon einmal eine Zaehlung verfaelscht haben:
+ *   (1) Das abschliessende Semikolon der LETZTEN Deklaration eines Blocks ist
+ *       in CSS optional. Eine Zerlegung, die nur an `;` trennt, verliert
+ *       genau sie — und das ist die Schreibweise, in der ein Rueckfall an der
+ *       Ratsche vorbeikaeme.
+ *   (2) Ein Selektor (`.btn:hover`) und ein At-Regel-Kopf (`@media
+ *       (max-width: 600px)`) tragen ebenfalls einen Doppelpunkt. Wer nur auf
+ *       "name: wert" prueft, zaehlt sie als Deklarationen mit.
+ * Runde Klammern werden am Stueck uebersprungen, damit ein Semikolon in einer
+ * `url()` oder einem Verlauf keine Deklaration beendet.
+ *
+ * Der SELEKTOR wird mitgefuehrt, weil die Ausnahmelisten unten ihn als
+ * Schluessel brauchen: eine Zeilennummer verschiebt jeder Kommentar-Commit
+ * (die Lehre steht im Block R-06), ein Selektor nicht. Die Zeile wandert
+ * trotzdem mit — aber nur in die Fehlermeldung, nie in einen Schluessel.
+ */
+function typoDeklarationen(css) {
+    const code = typoOhneKommentare(css);
+    const out = [];
+    const stapel = [];
+    let puffer = '';
+    let pufferZeile = 1;
+    let zeile = 1;
+    const abgeben = () => {
+        const t = puffer.trim();
+        const c = t.indexOf(':');
+        if (stapel.length && c > 0) {
+            const prop = t.slice(0, c).trim();
+            if (/^(?:--)?[a-zA-Z][\w-]*$/.test(prop)) {
+                const at = stapel.filter(s => s.startsWith('@'));
+                out.push({
+                    prop: prop.toLowerCase(),
+                    wert: t
+                        .slice(c + 1)
+                        .trim()
+                        .replace(/\s+/g, ' '),
+                    selektoren: [...stapel].reverse().find(s => !s.startsWith('@')) || '(ohne)',
+                    at: at.length ? at.join(' & ') : null,
+                    zeile: pufferZeile
+                });
+            }
+        }
+        puffer = '';
+        pufferZeile = zeile;
+    };
+    for (let i = 0; i < code.length; i++) {
+        const ch = code[i];
+        if (ch === '\n') {
+            zeile++;
+            puffer += ch;
+            if (!puffer.trim()) pufferZeile = zeile;
+            continue;
+        }
+        if (ch === '(') {
+            let k = 1;
+            puffer += ch;
+            i++;
+            while (i < code.length && k > 0) {
+                if (code[i] === '(') k++;
+                else if (code[i] === ')') k--;
+                else if (code[i] === '\n') zeile++;
+                puffer += code[i];
+                i++;
+            }
+            i--;
+            continue;
+        }
+        if (ch === '{') {
+            stapel.push(puffer.trim().replace(/\s+/g, ' '));
+            puffer = '';
+            pufferZeile = zeile;
+            continue;
+        }
+        if (ch === '}') {
+            abgeben();
+            stapel.pop();
+            puffer = '';
+            pufferZeile = zeile;
+            continue;
+        }
+        if (ch === ';') {
+            abgeben();
+            continue;
+        }
+        puffer += ch;
+        if (!puffer.trim()) pufferZeile = zeile;
+    }
+    return out;
+}
+
+/**
+ * Der Geltungsbereich der beiden Ratschen: alle `assets/styles/*.css` ausser
+ * `variables.css` und `fonts.css`. Zeichengleich mit `declarationsOf()` weiter
+ * oben, und aus denselben Gruenden:
+ *   - `fonts.css` enthaelt ausschliesslich @font-face-Bloecke. Deren 10
+ *     `font-weight`-Zeilen (400 4x, 500 2x, 600 3x, 700 1x) BENENNEN eine
+ *     Schriftschnittdatei, sie gestalten nichts. Eine Gewichtsratsche, die sie
+ *     mitzaehlt, verlangte die Loeschung der 700er-Schriftdatei.
+ *   - `variables.css` ist der Ort, an dem die Skala DEFINIERT wird, und
+ *     traegt ausserdem die Deklarationen des Mobil-Profils, die bewusst
+ *     stehenbleiben (`--font-size-base/-small/-title`): unter 16 px loest ein
+ *     Telefon beim Antippen eines Eingabefeldes den Auto-Zoom aus, das
+ *     Entfernen waere eine Funktionsaenderung, kein Umbau. Die Datei
+ *     auszunehmen ist praeziser als vier Ausnahmen zu fuehren — und es ist die
+ *     Ausnahme, die `declarationsOf()` ohnehin schon macht.
+ */
+function typoGeltungsbereich() {
+    return cssFiles.filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css');
+}
+
+/** Alle Deklarationen einer Eigenschaft im Geltungsbereich, mit Datei. */
+function typoAlle(prop) {
+    const out = [];
+    typoGeltungsbereich().forEach(f =>
+        typoDeklarationen(f.content).forEach(d => {
+            if (d.prop === prop) out.push({ datei: f.name, ...d });
+        })
+    );
+    return out;
+}
+
+/** Schluessel einer Ausnahme: Datei, Selektor, Eigenschaft. KEINE Zeile. */
+function typoAnker(d) {
+    return `${d.datei}||${d.selektoren}||${d.prop}`;
+}
+
+describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => {
+    /** Die Skala. GENAU acht Sprossen (Handoff Paragraph 3.7), davon zwei von
+     *  Welle 4 vorgezogen. Geurteilt wird ueber die TOKENNAMEN, nicht ueber
+     *  ihre Werte — welche Zahl hinter `--text-md` steht, entscheidet
+     *  `assets/styles/variables.css`, und F-01 wacht darueber, dass der Name
+     *  ueberhaupt definiert ist.
+     *
+     *  EIN SPAETERER SCHRITT VERLEGT DIESE LISTE nach `tools/typo-map.js` und
+     *  laesst diese Ratsche sie IMPORTIEREN. Bis dahin ist sie hier die
+     *  einzige Quelle — es gibt noch kein zweites Verzeichnis, mit dem sie
+     *  auseinanderlaufen koennte, weil das Umstellungswerkzeug noch nicht
+     *  existiert. Zwei hand-synchrone Listen sind in diesem Projekt schon
+     *  einmal auseinandergelaufen (ARCH-01); genau deshalb darf das Werkzeug
+     *  keine zweite anlegen, sondern muss diese verschieben. */
+    const SKALA_TOKENS = [
+        '--text-xs',
+        '--text-sm',
+        '--text-md',
+        '--text-lg',
+        '--text-xl',
+        '--text-2xl',
+        '--text-3xl',
+        '--text-hero'
+    ];
+
+    /** Was eine Schriftgroesse sein DARF: ein Skalentoken oder `inherit`.
+     *  `inherit` bleibt erlaubt, weil es gar keine Groesse FESTLEGT, sondern
+     *  eine ueberschreibende Regel zuruecknimmt — die sieben Fundstellen heben
+     *  Groessen auf, die ein Vorfahr gesetzt hat. */
+    const ERLAUBT = new RegExp(`^var\\(\\s*(?:${SKALA_TOKENS.join('|')})\\s*\\)$|^inherit$`);
+
+    /** Ein Wert mit der Einheit `em`. Der Vorsatz schliesst `rem` aus: das ist
+     *  eine andere Einheit, F-03 urteilt darueber, und eine Schranke, die
+     *  beide zaehlt, meint etwas anderes als sie sagt. */
+    const EM_WERT = /(?:^|[\d.\s(])[\d.]+\s*em\b/;
+
+    /**
+     * Benannte Ausnahmen. Je Eintrag Datei, Selektor, gemessener Wert und
+     * Grund — eine Zeile, die man bestreiten kann. Der Schluessel traegt KEINE
+     * Zeilennummer (siehe typoAnker()).
+     *
+     * Dies ist der Ausgangsbestand des Vorlaufs: die fuenf Stellen, deren
+     * Verbleib bereits entschieden ist. Die Welle hat weitere zu begruenden —
+     * die Emoji- und Avatar-Groessen und die benannten Kleinst-Stellen; jede
+     * kommt mit dem Schritt hinzu, der sie beurteilt, und mit ihrer eigenen
+     * Begruendung. Die Liste ist NICHT der Ort, an dem eine unbequeme Stelle
+     * verschwindet: die VERWESUNGSPROBE unten verlangt, dass jeder Eintrag
+     * auch wirklich eine Deklaration trifft.
+     *
+     * FOLGE FUER DIE ZIELQUOTE, die benannt werden MUSS: weil Ikonen,
+     * Avatar-Platzhalter und Browser-Formularschrift bewusst neben der Skala
+     * bleiben, gilt die Zusage ">= 95 % auf einem Skalenwert" fuer die
+     * TEXT-Deklarationen, nicht fuer alle sichtbaren Elemente. Auf der
+     * Elementmenge ist sie arithmetisch nicht erreichbar (Ausgangswert
+     * 63,36 %), und eine Zahl, die beim Aufschreiben schon nicht zu halten
+     * ist, wird beim ersten roten Lauf gesenkt statt erfuellt.
+     */
+    const FONT_SIZE_GEDULDET = {
+        'dashboard.css||.slot-pip||font-size':
+            '8px. KEINE Schrift: ein Kreis von 18x18 px mit border-radius 50% ' +
+            'und ohne Textinhalt (dashboard.css:311). Gemessen 4 Elemente, alle ' +
+            'ohne eigenen Textknoten. Auf 11 px zu heben aendert nichts ' +
+            'Sichtbares, erzeugt aber vier Treffer im Stil-Sollstand ohne ' +
+            'Nutzen — und wer die Stelle als "Schrift unter 11 px" zaehlt, ' +
+            'rechnet die Zielquote falsch.',
+        'command-palette.css||.cp-result-label||font-size':
+            'var(--font-size-base, 14px). Komponentenleser der ' +
+            'MOBILVERGROESSERUNG, die bewusst stehenbleibt: im Mobil-Profil ' +
+            'wird --font-size-base 16 px, im Desktop-Profil 14 px. Ein ' +
+            'Skalentoken an dieser Stelle naehme der Palette genau diese ' +
+            'Vergroesserung. Der px-Rueckfall ist der Wert fuer den Fall, dass ' +
+            'das Profil-Token fehlt.',
+        'file-backup.css||.backup-entry-name||font-size':
+            'var(--font-size-base, 14px). Dieselbe Begruendung wie ' +
+            '.cp-result-label: Leser der Mobilvergroesserung.',
+        'pwa.css||.pwa-install-btn||font-size':
+            'var(--font-size-small, 12px). Leser der Mobilvergroesserung: ' +
+            '12 px im Desktop-Profil, 14 px im Mobil-Profil.',
+        'pwa.css||.pwa-update-banner||font-size':
+            'var(--font-size-small, 12px). Dieselbe Begruendung wie ' +
+            '.pwa-install-btn.'
+    };
+
+    /** SCHRANKE 1 — Deklarationen ausserhalb der Skala.
+     *  Gemessener Ausgangswert: 844 von 853 liegen nicht auf der Skala (9
+     *  liegen schon richtig: 2 Token aus Welle 4, 7 inherit); nach Abzug der
+     *  fuenf geduldeten Stellen bleiben 839 Befunde. ZIEL 0.
+     *  Diese Zahl darf nur SINKEN. */
+    const AUSSERHALB_MAX = 0;
+
+    /** SCHRANKE 2 — Schriftgroessen in `em`.
+     *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
+     *  Sie ist die eigentliche Ursache des Befundes: ein em-Wert
+     *  multipliziert sich mit dem Elternwert, und 225 der 948 em-Elemente
+     *  sitzen auf einem Elternwert ungleich 16 px — ihr sichtbarer Wert ist
+     *  ein Produkt, bis Faktor 0,574 (.cf-skill-row 0,82em ueber
+     *  .cf-skill-exp-label 0,7em = 9,18 px). ZIEL 0.
+     *  Eigene Schranke und nicht in Schranke 1 aufgegangen, weil sie etwas
+     *  anderes zusichert: Schranke 1 verlangt ein Token, Schranke 2 verbietet
+     *  die Einheit. Eine Stelle, die von `0.85em` auf `13px` wandert, erfuellt
+     *  Schranke 2 und verletzt Schranke 1 weiter — und das soll sie auch.
+     *  Diese Zahl darf nur SINKEN. */
+    const EM_MAX = 0;
+
+    /** SCHRANKE 3 — SVG-Praesentationsattribute `font-size="<zahl>"` im JS.
+     *  Gemessener Ausgangswert: 3 Fundstellen in
+     *  features/dice-stats/dice-stats-render.js (Zeilen 194, 210, 213) mit den
+     *  Werten 8, 7 und 7 — zusammen 21 sichtbare Elemente unter 11 px, die
+     *  kleinste Schrift der ganzen App. ZIEL 0; duerfen die Beschriftungen auf
+     *  ihrem Wert bleiben, stehen sie namentlich in SVG_GEDULDET statt
+     *  unentdeckt im Quelltext. Diese Zahl darf nur SINKEN. */
+    const SVG_MAX = 0;
+
+    /** Benannte Ausnahmen der dritten Schranke, Schluessel `datei:zeile` —
+     *  hier AUSNAHMSWEISE mit Zeile, weil ein SVG-Attribut in einer
+     *  Zeichenkette keinen Selektor hat, an dem es haengen koennte. Bewusst
+     *  LEER, nicht abwesend (Muster der EXEC_COMMAND_ALLOWLIST): die
+     *  Entscheidung ueber die 21 Beschriftungen faellt in einem eigenen
+     *  Schritt, nicht im Vorlauf. */
+    const SVG_GEDULDET = {};
+
+    /** Die Quelldateien, in denen ein SVG-Praesentationsattribut stehen kann.
+     *  Der Geltungsbereich geht ueber core/features/ui hinaus: 42 der
+     *  umzubauenden JS-Stellen liegen in systems/, utils/, render/ und
+     *  loader.js. Eine Ausnahmeliste, die fast die Haelfte des Befundes
+     *  umfasst, bewacht nichts mehr.
+     *  `features/shops/shop-export.js` ist namentlich ausgenommen: es erzeugt
+     *  ein eigenstaendiges Druckdokument mit pt-Einheiten und gehoert nicht zur
+     *  Bildschirm-Typografie. Die DATEI wird ausgenommen, nicht eine Zahl —
+     *  sonst sinkt die Schranke bei der naechsten Aenderung dort von selbst
+     *  und niemand merkt, dass eine Ausnahme stillschweigend gewachsen ist. */
+    const JS_VERZEICHNISSE = ['core', 'features', 'ui', 'systems', 'utils', 'render'];
+    const JS_AUSGENOMMEN = ['features/shops/shop-export.js'];
+
+    let jsCache = null;
+    function jsDateien() {
+        if (jsCache) return jsCache;
+        const out = [];
+        const lauf = rel => {
+            const abs = path.join(REPO, rel);
+            if (!fs.existsSync(abs)) return;
+            for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
+                const kind = rel + '/' + e.name;
+                if (e.isDirectory()) lauf(kind);
+                else if (e.name.endsWith('.js') && !JS_AUSGENOMMEN.includes(kind))
+                    out.push({
+                        name: kind,
+                        content: fs.readFileSync(path.join(REPO, kind), 'utf8')
+                    });
+            }
+        };
+        JS_VERZEICHNISSE.forEach(lauf);
+        out.push({ name: 'loader.js', content: fs.readFileSync(path.join(REPO, 'loader.js'), 'utf8') });
+        jsCache = out;
+        return out;
+    }
+
+    /** Jede Fundstelle eines SVG-Praesentationsattributs, mit `datei:zeile`. */
+    function svgFundstellen() {
+        const out = [];
+        jsDateien().forEach(f => {
+            f.content.split('\n').forEach((z, i) => {
+                for (const m of z.matchAll(/font-size\s*=\s*["']([^"']*)["']/g)) {
+                    out.push({ anker: `${f.name}:${i + 1}`, wert: m[1] });
+                }
+            });
+        });
+        return out;
+    }
+
+    const alleGroessen = typoAlle('font-size');
+
+    // ---- Schranke 1: nur Tokens --------------------------------------
+
+    test('W5-R-05a: keine font-size ausserhalb der Skala', () => {
+        const befunde = [];
+        alleGroessen.forEach(d => {
+            const wert = d.wert.replace(/\s*!important$/, '').trim();
+            if (ERLAUBT.test(wert)) return;
+            if (FONT_SIZE_GEDULDET[typoAnker(d)]) return;
+            befunde.push(
+                `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }` +
+                    (d.at ? `  @ ${d.at}` : '')
+            );
+        });
+        if (befunde.length > AUSSERHALB_MAX) {
+            /* Nur im roten Fall. `toBeLessThanOrEqual` meldet "expected <= N"
+               und nennt die Lage nicht; eine Gegenueberstellung von Objekten
+               druckt Zahl UND Stellen, und genau das soll ein roter Lauf
+               leisten — der Nachweis einer Ratsche ist ihre bezifferte
+               Ausgabe, nicht die Behauptung, sie greife. */
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleGroessen.length,
+                geduldet: Object.keys(FONT_SIZE_GEDULDET).length,
+                schranke: AUSSERHALB_MAX,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: AUSSERHALB_MAX,
+                gesamt: alleGroessen.length,
+                geduldet: Object.keys(FONT_SIZE_GEDULDET).length,
+                schranke: AUSSERHALB_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(AUSSERHALB_MAX);
+    });
+
+    // ---- Schranke 2: keine em-Einheit --------------------------------
+
+    test('W5-R-05b: keine Schriftgroesse in em', () => {
+        const treffer = alleGroessen.filter(d => EM_WERT.test(d.wert));
+        if (treffer.length > EM_MAX) {
+            const werte = {};
+            treffer.forEach(d => {
+                const m = d.wert.match(/([\d.]+\s*em)/);
+                if (m) werte[m[1]] = (werte[m[1]] || 0) + 1;
+            });
+            expect({
+                em: treffer.length,
+                verschiedeneWerte: Object.keys(werte).length,
+                schranke: EM_MAX,
+                verteilung: werte,
+                befunde: treffer.map(
+                    d => `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }`
+                )
+            }).toEqual({
+                em: EM_MAX,
+                verschiedeneWerte: Object.keys(werte).length,
+                schranke: EM_MAX,
+                verteilung: werte,
+                befunde: []
+            });
+        }
+        expect(treffer.length).toBeLessThanOrEqual(EM_MAX);
+    });
+
+    // ---- Schranke 3: SVG-Praesentationsattribute ---------------------
+
+    test('W5-R-05c: kein font-size-Attribut in einer SVG-Zeichenkette im JS', () => {
+        const befunde = svgFundstellen()
+            .filter(s => !SVG_GEDULDET[s.anker])
+            .map(s => `${s.anker}  font-size="${s.wert}"`);
+        if (befunde.length > SVG_MAX) {
+            expect({ svgAttribute: befunde.length, schranke: SVG_MAX, befunde }).toEqual({
+                svgAttribute: SVG_MAX,
+                schranke: SVG_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(SVG_MAX);
+    });
+
+    // ---- Proben an der Ratsche selbst --------------------------------
+
+    test('SELBSTPROBE: der Geltungsbereich ist die Menge aus declarationsOf()', () => {
+        // Ohne diese Zahlen ist jede Zusicherung oben durch WEGLASSEN
+        // erfuellbar: wer eine Datei aus dem Geltungsbereich nimmt, macht die
+        // Ratsche gruen, ohne eine Zeile CSS zu aendern.
+        const namen = typoGeltungsbereich().map(f => f.name);
+        expect(cssFiles.length).toBe(20);
+        expect(namen.length).toBe(18);
+        expect(namen).not.toContain('variables.css');
+        expect(namen).not.toContain('fonts.css');
+        // Gegenrechnung mit einer ZWEITEN, unabhaengigen Zaehlart: der
+        // Deklarations-Regex ueber derselben Dateimenge. Zwei Wege, die nichts
+        // voneinander wissen, muessen dieselbe Zahl nennen — sonst zaehlt
+        // einer von beiden etwas anderes, als er behauptet.
+        const perRegex = typoGeltungsbereich().reduce(
+            (n, f) =>
+                n + [...withoutComments(f.content).matchAll(/(^|[{;}])\s*font-size\s*:/g)].length,
+            0
+        );
+        expect(alleGroessen.length).toBe(perRegex);
+        expect(alleGroessen.length).toBeGreaterThan(500);
+    });
+
+    test('SELBSTPROBE: typoDeklarationen() zaehlt Deklarationen, nicht Vorkommen', () => {
+        const props = css => typoDeklarationen(css).map(d => d.prop);
+        const werte = css => typoDeklarationen(css).map(d => d.wert);
+        const sel = css => typoDeklarationen(css).map(d => d.selektoren);
+
+        // (a) der gewoehnliche Fall
+        expect(props('.a { font-size: 12px; }')).toEqual(['font-size']);
+        // (b) letzte Deklaration OHNE Semikolon — die Schreibweise, in der ein
+        //     Rueckfall an einer rein `;`-basierten Zerlegung vorbeikaeme
+        expect(props('.a { color: red; font-size: 13px }')).toEqual(['color', 'font-size']);
+        expect(werte('.a { color: red; font-size: 13px }')).toEqual(['red', '13px']);
+        // (c) ein Selektor mit Doppelpunkt ist KEINE Deklaration
+        expect(props('.a:hover { }')).toEqual([]);
+        expect(props('.a:hover { font-size: 1em }')).toEqual(['font-size']);
+        // (d) ein At-Regel-Kopf ist KEINE Deklaration, und der Selektor im
+        //     Innern wird richtig zugeordnet
+        expect(props('@media (max-width: 600px) { .a { font-size: 10px } }')).toEqual([
+            'font-size'
+        ]);
+        expect(sel('@media (max-width: 600px) { .a { font-size: 10px } }')).toEqual(['.a']);
+        expect(
+            typoDeklarationen('@media (max-width: 600px) { .a { font-size: 10px } }')[0].at
+        ).toBe('@media (max-width: 600px)');
+        // (e) ein Semikolon in einer url() beendet keine Deklaration
+        expect(props('.a { background: url("x;y.png"); font-size: 9px }')).toEqual([
+            'background',
+            'font-size'
+        ]);
+        // (f) Kommentare zaehlen nicht, und sie verschieben keine Zeile
+        const mitKommentar = '.a {\n/* font-size: 99px */\nfont-size: 14px;\n}';
+        expect(props(mitKommentar)).toEqual(['font-size']);
+        expect(typoDeklarationen(mitKommentar)[0].zeile).toBe(3);
+    });
+
+    test('GEGENPROBE: eine erfundene Fremdgroesse wird gefunden', () => {
+        // Ohne diese Probe koennte jede gruene Zusicherung oben auch daran
+        // liegen, dass die Erhebung nichts findet.
+        const d = typoDeklarationen('.erfunden { font-size: 13px }');
+        expect(d.length).toBe(1);
+        expect(ERLAUBT.test(d[0].wert)).toBe(false);
+        expect(ERLAUBT.test('var(--text-md)')).toBe(true);
+        expect(ERLAUBT.test('inherit')).toBe(true);
+        // ... und ein Token, das NICHT auf der Skala steht, ist nicht erlaubt
+        expect(ERLAUBT.test('var(--font-size-base)')).toBe(false);
+        expect(ERLAUBT.test('var(--text-huge)')).toBe(false);
+    });
+
+    test('GEGENPROBE: die em-Erhebung trennt die Einheit vom Wortbestandteil', () => {
+        expect(EM_WERT.test('0.85em')).toBe(true);
+        expect(EM_WERT.test('1.0em')).toBe(true);
+        expect(EM_WERT.test('calc(1em + 2px)')).toBe(true);
+        expect(EM_WERT.test('12px')).toBe(false);
+        expect(EM_WERT.test('var(--text-md)')).toBe(false);
+        expect(EM_WERT.test('inherit')).toBe(false);
+        // `rem` darf die em-Erhebung NICHT treffen: andere Einheit, anderer
+        // Befund, und F-03 urteilt darueber.
+        expect(EM_WERT.test('1.2rem')).toBe(false);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set(alleGroessen.map(typoAnker));
+        expect(Object.keys(FONT_SIZE_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+        const svgAnker = new Set(svgFundstellen().map(s => s.anker));
+        expect(Object.keys(SVG_GEDULDET).filter(k => !svgAnker.has(k))).toEqual([]);
+    });
+
+    test('GEGENPROBE: shop-export.js ist namentlich ausgenommen, nicht wegdefiniert', () => {
+        // Die Datei traegt 17 der JS-Inline-Schriftgroessen und bleibt
+        // draussen, weil sie ein Druckdokument mit pt-Einheiten erzeugt. Dass
+        // die Ausnahme eine DATEI ist und keine Zahl, haelt sie sichtbar:
+        // waechst sie, waechst kein Zaehler still mit.
+        expect(JS_AUSGENOMMEN.length).toBe(1);
+        expect(fs.existsSync(path.join(REPO, JS_AUSGENOMMEN[0]))).toBe(true);
+        expect(jsDateien().map(f => f.name)).not.toContain('features/shops/shop-export.js');
+        // ... und die Erhebung sieht die uebrigen Dateien wirklich
+        expect(jsDateien().length).toBeGreaterThan(100);
+        expect(jsDateien().map(f => f.name)).toContain('features/dice-stats/dice-stats-render.js');
+        expect(jsDateien().map(f => f.name)).toContain('loader.js');
+    });
+});
+
+describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () => {
+    /** Die drei erlaubten Gewichte (Handoff Paragraph 3.3). Keine
+     *  Schluesselwoerter: `bold` und `normal` sind zwar gueltiges CSS, fuehren
+     *  dieselbe Eigenschaft aber in einer zweiten Schreibweise — und zwei
+     *  Schreibweisen derselben Sache laufen auseinander. Dasselbe Argument
+     *  steht hinter F-04 (keine Hex-Literale ausserhalb des Tokenblocks).
+     *
+     *  WARUM 700 WEGFAELLT UND NICHT BLEIBT: gemessen sind 500 und 600 unter
+     *  Segoe UI auf den Bildpunkt identisch, nur 700 weicht ab. Die Skala
+     *  400/500/600 ist damit keine Verarmung, sondern die Abschaffung einer
+     *  Unterscheidung, die vier Werte behaupten und drei einhalten. */
+    const ERLAUBT = /^(400|500|600)$/;
+
+    /** Benannte Ausnahmen, Schluessel wie bei W5-R-05 (Datei, Selektor,
+     *  Eigenschaft — KEINE Zeile). Bewusst LEER, nicht abwesend: fuer das
+     *  Gewicht ist nach heutigem Stand KEINE Ausnahme begruendet. Die zehn
+     *  `bold`, die eine `normal` und die eine `300` sitzen alle an sichtbarem
+     *  Text. Die 10 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
+     *  sondern liegen ausserhalb des Geltungsbereichs — sie benennen
+     *  Schriftdateien, sie gestalten nichts. */
+    const FONT_WEIGHT_GEDULDET = {};
+
+    /** SCHRANKE — Deklarationen ausserhalb von 400/500/600.
+     *  Gemessener Ausgangswert: 95 von 360 Deklarationen.
+     *    700     83x  party 18, bestiary 9, dashboard 9, core 6, encounters 6,
+     *                 initiative 7, welt 7, dice 4, dmscreen 4, npcs 3,
+     *                 tools 3, spells 1
+     *    bold    10x  core.css, dashboard.css (2x), dmscreen.css (2x),
+     *                 loot.css (3x), spells.css, tools.css
+     *    normal   1x  tools.css
+     *    300      1x  party.css (.cf-hp-divider)
+     *  Der Handoff rechnet 110; das ist um 15 zu hoch — er zaehlt die 10
+     *  @font-face-Gewichte aus fonts.css und die 6 schon richtigen 400 mit.
+     *  ZIEL 0. Diese Zahl darf nur SINKEN. */
+    const AUSSERHALB_MAX = 0;
+
+    const alleGewichte = typoAlle('font-weight');
+
+    function verteilung() {
+        const w = {};
+        alleGewichte.forEach(d => {
+            const v = d.wert.replace(/\s*!important$/, '').trim();
+            w[v] = (w[v] || 0) + 1;
+        });
+        return w;
+    }
+
+    test('W5-R-06: kein Schriftgewicht ausserhalb von 400/500/600', () => {
+        const befunde = [];
+        alleGewichte.forEach(d => {
+            const wert = d.wert.replace(/\s*!important$/, '').trim();
+            if (ERLAUBT.test(wert)) return;
+            if (FONT_WEIGHT_GEDULDET[typoAnker(d)]) return;
+            befunde.push(
+                `${d.datei}:${d.zeile}  ${d.selektoren} { font-weight: ${d.wert} }` +
+                    (d.at ? `  @ ${d.at}` : '')
+            );
+        });
+        if (befunde.length > AUSSERHALB_MAX) {
+            const v = verteilung();
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleGewichte.length,
+                schranke: AUSSERHALB_MAX,
+                verteilung: v,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: AUSSERHALB_MAX,
+                gesamt: alleGewichte.length,
+                schranke: AUSSERHALB_MAX,
+                verteilung: v,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(AUSSERHALB_MAX);
+    });
+
+    test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
+        // Die 10 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
+        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der 700er-Datei
+        // — und sie WIRD sie mitzaehlen, sobald jemand den Geltungsbereich
+        // "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        const fonts = cssFiles.find(f => f.name === 'fonts.css');
+        expect(fonts).toBeTruthy();
+        const dort = typoDeklarationen(fonts.content).filter(d => d.prop === 'font-weight');
+        expect(dort.length).toBe(10);
+        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual(['700']);
+        expect(typoGeltungsbereich().map(f => f.name)).not.toContain('fonts.css');
+    });
+
+    test('SELBSTPROBE: zwei Zaehlarten nennen dieselbe Zahl', () => {
+        const perRegex = typoGeltungsbereich().reduce(
+            (n, f) =>
+                n +
+                [...withoutComments(f.content).matchAll(/(^|[{;}])\s*font-weight\s*:/g)].length,
+            0
+        );
+        expect(alleGewichte.length).toBe(perRegex);
+        expect(alleGewichte.length).toBeGreaterThan(200);
+    });
+
+    test('GEGENPROBE: Schluesselwoerter gelten nicht als erlaubt', () => {
+        expect(ERLAUBT.test('bold')).toBe(false);
+        expect(ERLAUBT.test('normal')).toBe(false);
+        expect(ERLAUBT.test('700')).toBe(false);
+        expect(ERLAUBT.test('300')).toBe(false);
+        expect(ERLAUBT.test('600')).toBe(true);
+        // `!important` wird abgeschnitten, nicht als Fremdwert gezaehlt: die
+        // Doppelzeile in spells.css traegt es, und die Gewichtsfrage ist von
+        // der !important-Frage unabhaengig — F-18 fuehrt dafuer die eigene
+        // Ratsche.
+        const d = typoDeklarationen('.a { font-weight: 600 !important }')[0];
+        expect(ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim())).toBe(true);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        const vorhanden = new Set(alleGewichte.map(typoAnker));
+        expect(Object.keys(FONT_WEIGHT_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+    });
+});
