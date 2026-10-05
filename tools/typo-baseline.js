@@ -163,7 +163,13 @@ const FORMULARE = {
  * entprellte resize-Beobachter aus `core/init.js` (200 ms) reichlich Zeit.
  */
 const LAEUFE = [
-    { label: 'dark-1440', theme: 'dark', breite: 1440, hoehe: 900, zustaende: ['ruhe', 'offen', 'mob'] },
+    {
+        label: 'dark-1440',
+        theme: 'dark',
+        breite: 1440,
+        hoehe: 900,
+        zustaende: ['ruhe', 'offen', 'mob']
+    },
     { label: 'light-1440', theme: 'light', breite: 1440, hoehe: 900, zustaende: ['ruhe'] },
     { label: 'sepia-1440', theme: 'sepia', breite: 1440, hoehe: 900, zustaende: ['ruhe'] },
     { label: 'contrast-1440', theme: 'contrast', breite: 1440, hoehe: 900, zustaende: ['ruhe'] },
@@ -210,9 +216,7 @@ function erhebeImBrowser({ wurzel, ansicht }) {
             (r.width > 0 || r.height > 0);
         const klassen = el.classList ? Array.from(el.classList).sort().join('.') : '';
         const sig =
-            el.tagName.toLowerCase() +
-            (klassen ? '.' + klassen : '') +
-            (el.id ? '#' + el.id : '');
+            el.tagName.toLowerCase() + (klassen ? '.' + klassen : '') + (el.id ? '#' + el.id : '');
         const i = zaehler.get(sig) || 0;
         zaehler.set(sig, i + 1);
         out.push({
@@ -572,7 +576,9 @@ async function erhebe(nurLabel) {
 function vergleiche(alt, neu, schwelle) {
     const zeilen = [];
     let ueberschreitungen = 0;
-    const labels = [...new Set([...Object.keys(alt.laeufe || {}), ...Object.keys(neu.laeufe || {})])].sort();
+    const labels = [
+        ...new Set([...Object.keys(alt.laeufe || {}), ...Object.keys(neu.laeufe || {})])
+    ].sort();
     for (const label of labels) {
         const a = (alt.laeufe || {})[label];
         const b = (neu.laeufe || {})[label];
