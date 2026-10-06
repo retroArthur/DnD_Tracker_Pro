@@ -435,7 +435,7 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:887` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:891` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
 | `party.css:2088` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2355` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2367` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:465` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:592` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:675` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -540,8 +540,8 @@ diese Tabelle führt.
 | `dashboard.css:535` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:779` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:698` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2686` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2687` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2698` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2699` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -650,11 +650,11 @@ npcs.css
  1004  .npc-popup-section-title
 party.css
  1979  .party-stat-card.critical .party-stat-value
- 2259  .rest-heal-preview
- 2265  .rest-hd-restore
- 2641  .cf-attack-remove:hover
- 2790  .char-skill-item.proficient .char-skill-item-name
- 2813  .char-skill-item.expertise .char-skill-item-name
+ 2271  .rest-heal-preview
+ 2277  .rest-hd-restore
+ 2653  .cf-attack-remove:hover
+ 2802  .char-skill-item.proficient .char-skill-item-name
+ 2825  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css
@@ -6306,6 +6306,178 @@ npx jest tests/unit/design-consistency.test.js -t "W5-R-07"
 
 # Der F-18-Kaskadenstand (117 Abhaengigkeiten)
 node tools/check-f18-kaskade.js --check
+```
+
+---
+
+## W5-D Runde 1 — zwei Zuordnungen rechneten gegen eine Annahme statt gegen die Messung (2026-10-06)
+
+**Status: ERLEDIGT.** Prüfrunde zur Einheit W5-D. Beide Befunde der Prüfung sind
+nachgemessen **bestätigt** und behoben; keiner wurde zurückgewiesen. Fünf Commits,
+`5a06ca5 → 9892508`, Reihenfolge nach `plan.atomar_wie`: zuerst der rote Nachweis, dann
+die Urteile, dann das Werkzeugergebnis.
+
+### Die gemeinsame Ursache, in einem Satz
+
+`altPx()` rechnet jede `em`-Angabe gegen eine 16-px-Wurzel und **nennt das selbst eine
+Annahme**; an zwei Stellen trifft sie nicht, und an beiden ist der wirkliche Sprung größer
+als der gerechnete. Die 2-px-Abnahme des Schrittes 5 prüfte gegen denselben angenommenen
+Altwert — sie konnte den Fehler also nicht finden, weil sie ihn teilte.
+
+### Befund 1 (blocker) — `.rest-type-icon` sprang um +7,33 px und nicht um +2,00
+
+`party.css:2123` sitzt in `<button class="rest-type-btn">`, und dieser Knopf trägt in der
+**ganzen App keine** `font-size`: die einzige Regel, die Schaltflächen `inherit` gibt,
+gilt nur in `.loc-toolbar`. Also entscheidet das Stilblatt des Browsers — Chrome setzt an
+`button` **13,3333 px**, nicht 16. `2em` sind dort gemessen **26,67 px**, die Tabelle gab
+`--text-3xl` = 34 px. Nachgemessen am gebauten Bündel mit geöffnetem Rast-Modal wuchs die
+Karte von **237x111 auf 237x123 px**.
+
+**Vier Schranken waren an dieser Stelle blind,** und das ist der eigentliche Befund:
+`KETTEN` kann die Kante nicht führen (ihr Anker `datei||selektoren||wert` braucht eine
+Elterndeklaration, und es gibt keine); die eingefrorene Grundlinie läuft nur über
+`#view-*` und fünf Rahmen, **Modale liegen außerhalb**, und die Stelle steht nur im
+Rast-Modal; die 2-px-Abnahme rechnete mit der Annahme; `W5-R-07e` zählt die
+Ikon-Kandidaten, urteilt aber nicht über ihren Sprung.
+
+**Behebung:** Sonderzuordnung mit dem neuen, vierten Grund `browser-vorgabe` auf
+`--text-2xl` (26 px, Sprung **-0,67 px**). Der Grund ist ausdrücklich **nicht** `kette` —
+alle 16 `kette`-Einträge sind nachgemessen Kinder in `KETTEN`, und `grund: 'kette'` hätte
+eine Herkunft behauptet, die es nicht gibt (dieselbe Überlegung, mit der
+`kette-reichtext` entstanden ist). **Keine Ausnahme:** 26 px liegen innerhalb der 2-px-
+Abnahme, unter der Schritt 5 alle 54 unbeurteilten Ikon-Kandidaten mechanisch gehoben
+hat — die Begründung jener Entscheidung gilt also weiter, die Ausnahmeliste bleibt bei
+**35** Ankern, `W5-R-05a` bleibt bei **0**, und `W5-R-07e` bleibt bei 73/54.
+
+### Befund 2 (major) — unter der Linux-Metrik brach bei 375 px die Leiste zweier Ansichten um
+
+`editors.css:745`, `.section-toolbar-title` im Block `@media (max-width: 600px)`:
+`0.9em` → `var(--text-md)`. Der Elternwert ist dort **14 px**, die Schrift ging also
+12,6 → 14 px (**+1,40**), und die Titelgruppe wurde 10,4 px breiter. Gemessen auf
+gefüllter Kampagne bei 375 px unter der Verdana-Nachstellung (1,155x), VOR gegen NACH:
+
+| Ansicht | belegt (Titel + Lücke + Aktion) von 331 px | Leiste | Listenspalte |
+| --- | --- | --- | --- |
+| encounter | 322,64 → **333,04** | 158 → **187** px | `.enc-master` 305,2 → **276,2** px |
+| kalender | 324,37 → **342,59** | 146 → **175** px | – |
+| npcs | 321,99 → **328,44** | 179 → 179 px | 383 → 383 px |
+
+Aus **einer** Zeile werden **zwei**, die Leiste wächst um 29 px, und bei `encounter` gehen
+diese 29 px **1:1 aus der scrollenden Listenspalte**, weil die Ansicht höhenbegrenzt ist.
+Das ist dieselbe Größenordnung, die der C1-Kommentar in `editors.css:752` als Gewinn der
+Welle 4 verbucht — nur rückwärts. `npcs` stand mit 2,56 px Reserve am selben Kippen.
+
+**Warum nichts rot wurde:** waagerechter Überlauf und Seitenüberlauf blieben in allen vier
+Kombinationen **0**. Es wird nichts abgeschnitten; der Umbruch ist gültiges
+Flex-Verhalten. Unter Segoe passiert gar nichts (158/158, 146/146). `breite-schrift.spec.js`
+maß Überlauf und Spaltenhöhe bei 320/360 — nicht die **Zeilenbelegung** bei 375.
+
+**Behebung:** Sonderzuordnung mit Grund `kette` auf `--text-sm` (12 px, Sprung
+**-0,60 px** statt +1,40). Die Kante stand **schon** in `KETTEN` (Elternwert 14 px,
+gemessen 12,6 px, 24 Elemente) — nur urteilte dort nichts über die **Größe** des Sprungs,
+bloß über die Ordnung, und 12,6 → 14 kippt die Ordnung nicht (14 ≤ 14). Nach der Korrektur
+sind Leiste und Listenspalte **exakt** auf dem Stand vor der Welle (encounter 158 px /
+305,2 px), die Belegung mit 318,19 px sogar besser als die 322,64 px von davor.
+
+### Die eigene Erhebung, die die Grundlinien-Lücke geschlossen hat
+
+Weil die Grundlinie Modale nicht sieht, ist für diese Runde eigens über **49 Zustände**
+gemessen worden: alle 24 Ansichten mit geöffneten Aufklapp-Formularen **plus 24 geöffnete
+Modale**, gefüllte Kampagne, 1440x900, am VOR-Bündel (`44d33da`, `em` noch im Baum).
+Erfasst wurde jede `font-size`-Regel mit em-Wert samt gemessenem Elternwert.
+
+**207** em-Regeln sichtbar · **28** auf einem Elternwert ≠ 16 px · **7** mit einem
+Formularelement als Eltern · **5** davon auf der Browser-Vorgabe 13,3333 px. Über die
+2-px-Abnahme geht, gerechnet gegen den **gemessenen** Wert und **mit** den vorhandenen
+Sonderzuordnungen, **genau eine**: `.rest-type-icon`. Die anderen vier liegen bei
++0,67 … +1,33 px, die restlichen 23 bei -1,60 … +1,82 px.
+
+Diese fünf Stellen stehen jetzt als Bestandsliste im Wächter (`W5-W12`), mit zwei
+Zusicherungen: **keine** springt gegen ihren gemessenen Wert um mehr als 2 px, und wo die
+**Tabellenzeile** darüber hinausgriffe, muss eine Sonderzuordnung entscheiden — und wo
+nicht, darf keine stehen (eine Sonderzuordnung ohne Not wäre eine Abweichung ohne Grund).
+
+### Eine falsche Messung in der Akte, zurückgenommen statt übergangen
+
+`tests/unit/design-consistency.test.js` behauptete für die 54 Ikon-Kandidaten eine
+„Spanne -2,00 .. +2,00 px, mehrere bei 0,00". Diese Spanne war gegen den **angenommenen**
+Altwert gerechnet; `.rest-type-icon` ist Nummer 18 der Liste. Der Absatz nennt jetzt den
+Irrtum, die Korrektur und die Bezugsmenge der neuen Messung.
+
+### Abnahme
+
+- `node tools/sync-typo-tokens.js --check` schweigt: **853 = 811 + 7 + 35 + 0 + 0**,
+  OFFEN **0**, Rückgabewert 0. Ausnahmeliste **nicht** gewachsen.
+- Ein erneuter Lauf `--only=party.css` / `--only=editors.css` lässt beide Dateien
+  **byteweise** unverändert — die zwei neuen Ankerkommentare verschieben die
+  Zeichengrenzen des Werkzeugs nicht (genau der Fehler, den es beim ersten Lauf hatte).
+- `npx jest` **2074/2074 in 77 Suiten**. `npm run lint` Rückgabewert 0 mit **363**
+  Warnungen. `typecheck` und `typecheck:strict` Rückgabewert 0. Beide Builds 0.
+- `node tools/check-f18-kaskade.js --check` OK, 117 Abhängigkeiten.
+  `node tools/sync-aktenlage-anker.js --check` OK, **0** Abweichungen bei **123** Ankern
+  (8 Anker nachgezogen: der Kommentar in `party.css` verschiebt alles nach Zeile 2123 um
+  elf Zeilen — genau der Grund, warum die Typo-Ausnahmeliste zeilenfrei ist).
+- Ratschen unverändert: **DUBLETTEN 0 · !important 105 · Inline-Stile 254**,
+  `transition: all` 0.
+- `tests/e2e/features/breite-schrift.spec.js` **9/9**; knappste Stelle `npcs` mit
+  **10,14 px** Reserve gegen eine Schranke von 4 (vor der Welle 6,63 px, im Befundstand
+  -11,59 px).
+
+### Ein Gate hat zugeschlagen, und es ist nicht umgangen worden
+
+Das Abdeckungs-Gate (`module-test-coverage`) wurde rot, weil der neue Wächterblock
+`features/rest-manager.js` als **Fundort eines Markups** nannte — das Gate zählt jeden
+Treffer eines Modulpfads in `tests/` als Abdeckung, auch einen im Erklärtext. Die Nennung
+ist auf die Kurzform `rest-manager.js:26/31` gebracht, **mit** dem Satz, warum: ein voller
+Pfad hätte verlangt, das Modul von seiner Ausnahmeliste zu streichen, und damit eine
+Abdeckung behauptet, die es nicht gibt. Dasselbe Muster steht schon bei `OHNE_MESSUNG` in
+`design-consistency.test.js`.
+
+### Offene Punkte
+
+- **21 em-Stellen mit Faktor ≥ 1,2 ließen sich in keinem der 49 Zustände rendern** — u. a.
+  `.avatar-placeholder.avatar-lg` (2em), `.loot-detail-icon` (2em),
+  `.npc-popup-avatar-placeholder` (1.5em), `.rt-preview-icon` (1.5em),
+  `.generator-table-icon` (1.5em). Für sie trägt die 16-px-Annahme **ungeprüft** weiter.
+  Das ist eine offene **Messschuld**, keine Entwarnung: genau so war `.rest-type-icon`
+  gelagert, bis ein Modal geöffnet wurde.
+- **Die eingefrorene Grundlinien-Erhebung sieht Modale nicht** (`tools/typo-baseline.js`
+  läuft über `#view-*` und fünf Rahmen). Für diese Runde ist die Lücke mit einer eigenen
+  Erhebung geschlossen worden; eine **dauerhafte** Erweiterung der Grundlinie um die
+  Modalbäume ist nicht erfolgt — sie würde den eingefrorenen Bezugsstand ändern und gehört
+  deshalb nicht in eine Fehlerrunde. Übergeben an Schritt 9.
+- **O-10 bleibt stehen und hat jetzt eine Zahl:** von den dort genannten
+  Formularelementen auf Browser-Vorgabe tragen gemessen **5** eine em-Schriftgröße, und
+  **eine** davon war falsch zugeordnet. Die übrigen vier bleiben bei ihrer Tabellenzeile.
+- Unverändert aus W5-A bis W5-D: der tote Würfel-Behälter, die Uhr im 250-px-Ring, die
+  zehn kaputten `woff2`, der `file://`-Pfad der gebündelten Schriften, die vier
+  wirkungslosen Editor-Schriften, die fehlende Glyphendeckungs-Probe, `npm run check`
+  vorbestehend rot. **Und die örtlich nicht lauffähige E2E-Suite:** `playwright-core`
+  1.57.0 verlangt Chromium-Revision 1200, im Zwischenspeicher liegen 1217/1234/1243. Diese
+  Runde ist über eine Konfiguration im Kratzspeicher gefahren, die nur `executablePath`
+  umlegt; der Zwischenspeicher des Nutzers ist **nicht** angefasst. Saubere Behebung:
+  einmal `npx playwright install chromium`.
+- Restschuld der Folgeschritte, unverändert: `IMPORTANT_MAX` 105 → 104 (O-2),
+  `INLINE_MAX` 254 → 252 (O-6), die drei SVG-Präsentationsattribute (O-7), die Untergrenze
+  für Kleinstschrift als Bündel (Schritt 8).
+
+### Befehle
+
+```bash
+# Der neue Waechter: die fuenf Stellen auf der Browser-Vorgabe
+npx jest tests/unit/typo-map.test.js -t "W5-W12"
+
+# Die neue Zeilenprobe bei 375 px unter breiter Schrift
+npx playwright test tests/e2e/features/breite-schrift.spec.js --grep "\(5\)"
+
+# --check schweigt weiter, und ein erneuter Lauf schreibt nichts
+node tools/sync-typo-tokens.js --check
+node tools/sync-typo-tokens.js --only=party.css
+node tools/sync-typo-tokens.js --only=editors.css
+
+# Die zwei Waechter des Zweigs
+node tools/check-f18-kaskade.js --check
+node tools/sync-aktenlage-anker.js --check
 ```
 
 ---
