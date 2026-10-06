@@ -918,6 +918,19 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
      * Freigabe wie eine Ausnahmeliste, die nichts mehr ausnimmt.
      */
     test('Breitere Schriftmetrik bewegt den Digest nicht', async ({ page, context }) => {
+        /* EIGENE ZEITSCHRANKE, und zwar aus der Bauart dieses Falls heraus.
+           Die drei Durchgaenge ueber ihm erheben je EINEN Vollabzug; dieser erhebt ZWEI
+           (schmale und breite Metrik, beide Seiten selbst) — der Kopfkommentar beziffert
+           das mit "rund 30 s". Die globale Schranke in playwright.config.js steht aber
+           ebenfalls bei 30 s. Der Fall lag damit seit seiner Geburt am 2026-10-02 auf
+           seinem eigenen Budget und fiel auf einer belasteten Maschine in den Zeitablauf:
+           allein gemessen 25,1 s, in drei von fuenf Vollaeufen rot, auch auf einem
+           unbelasteten Rechner reproduziert (Lauf vom 2026-10-06, 603 bestanden / 1 rot).
+           90 s sind das Dreifache der gemessenen Einzellaufzeit — kein Freibrief, sondern
+           der Abstand, den die uebrigen drei Faelle gegenueber ihrem Abzug auch haben.
+           NICHT die globale Schranke anheben: die uebrigen Faelle sollen weiter bei 30 s
+           auffallen, wenn sie langsam werden. */
+        test.setTimeout(90 * 1000);
         await seedPopulatedSession(page);
         await loadApp(page);
         const schmalBefunde = [];
