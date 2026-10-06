@@ -1523,6 +1523,36 @@ function zielFuer(datei, selektoren, wert) {
     return ZUORDNUNG[wert] || null;
 }
 
+/**
+ * Die Werte, unter denen ein Anker der Form `datei||selektoren||wert` seine
+ * Deklaration im Baum WIEDERFINDET — vor und nach dem mechanischen Lauf.
+ *
+ * WARUM ES DIESE FUNKTION BRAUCHT, und warum sie keine Aufweichung ist.
+ * Die Anker von `KETTEN`, `SONDERZUORDNUNG`, `EM_EINS` und
+ * `ueberschriftAnker()` tragen den Wert MIT (Begruendung an `KETTEN`: ohne
+ * ihn liesse sich eine Kette nicht von ihrem Nachbarn unterscheiden). Dieser
+ * Wert ist der Wert VOR der Umstellung. Nach dem Lauf des Schrittes 5 steht
+ * an derselben Stelle `var(--text-*)` — die Verwesungsproben, die "jeder
+ * Anker trifft eine Deklaration" zusichern, wurden dann ALLE rot, und zwar
+ * nicht weil ein Selektor verschwunden waere, sondern weil die Umstellung
+ * gelungen ist. Gemessen: 89 von 90 Kettenankern und 26 von 27
+ * `1em`-Ankern.
+ *
+ * SIE ERLAUBT GENAU ZWEI WERTE und nicht "irgendeinen": den alten Wert (die
+ * Stelle ist geduldet oder noch nicht umgestellt) und genau den Wert, den
+ * der Lauf dorthin schreibt. Ein umbenannter oder gestrichener Selektor
+ * faellt weiter auf, ein von Hand auf einen dritten Wert geaenderter
+ * ebenfalls. Was sie aufgibt, ist die Unterscheidung zweier Anker, die sich
+ * NUR im alten Wert unterschieden und auf dasselbe Token fallen — das ist
+ * nach der Umstellung keine Information mehr, die im Baum steht, und die
+ * Bestandszahlen (35 Elternteile, 55 Kanten, 319 Elemente) bewachen die
+ * Laenge der Listen weiterhin.
+ */
+function ankerWerte(datei, selektoren, wert) {
+    const ziel = zielFuer(datei, selektoren, wert);
+    return ziel ? [wert, `var(${ziel})`] : [wert];
+}
+
 module.exports = {
     REPO,
     SKALA_TOKENS,
@@ -1540,6 +1570,7 @@ module.exports = {
     ueberschriftAnker,
     kettenAnker,
     zielFuer,
+    ankerWerte,
     OHNE_ZAHLENWERT,
     AUSNAHMEN,
     SVG_GEDULDET,

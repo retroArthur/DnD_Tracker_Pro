@@ -773,10 +773,41 @@ function zerlegeAnker(a) {
     return { datei: a.slice(0, i), selektoren: a.slice(i + 2, j), wert: a.slice(j + 2) };
 }
 
+/**
+ * Baut die Nachschlagehilfe der Verwesungsproben: Datei und Selektor auf die
+ * Menge der dort stehenden Werte, und daraus ein Praedikat "dieser Anker
+ * trifft eine Deklaration".
+ *
+ * WARUM NICHT MEHR EINE MENGE VON `datei||selektoren||wert`. Bis zum
+ * mechanischen Lauf des Schrittes 5 genuegte sie — der deklarierte Wert
+ * stand so im Baum. Nach dem Lauf steht dort `var(--text-*)`, und die Proben
+ * wurden flaechig rot, OHNE dass ein Selektor verschwunden waere (gemessen
+ * 89 von 90 Kettenankern und 26 von 27 `1em`-Ankern). `M.ankerWerte()` nennt
+ * die genau ZWEI erlaubten Werte je Anker — den alten und genau den, den der
+ * Lauf dorthin schreibt. Ein umbenannter Selektor faellt weiter auf, ein von
+ * Hand auf einen dritten Wert geaenderter ebenfalls. Die Begruendung steht
+ * an der Fundstelle in tools/typo-map.js, also in der einen Datei, die
+ * Werkzeug und Waechter gemeinsam lesen (O-4).
+ */
+function trifftFabrik(alle) {
+    const nach = new Map();
+    alle.forEach(d => {
+        const k = `${d.datei}||${d.selektoren}`;
+        if (!nach.has(k)) nach.set(k, new Set());
+        nach.get(k).add(d.wert);
+    });
+    return anker => {
+        const d = zerlegeAnker(anker);
+        const da = nach.get(`${d.datei}||${d.selektoren}`);
+        if (!da) return false;
+        return M.ankerWerte(d.datei, d.selektoren, d.wert).some(w => da.has(w));
+    };
+}
+
 describe('W5-W9 — die Verschachtelungsketten werden nach dem GEMESSENEN Wert zugeordnet', () => {
     const skala = M.skalaWerte();
     const { alle } = W.erheben();
-    const vorhanden = new Set(alle.map(d => M.kettenAnker(d.datei, d.selektoren, d.wert)));
+    const trifft = trifftFabrik(alle);
 
     /** Alle Kanten flach: Eltern- und Kindanker mit ihren Messwerten. */
     const kanten = M.KETTEN.flatMap(g =>
@@ -805,12 +836,17 @@ describe('W5-W9 — die Verschachtelungsketten werden nach dem GEMESSENEN Wert z
         // gruener Test.
         const fehlt = [];
         M.KETTEN.forEach(g => {
-            if (!vorhanden.has(g.eltern)) fehlt.push(`ELTERN ${g.eltern}`);
+            if (!trifft(g.eltern)) fehlt.push(`ELTERN ${g.eltern}`);
             g.kinder.forEach(([kind]) => {
-                if (!vorhanden.has(kind)) fehlt.push(`KIND ${kind}`);
+                if (!trifft(kind)) fehlt.push(`KIND ${kind}`);
             });
         });
         expect(fehlt).toEqual([]);
+        // GEGENPROBE zur Nachschlagehilfe: sie darf nicht alles treffen.
+        // Ohne diese Zeile waere die Probe durch ein zu weites Praedikat
+        // gruen zu machen — genau die Gefahr, die `trifftFabrik()` eingeht.
+        expect(trifft('core.css||.gibt-es-nicht||0.9em')).toBe(false);
+        expect(trifft(`${zerlegeAnker(M.KETTEN[0].eltern).datei}||${zerlegeAnker(M.KETTEN[0].eltern).selektoren}||7.77em`)).toBe(false);
     });
 
     test('kein Kind wird groesser als sein Elternelement — die Ordnung kippt nicht', () => {
@@ -897,12 +933,25 @@ describe('W5-W10 — die Formularschrift bleibt ueber der Auto-Zoom-Schwelle (E-
     test('EM_EINS ist vollstaendig: genau die `1em`/`1.0em`-Deklarationen des Bestandes', () => {
         // Die Vollstaendigkeit ist der Grund, warum diese Liste taugt: eine
         // neue `1em`-Stelle kann nicht unbeurteilt hineinwachsen.
-        const imBestand = alle
+        // GEPRUEFT WIRD IN BEIDE RICHTUNGEN, und seit dem mechanischen Lauf
+        // des Schrittes 5 ueber `trifft()`: 26 der 27 Stellen tragen jetzt
+        // ihr Token statt `1em`, eine (h4 des Reichtext-Inhalts) ist
+        // namentlich geduldet und steht weiter in `em`. Die Liste bleibt
+        // damit vollstaendig pruefbar — ein umbenannter Selektor faellt
+        // auf, und eine NEUE `1em`-Stelle kann nicht unbeurteilt
+        // hineinwachsen, weil die zweite Zusicherung sie unten faengt.
+        const trifftEins = trifftFabrik(alle);
+        expect(M.EM_EINS.map(e => e[0]).filter(a => !trifftEins(a))).toEqual([]);
+        expect(M.EM_EINS.length).toBe(27);
+        // ... und die Gegenrichtung: jede `1em`-Deklaration, die HEUTE noch
+        // im Baum steht, ist eine der 27 aufgezaehlten.
+        const bekannt = new Set(M.EM_EINS.map(e => e[0]));
+        const neuImBestand = alle
             .filter(d => d.wert === '1em' || d.wert === '1.0em')
             .map(d => M.kettenAnker(d.datei, d.selektoren, d.wert))
+            .filter(a => !bekannt.has(a))
             .sort();
-        expect(M.EM_EINS.map(e => e[0]).sort()).toEqual(imBestand);
-        expect(imBestand.length).toBe(27);
+        expect(neuImBestand).toEqual([]);
     });
 
     test('jede Stelle ohne Messwert traegt ihren Grund', () => {
@@ -946,7 +995,7 @@ describe('W5-W10 — die Formularschrift bleibt ueber der Auto-Zoom-Schwelle (E-
 describe('W5-W11 — die Ueberschriften-Hierarchie im Reichtext-Inhalt bleibt eine', () => {
     const skala = M.skalaWerte();
     const { alle } = W.erheben();
-    const vorhanden = new Set(alle.map(d => M.kettenAnker(d.datei, d.selektoren, d.wert)));
+    const trifft = trifftFabrik(alle);
     const stufen = [1, 2, 3, 4, 5, 6].map(n => M.ueberschriftAnker(n));
 
     test('VERWESUNGSPROBE: die sechs gebauten Anker treffen ihre Deklarationen', () => {
@@ -954,7 +1003,7 @@ describe('W5-W11 — die Ueberschriften-Hierarchie im Reichtext-Inhalt bleibt ei
         // GEBAUT; diese Probe belegt die Konstruktion, statt sie zu glauben.
         expect(M.REICHTEXT_BEHAELTER.length).toBe(8);
         expect(M.UEBERSCHRIFTEN_WERTE.length).toBe(6);
-        expect(stufen.filter(a => !vorhanden.has(a))).toEqual([]);
+        expect(stufen.filter(a => !trifft(a))).toEqual([]);
     });
 
     test('die Messung zeigt sechs streng fallende Stufen in allen acht Behaeltern', () => {
