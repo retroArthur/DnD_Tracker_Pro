@@ -648,3 +648,287 @@ test.describe('W6-R-02 — jeder sichtbare Ring haelt 3:1 auf seiner Traegerflae
         });
     }
 });
+
+// ---------------------------------------------------------------------------
+// W6-R-01 Teil 2 — die vier blinden Selektoren
+// ---------------------------------------------------------------------------
+
+/**
+ * DIE ACHT FELDER DES SCHRITTS 5, einzeln adressiert statt im Rundlauf
+ * gesammelt.
+ *
+ * WARUM EIN EIGENER FALL: der Rundlauf von W6-R-01 liegt hinter einem
+ * Schalter, weil er zwei Minuten je Theme kostet, und er faehrt nur EIN Theme.
+ * Die vier blinden Selektoren brauchen aber beides — alle vier Themes (weil
+ * die Ringfarbe wechselt) und einen Lauf in JEDEM Durchgang (weil sie der
+ * Gegenstand des Schritts sind). Dieser Fall holt sie gezielt: ein
+ * Aufklapp-Formular, ein zweites, eine Tastenkombination. Das kostet den
+ * Bruchteil eines Rundlaufs.
+ *
+ * ACHT, NICHT SIEBEN. Der Schrittplan nennt "3 Regeln, 7 Elemente". Am Baum
+ * gezaehlt sind es acht: `.cf-combat-value` traegt SECHS Felder
+ * (view-party.html — char-ac, char-init, char-speed, char-perception,
+ * char-hitdice, char-proficiency), nicht fuenf. `char-proficiency` ist
+ * `readonly` und damit leicht zu uebersehen — tabulierbar ist es trotzdem,
+ * gemessen. Dazu `#session-tags-input` und `.cp-input`.
+ *
+ * ZWEI WEGE FUER `.cp-input`, UND BEIDE SIND ECHTE TASTATUR. Die Befehlsleiste
+ * geht ueber `Strg+Shift+K` auf und setzt den Fokus dann SELBST
+ * (command-palette.js). Das ist kein `.focus()` im Testcode, sondern der
+ * echte Weg des Nutzers — und es ist der Weg, auf dem der Ring erscheinen
+ * MUSS, denn tabuliert wird dort niemand hin. Gemessen: `:focus-visible`
+ * greift trotz programmatischem Fokus, weil Chromium es bei Textfeldern
+ * immer setzt. Der zweite Weg (Shift+Tab, dann Tab) prueft denselben Knoten
+ * nach einem echten Sprung und belegt, dass beide Wege dasselbe Ergebnis
+ * liefern.
+ *
+ * DER ABSCHNITT WIRD MITGEPRUEFT, und das ist der Teil, den W6-R-01 nicht
+ * kann: `outline-offset: 2px` legt den Ring AUSSERHALB des Elements. Ein
+ * Vorfahr mit `overflow: hidden`, dessen Kasten den Ring nicht mehr enthaelt,
+ * schneidet ihn ab — die berechnete `outline-width` steht dann trotzdem auf
+ * 2px, und jede Pruefung, die nur sie liest, nennt den Ring vorhanden.
+ * `.cp-input` und `#session-tags-input` sitzen beide als `flex: 1` in einer
+ * Zeile; genau dort war das zu befuerchten. Gemessen: kein Abschnitt, an
+ * keinem der acht Felder, in keinem Theme.
+ *
+ * AUSGANGSWERTE (gemessen am 2026-10-06, HEAD dcb8ec0, gefuellte Kampagne,
+ * 1600x1000): ALLE 32 Zellen (8 Felder x 4 Themes) ohne jeden Ring —
+ * `outline: 0px none`, dazu `border-width: 0px`, also auch kein
+ * Rahmenwechsel. `:focus-visible` war an allen 32 Zellen WAHR; die Weltregel
+ * haette den Ring also gesetzt, wenn die drei `outline: none`-Regeln ihn nicht
+ * genommen haetten. Das ist der ganze Befund des Schritts 5, und er steht
+ * damit nicht als Behauptung, sondern als Messung.
+ */
+const BLINDE_FELDER = [
+    { id: 'char-ac', regel: 'party.css {.cf-combat-value input:focus}' },
+    { id: 'char-init', regel: 'party.css {.cf-combat-value input:focus}' },
+    { id: 'char-speed', regel: 'party.css {.cf-combat-value select:focus}' },
+    { id: 'char-perception', regel: 'party.css {.cf-combat-value input:focus}' },
+    { id: 'char-hitdice', regel: 'party.css {.cf-combat-value input:focus}' },
+    { id: 'char-proficiency', regel: 'party.css {.cf-combat-value input:focus}' },
+    { id: 'session-tags-input', regel: 'dmscreen.css {#session-tags-input}' }
+];
+
+/**
+ * Liest den fokussierten Knoten wie LESE_HALT und zusaetzlich den
+ * Abschneidevorfahren. Laeuft IM BROWSER.
+ */
+const LESE_BLIND = `(() => {
+    const el = document.activeElement;
+    if (!el || el === document.body || el === document.documentElement) return null;
+    const cs = getComputedStyle(el);
+    const lagen = [];
+    let p = el.parentElement;
+    while (p) {
+        const bg = getComputedStyle(p).backgroundColor;
+        if (bg && bg !== 'transparent') lagen.push({ bg: bg });
+        p = p.parentElement;
+    }
+    const r = el.getBoundingClientRect();
+    // Der Ring braucht 4px Luft: 2px Versatz plus 2px Breite.
+    const LUFT = 4;
+    let abschnitt = null;
+    let q = el.parentElement;
+    while (q && q !== document.documentElement) {
+        const qc = getComputedStyle(q);
+        if (qc.overflow !== 'visible' || qc.overflowX !== 'visible' || qc.overflowY !== 'visible') {
+            const qr = q.getBoundingClientRect();
+            if (r.left - LUFT < qr.left - 0.5 || r.top - LUFT < qr.top - 0.5 ||
+                r.right + LUFT > qr.right + 0.5 || r.bottom + LUFT > qr.bottom + 0.5) {
+                const c = (typeof q.className === 'string' ? q.className : '').trim().split(/\\s+/)[0];
+                abschnitt = q.tagName.toLowerCase() + (q.id ? '#' + q.id : '') + (c ? '.' + c : '')
+                    + ' overflow:' + qc.overflow;
+                break;
+            }
+        }
+        q = q.parentElement;
+    }
+    let blass = null;
+    let z = el;
+    while (z && z !== document.documentElement) {
+        if (parseFloat(getComputedStyle(z).opacity) === 0) {
+            blass = z.tagName.toLowerCase() + (z.id ? '#' + z.id : '');
+            break;
+        }
+        z = z.parentElement;
+    }
+    let fv = null;
+    try { fv = el.matches(':focus-visible'); } catch (e) { fv = null; }
+    return {
+        tag: el.tagName.toLowerCase(),
+        id: el.id || '',
+        cls: (typeof el.className === 'string' ? el.className : '').trim().split(/\\s+/).filter(Boolean).slice(0, 3).join(' '),
+        oW: cs.outlineWidth, oS: cs.outlineStyle, oC: cs.outlineColor, oO: cs.outlineOffset,
+        bw: cs.borderTopWidth, bc: cs.borderTopColor,
+        fv: fv, blass: blass, abschnitt: abschnitt, lagen: lagen,
+        css: el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }),
+        rect: [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]
+    };
+})()`;
+
+/**
+ * Tabuliert bis zum Element mit dieser ID und liest es. ECHTE Spruenge, kein
+ * `.focus()`. Gibt null zurueck, wenn es in `grenze` Spruengen nicht erreicht
+ * wird — das ist dann ein Befund und keine stille Luecke.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} id
+ * @param {number} grenze
+ */
+async function tabulierBis(page, id, grenze = 320) {
+    await page.evaluate(() => {
+        if (document.activeElement && document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        document.body.focus();
+    });
+    for (let i = 0; i < grenze; i++) {
+        await page.keyboard.press('Tab');
+        const da = await page.evaluate(
+            z => !!document.activeElement && document.activeElement.id === z,
+            id
+        );
+        if (da) return await page.evaluate(LESE_BLIND);
+    }
+    return null;
+}
+
+/**
+ * Klappt ein Aufklapp-Formular ueber seinen echten Knopf auf.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} formId
+ */
+async function klappeAuf(page, formId) {
+    await page.evaluate(f => {
+        const el = document.getElementById(f);
+        if (el && !el.classList.contains('open')) {
+            const knopf = document.querySelector(
+                `[data-action="toggle-collapse"][data-value="${f}"]`
+            );
+            if (knopf instanceof HTMLElement) knopf.click();
+        }
+    }, formId);
+    await page.waitForTimeout(500);
+    expect(
+        await page.evaluate(f => {
+            const el = document.getElementById(f);
+            return !!el && el.classList.contains('open');
+        }, formId),
+        `Formular ${formId} ging nicht auf — die Messung waere lueckenhaft`
+    ).toBe(true);
+}
+
+test.describe('W6-R-01 Teil 2 — die vier blinden Selektoren, einzeln und in vier Themes (Ratsche)', () => {
+    for (const theme of ['dark', 'light', 'sepia', 'contrast']) {
+        test(`Theme ${theme}: alle acht Felder tragen einen ungeschnittenen Ring ueber 3:1`, async ({
+            page
+        }) => {
+            test.setTimeout(180000);
+            await seedPopulatedSession(page);
+            await loadApp(page);
+            await schliesseUmzugshinweis(page);
+            await setzeTheme(page, theme);
+
+            /** @type {Array<{ name: string, h: any }>} */
+            const messungen = [];
+
+            // (1) Die sechs .cf-combat-value-Felder im Charakterformular.
+            await page.evaluate(() => {
+                // @ts-ignore — global aus der Ansichtsverwaltung
+                window.switchView('party');
+                // @ts-ignore
+                if (typeof window.clearEventLog === 'function') window.clearEventLog();
+            });
+            await page.waitForSelector('#view-party.active', { state: 'visible', timeout: 5000 });
+            await page.waitForTimeout(250);
+            await klappeAuf(page, 'char-form');
+            for (const feld of BLINDE_FELDER.slice(0, 6)) {
+                messungen.push({
+                    name: `${feld.id} (${feld.regel})`,
+                    h: await tabulierBis(page, feld.id)
+                });
+            }
+
+            // (2) #session-tags-input im Sitzungsformular.
+            await page.evaluate(() => {
+                // @ts-ignore
+                window.switchView('notes');
+                // @ts-ignore
+                if (typeof window.clearEventLog === 'function') window.clearEventLog();
+            });
+            await page.waitForSelector('#view-notes.active', { state: 'visible', timeout: 5000 });
+            await page.waitForTimeout(250);
+            await klappeAuf(page, 'session-form');
+            messungen.push({
+                name: `session-tags-input (dmscreen.css {#session-tags-input})`,
+                h: await tabulierBis(page, 'session-tags-input')
+            });
+
+            // (3) .cp-input ueber den echten Tastenweg. Die Leiste setzt den
+            //     Fokus selbst — tabuliert wird dort niemand hin, also ist das
+            //     DER Weg, auf dem der Ring erscheinen muss.
+            await page.evaluate(() => {
+                // @ts-ignore
+                if (typeof window.clearEventLog === 'function') window.clearEventLog();
+            });
+            await page.keyboard.press('Control+Shift+K');
+            await page.waitForTimeout(500);
+            const cp = await page.evaluate(LESE_BLIND);
+            expect(
+                cp && cp.cls.split(' ').includes('cp-input'),
+                'Strg+Shift+K hat die Befehlsleiste nicht geoeffnet oder ihren Leser nicht fokussiert'
+            ).toBe(true);
+            messungen.push({
+                name: '.cp-input (command-palette.css {.cp-input}, Strg+Shift+K)',
+                h: cp
+            });
+            // Derselbe Knoten nach einem echten Sprung.
+            await page.keyboard.press('Shift+Tab');
+            await page.waitForTimeout(160);
+            await page.keyboard.press('Tab');
+            await page.waitForTimeout(160);
+            messungen.push({
+                name: '.cp-input (command-palette.css {.cp-input}, echter Tabulatorsprung)',
+                h: await page.evaluate(LESE_BLIND)
+            });
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(200);
+
+            // Die Messung muss acht Felder plus den zweiten Weg gesehen haben.
+            expect(messungen).toHaveLength(9);
+            expect(messungen.filter(m => !m.h).map(m => `${m.name} — nicht erreicht`)).toEqual([]);
+
+            /** @type {string[]} */
+            const befunde = [];
+            for (const { name, h } of messungen) {
+                if (!istSichtbar(h)) {
+                    befunde.push(
+                        `${name} — nicht sichtbar (blass ${h.blass}, Kasten ${h.rect.join(',')})`
+                    );
+                    continue;
+                }
+                if (!hatRing(h)) {
+                    befunde.push(`${name} — KEIN RING (outline ${h.oW} ${h.oS}, border ${h.bw})`);
+                    continue;
+                }
+                if (h.abschnitt) {
+                    befunde.push(`${name} — Ring abgeschnitten von ${h.abschnitt}`);
+                    continue;
+                }
+                const ring = zerlegeFarbe(h.oC);
+                const flaeche = flaecheAusLagen(h.lagen);
+                if (!ring || ring.alpha < 1 || !flaeche) {
+                    befunde.push(`${name} — Ringfarbe oder Flaeche nicht messbar (${h.oC})`);
+                    continue;
+                }
+                const v = WCAG.ratio(WCAG.rgbToHex(ring.rgb), flaeche);
+                if (v < 3) {
+                    befunde.push(
+                        `${name} — ${WCAG.rgbToHex(ring.rgb)} auf ${flaeche} = ${v.toFixed(2)} unter 3`
+                    );
+                }
+            }
+            expect(befunde.sort()).toEqual([]);
+        });
+    }
+});

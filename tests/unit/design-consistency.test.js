@@ -16505,3 +16505,260 @@ describe('W6-R-04 — die Ringfarbe haelt 3:1 auf fuenf Flaechen in vier Themes 
         ]);
     });
 });
+
+/* ===========================================================================
+   W6-R-05 und W6-R-06 — die Schutzzaeune um den Ring (Design-Handoff v3,
+   Welle 6, Schritte 4 und 5)
+   ===========================================================================
+
+   WAS DIESE ZWEI SIND UND WAS SIE NICHT SIND. Der Nachweis der Schritte 4 und
+   5 ist W6-R-01 am echten Element (tests/e2e/features/fokusring.spec.js) —
+   diese zwei hier sind der Zaun, der das Erreichte haelt. Das steht so im
+   Schrittplan und wird hier wiederholt, weil eine Ratsche, die sich fuer den
+   Nachweis haelt, spaeter als Beleg zitiert wird, den sie nicht tragen kann.
+
+   W6-R-05  JEDE UNTERDRUECKUNG BRAUCHT EINEN ERSATZ. Wer `outline: none`
+            schreibt, nimmt dem Element den Ring der Weltregel. Erlaubt ist
+            das nur mit einem von zwei Nachweisen: der Selektor schliesst den
+            Tastaturfokus aus (`:not(:focus-visible)` in JEDEM Komma-Teil),
+            oder der Rumpf setzt daneben ein eigenes Kennzeichen
+            (`box-shadow` oder `border-color`). Ein ruhender `border:` einer
+            Grundregel zaehlt NICHT — er ist der Normalzustand, kein
+            Fokuskennzeichen.
+   W6-R-06  DAS MITTEL IST EIN RING, KEIN SCHATTEN. `box-shadow:
+            var(--ring-gold)` darf nicht das EINZIGE Fokuskennzeichen einer
+            Regel sein. Zwei unabhaengige Gruende, beide gerechnet: (1) der
+            Schatten liest auf der Flaeche von `.cf-panel` nur 1,27 · 1,16 ·
+            1,24 · 14,97, weil `--ring-gold` in drei der vier Themes eine
+            15-Prozent-Mischung ist — ein `outline` mit `--focus-ring` liest
+            dort 9,24 · 4,37 · 3,82 · 14,97. (2) `box-shadow` laeuft in
+            party.css durch eine Uebergangszeit von `var(--dur)`; Welle 4 hat
+            `outline-width`/`-offset` AUSDRUECKLICH aus `--trans-std`
+            herausgenommen, damit der Fokusring sofort da ist, und nennt dort
+            Welle 6 namentlich (variables.css, W4-R-03). Ein Schattenring
+            faedelt sich ein.
+
+   WARUM W6-R-06 BEI DER GEBURT GRUEN IST, und warum sie trotzdem gebraucht
+   wird: die drei heutigen Stellen tragen alle einen Rahmenwechsel daneben und
+   sind damit erlaubt. Rot ist ihr ERKENNER — die Gegenprobe legt ihm die
+   woertliche Fassung vor, die der Handoff fuer die vier blinden Stellen
+   vorschlug (`box-shadow: var(--ring-gold)` als einziges Mittel), und
+   verlangt, dass er sie anzeigt. Ein Zaun wird nicht erst gebaut, wenn das
+   Vieh schon draussen ist.
+
+   AUSGANGSWERTE BEI DER GEBURT (gemessen am 2026-10-06, HEAD dcb8ec0):
+
+     W6-R-05  ROT. 31 unterdrueckende Deklarationen, 6 davon ohne jeden
+              Ersatz: bestiary.css {.bst-rich-editor},
+              command-palette.css {.cp-input},
+              dmscreen.css {#session-tags-input},
+              file-backup.css {.backup-entry-header:hover},
+              party.css {.cf-combat-value input:focus, .cf-combat-value
+              select:focus}, welt.css {.wp-rich-editor}. Sollstand nach
+              Schritt 4: genau eine Deklaration, und die traegt
+              `:not(:focus-visible)`.
+     W6-R-06  GRUEN, Erkenner rot bewiesen. Drei Fokusregeln nennen
+              `--ring-gold` (dmscreen.css, party.css, welt.css), alle drei mit
+              Rahmenwechsel daneben. `migration.css {.wizard-step.active}`
+              nennt das Token auch, ist aber keine Fokusregel und wird
+              namentlich ausgenommen — nicht weggefiltert.
+   =========================================================================== */
+
+/**
+ * Erkennt eine Deklaration, die den Fokusring UNTERDRUECKT — in allen vier
+ * Schreibweisen, die das im Baum tun koennten.
+ *
+ * `outline: none` ist die haeufige; `outline: 0`, `outline-style: none` und
+ * `outline-width: 0` tun dasselbe und wuerden an einem Erkenner, der nur die
+ * erste kennt, vorbeilaufen. Die Kurzform `outline: 0` setzt die Breite auf 0
+ * und den Stil auf `solid` — sichtbar ist davon nichts.
+ */
+const W6_SUPPRESS_RE =
+    /(?:^|;)\s*outline\s*:\s*(?:none|0(?:px)?)\s*(?=;|$)|(?:^|;)\s*outline-style\s*:\s*none\s*(?=;|$)|(?:^|;)\s*outline-width\s*:\s*0(?:px)?\s*(?=;|$)/;
+
+/**
+ * Schliesst diese Selektorliste den Tastaturfokus aus? Nur wenn JEDER
+ * Komma-Teil es tut — `.a:not(:focus-visible), .b` trifft `.b` auch im Fokus
+ * und schluckt dort den Ring.
+ *
+ * @param {string} selector
+ */
+function w6SchliesstFokusAus(selector) {
+    return selector
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .every(s => /:not\(\s*:focus-visible\s*\)/.test(s));
+}
+
+/**
+ * Setzt dieser Rumpf ein eigenes Fokuskennzeichen? `box-shadow` oder
+ * `border-color` — NICHT `border`. Begruendung im Kopf: ein
+ * `border: 1px solid var(--border)` einer Grundregel ist der Ruhezustand.
+ * Vier der sechs roten Stellen bei der Geburt waren genau das, und ein
+ * Erkenner, der `border` mitzaehlt, haette sie fuer gedeckt gehalten.
+ *
+ * @param {string} body
+ */
+function w6HatEigenesKennzeichen(body) {
+    return /(?:^|;)\s*box-shadow\s*:/.test(body) || /(?:^|;)\s*border-color\s*:/.test(body);
+}
+
+/**
+ * Traegt diese Selektorliste irgendwo einen Fokusteil?
+ * @param {string} selector
+ */
+function w6IstFokusselektor(selector) {
+    return /:focus(-visible|-within)?\b/.test(selector);
+}
+
+describe('W6-R-05 — jede Ringunterdrueckung hat einen Ersatz oder nimmt den Fokus aus (Ratsche)', () => {
+    /** Alle unterdrueckenden Deklarationen des Baums, mit Ort. */
+    const w6Unterdrueckt = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => W6_SUPPRESS_RE.test(r.body))
+            .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+    );
+
+    test('keine Unterdrueckung ohne Ersatz und ohne Fokusausschluss', () => {
+        /* DER NACHWEIS DES SCHRITTS 4 IST DAS NICHT — der ist W6-R-01 am
+           echten Element. Dieser Fall ist der Zaun: er verhindert, dass die
+           30 geloeschten Zeilen einzeln wieder einwandern. */
+        const befunde = w6Unterdrueckt
+            .filter(r => !w6SchliesstFokusAus(r.selector) && !w6HatEigenesKennzeichen(r.body))
+            .map(r => `${r.datei}:${r.zeile} {${r.selector}}`);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('das Inventar der Unterdrueckungen ist genau die eine benannte Stelle', () => {
+        /* BEZIFFERT GEFUEHRT, wie R-20 bis W5-R-07. Die eine verbleibende
+           Stelle ist KEIN Fokusunterdruecker, und das ist der Grund, warum sie
+           steht: `.backup-entry-header` ist ein div mit BEIDEN Klassen
+           `backup-entry backup-entry-header` (file-backup-ui.js), ohne
+           tabindex und ohne data-action — es ist kein Tastaturhalt. Die Zeile
+           nimmt den HOVER-Umriss von `.backup-entry:hover` fuer die Kopfzeile
+           zurueck, die man nicht anklickt; ohne sie bekaeme die Kopfzeile
+           einen goldenen Ring, und davor warnt der Kommentar an der Regel seit
+           Welle 5 ausdruecklich. Welle 6 hat ihren Selektor auf
+           `:hover:not(:focus-visible)` verengt: verhaltensneutral, weil das
+           div nicht fokussierbar ist, aber die Regel sagt jetzt, was sie
+           meint. Waechst diese Liste, steht die Begruendung daneben oder die
+           Ratsche faellt. */
+        expect(w6Unterdrueckt.map(r => `${r.datei} {${r.selector}}`).sort()).toEqual([
+            'file-backup.css {.backup-entry-header:hover:not(:focus-visible)}'
+        ]);
+    });
+
+    test('GEGENPROBE: der Erkenner sieht alle vier Schreibweisen und trennt sie vom Setzen', () => {
+        // Ohne diesen Fall koennten die zwei Faelle darueber gruen sein, weil
+        // W6_SUPPRESS_RE nichts findet.
+        expect(W6_SUPPRESS_RE.test(' outline: none;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 0;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 0px;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline-style: none;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline-width: 0;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 2px solid var(--focus-ring);')).toBe(false);
+        expect(W6_SUPPRESS_RE.test(' outline-offset: 2px;')).toBe(false);
+        // `outline-color: none` ist kein gueltiger Wert und darf nicht als
+        // Unterdrueckung durchgehen, sonst waere jede Farbzeile ein Befund.
+        expect(W6_SUPPRESS_RE.test(' outline-color: none;')).toBe(false);
+
+        // Der Fokusausschluss gilt nur, wenn JEDER Komma-Teil ihn traegt.
+        expect(w6SchliesstFokusAus('.a:hover:not(:focus-visible)')).toBe(true);
+        expect(w6SchliesstFokusAus('.a:not(:focus-visible), .b:not(:focus-visible)')).toBe(true);
+        expect(w6SchliesstFokusAus('.a:not(:focus-visible), .b')).toBe(false);
+        expect(w6SchliesstFokusAus('.a:focus')).toBe(false);
+
+        // Und `border` allein ist kein Kennzeichen — das war der Unterschied
+        // zwischen 2 und 6 roten Stellen bei der Geburt.
+        expect(w6HatEigenesKennzeichen(' border: 1px solid var(--border); ')).toBe(false);
+        expect(w6HatEigenesKennzeichen(' border-color: var(--gold); ')).toBe(true);
+        expect(w6HatEigenesKennzeichen(' box-shadow: var(--ring-gold); ')).toBe(true);
+        expect(w6HatEigenesKennzeichen(' color: var(--text); ')).toBe(false);
+
+        // Der Lauf liest wirklich Regeln: die verbleibende Stelle hat eine
+        // Zeilennummer, und dort steht ihr Selektor.
+        expect(w6Unterdrueckt.length).toBeGreaterThan(0);
+        const fb = w6Unterdrueckt.find(r => r.datei === 'file-backup.css');
+        expect(fb).toBeTruthy();
+        const fbZeilen = fs
+            .readFileSync(path.join(REPO, 'assets', 'styles', 'file-backup.css'), 'utf8')
+            .split('\n');
+        expect(fbZeilen[fb.zeile - 1]).toContain('.backup-entry-header:hover');
+    });
+});
+
+describe('W6-R-06 — kein Fokuskennzeichen besteht allein aus box-shadow: var(--ring-gold) (Ratsche)', () => {
+    /**
+     * Regeln, die `--ring-gold` nennen, ohne Fokusregel zu sein. Namentlich
+     * gefuehrt statt weggefiltert: verschwindet eine oder kommt eine dazu,
+     * soll das auffallen.
+     */
+    const W6_RING_GOLD_OHNE_FOKUS = ['migration.css {.wizard-step.active}'];
+
+    const w6RingGold = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => /box-shadow\s*:[^;]*var\(\s*--ring-gold\s*\)/.test(r.body))
+            .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+    );
+
+    test('die Nennungen von --ring-gold sind die drei Fokusregeln plus die eine benannte Ausnahme', () => {
+        const fokus = w6RingGold.filter(r => w6IstFokusselektor(r.selector));
+        const ohne = w6RingGold
+            .filter(r => !w6IstFokusselektor(r.selector))
+            .map(r => `${r.datei} {${r.selector}}`);
+        expect(fokus.map(r => `${r.datei} {${r.selector}}`).sort()).toEqual([
+            'dmscreen.css {.form-group input:focus, .form-group select:focus, .form-group textarea:focus}',
+            'party.css {.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus}',
+            'welt.css {.wp-rich-editor:focus}'
+        ]);
+        expect(ohne.sort()).toEqual(W6_RING_GOLD_OHNE_FOKUS);
+    });
+
+    test('jede dieser drei traegt ein zweites Kennzeichen neben dem Schatten', () => {
+        /* WARUM NICHT "box-shadow verboten": die drei Stellen sind nicht
+           falsch — der Schatten ist dort eine Zugabe neben einem
+           Rahmenwechsel, und als Zugabe kostet er nichts. Falsch waere er als
+           EINZIGES Mittel, und genau das hatte der Handoff fuer die vier
+           blinden Stellen vorgeschlagen. */
+        const befunde = w6RingGold
+            .filter(r => w6IstFokusselektor(r.selector))
+            .filter(r => !/(?:^|;)\s*border(-color)?\s*:/.test(r.body))
+            .map(r => `${r.datei}:${r.zeile} {${r.selector}} — nur box-shadow`);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('GEGENPROBE: der Erkenner zeigt die woertliche Handoff-Fassung an', () => {
+        /* DER ROTNACHWEIS DIESER RATSCHE. Die Faelle darueber sind bei der
+           Geburt gruen; rot ist der Erkenner, und zwar an genau der Fassung,
+           die der Handoff fuer `.cf-combat-value input:focus` vorschlug. Ohne
+           diesen Fall waere W6-R-06 von einer Ratsche, die nichts prueft,
+           nicht zu unterscheiden. */
+        const handoffFassung = {
+            selector: '.cf-combat-value input:focus, .cf-combat-value select:focus',
+            body: ' box-shadow: var(--ring-gold); '
+        };
+        // Der Erkenner haelt sie fuer eine Fokusregel ...
+        expect(w6IstFokusselektor(handoffFassung.selector)).toBe(true);
+        // ... findet den Schatten ...
+        expect(/box-shadow\s*:[^;]*var\(\s*--ring-gold\s*\)/.test(handoffFassung.body)).toBe(true);
+        // ... und findet KEIN zweites Kennzeichen daneben. Damit waere sie ein
+        // Befund des Falls darueber.
+        expect(/(?:^|;)\s*border(-color)?\s*:/.test(handoffFassung.body)).toBe(false);
+        // Gegenstueck: mit Rahmenwechsel daneben waere sie keiner.
+        expect(
+            /(?:^|;)\s*border(-color)?\s*:/.test(
+                ' border-color: var(--gold); box-shadow: var(--ring-gold); '
+            )
+        ).toBe(true);
+
+        // Und der Fokuserkenner trennt: `.wizard-step.active` ist keine.
+        expect(w6IstFokusselektor('.wizard-step.active')).toBe(false);
+        expect(w6IstFokusselektor('.x:focus-within')).toBe(true);
+        expect(w6IstFokusselektor('.x:focus-visible')).toBe(true);
+        expect(w6IstFokusselektor('.x:focus')).toBe(true);
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(w6RingGold.length).toBe(4);
+    });
+});
