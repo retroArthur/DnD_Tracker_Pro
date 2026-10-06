@@ -1123,8 +1123,24 @@ describe('F-18 — Dubletten und !important (Ratsche)', () => {
     //    3  prefers-reduced-motion
     //    1  .shop-card.expanded .shop-body — schlaegt ein per JS gesetztes
     //       Inline-display
+    //
+    // Gesenkt am 2026-10-06 (Design-Handoff v3, Welle 5, Schritt 6): 105 ->
+    // 104. In `assets/styles/spells.css` stand das Editor-Fett zweizeilig —
+    // `font-weight: 700 !important;` und direkt darunter
+    // `font-weight: bold !important;`. Zwei Schreibweisen derselben
+    // Eigenschaft im selben Block; die zweite gewann, also galt `bold` (700).
+    // Die Gewichtsregel der Welle 5 kennt nur 400/500/600, und das
+    // Ausgabe-Fett (`.spell-desc strong/b` in party.css) steht schon auf
+    // `600 !important`. Die untere Zeile ist deshalb GELOESCHT und die obere
+    // auf `600 !important` gesetzt — Editor-Fett und Ausgabe-Fett sind damit
+    // dasselbe, und ein `!important` weniger. Die Senkung ist das
+    // Nebenergebnis der Gewichtsumstellung, nicht ihr Zweck (O-2).
+    // Gemessener Ausgangswert danach: 104, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien. Vorher 105 im Code und 111 im Rohtext — die sechs
+    // Differenzvorkommen stehen in Kommentaren, denn der Zaehler liest
+    // `cssCode`, also den kommentarfreien Text.
     const DUBLETTEN_MAX = 0;
-    const IMPORTANT_MAX = 105;
+    const IMPORTANT_MAX = 104;
 
     test('die Zahl echter Dubletten steigt nicht wieder', () => {
         const gruppen = new Map();
@@ -14369,6 +14385,124 @@ function typoAnker(d) {
     return `${d.datei}||${d.selektoren}||${d.prop}`;
 }
 
+/* ---------------------------------------------------------------------------
+   Der JS-Geltungsbereich und die Inline-Erhebung — HOCHGEZOGEN (Schritt 6)
+   ---------------------------------------------------------------------------
+   Die Dateiliste und `jsDateien()` standen bis zum 2026-10-06 INNERHALB des
+   W5-R-05-Blocks. Der Schritt 6 braucht dieselbe Menge fuer die
+   Inline-GEWICHTE und der Schritt 7 fuer die Inline-GROESSEN; eine zweite
+   Aufzaehlung derselben Verzeichnisse waere genau der Rueckfall, den O-4
+   verbietet (`build.py` trug einmal eine Kopie der Modulliste aus
+   `loader.js`, ARCH-01). Also EINE Liste, drei Leser. Die Tests im
+   W5-R-05-Block greifen unveraendert auf die Namen zu — sie liegen jetzt
+   eine Ebene hoeher im selben Modul.
+   --------------------------------------------------------------------------- */
+
+/** Die Quelldateien, in denen eine Inline-Typografie stehen kann.
+ *  Der Geltungsbereich geht ueber core/features/ui hinaus: 42 der umzubauenden
+ *  JS-Stellen liegen in systems/, utils/, render/ und loader.js (O-5). Eine
+ *  Ausnahmeliste, die fast die Haelfte des Befundes umfasst, bewacht nichts
+ *  mehr.
+ *  `features/shops/shop-export.js` ist namentlich ausgenommen: es erzeugt ein
+ *  eigenstaendiges Druckdokument mit pt-Einheiten und gehoert nicht zur
+ *  Bildschirm-Typografie. Die DATEI wird ausgenommen, nicht eine Zahl — sonst
+ *  sinkt die Schranke bei der naechsten Aenderung dort von selbst und niemand
+ *  merkt, dass eine Ausnahme stillschweigend gewachsen ist. Auch diese
+ *  Ausnahme steht in `tools/typo-map.js` (O-4): das Umstellungswerkzeug muss
+ *  dieselbe Datei auslassen wie die Ratsche. */
+const JS_VERZEICHNISSE = ['core', 'features', 'ui', 'systems', 'utils', 'render'];
+const JS_AUSGENOMMEN = TYPO_MAP.AUSGENOMMENE_DATEIEN;
+
+let jsCache = null;
+function jsDateien() {
+    if (jsCache) return jsCache;
+    const out = [];
+    const lauf = rel => {
+        const abs = path.join(REPO, rel);
+        if (!fs.existsSync(abs)) return;
+        for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
+            const kind = rel + '/' + e.name;
+            if (e.isDirectory()) lauf(kind);
+            else if (e.name.endsWith('.js') && !JS_AUSGENOMMEN.includes(kind))
+                out.push({
+                    name: kind,
+                    content: fs.readFileSync(path.join(REPO, kind), 'utf8')
+                });
+        }
+    };
+    JS_VERZEICHNISSE.forEach(lauf);
+    out.push({
+        name: 'loader.js',
+        content: fs.readFileSync(path.join(REPO, 'loader.js'), 'utf8')
+    });
+    jsCache = out;
+    return out;
+}
+
+/**
+ * Kommentare zeilentreu leeren — fuer JS und fuer HTML.
+ *
+ * WARUM DAS NOETIG IST UND NICHT WEGGELASSEN WERDEN DARF:
+ * `ui/editors/rich-text-insert.js:872` nennt im JSDoc woertlich
+ * `font-size: 1.3em` und erklaert daneben, warum die Stelle nicht angefasst
+ * wird. Eine Erhebung ohne diesen Schritt zaehlt den Erklaertext als Befund —
+ * gemessen 102 statt 98 Fundstellen — und verlangt damit die Aenderung eines
+ * Kommentars. Dieselbe Falle hat in dieser Datei schon einmal zugeschlagen;
+ * die Begruendung des globalen `withoutComments()` nennt sie.
+ *
+ * `//` wird NUR am Zeilenanfang gestrichen. Ein `//` mitten in der Zeile kann
+ * in einer Zeichenkette stehen (`'https://...'`); wer dort schneidet, loescht
+ * halbe Programmzeilen. Blockkommentare werden ueberall gestrichen; dass
+ * dadurch keine echte Deklaration verlorengeht, prueft die SELBSTPROBE im
+ * W5-R-08-Block mit einer zweiten Zaehlart gegen.
+ */
+function inlineOhneKommentare(text, html) {
+    let t = text.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    if (html) t = t.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' '));
+    return t
+        .split('\n')
+        .map(z => (z.trim().startsWith('//') ? '' : z))
+        .join('\n');
+}
+
+/**
+ * Jede Inline-Deklaration einer Eigenschaft in Templates und JS, mit
+ * `datei:zeile`, Wert und der Quellzeile zum Nachsehen.
+ *
+ * EINE Erhebung, zwei Leser: die Gewichtsschranke des Schrittes 6 (W5-R-06b)
+ * und die Groessenschranke des Schrittes 7 (W5-R-08). Sie zaehlt
+ * DEKLARATIONEN, nicht `style="`-Attribute — das ist der Unterschied, an dem
+ * sich F-19 (INLINE_MAX) und diese Schranke nicht widersprechen, sondern
+ * ergaenzen: ein Attribut mit drei Deklarationen ist dort eins und hier drei.
+ */
+function typoInline(prop) {
+    const out = [];
+    const quellen = [
+        ...tplFiles.map(f => ({
+            name: 'assets/templates/' + f.name,
+            content: f.content,
+            html: true
+        })),
+        ...jsDateien().map(f => ({ name: f.name, content: f.content, html: false }))
+    ];
+    const re = new RegExp(prop + '\\s*:\\s*([^;"\'`)}]+)', 'g');
+    quellen.forEach(f => {
+        inlineOhneKommentare(f.content, f.html)
+            .split('\n')
+            .forEach((z, i) => {
+                for (const m of z.matchAll(re)) {
+                    out.push({
+                        anker: `${f.name}:${i + 1}`,
+                        datei: f.name,
+                        wert: m[1].trim(),
+                        quelle: z.trim().slice(0, 140)
+                    });
+                }
+            });
+    });
+    return out;
+}
+
 describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => {
     /** Die Skala. GENAU acht Sprossen (Handoff Paragraph 3.7), davon zwei von
      *  Welle 4 vorgezogen. Geurteilt wird ueber die TOKENNAMEN, nicht ueber
@@ -14541,43 +14675,11 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  font-size-Ausnahmen kommen. */
     const SVG_GEDULDET = TYPO_MAP.SVG_GEDULDET;
 
-    /** Die Quelldateien, in denen ein SVG-Praesentationsattribut stehen kann.
-     *  Der Geltungsbereich geht ueber core/features/ui hinaus: 42 der
-     *  umzubauenden JS-Stellen liegen in systems/, utils/, render/ und
-     *  loader.js. Eine Ausnahmeliste, die fast die Haelfte des Befundes
-     *  umfasst, bewacht nichts mehr.
-     *  `features/shops/shop-export.js` ist namentlich ausgenommen: es erzeugt
-     *  ein eigenstaendiges Druckdokument mit pt-Einheiten und gehoert nicht zur
-     *  Bildschirm-Typografie. Die DATEI wird ausgenommen, nicht eine Zahl —
-     *  sonst sinkt die Schranke bei der naechsten Aenderung dort von selbst
-     *  und niemand merkt, dass eine Ausnahme stillschweigend gewachsen ist.
-     *  Auch diese Ausnahme ist nach `tools/typo-map.js` VERLEGT (O-4): das
-     *  Umstellungswerkzeug muss dieselbe Datei auslassen wie die Ratsche. */
-    const JS_VERZEICHNISSE = ['core', 'features', 'ui', 'systems', 'utils', 'render'];
-    const JS_AUSGENOMMEN = TYPO_MAP.AUSGENOMMENE_DATEIEN;
-
-    let jsCache = null;
-    function jsDateien() {
-        if (jsCache) return jsCache;
-        const out = [];
-        const lauf = rel => {
-            const abs = path.join(REPO, rel);
-            if (!fs.existsSync(abs)) return;
-            for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
-                const kind = rel + '/' + e.name;
-                if (e.isDirectory()) lauf(kind);
-                else if (e.name.endsWith('.js') && !JS_AUSGENOMMEN.includes(kind))
-                    out.push({
-                        name: kind,
-                        content: fs.readFileSync(path.join(REPO, kind), 'utf8')
-                    });
-            }
-        };
-        JS_VERZEICHNISSE.forEach(lauf);
-        out.push({ name: 'loader.js', content: fs.readFileSync(path.join(REPO, 'loader.js'), 'utf8') });
-        jsCache = out;
-        return out;
-    }
+    /* Die Quelldateien, in denen ein SVG-Praesentationsattribut stehen kann,
+       stehen in `JS_VERZEICHNISSE` / `jsDateien()` — HOCHGEZOGEN auf
+       Modulebene am 2026-10-06 (Schritt 6), weil die Inline-Schranken der
+       Schritte 6 und 7 dieselbe Dateimenge brauchen. Die Begruendung des
+       Geltungsbereichs (O-5) und der Dateiausnahme steht dort. */
 
     /** Jede Fundstelle eines SVG-Praesentationsattributs, mit `datei:zeile`. */
     function svgFundstellen() {
@@ -14822,10 +14924,43 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *    300      1x  party.css (.cf-hp-divider)
      *  Der Handoff rechnet 110; das ist um 15 zu hoch — er zaehlt die 10
      *  @font-face-Gewichte aus fonts.css und die 6 schon richtigen 400 mit.
+     *  ZIEL 0. Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 95 auf 0 — DER ZIELWERT (Schritt 6). Alle 95
+     *  sind umgestellt: 83x `700` -> `600`, 10x `bold` -> `600`, 1x `normal`
+     *  -> `400` und 1x `300` -> `400`. Die Schranke kann ab hier nicht mehr
+     *  sinken; sie faellt beim ersten neuen Fremdgewicht, und das ist ihr
+     *  Zweck. Was dabei WIRKLICH sichtbar wird, ist gemessen und nicht
+     *  behauptet: 500 und 600 rendern unter Segoe UI auf den Bildpunkt
+     *  identisch (578,50 px Textbreite, 8.940 dunkle Bildpunkte), 400 nicht
+     *  (562,03 px, 6.639). Die sichtbare Aenderung ist also 700 -> 600 und
+     *  NICHT 500 -> 600; die 83 + 10 Stellen sind der Eingriff, die beiden
+     *  Einzelfaelle daneben stehen in ihrem CSS begruendet. */
+    const AUSSERHALB_MAX = 0;
+
+    /** SCHRANKE 2 — Inline-Gewichte in Templates und JS.
+     *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
+     *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
+     *                systems/tags.js (das Loeschkreuz der Schlagwortliste),
+     *                loader.js (die Zusammenfassungszeile des Ladefehlers)
+     *    normal  1x  assets/templates/view-resources.html (der Klammerhinweis
+     *                neben "Zusammenfassung")
+     *  Die uebrigen 13 stehen schon auf 500 oder 600.
+     *  WARUM DIESE SCHRANKE HIER STEHT, obwohl das Ratschenfeld des Schrittes
+     *  nur die CSS-Seite nennt: das Feld `stellen` desselben Schrittes zaehlt
+     *  die Inline-Gewichte ausdruecklich mit ("+ 11 Inline-Gewichte
+     *  ausserhalb 400/500/600" — gemessen sind es 4, nicht 11; der Handoff
+     *  zaehlt die schon richtigen 500/600 und das `bold` in der
+     *  ausgenommenen shop-export.js mit). Ohne eine Schranke waeren die vier
+     *  geaenderten Stellen unbewacht: W5-R-06 sieht nur CSS-Dateien, F-19
+     *  zaehlt Attribute ohne Rucksicht auf ihren Inhalt, und der
+     *  Stil-Sollstand kennt keine Quellenangabe. Sie kaemen also still
+     *  zurueck. Derselbe Grund, aus dem O-7 die SVG-Attribute in R-05
+     *  aufnimmt.
      *  ZIEL 0. Diese Zahl darf nur SINKEN. */
-    const AUSSERHALB_MAX = 95;
+    const INLINE_GEWICHT_MAX = 0;
 
     const alleGewichte = typoAlle('font-weight');
+    const alleInlineGewichte = typoInline('font-weight');
 
     function verteilung() {
         const w = {};
@@ -14864,6 +14999,44 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
             });
         }
         expect(befunde.length).toBeLessThanOrEqual(AUSSERHALB_MAX);
+    });
+
+    test('W5-R-06b: kein Inline-Gewicht ausserhalb von 400/500/600', () => {
+        const befunde = alleInlineGewichte
+            .filter(d => !ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()))
+            .map(d => `${d.anker}  font-weight: ${d.wert}   ${d.quelle}`);
+        if (befunde.length > INLINE_GEWICHT_MAX) {
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleInlineGewichte.length,
+                schranke: INLINE_GEWICHT_MAX,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: INLINE_GEWICHT_MAX,
+                gesamt: alleInlineGewichte.length,
+                schranke: INLINE_GEWICHT_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(INLINE_GEWICHT_MAX);
+    });
+
+    test('SELBSTPROBE: die Inline-Erhebung sieht Templates UND JS', () => {
+        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar:
+        // wer eine Dateimenge aus der Erhebung nimmt, macht sie gruen, ohne
+        // eine Zeile zu aendern.
+        const dateien = new Set(alleInlineGewichte.map(d => d.datei));
+        expect([...dateien].some(n => n.startsWith('assets/templates/'))).toBe(true);
+        expect([...dateien].some(n => n.startsWith('systems/'))).toBe(true);
+        expect(dateien.has('loader.js')).toBe(true);
+        expect(alleInlineGewichte.length).toBeGreaterThanOrEqual(15);
+        // Die Erlaubnisliste des Bereinigers ist KEINE Deklaration: in
+        // `utils/basic.js` und `utils/testable-utils.js` steht der
+        // Eigenschaftsname als Zeichenkette in einer Aufzaehlung
+        // (`'font-weight',`). Ohne Doppelpunkt dahinter faellt er durch die
+        // Erhebung — und das soll er, denn dort wird nichts gestaltet.
+        expect(alleInlineGewichte.map(d => d.datei)).not.toContain('utils/basic.js');
+        expect(alleInlineGewichte.map(d => d.datei)).not.toContain('utils/testable-utils.js');
     });
 
     test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
