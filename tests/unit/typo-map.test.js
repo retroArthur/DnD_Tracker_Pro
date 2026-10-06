@@ -1144,3 +1144,153 @@ describe('W5-W11 — die Ueberschriften-Hierarchie im Reichtext-Inhalt bleibt ei
         expect(befunde).toEqual([]);
     });
 });
+
+describe('W5-W12 — der Elternwert aus der BROWSER-Vorgabe (Befund der Runde W5-D/1)', () => {
+    const skala = M.skalaWerte();
+    const { alle } = W.erheben();
+    const trifft = trifftFabrik(alle);
+
+    /* =====================================================================
+       WAS DIESER BLOCK ZUSICHERT, UND WARUM ES W5-W9 NICHT SCHON TUT.
+       =====================================================================
+       `KETTEN` (W5-W9) kennt eine Kante nur dann, wenn das ELTERNTEIL eine
+       eigene font-size-Deklaration traegt — ihr Anker ist
+       `datei||selektoren||wert`, und ohne Deklaration gibt es keinen Wert,
+       also keinen Anker. Genau dort liegt die Luecke, die die Pruefrunde
+       W5-D gefunden hat:
+
+         `.rest-type-icon { font-size: 2em }` sitzt in
+         `<button class="rest-type-btn">` (features/rest-manager.js:26/31).
+         Diese Schaltflaeche traegt in der ganzen App KEINE
+         font-size-Deklaration — assets/styles/party.css:2101 setzt
+         Ausrichtung, Abstand, Rahmen und Hintergrund, aber keine Schrift,
+         und die EINE Regel, die `font-size: inherit` an Schaltflaechen
+         vergibt (core.css:2693), gilt nur innerhalb `.loc-toolbar`.
+         Also entscheidet das Stilblatt des Browsers: Chrome setzt an
+         `button` 13,3333 px. `2em` sind dort 26,67 px und nicht 32 px.
+
+       Die Zuordnungstabelle rechnet `em` gegen eine 16-px-Wurzel (`altPx()`
+       nennt das selbst eine Annahme). Fuer diese Stelle gab sie
+       `--text-3xl` = 34 px und bezifferte den Sprung mit +2,00 px; GEMESSEN
+       waren es +7,33 px. Vier Schranken waren an der Stelle blind, und das
+       ist der Grund, warum dieser Block noetig ist:
+         (1) `KETTEN` kann die Kante nicht fuehren (siehe oben).
+         (2) die eingefrorene Grundlinien-Erhebung laeuft nur ueber `#view-*`
+             und fuenf Rahmen — Modale liegen ausserhalb, und diese Stelle
+             steht nur im Rast-Modal.
+         (3) die 2-px-Abnahme des Schrittes 5 rechnete mit demselben
+             angenommenen Altwert, gegen den sie pruefen sollte.
+         (4) `W5-R-07e` zaehlt die Ikon-Kandidaten, urteilt aber nicht ueber
+             ihren Sprung.
+
+       DIE ERHEBUNG. Gemessen am gebauten Buendel des Stands VOR der
+       Umstellung (44d33daa, `em` noch im Baum), auf gefuellter Kampagne,
+       1440x900, dark, ueber 49 Zustaende: alle 24 Ansichten mit geoeffneten
+       Aufklapp-Formularen UND 24 geoeffnete Modale. Erfasst wurde jede
+       font-size-Regel mit em-Wert, deren Elternelement ein Formularelement
+       ist; 207 em-Regeln waren sichtbar, 28 davon auf einem Elternwert
+       ungleich 16 px, 7 mit einem Formularelement als Elternteil — und
+       davon tragen genau diese 5 den Browser-Vorgabewert 13,3333 px. Die
+       anderen zwei (`.dms-quick-icon`, `.dms-quick-label`) sitzen auf
+       13,6 px, also auf einer App-Deklaration (0.85em), und gehoeren damit
+       zu `KETTEN`.
+
+       Ueber alle 49 Zustaende hinweg ueberschritt GENAU EINE Deklaration die
+       2-px-Abnahme: `.rest-type-icon`. Das ist der Befund, und die Spanne
+       der uebrigen vier ist +0,67 .. +1,33 px.
+
+       Form: [Anker, ElternPx, EigenPx, Elterntag, Zustand].
+       ===================================================================== */
+    const UA_VORGABE = [
+        ['party.css||.rest-type-icon||2em', 13.33, 26.67, 'button', 'modal:showRestModal'],
+        ['party.css||.qa-icon||1.1em', 13.33, 14.67, 'button', 'view:initiative'],
+        ['party.css||.qa-name||0.85em', 13.33, 11.33, 'button', 'view:initiative'],
+        ['party.css||.rest-type-desc||0.85em', 13.33, 11.33, 'button', 'modal:showRestModal'],
+        ['dice.css||.dice-attr span||0.8em', 13.33, 10.67, 'button', 'view:dice']
+    ];
+
+    /** Die Vorgabe des Browser-Stilblatts an `button`, in Chrome. Sie steht
+     *  hier als Zahl, damit die Begruendung nachrechenbar ist: 13,3333 px
+     *  sind 0,8333 der 16-px-Wurzel, und jede em-Angabe darunter ist um
+     *  genau diesen Faktor kleiner als die Tabelle annimmt. */
+    const UA_BUTTON_PX = 13.33;
+
+    test('der Bestand ist der gemessene: 5 Stellen, alle auf der Browser-Vorgabe', () => {
+        expect(UA_VORGABE.length).toBe(5);
+        UA_VORGABE.forEach(([a, elternPx, eigenPx]) => {
+            expect(Math.abs(elternPx - UA_BUTTON_PX)).toBeLessThan(0.02);
+            // ... und die Annahme der Tabelle ist hier WIRKLICH falsch: der
+            // gegen 16 px gerechnete Wert trifft den gemessenen nicht. Ohne
+            // diese Zeile koennte ein Eintrag hier stehen, bei dem es nichts
+            // zu urteilen gibt.
+            const d = zerlegeAnker(a);
+            const annahme = M.altPx(d.wert);
+            expect(annahme).not.toBeNull();
+            expect(Math.abs(annahme - eigenPx)).toBeGreaterThan(0.5);
+        });
+    });
+
+    test('VERWESUNGSPROBE: jeder Anker trifft eine Deklaration', () => {
+        // Dieselbe Probe wie bei `KETTEN`, aus demselben Grund: ein
+        // umbenannter Selektor wuerde lautlos aufhoeren zu urteilen.
+        expect(UA_VORGABE.map(e => e[0]).filter(a => !trifft(a))).toEqual([]);
+        // GEGENPROBE zur Nachschlagehilfe — sie darf nicht alles treffen.
+        expect(trifft('party.css||.gibt-es-nicht||2em')).toBe(false);
+        expect(trifft('party.css||.rest-type-icon||7.77em')).toBe(false);
+    });
+
+    test('keine Stelle springt gegen ihren GEMESSENEN Wert um mehr als 2 px', () => {
+        /* DIE EIGENTLICHE ZUSICHERUNG, und die Zahl, die sie traegt: ohne
+           Sonderzuordnung ist `.rest-type-icon` bei +7,33 px (26,67 -> 34),
+           und das ist der Befund der Runde W5-D/1. Gerechnet wird gegen den
+           GEMESSENEN Wert und nicht gegen `altPx()` — sonst prueft die Probe
+           dieselbe Annahme, an der die Zuordnung gescheitert ist. */
+        const befunde = [];
+        UA_VORGABE.forEach(([a, elternPx, eigenPx, tag, zustand]) => {
+            const d = zerlegeAnker(a);
+            if (M.AUSNAHMEN[M.anker(d.datei, d.selektoren, 'font-size')]) return; // geduldet
+            const z = zielPx(d.datei, d.selektoren, d.wert, skala);
+            if (z === null) return;
+            const sprung = +(z - eigenPx).toFixed(2);
+            if (Math.abs(sprung) > 2) {
+                befunde.push(
+                    `${d.datei} {${d.selektoren}} ${d.wert} auf <${tag}> mit ${elternPx} px: ` +
+                        `gemessen ${eigenPx} px -> ${z} px, Sprung ` +
+                        `${sprung >= 0 ? '+' : ''}${sprung} px  [${zustand}]`
+                );
+            }
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('wo die Tabelle ueber 2 px hinausgriffe, entscheidet eine SONDERZUORDNUNG', () => {
+        /* DER MECHANISMUS, benannt: die Tabelle darf hier nicht gelten, und
+           das Werkzeug dafuer ist `SONDERZUORDNUNG` — dieselbe Einrichtung,
+           mit der W5-W9 die 15 Kettenkanten geradegezogen hat. Diese Probe
+           verlangt sie genau dort, wo die Tabellenzeile am gemessenen Wert
+           vorbeigreift, und nirgends sonst: eine Sonderzuordnung ohne Not
+           waere eine Abweichung ohne Grund. */
+        const befunde = [];
+        UA_VORGABE.forEach(([a, , eigenPx]) => {
+            const d = zerlegeAnker(a);
+            const tabelle = M.ZUORDNUNG[d.wert];
+            if (!tabelle) return;
+            const tabellenPx = skala[tabelle];
+            const tabellenSprung = +(tabellenPx - eigenPx).toFixed(2);
+            const hatSonder = !!M.SONDERZUORDNUNG[a];
+            if (Math.abs(tabellenSprung) > 2 && !hatSonder) {
+                befunde.push(
+                    `${a}: die Tabellenzeile gibt ${tabelle} (${tabellenPx} px), gemessen ` +
+                        `${eigenPx} px — Sprung ${tabellenSprung} px und KEINE Sonderzuordnung`
+                );
+            }
+            if (Math.abs(tabellenSprung) <= 2 && hatSonder) {
+                befunde.push(
+                    `${a}: Sonderzuordnung ohne Not — die Tabellenzeile liegt mit ` +
+                        `${tabellenSprung} px schon innerhalb der Abnahme`
+                );
+            }
+        });
+        expect(befunde).toEqual([]);
+    });
+});
