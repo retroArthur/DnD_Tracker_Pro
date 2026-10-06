@@ -1160,7 +1160,17 @@ describe('W5-W12 — der Elternwert aus der BROWSER-Vorgabe (Befund der Runde W5
        W5-D gefunden hat:
 
          `.rest-type-icon { font-size: 2em }` sitzt in
-         `<button class="rest-type-btn">` (features/rest-manager.js:26/31).
+         `<button class="rest-type-btn">` (rest-manager.js:26/31 — KURZFORM
+         DES MODULPFADES, mit Absicht, und sie braucht denselben Satz wie die
+         Kurzform bei `OHNE_MESSUNG` in design-consistency.test.js: das
+         Abdeckungs-Gate in tests/unit/module-test-coverage.test.js sucht
+         einen Modulpfad als Teilzeichenkette in allen Testdateien und zaehlt
+         JEDEN Treffer als Abdeckung, auch einen im Erklaertext. Dieser Block
+         liest das Modul nicht und urteilt nicht darueber; er nennt es als
+         Fundort eines Markups. Mit vollem Pfad haette das Gate verlangt, das
+         Modul von seiner Ausnahmeliste zu streichen — und damit eine
+         Abdeckung behauptet, die es nicht gibt. Es gibt genau EINE
+         rest-manager.js im Baum).
          Diese Schaltflaeche traegt in der ganzen App KEINE
          font-size-Deklaration — assets/styles/party.css:2101 setzt
          Ausrichtung, Abstand, Rahmen und Hintergrund, aber keine Schrift,
