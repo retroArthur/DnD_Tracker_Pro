@@ -7181,7 +7181,8 @@ Charakterkarte im Mobilbild vom offenen Formular verdeckt war.
 ### Geprüfte Tore
 
 `npx jest` **2110/2110 in 78 Suiten** · `npx playwright test` **604 bestanden /
-31 übersprungen / 0 Fehlschläge** · `pytest tests/build` **30** · `npm run lint` exit 0 mit
+31 übersprungen / 0 Fehlschläge** (zweimal so gemessen; zu den zwei lastabhängigen Wacklern
+der beiden anderen Vollläufe siehe "Offene Punkte") · `pytest tests/build` **30** · `npm run lint` exit 0 mit
 **exakt 363** Warnungen · `typecheck` und `typecheck:strict` exit 0 · beide Builds exit 0 ·
 `check-f18-kaskade --check` OK (117 Abhängigkeiten) · `sync-aktenlage-anker --check` 0
 Abweichungen · **CLAUDE.md unverändert** (`git diff 7e4aa09..HEAD -- CLAUDE.md` leer).
@@ -7207,14 +7208,34 @@ INLINE_AUSSERHALB_MAX **0**. Alle direkt nachgezählt, nicht aus den Schranken a
 
 ### Offene Punkte
 
-- **NEU, am Messaufbau und nicht am Code: `computed-style-diff.spec.js` steht mit 25,1 s
-  gegen eine 30-s-Schranke.** Im zweiten von drei Vollläufen ist der Fall "Breitere
-  Schriftmetrik bewegt den Digest nicht" in den Zeitablauf gelaufen (603 statt 604) — in
-  demselben Lauf, in dem nebenher `jest` und vier `--list`-Aufrufe liefen; der Lauf dauerte
-  7,4 statt 5,7 Minuten. Zwei Vollläufe ohne Nebenlast sind grün. **Keine Regression dieser
-  Welle** (die Spec-Datei ist unverändert), aber die Reserve ist 4,9 s, und der Sollstand
-  ist in dieser Welle um 63 Schlüssel gewachsen. Auf einem langsameren CI-Läufer ist das die
-  nächste rote Lampe.
+- **NEU, und für die nächste CI-Runde das Wichtigste hier: zwei lastabhängige Wackler in
+  der vollen Suite, beide VORBESTEHEND und beide nachgewiesen, nicht vermutet.**
+
+  (a) `computed-style-diff.spec.js`, Fall "Breitere Schriftmetrik bewegt den Digest nicht",
+  braucht allein gemessen **25,1 s gegen eine 30-s-Schranke** — 4,9 s Reserve. In zwei von
+  vier Vollläufen an HEAD lief er in den Zeitablauf. **Der Beweis, dass es nicht an dieser
+  Welle liegt, ist gefahren und nicht geschlossen:** derselbe Fall fällt im Vollauf des
+  VORZUSTANDS `7e4aa09` genauso aus (594 bestanden / 1 Fehlschlag / 27 übersprungen, also
+  dieselben 595 wie der Basiswert — der Basiswert ist nur dann reproduzierbar, wenn dieser
+  eine Fall nicht in den Zeitablauf läuft). Die Spec-Datei ist zwischen `7e4aa09` und HEAD
+  **byteidentisch**; gewachsen ist nur ihre Eingabe, der Sollstand, um 63 von 3549
+  Schlüsseln (+1,8 %).
+
+  (b) `multi-tab-persistence.spec.js`, Vorbedingung "A sieht Bs Schreibvorgang im geteilten
+  Speicher", ist in EINEM der vier Vollläufe rot geworden; `localStorage` trug dort noch den
+  Saatzustand. Das ist ein Wettlauf zwischen dem Anlaufschreiben der Seite A und `await
+  saveImmediate()` auf Seite B. Drei Isolationsläufe grün. Die Spec-Datei und **alle**
+  Module, die sie anfasst, sind in dieser Welle unverändert: `systems/avatars.js`,
+  `systems/spellslots/persistence.js`, `systems/campaign-manager/campaign-manager.js`,
+  `core/init.js`, `tests/e2e/helpers/test-utils.js` — einzeln mit `git diff --quiet`
+  nachgeprüft.
+
+  **Gegenprobe zur Frage, ob die Welle irgendetwas Nicht-Typografisches angefasst hat:** der
+  gesamte JS-Diff `7e4aa09..HEAD` über `core features systems ui utils render loader.js`
+  enthält **16 Zeilen**, die weder `font-size`/`font-weight` noch Kommentar sind — die zwei
+  neuen Klassen an den Histogramm-Beschriftungen (Schritt 8, damit die Ratsche sie sieht),
+  fünf Ersetzungen eines Inline-Stils durch eine Klasse (Schritt 7) und ein Kommentarblock.
+  Nichts davon berührt Persistenz, Mehrfach-Tab-Verhalten oder Zeitverhalten.
 - **NEU: E-2 schützt weniger, als sein Begründungssatz verspricht** (Zahlen oben). 75 von
   201 antippbaren Textfeldern liegen bei 375 px unter 16 px, vorher wie nachher. Keine
   Regression dieser Welle — aber auch keine Zusage, die man zitieren dürfte. Wer sie
