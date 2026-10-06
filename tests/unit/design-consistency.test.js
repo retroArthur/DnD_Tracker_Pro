@@ -15239,6 +15239,55 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         });
     });
 
+    /** DIE ZWEI PFEILZEICHEN. `.wiki-tree-item-toggle` (party.css, ▶) und
+     *  `.tb-caret` (editors.css, ▾) sind dasselbe Zeichen in derselben Rolle:
+     *  ein Aufklapp-Hinweis, kein Lesetext. Schritt 4 hat das erste geduldet
+     *  und ausdruecklich in die Akte geschrieben, dass beide DIESELBE Antwort
+     *  bekommen muessen und keines allein entschieden wird (party.css:883,
+     *  spells.css:467, tools/typo-map.js).
+     *  DIESE PROBE MACHT AUS DEM SATZ EINE PRUEFUNG. Vorher stand er als
+     *  Absichtserklaerung in drei Kommentaren, und der mechanische Lauf des
+     *  Schrittes 5 haette ihn gebrochen, ohne dass etwas rot geworden waere:
+     *  `.tb-caret` springt um genau +2,00 px (9 -> 11) und liegt damit in der
+     *  mechanischen Menge, sein Zwilling um +3,00 px (8 -> 11) und liegt
+     *  ausserhalb. Ein Kommentar, den kein Fall prueft, ist eine Behauptung.
+     *  ERLAUBT SIND GENAU ZWEI LAGEN: beide geduldet, oder beide auf einer
+     *  Sprosse. Die zweite ist die Lage, in die Schritt 8 sie bringen kann —
+     *  die Probe steht ihm also nicht im Weg, sie verbietet nur die
+     *  Aufspaltung. */
+    const PFEILPAAR = [
+        'party.css||.wiki-tree-item-toggle||font-size',
+        'editors.css||.editor-toolbar .tb-caret||font-size'
+    ];
+
+    test('W5-R-07f: die zwei Pfeilzeichen bekommen dieselbe Antwort', () => {
+        const lage = PFEILPAAR.map(a => {
+            const dekls = (nachAnker.get(a) || []).map(d =>
+                d.wert.replace(/\s*!important$/, '').trim()
+            );
+            /* Eine Verwesungsprobe im Kleinen: ohne Deklaration ist die Lage
+               weder "geduldet" noch "sprosse", sondern "fehlt". Sonst machte
+               ein umbenannter Selektor die Probe gruen, indem er aus beiden
+               Mengen fiele. */
+            const lg =
+                dekls.length === 0
+                    ? 'fehlt'
+                    : TYPO_MAP.AUSNAHMEN[a]
+                      ? 'geduldet'
+                      : dekls.every(w => /^var\(--text-[a-z0-9]+\)$/.test(w))
+                        ? 'sprosse'
+                        : 'offen';
+            return `${a}  ->  ${lg}  [${dekls.join(' | ') || 'keine Deklaration'}]`;
+        });
+        /* Die Lage BEIDER Stellen steht in der Behauptung, nicht nur die
+           Zahl der verschiedenen Lagen: jests Gegenueberstellung blendet
+           aus, was auf beiden Seiten gleich ist, und eine Meldung
+           "2 Lagen statt 1" sagt nicht, WELCHE Stelle ausserhalb steht. */
+        const lagen = [...new Set(lage.map(z => z.split('  ->  ')[1].split('  [')[0]))];
+        expect({ lagen, lage }).toEqual({ lagen: [lagen[0]], lage });
+        expect(['geduldet', 'sprosse']).toContain(lagen[0]);
+    });
+
     test('VERWESUNGSPROBE: jede aufgezaehlte Stelle trifft eine Deklaration', () => {
         // Ohne sie hoerte ein umbenannter Selektor lautlos auf zu urteilen.
         const fehlt = [];
