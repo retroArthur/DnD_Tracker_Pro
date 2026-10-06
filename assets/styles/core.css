@@ -3657,13 +3657,25 @@
            (0,2,0) — alle vier schlagen (0,0,1); party.css und editors.css laden
            ausserdem hinter core.css). Am Buendel nachgemessen: von den
            Nicht-Vertragstypen aendert sich NICHTS an checkbox (eine
-           Autorenregel gewinnt) und nichts an radio (im ganzen Baum nicht
-           vorhanden). Die 12 `input[type="file"]` und die hidden-Felder
-           bekommen den Rahmen formal mit, sehen ihn aber nicht: beide stehen
-           auf `display: none` (.io-file-input in dmscreen.css, hidden per
-           Browser-Vorgabe). Und die Regel traegt sich fort — ein kuenftiges
-           Feld ohne eigene Regel bekommt den Eingaberahmen von selbst, statt
-           W6-R-07 Fall 2 rot zu machen.
+           Autorenregel gewinnt, an allen 7 583 besuchten Stellen) und nichts
+           an radio, submit, button, reset und image (im ganzen Baum nicht
+           vorhanden). Die `input[type="file"]` (465 Stellen) und die
+           hidden-Felder (1 050) bekommen den Rahmen formal mit, sehen ihn aber
+           nicht: beide stehen auf `display: none` (.io-file-input in
+           dmscreen.css, hidden per Browser-Vorgabe). Und die Regel traegt
+           sich fort — ein kuenftiges Feld ohne eigene Regel bekommt den
+           Eingaberahmen von selbst, statt W6-R-07 Fall 2 rot zu machen.
+
+           EINER FEHLTE IN DIESER AUFZAEHLUNG, UND ER STEHT AUF DEM SCHIRM:
+           `range`. Die Regel gab beiden Schiebereglern der App einen
+           1-px-Rahmen, und bei `box-sizing: border-box` ist das auf einer
+           8 px bzw. 4 px hohen Schiene kein Detail — gemessen clientHeight
+           8 -> 6 (#calc-budget-slider, die Farbverlaufsleiste des
+           Begegnungsrechners) und 4 -> 2 (.sb-volume-slider, die
+           Lautstaerkeschiene jeder Soundboard-Spur, also die HAELFTE ihrer
+           Hoehe). Dagegen steht die Ausnahmeregel am Ende dieser Datei —
+           die Regel hier bleibt unangetastet, weil ihre (0,0,1) ihr Vertrag
+           ist.
 
            WAS SIE NICHT TUT: sie setzt keine Fuellung, keinen Radius, kein
            Padding. Die 17 Felder bleiben darin Fremdkoerper (ihre Fuellung
@@ -3674,4 +3686,49 @@
            ------------------------------------------------------------------ */
         input, select, textarea {
             border: 1px solid var(--border-input);
+        }
+
+        /* ------------------------------------------------------------------
+           DIE EINE AUSNAHME DER ELEMENTREGEL: SCHIEBEREGLER
+           (Design-Handoff v3, Welle 6, Schritt 6 — Nachtrag aus der Pruefung)
+
+           `input[type="range"]` ist kein Vertragsfeld. Die Elementregel
+           darueber nimmt es trotzdem mit, weil sie `input` ohne Typfilter
+           nennt. A/B am gebauten Buendel, gefuellte Kampagne, 24 Ansichten +
+           3 Formulare + 6 Modale + Begegnungsrechner + Soundboard mit einer
+           Spur, 19 820 besuchte Feldstellen: GENAU ZWEI sichtbare
+           Nicht-Vertragselemente aenderten ihren Rahmen, und beide sind
+           Schieberegler — #calc-budget-slider (clientHeight 8 -> 6) und
+           .sb-volume-slider (4 -> 2). Beide Regeln (encounters.css,
+           tools.css) haben keine eigene Rahmenangabe, die Elementregel griff
+           dort also ungehindert.
+
+           WARUM HIER UND NICHT ZWEIMAL `border: none` AN DEN ZWEI REGLERN.
+           Der Mangel entsteht in der Regel darueber, also gehoert die
+           Ausnahme daneben — und sie traegt sich fort: ein kuenftiger dritter
+           Regler ist von selbst gedeckt, statt den Befund zurueckzubringen.
+           Eine Zeile statt zwei an zwei Orten.
+
+           WARUM NICHT `input:not([type="range"])` AN DER ELEMENTREGEL. Das
+           hebt deren Spezifitaet von (0,0,1) auf (0,1,1) — und genau die
+           (0,0,1) ist ihr Vertrag: JEDE Klassenregel soll weiter gewinnen.
+           Mit (0,1,1) schluege sie die Feldregeln dieses Schrittes, die mit
+           einer einzigen Klasse arbeiten (.toolbar-search, .calc-input,
+           .dice-formula, .global-search-input ...), und ueberschriebe deren
+           Rahmen. Diese Regel hier laesst die Elementregel unangetastet und
+           wirkt nur auf range.
+
+           SPEZIFITAET (0,1,1): schlaegt die Elementregel (0,0,1) und die
+           Klassenregel .sb-volume-slider (0,1,0), verliert gegen
+           #calc-budget-slider (1,0,0). Ein Regler, der wirklich einen Rahmen
+           tragen soll, bekommt ihn also weiter — ueber eine ID oder zwei
+           Klassen. Heute will das keiner: nachgezaehlt 0 Regeln im ganzen
+           Stilbaum, die einem range einen Rahmen geben.
+
+           BEWACHT von Fall 5 in W6-R-07 — generisch, nicht an den zwei
+           heutigen Reglern: kein `input[type="range"]` traegt einen Rahmen,
+           und seine Innenhoehe bleibt seine Aussenhoehe.
+           ------------------------------------------------------------------ */
+        input[type="range"] {
+            border: none;
         }
