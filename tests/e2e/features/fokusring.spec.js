@@ -84,17 +84,29 @@
  * zwei Tatsachen — ist ein Ring da, und hebt er sich ab. Ob er an der
  * richtigen Stelle sitzt, entscheidet die Sichtprobe der Welle.
  *
- * LAUFZEIT UND SCHALTER. Der Vier-Themes-Lauf ueber 24 Ansichten plus
- * Formulare plus Modale ist der teure Teil dieser Datei. W6-R-01 laeuft IMMER
- * (ein Theme reicht: die Ringsetzung hat keinen Theme-Zweig, und die Messung
- * oben bestaetigt das mit 54/53/53/53). W6-R-02 braucht alle vier Themes und
- * laeuft deshalb hinter `FOKUSRING=1`, wie die Ablichtungen der Vorwellen
- * hinter ihren Schaltern:
+ * LAUFZEIT UND SCHALTER. Ein Tabulatorlauf ueber 24 Ansichten plus drei
+ * Formulare plus sechs Modale kostet knapp zwei Minuten; W6-R-02 braucht ihn
+ * vier Mal. Beide Vollaeufe liegen deshalb hinter `FOKUSRING=1`, wie die
+ * Ablichtungen der Vorwellen hinter ihren Schaltern:
  *
  *     FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js
  *
- * Seine Aussage traegt in der CI die Schwesterratsche W6-R-04
- * (design-consistency.test.js): sie rechnet dasselbe Verhaeltnis gegen fuenf
+ * OHNE SCHALTER LAUFEN ZWEI BILLIGE FAELLE MIT, und die sind nicht Zierde: der
+ * Selbsttest des Kontrastrechners (er wirft beim Laden, wenn die Formel nicht
+ * stimmt) und eine Gegenprobe, die in einer Ansicht beweist, dass der
+ * Tabulatorlauf Ringe ueberhaupt sieht und dass beide Ausnahmelisten leer sind.
+ * Eine Ratsche, die nichts findet, weil sie nichts misst, ist von einer gruenen
+ * nicht zu unterscheiden.
+ *
+ * DER ZWEITE GRUND FUER DEN SCHALTER an W6-R-01: dieser Fall ist bis zum
+ * Schritt 4 der Welle ABSICHTLICH ROT (193 Befunde — die 31
+ * `outline: none`-Regeln). Liefe er in der vollen Suite mit, waere der
+ * E2E-Gate vom Tag der Ratsche bis zum Tag ihrer Erfuellung rot, und ein roter
+ * Gate verdeckt echte Regressionen. Wer Schritt 4 abschliesst, prueft mit
+ * `FOKUSRING=1` nach und kann den Schalter an W6-R-01 dann wegnehmen.
+ *
+ * IN DER CI traegt die Schwesterratsche W6-R-04 (design-consistency.test.js)
+ * die Aussage von W6-R-02: sie rechnet dasselbe Verhaeltnis gegen fuenf
  * Flaechen mal vier Themes am TOKEN, laeuft in jedem Lauf mit und braucht
  * keinen Browser. Diese Datei ist der Beleg am echten Element.
  *
@@ -113,8 +125,13 @@ import { seedPopulatedSession, loadApp } from '../helpers/test-utils.js';
 const require = createRequire(import.meta.url);
 const WCAG = require('../../unit/helpers/wcag-contrast.js');
 
-/** Vier Themes nur fuer W6-R-02; W6-R-01 kommt mit einem aus (siehe Kopf). */
-const VIER_THEMES = process.env.FOKUSRING === '1';
+/**
+ * Schalter fuer die beiden teuren Vollaeufe (siehe Kopf, Abschnitt LAUFZEIT).
+ * Ohne ihn laufen nur die zwei billigen Faelle: der Selbsttest des
+ * Kontrastrechners und die Gegenprobe, die beweist, dass der Tabulatorlauf
+ * Ringe ueberhaupt sieht.
+ */
+const VOLLER_LAUF = process.env.FOKUSRING === '1';
 
 /** Die 24 Ansichten der Registry — dieselbe Liste wie in den Ablichtungen. */
 const VIEWS = [
@@ -478,6 +495,10 @@ test.describe('W6-R-01 — jeder sichtbare Tastaturhalt traegt einen Fokusring (
     test('kein sichtbarer Halt in 24 Ansichten, drei Formularen und sechs Modalen bleibt ohne Ring', async ({
         page
     }) => {
+        test.skip(
+            !VOLLER_LAUF,
+            'Voller Tabulatorlauf nur auf Anforderung: FOKUSRING=1 setzen (rund zwei Minuten je Theme). Dieser Fall ist bis zum Schritt 4 der Welle ABSICHTLICH ROT — 193 Befunde, das sind die 31 outline-none-Regeln. Ohne Schalter waere die volle Suite dadurch rot, und ein roter Gate verdeckt echte Regressionen.'
+        );
         test.setTimeout(300000);
         await seedPopulatedSession(page);
         await loadApp(page);
@@ -587,7 +608,7 @@ test.describe('W6-R-02 — jeder sichtbare Ring haelt 3:1 auf seiner Traegerflae
     for (const theme of ['dark', 'light', 'sepia', 'contrast']) {
         test(`Theme ${theme}: kein sichtbarer Ring unter 3:1`, async ({ page }) => {
             test.skip(
-                !VIER_THEMES,
+                !VOLLER_LAUF,
                 'Vier-Themes-Lauf nur auf Anforderung: FOKUSRING=1 setzen. In der CI traegt W6-R-04 (design-consistency.test.js) dieselbe Aussage am Token.'
             );
             test.setTimeout(300000);
