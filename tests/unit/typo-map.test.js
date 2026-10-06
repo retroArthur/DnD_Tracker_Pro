@@ -395,6 +395,40 @@ describe('W5-W4 — die Ratsche IMPORTIERT die Tabelle, sie baut sie nicht nach'
         });
     });
 
+    test('jede Sonderzuordnung traegt einen Grund AUS der geschlossenen Menge', () => {
+        // SONDER_GRUENDE nennt sich eine GESCHLOSSENE Menge ("damit nicht bei
+        // jeder unbequemen Stelle ein neuer Grund erfunden wird"). Geprueft
+        // hat das bisher nichts: ein Eintrag mit `grund: 'passt-schon'` waere
+        // durchgelaufen, und die Zusage der Geschlossenheit war eine Bitte.
+        // Dieselbe Begruendungspflicht wie bei AUSNAHMEN gilt auch hier —
+        // eine Abweichung von der Tabelle ist das staerkere Werkzeug und
+        // braucht die staerkere Begruendung, nicht die schwaechere.
+        const eintraege = Object.entries(M.SONDERZUORDNUNG);
+        expect(eintraege.length).toBeGreaterThan(0);
+        const skala = M.skalaWerte();
+        const befunde = [];
+        eintraege.forEach(([k, s]) => {
+            if (k.split('||').length !== 3) befunde.push(`${k}: kein dreiteiliger Anker`);
+            if (!M.SONDER_GRUENDE.includes(s.grund)) {
+                befunde.push(
+                    `${k}: Grund '${s.grund}' steht nicht in SONDER_GRUENDE ` +
+                        `(${M.SONDER_GRUENDE.join(', ')})`
+                );
+            }
+            if (typeof s.warum !== 'string' || s.warum.length <= 60) {
+                befunde.push(`${k}: Begruendung fehlt oder ist zu kurz`);
+            }
+            // Ein Ziel, das nicht auf der Skala liegt, waere eine Abweichung
+            // von der Tabelle AN DER TABELLE VORBEI.
+            if (!(s.ziel in skala)) befunde.push(`${k}: Ziel '${s.ziel}' ist keine Sprosse`);
+        });
+        expect(befunde).toEqual([]);
+        // VERWESUNGSPROBE: jeder Grund der Menge wird auch benutzt. Ein
+        // ungenutzter Grund ist eine offene Tuer ohne Fall dahinter.
+        const benutzt = new Set(eintraege.map(([, s]) => s.grund));
+        expect([...benutzt].sort()).toEqual([...M.SONDER_GRUENDE].sort());
+    });
+
     test('die SVG-Ausnahmeliste ist LEER, nicht abwesend', () => {
         // Muster der EXEC_COMMAND_ALLOWLIST: eine leere Liste sagt "hier ist
         // noch nicht entschieden", eine fehlende sagt nichts.

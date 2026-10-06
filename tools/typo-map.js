@@ -1077,7 +1077,11 @@ const SONDERZUORDNUNG = {
         grund: 'kette',
         gemessenPx: 12.24,
         elternPx: 13.6,
-        warum: 'Wie .dms-init-marker, dasselbe Elternteil. Sprung -0,24 px.'
+        warum:
+            'Dritte Stelle derselben Kette wie .dms-init-marker, Elternteil ' +
+            '.dms-init-entry 0.85em = 13,6 px -> --text-sm. Tabelle ' +
+            '--text-md waere groesser als das Elternziel. Gerundet 12 px ' +
+            '-> --text-sm (12 px), Sprung -0,24 px.'
     },
     'dmscreen.css||.dms-quick-icon||1em': {
         ziel: token('sm'),
