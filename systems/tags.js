@@ -230,10 +230,10 @@ function showEntitiesWithTag(tagName) {
                 .map(
                     r => `
             <div class="search-result-item" data-action="tag-search-navigate" data-type="${r.type}" data-id="${r.id}" style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);">
-                <span style="font-size: 1.2em;">${r.icon}</span>
+                <span style="font-size: var(--text-xl);">${r.icon}</span>
                 <div>
                     <div style="font-weight: 500;">${esc(r.name)}</div>
-                    <div style="font-size: 0.8em; color: var(--text-dim);">${r.label}</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-dim);">${r.label}</div>
                 </div>
             </div>
         `

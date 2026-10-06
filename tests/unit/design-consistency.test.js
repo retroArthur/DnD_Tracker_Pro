@@ -14503,7 +14503,13 @@ function typoInline(prop) {
         })),
         ...jsDateien().map(f => ({ name: f.name, content: f.content, html: false }))
     ];
-    const re = new RegExp(prop + '\\s*:\\s*([^;"\'`)}]+)', 'g');
+    /* `var(--text-sm)` MUSS als ein Stueck gelesen werden. Eine Zeichenklasse,
+       die `)` ausschliesst, liefert `var(--text-sm` — und damit einen Wert,
+       den die Erlaubnis nicht erkennt: die Schranke blieb rot, obwohl jede
+       Stelle ihr Token trug (nachgemessen am 2026-10-06, 124 falsche
+       Befunde). Darum steht die var()-Form als eigene Alternative VOR der
+       Zeichenklasse. */
+    const re = new RegExp(prop + '\\s*:\\s*(var\\([^)]*\\)|[^;"\'`)}]+)', 'g');
     quellen.forEach(f => {
         inlineOhneKommentare(f.content, f.html)
             .split('\n')
@@ -15211,18 +15217,34 @@ describe('W5-R-08 — jede Inline-Schriftgroesse kommt aus der Skala (Ratsche)',
     });
 
     test('SELBSTPROBE: der Geltungsbereich ist beziffert, nicht angenommen', () => {
-        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar.
+        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar:
+        // wer eine Dateimenge aus der Erhebung nimmt, macht sie gruen, ohne
+        // eine Zeile zu aendern.
+        //
+        // DIE DATEIZAHLEN STEHEN EXAKT, DIE DEKLARATIONSZAHLEN ALS UNTERGRENZE
+        // — und das ist Absicht. Eine Datei weniger im Geltungsbereich ist
+        // IMMER ein Fehler; eine Deklaration mehr kann eine neue, voellig
+        // regelgerechte Stelle mit `var(--text-*)` sein. Ein exakter
+        // Deklarationszaehler waere dann eine Stolperfalle, die nichts
+        // bewacht, was die Schranke oben nicht schon bewacht.
+        //
+        // GEMESSENER BESTAND nach Schritt 7: 37 in Templates (von 39; zwei
+        // sind mit ihrem Attribut verschwunden) + 93 in JS (von 98; fuenf
+        // sind in npc-popup.js und sessions.js entfallen, weil dort die
+        // BASISREGEL entscheidet) = 130.
         const tpl = alleInline.filter(d => d.datei.startsWith('assets/templates/'));
         const js = alleInline.filter(d => !d.datei.startsWith('assets/templates/'));
-        expect(tpl.length).toBe(39);
-        expect(js.length).toBe(98);
-        expect(alleInline.length).toBe(137);
+        expect(tpl.length).toBeGreaterThanOrEqual(37);
+        expect(js.length).toBeGreaterThanOrEqual(93);
+        expect(alleInline.length).toBeGreaterThanOrEqual(130);
         expect(new Set(tpl.map(d => d.datei)).size).toBe(6);
-        // 28 und nicht 30: die Vorhersage des Schrittes zaehlt
-        // `rich-text.js` (drei `.style.fontSize`-Zuweisungen, Funktion) und
+        // 28 und nicht 30: die Vorhersage des Schrittes zaehlt `rich-text.js`
+        // (drei `.style.fontSize`-Zuweisungen, Funktion) und
         // `rich-text-insert.js` (eine Nennung im JSDoc) mit. Beide tragen
         // gemessen NULL Inline-Deklarationen; die zwei GEGENPROBEN unten
-        // halten genau das fest.
+        // halten genau das fest. Auch nach Schritt 7 sind es 28: keine Datei
+        // hat ALLE ihre Stellen verloren — `npc-popup.js` behaelt vier und
+        // `sessions.js` drei.
         expect(new Set(js.map(d => d.datei)).size).toBe(28);
     });
 

@@ -19,7 +19,7 @@ function renderDiceFavorites() {
     if (!container) return;
     if (!favs.length) {
         container.innerHTML =
-            '<span style="color: var(--text-dim); font-size: 0.75em;">Keine Favoriten</span>';
+            '<span style="color: var(--text-dim); font-size: var(--text-xs);">Keine Favoriten</span>';
         return;
     }
     container.innerHTML = favs

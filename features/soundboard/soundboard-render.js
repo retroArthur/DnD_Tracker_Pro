@@ -29,7 +29,7 @@ async function renderAudioLibrary() {
     const container = document.getElementById('soundboard-library-container');
     if (!container) return;
 
-    container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">Lade Audiodateien…</p>';
+    container.innerHTML = '<p style="color:var(--text-dim);font-size:var(--text-md);">Lade Audiodateien…</p>';
 
     let blobs = [];
     try {
@@ -148,8 +148,8 @@ async function renderSceneList() {
                     title="Track zur Szene hinzufuegen">+ Track</button>
             </div>`
             : (Object.keys(blobMeta).length === 0
-                ? '<p class="sb-empty-hint" style="font-size:0.8rem">Erst Audiodateien importieren.</p>'
-                : '<p class="sb-empty-hint" style="font-size:0.8rem">Alle Bibliothekstracks bereits hinzugefuegt.</p>');
+                ? '<p class="sb-empty-hint" style="font-size:var(--text-sm)">Erst Audiodateien importieren.</p>'
+                : '<p class="sb-empty-hint" style="font-size:var(--text-sm)">Alle Bibliothekstracks bereits hinzugefuegt.</p>');
 
         return `<div class="sb-scene-card" data-scene-id="${esc(scene.id)}">
             <div class="sb-scene-header">
@@ -164,7 +164,7 @@ async function renderSceneList() {
                         title="Szene loeschen" aria-label="Szene loeschen">🗑</button>
                 </div>
             </div>
-            <div class="sb-tracks">${trackRows || '<p class="sb-empty-hint" style="font-size:0.8rem">Keine Tracks. Unten hinzufuegen.</p>'}</div>
+            <div class="sb-tracks">${trackRows || '<p class="sb-empty-hint" style="font-size:var(--text-sm)">Keine Tracks. Unten hinzufuegen.</p>'}</div>
             ${addTrackControl}
         </div>`;
     }).join('');

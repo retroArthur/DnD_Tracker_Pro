@@ -49,7 +49,7 @@ function renderLinks() {
         <div class="link-info">
             <div class="link-title"><a href="${esc(l.url)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a></div>
             <div class="link-url">${esc(l.url)}</div>
-            ${l.description ? `<div style="font-size:0.8em; color:var(--text-dim); margin-top:4px;">${esc(l.description)}</div>` : ''}
+            ${l.description ? `<div style="font-size:var(--text-sm); color:var(--text-dim); margin-top:4px;">${esc(l.description)}</div>` : ''}
         </div>
         <div class="btn-group">
             <button class="btn btn-sm" data-action="edit-link" data-id="${l.id}" title="Bearbeiten">✏️</button>

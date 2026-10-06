@@ -23,7 +23,7 @@ function renderTimerPresets() {
     if (!container) return;
     if (!presets.length) {
         container.innerHTML =
-            '<span style="color: var(--text-dim); font-size: 0.75em;">Keine Vorlagen</span>';
+            '<span style="color: var(--text-dim); font-size: var(--text-xs);">Keine Vorlagen</span>';
         return;
     }
     container.innerHTML = presets
@@ -49,7 +49,7 @@ function renderPresetList() {
     if (!container) return;
     if (!presets.length) {
         container.innerHTML =
-            '<div style="color: var(--text-dim); font-size: 0.85em;">Noch keine Vorlagen erstellt</div>';
+            '<div style="color: var(--text-dim); font-size: var(--text-sm);">Noch keine Vorlagen erstellt</div>';
         return;
     }
     container.innerHTML = presets
@@ -57,9 +57,9 @@ function renderPresetList() {
             const timeStr = formatPresetTime(p.hours, p.minutes, p.seconds);
             return `<div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 6px;">
             <span style="flex: 1; display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 1.2em;">${p.emoji || '⏱️'}</span>
+                <span style="font-size: var(--text-xl);">${p.emoji || '⏱️'}</span>
                 <span style="font-weight: 500;">${esc(p.name)}</span>
-                <span style="color: var(--text-dim); font-size: 0.85em;">(${timeStr})</span>
+                <span style="color: var(--text-dim); font-size: var(--text-sm);">(${timeStr})</span>
             </span>
             <button class="btn btn-sm" data-action="edit-timer-preset" data-id="${i}" title="Bearbeiten">✏️</button>
             <button class="btn btn-sm btn-danger" data-action="delete-timer-preset" data-id="${i}" title="Löschen">🗑️</button>

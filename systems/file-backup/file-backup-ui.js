@@ -76,7 +76,7 @@ async function showFileBackupBrowser() {
     if (!dirHandle) {
         content = `<div class="backup-browser-empty">
             <div style="text-align:center; padding: 32px; color: var(--text-dim);">
-                <div style="font-size: 2em; margin-bottom: 12px;">📁</div>
+                <div style="font-size: var(--text-3xl); margin-bottom: 12px;">📁</div>
                 <div>Kein Backup-Ordner verbunden.</div>
                 <button class="btn btn-sm" style="margin-top: 12px;" data-action="setup-file-backup">Backup-Ordner wählen</button>
             </div>
@@ -122,7 +122,7 @@ async function showFileBackupBrowser() {
                 Keine Backup-Dateien der aktiven Kampagne im verbundenen Ordner gefunden.
             </div>`;
         } else {
-            const tableHeader = `<div class="backup-entry backup-entry-header" style="font-weight:600; color: var(--text-dim); font-size: 0.85em;">
+            const tableHeader = `<div class="backup-entry backup-entry-header" style="font-weight:600; color: var(--text-dim); font-size: var(--text-sm);">
                 <span>Kampagne / Datei</span>
                 <span>Datum</span>
                 <span>Größe</span>
@@ -138,7 +138,7 @@ async function showFileBackupBrowser() {
                 return `<div class="backup-entry">
                     <span class="backup-entry-name">${esc(displayName)}</span>
                     <span class="backup-entry-date" style="color: var(--text-dim);">${esc(dateStr)}</span>
-                    <span class="backup-entry-size" style="color: var(--text-dim); font-size: 0.85em;">${esc(size)}</span>
+                    <span class="backup-entry-size" style="color: var(--text-dim); font-size: var(--text-sm);">${esc(size)}</span>
                     <!-- KEIN Inline-Stil fuer Farbe oder Rand (Welle 3 Schritt 9).
                          Hier stand style="color: var(--red); border-color: var(--red);".
                          Ein Inline-Stil schlaegt jeden Selektor, also hat er die
@@ -169,7 +169,7 @@ async function showFileBackupBrowser() {
                     <button class="btn btn-sm" data-action="hide-modal" data-value="file-backup-modal">✕</button>
                 </div>
                 <div id="file-backup-list"></div>
-                <div style="margin-top: 12px; font-size: 0.85em; color: var(--text-dim);">
+                <div style="margin-top: 12px; font-size: var(--text-sm); color: var(--text-dim);">
                     Kampagne · Datum · Größe · Aktion
                 </div>
             </div>
@@ -296,7 +296,7 @@ function renderBackupStatus() {
             // Inhalt befuellen (plan: aktiviert via JS, nicht html-edit)
             if (!indicator.dataset.initialized) {
                 indicator.dataset.initialized = '1';
-                indicator.innerHTML = '⚠️ <span style="font-size:12px;color:var(--yellow);margin-left:2px;">Backup</span>';
+                indicator.innerHTML = '⚠️ <span style="font-size:var(--text-sm);color:var(--yellow);margin-left:2px;">Backup</span>';
                 indicator.style.cursor = 'pointer';
                 indicator.style.alignItems = 'center';
                 indicator.style.gap = '2px';
@@ -319,7 +319,7 @@ function renderBackupStatus() {
     if (isFileProtocol) {
         section.innerHTML = `
             <div class="file-backup-fallback">
-                <div class="backup-status-label" style="color: var(--text-dim); font-size: 0.85em; margin-bottom: 8px;">
+                <div class="backup-status-label" style="color: var(--text-dim); font-size: var(--text-sm); margin-bottom: 8px;">
                     file://-Modus: Kein automatisches Backup möglich.
                 </div>
                 <button class="btn btn-sm" data-action="download-file-backup">

@@ -314,7 +314,7 @@ function rollGroupPerception() {
         total: highest,
         rolls: results.map(r => r.roll)
     };
-    const extraHtml = `<div style="text-align: left; font-size: 0.85em; margin-top: 8px;">
+    const extraHtml = `<div style="text-align: left; font-size: var(--text-sm); margin-top: 8px;">
         ${results.map(r => `<div>${r.name}: <strong>${r.total}</strong> (🎲${r.roll}) | Passiv: ${r.passive}</div>`).join('')}
     </div>`;
     displayDiceResult(

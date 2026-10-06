@@ -20,19 +20,19 @@ function addDialogField() {
         'background: var(--bg-dark); padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border);';
     div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="color: var(--purple); font-weight: 600; font-size: 0.9em;">💬 Dialog ${id + 1}</span>
+            <span style="color: var(--purple); font-weight: 600; font-size: var(--text-md);">💬 Dialog ${id + 1}</span>
             <button type="button" class="btn btn-sm btn-danger" data-action="remove-field-stop" data-value=".npc-dialog-field">✕</button>
         </div>
         <div class="form-group" style="margin-bottom: 8px;">
-            <label style="font-size: 0.85em;">Titel (optional)</label>
-            <input type="text" class="dialog-title" placeholder="z.B. Begrüßung, Geheimnis enthüllen" style="font-size: 0.9em;">
+            <label style="font-size: var(--text-sm);">Titel (optional)</label>
+            <input type="text" class="dialog-title" placeholder="z.B. Begrüßung, Geheimnis enthüllen" style="font-size: var(--text-md);">
         </div>
         <div class="form-group" style="margin-bottom: 8px;">
-            <label style="font-size: 0.85em;">Trigger-Bedingung (optional)</label>
-            <input type="text" class="dialog-trigger" placeholder="z.B. Nach Quest-Abschluss, Wenn vertraut" style="font-size: 0.9em;">
+            <label style="font-size: var(--text-sm);">Trigger-Bedingung (optional)</label>
+            <input type="text" class="dialog-trigger" placeholder="z.B. Nach Quest-Abschluss, Wenn vertraut" style="font-size: var(--text-md);">
         </div>
         <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 0.85em;">Dialog-Text *</label>
+            <label style="font-size: var(--text-sm);">Dialog-Text *</label>
             ${buildEditorToolbar(editorId, 'minimal')}
             <div id="${editorId}" class="rich-editor dialog-text" contenteditable="true" style="min-height: 80px;" data-placeholder="Was sagt der NPC?"></div>
         </div>

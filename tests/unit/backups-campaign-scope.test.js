@@ -337,8 +337,16 @@ describe('showBackupsModal() — stabile ID und sichtbare Kampagne (R05)', () =>
         const [info, knopf] = zeile.children;
         expect(info.children[0].getAttribute('style')).toBe('font-weight: 500;');
         expect(info.children[0].textContent).toBe(new Date(1000).toLocaleString('de-DE'));
+        // NACHGEZOGEN am 2026-10-06 (Design-Handoff v3, Welle 5, Schritt 7):
+        // `0.85em` -> `var(--text-sm)`. Diese Zusicherung friert das Markup
+        // der Zeile ein, damit die Kampagnen-Erweiterung nichts anderes
+        // mitverschiebt — sie ist KEINE Aussage ueber die Typografie. Der
+        // Wert war 13,60 px auf einem 16-px-Elternwert und ist jetzt 12 px
+        // (Delta -1,60, unter der 2-px-Zusage der Welle). Die Zeile darueber
+        // (`font-weight: 500;`) ist unberuehrt: 500 liegt schon auf der
+        // Gewichtsskala.
         expect(info.children[1].getAttribute('style')).toBe(
-            'font-size: 0.85em; color: var(--text-dim);'
+            'font-size: var(--text-sm); color: var(--text-dim);'
         );
         expect(info.children[1].textContent).toBe('Backup #1 (0.0 MB)');
         expect(knopf.className).toBe('btn btn-sm');

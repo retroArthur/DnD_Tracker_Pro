@@ -37,6 +37,14 @@ function toggleMobileNav() {
         header.classList.toggle('nav-open');
     }
 }
+/* Die Schriftgroesse des Textfeldes unten ist `var(--text-lg)` = 16 px und
+   MUSS mindestens 16 px bleiben: unter 16 px loest ein Telefon beim Antippen
+   eines Eingabefeldes den Auto-Zoom aus. Das ist dieselbe Begruendung, aus
+   der die Mobilvergroesserung in assets/styles/variables.css stehenbleibt
+   (E-2). Vor der Welle 5 stand hier das Literal `16px`, der Weg auf die
+   Sprosse ist also Delta 0,00 px. Wer `--text-lg` je kleiner macht, muss
+   diese Stelle und `showMobileSearch()` darunter auf ein eigenes Mass
+   setzen. */
 function showMobileQuickNotes() {
     let modal = $('mobile-quicknotes-modal');
     if (!modal) {
@@ -51,7 +59,7 @@ function showMobileQuickNotes() {
                 </div>
                 <div class="form-group">
                     <textarea id="mobile-quick-notes" rows="12" placeholder="Schnelle Notizen..."
-                              style="font-size: 16px; width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 8px; resize: vertical;"></textarea>
+                              style="font-size: var(--text-lg); width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 8px; resize: vertical;"></textarea>
                 </div>
                 <button class="btn btn-success" data-action="call" data-value="saveMobileQuickNotes" style="width: 100%;">💾 Speichern</button>
             </div>
@@ -93,7 +101,7 @@ function showMobileSearch() {
                 </div>
                 <div class="form-group">
                     <input type="text" id="mobile-search-input" placeholder="NPCs, Orte, Quests..."
-                           data-on-input="performMobileSearch" autofocus style="font-size: 16px;">
+                           data-on-input="performMobileSearch" autofocus style="font-size: var(--text-lg);">
                 </div>
                 <div id="mobile-search-results" style="max-height: 60vh; overflow-y: auto;"></div>
             </div>
@@ -171,10 +179,10 @@ function performMobileSearch() {
             <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;"
                  data-action="mobile-search-navigate" data-type="${m.type}" data-id="${m.id}" data-loc="${m.locId || 'null'}">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.2em;">${getTypeIcon(m.type)}</span>
+                    <span style="font-size: var(--text-xl);">${getTypeIcon(m.type)}</span>
                     <div>
                         <div style="font-weight: 500;">${highlightMatch(m.name, query)}</div>
-                        <div style="font-size: 0.85em; color: var(--text-dim);">${m.detail}</div>
+                        <div style="font-size: var(--text-sm); color: var(--text-dim);">${m.detail}</div>
                     </div>
                 </div>
             </div>
@@ -328,7 +336,7 @@ function renderDashboard() {
             `
                     : `
                 <div class="dash-party-empty">
-                    <div style="font-size: 2em; margin-bottom: 8px;">👥</div>
+                    <div style="font-size: var(--text-3xl); margin-bottom: 8px;">👥</div>
                     <div>Keine Charaktere vorhanden</div>
                     <button class="btn btn-sm" style="margin-top: 10px;" data-action="show-view" data-value="party">+ Charakter erstellen</button>
                 </div>
@@ -401,7 +409,7 @@ function renderDashboard() {
                             : `
                         <div class="dash-empty">
                             <div>📌 Keine Quests verfolgt</div>
-                            <div style="font-size: 0.85em; margin-top: 4px;">Klicke bei einer Quest auf 📌</div>
+                            <div style="font-size: var(--text-sm); margin-top: 4px;">Klicke bei einer Quest auf 📌</div>
                         </div>
                     `
                     }
@@ -431,7 +439,7 @@ function renderDashboard() {
                             : `
                         <div class="dash-empty">
                             <div>📝 Keine Sessions</div>
-                            <div style="font-size: 0.85em; margin-top: 4px;">Erstelle deine erste Session-Notiz</div>
+                            <div style="font-size: var(--text-sm); margin-top: 4px;">Erstelle deine erste Session-Notiz</div>
                         </div>
                     `
                     }
