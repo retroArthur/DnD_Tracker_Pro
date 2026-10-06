@@ -14465,8 +14465,15 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  Stelle wandert von "offen" nach "namentlich geduldet" und verlaesst
      *  damit die Befundmenge dieser Schranke — wer sie bei 802 liesse,
      *  liesse sie um eine Stelle locker stehen. Gemessen nach dem Urteil:
-     *  ausserhalbDerSkala 801, geduldet 35, gesamt 853. */
-    const AUSSERHALB_MAX = 801;
+     *  ausserhalbDerSkala 801, geduldet 35, gesamt 853.
+     *  GESENKT am 2026-10-06 von 801 auf 0 — DAS ZIEL (Schritt 5, der
+     *  mechanische Lauf). Zum ersten Mal in dieser Welle ist die Schranke
+     *  nicht der gemessene Ausgangswert, sondern der Zielwert: nach dem Lauf
+     *  von `node tools/sync-typo-tokens.js` traegt JEDE Deklaration im
+     *  Geltungsbereich ein Skalentoken, `inherit` oder einen namentlich
+     *  geduldeten Wert. Sie kann ab hier nicht mehr sinken; sie faellt beim
+     *  ersten neuen px- oder em-Literal, und das ist ihr Zweck. */
+    const AUSSERHALB_MAX = 0;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14485,8 +14492,12 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  (56 / 48 / 40 / 28.8 / 22.4 / 17.6 px) statt eines em-Wertes, und 8
      *  Textstellen ihre Sprosse. Die 21 sind genau die Bewegung, die
      *  EM_ZIEL unten bei 6 haelt statt bei 27: eine geduldete Stelle zaehlt
-     *  hier mit, weil die EINHEIT verboten ist und nicht der Wert. */
-    const EM_MAX = 574;
+     *  hier mit, weil die EINHEIT verboten ist und nicht der Wert.
+     *  GESENKT am 2026-10-06 von 574 auf 6 — DER ZIELWERT (Schritt 5). Die
+     *  sechs sind die Ueberschriftenstufen h1 bis h6 des Reichtext-Inhalts,
+     *  deren Begruendung unter EM_ZIEL steht; sie sind der einzige Rest.
+     *  Auch diese Schranke kann ab hier nicht mehr sinken. */
+    const EM_MAX = 6;
 
     /** WAS DER ZIELWERT VON SCHRANKE 2 WIRKLICH IST: 6, nicht 0.
      *  Diese Schranke zaehlt em-Deklarationen OHNE Ruecksicht auf
