@@ -62,6 +62,26 @@
  *           #8b4513). Das ist keine Altlast, sondern in Welle 6 Schritt 3
  *           entstanden, als der Ring sein eigenes Token bekam und der Rahmen
  *           auf `--gold` blieb.
+ *   Fall 5  ROT, und zwar an der eigenen Umsetzung dieses Schrittes. Die
+ *           Elementregel am Ende von core.css (`input, select, textarea`)
+ *           nimmt `input[type="range"]` MIT — und `range` ist der einzige
+ *           Nicht-Vertragstyp, der auf dem Schirm steht. Gemessen am
+ *           2026-10-07 am Buendel von ccc2b89 gegen dasselbe Buendel mit
+ *           entfernter Elementregel, 24 Ansichten + 3 Formulare + 6 Modale +
+ *           Begegnungsrechner + Soundboard mit einer Spur, 19 820 besuchte
+ *           Feldstellen: GENAU ZWEI sichtbare Nicht-Vertragselemente aendern
+ *           ihren Rahmen, und beide sind Schieberegler —
+ *           `#calc-budget-slider` (`0px none` -> `1px solid rgb(124,124,124)`,
+ *           clientHeight 8 -> 6) und `.sb-volume-slider` (dasselbe,
+ *           clientHeight 4 -> 2). Die Farbverlaufsleiste des
+ *           Begegnungsrechners traegt dadurch einen grauen Rahmen und ist
+ *           2 px duenner; die Lautstaerkeschiene jeder Soundboard-Spur
+ *           verliert die HAELFTE ihrer Hoehe. Alle uebrigen Nicht-Vertragstypen
+ *           sind unbedenklich und nachgezaehlt: `checkbox` aendert sich an
+ *           keiner seiner 7 583 Stellen (eine Autorenregel gewinnt), `radio`,
+ *           `submit`, `button`, `reset` und `image` kommen im ganzen Baum
+ *           nicht vor, `hidden` (1 050 Stellen) und `file` (465) bekommen den
+ *           Rahmen formal, stehen aber auf `display: none`.
  *
  * DIE AUSGANGSWERTE SIND NACH ZWEI MESSKORREKTUREN ERNEUT ERHOBEN und unveraendert
  * geblieben (220 / 206 / 220 / 220 und 14). Die beiden Korrekturen stehen an ihrer
@@ -751,6 +771,186 @@ test.describe('W6-R-07 — jedes Vertragsfeld traegt den Eingaberahmen (Ratsche)
             befunde,
             `Behaelter mit Feldrahmen oder ohne var(--border): ${befunde.length} ` +
                 `(geprueft ${gesehen.length} von ${BEHAELTER_MIT_BORDER.length})`
+        ).toEqual([]);
+    });
+
+    test('Fall 5 — kein Schieberegler traegt einen Rahmen (Gegenprobe zur Elementregel)', async ({
+        page
+    }) => {
+        /* DIE ELEMENTREGEL NIMMT MEHR MIT, ALS IHR NAME SAGT. `input, select,
+           textarea` am Ende von core.css trifft JEDEN input-Typ, also auch
+           `input[type="range"]` — und `range` ist der einzige Nicht-Vertragstyp
+           im Baum, der auf dem Schirm steht (checkbox hat eine Autorenregel,
+           radio/submit/button/reset/image kommen nicht vor, hidden und file
+           stehen auf display: none). Ein 1-px-Rahmen auf einer 8 px bzw. 4 px
+           hohen Schiene ist dort keine Feinheit: bei `box-sizing: border-box`
+           frisst er ein Viertel bzw. die HAELFTE der Hoehe (gemessen
+           clientHeight 8 -> 6 und 4 -> 2).
+
+           WARUM GENERISCH UND NICHT ZWEI NAMEN. Die Ratsche soll nicht die
+           zwei heutigen Regler nennen, sondern die EIGENSCHAFT halten: kein
+           Schieberegler traegt einen Rahmen. Nur so faellt sie auch beim
+           dritten Regler, den es noch nicht gibt. Die Zahl unten
+           (`>= 2 gesehen`) sichert nur, dass der Lauf ueberhaupt Regler
+           erreicht hat.
+
+           WARUM DIESE ZWEI ORTE EIGENS ANGEFAHREN WERDEN. Beide Regler liegen
+           ausserhalb der Orte von `alleFelder()`: der eine im
+           Begegnungsrechner (ein Modal, das nur seine Funktion aufbaut), der
+           andere in einer Soundboard-SPUR, und Spuren entstehen erst mit einer
+           Szene in `D.soundboard`. Ohne beides prueft dieser Fall nichts.
+
+           WARUM NUR DARK. Geprueft wird die ANWESENHEIT eines Rahmens, nicht
+           seine Farbe; das Theme setzt nur `--border-input` und kann an der
+           Breite nichts aendern (nachgemessen in allen vier Themes: dieselben
+           `1px solid`, nur andere Farbe). Vier Durchgaenge waeren vier mal
+           dieselbe Zahl.
+
+           GEPRUEFT WIRD DIE BREITE UND DER KASTEN. `borderTopWidth === '0px'`
+           allein liesse ein `border-top: 0` mit Rahmen an den drei anderen
+           Seiten durch; `clientHeight === offsetHeight` faengt zusaetzlich
+           jeden waagerechten Rahmen, der die Schiene duenner macht — genau der
+           sichtbare Schaden. */
+        await starte(page);
+        await setzeTheme(page, 'dark');
+
+        /** @type {Array<{ ort: string, id: string, cls: string, bw: string, bs: string,
+         *   oben: number, rechts: number, unten: number, links: number,
+         *   clientHeight: number, offsetHeight: number, sichtbar: boolean }>} */
+        const regler = [];
+        const nimmRegler = async ort => {
+            const liste = await page.evaluate(() => {
+                /** @type {Array<any>} */
+                const out = [];
+                document.querySelectorAll('input[type="range"]').forEach(el => {
+                    const cs = getComputedStyle(el);
+                    const r = el.getBoundingClientRect();
+                    out.push({
+                        id: el.id || '',
+                        cls: (typeof el.className === 'string' ? el.className : '')
+                            .trim()
+                            .split(/\s+/)
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .join(' '),
+                        bw: cs.borderTopWidth,
+                        bs: cs.borderTopStyle,
+                        oben: parseFloat(cs.borderTopWidth) || 0,
+                        rechts: parseFloat(cs.borderRightWidth) || 0,
+                        unten: parseFloat(cs.borderBottomWidth) || 0,
+                        links: parseFloat(cs.borderLeftWidth) || 0,
+                        clientHeight: el.clientHeight,
+                        offsetHeight: el.offsetHeight,
+                        sichtbar:
+                            el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) &&
+                            r.width > 0 &&
+                            r.height > 0
+                    });
+                });
+                return out;
+            });
+            liste.forEach(x => regler.push({ ort, ...x }));
+        };
+
+        // 1. Begegnungsrechner — ueber seinen echten Codeweg.
+        await page.evaluate(() => {
+            // @ts-ignore — global aus der Ansichtsverwaltung
+            window.switchView('encounter');
+        });
+        await page.waitForTimeout(280);
+        const rechnerDa = await page.evaluate(() => {
+            // @ts-ignore — global aus dem Begegnungsrechner
+            if (typeof window.showCalculatorModal !== 'function') return false;
+            // @ts-ignore
+            window.showCalculatorModal();
+            return true;
+        });
+        expect(
+            rechnerDa,
+            'showCalculatorModal() gibt es nicht — der Regler bliebe unbesichtigt'
+        ).toBe(true);
+        await page.waitForTimeout(700);
+        await nimmRegler('calculator-modal');
+        /* ZU UEBER SEINEN EIGENEN WEG. Das Modal des Rechners traegt die Klasse
+           `show` und nicht `active`; ein Sammelgriff auf `.modal` liess es
+           offen, und dann meldete der zweite Ort denselben Regler ein zweites
+           Mal (3 Stellen fuer 2 Elemente im Rotlauf). Kein falscher Befund,
+           aber eine Zahl, die etwas anderes behauptet als sie zaehlt. */
+        await page.evaluate(() => {
+            // @ts-ignore — global aus dem Begegnungsrechner
+            if (typeof window.hideCalculatorModal === 'function') window.hideCalculatorModal();
+        });
+        await page.waitForTimeout(180);
+
+        // 2. Soundboard mit einer Spur. Der Blob liegt nur in IndexedDB; ohne
+        //    Blob-Meta zeigt die Spur ihre blobId als Namen — fuer die
+        //    Rahmenmessung ohne Belang, der Regler wird gezeichnet.
+        await page.evaluate(() => {
+            // @ts-ignore — globaler Datenstand
+            window.D.soundboard = {
+                scenes: [
+                    {
+                        id: 'sb-ratsche-1',
+                        name: 'Ratschenszene',
+                        slot: 1,
+                        tracks: [{ blobId: 'ratsche-spur-1', volume: 0.6 }]
+                    }
+                ]
+            };
+            // @ts-ignore — global aus der Ansichtsverwaltung
+            window.switchView('soundboard');
+        });
+        await page.waitForTimeout(400);
+        await page.evaluate(() => {
+            // @ts-ignore — global aus dem Soundboard
+            if (typeof window.renderSoundboard === 'function') window.renderSoundboard();
+        });
+        await page.waitForTimeout(900);
+        await nimmRegler('soundboard/mit-spur');
+
+        const sichtbare = regler.filter(r => r.sichtbar);
+        expect(
+            sichtbare.length,
+            `nur ${sichtbare.length} sichtbare Schieberegler erreicht (erwartet >= 2: ` +
+                `#calc-budget-slider im Begegnungsrechner, .sb-volume-slider in der ` +
+                `Soundboard-Spur) — der Fall haette nichts geprueft`
+        ).toBeGreaterThanOrEqual(2);
+        expect(
+            sichtbare.some(r => r.id === 'calc-budget-slider'),
+            '#calc-budget-slider war nicht im Baum'
+        ).toBe(true);
+        expect(
+            sichtbare.some(r => r.cls.split(' ').includes('sb-volume-slider')),
+            '.sb-volume-slider war nicht im Baum'
+        ).toBe(true);
+
+        /** @type {string[]} */
+        const befunde = [];
+        for (const r of sichtbare) {
+            const name = `${r.ort} range${r.id ? '#' + r.id : ''}${
+                r.cls ? '.' + r.cls.split(' ').join('.') : ''
+            }`;
+            const seiten = r.oben + r.rechts + r.unten + r.links;
+            if (seiten > 0) {
+                befunde.push(
+                    `${name}: Rahmen ${r.bw} ${r.bs} (oben ${r.oben} / rechts ${r.rechts} / ` +
+                        `unten ${r.unten} / links ${r.links}) — ein Schieberegler traegt keinen`
+                );
+            }
+            if (r.clientHeight !== r.offsetHeight) {
+                befunde.push(
+                    `${name}: Innenhoehe ${r.clientHeight} < Aussenhoehe ${r.offsetHeight} — ` +
+                        `die Schiene ist ${r.offsetHeight - r.clientHeight} px duenner als ` +
+                        `angegeben`
+                );
+            }
+        }
+        expect(
+            befunde,
+            `${befunde.length} Befunde an ${sichtbare.length} sichtbaren Schiebereglern. ` +
+                `Bei der Geburt dieses Falles: 4 Befunde an 2 Reglern — beide mit ` +
+                `1px solid rgb(124, 124, 124) auf allen vier Seiten, clientHeight 8 -> 6 ` +
+                `(#calc-budget-slider) und 4 -> 2 (.sb-volume-slider).`
         ).toEqual([]);
     });
 
