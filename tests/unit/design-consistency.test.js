@@ -16099,3 +16099,409 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
         expect(Math.abs(skala[TYPO_MAP.ZUORDNUNG['1.1em']] - 17.6)).toBeLessThanOrEqual(2);
     });
 });
+
+/* ===========================================================================
+   W6-R-03 und W6-R-04 — der Fokusring im Stilbaum (Design-Handoff v3,
+   Welle 6, Schritt 1)
+   ===========================================================================
+
+   WARUM DIESE ZWEI RATSCHEN HIER UND NICHT IM BROWSER: ihre Schwestern
+   W6-R-01 und W6-R-02 (tests/e2e/features/fokusring.spec.js) messen am echten
+   Element, mit echten Tabulatorspruengen, und brauchen dafuer einen Browser,
+   eine gesaete Kampagne und rund zwei Minuten. Diese zwei hier lesen
+   Deklarationen und rechnen Zahlen; sie tragen in der CI den Teil der Aussage,
+   der ohne Browser pruefbar ist.
+
+   WAS SIE ZUSAMMEN ABDECKEN, und warum beides gebraucht wird:
+
+     W6-R-03  DIE REGEL IST EINE UND STEHT AM RICHTIGEN ORT. Eine Weltregel in
+              einer Modulstildatei ist eine Weltregel per Zufall der
+              @import-Reihenfolge. Eine ZWEITE Weltregel waere eine Dublette,
+              die F-18 nicht faengt — dort zaehlen gleiche Regelrumpfe, hier
+              waeren es zwei verschiedene auf demselben Selektor.
+     W6-R-04  DIE RINGFARBE HAELT IHRE SCHWELLE — auf allen fuenf Flaechen, in
+              allen vier Themes, und AUF DER MODALFLAECHE AUCH. Der letzte
+              Punkt ist der Grund, warum diese Ratsche existiert: `.modal`
+              traegt `background: rgba(26, 26, 26, 0.95)` als Literal, das KEIN
+              Theme-Block ueberschreibt (gefuehrte Ausnahme W2-C-01). Wegen
+              `outline-offset: 2px` landet der Ring genau darauf. In Sepia
+              liest der heutige Ring dort 2,37 — ein Durchfall, den vor dieser
+              Ratsche kein Test im Baum gesehen hat, weil die Flaechenmenge von
+              R-02 und R-04 die vier neutralen Tokens fuehrt und die
+              Modalflaeche nicht.
+
+   DER STIL-SOLLSTAND SIEHT VON ALLEM DEM NICHTS. Seine zwoelf gehashten
+   Eigenschaften (const PROPERTIES in computed-style-diff.spec.js) enthalten
+   `outline` nicht, in keiner Schreibweise — und der Abzug entsteht im
+   unfokussierten Ruhezustand, wo auch ein gehashtes boxShadow nichts sehen
+   wuerde. Fuer die einzige Verhaltensaenderung der Welle 6 gibt es dort null
+   Deckung.
+
+   AUSGANGSWERTE BEI DER GEBURT, beide ROT (gemessen am 2026-10-06,
+   HEAD e4ac3a7):
+
+     W6-R-03  Die unbedingte Regel existiert, steht aber in dmscreen.css
+              (Zeile 1117) und nicht in core.css. Teil 1 ist gruen (es ist
+              genau eine), Teil 2 faellt.
+     W6-R-04  `--focus-ring` existiert in keinem der vier Theme-Bloecke; alle
+              20 Zellen sind unaufloesbar, und keine der sieben setzenden
+              Fokusregeln nennt das Token. Gerechnet mit dem heutigen
+              `var(--gold)` an seiner Stelle waeren 2 der 4 Themes rot: Light
+              min 2,40 (auf --bg-hover), Sepia min 2,37 (auf der
+              Modalflaeche); Dark 6,01 und Contrast 9,01 halten.
+   =========================================================================== */
+
+/**
+ * Jede Regel einer Stildatei mit Zeile, Selektorliste, Rumpf und den
+ * umgebenden At-Regeln.
+ *
+ * Eigener Klammerlauf statt eines Regex ueber die ganze Datei: ein
+ * `:focus-visible` kann in einem @media- oder @supports-Block stehen, und nur
+ * ein Lauf mit Klammerzaehler weiss, ob er dort steht. Die Kommentare werden
+ * vorher durch Leerzeichen ERSETZT, nicht geloescht — sonst verrutschen die
+ * Zeilennummern, und ein Kommentar mit einer Klammer darin wuerde den Lauf
+ * aus dem Tritt bringen (der Erklaerblock an `.modal` enthaelt genau so eine).
+ *
+ * @param {string} src
+ * @returns {Array<{ line: number, selector: string, body: string, atrules: string[] }>}
+ */
+function w6Regeln(src) {
+    let ohne = '';
+    let i = 0;
+    while (i < src.length) {
+        if (src[i] === '/' && src[i + 1] === '*') {
+            const ende = src.indexOf('*/', i + 2);
+            const stop = ende === -1 ? src.length : ende + 2;
+            for (let k = i; k < stop; k++) ohne += src[k] === '\n' ? '\n' : ' ';
+            i = stop;
+        } else {
+            ohne += src[i];
+            i++;
+        }
+    }
+    const zeilen = ohne.split('\n');
+    /** Zeilennummer eines Zeichenindex, ohne den Text je neu zu schneiden. */
+    const zeileVon = (() => {
+        const grenzen = [];
+        let summe = 0;
+        zeilen.forEach(z => {
+            summe += z.length + 1;
+            grenzen.push(summe);
+        });
+        return idx => {
+            let lo = 0;
+            let hi = grenzen.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (grenzen[mid] <= idx) lo = mid + 1;
+                else hi = mid;
+            }
+            return lo + 1;
+        };
+    })();
+
+    /** @type {Array<{ line: number, selector: string, body: string, atrules: string[] }>} */
+    const regeln = [];
+    /** @type {Array<{ prelude: string, index: number, eintrag: any }>} */
+    const stapel = [];
+    let puffer = '';
+    for (let k = 0; k < ohne.length; k++) {
+        const c = ohne[k];
+        if (c === '{') {
+            const prelude = puffer.trim().replace(/\s+/g, ' ');
+            let eintrag = null;
+            if (!prelude.startsWith('@')) {
+                eintrag = {
+                    line: zeileVon(k),
+                    selector: prelude,
+                    body: '',
+                    atrules: stapel.map(s => s.prelude)
+                };
+                regeln.push(eintrag);
+            }
+            stapel.push({ prelude, index: k, eintrag });
+            puffer = '';
+            continue;
+        }
+        if (c === '}') {
+            const oben = stapel.pop();
+            if (oben && oben.eintrag) oben.eintrag.body = ohne.slice(oben.index + 1, k);
+            puffer = '';
+            continue;
+        }
+        if (c === ';') {
+            puffer = '';
+            continue;
+        }
+        puffer += c;
+    }
+    return regeln;
+}
+
+/**
+ * Traegt diese Selektorliste einen UNBEDINGTEN `:focus-visible`-Teil — also
+ * einen, der nichts weiter verlangt als "dieses Element hat Tastaturfokus"?
+ *
+ * `:focus-visible` ist unbedingt; `.btn:focus-visible`, `.x :focus-visible`
+ * und `:focus-visible:hover` sind es nicht. Entscheidend ist der ganze
+ * Komma-Teil, nicht nur sein Anfang: `.x, :focus-visible` traegt einen.
+ *
+ * @param {string} selector
+ */
+function w6IstWeltregel(selector) {
+    return selector
+        .split(',')
+        .map(s => s.trim())
+        .some(s => s === ':focus-visible');
+}
+
+/** Alle Regeln aller Stildateien, einmal geparst. */
+const W6_ALLE_REGELN = cssFiles.map(f => ({ datei: f.name, regeln: w6Regeln(f.content) }));
+
+describe('W6-R-03 — eine unbedingte :focus-visible-Weltregel, und sie steht in core.css (Ratsche)', () => {
+    const weltregeln = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => w6IstWeltregel(r.selector))
+            .map(r => ({ datei: f.datei, zeile: r.line, atrules: r.atrules, body: r.body }))
+    );
+
+    test('es gibt GENAU EINE, nicht zwei und nicht keine', () => {
+        // Keine waere der Rueckfall auf den Browser-Standardring, der auf
+        // dunklem Grund gemessen kaum zu sehen ist — die Begruendung, mit der
+        // `.btn:focus-visible` in core.css ueberhaupt entstand. Zwei waeren
+        // eine Dublette, die F-18 nicht sieht.
+        expect(weltregeln.map(w => `${w.datei}:${w.zeile}`)).toHaveLength(1);
+    });
+
+    test('und sie steht in core.css, nicht in einer Modulstildatei', () => {
+        // WARUM DER ORT ZAEHLT: eine Weltregel in dmscreen.css ist eine
+        // Weltregel durch Zufall der @import-Reihenfolge. Jede gleichrangige
+        // Regel, die VOR dmscreen.css steht, gewinnt dort gegen sie; in
+        // core.css (dritte Datei des Hubs) gewinnt sie gegen alle
+        // gleichrangigen.
+        //
+        // KASKADENNEUTRAL IST DER UMZUG TROTZDEM, und das ist nachgerechnet,
+        // nicht gehofft: alle 31 unterdrueckenden outline-Regeln haben
+        // Spezifitaet >= (0,2,0) und schlagen beide Orte. Die drei
+        // Gegenspieler mit genau (0,1,0) liegen in bestiary.css, welt.css und
+        // command-palette.css — alle drei NACH beiden Orten im Hub; sie
+        // gewinnen vorher wie nachher ueber die Reihenfolge.
+        expect(weltregeln[0] && weltregeln[0].datei).toBe('core.css');
+    });
+
+    test('sie steht auf der obersten Ebene, nicht in einem @media- oder @supports-Zweig', () => {
+        // Eine Weltregel in einem Medienzweig gilt nicht in der Welt.
+        expect(weltregeln[0] && weltregeln[0].atrules).toEqual([]);
+    });
+
+    test('sie setzt Breite, Stil und Abstand — ein Ring ohne Abstand sitzt auf dem Rahmen', () => {
+        const rumpf = (weltregeln[0] && weltregeln[0].body) || '';
+        expect(rumpf).toMatch(/outline\s*:\s*2px\s+solid\s+var\(\s*--focus-ring\s*\)/);
+        expect(rumpf).toMatch(/outline-offset\s*:\s*2px/);
+    });
+
+    test('GEGENPROBE: der Erkenner trennt unbedingt von bedingt, und der Lauf findet Regeln', () => {
+        // Ohne diesen Fall koennte w6IstWeltregel() alles oder nichts fuer eine
+        // Weltregel halten, und die vier Faelle darueber waeren gruen, ohne
+        // etwas zu bedeuten.
+        expect(w6IstWeltregel(':focus-visible')).toBe(true);
+        expect(w6IstWeltregel('.x, :focus-visible')).toBe(true);
+        expect(w6IstWeltregel('.btn:focus-visible')).toBe(false);
+        expect(w6IstWeltregel('.x :focus-visible')).toBe(false);
+        expect(w6IstWeltregel(':focus-visible:hover')).toBe(false);
+        expect(w6IstWeltregel('.btn:focus')).toBe(false);
+        // Und der Klammerlauf liest core.css wirklich: dort stehen mehr als
+        // 100 Regeln, und `.btn:focus-visible` ist eine davon — mit Rumpf.
+        const core = W6_ALLE_REGELN.find(f => f.datei === 'core.css');
+        expect(core.regeln.length).toBeGreaterThan(100);
+        const btn = core.regeln.find(r => r.selector === '.btn:focus-visible');
+        expect(btn).toBeTruthy();
+        expect(btn.body).toMatch(/outline/);
+        // Zeilennummern stimmen: die gefundene Zeile traegt den Selektor.
+        const coreZeilen = fs
+            .readFileSync(path.join(REPO, 'assets', 'styles', 'core.css'), 'utf8')
+            .split('\n');
+        expect(coreZeilen[btn.line - 1]).toContain('.btn:focus-visible');
+    });
+});
+
+describe('W6-R-04 — die Ringfarbe haelt 3:1 auf fuenf Flaechen in vier Themes (Ratsche)', () => {
+    /* -----------------------------------------------------------------------
+       DIE FUENFTE FLAECHE IST DER GANZE PUNKT. Vier neutrale Tokens plus die
+       aufgeloeste Modalflaeche = 20 Zellen. Ohne die fuenfte waere diese
+       Ratsche in Sepia gruen und wuerde damit etwas Falsches behaupten: der
+       Ring liest dort auf der Modalflaeche 2,37.
+
+       WIE DIE MODALFLAECHE ENTSTEHT, Lage fuer Lage und am Browser
+       nachgemessen (alle vier Themes, offenes NSC-Modal):
+
+         unten    die Seitenflaeche      var(--bg-dark)
+         darueber der Dunkelschleier     .modal-overlay { background: var(--scrim-60) }
+         darueber die Modalfuellung      .modal { background: rgba(26, 26, 26, 0.95) }
+
+       `--scrim-60` steht NICHT in den vier Theme-Bloecken, sondern in einem
+       eigenen :root-Block — palette(theme) fuehrt es deshalb nicht, und wer es
+       per resolve() sucht, bekommt null und LAESST DIE LAGE STILL FALLEN.
+       Genau dieser Fehler hat in der Vermessung dieser Welle die Modalflaeche
+       von Light als #252525 statt als #1e1e1e ausgerechnet und damit die
+       erreichbare Kontrastdecke um vier Prozent zu niedrig angesetzt (3,36
+       statt 3,50). Deshalb liest dieser Block das Token aus dem Dateitext und
+       prueft alle drei Zutaten namentlich nach: faellt eine weg oder aendert
+       sich, faellt die Ratsche, statt gegen eine Flaeche zu rechnen, die es
+       auf dem Schirm nicht gibt.
+       ----------------------------------------------------------------------- */
+
+    const W6_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-elevated', '--bg-hover'];
+    const W6_SCHWELLE = 3;
+
+    /** Die drei Zutaten der Modalflaeche, aus dem Dateitext gelesen. */
+    const w6ScrimTreffer = fs
+        .readFileSync(WCAG.VARIABLES_CSS, 'utf8')
+        .match(/^\s*--scrim-60:\s*([^;]+);/m);
+    const w6ScrimWert = w6ScrimTreffer ? w6ScrimTreffer[1].trim() : null;
+
+    const w6DmRegeln = W6_ALLE_REGELN.find(f => f.datei === 'dmscreen.css').regeln;
+    /** Erste Regel mit genau diesem Selektor auf oberster Ebene. */
+    const w6Fuellung = sel => {
+        const r = w6DmRegeln.find(x => x.selector === sel && x.atrules.length === 0);
+        if (!r) return null;
+        const m = r.body.match(/(?:^|;)\s*background\s*:\s*([^;]+)/);
+        return m ? m[1].trim() : null;
+    };
+    const w6ModalWert = w6Fuellung('.modal');
+    const w6OverlayWert = w6Fuellung('.modal-overlay');
+
+    /**
+     * Die aufgeloeste Modalflaeche eines Themes.
+     * @param {Record<string,string>} pal
+     * @returns {string|null} Hex
+     */
+    function w6Modalflaeche(pal) {
+        const seite = WCAG.resolve('var(--bg-dark)', pal);
+        if (!seite) return null;
+        const schleier = WCAG.resolveOver(w6ScrimWert, pal, seite);
+        if (!schleier) return null;
+        return WCAG.resolveOver(w6ModalWert, pal, schleier);
+    }
+
+    test('die drei Zutaten der Modalflaeche sind noch die gemessenen', () => {
+        // Aendert eine davon, ist die Rechnung der naechsten Faelle ueberholt
+        // — und das soll auffallen, nicht durchlaufen.
+        expect(w6ScrimWert).toBe('color-mix(in srgb, #000 60%, transparent)');
+        expect(w6ModalWert).toBe('rgba(26, 26, 26, 0.95)');
+        expect(w6OverlayWert).toBe('var(--scrim-60)');
+    });
+
+    test('die aufgeloeste Modalflaeche je Theme ist die am Browser nachgemessene', () => {
+        // Nachgemessen am gebauten Buendel mit offenem NSC-Modal, alle vier
+        // Themes. Stimmt die Rechnung hier nicht mit dem Schirm ueberein, ist
+        // jede Zahl der naechsten Faelle wertlos.
+        const pals = WCAG.palettes();
+        const gerechnet = {};
+        WCAG.THEMES.forEach(t => {
+            gerechnet[t] = w6Modalflaeche(pals[t]);
+        });
+        expect(gerechnet).toEqual({
+            dark: '#191919',
+            light: '#1e1e1e',
+            sepia: '#1e1d1d',
+            contrast: '#191919'
+        });
+    });
+
+    test('--focus-ring steht in allen vier Theme-Bloecken', () => {
+        // R-01 prueft Symmetrie ueber ALLE Tokens; hier steht das eine, um das
+        // es geht, noch einmal namentlich — ein fehlender Block faellt sonst
+        // erst in der Kontrastrechnung auf, und dort als "unaufloesbar" statt
+        // als "fehlt".
+        const pals = WCAG.palettes();
+        expect(WCAG.THEMES.filter(t => !pals[t]['--focus-ring'])).toEqual([]);
+    });
+
+    test('20 Zellen: der Ring haelt 3:1 auf jeder der fuenf Flaechen, in jedem Theme', () => {
+        const pals = WCAG.palettes();
+        /** @type {string[]} */
+        const befunde = [];
+        let zellen = 0;
+        WCAG.THEMES.forEach(theme => {
+            const pal = pals[theme];
+            const ring = WCAG.resolve(pal['--focus-ring'], pal);
+            if (!ring) {
+                befunde.push(
+                    `${theme}: --focus-ring ist nicht aufloesbar (${pal['--focus-ring']})`
+                );
+                zellen += 5;
+                return;
+            }
+            /** @type {Array<[string, string|null]>} */
+            const flaechen = W6_FLAECHEN.map(s => [s, WCAG.resolve(pal[s], pal)]);
+            flaechen.push(['.modal (geschichtet)', w6Modalflaeche(pal)]);
+            flaechen.forEach(([name, hex]) => {
+                zellen++;
+                if (!hex) {
+                    befunde.push(`${theme}: Flaeche ${name} ist nicht aufloesbar`);
+                    return;
+                }
+                const v = WCAG.ratio(ring, hex);
+                if (v < W6_SCHWELLE) {
+                    befunde.push(
+                        `${theme}: ${ring} auf ${name} (${hex}) = ${v.toFixed(2)} — unter ${W6_SCHWELLE}`
+                    );
+                }
+            });
+        });
+        expect(zellen).toBe(20);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('jede Regel, die einen Fokusring SETZT, nimmt --focus-ring und nicht --gold', () => {
+        /* WOGEGEN DAS STEHT: der Tokenwechsel in variables.css allein bewegt
+           nichts, solange die Regeln weiter var(--gold) lesen. Und es sind
+           nicht eine, sondern sieben: die Weltregel plus sechs
+           `:focus-visible`-Regeln mit hoeherer Spezifitaet, die sie
+           ueberstimmen. Gemessen am Vorzustand: von 640 sichtbaren Ringen in
+           Light trug JEDER rgb(184, 134, 11) — ein Wechsel nur an der
+           Weltregel haette den groesseren Teil davon unberuehrt gelassen, weil
+           Knoepfe ihren Ring aus core.css beziehen.
+
+           NICHT GEMEINT sind die zwei `:hover`-Konturen: sie sind
+           Zeigerueckmeldung auf var(--gold-dim), kein Fokuskennzeichen. Sie
+           stehen namentlich in W6_HOVER_KONTUREN und werden gezaehlt, damit
+           ihr Dazukommen oder Verschwinden auffaellt. */
+        const W6_HOVER_KONTUREN = ['.qref-row:hover', '.backup-entry:hover'];
+
+        /** @type {string[]} */
+        const befunde = [];
+        /** @type {string[]} */
+        const fokusregeln = [];
+        /** @type {string[]} */
+        const hoverkonturen = [];
+
+        W6_ALLE_REGELN.forEach(f => {
+            f.regeln.forEach(r => {
+                const decl = r.body.match(/(?:^|;)\s*outline\s*:\s*([^;]+)/);
+                if (!decl) return;
+                const wert = decl[1].trim();
+                if (/^(none|0)$/.test(wert)) return;
+                const ort = `${f.datei} {${r.selector}}`;
+                if (W6_HOVER_KONTUREN.includes(r.selector)) {
+                    hoverkonturen.push(ort);
+                    return;
+                }
+                fokusregeln.push(ort);
+                if (!/var\(\s*--focus-ring\s*\)/.test(wert)) {
+                    befunde.push(`${ort} setzt ${wert} statt var(--focus-ring)`);
+                }
+            });
+        });
+
+        expect(befunde.sort()).toEqual([]);
+        // Die Menge ist nicht leer und nicht geschrumpft: sieben setzende
+        // Fokusregeln, zwei Zeigerkonturen daneben.
+        expect(fokusregeln.length).toBe(7);
+        expect(hoverkonturen.sort()).toEqual([
+            'dashboard.css {.qref-row:hover}',
+            'file-backup.css {.backup-entry:hover}'
+        ]);
+    });
+});
