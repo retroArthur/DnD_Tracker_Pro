@@ -7181,8 +7181,9 @@ Charakterkarte im Mobilbild vom offenen Formular verdeckt war.
 ### Geprüfte Tore
 
 `npx jest` **2110/2110 in 78 Suiten** · `npx playwright test` **604 bestanden /
-31 übersprungen / 0 Fehlschläge** (zweimal so gemessen; zu den zwei lastabhängigen Wacklern
-der beiden anderen Vollläufe siehe "Offene Punkte") · `pytest tests/build` **30** · `npm run lint` exit 0 mit
+31 übersprungen / 0 Fehlschläge** (so gemessen in den zwei schnellsten von fünf Vollläufen;
+zu den lastabhängigen Wacklern der drei langsameren siehe "Offene Punkte") ·
+`pytest tests/build` **30** · `npm run lint` exit 0 mit
 **exakt 363** Warnungen · `typecheck` und `typecheck:strict` exit 0 · beide Builds exit 0 ·
 `check-f18-kaskade --check` OK (117 Abhängigkeiten) · `sync-aktenlage-anker --check` 0
 Abweichungen · **CLAUDE.md unverändert** (`git diff 7e4aa09..HEAD -- CLAUDE.md` leer).
@@ -7212,8 +7213,8 @@ INLINE_AUSSERHALB_MAX **0**. Alle direkt nachgezählt, nicht aus den Schranken a
   der vollen Suite, beide VORBESTEHEND und beide nachgewiesen, nicht vermutet.**
 
   (a) `computed-style-diff.spec.js`, Fall "Breitere Schriftmetrik bewegt den Digest nicht",
-  braucht allein gemessen **25,1 s gegen eine 30-s-Schranke** — 4,9 s Reserve. In zwei von
-  vier Vollläufen an HEAD lief er in den Zeitablauf. **Der Beweis, dass es nicht an dieser
+  braucht allein gemessen **25,1 s gegen eine 30-s-Schranke** — 4,9 s Reserve. In **drei von
+  fünf** Vollläufen an HEAD lief er in den Zeitablauf. **Der Beweis, dass es nicht an dieser
   Welle liegt, ist gefahren und nicht geschlossen:** derselbe Fall fällt im Vollauf des
   VORZUSTANDS `7e4aa09` genauso aus (594 bestanden / 1 Fehlschlag / 27 übersprungen, also
   dieselben 595 wie der Basiswert — der Basiswert ist nur dann reproduzierbar, wenn dieser
@@ -7221,8 +7222,14 @@ INLINE_AUSSERHALB_MAX **0**. Alle direkt nachgezählt, nicht aus den Schranken a
   **byteidentisch**; gewachsen ist nur ihre Eingabe, der Sollstand, um 63 von 3549
   Schlüsseln (+1,8 %).
 
+  **Die Messumgebung selbst ist der Mitverursacher, und das gehört dazu statt verschwiegen:**
+  dieselbe Suite brauchte im Lauf der Abnahme nacheinander 5,6 · 5,7 · 6,1 · 7,4 · 8,2
+  Minuten — monoton steigend, bei unverändertem Baum. Am Ende lagen 14 `node`-Prozesse auf
+  der Maschine. Die zwei grünen Läufe sind die beiden schnellsten; die drei roten sind die
+  drei langsamsten. Wer die Zahl nachfahren will, fährt sie auf einer ruhigen Maschine.
+
   (b) `multi-tab-persistence.spec.js`, Vorbedingung "A sieht Bs Schreibvorgang im geteilten
-  Speicher", ist in EINEM der vier Vollläufe rot geworden; `localStorage` trug dort noch den
+  Speicher", ist in EINEM der fünf Vollläufe rot geworden; `localStorage` trug dort noch den
   Saatzustand. Das ist ein Wettlauf zwischen dem Anlaufschreiben der Seite A und `await
   saveImmediate()` auf Seite B. Drei Isolationsläufe grün. Die Spec-Datei und **alle**
   Module, die sie anfasst, sind in dieser Welle unverändert: `systems/avatars.js`,
