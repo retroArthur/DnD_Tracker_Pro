@@ -14857,3 +14857,363 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
         expect(Object.keys(FONT_WEIGHT_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 4 — W5-R-07: die Urteilsstellen
+   ===========================================================================
+
+   WAS DIESER BLOCK BEWACHT. Schritt 4 beurteilt die Deklarationen, deren
+   Sprung auf die Skala GROESSER ALS 2 px ist — die Schwelle, die das
+   Abnahmekriterium des Handoffs nennt ("keine Aenderung > 2 px ausser
+   beabsichtigt"). Alles darunter ist mechanische Nachschlagearbeit und
+   gehoert dem Schritt 5. Hier entscheidet ein Mensch, und zwar je Stelle:
+   bleibt sie neben der Skala (Entscheidung E-3: Emoji-Ikonen und
+   Avatar-Platzhalter) oder kommt sie auf eine Sprosse (es ist Text)?
+
+   DIE GEFAHR, GEGEN DIE ER ANGELEGT IST, ist nicht die falsche Entscheidung —
+   die steht mit ihrer Begruendung in `tools/typo-map.js` und ist bestreitbar.
+   Sie ist das STILLE NACHRUTSCHEN: eine Ausnahmeliste, in die ein spaeterer
+   Schritt eine unbequeme Stelle schiebt, weil das billiger ist als sie zu
+   beurteilen. Jeder solche Eintrag senkt die Schranke W5-R-05a um eins und
+   sieht dabei wie Fortschritt aus. Darum ist die Liste hier GESCHLOSSEN
+   aufgezaehlt und wird mit der Datei abgeglichen — in BEIDEN Richtungen.
+
+   BAUART WIE `RUHE_AUSNAHME` IN R-04 (oben in dieser Datei): eine Ausnahme
+   gilt nur MIT ihrem gemessenen Wert. Dort ist es ein Kontrastverhaeltnis,
+   hier ein Bildpunktwert. Beides hat denselben Zweck — eine Ausnahme ohne
+   Zahl ist eine Meinung, eine Ausnahme mit Zahl ist eine Aussage, die
+   schlechter werden KANN und dann auffaellt.
+
+   WIE DIE ZAHLEN ERHOBEN SIND. Im Browser, auf gefuellter Kampagne
+   (`seedPopulatedSession`), bei 1440 und 375 px, dark — 24 Ansichten, die
+   zwoelf Aufklapp-Formulare, Wuerfelpaneel, Schnellreferenz, Charaktermodal,
+   Generatormodal, und fuer Wiki und Encounter mit eigens angelegten
+   Eintraegen, weil die Saat gemessen KEINE Wiki-Eintraege und KEINE Encounter
+   fuehrt. 30 der 31 Deklarationen sind damit unmittelbar gemessen.
+
+   DER ELTERNWERT IST UEBERALL 16 px — gemessen, nicht angenommen, und bei
+   BEIDEN Breiten. Das ist der Grund, warum die em-Werte der Ikonen durch
+   ihren Bildpunktwert ersetzt werden duerfen: die Umschreibung ist exakt
+   (Delta 0,00 px), und sie nimmt der Schranke 2 von W5-R-05 nicht ihren
+   Zielwert. Eine geduldete Stelle, die in `em` stehenbleibt, wird von jener
+   Schranke MITGEZAEHLT — sie verbietet die EINHEIT und nicht den Wert. Mit 21
+   geduldeten em-Deklarationen waere ihr Zielwert 27 statt 6 gewesen, und eine
+   Schranke, deren Ziel ihre eigene Ausnahme verbietet, verspricht etwas, das
+   sie nicht halten kann (uebergeben aus Schritt 3, dort als Falle benannt).
+
+   SIEBEN DER 21 SITZEN IN EINEM KASTEN MIT PIXELMASS (`.loc-item-icon` 44x44,
+   `.loc-detail-icon` und `.enc-detail-icon` 56x56, `.enc-item-icon` 40x40,
+   `.npc-item-avatar` 44x44, `.timer-ctrl-btn` 50x50, `.dice-roll-btn` 50x44).
+   Fuer sie ist px nicht nur Buchhaltung, sondern die richtige Einheit: ein
+   Zeichen, das mitwaechst, waehrend sein Kasten es nicht tut, laeuft ueber.
+
+   WAS DIESER BLOCK NICHT ENTSCHEIDET, und es muss hier stehen, damit es nicht
+   als entschieden gilt: E-3 nennt 66 von 853 Deklarationen, die neben der
+   Skala bleiben; die Kandidatenmenge nach Namensmuster ist gemessen 73.
+   Dieser Schritt hat die 22 mit Sprung ueber 2 px beurteilt. Die uebrigen 54
+   Ikon-Deklarationen springen um 2 px oder weniger und sind NICHT beurteilt —
+   seine Ratsche begrenzt ihn ausdruecklich auf die eigenen Anker ("waechst um
+   genau diese Anker und keinen mehr"). Ob Schritt 5 sie mechanisch auf eine
+   Sprosse hebt (dann ist E-3 fuer sie nicht erfuellt, mit <= 2 px Wirkung)
+   oder ob sie ebenfalls geduldet werden, muss DORT entschieden und begruendet
+   werden. Diese Stelle sagt nur, dass es offen ist.
+   =========================================================================== */
+
+describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
+    /**
+     * DIE GEDULDETEN: Emoji-Ikonen und Avatar-Platzhalter, die neben der
+     * Skala bleiben (E-3), plus das Aufklapp-Pfeilzeichen des Wiki-Baums.
+     * Eine Zeile je DEKLARATION, mit dem alten Wert, dem neuen Wert und dem
+     * GEMESSENEN Bildpunktwert. Zwei Selektoren stehen zweimal, weil sie
+     * neben ihrer Grundregel eine Media-Query-Fassung haben; ihr Anker ist
+     * zeilenfrei und deckt beide, und das ist Absicht — eine Ikone, die in
+     * der Grundregel neben der Skala steht und in der Mobilfassung darauf,
+     * waere an zwei Breiten nach zwei Maszstaeben bemessen.
+     */
+    const URTEIL_IKON = [
+        ['dmscreen.css', '.empty-state-icon', '3.5em', '56px', 56],
+        ['npcs.css', '.loc-empty-icon, .loc-empty-state .empty-state-icon', '3.5em', '56px', 56],
+        ['party.css', '.wiki-detail-empty .empty-state-icon', '3.5em', '56px', 56],
+        [
+            'core.css',
+            '.detail-empty-icon, .loc-detail-empty-icon, .npc-detail-empty-icon, ' +
+                '.loot-detail-empty-icon, .enc-detail-empty-icon, .bestiary-detail-empty-icon',
+            '3em',
+            '48px',
+            48
+        ],
+        ['encounters.css', '.enc-empty-icon', '3em', '48px', 48],
+        ['npcs.css', '.npc-empty-icon', '3em', '48px', 48],
+        ['tools.css', '.rt-empty-icon', '3em', '48px', 48],
+        ['tools.css', '.generator-empty-icon', '3em', '48px', 48],
+        ['party.css', '.cf-avatar-placeholder', '2.5em', '40px', 40],
+        ['core.css', '.char-modal-avatar-placeholder', '1.8em', '28.8px', 28.8],
+        ['core.css', '.loc-detail-icon', '1.8em', '28.8px', 28.8],
+        ['dashboard.css', '.dash-char-avatar', '1.8em', '28.8px', 28.8],
+        ['encounters.css', '.enc-detail-icon', '1.8em', '28.8px', 28.8],
+        ['encounters.css', '.enc-detail-icon', '1.4em', '22.4px', 22.4],
+        ['core.css', '.loc-item-icon', '1.4em', '22.4px', 22.4],
+        ['dashboard.css', '.qref-fab-icon', '1.4em', '22.4px', 22.4],
+        ['dice.css', '.dice-roll-btn', '1.4em', '22.4px', 22.4],
+        ['encounters.css', '.enc-item-icon', '1.4em', '22.4px', 22.4],
+        ['encounters.css', '.enc-item-icon', '1.1em', '17.6px', 17.6],
+        ['npcs.css', '.npc-item-avatar', '1.4em', '22.4px', 22.4],
+        ['tools.css', '.timer-ctrl-btn', '1.4em', '22.4px', 22.4],
+        ['party.css', '.wiki-tree-item-toggle', '8px', '8px', 8]
+    ].map(([datei, sel, alt, neu, gemessen]) => ({ datei, sel, alt, neu, gemessen }));
+
+    /**
+     * DIE AUF DIE SKALA KOMMENDEN: Zahlen und Text. Je Zeile der alte Wert,
+     * der GEMESSENE Bildpunktwert und das Zieltoken. Alle neun folgen der
+     * Zuordnungstabelle in `tools/typo-map.js` — keine braucht eine
+     * Sonderzuordnung, und das ist der Beleg dafuer, dass die Tabelle fuer
+     * Text taugt und der Streit nur ueber die Ikonen ging.
+     *
+     * `gemessen: null` steht fuer die EINE Stelle, die kein Element hat; ihr
+     * Grund steht in OHNE_MESSUNG. Eine 0 waere dort eine Behauptung.
+     */
+    const URTEIL_TEXT = [
+        ['dice.css', '.fdp-number', '3em', 48, '--text-3xl'],
+        ['tools.css', '.timer-hero-time', '3em', 48, '--text-3xl'],
+        ['dashboard.css', '.dice-result-main', '4em', null, '--text-hero'],
+        ['dice.css', '.dice-hero-result', '5em', 80, '--text-hero'],
+        ['spells.css', '.floating-toolbar .kbd-hint', '8px', 8, '--text-xs'],
+        ['loot.css', '.checkout-amount', '1.8em', 28.8, '--text-2xl'],
+        ['dashboard.css', '.char-attr-box .attr-input', '1.4em', 22.4, '--text-xl'],
+        ['dmscreen.css', '.dms-dice-result', '1.4em', 22.4, '--text-xl'],
+        ['party.css', '.wiki-detail-title', '1.4em', 22.4, '--text-xl']
+    ].map(([datei, sel, alt, gemessen, ziel]) => ({ datei, sel, alt, gemessen, ziel }));
+
+    /** Die EINE Stelle ohne Messung, mit ihrem Grund. Namentlich, damit sie
+     *  nicht als gemessen durchgeht und nicht stillschweigend wachsen kann. */
+    /**
+     * DIE EINE STELLE, DIE NICHT WEGEN IHRES SPRUNGS DABEI IST.
+     *
+     * Die Menge dieses Schrittes ist "Sprung ueber 2 px". `.enc-item-icon`
+     * hat neben seiner Grundregel (1.4em = 22,4 px, Sprung -2,40) eine
+     * Mobilfassung unter `@media (max-width: 600px)` mit 1.1em = 17,6 px;
+     * deren Sprung waere -1,60 px und gehoerte damit dem Schritt 5.
+     *
+     * Sie ist trotzdem hier, und zwar ZWANGSLAEUFIG: der Anker der
+     * Ausnahmeliste ist zeilenfrei (`datei||selektoren||prop`), also deckt
+     * ein Eintrag fuer `.enc-item-icon` BEIDE Deklarationen. Die Alternative
+     * waere gewesen, die Mobilfassung auf eine Sprosse zu heben, waehrend die
+     * Grundregel neben der Skala bleibt — dieselbe Ikone, an zwei Breiten
+     * nach zwei Maszstaeben bemessen. Gemessen schrumpft ihr Kasten dort von
+     * 40x40 auf 32x32 px; das Zeichen folgt dem Kasten, und das ist genau die
+     * Logik, nach der die Ikonen px tragen und keine Sprosse.
+     *
+     * Dasselbe gilt fuer `.enc-detail-icon`, nur faellt es dort nicht auf:
+     * dessen Media-Fassung (1.4em = 22,4 px, Sprung -2,40) ist ohnehin eine
+     * Urteilsstelle. Deshalb steht hier EINE Stelle und nicht zwei.
+     */
+    const MITGEZOGEN = {
+        'encounters.css||.enc-item-icon||1.1em':
+            '17,6 px gemessen, Sprung -1,60 px — unter der 2-px-Schwelle. Mitgezogen, ' +
+            'weil der zeilenfreie Anker der Ausnahmeliste die Grundregel (22,4 px) und ' +
+            'diese Mobilfassung gemeinsam fuehrt.'
+    };
+
+    const OHNE_MESSUNG = {
+        'dashboard.css||.dice-result-main||font-size':
+            '0 Elemente. `#dice-result` existiert im Markup nicht; die Regel wird nur ' +
+            'vom Rueckfallpfad in features/dice/dice-core.js:372 angesprochen, und der ' +
+            'findet seinen Behaelter nie (gemessen auf der Wuerfelansicht nach einem ' +
+            'Wurf: 0 Treffer fuer .dice-result-main, #dice-result nicht vorhanden). Der ' +
+            'tote Behaelter ist ein eigener Befund und in der Aktenlage gefuehrt; die ' +
+            'Zuordnung folgt hier der 16-px-Wurzel, die an allen 30 uebrigen ' +
+            'Urteilsstellen gemessen zutrifft.'
+    };
+
+    /** Der Ausgangsbestand der Ausnahmeliste, so wie Schritt 3 ihn uebergab:
+     *  fuenf Stellen des Vorlaufs und die sechs Ueberschriftenregeln des
+     *  Reichtext-Inhalts. Die sechs werden GEBAUT und nicht abgeschrieben —
+     *  ihr Selektor ist 230 Zeichen lang, und sechs abgeschriebene Fassungen
+     *  waeren sechs Gelegenheiten fuer einen Tippfehler. */
+    const VORLAUF = [
+        'dashboard.css||.slot-pip||font-size',
+        'command-palette.css||.cp-result-label||font-size',
+        'file-backup.css||.backup-entry-name||font-size',
+        'pwa.css||.pwa-install-btn||font-size',
+        'pwa.css||.pwa-update-banner||font-size',
+        ...[1, 2, 3, 4, 5, 6].map(n =>
+            TYPO_MAP.anker(
+                'party.css',
+                TYPO_MAP.REICHTEXT_BEHAELTER.map(b => `${b} h${n}`).join(', '),
+                'font-size'
+            )
+        )
+    ];
+
+    const ankerVon = e => TYPO_MAP.anker(e.datei, e.sel, 'font-size');
+    const alleGroessen07 = typoAlle('font-size');
+    /** Alle Deklarationen je Anker — ein Anker kann mehrere haben (Grundregel
+     *  und Media-Query-Fassung), und genau das muss die Probe sehen. */
+    const nachAnker = new Map();
+    alleGroessen07.forEach(d => {
+        const a = typoAnker(d);
+        if (!nachAnker.has(a)) nachAnker.set(a, []);
+        nachAnker.get(a).push(d);
+    });
+
+    test('W5-R-07a: die Ausnahmeliste ist GENAU Vorlauf plus beurteilte Anker', () => {
+        // Beide Richtungen, und die zweite ist die wichtigere: ein Eintrag,
+        // den niemand aufgezaehlt hat, ist eine Entscheidung ohne Urteil.
+        const soll = [...new Set([...VORLAUF, ...URTEIL_IKON.map(ankerVon)])].sort();
+        const ist = Object.keys(TYPO_MAP.AUSNAHMEN).sort();
+        const fehlt = soll.filter(k => !ist.includes(k));
+        const zuviel = ist.filter(k => !soll.includes(k));
+        expect({ fehlt, zuviel, n: ist.length }).toEqual({
+            fehlt: [],
+            zuviel: [],
+            n: soll.length
+        });
+        // ... und die Mengengroessen sind die gemessenen: 11 aus dem Vorlauf,
+        // 20 Anker fuer 22 beurteilte Deklarationen.
+        expect(VORLAUF.length).toBe(11);
+        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(20);
+        expect(URTEIL_IKON.length).toBe(22);
+    });
+
+    test('W5-R-07b: jede geduldete Urteilsstelle traegt GENAU ihren gemessenen Wert', () => {
+        // Ohne diese Probe koennte `28.8px` spaeter zu `28px` werden: die
+        // Ausnahmeliste bliebe gleich lang, W5-R-05a bliebe gruen, und 0,8 px
+        // waeren lautlos verschwunden.
+        const befunde = [];
+        URTEIL_IKON.forEach(e => {
+            const a = ankerVon(e);
+            const dekls = (nachAnker.get(a) || []).map(d => d.wert.replace(/\s*!important$/, ''));
+            if (!dekls.includes(e.neu)) {
+                befunde.push(
+                    `${e.datei} {${e.sel}} — erwartet "${e.neu}" (gemessen ${e.gemessen} px), ` +
+                        `gefunden [${dekls.join(' | ')}]`
+                );
+            }
+        });
+        expect({ offen: befunde.length, befunde: befunde.sort() }).toEqual({
+            offen: 0,
+            befunde: []
+        });
+    });
+
+    test('W5-R-07c: jede Ausnahme nennt eine Zahl in Bildpunkten', () => {
+        // Bauart RUHE_AUSNAHME: eine Ausnahme ohne Zahl ist eine Meinung.
+        const ohneZahl = Object.entries(TYPO_MAP.AUSNAHMEN)
+            .filter(([, grund]) => !/\d+([.,]\d+)?\s*px/.test(grund))
+            .map(([k]) => k);
+        expect(ohneZahl.sort()).toEqual([]);
+        // ... und keine Begruendung ist ein Halbsatz
+        const zuKurz = Object.entries(TYPO_MAP.AUSNAHMEN)
+            .filter(([, grund]) => grund.length < 60)
+            .map(([k]) => k);
+        expect(zuKurz.sort()).toEqual([]);
+    });
+
+    test('W5-R-07d: jede Textstelle traegt ihr Zieltoken, kein em und kein Literal', () => {
+        const befunde = [];
+        URTEIL_TEXT.forEach(e => {
+            const a = ankerVon(e);
+            const dekls = (nachAnker.get(a) || []).map(d => d.wert.replace(/\s*!important$/, ''));
+            const erwartet = `var(${e.ziel})`;
+            if (dekls.length !== 1 || dekls[0] !== erwartet) {
+                befunde.push(
+                    `${e.datei} {${e.sel}} — erwartet "${erwartet}" (war ${e.alt}, gemessen ` +
+                        `${e.gemessen === null ? '0 Elemente' : e.gemessen + ' px'}), ` +
+                        `gefunden [${dekls.join(' | ')}]`
+                );
+            }
+            // ... und das Ziel ist eine Sprosse der Skala, kein erfundener Name
+            if (!TYPO_MAP.SKALA_TOKENS.includes(e.ziel)) {
+                befunde.push(`${e.datei} {${e.sel}} — ${e.ziel} ist keine Sprosse der Skala`);
+            }
+        });
+        expect({ offen: befunde.length, befunde: befunde.sort() }).toEqual({
+            offen: 0,
+            befunde: []
+        });
+        expect(URTEIL_TEXT.length).toBe(9);
+        // ... und keine Textstelle steht in der Ausnahmeliste
+        expect(URTEIL_TEXT.map(ankerVon).filter(a => TYPO_MAP.AUSNAHMEN[a])).toEqual([]);
+    });
+
+    test('W5-R-07e: die unbeurteilten Ikon-Kandidaten sind NICHT geduldet', () => {
+        // Die Gegenrichtung von W5-R-07a, auf der Kandidatenmenge: 54 der 73
+        // Ikon-Deklarationen springen um 2 px oder weniger und gehoeren
+        // diesem Schritt nicht. Wuerden sie hier mitgeduldet, waere E-3 fuer
+        // sie entschieden, ohne sie zu beurteilen.
+        const beurteilt = new Set(URTEIL_IKON.map(ankerVon));
+        const kandidaten = alleGroessen07.filter(d => TYPO_MAP.istIkon(d.selektoren));
+        const offen = kandidaten.filter(d => !beurteilt.has(typoAnker(d)));
+        const stillGeduldet = offen
+            .filter(d => TYPO_MAP.AUSNAHMEN[typoAnker(d)])
+            .map(d => `${d.datei}:${d.zeile} {${d.selektoren}}`);
+        expect(stillGeduldet.sort()).toEqual([]);
+        // Die Zahlen daneben, damit die Probe nicht durch WEGLASSEN gruen
+        // wird: waechst die Kandidatenmenge, faellt dieser Fall.
+        expect({ kandidaten: kandidaten.length, unbeurteilt: offen.length }).toEqual({
+            kandidaten: 73,
+            unbeurteilt: 54
+        });
+    });
+
+    test('VERWESUNGSPROBE: jede aufgezaehlte Stelle trifft eine Deklaration', () => {
+        // Ohne sie hoerte ein umbenannter Selektor lautlos auf zu urteilen.
+        const fehlt = [];
+        [...URTEIL_IKON, ...URTEIL_TEXT].forEach(e => {
+            if (!nachAnker.has(ankerVon(e))) fehlt.push(`${e.datei} {${e.sel}}`);
+        });
+        VORLAUF.forEach(a => {
+            if (!nachAnker.has(a)) fehlt.push(a);
+        });
+        expect([...new Set(fehlt)].sort()).toEqual([]);
+        // ... und die Begruendung der einen ungemessenen Stelle haengt an
+        // ihrem Anker, nicht an einer Zeilennummer
+        expect(Object.keys(OHNE_MESSUNG)).toEqual(['dashboard.css||.dice-result-main||font-size']);
+        expect(URTEIL_TEXT.filter(e => e.gemessen === null).map(ankerVon)).toEqual(
+            Object.keys(OHNE_MESSUNG)
+        );
+        expect(OHNE_MESSUNG[Object.keys(OHNE_MESSUNG)[0]].length).toBeGreaterThan(200);
+    });
+
+    test('GEGENPROBE: 30 der 31 sind Stellen mit Sprung ueber 2 px, die 31. ist benannt', () => {
+        // Der Grund, warum die Menge diese und keine andere ist. Gerechnet
+        // wird gegen den GEMESSENEN Wert, nicht gegen die 16-px-Annahme —
+        // dieselbe Rechnung, die in Runde 2 des Schrittes 3 fuenfzehn Stellen
+        // falsch zugeordnet hatte.
+        const skala = TYPO_MAP.skalaWerte();
+        const meine = new Map();
+        URTEIL_IKON.forEach(e => meine.set(`${e.datei}||${e.sel}||${e.alt}`, e.gemessen));
+        URTEIL_TEXT.forEach(e => meine.set(`${e.datei}||${e.sel}||${e.alt}`, e.gemessen));
+        // Jede aufgezaehlte Stelle springt wirklich um mehr als 2 px — ODER
+        // sie wird auf die Untergrenze gehoben (E-4: was unter 11 px liegt,
+        // soll nach oben, und --text-xs ist die unterste Sprosse) — ODER sie
+        // steht namentlich in MITGEZOGEN. Die dritte Moeglichkeit ist eine
+        // AUFZAEHLUNG und keine Nachsicht: waechst sie, faellt dieser Fall.
+        const zuKlein = [];
+        meine.forEach((gemessen, k) => {
+            if (gemessen === null) return;
+            if (MITGEZOGEN[k]) return;
+            const i = k.indexOf('||');
+            const j = k.lastIndexOf('||');
+            const ziel = TYPO_MAP.ZUORDNUNG[k.slice(j + 2)];
+            if (!ziel) return;
+            const neu = skala[ziel];
+            if (Math.abs(neu - gemessen) > 2) return;
+            if (gemessen < TYPO_MAP.KLEINST_GRENZE && neu === TYPO_MAP.KLEINST_GRENZE) return;
+            zuKlein.push(
+                `${k.slice(0, i)} {${k.slice(i + 2, j)}} — gemessen ${gemessen} -> ${neu} px, ` +
+                    `das sind ${Math.abs(neu - gemessen).toFixed(2)} px und gehoert Schritt 5`
+            );
+        });
+        expect(zuKlein.sort()).toEqual([]);
+        // ... und die Menge ist nicht leer
+        expect(meine.size).toBe(31);
+        // GENAU EINE mitgezogene Stelle, und sie ist eine der aufgezaehlten.
+        expect(Object.keys(MITGEZOGEN)).toEqual(['encounters.css||.enc-item-icon||1.1em']);
+        expect([...meine.keys()]).toContain('encounters.css||.enc-item-icon||1.1em');
+        expect(MITGEZOGEN['encounters.css||.enc-item-icon||1.1em'].length).toBeGreaterThan(100);
+        // GEGENPROBE ZUR NACHSICHT: ohne den Eintrag waere dieser Fall rot.
+        // Wer MITGEZOGEN leert, muss die Stelle aus der Liste nehmen.
+        expect(Math.abs(skala[TYPO_MAP.ZUORDNUNG['1.1em']] - 17.6)).toBeLessThanOrEqual(2);
+    });
+});
