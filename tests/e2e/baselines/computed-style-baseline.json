@@ -2737,7 +2737,7 @@
         "span.dash-card-link#1": "a363e92a882ff31d",
         "span.dash-card-title#0": "748b4a83f973a54f",
         "span.dash-card-title#1": "748b4a83f973a54f",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "party": {
@@ -2953,7 +2953,7 @@
         "span.filled.slot-pip#0": "6271ccae28273887",
         "span.filled.slot-pip#1": "6271ccae28273887",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "span.slot-pip#0": "5bd7f8a78c84f722",
         "span.slot-pip#1": "5bd7f8a78c84f722"
       }
@@ -3017,7 +3017,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.npc-item-race#0": "52ea5a1c0c751529",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "locations": {
@@ -3073,7 +3073,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "quests": {
@@ -3121,7 +3121,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "label.filter-toggle#0": "a270e07214f682d5",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "encounter": {
@@ -3185,7 +3185,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "795e41fb513827b5",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "initiative": {
@@ -3355,7 +3355,7 @@
         "span.qa-name#5": "66a0e4eedd216025",
         "span.qa-name#6": "66a0e4eedd216025",
         "span.qa-name#7": "66a0e4eedd216025",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "loot": {
@@ -3429,7 +3429,7 @@
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "shops": {
@@ -3559,7 +3559,7 @@
         "span.clickable.entity-link.npc.shop-meta-tag#0": "3ae646f64abb0255",
         "span.misc.shop-cat-badge#0": "c9d15b8e90c6bfb6",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "span.shop-cat-badge.weapon#0": "e7b4954c7cde3e32",
         "span.shop-icon#0": "2fd3dcf319136b96",
         "span.shop-item-count#0": "afb18cea61e7ab12",
@@ -3690,7 +3690,7 @@
         "div.spell-list#0": "1d748c6386e6c184",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "span.spell-filter-label#0": "c8f50b4aab7f28d1",
         "span.spell-filter-label#1": "c8f50b4aab7f28d1",
         "span.spell-filter-label#2": "c8f50b4aab7f28d1"
@@ -3745,7 +3745,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.card-title#0": "795e41fb513827b5",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "wiki": {
@@ -3805,7 +3805,7 @@
         "div.wiki-tree#0": "6218bebdb4c15642",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "links": {
@@ -3855,7 +3855,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "2a9606819dd4fd39",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "dice": {
@@ -4063,7 +4063,7 @@
         "span.dmg-chip#7": "8a85c2f1b70dc5b9",
         "span.dmg-chip#8": "8a85c2f1b70dc5b9",
         "span.dmg-chip#9": "8a85c2f1b70dc5b9",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "timers": {
@@ -4137,7 +4137,7 @@
         "div.timer-quick-bar#0": "daa631183eb93b4f",
         "div.timer-quick-presets#0": "1d748c6386e6c184",
         "div.timer-quick-times#0": "3affd77a67719379",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "data": {
@@ -4235,7 +4235,7 @@
         "div.section-toolbar-identity#0": "133ba0201fddfa5d",
         "div.u-mt-md#0": "b3709f1018bbf506",
         "div.u-mt-md#1": "b3709f1018bbf506",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "dmscreen": {
@@ -4516,7 +4516,7 @@
         "span.dmscreen-widget-title#4": "2708040e6e7c30b2",
         "span.dmscreen-widget-title#5": "2708040e6e7c30b2",
         "span.dmscreen-widget-title#6": "2708040e6e7c30b2",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "textarea.dms-notes-input#0": "8b43174dde991817"
       }
     },
@@ -4677,7 +4677,7 @@
         "span.bestiary-type#6": "5d6298d176b393f4",
         "span.bestiary-type#7": "5d6298d176b393f4",
         "span.section-toolbar-count#0": "b8f2c50e1a90613e",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "span.sr-only#0": "b5ab3fc6f5e47c30",
         "span.sr-only#1": "b5ab3fc6f5e47c30",
         "span.sr-only#2": "b5ab3fc6f5e47c30",
@@ -4725,7 +4725,7 @@
         "div.wp-view-content#0": "8a55e5a34f36596e",
         "input.toolbar-search#0": "36c0355f6375a997",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "kalender": {
@@ -4776,7 +4776,7 @@
         "input.toolbar-search#0": "36c0355f6375a997",
         "p.tl-empty-hint#0": "f8389578ffe2d5c0",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "span.tl-jahreszeit-badge#0": "e60d76093930b291"
       }
     },
@@ -4843,7 +4843,7 @@
         "select.form-select#1": "5f5856c1284f8a17",
         "select.form-select#2": "5f5856c1284f8a17",
         "select.form-select#3": "5f5856c1284f8a17",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "fraktionen": {
@@ -4969,7 +4969,7 @@
         "span.fr-ruf-badge#0": "5714af6daf1a78f8",
         "span.fr-ruf-value#0": "5d6298d176b393f4",
         "span.section-toolbar-count#0": "a587717db128bdbe",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "soundboard": {
@@ -5017,7 +5017,7 @@
         "p.sb-section-hint#1": "31b0d46f0dd54998",
         "section.sb-section#0": "9955b6e88f604f0b",
         "section.sb-section#1": "9955b6e88f604f0b",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996"
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
     },
     "dicestats": {
@@ -5054,7 +5054,7 @@
         "span.ds-crit.ds-rate-chip#0": "6ec1e39854e845b9",
         "span.ds-fumble.ds-rate-chip#0": "3e916d9e51ed0f36",
         "span.ds-rate-total#0": "d1611b94924435c9",
-        "span.section-toolbar-title#0": "d5d9495aa7b6e996",
+        "span.section-toolbar-title#0": "d3272f4e3c4a001f",
         "svg.ds-histogram-svg#0": "8a55e5a34f36596e"
       }
     }
