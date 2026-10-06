@@ -174,7 +174,9 @@ describe('Sollstands-Vergleich: Zugang und Abgang treten neben die Wertaenderung
     test('ein neuer Schluessel wird als Zugang gezaehlt, nicht als Aenderung', () => {
         const alt = fassung({ standard: { dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa' } } });
         const neu = fassung({
-            standard: { dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa', 'div.neu#0': 'dddddddddddddddd' } }
+            standard: {
+                dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa', 'div.neu#0': 'dddddddddddddddd' }
+            }
         });
         const r = V.vergleiche(alt, neu);
         expect(r.summe).toMatchObject({ geaendert: 0, zugang: 1, abgang: 0 });
@@ -182,7 +184,9 @@ describe('Sollstands-Vergleich: Zugang und Abgang treten neben die Wertaenderung
 
     test('ein verschwundener Schluessel wird als Abgang gezaehlt', () => {
         const alt = fassung({
-            standard: { dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa', 'div.weg#0': 'eeeeeeeeeeeeeeee' } }
+            standard: {
+                dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa', 'div.weg#0': 'eeeeeeeeeeeeeeee' }
+            }
         });
         const neu = fassung({ standard: { dashboard: { 'div.a#0': 'aaaaaaaaaaaaaaaa' } } });
         const r = V.vergleiche(alt, neu);
