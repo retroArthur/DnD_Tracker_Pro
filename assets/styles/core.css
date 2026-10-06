@@ -3524,3 +3524,57 @@
             font-size: var(--text-xs);
             font-weight: 600;
         }
+
+        /* ------------------------------------------------------------------
+           DIE SCHRIFTGROESSE DER BEDIENELEMENTE — eine App-Angabe statt der
+           Browser-Vorgabe (Design-Handoff v3, Welle 5, Schritt 8, O-10)
+           ------------------------------------------------------------------
+           Formular-Bedienelemente ERBEN die Schriftgroesse nicht. Ohne eigene
+           Angabe nehmen sie `font: -webkit-small-control`, und das sind in
+           Chromium 13,3333 px — eine Zahl, die die App nirgends nennt und die
+           vom System abhaengt. Gemessen auf gefuellter Kampagne standen so 254
+           Bedienelemente in 18 Signaturen auf diesem Wert: 187 blanke
+           `input` (Kennungsfelder und Kaestchen), 18 `.cf-skill-exp-check`,
+           8 `.qa-btn`, je 6 `.bst-attr-input`, `.dice-attr`, `.dice-attr.save`
+           und `.mobile-search-btn`, 5 `.npc-detail-btn`, 3 blanke `select`
+           und 1 `.roster-add` — dazu die Kinder darunter, deren Endwert ein
+           Produkt aus dieser Browser-Vorgabe war (die zwoelf `small` in den
+           Wuerfelknoepfen sind der gemessene Fall, siehe dice.css). Ein
+           Werkzeug, das
+           Deklarationen ERSETZT, findet dort nichts zu ersetzen und meldet
+           Erfolg; darum ist das ein eigener Schritt und kein Fall fuer den
+           mechanischen Lauf.
+
+           WARUM 12 px UND NICHT 14. Die App sagt selbst, was ein Formularfeld
+           traegt: `.form-group input, .form-group select, .form-group textarea`
+           steht auf `var(--text-sm)` (12 px; der F-18-bewachte Block weiter
+           oben). 14 px laegen naeher an 13,3333 (+0,67 gegen -1,33), waeren
+           aber eine ZWEITE Antwort auf dieselbe Frage. Der Sprung bleibt mit
+           -1,33 px innerhalb der 2-px-Zusage der Welle.
+
+           WARUM ELEMENTSELEKTOREN UND NICHT EINE KLASSE. Die Spezifitaet
+           (0,0,1) ist die kleinste, die es gibt: JEDE bestehende Klassenregel
+           gewinnt weiter, auch die Chip- und Markenbasen der Welle 4. Die
+           Regel wirkt ausschliesslich dort, wo die App bisher NICHTS gesagt
+           hat — und genau das ist ihr Zweck.
+
+           WARUM SIE AM ENDE DER DATEI STEHT UND NICHT BEI `body`. Dorthin
+           gehoerte sie der Sache nach, und der erste Versuch hat sie dorthin
+           gesetzt: 41 eingefuegte Zeilen haben JEDEN Zeilenanker oberhalb
+           verschoben und vier Ratschen rot gemacht (R-06, R-19 und drei Faelle
+           von W4-R-04). Die Stellung ist fuer diese Eigenschaft gemessen
+           folgenlos — sie ist die EINZIGE Regel im ganzen Stilblatt, die
+           `font-size` mit einem reinen Elementselektor setzt (nachgezaehlt
+           ueber alle 20 Dateien: 0 weitere), also gibt es keine Regel gleicher
+           Spezifitaet, gegen die ihre Reihenfolge entscheiden koennte.
+
+           WAS SIE NICHT TUT: sie setzt KEINE `font-family`. Bedienelemente
+           benutzen weiter die Schrift des Systems; das zu aendern waere eine
+           sichtbare Umstellung aller Knoepfe und Felder und gehoert nicht in
+           eine Groessen-Welle. F-05 laesst ohnehin genau EINE
+           `font-family: var(--font-ui)`-Deklaration zu (die in `body`). Die
+           Familienfrage steht als Folgearbeit in der Aktenlage.
+           ------------------------------------------------------------------ */
+        button, input, select, textarea {
+            font-size: var(--text-sm);
+        }

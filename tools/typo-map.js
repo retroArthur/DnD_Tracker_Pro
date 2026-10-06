@@ -1098,11 +1098,17 @@ const IKON_GEDULDET = {
         'kein Lesetext, also keine Sprosse der Schrift-Skala. ER IST AUCH ' +
         'KEIN EMOJI-IKON, und darum ist diese Duldung eine andere als die 19 ' +
         'darueber: sie sagt nur, dass die Stelle nicht in die TEXTskala ' +
-        'gehoert. UEBER DIE UNTERGRENZE VON 11 px (E-4) ENTSCHEIDET SCHRITT ' +
-        '8 — gemeinsam mit `.tb-caret` (editors.css, 9px, ▾), dem gleichen ' +
-        'Zeichen in der gleichen Rolle. Zwei Pfeilzeichen duerfen nicht zwei ' +
-        'verschiedene Antworten bekommen, und darum entscheidet keiner von ' +
-        'beiden hier allein.',
+        'gehoert. DIE ANTWORT DES SCHRITTES 8 (2026-10-06) IST: BEIDE ' +
+        'Pfeilzeichen bleiben, wo sie sind. Die Untergrenze von 11 px (E-4) ' +
+        'gilt woertlich fuer "alles, was man liest"; ein Aufklapp-Pfeil ist ' +
+        'kein Lesetext, sondern Zeichen-Deko in derselben Rolle wie der ' +
+        '18-px-Kreis `.slot-pip` — und genau diese Falle nennt der Plan in ' +
+        'seiner Risikoliste beim Namen. Entschieden ist das GEMEINSAM mit ' +
+        '`.tb-caret` (editors.css, 9px, ▾), wie Schritt 4 es an drei Stellen ' +
+        'zugesichert hat; bewacht von W5-R-07f. Diese Stelle hat auf ' +
+        'gefuellter Kampagne ueberdies 0 gerenderte Elemente (nachgemessen ' +
+        'in allen fuenf Grundlinien-Laeufen und am DOM), ihre Hebung waere ' +
+        'also eine Aenderung ohne Betrachter.',
     'spells.css||.floating-toolbar .kbd-hint||font-size':
         '8px, UNVERAENDERT. Gemessen 8,00 px an fuenf Elementen. DIESE ' +
         'DULDUNG IST DIE EINZIGE, DIE LESETEXT BETRIFFT ("Strg+B"), und sie ' +
@@ -1116,10 +1122,22 @@ const IKON_GEDULDET = {
         'px); die drei lesen sich dann als EINE Zeichenkette. Weil ' +
         '`.floating-toolbar:hover .kbd-hint` an der LEISTE haengt, sind ' +
         'immer alle fuenf zugleich sichtbar — Normalfall, nicht Randfall. ' +
-        'UEBER DIE UNTERGRENZE ENTSCHEIDET SCHRITT 8, dort aber GEMEINSAM ' +
-        'mit der Layoutregel (nur die Hilfe des beruehrten Knopfes zeigen); ' +
-        'ohne sie ersetzt eine Hebung nur einen Lesbarkeitsmangel durch ' +
-        'einen anderen. Zugesichert in tests/e2e/features/tastenhilfen.spec.js.',
+        'DIE ANTWORT DES SCHRITTES 8 (2026-10-06) IST: die Stelle BLEIBT ' +
+        'bei 8 px, und sie ist die EINZIGE Duldung der Welle 5, die ' +
+        'Lesetext betrifft. Begruendung in zwei Teilen. ERSTENS: die Hebung ' +
+        'allein macht den Text NICHT lesbarer, sie macht ihn unlesbar — ' +
+        'drei der fuenf Hilfen laufen ineinander und lesen sich als eine ' +
+        'Zeichenkette (gemessen -2,80 und -3,09 px, unter der breiten ' +
+        'Linux-Naeherung -8,20 und -8,68 px). ZWEITENS: der einzige Weg, der ' +
+        'beides loest, ist eine Layoutregel — nur die Hilfe des beruehrten ' +
+        'KNOPFES zeigen statt aller fuenf der LEISTE. Das aendert, wann ein ' +
+        'Hinweis erscheint, und ist damit eine Funktionsaenderung ' +
+        '(Arbeitsregel 10); eine Typografie-Welle darf sie nicht nebenbei ' +
+        'mitnehmen. Die Stelle traegt auch kein Padding, an dem sich 2,80 px ' +
+        'einsparen liessen (nachgesehen: position/bottom/left/transform, ' +
+        'font-size, color, white-space, opacity, transition, pointer-events ' +
+        '— kein Innenabstand). Die Layoutregel steht als Folgearbeit in der ' +
+        'Aktenlage. Zugesichert in tests/e2e/features/tastenhilfen.spec.js.',
     'editors.css||.editor-toolbar .tb-caret||font-size':
         '9px, UNVERAENDERT. Gemessen 9,00 px an vier Elementen (zwei je ' +
         'Langform-Leiste, davon zwei zugleich sichtbar). Aufklapp-Pfeil (▾, ' +
@@ -1138,12 +1156,45 @@ const IKON_GEDULDET = {
         'DIESELBE Antwort bekommen und keines allein entschieden wird. Der ' +
         'mechanische Lauf des Schrittes 5 haette genau eines gehoben — ' +
         '`.tb-caret` springt um +2,00 px und liegt in der mechanischen ' +
-        'Menge, sein Zwilling um +3,00 px und ausserhalb. UEBER DIE ' +
-        'UNTERGRENZE VON 11 px (E-4) ENTSCHEIDET SCHRITT 8 fuer BEIDE; die ' +
-        'Zahlen oben sind seine halbe Antwort, die andere Haelfte ist, dass ' +
-        '`.wiki-tree-item-toggle` auf gefuellter Kampagne 0 Elemente hat ' +
-        '(nachgemessen in allen fuenf Laeufen der Grundlinie und am DOM). ' +
-        'Zugesichert in W5-R-07f (tests/unit/design-consistency.test.js).'
+        'Menge, sein Zwilling um +3,00 px und ausserhalb. DIE ANTWORT DES ' +
+        'SCHRITTES 8 (2026-10-06) IST: BEIDE bleiben. Entschieden wird nicht ' +
+        'ueber die Harmlosigkeit der Hebung — die ist belegt —, sondern ' +
+        'darueber, OB ein Pfeilzeichen in die TEXTskala gehoert. Es gehoert ' +
+        'nicht hinein: die Untergrenze von 11 px (E-4) gilt woertlich fuer ' +
+        '"alles, was man liest". Waere es anders entschieden, muesste ' +
+        '`.wiki-tree-item-toggle` mit, und dessen Hebung ist eine Aenderung ' +
+        'ohne Betrachter (0 gerenderte Elemente auf gefuellter Kampagne, ' +
+        'nachgemessen in allen fuenf Laeufen der Grundlinie und am DOM). ' +
+        'Zugesichert in W5-R-07f (tests/unit/design-consistency.test.js).',
+    'tools.css||.ds-hist-face-label||font-size':
+        '8px, UNVERAENDERT — aber die Zahl ist eine BENUTZEREINHEIT und keine ' +
+        'Bildpunktgroesse. 20 Elemente: die Wuerfelseiten 1..20 unter den ' +
+        'Balken des d20-Histogramms. Das SVG traegt `viewBox="0 0 440 180"` ' +
+        'und `width: 100%`, der Wert wird also mitskaliert. Gemessen auf ' +
+        'gefuellter Kampagne wirkt er 11,34 px bei 1440 px Fensterbreite ' +
+        '(Skalierung 1,4175) und 5,44 px bei 375 px (0,68). Auf dem ' +
+        'Schreibtisch liegt die Beschriftung damit BEREITS auf der ' +
+        'Untergrenze; eine Hebung auf 11 Einheiten machte dort 15,6 px daraus ' +
+        'und liesse sie auf dem Telefon mit 7,5 px weiter darunter. Die ' +
+        'Lesbarkeit haengt an der Skalierung und nicht am deklarierten Wert — ' +
+        'sie zu loesen heisst, die Beschriftungen aus dem skalierten ' +
+        'Koordinatensystem herauszunehmen, und das ist eine ' +
+        'Struktur-Aenderung (Arbeitsregel 10, Folgearbeit in der Aktenlage). ' +
+        'E-4 nennt diese 21 Beschriftungen namentlich als Ausnahme. Der Wert ' +
+        'stand bis zum 2026-10-06 als Praesentationsattribut `font-size="8"` ' +
+        'in features/dice-stats/dice-stats-render.js:194 und war damit fuer ' +
+        'jede CSS-Pruefung unsichtbar (O-7); als Klasse steht er jetzt unter ' +
+        'W5-R-05, und SVG_MAX ist 0.',
+    'tools.css||.ds-hist-axis-label||font-size':
+        '7px, UNVERAENDERT, ebenfalls in BENUTZEREINHEITEN. 1 bis 2 Elemente: ' +
+        'die Y-Achse des Histogramms (die 0 und, bei vorhandenen Wuerfen, der ' +
+        'Hoechstwert). Wirkt gemessen 9,93 px bei 1440 px und 4,76 px bei ' +
+        '375 px. Eine Einheit kleiner als die Seitenbeschriftung, und das ist ' +
+        'kein Versehen: die Achse traegt bis zu drei Stellen und hat 26 ' +
+        'Einheiten Platz (PAD.left 30 minus 4 Abstand, `text-anchor: end`) — ' +
+        'bei 8 Einheiten liefe "100" aus dem Diagramm heraus. Dieselbe ' +
+        'Begruendung wie bei `.ds-hist-face-label` daneben, und dieselbe ' +
+        'Herkunft: `font-size="7"` in dice-stats-render.js:210 und :213.'
 };
 
 Object.assign(AUSNAHMEN, IKON_GEDULDET);

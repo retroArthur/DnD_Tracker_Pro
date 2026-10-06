@@ -579,7 +579,7 @@
 .dice-attr small {
     color: var(--cyan-text);
     font-weight: 600;
-    margin-top: 2px;
+    margin-top: 2px; font-size: var(--text-xs); /* 11px, NEU am 2026-10-06 (Welle 5, Schritt 8). Vorher trug diese Stelle KEINE Groesse: `small` hat in jedem Browser `font-size: smaller`, also 0,8333 mal den Elternwert, und der Elternwert war die Browser-Vorgabe des Knopfes (13,3333 px) — gemessen 11,11 px. Die neue Regel `button, input, select, textarea` in core.css legt den Knopf auf 12 px, und damit faellt `smaller` auf 10,00 px: die Formularregel haette hier 12 Elemente UNTER die Untergrenze geschoben (6 Attributknoepfe plus 6 Rettungswurf-Knoepfe). Deshalb steht hier jetzt eine Zahl statt eines Verhaeltnisses — gemessen 11,11 -> 11,00 px, Delta -0,11. Genau diese Sorte Kind nennt O-10 beim Namen ("40 em-Kinder, deren Endwert heute ein Produkt aus einer Browser-Vorgabe ist"). Bewacht von W5-R-09 in tests/e2e/features/schriftuntergrenze.spec.js. */
 }
 
 .dice-attr.save {

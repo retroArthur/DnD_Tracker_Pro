@@ -1731,6 +1731,39 @@
     width: 100%;
 }
 
+/* Die Beschriftungen des d20-Histogramms. SIE STANDEN BIS ZUM 2026-10-06 ALS
+   PRAESENTATIONSATTRIBUTE IM JS (`font-size="8"` bzw. `="7"` in
+   features/dice-stats/dice-stats-render.js) und waren damit fuer JEDE Pruefung
+   unsichtbar: keine CSS-Suche sieht sie, kein Inline-Stil-Zaehler, und der
+   Stil-Sollstand erfasst den berechneten Wert ohne Quellenangabe. Genau
+   deshalb nennt O-7 sie eine eigene Befundkategorie. Als Klasse stehen sie
+   jetzt unter W5-R-05 und tragen ihre Begruendung dort, wo der Wert steht.
+
+   WARUM SIE NICHT AUF 11 px GEHOBEN WERDEN (E-4, benannte Ausnahme):
+   das SVG traegt `viewBox="0 0 440 180"` und `width: 100%`, die Zahl hier ist
+   also eine BENUTZEREINHEIT und keine Bildpunktgroesse. Gemessen auf
+   gefuellter Kampagne wirkt sie
+     bei 1440 px  Skalierung 1,4175  ->  8 Einheiten = 11,34 px, 7 = 9,93 px
+     bei  375 px  Skalierung 0,68    ->  8 Einheiten =  5,44 px, 7 = 4,76 px
+   Auf dem Schreibtisch liegen die Beschriftungen also BEREITS auf der
+   Untergrenze; eine Hebung auf 11 Einheiten machte dort 15,6 px daraus und
+   liesse sie auf dem Telefon mit 7,5 px immer noch darunter. Die Lesbarkeit
+   dieser Zahlen haengt an der viewBox-Skalierung und NICHT an ihrem
+   deklarierten Wert — wer sie wirklich loesen will, muss die Beschriftungen
+   aus dem skalierten Koordinatensystem herausnehmen (HTML-Schicht ueber dem
+   Diagramm oder ein mitwachsendes viewBox-Mass). Das ist eine
+   Struktur-Aenderung und keine Typografie-Entscheidung (Arbeitsregel 10); sie
+   steht als Folgearbeit in der Aktenlage. */
+.ds-hist-face-label {
+    font-size: 8px; /* 8 BENUTZEREINHEITEN, unveraendert. 20 Elemente (die Wuerfelseiten 1..20 unter den Balken). Wirkt 11,34 px bei 1440 und 5,44 px bei 375 px — siehe den Kommentar darueber. Namentlich in tools/typo-map.js. */
+    fill: var(--text-dim);
+}
+
+.ds-hist-axis-label {
+    font-size: 7px; /* 7 BENUTZEREINHEITEN, unveraendert. 1 bis 2 Elemente (die Y-Achse: 0 und, bei vorhandenen Wuerfen, der Hoechstwert). Wirkt 9,93 px bei 1440 und 4,76 px bei 375 px. Eine Einheit kleiner als die Seitenbeschriftung, weil die Achse bis zu drei Stellen traegt und nur 26 Einheiten Platz hat (PAD.left 30 minus 4 Abstand) — bei 8 Einheiten liefe "100" aus dem Diagramm heraus. Namentlich in tools/typo-map.js. */
+    fill: var(--text-dim);
+}
+
 .ds-no-data {
     text-align: center;
     color: var(--text-dim);
