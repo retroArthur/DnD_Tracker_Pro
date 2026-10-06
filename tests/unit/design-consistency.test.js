@@ -14444,19 +14444,21 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  Abschnitt 7a; die geschlossene Menge bewacht W5-R-07), und 9
      *  Textstellen tragen jetzt ihre Sprosse. 22 + 9 = 31, und das sind
      *  GENAU die Deklarationen mit Sprung ueber 2 px.
-     *  ANGEHOBEN am 2026-10-06 von 802 auf 803 (Pruefrunde 1 des Schrittes
-     *  4) — die EINZIGE Anhebung dieser Welle, und sie wird benannt statt
-     *  verrechnet. `.floating-toolbar .kbd-hint` ist von `var(--text-xs)`
-     *  auf `8px` zurueckgenommen: die Hebung auf die Untergrenze liess die
-     *  fuenf Tastenhilfen gemessen ueberlappen (-2,80 / -3,09 px; breite
-     *  Linux-Naeherung -8,20 / -8,68), weil sie absolut unter ihren Knoepfen
-     *  haengen. Die Stelle ist damit wieder eine geduldete (23 statt 22
-     *  unter 21 statt 20 Ankern) und keine erledigte, und die Schranke sagt
-     *  das. Eine Ruecknahme, die die Schranke stehenlaesst, behauptete eine
-     *  Erledigung, die es nicht gibt. Zugesichert in
+     *  UNVERAENDERT BEI 802 NACH DER PRUEFRUNDE 1 des Schrittes 4, und das
+     *  ist NACHGEMESSEN und nicht angenommen: `.floating-toolbar .kbd-hint`
+     *  ist von `var(--text-xs)` auf `8px` zurueckgenommen (die Hebung auf
+     *  die Untergrenze liess die fuenf Tastenhilfen ueberlappen, -2,80 /
+     *  -3,09 px, breite Linux-Naeherung -8,20 / -8,68). Die Stelle wandert
+     *  dabei von "auf einer Sprosse" nach "namentlich geduldet" — BEIDE
+     *  Mengen stehen ausserhalb der Befundmenge, die diese Schranke zaehlt.
+     *  Sie laeuft also nicht ueber die Schranke, und wer sie auf 803
+     *  anhuebe, liesse die Schranke um eine Stelle locker stehen. Gemessen
+     *  nach der Ruecknahme: ausserhalbDerSkala 802, geduldet 32, gesamt 853
+     *  (erhoben, indem die Schranke voruebergehend auf 0 gesetzt und die
+     *  gemeldete Zahl gelesen wurde). Zugesichert in
      *  tests/e2e/features/tastenhilfen.spec.js; Schritt 8 entscheidet ueber
      *  die Untergrenze gemeinsam mit der Layoutregel. */
-    const AUSSERHALB_MAX = 803;
+    const AUSSERHALB_MAX = 802;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
