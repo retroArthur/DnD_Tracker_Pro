@@ -6715,23 +6715,86 @@ dazu, nicht in die Fußnote.
 
 ### Der Stil-Sollstand
 
-Bewusst neu erhoben (`4de0e3a`, O-9), Schlüssel für Schlüssel gegen die vorige Fassung
-gegengerechnet: **3549 -> 3612 Digests, 0 geändert, 63 Zugänge, 0 Abgänge.** Die 63 sind
-**eine einzige Ursache**: dreimal dieselben 21 Schlüssel, alle in `dicestats`, alle
-`text.ds-hist-face-label#0..19` und `text.ds-hist-axis-label#0`. Die Beschriftungen trugen
-ihre Größe bis zu diesem Schritt als Präsentationsattribut und hatten KEINE Klasse; die
-Abtastung greift Elemente an ihrer Signatur und ließ sie fallen. Sie sind also nicht "neu",
-sondern erstmals **erfasst**.
+Bewusst neu erhoben (`4de0e3a`, O-9). **Die Zahl, die hier zuerst stand, war falsch, und
+der Irrtum ist lehrreich genug, um benannt zu bleiben statt stillschweigend überschrieben
+zu werden.**
 
-**Dass sich kein bestehender Digest bewegt, liegt an der Abtastung und nicht an der
-Harmlosigkeit der Änderung** — das muss dastehen, sonst liest es sich als Entwarnung. Der
-Sollstand erfasst 1213 von gemessen 3672 Elementen je Durchgang, nämlich eine kuratierte
-Auswahl je Ansicht; die 95 Gewichte und die 254 Bedienelemente liegen außerhalb. Der
-Bildpunkt-Vergleich nennt für dieselbe Umstellung 355 Größen- und 293 Gewichtsänderungen
-je Lauf. **Beide Werkzeuge nebeneinander sind Absicht.** `EXPECTED_DEVIATION_KEYS` und
-`EXPECTED_DEVIATION_KEYS_NARROW` bleiben LEER.
+Gegengerechnet auf den **Digest-WERTEN** (`tools/vergleich-stil-sollstand.js --alt 10aa860
+--neu 1ebc13a`, Befund der Prüfrunde 1):
 
-**Summe über die Welle:** W5-C 9 bewegte Digests, W5-D 1143, W5-E 0 (plus 63 Zugänge).
+| Durchgang | vorher | nachher | geändert | Zugänge | Abgänge |
+| --- | --- | --- | --- | --- | --- |
+| standard | 1213 | 1234 | 99 | 21 | 0 |
+| narrow | 1123 | 1144 | 86 | 21 | 0 |
+| reducedMotion | 1213 | 1234 | 99 | 21 | 0 |
+| **SUMME** | **3549** | **3612** | **284** | **63** | **0** |
+
+**Vorher stand hier „0 geändert".** Der Sollstand trägt je Ansicht ZWEI Felder: `keys` (die
+Elementsignaturen) und `digests` (die Hashwerte dazu). Wer `keys` vergleicht, sieht Zugänge
+und Abgänge — eine Wertänderung an einem BESTEHENDEN Schlüssel ist dort unsichtbar, weil
+sich der Schlüssel dabei nicht ändert. Auf `keys` gerechnet kommt für diese Welle Ziffer für
+Ziffer „0 geändert, 63 Zugänge, 0 Abgänge" heraus. Der Vergleich hat nicht falsch gerechnet,
+er hat das falsche Feld gelesen. Zweite, unabhängige Methode (Zeilen-Diff der Datei): 287
+Minus- und 350 Plus-Zeilen; drei der 287 tragen denselben Wert wie ihre Plus-Zeile
+(`svg.ds-histogram-svg#0`, reine Kommaverschiebung), 287 − 3 = **284**.
+
+Die **63 Zugänge** sind unverändert richtig und haben **eine einzige Ursache**: dreimal
+dieselben 21 Schlüssel, alle in `dicestats`, alle `text.ds-hist-face-label#0..19` und
+`text.ds-hist-axis-label#0`. Die Beschriftungen trugen ihre Größe bis zu diesem Schritt als
+Präsentationsattribut und hatten KEINE Klasse; die Abtastung greift Elemente an ihrer
+Signatur und ließ sie fallen. Sie sind also nicht „neu", sondern erstmals **erfasst**.
+
+**Der tragende Satz der ersten Fassung ist widerlegt und gestrichen:** „die 95 Gewichte und
+die 254 Bedienelemente liegen gemessen außerhalb dieser Auswahl". Beide Gruppen liegen
+mitten in der Auswahl — 194 bewegte Digests kommen von der Gewichtsumstellung, 81 von der
+neuen Bedienelement-Regel. `div.dash-stat-value`, `button.qa-btn`, `button.dice-attr`,
+`button.dice-attr.save` und `button.npc-detail-btn` stehen in der Auswahl UND haben sich
+bewegt; die vier Knöpfe führt `1c8e4f8` selbst unter seinen 254 Bedienelementen auf.
+
+**Die 284 sind eigenschaftsgenau erklärt — rechnend, nicht erzählend.** „284 bewegt" allein
+wäre kein Freispruch: der Digest ist ein SHA-256 über zwölf Eigenschaften und sagt nur DASS,
+nicht WAS; bewegt haben könnte sich auch eine Farbe oder ein Rahmen. Die Rekonstruktion
+nimmt den heutigen Satz aller zwölf Werte aus dem lokalen Vollabzug, ersetzt darin NUR Größe
+und Gewicht durch Kandidatenwerte und prüft, ob eine Kombination den ALTEN Digest exakt
+reproduziert; trifft sie, sind die übrigen zehn Eigenschaften unverändert. Ergebnis:
+**bewegt 284 · erklärt 284 · unerklärt 0**, verteilt auf 38 Signaturen:
+
+| Digests | Signaturen | Ursache | Commit |
+| --- | --- | --- | --- |
+| 194 | 28 | Gewicht 700 -> 600 | `476ce50` |
+| 81 | 8 | Größe 13,3333 -> 12 px (`font: -webkit-small-control`, also genau die Browser-Vorgabe, die Schritt 8 verlassen wollte) | `1c8e4f8` |
+| 6 | 1 | Größe 17,6 -> 16 px — `render/helpers.js:436`, `renderEmptyState`, `1.1em` -> `var(--text-lg)` | `1eb1e80` |
+| 3 | 1 | Größe 13,6 -> 12 px — `systems/file-backup/file-backup-ui.js:322`, `0.85em` -> `var(--text-sm)` | `1eb1e80` |
+
+Es verbirgt sich also nichts Unbeabsichtigtes in den 284. **Das ist jetzt eine
+Werkzeugaussage mit Gegenprobe und keine Zusage im Begleittext mehr** — und darauf kommt es
+an: der Sollstand ist der einzige Wächter im Baum, der eine unbeabsichtigte Bildänderung
+fängt, eine Neuerhebung schreibt ihn neu, und unter der Zusage „0 bewegt" bleibt dieser
+Beweis ungeführt, weil es scheinbar nichts zu beweisen gibt. Genau dieser Schritt war
+ausgefallen.
+
+Der Sollstand erfasst 1213 von gemessen 3672 Elementen je Durchgang, nämlich eine kuratierte
+Auswahl je Ansicht — die Auswahl ist der Grund, warum es 284 bewegte Digests sind und nicht
+mehr. Der Bildpunkt-Vergleich nennt für dieselbe Umstellung 355 Größen- und 293
+Gewichtsänderungen je Lauf. **Beide Werkzeuge nebeneinander sind Absicht.**
+`EXPECTED_DEVIATION_KEYS` und `EXPECTED_DEVIATION_KEYS_NARROW` bleiben LEER.
+
+**Summe über die Welle, alle vier Neuerhebungen mit demselben Werkzeug nachgerechnet:**
+W5-C 9 (`4534b38`), W5-D 1143 (`ebc2914`), W5-D Runde 1 **24** (`304a297` — stand bisher in
+keinem Abschnitt dieser Akte, deshalb hier nachgetragen), W5-E **284** (`4de0e3a`, plus 63
+Zugänge). **Gesamt 1460 bewegte Digests.** Die ersten drei Zahlen treffen ihre
+Commit-Nachrichten auf den Punkt — sie waren auf den Werten gerechnet, und das ist der
+Beleg, dass der Irrtum auf W5-E beschränkt bleibt und keine stille Serie ist.
+
+**Gegen die Wiederkehr** steht ab jetzt `tools/vergleich-stil-sollstand.js` mit
+`tests/unit/stil-sollstand-vergleich.test.js` (20 Fälle): der Vergleich rechnet auf
+`digests`, die Schlüsselmengen-Rechnung steht im selben Testfall zum Gegenhalten, die
+Eigenschaftsliste wird aus dem Vergleichslauf GELESEN statt nachgebaut (ARCH-01), und ein
+Vollabzug aus einem fremden Baumzustand wird gemeldet statt stillschweigend verrechnet. Das
+Werkzeug ist **kein Tor** und läuft in keiner Pipeline — die Rekonstruktion braucht den per
+`.gitignore` ausgeschlossenen Vollabzug und Git-Historie, die `actions/checkout@v7` nicht
+holt. Es ist ein handgefahrenes Berichtswerkzeug für den Augenblick der Neuerhebung,
+dieselbe Bauart wie `--verlauf` in `tools/check-f18-kaskade.js`.
 
 ### Geprüfte Basiswerte
 
@@ -6802,6 +6865,119 @@ node tools/typo-baseline.js --diff vorher.json nachher.json --schwelle 2 --egal 
 # Die zwei Waechter des Zweigs
 node tools/check-f18-kaskade.js --check
 node tools/sync-aktenlage-anker.js --check
+```
+
+---
+
+## W5-E Runde 1 — „0 bewegt" war ein Vergleich der Schlüssel, nicht der Werte (2026-10-06)
+
+**Status: ERLEDIGT.** Prüfrunde zur Einheit W5-E. Der eine Befund der Prüfung ist
+nachgemessen **bestätigt** und behoben; keiner wurde zurückgewiesen. Drei Commits,
+Reihenfolge nach `plan.atomar_wie`: zuerst der rote Nachweis, dann das Werkzeug, dann die
+Akte.
+
+### Der Befund in einem Satz
+
+Die Neuerhebung des Stil-Sollstands wurde mit der Zusage begleitet, es habe sich **kein**
+bestehender Digest bewegt („GEPRÜFT UND NICHT GEHOFFT", `4de0e3a`). Gemessen haben sich
+**284 von 3549** bewegt. Die Rechnung hatte das Feld `keys` verglichen statt `digests` —
+auf den Schlüsselmengen ist eine Wertänderung an einem bestehenden Schlüssel unsichtbar,
+und dort kommt Ziffer für Ziffer „0 geändert, 63 Zugänge, 0 Abgänge" heraus.
+
+Die vollständige Richtigstellung mit beiden Messmethoden, der eigenschaftsgenauen Zuordnung
+der 284 auf 38 Signaturen und der gestrichenen Behauptung steht oben im Abschnitt
+**„Der Stil-Sollstand"** der Einheit W5-E — dort, wo die falsche Zahl stand, und nicht hier
+in einer Fußnote.
+
+### Warum das schwerer wog als eine falsche Zahl
+
+Der Sollstand ist der **einzige** Wächter im Baum, der eine unbeabsichtigte Bildänderung
+fängt: er hängt an zwölf berechneten Eigenschaften je Element und meldet jede Bewegung, ohne
+zu wissen, welche gewollt war. Eine Neuerhebung **schreibt diesen Wächter neu** und ist nur
+zulässig, wenn vorher bewiesen ist, dass in den bewegten Werten nichts Unbeabsichtigtes
+steckt. Unter der Zusage „0 bewegt" bleibt dieser Beweis ungeführt, weil es scheinbar nichts
+zu beweisen gibt — genau dieser Schritt war ausgefallen. Nachgeholt ist er jetzt rechnend:
+**284 bewegt, 284 erklärt, 0 unerklärt.**
+
+### Was dauerhaft dagegen steht
+
+`tools/vergleich-stil-sollstand.js` + `tests/unit/stil-sollstand-vergleich.test.js`
+(20 Fälle). Vier Vorkehrungen, jede gegen einen konkreten Fehlgriff:
+
+| Vorkehrung | Gegen welchen Fehlgriff |
+| --- | --- |
+| `vergleiche()` rechnet nur auf `digests` | den Irrtum dieser Runde |
+| die Schlüsselmengen-Rechnung steht **im selben Testfall** zum Gegenhalten | denselben Irrtum als Prosa-Warnung, die niemand liest |
+| `PROPERTIES`/`DIGEST_HEX_LENGTH` werden aus dem Vergleichslauf **gelesen**, nicht nachgebaut; Abweichung bricht hart | ARCH-01, zwei handgepflegte Kopien einer Liste |
+| ein Vollabzug, der nicht zum neuen Digest passt, wird gemeldet statt verrechnet | Abzug aus einem fremden Baumzustand |
+
+**Das Werkzeug ist kein Tor** und läuft in keiner Pipeline — gesagt, weil CLAUDE.md für
+genau diese Unehrlichkeit eine eigene Mahnung führt (Phase 15, GATE-04). Die Rekonstruktion
+braucht den per `.gitignore` ausgeschlossenen Vollabzug und Git-Historie, die
+`actions/checkout@v7` nicht holt. Handgefahrenes Berichtswerkzeug für den Augenblick der
+Neuerhebung, dieselbe Bauart **und dieselbe Einschränkung** wie `--verlauf` in
+`tools/check-f18-kaskade.js`. Über den echten Sollstand urteilt weiterhin der
+Vergleichslauf in der E2E-Suite, bei jedem Lauf.
+
+### Ein echter Fehler, vom eigenen Wächter gefangen
+
+Die Kandidatensuche ließ den **heutigen** Wert eines Feldes aus, wenn der Aufrufer ihn nicht
+nannte. Bewegt sich an einem Element nur die Größe, muss das Gewicht auf seinem
+unveränderten Wert stehenbleiben können — sonst bleibt genau dieser häufigste Fall
+unerklärt, und zwar stillschweigend als „andere Eigenschaft bewegt". An der vollen
+Kandidatenmenge aus dem Vollabzug fiel es **nicht** auf, weil die heutigen Werte dort
+ohnehin alle vorkommen; zwei Fälle mit enger Menge haben es rot gemacht. Das ist der Grund,
+warum der Wächter vor dem Werkzeug entstand.
+
+### Die Gegenprobe: ist es eine Serie?
+
+**Nein.** Alle vier Neuerhebungen der Welle 5 mit demselben Werkzeug nachgerechnet:
+`4534b38` **9**, `ebc2914` **1143**, `304a297` **24**, `4de0e3a` **284**. Die ersten drei
+treffen ihre Commit-Nachrichten auf den Punkt — sie waren auf den Werten gerechnet. Der
+Irrtum bleibt auf W5-E beschränkt. Nebenbei gefunden: die **24** von `304a297` (W5-D
+Runde 1) stand in keinem Abschnitt dieser Akte und ist jetzt in der Wellensumme
+nachgetragen.
+
+### Geprüfte Basiswerte
+
+`npx jest` **2110/2110 in 78 Suiten** (die 20 neuen Fälle heben 2090 auf 2110) ·
+`npx playwright test` **604 bestanden / 27 übersprungen / 0 Fehlschläge** · `npm run lint`
+exit 0 mit **exakt 363** Warnungen · `typecheck` und `typecheck:strict` exit 0 · `pytest`
+30 · beide Builds exit 0 · `check-f18-kaskade --check` OK · `sync-aktenlage-anker --check`
+0 Abweichungen. Ratschen unverändert: **DUBLETTEN 0 · !important 104 · Inline-Attribute
+252 · `transition: all` 0 · SVG_MAX 0 · AUSSERHALB_MAX 0 · EM_MAX 6 ·
+INLINE_AUSSERHALB_MAX 0**. Diese Runde ändert **keine** Quelldatei der App — nur ein
+Werkzeug, einen Wächter und diese Akte; die Ratschen können davon nicht berührt sein, und
+dass sie es nicht sind, ist gemessen und nicht geschlossen.
+
+### Offene Punkte
+
+- **Die Rekonstruktion deckt nur die Eigenschaften ab, die man ihr nennt.** Für Welle 5
+  waren das `fontSize` und `fontWeight`, und das war richtig. Eine Welle, die Farben oder
+  Ränder bewegt, muss ihre Kandidatenmengen selbst mitbringen — sonst meldet das Werkzeug
+  ihre beabsichtigten Änderungen als „unerklärt". Das ist die gewollte Richtung des
+  Irrtums (laut statt still), aber es ist eine Bedienpflicht und keine Automatik.
+- **Niemand fährt das Werkzeug automatisch.** Es ist bewusst kein Tor (Begründung oben),
+  aber damit gilt für es dieselbe Restschuld, die CLAUDE.md für
+  `sync-editor-toolbars --check` führt: eine Fähigkeit, die nur jemand nutzt, der an sie
+  denkt. Der nächste Schritt, falls je gewünscht: der Vollabzug müsste versioniert oder in
+  der CI erzeugt werden, und `fetch-depth: 0` in den Workflow.
+- **Der Umgebungsmangel aus W5-A bis W5-E ist behoben.** `npx playwright install chromium`
+  ist in dieser Runde gelaufen (Chromium 143.0.7499.4, Playwright-Build v1200); die
+  E2E-Suite läuft örtlich ohne `PLAYWRIGHT_BROWSERS_PATH`-Umweg. Der entsprechende Punkt
+  der Einheit W5-E ist damit erledigt.
+
+### Befehle
+
+```bash
+# Der Waechter des Vergleichswerkzeugs (20 Faelle)
+npx jest tests/unit/stil-sollstand-vergleich.test.js
+
+# Die Neuerhebung dieser Welle nachrechnen — Werte, nicht Schluessel
+node tools/vergleich-stil-sollstand.js --alt 10aa860 --neu 1ebc13a
+
+# Den Vollabzug erzeugen, den die Rekonstruktion braucht
+npx playwright test tests/e2e/features/computed-style-diff.spec.js
 ```
 
 ---
