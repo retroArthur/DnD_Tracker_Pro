@@ -34,9 +34,20 @@
  * flex` traegt — also von Anfang an. Der Messfall setzt trotzdem `.visible`
  * und hovert ECHT, aber nicht, um die Masse zu bekommen, sondern um die
  * Behauptung "gemeinsam sichtbar" zu belegen. Das `.visible` ist dabei der
- * Weg der App selbst: `handleSelectionChange()` in
- * `ui/editors/rich-text-toolbars.js` setzt genau diese Klasse und genau
- * `left`/`top`, wenn im Editor Text markiert wird.
+ * Weg der App selbst: `handleSelectionChange()` in rich-text-toolbars.js
+ * setzt genau diese Klasse und genau `left`/`top`, wenn im Editor Text
+ * markiert wird.
+ *
+ * KURZFORM DES MODULNAMENS OBEN, mit Absicht — sie sieht wie eine Umgehung
+ * aus und muss darum begruendet werden. Das Abdeckungs-Gate in
+ * `tests/unit/module-test-coverage.test.js` sucht einen Modulpfad als
+ * Teilzeichenkette in allen Testdateien und zaehlt JEDEN Treffer als
+ * Abdeckung, auch einen im Erklaertext. Diese Datei prueft das Modul NICHT;
+ * sie nennt es als Herkunft der Klasse `visible`. Mit vollem Pfad haette das
+ * Gate verlangt, das Modul von seiner Ausnahmeliste zu streichen — und damit
+ * eine Abdeckung behauptet, die es nicht gibt. Dasselbe Muster steht bei
+ * `OHNE_MESSUNG` in tests/unit/design-consistency.test.js. Es gibt genau EINE
+ * rich-text-toolbars.js im Baum.
  *
  * WARUM DIE BREITE SCHRIFT MITGEMESSEN WIRD. Die CI laeuft auf ubuntu-latest
  * und hat an der Schriftmetrik schon einmal zwoelf Faelle verloren; die

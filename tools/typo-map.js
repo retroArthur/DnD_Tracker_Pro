@@ -607,20 +607,25 @@ const KETTEN = [
         kinder: [['bestiary.css||.bst-save-val||0.85em', 11.56, 6, 0]]
     },
     {
-        /* NACHGEZOGEN IM SCHRITT 4. Das Kind war `8px` und ist jetzt
-           `var(--text-xs)`: die Tastenhilfe ist Lesetext ("Strg+B") und lag
-           unter der Untergrenze von 11 px (E-4), also eine Urteilsstelle mit
-           +3,00 px. Der Anker TRAEGT den Wert (Begruendung am Kopf von
-           KETTEN), darum muss er mitwandern — sonst traf die
-           Verwesungsprobe in typo-map.test.js ihn nicht mehr und die Kante
-           hoerte lautlos auf zu urteilen.
-           `kindPx` ist der NEUE gemessene Wert, weil dieses Feld laut
-           Abschnittskopf sagt, was der Browser zeigt. Der alte stand bei 8,
-           und die Kante war dort informationslos: ein px-Literal haengt
-           nicht am Elternwert, `altPx()` und Messung fielen zusammen. */
+        /* DAS KIND BLEIBT BEI `8px`, und das ist in Pruefrunde 1 des
+           Schrittes 4 zurueckgenommen worden. Kurzzeitig stand hier
+           `var(--text-xs)` mit `kindPx` 11 — die Hebung auf die Untergrenze
+           (E-4) hat die fuenf Tastenhilfen gemessen ueberlappen lassen
+           (-2,80 und -3,09 px, breite Linux-Naeherung -8,20 und -8,68), weil
+           sie absolut unter ihren Knoepfen haengen und ihr Abstand der
+           Abstand der Knoepfe ist. Begruendung und Uebergabe an Schritt 8
+           stehen bei der Ausnahme in Abschnitt 7a.
+           Der Anker TRAEGT den Wert (Begruendung am Kopf von KETTEN), darum
+           musste er zweimal mitwandern — sonst traf die Verwesungsprobe in
+           typo-map.test.js ihn nicht mehr und die Kante hoerte lautlos auf
+           zu urteilen. Die Kante ist mit einem px-Literal am Kind ohne
+           Aussage (`altPx()` und Messung fallen zusammen, ein Literal haengt
+           nicht am Elternwert); sie steht trotzdem hier, weil die
+           Verschachtelung real ist und ihr Fehlen eine Luecke in der
+           Kettenliste waere. */
         eltern: 'spells.css||.floating-toolbar .editor-btn||14px',
         elternPx: 14,
-        kinder: [['spells.css||.floating-toolbar .kbd-hint||var(--text-xs)', 11, 5, 5]]
+        kinder: [['spells.css||.floating-toolbar .kbd-hint||8px', 8, 5, 5]]
     },
     {
         eltern: 'dashboard.css||.qref-tab||0.75em',
@@ -841,16 +846,25 @@ for (let n = 1; n <= 6; n++) {
 }
 
 /* ===========================================================================
-   7a. DIE 20 BEURTEILTEN IKON-ANKER — Schritt 4, Entscheidung E-3
+   7a. DIE 21 BEURTEILTEN ANKER — Schritt 4, Entscheidungen E-3 und E-4
    ===========================================================================
 
    WAS HIER ENTSCHIEDEN WIRD. Der Vorlauf (Schritt 3) hat die Kandidatenmenge
    ausgezaehlt und an jeder Stelle "NOCH NICHT geduldet" gesagt, weil ob eine
    Ikonengroesse neben der Skala bleibt ein URTEIL ist. Dieser Abschnitt
-   faellt es — fuer die 22 Deklarationen, deren Sprung auf die Skala GROESSER
+   faellt es — fuer die 23 Deklarationen, deren Sprung auf die Skala GROESSER
    ALS 2 px waere. Das ist die Schwelle des Abnahmekriteriums ("keine
    Aenderung > 2 px ausser beabsichtigt"); alles darunter ist mechanische
    Nachschlagearbeit und gehoert dem Schritt 5.
+
+   DIE 23. IST DIE AUSNAHME VON ALLEM, WAS HIER SONST STEHT, und sie steht
+   darum vorneweg: `.floating-toolbar .kbd-hint` TRAEGT Lesetext ("Strg+B"),
+   gehoert also nach E-4 auf die Untergrenze von 11 px. Sie bleibt trotzdem
+   bei 8 px, und zwar nicht aus E-3, sondern aus einer Messung: auf 11 px
+   gehoben ueberlappen die Hilfen (-2,80 und -3,09 px; breite Linux-Naeherung
+   -8,20 und -8,68), weil sie absolut unter ihren Knoepfen haengen. Ihre
+   Begruendung steht bei ihrem Eintrag; Schritt 8 entscheidet ueber sie
+   gemeinsam mit der Layoutregel. Alles Folgende gilt fuer die anderen 22.
 
    WARUM SIE NEBEN DER SKALA BLEIBEN. Keine der 22 traegt Lesetext. 19 tragen
    ein einzelnes Emoji (gemessen: 🏠 📖 👹 🎭 🎲 📍 👤 ⚔️ 📦 🐉 ✨ 📝 🔗 📜),
@@ -893,7 +907,9 @@ for (let n = 1; n <= 6; n++) {
 
    WAS OFFEN BLEIBT, damit es nicht als entschieden gilt: E-3 nennt 66 von 853
    Deklarationen; die Kandidatenmenge nach Namensmuster ist gemessen 73.
-   Beurteilt sind hier 22. Die uebrigen 54 springen um 2 px oder weniger und
+   Beurteilt sind hier 22 davon (die 23. Zeile, die Tastenhilfe, ist nach
+   Namensmuster keine Ikone und zaehlt nicht mit). Die uebrigen 54 springen
+   um 2 px oder weniger und
    sind NICHT beurteilt — die Ratsche dieses Schrittes begrenzt ihn
    ausdruecklich auf die eigenen Anker ("waechst um genau diese Anker und
    keinen mehr"), und W5-R-07e sichert zu, dass keine davon still hier landet.
@@ -1009,7 +1025,24 @@ const IKON_GEDULDET = {
         '8 — gemeinsam mit `.tb-caret` (editors.css, 9px, ▾), dem gleichen ' +
         'Zeichen in der gleichen Rolle. Zwei Pfeilzeichen duerfen nicht zwei ' +
         'verschiedene Antworten bekommen, und darum entscheidet keiner von ' +
-        'beiden hier allein.'
+        'beiden hier allein.',
+    'spells.css||.floating-toolbar .kbd-hint||font-size':
+        '8px, UNVERAENDERT. Gemessen 8,00 px an fuenf Elementen. DIESE ' +
+        'DULDUNG IST DIE EINZIGE, DIE LESETEXT BETRIFFT ("Strg+B"), und sie ' +
+        'ist darum die einzige, die nicht mit E-3 begruendet wird, sondern ' +
+        'mit einer Messung. Der Schritt hatte sie auf die Untergrenze von 11 ' +
+        'px gehoben (E-4) und damit das Gegenteil erreicht: die fuenf Hilfen ' +
+        'haengen ABSOLUT unter ihren Knoepfen und nehmen im Fluss der Leiste ' +
+        'keinen Platz ein, ihr Abstand ist der Abstand der Knoepfe (2 px ' +
+        'Spalt). Bei 11 px ueberlappen Strg+B/Strg+I um 2,80 px und ' +
+        'Strg+I/Strg+U um 3,09 px (breite Linux-Naeherung 8,20 bzw. 8,68 ' +
+        'px); die drei lesen sich dann als EINE Zeichenkette. Weil ' +
+        '`.floating-toolbar:hover .kbd-hint` an der LEISTE haengt, sind ' +
+        'immer alle fuenf zugleich sichtbar — Normalfall, nicht Randfall. ' +
+        'UEBER DIE UNTERGRENZE ENTSCHEIDET SCHRITT 8, dort aber GEMEINSAM ' +
+        'mit der Layoutregel (nur die Hilfe des beruehrten Knopfes zeigen); ' +
+        'ohne sie ersetzt eine Hebung nur einen Lesbarkeitsmangel durch ' +
+        'einen anderen. Zugesichert in tests/e2e/features/tastenhilfen.spec.js.'
 };
 
 Object.assign(AUSNAHMEN, IKON_GEDULDET);

@@ -107,8 +107,16 @@ const W = require('../../tools/sync-typo-tokens.js');
  *  GESENKT auf 802 (Schritt 4): 22 Ikon- und Avatar-Deklarationen mit Sprung
  *  ueber 2 px sind unter 20 Ankern namentlich geduldet (E-3, Abschnitt 7a),
  *  9 Textstellen tragen ihre Sprosse. Die Schranke steht wieder exakt auf
- *  dem gemessenen Wert. */
-const OFFEN_MAX = 802;
+ *  dem gemessenen Wert.
+ *  ANGEHOBEN auf 803 (Pruefrunde 1 des Schrittes 4) — die einzige Anhebung
+ *  dieser Welle, und sie steht hier statt verrechnet zu werden:
+ *  `.floating-toolbar .kbd-hint` ist auf `8px` zurueckgenommen, weil die
+ *  Hebung auf die Untergrenze die fuenf Tastenhilfen gemessen ueberlappen
+ *  liess (-2,80 / -3,09 px; breite Linux-Naeherung -8,20 / -8,68). Die
+ *  Stelle ist damit wieder offen und nicht erledigt, und die Schranke sagt
+ *  das. Begruendung bei der Ausnahme in tools/typo-map.js Abschnitt 7a,
+ *  Zusicherung in tests/e2e/features/tastenhilfen.spec.js. */
+const OFFEN_MAX = 803;
 
 /** Das Werkzeug als eigener Prozess fahren — so, wie ein Mensch es faehrt.
  *  Nicht `main()` im Testprozess aufrufen: dann waere weder der

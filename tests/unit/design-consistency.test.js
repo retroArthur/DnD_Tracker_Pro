@@ -14443,8 +14443,20 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  namentlich geduldet (E-3, Begruendung in tools/typo-map.js,
      *  Abschnitt 7a; die geschlossene Menge bewacht W5-R-07), und 9
      *  Textstellen tragen jetzt ihre Sprosse. 22 + 9 = 31, und das sind
-     *  GENAU die Deklarationen mit Sprung ueber 2 px. */
-    const AUSSERHALB_MAX = 802;
+     *  GENAU die Deklarationen mit Sprung ueber 2 px.
+     *  ANGEHOBEN am 2026-10-06 von 802 auf 803 (Pruefrunde 1 des Schrittes
+     *  4) — die EINZIGE Anhebung dieser Welle, und sie wird benannt statt
+     *  verrechnet. `.floating-toolbar .kbd-hint` ist von `var(--text-xs)`
+     *  auf `8px` zurueckgenommen: die Hebung auf die Untergrenze liess die
+     *  fuenf Tastenhilfen gemessen ueberlappen (-2,80 / -3,09 px; breite
+     *  Linux-Naeherung -8,20 / -8,68), weil sie absolut unter ihren Knoepfen
+     *  haengen. Die Stelle ist damit wieder eine geduldete (23 statt 22
+     *  unter 21 statt 20 Ankern) und keine erledigte, und die Schranke sagt
+     *  das. Eine Ruecknahme, die die Schranke stehenlaesst, behauptete eine
+     *  Erledigung, die es nicht gibt. Zugesichert in
+     *  tests/e2e/features/tastenhilfen.spec.js; Schritt 8 entscheidet ueber
+     *  die Untergrenze gemeinsam mit der Layoutregel. */
+    const AUSSERHALB_MAX = 803;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14929,7 +14941,9 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
    WAS DIESER BLOCK NICHT ENTSCHEIDET, und es muss hier stehen, damit es nicht
    als entschieden gilt: E-3 nennt 66 von 853 Deklarationen, die neben der
    Skala bleiben; die Kandidatenmenge nach Namensmuster ist gemessen 73.
-   Dieser Schritt hat die 22 mit Sprung ueber 2 px beurteilt. Die uebrigen 54
+   Dieser Schritt hat die 22 IKONEN mit Sprung ueber 2 px beurteilt (die 23.
+   geduldete Zeile, die Tastenhilfe, ist nach Namensmuster keine Ikone und
+   zaehlt in dieser Rechnung nicht mit). Die uebrigen 54
    Ikon-Deklarationen springen um 2 px oder weniger und sind NICHT beurteilt —
    seine Ratsche begrenzt ihn ausdruecklich auf die eigenen Anker ("waechst um
    genau diese Anker und keinen mehr"). Ob Schritt 5 sie mechanisch auf eine
@@ -14941,13 +14955,27 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
 describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
     /**
      * DIE GEDULDETEN: Emoji-Ikonen und Avatar-Platzhalter, die neben der
-     * Skala bleiben (E-3), plus das Aufklapp-Pfeilzeichen des Wiki-Baums.
+     * Skala bleiben (E-3), plus das Aufklapp-Pfeilzeichen des Wiki-Baums und
+     * — als einzige Zeile mit Lesetext — die Tastenhilfe der schwebenden
+     * Werkzeugleiste.
      * Eine Zeile je DEKLARATION, mit dem alten Wert, dem neuen Wert und dem
      * GEMESSENEN Bildpunktwert. Zwei Selektoren stehen zweimal, weil sie
      * neben ihrer Grundregel eine Media-Query-Fassung haben; ihr Anker ist
      * zeilenfrei und deckt beide, und das ist Absicht — eine Ikone, die in
      * der Grundregel neben der Skala steht und in der Mobilfassung darauf,
      * waere an zwei Breiten nach zwei Maszstaeben bemessen.
+     *
+     * `.floating-toolbar .kbd-hint` steht hier NICHT aus E-3 — sie traegt
+     * Lesetext und gehoerte nach E-4 auf die Untergrenze. Sie steht hier aus
+     * einer MESSUNG: auf 11 px gehoben ueberlappen die fuenf Hilfen
+     * (-2,80 / -3,09 px; breite Linux-Naeherung -8,20 / -8,68), weil sie
+     * absolut unter ihren Knoepfen haengen und ihr Abstand der Abstand der
+     * Knoepfe ist. Die Zusicherung dazu steht in
+     * tests/e2e/features/tastenhilfen.spec.js; ueber die Untergrenze
+     * entscheidet Schritt 8 gemeinsam mit der Layoutregel. Sie liegt in
+     * dieser Liste, weil die Liste "nicht auf der Skala" bedeutet und nicht
+     * "ist eine Ikone" — W5-R-07e zaehlt die Ikon-Kandidaten eigens nach
+     * Namensmuster und wird davon nicht beruehrt.
      */
     const URTEIL_IKON = [
         ['dmscreen.css', '.empty-state-icon', '3.5em', '56px', 56],
@@ -14978,15 +15006,22 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         ['encounters.css', '.enc-item-icon', '1.1em', '17.6px', 17.6],
         ['npcs.css', '.npc-item-avatar', '1.4em', '22.4px', 22.4],
         ['tools.css', '.timer-ctrl-btn', '1.4em', '22.4px', 22.4],
-        ['party.css', '.wiki-tree-item-toggle', '8px', '8px', 8]
+        ['party.css', '.wiki-tree-item-toggle', '8px', '8px', 8],
+        ['spells.css', '.floating-toolbar .kbd-hint', '8px', '8px', 8]
     ].map(([datei, sel, alt, neu, gemessen]) => ({ datei, sel, alt, neu, gemessen }));
 
     /**
      * DIE AUF DIE SKALA KOMMENDEN: Zahlen und Text. Je Zeile der alte Wert,
-     * der GEMESSENE Bildpunktwert und das Zieltoken. Alle neun folgen der
+     * der GEMESSENE Bildpunktwert und das Zieltoken. Alle acht folgen der
      * Zuordnungstabelle in `tools/typo-map.js` — keine braucht eine
      * Sonderzuordnung, und das ist der Beleg dafuer, dass die Tabelle fuer
      * Text taugt und der Streit nur ueber die Ikonen ging.
+     *
+     * ES WAREN NEUN. `.floating-toolbar .kbd-hint` ist in Pruefrunde 1
+     * zurueckgenommen worden und steht jetzt in URTEIL_IKON — nicht weil die
+     * Zuordnung sie verfehlt haette (sie traf: 8 px -> `--text-xs`), sondern
+     * weil die Hebung gemessen Ueberlappung erzeugt. Die Begruendung steht
+     * dort und bei der Ausnahme in `tools/typo-map.js`.
      *
      * `gemessen: null` steht fuer die EINE Stelle, die kein Element hat; ihr
      * Grund steht in OHNE_MESSUNG. Eine 0 waere dort eine Behauptung.
@@ -14996,7 +15031,7 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
      * `tests/unit/typo-map.test.js` zaehlt, wie oft ein Skalentokenname in
      * DIESER Datei vorkommt, und faellt bei jeder zweiten Aufzaehlung — der
      * Kern von O-4 (eine Liste je Anlagenart; ARCH-01 hat die Lehre schon
-     * einmal bezahlt). Neun ausgeschriebene Tokennamen waeren genau so eine
+     * einmal bezahlt). Acht ausgeschriebene Tokennamen waeren genau so eine
      * zweite Aufzaehlung. Ueber `token()` gibt es sie nicht, und ein
      * umbenanntes Token faellt trotzdem auf: W5-R-07d prueft, dass das Ziel
      * in `SKALA_TOKENS` steht.
@@ -15006,7 +15041,6 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         ['tools.css', '.timer-hero-time', '3em', 48, '3xl'],
         ['dashboard.css', '.dice-result-main', '4em', null, 'hero'],
         ['dice.css', '.dice-hero-result', '5em', 80, 'hero'],
-        ['spells.css', '.floating-toolbar .kbd-hint', '8px', 8, 'xs'],
         ['loot.css', '.checkout-amount', '1.8em', 28.8, '2xl'],
         ['dashboard.css', '.char-attr-box .attr-input', '1.4em', 22.4, 'xl'],
         ['dmscreen.css', '.dms-dice-result', '1.4em', 22.4, 'xl'],
@@ -15115,10 +15149,11 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
             n: soll.length
         });
         // ... und die Mengengroessen sind die gemessenen: 11 aus dem Vorlauf,
-        // 20 Anker fuer 22 beurteilte Deklarationen.
+        // 21 Anker fuer 23 beurteilte Deklarationen (20/22 Ikonen und
+        // Pfeilzeichen, dazu die Tastenhilfe aus Pruefrunde 1).
         expect(VORLAUF.length).toBe(11);
-        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(20);
-        expect(URTEIL_IKON.length).toBe(22);
+        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(21);
+        expect(URTEIL_IKON.length).toBe(23);
     });
 
     test('W5-R-07b: jede geduldete Urteilsstelle traegt GENAU ihren gemessenen Wert', () => {
@@ -15177,7 +15212,7 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
             offen: 0,
             befunde: []
         });
-        expect(URTEIL_TEXT.length).toBe(9);
+        expect(URTEIL_TEXT.length).toBe(8);
         // ... und keine Textstelle steht in der Ausnahmeliste
         expect(URTEIL_TEXT.map(ankerVon).filter(a => TYPO_MAP.AUSNAHMEN[a])).toEqual([]);
     });
