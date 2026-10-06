@@ -62,6 +62,14 @@
  *       zweite Quelle, die veraltet, waehrend die Tabelle weiterlebt. Wer ihn
  *       als Datei braucht, leitet um.
  *
+ *   node tools/sync-typo-tokens.js --ketten
+ *       Zeigt die GEMESSENEN Verschachtelungsketten mit Eltern- UND Kindwert
+ *       und urteilt darueber, ob die Ordnung nach der Zuordnung kippt. Exit 1,
+ *       solange eine Kante kippt. Diese Sicht fehlte: `--report` sortiert nach
+ *       dem Sprung EINER Deklaration, eine Kette ist aber ein Verhaeltnis, und
+ *       jede Zeile fuer sich sah unauffaellig aus, als die Tabelle
+ *       `.char-attr-pill` auf 11 px und sein Kind auf 16 px legte.
+ *
  *   node tools/sync-typo-tokens.js [--only=<datei.css>]
  *       SCHREIBT. Ersetzt jede zuordenbare Deklaration durch ihr Token,
  *       `!important` bleibt erhalten. `--only` beschraenkt auf eine Datei —
@@ -263,27 +271,62 @@ function einordnen(datei, d) {
         return 'ohnezeile';
     }
     if (M.schutzFamilie(d.selektoren) && !M.istSchutzBasis(d.selektoren)) return 'schutz';
-    if (!M.ZUORDNUNG[wert]) return 'ohnezeile';
+    // `zielFuer()` und nicht `ZUORDNUNG` — die eine Stelle, die ein Ziel
+    // bestimmt. Wer hier die Tabelle direkt nachschlaegt, umgeht die
+    // Sonderzuordnungen und ersetzt beide Glieder einer Kette einzeln.
+    if (!M.zielFuer(datei, d.selektoren, wert)) return 'ohnezeile';
     return 'offen';
+}
+
+/**
+ * Die GEMESSENEN Bildpunktwerte je Deklarations-Anker, aus `KETTEN` und
+ * `SONDERZUORDNUNG` zusammengezogen.
+ *
+ * WARUM DER BERICHT SIE BRAUCHT. Die Spalte "alt" war der deklarierte Wert
+ * bei einer 16-px-Wurzel — eine Annahme, die fuer 55 gemessene Kanten nicht
+ * stimmt. Der Delta-Bericht nannte damit 31 Stellen ueber 2 px und uebersah
+ * genau die, bei denen der Fehler gross ist: der sichtbare Wert ist dort ein
+ * Produkt. Wo eine Messung vorliegt, rechnet der Bericht jetzt mit ihr; wo
+ * keine vorliegt, mit der Annahme — und sagt in der Spalte "Quelle", welche
+ * von beiden es war. Eine Liste, die beides vermengt ohne es zu nennen, ist
+ * keine Urteilsgrundlage.
+ */
+function gemesseneWerte() {
+    const out = {};
+    for (const g of M.KETTEN) {
+        for (const [kind, kindPx] of g.kinder) out[kind] = kindPx;
+    }
+    for (const [k, v] of Object.entries(M.SONDERZUORDNUNG)) {
+        if (typeof v.gemessenPx === 'number') out[k] = v.gemessenPx;
+    }
+    return out;
 }
 
 /** Alle Deklarationen im Geltungsbereich, eingeordnet. */
 function erheben(nur) {
     const skala = M.skalaWerte();
+    const gemessen = gemesseneWerte();
     const alle = [];
     for (const f of dateien(nur)) {
         const css = fs.readFileSync(f.pfad, 'utf8');
         for (const d of deklarationen(css, 'font-size')) {
             const lage = einordnen(f.name, d);
             const ziel = M.ZUORDNUNG[d.wert] || null;
-            const alt = M.altPx(d.wert);
-            const neu = ziel ? skala[ziel] : null;
+            const sonder = M.SONDERZUORDNUNG[M.kettenAnker(f.name, d.selektoren, d.wert)] || null;
+            const echtesZiel = M.zielFuer(f.name, d.selektoren, d.wert);
+            const gem = gemessen[M.kettenAnker(f.name, d.selektoren, d.wert)];
+            const alt = typeof gem === 'number' ? gem : M.altPx(d.wert);
+            const quelle = typeof gem === 'number' ? 'gemessen' : 'annahme';
+            const neu = echtesZiel ? skala[echtesZiel] : null;
             alle.push({
                 datei: f.name,
                 ...d,
                 lage,
-                ziel,
+                ziel: echtesZiel,
+                tabellenZiel: ziel,
+                sonder,
                 alt,
+                quelle,
                 neu,
                 delta: alt !== null && neu !== null ? +(neu - alt).toFixed(2) : null
             });
@@ -385,12 +428,21 @@ function laufReport(nur, mitKategorien) {
     console.log('DIE SKALA, gelesen aus assets/styles/variables.css:');
     console.log('  ' + M.SKALA_TOKENS.map(t => `${t}=${skala[t]}px`).join('  '));
     console.log('');
-    console.log('ZUR RECHNUNG. Die Spalte "alt" ist der deklarierte Wert bei einer');
-    console.log('16-px-Wurzel. Das ist eine ANNAHME und keine Messung: gemessen sitzen');
-    console.log('nur 723 der 948 em-Elemente auf einem 16-px-Elternwert, bei 225 ist der');
-    console.log('sichtbare Wert ein Produkt (bis Faktor 0,574). Diese Tabelle sortiert und');
-    console.log('laesst abhaken; was auf dem Bildschirm geschieht, misst');
-    console.log('tools/typo-baseline.js im Browser und stellt es in Bildpunkten gegenueber.');
+    const gemZahl = mitZahl.filter(d => d.quelle === 'gemessen').length;
+    console.log('ZUR RECHNUNG, und die Herkunft jeder Zahl steht in der Spalte "Q".');
+    console.log('  Q=g (' + gemZahl + ' Zeilen): GEMESSEN. Der Wert kommt aus KETTEN oder');
+    console.log('    SONDERZUORDNUNG in tools/typo-map.js — erhoben im Browser auf');
+    console.log('    gefuellter Kampagne, beide Laeufe gleich.');
+    console.log('  Q=a (' + (mitZahl.length - gemZahl) + ' Zeilen): ANNAHME. Der deklarierte');
+    console.log('    Wert bei einer 16-px-Wurzel. Richtig, solange das Elternelement');
+    console.log('    wirklich 16 px traegt — fuer 55 gemessene Kanten tut es das nicht,');
+    console.log('    und dort ist der sichtbare Wert ein Produkt (bis Faktor 0,574).');
+    console.log('BIS 2026-10-06 RECHNETE DIESE SPALTE DURCHWEG MIT DER ANNAHME. Sie nannte');
+    console.log('damit 31 Stellen ueber 2 px und uebersah genau die 15, bei denen der');
+    console.log('Fehler gross ist. Dass eine unabhaengige Vorab-Vermessung dieselben 31');
+    console.log('nannte, war keine Bestaetigung: beide Rechnungen teilten die Annahme.');
+    console.log('Was auf dem Bildschirm geschieht, misst tools/typo-baseline.js;');
+    console.log('`--ketten` zeigt die Ketten mit Eltern- und Kindwert.');
     console.log('');
     console.log('Deklarationen mit Zahlenwert     : ' + mitZahl.length);
     console.log('  davon Sprung > 2 px            : ' + gross.length + '   <- Urteilsstellen');
@@ -401,7 +453,7 @@ function laufReport(nur, mitKategorien) {
     console.log(
         '  ' +
             'Delta'.padStart(8) +
-            '  ' +
+            ' Q ' +
             'alt'.padStart(6) +
             ' -> ' +
             'neu'.padEnd(4) +
@@ -459,7 +511,9 @@ function zeilen(menge) {
             d =>
                 '  ' +
                 ((d.delta > 0 ? '+' : '') + d.delta.toFixed(2)).padStart(8) +
-                '  ' +
+                ' ' +
+                (d.quelle === 'gemessen' ? 'g' : 'a') +
+                ' ' +
                 d.alt.toFixed(2).padStart(6) +
                 ' -> ' +
                 String(d.neu).padEnd(4) +
@@ -547,6 +601,44 @@ function kategorien(alle) {
     console.log('   damit ausserhalb des Geltungsbereichs — zusammen die 8 Stellen aus E-2.)');
 
     console.log('');
+    console.log('=== DIE STILLEN LESER DER WURZEL: `1em` (E-2, zweite Haelfte) ===');
+    console.log('`1em` legt keine Groesse fest, sondern UEBERNIMMT die des');
+    console.log('Elternelements — am Wurzelwert sind das 16 px, und 16 px ist die');
+    console.log('Schwelle des Auto-Zooms. Diese Stellen sind ueber ihren Selektor NICHT');
+    console.log('zu finden: `.dice-formula` und `.dice-multi` nennen ihr Eingabefeld');
+    console.log('nicht. Darum ist die Liste GEMESSEN (EM_EINS in tools/typo-map.js) und');
+    console.log('nicht hergeleitet. Zahl im Geltungsbereich: ' + M.EM_EINS.length);
+    const steuer = ['input', 'select', 'textarea'];
+    let geschuetzt = 0;
+    for (const [a, px, el, n] of M.EM_EINS) {
+        const d = a.split('||');
+        const sonder = M.SONDERZUORDNUNG[a];
+        const ist = el && el.split(',').some(t => steuer.includes(t));
+        if (ist && px !== null && px >= 16) geschuetzt++;
+        console.log(
+            '  ' +
+                (d[0] + ' ' + d[1]).slice(0, 56).padEnd(58) +
+                (px === null ? 'ungemessen' : String(px) + ' px').padStart(11) +
+                '  ' +
+                (el || '-').padEnd(10) +
+                String(n).padStart(3) +
+                'x  ' +
+                (ist ? 'STEUERELEMENT ' : '') +
+                (sonder ? '[' + sonder.grund + ' -> ' + sonder.ziel + ']' : '')
+        );
+    }
+    console.log(
+        '  Steuerelemente mit heute >= 16 px (E-2 schuetzt sie): ' +
+            geschuetzt +
+            ' — alle mit Sonderzuordnung auf --text-lg.'
+    );
+    console.log(
+        '  Ohne Messwert: ' +
+            M.EM_EINS.filter(e => e[1] === null).length +
+            ', je mit Grund in EM_EINS_UNGEMESSEN (offene Messschuld, keine stille Null).'
+    );
+
+    console.log('');
     console.log('=== GESCHUETZTE FAMILIEN (Welle 4, Vertrag W4-R-06) ===');
     const basen = alle.filter(d => M.istSchutzBasis(d.selektoren));
     console.log(
@@ -580,6 +672,129 @@ function kategorien(alle) {
     console.log('  sind ERLEDIGT, nicht ausgenommen — darum steht hier eine 0 und keine');
     console.log('  Ausnahmeliste. Was bliebe, waere ein Rueckfall, und den verweigert das');
     console.log('  Werkzeug (Exit 2), statt ihn durch ein Token zu verdecken.');
+}
+
+/* ===========================================================================
+   --ketten
+   =========================================================================== */
+
+/**
+ * Die gemessenen Verschachtelungsketten, mit Eltern- UND Kindwert.
+ *
+ * WARUM ES DIESE BETRIEBSART GIBT. `--report` sortiert nach dem Sprung EINER
+ * Deklaration. Eine Kette ist aber kein Sprung, sondern ein Verhaeltnis: ein
+ * Kind mit `1.1em` ist um 10 % groesser als sein Behaelter, und was von
+ * diesem Verhaeltnis nach der Umstellung uebrig ist, sieht man nur, wenn
+ * beide Werte nebeneinander stehen. Genau das war nicht zu sehen, als die
+ * Tabelle `.char-attr-pill` auf 11 px und sein Kind auf 16 px legte — jede
+ * Zeile fuer sich sah unauffaellig aus.
+ */
+function laufKetten() {
+    const skala = M.skalaWerte();
+    const kanten = M.KETTEN.flatMap(g =>
+        g.kinder.map(([kind, kindPx, elemente, text]) => ({
+            eltern: g.eltern,
+            elternPx: g.elternPx,
+            kind,
+            kindPx,
+            elemente,
+            text
+        }))
+    );
+    const zerlege = a => {
+        const i = a.indexOf('||');
+        const j = a.lastIndexOf('||');
+        return { datei: a.slice(0, i), sel: a.slice(i + 2, j), wert: a.slice(j + 2) };
+    };
+    const zielPx = a => {
+        const d = zerlege(a);
+        const t = M.zielFuer(d.datei, d.sel, d.wert);
+        return t ? skala[t] : null;
+    };
+
+    console.log('sync-typo-tokens --ketten   (es wird NICHTS geschrieben)');
+    console.log('');
+    console.log(
+        'Die GEMESSENEN Verschachtelungsketten: ' +
+            M.KETTEN.length +
+            ' Elternteile, ' +
+            kanten.length +
+            ' Kanten, ' +
+            kanten.reduce((s, k) => s + k.elemente, 0) +
+            ' Elemente.'
+    );
+    console.log('Nur Ketten mit Elternwert UNGLEICH 16 px — dort stimmt die Annahme von');
+    console.log('altPx() nicht und der sichtbare Wert ist ein Produkt.');
+    console.log('');
+    console.log('Erhebung: gebautes Buendel, seedPopulatedSession, 24 Ansichten, Laeufe');
+    console.log('dark-1440 und dark-375. Je Element die Eigentuemer-Deklaration bestimmt');
+    console.log('(Selektor trifft UND berechneter Wert ist mit der Deklaration vereinbar).');
+    console.log('Beide Laeufe nennen fuer jede Kante denselben Messwert.');
+    console.log('');
+
+    let kippt = 0;
+    for (const g of M.KETTEN) {
+        const e = zerlege(g.eltern);
+        const ez = zielPx(g.eltern);
+        console.log(
+            'ELTERN ' +
+                (e.datei + ' ' + e.sel).slice(0, 72).padEnd(74) +
+                e.wert.padEnd(8) +
+                String(g.elternPx).padStart(6) +
+                ' px -> ' +
+                (ez === null ? 'bleibt (geduldet)' : ez + ' px')
+        );
+        for (const [kind, kindPx, elemente, text] of g.kinder) {
+            const c = zerlege(kind);
+            const cz = zielPx(kind);
+            const ordnung =
+                kindPx < g.elternPx - 0.01 ? '<' : kindPx > g.elternPx + 0.01 ? '>' : '=';
+            let urteil = '';
+            if (ez !== null && cz !== null) {
+                const schlecht =
+                    (ordnung === '<' && cz > ez) ||
+                    (ordnung === '>' && cz < ez) ||
+                    (ordnung === '=' && cz !== ez);
+                if (schlecht) {
+                    urteil = '  <== ORDNUNG KIPPT';
+                    kippt++;
+                }
+            }
+            const sonder = M.SONDERZUORDNUNG[kind];
+            console.log(
+                '   ' +
+                    ordnung +
+                    '   ' +
+                    (c.datei + ' ' + c.sel).slice(0, 70).padEnd(72) +
+                    c.wert.padEnd(8) +
+                    String(kindPx).padStart(6) +
+                    ' px -> ' +
+                    (cz === null ? 'bleibt' : String(cz).padStart(2) + ' px') +
+                    '  ' +
+                    (sonder ? '[' + sonder.grund + '] ' : '') +
+                    elemente +
+                    ' Elem., ' +
+                    text +
+                    ' m. Text' +
+                    urteil
+            );
+        }
+        console.log('');
+    }
+    console.log('ORDNUNG KIPPT: ' + kippt + ' Kante(n). Soll: 0.');
+    console.log('Sonderzuordnungen: ' + Object.keys(M.SONDERZUORDNUNG).length + ' (');
+    const nachGrund = {};
+    Object.values(M.SONDERZUORDNUNG).forEach(s => {
+        nachGrund[s.grund] = (nachGrund[s.grund] || 0) + 1;
+    });
+    console.log(
+        '  ' +
+            Object.entries(nachGrund)
+                .map(([g2, n]) => g2 + ': ' + n)
+                .join(', ') +
+            ' ) — Begruendung je Zeile in tools/typo-map.js.'
+    );
+    return kippt === 0 ? 0 : 1;
 }
 
 /* ===========================================================================
@@ -653,6 +868,7 @@ function main(argv) {
         );
         return 2;
     }
+    if (argv.includes('--ketten')) return laufKetten();
     if (argv.includes('--check')) return laufCheck(nur);
     if (argv.includes('--report')) return laufReport(nur, argv.includes('--kategorien'));
     return laufSchreiben(nur);
@@ -662,4 +878,4 @@ if (require.main === module) {
     process.exit(main(process.argv.slice(2)));
 }
 
-module.exports = { deklarationen, erheben, zaehlen, dateien, main };
+module.exports = { deklarationen, erheben, zaehlen, dateien, gemesseneWerte, main };

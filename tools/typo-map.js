@@ -30,6 +30,17 @@
  * W5-R-05 und W5-R-06. Wer dem Werkzeug eine Dauerrolle zuschreibt,
  * verspricht eine Pruefung, die es nicht leisten kann.
  *
+ * UND WARUM SIE AUCH DIE MESSWERTE TRAEGT (Abschnitt 7, seit der
+ * Nachbesserung vom 2026-10-06). Die Zuordnungstabelle allein konnte eine
+ * Frage nicht beantworten, die sie stellen muss: wie gross ist eine
+ * Deklaration WIRKLICH? Ein `em`-Wert ist eine Rechnung, kein Wert, und
+ * `altPx()` loest sie mit einer 16-px-Wurzel auf — fuer 55 gemessene Kanten
+ * falsch. Darum stehen hier jetzt auch `KETTEN`, `EM_EINS` und
+ * `UEBERSCHRIFTEN_GEMESSEN`: Messungen aus dem Browser, in derselben Datei
+ * wie die Zuordnung, weil beide Leser beides brauchen. `zielFuer()`
+ * (Abschnitt 9) ist die EINZIGE Stelle, die aus Tabelle, Sonderzuordnung und
+ * Ausnahmen ein Ziel macht.
+ *
  * WARUM DIE WERTE DER SKALA HIER NICHT STEHEN.
  * `skalaWerte()` liest sie aus `assets/styles/variables.css`. Eine zweite
  * Zahlenliste waere genau der Rueckfall, den der Absatz oben beschreibt —
@@ -208,6 +219,12 @@ const OHNE_ZAHLENWERT = /^(?:inherit|var\()/;
  * DIE LISTE IST NICHT DER ORT, AN DEM EINE UNBEQUEME STELLE VERSCHWINDET:
  * die VERWESUNGSPROBE in W5-R-05 verlangt, dass jeder Eintrag auch wirklich
  * eine Deklaration trifft.
+ *
+ * SECHS WEITERE EINTRAEGE KOMMEN WEITER UNTEN HINZU, in Abschnitt 7: die
+ * Ueberschriftenregeln des Reichtext-Inhalts. Ihre Schluessel werden aus
+ * `REICHTEXT_BEHAELTER` GEBAUT, und diese Liste steht dort, weil auch die
+ * Messung sie braucht — sie hier ein zweites Mal auszuschreiben waere genau
+ * die Dopplung, gegen die diese Datei angelegt ist.
  *
  * UEBERGABE AN DIE FOLGESCHRITTE. Dies ist der Ausgangsbestand des Vorlaufs:
  * die fuenf Stellen, deren Verbleib bereits entschieden ist. Die namentlichen
@@ -754,6 +771,50 @@ function ueberschriftAnker(n) {
 }
 
 /**
+ * DIE SECHS UEBERSCHRIFTENREGELN BLEIBEN IN `em` — namentlich geduldet.
+ *
+ * WARUM NICHT AUF SPROSSEN. Die sechs Regeln sind KEINE sechs Groessen,
+ * sondern EIN Verhaeltnis: 1.3 / 1.2 / 1.1 / 1.0 / 0.95 / 0.9 mal der Groesse
+ * ihres Behaelters. Und der Behaelter ist gemessen nicht einer, sondern drei —
+ * 13,6 px (.spell-desc), 14,4 px (.char-notes-content) und 16 px (die
+ * uebrigen sechs). Eine feste Sprosse kann nicht gleichzeitig ueber einem
+ * 13,6-px- und unter einem 16-px-Fliesstext liegen; sie wuerde in einem der
+ * Behaelter immer falsch sitzen. Die Tabelle fuehrt genau dorthin: `xl / xl /
+ * lg / md / md / md` = 20 / 20 / 16 / 14 / 14 / 14 px — drei Stufen statt
+ * sechs, h1 = h2, h4 = h5 = h6, und in den sechs 16-px-Behaeltern sind h4 bis
+ * h6 mit 14 px KLEINER als der Fliesstext, den sie ueberschreiben.
+ *
+ * SECHS SPROSSEN STATT DREI WAEREN AUCH KEINE LOESUNG: die Skala hat unter
+ * `xl` (20) nur `lg` (16), `md` (14), `sm` (12) und `xs` (11). Sechs streng
+ * fallende Werte waeren 20 / 16 / 14 / 12 / 11 / ... — bei h5 ist die Skala
+ * zu Ende, und h4 laege mit 12 px wieder unter dem 16-px-Fliesstext. Das ist
+ * keine Zuordnungsfrage, sondern eine Eigenschaft einer achtsprossigen Skala
+ * gegenueber einer sechsstufigen Hierarchie in drei Bezugsgroessen.
+ *
+ * WAS DAS KOSTET, und es muss benannt werden: sechs Deklarationen bleiben in
+ * `em`. Die Schranke 2 von W5-R-05 zaehlt em-Deklarationen OHNE Ruecksicht
+ * auf diese Ausnahmeliste; ihr Zielwert ist damit 6 und nicht 0, und das
+ * steht dort jetzt auch so. Eine Schranke, die 0 verspricht und 6 erreichen
+ * kann, wird beim ersten roten Lauf gesenkt statt erfuellt.
+ *
+ * WAS DAS RISIKO BEGRENZT: diese sechs Regeln gelten NUR fuer vom Nutzer
+ * geschriebenen Reichtext-Inhalt in acht benannten Behaeltern, nicht fuer die
+ * Oberflaeche. Sie sind der einzige Ort der App, an dem eine sechsstufige
+ * Hierarchie ueberhaupt vorkommt.
+ */
+for (let n = 1; n <= 6; n++) {
+    const sel = REICHTEXT_BEHAELTER.map(b => `${b} h${n}`).join(', ');
+    AUSNAHMEN[anker('party.css', sel, 'font-size')] =
+        `${UEBERSCHRIFTEN_WERTE[n - 1]} !important, Ueberschrift h${n} des ` +
+        'Reichtext-Inhalts in acht Behaeltern. Die sechs Regeln sind EIN ' +
+        'Verhaeltnis zum Behaelter und keine sechs Groessen; der Behaelter ist ' +
+        'gemessen 13,6 / 14,4 oder 16 px. Feste Sprossen lassen von sechs ' +
+        'Stufen drei uebrig (20/20/16/14/14/14) und machen h4 bis h6 kleiner ' +
+        'als den Fliesstext, den sie ueberschreiben. Volle Begruendung am ' +
+        'Kopf dieser Schleife in tools/typo-map.js, Abschnitt 7.';
+}
+
+/**
  * Alle 27 Deklarationen mit dem Wert `1em` oder `1.0em`, mit ihrem GEMESSENEN
  * Bildpunktwert, dem Elementnamen und der Zahl der Fundstellen.
  *
@@ -883,12 +944,248 @@ const UEBERSCHRIFTEN_GEMESSEN = [
  * `datei||selektoren||wert` (siehe `kettenAnker()`), Wert
  * `{ ziel, grund, warum, ...Messwerte }`.
  *
- * Bewusst LEER im Commit, der die Messung einfuehrt, und nicht abwesend
- * (Muster der `EXEC_COMMAND_ALLOWLIST`): die Messung sagt, WO die Tabelle
- * daneben liegt; die Entscheidung, WOHIN die Stelle dann geht, ist ein
- * eigener Schritt mit eigener Begruendung je Zeile.
+ * ZWANZIG EINTRAEGE IN ZWEI GRUENDEN, und jeder nennt seinen Messwert.
+ *
+ * GRUND `kette` — 15 Stellen. Das Ziel kommt aus dem GEMESSENEN Wert und
+ * nicht aus dem deklarierten. Die Regel ist EINE und ueberall dieselbe,
+ * damit die Zeilen nachrechenbar bleiben und nicht nach Gefuehl gesetzt
+ * sind:
+ *   (1) Den gemessenen Wert auf ganze Bildpunkte runden und durch die
+ *       px-Zeilen DERSELBEN Tabelle schicken. Nicht "naechste Sprosse" —
+ *       die Tabelle rundet an ihren Bucketgrenzen bewusst anders (12,0 px
+ *       aus `0.75em` geht nach 11, das px-Literal `12px` nach 12), und eine
+ *       zweite Rundungsregel waere eine zweite Tabelle.
+ *   (2) An der Ordnung zum Elternziel kappen: war das Kind gemessen KLEINER
+ *       als sein Elternteil, darf es nicht groesser werden; war es groesser,
+ *       nicht kleiner; war es gleich, bleibt es gleich.
+ * Geurteilt wird ueber die ORDNUNG und nicht ueber die Strenge: zwei
+ * Messwerte im Abstand von 1,4 px landen auf einer achtsprossigen Skala zu
+ * Recht auf derselben Sprosse. Was nicht passieren darf, ist eine UMKEHRUNG.
+ *
+ * GRUND `formular-e2` — 5 Stellen. `1em` auf einem Eingabefeld ist gemessen
+ * 16,00 px, und 16 px ist die Schwelle, unter der ein Telefon beim Antippen
+ * den Auto-Zoom ausloest. Die Tabellenzeile `1em -> --text-md` zoege sie auf
+ * 14 px — nach Arbeitsregel 10 eine Funktionsaenderung, und genau der Fall,
+ * zu dessen Verhinderung E-2 getroffen wurde. `--text-lg` = 16 px ist die
+ * treue Zuordnung: Delta 0,00 px auf dem Bildschirm, in beiden Profilen.
+ * EINE AUSNAHME WAERE HIER DAS SCHLECHTERE MITTEL — sie liesse den em-Wert
+ * stehen und damit eine Stelle, die bei jeder Aenderung ihres Behaelters
+ * wieder unter 16 px rutschen kann.
  */
-const SONDERZUORDNUNG = {};
+const SONDERZUORDNUNG = {
+    // --- Grund `kette`: Ziel aus dem gemessenen Wert ---------------------
+    'core.css||.char-attr-pill-name||0.9em': {
+        ziel: token('xs'),
+        grund: 'kette',
+        gemessenPx: 10.08,
+        elternPx: 11.2,
+        warum:
+            'Elternteil .char-attr-pill traegt 0.7em = 11,2 px, nicht 16 px. ' +
+            'Die Tabelle gaebe --text-md (14 px) und machte das Kind um 27 % ' +
+            'GROESSER als die Grundgroesse seines Behaelters (vorher 10 % ' +
+            'kleiner); die Pillenbox waechst dadurch um 28,6 %. Gerundet 10 px ' +
+            '-> px-Zeile 10px -> --text-xs (11 px), Sprung +0,92 px.'
+    },
+    'core.css||.char-attr-pill-val||1.1em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.32,
+        elternPx: 11.2,
+        warum:
+            'Dieselbe Kette, andere Richtung: dieses Kind war gemessen ' +
+            'GROESSER als sein Elternteil (12,32 gegen 11,2 px) und darf das ' +
+            'bleiben. Die Tabelle gaebe --text-lg (16 px), ein Sprung von ' +
+            '+3,68 px. Gerundet 12 px -> --text-sm (12 px), Sprung -0,32 px.'
+    },
+    'core.css||.char-attr-pill-mod||0.95em': {
+        ziel: token('xs'),
+        grund: 'kette',
+        gemessenPx: 10.64,
+        elternPx: 11.2,
+        warum:
+            'Dieselbe Kette wie .char-attr-pill-name. Tabelle --text-md ' +
+            '(+3,36 px); gerundet 11 px -> --text-xs (11 px), Sprung +0,36 px.'
+    },
+    'dashboard.css||.qref-value||0.95em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.92,
+        elternPx: 13.6,
+        warum:
+            'Elternteil .qref-item traegt 0.85em = 13,6 px -> --text-sm ' +
+            '(12 px). Die Tabelle gaebe dem Kind --text-md (14 px) und damit ' +
+            'MEHR als dem Elternteil, obwohl es gemessen kleiner ist. ' +
+            'Gerundet 13 px -> --text-sm (12 px), Sprung -0,92 px.'
+    },
+    'dashboard.css||.qref-tab-icon||1.1em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 13.2,
+        elternPx: 12,
+        warum:
+            'Elternteil .qref-tab traegt 0.75em = 12 px -> --text-xs (11 px). ' +
+            'Tabelle --text-lg (16 px), Sprung +2,80 px. Gerundet 13 px -> ' +
+            '--text-sm (12 px), Sprung -1,20 px, und weiterhin groesser als ' +
+            'das Elternziel — die Reiterschrift bleibt kleiner als ihr Ikon.'
+    },
+    'dmscreen.css||.dms-init-count||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.24,
+        elternPx: 13.6,
+        warum:
+            'Elternteil .dms-init-header 0.85em = 13,6 px -> --text-sm. ' +
+            'Tabelle --text-md waere groesser als das Elternziel. Gerundet ' +
+            '12 px -> --text-sm (12 px), Sprung -0,24 px.'
+    },
+    'dmscreen.css||.dms-init-marker||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.24,
+        elternPx: 13.6,
+        warum: 'Wie .dms-init-count, Elternteil .dms-init-entry. Sprung -0,24 px.'
+    },
+    'dmscreen.css||.dms-init-value||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.24,
+        elternPx: 13.6,
+        warum: 'Wie .dms-init-marker, dasselbe Elternteil. Sprung -0,24 px.'
+    },
+    'dmscreen.css||.dms-quick-icon||1em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 13.6,
+        elternPx: 13.6,
+        warum:
+            '`1em` heisst hier "genau so gross wie der Knopf": gemessen 13,6 ' +
+            'gegen 13,6 px. Das Elternteil .dms-quick-btn geht auf --text-sm, ' +
+            'also muss das Ikon mit — die Tabelle gaebe --text-md und machte ' +
+            'das Ikon groesser als seinen eigenen Knopf. Sprung -1,60 px.'
+    },
+    'encounters.css||.enc-lang-item span||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 11.7,
+        elternPx: 13,
+        warum:
+            'Elternteil ist das px-Literal .form-group label 13px -> ' +
+            '--text-sm. Die 17 Sprachmarken messen 11,7 px; die Tabelle gaebe ' +
+            '--text-md (14 px), Sprung +2,30 px und groesser als das ' +
+            'Elternziel. Gerundet 12 px -> --text-sm, Sprung +0,30 px.'
+    },
+    'initiative.css||.init-mob-dmg-inputs input||0.9em': {
+        ziel: token('xs'),
+        grund: 'kette',
+        gemessenPx: 10.8,
+        elternPx: 12,
+        warum:
+            'Elternteil .init-mob-dmg-inputs 0.75em = 12 px -> --text-xs. ' +
+            'Tabelle --text-md (14 px), Sprung +3,20 px. Gerundet 11 px -> ' +
+            '--text-xs (11 px), Sprung +0,20 px. KEIN E-2-Fall: das Feld ' +
+            'liegt mit 10,8 px schon heute unter 16 px, der Auto-Zoom greift ' +
+            'dort also ohnehin — das ist ein eigener Befund und nicht dieser.'
+    },
+    'loot.css||.si-avail-toggle||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.24,
+        elternPx: 13.6,
+        warum:
+            'Elternteil .si-details 0.85em = 13,6 px -> --text-sm. Tabelle ' +
+            '--text-md waere groesser als das Elternziel. Sprung -0,24 px.'
+    },
+    'loot.css||.cart-total-gold||0.8em': {
+        ziel: token('md'),
+        grund: 'kette',
+        gemessenPx: 15.36,
+        elternPx: 19.2,
+        warum:
+            'Die einzige Kette mit einem GROSSEN Elternteil: .cart-total-row ' +
+            'traegt 1.2em = 19,2 px, das Kind misst 15,36 px. Die Tabelle ' +
+            'rechnet 0.8em gegen 16 px und gaebe --text-sm (12 px) — ein ' +
+            'Sprung von -3,36 px an der Summenzeile des Warenkorbs. Gerundet ' +
+            '15 px -> px-Zeile 15px -> --text-md (14 px), Sprung -1,36 px.'
+    },
+    'npcs.css||.npc-section-btn||1em': {
+        ziel: token('xs'),
+        grund: 'kette',
+        gemessenPx: 12,
+        elternPx: 12,
+        warum:
+            '`1em` heisst hier "genau so gross wie die Abschnittsueberschrift": ' +
+            'gemessen 12 gegen 12 px. Das Elternteil .npc-section-title geht ' +
+            'auf --text-xs, also muss der Knopf mit. Tabelle --text-md, ' +
+            'Sprung +2,00 px und groesser als die Ueberschrift, in der er ' +
+            'sitzt. Sprung -1,00 px.'
+    },
+    'party.css||.cf-combat-stat .cf-speed-ft||0.85em': {
+        ziel: token('xs'),
+        grund: 'kette',
+        gemessenPx: 9.52,
+        elternPx: 11.2,
+        warum:
+            'Elternteil .cf-combat-label 0.7em = 11,2 px -> --text-xs. Die ' +
+            'Tabelle gaebe --text-sm (12 px), Sprung +2,48 px und groesser ' +
+            'als das Elternziel. Gerundet 10 px -> --text-xs (11 px), Sprung ' +
+            '+1,48 px — gleichzeitig die Hebung ueber die Untergrenze (E-4), ' +
+            'denn 9,52 px ist Fliesstext unter 11 px.'
+    },
+
+    // --- Grund `formular-e2`: 16 px ist eine Funktionsgrenze -------------
+    'dashboard.css||.qref-conv-input||1em': {
+        ziel: token('lg'),
+        grund: 'formular-e2',
+        gemessenPx: 16,
+        elternPx: 16,
+        warum:
+            'Eingabefeld der Maßumrechnung, gemessen 16,00 px in BEIDEN ' +
+            'Profilen. --text-lg = 16 px, Delta 0,00 px. Die Tabellenzeile ' +
+            '`1em -> --text-md` zoege es auf 14 px und loeste damit auf dem ' +
+            'Telefon den Auto-Zoom aus (E-2).'
+    },
+    'dice.css||.dice-multi||1em': {
+        ziel: token('lg'),
+        grund: 'formular-e2',
+        gemessenPx: 16,
+        elternPx: 16,
+        warum:
+            'Wurfanzahl-Feld des Wuerflers, gemessen 16,00 px. Wie ' +
+            '.qref-conv-input: --text-lg haelt den Wert und die E-2-Zusage.'
+    },
+    'dice.css||.dice-formula||1em': {
+        ziel: token('lg'),
+        grund: 'formular-e2',
+        gemessenPx: 16,
+        elternPx: 16,
+        warum:
+            'Formelfeld des Wuerflers, gemessen 16,00 px. --text-lg haelt ' +
+            'zusaetzlich die Rechnung im Kommentar daneben gueltig: die ' +
+            'Sollbreite 160 px ist dort aus "4d6kh3+2d8+5 ist in ' +
+            'var(--font-mono) bei 1em 130 px breit" abgeleitet. Bei 14 px ' +
+            'stimmte diese Begruendung nicht mehr und die Zauberzahl haette ' +
+            'mitgezogen werden muessen; bei 16 px bleibt sie, wie sie ist.'
+    },
+    'initiative.css||.aoe-damage-input input||1em': {
+        ziel: token('lg'),
+        grund: 'formular-e2',
+        gemessenPx: 16,
+        elternPx: 16,
+        warum:
+            'Schadensformel im Flaechenschaden-Dialog. Eigens gemessen, indem ' +
+            'der Dialog geoeffnet wurde (in der Ruhelage steht er nicht im ' +
+            'DOM): 16,00 px in beiden Profilen.'
+    },
+    'party.css||.condition-ref-search input||1em': {
+        ziel: token('lg'),
+        grund: 'formular-e2',
+        gemessenPx: 16,
+        elternPx: 16,
+        warum:
+            'Suchfeld der Zustands-Schnellreferenz. Ebenfalls nach Oeffnen ' +
+            'des Dialogs gemessen: 16,00 px in beiden Profilen.'
+    }
+};
 
 /** Die Gruende, die eine Sonderzuordnung tragen darf. Eine geschlossene
  *  Menge, damit nicht bei jeder unbequemen Stelle ein neuer Grund erfunden

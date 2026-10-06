@@ -37,24 +37,33 @@
  *   font-size im Geltungsbereich  853 Deklarationen in 18 Dateien
  *     davon schon auf einer Sprosse   2   (aus Welle 4 vorgezogen)
  *     davon `inherit`                 7
- *     davon namentlich geduldet       5
+ *     davon namentlich geduldet      11   (5 aus dem Vorlauf + 6 Ueberschriften)
  *     davon ohne Tabellenzeile        0
  *     davon in geschuetzter Familie   0
- *     OFFEN                         839
- *   mit Zahlenwert                  840
- *     Sprung > 2 px                  31   <- die Urteilsstellen
- *     Sprung <= 2 px                809
- *       davon Sprung exakt 0,00 px  151
+ *     OFFEN                         833
+ *   mit Zahlenwert                  833
+ *     Sprung > 2 px                  30   <- die Urteilsstellen
+ *     Sprung <= 2 px                803
+ *       davon Sprung exakt 0,00 px  158
  *
- * ZWEI RECHNUNGEN, DIE NICHTS VONEINANDER WISSEN, NENNEN DIESELBE MENGE.
- * Die 31 Urteilsstellen des Werkzeugs sind gegen die unabhaengige
- * Vorab-Vermessung abgeglichen (ein zeilenweiser Regex-Zaehler gegen den
- * klammerzaehlenden Zerleger des Werkzeugs): beide nennen dieselben 31
- * `Datei:Zeile`-Paare, Abgleich schriftlich im Bericht der Einheit. Die
- * Gesamtzahl 853 ist zusaetzlich gegen die Zerlegung der Ratsche abgeglichen,
- * die ihren eigenen Zerleger mitbringt — drei Wege, eine Zahl.
+ * DIE ZAHLEN HABEN SICH AM 2026-10-06 GEAENDERT, und der Grund gehoert
+ * hierher, weil er der Befund der Runde 1 ist. Vorher standen hier 5
+ * geduldete Stellen, 839 offene und 31 Urteilsstellen ueber 2 px — und dazu
+ * der Satz, diese 31 seien gegen eine unabhaengige Vorab-Vermessung
+ * abgeglichen, "zwei Rechnungen, die nichts voneinander wissen, nennen
+ * dieselbe Menge". Das war keine Bestaetigung: BEIDE Rechnungen rechneten den
+ * deklarierten Wert gegen eine 16-px-Wurzel, und auf dieser gemeinsamen
+ * Annahme ist die Uebereinstimmung eine Tautologie. Gemessen sitzen 55 Kanten
+ * auf einem Elternwert ungleich 16 px; bei 15 von ihnen war die Zuordnung
+ * falsch, und keine der 15 stand in der 31er-Liste.
+ * JETZT rechnet die Spalte "alt" mit dem GEMESSENEN Wert, wo es einen gibt
+ * (Spalte "Q": g = gemessen, a = Annahme), und die 6 Ueberschriftenregeln
+ * sind namentlich geduldet. Daraus die neuen Zahlen. Die Gesamtzahl 853 ist
+ * weiterhin gegen zwei unabhaengige Zerlegungen abgeglichen — den
+ * Regex-Zaehler in W5-W1 und den Zerleger der Ratsche. Das ist der Abgleich,
+ * der traegt, weil er keine gemeinsame Annahme hat.
  *
- * WARUM DIE SCHRANKE MIT 839 STARTET UND NICHT MIT 0.
+ * WARUM DIE SCHRANKE MIT 833 STARTET UND NICHT MIT 0.
  * Die Umstellung selbst ist Sache der Schritte 4 bis 8 derselben Welle; eine
  * Schranke von 0 liesse die Suite ueber mehrere Commits rot, und eine rote
  * Suite ist in diesem Projekt kein Arbeitszustand, sondern ein blockierendes
@@ -67,7 +76,7 @@
  * setzt sie auf 0 und sieht dieselbe Ausgabe wieder.
  *
  * WAS DIESER WAECHTER NICHT HART FESTNAGELT, und warum das Absicht ist:
- * die Zahlen 840/31/809/151 sind Eigenschaften des HEUTIGEN Bestandes. Nach
+ * die Zahlen 833/30/803/158 sind Eigenschaften des HEUTIGEN Bestandes. Nach
  * der Umstellung sind sie alle 0, weil dann kein Zahlenwert mehr da ist.
  * Haertete man sie ein, muesste der Schritt, der die Welle vollendet, seinen
  * eigenen Waechter aufweichen — und ein Waechter, der beim ersten Erfolg
@@ -91,9 +100,11 @@ const M = require('../../tools/typo-map.js');
 const W = require('../../tools/sync-typo-tokens.js');
 
 /** SCHRANKE — offene Deklarationen, die `--check` meldet.
- *  Gemessener Ausgangswert 839. ZIEL 0. Diese Zahl darf nur SINKEN.
+ *  Gemessener Ausgangswert 833 (vorher 839; die 6 Ueberschriftenregeln des
+ *  Reichtext-Inhalts sind seit Runde 1 namentlich geduldet, Begruendung in
+ *  tools/typo-map.js Abschnitt 7). ZIEL 0. Diese Zahl darf nur SINKEN.
  *  Exakt ausgereizt: eine einzige neue Fremdgroesse macht sie rot. */
-const OFFEN_MAX = 839;
+const OFFEN_MAX = 833;
 
 /** Das Werkzeug als eigener Prozess fahren — so, wie ein Mensch es faehrt.
  *  Nicht `main()` im Testprozess aufrufen: dann waere weder der

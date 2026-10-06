@@ -14431,9 +14431,14 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
     /** SCHRANKE 1 — Deklarationen ausserhalb der Skala.
      *  Gemessener Ausgangswert: 844 von 853 liegen nicht auf der Skala (9
      *  liegen schon richtig: 2 Token aus Welle 4, 7 inherit); nach Abzug der
-     *  fuenf geduldeten Stellen bleiben 839 Befunde. ZIEL 0.
-     *  Diese Zahl darf nur SINKEN. */
-    const AUSSERHALB_MAX = 839;
+     *  elf geduldeten Stellen bleiben 833 Befunde. ZIEL 0.
+     *  Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 839 auf 833: die sechs Ueberschriftenregeln
+     *  des Reichtext-Inhalts sind seit der Nachbesserung namentlich geduldet
+     *  (Begruendung in tools/typo-map.js, Abschnitt 7). Eine Schranke, die
+     *  nach einer Aenderung um sechs Stellen locker steht, bewacht sechs
+     *  Stellen weniger als sie behauptet. */
+    const AUSSERHALB_MAX = 833;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14448,6 +14453,21 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  Schranke 2 und verletzt Schranke 1 weiter — und das soll sie auch.
      *  Diese Zahl darf nur SINKEN. */
     const EM_MAX = 603;
+
+    /** WAS DER ZIELWERT VON SCHRANKE 2 WIRKLICH IST: 6, nicht 0.
+     *  Diese Schranke zaehlt em-Deklarationen OHNE Ruecksicht auf
+     *  FONT_SIZE_GEDULDET — mit Absicht, denn sie verbietet die EINHEIT und
+     *  nicht den Wert. Seit der Nachbesserung bleiben sechs Deklarationen
+     *  dauerhaft in `em`: die Ueberschriftenstufen h1 bis h6 des
+     *  Reichtext-Inhalts. Sie sind EIN Verhaeltnis zu ihrem Behaelter und
+     *  keine sechs Groessen, und der Behaelter traegt gemessen 13,6 / 14,4
+     *  oder 16 px — eine feste Sprosse kann nicht gleichzeitig ueber einem
+     *  13,6-px- und unter einem 16-px-Fliesstext liegen. Volle Begruendung in
+     *  tools/typo-map.js, Abschnitt 7. Der Zielwert steht hier, damit die
+     *  Schranke nicht 0 verspricht und dann beim ersten roten Lauf gesenkt
+     *  wird — eine Zahl, die beim Aufschreiben schon nicht zu halten ist,
+     *  bewacht nichts. */
+    const EM_ZIEL = 6;
 
     /** SCHRANKE 3 — SVG-Praesentationsattribute `font-size="<zahl>"` im JS.
      *  Gemessener Ausgangswert: 3 Fundstellen in
@@ -14585,6 +14605,13 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
             });
         }
         expect(treffer.length).toBeLessThanOrEqual(EM_MAX);
+        // ... und der Zielwert ist erreichbar: 6 geduldete em-Regeln, nicht 0.
+        expect(EM_ZIEL).toBe(
+            Object.keys(FONT_SIZE_GEDULDET).filter(k => {
+                const d = alleGroessen.find(x => typoAnker(x) === k);
+                return d && EM_WERT.test(d.wert);
+            }).length
+        );
     });
 
     // ---- Schranke 3: SVG-Praesentationsattribute ---------------------
