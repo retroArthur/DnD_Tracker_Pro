@@ -16762,3 +16762,403 @@ describe('W6-R-06 — kein Fokuskennzeichen besteht allein aus box-shadow: var(-
         expect(w6RingGold.length).toBe(4);
     });
 });
+
+/* ===========================================================================
+   W6-R-08 — der Eingaberahmen ist ANGEWENDET, und das Fokuskennzeichen hat
+   EINE Tinte (Design-Handoff v3, Welle 6, Schritt 6)
+   ===========================================================================
+
+   WAS DIESE RATSCHE IST UND WAS SIE NICHT IST. Der Nachweis am Element ist
+   W6-R-07 (tests/e2e/features/eingaberahmen.spec.js) — nur der Baum weiss,
+   welcher Selektor ein Feld erreicht und welcher einen Behaelter. Dieser Block
+   ist der browserfreie Zaun daneben und traegt in der CI genau die vier
+   Aussagen, die ohne Browser pruefbar sind.
+
+   WARUM ES SIE BRAUCHT, obwohl R-02 Teilformel 4 den Tokenwert schon prueft:
+   diese Teilformel ist seit Welle 1 GRUEN, und sie war es, solange im ganzen
+   Baum kein einziges Feld `var(--border-input)` las. Eine Ratsche, die eine
+   Farbe bewacht, die niemand benutzt, bewacht nichts. Teil 2 ist deshalb der
+   eigentliche Nachweis dieses Schrittes.
+
+   DAS ZENTRALE PROBLEM DES SCHRITTES, und warum es so und nicht anders
+   geloest ist — alles gerechnet mit dem Kontrastrechner dieses Testnetzes:
+
+   Punkt 3 hellt den RUHE-Rahmen auf (`--border` -> `--border-input`). Dadurch
+   bricht der Fokus-RAHMENWECHSEL ein, auf dem 223 von 297 Vertragsfeldern als
+   zweites Kennzeichen stehen: gemessen 5,41 -> 1,98 (dark), 2,03 -> 1,40
+   (light), 3,68 -> 1,69 (sepia), 5,32 -> 2,40 (contrast).
+
+   DREI WEGE STANDEN ZUR WAHL, alle drei durchgerechnet:
+
+     (i)  EIGENER FOKUSWERT GEGEN DEN NEUEN RUHEWERT, also eine Farbe mit
+          >= 3:1 gegen `--border-input`. Arithmetisch moeglich, aber nur an
+          EINEM Ende des Themes: in dark braucht sie L >= 0,7047 (etwa die
+          Helligkeit von #dadada), in light L <= 0,0271, in sepia L <= 0,0335,
+          in contrast L >= 0,8868. Die Gegenrichtung faellt jeweils an den
+          Fuellungen durch (gerechnet: 1,23 / 1,23 / 1,11 / 1,58). Das heisst:
+          ein cremefarbenes Gold in dark, ein fast schwarzes in light, in
+          ENTGEGENGESETZTER Richtung — und in keinem der vier Themes mehr die
+          Farbe des Rings, der 2 px daneben liegt. Der Weg loest den
+          Zahlenkonflikt und erzeugt dabei genau den Mangel, den Fall 4 von
+          W6-R-07 misst: zwei Tinten an einem Kennzeichen.
+     (ii) `--border-input` NUR DORT, WO KEIN FOKUSRAHMEN DANEBEN STEHT. Dann
+          behalten 223 von 264 Kandidatenfeldern den Rahmen, der gegen seine
+          Fuellung 1,31 bis 2,13 liest — Punkt 3 wuerde 41 Felder erreichen
+          statt 264. Der Ruhezustand ist der Zustand, in dem ein Feld fast
+          immer ist; ihn fuer ein redundantes Kennzeichen zu opfern, ist der
+          falsche Tausch.
+     (iii) WECHSEL DURCH DICKE STATT FARBE (1px -> 2px). Messbar, aber es
+          verschiebt bei jedem Fokus den Inhaltskasten um 1 px — an 223
+          Feldern, darunter 22 Langform-Editoren. Und die Geometrieaenderung,
+          die es liefern soll, liefert der Ring schon: `outline-width` 0 -> 2px
+          ausserhalb des Elements, ohne Umbruch.
+
+   GEWAEHLT IST (i) MIT DEM BESTEHENDEN TOKEN `--focus-ring`, und die Schwelle
+   liegt dort, wo WCAG 1.4.11 sie hinlegt: am RAUM, nicht an der ZEIT. Die
+   Norm vergleicht benachbarte Farben, nicht einen Zustand mit seinem eigenen
+   Vorzustand. Geprueft wird deshalb, dass der Fokusrahmen gegen die FUELLUNG
+   haelt — und `--focus-ring` tut das als einziges Gold im Baum in allen vier
+   Themes (3,89 light / 3,82 sepia / 7,29 dark / 11,34 contrast, gerechnet
+   ueber --bg-dark/--bg-card/--bg-elevated). `--gold` liest in light 2,66 und
+   `--cyan` in sepia 2,51: der Fokusrahmen war also in zwei von vier Themes
+   SCHON VORHER unter der Schwelle, und niemand hat es benannt.
+
+   WAS DEN ZUSTANDSWECHSEL DANACH TRAEGT, beziffert und nicht behauptet:
+     — der RING, `outline-width` 0 -> 2px, auf allen 5195 sichtbaren
+       Tastaturhalten vorhanden und mit >= 3:1 auf seiner Traegerflaeche
+       (W6-R-01/W6-R-02, Boden 3,44 gemessen);
+     — der SAETTIGUNGSSPRUNG des Rahmens von einem neutralen Grau zu einem
+       gesaettigten Gold: 0,000 -> 0,741 (dark), 0,000 -> 0,940 (light),
+       0,348 -> 0,863 (sepia), 0,000 -> 1,000 (contrast). Ein
+       Kontrastverhaeltnis sieht davon nichts — es ist eine reine
+       Helligkeitsrechnung.
+   Der Rahmen bleibt damit das zweite Kennzeichen (Entscheidung W6-E-1 = A),
+   aber er ist nicht mehr das tragende.
+
+   AUSGANGSWERTE BEI DER GEBURT (gemessen am 2026-10-06, HEAD a2b6784):
+
+     Teil 1  GRUEN. 12 Zellen, Minimum 3,33 (sepia auf --bg-dark). Steht hier
+             noch einmal in allen zwoelf Zellen, obwohl R-02 Teilformel 4
+             dasselbe Feld mit EINER Zahl deckt: faellt eine Zelle, soll der
+             Befund sagen, WELCHE.
+     Teil 2  ROT. `--border-input` hat 0 Verbraucher im Komponenten-CSS. Das
+             Token steht seit Welle 1 in vier Theme-Bloecken und wird von
+             keiner Regel gelesen.
+     Teil 3  ROT. 31 Regeln setzen in einem Fokuszustand eine Rahmenfarbe, und
+             KEINE davon liest `var(--focus-ring)`: 27 lesen `var(--gold)`,
+             4 lesen `var(--cyan)`.
+     Teil 4  ROT. Alle 52 Feldregeln der Stellenliste lesen `var(--border)`.
+             Die Liste ist am BAUM erzeugt, nicht am Namen (siehe ihren
+             Kommentar).
+   =========================================================================== */
+
+/**
+ * Die 52 Regeln, die den Ruherahmen eines Vertragsfeldes setzen — als
+ * SELEKTORTEXT, nicht als Zeilenanker.
+ *
+ * WARUM SELEKTOREN UND KEINE ZEILENANKER. Diese Welle hat in zwei Einheiten
+ * 178 Zeilenanker nachziehen muessen, weil geloeschte und eingefuegte Zeilen
+ * alles darunter verschieben. Ein Selektortext verschiebt sich nicht. Wird er
+ * umbenannt, meldet der Fall "Selektor nicht gefunden" — und das ist ein
+ * echtes Signal, kein Pflegeaufwand.
+ *
+ * WIE DIE LISTE ENTSTANDEN IST, und warum kein Namensfilter sie erzeugen kann:
+ * jede Regel mit einer Rahmenangabe (907 im Baum) wurde am gebauten Buendel
+ * gegen `querySelectorAll` gefahren, in 24 Ansichten, drei Formularen, 20
+ * Modalen und acht ueber ihre Funktion geoeffneten Dialogen; gezaehlt wurde,
+ * ob ein VERTRAGSFELD darunter ist. 39 Regeln haben dabei getroffen. Die
+ * uebrigen 13 erreichen Felder, die nur in Baumzustaenden entstehen, die kein
+ * Lauf stabil herstellt (Begegnungsrechner, Warenkorb, Zufallstabellen-
+ * Zeilen, Fraktionsruf, Angriffszeilen, die beiden Editorhuellen) — jede ist
+ * einzeln im Markup nachgewiesen.
+ *
+ * NICHT HIER: die 36 Behaelterregeln, die eingabenah heissen und kein Feld
+ * treffen (.editor-toolbar, .editor-shell, .dice-input-group, .cp-input-row,
+ * .session-tags-input-wrapper, .qref-search, die th/td-Gruppen ...). Fall 3
+ * von W6-R-07 bewacht, dass sie `var(--border)` behalten.
+ */
+const W6_FELDREGELN = [
+    '.aoe-damage-input input',
+    '.assign-spell-search-wrap input',
+    '.assign-spell-select',
+    '.bst-rich-editor',
+    '.calc-import-count',
+    '.calc-input',
+    '.cart-qty-input',
+    '.cf-attack-row input[type="text"], .cf-attack-row input[type="number"]',
+    '.cf-attr-card input[type="number"]',
+    '.cf-coin-item input',
+    '.cf-notes-panel .cf-notes-editor',
+    '.cf-notes-panel .cf-notes-toolbar select',
+    '.cf-panel .cf-field input, .cf-panel .cf-field select',
+    '.cf-slot-item input',
+    '.condition-ref-search input',
+    '.dialog-text-area',
+    '.dice-char-header select',
+    '.dice-combat-row input, .dice-combat-row select',
+    '.dice-formula',
+    '.dice-multi',
+    '.dms-dice-input',
+    '.dms-notes-input',
+    '.editor-select',
+    '.editor-toolbar .editor-select',
+    '.enc-filter-select',
+    '.enc-save-input',
+    '.enc-speed-item input',
+    '.fdp-input',
+    '.form-control, .form-select, .form-input',
+    '.form-group input, .form-group select, .form-group textarea',
+    '.fr-ruf-grund-input',
+    '.fr-ruf-set-input',
+    '.global-search-input',
+    '.init-mob-dmg-inputs input',
+    '.notes-search-input',
+    '.npc-filter-select',
+    '.qref-conv-input',
+    '.qref-conv-select',
+    '.qref-search input',
+    '.relations-form-row select, .relations-form-row input',
+    '.rest-hd-input',
+    '.rich-editor',
+    '.round-timer-row input',
+    '.rt-entry-row .rt-entry-range',
+    '.rt-field input',
+    '.section-toolbar-filters select',
+    '.si-qty-input',
+    '.spell-editor',
+    '.toolbar-search',
+    '.toolbar-select',
+    '.wp-rich-editor',
+    '.xp-dist-total-input'
+];
+
+/**
+ * Untergrenze fuer Teil 2. Gemessen sind 52 Regeln (W6_FELDREGELN) plus die
+ * eine Elementregel am Ende von core.css fuer die Felder ohne Autorenregel =
+ * 53 Verbraucher. Die Schranke liegt bei 48 und nicht bei 53, damit das
+ * Zusammenfassen zweier Regeln oder das Entfernen eines toten Selektors nicht
+ * als Rueckschritt gilt — der Handoff verlangt ">= 40", und darunter faellt
+ * die Aussage "angewendet" ohnehin.
+ */
+const W6_VERBRAUCHER_MIN = 48;
+
+/** Selektortexte vergleichbar machen: Mehrfachleerzeichen und Kommaluft weg. */
+function w6NormSel(sel) {
+    return String(sel)
+        .replace(/\s+/g, ' ')
+        .replace(/\s*,\s*/g, ', ')
+        .trim()
+        .toLowerCase();
+}
+
+/** Traegt dieser Rumpf eine Rahmen-Deklaration (Kurz- oder Langform)? */
+function w6HatRahmenDeklaration(body) {
+    return /(?:^|;)\s*border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/.test(
+        ' ' + body
+    );
+}
+
+/** Nennt dieser Rumpf dieses Token in einer RAHMEN-Deklaration? */
+function w6RahmenNennt(body, token) {
+    return body
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => /^border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/.test(s))
+        .some(s => s.includes('var(' + token + ')'));
+}
+
+describe('W6-R-08 — --border-input ist angewendet und das Fokuskennzeichen hat eine Tinte (Ratsche)', () => {
+    const W6_FUELLUNGEN = ['--bg-dark', '--bg-card', '--bg-elevated'];
+    const W6_RAHMEN_SCHWELLE = 3;
+
+    test('Teil 1 — der Eingaberahmen haelt 3:1 auf allen drei Fuellungen in vier Themes', () => {
+        // Zwoelf Zellen, jede namentlich. Gemessener Boden am 2026-10-06:
+        // 3,33 (sepia auf --bg-dark). R-02 Teilformel 4 deckt dasselbe Feld
+        // mit EINER Zahl; hier soll ein Befund sagen, welche Zelle fiel.
+        const pals = WCAG.palettes();
+        /** @type {string[]} */
+        const befunde = [];
+        let kleinster = Infinity;
+        WCAG.THEMES.forEach(theme => {
+            const p = pals[theme];
+            const rahmen = WCAG.resolve('var(--border-input)', p);
+            if (!rahmen) {
+                befunde.push(theme + ': --border-input ist nicht aufloesbar');
+                return;
+            }
+            W6_FUELLUNGEN.forEach(f => {
+                const flaeche = WCAG.resolve('var(' + f + ')', p);
+                if (!flaeche) {
+                    befunde.push(theme + ': ' + f + ' ist nicht aufloesbar');
+                    return;
+                }
+                const v = WCAG.ratio(rahmen, flaeche);
+                if (v < kleinster) kleinster = v;
+                if (v < W6_RAHMEN_SCHWELLE) {
+                    befunde.push(
+                        theme + ' ' + rahmen + ' auf ' + f + ' ' + flaeche + ': ' +
+                            v.toFixed(2) + ' < ' + W6_RAHMEN_SCHWELLE
+                    );
+                }
+            });
+        });
+        /* MELDUNGEN STEHEN IM VERGLEICHSWERT, nicht in einem zweiten
+           expect-Argument: dieses Jest nimmt nur eines ("Expect takes at most
+           one argument"). Die Zahl gehoert trotzdem in den Befund, sonst sagt
+           ein roter Lauf nur "ungleich []". */
+        if (kleinster < 3.3) {
+            befunde.push(
+                'Boden ueber alle zwoelf Zellen auf ' + kleinster.toFixed(2) +
+                    ' gesunken (gemessen bei der Geburt: 3,33)'
+            );
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Teil 2 — --border-input hat Verbraucher im Komponenten-CSS', () => {
+        /* DER EIGENTLICHE NACHWEIS DES SCHRITTES. Gezaehlt werden Regeln
+           AUSSERHALB von variables.css, die das Token in einer
+           Rahmen-Deklaration lesen — die Definition selbst zaehlt nicht mit,
+           sonst waere der Fall schon vor dem Schritt gruen. */
+        const verbraucher = W6_ALLE_REGELN.filter(f => f.datei !== 'variables.css').flatMap(f =>
+            f.regeln
+                .filter(r => w6RahmenNennt(r.body, '--border-input'))
+                .map(r => f.datei + ':' + r.line + ' {' + r.selector + '}')
+        );
+        const lage =
+            'Verbraucher von --border-input im Komponenten-CSS: ' + verbraucher.length +
+            ' (verlangt >= ' + W6_VERBRAUCHER_MIN + '). Bei der Geburt dieser Ratsche: 0 — das ' +
+            'Token stand seit Welle 1 in vier Theme-Bloecken und wurde von keiner Regel gelesen.';
+        expect(verbraucher.length >= W6_VERBRAUCHER_MIN ? [] : [lage]).toEqual([]);
+    });
+
+    test('Teil 3 — jede Fokus-Rahmenfarbe ist var(--focus-ring)', () => {
+        /* EINE TINTE AN EINEM KENNZEICHEN. Ring und Rahmen liegen 2 px
+           voneinander entfernt am selben Element; zwei verschiedene Goldtoene
+           dort sind keine Gestaltung, sondern ein Versehen. Gemessen bei der
+           Geburt: 219 von 219 fokussierten Feldern in light und sepia zeigten
+           genau das (142x Ring #946c09 gegen Rahmen #b8860b in light, 142x
+           #b55819 gegen #8b4513 in sepia).
+
+           HOVER IST NICHT GEMEINT und wird nicht geprueft: `:hover` ist kein
+           Zustand, den WCAG 1.4.11 als identifizierend fuehrt, und drei
+           Hover-Regeln auf Feldern behalten darum ihr `var(--gold)` (zwei in
+           editors.css, eine in spells.css). Das ist benannte Restschuld, keine
+           Luecke im Erkenner — er trennt die beiden Zustaende ausdruecklich,
+           siehe Gegenprobe. */
+        const fokusRahmen = W6_ALLE_REGELN.flatMap(f =>
+            f.regeln
+                .filter(
+                    r =>
+                        w6IstFokusselektor(r.selector) &&
+                        /(?:^|;)\s*border(-top|-right|-bottom|-left)?-color\s*:/.test(' ' + r.body)
+                )
+                .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+        );
+
+        expect(
+            fokusRahmen.length >= 25
+                ? []
+                : [
+                      'nur ' + fokusRahmen.length + ' Fokusregeln mit Rahmenfarbe gefunden ' +
+                          '(erwartet >= 25) — der Lauf hat zu wenig gelesen'
+                  ]
+        ).toEqual([]);
+
+        const fremd = fokusRahmen
+            .filter(r => !w6RahmenNennt(r.body, '--focus-ring'))
+            .map(
+                r =>
+                    r.datei + ':' + r.zeile + ' {' + r.selector + '} -> ' +
+                    (r.body.match(/border[a-z-]*:\s*[^;]+/) || ['?'])[0].trim()
+            );
+        if (fremd.length) {
+            fremd.unshift(
+                fremd.length + ' von ' + fokusRahmen.length + ' Fokusregeln setzen eine andere ' +
+                    'Rahmenfarbe als var(--focus-ring). Bei der Geburt: 31 (27x var(--gold), ' +
+                    '4x var(--cyan)).'
+            );
+        }
+        expect(fremd).toEqual([]);
+    });
+
+    test('Teil 4 — alle 52 Feldregeln lesen var(--border-input)', () => {
+        /** @type {string[]} */
+        const fehlt = [];
+        /** @type {string[]} */
+        const falsch = [];
+        W6_FELDREGELN.forEach(sel => {
+            const treffer = W6_ALLE_REGELN.flatMap(f =>
+                f.regeln
+                    .filter(
+                        r =>
+                            w6NormSel(r.selector) === w6NormSel(sel) &&
+                            w6HatRahmenDeklaration(r.body)
+                    )
+                    .map(r => ({ datei: f.datei, zeile: r.line, body: r.body }))
+            );
+            if (!treffer.length) {
+                fehlt.push(sel);
+                return;
+            }
+            treffer.forEach(t => {
+                if (!w6RahmenNennt(t.body, '--border-input')) {
+                    falsch.push(
+                        t.datei + ':' + t.zeile + ' {' + sel + '} -> ' +
+                            (t.body.match(/border[a-z-]*:\s*[^;]+/) || ['?'])[0].trim()
+                    );
+                }
+            });
+        });
+
+        if (fehlt.length) {
+            fehlt.unshift(
+                fehlt.length + ' Selektoren der Stellenliste gibt es nicht mehr oder sie haben ' +
+                    'ihre Rahmenangabe verloren — umbenannt oder entfallen, beides will gesehen ' +
+                    'werden'
+            );
+        }
+        expect(fehlt).toEqual([]);
+        if (falsch.length) {
+            falsch.unshift(
+                falsch.length + ' von ' + W6_FELDREGELN.length + ' Feldregeln lesen nicht ' +
+                    'var(--border-input). Bei der Geburt: alle 52 lasen var(--border).'
+            );
+        }
+        expect(falsch).toEqual([]);
+    });
+
+    test('Gegenprobe: die drei Erkenner trennen, was sie trennen sollen', () => {
+        // Rahmen-Deklaration erkannt, andere Eigenschaften nicht.
+        expect(w6HatRahmenDeklaration(' border: 1px solid var(--border); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-color: var(--gold); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-bottom-color: var(--gold); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-radius: var(--radius-md); ')).toBe(false);
+        expect(w6HatRahmenDeklaration(' background: var(--border); ')).toBe(false);
+
+        // Token NUR in einer Rahmen-Deklaration zaehlt.
+        expect(w6RahmenNennt(' border: 1px solid var(--border-input); ', '--border-input')).toBe(
+            true
+        );
+        expect(w6RahmenNennt(' background: var(--border-input); ', '--border-input')).toBe(false);
+        expect(w6RahmenNennt(' border-radius: var(--border-input); ', '--border-input')).toBe(
+            false
+        );
+
+        // Fokus und Hover werden getrennt — die Grundlage der Restschuld in
+        // Teil 3. Waere das nicht so, muesste Teil 3 eine Ausnahmeliste
+        // fuehren, und eine Ausnahmeliste verdeckt genau das, was sie nennt.
+        expect(w6IstFokusselektor('.editor-select:hover')).toBe(false);
+        expect(w6IstFokusselektor('.editor-select:focus')).toBe(true);
+        expect(w6IstFokusselektor('.editor-select:hover, .editor-select:focus')).toBe(true);
+
+        // Selektornormalisierung: Kommaluft und Mehrfachleerzeichen egal,
+        // Reihenfolge NICHT — sonst wuerde eine umsortierte Liste unbemerkt
+        // durchlaufen.
+        expect(w6NormSel('.a  input,.b   select')).toBe(w6NormSel('.a input, .b select'));
+        expect(w6NormSel('.b select, .a input')).not.toBe(w6NormSel('.a input, .b select'));
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(W6_FELDREGELN.length).toBe(52);
+    });
+});
