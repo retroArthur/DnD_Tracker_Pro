@@ -741,10 +741,25 @@
         gap: 8px;
     }
     
+    /* --text-sm UND NICHT --text-md, und das ist keine Nachlaessigkeit.
+       Die Sprosse steht hier aus einer Layoutmessung, nicht aus einer
+       Schriftentscheidung: `.section-toolbar` traegt in diesem Block 14px, die
+       alte Angabe `0.9em` ergab also 12,6px. Mit --text-md (14px) wird die
+       Titelgruppe 10,4px breiter, und bei 375px unter der breiteren
+       Linux-Schriftmetrik reicht die Reserve dann nicht mehr: Titelgruppe +
+       Luecke + primaere Aktion belegen bei `encounter` 333,04 statt 322,64 von
+       331px und bei `kalender` 342,59 statt 324,37 — aus EINER Zeile werden
+       ZWEI, die Leiste waechst um 29px, und bei `encounter` gehen diese 29px
+       1:1 aus der scrollenden Listenspalte (.enc-master 305,2 -> 276,2px),
+       weil die Ansicht hoehenbegrenzt ist. Das ist derselbe Betrag, den der
+       C1-Kommentar unten als Gewinn der Welle 4 verbucht, nur rueckwaerts.
+       Begruendung und Rechenweg: tools/typo-map.js, SONDERZUORDNUNG
+       `editors.css||.section-toolbar-title||0.9em` (Grund `kette`).
+       Bewacht von tests/e2e/features/breite-schrift.spec.js, Fall (5). */
     .section-toolbar-title {
         font-size: var(--text-sm);
     }
-    
+
     .section-toolbar-filters {
         width: 100%;
         justify-content: flex-start;

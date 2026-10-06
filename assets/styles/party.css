@@ -2120,6 +2120,18 @@
     background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
+/* --text-2xl UND NICHT --text-3xl. Die drei Regeln darunter sitzen in einem
+   <button> (.rest-type-btn, features/rest-manager.js:26/31), und der traegt in
+   dieser App KEINE font-size — die einzige Regel, die Schaltflaechen `inherit`
+   gibt, gilt nur in .loc-toolbar (core.css). Also entscheidet das Stilblatt
+   des Browsers: 13,3333px. Die alte Angabe `2em` war dort gemessen 26,67px und
+   nicht 32, und --text-3xl (34px) waere ein Sprung von +7,33px gewesen — die
+   Karte wuchs im Rast-Modal von 237x111 auf 237x123px. --text-2xl (26px)
+   liegt 0,67px darunter. Wer hier auf --text-3xl "zurueckstellt", macht den
+   Befund W5-D/1 wieder auf.
+   Begruendung und Rechenweg: tools/typo-map.js, SONDERZUORDNUNG
+   `party.css||.rest-type-icon||2em` (Grund `browser-vorgabe`).
+   Bewacht von tests/unit/typo-map.test.js, Block W5-W12. */
 .rest-type-icon { font-size: var(--text-2xl); }
 .rest-type-label { font-weight: 600; color: var(--text); }
 .rest-type-desc { font-size: var(--text-sm); color: var(--text-dim); }
