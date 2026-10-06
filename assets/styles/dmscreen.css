@@ -22,7 +22,6 @@
         
         .global-search-input:focus {
             border-color: var(--gold);
-            outline: none;
             width: 280px;
         }
         
@@ -364,7 +363,6 @@
         
         .notes-search-input:focus {
             border-color: var(--gold);
-            outline: none;
         }
         
         .notes-search-results {
@@ -529,7 +527,6 @@
             background: transparent;
             color: var(--text);
             font-size: var(--text-md);
-            outline: none;
         }
         .session-tag-suggestions {
             display: flex;
@@ -1084,7 +1081,6 @@
         .form-group textarea:focus {
             border-color: var(--gold);
             box-shadow: var(--ring-gold);
-            outline: none; /* F-18: aus der Dublette uebernommen */
         }
         
         /* Smooth Scrollbar */
@@ -1187,7 +1183,6 @@
         
         .dialog-text-area:focus {
             border-color: var(--gold);
-            outline: none;
         }
 
 /* DM Screen grid — Masonry-style column layout */
@@ -1608,7 +1603,6 @@
 }
 
 .dms-notes-input:focus {
-    outline: none;
     border-color: var(--gold);
 }
 

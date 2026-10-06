@@ -64,7 +64,6 @@
     background: transparent;
     font-size: var(--text-lg);
     color: var(--text);
-    outline: none;
     font-family: inherit;
     min-width: 0;
 }

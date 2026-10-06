@@ -1213,7 +1213,6 @@
 .cf-panel .cf-field input:focus,
 .cf-panel .cf-field select:focus {
     border-color: var(--gold);
-    outline: none;
     box-shadow: var(--ring-gold);
 }
 
@@ -1366,11 +1365,6 @@
     background: transparent;
     border: none;
     color: var(--text);
-}
-
-.cf-combat-value input:focus,
-.cf-combat-value select:focus {
-    outline: none;
 }
 
 /* Speed Dropdown - Dark Theme */
@@ -1845,7 +1839,6 @@
 
 .cf-notes-panel .cf-notes-editor:focus {
     border-color: var(--gold);
-    outline: none;
 }
 
 /* === RESPONSIVE V4 === */
@@ -2384,7 +2377,6 @@
 
 .condition-ref-search input:focus {
     border-color: var(--gold);
-    outline: none;
 }
 
 .condition-ref-list {

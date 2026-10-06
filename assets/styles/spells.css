@@ -298,7 +298,6 @@
 
         .editor-select:hover, .editor-select:focus {
             border-color: var(--gold);
-            outline: none;
         }
 
         /* `.editor-toolbar .editor-btn` stand hier und steht jetzt wieder in
@@ -373,7 +372,6 @@
         }
 
         .spell-editor:focus, .rich-editor:focus {
-            outline: none;
             border-color: var(--gold);
         }
         

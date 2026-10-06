@@ -7238,14 +7238,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            zeilenbasierter grep sechs Literale verliert. */
         {
             datei: 'dice.css',
-            zeile: 746,
+            zeile: 745,
             pfad: '.floating-dice-panel',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
         },
         {
             datei: 'dmscreen.css',
-            zeile: 782,
+            zeile: 779,
             pfad: '.modal',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
@@ -7258,14 +7258,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            als uebersehener Rest gilt. */
         {
             datei: 'dice.css',
-            zeile: 705,
+            zeile: 704,
             pfad: '@keyframes floatingPulse >> 0%, 100%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
         },
         {
             datei: 'dice.css',
-            zeile: 706,
+            zeile: 705,
             pfad: '@keyframes floatingPulse >> 50%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
@@ -7289,7 +7289,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
         {
             datei: 'dmscreen.css',
-            zeile: 1143,
+            zeile: 1139,
             pfad: '[data-sortable].drag-over',
             lage: '0 0 0 2px var(--gold)',
             grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
@@ -7307,7 +7307,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            diesen Wert traegt. */
         {
             datei: 'dice.css',
-            zeile: 682,
+            zeile: 681,
             pfad: '.floating-dice-trigger',
             lage: '0 0 0 0 rgba(220, 38, 38, 0.4)',
             grund: 'Ruhelage der Pulsanimation, wortgleich mit dem 0-%-Bild'
@@ -7369,22 +7369,22 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 1778, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 775, stufe: 2,
+        { datei: 'dashboard.css', zeile: 774, stufe: 2,
           pfad: '.conflict-banner',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 893, stufe: 2,
+        { datei: 'dashboard.css', zeile: 892, stufe: 2,
           pfad: '.dash-char:hover',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 1200, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1199, stufe: 2,
           pfad: '.qref-fab',
           vorher: '0 4px 12px rgba(0,0,0,0.4)' },
-        { datei: 'dashboard.css', zeile: 1207, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1206, stufe: 2,
           pfad: '.qref-fab:hover',
           vorher: '0 6px 20px rgba(212,175,55,0.4)' },
-        { datei: 'dashboard.css', zeile: 1224, stufe: 3,
+        { datei: 'dashboard.css', zeile: 1223, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 2184, stufe: 3,
+        { datei: 'dashboard.css', zeile: 2180, stufe: 3,
           pfad: '.kplog-panel',
           vorher:
               'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +
@@ -7394,46 +7394,46 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dice.css', zeile: 79, stufe: 2,
           pfad: '.dice-die:hover',
           vorher: '0 4px 16px rgba(0,0,0,0.3)' },
-        { datei: 'dice.css', zeile: 682, stufe: 2,
+        { datei: 'dice.css', zeile: 681, stufe: 2,
           pfad: '.floating-dice-trigger',
           vorher: '0 4px 16px rgba(220, 38, 38, 0.4)' },
-        { datei: 'dice.css', zeile: 691, stufe: 3,
+        { datei: 'dice.css', zeile: 690, stufe: 3,
           pfad: '.floating-dice-trigger:hover',
           vorher: '0 6px 24px rgba(220, 38, 38, 0.5)' },
-        { datei: 'dice.css', zeile: 746, stufe: 3,
+        { datei: 'dice.css', zeile: 745, stufe: 3,
           pfad: '.floating-dice-panel',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.5)' },
-        { datei: 'dmscreen.css', zeile: 50, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 49, stufe: 3,
           pfad: '.global-search-results',
           vorher: '0 8px 24px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 263, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 262, stufe: 2,
           pfad: '.condition-tooltip',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 782, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 779, stufe: 3,
           pfad: '.modal',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.4)' },
-        { datei: 'dmscreen.css', zeile: 815, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 812, stufe: 3,
           pfad: '.dragging',
           vorher: '0 8px 24px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 872, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 869, stufe: 2,
           pfad: '.export-dropdown-content',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 968, stufe: 1,
+        { datei: 'dmscreen.css', zeile: 965, stufe: 1,
           pfad: '[data-tooltip]::after',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 992, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 989, stufe: 2,
           pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
-        { datei: 'dmscreen.css', zeile: 1137, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1133, stufe: 2,
           pfad: '[data-sortable].dragging',
           vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 1143, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1139, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2180, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2174, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2433, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2427, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
         { datei: 'editors.css', zeile: 227, stufe: 3,
@@ -7445,18 +7445,18 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'encounters.css', zeile: 110, stufe: 3,
           pfad: '#calculator-modal .modal-content',
           vorher: '0 20px 60px rgba(0, 0, 0, 0.5)' },
-        { datei: 'encounters.css', zeile: 577, stufe: 1,
+        { datei: 'encounters.css', zeile: 576, stufe: 1,
           pfad: '#calc-budget-slider::-webkit-slider-thumb',
           vorher: '0 2px 4px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 587, stufe: 1,
+        { datei: 'encounters.css', zeile: 586, stufe: 1,
           pfad: '#calc-budget-slider::-moz-range-thumb',
           vorher: '0 2px 4px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 645, stufe: 2,
+        { datei: 'encounters.css', zeile: 644, stufe: 2,
           pfad: '.calc-favorites-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1385 -> 1388: die Begruendung am Hoehenbudget von
         // .enc-view.active (U6) ist 3 Zeilen weiter oben eingefuegt.
-        { datei: 'encounters.css', zeile: 1382, stufe: 2,
+        { datei: 'encounters.css', zeile: 1381, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
@@ -7505,22 +7505,22 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'party.css', zeile: 609, stufe: 2,
           pfad: '.event-log-entry',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'party.css', zeile: 1674, stufe: 2,
+        { datei: 'party.css', zeile: 1668, stufe: 2,
           pfad: '.cf-languages-block .cf-lang-dropdown',
           vorher: '0 4px 12px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 436, stufe: 2,
+        { datei: 'spells.css', zeile: 434, stufe: 2,
           pfad: '.floating-toolbar',
           vorher: '0 4px 20px rgba(0, 0, 0, 0.5)' },
-        { datei: 'spells.css', zeile: 525, stufe: 2,
+        { datei: 'spells.css', zeile: 523, stufe: 2,
           pfad: '.table-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 563, stufe: 2,
+        { datei: 'spells.css', zeile: 561, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1166, stufe: 3,
+        { datei: 'tools.css', zeile: 1165, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1345, stufe: 2,
+        { datei: 'tools.css', zeile: 1344, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -9471,7 +9471,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
     const RING_STELLEN = [
         {
             datei: 'dmscreen.css',
-            zeile: 1086,
+            zeile: 1083,
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
             marke: '.form-group input:focus',
             vorher: { dicke: 3, deckung: 0.1, farbe: '#d4af37' },
@@ -9481,7 +9481,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'party.css',
-            zeile: 1217,
+            zeile: 1216,
             sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
             marke: '.cf-panel .cf-field input:focus',
             vorher: { dicke: 3, deckung: 0.15, farbe: '#d4af37' },
@@ -9491,7 +9491,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'welt.css',
-            zeile: 156,
+            zeile: 155,
             sel: '.wp-rich-editor:focus',
             marke: '.wp-rich-editor:focus',
             vorher: { dicke: 2, deckung: 0.15, farbe: null },
@@ -9511,7 +9511,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1143,
+            zeile: 1139,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
             vorher: { dicke: 2, deckung: 1.0, farbe: null },
@@ -9545,8 +9545,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         { datei: 'dashboard.css', zeile: 67, sel: '.dice-fail', marke: '.dice-fail', radius: 10, vorher: 0.5, rolle: '--red', farbe: null },
         { datei: 'dice.css', zeile: 31, sel: '.dice-hero-result.crit', marke: '.dice-hero-result.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dice.css', zeile: 36, sel: '.dice-hero-result.fail', marke: '.dice-hero-result.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' },
-        { datei: 'dice.css', zeile: 823, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
-        { datei: 'dice.css', zeile: 829, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
+        { datei: 'dice.css', zeile: 822, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 828, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
     ];
 
     /* -------------------------------------------------------------------
@@ -9570,7 +9570,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1317,
+            zeile: 1312,
             sel: '.dms-hp-text',
             marke: '.dms-hp-text',
             wert: '0 1px 2px rgba(0,0,0,0.5)',
@@ -9578,7 +9578,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dice.css',
-            zeile: 701,
+            zeile: 700,
             sel: '.floating-dice-trigger svg',
             marke: '.floating-dice-trigger svg',
             wert: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
@@ -12875,8 +12875,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3348':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3344) schaltet ' +
+        'core.css:3345':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3341) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13338,7 +13338,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3348,
+                    zeile: 3345,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }

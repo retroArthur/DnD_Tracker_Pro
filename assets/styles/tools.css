@@ -531,7 +531,6 @@
 
 .rt-entry-row .rt-entry-range:focus {
     border-color: var(--gold);
-    outline: none;
 }
 
 .rt-entry-row .rt-entry-text {

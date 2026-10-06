@@ -213,7 +213,6 @@
 }
 
 .dice-formula:focus {
-    outline: none;
     border-color: var(--gold);
 }
 
@@ -1002,7 +1001,6 @@
 }
 
 .fdp-input:focus {
-    outline: none;
     border-color: var(--gold);
 }
 

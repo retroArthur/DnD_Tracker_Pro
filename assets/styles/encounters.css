@@ -235,7 +235,6 @@
 }
 
 .calc-input:focus {
-    outline: none;
     border-color: var(--gold);
 }
 
@@ -1458,7 +1457,6 @@
 
 .enc-speed-item input:focus {
     border-color: var(--cyan);
-    outline: none;
 }
 
 .enc-speed-item input::placeholder {
@@ -1616,7 +1614,6 @@
 }
 
 .calc-import-count:focus {
-    outline: none;
     border-color: var(--gold);
 }
 

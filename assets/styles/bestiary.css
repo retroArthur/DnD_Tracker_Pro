@@ -621,7 +621,6 @@
     color: var(--text);
     font-size: var(--text-md);
     line-height: 1.5;
-    outline: none;
     resize: vertical;
     overflow-y: auto;
 }

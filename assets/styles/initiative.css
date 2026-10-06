@@ -1549,7 +1549,6 @@
 
 .xp-dist-total-input:focus {
     border-color: var(--gold);
-    outline: none;
 }
 
 .xp-dist-party-info {

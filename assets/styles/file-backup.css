@@ -193,13 +193,29 @@
     border-bottom: 2px solid var(--border);
 }
 
-.backup-entry-header:hover {
+.backup-entry-header:hover:not(:focus-visible) {
     /* Die Kopfzeile ist keine Zeile, die man anklickt — sie darf den
        Hover-Zustand also auch nicht melden. Bis Schritt 9 genuegte dafuer
        `background: transparent`, weil .backup-entry:hover eine Fuellung
        setzte; seit E3 setzt es einen Umriss, und der muss hier ausdruecklich
        zurueckgenommen werden. Ohne diese Zeile bekaeme die Kopfzeile einen
-       goldenen Ring. */
+       goldenen Ring.
+
+       WELLE 6 HAT DEN SELEKTOR VERENGT, nicht die Zeile geloescht. Diese
+       Regel ist die EINZIGE der 31 `outline: none` im Baum, die keinen Fokus
+       unterdrueckt: `.backup-entry-header` ist ein div mit BEIDEN Klassen
+       (`backup-entry backup-entry-header`, file-backup-ui.js), ohne tabindex
+       und ohne data-action — es ist kein Tastaturhalt, und
+       `.backup-entry:hover` trifft es ueber die erste Klasse. Loeschen haette
+       also nicht einen Fokusring freigelegt, sondern genau den goldenen
+       Hover-Ring erzeugt, vor dem der Absatz darueber warnt.
+
+       `:not(:focus-visible)` ist deshalb heute verhaltensneutral (ein nicht
+       fokussierbares div ist nie `:focus-visible`) und sagt trotzdem, was die
+       Regel meint: den HOVER-Umriss zuruecknehmen, niemals einen Fokusring.
+       Wird die Kopfzeile spaeter anklickbar — ein Sortierknopf etwa —, bleibt
+       ihr Ring erhalten, ohne dass jemand an diese Stelle denken muss. Und
+       W6-R-05 kommt damit ohne Ausnahmeliste aus. */
     outline: none;
 }
 

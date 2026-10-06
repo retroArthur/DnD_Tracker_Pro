@@ -86,24 +86,25 @@
  *
  * LAUFZEIT UND SCHALTER. Ein Tabulatorlauf ueber 24 Ansichten plus drei
  * Formulare plus sechs Modale kostet knapp zwei Minuten; W6-R-02 braucht ihn
- * vier Mal. Beide Vollaeufe liegen deshalb hinter `FOKUSRING=1`, wie die
- * Ablichtungen der Vorwellen hinter ihren Schaltern:
+ * vier Mal. NUR W6-R-02 liegt deshalb hinter `FOKUSRING=1`:
  *
  *     FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js
  *
- * OHNE SCHALTER LAUFEN ZWEI BILLIGE FAELLE MIT, und die sind nicht Zierde: der
- * Selbsttest des Kontrastrechners (er wirft beim Laden, wenn die Formel nicht
- * stimmt) und eine Gegenprobe, die in einer Ansicht beweist, dass der
- * Tabulatorlauf Ringe ueberhaupt sieht und dass beide Ausnahmelisten leer sind.
- * Eine Ratsche, die nichts findet, weil sie nichts misst, ist von einer gruenen
- * nicht zu unterscheiden.
+ * W6-R-01 LIEF BIS ZUM SCHRITT 4 EBENFALLS HINTER DEM SCHALTER, aus einem
+ * Grund, der mit Schritt 4 entfallen ist: der Fall war ABSICHTLICH ROT (193
+ * Befunde — die 31 `outline: none`-Regeln), und ein roter Gate verdeckt echte
+ * Regressionen. Seit die 30 Fokus-Unterdruecker gefallen sind, ist er gruen,
+ * und der Schalter ist weg. Er muss weg sein: er ist die EINZIGE Deckung in
+ * der CI fuer die einzige Verhaltensaenderung der Welle. Gemessen kostet er
+ * 1,2 Minuten, ein Theme (dass eines genuegt, steht belegt an seinem
+ * `setzeTheme`).
  *
- * DER ZWEITE GRUND FUER DEN SCHALTER an W6-R-01: dieser Fall ist bis zum
- * Schritt 4 der Welle ABSICHTLICH ROT (193 Befunde — die 31
- * `outline: none`-Regeln). Liefe er in der vollen Suite mit, waere der
- * E2E-Gate vom Tag der Ratsche bis zum Tag ihrer Erfuellung rot, und ein roter
- * Gate verdeckt echte Regressionen. Wer Schritt 4 abschliesst, prueft mit
- * `FOKUSRING=1` nach und kann den Schalter an W6-R-01 dann wegnehmen.
+ * OHNE SCHALTER LAUFEN JETZT SIEBEN FAELLE MIT, und keiner ist Zierde: der
+ * Rundlauf von W6-R-01, seine Gegenprobe (die beweist, dass der Lauf Ringe
+ * ueberhaupt sieht und dass beide Ausnahmelisten leer sind), der Selbsttest
+ * des Kontrastrechners und die vier Themes von W6-R-01 Teil 2. Eine Ratsche,
+ * die nichts findet, weil sie nichts misst, ist von einer gruenen nicht zu
+ * unterscheiden.
  *
  * IN DER CI traegt die Schwesterratsche W6-R-04 (design-consistency.test.js)
  * die Aussage von W6-R-02: sie rechnet dasselbe Verhaeltnis gegen fuenf
@@ -495,10 +496,21 @@ test.describe('W6-R-01 — jeder sichtbare Tastaturhalt traegt einen Fokusring (
     test('kein sichtbarer Halt in 24 Ansichten, drei Formularen und sechs Modalen bleibt ohne Ring', async ({
         page
     }) => {
-        test.skip(
-            !VOLLER_LAUF,
-            'Voller Tabulatorlauf nur auf Anforderung: FOKUSRING=1 setzen (rund zwei Minuten je Theme). Dieser Fall ist bis zum Schritt 4 der Welle ABSICHTLICH ROT — 193 Befunde, das sind die 31 outline-none-Regeln. Ohne Schalter waere die volle Suite dadurch rot, und ein roter Gate verdeckt echte Regressionen.'
-        );
+        /* DER SCHALTER IST HIER WEG, seit Schritt 4 der Welle. Er stand hier,
+           weil dieser Fall bis dahin ABSICHTLICH ROT war (193 Befunde, die 31
+           `outline: none`-Regeln) und ein roter Gate echte Regressionen
+           verdeckt. Seit die 30 Fokus-Unterdruecker gefallen sind, ist er
+           gruen — und damit ist er die EINZIGE Deckung in der CI fuer die
+           einzige Verhaltensaenderung der ganzen Welle: der Stil-Sollstand
+           hasht `outline` in keiner Schreibweise, und W6-R-04 traegt nur die
+           Farbe am Token, nicht die Ringpraesenz je Element. Die kostet einen
+           Browser und ist ohne ihn nicht messbar.
+
+           GEMESSEN, WAS ER KOSTET: 1,2 Minuten allein, ein Theme. Dass ein
+           Theme genuegt, ist belegt und keine Sparmassnahme — siehe der
+           Kommentar unter `setzeTheme`. W6-R-02 bleibt hinter dem Schalter:
+           vier Themes mal zwei Minuten, und seine Aussage traegt in der CI
+           W6-R-04 am Token. */
         test.setTimeout(300000);
         await seedPopulatedSession(page);
         await loadApp(page);

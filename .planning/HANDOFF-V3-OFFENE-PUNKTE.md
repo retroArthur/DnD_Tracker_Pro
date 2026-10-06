@@ -434,13 +434,13 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:870` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:887` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:891` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:2088` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2367` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2081` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2360` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:465` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:596` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:679` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:806` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:839` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:595` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:678` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:805` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:838` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
 
 ### Gruppe B — Verlauf als Traeger, 11 Stellen
 
@@ -498,8 +498,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1156` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:597` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `dmscreen.css:1152` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:271` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:303` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:331` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -508,7 +508,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:1393` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
-| `tools.css:854` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
+| `tools.css:853` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
 
 ### Gruppe C — Akzent- oder Toenungsflaeche, 10 Stellen
 
@@ -523,25 +523,25 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:186` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1374` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1387` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1369` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1382` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:289` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:290` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:292` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:294` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
 | `party.css:842` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
-| `tools.css:577` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
-| `tools.css:632` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
+| `tools.css:576` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
+| `tools.css:631` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
 
 ### Gruppe D — zwei verschiedene Traeger fuer denselben Selektor, 5 Stellen
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dashboard.css:535` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:779` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `dashboard.css:534` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `dice.css:778` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:758` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2698` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2699` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2690` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2691` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -579,8 +579,8 @@ core.css
   116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
   120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
  1380  .char-card-currency
- 2153  .quest-reward-item-tag .remove-btn:hover
- 2146  .quest-reward-item-tag .remove-btn
+ 2152  .quest-reward-item-tag .remove-btn:hover
+ 2145  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -598,38 +598,38 @@ dashboard.css
    88  .dice-skill-btn:hover
   448  .char-save-box.proficient .save-label
   496  .enc-save-box.active .enc-save-label
-  697  .icon-btn.danger:hover
-  698  .icon-btn.success:hover
- 1166  .dash-timer-time
- 1505  .qref-chip.danger
+  696  .icon-btn.danger:hover
+  697  .icon-btn.success:hover
+ 1165  .dash-timer-time
+ 1504  .qref-chip.danger
 dice.css
-  421  .dice-fav-item:hover .fav-del
+  420  .dice-fav-item:hover .fav-del
 dmscreen.css
-   86  .dice-fav-btn .fav-name
-  274  .condition-tooltip-title
-  394  .notes-search-date
-  524  .session-tag-remove:hover
-  670  .quick-ref-section-title
- 1276  .dms-stat-warning .dms-stat-value
- 2359  .dms-profile-check
- 2385  .dms-profile-save
- 2389  .dms-profile-save .dms-profile-name
+   85  .dice-fav-btn .fav-name
+  273  .condition-tooltip-title
+  392  .notes-search-date
+  522  .session-tag-remove:hover
+  667  .quick-ref-section-title
+ 1271  .dms-stat-warning .dms-stat-value
+ 2353  .dms-profile-check
+ 2379  .dms-profile-save
+ 2383  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
-  308  .calc-list-remove:hover
-  375  .calc-diff-xp
-  407  .calc-threshold-label.easy
-  408  .calc-threshold-label.medium
-  409  .calc-threshold-label.hard
-  410  .calc-threshold-label.deadly
-  483  .calc-stat-info:hover
-  509  .calc-preview-xp
-  514  .calc-preview-change
-  680  .calc-fav-item.save
- 1185  .enc-speed-line
+  307  .calc-list-remove:hover
+  374  .calc-diff-xp
+  406  .calc-threshold-label.easy
+  407  .calc-threshold-label.medium
+  408  .calc-threshold-label.hard
+  409  .calc-threshold-label.deadly
+  482  .calc-stat-info:hover
+  508  .calc-preview-xp
+  513  .calc-preview-change
+  679  .calc-fav-item.save
+ 1184  .enc-speed-line
 file-backup.css
-  243  .backup-entry-restore
+  259  .backup-entry-restore
 initiative.css
    72  .bf-xp
   108  .init-entry.lair .init-name
@@ -649,23 +649,23 @@ npcs.css
   971  .npc-popup-name
  1004  .npc-popup-section-title
 party.css
- 1979  .party-stat-card.critical .party-stat-value
- 2271  .rest-heal-preview
- 2277  .rest-hd-restore
- 2653  .cf-attack-remove:hover
- 2802  .char-skill-item.proficient .char-skill-item-name
- 2825  .char-skill-item.expertise .char-skill-item-name
+ 1972  .party-stat-card.critical .party-stat-value
+ 2264  .rest-heal-preview
+ 2270  .rest-hd-restore
+ 2645  .cf-attack-remove:hover
+ 2794  .char-skill-item.proficient .char-skill-item-name
+ 2817  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css
   252  .timer-card-time
   446  .rt-result-label
- 1145  .breadcrumb-item:hover
- 1458  .sb-remove-btn:hover
+ 1144  .breadcrumb-item:hover
+ 1457  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
-  272  .wp-detail-header h3
-  595  .rs-tagesmarsch
+  271  .wp-detail-header h3
+  594  .rs-tagesmarsch
 ```
 
 ### Wie Gruppe E aufzulösen ist

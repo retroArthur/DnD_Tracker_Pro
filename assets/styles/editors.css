@@ -631,7 +631,6 @@
 }
 
 .section-toolbar-filters select:focus {
-    outline: none;
     border-color: var(--gold);
 }
 

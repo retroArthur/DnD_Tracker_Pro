@@ -1912,7 +1912,6 @@
 
         .assign-spell-search-wrap input:focus {
             border-color: var(--gold);
-            outline: none;
         }
 
         .assign-spell-select {
@@ -2351,7 +2350,6 @@
 
         .toolbar-select:focus {
             border-color: var(--gold);
-            outline: none;
         }
 
         /* Boolescher Filter ("Nur Eigene", "Favoriten", "Aktive").
@@ -2421,7 +2419,6 @@
         }
         
         .toolbar-search:focus {
-            outline: none;
             border-color: var(--gold);
         }
         

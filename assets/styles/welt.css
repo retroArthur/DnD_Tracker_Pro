@@ -148,7 +148,6 @@
     color: var(--text);
     font-size: var(--text-md);
     line-height: 1.5;
-    outline: none;
 }
 
 .wp-rich-editor:focus {
