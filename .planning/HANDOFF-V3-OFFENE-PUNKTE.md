@@ -5763,3 +5763,189 @@ node tools/sync-typo-tokens.js --report | grep spell-desc
 ```
 
 ---
+
+## W5-C — die 31 Urteilsstellen: 22 bleiben neben der Skala, 9 kommen darauf (2026-10-06)
+
+**Status: ERLEDIGT.** Einheit W5-C (Schritt 4), zwei Commits, `5f313a6 → 4534b38`. Die
+erste Einheit dieser Welle, die **CSS ändert**: 31 Deklarationen in zehn Dateien, jede mit
+einem nachgestellten Kommentar, der alten Wert, neuen Wert und Grund nennt.
+
+### Die Teilung, und sie ist gemessen
+
+31 Deklarationen springen um mehr als 2 px — die Schwelle, die das Abnahmekriterium nennt.
+Davon tragen **22 keinen Lesetext**: 19 ein einzelnes Emoji (gemessen 🏠 📖 👹 🎭 🎲 📍 👤
+⚔️ 📦 🐉 ✨ 📝 🔗 📜), zwei einen Avatar-Platzhalter (`?` bzw. der Anfangsbuchstabe des
+Namens), einer ein Aufklapp-Pfeilzeichen (▶). Sie bleiben neben der Skala (E-3) und stehen
+unter **20 Ankern** namentlich in `tools/typo-map.js`, Abschnitt 7a. Die anderen **9** sind
+Zahlen und Überschriften und bekommen ihre Sprosse — alle neun nach der Zuordnungstabelle,
+**keine** braucht eine Sonderzuordnung.
+
+**Der Plan nannte 20 und 11; gemessen sind es 22 und 9.** Die Differenz ist keine Rundung:
+`.rt-empty-icon` und `.generator-empty-icon` standen dort als Textstellen („rt-empty und
+generator-empty"), tragen aber gemessen das Emoji 🎲 — der Fließtext daneben heißt `-text`
+und gehört dem Schritt 5. Dazu kommt `.enc-item-icon` in `@media (max-width: 600px)`: ihr
+Sprung wäre nur −1,60 px, sie ist aber **mitgezogen**, weil der zeilenfreie Anker der
+Ausnahmeliste Grundregel und Mobilfassung gemeinsam führt. Namentlich in `MITGEZOGEN`.
+
+### Warum die Ikonen ihre Einheit verlieren
+
+Das ist der Teil, der begründet sein muss, weil er 21 Deklarationen anfasst, die sichtbar
+**nichts** ändern.
+
+- **Die Umschreibung ist exakt.** Der Elternwert ist an allen 30 erreichten Urteilsstellen
+  **16 px** — gemessen, bei 1440 **und** 375 px. `3.5em` ist dort keine Rechnung, sondern
+  eine Schreibweise für 56 px. Belegt: im Grundlinien-Diff **null** Abweichungen bis 2 px,
+  und das Charaktermodal ist im Bildvergleich in allen vier Themes **pixelgleich**.
+- **Schranke 2 von W5-R-05 zählt die EINHEIT, nicht den Wert.** Mit 21 geduldeten
+  em-Stellen wäre ihr Zielwert **27 statt 6** gewesen. Eine Schranke, deren Ziel ihre
+  eigene Ausnahme verbietet, verspricht etwas, das sie nicht halten kann; Schritt 3 hat
+  genau das als Falle übergeben.
+- **Sieben von 22 sitzen in einem Kasten mit Pixelmaß** (`.loc-item-icon` 44×44,
+  `.loc-detail-icon` und `.enc-detail-icon` 56×56, `.enc-item-icon` 40×40,
+  `.npc-item-avatar` 44×44, `.timer-ctrl-btn` 50×50, `.dice-roll-btn` 50×44). Dort ist px
+  die richtige Einheit und nicht nur die buchhalterische: ein Zeichen, das mitwächst,
+  während sein Kasten es nicht tut, läuft über.
+
+`28.8`, `22.4` und `17.6 px` sehen nach Tippfehlern aus und sind keine. W5-R-07b vergleicht
+sie zeichengenau; wer sie auf 28, 22 und 18 rundet, ändert sichtbar und wird rot.
+
+### Die neun Textstellen
+
+| Stelle | gemessen | neu | Δ |
+| --- | --- | --- | --- |
+| `.dice-hero-result` (dice.css) | 80,00 px | `--text-hero` 72 | −8,00 |
+| `.dice-result-main` (dashboard.css) | **0 Elemente** | `--text-hero` 72 | — |
+| `.fdp-number` (dice.css) | 48,00 px | `--text-3xl` 34 | −14,00 |
+| `.timer-hero-time` (tools.css) | 48,00 px | `--text-3xl` 34 | −14,00 |
+| `.checkout-amount` (loot.css) | 28,80 px | `--text-2xl` 26 | −2,80 |
+| `.char-attr-box .attr-input` (dashboard.css) | 22,40 px | `--text-xl` 20 | −2,40 |
+| `.dms-dice-result` (dmscreen.css) | 22,40 px | `--text-xl` 20 | −2,40 |
+| `.wiki-detail-title` (party.css) | 22,40 px | `--text-xl` 20 | −2,40 |
+| `.floating-toolbar .kbd-hint` (spells.css) | 8,00 px | `--text-xs` 11 | **+3,00** |
+
+`.dice-result-main` hat **0 Elemente**: `#dice-result` existiert im Markup nicht, der
+Rückfallpfad in `dice-core.js:372` findet seinen Behälter nie. Namentlich in `OHNE_MESSUNG`
+mit Grund — eine 0 wäre dort eine Behauptung. **Der tote Behälter ist ein eigener Befund**
+(siehe offene Punkte). Der Dead-CSS-Bericht hält die Klasse für lebendig, weil `dice-core.js`
+ihren Namen als Zeichenkette führt; sie rendert trotzdem nie.
+
+### Eine gemessene Nebenwirkung, die nicht verschwiegen wird
+
+`.kbd-hint` von 8 auf 11 px lässt die fünf Tastenhilfen **überlappen**. Sie stehen absolut
+unter ihren Knöpfen und werden bei `:hover` der Leiste **gemeinsam** sichtbar
+(`.floating-toolbar:hover .kbd-hint { opacity: 0.7 }`). Gemessen, beide Stände, dieselbe
+Sitzung:
+
+| | Strg+B / Strg+I | Strg+I / Strg+U |
+| --- | --- | --- |
+| 8 px (vorher) | keine Überlappung | keine Überlappung |
+| 11 px (nachher) | **2,80 px** | **3,09 px** |
+| 11 px, breite Schrift | **9,50 px** | **9,74 px** |
+
+Das ist eine **Layout-Frage** (welche Hilfe wann sichtbar ist) und keine Größenfrage; nach
+Arbeitsregel 10 gehört sie nicht in eine Typografie-Welle. 8 px unlesbaren Text
+stehenzulassen wäre die schlechtere Wahl — E-4 zieht die Untergrenze bei 11 px für alles,
+was man liest. Die Zahlen stehen an der Stelle im CSS.
+
+**Nebenbefund dabei:** `.kbd-hint` erbt gemessen `Arial` und **nicht** `--font-ui`. Die
+Linux-Nachstellung über `--font-ui` greift dort also gar nicht; die breite Schrift ist für
+die Messung oben direkt an die Hilfe gelegt worden.
+
+### Was dieser Schritt NICHT entschieden hat
+
+- **E-3 ist nur für 22 von 73 Kandidaten entschieden.** Die übrigen **54**
+  Ikon-Deklarationen springen um 2 px oder weniger. Die Ratsche dieses Schrittes begrenzt
+  ihn ausdrücklich auf die eigenen Anker („wächst um genau diese Anker und keinen mehr"),
+  und `W5-R-07e` sichert zu, dass keine davon still in der Dulde-Liste landet. **Schritt 5
+  muss sagen**, ob er sie mechanisch auf eine Sprosse hebt — dann ist E-3 für sie nicht
+  erfüllt, mit ≤ 2 px Wirkung — oder ob sie ebenfalls geduldet werden.
+- **Die Untergrenze für Pfeilzeichen gehört Schritt 8.** `.wiki-tree-item-toggle` bleibt
+  bei 8 px (gemessen 8,00 px in einer 12,8-px-Baumzeile): kein Lesetext, aber auch kein
+  Emoji-Ikon. Er muss **gemeinsam mit `.tb-caret`** (editors.css, 9 px, ▾) entschieden
+  werden — dasselbe Zeichen in derselben Rolle darf nicht zwei verschiedene Antworten
+  bekommen. Beide stehen so im CSS.
+
+### Nachweise
+
+**Grundlinien-Diff gegen die eingefrorene Grundlinie** (`grundlinie-v5.json`, HEAD
+7e4aa09): 18325 gemeinsame Schlüssel, **50 Größenabweichungen in genau 10
+Elementschlüsseln** (je 5 Läufe), **0 Gewichtsabweichungen**, Spanne **−14,00 … −2,40 px**,
+und **null** Abweichungen bis 2 px. Werkzeug gegen Werkzeug (`nach-w5b.json`, dasselbe
+Bündel `d189459c`, derselbe Browser `chromium-1217`): 0 Schlüssel nur alt, 0 nur neu, 0
+Gewicht, 0 Sichtbarkeit; 64 Elementtreffer über 2 px in **5** Selektoren, alle benannt. Die
+20 Zeilenhöhenwechsel sind Folgen von `line-height: 1` bzw. `1.5` an genau diesen Zahlen.
+
+**Bildabgleich, vier Themes, vorher gegen nachher.** `truhe-leer` und das aufgeklappte
+Encounter-Formular: **0 Pixel** in allen vier. Charaktermodal: **0 Pixel** in allen vier —
+der Beleg, dass die em→px-Umschreibung der Ausnahmen ein Nulleingriff ist. `npcs-leer`,
+`orte-leer`, `enc-leer`: 6–226 Pixel, alle in einem 60×60-Kasten unten links; eine
+**Wiederholbarkeitsprobe desselben Baus** nennt dort **278** Pixel — das ist die
+Animationsphase des schwebenden Würfelknopfes, nicht diese Änderung. `timer-hero`: ~2800
+Pixel, die Uhr 48 → 34 px. `wuerfel-hero` und `dmschirm`: Höhe 851 → 843 bzw. 798 → 795 px,
+die Folge der kleineren Zahlen.
+
+**Stil-Sollstand bewusst neu erhoben** und Schlüssel für Schlüssel gelesen: **9 von 3549
+Digests geändert, 0 Zugänge, 0 Abgänge** — drei Elemente in je drei Durchgängen
+(`.dice-hero-result`, `.timer-hero-time`, `.dms-dice-result`) und **genau eine**
+Eigenschaft, `fontSize`. `EXPECTED_DEVIATION_KEYS` und `_NARROW` bleiben **leer** (O-9).
+
+**Linux-Nachstellung** (Verdana, Faktor 1,155) zeichengleich mit dem Stand vor dieser
+Einheit: Überhang 0 px, Knopfsumme 262,6 px in 320 px, alle acht Listenspalten OK, G1 24
+CI-Schlüssel.
+
+**Keine einzige Zeile ist verschoben.** Alle 31 Kommentare sind **nachgestellt**; 120
+Zeilenanker in `design-consistency.test.js` und 48 in dieser Akte zeigen in diese zehn
+Dateien. Zeilenzahl je Datei vor und nach dem Lauf gemessen; der Diff zeigt 31 geänderte
+und 31 entfernte Zeilen.
+
+### Ratschen
+
+Alle gesunken und exakt ausgereizt: `AUSSERHALB_MAX` **833 → 802**, `EM_MAX` **603 → 574**
+(`EM_ZIEL` bleibt **6**, und das ist jetzt haltbar), `OFFEN_MAX` **833 → 802**. Unverändert:
+DUBLETTEN 0, `!important` 105, Inline-Stile 254, `transition: all` 0, `SVG_MAX` 3. Lint
+Exit 0 mit **363** Warnungen, typecheck und typecheck:strict Exit 0, beide Builds Exit 0,
+pytest 30, Jest **2069/2069 in 77 Suiten**, Playwright **595 bestanden / 27 übersprungen /
+0 Fehlschläge**, `check-f18-kaskade` OK (126/126), `sync-aktenlage-anker` 0 Abweichungen.
+
+### Offene Punkte
+
+- **Der tote Würfel-Behälter.** `#dice-result` gibt es nicht; `dice-core.js:372` und die
+  CSS-Regeln `.dice-result-main`, `.dice-result-detail`, `#dice-result-extra` hängen an
+  einem Markup, das keine Vorlage mehr erzeugt. Der Dead-CSS-Bericht hält sie für lebendig,
+  weil der Klassenname als Zeichenkette im JS steht. Eigene Aufräumarbeit, keine
+  Typografie.
+- **Die Überlappung der Tastenhilfen** (oben beziffert) braucht eine Layout-Entscheidung.
+  Naheliegend: nur die Hilfe des **berührten** Knopfes zeigen statt aller fünf.
+- **Die 54 unbeurteilten Ikon-Kandidaten** (Schritt 5) und **die Untergrenze für
+  Pfeilzeichen** (Schritt 8, `.wiki-tree-item-toggle` + `.tb-caret`).
+- **Die Uhr im 250-px-Ring wirkt bei 34 px kleiner als nötig.** Die Skala hat zwischen 34
+  und 72 px keine Sprosse; 72 würde mit „Kein Timer" darunter kollidieren. Wenn eine
+  Zwischensprosse je gebraucht wird, ist dies die Stelle, die danach fragt.
+- **Weiterhin offen aus W5-A/W5-B und von dieser Einheit nicht berührt:** die oertlich
+  nicht lauffähige E2E-Suite (`playwright-core` 1.57.0 verlangt Chromium-Revision 1200, im
+  Zwischenspeicher liegen 1217/1234/1243 — diese Einheit ist wieder über
+  `TYPO_BASELINE_CHROMIUM` und `PLAYWRIGHT_BROWSERS_PATH` gefahren, der Zwischenspeicher
+  des Nutzers ist **nicht** angefasst; saubere Behebung: einmal
+  `npx playwright install chromium`), die zehn kaputten `woff2`, der `file://`-Pfad der
+  gebündelten Schriften, die vier wirkungslosen Editor-Schriften, die fehlende
+  Glyphendeckungs-Probe, `npm run check` vorbestehend rot (`prettier --check` über den
+  ganzen Baum; die zehn geänderten CSS-Dateien waren schon vorher nicht konform,
+  `tools/typo-map.js` und der neue Block in `design-consistency.test.js` sind es), und die
+  Restschuld der Folgeschritte: IMPORTANT_MAX 105 → 104 (O-2), INLINE_MAX 254 → 252 (O-6),
+  die 36 Formularelemente auf Browser-Vorgabe (O-10), die Neuerhebung des Stil-Sollstands
+  am Wellenende (O-9).
+
+### Befehle
+
+```bash
+# Der Wächter über die geschlossene Menge (7 Fälle)
+npx jest tests/unit/design-consistency.test.js -t "W5-R-07"
+
+# Die Rechnung nach dem Schritt: 853 = 11 Sprossen + 7 inherit + 33 geduldet + 802 offen
+node tools/sync-typo-tokens.js --check
+
+# Die 31 im Delta-Bericht — nach dem Schritt ist die Liste über 2 px LEER
+node tools/sync-typo-tokens.js --report | sed -n '/STELLEN MIT SPRUNG > 2 px/,/STELLEN MIT SPRUNG <= 2 px/p'
+```
+
+---
