@@ -643,3 +643,310 @@ describe('W5-W8 — das Werkzeug ist als einmaliges benannt, nicht als Dauerwach
         expect(befunde).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   W5-W9 bis W5-W11 — die drei Zusicherungen, die der 16-px-Annahme fehlten
+   ===========================================================================
+
+   WARUM SIE NACHGETRAGEN WERDEN. Die Faelle W5-W1 bis W5-W8 pruefen das
+   WERKZEUG: dass `--check` laeuft, nichts schreibt, seine Rechnung aufgeht
+   und seine Zeichengrenzen treffen. Keiner von ihnen urteilt darueber, OB
+   eine Zuordnung richtig ist — und genau dort lagen drei Befunde:
+
+     (1) Die Spalte "alt" in `--report` ist der deklarierte Wert bei einer
+         16-px-Wurzel. Fuer 55 gemessene Kanten stimmt diese Wurzel nicht; der
+         sichtbare Wert ist ein Produkt. Bei 15 Kanten ist der wirkliche
+         Sprung groesser als 2 px oder die Ordnung Eltern/Kind kippt. Dass die
+         31er-Liste des Berichts mit der Vorab-Vermessung uebereinstimmte, war
+         keine Bestaetigung: BEIDE Rechnungen teilen die 16-px-Annahme, die
+         Uebereinstimmung ist auf ihr eine Tautologie.
+     (2) `1em` wird auf `--text-md` (14 px) abgebildet. Fuenf gemessene
+         Eingabefelder liegen damit unter 16 px — der Fall, zu dessen
+         Verhinderung E-2 getroffen wurde. Sie waren nicht geschuetzt und in
+         `--report --kategorien` nicht aufgefuehrt, weil ihr Selektor sein
+         Eingabefeld nicht nennt (`.dice-formula`, `.dice-multi`).
+     (3) Die sechs Ueberschriftenregeln des Reichtext-Inhalts fallen von sechs
+         Stufen auf drei zusammen, und h4 bis h6 werden kleiner als der
+         Fliesstext, den sie ueberschreiben. Kein Tor konnte das sehen: die
+         acht Behaelter stehen in keiner Grundlinien-Erhebung, und die
+         2-px-Schwelle ist hier blind, weil der Schaden der VERLUST DER
+         UNTERSCHIEDE ist und nicht die Groesse eines einzelnen Sprungs.
+
+   ALLE DREI URTEILEN GEGEN MESSWERTE, nicht gegen die Annahme. Die Messwerte
+   stehen in `tools/typo-map.js` (Abschnitt 7: `KETTEN`, `EM_EINS`,
+   `UEBERSCHRIFTEN_GEMESSEN`), zusammen mit ihrer Erhebungsweise. Das Ziel
+   einer Deklaration holen alle drei aus `M.zielFuer()` — der einen Stelle,
+   die ein Ziel bestimmt. Wer hier `M.ZUORDNUNG` direkt nachschlaegt, prueft
+   wieder die Annahme statt des Ergebnisses.
+   =========================================================================== */
+
+/** Der Bildpunktwert eines Ziels, oder `null` fuer eine geduldete Stelle. */
+function zielPx(datei, selektoren, wert, skala) {
+    const t = M.zielFuer(datei, selektoren, wert);
+    return t ? skala[t] : null;
+}
+
+/** Einen Anker `datei||selektoren||wert` wieder zerlegen. Der Selektor darf
+ *  selbst kein `||` enthalten — CSS kennt den Operator nicht, und die
+ *  Verwesungsproben unten belegen, dass jeder Anker eine Deklaration trifft. */
+function zerlegeAnker(a) {
+    const i = a.indexOf('||');
+    const j = a.lastIndexOf('||');
+    return { datei: a.slice(0, i), selektoren: a.slice(i + 2, j), wert: a.slice(j + 2) };
+}
+
+describe('W5-W9 — die Verschachtelungsketten werden nach dem GEMESSENEN Wert zugeordnet', () => {
+    const skala = M.skalaWerte();
+    const { alle } = W.erheben();
+    const vorhanden = new Set(alle.map(d => M.kettenAnker(d.datei, d.selektoren, d.wert)));
+
+    /** Alle Kanten flach: Eltern- und Kindanker mit ihren Messwerten. */
+    const kanten = M.KETTEN.flatMap(g =>
+        g.kinder.map(([kind, kindPx, elemente, text]) => ({
+            eltern: g.eltern,
+            elternPx: g.elternPx,
+            kind,
+            kindPx,
+            elemente,
+            text
+        }))
+    );
+
+    test('der Bestand ist der gemessene: 35 Elternteile, 55 Kanten, 319 Elemente', () => {
+        expect(M.KETTEN.length).toBe(35);
+        expect(kanten.length).toBe(55);
+        expect(kanten.reduce((s, k) => s + k.elemente, 0)).toBe(319);
+        // ... und kein Elternteil sitzt auf 16 px: dort stimmt die Annahme
+        // von altPx(), und ein Eintrag waere eine Messung ohne Gegenstand.
+        M.KETTEN.forEach(g => expect(Math.abs(g.elternPx - 16)).toBeGreaterThan(0.01));
+    });
+
+    test('VERWESUNGSPROBE: jeder Anker einer Kette trifft eine Deklaration', () => {
+        // Ohne diese Probe wuerde ein Eintrag, dessen Selektor umbenannt
+        // wurde, lautlos aufhoeren zu urteilen — die gefaehrlichste Sorte
+        // gruener Test.
+        const fehlt = [];
+        M.KETTEN.forEach(g => {
+            if (!vorhanden.has(g.eltern)) fehlt.push(`ELTERN ${g.eltern}`);
+            g.kinder.forEach(([kind]) => {
+                if (!vorhanden.has(kind)) fehlt.push(`KIND ${kind}`);
+            });
+        });
+        expect(fehlt).toEqual([]);
+    });
+
+    test('kein Kind wird groesser als sein Elternelement — die Ordnung kippt nicht', () => {
+        // DER KERN DES BEFUNDES. `.char-attr-pill` (0.7em = 11,2 px) wird
+        // --text-xs = 11 px; seine drei Kinder (0.9em / 1.1em / 0.95em von
+        // 11,2 px = 10,08 / 12,32 / 10,64 px) wuerden nach der Tabelle 14 /
+        // 16 / 14 px — das Kind waere 45 Prozent groesser als die
+        // Grundgroesse seines Behaelters, vorher waren es 10 Prozent, und die
+        // Pillenbox waechst um 28,6 Prozent.
+        //
+        // Geurteilt wird ueber die ORDNUNG und nicht ueber die Strenge: die
+        // Skala hat acht Sprossen, zwei Messwerte im Abstand von 1,4 px
+        // landen zu Recht auf derselben. Was nicht passieren darf, ist eine
+        // UMKEHRUNG.
+        const kippt = [];
+        kanten.forEach(k => {
+            const e = zerlegeAnker(k.eltern);
+            const c = zerlegeAnker(k.kind);
+            const ez = zielPx(e.datei, e.selektoren, e.wert, skala);
+            const cz = zielPx(c.datei, c.selektoren, c.wert, skala);
+            // Eine geduldete Seite behaelt ihren em-Wert und folgt dem
+            // Elternteil weiter proportional — dann kann nichts kippen.
+            if (ez === null || cz === null) return;
+            const ordnung =
+                k.kindPx < k.elternPx - 0.01 ? '<' : k.kindPx > k.elternPx + 0.01 ? '>' : '=';
+            const schlecht =
+                (ordnung === '<' && cz > ez) ||
+                (ordnung === '>' && cz < ez) ||
+                (ordnung === '=' && cz !== ez);
+            if (schlecht) {
+                kippt.push(
+                    `${c.datei} ${c.selektoren} { ${c.wert} }  gemessen ${k.kindPx} -> ${cz}  ` +
+                        `[${ordnung}]  Eltern ${e.selektoren} { ${e.wert} } ${k.elternPx} -> ${ez}  ` +
+                        `(${k.elemente} Elemente, ${k.text} mit Textknoten)`
+                );
+            }
+        });
+        expect(kippt).toEqual([]);
+    });
+
+    test('kein Sprung ueber 2 px gegen den GEMESSENEN Wert, ausser benannt', () => {
+        // Das Abnahmekriterium des Handoffs ("keine Aenderung > 2 px ausser
+        // beabsichtigt") gegen die Messung gerechnet statt gegen die Annahme.
+        // Zwei Arten von Sprung sind erlaubt, und beide sind benannt:
+        //   - die Hebung auf die Untergrenze (E-4): was unter 11 px liegt,
+        //     soll nach oben, und `--text-xs` ist die unterste Sprosse.
+        //   - eine Stelle mit begruendetem Eintrag in SONDERZUORDNUNG.
+        const zuViel = [];
+        kanten.forEach(k => {
+            const c = zerlegeAnker(k.kind);
+            const cz = zielPx(c.datei, c.selektoren, c.wert, skala);
+            if (cz === null) return;
+            if (Math.abs(cz - k.kindPx) <= 2) return;
+            if (cz === M.KLEINST_GRENZE && k.kindPx < M.KLEINST_GRENZE) return;
+            if (M.SONDERZUORDNUNG[k.kind]) return;
+            zuViel.push(
+                `${c.datei} ${c.selektoren} { ${c.wert} }  gemessen ${k.kindPx} -> ${cz}  ` +
+                    `(${(cz - k.kindPx > 0 ? '+' : '') + (cz - k.kindPx).toFixed(2)} px, ` +
+                    `${k.elemente} Elemente, ${k.text} mit Textknoten)`
+            );
+        });
+        expect(zuViel).toEqual([]);
+    });
+
+    test('GEGENPROBE: die 16-px-Annahme weicht wirklich ab, die Probe ist nicht leer', () => {
+        // Ohne diese Gegenprobe koennten die Faelle oben auch deshalb gruen
+        // sein, weil Annahme und Messung ueberall zusammenfallen.
+        const abweichend = kanten.filter(k => {
+            const c = zerlegeAnker(k.kind);
+            const annahme = M.altPx(c.wert);
+            return annahme !== null && Math.abs(annahme - k.kindPx) > 0.01;
+        });
+        expect(abweichend.length).toBeGreaterThan(25);
+    });
+});
+
+describe('W5-W10 — die Formularschrift bleibt ueber der Auto-Zoom-Schwelle (E-2)', () => {
+    const skala = M.skalaWerte();
+    const { alle } = W.erheben();
+    const SCHWELLE = 16;
+    const STEUERELEMENTE = ['input', 'select', 'textarea'];
+    const istSteuerelement = el => !!el && el.split(',').some(t => STEUERELEMENTE.includes(t));
+
+    test('EM_EINS ist vollstaendig: genau die `1em`/`1.0em`-Deklarationen des Bestandes', () => {
+        // Die Vollstaendigkeit ist der Grund, warum diese Liste taugt: eine
+        // neue `1em`-Stelle kann nicht unbeurteilt hineinwachsen.
+        const imBestand = alle
+            .filter(d => d.wert === '1em' || d.wert === '1.0em')
+            .map(d => M.kettenAnker(d.datei, d.selektoren, d.wert))
+            .sort();
+        expect(M.EM_EINS.map(e => e[0]).sort()).toEqual(imBestand);
+        expect(imBestand.length).toBe(27);
+    });
+
+    test('jede Stelle ohne Messwert traegt ihren Grund', () => {
+        // Eine offene Messschuld mit Grund ist nachvollziehbar; eine 0 an
+        // derselben Stelle waere eine Behauptung.
+        const ohne = M.EM_EINS.filter(e => e[1] === null).map(e => e[0]);
+        expect(ohne.length).toBe(9);
+        ohne.forEach(a => {
+            expect(typeof M.EM_EINS_UNGEMESSEN[a]).toBe('string');
+            expect(M.EM_EINS_UNGEMESSEN[a].length).toBeGreaterThan(40);
+        });
+        // ... und keine Begruendung ohne Stelle
+        expect(Object.keys(M.EM_EINS_UNGEMESSEN).sort()).toEqual([...ohne].sort());
+    });
+
+    test('kein Eingabefeld mit heute >= 16 px faellt nach der Zuordnung darunter', () => {
+        // E-2 woertlich: "unter 16 px loest ein Telefon beim Antippen den
+        // Auto-Zoom aus, das ist nach Arbeitsregel 10 eine
+        // Funktionsaenderung". Die Zusicherung gilt fuer die Felder, die
+        // heute geschuetzt SIND — 428 der 617 Formularelemente liegen schon
+        // vorher darunter, das ist ein eigener Befund und nicht dieser.
+        const befunde = [];
+        M.EM_EINS.forEach(([a, px, element]) => {
+            if (px === null || px < SCHWELLE || !istSteuerelement(element)) return;
+            const d = zerlegeAnker(a);
+            const z = zielPx(d.datei, d.selektoren, d.wert, skala);
+            if (z === null || z >= SCHWELLE) return; // geduldet oder gross genug
+            befunde.push(`${d.datei} ${d.selektoren} { ${d.wert} }  gemessen ${px} -> ${z} px`);
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('GEGENPROBE: es gibt wirklich Eingabefelder mit 16 px zu schuetzen', () => {
+        const zuSchuetzen = M.EM_EINS.filter(
+            ([, px, el]) => px !== null && px >= SCHWELLE && istSteuerelement(el)
+        );
+        expect(zuSchuetzen.length).toBe(5);
+    });
+});
+
+describe('W5-W11 — die Ueberschriften-Hierarchie im Reichtext-Inhalt bleibt eine', () => {
+    const skala = M.skalaWerte();
+    const { alle } = W.erheben();
+    const vorhanden = new Set(alle.map(d => M.kettenAnker(d.datei, d.selektoren, d.wert)));
+    const stufen = [1, 2, 3, 4, 5, 6].map(n => M.ueberschriftAnker(n));
+
+    test('VERWESUNGSPROBE: die sechs gebauten Anker treffen ihre Deklarationen', () => {
+        // Die Anker werden aus REICHTEXT_BEHAELTER und UEBERSCHRIFTEN_WERTE
+        // GEBAUT; diese Probe belegt die Konstruktion, statt sie zu glauben.
+        expect(M.REICHTEXT_BEHAELTER.length).toBe(8);
+        expect(M.UEBERSCHRIFTEN_WERTE.length).toBe(6);
+        expect(stufen.filter(a => !vorhanden.has(a))).toEqual([]);
+    });
+
+    test('die Messung zeigt sechs streng fallende Stufen in allen acht Behaeltern', () => {
+        expect(M.UEBERSCHRIFTEN_GEMESSEN.length).toBe(8);
+        expect(M.UEBERSCHRIFTEN_GEMESSEN.map(z => z[0]).sort()).toEqual(
+            [...M.REICHTEXT_BEHAELTER].sort()
+        );
+        M.UEBERSCHRIFTEN_GEMESSEN.forEach(([name, behaelterPx, absatzPx, h]) => {
+            expect(name.startsWith('.')).toBe(true);
+            expect(h.length).toBe(6);
+            expect(new Set(h).size).toBe(6);
+            h.forEach((v, i) => {
+                if (i) expect(v).toBeLessThan(h[i - 1]);
+            });
+            // h4 traegt 1.0em und ist damit genau der Fliesstext
+            expect(h[3]).toBeCloseTo(absatzPx, 2);
+            expect(absatzPx).toBeCloseTo(behaelterPx, 2);
+        });
+    });
+
+    test('nach der Zuordnung bleiben sechs Stufen sechs Stufen', () => {
+        // ZWEI GUELTIGE ENTWUERFE, und der Fall laesst beide zu:
+        //   (a) die sechs Regeln bleiben in `em` (namentlich geduldet). Dann
+        //       skalieren sie mit dem Behaelter — und der traegt gemessen
+        //       13,6 / 14,4 oder 16 px, ist also nicht einer, sondern drei.
+        //       Die Hierarchie ist dann durch die Bauart erhalten.
+        //   (b) die sechs Regeln landen auf sechs VERSCHIEDENEN Sprossen, die
+        //       streng fallen und nicht unter den Fliesstext des Behaelters
+        //       rutschen.
+        // Was der Fall ausschliesst, ist das Dazwischen: `xl / xl / lg / md /
+        // md / md` = 20 / 20 / 16 / 14 / 14 / 14 px — drei Stufen statt
+        // sechs, und h4 bis h6 sind im 16-px-Behaelter KLEINER als der Text,
+        // den sie ueberschreiben.
+        const ziele = stufen.map(a => {
+            const d = zerlegeAnker(a);
+            return zielPx(d.datei, d.selektoren, d.wert, skala);
+        });
+
+        if (ziele.every(z => z === null)) return; // Entwurf (a): alle geduldet
+
+        const befunde = [];
+        if (ziele.some(z => z === null)) {
+            befunde.push(
+                'teils geduldet, teils umgestellt: ' +
+                    ziele.map((z, i) => `h${i + 1}=${z === null ? 'em' : z}`).join(' ') +
+                    ' — eine halb umgestellte Hierarchie ist keine.'
+            );
+        } else {
+            if (new Set(ziele).size !== 6) {
+                befunde.push(
+                    `nur ${new Set(ziele).size} verschiedene Stufen statt 6: ` +
+                        ziele.map((z, i) => `h${i + 1}=${z}`).join(' ')
+                );
+            }
+            ziele.forEach((z, i) => {
+                if (i && z >= ziele[i - 1]) {
+                    befunde.push(`h${i + 1}=${z} ist nicht kleiner als h${i}=${ziele[i - 1]}`);
+                }
+            });
+            M.UEBERSCHRIFTEN_GEMESSEN.forEach(([name, , absatzPx]) => {
+                ziele.forEach((z, i) => {
+                    if (z < absatzPx) {
+                        befunde.push(
+                            `${name}: h${i + 1}=${z} px ist kleiner als der Fliesstext ` +
+                                `(${absatzPx} px), den es ueberschreibt`
+                        );
+                    }
+                });
+            });
+        }
+        expect(befunde).toEqual([]);
+    });
+});
