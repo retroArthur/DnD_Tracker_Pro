@@ -6981,3 +6981,291 @@ npx playwright test tests/e2e/features/computed-style-diff.spec.js
 ```
 
 ---
+
+## W5-F — Die Abnahme der Welle 5: der Grundlinien-Diff als Hauptnachweis (2026-10-06)
+
+**Status: ERLEDIGT.** Schritt 9 des geprüften Plans (Abnahme, Sollstand, Bilderserie).
+Diese Einheit ändert **keine** Quelldatei der App — sie misst, legt Bilder ab und schreibt
+diese Akte. Alles, was hier steht, ist am Buendel von `63103b1` **selbst gefahren** und
+nicht aus den Einheiten W5-A bis W5-E übernommen. Die beiden Commits dieser Einheit
+(`514318c` Bilderserie, danach diese Akte) fassen nur `tests/` und `.planning/` an; das
+gebaute Buendel ist davon unberuehrt, und deshalb gelten alle Zahlen unten unveraendert
+fuer den Zweigkopf.
+
+### Der Grundlinien-Diff — die Hauptabnahme
+
+Gegen die **eingefrorene Grundlinie** `grundlinie-v5.json` (HEAD `7e4aa09`, also die ganze
+Welle 5), gefüllte Kampagne, 24 Ansichten, vier Themes, 1440 und 375 px:
+
+| Lauf | verglichene Schlüssel | Größe geändert | Spanne | **über 2 px** | Gewicht | Zeilenhöhe | Sichtbarkeit |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| dark-1440 | 3651 | 1855 | −14 .. +2 px | **10** | 200 | 869 | 0 |
+| light-1440 | 3651 | 1855 | −14 .. +2 px | **10** | 200 | 869 | 0 |
+| sepia-1440 | 3651 | 1855 | −14 .. +2 px | **10** | 200 | 869 | 0 |
+| contrast-1440 | 3651 | 1855 | −14 .. +2 px | **10** | 200 | 869 | 0 |
+| dark-375 | 3616 | 1623 | −14 .. +2 px | **10** | 195 | 867 | 0 |
+| **Summe** | **18220** | **9043** | | **50** | **995** | **4343** | **0** |
+
+**Die 50 Überschreitungen sind 10 Elementschlüssel, jeder in allen fünf Läufen.** Es sind
+dieselben 10, die Schritt 4 (W5-C) einzeln beurteilt hat; die Einheiten W5-D und W5-E haben
+keine einzige hinzugefügt, und diese Abnahme bestätigt das an einer eigenen Erhebung. Jede
+trägt ihre Begründung **am Code**, nicht in dieser Akte — das ist die Lesart von
+"beabsichtigt":
+
+| Delta | Selektor | von -> nach | Begründung am Code |
+| --- | --- | --- | --- |
+| −14,00 | `.timer-hero-time` | 48 -> 34 | "Die Uhrzeit ist Text. `--text-3xl` ist die nächste Sprosse; die Skala hat zwischen 34 und 72 px keine, und der 250-px-Ring trägt 34 px ohne Weiteres" |
+| −14,00 | `.fdp-number` | 48 -> 34 | "Die Wurfzahl ist Text, kein Ikon. `--text-3xl` und nicht `--text-hero`: das schwebende Paneel bleibt dem Würfel-Hero (72 px) untergeordnet" |
+| −8,00 | `.dice-hero-result` | 80 -> 72 | "Die größte Zahl der App; `--text-hero` ist genau für sie da (Handoff §7)" |
+| −2,40 | `.dms-dice-result` | 22,40 -> 20 | "Die Wurfzahl des Würfel-Widgets ist Text" |
+| −2,40 | `.attr-input` (6×: `enc-str/dex/con/int/wis/cha`) | 22,40 -> 20 | "Ein Eingabefeld mit dem Attributwert, also Text. 20 px liegt über der 16-px-Schwelle und löst beim Antippen keinen Auto-Zoom aus (E-2)" |
+
+**Kein weiterer Schlüssel überschreitet die Schwelle, in keinem der fünf Läufe. Null
+Sichtbarkeitswechsel.** Die 4343 Zeilenhöhen-Befunde sind die **mechanische Folge** der
+Größenänderung: eine einheitenlose `line-height` rechnet sich aus der Größe.
+
+Der Diff führt außerdem 217 nur einseitig vorhandene Schlüssel und 18 nicht gefundene
+Umschalter. **Beides liegt am Alter der Grundlinie und nicht an einer Änderung dieser
+Welle** — die eingefrorene Grundlinie stammt aus den Vorab-Skripten und kennt nur die
+Ruhelage, während das committete Werkzeug drei Zustände erhebt. Die 1936 "nur neu"-Schlüssel
+der beiden Dark-Läufe sind genau diese Zustände; die 49 "nur alt" sind vier
+Bestiar-Listenzeilen (Nachladen) und die 21 `dicestats`-Beschriftungen, die erst seit
+Schritt 8 eine Klasse tragen und damit erstmals **erfasst** sind.
+
+### Die Zielquote — Zähler, Nenner und Bezugsmenge
+
+**Bezugsmenge ist die TEXT-Deklaration (E-3/O-13), nicht das Element und nicht "alle".**
+Gemessen mit demselben Erhebungspfad, den `W5-R-10` benutzt (18 Dateien unter
+`assets/styles`, ohne `variables.css` und `fonts.css`):
+
+| Menge | Zähler | Nenner | Quote |
+| --- | --- | --- | --- |
+| **Text-Deklarationen** (857 − 26 ohne Lesetext) | **820** | **831** | **98,68 %** |
+| alle `font-size`-Deklarationen | 820 | 857 | 95,68 % |
+
+Die 820 sind 813 Deklarationen auf einer Sprosse plus 7 `inherit` (legt nichts fest); die
+11 Stellen, die in der Textmenge **bleiben** und daneben liegen, sind die drei geduldeten
+TEXT-Gruppen: sechs Überschriftenstufen des Reichtext-Inhalts, vier Leser der
+Mobilvergrößerung (E-2) und die Tastenhilfe. Sie DRÜCKEN die Quote, und das sollen sie.
+
+**Die Element-Quote erreicht die 95 Prozent ebenfalls — das war beim Aufschreiben von E-3
+nicht erwartet.** Feld `skalaAnteilSichtbar` des Grundlinienwerkzeugs, sichtbare Elemente
+auf einem Skalenwert:
+
+| Lauf | vorher (7e4aa09) | nachher |
+| --- | --- | --- |
+| dark-1440 | 63,36 % | **98,11 %** |
+| light/sepia/contrast-1440 | 63,36 % | **97,00 %** |
+| dark-375 | 63,45 % | **97,81 %** |
+
+Die Begründung von O-13 ("auf der Elementmenge ist 95 % arithmetisch unerreichbar") ist
+damit **gemessen widerlegt**. Sie bleibt trotzdem die richtige Entscheidung: die
+Deklarationsquote ist die prüfbare, weil sie nicht davon abhängt, wie viele Elemente eine
+Saat gerade erzeugt. Beide Zahlen stehen hier nebeneinander, damit niemand die eine für die
+andere hält. Einschränkung, die dazugehört: die 63,36 % stammen aus dem Vorab-Skript, die
+98,11 % aus dem committeten Werkzeug — zwei Umsetzungen derselben Definition (dieselben acht
+Sprossen, nachgeprüft), nicht zweimal dasselbe Programm.
+
+### Die Untergrenze
+
+**0 Elemente unter 11 px außerhalb der namentlichen Liste**, in beiden unabhängigen
+Messungen:
+
+- `W5-R-09` (Browser, drei Zustände, zwei Breiten, gefüllte Kampagne): grün, mit
+  Werte- und Anzahlprüfung je Signatur und der Zusicherung "Minimum = 7".
+- Eigene Erhebung über die fünf Grundlinien-Läufe: **29 Elemente in der Ruhelage** (vorher
+  **153**), 33 über alle drei Zustände, verteilt auf **genau fünf** Signaturen —
+  `span.slot-pip` und `span.filled.slot-pip` (je 2 bei 8 px), `span.tb-caret` (4 bei 9 px),
+  `text.ds-hist-face-label` (20 bei 8) und `text.ds-hist-axis-label` (1 bei 7).
+
+**Jede Ausnahme trifft eine existierende Stelle** — das prüft die VERWESUNGSPROBE von
+`W5-R-09` auf die Anzahl genau, und sie ist grün.
+
+**Die Liste ist mit 34 Elementen in 5 Signaturen länger als die 25 Stellen, die E-4 nennt,
+und das muss hier stehen statt in einer Fußnote.** E-4 führt 21 SVG-Beschriftungen und 4
+`.slot-pip`. Dazu kommen 5 `.kbd-hint` (8 px) und 4 `.tb-caret` (9 px), beide in den
+Schritten 4 und 5 einzeln beurteilt. Auf die Frage, die E-4 wirklich stellt — "was von dem,
+was man LIEST, ist kleiner als 11 px?" — lautet die Antwort **26**: 21 SVG-Beschriftungen in
+Benutzereinheiten und 5 Tastenhilfen. Die 8 `.slot-pip`/`.tb-caret` tragen keinen
+Textinhalt. Die eine Abweichung von E-4 sind damit die fünf Tastenhilfen, und ihr Grund ist
+gemessen: bei 11 px laufen sie ineinander.
+
+### Die Linux-Nachstellung
+
+Der Auftrag verlangt "die volle Suite ODER mindestens jede Leiste und jede Eingabe unter der
+breiten Schrift". Gefahren ist der zweite Weg, beziffert, über alle 24 Ansichten, Vorzustand
+`7e4aa09` gegen HEAD, je mit Segoe und mit Verdana (Faktor 1,1554 — Textbreite 114,75 ->
+132,59 px, am CI-Befund kalibriert), bei 1440 und 375 px:
+
+| Lage | Leisten gesehen | beschnitten | Überhang | Eingaben | beschnitten | Knöpfe | beschnitten | Seitenüberlauf |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1440 / Segoe | 193 -> 193 | 0 -> 0 | 0 -> 0 | 50 -> 50 | 0 -> 0 | 209 -> 209 | 0 -> 0 | 0 -> 0 |
+| 1440 / Verdana | 193 -> 193 | 0 -> 0 | 0 -> 0 | 50 -> 50 | 0 -> 0 | 209 -> 209 | 0 -> 0 | 0 -> 0 |
+| 375 / Segoe | 191 -> 191 | 0 -> 0 | 0 -> 0 | 50 -> 50 | 0 -> 0 | 188 -> 188 | 0 -> 0 | 0 -> 0 |
+| 375 / Verdana | 191 -> 191 | 0 -> 0 | 0 -> 0 | 50 -> 50 | 0 -> 0 | 188 -> 188 | 0 -> 0 | 0 -> 0 |
+
+**Keine Änderung in keiner der vier Lagen.** Das ist die Fehlerklasse, die die CI schon
+einmal 12 Tests gekostet hat, und diese Welle ändert Schriftgrößen — die Probe gehört dazu.
+
+**Die Probe hat sich dabei selbst einmal belogen, und das bleibt hier stehen.** Der erste
+Lauf meldete in allen vier Lagen "0 -> 0" bei JEDER Zeile — weil `page.evaluate` nur EIN
+Argument übergibt, der Aufruf mit zweien warf, und ein `.catch(() => null)` den Fehler
+verschluckte. Eine Messung, die nichts gesehen hat, meldet "0 Änderungen" und sieht aus wie
+ein Erfolg. Die Fassung oben hat deshalb eine Selbstprobe: sie nennt die Zahl der GESEHENEN
+Leisten, Eingaben und Knöpfe und schreibt "NULLMESSUNG" hin, wenn eine davon 0 ist.
+
+### E-2 nachgerechnet: der Auto-Zoom
+
+E-2 ist mit dem Satz begründet, unter 16 px löse ein Telefon beim Antippen den Auto-Zoom
+aus. Diese Zusage ist nirgends bewacht, also hier gemessen — 201 antippbare Textfelder (die
+fünf Aufklapp-Formulare geöffnet), bei 375 px:
+
+| | vorher (7e4aa09) | nachher |
+| --- | --- | --- |
+| antippbare Felder | 201 | 201 |
+| davon unter 16 px | **75** | **75** |
+| die Grenze neu unterschritten | — | **0** |
+| die Grenze verlassen | — | 0 |
+| Größe gesunken / gestiegen | — | 71 / 11 |
+
+**Kein einziges Feld überquert die 16-px-Linie in irgendeine Richtung.** Die Welle
+verschlechtert die Lage also nicht — aber sie verbessert sie auch nicht, und die Zahl 75
+gehört benannt: **E-2 schützt nachweislich weniger, als sein Begründungssatz verspricht.**
+Die Mobilvergrößerung hält 126 Felder bei oder über 16 px; die übrigen 75 lagen schon vorher
+darunter (Suchfelder bei 14, Charakterformular 15,20 -> 14, Bestiar 13,33 -> 12). Das zu
+entfernen wäre schlechter gewesen — das ist der Kern von E-2 und bleibt richtig. Dass es
+reicht, ist nicht gemessen und war nie gemessen. Als Folgearbeit unten geführt.
+
+### Der Stil-Sollstand
+
+**Die Neuerhebung dieses Schritts ist byteidentisch mit der bestehenden Datei.** Mit
+`UPDATE_STYLE_BASELINE=1` neu erhoben: SHA-256 vorher und nachher `2b7b99df8ced2d39…`,
+`git diff` über die Datei **0 Zeilen**. Das ist die stärkste Form von "0 bewegt" — bewiesen
+statt behauptet, und genau die Probe, deren Ausfall die Runde W5-E/1 nachträglich hat holen
+müssen. `EXPECTED_DEVIATION_KEYS` und `EXPECTED_DEVIATION_KEYS_NARROW` sind **beide leer**
+(nachgelesen, nicht erinnert) — das ist die eigentliche Ratsche dieses Schritts.
+
+Schlüsselweise über die **ganze Welle** (`tools/vergleich-stil-sollstand.js --alt 7e4aa09
+--neu HEAD --schluessel`, gerechnet auf den Digest-WERTEN):
+
+| Durchgang | vorher | nachher | geändert | Zugänge | Abgänge |
+| --- | --- | --- | --- | --- | --- |
+| standard | 1213 | 1234 | 452 | 21 | 0 |
+| narrow | 1123 | 1144 | 414 | 21 | 0 |
+| reducedMotion | 1213 | 1234 | 452 | 21 | 0 |
+| **SUMME** | **3549** | **3612** | **1318** | **63** | **0** |
+
+**1318 und nicht 1460, und der Unterschied ist kein Widerspruch.** W5-E summiert die vier
+Neuerhebungen der Welle einzeln (9 + 1143 + 24 + 284 = 1460); diese Zeile misst Anfang gegen
+Ende. Ein Digest, der in W5-D und noch einmal in W5-E bewegt wurde, zählt dort zweimal und
+hier einmal. **1460 ist die Zahl der Bewegungen, 1318 die Zahl der bewegten Schlüssel.**
+Die 63 Zugänge sind dreimal dieselben 21 `dicestats`-Beschriftungen, die erst seit Schritt 8
+eine Klasse tragen; **0 Abgänge** in allen drei Durchgängen.
+
+### Die Bilderserie
+
+`tests/e2e/features/welle-5-screens.spec.js`, hinter eigenem Schalter `WELLE5_SCREENS=1`,
+Muster der vier Vorgänger. Auf gefüllter Kampagne, vier Themes: **24 Vollbilder + 15
+Zustandsbilder + 12 Naheinstellungen = 51 je Theme, 204 insgesamt**, davon drei bei 375 px.
+Dazu ein **Vorher/Nachher-Kontaktbogen** mit 15 Paaren (`kontaktbogen-welle-5.png`), beide
+Spalten mit demselben Seed, demselben Theme und demselben Bildausschnitt, die Werte unter
+jedem Bild GEMESSEN. Ablage unter `tests/e2e/__screens__/welle-5/`, von `.gitignore`
+ausgenommen.
+
+**Zwei Befunde am Messaufbau, in der ersten Runde gefunden und behoben:** (1) bei 375 px
+liegt die feste Mobil-Kopfzeile über dem Formularkopf, `scrollIntoViewIfNeeded` wird dort
+nie "stabil sichtbar" und lief in allen vier Themes in den Zeitablauf — genau beim Bild zur
+E-2-Frage; (2) `Escape` schließt Modale, aber NICHT die Aufklapp-Formulare, weshalb die
+Charakterkarte im Mobilbild vom offenen Formular verdeckt war.
+
+### Geprüfte Tore
+
+`npx jest` **2110/2110 in 78 Suiten** · `npx playwright test` **604 bestanden /
+31 übersprungen / 0 Fehlschläge** · `pytest tests/build` **30** · `npm run lint` exit 0 mit
+**exakt 363** Warnungen · `typecheck` und `typecheck:strict` exit 0 · beide Builds exit 0 ·
+`check-f18-kaskade --check` OK (117 Abhängigkeiten) · `sync-aktenlage-anker --check` 0
+Abweichungen · **CLAUDE.md unverändert** (`git diff 7e4aa09..HEAD -- CLAUDE.md` leer).
+
+**Jede Abweichung vom Basiswert ist aufgerechnet, nicht gerundet:**
+
+- Jest **1963 -> 2110 (+147)**: 110 in drei neuen Suiten (`typo-baseline.test.js`,
+  `typo-map.test.js`, `stil-sollstand-vergleich.test.js`) plus 37 neue Fälle in
+  `design-consistency.test.js` (W5-R-05 9 · W5-R-06 7 · W5-R-07 9 · W5-R-08 8 · W5-R-10 4).
+  110 + 37 = 147, Ziffer für Ziffer.
+- Suiten **75 -> 78 (+3)**: dieselben drei neuen Dateien.
+- Playwright **595 -> 604 (+9)**: `schriftuntergrenze.spec.js` 4 (neu) ·
+  `tastenhilfen.spec.js` 4 (neu) · ein neuer Fall in `breite-schrift.spec.js`
+  ("(5) Titelgruppe und primäre Aktion teilen bei 375x812 eine Zeile"). 4 + 4 + 1 = 9.
+- Übersprungen **27 -> 31 (+4)**: die vier Themes der neuen Bilderserie, die sich ohne
+  `WELLE5_SCREENS=1` selbst überspringt — genau wie ihre vier Vorgänger.
+- Lint **363 -> 363**, pytest **30 -> 30**, typecheck **0 -> 0**: unverändert.
+
+**Ratschen — keine gestiegen, zwei gesunken:** DUBLETTEN **0** · `!important` **105 -> 104**
+(−1) · Inline-Attribute **254 -> 252** (−2, und nur um 2, wie die Rechnung von E-2 es
+vorgab) · `transition: all` **0** · SVG_MAX **0** · AUSSERHALB_MAX **0** · EM_MAX **6** ·
+INLINE_AUSSERHALB_MAX **0**. Alle direkt nachgezählt, nicht aus den Schranken abgelesen.
+
+### Offene Punkte
+
+- **NEU, am Messaufbau und nicht am Code: `computed-style-diff.spec.js` steht mit 25,1 s
+  gegen eine 30-s-Schranke.** Im zweiten von drei Vollläufen ist der Fall "Breitere
+  Schriftmetrik bewegt den Digest nicht" in den Zeitablauf gelaufen (603 statt 604) — in
+  demselben Lauf, in dem nebenher `jest` und vier `--list`-Aufrufe liefen; der Lauf dauerte
+  7,4 statt 5,7 Minuten. Zwei Vollläufe ohne Nebenlast sind grün. **Keine Regression dieser
+  Welle** (die Spec-Datei ist unverändert), aber die Reserve ist 4,9 s, und der Sollstand
+  ist in dieser Welle um 63 Schlüssel gewachsen. Auf einem langsameren CI-Läufer ist das die
+  nächste rote Lampe.
+- **NEU: E-2 schützt weniger, als sein Begründungssatz verspricht** (Zahlen oben). 75 von
+  201 antippbaren Textfeldern liegen bei 375 px unter 16 px, vorher wie nachher. Keine
+  Regression dieser Welle — aber auch keine Zusage, die man zitieren dürfte. Wer sie
+  einlösen will, braucht eine eigene Einheit und eine Ratsche, die das Element misst.
+- **Unverändert aus W5-E, und für die Welle 5 die stärkste offene Stelle: die
+  Histogramm-Beschriftungen sind auf dem Telefon 4,76 bis 5,44 px groß**, obwohl ihre
+  Deklaration 7 bzw. 8 sagt. Ursache ist die viewBox-Skalierung, nicht der Wert.
+- **Unverändert: die Layoutregel der Tastenhilfen** (nur die Hilfe des berührten Knopfes
+  zeigen) ist die Voraussetzung dafür, die 8 px je auf 11 zu heben. Funktionsänderung.
+- **Unverändert: die Schrift-FAMILIE der Bedienelemente.** Die neue Regel setzt nur
+  `font-size`; Knöpfe und Felder benutzen weiter die Schrift des Systems.
+- **RESTSCHULD, ausdrücklich NICHT in dieser Welle behoben und hier geführt, damit sie nicht
+  verschwindet: die zehn kaputten `woff2` unter `assets/fonts/`** (kyrillische bzw.
+  devanagari Teilmengen, kein lateinischer Kleinbuchstabe) **und der `file://`-Pfad der
+  gebündelten Schriften.** E-1 nimmt beides ausdrücklich aus der Welle 5 heraus (kein
+  Schriftwechsel, keine gebündelte Schrift, die sieben `tnum`-Deklarationen entfallen
+  ersatzlos als gemessener Nullzug). Es bleibt eine eigene Reparatur. Dazu gehören die vier
+  wirkungslosen Editor-Schriften in `EDITOR_FONTS` und die fehlende Glyphendeckungs-Probe im
+  Testnetz.
+- **Unverändert: der tote Würfel-Behälter `#dice-result`** und **die fehlende
+  Zwischensprosse zwischen 34 und 72 px** (die Uhr im 250-px-Ring — der Kontaktbogen zeigt
+  sie, und sie wirkt im Ring jetzt kleiner).
+- **Messlücke der Bilderserie, benannt statt geschönt:** die Naheinstellung
+  `editor-tastenhilfen` zeigt die vier `.tb-caret`, nicht die fünf `.kbd-hint` — die
+  erscheinen erst beim Berühren EINES Knopfes, und der Zeiger steht beim Auslösen auf der
+  Leiste. Die Zahlen dazu stehen in `tastenhilfen.spec.js`. Ebenso: in den drei Mobilbildern
+  liegt die rote Mehrfach-Tab-Warnung über der Werkzeugleiste — ein Artefakt des
+  Messaufbaus (ein zweiter Kontext hielt die Kampagnensperre), keine Änderung dieser Welle.
+- **`npm run check` bleibt vorbestehend rot**, weil `prettier --check` über den ganzen Baum
+  läuft. Die eine in dieser Einheit angelegte Datei (`welle-5-screens.spec.js`) ist einzeln
+  geprüft und konform.
+
+### Befehle
+
+```bash
+# Der Grundlinien-Diff, die Hauptabnahme dieser Welle
+node tools/typo-baseline.js --out nachher.json
+node tools/typo-baseline.js --diff grundlinie-v5.json nachher.json --schwelle 2
+
+# Die Zielquote mit Zaehler und Nenner
+node tools/sync-typo-tokens.js --check
+
+# Die Untergrenze am Element (4 Faelle, zwei Breiten, drei Zustaende)
+npx playwright test tests/e2e/features/schriftuntergrenze.spec.js
+
+# Die Bilderserie und der Kontaktbogen
+WELLE5_SCREENS=1 npx playwright test tests/e2e/features/welle-5-screens.spec.js
+
+# Der Sollstand: Neuerhebung muss byteidentisch sein
+UPDATE_STYLE_BASELINE=1 npx playwright test tests/e2e/features/computed-style-diff.spec.js
+git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss leer sein
+```
+
+---
