@@ -12,13 +12,13 @@
         }
         
         [data-layout="mobile"] .mobile-nav-toggle-text {
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 500;
             color: var(--gold);
         }
         
         [data-layout="mobile"] .mobile-nav-toggle-icon {
-            font-size: 18px;
+            font-size: var(--text-xl);
             transition: transform var(--dur-slow) ease;
         }
         
@@ -86,7 +86,7 @@
             background: none;
             border: none;
             color: var(--text);
-            font-size: 1.3em;
+            font-size: var(--text-xl);
             cursor: pointer;
             padding: 8px;
         }
@@ -107,7 +107,7 @@
         
         [data-layout="mobile"] #mobile-timer-display {
             font-family: var(--font-mono);
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 600;
             color: var(--gold);
         }
@@ -226,7 +226,7 @@
             border: 1px solid var(--border);
             color: var(--text);
             cursor: pointer;
-            font-size: 16px;
+            font-size: var(--text-lg);
             transition: var(--trans-std);
             display: flex;
             align-items: center;
@@ -309,11 +309,11 @@
         }
         
         .session-timer-icon {
-            font-size: 14px;
+            font-size: var(--text-md);
         }
         
         .session-timer-display {
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 600;
             color: var(--gold-text);
             min-width: 65px;
@@ -333,7 +333,7 @@
             border: none;
             color: var(--text-dim);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--text-sm);
             padding: 2px 4px;
             border-radius: var(--radius-sm);
             transition: var(--trans-std);
@@ -347,13 +347,13 @@
         .session-content h3 {
             color: var(--gold-text);
             margin: 0 0 8px 0;
-            font-size: 1.1em;
+            font-size: var(--text-lg);
         }
         
         .session-content h4 {
             color: var(--cyan-text);
             margin: 12px 0 6px 0;
-            font-size: 0.95em;
+            font-size: var(--text-md);
         }
         
         .session-content p {
@@ -424,7 +424,7 @@
         
         .app-title {
             color: var(--gold-text);
-            font-size: 1.2em;
+            font-size: var(--text-xl);
         }
         
         .nav-tabs {
@@ -457,7 +457,7 @@
             padding: 8px 12px;
             cursor: pointer;
             border-radius: var(--radius-lg);
-            font-size: 12px;
+            font-size: var(--text-sm);
             font-weight: 500;
             white-space: nowrap;
             transition: var(--trans-std), border-left-width var(--dur) var(--ease), margin-left var(--dur) var(--ease); /* Geometrie des .drag-over-Balkens darunter — s. W4-R-03 */
@@ -488,7 +488,7 @@
             padding: 8px 12px;
             cursor: pointer;
             border-radius: var(--radius-lg);
-            font-size: 12px;
+            font-size: var(--text-sm);
             font-weight: 500;
             white-space: nowrap;
             transition: var(--trans-std);
@@ -539,7 +539,7 @@
         
         .card-title {
             color: var(--gold-text);
-            font-size: 1em;
+            font-size: var(--text-md);
             font-weight: 600;
         }
         
@@ -551,7 +551,7 @@
             padding: 6px 12px;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--text-sm);
             transition: var(--trans-std);
             display: inline-flex;
             align-items: center;
@@ -576,11 +576,11 @@
             background: var(--gold);
             color: var(--on-gold);
         }
-        .btn-sm { padding: 3px 8px; font-size: 11px; }
+        .btn-sm { padding: 3px 8px; font-size: var(--text-xs); }
 
         /* btn-xs: zweimal im Markup benutzt, nie definiert (F-13). Eine Stufe
            unter btn-sm. */
-        .btn-xs { padding: 2px 6px; font-size: 10px; }
+        .btn-xs { padding: 2px 6px; font-size: var(--text-xs); }
 
         /* btn-text: dreimal im Migrations-Assistenten benutzt, nie definiert
            (F-13). Reiner Text ohne Flaeche — fuer Nebenwege wie
@@ -690,7 +690,7 @@
         .form-group label {
             /* F-18-BEWACHT: tools/check-f18-kaskade.js haelt die Stellung
                dieses Blocks gegen jede Regel gleicher Spezifitaet fest. */
-            font-size: 13px;
+            font-size: var(--text-sm);
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
@@ -706,7 +706,7 @@
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
+            font-size: var(--text-sm);
         }
         
         .form-group textarea { min-height: 60px; resize: vertical; }
@@ -739,7 +739,7 @@
         .form-label {
             display: block;
             margin-bottom: 4px;
-            font-size: 13px;
+            font-size: var(--text-sm);
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.03em;
@@ -778,7 +778,7 @@
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
+            font-size: var(--text-sm);
         }
 
         textarea.form-control { min-height: 60px; resize: vertical; }
@@ -796,7 +796,7 @@
             background: transparent;
             border: none;
             color: var(--text-dim);
-            font-size: 22px;
+            font-size: var(--text-xl);
             line-height: 1;
             padding: 0 4px;
             cursor: pointer;
@@ -845,7 +845,7 @@
         .color-pink { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); border-color: var(--pink); color: var(--pink-text); }
         
         .condition-tag {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             display: flex;
@@ -856,7 +856,7 @@
         
         .condition-tag .remove-condition {
             opacity: 0.6;
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .condition-tag:hover .remove-condition { opacity: 1; }
@@ -968,12 +968,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
             color: var(--text-dim);
         }
         
-        .avatar-placeholder.avatar-sm { font-size: 1em; }
-        .avatar-placeholder.avatar-lg { font-size: 2em; }
+        .avatar-placeholder.avatar-sm { font-size: var(--text-md); }
+        .avatar-placeholder.avatar-lg { font-size: var(--text-3xl); }
         
         /* ============================================================
            TAGS SYSTEM
@@ -1083,7 +1083,7 @@
             color: var(--on-red);
             padding: 8px 16px;
             border-radius: var(--radius-lg);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             display: none;
             z-index: var(--z-panel);
             /* Design-Handoff v3, Welle 3, Schritt 2. Hier stand die EINZIGE
@@ -1145,7 +1145,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            font-size: var(--text-xl);
             flex-shrink: 0;
         }
 
@@ -1163,7 +1163,7 @@
         .char-card-name {
             font-weight: 600;
             color: var(--gold-text);
-            font-size: 0.95em;
+            font-size: var(--text-md);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -1199,7 +1199,7 @@
 
         .char-card-name .drag-handle {
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: grab;
             opacity: 0.5;
         }
@@ -1209,7 +1209,7 @@
         }
 
         .char-card-meta {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             white-space: nowrap;
             overflow: hidden;
@@ -1223,7 +1223,7 @@
 
         .char-card-hp-value {
             font-weight: 700;
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         .char-card-hp-value.healthy { color: var(--green-text); }
@@ -1268,7 +1268,7 @@
             padding: 4px 8px;
             background: var(--bg-dark);
             border-radius: var(--radius-lg);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
         }
 
         .char-stat-pill-label {
@@ -1294,29 +1294,29 @@
             padding: 4px 2px;
             background: var(--bg-dark);
             border-radius: var(--radius-md);
-            font-size: 0.7em;
+            font-size: var(--text-xs);
         }
 
         .char-attr-pill-name {
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-xs);
             font-weight: 600;
         }
 
         .char-attr-pill-val {
             color: var(--text);
-            font-size: 1.1em;
+            font-size: var(--text-sm);
             font-weight: 700;
         }
 
         .char-attr-pill-mod {
             color: var(--gold-text);
-            font-size: 0.95em;
+            font-size: var(--text-xs);
         }
 
         /* Currency */
         .char-card-currency {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--gold);
         }
 
@@ -1347,7 +1347,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             cursor: pointer;
             transition: var(--trans-std);
             color: var(--text);
@@ -1420,18 +1420,18 @@
         
         .char-modal-title h2 {
             margin: 0;
-            font-size: 1.3em;
+            font-size: var(--text-xl);
             color: var(--gold);
         }
         
         .char-modal-subtitle {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--cyan);
             margin-top: 2px;
         }
         
         .char-modal-meta {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -1466,18 +1466,18 @@
         }
         
         .char-vital-icon {
-            font-size: 14px;
+            font-size: var(--text-md);
             margin-bottom: 2px;
         }
         
         .char-vital-value {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             font-weight: 700;
             color: var(--cyan-text);
         }
         
         .char-vital-label {
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             text-transform: uppercase;
             margin-top: 2px;
@@ -1496,19 +1496,19 @@
         }
         
         .char-attr-name {
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             color: var(--gold-text);
             font-weight: 600;
         }
         
         .char-attr-value {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             font-weight: 700;
             color: var(--text);
         }
         
         .char-attr-mod {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--cyan-text);
         }
         
@@ -1531,7 +1531,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 4px 0;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             border-bottom: 1px solid var(--border);
         }
         
@@ -1587,7 +1587,7 @@
             padding: 8px 10px;
             background: var(--bg-elevated);
             cursor: pointer;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             font-weight: 500;
         }
         
@@ -1596,7 +1596,7 @@
         }
         
         .char-expand-icon {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             transition: transform var(--dur);
         }
@@ -1623,7 +1623,7 @@
             padding: 3px 8px;
             margin: 2px;
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             transition: transform var(--dur-fast), box-shadow var(--dur-fast);
             background: var(--bg-elevated); /* F-18: aus der Dublette uebernommen */
             color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
@@ -1658,13 +1658,13 @@
         }
         
         .char-notes-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-bottom: 6px;
         }
         
         .char-notes-content {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             line-height: 1.5;
         }
         
@@ -1733,13 +1733,13 @@
         }
         
         .spell-tooltip-name {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             font-weight: bold;
             color: var(--gold-text);
         }
         
         .spell-tooltip-level {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             background: var(--bg-dark);
             padding: 2px 8px;
@@ -1750,7 +1750,7 @@
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 4px 12px;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             margin-bottom: 8px;
         }
         
@@ -1763,7 +1763,7 @@
         }
         
         .spell-tooltip-desc {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text);
             background: var(--bg-dark);
             padding: 8px;
@@ -1780,7 +1780,7 @@
         }
         
         .spell-tooltip-comp {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             background: var(--bg-dark);
@@ -1788,7 +1788,7 @@
         }
         
         .spell-tooltip-classes {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             margin-top: 8px;
             font-style: italic;
@@ -1799,7 +1799,7 @@
             border: 1px solid var(--border);
             color: var(--text-dim);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--text-sm);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1847,7 +1847,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         .assign-spell-search-wrap input:focus {
@@ -1861,7 +1861,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             min-width: 120px;
         }
 
@@ -1874,7 +1874,7 @@
         }
 
         .assign-spell-count-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
 
@@ -1885,7 +1885,7 @@
             padding: 2px 8px;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             margin-left: 6px;
         }
 
@@ -1946,14 +1946,14 @@
         .assign-spell-name {
             font-weight: 600;
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .assign-spell-meta {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             white-space: nowrap;
             overflow: hidden;
@@ -1964,7 +1964,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             font-weight: 600;
             padding: 3px 6px;
             border-radius: var(--radius-sm);
@@ -2077,7 +2077,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .quest-reward-item-tag .remove-btn {
@@ -2086,7 +2086,7 @@
             color: var(--red);
             cursor: pointer;
             padding: 0 2px;
-            font-size: 1em;
+            font-size: var(--text-md);
         }
         
         .quest-reward-item-tag .remove-btn:hover {
@@ -2140,7 +2140,7 @@
         .quest-item.completed .quest-title { text-decoration: line-through; }
         
         .quest-type-badge {
-            font-size: 10px;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
         }
@@ -2194,7 +2194,7 @@
         }
         
         .spell-filter-label {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             font-weight: 500;
             white-space: nowrap;
@@ -2238,20 +2238,20 @@
         .u-pad-sm { padding: var(--space-sm); }
         .u-flex-1 { flex: 1; }
         .u-w-full { width: 100%; }
-        .u-text-sm { font-size: 0.85em; }
+        .u-text-sm { font-size: var(--text-sm); }
         .u-rule-bottom { border-bottom: 1px solid var(--border); }
 
         /* Zwei benannte statt generischer Klassen: sie beschreiben eine
            Rolle, nicht eine Eigenschaft. */
         .form-hint {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-bottom: var(--space-xs);
         }
 
         .meta-text {
             color: var(--text-dim);
-            font-size: 11px;
+            font-size: var(--text-xs);
         }
 
         /* Modalbreiten: drei Stufen statt dreier Inline-Werte. */
@@ -2274,7 +2274,7 @@
            Vereinheitlicht wird also das AUSSEHEN, nicht die Bedienform.
            ------------------------------------------------------------ */
         .toolbar-filter-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             white-space: nowrap;
         }
@@ -2285,7 +2285,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             cursor: pointer;
         }
 
@@ -2357,7 +2357,7 @@
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: var(--radius-md);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .toolbar-search:focus {
@@ -2392,7 +2392,7 @@
             color: var(--text-dim);
             cursor: pointer;
             padding: 2px 6px;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             opacity: 0;
             transition: opacity var(--dur);
         }
@@ -2727,7 +2727,7 @@
             border: none;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             cursor: pointer;
             transition: var(--trans-std);
         }
@@ -3023,7 +3023,7 @@
            tests/unit/design-consistency.test.js meldet es. */
 
         .loc-item-meta {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -3039,7 +3039,7 @@
             height: 22px;
             border-radius: 50%;
             background: var(--bg-dark);
-            font-size: 0.6em;
+            font-size: var(--text-xs);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3098,7 +3098,7 @@
             padding: var(--space-xl);
             text-align: center;
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         /* ------------------------------------------------------------
@@ -3149,7 +3149,7 @@
         .loot-detail-empty-text,
         .enc-detail-empty-text,
         .bestiary-detail-empty-text {
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         /* Detail Content */
@@ -3185,14 +3185,14 @@
         }
 
         .loc-detail-name {
-            font-size: 1.2em;
+            font-size: var(--text-xl);
             font-weight: 700;
             color: var(--gold-text);
             word-break: break-word;
         }
 
         .loc-detail-region {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -3207,7 +3207,7 @@
             border: 1px solid var(--border);
             background: var(--bg-elevated);
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             transition: var(--trans-std);
         }
 

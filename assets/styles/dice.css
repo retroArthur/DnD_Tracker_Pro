@@ -37,14 +37,14 @@
 }
 
 .dice-hero-formula {
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     color: var(--text-dim);
     margin-top: 8px;
     font-family: var(--font-mono);
 }
 
 .dice-hero-breakdown {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 8px;
 }
@@ -65,7 +65,7 @@
     border-radius: var(--radius-md);
     background: var(--bg-elevated);
     cursor: pointer;
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 700;
     color: var(--text);
     transition: var(--trans-std);
@@ -145,7 +145,7 @@
     border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
-    font-size: 1em;
+    font-size: var(--text-lg);
 }
 
 .dice-multi-x {
@@ -208,7 +208,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 1em;
+    font-size: var(--text-lg);
     font-family: var(--font-mono);
 }
 
@@ -237,7 +237,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     color: var(--text);
     transition: var(--trans-std);
 }
@@ -307,7 +307,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1.3em;
+    font-size: var(--text-xl);
     transition: var(--trans-std);
 }
 
@@ -343,7 +343,7 @@
 }
 
 .dice-combat-label {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     min-width: 30px;
 }
@@ -392,7 +392,7 @@
     border-radius: var(--radius-md);
     padding: 8px 12px;
     cursor: pointer;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     transition: var(--trans-std);
     display: inline-flex;
     align-items: center;
@@ -410,7 +410,7 @@
 
 .dice-fav-item .fav-del {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     opacity: 0.5;
     transition: var(--trans-std);
     cursor: pointer;
@@ -425,7 +425,7 @@
     border: 1px dashed var(--border);
     background: transparent;
     color: var(--text-dim);
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     cursor: pointer;
     transition: var(--trans-std);
     display: flex;
@@ -481,7 +481,7 @@
     background: transparent;
     border: none;
     color: var(--text-dim);
-    font-size: 1em;
+    font-size: var(--text-md);
     padding: 2px 6px;
     cursor: pointer;
     transition: color var(--dur-fast);
@@ -523,7 +523,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .dice-char-grid {
@@ -541,7 +541,7 @@
 .dice-char-col-title {
     font-weight: 600;
     color: var(--gold-text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -572,7 +572,7 @@
 
 .dice-attr span {
     font-weight: 600;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text);
 }
 
@@ -630,7 +630,7 @@
     padding: 8px 12px;
     background: var(--bg-elevated);
     border-radius: var(--radius-md);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     margin-bottom: 4px; /* F-18: aus der Dublette uebernommen */
     align-items: center; /* F-18: aus der Dublette uebernommen */
     gap: 8px; /* F-18: aus der Dublette uebernommen */
@@ -778,7 +778,7 @@
        .fdp-die in dieser Datei schon fuehren. */
     color: var(--gold-text);
     font-weight: 600;
-    font-size: 1em;
+    font-size: var(--text-md);
 }
 
 .fdp-close {
@@ -786,7 +786,7 @@
     border: none;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
     transition: var(--trans-std);
@@ -830,14 +830,14 @@
 }
 
 .fdp-formula {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 4px;
     font-family: var(--font-mono);
 }
 
 .fdp-breakdown {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     margin-top: 2px;
     opacity: 0.7;
@@ -859,7 +859,7 @@
     color: var(--gold-text);
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.9em;
+    font-size: var(--text-md);
     transition: var(--trans-std);
 }
 
@@ -957,7 +957,7 @@
     border-radius: var(--radius-md);
     color: var(--text);
     cursor: pointer;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     transition: var(--trans-std);
 }
 
@@ -997,7 +997,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     font-family: var(--font-mono);
 }
 
@@ -1017,7 +1017,7 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1em;
+    font-size: var(--text-md);
     transition: var(--trans-std);
 }
 
@@ -1036,7 +1036,7 @@
 }
 
 .fdp-history-label {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     white-space: nowrap;
 }
@@ -1072,11 +1072,11 @@
 .fdp-history-result {
     font-weight: 600;
     color: var(--gold-text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .fdp-history-notation {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
 }
 

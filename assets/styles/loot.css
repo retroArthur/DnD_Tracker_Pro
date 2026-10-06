@@ -27,7 +27,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: pointer;
             transition: var(--trans-std);
         }
@@ -110,7 +110,7 @@
         .loot-selected-tags:empty::before {
             content: 'Keine Tags ausgewählt';
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             font-style: italic;
         }
         
@@ -165,12 +165,12 @@
         
         .shop-toggle {
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             transition: transform var(--dur);
         }
         
         .shop-icon {
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
         }
         
         .shop-title-block {
@@ -181,7 +181,7 @@
         
         .shop-name {
             font-weight: 600;
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             color: var(--gold-text);
             white-space: nowrap;
             overflow: hidden;
@@ -189,7 +189,7 @@
         }
         
         .shop-type-label {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
         }
         
@@ -201,7 +201,7 @@
         }
 
         .shop-meta-tag {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             padding: 2px 8px;
             border-radius: var(--radius-sm);
             background: var(--bg-dark);
@@ -219,7 +219,7 @@
         .shop-meta-tag.location { color: var(--cyan-text); }
 
         .shop-item-count {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--green-text);
             background: color-mix(in srgb, var(--green) min(10%, var(--tint-max)), transparent);
             padding: 2px 8px;
@@ -245,13 +245,13 @@
         
         .shop-special {
             color: var(--gold-text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
             margin-bottom: 6px;
         }
         
         .shop-note {
             color: var(--text-dim);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             font-style: italic;
             margin-bottom: 10px;
         }
@@ -318,7 +318,7 @@
         }
 
         .shop-sort-btn {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             padding: 4px 12px;
             border-radius: var(--radius-sm);
             background: var(--bg-card);
@@ -387,12 +387,12 @@
         
         .si-qty {
             text-align: center;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
         
         .si-cat {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             text-align: center;
         }
         
@@ -407,7 +407,7 @@
         .si-cost {
             text-align: right;
             color: var(--gold-text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
             font-weight: 500;
             white-space: nowrap;
             display: flex;
@@ -424,14 +424,14 @@
         
         .si-btns .btn {
             padding: 3px 6px;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
         }
         
         .si-details {
             display: none;
             background: var(--bg-card);
             padding: 10px 12px 10px 50px;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             border-top: 1px solid var(--border);
         }
         
@@ -501,7 +501,7 @@
             align-items: center;
             gap: 6px;
             cursor: pointer;
-            font-size: 0.9em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
         
@@ -594,7 +594,7 @@
         /* Shop Item Add-to-Cart Button */
         .si-cart-btn {
             padding: 3px 8px;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent);
             border: 1px solid var(--gold);
             color: var(--gold-text);
@@ -655,7 +655,7 @@
         }
         
         .cart-item-icon {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
         }
         
         .cart-item-name {
@@ -687,7 +687,7 @@
         }
         
         .cart-item-unit {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             display: block;
         }
@@ -708,7 +708,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 1.2em;
+            font-size: var(--text-xl);
             margin-bottom: 12px;
         }
         
@@ -718,7 +718,7 @@
         }
         
         .cart-total-gold {
-            font-size: 0.8em;
+            font-size: var(--text-md);
             color: var(--text-dim);
             margin-left: 8px;
         }
@@ -744,7 +744,7 @@
         
         .checkout-receipt {
             font-family: var(--font-mono);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             text-align: left;
             white-space: pre-wrap;
             color: var(--text);
@@ -769,7 +769,7 @@
         
         .checkout-label {
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .checkout-amount {
@@ -790,7 +790,7 @@
             background: var(--bg-dark);
             padding: 4px 10px;
             border-radius: var(--radius-sm);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .checkout-currency-info {
@@ -798,7 +798,7 @@
         }
         
         .currency-hint {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             background: var(--bg-dark);
             padding: 8px 12px;
@@ -839,7 +839,7 @@
 
         .handout-checkbox-label span {
             flex: 1;
-            font-size: 0.95em;
+            font-size: var(--text-md);
             user-select: none;
         }
 
@@ -853,7 +853,7 @@
 
         .handout-help-text p {
             margin: 0;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text-dim);
         }
 

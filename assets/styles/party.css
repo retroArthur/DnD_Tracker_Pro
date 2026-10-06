@@ -92,7 +92,7 @@
             border-collapse: collapse !important;
             width: 100% !important;
             margin: 8px 0 !important;
-            font-size: 0.9em !important;
+            font-size: var(--text-md) !important;
         }
         
         /* Tabellen-Zellen */
@@ -483,12 +483,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: var(--text-xl);
         }
         
         .link-info { flex: 1; }
         .link-title { font-weight: 600; color: var(--cyan-text); }
-        .link-url { font-size: 0.75em; color: var(--text-dim); word-break: break-all; }
+        .link-url { font-size: var(--text-xs); color: var(--text-dim); word-break: break-all; }
         .quick-panel.open .quick-panel-content { display: block; }
         
         /* Event Log (ersetzt Toast) */
@@ -580,7 +580,7 @@
             padding: 4px 8px;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
         }
 
         .event-log-btn:hover {
@@ -599,7 +599,7 @@
             border-left: 3px solid var(--green);
             border-radius: var(--radius-md);
             padding: 10px 14px;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             /* Die Meldung selbst — die schlechteste Stelle des ganzen
                Farbbefunds vor diesem Schritt: var(--text) erreichte hier in
                Light 1,07 und in Sepia 1,50. --on-log erreicht 13,40-15,13
@@ -620,7 +620,7 @@
         .event-log-entry.info { border-left-color: var(--cyan); }
 
         .event-log-icon {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             flex-shrink: 0;
             margin-top: 1px;
         }
@@ -636,7 +636,7 @@
         }
 
         .event-log-time {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             /* Zeitstempel: var(--text-dim) erreichte in Light 2,84 und in
                Sepia 2,88; --on-log-dim erreicht 6,96-7,87 (E6, Schritt 10). */
             color: var(--on-log-dim);
@@ -764,7 +764,7 @@
         }
         
         .wiki-tree-toggle {
-            font-size: 10px;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             transition: transform var(--dur);
             width: 12px;
@@ -775,18 +775,18 @@
         }
         
         .wiki-tree-cat-icon {
-            font-size: 1em;
+            font-size: var(--text-md);
         }
         
         .wiki-tree-cat-name {
             flex: 1;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             font-weight: 500;
             color: var(--text);
         }
         
         .wiki-tree-cat-count {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             background: var(--bg-card);
             padding: 2px 6px;
@@ -812,7 +812,7 @@
             margin: 2px 0;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text);
             transition: var(--trans-fast);
             border-left: 2px solid transparent;
@@ -844,7 +844,7 @@
         
         .wiki-tree-item.pinned::before {
             content: '📌';
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             margin-right: 2px;
         }
         
@@ -914,14 +914,14 @@
         }
 
         .wiki-detail-empty .empty-state-title {
-            font-size: 1.25em;
+            font-size: var(--text-xl);
             font-weight: 500;
             color: var(--text);
             margin-bottom: 8px;
         }
 
         .wiki-detail-empty .empty-state-desc {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text-dim);
             max-width: 320px;
             line-height: 1.6;
@@ -954,7 +954,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
         
@@ -972,7 +972,7 @@
 
         .wiki-detail-actions .btn {
             padding: 8px 12px;
-            font-size: 1.1em;
+            font-size: var(--text-lg);
         }
         
         .wiki-detail-body {
@@ -1012,7 +1012,7 @@
         }
         
         .wiki-detail-links-label {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             margin-bottom: 6px;
         }
@@ -1027,7 +1027,7 @@
             padding: 12px 20px;
             background: var(--bg-elevated);
             border-top: 1px solid var(--border);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             display: flex;
             justify-content: space-between;
@@ -1066,7 +1066,7 @@
             margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             font-weight: 600;
             color: var(--gold-text);
         }
@@ -1080,7 +1080,7 @@
         }
         
         .wiki-tag {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             background: var(--bg-dark);
             color: var(--cyan-text);
             padding: 3px 8px;
@@ -1135,11 +1135,11 @@
 }
 
 .cf-panel-icon {
-    font-size: 1.3em;
+    font-size: var(--text-xl);
 }
 
 .cf-panel-title {
-    font-size: 1em;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1191,7 +1191,7 @@
 
 .cf-panel .cf-field label {
     display: block;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1206,7 +1206,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.95em;
+    font-size: var(--text-md);
     transition: border-color var(--dur), box-shadow var(--dur);
 }
 
@@ -1294,7 +1294,7 @@
 }
 
 .cf-hp-label {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     font-weight: 600;
@@ -1304,7 +1304,7 @@
 .cf-hp-max input {
     width: 70px;
     padding: 10px;
-    font-size: 1.3em;
+    font-size: var(--text-xl);
     font-weight: 700;
     text-align: center;
     background: var(--bg-card);
@@ -1314,7 +1314,7 @@
 }
 
 .cf-hp-divider {
-    font-size: 1.5em;
+    font-size: var(--text-2xl);
     color: var(--text-dim);
     font-weight: 300;
 }
@@ -1326,7 +1326,7 @@
 .cf-hp-temp input {
     width: 60px;
     padding: 8px;
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 600;
     text-align: center;
     background: var(--bg-card);
@@ -1360,7 +1360,7 @@
 .cf-combat-value select {
     width: 100%;
     padding: 8px;
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 600;
     text-align: center;
     background: transparent;
@@ -1411,7 +1411,7 @@
 
 .cf-combat-label {
     display: block;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     margin-top: 4px;
@@ -1419,7 +1419,7 @@
 
 .cf-combat-stat .cf-speed-ft {
     display: inline-block;
-    font-size: 0.85em;
+    font-size: var(--text-xs);
     color: var(--cyan-text);
     /* 0,180,216 ist palettenfremd; die Regel fuehrt die Cyanrolle als Tinte.
        6,15 · 2,66 · 2,22 · 9,94 -> 5,70 · 2,56 · 2,20 · 8,65 (D-4). */
@@ -1444,7 +1444,7 @@
 }
 
 .cf-section-header span {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1474,7 +1474,7 @@
 
 .cf-attr-card .cf-attr-name {
     display: block;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 700;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1485,7 +1485,7 @@
 .cf-attr-card input[type="number"] {
     width: 100%;
     padding: 6px;
-    font-size: 1.3em;
+    font-size: var(--text-xl);
     font-weight: 700;
     text-align: center;
     background: var(--bg-dark);
@@ -1496,7 +1496,7 @@
 
 .cf-attr-card .cf-attr-mod {
     display: block;
-    font-size: 1em;
+    font-size: var(--text-md);
     font-weight: 700;
     color: var(--cyan-text);
     margin: 6px 0;
@@ -1507,7 +1507,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     cursor: pointer;
 }
@@ -1519,7 +1519,7 @@
 
 .cf-block-title {
     display: block;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1546,7 +1546,7 @@
 }
 
 .cf-coin-label {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
     /* Schritt 12 (Welle 1), Entscheidung D-5: Die Marke ist jetzt eine
@@ -1582,7 +1582,7 @@
 .cf-coin-item input {
     width: 100%;
     padding: 8px 4px;
-    font-size: 0.95em;
+    font-size: var(--text-md);
     font-weight: 600;
     text-align: center;
     background: var(--bg-card);
@@ -1610,7 +1610,7 @@
 }
 
 .cf-slot-item span {
-    font-size: 0.6em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     font-weight: 600;
 }
@@ -1618,7 +1618,7 @@
 .cf-slot-item input {
     width: 100%;
     padding: 6px 2px;
-    font-size: 0.9em;
+    font-size: var(--text-md);
     text-align: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1638,7 +1638,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -1701,7 +1701,7 @@
 
 .cf-defense-panel .cf-defense-title {
     display: block;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1788,7 +1788,7 @@
 
 .cf-notes-panel .cf-notes-title {
     display: block;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--gold-text);
     text-transform: uppercase;
@@ -1812,7 +1812,7 @@
     border-radius: var(--radius-sm);
     color: var(--text);
     cursor: pointer;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     min-width: 32px;
     transition: var(--trans-fast);
 }
@@ -1827,7 +1827,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     cursor: pointer;
 }
 
@@ -1839,7 +1839,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.95em;
+    font-size: var(--text-md);
     line-height: 1.5;
 }
 
@@ -1957,19 +1957,19 @@
 }
 
 .party-stat-icon {
-    font-size: 1.3em;
+    font-size: var(--text-xl);
     margin-bottom: 4px;
 }
 
 .party-stat-value {
-    font-size: 1.5em;
+    font-size: var(--text-2xl);
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1.2;
 }
 
 .party-stat-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -2016,7 +2016,7 @@
 }
 
 .party-leveling-toggle-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -2050,7 +2050,7 @@
     border: 1px solid var(--border);
     background: var(--bg-elevated);
     color: var(--text-dim);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     cursor: pointer;
     transition: var(--trans-std);
     white-space: nowrap;
@@ -2120,9 +2120,9 @@
     background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
-.rest-type-icon { font-size: 2em; }
+.rest-type-icon { font-size: var(--text-3xl); }
 .rest-type-label { font-weight: 600; color: var(--text); }
-.rest-type-desc { font-size: 0.85em; color: var(--text-dim); }
+.rest-type-desc { font-size: var(--text-sm); color: var(--text-dim); }
 
 .rest-details {
     padding: 0 20px;
@@ -2144,7 +2144,7 @@
     margin: 0;
     padding-left: 20px;
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .rest-info li { margin-bottom: 4px; }
@@ -2205,7 +2205,7 @@
 .rest-hp-bar.critical::after { background: var(--red); }
 
 .rest-hp-text {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     text-align: right;
 }
@@ -2221,7 +2221,7 @@
     border: 1px solid var(--border);
     color: var(--text);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--text-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2241,11 +2241,11 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 12px;
+    font-size: var(--text-sm);
 }
 
 .rest-hd-label {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     white-space: nowrap;
 }
@@ -2255,13 +2255,13 @@
 }
 
 .rest-heal-preview {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--green);
     font-weight: 600;
 }
 
 .rest-hd-restore {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--cyan);
 }
 
@@ -2304,7 +2304,7 @@
 }
 
 .qa-label {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
 }
 
@@ -2332,8 +2332,8 @@
     background: var(--bg-elevated);
 }
 
-.qa-icon { font-size: 1.1em; }
-.qa-name { font-size: 0.85em; }
+.qa-icon { font-size: var(--text-lg); }
+.qa-name { font-size: var(--text-sm); }
 
 /* ============================================================
    CONDITION QUICK REFERENCE
@@ -2367,7 +2367,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 1em;
+    font-size: var(--text-lg);
 }
 
 .condition-ref-search input:focus {
@@ -2402,10 +2402,10 @@
     margin-bottom: 6px;
 }
 
-.condition-ref-icon { font-size: 1.2em; }
+.condition-ref-icon { font-size: var(--text-xl); }
 
 .condition-ref-desc {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     line-height: 1.4;
 }
@@ -2422,7 +2422,7 @@
     border: none;
     padding: 0 2px;
     cursor: pointer;
-    font-size: 1em;
+    font-size: var(--text-md);
     line-height: 1;
     color: var(--text-dim);
     opacity: 0.6;
@@ -2452,7 +2452,7 @@
 
 .cf-skills-title {
     font-weight: 700;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-dim);
@@ -2461,7 +2461,7 @@
 }
 
 .cf-skills-hint {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     opacity: 0.75;
     margin-bottom: 10px;
@@ -2488,7 +2488,7 @@
 }
 
 .cf-skill-attr-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -2503,7 +2503,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 0.82em;
+    font-size: var(--text-sm);
     cursor: pointer;
     padding: 2px 3px;
     border-radius: var(--radius-sm);
@@ -2538,7 +2538,7 @@
 }
 
 .cf-skill-exp-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 700;
     /* Welle 1 Schritt 8: Selbst-Fallback aufgeloest UND Wert umgestellt.
        Traegerflaeche ist .cf-panel (background: var(--bg-dark)) bzw. beim
@@ -2577,14 +2577,14 @@
 
 .cf-attacks-title {
     font-weight: 700;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-dim);
 }
 
 .cf-attacks-hint {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     opacity: 0.75;
     margin-bottom: 8px;
@@ -2614,7 +2614,7 @@
 .cf-attack-row input[type="number"] {
     width: 100%;
     padding: 4px 6px;
-    font-size: 0.82em;
+    font-size: var(--text-sm);
     background: var(--bg-input, var(--bg));
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -2627,7 +2627,7 @@
     align-items: center;
     justify-content: center;
     padding: 2px 5px;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     line-height: 1;
     background: transparent;
     border: 1px solid var(--border);
@@ -2667,7 +2667,7 @@
 }
 
 .char-adv-btn {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     padding: 1px 4px;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -2703,7 +2703,7 @@
 }
 
 .char-skills-section-title {
-    font-size: 0.78em;
+    font-size: var(--text-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -2735,7 +2735,7 @@
 }
 
 .char-skill-attr-head {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -2751,7 +2751,7 @@
     gap: 5px;
     padding: 3px 5px;
     border-radius: var(--radius-sm);
-    font-size: 0.82em;
+    font-size: var(--text-sm);
     cursor: pointer;
     transition: background var(--dur-fast);
     user-select: none;
@@ -2816,7 +2816,7 @@
 .char-skill-item-mod {
     font-weight: 700;
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     min-width: 28px;
     text-align: right;
 }
@@ -2832,7 +2832,7 @@
 }
 
 .char-saves-section-title {
-    font-size: 0.78em;
+    font-size: var(--text-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -2848,7 +2848,7 @@
 
 .char-save-box-name {
     font-weight: 700;
-    font-size: 0.9em;
+    font-size: var(--text-md);
     text-transform: uppercase;
 }
 
@@ -2862,7 +2862,7 @@
 }
 
 .char-attacks-section-title {
-    font-size: 0.78em;
+    font-size: var(--text-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -2885,7 +2885,7 @@
     background: var(--bg-card, var(--bg));
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
 }
 
 .char-attack-name {
@@ -2896,7 +2896,7 @@
 }
 
 .char-attack-type-badge {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     padding: 1px 5px;
     background: var(--bg);
@@ -2911,7 +2911,7 @@
 }
 
 .char-attack-roll-label {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
 }
@@ -2949,7 +2949,7 @@
 }
 
 .char-xp-section-title {
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -2966,17 +2966,17 @@
 .char-xp-label {
     font-weight: 600;
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .char-xp-value {
-    font-size: 18px;
+    font-size: var(--text-xl);
     font-weight: 700;
     color: var(--gold-text);
 }
 
 .char-xp-threshold {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
 }
 
@@ -3008,7 +3008,7 @@
     border: 1px solid var(--green);
     border-radius: var(--radius-md);
     padding: 8px 12px;
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--green-text);
 }
@@ -3019,7 +3019,7 @@
     border: none;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: var(--text-sm);
     cursor: pointer;
     font-weight: 700;
 }
@@ -3096,7 +3096,7 @@
 }
 
 .char-xp-milestone-info {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     font-style: italic;
 }
@@ -3108,7 +3108,7 @@
     border: none;
     padding: 6px 14px;
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 700;
     cursor: pointer;
 }

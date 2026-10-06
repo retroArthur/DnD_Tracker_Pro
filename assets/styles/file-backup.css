@@ -46,7 +46,7 @@
 }
 
 .backup-status-text {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text);
     line-height: 1.4;
 }
@@ -63,7 +63,7 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     color: var(--yellow-text);
-    font-size: 12px;
+    font-size: var(--text-sm);
     background: transparent;
     transition: background var(--dur-fast);
 }
@@ -82,7 +82,7 @@
 
 .file-backup-fallback .backup-status-label {
     color: var(--text-dim);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     margin-bottom: 8px;
     line-height: 1.4;
 }
@@ -187,7 +187,7 @@
 /* Header-Zeile der Backup-Liste */
 .backup-entry-header {
     min-height: 32px;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     background: transparent;
     border-bottom: 2px solid var(--border);
@@ -214,13 +214,13 @@
 
 /* Datum */
 .backup-entry-date {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
 /* Dateigröße */
 .backup-entry-size {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     text-align: right;
 }
@@ -243,7 +243,7 @@
     color: var(--red-text);
     border-color: var(--red-text);
     background: transparent;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
     border: 1px solid;
@@ -290,6 +290,6 @@
     .backup-entry {
         grid-template-columns: 1fr 80px 60px 90px;
         gap: 4px;
-        font-size: 0.9em;
+        font-size: var(--text-md);
     }
 }

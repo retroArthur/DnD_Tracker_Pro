@@ -36,7 +36,7 @@
 }
 
 .migration-wizard-title {
-    font-size: 20px;
+    font-size: var(--text-xl);
     font-weight: 600;
     color: var(--gold-text);
     margin: 0 0 16px 0;
@@ -80,7 +80,7 @@
 }
 
 .migration-step-heading {
-    font-size: 16px;
+    font-size: var(--text-lg);
     font-weight: 600;
     color: var(--text, var(--text));
     margin: 0 0 12px 0;
@@ -88,7 +88,7 @@
 }
 
 .migration-step-body {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim, var(--text-dim));
     line-height: 1.5;
     margin: 0 0 16px 0;
@@ -151,7 +151,7 @@
 }
 
 .wizard-dropzone-icon {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     display: block;
 }
 
@@ -163,12 +163,12 @@
 }
 
 .wizard-dropzone-text {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim, var(--text-dim));
 }
 
 .wizard-dropzone-filename {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--green-text);
     word-break: break-all;
 }
@@ -176,7 +176,7 @@
 /* Fehlermeldung */
 .migration-step-error {
     color: var(--red-text);
-    font-size: 13px;
+    font-size: var(--text-sm);
     margin-top: 8px;
     line-height: 1.4;
 }
@@ -188,7 +188,7 @@
 }
 
 .migration-success-icon {
-    font-size: 32px;
+    font-size: var(--text-3xl);
     color: var(--green-text);
     margin-bottom: 12px;
     display: block;
@@ -199,7 +199,7 @@
 }
 
 .migration-success-line {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim, var(--text-dim));
     margin-bottom: 4px;
 }
@@ -214,7 +214,7 @@
 }
 
 .migration-skip-btn {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim, var(--text-dim));
     background: none;
     border: none;
@@ -249,7 +249,7 @@
 }
 
 .migration-hint-text {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text, var(--text));
     flex: 1;
     min-width: 200px;
@@ -315,7 +315,7 @@
 }
 
 .migration-hint-link {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--gold-text);
     text-decoration: underline;
     background: none;
@@ -335,7 +335,7 @@
     border: none;
     color: var(--text-dim, var(--text-dim));
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--text-lg);
     padding: 4px 8px;
     min-width: 32px;
     min-height: 44px;
@@ -421,7 +421,7 @@ body.has-migration-hint {
 }
 
 .divergence-banner-text {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim, var(--text-dim));
     flex: 1;
     overflow: hidden;
@@ -430,7 +430,7 @@ body.has-migration-hint {
 }
 
 .divergence-banner-dismiss {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim, var(--text-dim));
     background: none;
     border: none;

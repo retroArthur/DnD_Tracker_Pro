@@ -49,7 +49,7 @@
         
         .spell-card-toggle {
             color: var(--text-dim);
-            font-size: 12px;
+            font-size: var(--text-sm);
             margin-left: 8px;
             transition: transform var(--dur);
         }
@@ -76,7 +76,7 @@
         
         .spell-name { font-weight: 600; color: var(--text); }
         .spell-level { 
-            font-size: 0.75em; 
+            font-size: var(--text-xs); 
             color: var(--on-purple);
             background: var(--purple);
             padding: 2px 8px;
@@ -84,7 +84,7 @@
         }
         
         .spell-info-line {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             margin-bottom: 2px;
         }
@@ -97,7 +97,7 @@
             flex-wrap: wrap;
             gap: 12px;
             margin: 8px 0;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             padding-top: 8px;
             border-top: 1px solid var(--border);
         }
@@ -113,7 +113,7 @@
         .spell-meta-value.range { color: var(--green-text); }
         
         .spell-duration-line {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             margin-bottom: 8px;
         }
         
@@ -132,7 +132,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: var(--text-xs);
             font-weight: 600;
         }
         
@@ -144,7 +144,7 @@
         .spell-comp.inactive { background: var(--bg-dark); color: var(--text-dim); }
         
         .spell-material {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--pink);
             font-style: italic;
             margin: 6px 0;
@@ -152,7 +152,7 @@
         }
         
         .spell-desc {
-            font-size: 0.85em;
+            font-size: var(--text-md);
             color: var(--text);
             background: var(--bg-dark);
             padding: 10px;
@@ -173,7 +173,7 @@
              var(--gold)      5,88 · 2,45 · 5,20 · 8,54
              var(--gold-text) 5,88 · 4,78 · 5,34 · 8,54 */
         .spell-note {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--gold-text);
             background: linear-gradient(
                 90deg,
@@ -205,7 +205,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: pointer;
             padding: 2px 0;
             justify-self: start;
@@ -253,7 +253,7 @@
             padding: 4px 6px;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 13px;
+            font-size: var(--text-sm);
             transition: color var(--dur), background var(--dur);
         }
 
@@ -290,7 +290,7 @@
             padding: 2px 4px;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 11px;
+            font-size: var(--text-xs);
             min-width: 70px;
             max-width: 100px;
             flex-shrink: 0;
@@ -327,7 +327,7 @@
             border: 1px solid var(--border);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
             color: var(--text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
             line-height: 1.5;
             overflow-y: auto;
         }
@@ -339,7 +339,7 @@
             border: 1px solid var(--border);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
             color: var(--text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
             line-height: 1.5;
             overflow-y: auto;
         }
@@ -394,7 +394,7 @@
             border-collapse: collapse;
             width: 100%;
             margin: 8px 0;
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .spell-editor th, .rich-editor th,
@@ -450,7 +450,7 @@
         .floating-toolbar .editor-btn {
             position: relative;
             padding: 6px 10px;
-            font-size: 14px; /* F-18: aus der Dublette uebernommen */
+            font-size: var(--text-md); /* F-18: aus der Dublette uebernommen */
         }
 
         .floating-toolbar .editor-btn.active {
@@ -509,7 +509,7 @@
         .floating-toolbar .editor-select {
             width: auto;
             min-width: 65px;
-            font-size: 11px;
+            font-size: var(--text-xs);
             padding: 4px 6px;
         }
 
@@ -536,7 +536,7 @@
         }
 
         .table-context-toolbar .editor-btn {
-            font-size: 11px;
+            font-size: var(--text-xs);
             padding: 4px 8px;
             white-space: nowrap;
         }
@@ -548,7 +548,7 @@
         .table-context-toolbar::before {
             content: '📊';
             margin-right: 4px;
-            font-size: 12px;
+            font-size: var(--text-sm);
         }
 
         /* Link context toolbar */
@@ -575,7 +575,7 @@
 
         .link-context-toolbar .link-url {
             color: var(--text-dim);
-            font-size: 11px;
+            font-size: var(--text-xs);
             max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -619,7 +619,7 @@
 
             .floating-toolbar .editor-btn {
                 padding: 10px 12px;
-                font-size: 16px;
+                font-size: var(--text-lg);
                 flex: 1;
                 max-width: 44px;
             }
@@ -627,7 +627,7 @@
             .floating-toolbar .editor-select {
                 flex: 1;
                 min-width: 0;
-                font-size: 12px;
+                font-size: var(--text-sm);
             }
 
             .floating-toolbar::after {
@@ -643,7 +643,7 @@
                 display: block;
                 text-align: center;
                 color: var(--text-dim);
-                font-size: 10px;
+                font-size: var(--text-xs);
                 padding-top: 4px;
                 border-top: 1px solid var(--border);
             }
