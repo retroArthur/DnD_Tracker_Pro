@@ -1112,12 +1112,13 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Focus Visible for Accessibility */
-        :focus-visible {
-            outline: 2px solid var(--gold);
-            outline-offset: 2px;
-        }
-        
+        /* W6-R-03: die unbedingte `:focus-visible`-Weltregel stand hier und ist
+           nach core.css umgezogen (Welle 6, Schritt 2). Sie gilt fuer den
+           ganzen Baum und hatte in einer Modulstildatei nichts zu suchen — hier
+           war sie eine Weltregel durch Zufall der @import-Reihenfolge. NICHT
+           zurueckholen und NICHT danebenstellen: W6-R-03 laesst genau eine zu
+           und verlangt sie in core.css. */
+
         /* ============================================================
            DRAG AND DROP SORTING
            ============================================================ */

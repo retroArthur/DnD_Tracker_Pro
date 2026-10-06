@@ -427,8 +427,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:525` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:538` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1424` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1429` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1477` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1482` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:234` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:730` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:870` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -499,7 +499,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1155` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:1156` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:271` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:303` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:331` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -523,8 +523,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:186` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1373` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1386` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1374` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1387` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:289` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:290` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:292` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -539,7 +539,7 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:535` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:779` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `core.css:698` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `core.css:751` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2698` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2699` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
@@ -578,9 +578,9 @@ core.css
   112  [data-layout="mobile"] #mobile-timer-display
   116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
   120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1320  .char-card-currency
- 2093  .quest-reward-item-tag .remove-btn:hover
- 2086  .quest-reward-item-tag .remove-btn
+ 1373  .char-card-currency
+ 2146  .quest-reward-item-tag .remove-btn:hover
+ 2139  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -610,10 +610,10 @@ dmscreen.css
   394  .notes-search-date
   524  .session-tag-remove:hover
   670  .quick-ref-section-title
- 1275  .dms-stat-warning .dms-stat-value
- 2358  .dms-profile-check
- 2384  .dms-profile-save
- 2388  .dms-profile-save .dms-profile-name
+ 1276  .dms-stat-warning .dms-stat-value
+ 2359  .dms-profile-check
+ 2385  .dms-profile-save
+ 2389  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status

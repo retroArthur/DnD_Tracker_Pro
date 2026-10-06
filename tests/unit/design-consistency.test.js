@@ -7289,7 +7289,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
         {
             datei: 'dmscreen.css',
-            zeile: 1142,
+            zeile: 1143,
             pfad: '[data-sortable].drag-over',
             lage: '0 0 0 2px var(--gold)',
             grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
@@ -7360,13 +7360,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 512, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 1103, stufe: 2,
+        { datei: 'core.css', zeile: 1156, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1639, stufe: 1,
+        { datei: 'core.css', zeile: 1692, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1718, stufe: 3,
+        { datei: 'core.css', zeile: 1771, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
         { datei: 'dashboard.css', zeile: 775, stufe: 2,
@@ -7424,16 +7424,16 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 992, stufe: 2,
           pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
-        { datei: 'dmscreen.css', zeile: 1136, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1137, stufe: 2,
           pfad: '[data-sortable].dragging',
           vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 1142, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1143, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2179, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2180, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2432, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2433, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
         { datei: 'editors.css', zeile: 222, stufe: 3,
@@ -9511,7 +9511,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1142,
+            zeile: 1143,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
             vorher: { dicke: 2, deckung: 1.0, farbe: null },
@@ -9570,7 +9570,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1316,
+            zeile: 1317,
             sel: '.dms-hp-text',
             marke: '.dms-hp-text',
             wert: '0 1px 2px rgba(0,0,0,0.5)',
@@ -12875,8 +12875,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3288':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3284) schaltet ' +
+        'core.css:3341':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3337) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13338,7 +13338,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3288,
+                    zeile: 3341,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }

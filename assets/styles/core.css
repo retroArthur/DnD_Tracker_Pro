@@ -642,8 +642,61 @@
         }
 
 
+        /* ============================================================
+           DER FOKUSRING — WELTREGEL (Welle 6, Schritt 2)
+           ============================================================
+
+           HIERHER UMGEZOGEN aus dmscreen.css, wo sie seit ihrer Entstehung
+           stand. Sie gilt fuer den ganzen Baum; in einer Modulstildatei war sie
+           eine Weltregel durch Zufall der @import-Reihenfolge. core.css ist die
+           dritte Datei des Hubs, damit gewinnt sie hier gegen jede
+           gleichrangige Regel des ganzen Baums — in dmscreen.css (Platz 16)
+           gewann sie nur gegen die Dateien danach.
+
+           DER UMZUG IST KASKADENNEUTRAL, nachgerechnet und am Tabulatorlauf
+           gegengeprueft: alle 31 unterdrueckenden `outline`-Regeln haben
+           Spezifitaet >= (0,2,0) und schlagen (0,1,0) von beiden Orten aus. Die
+           drei unbedingten (0,1,0)-Gegenspieler stehen in bestiary.css,
+           welt.css und command-palette.css — im Hub NACH beiden Orten, sie
+           gewinnen vorher wie nachher ueber die Reihenfolge. `#session-tags-input`
+           ist (1,0,0) und gewinnt immer. Die sechs `:focus-visible`-Regeln mit
+           hoeherer Spezifitaet (eine hier darunter, vier in editors.css, eine
+           in tools.css) ueberstimmen sie weiterhin.
+
+           SIE HAT NIE EIN `border-radius` GETRAGEN. Der Handoff v3 fuehrt unter
+           Welle 6 Punkt 1 die Teilaufgabe "border-radius aus der globalen
+           :focus-visible-Regel streichen" und nennt als Begruendung einen
+           Formsprung an `.nav-tab` von 12 auf 4 Bildpunkte. Nachgesehen: die
+           Regel enthielt an ihrem alten Ort genau zwei Deklarationen, dieselben
+           zwei wie hier. Die Teilaufgabe hat keinen Gegenstand; der Anspruch
+           stammt aus einem v2-Patch, der nie eingebaut wurde, und der genannte
+           Formsprung an `.nav-tab` aus demselben. Wer ihn wieder aufgreift,
+           sucht ein `border-radius`, das es in dieser Regel nie gab.
+
+           WARUM `outline` UND NICHT `box-shadow`: Welle 4 hat `outline-width`
+           und `outline-offset` ausdruecklich aus den Uebergangslisten
+           herausgenommen ("ein Fokusring soll sofort da sein") und dabei auf
+           diese Welle vorausgeschaut. Ein Ring aus `box-shadow` faedelt sich
+           ueber var(--dur) ein und liest auf den Paneelflaechen ausserdem nur
+           1,16 bis 1,27.
+
+           DIE FARBE BLEIBT IN DIESEM SCHRITT `--gold` und wird in Schritt 3 auf
+           ein eigenes Token umgestellt. Getrennt gehalten, damit dieser Schritt
+           allein einen lauffaehigen Baum hinterlaesst: ein Aufruf von
+           --focus-ring vor dem Anlegen des Tokens macht die ganze Deklaration
+           ungueltig und nimmt damit JEDEM Element den Ring — der
+           Zwischenzustand waere schlimmer als der Vorzustand. (Der Tokenname
+           steht hier ohne var()-Klammern: F-01 liest auch Kommentare und wuerde
+           den noch nicht angelegten Namen sonst als undefiniert melden.) */
+        :focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
+
         /* Der Fokusring war bisher der Browser-Standard und auf dunklem
-           Grund kaum zu sehen. */
+           Grund kaum zu sehen. Die Regel bleibt neben der Weltregel darueber
+           stehen: sie ist spezifischer und traegt damit den Ring aller Knoepfe
+           — gemessen der groesste Teil aller Tastaturhalte. */
         .btn:focus-visible {
             outline: 2px solid var(--gold);
             outline-offset: 2px;
