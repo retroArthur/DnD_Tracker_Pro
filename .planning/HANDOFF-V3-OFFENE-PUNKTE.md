@@ -5210,34 +5210,42 @@ drei Dateien und einen Bericht statt 839 geänderter Deklarationen.
 | `font-size`-Deklarationen im Geltungsbereich (18 Dateien) | **853** |
 | davon bereits auf einer Sprosse (Welle 4) | 2 |
 | davon `inherit` (legt keine Größe fest) | 7 |
-| davon namentlich geduldet, mit Begründung | 5 |
+| davon namentlich geduldet, mit Begründung | ~~5~~ **11** (Runde 1) |
 | davon ohne Tabellenzeile | **0** |
 | davon in einer geschützten Familie | **0** |
-| **OFFEN** | **839** |
+| **OFFEN** | ~~839~~ **833** (Runde 1) |
 
 **Drei Wege, eine Zahl.** Die 853 nennen (a) der klammerzählende Zerleger des Werkzeugs,
 (b) ein Regex-Zähler im Wächtertest und (c) die Zerlegung der Ratsche W5-R-05, die ihren
-eigenen Zerleger mitbringt. Die 839 stimmen mit `AUSSERHALB_MAX` von W5-R-05 überein —
-zwei getrennt geschriebene Zerleger, dieselbe Menge.
+eigenen Zerleger mitbringt. Die 833 stimmen mit `AUSSERHALB_MAX` von W5-R-05 überein —
+zwei getrennt geschriebene Zerleger, dieselbe Menge. **Die 839 wurden in Runde 1 auf 833
+gesenkt**, weil die sechs Überschriftenregeln des Reichtext-Inhalts seither namentlich
+geduldet sind; siehe den Abschnitt **W5-B Runde 1** weiter unten.
 
 ### Der Delta-Bericht, den `--report` schreibt
 
-840 Deklarationen tragen einen Zahlenwert. **31** springen um mehr als 2 px, **809** um
-2 px oder weniger, davon **151** um exakt 0,00 px (die px-Literale, die schon auf einem
-Skalenwert liegen: ihr Text ändert sich, ihr Bildpunkt nicht). Das ist die Liste, die das
-Abnahmekriterium des Handoffs ("keine Änderung > 2 px außer beabsichtigt") namentlich
-braucht und die der Handoff nicht liefert.
+~~840 Deklarationen tragen einen Zahlenwert. **31** springen um mehr als 2 px, **809** um
+2 px oder weniger, davon **151** um exakt 0,00 px.~~ **Stand nach Runde 1: 833 mit
+Zahlenwert, 30 über 2 px, 803 darunter, davon 158 mit exakt 0,00 px — und es sind ANDERE
+Stellen.** Das ist die Liste, die das Abnahmekriterium des Handoffs ("keine Änderung
+> 2 px außer beabsichtigt") namentlich braucht und die der Handoff nicht liefert.
 
-**Die 31er-Liste ist gegen eine unabhängige Rechnung abgeglichen**: ein zeilenweiser
-Regex-Zähler aus der Vorab-Vermessung gegen den klammerzählenden Zerleger des Werkzeugs
-nennen **dieselben 31** `Datei:Zeile`-Paare, sortierter Diff **leer**. Zwei Rechnungen,
-die nichts voneinander wissen.
+**~~Die 31er-Liste ist gegen eine unabhängige Rechnung abgeglichen~~ — DIESER SATZ WAR
+FALSCH, und sein Fehler ist der Hauptbefund der Prüfrunde 1.** Ein zeilenweiser
+Regex-Zähler aus der Vorab-Vermessung und der klammerzählende Zerleger des Werkzeugs
+nannten dieselben 31 `Datei:Zeile`-Paare, sortierter Diff leer — aber **beide Rechnungen
+lösten einen `em`-Wert gegen eine 16-px-Wurzel auf**. Auf dieser gemeinsamen Annahme ist
+die Übereinstimmung eine **Tautologie** und keine Bestätigung. Gemessen sitzen 55 Kanten
+auf einem Elternwert ungleich 16 px; bei 15 von ihnen war die Zuordnung falsch, und
+**keine der 15 stand in der 31er-Liste**. Was trägt, ist der Abgleich der Gesamtzahl 853
+über drei Zerlegungen — der hat keine gemeinsame Annahme.
 
-**Die Spalte "alt" ist eine Annahme und wird als solche benannt**: der deklarierte Wert
-bei einer 16-px-Wurzel. Gemessen sitzen nur 723 der 948 `em`-Elemente auf einem
-16-px-Elternwert; bei 225 ist der sichtbare Wert ein Produkt, bis Faktor 0,574. Die
-Tabelle sortiert und lässt abhaken — was auf dem Bildschirm geschieht, misst
-`tools/typo-baseline.js` im Browser in Bildpunkten.
+**~~Die Spalte "alt" ist eine Annahme und wird als solche benannt~~ — seit Runde 1 rechnet
+sie mit der MESSUNG, wo es eine gibt.** Neue Spalte **"Q"**: `g` = gemessen (aus `KETTEN`
+oder `SONDERZUORDNUNG`), `a` = Annahme (deklarierter Wert bei 16-px-Wurzel). Eine Spalte,
+die beides vermengt, ohne es zu nennen, ist keine Urteilsgrundlage. Was auf dem Bildschirm
+geschieht, misst weiterhin `tools/typo-baseline.js`; `--ketten` zeigt die Ketten mit
+Eltern- und Kindwert.
 
 ### Zwei Handoff-Zeilen fehlen in der Tabelle, mit Absicht
 
@@ -5390,6 +5398,238 @@ node tools/sync-typo-tokens.js --report --kategorien
 node tools/sync-typo-tokens.js --only=pwa.css
 
 # Der Wächter (43 Fälle)
+npx jest tests/unit/typo-map.test.js
+```
+
+---
+
+## W5-B Runde 1 — die 16-px-Annahme hatte 15 Stellen falsch zugeordnet (2026-10-06)
+
+**Status: ERLEDIGT.** Nachbesserung der Einheit W5-B nach der Prüfrunde. Zwei Commits,
+**keine Zeile CSS** — korrigiert wird die ZUORDNUNG, nicht der Bestand. Das gebaute
+Bündel ist unberührt: `git diff cbc6be7..HEAD` über alles außer `tests/`, `tools/` und
+`.planning/` ist **leer**, es ist also kein Datei im Bündel geändert worden.
+
+### Der Befund in einem Satz
+
+`altPx()` löst einen `em`-Wert gegen eine 16-px-Wurzel auf. Für **55 gemessene Kanten**
+stimmt diese Wurzel nicht — der sichtbare Wert ist dort ein **Produkt** aus Elternwert und
+Faktor. Die Zuordnungstabelle ersetzte beide Glieder einzeln und **zerriss die Kette**.
+
+Die Prüfrunde hat es an der Attribut-Pille vorgerechnet, und die Messung bestätigt es:
+`.char-attr-pill` trägt `0.7em` = 11,2 px und wird `--text-xs` = 11 px; seine drei Kinder
+(`0.9em` / `1.1em` / `0.95em` **von 11,2 px** = 10,08 / 12,32 / 10,64 px) hätte die Tabelle
+auf 14 / 16 / 14 px gelegt. Das Kind wäre **45 % größer als die Grundgröße seines
+Behälters** geworden (vorher 10 % kleiner), die Pillenbox **28,6 % höher**.
+
+### Warum kein Tor das sah
+
+**Die 31er-Liste von `--report` und die unabhängige Vorab-Vermessung teilten die Annahme.**
+Beide lösten `em` gegen 16 px auf, beide nannten dieselben 31 `Datei:Zeile`-Paare, Diff
+leer — und beide lagen bei denselben Stellen daneben. Eine Übereinstimmung zweier
+Rechnungen über derselben falschen Annahme ist eine **Tautologie**. Der Satz "zwei
+Rechnungen, die nichts voneinander wissen" stand in dieser Akte und ist oben als falsch
+markiert. Was trägt, ist der Abgleich der **Gesamtzahl 853** über drei Zerlegungen: der
+hat keine gemeinsame Annahme.
+
+Die zwei anderen Befunde waren aus demselben Grund unsichtbar:
+
+- **Die fünf `1em`-Eingabefelder** liegen gemessen auf 16,00 px — die Annahme stimmt hier
+  sogar. Der Sprung auf `--text-md` ist **exakt −2,00 px** und fällt damit unter die
+  2-px-Schwelle, obwohl er eine **Funktionsgrenze** reißt: unter 16 px löst ein Telefon
+  beim Antippen den Auto-Zoom aus (E-2, Arbeitsregel 10). Über den Selektor sind sie nicht
+  zu finden — `.dice-formula` und `.dice-multi` nennen ihr Eingabefeld nicht, und die
+  Kategorie "LESER DER MOBILVERGROESSERUNG" zählte nur die vier `var(--font-size-*)`-Leser.
+- **Die sechs Überschriftenregeln** springen einzeln um −0,4 bis −2,0 px, also ebenfalls
+  unter der Schwelle. Der Schaden ist nicht die Größe eines Sprungs, sondern der **Verlust
+  der Unterschiede**: sechs Stufen werden drei. Und die acht Reichtext-Behälter stehen in
+  **keiner** Grundlinien-Erhebung, weil `seedPopulatedSession` keinen Eintrag mit
+  Überschriften erzeugt — `typo-baseline --diff` kann über sie nichts melden.
+
+### Die Messung, auf der die Behebung steht
+
+Gebautes Bündel, gefüllte Kampagne (`seedPopulatedSession`), 24 Ansichten besucht, zwei
+Läufe: **dark-1440** (layout desktop) und **dark-375** (layout mobile). Je Element wird die
+**Eigentümer-Deklaration** bestimmt — der Selektor trifft UND der berechnete Wert ist mit
+der Deklaration vereinbar (`px` wörtlich, `em` als Elternwert mal Faktor) — und dann die
+nächste Vorfahrenkante gebildet.
+
+**Die Eigentümerprobe ist der Teil, auf den es ankommt.** Ein erster Entwurf der Messung
+nahm einfach alle Treffer von `querySelectorAll('.btn')`, schrieb deren Werte der
+`.btn`-Deklaration zu und meldete `.btn` mit 17,6 px — an jenen Elementen gewinnt eine
+spezifischere Regel. Ohne diese Probe hätte die Behebung 144 "Abweichungen" statt der
+15 echten gesehen.
+
+| Messung | Zahl |
+| --- | --- |
+| Elternteile mit Wert ungleich 16 px | **35** |
+| Kanten (Eltern → Kind) | **55** |
+| betroffene Elemente | **319** |
+| Kanten, bei denen die Ordnung Eltern/Kind kippt | **12** (53 Elemente, 46 mit Textknoten) |
+| Kanten mit Sprung > 2 px gegen den GEMESSENEN Wert | **8** |
+| zusammen falsch zugeordnete Deklarationen | **15** |
+| davon in der alten 31er-Liste | **0** |
+| `1em`/`1.0em`-Deklarationen im Geltungsbereich | **27** (9 ohne Messwert, je mit Grund) |
+| davon Steuerelemente mit heute ≥ 16 px | **5** |
+| Reichtext-Behälter mit sechs streng fallenden Stufen | **8** (Behälter 13,6 / 14,4 / 16 px) |
+
+**Beide Läufe nennen für jede Kante denselben Messwert — 0 Abweichungen.** Darum steht in
+`KETTEN` eine Zahl je Kante und nicht zwei.
+
+### Regel K — wie die 15 neu zugeordnet werden
+
+Eine Regel, überall dieselbe, damit die Zeilen nachrechenbar sind und nicht nach Gefühl
+gesetzt:
+
+1. Den **gemessenen** Wert auf ganze Bildpunkte runden und durch die **px-Zeilen derselben
+   Tabelle** schicken. Nicht "nächste Sprosse" — die Tabelle rundet an ihren Bucketgrenzen
+   bewusst anders (12,0 px aus `0.75em` geht nach 11, das px-Literal `12px` nach 12), und
+   eine zweite Rundungsregel wäre eine zweite Tabelle.
+2. An der **Ordnung zum Elternziel** kappen: war das Kind gemessen kleiner, darf es nicht
+   größer werden; war es größer, nicht kleiner; war es gleich, bleibt es gleich.
+
+**Geurteilt wird über die Ordnung, nicht über die Strenge.** Zwei Messwerte im Abstand von
+1,4 px landen auf einer achtsprossigen Skala zu Recht auf derselben Sprosse; was nicht
+passieren darf, ist eine **Umkehrung**. Bei den vier Kindern mit Elternziel 11 px ist
+Gleichheit sogar erzwungen — 11 px ist die unterste Sprosse und gleichzeitig die
+Untergrenze aus E-4.
+
+Für die Pillenkette ergibt Regel K genau die Werte, die die Prüfrunde vorgerechnet hat:
+name 10,08 → **11** (+0,92), val 12,32 → **12** (−0,32), mod 10,64 → **11** (+0,36).
+
+### Was entstanden ist
+
+- **`SONDERZUORDNUNG`** in `tools/typo-map.js`, **20 Einträge in zwei Gründen**, jeder mit
+  seinem Messwert, seinem Elternwert und einer Begründung in Prosa:
+  - `kette` (**15**) — Ziel aus dem gemessenen Wert nach Regel K.
+  - `formular-e2` (**5**) — `1em` auf einem Eingabefeld geht auf `--text-lg` = 16 px,
+    **Delta 0,00 px**. Eine Ausnahme wäre hier das schlechtere Mittel: sie ließe den
+    em-Wert stehen und damit eine Stelle, die bei jeder Änderung ihres Behälters wieder
+    unter 16 px rutschen kann. Nebenbefund mitgezogen: der Kommentar an `dice.css:156`
+    leitet die Sollbreite 160 px aus "`4d6kh3+2d8+5` ist in `var(--font-mono)` bei 1em
+    130 px breit" ab — bei 14 px hätte diese Begründung nicht mehr gestimmt, bei 16 px
+    bleibt sie, wie sie ist.
+- **`zielFuer(datei, selektoren, wert)`** — die **einzige** Stelle, die ein Ziel bestimmt:
+  `AUSNAHMEN` → `SONDERZUORDNUNG` → `ZUORDNUNG`. Das Werkzeug und der Wächter rufen beide
+  sie; `ZUORDNUNG` direkt nachzuschlagen umgeht die Sonderzuordnungen und war genau der
+  Fehler.
+- **Sechs neue `AUSNAHMEN`** — die Überschriftenstufen h1…h6 des Reichtext-Inhalts bleiben
+  in `em`. Sie sind **EIN Verhältnis** zu ihrem Behälter und keine sechs Größen, und der
+  Behälter ist gemessen 13,6 / 14,4 **oder** 16 px. Eine feste Sprosse kann nicht
+  gleichzeitig über einem 13,6-px- und unter einem 16-px-Fließtext liegen. **Sechs Sprossen
+  wären auch keine Lösung**: unter `xl` (20) hat die Skala nur 16 / 14 / 12 / 11 — bei h5
+  ist sie zu Ende, und h4 läge mit 12 px wieder unter dem 16-px-Fließtext. Die Schlüssel
+  werden aus `REICHTEXT_BEHAELTER` **gebaut** (der Selektor ist 230 Zeichen lang und
+  sechsmal fast derselbe); die Verwesungsprobe belegt die Konstruktion.
+- **Drei Messbestände** in `tools/typo-map.js`, Abschnitt 7: `KETTEN` (55 Kanten),
+  `EM_EINS` (27 Stellen, 9 davon mit `EM_EINS_UNGEMESSEN`-Grund statt stiller Null),
+  `UEBERSCHRIFTEN_GEMESSEN` (8 Behälter). **Messung, nicht Entscheidung** — eine Messung
+  darf man nachmessen, eine Entscheidung muss man bestreiten können, und beides im selben
+  Satz macht keins von beidem prüfbar.
+- **Neue Betriebsart `--ketten`**: zeigt die 35 Elternteile / 55 Kanten / 319 Elemente mit
+  Eltern- UND Kindwert und urteilt über die Ordnung. `--report` sortiert nach dem Sprung
+  **einer** Deklaration; eine Kette ist aber ein **Verhältnis**, und jede Zeile für sich sah
+  unauffällig aus. Ausgabe: `ORDNUNG KIPPT: 0 Kante(n). Soll: 0.`, Exit 0.
+- **`--kategorien` nennt jetzt die 27 stillen Leser der Wurzel** (`1em`) mit Messwert,
+  Elementnamen und Sonderzuordnung — die Kategorie, in der die fünf Eingabefelder fehlten.
+- **Drei neue Wächterblöcke** in `tests/unit/typo-map.test.js`, **12 Fälle** (43 → 55):
+  - **W5-W9** — Ketten: Bestand (35/55/319), Verwesungsprobe je Anker, "kein Kind wird
+    größer als sein Elternelement", "kein Sprung > 2 px gegen den gemessenen Wert, außer
+    benannt", und eine **Gegenprobe**, dass die Annahme wirklich abweicht (sonst wären die
+    Fälle auch grün, wenn Annahme und Messung überall zusammenfielen).
+  - **W5-W10** — Formularschrift: `EM_EINS` ist **vollständig** (gegen alle
+    `1em`-Deklarationen des Bestandes geprüft, also kann keine neue unbeurteilt
+    hineinwachsen), jede ungemessene Stelle trägt ihren Grund, kein Steuerelement mit heute
+    ≥ 16 px fällt darunter, plus Gegenprobe, dass es wirklich fünf zu schützen gibt.
+  - **W5-W11** — Überschriften: Verwesungsprobe der sechs gebauten Anker, die Messung zeigt
+    sechs streng fallende Stufen, und "sechs Stufen bleiben sechs Stufen" **lässt beide
+    gültigen Entwürfe zu** (alle in `em` geduldet ODER sechs verschiedene Sprossen, die
+    nicht unter den Fließtext rutschen) und schließt nur das Dazwischen aus.
+
+### Ratschen gesenkt, nicht gelockert
+
+| Ratsche | vorher | jetzt | Grund |
+| --- | --- | --- | --- |
+| `OFFEN_MAX` (typo-map.test.js) | 839 | **833** | 6 Überschriften geduldet |
+| `AUSSERHALB_MAX` (W5-R-05a) | 839 | **833** | dieselbe Ursache |
+| Zielwert von `EM_MAX` (W5-R-05b) | "0" | **`EM_ZIEL = 6`** | siehe unten |
+
+**`EM_MAX` kann 0 nicht erreichen, und das steht jetzt dort.** Schranke 2 zählt die
+**Einheit** `em` ohne Rücksicht auf die Dulde-Liste — absichtlich, denn Schranke 1 verlangt
+ein Token und Schranke 2 verbietet die Einheit. Mit sechs dauerhaft in `em` verbleibenden
+Überschriftenregeln ist der Zielwert **6**. `EM_ZIEL` wird gegen die Dulde-Liste
+**nachgerechnet** und nicht behauptet. Eine Zahl, die beim Aufschreiben schon nicht zu
+halten ist, wird beim ersten roten Lauf gesenkt statt erfüllt — das war der schon in W5-B
+übergebene offene Punkt, und er ist damit beantwortet.
+
+### Abnahme
+
+- Roter Nachweis in eigenem Commit (`4831eb5`): **4 failed / 51 passed**, Ausgabe nennt
+  die 12 kippenden Kanten, die 8 Sprünge > 2 px, die 5 Eingabefelder und die 27
+  Überschriften-Befunde **namentlich und beziffert**.
+- Grüner Commit (`c0284f2`): `npx jest tests/unit/typo-map.test.js
+  tests/unit/design-consistency.test.js` **324/324 grün**.
+- `npx jest`: **2060 Tests in 77 Suiten**, alle grün (vorher 2048 — die 12 neuen Fälle).
+- `npm run lint` Exit 0 mit **363** Warnungen · `typecheck` Exit 0 · `python -m pytest
+  tests/build` **30 passed** · beide Builds Exit 0 · beide Wächter OK
+  (`check-f18-kaskade --check`, `sync-aktenlage-anker --check` 0 Abweichungen, 123 Anker).
+- Ratschen unverändert: Dubletten **0**, `!important` **105**, Inline **254**,
+  `transition: all` **0**. W5-R-05 **833**/603/3, W5-R-06 95.
+- `node tools/sync-typo-tokens.js --ketten` → `ORDNUNG KIPPT: 0 Kante(n). Soll: 0.`
+- **Keine Bildschirmwirkung, und das ist nicht gemessen, sondern hergeleitet**: es wurde
+  keine Datei geändert, die ins Bündel eingeht (`git diff cbc6be7..HEAD` ohne `tests/`,
+  `tools/`, `.planning/` ist leer). Eine Grundlinien-Erhebung kann hier nichts zeigen, was
+  nicht schon aus dem leeren Diff folgt.
+- **`npx playwright test` bleibt örtlich nicht lauffähig** — derselbe Umgebungsmangel wie
+  in W5-A und W5-B: `playwright-core` 1.57.0 verlangt Chromium-Revision **1200**, vorhanden
+  sind 1217/1234/1243. Nachgefahren und belegt an `tests/e2e/features/wiki.spec.js`
+  (`browserType.launch: Executable doesn't exist … chromium_headless_shell-1200`). Der
+  Browser-Zwischenspeicher des Nutzers ist **nicht** angefasst; die Browser-Messungen
+  dieser Runde liefen über einen ausdrücklich gesetzten `executablePath` auf
+  chromium-1217. Da kein Bündel-Byte geändert ist, ist der E2E-Ausgang zwangsläufig
+  derselbe wie an `cbc6be7`.
+
+### Offen, an die Folgeschritte übergeben
+
+- **Die neun ungemessenen `1em`-Stellen sind eine offene Messschuld**, nicht ein Nullwert.
+  Keine davon ist nach ihrem Elementnamen ein `input`, `select` oder `textarea` — aber das
+  ist eine **Beobachtung und keine Herleitung**, und darum stehen sie mit Grund in
+  `EM_EINS_UNGEMESSEN`. Wer einen ihrer Zustände erreichbar macht (Widget "Referenz" des
+  DM-Schirms, Belohnung im Quest-Formular, Konzentrationsmarke, Wiki-Baum ausgeklappt),
+  sollte sie nachmessen.
+- **Die Grundlinie sieht den Reichtext-Inhalt nicht.** `seedPopulatedSession` erzeugt
+  keinen Eintrag mit `h1`…`h6`, also fehlen alle acht Behälter in `grundlinie-v5.json`.
+  Diese Runde hat die Stellen mit einem eingehängten Probekörper gemessen und das Ergebnis
+  als `UEBERSCHRIFTEN_GEMESSEN` **in den Quellbaum** gelegt, damit ein Unit-Test darüber
+  urteilen kann. Die Saat selbst wurde **nicht** erweitert: sie würde die eingefrorene
+  Grundlinie verschieben, und das ist eine Entscheidung für den Schritt, der die Grundlinie
+  neu zieht — nicht für eine Nachbesserung. **Wer die Saat erweitert, muss die Grundlinie
+  neu erheben.**
+- **Regel K ist auf 15 Stellen angewandt, nicht auf alle 55 Kanten.** Bei den übrigen 40
+  liegt der Sprung gegen den gemessenen Wert unter 2 px und die Ordnung kippt nicht; ihre
+  Zuordnung bleibt die der Tabelle. Das ist Absicht: die Tabelle ist die
+  Entwurfsentscheidung des Handoffs (§ 3.7), und 20 weitere Stellen auf "nächste Sprosse"
+  umzuschreiben wäre ein anderer Entwurf und nicht die Behebung eines Befundes. **Wer das
+  ändern will, ändert § 3.7 und nicht diese Tabelle.**
+- **`--ketten` ist eine Momentaufnahme, keine Dauersynchronisation.** `KETTEN` ist ein
+  gemessener Bestand; verschiebt die Umstellung in Schritt 5 einen Elternwert auf ein
+  Token, verschwinden Kanten aus der Messung, und die Verwesungsprobe verlangt dann, dass
+  ihr Eintrag mitgeht. **Nach dem schreibenden Lauf von Schritt 5 ist `KETTEN` neu zu
+  erheben** — die 15 Sonderzuordnungen bleiben gültig (sie tragen ein Token, keinen
+  em-Wert), aber die Kantenliste beschreibt dann einen Bestand, der nicht mehr existiert.
+- Die übrigen offenen Punkte aus W5-B bleiben: **E-3 und E-4 sind nicht getroffen**, der
+  **schreibende Lauf ist noch nie gelaufen**.
+
+### Befehle
+
+```bash
+# Die Ketten mit Eltern- UND Kindwert, mit Urteil über die Ordnung
+node tools/sync-typo-tokens.js --ketten
+
+# Die Delta-Tabelle mit Herkunftsspalte Q (g = gemessen, a = Annahme)
+node tools/sync-typo-tokens.js --report --kategorien
+
+# Der Wächter (55 Fälle)
 npx jest tests/unit/typo-map.test.js
 ```
 
