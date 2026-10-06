@@ -1198,7 +1198,25 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     // Regex ueber dieselben Dateien. Der erklaerende Kommentar im Markup nennt
     // den Attributnamen absichtlich nicht aus: die Regex zaehlt sein Vorkommen
     // auch dort, und die Senkung waere sonst um eins zu klein.
-    const INLINE_MAX = 254;
+    // Gesenkt am 2026-10-06 (Design-Handoff v3, Welle 5, Schritt 7): 254 ->
+    // 252. UND NICHT AUF 215, obwohl der Schritt 39 Inline-Schriftgroessen in
+    // Templates anfasst — diese Zahl zaehlt ATTRIBUTE, nicht Deklarationen.
+    // Von den 39 tragen gemessen nur ZWEI ausschliesslich eine Schriftgroesse
+    // (die beiden Beschriftungen "Typ" und "Ziel" des
+    // Verknuepfungsformulars); bei ihnen verschwindet mit der Deklaration das
+    // ganze Attribut. Die anderen 37 fuehren daneben `color` (29x),
+    // `margin-bottom` (10x), `display` (6x) und `text-align` (4x) und bleiben
+    // stehen. Dasselbe Missverstaendnis ist in dieser Datei schon einmal
+    // festgehalten (der Kommentar bei F-19 oben: "INLINE_MAX blieb beim
+    // Entfernen eines Stils darum zu Recht unveraendert"). Die Senkung ist das
+    // Nebenergebnis, nicht der Zweck (O-6). Dass die beiden Beschriftungen
+    // ihre Groesse danach nicht verlieren, ist gemessen und nicht gehofft:
+    // `.form-group label` (core.css, F-18-bewacht) setzt
+    // `font-size: var(--text-sm)` = 12 px, der Inline-Wert war 0,8em auf
+    // einem 16-px-Elternwert = 12,8 px — Delta -0,80 px.
+    // Gemessener Ausgangswert danach: 252, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien.
+    const INLINE_MAX = 252;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
@@ -15088,6 +15106,209 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
         const vorhanden = new Set(alleGewichte.map(typoAnker));
         expect(Object.keys(FONT_WEIGHT_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 7 — W5-R-08: die Inline-Typografie
+   ===========================================================================
+
+   WAS DIESER BLOCK BEWACHT UND WARUM IHN KEINE BESTEHENDE ZUSICHERUNG
+   ERSETZT. W5-R-05 urteilt ueber `assets/styles/*.css` und sieht keine Zeile
+   Markup. F-19 (INLINE_MAX) zaehlt `style="`-ATTRIBUTE und urteilt nicht
+   ueber ihren Inhalt: ein Attribut mit `font-size: 0.85em` und eines mit
+   `font-size: var(--text-sm)` sind fuer sie dieselbe Zahl. Der Stil-Sollstand
+   sieht den berechneten Wert, aber ohne Quellenangabe — er kann nicht sagen,
+   dass eine Groesse aus einem Inline-Stil kommt. Zwischen den drei
+   Zusicherungen liegt also eine Luecke von gemessen 137 Deklarationen, und
+   das ist mehr als ein Siebtel des ganzen Befundes D-06.
+
+   GEMESSENER AUSGANGSWERT, am 2026-10-06 gegen 476ce50 erhoben:
+
+     Templates   39 Deklarationen in 6 Dateien
+                 modals-tools 21, modals-editors 8, modals-entity 4,
+                 view-resources 3, view-tools 2, modals-shops 1
+     JS          98 Deklarationen in 30 Dateien
+                 entity-links 14, npc-popup 8, performance-extras 7,
+                 npc-dialogs 6, file-backup-ui 6, loader 5, ...
+     zusammen   137
+
+   Die Zahl 137 trifft die Vorhersage des Schrittes (39 + 98) auf den Punkt —
+   aber nur, WEIL die Erhebung Kommentare streicht. Ohne diesen Schritt zaehlt
+   sie 141: `rich-text-insert.js:872` nennt im JSDoc woertlich
+   `font-size: 1.3em`, und drei weitere Zeilen sind `.style.fontSize`-
+   Zuweisungen, die kein `font-size:` schreiben. Die Begruendung steht an
+   `inlineOhneKommentare()`.
+
+   WAS DIESER BLOCK AUSDRUECKLICH NICHT TUT.
+     - Er verlangt NICHT das Verschwinden der Inline-Deklaration, sondern ihr
+       Token. Eine Inline-Deklaration in eine Klasse zu verlegen aendert die
+       KASKADE: ein Inline-Stil schlaegt jede Regel, eine Hilfsklasse (0,1,0)
+       verliert gegen jede Komponentenregel mit einem zweiten Glied — und
+       `.form-group label` (0,1,1) ist genau so eine. Wer 137 Stellen so
+       verschiebt, aendert an einer unbekannten Zahl von ihnen, WELCHE Regel
+       gewinnt, und eine Typografie-Welle darf das nicht stillschweigend tun.
+       Mit dem Token aendert sich die Zahl und sonst nichts; der
+       Grundlinien-Diff misst genau diese eine Aenderung.
+     - Er urteilt NICHT ueber `element.style.fontSize = ...` in
+       `ui/editors/rich-text.js` (Zeilen 285, 289, 359). Das sind drei Stellen
+       der Schriftgroessen-AUSWAHL des Editors: der Nutzer waehlt eine Groesse,
+       das Programm setzt sie. Funktion, keine Gestaltung (Arbeitsregel 10).
+       Die GEGENPROBE unten sichert zu, dass die Erhebung sie nicht sieht.
+     - Er urteilt NICHT ueber `font-weight` (das tut W5-R-06b) und nicht ueber
+       die SVG-Praesentationsattribute (das tut W5-R-05c).
+   =========================================================================== */
+
+describe('W5-R-08 — jede Inline-Schriftgroesse kommt aus der Skala (Ratsche)', () => {
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
+    const GEDULDET = TYPO_MAP.INLINE_GEDULDET;
+    const AUSGENOMMEN = TYPO_MAP.INLINE_AUSGENOMMEN;
+
+    /** SCHRANKE — Inline-Schriftgroessen ausserhalb der Skala.
+     *  Gemessener Ausgangswert: 137 von 137 (keine einzige stand auf einer
+     *  Sprosse). Die Werte verteilen sich auf 17 Schreibweisen:
+     *    0.85em 33x, 0.8em 23x, 0.9em 17x, 0.75em 11x, 14px 4x, 11px 4x,
+     *    1.2em 5x, 2em 5x, 0.8rem 4x, 10px 5x, 1.1em 4x, 12px 3x, 0.7em 2x,
+     *    16px 3x, 0.95em 1x, 18px 1x, 48px 1x, 1.5em 1x, 3em 1x, 0.85rem 1x,
+     *    1.2rem 1x
+     *  ZIEL 0 — erreicht, sobald jede Deklaration ein `var(--text-*)` traegt,
+     *  namentlich geduldet oder in einer ausgenommenen Datei steht.
+     *  Diese Zahl darf nur SINKEN. */
+    const INLINE_AUSSERHALB_MAX = 0;
+
+    const alleInline = typoInline('font-size');
+
+    function offene() {
+        return alleInline.filter(d => {
+            if (AUSGENOMMEN.includes(d.datei)) return false;
+            if (GEDULDET[d.anker]) return false;
+            return !ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim());
+        });
+    }
+
+    test('W5-R-08: keine Inline-Schriftgroesse ausserhalb der Skala', () => {
+        const befunde = offene().map(d => `${d.anker}  [${d.wert}]  ${d.quelle}`);
+        if (befunde.length > INLINE_AUSSERHALB_MAX) {
+            const v = {};
+            offene().forEach(d => {
+                v[d.wert] = (v[d.wert] || 0) + 1;
+            });
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleInline.length,
+                schranke: INLINE_AUSSERHALB_MAX,
+                verteilung: v,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: INLINE_AUSSERHALB_MAX,
+                gesamt: alleInline.length,
+                schranke: INLINE_AUSSERHALB_MAX,
+                verteilung: v,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(INLINE_AUSSERHALB_MAX);
+    });
+
+    test('SELBSTPROBE: der Geltungsbereich ist beziffert, nicht angenommen', () => {
+        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar.
+        const tpl = alleInline.filter(d => d.datei.startsWith('assets/templates/'));
+        const js = alleInline.filter(d => !d.datei.startsWith('assets/templates/'));
+        expect(tpl.length).toBe(39);
+        expect(js.length).toBe(98);
+        expect(alleInline.length).toBe(137);
+        expect(new Set(tpl.map(d => d.datei)).size).toBe(6);
+        // 28 und nicht 30: die Vorhersage des Schrittes zaehlt
+        // `rich-text.js` (drei `.style.fontSize`-Zuweisungen, Funktion) und
+        // `rich-text-insert.js` (eine Nennung im JSDoc) mit. Beide tragen
+        // gemessen NULL Inline-Deklarationen; die zwei GEGENPROBEN unten
+        // halten genau das fest.
+        expect(new Set(js.map(d => d.datei)).size).toBe(28);
+    });
+
+    test('SELBSTPROBE: zwei Zaehlarten nennen dieselbe Zahl', () => {
+        // Eine zweite, unabhaengige Zaehlung ueber dieselbe Dateimenge: hier
+        // ohne Zeilenzerlegung, nur ein globaler Regex ueber den
+        // kommentarfreien Text. Zwei Wege, die nichts voneinander wissen.
+        const quellen = [
+            ...tplFiles.map(f => ({ t: f.content, h: true })),
+            ...jsDateien().map(f => ({ t: f.content, h: false }))
+        ];
+        const perRegex = quellen.reduce(
+            (n, q) =>
+                n + [...inlineOhneKommentare(q.t, q.h).matchAll(/font-size\s*:/g)].length,
+            0
+        );
+        expect(alleInline.length).toBe(perRegex);
+    });
+
+    test('GEGENPROBE: der Erklaertext im JSDoc zaehlt nicht mit', () => {
+        // `ui/editors/rich-text-insert.js:872` nennt `font-size: 1.3em` in
+        // einem Blockkommentar und erklaert daneben, warum die Stelle nicht
+        // angefasst wird. Ohne das Streichen der Kommentare verlangte diese
+        // Ratsche die Aenderung eines Kommentars — gemessen 141 statt 137.
+        expect(alleInline.map(d => d.anker)).not.toContain(
+            'ui/editors/rich-text-insert.js:872'
+        );
+        const roh = fs.readFileSync(
+            path.join(REPO, 'ui/editors/rich-text-insert.js'),
+            'utf8'
+        );
+        expect(roh).toContain('font-size: 1.3em');
+    });
+
+    test('GEGENPROBE: die Schriftwahl des Editors ist Funktion, nicht Gestaltung', () => {
+        // `element.style.fontSize = sizeValue` setzt um, was der Nutzer im
+        // Auswahlfeld gewaehlt hat; die dritte Stelle setzt es zurueck. Keine
+        // der drei schreibt `font-size:` und keine darf ein Token bekommen —
+        // ein Token waere hier eine feste Groesse an einer Stelle, deren Zweck
+        // die freie Wahl ist (Arbeitsregel 10).
+        const rt = fs.readFileSync(path.join(REPO, 'ui/editors/rich-text.js'), 'utf8');
+        expect([...rt.matchAll(/\.style\.fontSize\s*=/g)].length).toBe(3);
+        expect(alleInline.filter(d => d.datei === 'ui/editors/rich-text.js').length).toBe(0);
+    });
+
+    test('GEGENPROBE: die ausgenommenen Dateien sind namentlich ausgenommen', () => {
+        // Die Ausnahme ist eine DATEI und keine Zahl: waechst sie, waechst
+        // kein Zaehler still mit. `loader.js` bleibt im Geltungsbereich der
+        // GEWICHTS-Schranke und der SVG-Schranke — ausgenommen sind nur seine
+        // Schriftgroessen, und zwar weil Ladeanzeige und Fehlerschirm ohne
+        // wirkendes Stilblatt richtig aussehen muessen (Begruendung in
+        // tools/typo-map.js).
+        expect(AUSGENOMMEN).toEqual(['loader.js', 'features/shops/shop-export.js']);
+        AUSGENOMMEN.forEach(f => expect(fs.existsSync(path.join(REPO, f))).toBe(true));
+        // ... und die Erhebung SIEHT loader.js wirklich, sie laesst es nur im
+        // Urteil aus. Sonst waere die Ausnahme nicht nachpruefbar.
+        expect(alleInline.filter(d => d.datei === 'loader.js').length).toBe(5);
+        // shop-export.js traegt gemessen 17 Stellen und ist schon aus der
+        // Dateimenge heraus (AUSGENOMMENE_DATEIEN) — doppelt genannt, damit
+        // eine andere Bildung der Dateimenge die Ausnahme nicht verliert.
+        expect(alleInline.map(d => d.datei)).not.toContain('features/shops/shop-export.js');
+    });
+
+    test('GEGENPROBE: die Erlaubnis kommt aus der Tabelle und trifft wirklich', () => {
+        // `erlaubtRegex()` kommt aus tools/typo-map.js; hier steht keine
+        // zweite Aufzaehlung von Tokennamen (O-4 / ARCH-01, zugesichert in
+        // tests/unit/typo-map.test.js, "es gibt kein zweites Verzeichnis der
+        // Skalentokens" — die EINE Nennung unten ist dort namentlich
+        // verbucht). Ohne diese drei Zeilen koennte jede gruene Zusicherung
+        // oben auch daran liegen, dass die Erlaubnis ALLES durchlaesst.
+        expect(ERLAUBT.test('var(--text-sm)')).toBe(true);
+        expect(ERLAUBT.test('0.85em')).toBe(false);
+        expect(ERLAUBT.test('12px')).toBe(false);
+        expect(ERLAUBT.test('0.8rem')).toBe(false);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        const vorhanden = new Set(alleInline.map(d => d.anker));
+        expect(Object.keys(GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+        // ... und jede Duldung nennt eine Zahl in Bildpunkten. Eine Ausnahme
+        // ohne Messwert ist eine Meinung.
+        Object.entries(GEDULDET).forEach(([k, grund]) => {
+            expect(typeof grund).toBe('string');
+            expect(grund).toMatch(/\d+(?:[.,]\d+)?\s*px/);
+            expect(k).toMatch(/:\d+$/);
+        });
     });
 });
 

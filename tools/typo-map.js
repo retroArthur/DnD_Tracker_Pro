@@ -188,7 +188,29 @@ const ZUORDNUNG = {
     '20px': token('xl'), //  -> 20 px  (Delta 0)
     '22px': token('xl'), //  -> 20 px  (-2)
     '24px': token('2xl'), // -> 26 px  (+2)
-    '32px': token('3xl') //  -> 34 px  (+2)
+    '32px': token('3xl'), // -> 34 px  (+2)
+
+    /* --- rem: drei Werte, und nur aus der INLINE-Typografie ---
+       NACHGETRAGEN am 2026-10-06 (Schritt 7). Im CSS kommt `rem` nicht vor —
+       F-03 wacht darueber — aber die Inline-Stile in Templates und JS tragen
+       drei rem-Werte: `0.8rem` (initiative.js:157 und drei Stellen in
+       soundboard-render.js), `0.85rem` (soundboard-render.js:32) und
+       `1.2rem` (modals-entity.html:637).
+       SIE STEHEN IN DERSELBEN TABELLE UND NICHT IN EINER ZWEITEN, weil die
+       Rechnung dieselbe ist: `rem` bezieht sich auf die Wurzel, und die
+       Wurzel traegt gemessen 16 px — die App setzt an `html` keine
+       Schriftgroesse, nachgesehen in allen 20 CSS-Dateien, und die Messung
+       im Browser nennt fuer alle vier rem-Stellen einen Elternwert von
+       16 px. Fuer `altPx()` ist `1rem` damit zeichengleich mit `1em` auf
+       einer 16-px-Wurzel; eine zweite Liste waere genau der Rueckfall, den
+       O-4 verbietet.
+       DASS SIE IM CSS NICHTS ANFASSEN, ist keine Annahme: das
+       Umstellungswerkzeug findet dort keinen rem-Wert (0 Treffer), und die
+       em-Erhebung der Ratsche W5-R-05b nimmt `rem` ausdruecklich NICHT mit
+       (eigene Einheit, eigener Befund — F-03 urteilt darueber). */
+    '0.8rem': token('sm'), //  12,80 px bei 16er Wurzel  -> 12 px  (-0,8)
+    '0.85rem': token('md'), // 13,60 px                  -> 14 px  (+0,4)
+    '1.2rem': token('xl') //   19,20 px                  -> 20 px  (+0,8)
 };
 
 /* ===========================================================================
@@ -271,6 +293,54 @@ const AUSNAHMEN = {
  * der Ratsche, aus demselben Grund wie AUSNAHMEN.
  */
 const SVG_GEDULDET = {};
+
+/**
+ * Namentlich geduldete INLINE-Schriftgroessen in Templates und JS.
+ * Schluessel `datei:zeile` — wie bei SVG_GEDULDET AUSNAHMSWEISE mit Zeile,
+ * weil eine Inline-Deklaration in einer Zeichenkette keinen Selektor hat, an
+ * dem sie haengen koennte. Werte: gemessener Wert, Grund.
+ *
+ * ES IST GENAU EINE, und das ist gemessen und nicht gespart. Von den 137
+ * Inline-Schriftgroessen tragen neun ein Emoji oder ein Ikon als einzigen
+ * Inhalt; acht davon springen beim Weg auf eine Sprosse um 2,00 px oder
+ * weniger (1.1em -> lg -1,60; 1.2em -> xl +0,80 dreimal; 2em -> 3xl +2,00
+ * dreimal; 10px -> xs +1,00) und sind deshalb MECHANISCH gehoben, so wie der
+ * Schritt 5 es mit den 54 unbeurteilten Ikon-Kandidaten im CSS gehalten hat.
+ * Eine Ausnahmeliste, die eine Stelle fuehrt, deren Sprung 0,80 px betraegt,
+ * bewacht nichts — sie verlaengert nur die Liste (Lehre O-5).
+ */
+const INLINE_GEDULDET = {
+    'assets/templates/modals-tools.html:552':
+        '48px. Das 🎲 des Impressumsfensters, einziger Inhalt seines Kastens, kein ' +
+        'Lesetext (E-3). Die Skala hat zwischen 34 und 72 px keine Sprosse: der Weg ' +
+        'auf --text-3xl waere -14,00 px, der auf --text-hero +24,00 px. Beide ' +
+        'ueberschreiten die 2-px-Zusage um ein Mehrfaches, und beide aenderten das ' +
+        'Bild eines Zeichens, das nichts sagt. Gemessen 48,00 px auf 16-px-Eltern.'
+};
+
+/**
+ * QUELLDATEIEN, deren Inline-SCHRIFTGROESSEN ausgenommen sind — nicht ihre
+ * Gewichte und nicht ihre SVG-Attribute.
+ *
+ * `loader.js` DARF KEIN `var(--text-*)` TRAGEN, und das ist keine
+ * Geschmacksfrage. Die Ladeanzeige (Zeilen 196-218) und der Fehlerschirm
+ * (Zeilen 320-348) sind die beiden einzigen Oberflaechen, die ENTSTEHEN,
+ * BEVOR oder OHNE DASS das Stilblatt wirkt — der Fehlerschirm erscheint
+ * genau dann, wenn das Laden fehlgeschlagen ist. Dass das Absicht ist und
+ * nicht Schlamperei, steht in der Datei selbst: beide tragen ihre Farben als
+ * Literale (#0f0f0f, #e0e0e0, #fbbf24, #888, #2a2a2a, #ef4444), obwohl der
+ * ganze uebrige Baum unter F-04 keine Hex-Literale duldet. Ein
+ * `font-size: var(--text-md)` ohne definiertes Token ist zur Berechnungszeit
+ * ungueltig und faellt auf den geerbten Wert zurueck: das ⚔️ der Ladeanzeige
+ * stuende dann nicht bei 48 px, sondern bei 16. Die fuenf Stellen bleiben
+ * deshalb in `em` — gemessen 48 / 24 / 13,6 / 32 / 19,2 px.
+ *
+ * `features/shops/shop-export.js` steht hier ein zweites Mal, obwohl
+ * `AUSGENOMMENE_DATEIEN` es schon aus der Dateimenge nimmt. Doppelt genannt
+ * ist hier besser als einmal: wer die Dateimenge je anders bildet, hat die
+ * Ausnahme immer noch.
+ */
+const INLINE_AUSGENOMMEN = ['loader.js', 'features/shops/shop-export.js'];
 
 /**
  * Namentlich ausgenommene QUELLDATEIEN. `features/shops/shop-export.js`
@@ -443,10 +513,17 @@ function istIkon(selektoren) {
  *  wirklich auf dem Bildschirm passiert, misst `tools/typo-baseline.js` im
  *  Browser und stellt es in Bildpunkten gegenueber. */
 function altPx(wert) {
-    const m = wert.match(/^([0-9.]+)\s*(em|px)$/);
+    /* `rem` seit dem 2026-10-06 mit dabei (Schritt 7, drei Inline-Werte).
+       Die Rechnung ist fuer em und rem dieselbe ZAHL, aber nicht dieselbe
+       AUSSAGE: bei `em` ist 16 px die Annahme "der Elternwert ist 16 px"
+       (gemessen bei 723 von 948 Elementen richtig), bei `rem` ist 16 px der
+       gemessene Wurzelwert und damit exakt. Die rem-Schaetzung ist also die
+       bessere der beiden — nachgemessen stimmt sie an allen vier
+       rem-Stellen auf 0,00 px. */
+    const m = wert.match(/^([0-9.]+)\s*(em|rem|px)$/);
     if (!m) return null;
     const zahl = parseFloat(m[1]);
-    return m[2] === 'em' ? zahl * 16 : zahl;
+    return m[2] === 'px' ? zahl : zahl * 16;
 }
 
 /* ===========================================================================
@@ -1665,6 +1742,8 @@ module.exports = {
     OHNE_ZAHLENWERT,
     AUSNAHMEN,
     SVG_GEDULDET,
+    INLINE_GEDULDET,
+    INLINE_AUSGENOMMEN,
     AUSGENOMMENE_DATEIEN,
     SCHUTZ_CHIP,
     SCHUTZ_MARKE,

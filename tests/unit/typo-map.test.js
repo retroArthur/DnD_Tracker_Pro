@@ -283,11 +283,35 @@ describe('W5-W2 — der Delta-Bericht ist in sich stimmig', () => {
 describe('W5-W3 — die Zuordnungstabelle', () => {
     const werte = M.skalaWerte();
 
-    test('44 Zeilen: 28 em-Werte und 16 px-Literale', () => {
+    test('47 Zeilen: 28 em-Werte, 3 rem-Werte und 16 px-Literale', () => {
+        // GEWACHSEN am 2026-10-06 von 44 auf 47 (Schritt 7, Inline-Typografie):
+        // die Inline-Stile in Templates und JS tragen drei rem-Werte, die im
+        // CSS nicht vorkommen (dort wacht F-03 darueber). Sie stehen in
+        // DIESER Tabelle und nicht in einer zweiten — die Rechnung ist
+        // dieselbe, weil die Wurzel gemessen 16 px traegt (O-4).
         const schluessel = Object.keys(M.ZUORDNUNG);
-        expect(schluessel.length).toBe(44);
-        expect(schluessel.filter(k => k.endsWith('em')).length).toBe(28);
+        expect(schluessel.length).toBe(47);
+        // `endsWith('em')` trifft auch `rem`. Darum wird hier getrennt
+        // gezaehlt — sonst stuende 31 da, und die Aussage waere falsch.
+        expect(schluessel.filter(k => /[0-9]em$/.test(k)).length).toBe(28);
+        expect(schluessel.filter(k => k.endsWith('rem')).length).toBe(3);
         expect(schluessel.filter(k => k.endsWith('px')).length).toBe(16);
+    });
+
+    test('die drei rem-Werte haben genau die Sprossen, die die 16-px-Wurzel nennt', () => {
+        // Eine Gegenprobe zur Tabelle, nicht ihre Wiederholung: sie rechnet
+        // den Wert aus und sucht die naechste Sprosse, statt den Eintrag
+        // abzulesen. Laeufe beide auseinander, ist der Eintrag ein Tippfehler.
+        const sprossen = Object.values(werte).sort((a, b) => a - b);
+        ['0.8rem', '0.85rem', '1.2rem'].forEach(k => {
+            const alt = M.altPx(k);
+            expect(alt).toBe(parseFloat(k) * 16);
+            const naechste = sprossen.reduce((best, s) =>
+                Math.abs(s - alt) < Math.abs(best - alt) ? s : best
+            );
+            expect(werte[M.ZUORDNUNG[k]]).toBe(naechste);
+            expect(Math.abs(werte[M.ZUORDNUNG[k]] - alt)).toBeLessThanOrEqual(2);
+        });
     });
 
     test('jedes Ziel ist eine Sprosse der Skala', () => {
@@ -333,9 +357,21 @@ describe('W5-W3 — die Zuordnungstabelle', () => {
         expect(M.altPx('13px')).toBe(13);
         expect(M.altPx('inherit')).toBeNull();
         expect(M.altPx('var(--text-md)')).toBeNull();
-        // `rem` ist eine ANDERE Einheit (F-03 urteilt darueber) und darf hier
-        // nicht stillschweigend als em durchgehen.
-        expect(M.altPx('1.2rem')).toBeNull();
+        // `rem` GING BIS ZUM 2026-10-06 ABSICHTLICH NICHT DURCH, und die
+        // Begruendung lautete "andere Einheit, F-03 urteilt darueber". Sie
+        // galt, solange die Tabelle nur CSS-Werte fuehrte; seit dem Schritt 7
+        // fuehrt sie drei rem-Werte aus den Inline-Stilen, und ein `altPx()`,
+        // das fuer sie `null` lieferte, haette die Monotonieprobe oben und
+        // jede Delta-Rechnung des Berichts an genau diesen drei Zeilen blind
+        // gemacht. Die ZAHL ist fuer em und rem dieselbe, die AUSSAGE nicht:
+        // bei em ist 16 px die Annahme ueber den Elternwert, bei rem der
+        // gemessene Wurzelwert — und damit exakt.
+        expect(M.altPx('1.2rem')).toBeCloseTo(19.2, 5);
+        expect(M.altPx('0.8rem')).toBeCloseTo(12.8, 5);
+        // Was WEITER null bleibt: eine Einheit, die die Tabelle nicht kennt.
+        expect(M.altPx('1.2vw')).toBeNull();
+        expect(M.altPx('12pt')).toBeNull();
+        expect(M.altPx('120%')).toBeNull();
     });
 });
 
@@ -363,7 +399,12 @@ describe('W5-W4 — die Ratsche IMPORTIERT die Tabelle, sie baut sie nicht nach'
         const ERLAUBTE_NENNUNGEN = {
             // Welle-4-Vertrag, Chip-Basis: `font-size: var(--text-sm)`
             // (design-consistency.test.js, "Teil 3: die 17 Chip-Bauformen").
-            '--text-sm': 1,
+            // Dazu seit dem 2026-10-06 (Schritt 7) eine GEGENPROBE von
+            // W5-R-08: `ERLAUBT.test('var(--text-sm)')` muss wahr sein, sonst
+            // koennte die gruene Inline-Schranke auch daran liegen, dass die
+            // Erlaubnis alles durchlaesst. Eine neue ZUSICHERUNG, keine neue
+            // Liste — deshalb hier verbucht und nicht weggeregelt.
+            '--text-sm': 2,
             // Welle-4-Vertrag, Marken-Basis: `font-size: var(--text-xs)`
             // ("Teil 5: die 8 Marken haengen an .badge").
             '--text-xs': 1,
