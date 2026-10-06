@@ -742,7 +742,7 @@
     }
     
     .section-toolbar-title {
-        font-size: var(--text-md);
+        font-size: var(--text-sm);
     }
     
     .section-toolbar-filters {

@@ -2120,7 +2120,7 @@
     background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
-.rest-type-icon { font-size: var(--text-3xl); }
+.rest-type-icon { font-size: var(--text-2xl); }
 .rest-type-label { font-weight: 600; color: var(--text); }
 .rest-type-desc { font-size: var(--text-sm); color: var(--text-dim); }
 
