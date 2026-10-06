@@ -6481,3 +6481,327 @@ node tools/sync-aktenlage-anker.js --check
 ```
 
 ---
+
+## W5-E — Gewichte, Inline-Typografie, Untergrenze und Formularschrift (2026-10-06)
+
+**Status: ERLEDIGT.** Sechste Einheit der Welle 5, Schritte **6, 7 und 8** des geprüften
+Plans. Sieben Commits, `10aa860 → 4de0e3a`. Jeder Schritt hat seinen **eigenen roten
+Nachweis in einem eigenen Commit**, gefolgt von seiner Umsetzung.
+
+### Schritt 6 — die 99 Schriftgewichte
+
+Roter Nachweis `8b512e3`: 3 failed / 276 passed. `!important` 105 gegen Schranke 104;
+W5-R-06 **95 von 360** Deklarationen außerhalb 400/500/600 (700 83x, `bold` 10x, `normal`
+1x, `300` 1x); W5-R-06b (neu) **4 von 17** Inline-Gewichten außerhalb.
+
+Umsetzung `476ce50`. **91 der 95 CSS-Stellen sind Werkzeugergebnis** (82x `700 -> 600`,
+9x `bold -> 600`); der Lauf ersetzt nur den WERT und nur, wenn danach ein Semikolon oder
+eine Blockgrenze folgt — deshalb hat er die `spells.css`-Doppelzeile von selbst nicht
+angefasst, dort steht `!important` dazwischen. Verteilung danach: **600 304x,
+`600 !important` 9x, 500 38x, 400 8x — kein vierter Wert.**
+
+Vier Urteilsstellen, jede mit nachgestellter Begründung im CSS:
+
+| Stelle | vorher -> nachher | Begründung |
+| --- | --- | --- |
+| `spells.css` Editor-Fett | `700 !important` -> `600 !important`, zweite Zeile (`bold !important`) entfällt | Das Ausgabe-Fett derselben Inhalte steht schon auf `600 !important`; Editor und gespeicherte Ansicht zeigen jetzt **dasselbe** Fett. `IMPORTANT_MAX` 105 -> 104 (O-2). |
+| `party.css` `.cf-hp-divider` | `300` -> `400` | Die einzige 300 im Baum, Inhalt ist **ein** Schrägstrich. Ein fünfter Wert für ein Zeichen ist die Unterscheidung nicht wert. Sichtbar nur unter Windows (Segoe UI Light). |
+| `tools.css` `.category-tag` | `normal` -> `400` | **Gemessen ein Nullzug**: `normal` IST 400. Geändert wird die Schreibweise. |
+| 4x inline | `bold`/`normal` -> `600`/`400` | `modals-shops.html`, `view-resources.html`, `tags.js:62`, `loader.js:344`. |
+
+**Die gelöschte Zeile ist durch eine Kommentarzeile ersetzt, und das ist Absicht.**
+`spells.css` trägt neun Zeilenanker aus `R-19`, aus der Radientabelle und aus dieser Akte.
+Der erste Versuch löschte ohne Ersatz und verschob alle sechs Anker oberhalb von 353 um
+eins — `R-19` meldete "Anker 436/525/563, gefunden 435/524/562". Mit Ersatzzeile ist die
+**Zeilenzahl jeder angefassten Datei unverändert** (numstat: 99 hinzugefügt, 99 entfernt,
+je Datei gleich).
+
+### Schritt 7 — die 137 Inline-Schriftgrößen
+
+Roter Nachweis `be4fd80`: 2 failed / 2085 gesamt. `F-19` 254 gegen Schranke 252; W5-R-08
+(neu) **131 von 137** außerhalb der Skala. Die 137 treffen die Vorhersage des Plans
+(39 + 98) **auf den Punkt** — aber nur, weil die Erhebung Kommentare streicht: ohne diesen
+Schritt zählt sie 141 (`rich-text-insert.js:872` nennt `font-size: 1.3em` im JSDoc und
+erklärt daneben, warum die Stelle nicht angefasst wird; drei weitere sind
+`.style.fontSize`-Zuweisungen der Editor-Schriftwahl).
+
+Umsetzung `1eb1e80`. **124 Stellen sind Werkzeugergebnis.** Quellseitige Delta-Spanne
+−1,60 .. +2,00 px, **kein Wert darüber**: −1,60 41x, −0,80 22x, −0,40 20x, 0,00 16x,
++1,00 6x, +0,80 6x, −1,00 5x, +2,00 5x, −1,20 1x, −0,20 1x, +0,40 1x.
+
+13 Urteilsstellen: **7 entfernt** (vier Chip-Mitglieder in `npc-popup.js` — der
+Welle-4-Vertrag `W4-R-06` verbietet einem Mitgliedsselektor eine eigene Schriftgröße und
+verlangt sie an der Basis; `.session-tag`, dessen Basisregel gemessen denselben Wert
+deklariert, Delta 0,00; und die zwei Beschriftungen "Typ"/"Ziel", bei denen das ganze
+Attribut weicht und `.form-group label` entscheidet, Delta −0,80 — das sind die zwei, die
+`INLINE_MAX` auf 252 senken). **1 geduldet** (das Würfel-Emoji des Impressumsfensters,
+48 px; die Skala hat zwischen 34 und 72 px keine Sprosse, beide Wege wären −14,00 bzw.
++24,00 px). **5 ausgenommen** (`loader.js`).
+
+**Die 37 übrigen Attribute behalten ihre Deklaration — als Token, nicht als Klasse.** Eine
+Inline-Deklaration in eine Hilfsklasse zu verlegen ändert die KASKADE: ein Inline-Stil
+schlägt jede Regel, eine Hilfsklasse (0,1,0) verliert gegen jede Komponentenregel mit
+einem zweiten Glied, und `.form-group label` (0,1,1) ist genau so eine. Wer 137 Stellen so
+verschiebt, ändert an unbekannt vielen, WELCHE Regel gewinnt. Mit dem Token ändert sich
+die Zahl und sonst nichts — und genau diese eine Änderung misst der Grundlinien-Diff.
+
+**`loader.js` ist eine namentliche DATEI-Ausnahme, und das ist keine Geschmacksfrage.**
+Ladeanzeige (196-218) und Fehlerschirm (320-348) entstehen, BEVOR oder OHNE DASS das
+Stilblatt wirkt — der Fehlerschirm erscheint genau dann, wenn das Laden fehlgeschlagen
+ist. Ein `font-size: var(--text-md)` ohne definiertes Token ist zur Berechnungszeit
+ungültig und fällt auf den geerbten Wert zurück: das Schwerter-Zeichen stünde dann bei
+16 px statt bei 48. **Dass das Absicht ist und nicht Schlamperei, steht in der Datei
+selbst:** beide Schirme führen ihre Farben als Hex-Literale, obwohl der übrige Baum unter
+`F-04` keine duldet.
+
+Drei `rem`-Zeilen sind in die Zuordnungstabelle nachgetragen (44 -> 47). Im CSS kommt `rem`
+nicht vor — dort wacht `F-03` —, die Inline-Stile tragen aber `0.8rem`, `0.85rem` und
+`1.2rem`. Sie stehen in DERSELBEN Tabelle, weil die Rechnung dieselbe ist: die Wurzel
+trägt gemessen 16 px, und die Browser-Messung nennt für alle vier rem-Stellen genau diesen
+Elternwert. `altPx()` rechnet `rem` jetzt mit; der frühere zugesicherte `null` war richtig,
+solange die Tabelle nur CSS führte, und hätte die Monotonieprobe an diesen drei Zeilen
+blind gemacht.
+
+### Schritt 8 — Untergrenze und Formularschrift
+
+Roter Nachweis `8b62ebb`: Jest 6 failed / 286 passed, Playwright 4 failed / 0 passed.
+Daneben unabhängig gemessen, weil der erste rote Fall den zweiten verdeckt: **254
+Bedienelemente in 18 Signaturen** standen auf Chromiums `font: -webkit-small-control`
+(13,3333 px) — 187 blanke `input`, 18 `.cf-skill-exp-check`, 8 `.qa-btn`, je 6
+`.bst-attr-input`, `.dice-attr`, `.dice-attr.save`, `.mobile-search-btn`, 5
+`.npc-detail-btn`, 3 blanke `select`, 1 `.roster-add`.
+
+Umsetzung `1c8e4f8`, vier Eingriffe:
+
+**(1) Eine Regel für die Bedienelemente** (`core.css`, O-10):
+`button, input, select, textarea { font-size: var(--text-sm) }`. 12 px und nicht 14, weil
+die App selbst sagt, was ein Formularfeld trägt (`.form-group input/select/textarea`:
+`var(--text-sm)`); 14 lag näher an 13,3333, wäre aber eine ZWEITE Antwort auf dieselbe
+Frage. Sprung −1,33 px. Elementselektoren und keine Klasse: Spezifität (0,0,1) ist die
+kleinste, die es gibt — jede bestehende Klassenregel gewinnt weiter, auch die Chip- und
+Markenbasen der Welle 4. **Sie steht am ENDE von `core.css`** und nicht bei `body`, wo sie
+der Sache nach hingehörte: der erste Versuch setzte sie dorthin, und 41 eingefügte Zeilen
+machten vier Ratschen rot (`R-06`, `R-19` und drei Fälle von `W4-R-04`) — reine
+Zeilenanker-Verschiebung. Die Stellung ist für diese Eigenschaft gemessen folgenlos: es ist
+die **einzige** Regel im Stilblatt, die `font-size` mit einem reinen Elementselektor setzt
+(nachgezählt über alle 20 Dateien: 0 weitere).
+
+**(2) Eine Folge davon, gefunden und behoben** (`dice.css`). `.dice-attr small` trug keine
+Größe; `small` ist in jedem Browser `font-size: smaller`, also 0,8333 mal den Elternwert.
+Mit dem Knopf auf 12 px fällt das auf **10,00 px** — die neue Formularregel hätte 12
+Elemente UNTER die Untergrenze geschoben (6 Attribut- und 6 Rettungswurf-Knöpfe). Jetzt
+steht dort `var(--text-xs)`: 11,11 -> 11,00 px, Delta −0,11. **Genau diese Sorte Kind nennt
+O-10 beim Namen** ("40 em-Kinder, deren Endwert heute ein Produkt aus einer
+Browser-Vorgabe ist").
+
+**(3) Die drei SVG-Präsentationsattribute verschwinden** (O-7, `SVG_MAX` 3 -> 0) — und zwar
+OHNE einen Eintrag in `SVG_GEDULDET`. Die Histogramm-Beschriftungen tragen jetzt die
+Klassen `.ds-hist-face-label` (8) und `.ds-hist-axis-label` (7); ihre WERTE sind
+unverändert und stehen namentlich in `AUSNAHMEN`, also unter `W5-R-05a`. Der Unterschied
+ist der Ort: geduldet in einer Kategorie, in der nichts hinsieht, gegen geduldet dort, wo
+jede andere Größe auch geurteilt wird.
+
+**DER WICHTIGSTE NEUE BEFUND DIESER EINHEIT: die Lesbarkeit dieser Beschriftungen hängt
+an der viewBox-Skalierung und NICHT an ihrem deklarierten Wert.** Das SVG trägt
+`viewBox="0 0 440 180"` und `width: 100%`, die Zahl ist also eine BENUTZEREINHEIT.
+Gemessen auf gefüllter Kampagne:
+
+| Fensterbreite | Skalierung | 8 Einheiten wirken | 7 Einheiten wirken |
+| --- | --- | --- | --- |
+| 1440 px | 1,4175 | **11,34 px** | **9,93 px** |
+| 375 px | 0,68 | **5,44 px** | **4,76 px** |
+
+Auf dem Schreibtisch liegt die Beschriftung damit **bereits** auf der Untergrenze; eine
+Hebung auf 11 Einheiten machte dort 15,6 px daraus und ließe sie auf dem Telefon mit
+7,5 px weiter darunter. Wer das wirklich lösen will, muss die Beschriftungen aus dem
+skalierten Koordinatensystem nehmen (HTML-Schicht über dem Diagramm oder ein mitwachsendes
+viewBox-Maß). Das ist eine **Struktur**-Änderung und keine Typografie-Entscheidung
+(Arbeitsregel 10) — Folgearbeit, siehe unten.
+
+**(4) Die drei offenen Untergrenzen-Fragen sind beantwortet**, jede an ihrer Deklaration
+und in `tools/typo-map.js`:
+
+- **`.wiki-tree-item-toggle` (8 px) und `.tb-caret` (9 px) bleiben**, und zwar gemeinsam,
+  wie Schritt 4 es an drei Stellen zugesichert hat. Entschieden wird **nicht** über die
+  Harmlosigkeit der Hebung — die ist belegt —, sondern darüber, OB ein Pfeilzeichen in die
+  TEXTskala gehört. Die Untergrenze gilt wörtlich für "alles, was man liest"; der Plan
+  nennt genau diese Falle in seiner Risikoliste ("ein Pfeilzeichen, keine Schrift").
+  `.wiki-tree-item-toggle` hat überdies 0 gerenderte Elemente — seine Hebung wäre eine
+  Änderung ohne Betrachter.
+- **`.floating-toolbar .kbd-hint` (8 px) bleibt** und ist die **einzige** Duldung der
+  Welle, die Lesetext betrifft. Die Hebung macht den Text nicht lesbarer, sondern unlesbar
+  (drei der fünf Hilfen laufen ineinander, −2,80 und −3,09 px, breite Linux-Näherung −8,20
+  und −8,68). Der einzige Weg, der beides löst, ist eine Layoutregel — nur die Hilfe des
+  berührten Knopfes zeigen statt aller fünf der Leiste —, und die ändert, WANN ein Hinweis
+  erscheint. Funktionsänderung, Arbeitsregel 10. Die Stelle trägt auch kein Padding, an
+  dem sich 2,80 px einsparen ließen (nachgesehen: position/bottom/left/transform,
+  font-size, color, white-space, opacity, transition, pointer-events — kein Innenabstand).
+
+### Zwei neue Ratschen
+
+**`W5-R-09`** (`tests/e2e/features/schriftuntergrenze.spec.js`, 4 Fälle) misst die
+Untergrenze **und** die Formularschrift in drei Zuständen bei zwei Breiten auf gefüllter
+Kampagne. Warum es ein Browserfall sein MUSS: `W5-R-05` urteilt über DEKLARATIONEN.
+`0.7em` ist quelltextlich unauffällig und wird zu 8,96 px, wenn der Elternwert 12,8 px
+trägt. Und die Browser-Vorgabe ist das Gegenteil: dort gibt es **gar keine** Deklaration,
+die eine Quelltextsuche finden könnte. **Die bestehende Handoff-Zusage "0 außer
+`.sr-only`" taugt nicht** — diese Ausnahme ist gemessen LEER (alle 17
+`.sr-only`-Elemente liegen bei 17,6 px) und verdeckt den echten Befund statt ihn zu
+benennen. Die Ausnahmeliste nennt je Signatur Wert, Anzahl, Textknoten und Grund: **34
+Elemente in 5 Signaturen** (2+2 `.slot-pip`, 5 `.kbd-hint`, 4 `.tb-caret`, 20+1
+SVG-Beschriftungen). Das ist mehr als die 25 Stellen, die E-4 nennt — die drei anderen
+Signaturen (9 Elemente) sind in den Schritten 4 und 5 gefunden und dort einzeln beurteilt
+worden.
+
+**`W5-R-10`** legt die BEZUGSMENGE der Zielquote fest (O-13). **Die Hauptzusicherung ist
+NICHT rot und war es auch vorher nicht:** die Quote lag nach Schritt 5 schon bei 98,67 %
+(818 von 829 Text-Deklarationen), nach dieser Einheit bei **98,68 % (820 von 831)** und
+bei 95,68 % über **alle** 857 Deklarationen. Das ist kein Versehen, sondern der Punkt — die
+Ratsche behauptet keinen neuen Fortschritt, sie hält fest, WORAUF sich die 95 Prozent
+beziehen. Der Ausgangswert 63,36 % des Handoffs ist eine **Element**-Quote
+(`typo-baseline`, Feld `skalaAnteilSichtbar`) und bewusst durch die Deklarationsquote
+ersetzt; auf der Elementmenge ist 95 % mit den Ausnahmen E-2/E-3/E-4 arithmetisch
+unerreichbar. **In der Bezugsmenge BLEIBEN die drei Duldungen, die Text betreffen** (sechs
+Überschriftenstufen, vier Leser der Mobilvergrößerung, die Tastenhilfe) — eine Quote, aus
+der jede unbequeme Stelle herausdefiniert ist, ist eine Tautologie.
+
+### Der Grundlinien-Diff
+
+**Werkzeug gegen Werkzeug** (Erhebung vor und nach der Einheit, dieselbe Browser-Fassung,
+gefüllte Kampagne, 24 Ansichten, vier Themes, 1440 und 375 px):
+
+| Lauf | Schlüssel | Größen geändert | Spanne | **über 2 px** | Gewicht | Zeilenhöhe |
+| --- | --- | --- | --- | --- | --- | --- |
+| dark-1440 | 5566 | 355 | −1,6 .. +2,0 px | **0** | 293 | 17 |
+| dark-375 | 5531 | 355 | −1,6 .. +2,0 px | **0** | 288 | 17 |
+| light-1440 | 3651 | 212 | −1,6 .. +2,0 px | **0** | 200 | 15 |
+| sepia-1440 | 3651 | 212 | −1,6 .. +2,0 px | **0** | 200 | 15 |
+| contrast-1440 | 3651 | 212 | −1,6 .. +2,0 px | **0** | 200 | 15 |
+
+**Keine einzige Überschreitung der 2-px-Schwelle, in keinem der fünf Läufe.** 0
+Sichtbarkeitswechsel. Die 79 Zeilenhöhen-Befunde sind die **mechanische Folge** der
+Größenänderung und keine eigene Änderung: **alle 17 je Lauf sitzen auf Elementen, deren
+Schriftgröße sich ebenfalls ändert** (einzeln nachgerechnet), denn eine einheitenlose
+`line-height` rechnet sich aus der Größe. Größter Wert: `.backup-status-label`
+19,04 -> 16,80 px bei 13,6 -> 12 px.
+
+Der Anteil auf der Skala steigt: **92,30 -> 98,11 %** (dark-1440), 92,68 -> 97,00 %
+(light/sepia/contrast), **91,89 -> 97,81 %** (dark-375). Sichtbarer Text unter 11 px fällt
+25 -> 23 bzw. 23 -> 21; das gemessene **Minimum bleibt 7 px** (die Y-Achse des
+Histogramms).
+
+**Gegen die eingefrorene Grundlinie** `grundlinie-v5.json` (HEAD 7e4aa09, also die ganze
+Welle 5): 50 Überschreitungen in genau **10** Elementschlüsseln (je 5 Läufe), Spanne
+−14,00 .. +2,00 px. Es sind **dieselben 10**, die W5-C für Schritt 4 gemeldet hat
+(`.fdp-number` und `.timer-hero-time` 48 -> 34, `.dice-hero-result` 80 -> 72,
+`.dms-dice-result` und sechs `.attr-input` 22,4 -> 20). **Diese Einheit fügt keine einzige
+hinzu.**
+
+### Die Linux-Nachstellung
+
+Vorzustand gegen Nachzustand, je mit Segoe und mit Verdana (Faktor 1,1554), bei 1440 und
+375 px, über alle 24 Ansichten:
+
+| Lage | waagerechter Textüberlauf | senkrechter | Ansichten mit Seitenüberlauf |
+| --- | --- | --- | --- |
+| 1440 / Segoe | 0 -> 0 | 5 -> 5 | 0 -> 0 |
+| 1440 / Verdana | 0 -> 0 | 1 -> 1 | 0 -> 0 |
+| 375 / Segoe | 0 -> 0 | 5 -> 5 | 0 -> 0 |
+| 375 / Verdana | 0 -> 0 | 1 -> 1 | 0 -> 0 |
+
+**Keine Änderung in keiner der vier Lagen.** Das ist die Fehlerklasse, die die CI schon
+einmal 12 Tests gekostet hat, und diese Welle ändert Schriftgrößen — die Probe gehört
+dazu, nicht in die Fußnote.
+
+### Der Stil-Sollstand
+
+Bewusst neu erhoben (`4de0e3a`, O-9), Schlüssel für Schlüssel gegen die vorige Fassung
+gegengerechnet: **3549 -> 3612 Digests, 0 geändert, 63 Zugänge, 0 Abgänge.** Die 63 sind
+**eine einzige Ursache**: dreimal dieselben 21 Schlüssel, alle in `dicestats`, alle
+`text.ds-hist-face-label#0..19` und `text.ds-hist-axis-label#0`. Die Beschriftungen trugen
+ihre Größe bis zu diesem Schritt als Präsentationsattribut und hatten KEINE Klasse; die
+Abtastung greift Elemente an ihrer Signatur und ließ sie fallen. Sie sind also nicht "neu",
+sondern erstmals **erfasst**.
+
+**Dass sich kein bestehender Digest bewegt, liegt an der Abtastung und nicht an der
+Harmlosigkeit der Änderung** — das muss dastehen, sonst liest es sich als Entwarnung. Der
+Sollstand erfasst 1213 von gemessen 3672 Elementen je Durchgang, nämlich eine kuratierte
+Auswahl je Ansicht; die 95 Gewichte und die 254 Bedienelemente liegen außerhalb. Der
+Bildpunkt-Vergleich nennt für dieselbe Umstellung 355 Größen- und 293 Gewichtsänderungen
+je Lauf. **Beide Werkzeuge nebeneinander sind Absicht.** `EXPECTED_DEVIATION_KEYS` und
+`EXPECTED_DEVIATION_KEYS_NARROW` bleiben LEER.
+
+**Summe über die Welle:** W5-C 9 bewegte Digests, W5-D 1143, W5-E 0 (plus 63 Zugänge).
+
+### Geprüfte Basiswerte
+
+`npx jest` **2090/2090 in 77 Suiten** · `npx playwright test` **604 bestanden / 27
+übersprungen / 0 Fehlschläge** (vor der Sollstand-Neuerhebung: 600 bestanden, 1
+Fehlschlag, 3 nicht gelaufen — genau die erwartete Stelle) · `npm run lint` exit 0 mit
+**exakt 363** Warnungen · `typecheck` und `typecheck:strict` exit 0 · `pytest` 30 · beide
+Builds exit 0 · `check-f18-kaskade --check` OK (117 Abhängigkeiten) ·
+`sync-aktenlage-anker --check` 0 Abweichungen. Ratschen: **DUBLETTEN 0 · !important 104 ·
+Inline-Attribute 252 · `transition: all` 0 · SVG_MAX 0 · AUSSERHALB_MAX 0 (Größe und
+Gewicht) · EM_MAX 6 · INLINE_AUSSERHALB_MAX 0**.
+
+### Offene Punkte
+
+- **NEU, und der stärkste Befund dieser Einheit: die Histogramm-Beschriftungen sind auf
+  dem Telefon 4,76 bis 5,44 px groß**, obwohl ihre Deklaration 7 bzw. 8 sagt. Ursache ist
+  die viewBox-Skalierung (0,68 bei 375 px, 1,4175 bei 1440 px), nicht der Wert. Lösung:
+  Beschriftungen aus dem skalierten Koordinatensystem nehmen. Eigene Arbeit, nicht
+  Typografie.
+- **NEU: die Layoutregel der Tastenhilfen.** `.floating-toolbar:hover .kbd-hint` zeigt
+  alle fünf Hilfen gleichzeitig; nur die Hilfe des berührten Knopfes zu zeigen
+  (`.editor-btn:hover .kbd-hint`) wäre die Voraussetzung dafür, die 8 px je auf 11 zu
+  heben. Funktionsänderung, gehört in eine eigene Einheit.
+- **NEU: die Schrift-FAMILIE der Bedienelemente.** Die neue Regel setzt nur `font-size`.
+  Knöpfe und Felder benutzen weiter die Schrift des Systems, und die ist
+  plattformabhängig — dieselbe Ursache, nur eine Eigenschaft weiter. `F-05` lässt genau
+  EINE `font-family: var(--font-ui)`-Deklaration zu; wer das angeht, muss die Ratsche
+  mitdenken.
+- **NEU als Klasse von Fehlern, einmal belegt: relative Größen unter einem
+  Bedienelement.** `.dice-attr small` ist gefunden und behoben; eine systematische Suche
+  nach `smaller`/`larger`/Prozent-Größen, deren Elternteil eine Browser-Vorgabe war, hat
+  diese Einheit nicht gefahren.
+- **UMGEBUNGSMANGEL, unverändert aus W5-A bis W5-D: die E2E-Suite ist örtlich nicht ohne
+  Umweg lauffähig.** `playwright-core` 1.57.0 verlangt Chromium-Revision 1200, im
+  Zwischenspeicher liegen 1217/1234/1243. Alle Browser-Läufe dieser Einheit sind über
+  `PLAYWRIGHT_BROWSERS_PATH` und `TYPO_BASELINE_CHROMIUM` gefahren; der Zwischenspeicher
+  des Nutzers ist **nicht** angefasst. Saubere Behebung: einmal
+  `npx playwright install chromium`.
+- **`npm run check` bleibt vorbestehend rot**, weil `prettier --check` über den ganzen
+  Baum läuft. Der neu erhobene Stil-Sollstand ist wie seine Vorgängerfassung nicht
+  prettier-konform (beide nachgemessen — kein Statuswechsel);
+  `tests/e2e/features/schriftuntergrenze.spec.js` und `tools/typo-map.js` sind einzeln
+  konform.
+- **Weiterhin offen aus W5-A/W5-B und von dieser Einheit nicht berührt:** die zehn
+  kaputten `woff2` unter `assets/fonts/` (kyrillische bzw. devanagari Teilmengen, kein
+  lateinischer Kleinbuchstabe), der `file://`-Pfad der gebündelten Schriften, die vier
+  wirkungslosen Editor-Schriften in `EDITOR_FONTS`, die fehlende Glyphendeckungs-Probe im
+  Testnetz, der tote Würfel-Behälter `#dice-result`, und die fehlende Zwischensprosse
+  zwischen 34 und 72 px (die Uhr im 250-px-Ring).
+- **Die Restschuld der Schritte 6 bis 8 ist damit abgetragen:** `IMPORTANT_MAX` 104 (O-2),
+  `INLINE_MAX` 252 (O-6), `SVG_MAX` 0 (O-7), die Formularschrift (O-10), die Zielquote mit
+  benannter Bezugsmenge (O-13), die Neuerhebung des Sollstands (O-9).
+
+### Befehle
+
+```bash
+# Die neue Untergrenzen-Probe (4 Faelle, Browser, zwei Breiten)
+npx playwright test tests/e2e/features/schriftuntergrenze.spec.js
+
+# Die drei neuen Quelltext-Schranken
+npx jest tests/unit/design-consistency.test.js -t "W5-R-06"
+npx jest tests/unit/design-consistency.test.js -t "W5-R-08"
+npx jest tests/unit/design-consistency.test.js -t "W5-R-10"
+
+# Der Grundlinien-Diff gegen den Vorzustand
+node tools/typo-baseline.js --diff vorher.json nachher.json --schwelle 2 --egal gewicht
+
+# Die zwei Waechter des Zweigs
+node tools/check-f18-kaskade.js --check
+node tools/sync-aktenlage-anker.js --check
+```
+
+---
