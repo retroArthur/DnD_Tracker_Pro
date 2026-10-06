@@ -386,7 +386,40 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Die Umstellung von `padding` ist dabei nachgemessen ein Nulleingriff: kein einziger der 1213
 // Schluessel aendert sich durch sie allein.
 
-// Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
+// -----------------------------------------------------------------------------------
+// NEUERHEBUNG VOM 2026-10-07 -- Design-Handoff v3, Welle 6, Schritt 6 (--border-input)
+// -----------------------------------------------------------------------------------
+// Gemessen, nicht geschaetzt: der Sollstand hat sich an GENAU 96 von 3615 Digests bewegt
+// (2,66 Prozent), 32 je Durchgang, und alle drei Durchgaenge nennen DIESELBEN 32
+// Schluessel. Kein Schluessel ist hinzugekommen, keiner verschwunden.
+//
+//   Durchgang        geaendert  nur vorher  nur nachher
+//   ---------------  ---------  ----------  -----------
+//   standard                32           0            0
+//   narrow                  32           0            0
+//   reducedMotion           32           0            0
+//
+// Die 32 sind restlos Vertragseingaben, und ihre einzige geaenderte Eigenschaft ist
+// `borderColor`: 15x `input.toolbar-search`, 5x `select.toolbar-select`,
+// 4x `select.form-select`, 2x `input.form-input`, je 1x `input.dice-formula`,
+// `input.dice-multi`, `input.dms-dice-input`, `textarea.dms-notes-input`,
+// `input.fr-ruf-grund-input`, `input.fr-ruf-set-input`. Vorher stand bei allen 32
+// derselbe Wert `rgb(58, 58, 58)` (= `--border`), nachher bei allen 32 derselbe Wert
+// `rgb(124, 124, 124)` (= `--border-input`). Die anderen elf gehashten Eigenschaften
+// streuen ueber die 32 Schluessel unveraendert (color 1 Wert, backgroundColor 3,
+// padding 8, ...) -- es hat sich also nichts mitbewegt.
+//
+// WAS DER SOLLSTAND VON DIESEM SCHRITT NICHT SIEHT, und das ist der groessere Teil:
+// `.form-group input` (184 Felder) und `.form-group select` kommen in keinem seiner
+// Schluessel vor, weil er die Ansichten im RUHEZUSTAND bemustert und diese Felder in
+// zugeklappten Formularen und geschlossenen Modalen liegen. Von 297 Vertragsfeldern
+// deckt er 32. Den Rest deckt W6-R-07 (tests/e2e/features/eingaberahmen.spec.js) am
+// Element, in vier Themes, mit aufgeklappten Formularen und sechs geoeffneten Modalen.
+// Den Fokusring sieht er ueberhaupt nicht: `outline` ist in keiner Schreibweise unter
+// den zwoelf gehashten Eigenschaften.
+//
+// Globale Ausnahmen (alle drei Durchgaenge). WIEDER LEER nach dieser Neuerhebung --
+// dieselbe Regel wie nach M3b: die Liste traegt eine Welle, nicht den Dauerzustand.
 /** @type {string[]} */
 const EXPECTED_DEVIATION_KEYS = [];
 

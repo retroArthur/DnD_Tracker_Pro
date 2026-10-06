@@ -575,6 +575,21 @@
     max-width: 56px;
     text-align: center;
     padding: 4px;
+    /* FUELLUNG AUS DER APP, NICHT VOM BROWSER (Welle 6, Schritt 6).
+       Diese sechs Felder hatten bis Schritt 6 keine einzige Autorenregel fuer
+       ihr Aussehen; ihre Fuellung kam aus color-scheme, also in dark als
+       #3b3b3b. Der neue Eingaberahmen liest darauf nur 2,68 — SCHLECHTER als
+       die 3,04, die Chromiums eigenes Grau dort erreichte. Den Rahmen zu
+       setzen und die Fuellung dem Browser zu lassen, haette das Feld also
+       messbar verschlechtert. Mit var(--bg-card) liest er 4,17 / 4,54 / 3,88 /
+       5,62.
+       WARUM NICHT IN DER ELEMENTREGEL AM ENDE VON core.css: am Buendel
+       nachgemessen bekommen dort ALLE 228 Kaestchen die Fuellung mit
+       (appearance: auto laesst background durch), und das waere eine
+       sichtbare Aenderung an 228 Elementen, die dieser Schritt nicht gemessen
+       hat. Eine Typenliste mit :not() haette ausserdem die Spezifitaet (0,1,1)
+       und wuerde die Fuellung JEDER Klassenregel ueberschreiben. */
+    background: var(--bg-card);
 }
 
 .bst-attr-mod {
@@ -609,13 +624,15 @@
     padding: 3px 4px;
     font-size: var(--text-sm);
     text-align: center;
+    /* Fuellung aus der App — Begruendung bei .bst-attr-input. */
+    background: var(--bg-card);
 }
 
 /* Rich-text editor fields (contenteditable) */
 .bst-rich-editor {
     min-height: 80px;
     padding: 8px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
@@ -626,7 +643,7 @@
 }
 
 .bst-rich-editor:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .bst-rich-editor[placeholder]:empty::before {

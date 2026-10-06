@@ -226,7 +226,7 @@
 
 .calc-input {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     color: var(--text);
     padding: 6px 10px;
     border-radius: var(--radius-sm);
@@ -235,7 +235,7 @@
 }
 
 .calc-input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .calc-input::placeholder {
@@ -968,7 +968,7 @@
 .enc-filter-select {
     padding: 4px 8px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text-dim);
     font-size: var(--text-sm);
@@ -1448,7 +1448,7 @@
     width: 100%;
     padding: 6px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
     font-size: var(--text-sm);
@@ -1456,7 +1456,7 @@
 }
 
 .enc-speed-item input:focus {
-    border-color: var(--cyan);
+    border-color: var(--focus-ring);
 }
 
 .enc-speed-item input::placeholder {
@@ -1606,7 +1606,7 @@
     width: 50px;
     padding: 6px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
     font-size: var(--text-md);
@@ -1614,7 +1614,7 @@
 }
 
 .calc-import-count:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .calc-import-btn {

@@ -63,6 +63,14 @@
  *           entstanden, als der Ring sein eigenes Token bekam und der Rahmen
  *           auf `--gold` blieb.
  *
+ * DIE AUSGANGSWERTE SIND NACH ZWEI MESSKORREKTUREN ERNEUT ERHOBEN und unveraendert
+ * geblieben (220 / 206 / 220 / 220 und 14). Die beiden Korrekturen stehen an ihrer
+ * Stelle im Code: der Durchgang laesst den Fokus LOS, bevor er den Ruherahmen liest
+ * (der HP-Rechner fokussiert sein Feld selbst und lieferte sonst einen falschen
+ * Befund je Theme), und die Gegenprobe dreht den Schritt an einer Regel ZURUECK
+ * statt ihn vorwegzunehmen — in der ersten Fassung wurde sie nach der Umsetzung
+ * selbst rot, war also keine Bewachung des Schrittes.
+ *
  * WAS DIESE DATEI NICHT IST. Sie ist nicht der Nachweis, dass der Fokus
  * ueberhaupt sichtbar ist — das ist W6-R-01 (fokusring.spec.js), und sie ist
  * nicht der Nachweis, dass der RING seine Schwelle haelt — das ist W6-R-02 am
@@ -485,6 +493,17 @@ async function alleFelder(page) {
     const felder = [];
     const ausnahmen = RAHMEN_AUSNAHME.map(a => a.sel);
     const nimm = async ort => {
+        /* ERST DEN FOKUS WEGNEHMEN. Dieser Durchgang misst den RUHE-Rahmen,
+           und mindestens ein Ort setzt den Fokus selbst: der HP-Rechner
+           fokussiert #hp-calc-value beim Oeffnen. Ohne das Loslassen liest der
+           Durchgang dort die FOKUSfarbe und meldet sie als falschen
+           Ruherahmen — ein Befund, der keiner ist (gemessen am 2026-10-07,
+           genau ein Feld in jedem der vier Themes). */
+        await page.evaluate(() => {
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            document.body.focus();
+        });
+        await page.waitForTimeout(260);
         const liste = await page.evaluate(SAMMLE_FELDER, ausnahmen);
         liste.forEach(f => felder.push({ ort, ...f }));
     };
@@ -899,8 +918,15 @@ test.describe('W6-R-07 — jedes Vertragsfeld traegt den Eingaberahmen (Ratsche)
         page
     }) => {
         /* OHNE DIESEN FALL KOENNTE FALL 1 GRUEN WERDEN, WEIL ER NICHTS FINDET.
-           Er haengt eine Regel ein, die genau das tut, was Schritt 6 tun
-           soll, und verlangt, dass die Messung den Unterschied sieht. */
+           Er dreht den Schritt an EINER Regel zurueck und verlangt, dass die
+           Messung den Rueckschritt sieht.
+
+           ERST WAR ES UMGEKEHRT HERUM GEBAUT (var(--border-input) einhaengen
+           und die Aenderung sehen) — das konnte nur VOR der Umsetzung
+           funktionieren und wurde danach selbst rot ("der Ausgangswert ist
+           nicht var(--border)"). Eine Gegenprobe, die nach dem Schritt
+           umgeschrieben werden muss, hat den Schritt nicht bewacht. Diese
+           Fassung gilt in beide Richtungen. */
         await starte(page);
         await setzeTheme(page, 'dark');
         await page.evaluate(() => {
@@ -909,29 +935,39 @@ test.describe('W6-R-07 — jedes Vertragsfeld traegt den Eingaberahmen (Ratsche)
         });
         await page.waitForTimeout(280);
 
-        const vor = await page.evaluate(
-            () => getComputedStyle(document.querySelector('.toolbar-search')).borderTopColor
-        );
+        const lies = () =>
+            page.evaluate(
+                () => getComputedStyle(document.querySelector('.toolbar-search')).borderTopColor
+            );
+        const tokens = await page.evaluate(() => {
+            const cs = getComputedStyle(document.documentElement);
+            return {
+                border: cs.getPropertyValue('--border').trim(),
+                borderInput: cs.getPropertyValue('--border-input').trim()
+            };
+        });
+        const alsRgb = hex => 'rgb(' + WCAG.hexToRgb(hex).map(Math.round).join(', ') + ')';
+
+        // Vorher: der Eingaberahmen, wie Schritt 6 ihn gesetzt hat.
+        expect(await lies()).toBe(alsRgb(tokens.borderInput));
+
+        // Rueckdrehung an einer Regel — die Messung muss sie sehen.
         await page.addStyleTag({
-            content: '.toolbar-search { border-color: var(--border-input) !important; }'
+            content: '.toolbar-search { border-color: var(--border) !important; }'
         });
         await page.waitForTimeout(150);
-        const nach = await page.evaluate(
-            () => getComputedStyle(document.querySelector('.toolbar-search')).borderTopColor
-        );
-        const soll = await page.evaluate(() =>
-            getComputedStyle(document.documentElement).getPropertyValue('--border-input').trim()
-        );
+        expect(await lies()).toBe(alsRgb(tokens.border));
 
+        // Und die beiden Tokens sind wirklich verschieden, sonst prueft der
+        // Vergleich oben nichts.
+        expect(tokens.border.toLowerCase()).not.toBe(tokens.borderInput.toLowerCase());
+
+        // Der Grund fuer den ganzen Schritt, noch einmal als Zahl: der
+        // Eingaberahmen haelt auf der Kartenfuellung 3:1, der alte nicht.
+        const auf = '#1a1a1a';
         expect(
-            vor,
-            'der Ausgangswert ist nicht var(--border) — die Gegenprobe misst dann nichts'
-        ).toBe('rgb(58, 58, 58)');
-        expect(nach).toBe('rgb(' + WCAG.hexToRgb(soll).map(Math.round).join(', ') + ')');
-        expect(
-            WCAG.ratio(WCAG.rgbToHex(WCAG.hexToRgb(soll)), '#1a1a1a') >= 3,
-            'der Eingaberahmen haelt auf var(--bg-card) keine 3:1 — dann ist die ganze ' +
-                'Umstellung sinnlos'
-        ).toBe(true);
+            WCAG.ratio(WCAG.rgbToHex(WCAG.hexToRgb(tokens.borderInput)), auf)
+        ).toBeGreaterThanOrEqual(3);
+        expect(WCAG.ratio(WCAG.rgbToHex(WCAG.hexToRgb(tokens.border)), auf)).toBeLessThan(3);
     });
 });

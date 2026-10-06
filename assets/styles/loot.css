@@ -528,7 +528,7 @@
             padding: 4px 6px;
             text-align: center;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-sm);
         }
@@ -676,7 +676,7 @@
             text-align: center;
             padding: 4px;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-sm);
         }

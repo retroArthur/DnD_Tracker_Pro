@@ -121,7 +121,7 @@
         .editor-toolbar .editor-select {
             height: 30px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 0 6px;
             border-radius: 0;
@@ -138,7 +138,7 @@
         }
 
         .editor-toolbar .editor-select:focus-visible {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
             outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
@@ -618,7 +618,7 @@
 .section-toolbar-filters select {
     padding: 7px 12px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     color: var(--text);
     border-radius: var(--radius-md);
     font-size: var(--text-sm);
@@ -631,7 +631,7 @@
 }
 
 .section-toolbar-filters select:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 /* Der frueher hier stehende .filter-checkbox-Block ist entfallen: boolesche

@@ -14,14 +14,14 @@
             width: 200px;
             padding: 6px 12px 6px 30px;
             border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             background: var(--bg-dark);
             color: var(--text);
             font-size: var(--text-sm);
         }
         
         .global-search-input:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
             width: 280px;
         }
         
@@ -356,13 +356,13 @@
             flex: 1;
             padding: 8px 12px;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
         }
         
         .notes-search-input:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
         
         .notes-search-results {
@@ -501,7 +501,7 @@
             min-height: 36px;
             align-items: center;
         }
-        .session-tags-input-wrapper:focus-within { border-color: var(--gold); }
+        .session-tags-input-wrapper:focus-within { border-color: var(--focus-ring); }
         .session-tags-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .session-tag {
             display: inline-flex;
@@ -567,7 +567,14 @@
             color: var(--text-dim);
             white-space: nowrap;
         }
-        .session-filter-group select { padding: 4px 8px; font-size: var(--text-sm); }
+        /* background ergaenzt in Welle 6 Schritt 6: #filter-session-arc hatte
+           keine Fuellung aus der App und stand damit auf der des Browsers.
+           Begruendung und Zahlen bei .bst-attr-input in bestiary.css. */
+        .session-filter-group select {
+            padding: 4px 8px;
+            font-size: var(--text-sm);
+            background: var(--bg-card);
+        }
         .session-filter-tags { display: flex; flex-wrap: wrap; gap: 4px; }
         .session-filter-tag {
             padding: 2px 8px;
@@ -1079,7 +1086,7 @@
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
             box-shadow: var(--ring-gold);
         }
         
@@ -1171,7 +1178,7 @@
             max-height: 300px;
             padding: 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
             resize: vertical;
@@ -1182,7 +1189,7 @@
         }
         
         .dialog-text-area:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
 
 /* DM Screen grid — Masonry-style column layout */
@@ -1465,7 +1472,7 @@
     flex: 1;
     padding: 8px 12px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1594,7 +1601,7 @@
     min-height: 120px;
     padding: 10px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1603,7 +1610,7 @@
 }
 
 .dms-notes-input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 /* Responsive DM Screen - Column-based Masonry */

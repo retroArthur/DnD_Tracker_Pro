@@ -48,7 +48,7 @@
 
 /* Fokusring via border-bottom auf .cp-input-row */
 .cp-input-row:focus-within {
-    border-bottom-color: var(--gold);
+    border-bottom-color: var(--focus-ring);
 }
 
 .cp-search-icon {

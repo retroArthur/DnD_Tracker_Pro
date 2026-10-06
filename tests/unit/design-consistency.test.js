@@ -7245,7 +7245,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         },
         {
             datei: 'dmscreen.css',
-            zeile: 779,
+            zeile: 786,
             pfad: '.modal',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
@@ -7289,7 +7289,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
         {
             datei: 'dmscreen.css',
-            zeile: 1139,
+            zeile: 1146,
             pfad: '[data-sortable].drag-over',
             lage: '0 0 0 2px var(--gold)',
             grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
@@ -7409,31 +7409,31 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 262, stufe: 2,
           pfad: '.condition-tooltip',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 779, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 786, stufe: 3,
           pfad: '.modal',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.4)' },
-        { datei: 'dmscreen.css', zeile: 812, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 819, stufe: 3,
           pfad: '.dragging',
           vorher: '0 8px 24px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 869, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 876, stufe: 2,
           pfad: '.export-dropdown-content',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 965, stufe: 1,
+        { datei: 'dmscreen.css', zeile: 972, stufe: 1,
           pfad: '[data-tooltip]::after',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 989, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 996, stufe: 2,
           pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
-        { datei: 'dmscreen.css', zeile: 1133, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1140, stufe: 2,
           pfad: '[data-sortable].dragging',
           vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 1139, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1146, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2174, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2181, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2427, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2434, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
         { datei: 'editors.css', zeile: 227, stufe: 3,
@@ -7508,13 +7508,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'party.css', zeile: 1668, stufe: 2,
           pfad: '.cf-languages-block .cf-lang-dropdown',
           vorher: '0 4px 12px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 434, stufe: 2,
+        { datei: 'spells.css', zeile: 450, stufe: 2,
           pfad: '.floating-toolbar',
           vorher: '0 4px 20px rgba(0, 0, 0, 0.5)' },
-        { datei: 'spells.css', zeile: 523, stufe: 2,
+        { datei: 'spells.css', zeile: 539, stufe: 2,
           pfad: '.table-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 561, stufe: 2,
+        { datei: 'spells.css', zeile: 577, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
         { datei: 'tools.css', zeile: 1165, stufe: 3,
@@ -8313,9 +8313,14 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'dice.css', sel: '.fdp-die.d20:hover', token: '--red', stufe: null },
         { datei: 'dmscreen.css', sel: '.btn-success:hover', token: '--green-dim', stufe: null },
         {
+            /* `--focus-ring` statt `--gold` seit Welle 6 Schritt 6: der
+               Fokusrahmen liest jetzt dieselbe Tinte wie der Ring 2 px
+               daneben. Vorher standen an einem Kennzeichen zwei Goldtoene
+               (in light #946c09 gegen #b8860b, gemessen an 219 von 219
+               fokussierten Feldern). Gefuehrt in W6-R-08 Teil 3. */
             datei: 'dmscreen.css',
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
-            token: '--gold',
+            token: '--focus-ring',
             stufe: null
         },
         {
@@ -8325,13 +8330,15 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             stufe: null
         },
         {
+            // `--focus-ring` seit Welle 6 Schritt 6 — Begruendung oben.
             datei: 'party.css',
             sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
-            token: '--gold',
+            token: '--focus-ring',
             stufe: null
         },
         { datei: 'spells.css', sel: '.color-swatch.active', token: '--gold', stufe: null },
-        { datei: 'welt.css', sel: '.wp-rich-editor:focus', token: '--gold', stufe: null }
+        // `--focus-ring` seit Welle 6 Schritt 6 — Begruendung oben.
+        { datei: 'welt.css', sel: '.wp-rich-editor:focus', token: '--focus-ring', stufe: null }
     ];
 
     /** Der Umriss, den der Contrast-Block einer Stufe gibt. Zeichengleich mit
@@ -9471,7 +9478,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
     const RING_STELLEN = [
         {
             datei: 'dmscreen.css',
-            zeile: 1083,
+            zeile: 1090,
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
             marke: '.form-group input:focus',
             vorher: { dicke: 3, deckung: 0.1, farbe: '#d4af37' },
@@ -9511,7 +9518,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1139,
+            zeile: 1146,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
             vorher: { dicke: 2, deckung: 1.0, farbe: null },
@@ -9570,7 +9577,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1312,
+            zeile: 1319,
             sel: '.dms-hp-text',
             marke: '.dms-hp-text',
             wert: '0 1px 2px rgba(0,0,0,0.5)',
@@ -16850,6 +16857,9 @@ describe('W6-R-06 — kein Fokuskennzeichen besteht allein aus box-shadow: var(-
      Teil 4  ROT. Alle 52 Feldregeln der Stellenliste lesen `var(--border)`.
              Die Liste ist am BAUM erzeugt, nicht am Namen (siehe ihren
              Kommentar).
+     Gegenprobe  GRUEN. Sie prueft die drei Erkenner gegeneinander, nicht den
+             Baum — ein Zaun wird nicht erst gebaut, wenn das Vieh draussen
+             ist.
    =========================================================================== */
 
 /**
@@ -16951,6 +16961,13 @@ function w6NormSel(sel) {
         .toLowerCase();
 }
 
+/**
+ * Eine Rahmen-Deklaration in Kurz- oder Langform — `border-radius` gehoert
+ * NICHT dazu, und das ist der einzige Grund, warum dieser Ausdruck mit einem
+ * Doppelpunkt endet statt mit einem Bindestrich-Platzhalter.
+ */
+const RAHMEN_DECL_RE = /^border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/;
+
 /** Traegt dieser Rumpf eine Rahmen-Deklaration (Kurz- oder Langform)? */
 function w6HatRahmenDeklaration(body) {
     return /(?:^|;)\s*border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/.test(
@@ -16958,12 +16975,27 @@ function w6HatRahmenDeklaration(body) {
     );
 }
 
+/**
+ * Die erste echte Rahmen-Deklaration eines Rumpfes als Auszug fuer die
+ * Befundmeldung. NICHT `border-radius`: ein blosses /border[a-z-]*:/ greift
+ * sie zuerst, wenn sie oben im Rumpf steht, und dann meldet der Befund
+ * "border-radius: var(--radius-lg)" fuer eine Regel, deren Rahmenfarbe das
+ * Thema ist (gesehen am 2026-10-07 bei .global-search-input).
+ */
+function w6RahmenAuszug(body) {
+    const treffer = body
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => RAHMEN_DECL_RE.test(s));
+    return treffer.length ? treffer[0] : '?';
+}
+
 /** Nennt dieser Rumpf dieses Token in einer RAHMEN-Deklaration? */
 function w6RahmenNennt(body, token) {
     return body
         .split(';')
         .map(s => s.trim())
-        .filter(s => /^border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/.test(s))
+        .filter(s => RAHMEN_DECL_RE.test(s))
         .some(s => s.includes('var(' + token + ')'));
 }
 
@@ -17070,7 +17102,7 @@ describe('W6-R-08 — --border-input ist angewendet und das Fokuskennzeichen hat
             .map(
                 r =>
                     r.datei + ':' + r.zeile + ' {' + r.selector + '} -> ' +
-                    (r.body.match(/border[a-z-]*:\s*[^;]+/) || ['?'])[0].trim()
+                    w6RahmenAuszug(r.body)
             );
         if (fremd.length) {
             fremd.unshift(
@@ -17105,7 +17137,7 @@ describe('W6-R-08 — --border-input ist angewendet und das Fokuskennzeichen hat
                 if (!w6RahmenNennt(t.body, '--border-input')) {
                     falsch.push(
                         t.datei + ':' + t.zeile + ' {' + sel + '} -> ' +
-                            (t.body.match(/border[a-z-]*:\s*[^;]+/) || ['?'])[0].trim()
+                            w6RahmenAuszug(t.body)
                     );
                 }
             });

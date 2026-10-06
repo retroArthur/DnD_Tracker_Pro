@@ -141,7 +141,7 @@
     width: 50px;
     padding: 8px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
@@ -205,7 +205,7 @@
     min-width: 0;
     padding: 10px 12px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-lg);
@@ -213,7 +213,7 @@
 }
 
 .dice-formula:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .dice-roll-btn {
@@ -352,7 +352,7 @@
     width: 60px;
     padding: 8px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
@@ -519,7 +519,7 @@
     min-width: 0;
     padding: 8px 12px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -993,7 +993,7 @@
     flex: 1;
     padding: 8px 12px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1001,7 +1001,7 @@
 }
 
 .fdp-input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .fdp-input::placeholder {

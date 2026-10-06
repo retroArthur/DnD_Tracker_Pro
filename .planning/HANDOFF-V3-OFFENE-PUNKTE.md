@@ -498,8 +498,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dmscreen.css:597` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1152` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:604` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `dmscreen.css:1159` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:271` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:303` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:331` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -523,8 +523,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:186` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1369` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1382` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1376` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1389` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:289` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:290` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:292` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -609,11 +609,11 @@ dmscreen.css
   273  .condition-tooltip-title
   392  .notes-search-date
   522  .session-tag-remove:hover
-  667  .quick-ref-section-title
- 1271  .dms-stat-warning .dms-stat-value
- 2353  .dms-profile-check
- 2379  .dms-profile-save
- 2383  .dms-profile-save .dms-profile-name
+  674  .quick-ref-section-title
+ 1278  .dms-stat-warning .dms-stat-value
+ 2360  .dms-profile-check
+ 2386  .dms-profile-save
+ 2390  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status

@@ -1203,7 +1203,7 @@
     width: 100%;
     padding: 10px 12px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1212,7 +1212,7 @@
 
 .cf-panel .cf-field input:focus,
 .cf-panel .cf-field select:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
     box-shadow: var(--ring-gold);
 }
 
@@ -1483,7 +1483,7 @@
     font-weight: 600;
     text-align: center;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
 }
@@ -1580,7 +1580,7 @@
     font-weight: 600;
     text-align: center;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
 }
@@ -1615,7 +1615,7 @@
     font-size: var(--text-md);
     text-align: center;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
 }
@@ -1818,7 +1818,7 @@
 .cf-notes-panel .cf-notes-toolbar select {
     padding: 6px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
     font-size: var(--text-sm);
@@ -1830,7 +1830,7 @@
     min-height: 120px;
     padding: 14px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1838,7 +1838,7 @@
 }
 
 .cf-notes-panel .cf-notes-editor:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 /* === RESPONSIVE V4 === */
@@ -2243,7 +2243,7 @@
     text-align: center;
     padding: 0;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
     font-size: var(--text-sm);
@@ -2369,14 +2369,14 @@
     width: 100%;
     padding: 10px 14px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-lg);
 }
 
 .condition-ref-search input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .condition-ref-list {
@@ -2620,7 +2620,7 @@
     padding: 4px 6px;
     font-size: var(--text-sm);
     background: var(--bg-input, var(--bg));
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
     box-sizing: border-box;

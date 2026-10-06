@@ -745,7 +745,7 @@
             flex: 1;
             padding: 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
             font-size: var(--text-lg);
@@ -1096,7 +1096,7 @@
             flex: 1;
             padding: 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
         }
@@ -1450,7 +1450,7 @@
     width: 48px;
     padding: 4px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     color: var(--text);
     border-radius: var(--radius-sm);
     font-size: var(--text-xs);
@@ -1541,14 +1541,14 @@
     width: 100%;
     padding: 8px 12px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-lg);
 }
 
 .xp-dist-total-input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .xp-dist-party-info {
@@ -1665,3 +1665,19 @@
     opacity: 0.6;
 }
 
+
+/* Die drei Felder des benutzerdefinierten Effekts (#effect-name,
+   #effect-duration, #effect-color) hatten bis Welle 6 Schritt 6 KEINE
+   Autorenregel. Den Rahmen gibt ihnen seitdem die Elementregel am Ende von
+   core.css; die Fuellung kann sie nicht mitgeben, ohne 228 Kaestchen
+   mitzunehmen (am Buendel nachgemessen, Begruendung bei .bst-attr-input in
+   bestiary.css). Ohne Fuellung aus der App liest der neue Rahmen in dark nur
+   2,68 auf Chromiums #3b3b3b — schlechter als die 3,04 vorher. Mit
+   var(--bg-card): 4,17 / 4,54 / 3,88 / 5,62.
+   IDs und keine neue Klasse, weil die drei Felder im Markup keine tragen und
+   eine neue Klasse zwei Dateien beruehren wuerde, ohne etwas zu gewinnen. */
+#effect-name,
+#effect-duration,
+#effect-color {
+    background: var(--bg-card);
+}

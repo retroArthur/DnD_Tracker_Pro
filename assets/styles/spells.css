@@ -285,7 +285,7 @@
 
         .editor-select {
             background: var(--bg-elevated);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 2px 4px;
             border-radius: var(--radius-sm);
@@ -296,8 +296,24 @@
             flex-shrink: 0;
         }
 
-        .editor-select:hover, .editor-select:focus {
+        /* GETEILT IN WELLE 6 SCHRITT 6, und die Teilung ist die Aussage:
+           Hover und Fokus standen hier in EINER Regel auf var(--gold). Der
+           Fokusrahmen geht auf var(--focus-ring) — die einzige Tinte des
+           Baums, die in allen vier Themes gegen jede Fuellung 3:1 haelt und
+           die der Ring 2 px daneben schon traegt. Der Hover-Rahmen BLEIBT auf
+           var(--gold): :hover ist kein Zustand, den WCAG 1.4.11 als
+           identifizierend fuehrt, und ihn mitzuziehen waere eine sichtbare
+           Aenderung an 37 Feldern, die dieser Schritt nicht gemessen hat. Dass
+           der Hover-Rahmen in Light nur 2,66 liest, ist benannte Restschuld
+           (zusammen mit den zwei reinen Hover-Regeln in editors.css).
+           Ohne die Teilung haette W6-R-08 Teil 3 eine Ausnahmeliste gebraucht
+           — und eine Ausnahmeliste verdeckt genau das, was sie nennt. */
+        .editor-select:hover {
             border-color: var(--gold);
+        }
+
+        .editor-select:focus {
+            border-color: var(--focus-ring);
         }
 
         /* `.editor-toolbar .editor-btn` stand hier und steht jetzt wieder in
@@ -323,7 +339,7 @@
             min-height: 120px;
             padding: 10px;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
             color: var(--text);
             font-size: var(--text-md);
@@ -335,7 +351,7 @@
             min-height: 80px;
             padding: 10px;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
             color: var(--text);
             font-size: var(--text-md);
@@ -372,7 +388,7 @@
         }
 
         .spell-editor:focus, .rich-editor:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
         
         .spell-editor ul, .rich-editor ul {

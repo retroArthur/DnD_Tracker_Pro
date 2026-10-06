@@ -762,7 +762,7 @@
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
@@ -834,7 +834,7 @@
         .form-input {
             width: 100%;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
@@ -1904,20 +1904,20 @@
             width: 100%;
             padding: 8px 12px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
             font-size: var(--text-md);
         }
 
         .assign-spell-search-wrap input:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
 
         .assign-spell-select {
             padding: 8px 12px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
             font-size: var(--text-sm);
@@ -2341,7 +2341,7 @@
         .toolbar-select {
             padding: 6px 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
             font-size: var(--text-sm);
@@ -2349,7 +2349,7 @@
         }
 
         .toolbar-select:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
 
         /* Boolescher Filter ("Nur Eigene", "Favoriten", "Aktive").
@@ -2412,14 +2412,14 @@
             padding: 6px 10px;
             padding-right: 28px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
             font-size: var(--text-md);
         }
         
         .toolbar-search:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
         
         .toolbar-search::placeholder {
@@ -3634,4 +3634,44 @@
            ------------------------------------------------------------------ */
         button, input, select, textarea {
             font-size: var(--text-sm);
+        }
+
+        /* ------------------------------------------------------------------
+           EINGABERAHMEN FUER DIE FELDER OHNE AUTORENREGEL
+           (Design-Handoff v3, Welle 6, Schritt 6)
+
+           17 Vertragsfelder standen auf Chromiums Vorgabe statt auf einer
+           Regel der App, am gebauten Buendel gezaehlt: 6 .bst-attr-input,
+           6 .bst-save-val, #effect-name, #effect-duration, #effect-color,
+           #char-languages, #filter-session-arc. Sie zeigten
+           `2px inset rgb(133, 133, 133)` (input, textarea) bzw.
+           `1px solid rgb(133, 133, 133)` (select) — zwei Schreibweisen, und
+           eine Pruefung, die nur `inset` sucht, uebersieht die drei selects.
+
+           WARUM EIN ELEMENTSELEKTOR UND KEINE 5 NEUEN KLASSENREGELN. Die
+           Spezifitaet (0,0,1) ist die kleinste, die es gibt: alle 52
+           Feldregeln dieses Schrittes gewinnen weiter, und die vier absichtlich
+           rahmenlosen Gruppen behalten ihr `border: none`
+           (.cf-combat-value input ist (0,1,1), .char-attr-box .attr-input
+           (0,2,0), #session-tags-input (1,0,0), .editor-shell .rich-editor
+           (0,2,0) — alle vier schlagen (0,0,1); party.css und editors.css laden
+           ausserdem hinter core.css). Am Buendel nachgemessen: von den
+           Nicht-Vertragstypen aendert sich NICHTS an checkbox (eine
+           Autorenregel gewinnt) und nichts an radio (im ganzen Baum nicht
+           vorhanden). Die 12 `input[type="file"]` und die hidden-Felder
+           bekommen den Rahmen formal mit, sehen ihn aber nicht: beide stehen
+           auf `display: none` (.io-file-input in dmscreen.css, hidden per
+           Browser-Vorgabe). Und die Regel traegt sich fort — ein kuenftiges
+           Feld ohne eigene Regel bekommt den Eingaberahmen von selbst, statt
+           W6-R-07 Fall 2 rot zu machen.
+
+           WAS SIE NICHT TUT: sie setzt keine Fuellung, keinen Radius, kein
+           Padding. Die 17 Felder bleiben darin Fremdkoerper (ihre Fuellung
+           kommt aus `color-scheme`, also vom Browser, nicht vom Theme). Das
+           ist benannte Restschuld und keine Nachlaessigkeit: der ganze
+           Eingabevertrag auf 17 Feldern waere eine sichtbare Umgestaltung in
+           vier Themes, die dieser Schritt nicht gemessen hat.
+           ------------------------------------------------------------------ */
+        input, select, textarea {
+            border: 1px solid var(--border-input);
         }

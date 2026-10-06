@@ -352,7 +352,7 @@
         }
         
         .char-attr-box:focus-within {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
         
         .char-attr-box .attr-label {
@@ -501,7 +501,7 @@
             max-width: 50px;
             padding: 4px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-sm);
             color: var(--text);
             font-size: var(--text-sm);
@@ -509,7 +509,7 @@
         }
 
         .enc-save-input:focus {
-            border-color: var(--cyan);
+            border-color: var(--focus-ring);
         }
 
         .enc-save-input::placeholder {
@@ -1649,14 +1649,14 @@
     width: 100%;
     padding: 8px 12px 8px 32px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-sm);
 }
 
 .qref-search input:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .qref-search input::placeholder {
@@ -1752,7 +1752,7 @@
     flex: 1;
     padding: 8px 10px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-lg);
@@ -1767,14 +1767,14 @@
 }
 
 .qref-conv-input:focus {
-    border-color: var(--cyan);
+    border-color: var(--focus-ring);
 }
 
 .qref-conv-select {
     width: 70px;
     padding: 8px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--text-md);
@@ -1782,7 +1782,7 @@
 }
 
 .qref-conv-select:focus {
-    border-color: var(--cyan);
+    border-color: var(--focus-ring);
 }
 
 .qref-converter-arrow {
