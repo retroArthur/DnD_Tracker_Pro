@@ -960,4 +960,71 @@ describe('W5-W11 — die Ueberschriften-Hierarchie im Reichtext-Inhalt bleibt ei
         }
         expect(befunde).toEqual([]);
     });
+
+    test('jede Stufe bleibt lesbar, gerechnet gegen das ZIEL ihres Behaelters', () => {
+        // WARUM DIESER FALL NEBEN DEM VORIGEN STEHEN MUSS. Der vorige prueft
+        // die sechs Ueberschriftenregeln; im heutigen Zweig sind alle sechs
+        // namentlich geduldet, also kehrt er an `ziele.every(z => z === null)`
+        // sofort zurueck und ist LEER. Die Gefahr liegt aber nicht in den
+        // Regeln, sondern in ihrem BEHAELTER: `em` ist ein Verhaeltnis, und
+        // wenn der Behaelter auf eine Sprosse wandert, wandern alle sechs
+        // Stufen mit — ohne dass eine der sechs Deklarationen angefasst
+        // wuerde. Die Werte in UEBERSCHRIFTEN_GEMESSEN zeigen genau das, sie
+        // wurden bisher aber nur zur BEGRUENDUNG der Ausnahme benutzt und
+        // nirgends gegen das Ziel des Behaelters gerechnet.
+        //
+        // Vier Schranken sind an dieser Stelle blind, und keine davon wird
+        // sehend, ohne dass dieser Fall hier steht:
+        //   (1) `--report` fuehrt die sechs Regeln als 'geduldet' mit
+        //       `ziel: null` — sie haben kein Delta, auf das eine 2-px-
+        //       Schwelle angewandt werden koennte.
+        //   (2) der vorige Fall ist heute leer (siehe oben).
+        //   (3) `KETTEN` ist aus dem DOM erhoben und kann die Kante
+        //       Behaelter -> Ueberschrift nicht enthalten: in der Ruhelage
+        //       steht dort keine Ueberschrift.
+        //   (4) die Grundlinien-Erhebung sieht die acht Behaelter nicht,
+        //       `seedPopulatedSession` erzeugt keinen Eintrag mit h1..h6.
+        const eigene = {};
+        for (const d of alle) {
+            for (const s of d.selektoren.split(',')) {
+                const t = s.trim();
+                if (M.REICHTEXT_BEHAELTER.includes(t)) eigene[t] = d;
+            }
+        }
+        // VERWESUNGSPROBE: gemessen tragen genau zwei der acht Behaelter eine
+        // eigene font-size (.char-notes-content 0.9em, .spell-desc 0.85em);
+        // die uebrigen sechs erben die Wurzelgroesse. Ohne diese Zusicherung
+        // wuerde der Fall gruen, sobald die Suche nichts mehr findet.
+        expect(Object.keys(eigene).sort()).toEqual(['.char-notes-content', '.spell-desc']);
+
+        const befunde = [];
+        M.UEBERSCHRIFTEN_GEMESSEN.forEach(([name, behaelterPx, , stufen]) => {
+            const d = eigene[name];
+            const ziel = d ? zielPx(d.datei, d.selektoren, d.wert, skala) : null;
+            if (!d) {
+                // Kein eigener Wert: der Behaelter erbt die Wurzel und
+                // aendert sich nicht. Das ist eine bestreitbare Behauptung,
+                // also wird sie geprueft und nicht geglaubt.
+                expect(behaelterPx).toBe(16);
+            }
+            const behaelterZiel = ziel === null ? behaelterPx : ziel;
+            M.UEBERSCHRIFTEN_WERTE.forEach((wert, i) => {
+                const neu = +(parseFloat(wert) * behaelterZiel).toFixed(2);
+                if (neu < M.KLEINST_GRENZE) {
+                    befunde.push(
+                        `${name} h${i + 1}: ${wert} x ${behaelterZiel} px = ${neu} px ` +
+                            `liegt unter der Untergrenze (${M.KLEINST_GRENZE} px, E-4)`
+                    );
+                }
+                const abw = +(neu - stufen[i]).toFixed(2);
+                if (Math.abs(abw) > 2) {
+                    befunde.push(
+                        `${name} h${i + 1}: ${stufen[i]} px gemessen -> ${neu} px, ` +
+                            `Sprung ${abw} px ueber der Abnahmeschwelle von 2 px`
+                    );
+                }
+            });
+        });
+        expect(befunde).toEqual([]);
+    });
 });
