@@ -607,9 +607,20 @@ const KETTEN = [
         kinder: [['bestiary.css||.bst-save-val||0.85em', 11.56, 6, 0]]
     },
     {
+        /* NACHGEZOGEN IM SCHRITT 4. Das Kind war `8px` und ist jetzt
+           `var(--text-xs)`: die Tastenhilfe ist Lesetext ("Strg+B") und lag
+           unter der Untergrenze von 11 px (E-4), also eine Urteilsstelle mit
+           +3,00 px. Der Anker TRAEGT den Wert (Begruendung am Kopf von
+           KETTEN), darum muss er mitwandern — sonst traf die
+           Verwesungsprobe in typo-map.test.js ihn nicht mehr und die Kante
+           hoerte lautlos auf zu urteilen.
+           `kindPx` ist der NEUE gemessene Wert, weil dieses Feld laut
+           Abschnittskopf sagt, was der Browser zeigt. Der alte stand bei 8,
+           und die Kante war dort informationslos: ein px-Literal haengt
+           nicht am Elternwert, `altPx()` und Messung fielen zusammen. */
         eltern: 'spells.css||.floating-toolbar .editor-btn||14px',
         elternPx: 14,
-        kinder: [['spells.css||.floating-toolbar .kbd-hint||8px', 8, 5, 5]]
+        kinder: [['spells.css||.floating-toolbar .kbd-hint||var(--text-xs)', 11, 5, 5]]
     },
     {
         eltern: 'dashboard.css||.qref-tab||0.75em',
@@ -828,6 +839,180 @@ for (let n = 1; n <= 6; n++) {
         'als den Fliesstext, den sie ueberschreiben. Volle Begruendung am ' +
         'Kopf dieser Schleife in tools/typo-map.js, Abschnitt 7.';
 }
+
+/* ===========================================================================
+   7a. DIE 20 BEURTEILTEN IKON-ANKER — Schritt 4, Entscheidung E-3
+   ===========================================================================
+
+   WAS HIER ENTSCHIEDEN WIRD. Der Vorlauf (Schritt 3) hat die Kandidatenmenge
+   ausgezaehlt und an jeder Stelle "NOCH NICHT geduldet" gesagt, weil ob eine
+   Ikonengroesse neben der Skala bleibt ein URTEIL ist. Dieser Abschnitt
+   faellt es — fuer die 22 Deklarationen, deren Sprung auf die Skala GROESSER
+   ALS 2 px waere. Das ist die Schwelle des Abnahmekriteriums ("keine
+   Aenderung > 2 px ausser beabsichtigt"); alles darunter ist mechanische
+   Nachschlagearbeit und gehoert dem Schritt 5.
+
+   WARUM SIE NEBEN DER SKALA BLEIBEN. Keine der 22 traegt Lesetext. 19 tragen
+   ein einzelnes Emoji (gemessen: 🏠 📖 👹 🎭 🎲 📍 👤 ⚔️ 📦 🐉 ✨ 📝 🔗 📜),
+   zwei einen Avatar-Platzhalter ("?" bzw. den Anfangsbuchstaben des Namens),
+   einer ein Aufklapp-Pfeilzeichen (▶). Eine Schrift-Skala ordnet LESEGROESSEN;
+   ein Bild hat keine. Sieben der 22 sitzen ueberdies in einem Kasten mit
+   Pixelmass (.loc-item-icon 44x44, .loc-detail-icon und .enc-detail-icon
+   56x56, .enc-item-icon 40x40, .npc-item-avatar 44x44, .timer-ctrl-btn 50x50,
+   .dice-roll-btn 50x44) — dort ist die Groesse eine Eigenschaft des Kastens
+   und nicht der Textordnung, und ein Zeichen, das mitwaechst, waehrend sein
+   Kasten es nicht tut, laeuft ueber.
+
+   WARUM SIE TROTZDEM IHRE EINHEIT VERLIEREN — und das ist der Teil, der
+   begruendet werden muss, weil er 21 Deklarationen anfasst, die sichtbar
+   NICHTS aendern. Drei Gruende, in dieser Reihenfolge:
+
+   (1) DIE UMSCHREIBUNG IST EXAKT, gemessen. Der Elternwert ist an allen 30
+       erreichten Urteilsstellen 16 px, bei 1440 UND bei 375 px, in jedem
+       erreichten Zustand. `3.5em` ist dort also keine Rechnung, sondern eine
+       Schreibweise fuer 56 px. Das Delta ist 0,00 px, und der
+       Grundlinien-Diff muss das zeigen.
+
+   (2) DIE SCHRANKE 2 VON W5-R-05 ZAEHLT DIE EINHEIT, NICHT DEN WERT. Sie
+       verbietet `em`, und sie tut das OHNE Ruecksicht auf diese Liste — mit
+       Absicht, denn ein em-Wert multipliziert sich mit seinem Elternwert, und
+       das ist die Ursache des ganzen Befundes. Blieben die 21 in `em`, waere
+       ihr Zielwert 27 statt 6, und eine Schranke, deren Ziel ihre eigene
+       Ausnahme verbietet, verspricht etwas, das sie nicht halten kann. Der
+       Schritt 3 hat genau das als Falle an den urteilenden Schritt uebergeben.
+
+   (3) EINE ZAHL IST BESTREITBAR, EINE RECHNUNG NICHT. `font-size: 28.8px` an
+       einem Avatar-Platzhalter laedt die Frage ein, ob 28,8 px die richtige
+       Groesse ist. `1.8em` verbirgt sie hinter einer Multiplikation mit einem
+       Wert, der nicht dabeisteht.
+
+   WAS DAS NICHT IST: eine Rundung. 28.8, 22.4 und 17.6 px sehen nach
+   Tippfehlern aus und sind keine — sie sind die gemessenen Werte, und
+   W5-R-07b vergleicht sie zeichengenau. Wer sie auf 28, 22 und 18 rundet,
+   aendert sichtbar und wird rot.
+
+   WAS OFFEN BLEIBT, damit es nicht als entschieden gilt: E-3 nennt 66 von 853
+   Deklarationen; die Kandidatenmenge nach Namensmuster ist gemessen 73.
+   Beurteilt sind hier 22. Die uebrigen 54 springen um 2 px oder weniger und
+   sind NICHT beurteilt — die Ratsche dieses Schrittes begrenzt ihn
+   ausdruecklich auf die eigenen Anker ("waechst um genau diese Anker und
+   keinen mehr"), und W5-R-07e sichert zu, dass keine davon still hier landet.
+   Ob Schritt 5 sie mechanisch auf eine Sprosse hebt — dann ist E-3 fuer sie
+   nicht erfuellt, mit <= 2 px Wirkung — oder ob sie ebenfalls geduldet
+   werden, muss DORT entschieden und begruendet werden.
+
+   ZWEI ANKER DECKEN DREI DEKLARATIONEN MEHR, als die Liste Zeilen hat, und
+   das ist Absicht: `.enc-detail-icon` und `.enc-item-icon` haben neben ihrer
+   Grundregel eine Media-Query-Fassung, und der Anker ist zeilenfrei. Eine
+   Ikone, die in der Grundregel neben der Skala steht und in der Mobilfassung
+   darauf, waere an zwei Breiten nach zwei Maszstaeben bemessen.
+   =========================================================================== */
+
+/** Je Eintrag: Anker -> Begruendung MIT gemessenem Wert. Die Bauart ist die
+ *  von `RUHE_AUSNAHME` in der Ratschendatei: eine Ausnahme ohne Zahl ist eine
+ *  Meinung. `W5-R-07c` prueft, dass jede Begruendung eine px-Zahl nennt. */
+const IKON_GEDULDET = {
+    'dmscreen.css||.empty-state-icon||font-size':
+        '56px (war 3.5em). Gemessen 56,00 px auf einem 16-px-Elternwert, ' +
+        'bei 1440 und 375 px — Delta 0,00. Emoji des allgemeinen ' +
+        'Leerzustands (gemessen ✨ 📝 📖 🔗 📜, 9 Elemente). Kein Lesetext, ' +
+        'darum neben der Skala (E-3).',
+    'npcs.css||.loc-empty-icon, .loc-empty-state .empty-state-icon||font-size':
+        '56px (war 3.5em). Gemessen 56,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Emoji des Orte-Leerzustands (🏠). Kein Lesetext (E-3).',
+    'party.css||.wiki-detail-empty .empty-state-icon||font-size':
+        '56px (war 3.5em). Gemessen 56,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Emoji des Wiki-Leerzustands (📖). Kein Lesetext (E-3).',
+    'core.css||.detail-empty-icon, .loc-detail-empty-icon, .npc-detail-empty-icon, .loot-detail-empty-icon, .enc-detail-empty-icon, .bestiary-detail-empty-icon||font-size':
+        '48px (war 3em). Gemessen 48,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Die gemeinsame Regel der fuenf Detail-Leerzustaende; gemessen ' +
+        'tragen sie 📦 👹 🐉 🎭 🏠. Das sechste Mitglied ' +
+        '`.detail-empty-icon` hat gemessen KEIN Markup (0 Elemente) und ist ' +
+        'eine Altlast der Zusammenlegung aus Welle 1 — ein eigener Befund, ' +
+        'in der Aktenlage gefuehrt, kein Grund gegen die Duldung der Regel.',
+    'encounters.css||.enc-empty-icon||font-size':
+        '48px (war 3em). Gemessen 48,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Emoji des Encounter-Leerzustands (👹). Kein Lesetext (E-3).',
+    'npcs.css||.npc-empty-icon||font-size':
+        '48px (war 3em). Gemessen 48,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Emoji des NPC-Leerzustands (🎭). Kein Lesetext (E-3).',
+    'tools.css||.rt-empty-icon||font-size':
+        '48px (war 3em). Gemessen 48,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Emoji des Zufallstabellen-Leerzustands (🎲). Kein Lesetext (E-3). ' +
+        'NICHT zu verwechseln mit `.rt-empty-text` daneben, das Fliesstext ' +
+        'ist und dem Schritt 5 gehoert.',
+    'tools.css||.generator-empty-icon||font-size':
+        '48px (war 3em). Gemessen 48,00 px auf 16-px-Eltern im ' +
+        'Generatormodal — Delta 0,00. Emoji (🎲). Kein Lesetext (E-3). Die ' +
+        'Stelle war im ersten Messlauf nicht erreichbar: sie steht in ' +
+        '`showGeneratorModal()` und erscheint erst bei leerer Tabellenliste.',
+    'party.css||.cf-avatar-placeholder||font-size':
+        '40px (war 2.5em). Gemessen 40,00 px auf 16-px-Eltern — Delta 0,00. ' +
+        'Avatar-Platzhalter des Charakterformulars, Inhalt "?" (ein ' +
+        'Fragezeichen als Bild, kein Satzzeichen). E-3 nennt ' +
+        'Avatar-Platzhalter ausdruecklich.',
+    'core.css||.char-modal-avatar-placeholder||font-size':
+        '28.8px (war 1.8em). Gemessen 28,80 px auf 16-px-Eltern — Delta ' +
+        '0,00. Avatar-Platzhalter des Charaktermodals: der ' +
+        'Anfangsbuchstabe des Namens, gross gesetzt in einem Kasten mit ' +
+        'Pixelmass. Ein Buchstabe als Bild, kein Lesetext (E-3).',
+    'core.css||.loc-detail-icon||font-size':
+        '28.8px (war 1.8em). Gemessen 28,80 px auf 16-px-Eltern — Delta ' +
+        '0,00. Emoji (📍) in einem 56x56-px-Kasten mit Farbverlauf. Die ' +
+        'Groesse gehoert dem Kasten, nicht der Textordnung (E-3).',
+    'dashboard.css||.dash-char-avatar||font-size':
+        '28.8px (war 1.8em). Gemessen 28,80 px auf 16-px-Eltern — Delta ' +
+        '0,00. Avatar-Emoji (👤) der Charakterkachel des Dashboards (E-3).',
+    'encounters.css||.enc-detail-icon||font-size':
+        '28.8px in der Grundregel (war 1.8em) und 22.4px in ' +
+        '`@media (max-width: 1200px)` (war 1.4em). Gemessen 28,80 bzw. ' +
+        '22,40 px auf 16-px-Eltern — Delta je 0,00. Emoji (⚔️) in einem ' +
+        'Kasten, der von 56x56 auf 44x44 px geht; das Zeichen folgt dem ' +
+        'Kasten (E-3). BEIDE Deklarationen haengen an diesem einen Anker, ' +
+        'weil er zeilenfrei ist — und das ist richtig so: eine Ikone, die ' +
+        'in der Grundregel neben der Skala steht und in der Mobilfassung ' +
+        'darauf, waere an zwei Breiten nach zwei Maszstaeben bemessen.',
+    'core.css||.loc-item-icon||font-size':
+        '22.4px (war 1.4em). Gemessen 22,40 px auf 16-px-Eltern — Delta ' +
+        '0,00. Emoji (📍) in einem 44x44-px-Kasten der Orte-Listenzeile (E-3).',
+    'dashboard.css||.qref-fab-icon||font-size':
+        '22.4px (war 1.4em). Gemessen 22,40 px auf 16-px-Eltern — Delta ' +
+        '0,00. Emoji (📖) im schwebenden Schnellreferenz-Knopf (E-3).',
+    'dice.css||.dice-roll-btn||font-size':
+        '22.4px (war 1.4em). Gemessen 22,40 px auf 16-px-Eltern — Delta ' +
+        '0,00. Der Knopf traegt NUR ein Emoji (🎲) und sitzt in einem ' +
+        '50x44-px-Kasten; seine Schriftgroesse ist die Groesse des ' +
+        'Zeichens, nicht die einer Beschriftung (E-3).',
+    'encounters.css||.enc-item-icon||font-size':
+        '22.4px in der Grundregel (war 1.4em) und 17.6px in ' +
+        '`@media (max-width: 600px)` (war 1.1em). Gemessen 22,40 bzw. ' +
+        '17,60 px auf 16-px-Eltern — Delta je 0,00. Emoji in einem Kasten, ' +
+        'der von 40x40 auf 32x32 px geht (E-3). DIE MOBILFASSUNG IST DIE ' +
+        'EINE STELLE DIESES SCHRITTES, DEREN SPRUNG UNTER 2 px LAEGE ' +
+        '(-1,60): sie ist mitgezogen, weil der zeilenfreie Anker beide ' +
+        'Fassungen fuehrt. Namentlich in MITGEZOGEN in W5-R-07.',
+    'npcs.css||.npc-item-avatar||font-size':
+        '22.4px (war 1.4em). Gemessen 22,40 px auf 16-px-Eltern — Delta ' +
+        '0,00. Avatar-Emoji in einem 44x44-px-Kreis der NPC-Listenzeile (E-3).',
+    'tools.css||.timer-ctrl-btn||font-size':
+        '22.4px (war 1.4em). Gemessen 22,40 px auf 16-px-Eltern — Delta ' +
+        '0,00. Der Knopf traegt NUR ein Zeichen (▶️ bzw. ↺) in einem ' +
+        '50x50-px-Kreis (E-3).',
+    'party.css||.wiki-tree-item-toggle||font-size':
+        '8px, UNVERAENDERT. Gemessen 8,00 px in einer Baumzeile von 12,8 px ' +
+        '— das Zeichen ist 62 Prozent seiner Zeile. Inhalt ist ein ' +
+        'Aufklapp-Pfeil (▶, U+25B6), der bei `.expanded` um 90 Grad dreht: ' +
+        'kein Lesetext, also keine Sprosse der Schrift-Skala. ER IST AUCH ' +
+        'KEIN EMOJI-IKON, und darum ist diese Duldung eine andere als die 19 ' +
+        'darueber: sie sagt nur, dass die Stelle nicht in die TEXTskala ' +
+        'gehoert. UEBER DIE UNTERGRENZE VON 11 px (E-4) ENTSCHEIDET SCHRITT ' +
+        '8 — gemeinsam mit `.tb-caret` (editors.css, 9px, ▾), dem gleichen ' +
+        'Zeichen in der gleichen Rolle. Zwei Pfeilzeichen duerfen nicht zwei ' +
+        'verschiedene Antworten bekommen, und darum entscheidet keiner von ' +
+        'beiden hier allein.'
+};
+
+Object.assign(AUSNAHMEN, IKON_GEDULDET);
 
 /**
  * Alle 27 Deklarationen mit dem Wert `1em` oder `1.0em`, mit ihrem GEMESSENEN

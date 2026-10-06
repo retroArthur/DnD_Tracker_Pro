@@ -54,7 +54,7 @@
 }
 
 .timer-hero-time {
-    font-size: 3em;
+    font-size: var(--text-3xl); /* war 3em = 48,00 px gemessen -> 34 px, -14,00. Die Uhrzeit ist Text. --text-3xl ist die naechste Sprosse; die Skala hat zwischen 34 und 72 px keine, und der 250-px-Ring traegt 34 px ohne Weiteres */
     font-weight: 700;
     font-family: var(--font-mono);
     color: var(--gold-text);
@@ -78,7 +78,7 @@
     border-radius: 50%;
     border: 2px solid var(--border);
     background: var(--bg-elevated);
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Der Knopf traegt NUR ein Zeichen (▶️ bzw. ↺) in einem 50x50-px-Kreis — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     cursor: pointer;
     transition: var(--trans-std);
     display: flex;
@@ -328,7 +328,7 @@
     color: var(--text-dim);
 }
 
-.rt-empty-icon { font-size: 3em; margin-bottom: 12px; }
+.rt-empty-icon { font-size: 48px; margin-bottom: 12px; } /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (🎲) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
 .rt-empty-text { margin-bottom: 16px; }
 
 .rt-card {
@@ -749,7 +749,7 @@
     color: var(--text-dim);
 }
 
-.generator-empty-icon { font-size: 3em; margin-bottom: 12px; }
+.generator-empty-icon { font-size: 48px; margin-bottom: 12px; } /* war 3em; gemessen 48,00 px auf 16-px-Eltern im Generatormodal, Delta 0,00. Emoji im Leerzustand (🎲) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
 .generator-empty-text { font-size: 1.1em; margin-bottom: 8px; color: var(--text); }
 .generator-empty p { margin: 0; font-size: 0.9em; }
 

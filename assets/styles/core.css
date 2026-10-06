@@ -1409,7 +1409,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8em;
+            font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Avatar-Platzhalter (Anfangsbuchstabe) in einem Kasten mit Pixelmass — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             font-weight: 700;
             color: var(--gold-text);
         }
@@ -2983,7 +2983,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4em;
+            font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 44x44-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             flex-shrink: 0;
         }
 
@@ -3138,7 +3138,7 @@
         .loot-detail-empty-icon,
         .enc-detail-empty-icon,
         .bestiary-detail-empty-icon {
-            font-size: 3em;
+            font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Fuenf der sechs Mitglieder tragen ein Emoji, .detail-empty-icon hat kein Markup — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: var(--space-md);
             opacity: 0.3;
         }
@@ -3175,7 +3175,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8em;
+            font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 56x56-px-Kasten: das Zeichen folgt dem Kasten, nicht der Textskala — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             flex-shrink: 0;
         }
 

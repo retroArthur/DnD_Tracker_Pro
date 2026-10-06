@@ -1048,7 +1048,7 @@
         }
         
         .empty-state-icon {
-            font-size: 3.5em;
+            font-size: 56px; /* war 3.5em; gemessen 56,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: 16px;
             opacity: 0.4;
             filter: grayscale(50%);
@@ -1443,7 +1443,7 @@
 
 .dms-dice-result {
     text-align: center;
-    font-size: 1.4em;
+    font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Die Wurfzahl des Wuerfel-Widgets ist Text */
     font-weight: 700;
     color: var(--gold-text);
     padding: 10px;

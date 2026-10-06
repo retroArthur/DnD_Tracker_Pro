@@ -1021,7 +1021,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 40x40-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
 }
 
@@ -1091,7 +1091,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8em;
+    font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 56x56-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
 }
 
@@ -1312,7 +1312,7 @@
 }
 
 .enc-empty-icon {
-    font-size: 3em;
+    font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (👹) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     margin-bottom: 12px;
     opacity: 0.5;
 }
@@ -1485,7 +1485,7 @@
     .enc-detail-icon {
         width: 44px;
         height: 44px;
-        font-size: 1.4em;
+        font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Mobilfassung derselben Ikone: der Kasten geht auf 44x44 px, das Zeichen mit — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     }
 
     .enc-detail-header {
@@ -1541,7 +1541,7 @@
     .enc-item-icon {
         width: 32px;
         height: 32px;
-        font-size: 1.1em;
+        font-size: 17.6px; /* war 1.1em; gemessen 17,60 px auf 16-px-Eltern, Delta 0,00. Mobilfassung derselben Ikone: Kasten 32x32 px. Sprung waere nur -1,60 px, also unter der Schwelle — mitgezogen, weil der zeilenfreie Anker beide Fassungen fuehrt (MITGEZOGEN in W5-R-07) */
     }
 
     .enc-item-stats {

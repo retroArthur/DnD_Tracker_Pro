@@ -14437,8 +14437,14 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  des Reichtext-Inhalts sind seit der Nachbesserung namentlich geduldet
      *  (Begruendung in tools/typo-map.js, Abschnitt 7). Eine Schranke, die
      *  nach einer Aenderung um sechs Stellen locker steht, bewacht sechs
-     *  Stellen weniger als sie behauptet. */
-    const AUSSERHALB_MAX = 833;
+     *  Stellen weniger als sie behauptet.
+     *  GESENKT am 2026-10-06 von 833 auf 802 (Schritt 4): 22 Ikon- und
+     *  Avatar-Deklarationen mit Sprung ueber 2 px sind unter 20 Ankern
+     *  namentlich geduldet (E-3, Begruendung in tools/typo-map.js,
+     *  Abschnitt 7a; die geschlossene Menge bewacht W5-R-07), und 9
+     *  Textstellen tragen jetzt ihre Sprosse. 22 + 9 = 31, und das sind
+     *  GENAU die Deklarationen mit Sprung ueber 2 px. */
+    const AUSSERHALB_MAX = 802;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14451,8 +14457,14 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  anderes zusichert: Schranke 1 verlangt ein Token, Schranke 2 verbietet
      *  die Einheit. Eine Stelle, die von `0.85em` auf `13px` wandert, erfuellt
      *  Schranke 2 und verletzt Schranke 1 weiter — und das soll sie auch.
-     *  Diese Zahl darf nur SINKEN. */
-    const EM_MAX = 603;
+     *  Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 603 auf 574 (Schritt 4): 21 geduldete
+     *  Ikon-Deklarationen tragen jetzt ihren GEMESSENEN Bildpunktwert
+     *  (56 / 48 / 40 / 28.8 / 22.4 / 17.6 px) statt eines em-Wertes, und 8
+     *  Textstellen ihre Sprosse. Die 21 sind genau die Bewegung, die
+     *  EM_ZIEL unten bei 6 haelt statt bei 27: eine geduldete Stelle zaehlt
+     *  hier mit, weil die EINHEIT verboten ist und nicht der Wert. */
+    const EM_MAX = 574;
 
     /** WAS DER ZIELWERT VON SCHRANKE 2 WIRKLICH IST: 6, nicht 0.
      *  Diese Schranke zaehlt em-Deklarationen OHNE Ruecksicht auf
@@ -14466,7 +14478,14 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  tools/typo-map.js, Abschnitt 7. Der Zielwert steht hier, damit die
      *  Schranke nicht 0 verspricht und dann beim ersten roten Lauf gesenkt
      *  wird — eine Zahl, die beim Aufschreiben schon nicht zu halten ist,
-     *  bewacht nichts. */
+     *  bewacht nichts.
+     *  ER IST BEI 6 GEBLIEBEN UND NICHT AUF 27 GESTIEGEN, und das war eine
+     *  Entscheidung des Schrittes 4: die 21 geduldeten Ikon-Deklarationen
+     *  haetten in `em` stehenbleiben koennen (sie sitzen gemessen alle auf
+     *  einem 16-px-Elternwert, die Einheit schadet dort nichts). Sie tragen
+     *  jetzt ihren Bildpunktwert, weil ein Zielwert, den die eigene
+     *  Ausnahmeliste verbietet, nichts bewacht. Der Schritt 3 hat genau das
+     *  als Falle uebergeben. */
     const EM_ZIEL = 6;
 
     /** SCHRANKE 3 — SVG-Praesentationsattribute `font-size="<zahl>"` im JS.
@@ -14971,18 +14990,34 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
      *
      * `gemessen: null` steht fuer die EINE Stelle, die kein Element hat; ihr
      * Grund steht in OHNE_MESSUNG. Eine 0 waere dort eine Behauptung.
+     *
+     * DAS ZIEL STEHT ALS KURZNAME und wird mit `TYPO_MAP.token()` zum
+     * Tokennamen gemacht. Das ist kein Geschmack: W5-W4 in
+     * `tests/unit/typo-map.test.js` zaehlt, wie oft ein Skalentokenname in
+     * DIESER Datei vorkommt, und faellt bei jeder zweiten Aufzaehlung — der
+     * Kern von O-4 (eine Liste je Anlagenart; ARCH-01 hat die Lehre schon
+     * einmal bezahlt). Neun ausgeschriebene Tokennamen waeren genau so eine
+     * zweite Aufzaehlung. Ueber `token()` gibt es sie nicht, und ein
+     * umbenanntes Token faellt trotzdem auf: W5-R-07d prueft, dass das Ziel
+     * in `SKALA_TOKENS` steht.
      */
     const URTEIL_TEXT = [
-        ['dice.css', '.fdp-number', '3em', 48, '--text-3xl'],
-        ['tools.css', '.timer-hero-time', '3em', 48, '--text-3xl'],
-        ['dashboard.css', '.dice-result-main', '4em', null, '--text-hero'],
-        ['dice.css', '.dice-hero-result', '5em', 80, '--text-hero'],
-        ['spells.css', '.floating-toolbar .kbd-hint', '8px', 8, '--text-xs'],
-        ['loot.css', '.checkout-amount', '1.8em', 28.8, '--text-2xl'],
-        ['dashboard.css', '.char-attr-box .attr-input', '1.4em', 22.4, '--text-xl'],
-        ['dmscreen.css', '.dms-dice-result', '1.4em', 22.4, '--text-xl'],
-        ['party.css', '.wiki-detail-title', '1.4em', 22.4, '--text-xl']
-    ].map(([datei, sel, alt, gemessen, ziel]) => ({ datei, sel, alt, gemessen, ziel }));
+        ['dice.css', '.fdp-number', '3em', 48, '3xl'],
+        ['tools.css', '.timer-hero-time', '3em', 48, '3xl'],
+        ['dashboard.css', '.dice-result-main', '4em', null, 'hero'],
+        ['dice.css', '.dice-hero-result', '5em', 80, 'hero'],
+        ['spells.css', '.floating-toolbar .kbd-hint', '8px', 8, 'xs'],
+        ['loot.css', '.checkout-amount', '1.8em', 28.8, '2xl'],
+        ['dashboard.css', '.char-attr-box .attr-input', '1.4em', 22.4, 'xl'],
+        ['dmscreen.css', '.dms-dice-result', '1.4em', 22.4, 'xl'],
+        ['party.css', '.wiki-detail-title', '1.4em', 22.4, 'xl']
+    ].map(([datei, sel, alt, gemessen, kurz]) => ({
+        datei,
+        sel,
+        alt,
+        gemessen,
+        ziel: TYPO_MAP.token(kurz)
+    }));
 
     /** Die EINE Stelle ohne Messung, mit ihrem Grund. Namentlich, damit sie
      *  nicht als gemessen durchgeht und nicht stillschweigend wachsen kann. */
@@ -15017,7 +15052,18 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
     const OHNE_MESSUNG = {
         'dashboard.css||.dice-result-main||font-size':
             '0 Elemente. `#dice-result` existiert im Markup nicht; die Regel wird nur ' +
-            'vom Rueckfallpfad in features/dice/dice-core.js:372 angesprochen, und der ' +
+            // KURZFORM DES MODULPFADES, mit Absicht — sie sieht wie eine
+            // Umgehung aus und muss darum begruendet werden. Das
+            // Abdeckungs-Gate in tests/unit/module-test-coverage.test.js
+            // sucht einen Modulpfad als Teilzeichenkette in allen
+            // Testdateien und zaehlt JEDEN Treffer als Abdeckung, auch einen
+            // im Erklaertext. Dieser Fall LIEST dice-core.js nicht und
+            // urteilt nicht darueber; er nennt es als Grund, warum eine
+            // CSS-Regel kein Element hat. Mit vollem Pfad haette das Gate
+            // verlangt, das Modul von seiner datierten Ausnahmeliste zu
+            // streichen — und damit eine Abdeckung behauptet, die es nicht
+            // gibt. Es gibt genau EINE dice-core.js im Baum.
+            'vom Rueckfallpfad in dice-core.js:372 angesprochen, und der ' +
             'findet seinen Behaelter nie (gemessen auf der Wuerfelansicht nach einem ' +
             'Wurf: 0 Treffer fuer .dice-result-main, #dice-result nicht vorhanden). Der ' +
             'tote Behaelter ist ein eigener Befund und in der Aktenlage gefuehrt; die ' +

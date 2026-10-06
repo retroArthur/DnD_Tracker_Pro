@@ -106,7 +106,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Avatar-Emoji in einem 44x44-px-Kreis — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -380,7 +380,7 @@
 }
 
 .npc-empty-icon {
-    font-size: 3em;
+    font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (🎭) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     margin-bottom: 12px;
     opacity: 0.3;
 }
@@ -825,7 +825,7 @@
 
         .loc-empty-icon,
         .loc-empty-state .empty-state-icon {
-            font-size: 3.5em;
+            font-size: 56px; /* war 3.5em; gemessen 56,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (🏠) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: 16px;
             opacity: 0.4;
             filter: grayscale(50%);

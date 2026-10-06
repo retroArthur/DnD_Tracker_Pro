@@ -880,7 +880,7 @@
         
         .wiki-tree-item-toggle {
             display: none;
-            font-size: 8px;
+            font-size: 8px; /* UNVERAENDERT bei 8px; gemessen 8,00 px in einer 12,8-px-Baumzeile. Aufklapp-Pfeil (▶), kein Lesetext — darum nicht auf eine Sprosse gehoben, aber auch kein Emoji-Ikon: er steht namentlich in tools/typo-map.js. UEBER DIE UNTERGRENZE VON 11 px ENTSCHEIDET SCHRITT 8, gemeinsam mit .tb-caret (editors.css, 9px, ▾) — dasselbe Zeichen in derselben Rolle, beide muessen dieselbe Antwort bekommen. */
             color: var(--text-dim);
             margin-right: 4px;
         }
@@ -907,7 +907,7 @@
         }
 
         .wiki-detail-empty .empty-state-icon {
-            font-size: 3.5em;
+            font-size: 56px; /* war 3.5em; gemessen 56,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (📖) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: 16px;
             opacity: 0.4;
             filter: grayscale(50%);
@@ -944,7 +944,7 @@
         }
         
         .wiki-detail-title {
-            font-size: 1.4em;
+            font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Ueberschrift des Wiki-Eintrags — der klarste Fall von Lesetext in dieser Liste */
             font-weight: 700;
             color: var(--text);
             margin-bottom: 4px;
@@ -1173,7 +1173,7 @@
 }
 
 .cf-avatar-placeholder {
-    font-size: 2.5em;
+    font-size: 40px; /* war 2.5em; gemessen 40,00 px auf 16-px-Eltern, Delta 0,00. Avatar-Platzhalter ("?") im Vorschaukasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     color: var(--text-dim);
 }
 

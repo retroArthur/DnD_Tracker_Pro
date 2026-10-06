@@ -19,7 +19,7 @@
 }
 
 .dice-hero-result {
-    font-size: 5em;
+    font-size: var(--text-hero); /* war 5em = 80,00 px gemessen -> 72 px, -8,00. Die groesste Zahl der App; --text-hero ist genau fuer sie da (Handoff Paragraph 7) */
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;
@@ -224,7 +224,7 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Der Knopf traegt NUR ein Emoji (🎲) in einem 50x44-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     transition: var(--trans-std);
 }
 
@@ -811,7 +811,7 @@
 }
 
 .fdp-number {
-    font-size: 3em;
+    font-size: var(--text-3xl); /* war 3em = 48,00 px gemessen (16-px-Eltern) -> 34 px, -14,00. Die Wurfzahl ist Text, kein Ikon. --text-3xl und nicht --text-hero: das schwebende Paneel bleibt dem Wuerfel-Hero (72 px) untergeordnet */
     font-weight: 700;
     color: var(--gold-text);
     line-height: 1;

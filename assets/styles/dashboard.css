@@ -54,7 +54,7 @@
         }
         
         .dice-result-main {
-            font-size: 4em;
+            font-size: var(--text-hero); /* war 4em = 64 px bei 16-px-Wurzel -> 72 px, +8,00. GEMESSEN 0 Elemente: #dice-result gibt es im Markup nicht, der Rueckfallpfad in dice-core.js:372 findet seinen Behaelter nie — die Aenderung ist sichtbar wirkungslos. Der tote Behaelter ist in der Aktenlage als eigener Befund gefuehrt */
             font-weight: 700;
             color: var(--gold);
             line-height: 1;
@@ -369,7 +369,7 @@
             background: transparent;
             border: none;
             color: var(--cyan-text);
-            font-size: 1.4em;
+            font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Ein Eingabefeld mit dem Attributwert, also Text. 20 px liegt ueber der 16-px-Schwelle und loest beim Antippen keinen Auto-Zoom aus (E-2) */
             font-weight: 700;
             padding: 2px 0;
             -moz-appearance: textfield;
@@ -915,7 +915,7 @@
 }
 
 .dash-char-avatar {
-    font-size: 1.8em;
+    font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Avatar-Emoji (👤) der Charakterkachel — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     margin-bottom: 4px;
 }
 
@@ -1208,7 +1208,7 @@
 }
 
 .qref-fab-icon {
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Emoji (📖) des Schnellreferenz-Knopfes — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
 }
 
 /* Panel */

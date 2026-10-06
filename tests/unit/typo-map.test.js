@@ -103,8 +103,12 @@ const W = require('../../tools/sync-typo-tokens.js');
  *  Gemessener Ausgangswert 833 (vorher 839; die 6 Ueberschriftenregeln des
  *  Reichtext-Inhalts sind seit Runde 1 namentlich geduldet, Begruendung in
  *  tools/typo-map.js Abschnitt 7). ZIEL 0. Diese Zahl darf nur SINKEN.
- *  Exakt ausgereizt: eine einzige neue Fremdgroesse macht sie rot. */
-const OFFEN_MAX = 833;
+ *  Exakt ausgereizt: eine einzige neue Fremdgroesse macht sie rot.
+ *  GESENKT auf 802 (Schritt 4): 22 Ikon- und Avatar-Deklarationen mit Sprung
+ *  ueber 2 px sind unter 20 Ankern namentlich geduldet (E-3, Abschnitt 7a),
+ *  9 Textstellen tragen ihre Sprosse. Die Schranke steht wieder exakt auf
+ *  dem gemessenen Wert. */
+const OFFEN_MAX = 802;
 
 /** Das Werkzeug als eigener Prozess fahren — so, wie ein Mensch es faehrt.
  *  Nicht `main()` im Testprozess aufrufen: dann waere weder der
@@ -611,18 +615,36 @@ describe('W5-W7 — die Kandidatenmengen sind benannt und gezaehlt, aber nicht g
         expect(M.istIkon('.generator-empty p')).toBe(false);
     });
 
-    test('die Kandidatenmenge E-3 ist KEINE Ausnahme — sie steht in keiner Dulde-Liste', () => {
-        // Der Punkt, an dem eine Zielquote still zur Luege wird: wer die
-        // Kandidaten als geduldet fuehrt, hat sie entschieden, ohne sie zu
-        // beurteilen. Geduldet ist, was in AUSNAHMEN steht, und das sind
-        // heute fuenf Stellen mit Begruendung.
+    test('von der Kandidatenmenge E-3 ist genau der beurteilte Teil geduldet', () => {
+        // UMGEDREHT IM SCHRITT 4, und der Grund gehoert hierher. Bis dahin
+        // stand hier "sie steht in KEINER Dulde-Liste": der Vorlauf hatte die
+        // Menge nur ausgezaehlt, und ein geduldeter Kandidat waere damit eine
+        // Entscheidung ohne Urteil gewesen. Schritt 4 hat geurteilt — aber
+        // nur ueber die 19 Deklarationen der Menge, deren Sprung auf die
+        // Skala GROESSER ALS 2 px waere. Die uebrigen 54 sind weiter
+        // unbeurteilt, und genau das sichert dieser Fall jetzt zu: er zaehlt
+        // beide Teile und laesst keinen davon still wachsen.
+        //
+        // Die Zahl 19 und nicht 22: drei der 22 beurteilten Deklarationen
+        // treffen das Namensmuster nicht (.dice-roll-btn, .timer-ctrl-btn,
+        // .wiki-tree-item-toggle — ein Knopf mit Emoji, ein Knopf mit
+        // Zeichen, ein Aufklapp-Pfeil). Dass die Muster sie nicht fangen, war
+        // der Grund, sie VON HAND zu beurteilen; die geschlossene Aufzaehlung
+        // steht in W5-R-07 in tests/unit/design-consistency.test.js.
         const { alle } = W.erheben();
         const ikon = alle.filter(d => M.istIkon(d.selektoren));
-        expect(ikon.length).toBeGreaterThan(50);
+        expect(ikon.length).toBe(73);
         const geduldeteIkonen = ikon.filter(
             d => M.AUSNAHMEN[M.anker(d.datei, d.selektoren, 'font-size')]
         );
-        expect(geduldeteIkonen).toEqual([]);
+        expect(geduldeteIkonen.length).toBe(19);
+        expect(ikon.length - geduldeteIkonen.length).toBe(54);
+        // Jede geduldete nennt ihren gemessenen Wert — sonst waere die
+        // Umdrehung dieses Falles ein Freibrief geworden.
+        const ohneZahl = geduldeteIkonen
+            .map(d => M.anker(d.datei, d.selektoren, 'font-size'))
+            .filter(a => !/\d+([.,]\d+)?\s*px/.test(M.AUSNAHMEN[a]));
+        expect([...new Set(ohneZahl)].sort()).toEqual([]);
     });
 
     test('die Chip- und Markenfamilien sind vollstaendig und ihre Basen stehen auf der Skala', () => {

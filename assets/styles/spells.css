@@ -464,7 +464,7 @@
             bottom: -12px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 8px;
+            font-size: var(--text-xs); /* war 8px = 8,00 px gemessen -> 11 px, +3,00. "Strg+B" ist LESETEXT und lag unter der Untergrenze von 11 px (E-4). GEMESSENE FOLGE, die benannt sein muss: die fuenf Hilfen stehen absolut unter ihren Knoepfen und werden bei :hover der Leiste GEMEINSAM sichtbar; bei 8 px beruehrten sie sich nicht, bei 11 px ueberlappen Strg+B/Strg+I um 2,80 px und Strg+I/Strg+U um 3,09 px (mit der breiten Linux-Naeherung 9,50 bzw. 9,74 px). Das ist eine LAYOUT-Frage (welche Hilfe wann sichtbar ist), keine Groessenfrage, und sie gehoert nach Arbeitsregel 10 nicht in eine Typografie-Welle — in der Aktenlage als Folgearbeit gefuehrt. 8 px unlesbar stehenzulassen waere die schlechtere Wahl. */
             color: var(--text-dim);
             white-space: nowrap;
             opacity: 0;
