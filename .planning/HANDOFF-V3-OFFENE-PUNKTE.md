@@ -6131,3 +6131,181 @@ node tools/sync-typo-tokens.js --check
 ```
 
 ---
+
+## W5-D — der atomare Commit: 801 Schriftgrößen erzeugt, nicht getippt (2026-10-06)
+
+**Status: ERLEDIGT.** Fünfte Einheit der Welle 5, Schritt 5 des geprüften Plans. Sechs
+Commits, `44d33da → ebc2914`. Der mechanische Lauf selbst ist **ein** Commit; alles,
+worüber ein Mensch urteilen musste, steht davor in eigenen, kleinen Commits — so, wie
+`plan.atomar_wie` es verlangt.
+
+### Was gelaufen ist
+
+`node tools/sync-typo-tokens.js --only=<datei>`, achtzehnmal, eine Datei je Lauf. **Kein
+Byte von Hand getippt.** 801 Deklarationen in 18 Dateien: party 97, dmscreen 94, core 88,
+dashboard 77, tools 74, welt 61, encounters 60, npcs 52, initiative 51, loot 28, dice 27,
+spells 23, bestiary 21, editors 19, migration 15, file-backup 8, command-palette 4, pwa 2.
+
+`--check` schweigt: **853 = 811 auf einer Sprosse + 7 `inherit` + 35 geduldet + 0 ohne
+Tabellenzeile + 0 in geschützter Familie + 0 OFFEN**, Rückgabewert 0. Der Lauf ist
+**wiederholbar**: die achtzehn Einzelläufe liefern byteweise dasselbe wie ein Lauf über den
+ganzen Baum (`diff -rq`, leer).
+
+**Die drei Zahlen, die den Charakter des Diffs belegen:** 801 entfernte und 801 eingefügte
+Zeilen, **jede einzelne mit `font-size` im Text** (nachgezählt am Diff — es ist keine
+Fremdänderung mitgelaufen). **158** Deklarationen mit Delta exakt 0,00 px: px-Literale, die
+schon auf einem Skalenwert lagen. Ihr Text ändert sich, ihr Bildpunkt nicht — der Beleg,
+dass das Werkzeug **benennt** statt zu rechnen. Und **0 von 801** springen über 2 px.
+
+### Die zwei Urteile, die der Lauf erzwungen hat
+
+**(1) Die 54 unbeurteilten Ikon-Kandidaten werden mechanisch gehoben.** W5-C hat diese
+Frage ausdrücklich offen übergeben („beides ist vertretbar, keines darf unbemerkt
+passieren"). Gemessen springt **keine** von ihnen über 2 px (Spanne -2,00 .. +2,00, mehrere
+bei 0,00). E-3 ist für sie damit **nicht** erfüllt, mit ≤ 2 px Wirkung. Der Gegenweg hätte
+die Ausnahmeliste von 32 auf 86 Anker getrieben — eine Liste, die den größeren Teil des
+Befundes umfasst, bewacht nichts mehr (dieselbe Lehre wie O-5) — und wäre an `W5-R-07e`
+gescheitert, das sie namentlich NICHT geduldet sehen will.
+
+**(2) `.tb-caret` bleibt bei 9 px, damit das Pfeilpaar zusammenbleibt.** Der Lauf hätte es
+auf 11 px gehoben (+2,00 px liegt in seiner Menge), während sein Zwilling
+`.wiki-tree-item-toggle` bei 8 px bleibt (+3,00 px liegt außerhalb) — genau die Aufspaltung,
+die W5-C an **drei** Stellen verboten hat. **Die Hebung wäre gemessen harmlos:** Knopf
++1,67 px (87,88 → 89,55 und 107,91 → 109,58), Höhe 30 px und Leiste 43 px unverändert,
+Spalt zur Beschriftung 7,00 px (keine Überlappung), Zeichen bleibt im Knopf — bei 1440 UND
+375 px. Sie bleibt trotzdem aus, weil Schritt 8 für **beide** entscheidet. Dazu die zweite
+Hälfte der Antwort für Schritt 8: **`.wiki-tree-item-toggle` hat auf gefüllter Kampagne
+0 Elemente** (nachgemessen in allen fünf Grundlinien-Läufen und direkt am DOM). Neu bewacht
+von `W5-R-07f`: erlaubt sind genau zwei Lagen — beide geduldet oder beide auf einer Sprosse.
+
+### Grundlinien-Diff
+
+**Werkzeug gegen Werkzeug** (Erhebung vor und nach dem Lauf, dieselbe Browser-Fassung
+chromium-1217, gefüllte Kampagne, 24 Ansichten, vier Themes, 1440 und 375 px):
+**18255 verglichene Schlüssel, 0 nur alt, 0 nur neu. 0 Größenänderungen über 2 px,
+Spanne -2 .. +2 px. 0 Gewichts- und 0 Sichtbarkeitswechsel.**
+
+Die 5230 gemeldeten **Zeilenhöhen**-Änderungen sind **alle 5230 abgeleitet**, und das ist
+nachgerechnet und nicht angenommen: das Verhältnis Zeilenhöhe/Schriftgröße bleibt in jedem
+einzelnen Fall gleich (±1 %), und es gibt **keinen** Fall, in dem die Zeilenhöhe wandert,
+während die Schriftgröße steht. O-11 hält also: `line-height` ist nicht ausgerollt.
+
+**Gegen die eingefrorene Grundlinie** (`v5-vermessung/typo-grundlinie/grundlinie-v5.json`,
+HEAD 7e4aa09): 50 Größenabweichungen über 2 px in **genau 10 Elementschlüsseln** (je 5
+Läufe), Spanne -14 .. +2 px — **dieselben zehn, die W5-C gemeldet hat**, keine einzige neue.
+Alle zehn sind Urteilsstellen des Schrittes 4: `.dice-hero-result` 80→72,
+`.dms-dice-result` 22,4→20, sechs `input.attr-input` 22,4→20, `.fdp-number` 48→34,
+`.timer-hero-time` 48→34.
+
+**Die Wirkung der Welle, in zwei Zahlen:** Anteil auf einer Sprosse (sichtbare Elemente)
+**57,57 → 92,30 %** (dark-1440), 63,97 → 92,68 % (light/sepia/contrast), 60,47 → 91,89 %
+(dark-375). Sichtbare Textelemente unter 11 px **95 → 25** bzw. 49 → 23; im DOM 249 → 35
+bzw. 153 → 31. Das Minimum bleibt **7 px** — das sind die SVG-Präsentationsattribute in
+`dice-stats-render.js` (O-7), und die gehören Schritt 8.
+
+### Linux-Nachstellung
+
+Gefahren als Vergleich **Vorzustand (8d1fd01) gegen Nachzustand**, je mit Segoe und mit
+Verdana (Faktor 1,155), bei 1440 und 375 px, über alle 24 Ansichten:
+
+- **Waagerechter Textüberlauf 0 → 0** in allen vier Kombinationen.
+- **Seitenüberlauf 0 → 0** in allen vier Kombinationen.
+- Senkrechter Textüberlauf 1 → 5 unter Segoe, **1 → 1 unter Verdana**. Die Differenz ist
+  nachgemessen **keine neue Lage, sondern eine Rundungsschwelle**: `.party-stat-value` trägt
+  `line-height: 1.2`, das enger ist als der natürliche Zeilenkasten von Segoe UI. Vorher
+  24 px, Kasten 28,80, Glyphenkasten 30 → Überhang **1,20 px**. Nachher 26 px, Kasten 31,19,
+  Glyphenkasten 33 → Überhang **1,81 px**. Es schneidet nichts ab: die Karte trägt
+  `overflow: visible`, der Spalt zur Beschriftung bleibt **4,00 px**, der Glyphenkasten endet
+  49 px innerhalb der Kartenkante, und die Karte wächst 139,58 → 140,19 px. Der fünfte Fall,
+  `.dice-hero-result` (+12 Segoe / +7 Verdana), ist **vorbestehend** und von diesem Schritt
+  unberührt.
+
+### Zwei Folgen, die kein Werkzeug von sich aus erzeugt
+
+**Der F-18-Kaskadenstand: 126 → 117 Abhängigkeiten, 0 GEDREHTE und 0 NEUE.** Das
+Abnahmemaß ist die Art, nicht die Zahl: eine Drehung ist die F-18-Fehlerklasse. Die neun
+entfallenen sind einzeln nachgerechnet und stehen mit alten und neuen Werten im Kopf von
+`tests/unit/f18-kaskade.test.js` — bei allen neun tragen **beide** Konkurrentinnen jetzt
+denselben Wert, also entscheidet die Reihenfolge nichts mehr.
+
+**Der Stil-Sollstand: 1143 von 3549 Digests bewegt (32,21 %), 0 Zugänge, 0 Abgänge.** Mehr
+als die Vorhersage (660–815), und der Grund ist nachgemessen: die Digest-Liste enthält neben
+`fontSize` auch `padding` und `margin`. Eine Gegenprobe über 3082 gemeinsame
+Elementschlüssel nennt, **welche** Eigenschaft wirklich wandert — `fontSize` 1394,
+`margin` 11, `opacity` 1 (ein Animationsbild), und **`padding` 0, `borderRadius` 0,
+`color` 0, `backgroundColor` 0, `borderColor` 0, `boxShadow` 0, `display` 0, `textAlign` 0,
+`fontWeight` 0**. Die elf Ränder sind `margin-left: auto` (editors.css:642,
+dmscreen.css:2407), also der übrige Platz, der der Breite des Nachbartextes folgt; kein
+px-Rand dieser Größenordnung existiert irgendwo im CSS. **Beide Ausnahmelisten bleiben
+leer** — `EXPECTED_DEVIATION_KEYS` steht unverändert auf `[]`.
+
+### Ein Irrtum, der in die Akte gehört
+
+Die neun entfallenen F-18-Paare sahen zuerst nach **gelöschten Markern** aus: ein
+einseitiger Vergleich zählte nur die entfernten Zeilen mit Kommentar (9) und nicht die
+hinzugefügten. Der Lauf wurde daraufhin zurückgenommen und erst nach der Gegenprobe erneut
+gefahren. Nachgemessen sind es **9 entfernte UND 9 hinzugefügte** Kommentarzeilen, und die
+Markerzahl je Datei ist gegen HEAD unverändert (112: core 3, dashboard 19, dice 7,
+dmscreen 31, loot 1, npcs 25, party 3, spells 11, welt 12). Das Werkzeug ersetzt nur die
+Zeichengrenzen des **Wertes**; ein nachgestellter Kommentar liegt dahinter. Belegt an einem
+Kunstfall mit und ohne abschließendes Semikolon.
+
+### Schranken
+
+`AUSSERHALB_MAX` **802 → 801** (Urteil `.tb-caret`) **→ 0** (der Lauf). `EM_MAX` **574 → 6**
+— genau die sechs Überschriftenstufen h1 bis h6 des Reichtext-Inhalts, keine siebte. Beide
+stehen damit erstmals auf ihrem **Zielwert** und können nicht mehr sinken; sie fallen beim
+ersten neuen px- oder em-Literal. `SVG_MAX` bleibt 3 (O-7, Schritt 8). Unberührt:
+DUBLETTEN 0, `!important` 105, Inline 254, `transition: all` 0.
+
+**E-2 hält punktgenau:** die fünf Eingabefelder mit 16 px tragen jetzt `var(--text-lg)` =
+16 px. Die Auto-Zoom-Schwelle ist nicht unterschritten.
+
+### Offene Punkte
+
+- **Die Untergrenze für Kleinstschrift ist unverändert ein Bündel aus drei Stellen**
+  (Schritt 8), aber jetzt mit Zahlen für zwei von ihnen: `.tb-caret` 9 px (Hebung gemessen
+  harmlos), `.wiki-tree-item-toggle` 8 px (0 gerenderte Elemente),
+  `.floating-toolbar .kbd-hint` 8 px (Hebung erzeugt Überlappung, ohne Layoutänderung nicht
+  lösbar). Die erste Frage, die Schritt 8 beantworten muss, ist, ob ein **Pfeilzeichen**
+  überhaupt in die Textskala gehört; die Zahlen dafür liegen jetzt vor.
+- **`.party-stat-value` trägt eine Zeilenhöhe, die enger ist als ihr Glyphenkasten**
+  (1,81 px Überhang bei 26 px, vorher 1,20 bei 24 px; unter Verdana gar keiner). Es schneidet
+  nichts ab, und `line-height` ist nach O-11 nicht Gegenstand dieser Welle — aber wenn die
+  drei `--leading-*` je ausgerollt werden, ist dies die Stelle, an der sich das lohnt.
+- **Die 1143 bewegten Digests sind ein Zwischenstand, nicht die Summe der Welle.** O-9
+  verlangt am Wellenende eine Erhebung mit beziffertem Delta; W5-C hat 9 Digests bewegt,
+  diese Einheit 1143. Schritt 9 muss die **Summe über alle Schritte** nennen, nicht die
+  letzte Zahl.
+- Unverändert aus W5-A/W5-B/W5-C: der tote Würfel-Behälter, die Uhr im 250-px-Ring, die
+  örtlich **nicht lauffähige E2E-Suite** (`playwright-core` 1.57.0 verlangt
+  Chromium-Revision 1200, im Zwischenspeicher liegen 1217/1234/1243 — diese Einheit ist
+  wieder über `PLAYWRIGHT_BROWSERS_PATH` und `TYPO_BASELINE_CHROMIUM` gefahren, der
+  Zwischenspeicher des Nutzers ist **nicht** angefasst; saubere Behebung: einmal
+  `npx playwright install chromium`), die zehn kaputten `woff2`, der `file://`-Pfad der
+  gebündelten Schriften, die vier wirkungslosen Editor-Schriften in `EDITOR_FONTS`, die
+  fehlende Glyphendeckungs-Probe, `npm run check` vorbestehend rot.
+- Restschuld der Folgeschritte, unverändert: `IMPORTANT_MAX` 105 → 104 (O-2), `INLINE_MAX`
+  254 → 252 (O-6), die 36 Formularelemente auf Browser-Vorgabe (O-10), die drei
+  SVG-Präsentationsattribute (O-7).
+
+### Befehle
+
+```bash
+# Die Abnahme des Schrittes: --check schweigt, Rueckgabewert 0
+node tools/sync-typo-tokens.js --check
+
+# Die Delta-Tabelle und die Kandidatenmengen
+node tools/sync-typo-tokens.js --report --kategorien
+
+# Die Ketten-Ordnung kippt nicht (0 Kanten)
+node tools/sync-typo-tokens.js --ketten
+
+# Das neue Pfeilpaar-Tor und der Urteilsblock (8 Faelle)
+npx jest tests/unit/design-consistency.test.js -t "W5-R-07"
+
+# Der F-18-Kaskadenstand (117 Abhaengigkeiten)
+node tools/check-f18-kaskade.js --check
+```
+
+---
