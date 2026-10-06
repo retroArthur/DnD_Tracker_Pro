@@ -90,8 +90,13 @@
             background: color-mix(in srgb, var(--gold) min(14%, var(--tint-max)), transparent);
         }
 
+        /* Die vier Fokusringe dieser Datei sind spezifischer als die Weltregel
+           in core.css und tragen ihre Farbe darum selbst. Sie nehmen deshalb
+           dasselbe Token: --gold laege in Light und Sepia unter 3:1 (Zahlen je
+           Theme in variables.css). W6-R-04 verlangt das Token von jeder
+           setzenden Fokusregel des Baums. */
         .editor-toolbar .editor-btn:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -134,7 +139,7 @@
 
         .editor-toolbar .editor-select:focus-visible {
             border-color: var(--gold);
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -262,7 +267,7 @@
         }
 
         .editor-toolbar .tb-menu-item:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: -2px;
         }
 
@@ -402,7 +407,7 @@
         }
 
         .editor-block-handle button:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: -2px;
         }
 

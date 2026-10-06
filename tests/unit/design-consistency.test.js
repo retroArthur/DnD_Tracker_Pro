@@ -7360,13 +7360,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 512, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 1156, stufe: 2,
+        { datei: 'core.css', zeile: 1163, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1692, stufe: 1,
+        { datei: 'core.css', zeile: 1699, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1771, stufe: 3,
+        { datei: 'core.css', zeile: 1778, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
         { datei: 'dashboard.css', zeile: 775, stufe: 2,
@@ -7436,10 +7436,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 2433, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
-        { datei: 'editors.css', zeile: 222, stufe: 3,
+        { datei: 'editors.css', zeile: 227, stufe: 3,
           pfad: '.editor-toolbar .tb-menu',
           vorher: '0 14px 34px rgba(0, 0, 0, 0.65)' },
-        { datei: 'editors.css', zeile: 367, stufe: 2,
+        { datei: 'editors.css', zeile: 372, stufe: 2,
           pfad: '.editor-block-handle',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
         { datei: 'encounters.css', zeile: 110, stufe: 3,
@@ -7517,10 +7517,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'spells.css', zeile: 563, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1162, stufe: 3,
+        { datei: 'tools.css', zeile: 1166, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1341, stufe: 2,
+        { datei: 'tools.css', zeile: 1345, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -12875,8 +12875,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3341':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3337) schaltet ' +
+        'core.css:3348':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3344) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13338,7 +13338,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3341,
+                    zeile: 3348,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }

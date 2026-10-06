@@ -427,8 +427,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:525` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:538` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1477` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1482` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1484` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1489` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:234` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:730` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:870` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -437,10 +437,10 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `party.css:2088` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `party.css:2367` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:465` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:592` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:675` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:802` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:835` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:596` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:679` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:806` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:839` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
 
 ### Gruppe B — Verlauf als Traeger, 11 Stellen
 
@@ -508,7 +508,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:1393` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
-| `tools.css:850` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
+| `tools.css:854` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
 
 ### Gruppe C — Akzent- oder Toenungsflaeche, 10 Stellen
 
@@ -531,7 +531,7 @@ diese Tabelle führt.
 | `loot.css:294` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
 | `party.css:842` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
 | `tools.css:577` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
-| `tools.css:628` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
+| `tools.css:632` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
 
 ### Gruppe D — zwei verschiedene Traeger fuer denselben Selektor, 5 Stellen
 
@@ -539,7 +539,7 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:535` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:779` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `core.css:751` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `core.css:758` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2698` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2699` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
@@ -578,9 +578,9 @@ core.css
   112  [data-layout="mobile"] #mobile-timer-display
   116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
   120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1373  .char-card-currency
- 2146  .quest-reward-item-tag .remove-btn:hover
- 2139  .quest-reward-item-tag .remove-btn
+ 1380  .char-card-currency
+ 2153  .quest-reward-item-tag .remove-btn:hover
+ 2146  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -660,8 +660,8 @@ spells.css
 tools.css
   252  .timer-card-time
   446  .rt-result-label
- 1141  .breadcrumb-item:hover
- 1454  .sb-remove-btn:hover
+ 1145  .breadcrumb-item:hover
+ 1458  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3

@@ -577,8 +577,12 @@
     color: var(--gold);
 }
 
+/* Spezifischer als die Weltregel in core.css, traegt die Ringfarbe also selbst
+   — und nimmt deshalb dasselbe Token: --gold laege in Light und Sepia unter
+   3:1 (Zahlen je Theme in variables.css). W6-R-04 verlangt das Token von jeder
+   setzenden Fokusregel des Baums. */
 .rt-dice-btn:focus-visible {
-    outline: 2px solid var(--gold);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 

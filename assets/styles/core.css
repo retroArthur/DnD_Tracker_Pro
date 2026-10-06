@@ -680,16 +680,23 @@
            ueber var(--dur) ein und liest auf den Paneelflaechen ausserdem nur
            1,16 bis 1,27.
 
-           DIE FARBE BLEIBT IN DIESEM SCHRITT `--gold` und wird in Schritt 3 auf
-           ein eigenes Token umgestellt. Getrennt gehalten, damit dieser Schritt
-           allein einen lauffaehigen Baum hinterlaesst: ein Aufruf von
-           --focus-ring vor dem Anlegen des Tokens macht die ganze Deklaration
-           ungueltig und nimmt damit JEDEM Element den Ring — der
-           Zwischenzustand waere schlimmer als der Vorzustand. (Der Tokenname
-           steht hier ohne var()-Klammern: F-01 liest auch Kommentare und wuerde
-           den noch nicht angelegten Namen sonst als undefiniert melden.) */
+           DIE FARBE IST EIN EIGENES TOKEN, nicht --gold (Schritt 3). Grund und
+           Zahlen stehen je Theme in variables.css; kurz: der Ring ist die
+           einzige Tinte, die gleichzeitig gegen die hellste Seitenflaeche des
+           Themes und gegen die dunkle, themenblinde Modalflaeche halten muss,
+           und --gold kann das in Light (min 2,40) und Sepia (min 2,37) nicht.
+           In Dark und Contrast verweist das Token auf dasselbe Gold wie bisher,
+           dort aendert sich nichts.
+
+           DIESELBE FARBE AN ALLEN SIEBEN SETZENDEN REGELN. Ein Wechsel nur
+           hier waere unwirksam geblieben: sechs Regeln mit hoeherer
+           Spezifitaet (die naechste darunter, vier in editors.css, eine in
+           tools.css) ueberstimmen diese und trugen ihr Gold selbst. Gemessen
+           am Vorzustand: von 640 sichtbaren Ringen in Light trug JEDER
+           rgb(184, 134, 11), der groessere Teil davon aus den sechs. W6-R-04
+           zaehlt sie und verlangt das Token von jeder. */
         :focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -698,7 +705,7 @@
            stehen: sie ist spezifischer und traegt damit den Ring aller Knoepfe
            — gemessen der groesste Teil aller Tastaturhalte. */
         .btn:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
         .btn-danger { border-color: var(--red); color: var(--red-text); }

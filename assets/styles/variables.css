@@ -366,8 +366,25 @@
                sitzen sechs Felder (Entscheidung D-8). #7c7c7c erreicht 3,67.
                ANGEWENDET wird das Token erst in Welle 6. */
             --border-input: #7c7c7c;
+
+            /* Fokusring, WCAG 1.4.11 (3:1, kein Text). Welle 6, Schritt 3.
+
+               WARUM EIN EIGENES TOKEN UND NICHT --gold: der Ring ist die
+               einzige Tinte der App, die GLEICHZEITIG gegen die hellste
+               Seitenflaeche des Themes und gegen die dunkle, THEMENBLINDE
+               Modalflaeche halten muss. `.modal` traegt baumweit
+               `background: rgba(26, 26, 26, 0.95)` (gefuehrte Ausnahme
+               W2-C-01), und wegen `outline-offset: 2px` landet der Ring genau
+               darauf. --gold kann das in zwei der vier Themes nicht: gemessen
+               Light min 2,40 (auf --bg-hover), Sepia min 2,37 (auf der
+               Modalflaeche). Dark und Contrast halten mit 6,01 und 9,01.
+
+               DARK BLEIBT BEI --gold, als Verweis und nicht als Kopie: aendert
+               jemand das Gold dieses Themes, folgt der Ring, und W6-R-04
+               rechnet nach, ob er dabei unter 3:1 faellt. */
+            --focus-ring: var(--gold);
         }
-        
+
         /* Theme: Light */
         [data-theme="light"] {
             --bg-dark: #f5f5f5;
@@ -509,6 +526,37 @@
 
             /* Eingaberahmen: min3 3,71 (schlechteste Flaeche --bg-elevated). */
             --border-input: #767676;
+
+            /* Fokusring. Begruendung im Dark-Block; hier die Zahlen.
+
+               --gold (#b8860b) liest in Light 2,98 / 3,25 / 2,66 / 2,40 auf den
+               vier neutralen Flaechen und 5,12 auf der geschichteten
+               Modalflaeche #1e1e1e — min 2,40, FAELLT. #946c09 liest
+               4,36 / 4,76 / 3,89 / 3,51 und 3,50, min 3,50.
+
+               3,50 IST DIE DECKE, nicht eine Wahl. Wer gegen --bg-hover (#ddd)
+               UND gegen die Modalflaeche (#1e1e1e) gleichzeitig >= 3 halten
+               muss, kann das Minimum hoechstens dort hinschieben, wo beide
+               gleich gross sind; das sind gerechnete 3,503. Kein Farbwert
+               erreicht mehr — nachgesucht ueber das ganze Goldband in
+               Einerschritten. Der Puffer ueber der Schwelle ist also 17
+               Prozent und nicht mehr zu vergroessern, solange der Ring EIN
+               Wert je Theme ist.
+
+               DER GOLDCHARAKTER IST GEHALTEN, und zwar gemessen, nicht nach
+               Augenmass: Farbwinkel 42,73 Grad gegen 42,66 des --gold dieses
+               Themes, Saettigung 0,939 gegen 0,940. Es ist dasselbe Gold, nur
+               dunkler.
+
+               ABWEICHUNG VOM VORSCHLAG DES PLANS (#947020): der erreicht nur
+               3,36. Seine Suche hat die Lage --scrim-60 unter dem Modal
+               verloren — das Token steht in einem eigenen :root-Block, nicht
+               in den Theme-Bloecken, und ein Aufloeser, der nur dort sucht,
+               faellt still auf die Seitenflaeche zurueck. Damit kam die
+               Modalflaeche als #252525 statt #1e1e1e heraus und die Decke vier
+               Prozent zu niedrig. W6-R-04 rechnet die Flaeche geschichtet und
+               prueft alle drei Zutaten namentlich nach. */
+            --focus-ring: #946c09;
         }
         
         /* Theme: Sepia/Parchment */
@@ -648,6 +696,28 @@
 
             /* Eingaberahmen: min3 3,33 (schlechteste Flaeche --bg-dark). */
             --border-input: #8a7a5a;
+
+            /* Fokusring. Begruendung im Dark-Block; hier die Zahlen.
+
+               Sepia ist der Fall, der diese ganze Entscheidung ausgeloest hat:
+               --gold (#8b4513) haelt auf den vier neutralen Flaechen muehelos
+               (5,65 / 6,58 / 5,79 / 5,16) und FAELLT auf der Modalflaeche
+               #1e1d1d auf 2,37 — weil beide dunkel sind. Kein Test im Baum hat
+               das vor W6-R-04 gesehen: die Flaechenmenge von R-02 und R-04
+               fuehrt die vier neutralen Tokens und die Modalflaeche nicht.
+               Hier muss der Ring also HELLER werden, nicht dunkler wie in
+               Light. #b55819 liest 3,83 / 4,45 / 3,92 / 3,49 und 3,50,
+               min 3,49 — dieselbe Decke, dieselbe Begruendung wie dort.
+
+               DER CHARAKTER IST GEHALTEN: Farbwinkel 24,23 Grad gegen 25,00
+               des --gold dieses Themes (ein Sattelbraun, kein Gelbgold),
+               Saettigung 0,862 gegen 0,863.
+
+               ABWEICHUNG VOM VORSCHLAG DES PLANS (#907030): der erreicht 3,36,
+               verschiebt den Farbwinkel auf 40 Grad (also vom Braun ins Gelb)
+               und senkt die Saettigung auf 0,67. Grund der niedrigeren Decke
+               wie in Light: die verlorene Schleierlage. */
+            --focus-ring: #b55819;
         }
         
         /* Theme: High Contrast */
@@ -797,6 +867,13 @@
 
             /* Eingaberahmen: min3 4,73 (schlechteste Flaeche --bg-elevated). */
             --border-input: #8c8c8c;
+
+            /* Fokusring. Begruendung im Dark-Block. Contrast haelt mit seinem
+               eigenen Gold (#ffd700) ueberall klar: 14,97 / 13,46 / 11,34 /
+               9,01 auf den neutralen Flaechen, 12,54 auf der Modalflaeche —
+               min 9,01. Ein eigener Wert waere hier eine Verschlechterung,
+               also bleibt der Verweis. */
+            --focus-ring: var(--gold);
         }
         
 
