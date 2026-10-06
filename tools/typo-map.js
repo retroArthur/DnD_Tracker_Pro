@@ -1042,7 +1042,31 @@ const IKON_GEDULDET = {
         'UEBER DIE UNTERGRENZE ENTSCHEIDET SCHRITT 8, dort aber GEMEINSAM ' +
         'mit der Layoutregel (nur die Hilfe des beruehrten Knopfes zeigen); ' +
         'ohne sie ersetzt eine Hebung nur einen Lesbarkeitsmangel durch ' +
-        'einen anderen. Zugesichert in tests/e2e/features/tastenhilfen.spec.js.'
+        'einen anderen. Zugesichert in tests/e2e/features/tastenhilfen.spec.js.',
+    'editors.css||.editor-toolbar .tb-caret||font-size':
+        '9px, UNVERAENDERT. Gemessen 9,00 px an vier Elementen (zwei je ' +
+        'Langform-Leiste, davon zwei zugleich sichtbar). Aufklapp-Pfeil (▾, ' +
+        'U+25BE) neben den Beschriftungen "Marker" und "Bausteine" — kein ' +
+        'Lesetext, dasselbe Zeichen in derselben Rolle wie ' +
+        '`.wiki-tree-item-toggle` (party.css, 8px, ▶). DIESE DULDUNG IST ' +
+        'NICHT MIT EINER NEBENWIRKUNG BEGRUENDET, und das muss dastehen, ' +
+        'weil es sie von der Tastenhilfe darueber unterscheidet: die Hebung ' +
+        'auf 11 px ist gemessen HARMLOS. Der Knopf waechst um 1,67 px ' +
+        '(87,88 -> 89,55 px bzw. 107,91 -> 109,58 px), seine Hoehe bleibt ' +
+        '30 px, die Leiste bleibt 43 px hoch, der Spalt zur Beschriftung ' +
+        'bleibt 7,00 px, und das Zeichen bleibt innerhalb seines Knopfes ' +
+        '(-8,50 px Rand unten statt -9,50) — gemessen bei 1440 UND 375 px. ' +
+        'SIE STEHT HIER AUS EINER ZUSICHERUNG: Schritt 4 hat den Zwilling ' +
+        'geduldet und an drei Stellen festgehalten, dass beide Pfeilzeichen ' +
+        'DIESELBE Antwort bekommen und keines allein entschieden wird. Der ' +
+        'mechanische Lauf des Schrittes 5 haette genau eines gehoben — ' +
+        '`.tb-caret` springt um +2,00 px und liegt in der mechanischen ' +
+        'Menge, sein Zwilling um +3,00 px und ausserhalb. UEBER DIE ' +
+        'UNTERGRENZE VON 11 px (E-4) ENTSCHEIDET SCHRITT 8 fuer BEIDE; die ' +
+        'Zahlen oben sind seine halbe Antwort, die andere Haelfte ist, dass ' +
+        '`.wiki-tree-item-toggle` auf gefuellter Kampagne 0 Elemente hat ' +
+        '(nachgemessen in allen fuenf Laeufen der Grundlinie und am DOM). ' +
+        'Zugesichert in W5-R-07f (tests/unit/design-consistency.test.js).'
 };
 
 Object.assign(AUSNAHMEN, IKON_GEDULDET);

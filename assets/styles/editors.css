@@ -108,7 +108,7 @@
         }
 
         .editor-toolbar .tb-caret {
-            font-size: 9px;
+            font-size: 9px; /* UNVERAENDERT bei 9px; gemessen 9,00 px an vier Elementen. Aufklapp-Pfeil (▾), kein Lesetext — dasselbe Zeichen in derselben Rolle wie .wiki-tree-item-toggle (party.css, 8px, ▶). Die Hebung auf 11 px waere gemessen HARMLOS (Knopf +1,67 px, Hoehe 30 px und Leiste 43 px unveraendert, Spalt zur Beschriftung 7,00 px, Zeichen bleibt im Knopf; 1440 UND 375 px) — anders als bei der Tastenhilfe gibt es hier keine Nebenwirkung. Geduldet wird sie TROTZDEM, weil Schritt 4 beide Pfeilzeichen aneinander gebunden hat: UEBER DIE UNTERGRENZE VON 11 px ENTSCHEIDET SCHRITT 8 fuer BEIDE. Der mechanische Lauf des Schrittes 5 haette nur dieses eine gehoben (+2,00 px liegt in seiner Menge, die +3,00 px des Zwillings nicht). Namentlich in tools/typo-map.js, zugesichert in W5-R-07f. */
             opacity: 0.7;
         }
 

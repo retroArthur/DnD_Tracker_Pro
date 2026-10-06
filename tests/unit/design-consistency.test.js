@@ -14457,8 +14457,16 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  (erhoben, indem die Schranke voruebergehend auf 0 gesetzt und die
      *  gemeldete Zahl gelesen wurde). Zugesichert in
      *  tests/e2e/features/tastenhilfen.spec.js; Schritt 8 entscheidet ueber
-     *  die Untergrenze gemeinsam mit der Layoutregel. */
-    const AUSSERHALB_MAX = 802;
+     *  die Untergrenze gemeinsam mit der Layoutregel.
+     *  GESENKT am 2026-10-06 von 802 auf 801 (Schritt 5, Urteil VOR dem
+     *  mechanischen Lauf): `.editor-toolbar .tb-caret` ist namentlich
+     *  geduldet, weil sein Zwilling `.wiki-tree-item-toggle` es ist und
+     *  Schritt 4 beide aneinander gebunden hat (bewacht von W5-R-07f). Die
+     *  Stelle wandert von "offen" nach "namentlich geduldet" und verlaesst
+     *  damit die Befundmenge dieser Schranke — wer sie bei 802 liesse,
+     *  liesse sie um eine Stelle locker stehen. Gemessen nach dem Urteil:
+     *  ausserhalbDerSkala 801, geduldet 35, gesamt 853. */
+    const AUSSERHALB_MAX = 801;
 
     /** SCHRANKE 2 — Schriftgroessen in `em`.
      *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
@@ -14952,9 +14960,31 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
    Sprosse hebt (dann ist E-3 fuer sie nicht erfuellt, mit <= 2 px Wirkung)
    oder ob sie ebenfalls geduldet werden, muss DORT entschieden und begruendet
    werden. Diese Stelle sagt nur, dass es offen ist.
+
+   NACHTRAG DES SCHRITTES 5, und er beantwortet genau die zwei Fragen, die der
+   Absatz darueber offen gelassen hat.
+     (1) DIE 54 IKON-KANDIDATEN WERDEN MECHANISCH GEHOBEN. Gemessen springt
+         KEINE von ihnen um mehr als 2 px (Spanne -2,00 .. +2,00 px, mehrere
+         bei 0,00); E-3 ist fuer sie also nicht erfuellt, und die Wirkung ist
+         der Rahmen, den das Abnahmekriterium des Handoffs pauschal deckt. Der
+         Gegenweg — sie zu dulden — haette die Ausnahmeliste von 32 auf 86
+         Anker getrieben, und eine Ausnahmeliste, die den groesseren Teil des
+         Befundes umfasst, bewacht nichts mehr (dieselbe Lehre wie O-5). Er
+         waere ueberdies an W5-R-07e gescheitert, das sie namentlich NICHT
+         geduldet sehen will.
+     (2) DIE LISTE WAECHST UM GENAU EINEN ANKER, `.tb-caret`, und das ist
+         keine Ikone, sondern eine ZUSICHERUNG, die sonst gebrochen waere:
+         `.wiki-tree-item-toggle` und `.tb-caret` sind dasselbe Zeichen in
+         derselben Rolle und muessen dieselbe Antwort bekommen (Schritt 4, an
+         drei Stellen aufgeschrieben). `.tb-caret` springt um +2,00 px und
+         liegt damit INNERHALB der mechanischen Menge, sein Zwilling um
+         +3,00 px und ausserhalb — der Lauf haette genau eines gehoben. Die
+         Hebung ist gemessen harmlos (Zahlen in `tools/typo-map.js`); sie
+         bleibt trotzdem aus, weil Schritt 8 fuer BEIDE entscheidet. Bewacht
+         von W5-R-07f.
    =========================================================================== */
 
-describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
+describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
     /**
      * DIE GEDULDETEN: Emoji-Ikonen und Avatar-Platzhalter, die neben der
      * Skala bleiben (E-3), plus das Aufklapp-Pfeilzeichen des Wiki-Baums und
@@ -14966,6 +14996,16 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
      * zeilenfrei und deckt beide, und das ist Absicht — eine Ikone, die in
      * der Grundregel neben der Skala steht und in der Mobilfassung darauf,
      * waere an zwei Breiten nach zwei Maszstaeben bemessen.
+     *
+     * `.editor-toolbar .tb-caret` ist die 24. Zeile und die einzige, die
+     * SCHRITT 5 hinzugefuegt hat. Sie steht weder aus E-3 (kein Emoji) noch
+     * aus einer Nebenwirkung (die Hebung auf 11 px ist gemessen harmlos:
+     * Knopf +1,67 px, Hoehe 30 px und Leiste 43 px unveraendert, Spalt 7,00
+     * px, bei 1440 UND 375 px), sondern aus einer ZUSICHERUNG: sie traegt
+     * dasselbe Pfeilzeichen in derselben Rolle wie `.wiki-tree-item-toggle`,
+     * und Schritt 4 hat beide aneinander gebunden. +2,00 px liegen in der
+     * mechanischen Menge des Schrittes 5, die +3,00 px des Zwillings nicht —
+     * der Lauf haette genau eines gehoben. Bewacht von W5-R-07f.
      *
      * `.floating-toolbar .kbd-hint` steht hier NICHT aus E-3 — sie traegt
      * Lesetext und gehoerte nach E-4 auf die Untergrenze. Sie steht hier aus
@@ -15009,7 +15049,8 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         ['npcs.css', '.npc-item-avatar', '1.4em', '22.4px', 22.4],
         ['tools.css', '.timer-ctrl-btn', '1.4em', '22.4px', 22.4],
         ['party.css', '.wiki-tree-item-toggle', '8px', '8px', 8],
-        ['spells.css', '.floating-toolbar .kbd-hint', '8px', '8px', 8]
+        ['spells.css', '.floating-toolbar .kbd-hint', '8px', '8px', 8],
+        ['editors.css', '.editor-toolbar .tb-caret', '9px', '9px', 9]
     ].map(([datei, sel, alt, neu, gemessen]) => ({ datei, sel, alt, neu, gemessen }));
 
     /**
@@ -15151,11 +15192,12 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
             n: soll.length
         });
         // ... und die Mengengroessen sind die gemessenen: 11 aus dem Vorlauf,
-        // 21 Anker fuer 23 beurteilte Deklarationen (20/22 Ikonen und
-        // Pfeilzeichen, dazu die Tastenhilfe aus Pruefrunde 1).
+        // 22 Anker fuer 24 beurteilte Deklarationen (20/22 Ikonen und das
+        // Pfeilzeichen des Wiki-Baums, dazu die Tastenhilfe aus Pruefrunde 1
+        // und, aus Schritt 5, das zweite Pfeilzeichen `.tb-caret`).
         expect(VORLAUF.length).toBe(11);
-        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(21);
-        expect(URTEIL_IKON.length).toBe(23);
+        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(22);
+        expect(URTEIL_IKON.length).toBe(24);
     });
 
     test('W5-R-07b: jede geduldete Urteilsstelle traegt GENAU ihren gemessenen Wert', () => {
@@ -15307,11 +15349,17 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         expect(OHNE_MESSUNG[Object.keys(OHNE_MESSUNG)[0]].length).toBeGreaterThan(200);
     });
 
-    test('GEGENPROBE: 30 der 31 sind Stellen mit Sprung ueber 2 px, die 31. ist benannt', () => {
+    test('GEGENPROBE: 29 der 32 springen ueber 2 px, die drei anderen sind benannt', () => {
         // Der Grund, warum die Menge diese und keine andere ist. Gerechnet
         // wird gegen den GEMESSENEN Wert, nicht gegen die 16-px-Annahme —
         // dieselbe Rechnung, die in Runde 2 des Schrittes 3 fuenfzehn Stellen
         // falsch zugeordnet hatte.
+        // DIE AUFTEILUNG, nachgerechnet: 29 springen ueber 2 px; eine steht
+        // in MITGEZOGEN (.enc-item-icon in der Mobilfassung, -1,60 px); eine
+        // wird auf die Untergrenze bezogen (.tb-caret 9 -> 11 px, genau
+        // +2,00 und damit NICHT ueber der Schwelle — sie ist aus einem
+        // anderen Grund dabei, siehe W5-R-07f); eine hat kein Element und
+        // traegt ihren Grund in OHNE_MESSUNG.
         const skala = TYPO_MAP.skalaWerte();
         const meine = new Map();
         URTEIL_IKON.forEach(e => meine.set(`${e.datei}||${e.sel}||${e.alt}`, e.gemessen));
@@ -15339,7 +15387,7 @@ describe('W5-R-07 — die 31 Urteilsstellen der Welle 5 (Ratsche)', () => {
         });
         expect(zuKlein.sort()).toEqual([]);
         // ... und die Menge ist nicht leer
-        expect(meine.size).toBe(31);
+        expect(meine.size).toBe(32);
         // GENAU EINE mitgezogene Stelle, und sie ist eine der aufgezaehlten.
         expect(Object.keys(MITGEZOGEN)).toEqual(['encounters.css||.enc-item-icon||1.1em']);
         expect([...meine.keys()]).toContain('encounters.css||.enc-item-icon||1.1em');
