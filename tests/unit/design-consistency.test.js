@@ -14685,8 +14685,24 @@ describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => 
      *  Werten 8, 7 und 7 — zusammen 21 sichtbare Elemente unter 11 px, die
      *  kleinste Schrift der ganzen App. ZIEL 0; duerfen die Beschriftungen auf
      *  ihrem Wert bleiben, stehen sie namentlich in SVG_GEDULDET statt
-     *  unentdeckt im Quelltext. Diese Zahl darf nur SINKEN. */
-    const SVG_MAX = 3;
+     *  unentdeckt im Quelltext. Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 3 auf 0 — DER ZIELWERT (Schritt 8), und
+     *  ERREICHT OHNE EINEN EINZIGEN EINTRAG IN `SVG_GEDULDET`. Die drei
+     *  Attribute sind nicht geduldet, sondern VERSCHWUNDEN: die
+     *  Beschriftungen tragen jetzt die Klassen `.ds-hist-face-label` und
+     *  `.ds-hist-axis-label` (assets/styles/tools.css), ihre WERTE sind
+     *  unveraendert (8 bzw. 7 Benutzereinheiten) und stehen namentlich in
+     *  `AUSNAHMEN` von tools/typo-map.js — also unter W5-R-05a, wo jede
+     *  andere Groesse auch geurteilt wird. Das ist der Unterschied zwischen
+     *  "geduldet, weil wir hinsehen konnten" und "geduldet in einer Kategorie,
+     *  in der nichts hinsieht": die Duldung ist dieselbe, der Ort ist ein
+     *  besserer. Warum die Werte bleiben, steht an beiden Deklarationen —
+     *  kurz: das SVG traegt eine viewBox, die Zahl ist eine Benutzereinheit,
+     *  und gemessen wirken die 8 Einheiten 11,34 px bei 1440 und 5,44 px bei
+     *  375 px. `SVG_GEDULDET` bleibt BEWUSST LEER, nicht abwesend (Muster der
+     *  EXEC_COMMAND_ALLOWLIST): kommt je ein neues Praesentationsattribut
+     *  dazu, faellt diese Schranke. */
+    const SVG_MAX = 0;
 
     /** Benannte Ausnahmen der dritten Schranke, Schluessel `datei:zeile` —
      *  hier AUSNAHMSWEISE mit Zeile, weil ein SVG-Attribut in einer
@@ -15335,6 +15351,172 @@ describe('W5-R-08 — jede Inline-Schriftgroesse kommt aus der Skala (Ratsche)',
 });
 
 /* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 8 — W5-R-10: die Zielquote
+   ===========================================================================
+
+   WORUEBER DIESE RATSCHE URTEILT, UND WORUEBER AUSDRUECKLICH NICHT. Der
+   Handoff verlangt "mindestens 95 Prozent aller Schriftgroessen auf einem
+   Skalenwert". Diese Zahl ist nur so viel wert wie ihre BEZUGSMENGE, und die
+   fehlte im Handoff — genau das haelt O-13 fest.
+
+   AUF DER ELEMENTMENGE IST 95 PROZENT ARITHMETISCH UNERREICHBAR. Mit der
+   Emoji-Ausnahme (E-3) bleiben Ikonen und Avatar-Platzhalter bewusst neben
+   der Skala; dazu kommen die Kleinst-Ausnahmen (E-4) und die Leser der
+   Mobilvergroesserung (E-2). Der gemessene Ausgangswert jener Rechnung war
+   63,36 Prozent SICHTBARER ELEMENTE auf einem Skalenwert (erhoben mit
+   `tools/typo-baseline.js`, Feld `skalaAnteilSichtbar`). Eine Zielzahl, die
+   man beim Aufschreiben schon nicht halten kann, wird beim ersten roten Lauf
+   gesenkt statt erfuellt — und bewacht ab dann nichts.
+
+   DIE BEZUGSMENGE IST DESHALB DIE TEXT-DEKLARATION, und sie ist hier
+   AUSGERECHNET und nicht behauptet: alle `font-size`-Deklarationen im
+   Geltungsbereich MINUS die namentlich geduldeten Stellen, die keinen
+   Lesetext tragen (Emoji-Ikonen, Avatar-Platzhalter, der Zauberplatz-Punkt,
+   die zwei Aufklapp-Pfeile und die zwei Histogramm-Beschriftungen in
+   Benutzereinheiten). Was in der Menge BLEIBT, sind die drei Duldungen, die
+   sehr wohl Text betreffen — die sechs Ueberschriftenstufen des
+   Reichtext-Inhalts, die vier Leser der Mobilvergroesserung und die
+   Tastenhilfe. Sie DRUECKEN die Quote, und das sollen sie: eine Quote, aus
+   der jede unbequeme Stelle herausdefiniert ist, ist eine Tautologie.
+
+   WAS DIE ZAHL AM ENDE DER WELLE 5 IST: 98,68 Prozent (820 von 831), bei
+   95,68 Prozent ueber ALLE 857 Deklarationen. Beide Zahlen stehen unten, weil
+   die zweite die erste nachpruefbar macht.
+   =========================================================================== */
+
+describe('W5-R-10 — die Zielquote auf der Textmenge (Ratsche)', () => {
+    /** Die Zielquote des Handoffs (Paragraph 3.7), bezogen auf die
+     *  TEXT-Deklarationen (O-13). Diese Zahl darf nur STEIGEN. */
+    const QUOTE_MIN = 95;
+
+    /** Die geduldeten Stellen OHNE Lesetext. Sie verlassen die Bezugsmenge.
+     *  17 werden vom Ikonenmuster aus `tools/typo-map.js` erkannt; die sieben
+     *  darunter nicht, und jede nennt ihren Grund, weil "kein Lesetext" bei
+     *  ihnen NICHT aus dem Namen folgt. */
+    const OHNE_LESETEXT = [
+        'dashboard.css||.slot-pip||font-size', // 18-px-Kreis ohne Textinhalt
+        'dice.css||.dice-roll-btn||font-size', // Knopf mit NUR einem Emoji (🎲)
+        'tools.css||.timer-ctrl-btn||font-size', // Knopf mit NUR einem Zeichen (▶️ / ↺)
+        'party.css||.wiki-tree-item-toggle||font-size', // Aufklapp-Pfeil ▶
+        'editors.css||.editor-toolbar .tb-caret||font-size', // Aufklapp-Pfeil ▾
+        'tools.css||.ds-hist-face-label||font-size', // SVG-Benutzereinheit
+        'tools.css||.ds-hist-axis-label||font-size' // SVG-Benutzereinheit
+    ];
+
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
+    const alle10 = typoAlle('font-size');
+
+    function nichtText() {
+        return new Set([
+            ...Object.keys(TYPO_MAP.AUSNAHMEN).filter(a =>
+                TYPO_MAP.istIkon(a.split('||')[1])
+            ),
+            ...OHNE_LESETEXT
+        ]);
+    }
+
+    function mengen() {
+        const nt = nichtText();
+        const text = alle10.filter(d => !nt.has(typoAnker(d)));
+        const aufSkala = text.filter(
+            d =>
+                ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()) ||
+                /^inherit$/.test(d.wert)
+        );
+        return { text, aufSkala };
+    }
+
+    test('W5-R-10: mindestens 95 Prozent der Text-Deklarationen liegen auf der Skala', () => {
+        const { text, aufSkala } = mengen();
+        const quote = Math.round((aufSkala.length / text.length) * 10000) / 100;
+        const daneben = text
+            .filter(d => !aufSkala.includes(d))
+            .map(d => `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }`);
+        if (quote < QUOTE_MIN) {
+            expect({ quote, text: text.length, aufSkala: aufSkala.length, daneben }).toEqual({
+                quote: QUOTE_MIN,
+                text: text.length,
+                aufSkala: text.length,
+                daneben: []
+            });
+        }
+        expect(quote).toBeGreaterThanOrEqual(QUOTE_MIN);
+    });
+
+    test('SELBSTPROBE: die Bezugsmenge ist ausgerechnet und beziffert', () => {
+        // Ohne diese Zahlen ist die Quote oben durch VERKLEINERN der
+        // Bezugsmenge erfuellbar: wer eine unbequeme Stelle als "kein
+        // Lesetext" fuehrt, hebt die Quote ohne eine Zeile CSS.
+        const { text, aufSkala } = mengen();
+        expect(nichtText().size).toBe(24);
+        expect(alle10.length - text.length).toBe(26);
+        expect(text.length).toBeGreaterThanOrEqual(831);
+        expect(aufSkala.length).toBeGreaterThanOrEqual(820);
+        // Die Quote ueber ALLE Deklarationen daneben — sie ist die
+        // Gegenrechnung und liegt gemessen ebenfalls ueber 95 Prozent. Waere
+        // sie es nicht, waere die Textquote eine Rechnung, die ihre Aussage
+        // aus dem Ausschluss zieht.
+        const alleAufSkala = alle10.filter(
+            d =>
+                ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()) ||
+                /^inherit$/.test(d.wert)
+        );
+        expect((alleAufSkala.length / alle10.length) * 100).toBeGreaterThanOrEqual(95);
+    });
+
+    test('GEGENPROBE: die drei TEXT-Duldungen bleiben in der Bezugsmenge', () => {
+        // Das ist der Kern von O-13. Sechs Ueberschriftenstufen (ein
+        // Verhaeltnis zu ihrem Behaelter), vier Leser der Mobilvergroesserung
+        // (unter 16 px loest ein Telefon den Auto-Zoom aus, E-2) und die
+        // Tastenhilfe (Hebung erzeugt Ueberlappung) sind geduldet, aber sie
+        // sind TEXT. Wer sie herausnimmt, bekommt 100 Prozent und hat nichts
+        // gemessen.
+        const nt = nichtText();
+        const drin = [
+            'spells.css||.floating-toolbar .kbd-hint||font-size',
+            'command-palette.css||.cp-result-label||font-size',
+            'file-backup.css||.backup-entry-name||font-size',
+            'pwa.css||.pwa-install-btn||font-size',
+            'pwa.css||.pwa-update-banner||font-size'
+        ];
+        drin.forEach(a => {
+            expect(TYPO_MAP.AUSNAHMEN[a]).toBeDefined();
+            expect(nt.has(a)).toBe(false);
+        });
+        // ... und die sechs Ueberschriftenstufen ebenfalls, ueber ihren
+        // GEBAUTEN Selektor statt ueber 230 abgeschriebene Zeichen.
+        // `ueberschriftAnker()` taugt dafuer nicht: sein Schluessel endet auf
+        // dem WERT (`1.3em !important`), weil er die Kettenliste bedient —
+        // die Ausnahmeliste endet auf der EIGENSCHAFT.
+        [1, 2, 3, 4, 5, 6].forEach(n => {
+            const a = TYPO_MAP.anker(
+                'party.css',
+                TYPO_MAP.REICHTEXT_BEHAELTER.map(b => `${b} h${n}`).join(', '),
+                'font-size'
+            );
+            expect(TYPO_MAP.AUSNAHMEN[a]).toBeDefined();
+            expect(nt.has(a)).toBe(false);
+        });
+        // Zusammen 11 geduldete TEXT-Stellen — genau die Differenz zwischen
+        // der Ausnahmeliste (35) und der Nicht-Text-Menge (24).
+        expect(Object.keys(TYPO_MAP.AUSNAHMEN).length - nt.size).toBe(11);
+    });
+
+    test('VERWESUNGSPROBE: jede Stelle der Nicht-Text-Menge gibt es wirklich', () => {
+        const vorhanden = new Set(Object.keys(TYPO_MAP.AUSNAHMEN));
+        expect(OHNE_LESETEXT.filter(a => !vorhanden.has(a))).toEqual([]);
+        const ankerImBaum = new Set(alle10.map(typoAnker));
+        expect(OHNE_LESETEXT.filter(a => !ankerImBaum.has(a))).toEqual([]);
+        // Und das Ikonenmuster trifft wirklich 17 — nicht 0, was die Menge
+        // still auf sieben schrumpfen liesse.
+        expect(
+            Object.keys(TYPO_MAP.AUSNAHMEN).filter(a => TYPO_MAP.istIkon(a.split('||')[1]))
+                .length
+        ).toBe(17);
+    });
+});
+
+/* ===========================================================================
    Design-Handoff v3, Welle 5, Schritt 4 — W5-R-07: die Urteilsstellen
    ===========================================================================
 
@@ -15628,6 +15810,26 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
         )
     ];
 
+    /** Die zwei Anker, die SCHRITT 8 der Ausnahmeliste hinzufuegt — und zwar
+     *  als ZUGANG, nicht als Umbuchung: vorher gab es an diesen Stellen keine
+     *  CSS-Deklaration, sondern zwei SVG-Praesentationsattribute in einer
+     *  Zeichenkette (`font-size="8"` und `="7"` in
+     *  features/dice-stats/dice-stats-render.js). Sie standen damit ausserhalb
+     *  JEDER Pruefung dieses Projekts; das ist der Befund, den O-7 eine eigene
+     *  Kategorie nennt. Als Klasse sind sie jetzt gewoehnliche Deklarationen
+     *  und werden hier geurteilt wie jede andere Groesse.
+     *  Sie stehen in einer EIGENEN Liste und nicht in URTEIL_IKON, weil sie
+     *  kein Ikon sind und weil ihr Urteil einen anderen Grund hat: nicht "kein
+     *  Lesetext", sondern "die Zahl ist eine Benutzereinheit in einer viewBox,
+     *  und ihre Lesbarkeit haengt an der Skalierung" — gemessen wirken die 8
+     *  Einheiten 11,34 px bei 1440 und 5,44 px bei 375 px Fensterbreite. Die
+     *  volle Begruendung steht an beiden Deklarationen und in
+     *  tools/typo-map.js. */
+    const URTEIL_SVG = [
+        ['tools.css', '.ds-hist-face-label', '8px'],
+        ['tools.css', '.ds-hist-axis-label', '7px']
+    ];
+
     const ankerVon = e => TYPO_MAP.anker(e.datei, e.sel, 'font-size');
     const alleGroessen07 = typoAlle('font-size');
     /** Alle Deklarationen je Anker — ein Anker kann mehrere haben (Grundregel
@@ -15642,7 +15844,13 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
     test('W5-R-07a: die Ausnahmeliste ist GENAU Vorlauf plus beurteilte Anker', () => {
         // Beide Richtungen, und die zweite ist die wichtigere: ein Eintrag,
         // den niemand aufgezaehlt hat, ist eine Entscheidung ohne Urteil.
-        const soll = [...new Set([...VORLAUF, ...URTEIL_IKON.map(ankerVon)])].sort();
+        const soll = [
+            ...new Set([
+                ...VORLAUF,
+                ...URTEIL_IKON.map(ankerVon),
+                ...URTEIL_SVG.map(e => TYPO_MAP.anker(e[0], e[1], 'font-size'))
+            ])
+        ].sort();
         const ist = Object.keys(TYPO_MAP.AUSNAHMEN).sort();
         const fehlt = soll.filter(k => !ist.includes(k));
         const zuviel = ist.filter(k => !soll.includes(k));
@@ -15658,6 +15866,40 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
         expect(VORLAUF.length).toBe(11);
         expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(22);
         expect(URTEIL_IKON.length).toBe(24);
+        // ... und die zwei Zugaenge des Schrittes 8. Sie sind getrennt
+        // gezaehlt, damit nachlesbar bleibt, WANN die Liste von 33 auf 35
+        // gewachsen ist und warum.
+        expect(URTEIL_SVG.length).toBe(2);
+        expect(ist.length).toBe(35);
+    });
+
+    test('W5-R-07g: die zwei SVG-Beschriftungen tragen ihren Wert und ihre Klasse', () => {
+        // Drei Dinge zugleich, weil sie nur zusammen etwas aussagen:
+        // (1) die Deklaration steht im CSS und traegt genau den Wert, den die
+        //     Ausnahme behauptet — eine Ausnahme mit falschem Wert duldet
+        //     etwas anderes als sie sagt;
+        // (2) im JS steht KEIN `font-size`-Attribut mehr (sonst waere die
+        //     Verlegung halb geblieben und zwei Quellen wuerden streiten);
+        // (3) das JS nennt die Klasse wirklich — eine CSS-Regel ohne Traeger
+        //     ist toter Code, und der Dead-CSS-Bericht findet sie nicht,
+        //     weil ihr Name nur als Zeichenkette im JS steht.
+        const js = fs.readFileSync(
+            path.join(REPO, 'features/dice-stats/dice-stats-render.js'),
+            'utf8'
+        );
+        expect([...js.matchAll(/font-size\s*=/g)].length).toBe(0);
+        URTEIL_SVG.forEach(([datei, sel, wert]) => {
+            const a = TYPO_MAP.anker(datei, sel, 'font-size');
+            const ds = nachAnker.get(a) || [];
+            expect(ds.map(d => d.wert)).toEqual([wert]);
+            expect(TYPO_MAP.AUSNAHMEN[a]).toMatch(/\d+(?:[.,]\d+)?\s*px/);
+            expect(js).toContain(sel.slice(1));
+        });
+        // Die Seitenbeschriftung ist GROESSER als die Achsenbeschriftung, und
+        // das ist Absicht (die Achse hat 26 Benutzereinheiten Platz fuer bis
+        // zu drei Stellen). Ohne diese Zeile koennten die zwei Werte
+        // vertauscht werden, ohne dass etwas rot wird.
+        expect(parseFloat(URTEIL_SVG[0][2])).toBeGreaterThan(parseFloat(URTEIL_SVG[1][2]));
     });
 
     test('W5-R-07b: jede geduldete Urteilsstelle traegt GENAU ihren gemessenen Wert', () => {
