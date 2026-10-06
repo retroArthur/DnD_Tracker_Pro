@@ -1058,17 +1058,31 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
        als Gewinn der Welle 4 verbucht ("die Leiste faellt von 328 auf 296px, und
        die 32px gehen 1:1 in die Listenspalte"), nur in der Gegenrichtung.
 
-       DER BEFUND DER RUNDE W5-D/1, gemessen am gebauten Buendel, gefuellte
-       Kampagne, 375x812, VOR gegen NACH der Schriftumstellung des Schrittes 5:
+       DER BEFUND DER RUNDE W5-D/1, gemessen am gebauten Buendel, GEFUELLTE
+       Kampagne (`seedPopulatedSession`), 375x812, VOR gegen NACH der
+       Schriftumstellung des Schrittes 5:
 
-         encounter  Titelgruppe + primaere Aktion  314,64 -> 325,04 px (Luecke 8 px,
-                    Zeilenbreite 329 px) => 322,64 -> 333,04 px belegt, also aus
-                    EINER Zeile werden ZWEI; Leiste 158 -> 187 px (+29), und
-                    `.enc-master` 305,2 -> 276,2 px (-29), weil `#view-encounter`
-                    hoehenbegrenzt ist.
-         kalender   316,37 -> 334,59 px belegt; Leiste 146 -> 175 px (+29).
-         npcs       313,99 -> 320,44 px belegt, zusammen mit der Luecke 328,44 von
-                    329 px — 0,56 px Reserve, also dicht am selben Kippen.
+         encounter  Titelgruppe + Luecke + primaere Aktion  322,64 -> 333,04 px
+                    von 331 px Zeilenbreite, also aus EINER Zeile werden ZWEI;
+                    Leiste 158 -> 187 px (+29), und `.enc-master` 305,2 ->
+                    276,2 px (-29), weil `#view-encounter` hoehenbegrenzt ist.
+         kalender   324,37 -> 342,59 px belegt; Leiste 146 -> 175 px (+29).
+         npcs       321,99 -> 328,44 px belegt — 2,56 px Reserve, also dicht am
+                    selben Kippen.
+
+       DIESER FALL MISST MIT DER SAAT DIESER DATEI und nicht mit
+       `seedPopulatedSession`; seine Zahlen liegen daneben, weil Zaehlwert und
+       Filterchips anders ausfallen. Mit der Saat dieser Datei, dreimal
+       gemessen:
+
+                        vor der Welle   im Befundstand   nach der Korrektur
+         encounter          +6,72            -3,69             +11,17
+         kalender           +6,63           -11,59             +14,44
+         npcs               +7,37            +0,92             +10,14
+         die uebrigen 5   +47,91..131,52   +39,94..124,53   +51,33..134,50
+
+       Die Korrektur steht damit BESSER da als der Stand vor der Welle: 12 px
+       (--text-sm) sind 0,6 px unter den 12,6 px, die `0.9em` dort ergaben.
 
        Ursache war `.section-toolbar-title` im Block `@media (max-width: 600px)`
        (editors.css:745): `0.9em` -> `var(--text-md)`. Der Elternwert ist dort
@@ -1103,10 +1117,14 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
     ];
 
     /** Mindestabstand der belegten Breite zur Zeilenbreite, in Bildpunkten.
-     *  Gemessen nach der Korrektur betraegt der kleinste Abstand 13,37 px
-     *  (npcs); VOR der Schriftumstellung waren es 7,01 px, und im Befundstand
-     *  0,56 px. Die Schranke steht auf 4 px und damit UNTER dem Stand vor der
-     *  Welle: sie soll das Kippen melden und nicht die Welle 5 zurueckdrehen. */
+     *  Mit der Saat dieser Datei gemessen (Tabelle im Kopfkommentar): nach der
+     *  Korrektur ist der kleinste Abstand 10,14 px (npcs), vor der Welle waren
+     *  es 6,63 px (kalender), im Befundstand -11,59 px (kalender).
+     *  DIE SCHRANKE STEHT AUF 4 px, und die Wahl gehoert begruendet: sie liegt
+     *  UNTER dem Stand vor der Welle (6,63 px) und ueber dem Befundstand. So
+     *  meldet sie das Kippen, ohne die Welle 5 zurueckzudrehen — eine Schranke
+     *  auf dem heutigen Bestwert waere eine Ratsche auf einer Zahl, die von der
+     *  Textlaenge der Saat abhaengt und beim naechsten Knopfnamen faellt. */
     const MIN_ZEILEN_RESERVE = 4;
 
     /**
@@ -1244,8 +1262,9 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
         ).toEqual([]);
 
         /* ZUSICHERUNG 1 — DIE RESERVE. Sie steht vor dem Zustand, aus
-           demselben Grund wie bei (1): 0,56 px Reserve (npcs im Befundstand)
-           sind heute gruen und morgen der naechste Umbruch. */
+           demselben Grund wie bei (1): 0,92 px Reserve, die npcs im
+           Befundstand hatte, sind heute gruen und morgen der naechste
+           Umbruch. */
         const zuKnapp = messungen
             .filter(({ m }) => m.reserve === null || m.reserve < MIN_ZEILEN_RESERVE)
             .map(
