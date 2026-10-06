@@ -5499,9 +5499,16 @@ name 10,08 → **11** (+0,92), val 12,32 → **12** (−0,32), mod 10,64 → **1
 
 ### Was entstanden ist
 
-- **`SONDERZUORDNUNG`** in `tools/typo-map.js`, **20 Einträge in zwei Gründen**, jeder mit
+- **`SONDERZUORDNUNG`** in `tools/typo-map.js`, **21 Einträge in drei Gründen**, jeder mit
   seinem Messwert, seinem Elternwert und einer Begründung in Prosa:
   - `kette` (**15**) — Ziel aus dem gemessenen Wert nach Regel K.
+  - `kette-reichtext` (**1**, Runde 2) — `.spell-desc`. Nicht `kette`: dort weicht der
+    gemessene Wert von der 16-px-Annahme ab, hier stimmt sie (0,85 × 16 = 13,6 ist genau
+    der Messwert). Abgewichen wird wegen der **Kinder** — der sechs geduldeten
+    em-Überschriften, die sich mit dem Behälter mitbewegen, ohne dass eine ihrer
+    Deklarationen angefasst würde. Die Kante steht nicht in `KETTEN` und kann dort nicht
+    stehen (Begründung im nächsten Abschnitt). Ziel nach derselben Rundungsregel:
+    13,6 → 14 → px-Zeile `14px` → `--text-md`.
   - `formular-e2` (**5**) — `1em` auf einem Eingabefeld geht auf `--text-lg` = 16 px,
     **Delta 0,00 px**. Eine Ausnahme wäre hier das schlechtere Mittel: sie ließe den
     em-Wert stehen und damit eine Stelle, die bei jeder Änderung ihres Behälters wieder
@@ -5615,7 +5622,7 @@ halten ist, wird beim ersten roten Lauf gesenkt statt erfüllt — das war der s
   gemessener Bestand; verschiebt die Umstellung in Schritt 5 einen Elternwert auf ein
   Token, verschwinden Kanten aus der Messung, und die Verwesungsprobe verlangt dann, dass
   ihr Eintrag mitgeht. **Nach dem schreibenden Lauf von Schritt 5 ist `KETTEN` neu zu
-  erheben** — die 15 Sonderzuordnungen bleiben gültig (sie tragen ein Token, keinen
+  erheben** — die 21 Sonderzuordnungen bleiben gültig (sie tragen ein Token, keinen
   em-Wert), aber die Kantenliste beschreibt dann einen Bestand, der nicht mehr existiert.
 - Die übrigen offenen Punkte aus W5-B bleiben: **E-3 und E-4 sind nicht getroffen**, der
   **schreibende Lauf ist noch nie gelaufen**.
@@ -5629,8 +5636,130 @@ node tools/sync-typo-tokens.js --ketten
 # Die Delta-Tabelle mit Herkunftsspalte Q (g = gemessen, a = Annahme)
 node tools/sync-typo-tokens.js --report --kategorien
 
-# Der Wächter (55 Fälle)
+# Der Wächter (57 Fälle)
 npx jest tests/unit/typo-map.test.js
+```
+
+---
+
+## W5-B Runde 2 — die Überschriften-Ausnahme hing am Ziel ihres Behälters (2026-10-06)
+
+**Status: ERLEDIGT.** Dritte Nachbesserung der Einheit W5-B. Drei Commits, **keine Zeile
+CSS** — korrigiert wird wieder die ZUORDNUNG, nicht der Bestand. `git diff 088f9a0..HEAD`
+über alles außer `tests/`, `tools/` und `.planning/` ist **leer**.
+
+### Der Befund in einem Satz
+
+Die sechs Überschriftenregeln des Reichtext-Inhalts bleiben in `em` (Runde 1, namentlich
+geduldet) — also bleiben sie ein **Verhältnis zu ihrem Behälter**. `.spell-desc` ging nach
+der Tabellenzeile `0.85em → --text-sm` von 13,6 auf **12 px**, und damit fiel
+`.spell-desc h6` auf 0,9 × 12 = **10,80 px**, unter die E-4-Untergrenze von 11 px, **ohne
+dass eine der sechs Überschriftendeklarationen angefasst worden wäre**. `h1` fiel auf
+15,60 gegen gemessene 17,68 px, also **−2,08 px** über der Abnahmeschwelle. Beide Stufen
+sind sichtbar und tragen einen Textknoten.
+
+**Genau ein Behälter von acht ist betroffen.** Sechs erben die Wurzelgröße und ändern sich
+nicht (16 → 16 px); `.char-notes-content` geht 14,4 → 14 und hält `h6` bei 12,6 px.
+
+### Warum kein Tor das sah — vier Schranken, alle blind an derselben Stelle
+
+1. **`--report` kennt kein Delta für die sechs Regeln.** `einordnen()` führt sie als
+   `geduldet`, `ziel` ist `null`, `neu` ist `null` — es gibt keine Zahl, auf die eine
+   2-px-Schwelle angewandt werden könnte.
+2. **W5-W11 war an dieser Stelle leer.** Der Fall "nach der Zuordnung bleiben sechs Stufen
+   sechs Stufen" kehrt an `ziele.every(z => z === null)` sofort zurück; sein
+   Untergrenzen-Zweig lief nur, wenn **alle sechs umgestellt** wären. Heute sind alle sechs
+   geduldet — der Fall prüfte also gerade im eingetretenen Entwurf nichts.
+3. **`KETTEN` kann diese Kante nicht enthalten.** Die Liste ist aus dem **DOM** erhoben,
+   und in der Ruhelage steht in keinem Reichtext-Inhalt eine Überschrift. Zur Gegenprobe,
+   dass die Liste sonst vollständig ist: die sehr ähnliche, aber sichtbare Kante
+   `.bst-save-item 0.85em 13,6` → `.bst-save-val` **steht** darin. `.spell-desc` fehlt
+   ganz.
+4. **Die Grundlinien-Erhebung sieht die acht Behälter nicht** — das stand seit Runde 1 in
+   dieser Akte, als Messschuld. Es war zugleich die Ursache: `UEBERSCHRIFTEN_GEMESSEN`
+   enthielt die Zahlen, die den Befund zeigen (Behälter 13,6 px), aber sie wurden **nur
+   zur Begründung der Ausnahme** benutzt und nirgends gegen das **Ziel** des Behälters
+   gerechnet. Eine Messung im Quellbaum, über die nichts urteilt, ist Dokumentation und
+   keine Schranke.
+
+### Was entstanden ist
+
+- **Ein Fall, der im heutigen Entwurf nicht leer ist** (`tests/unit/typo-map.test.js`,
+  W5-W11): je Behälter das Ziel seiner **eigenen** Deklaration über `zielFuer()`, mal jeden
+  der sechs `UEBERSCHRIFTEN_WERTE`, zugesichert gegen `KLEINST_GRENZE` **und** gegen die
+  2-px-Schwelle. Rot bewiesen an genau zwei Stellen, beide `.spell-desc`. Eine
+  Verwesungsprobe hält fest, dass **genau zwei** der acht Behälter überhaupt eine eigene
+  `font-size` tragen — ohne sie würde der Fall grün, sobald die Suche nichts mehr trifft.
+- **`SONDERZUORDNUNG['spells.css||.spell-desc||0.85em']` → `--text-md`**, dritter Grund
+  `kette-reichtext`. Danach h1…h6 = 18,2 / 16,8 / 15,4 / 14,0 / 13,3 / 12,6 px: alle über
+  11 px, alle innerhalb **0,52 px** der Messung, und der Behälter selbst springt **+0,40**
+  statt −1,60 px.
+- **Der Kopf von `KETTEN` nennt jetzt die Grenze seiner Erhebung**: nur Kanten, deren Kind
+  in der Ruhelage im DOM steht; Reichtext-Inhalt fällt grundsätzlich heraus. Wer dort eine
+  Kette braucht, misst sie eigens mit einem Probekörper und trägt sie nach
+  `UEBERSCHRIFTEN_GEMESSEN` ein, nicht nach `KETTEN`.
+- **Ein Wächter über `SONDER_GRUENDE`** — Nebenfund, aber kein kleiner: die Menge nannte
+  sich *geschlossen*, und geprüft hat das nichts. Der neue Fall verlangt je
+  Sonderzuordnung dreiteiligen Anker, Grund **aus** der Menge, Begründung über 60 Zeichen
+  (dieselbe Schranke wie bei `AUSNAHMEN`) und ein Ziel auf der Skala; eine
+  Verwesungsprobe verlangt, dass jeder Grund der Menge auch benutzt wird.
+
+### Die verworfene Alternative, benannt statt verschwiegen
+
+`.spell-desc h6` namentlich aus E-4 auszunehmen wäre der andere Weg gewesen. **Verworfen:**
+eine 10,8-px-Überschrift im Zauberblatt ist lesbarer Text, und genau dafür gilt die
+Untergrenze. Die 25 benannten Kleinst-Ausnahmen sind SVG-Beschriftungen der Würfelstatistik
+und textlose Punkte (`.slot-pip`) — eine Überschrift mit eigenem Textknoten gehört nicht in
+diese Klasse.
+
+### Eine Schranke wurde erfüllt, nicht gesenkt
+
+Der neue `SONDER_GRUENDE`-Wächter war sofort rot, und zwar an einer **vorbestehenden**
+Stelle: `dmscreen.css .dms-init-value` trug 59 Zeichen Begründung, einen Querverweis auf
+den Nachbareintrag. Die 60er-Schranke zu senken wäre genau der Fehler, vor dem
+`plan.atomar_wie` warnt. Statt dessen ist die Begründung ausgeschrieben — Elternteil,
+Tabellenwert, warum er nicht taugt, Rundungsweg, Sprung. `.dms-init-marker` liegt mit 65
+Zeichen über der Schranke und **bleibt unangetastet**: was der Wächter nicht meldet, wird
+nicht angefasst.
+
+### Abnahme
+
+`npx jest` **2062/2062 in 77 Suiten** · `npm run lint` exit 0 mit **exakt 363** Warnungen ·
+`typecheck` und `typecheck:strict` exit 0 · beide Builds exit 0 · `check-f18-kaskade
+--check` OK (126 Abhängigkeiten) · `sync-aktenlage-anker --check` 0 Abweichungen.
+Ratschen unverändert: **DUBLETTEN 0 · !important 105 · Inline-Stile 254 · `transition:
+all` 0**. `--check` unverändert **833 offen**, `--report` unverändert **30 Stellen über
+2 px / 803 darunter / 158 mit Sprung 0,00** — die Zeile von `.spell-desc` wechselt von
+`−1.60 a` auf `+0.40 g`.
+
+**Die CI-Schriftmetrik ist nicht berührt:** diese Runde ändert keine CSS-Deklaration,
+sondern eine Zuordnungstabelle, die noch nie schreibend gelaufen ist. Kein gerenderter
+Bildpunktwert hat sich bewegt.
+
+### Offen, an die Folgeschritte übergeben
+
+- **Die Grundlinie sieht den Reichtext-Inhalt weiterhin nicht.** Das bleibt die
+  Messschuld aus Runde 1, unverändert. Diese Runde hat nur die Folge eingefangen, nicht
+  die Ursache: wer die Saat um einen Eintrag mit `h1`…`h6` erweitert, muss die Grundlinie
+  neu erheben.
+- **`kette-reichtext` hat genau einen Fall.** Entstehen weitere Behälter mit eigener
+  `font-size` **und** em-Kindern, deckt der neue W5-W11-Fall sie ab — aber nur für die
+  acht Behälter, die in `REICHTEXT_BEHAELTER` stehen. Ein neunter müsste dort eingetragen
+  und eigens gemessen werden.
+- Die übrigen offenen Punkte aus W5-B bleiben: **E-3 und E-4 sind nicht getroffen**, der
+  **schreibende Lauf ist noch nie gelaufen**.
+
+### Befehle
+
+```bash
+# Der Fall, der den Befund gefunden hat
+npx jest tests/unit/typo-map.test.js -t "gerechnet gegen das ZIEL"
+
+# Der neue Wächter über die geschlossene Gründemenge
+npx jest tests/unit/typo-map.test.js -t "Grund AUS der geschlossenen Menge"
+
+# Die Zeile von .spell-desc im Delta-Bericht
+node tools/sync-typo-tokens.js --report | grep spell-desc
 ```
 
 ---
