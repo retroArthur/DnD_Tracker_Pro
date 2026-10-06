@@ -33,10 +33,12 @@ tests/e2e/reports/
 # unberuehrt. Nur loeschen liesse ihn wiederkommen, nur ignorieren verbaerge
 # den Hinweis, dass jemand ohne Konfiguration geprueft hat.
 /test-results/
-# Ablichtungen der Sichtpruefung (welle-1-screens.spec.js mit
-# WELLE1_SCREENS=1, welle-2-screens.spec.js mit WELLE2_SCREENS=1):
+# Ablichtungen der Sichtpruefung (welle-<N>-screens.spec.js mit
+# WELLE<N>_SCREENS=1, N = 1 bis 5; dazu mobil-screens und uat-funde-screens):
 # oertliches Material fuer die menschliche Runde, jederzeit neu erzeugbar —
-# ein Stapel Vollbilder gehoert nicht in die Historie.
+# ein Stapel Vollbilder gehoert nicht in die Historie. Die Aufzaehlung stand
+# seit Welle 2 auf zwei Namen und war ab Welle 3 falsch; eine Liste, die nicht
+# mitwaechst, liest sich wie eine Schranke, die es nicht gibt.
 tests/e2e/__screens__/
 tmpclaude-*
 __pycache__/
