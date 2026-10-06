@@ -626,7 +626,7 @@
         }
         .session-number {
             font-size: var(--text-2xl);
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold-text);
             line-height: 1;
             min-width: 50px;
@@ -1444,7 +1444,7 @@
 .dms-dice-result {
     text-align: center;
     font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Die Wurfzahl des Wuerfel-Widgets ist Text */
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     padding: 10px;
     background: var(--bg-dark);
@@ -1719,7 +1719,7 @@
 
 .dms-attr-abbr {
     font-size: var(--text-md);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .dms-attr-name {
@@ -2082,7 +2082,7 @@
 
 .dms-dc-value {
     font-size: var(--text-md);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     min-width: 30px; /* F-18: aus der Dublette uebernommen */
 }
@@ -2270,7 +2270,7 @@
 .dms-config-drag {
     cursor: grab;
     color: var(--text-dim);
-    font-weight: bold;
+    font-weight: 600;
     letter-spacing: -2px;
     user-select: none;
 }
@@ -2392,7 +2392,7 @@
 .dmscreen-widget-drag {
     cursor: grab;
     color: var(--text-dim);
-    font-weight: bold;
+    font-weight: 600;
     letter-spacing: -2px;
     user-select: none;
     padding: 0 4px;

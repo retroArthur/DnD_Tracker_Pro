@@ -14940,8 +14940,16 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     /** SCHRANKE 2 — Inline-Gewichte in Templates und JS.
      *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
      *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
-     *                systems/tags.js (das Loeschkreuz der Schlagwortliste),
-     *                loader.js (die Zusammenfassungszeile des Ladefehlers)
+     *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
+     *                loader.js:344 (die Zusammenfassungszeile des Ladefehlers)
+     *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
+     *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
+     *  Modulpfade als Teilzeichenkette und zaehlt JEDEN Treffer als
+     *  Abdeckung, auch einen im Erklaertext; mit vollem Pfad verlangte es,
+     *  das Modul von seiner datierten Ausnahmeliste zu streichen — und haette
+     *  damit eine Testabdeckung behauptet, die es nicht gibt. Diese Schranke
+     *  liest den Dateitext, sie fuehrt keine Zeile des Moduls aus. Dieselbe
+     *  Loesung wie bei `dice-core.js:372` im W5-R-07-Block.
      *    normal  1x  assets/templates/view-resources.html (der Klammerhinweis
      *                neben "Zusammenfassung")
      *  Die uebrigen 13 stehen schon auf 500 oder 600.

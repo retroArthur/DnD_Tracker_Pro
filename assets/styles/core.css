@@ -1222,7 +1222,7 @@
         }
 
         .char-card-hp-value {
-            font-weight: 700;
+            font-weight: 600;
             font-size: var(--text-md);
         }
 
@@ -1306,7 +1306,7 @@
         .char-attr-pill-val {
             color: var(--text);
             font-size: var(--text-sm);
-            font-weight: 700;
+            font-weight: 600;
         }
 
         .char-attr-pill-mod {
@@ -1410,7 +1410,7 @@
             align-items: center;
             justify-content: center;
             font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Avatar-Platzhalter (Anfangsbuchstabe) in einem Kasten mit Pixelmass — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold-text);
         }
         
@@ -1472,7 +1472,7 @@
         
         .char-vital-value {
             font-size: var(--text-lg);
-            font-weight: 700;
+            font-weight: 600;
             color: var(--cyan-text);
         }
         
@@ -1503,7 +1503,7 @@
         
         .char-attr-value {
             font-size: var(--text-lg);
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text);
         }
         
@@ -1734,7 +1734,7 @@
         
         .spell-tooltip-name {
             font-size: var(--text-lg);
-            font-weight: bold;
+            font-weight: 600;
             color: var(--gold-text);
         }
         
@@ -3054,7 +3054,7 @@
         .loc-mini-avatar.more {
             background: var(--cyan);
             color: var(--on-cyan);
-            font-weight: 700;
+            font-weight: 600;
         }
 
         /* Detail Sidebar */
@@ -3186,7 +3186,7 @@
 
         .loc-detail-name {
             font-size: var(--text-xl);
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold-text);
             word-break: break-word;
         }

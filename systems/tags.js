@@ -59,7 +59,7 @@ function renderTagsModal() {
                           i
                       ) => `<span class="tag tag-${t.color || 'blue'}" style="display: inline-flex; align-items: center; gap: 4px;">
             ${esc(t.name)}
-            <span style="cursor:pointer; color: var(--red); font-weight: bold;" data-action="delete-global-tag" data-value="${i}" title="Tag überall löschen">✕</span>
+            <span style="cursor:pointer; color: var(--red); font-weight: 600;" data-action="delete-global-tag" data-value="${i}" title="Tag überall löschen">✕</span>
         </span>`
                   )
                   .join('')

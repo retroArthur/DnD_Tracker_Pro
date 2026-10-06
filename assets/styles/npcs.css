@@ -207,7 +207,7 @@
 
 .npc-detail-name {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     word-break: break-word;
 }
@@ -600,7 +600,7 @@
 
 .loot-detail-name {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     word-break: break-word;
 }
@@ -1173,7 +1173,7 @@
             align-items: center;
             justify-content: center;
             font-size: var(--text-xs);
-            font-weight: 700;
+            font-weight: 600;
             flex-shrink: 0;
         }
         

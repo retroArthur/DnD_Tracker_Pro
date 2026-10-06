@@ -342,7 +342,7 @@
             background: var(--gold);
             color: var(--on-gold);
             border-color: var(--gold);
-            font-weight: bold;
+            font-weight: 600;
             box-shadow: var(--shadow-1);
         }
         
@@ -713,7 +713,7 @@
         }
         
         .cart-total-value {
-            font-weight: bold;
+            font-weight: 600;
             color: var(--gold-text);
         }
         
@@ -774,7 +774,7 @@
         
         .checkout-amount {
             font-size: var(--text-2xl); /* war 1.8em = 28,80 px gemessen -> 26 px, -2,80. Der Kassenbetrag ist eine Zahl zum Lesen, kein Ikon */
-            font-weight: bold;
+            font-weight: 600;
             color: var(--gold-text);
             margin: 8px 0;
         }

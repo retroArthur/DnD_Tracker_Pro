@@ -55,7 +55,7 @@
 
 .timer-hero-time {
     font-size: var(--text-3xl); /* war 3em = 48,00 px gemessen -> 34 px, -14,00. Die Uhrzeit ist Text. --text-3xl ist die naechste Sprosse; die Skala hat zwischen 34 und 72 px keine, und der 250-px-Ring traegt 34 px ohne Weiteres */
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-mono);
     color: var(--gold-text);
 }
@@ -247,7 +247,7 @@
 
 .timer-card-time {
     font-size: var(--text-lg);
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-mono);
     color: var(--gold);
     min-width: 50px;
@@ -846,7 +846,7 @@
 
 .ld-split-amount {
     font-size: var(--text-3xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold);
 }
 
@@ -1194,7 +1194,7 @@
 
 .search-result-title .category-tag {
     font-size: var(--text-xs);
-    font-weight: normal;
+    font-weight: 400; /* war `normal`, die einzige Stelle im Baum. GEMESSEN EIN NULLZUG: `normal` IST 400, die Regel setzt nur zurueck, was `.search-result-title` daneben auf 600 hebt. Geaendert wird die Schreibweise, nicht die Darstellung — zwei Schreibweisen derselben Eigenschaft laufen auseinander, dasselbe Argument wie bei F-04 (keine Hex-Literale ausserhalb des Tokenblocks). */
     color: var(--text-dim);
     background: var(--bg-dark);
     padding: 2px 6px;
@@ -1748,7 +1748,7 @@
 
 .ds-legend-gold {
     color: var(--gold-text);
-    font-weight: bold;
+    font-weight: 600;
 }
 
 /* Crit / Fumble Rate Row */

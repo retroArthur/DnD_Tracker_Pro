@@ -55,7 +55,7 @@
         
         .dice-result-main {
             font-size: var(--text-hero); /* war 4em = 64 px bei 16-px-Wurzel -> 72 px, +8,00. GEMESSEN 0 Elemente: #dice-result gibt es im Markup nicht, der Rueckfallpfad in dice-core.js:372 findet seinen Behaelter nie — die Aenderung ist sichtbar wirkungslos. Der tote Behaelter ist in der Aktenlage als eigener Befund gefuehrt */
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold);
             line-height: 1;
             text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
@@ -357,7 +357,7 @@
         
         .char-attr-box .attr-label {
             font-size: var(--text-xs);
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold-text);
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -370,7 +370,7 @@
             border: none;
             color: var(--cyan-text);
             font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Ein Eingabefeld mit dem Attributwert, also Text. 20 px liegt ueber der 16-px-Schwelle und loest beim Antippen keinen Auto-Zoom aus (E-2) */
-            font-weight: 700;
+            font-weight: 600;
             padding: 2px 0;
             -moz-appearance: textfield;
         }
@@ -905,7 +905,7 @@
     background: var(--purple);
     color: var(--on-purple);
     font-size: var(--text-xs);
-    font-weight: 700;
+    font-weight: 600;
     width: 18px;
     height: 18px;
     border-radius: 50%;
@@ -989,7 +989,7 @@
 
 .dash-stat-value {
     font-size: var(--text-2xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
 }
 
@@ -1133,7 +1133,7 @@
 }
 
 .dash-session-num {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     min-width: 30px;
 }
@@ -1161,7 +1161,7 @@
 
 .dash-timer-time {
     font-size: var(--text-2xl);
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-mono);
     color: var(--gold);
 }
@@ -1383,7 +1383,7 @@
     padding: 6px 10px;
     min-width: 48px;
     cursor: help;
-    font-weight: 700;
+    font-weight: 600;
     transition: var(--trans-std);
 }
 
@@ -1525,7 +1525,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-weight: 700;
+    font-weight: 600;
     cursor: help;
     transition: var(--trans-std);
 }
@@ -1867,7 +1867,7 @@
     color: var(--on-green);
     cursor: pointer;
     font-size: var(--text-sm);
-    font-weight: bold;
+    font-weight: 600;
     line-height: 1;
     opacity: 0;
     transition: opacity var(--dur);
@@ -2120,7 +2120,7 @@
     background: var(--purple);
     color: var(--on-purple);
     border-radius: 50%;
-    font-weight: bold;
+    font-weight: 600;
     font-size: var(--text-md);
     margin-bottom: 4px;
 }

@@ -93,7 +93,7 @@
 
 /* Monster name */
 .bestiary-name {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text);
     flex: 1;
     min-width: 0;
@@ -174,7 +174,7 @@
 /* Monster name heading (above parchment) */
 .bestiary-detail-name {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     margin-bottom: 8px;
 }
@@ -215,7 +215,7 @@
 /* Monster name inside parchment (classic 5e red) */
 .bestiary-statblock-name {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     /* Schritt 11 (Welle 1): Das Pergament folgt keinem Theme — die
        Verlaufsenden --ra-parchment-from/-to sind in allen vier Themes
        dieselben. `var(--red)` tat es trotzdem und erreichte darauf
@@ -296,7 +296,7 @@
 }
 
 .bestiary-attr-label {
-    font-weight: 700;
+    font-weight: 600;
     font-size: var(--text-md);
     color: var(--parchment-ink);
 }
@@ -324,7 +324,7 @@
 /* Section headings (Eigenschaften, Aktionen, etc.) */
 .bestiary-statblock-section-heading {
     font-size: var(--text-lg);
-    font-weight: 700;
+    font-weight: 600;
     /* Schritt 11 (Welle 1), dieselbe Rechnung wie bei
        .bestiary-statblock-name: `var(--red)` erreichte auf dem
        themenunabhaengigen Pergament hoechstens 3,92 (Text) und fiel mit
@@ -347,7 +347,7 @@
 }
 
 .bestiary-statblock-trait-name {
-    font-weight: 700;
+    font-weight: 600;
     font-style: italic;
 }
 
@@ -520,7 +520,7 @@
 
 /* Section headings inside the editor */
 .bst-section-title {
-    font-weight: 700;
+    font-weight: 600;
     font-size: var(--text-md);
     color: var(--gold);
     border-bottom: 1px solid var(--border);
@@ -565,7 +565,7 @@
 
 .bst-attr-col label {
     font-size: var(--text-xs);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-dim);
     text-align: center;
 }
@@ -599,7 +599,7 @@
 }
 
 .bst-save-item span {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-dim);
     min-width: 28px;
 }

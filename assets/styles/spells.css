@@ -349,8 +349,8 @@
         [contenteditable="true"] strong,
         .spell-editor b, .rich-editor b, .dialog-text b,
         .spell-editor strong, .rich-editor strong, .dialog-text strong {
-            font-weight: 700 !important;
-            font-weight: bold !important;
+            font-weight: 600 !important; /* war 700 !important. 600, weil das Ausgabe-Fett derselben Inhalte (`.spell-desc strong/b` und sieben Geschwister, party.css:248-265) schon auf `600 !important` steht: der Editor zeigt beim Tippen jetzt dasselbe Fett wie die gespeicherte Ansicht (Handoff Paragraph 3.3). Gemessen ist 700 -> 600 die einzige sichtbare Gewichtsaenderung — 500 und 600 rendern unter Segoe UI auf den Bildpunkt identisch (578,50 px Textbreite, 8.940 dunkle Bildpunkte), 400 nicht (562,03 px, 6.639). Das `!important` bleibt: es schlaegt die Inline-Stile, die der Reichtext-Editor in gespeicherte Inhalte schreibt (begruendete Ausnahme, F-18). */
+            /* HIER STAND EINE ZWEITE DEKLARATION: `font-weight: bold !important`. Zwei Schreibweisen derselben Eigenschaft im selben Block; die untere gewann, also galt 700, und die obere war wirkungslos. Sie ist GELOESCHT — IMPORTANT_MAX 105 -> 104 (O-2, Welle 5 Schritt 6). DIESE ZEILE BLEIBT ABSICHTLICH EINE ZEILE: spells.css traegt neun Zeilenanker aus zwei Ratschen (R-19 und der Radientabelle) und aus der Aktenlage; eine Loeschung OHNE Ersatzzeile haette alle sechs Anker oberhalb von 353 um eins verschoben. Die Projektlehre dazu steht in tools/typo-map.js. */
         }
 
         [contenteditable="true"] i,

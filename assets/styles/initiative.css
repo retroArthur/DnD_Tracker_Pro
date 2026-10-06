@@ -268,7 +268,7 @@
             cursor: grabbing;
         }
         
-        .init-value { font-size: var(--text-xl); font-weight: 700; color: var(--gold); text-align: center; cursor: pointer; }
+        .init-value { font-size: var(--text-xl); font-weight: 600; color: var(--gold); text-align: center; cursor: pointer; }
         .init-value:hover { text-decoration: underline; }
         
         .init-ac {
@@ -600,7 +600,7 @@
 
         .concentration-badge .conc-break {
             color: var(--red-text);
-            font-weight: 700;
+            font-weight: 600;
             padding: 2px 6px;
             background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent);
             border-radius: var(--radius-sm);
@@ -688,7 +688,7 @@
 
         /* Die Tinte des Quergriffs; die Zahlen stehen in der Elternregel. */
         .concentration-check-banner .conc-dc {
-            font-weight: 700;
+            font-weight: 600;
             color: var(--gold-text);
         }
 
@@ -773,7 +773,7 @@
             background: var(--red);
             color: var(--on-red);
             border-radius: var(--radius-md);
-            font-weight: 700;
+            font-weight: 600;
             font-size: var(--text-xl);
             min-width: 50px;
             text-align: center;
@@ -1248,7 +1248,7 @@
 
 .init-statblock-name {
     font-size: var(--text-lg);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text);
     margin-bottom: 4px;
 }
@@ -1498,7 +1498,7 @@
     color: var(--on-red);
     border-radius: var(--radius-sm);
     font-size: var(--text-xs);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* ============================================================
@@ -1506,7 +1506,7 @@
    ============================================================ */
 
 .xp-distribute-btn {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .xp-dist-body {
@@ -1533,7 +1533,7 @@
 
 .xp-dist-autosum-value {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
 }
 

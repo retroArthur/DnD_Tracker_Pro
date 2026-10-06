@@ -20,7 +20,7 @@
 
 .dice-hero-result {
     font-size: var(--text-hero); /* war 5em = 80,00 px gemessen -> 72 px, -8,00. Die groesste Zahl der App; --text-hero ist genau fuer sie da (Handoff Paragraph 7) */
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     line-height: 1;
     transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */
@@ -66,7 +66,7 @@
     background: var(--bg-elevated);
     cursor: pointer;
     font-size: var(--text-lg);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text);
     transition: var(--trans-std);
     display: flex;
@@ -578,7 +578,7 @@
 
 .dice-attr small {
     color: var(--cyan-text);
-    font-weight: 700;
+    font-weight: 600;
     margin-top: 2px;
 }
 
@@ -812,7 +812,7 @@
 
 .fdp-number {
     font-size: var(--text-3xl); /* war 3em = 48,00 px gemessen (16-px-Eltern) -> 34 px, -14,00. Die Wurfzahl ist Text, kein Ikon. --text-3xl und nicht --text-hero: das schwebende Paneel bleibt dem Wuerfel-Hero (72 px) untergeordnet */
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     line-height: 1;
     transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */

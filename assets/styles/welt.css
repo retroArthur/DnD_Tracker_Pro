@@ -57,7 +57,7 @@
 }
 
 .wp-session-nr {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold);
     margin-right: 4px;
 }
@@ -332,7 +332,7 @@
 }
 
 #kalender-monat-anzeige {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tl-list {
@@ -591,13 +591,13 @@
 
 .rs-tagesmarsch {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold);
 }
 
 .rs-config-title {
     font-size: var(--text-lg);
-    font-weight: 700;
+    font-weight: 600;
     margin: 0 0 var(--space-sm) 0;
     color: var(--text);
 }
@@ -805,7 +805,7 @@
 
 .npcg-preview-name {
     font-size: var(--text-xl);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold-text);
     margin-bottom: 8px;
     line-height: 1.2;
@@ -1021,7 +1021,7 @@
 
 .fr-section-title {
     font-size: var(--text-sm);
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-dim);
@@ -1115,7 +1115,7 @@
 }
 
 .fr-hist-delta {
-    font-weight: 700;
+    font-weight: 600;
     min-width: 40px;
     text-align: right;
     flex-shrink: 0;
