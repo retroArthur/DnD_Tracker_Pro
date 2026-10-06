@@ -1201,9 +1201,11 @@ const UEBERSCHRIFTEN_GEMESSEN = [
  * `datei||selektoren||wert` (siehe `kettenAnker()`), Wert
  * `{ ziel, grund, warum, ...Messwerte }`.
  *
- * EINUNDZWANZIG EINTRAEGE IN DREI GRUENDEN, und jeder nennt seinen Messwert.
+ * DREIUNDZWANZIG EINTRAEGE IN VIER GRUENDEN, und jeder nennt seinen Messwert.
+ * (Zwei davon sind in der Pruefrunde W5-D/1 nachgetragen; ihre Gruende stehen
+ * unten bei `kette` und bei `browser-vorgabe`.)
  *
- * GRUND `kette` — 15 Stellen. Das Ziel kommt aus dem GEMESSENEN Wert und
+ * GRUND `kette` — 16 Stellen. Das Ziel kommt aus dem GEMESSENEN Wert und
  * nicht aus dem deklarierten. Die Regel ist EINE und ueberall dieselbe,
  * damit die Zeilen nachrechenbar bleiben und nicht nach Gefuehl gesetzt
  * sind:
@@ -1240,6 +1242,29 @@ const UEBERSCHRIFTEN_GEMESSEN = [
  * und in der Ruhelage enthaelt kein Reichtext-Inhalt eine Ueberschrift
  * (Begruendung am Kopf von `KETTEN`). Ein Eintrag mit `grund: 'kette'` haette
  * also eine Herkunft behauptet, die er nicht hat.
+ *
+ * GRUND `browser-vorgabe` — 1 Stelle, nachgetragen in der Pruefrunde W5-D/1,
+ * und er ist NICHT `kette`. Bei `kette` traegt das Elternteil eine eigene
+ * App-Deklaration; genau darum steht die Kante in `KETTEN`, deren Anker
+ * `datei||selektoren||wert` ohne Elterndeklaration keinen Wert haette. Hier
+ * traegt das Elternteil KEINE: `.rest-type-icon` sitzt in
+ * `<button class="rest-type-btn">` (features/rest-manager.js:26/31), und
+ * `party.css:2101` setzt dort Ausrichtung, Abstand, Rahmen und Hintergrund,
+ * aber keine Schrift. Die einzige Regel, die Schaltflaechen `font-size:
+ * inherit` gibt (`core.css:2693`), gilt nur innerhalb `.loc-toolbar`. Also
+ * entscheidet das Stilblatt des Browsers — Chrome setzt an `button`
+ * 13,3333 px, nicht 16 —, und `2em` sind dort gemessen 26,67 px.
+ * WARUM DAS EINEN EIGENEN GRUND BRAUCHT UND NICHT `kette` BEKOMMT: dieselbe
+ * Ueberlegung wie bei `kette-reichtext`. Alle 15 `kette`-Eintraege sind
+ * nachgemessen Kinder in `KETTEN`; dieser kann es nicht sein, und ein
+ * `grund: 'kette'` haette eine Herkunft behauptet, die er nicht hat.
+ * Der Bestand dieser Lage ist eigens erhoben und steht als Liste im Waechter
+ * (`tests/unit/typo-map.test.js`, Block W5-W12): 5 em-Deklarationen sitzen auf
+ * der Browser-Vorgabe 13,3333 px, und ueber die 2-px-Abnahme geht genau diese
+ * eine. Die anderen vier (`.qa-icon` +1,33, `.dice-attr span` +1,33,
+ * `.qa-name` +0,67, `.rest-type-desc` +0,67 px) bleiben bei ihrer
+ * Tabellenzeile — eine Sonderzuordnung ohne Not waere eine Abweichung ohne
+ * Grund, und der Waechter verbietet sie ausdruecklich.
  */
 const SONDERZUORDNUNG = {
     // --- Grund `kette`: Ziel aus dem gemessenen Wert ---------------------
@@ -1392,6 +1417,36 @@ const SONDERZUORDNUNG = {
             'Sprung +2,00 px und groesser als die Ueberschrift, in der er ' +
             'sitzt. Sprung -1,00 px.'
     },
+    'editors.css||.section-toolbar-title||0.9em': {
+        ziel: token('sm'),
+        grund: 'kette',
+        gemessenPx: 12.6,
+        elternPx: 14,
+        warum:
+            'Mobilfassung des Leistentitels im Block `@media (max-width: ' +
+            '600px)`. NACHGETRAGEN IN DER PRUEFRUNDE W5-D/1, und die Zahl, die ' +
+            'sie traegt, ist keine Schriftzahl, sondern eine Layoutzahl. Das ' +
+            'Elternteil `.section-toolbar` traegt dort 14px (die Kante steht ' +
+            'als Kind in KETTEN, gemessen 12,6 px, 24 Elemente mit Text); die ' +
+            'Tabellenzeile 0.9em -> --text-md gaebe 14 px, Sprung +1,40 px. ' +
+            'Dieser Sprung macht die Titelgruppe 10,4 px breiter, und bei ' +
+            '375 px unter der breiten Linux-Metrik reicht die Reserve dann ' +
+            'nicht mehr: gemessen am gebauten Buendel (Verdana, 1,155x, ' +
+            'gefuellte Kampagne) belegen Titelgruppe + Luecke + primaere ' +
+            'Aktion bei `encounter` 334,69 statt 322,64 von 331 px und bei ' +
+            '`kalender` 342,59 statt 324,37 — aus EINER Zeile werden ZWEI, die ' +
+            'Leiste waechst um 29 px, und bei `encounter` gehen diese 29 px ' +
+            '1:1 aus der scrollenden Listenspalte (`.enc-master` 305,2 -> ' +
+            '276,2 px), weil die Ansicht hoehenbegrenzt ist. `npcs` stand mit ' +
+            '0,92 px Reserve am selben Kippen. Das ist dieselbe ' +
+            'Groessenordnung, die der C1-Kommentar in editors.css:752 als ' +
+            'Gewinn der Welle 4 verbucht — nur in der Gegenrichtung. ' +
+            '--text-sm kommt aus der Rundungsregel von `kette`: gemessen ' +
+            '12,6 -> gerundet 13 -> px-Zeile 13px -> --text-sm (12 px), ' +
+            'Sprung -0,60 statt +1,40 px, und die Ordnung zum Elternziel ' +
+            '(14 px) bleibt gewahrt (das Kind war kleiner und bleibt kleiner). ' +
+            'Bewacht von tests/e2e/features/breite-schrift.spec.js, Fall (5).'
+    },
     'party.css||.cf-combat-stat .cf-speed-ft||0.85em': {
         ziel: token('xs'),
         grund: 'kette',
@@ -1482,15 +1537,51 @@ const SONDERZUORDNUNG = {
             'aber lesbarer Text, und genau dafuer gilt die Untergrenze; die ' +
             '25 benannten Kleinst-Ausnahmen sind SVG-Beschriftungen und ' +
             'textlose Punkte, nicht Ueberschriften.'
+    },
+
+    // --- Grund `browser-vorgabe`: Elternwert aus dem Stilblatt des Browsers
+    'party.css||.rest-type-icon||2em': {
+        ziel: token('2xl'),
+        grund: 'browser-vorgabe',
+        gemessenPx: 26.67,
+        elternPx: 13.33,
+        warum:
+            'Ikone der Rastauswahl (⏰ / 🌙), beide sichtbar und mit ' +
+            'Textknoten. NACHGETRAGEN IN DER PRUEFRUNDE W5-D/1 — das ist der ' +
+            'Befund, nicht eine Feinheit. Das Elternteil ist ein <button> ' +
+            'OHNE App-Deklaration (siehe Grund `browser-vorgabe` oben), ' +
+            'Chrome setzt dort 13,3333 px, und `2em` sind gemessen 26,67 px ' +
+            'und nicht die 32 px, mit denen `altPx()` rechnet. Die ' +
+            'Tabellenzeile 2em -> --text-3xl gaebe 34 px: gemessen ein Sprung ' +
+            'von +7,33 px, nicht die +2,00 px, die der Bericht des Schrittes 5 ' +
+            'auswies. Nachgemessen am gebauten Buendel, Rast-Modal geoeffnet, ' +
+            'gefuellte Kampagne: die Karte wuchs von 237x111 auf 237x123 px. ' +
+            'DAS ZIEL IST --text-2xl (26 px) UND KEINE AUSNAHME, und das ist ' +
+            'der Punkt: 26 px liegen 0,67 px unter dem gemessenen Wert, also ' +
+            'innerhalb der 2-px-Abnahme, unter der Schritt 5 alle 54 ' +
+            'unbeurteilten Ikon-Kandidaten mechanisch gehoben hat. Damit gilt ' +
+            'die Begruendung jener Entscheidung fuer diese Stelle weiter, die ' +
+            'Ausnahmeliste bleibt bei 35 Ankern (eine Liste, die den groesseren ' +
+            'Teil des Befundes umfasst, bewacht nichts — Lehre O-5), und ' +
+            'W5-R-05a bleibt bei 0. Eine Sprosse bei 27 px gibt es nicht; die ' +
+            'Skala fuehrt 26 und 34, und 34 ist der Fehler, der hier behoben ' +
+            'wird. Die Ordnung zum Elternteil bleibt gewahrt: das Kind war ' +
+            'groesser (26,67 gegen 13,33) und bleibt groesser. Bewacht von ' +
+            'tests/unit/typo-map.test.js, Block W5-W12.'
     }
 };
 
 /** Die Gruende, die eine Sonderzuordnung tragen darf. Eine geschlossene
  *  Menge, damit nicht bei jeder unbequemen Stelle ein neuer Grund erfunden
- *  wird — wer einen vierten braucht, traegt ihn hier ein und begruendet ihn.
+ *  wird — wer einen fuenften braucht, traegt ihn hier ein und begruendet ihn.
+ *  Der vierte (`browser-vorgabe`) ist in der Pruefrunde W5-D/1 dazugekommen,
+ *  und zwar NICHT, weil `kette` unbequem war, sondern weil `kette` eine
+ *  Herkunft behauptet haette, die es nicht gibt: alle 16 `kette`-Eintraege
+ *  sind nachgemessen Kinder in `KETTEN`, und dort kann eine Kante ohne
+ *  Elterndeklaration nicht stehen. Begruendung in voller Laenge oben.
  *  Dass jeder Eintrag einen Grund AUS dieser Menge traegt, prueft der
  *  Waechter; ohne diese Pruefung waere die Geschlossenheit eine Bitte. */
-const SONDER_GRUENDE = ['kette', 'formular-e2', 'kette-reichtext'];
+const SONDER_GRUENDE = ['kette', 'formular-e2', 'kette-reichtext', 'browser-vorgabe'];
 
 /* ===========================================================================
    9. DIE EINE STELLE, DIE EIN ZIEL BESTIMMT

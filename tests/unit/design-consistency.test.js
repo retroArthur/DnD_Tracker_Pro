@@ -14974,15 +14974,40 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
 
    NACHTRAG DES SCHRITTES 5, und er beantwortet genau die zwei Fragen, die der
    Absatz darueber offen gelassen hat.
-     (1) DIE 54 IKON-KANDIDATEN WERDEN MECHANISCH GEHOBEN. Gemessen springt
-         KEINE von ihnen um mehr als 2 px (Spanne -2,00 .. +2,00 px, mehrere
-         bei 0,00); E-3 ist fuer sie also nicht erfuellt, und die Wirkung ist
+     (1) DIE 54 IKON-KANDIDATEN WERDEN MECHANISCH GEHOBEN, weil ihr Sprung
+         gegen den GEMESSENEN Wert innerhalb von 2 px bleibt; E-3 ist fuer sie
+         also nicht erfuellt, und die Wirkung ist
          der Rahmen, den das Abnahmekriterium des Handoffs pauschal deckt. Der
          Gegenweg — sie zu dulden — haette die Ausnahmeliste von 32 auf 86
          Anker getrieben, und eine Ausnahmeliste, die den groesseren Teil des
          Befundes umfasst, bewacht nichts mehr (dieselbe Lehre wie O-5). Er
          waere ueberdies an W5-R-07e gescheitert, das sie namentlich NICHT
          geduldet sehen will.
+         HIER STAND EINE FALSCHE MESSUNG, und sie ist der Befund der
+         Pruefrunde W5-D/1. Der Satz lautete: "Gemessen springt KEINE von
+         ihnen um mehr als 2 px (Spanne -2,00 .. +2,00 px, mehrere bei 0,00)".
+         Diese Spanne war gegen den ANGENOMMENEN Altwert gerechnet — em mal
+         einer 16-px-Wurzel, so wie `altPx()` es tut und wie es sich selbst
+         eine Annahme nennt. Nachgemessen im Browser ging Nummer 18 der Liste,
+         `party.css .rest-type-icon`, um +7,33 px und nicht um +2,00: ihr
+         Elternteil ist ein <button> ohne App-Deklaration, und dort gilt die
+         Browser-Vorgabe 13,3333 px. Die Stelle traegt jetzt eine
+         Sonderzuordnung auf --text-2xl (Sprung -0,67 px, Begruendung in
+         `tools/typo-map.js`), damit der Satz oben wieder stimmt — sie bleibt
+         also in der mechanischen Menge und nicht in der Ausnahmeliste, und
+         die 54 bleiben 54. Was den Satz heute traegt, ist eine eigene
+         Erhebung ueber 49 Zustaende (24 Ansichten mit geoeffneten
+         Aufklapp-Formularen plus 24 geoeffnete Modale, gefuellte Kampagne, am
+         VOR-Buendel): von 207 sichtbaren em-Regeln sitzen 28 auf einem
+         Elternwert ungleich 16 px, und ueber die 2-px-Abnahme ging GENAU
+         diese eine. Bewacht von tests/unit/typo-map.test.js, Block W5-W12.
+         WAS DAMIT NICHT GEMESSEN IST, und es gehoert hierher, damit es nicht
+         als gemessen gilt: 21 em-Stellen mit Faktor >= 1,2 liessen sich in
+         keinem der 49 Zustaende rendern (u.a. `.avatar-placeholder.avatar-lg`,
+         `.loot-detail-icon`, `.npc-popup-avatar-placeholder`,
+         `.rt-preview-icon`, `.generator-table-icon`). Fuer sie traegt die
+         16-px-Annahme weiterhin UNGEPRUEFT. Das ist eine offene Messschuld
+         und in der Aktenlage als solche gefuehrt.
      (2) DIE LISTE WAECHST UM GENAU EINEN ANKER, `.tb-caret`, und das ist
          keine Ikone, sondern eine ZUSICHERUNG, die sonst gebrochen waere:
          `.wiki-tree-item-toggle` und `.tb-caret` sind dasselbe Zeichen in
