@@ -5766,7 +5766,8 @@ node tools/sync-typo-tokens.js --report | grep spell-desc
 
 ## W5-C — die 31 Urteilsstellen: 22 bleiben neben der Skala, 9 kommen darauf (2026-10-06)
 
-**Status: ERLEDIGT.** Einheit W5-C (Schritt 4), zwei Commits, `5f313a6 → 4534b38`. Die
+**Status: ERLEDIGT, mit einer Rücknahme in Runde 1** (eigener Abschnitt weiter unten).
+Einheit W5-C (Schritt 4), zwei Commits, `5f313a6 → 4534b38`. Die
 erste Einheit dieser Welle, die **CSS ändert**: 31 Deklarationen in zehn Dateien, jede mit
 einem nachgestellten Kommentar, der alten Wert, neuen Wert und Grund nennt.
 
@@ -5821,7 +5822,10 @@ sie zeichengenau; wer sie auf 28, 22 und 18 rundet, ändert sichtbar und wird ro
 | `.char-attr-box .attr-input` (dashboard.css) | 22,40 px | `--text-xl` 20 | −2,40 |
 | `.dms-dice-result` (dmscreen.css) | 22,40 px | `--text-xl` 20 | −2,40 |
 | `.wiki-detail-title` (party.css) | 22,40 px | `--text-xl` 20 | −2,40 |
-| `.floating-toolbar .kbd-hint` (spells.css) | 8,00 px | `--text-xs` 11 | **+3,00** |
+| ~~`.floating-toolbar .kbd-hint` (spells.css) | 8,00 px | `--text-xs` 11 | **+3,00**~~ | — | — | — |
+
+**Die letzte Zeile ist in Runde 1 zurückgenommen worden**, die Tabelle hat seither **acht**
+Zeilen. Grund: die Hebung erzeugt gemessen Überlappung. Siehe **W5-C Runde 1** weiter unten.
 
 `.dice-result-main` hat **0 Elemente**: `#dice-result` existiert im Markup nicht, der
 Rückfallpfad in `dice-core.js:372` findet seinen Behälter nie. Namentlich in `OHNE_MESSUNG`
@@ -5842,10 +5846,15 @@ Sitzung:
 | 11 px (nachher) | **2,80 px** | **3,09 px** |
 | 11 px, breite Schrift | **9,50 px** | **9,74 px** |
 
-Das ist eine **Layout-Frage** (welche Hilfe wann sichtbar ist) und keine Größenfrage; nach
+~~Das ist eine **Layout-Frage** (welche Hilfe wann sichtbar ist) und keine Größenfrage; nach
 Arbeitsregel 10 gehört sie nicht in eine Typografie-Welle. 8 px unlesbaren Text
 stehenzulassen wäre die schlechtere Wahl — E-4 zieht die Untergrenze bei 11 px für alles,
-was man liest. Die Zahlen stehen an der Stelle im CSS.
+was man liest.~~ **Dieser Absatz hat in Runde 1 nicht gehalten.** Die Abwägung „klein, aber
+getrennt" gegen „größer, aber verschmolzen" ist nicht neutral: bei 11 px fällt der
+Lückenabstand auf **null**, und die drei linken Hilfen rendern als eine einzige Zeichenkette
+(`Strg+BStrg+IStrg+U`). Für drei von fünf erreicht die Hebung damit das Gegenteil ihres
+Zwecks. Die Stelle ist zurückgenommen; siehe **W5-C Runde 1**. Die Zahlen stehen an der
+Stelle im CSS.
 
 **Nebenbefund dabei:** `.kbd-hint` erbt gemessen `Arial` und **nicht** `--font-ui`. Die
 Linux-Nachstellung über `--font-ui` greift dort also gar nicht; die breite Schrift ist für
@@ -5863,7 +5872,8 @@ die Messung oben direkt an die Hilfe gelegt worden.
   bei 8 px (gemessen 8,00 px in einer 12,8-px-Baumzeile): kein Lesetext, aber auch kein
   Emoji-Ikon. Er muss **gemeinsam mit `.tb-caret`** (editors.css, 9 px, ▾) entschieden
   werden — dasselbe Zeichen in derselben Rolle darf nicht zwei verschiedene Antworten
-  bekommen. Beide stehen so im CSS.
+  bekommen. Beide stehen so im CSS. **Seit Runde 1 gehört `.floating-toolbar .kbd-hint`
+  (8 px) zu demselben Bündel** — dort aber zusätzlich mit der Layoutfrage.
 
 ### Nachweise
 
@@ -5901,7 +5911,8 @@ und 31 entfernte Zeilen.
 ### Ratschen
 
 Alle gesunken und exakt ausgereizt: `AUSSERHALB_MAX` **833 → 802**, `EM_MAX` **603 → 574**
-(`EM_ZIEL` bleibt **6**, und das ist jetzt haltbar), `OFFEN_MAX` **833 → 802**. Unverändert:
+(`EM_ZIEL` bleibt **6**, und das ist jetzt haltbar), `OFFEN_MAX` **833 → 802**. **Beide
+Schranken stehen auch nach Runde 1 auf 802** — nachgemessen, Begründung dort. Unverändert:
 DUBLETTEN 0, `!important` 105, Inline-Stile 254, `transition: all` 0, `SVG_MAX` 3. Lint
 Exit 0 mit **363** Warnungen, typecheck und typecheck:strict Exit 0, beide Builds Exit 0,
 pytest 30, Jest **2069/2069 in 77 Suiten**, Playwright **595 bestanden / 27 übersprungen /
@@ -5914,10 +5925,14 @@ pytest 30, Jest **2069/2069 in 77 Suiten**, Playwright **595 bestanden / 27 übe
   einem Markup, das keine Vorlage mehr erzeugt. Der Dead-CSS-Bericht hält sie für lebendig,
   weil der Klassenname als Zeichenkette im JS steht. Eigene Aufräumarbeit, keine
   Typografie.
-- **Die Überlappung der Tastenhilfen** (oben beziffert) braucht eine Layout-Entscheidung.
-  Naheliegend: nur die Hilfe des **berührten** Knopfes zeigen statt aller fünf.
+- ~~**Die Überlappung der Tastenhilfen** (oben beziffert) braucht eine
+  Layout-Entscheidung.~~ **In Runde 1 beseitigt** (Rücknahme auf 8 px). Was bleibt, ist
+  die Kopplung: wer die Hilfen je größer setzt, muss die Layoutregel **mit** ändern —
+  naheliegend, nur die Hilfe des **berührten** Knopfes zu zeigen statt aller fünf. Gehört
+  jetzt zum Bündel unten.
 - **Die 54 unbeurteilten Ikon-Kandidaten** (Schritt 5) und **die Untergrenze für
-  Pfeilzeichen** (Schritt 8, `.wiki-tree-item-toggle` + `.tb-caret`).
+  Kleinstschrift** (Schritt 8): `.wiki-tree-item-toggle` (8 px) + `.tb-caret` (9 px) +
+  seit Runde 1 `.floating-toolbar .kbd-hint` (8 px, **mit** der Layoutregel).
 - **Die Uhr im 250-px-Ring wirkt bei 34 px kleiner als nötig.** Die Skala hat zwischen 34
   und 72 px keine Sprosse; 72 würde mit „Kein Timer" darunter kollidieren. Wenn eine
   Zwischensprosse je gebraucht wird, ist dies die Stelle, die danach fragt.
@@ -5942,10 +5957,177 @@ pytest 30, Jest **2069/2069 in 77 Suiten**, Playwright **595 bestanden / 27 übe
 npx jest tests/unit/design-consistency.test.js -t "W5-R-07"
 
 # Die Rechnung nach dem Schritt: 853 = 11 Sprossen + 7 inherit + 33 geduldet + 802 offen
+# (seit Runde 1: 10 Sprossen + 7 inherit + 34 geduldet + 802 offen — OFFEN unverändert)
 node tools/sync-typo-tokens.js --check
 
 # Die 31 im Delta-Bericht — nach dem Schritt ist die Liste über 2 px LEER
 node tools/sync-typo-tokens.js --report | sed -n '/STELLEN MIT SPRUNG > 2 px/,/STELLEN MIT SPRUNG <= 2 px/p'
+```
+
+---
+
+## W5-C Runde 1 — die Hebung auf 11 px hat drei Tastenhilfen verschmolzen (2026-10-06)
+
+**Status: ERLEDIGT.** Nachbesserung der Einheit W5-C nach der Prüfrunde. Vier Commits
+(`39aef23 → HEAD`), **eine Zeile CSS** — und sie geht zurück, nicht vor. Der dritte Commit
+nimmt eine Zahl zurück, die die Prüfrunde vorgerechnet hatte und die nachgemessen nicht
+stimmte; der Abschnitt **Ratschen** unten führt sie.
+
+### Der Befund in einem Satz
+
+`.floating-toolbar .kbd-hint` von 8 auf 11 px zu heben macht die drei linken Tastenhilfen
+**schlechter** lesbar, nicht besser: der Lückenabstand fällt auf null, und „Strg+B",
+„Strg+I", „Strg+U" rendern als eine einzige Zeichenkette.
+
+### Warum das keine Geschmacksfrage ist
+
+Die Hilfen hängen **absolut** unter ihren Knöpfen und nehmen im Fluss der Leiste keinen
+Platz ein (`position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%)`).
+Ihre Breite ist die Breite ihres Textes, ihr Abstand der Abstand ihrer Knöpfe (2 px Spalt,
+`padding: 6px 10px`). **Wächst die Schrift, wächst nur der Text — der Platz dazwischen
+nicht.** Gemessen, eigener Bau, gefüllte Kampagne, 1440 px:
+
+| | Strg+B / Strg+I | Strg+I / Strg+U | Strg+U / Strg+K | Strg+K / Strg+⇧+T |
+| --- | --- | --- | --- | --- |
+| **8 px** | +5,86 | +5,67 | +52,11 | +80,22 |
+| **11 px** | **−2,80** | **−3,09** | +42,78 | +69,28 |
+| 8 px, breite Schrift | +2,30 | +1,90 | +48,05 | +74,94 |
+| **11 px, breite Schrift** | **−8,20** | **−8,68** | +37,06 | +62,02 |
+
+Negative Lücke heißt Überlappung. Die Zahlen des ursprünglichen Laufs sind damit **in der
+Standardschrift exakt bestätigt** (2,80 / 3,09); für die breite Schrift wurden dort 9,50 und
+9,74 px genannt, hier gemessen 8,20 und 8,68 — dieselbe Größenordnung, dieselbe Aussage.
+
+**Es ist der Normalfall, kein Randfall.** `.floating-toolbar:hover .kbd-hint` hängt an der
+**Leiste**, nicht am berührten Knopf. Wer die Leiste irgendwo berührt, sieht alle fünf
+gleichzeitig; einen Zustand mit nur einer Hilfe gibt es nicht.
+
+### Warum die ursprüngliche Abwägung nicht trug
+
+Die Einheit hat die Nebenwirkung gemessen, benannt und bewusst in Kauf genommen: „8 px
+unlesbaren Text stehenzulassen wäre die schlechtere Wahl". Diese Abwägung setzt voraus, dass
+11 px lesbarer sind als 8 px. **Für drei der fünf Hilfen trifft das nicht zu** — sie sind bei
+11 px größer **und** ohne Worttrennung. Eine Welle, die einen Lesbarkeitsmangel durch einen
+anderen ersetzt und beide offen lässt, hat an dieser Stelle nichts gewonnen.
+
+Dazu kommt die **Ungleichbehandlung im eigenen Haus**: die beiden anderen Stellen unter
+11 px — `.wiki-tree-item-toggle` (8 px) und `.tb-caret` (9 px) — hat dieselbe Einheit
+ausdrücklich stehengelassen und **gemeinsam** an Schritt 8 übergeben, mit der Begründung,
+dass zwei gleiche Zeichen nicht zwei Antworten bekommen dürfen. Die Tastenhilfe ging denselben
+Weg nicht.
+
+### Was geändert wurde
+
+| Stelle | vorher | nachher |
+| --- | --- | --- |
+| `assets/styles/spells.css` | `var(--text-xs)` | `8px`, Kommentar nachgestellt |
+| `tools/typo-map.js` Abschnitt 7a | 20 Anker | **21** Anker, eigener Eintrag mit Messung |
+| `tools/typo-map.js` Kettenanker | Wert `var(--text-xs)`, kindPx 11 | Wert `8px`, kindPx 8 |
+| `URTEIL_IKON` | 22 Zeilen | **23** |
+| `URTEIL_TEXT` | 9 Zeilen | **8** |
+
+23 + 8 = 31; die Menge des Schrittes ist unverändert. **Die Zeilenzahl von `spells.css`
+bleibt 711** — der Kommentar ist nachgestellt, kein Zeilenanker verschiebt sich.
+
+Der Kettenanker **trägt den Wert** und musste darum zum zweiten Mal mitwandern, sonst träfe
+die Verwesungsprobe in `typo-map.test.js` ihn nicht mehr und die Kante hörte lautlos auf zu
+urteilen.
+
+### Die Zusicherung, und was sie NICHT festschreibt
+
+`tests/e2e/features/tastenhilfen.spec.js`, **4 Fälle**:
+
+1. alle fünf Hilfen werden bei einer Berührung **gemeinsam** sichtbar (belegt, dass es der
+   Normalfall ist, statt den Selektor nur zu lesen),
+2. keine zwei berühren einander in der Standardschrift,
+3. dasselbe in der **breiten Schrift** (Verdana, Linux-Näherung — `.kbd-hint` erbt gemessen
+   `Arial` und **nicht** `--font-ui`, die Umlegung sitzt deshalb direkt an der Hilfe),
+4. unter 901 px nimmt `@media (max-width: 900px)` die Hilfen weg — ohne diesen Fall sicherten
+   die drei anderen auf Telefonbreiten etwas zu, das dort nicht gilt.
+
+**Der Fall schreibt keine Schriftgröße fest.** Er verlangt nur Platz zwischen zwei Hilfen.
+Schritt 8 darf sie größer setzen — dann aber **mit** der Layoutregel. Genau diese Kopplung ist
+der Zweck: Größe und Anordnung dürfen hier nicht getrennt entschieden werden.
+
+### Ratschen
+
+**`AUSSERHALB_MAX` und `OFFEN_MAX` bleiben auf 802 — und das ist nachgemessen, nicht
+angenommen.** Die Prüfrunde hatte 803 vorgerechnet; das ist falsch. Die Stelle wandert von
+**„bereits auf einer Sprosse"** (11 → 10) nach **„namentlich geduldet"** (33 → 34). Beide
+Mengen liegen **außerhalb** dessen, was diese Schranken zählen — die offene Menge berührt sie
+weder vorher noch nachher. `node tools/sync-typo-tokens.js --check` nach der Rücknahme:
+
+```
+  font-size-Deklarationen gesamt      :  853
+    davon bereits auf einer Sprosse   :   10
+    davon inherit (legt nichts fest)  :    7
+    davon namentlich geduldet         :   34
+  OFFEN (zuordenbar, noch nicht Token):  802
+```
+
+Und `W5-R-05a`, mit der Schranke vorübergehend auf 0 gesetzt, um die gemeldete Zahl zu lesen:
+`ausserhalbDerSkala: 802, geduldet: 32, gesamt: 853`. **Wer hier auf 803 angehoben hätte,
+ließe beide Schranken um eine Stelle locker stehen** — genau der Fehler, den diese Akte an
+anderer Stelle schon einmal festgehalten hat („eine Schranke, die nach einer Änderung um sechs
+Stellen locker steht, bewacht sechs Stellen weniger als sie behauptet"). `EM_MAX` bleibt
+**574** (die Stelle war nie `em`), DUBLETTEN 0, `!important` 105, Inline-Stile 254,
+`transition: all` 0.
+
+### Ein Gate hat zugeschlagen, und es ist nicht umgangen worden
+
+Der Kopfkommentar des neuen Falls nannte `rich-text-toolbars.js` mit vollem Pfad — worauf
+`module-test-coverage.test.js` das Modul als abgedeckt zählte und rot wurde. Das Gate sucht
+Modulpfade als Teilzeichenkette in **allen** Testdateien und zählt jeden Treffer, auch einen
+im Erklärtext. Die Datei prüft das Modul nicht, sie nennt es als Herkunft der Klasse
+`visible`. Also **Kurzform plus Begründung an Ort und Stelle**, wie beim Präzedenzfall
+`dice-core.js` in `OHNE_MESSUNG`; die Ausnahmeliste bleibt unberührt. Die Alternative — das
+Modul von der Liste streichen — hätte eine Abdeckung behauptet, die es nicht gibt.
+
+### Nachweise
+
+**Rot vor grün, beziffert.** Der Fall wurde gegen den gebauten Stand `39aef23` gefahren und
+meldete 2 von 4 Fällen rot mit genau den Zahlen der Tabelle oben; nach der Rücknahme 4/4 grün.
+Beide Läufe stehen in den Commit-Nachrichten `4f30c1f` und `ab38cc3`.
+
+**Gegenprobe mit einem Kontrollbau.** Statt `5f313a6` auszuchecken (30 weitere geänderte
+Deklarationen) wurde **nur die eine Zeile** auf `8px` zurückgesetzt und gebaut — ein
+Experiment mit genau einer Variablen. Beide Bauten in derselben Sitzung, demselben Browser,
+derselben Kampagne gemessen.
+
+**Volle Tore:** Jest **2069/2069 in 77 Suiten**, Playwright **599 bestanden / 27 übersprungen /
+0 Fehlschläge** (595 + die vier neuen), pytest 30, Lint Exit 0 mit **363** Warnungen,
+typecheck und typecheck:strict Exit 0, beide Builds Exit 0, `check-f18-kaskade` OK (126/126),
+`sync-aktenlage-anker` 0 Abweichungen.
+
+### Offene Punkte
+
+- **Die Untergrenze für Kleinstschrift ist jetzt ein Bündel aus drei Stellen** (Schritt 8):
+  `.wiki-tree-item-toggle` 8 px, `.tb-caret` 9 px, `.floating-toolbar .kbd-hint` 8 px. Die
+  dritte unterscheidet sich von den beiden anderen: sie trägt **Lesetext** und ist damit die
+  einzige, für die E-4 unmittelbar gilt — sie ist nur deshalb nicht gehoben, weil die
+  Anordnung es nicht zulässt. **Ohne Layoutänderung ist sie nicht lösbar.**
+- **Eine Ungenauigkeit im Kopfkommentar von Abschnitt 7a, nicht angefasst:** dort steht
+  „ZWEI ANKER DECKEN DREI DEKLARATIONEN MEHR, als die Liste Zeilen hat". Gemeint und richtig
+  sind **zwei** (`.enc-detail-icon` und `.enc-item-icon`, je Grundregel + Mobilfassung). Der
+  Satz war schon vor dieser Runde so und ist kein Befund dieser Prüfung; er wird hier nur
+  benannt, damit er nicht als geprüft gilt.
+- Unverändert aus W5-C: der tote Würfel-Behälter, die 54 unbeurteilten Ikon-Kandidaten, die
+  Uhr im 250-px-Ring, und die Restschuld aus W5-A/W5-B (örtlich nicht lauffähige E2E-Suite —
+  diese Runde ist wieder über `PLAYWRIGHT_BROWSERS_PATH` gefahren, der Zwischenspeicher des
+  Nutzers ist **nicht** angefasst; die zehn kaputten `woff2`, der `file://`-Pfad der
+  gebündelten Schriften, `npm run check` vorbestehend rot).
+
+### Befehle
+
+```bash
+# Die Zusicherung (4 Fälle, Browser)
+npx playwright test tests/e2e/features/tastenhilfen.spec.js
+
+# Der Wächter über die geschlossene Menge (7 Fälle)
+npx jest tests/unit/design-consistency.test.js -t "W5-R-07"
+
+# Die Rechnung nach der Rücknahme: 853 = 10 Sprossen + 7 inherit + 34 geduldet + 802 offen
+node tools/sync-typo-tokens.js --check
 ```
 
 ---
