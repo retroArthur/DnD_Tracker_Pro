@@ -518,6 +518,21 @@ const LEERZUSTAND_ANKER =
  * `tests/unit/typo-map.test.js`: keine Kante kippt die Ordnung. Wird eine
  * Kette aufgeloest, verschwindet ihr Eintrag — und die Verwesungsprobe im
  * Waechter verlangt, dass jeder Anker hier wirklich eine Deklaration trifft.
+ *
+ * DIE GRENZE DER ERHEBUNG, und sie ist kein Randfall. Die Liste kennt nur
+ * Kanten, deren KIND in der Ruhelage der gefuellten Kampagne im DOM steht.
+ * Vom Nutzer geschriebener Reichtext-Inhalt faellt grundsaetzlich heraus:
+ * `seedPopulatedSession` erzeugt keinen Eintrag mit `h1`..`h6`, also kennt
+ * diese Liste keine einzige Kante von einem der acht Reichtext-Behaelter zu
+ * einer Ueberschrift darin — auch dann nicht, wenn die Kante gefaehrlich
+ * ist. Gemessen war sie es: `.spell-desc` (0.85em) haette nach der Tabelle
+ * 12 px getragen und damit `h6` auf 10,80 px gezogen, unter die
+ * E-4-Untergrenze, ohne dass eine der sechs Ueberschriftendeklarationen
+ * angefasst worden waere. Zur Gegenprobe steht die sehr aehnliche, aber im
+ * DOM sichtbare Kante `.bst-save-item` -> `.bst-save-val` sehr wohl hier.
+ * WER DORT EINE KETTE BRAUCHT, MISST SIE EIGENS mit einem eingehaengten
+ * Probekoerper, so wie `UEBERSCHRIFTEN_GEMESSEN` entstanden ist, und traegt
+ * das Ergebnis dort und nicht hier ein.
  */
 const KETTEN = [
     {
@@ -944,7 +959,7 @@ const UEBERSCHRIFTEN_GEMESSEN = [
  * `datei||selektoren||wert` (siehe `kettenAnker()`), Wert
  * `{ ziel, grund, warum, ...Messwerte }`.
  *
- * ZWANZIG EINTRAEGE IN ZWEI GRUENDEN, und jeder nennt seinen Messwert.
+ * EINUNDZWANZIG EINTRAEGE IN DREI GRUENDEN, und jeder nennt seinen Messwert.
  *
  * GRUND `kette` — 15 Stellen. Das Ziel kommt aus dem GEMESSENEN Wert und
  * nicht aus dem deklarierten. Die Regel ist EINE und ueberall dieselbe,
@@ -971,6 +986,18 @@ const UEBERSCHRIFTEN_GEMESSEN = [
  * EINE AUSNAHME WAERE HIER DAS SCHLECHTERE MITTEL — sie liesse den em-Wert
  * stehen und damit eine Stelle, die bei jeder Aenderung ihres Behaelters
  * wieder unter 16 px rutschen kann.
+ *
+ * GRUND `kette-reichtext` — 1 Stelle, und er ist NICHT `kette`. Bei `kette`
+ * weicht der GEMESSENE Wert der Stelle von der 16-px-Annahme ab, und das
+ * Ziel kommt aus der Messung. Hier stimmt die Annahme: `.spell-desc` sitzt
+ * unter einem 16-px-Elternteil, 0.85 x 16 = 13,6 px ist gemessen genau der
+ * deklarierte Wert. Abgewichen wird wegen der KINDER — der sechs geduldeten
+ * em-Ueberschriften aus Abschnitt 7, die sich mit dem Behaelter mitbewegen,
+ * ohne dass eine ihrer Deklarationen angefasst wuerde. Die Kante steht nicht
+ * in `KETTEN` und kann dort nicht stehen: die Liste ist aus dem DOM erhoben,
+ * und in der Ruhelage enthaelt kein Reichtext-Inhalt eine Ueberschrift
+ * (Begruendung am Kopf von `KETTEN`). Ein Eintrag mit `grund: 'kette'` haette
+ * also eine Herkunft behauptet, die er nicht hat.
  */
 const SONDERZUORDNUNG = {
     // --- Grund `kette`: Ziel aus dem gemessenen Wert ---------------------
@@ -1184,13 +1211,40 @@ const SONDERZUORDNUNG = {
         warum:
             'Suchfeld der Zustands-Schnellreferenz. Ebenfalls nach Oeffnen ' +
             'des Dialogs gemessen: 16,00 px in beiden Profilen.'
+    },
+
+    // --- Grund `kette-reichtext`: Ziel aus den geduldeten em-Kindern ------
+    'spells.css||.spell-desc||0.85em': {
+        ziel: token('md'),
+        grund: 'kette-reichtext',
+        gemessenPx: 13.6,
+        elternPx: 16,
+        warum:
+            'Behaelter des Zauberblatts und einer der acht Reichtext-' +
+            'Behaelter. Die Tabellenzeile 0.85em -> --text-sm gaebe 12 px; ' +
+            'die sechs geduldeten em-Ueberschriften (Abschnitt 7) bewegen ' +
+            'sich mit ihm, und 0.9 x 12 = 10,80 px schickt h6 unter die ' +
+            'E-4-Untergrenze von 11 px, h1 auf 15,60 gegen gemessene 17,68 ' +
+            '(-2,08 px, ueber der Abnahmeschwelle). Beide Stufen sind ' +
+            'sichtbar und tragen einen Textknoten. --text-md kommt aus der ' +
+            'Rundungsregel von `kette`: gemessen 13,6 -> gerundet 14 -> ' +
+            'px-Zeile 14px -> --text-md. Dann h6 = 12,6 und h1 = 18,2 px, ' +
+            'alle sechs Stufen ueber 11 px und innerhalb 2 px der Messung, ' +
+            'und der Behaelter selbst springt +0,40 statt -1,60 px. Die ' +
+            'einzige Alternative waere, .spell-desc h6 namentlich aus E-4 ' +
+            'auszunehmen — eine 10,8-px-Ueberschrift im Zauberblatt ist ' +
+            'aber lesbarer Text, und genau dafuer gilt die Untergrenze; die ' +
+            '25 benannten Kleinst-Ausnahmen sind SVG-Beschriftungen und ' +
+            'textlose Punkte, nicht Ueberschriften.'
     }
 };
 
 /** Die Gruende, die eine Sonderzuordnung tragen darf. Eine geschlossene
  *  Menge, damit nicht bei jeder unbequemen Stelle ein neuer Grund erfunden
- *  wird — wer einen sechsten braucht, traegt ihn hier ein und begruendet ihn. */
-const SONDER_GRUENDE = ['kette', 'formular-e2'];
+ *  wird — wer einen vierten braucht, traegt ihn hier ein und begruendet ihn.
+ *  Dass jeder Eintrag einen Grund AUS dieser Menge traegt, prueft der
+ *  Waechter; ohne diese Pruefung waere die Geschlossenheit eine Bitte. */
+const SONDER_GRUENDE = ['kette', 'formular-e2', 'kette-reichtext'];
 
 /* ===========================================================================
    9. DIE EINE STELLE, DIE EIN ZIEL BESTIMMT
