@@ -7297,3 +7297,247 @@ git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss lee
 ```
 
 ---
+
+## W6-D — Zwei Zähler zwei Namen, und die Phantom-Halte aus der Tabulatorreihenfolge (2026-10-07)
+
+**Status: ERLEDIGT.** Schritt 7 des geprüften Plans plus Entscheidung **W6-E-4 = B**. Drei
+Commits: der Rotnachweis zuerst (`d450a42`), dann die Zähler (`0a3c0ef`), dann die
+Phantom-Halte (`4fd464f`). Basis `186e4e7`. Alle Zahlen unten sind an **meinem** Stand
+gemessen, nicht aus Plan oder Vermessung übernommen; wo eine Zahl der Vorlage widerspricht,
+steht beides.
+
+### Der Zählerfehler, in zwei Zeilen Messwert
+
+Der Zähler in der Werkzeugleiste der Zauber- und der Auftragsansicht stand im Normalbetrieb
+**dauerhaft auf 0**, egal wie viele Zauber oder Aufträge im Bestand lagen. Am gebauten
+Bündel, gefüllte Kampagne, vorher und nachher mit demselben Skript:
+
+| Handgriff | Element | vorher | nachher |
+| --- | --- | --- | --- |
+| 2 Zauber in `D.spells`, **nur** `renderSpells()` | `#spells-count` | `0` | `2` |
+| 1 Auftrag in `D.quests`, **nur** `renderQuests()` | `#quests-count` | `0` | `1` |
+| letzten Auftrag gelöscht, **nur** `renderQuests()` | `#quests-count` | `0` | `0` |
+| ohne Filter | Filterrückmeldung | `📖 2` | `📖 2` |
+| Stufenfilter 1 | Filterrückmeldung | `📖 1/2` | `📖 1/2` |
+
+`renderSpells()` und `renderQuests()` sind die Pfade, die **jede** Zauber- und
+Auftrags-CRUD geht. `renderAll()` — die einzige Stelle, die den Zähler bisher über
+`updateIOCounts()` schrieb — läuft nur beim Import, beim Zurücknehmen und beim
+Wiederherstellen. Beide Renderpfade rufen jetzt `setViewCount()` selbst, und bei den
+Aufträgen steht der Aufruf **vor** der frühen Rückkehr des Leerzustands: sonst bliebe der
+Zähler nach dem Löschen des letzten Auftrags auf der alten Zahl stehen, also genau
+umgekehrt falsch. Beide Richtungen sind gemessen und beide stehen in der Ratsche.
+
+### Der Widerspruch des Handoffs, aufgelöst durch zwei Namen (W6-E-3 = A)
+
+Der Handoff will beide Zähler behalten **und** die F-10-Ratsche so verschärfen, dass nur
+ein Schreibweg erlaubt ist. Das geht nicht zusammen — rot nachgefahren: mit `'spell'` in
+`COUNTED_VIEWS` wird F-10 Test 3 rot mit genau **einem** Befund, und grün wird er nur, wenn
+der Leser der Filterrückmeldung verschwindet. Dann ist die Rückmeldung, die §3.7
+desselben Handoffs ausdrücklich behalten will, ein leeres `div`.
+
+Entschieden und ausgeführt: die Rückmeldung heißt `#spells-filter-count` und fällt damit
+**nachweislich** aus dem Schema — die Regex von F-10 Test 3 kann sie nicht treffen, weil
+ihre Zeichenklasse keinen Bindestrich enthält. In der Gegenprobe von W6-R-09 beidseitig
+vorgeführt. F-10 bleibt dreifach grün, **ohne** Ausnahmeliste.
+
+### Der eigentliche Risikopunkt waren zwei Layout-Deklarationen, nicht die Farbe
+
+Der gelöschte Inline-Stil trug vier Deklarationen, und zwei davon sind Layout:
+`white-space: nowrap` (sonst bricht `📖 1/2` um) und `margin-left: auto` (das einzige
+Mittel, das den Zähler im Flex-Streifen nach rechts schiebt — das Elternelement führt kein
+`justify-content`). Beide sind in `.filter-count` mitgegangen. Gemessen am Bündel, in vier
+Themes:
+
+| Zustand | Abstand der rechten Kante zum rechten Innenrand |
+| --- | --- |
+| mit dem alten Inline-Stil | **0,0 px** |
+| mit der neuen Klasse | **0,0 px** (dark, light, sepia, contrast) |
+| mit zurückgenommenem `margin-left` | **296,3 px** nach links, an die Schulfilter |
+
+Die berechneten Werte der Rückmeldung sind vor und nach dem Umbau identisch: 12 px,
+`rgb(136, 136, 136)`, `nowrap`. Die Klasse ist dieselbe Angabe, nur an einem Ort, den eine
+Medienabfrage erreichen kann.
+
+`.filter-bar { gap }` ist von 6 px auf `var(--space-sm)` = 8 px gehoben (§3.7 verlangt die
+Abstandsleiter, 6 px stand auf keiner Sprosse). Drei Verwendungen im Markup, alle im
+Zauberfilter. Gemessene Folge: die drei Marken-Reihen werden zusammen **46,0 px** breiter
+(23 Spalte × 2 px), der `auto`-Rest links von der Rückmeldung sinkt von 342,3 auf
+296,3 px, ihre rechte Kante bleibt bei 0,0 px.
+
+### Die Phantom-Halte: eine Zeile, 384 Halte je Theme (W6-E-4 = B)
+
+Die schwebende Editorleiste trug `position: fixed; display: flex; opacity: 0` **ohne**
+`visibility: hidden` und blieb damit im Layout UND in der Tabulatorreihenfolge;
+`pointer-events: none` deckte nur die Maus ab. In **jeder** Ansicht liefen zwölf
+Tabulaturschritte dorthin — 9 `.editor-btn` und 3 `.editor-select` — und der Fokus
+verschwand dort in nichts, weil ein Ring auf einem Vorfahren mit `opacity: 0` selbst
+`opacity: 0` hat.
+
+Echte Tabulatorsprünge, gefüllte Kampagne, 1600×1000, gebautes Bündel, frische Seite je
+Theme, 24 Ansichten + 3 Aufklapp-Formulare + 6 Modale. Dasselbe Skript vorher und nachher:
+
+| Theme | Halte | sichtbar | **unsichtbar** | davon in der Leiste | Ringe | ≥ 3:1 | Boden |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| dark vorher | 1761 | 1319 | 442 | **384** | 1319 | 1319 | 7,29 |
+| dark nachher | 1372 | 1314 | **58** | **0** | 1314 | 1314 | 7,29 |
+| light vorher | 1743 | 1301 | 442 | **384** | 1301 | 1301 | 3,50 |
+| light nachher | 1333 | 1276 | **57** | **0** | 1276 | 1276 | 3,50 |
+| sepia vorher | 1743 | 1301 | 442 | **384** | 1301 | 1301 | 3,44 |
+| sepia nachher | 1377 | 1319 | **58** | **0** | 1319 | 1319 | 3,44 |
+| contrast vorher | 1703 | 1274 | 429 | **372** | 1274 | 1274 | 11,34 |
+| contrast nachher | 1359 | 1301 | **58** | **0** | 1301 | 1301 | 11,34 |
+
+Der Kontrastboden ist in allen vier Themes **unverändert** — die Änderung nimmt Halte weg,
+sie berührt keinen Ring. Gerechnet gegen die **geschichtet** ausgerechnete Trägerfläche,
+einschließlich der themenblinden Modalfläche: `.modal { background: rgba(26,26,26,0.95) }`
+löst über dem Schleier zu `#191919` (dark) / `#1e1e1e` (light) / `#1e1d1d` (sepia) /
+`#191919` (contrast) auf und trägt dort 109 Ringe je Theme mit den Minima 8,36 / 3,50 /
+3,50 / 12,54.
+
+**Die Nebenwirkung ist gemessen, nicht abgeschätzt.** Abtastung je Bild über 300 ms, auf
+dem echten Weg (Textauswahl im Wiki-Editor):
+
+| Richtung | 4 ms | 37 ms | 70 ms | 104 ms | 137 ms | 154 ms | 170 ms |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Ausblenden | 1,000 sichtbar | 0,888 sichtbar | 0,424 sichtbar | 0,147 sichtbar | 0,030 sichtbar | 0,007 sichtbar | 0,000 **verborgen** |
+| Einblenden | 0,000 verborgen | 0,345 sichtbar | 0,740 sichtbar | 0,925 sichtbar | 0,993 sichtbar | — | 1,000 sichtbar |
+
+Die ganze 150-ms-Ausblende ist sichtbar; der einzige verborgene Punkt der Einblende liegt
+bei Deckkraft 0,000, wo es nichts zu sehen gibt. Dafür steht `visibility` in der
+Eigenschaftsliste des Übergangs. **Kein `--trans-reveal`-Token:** die zwei Reveal-Listen
+laufen auf 200 und 300 ms, diese Leiste auf `--dur-fast` = 150 ms, und eine zu lange
+visibility-Dauer hielte die Leiste nach dem Ausblenden sichtbar — derselbe Fehler, nur
+später, genau wie W4-R-02 Teil B ihn beschreibt.
+
+**Ihre zwei Geschwister waren nie betroffen,** und das war der eigentliche Befund:
+`.table-context-toolbar` und `.link-context-toolbar` schalten über `display: none` und
+tauchen in keinem Tabulatorlauf auf. Nur die eine Leiste wich ab. `display` statt
+`visibility` kommt hier trotzdem nicht in Frage — `display` ist nicht übergangsfähig, die
+Blende wäre verloren.
+
+### Benannte Restschuld 1: der Rest des Tastatur-Strangs (90 Stellen)
+
+W6-E-4 = B deckt **nur** die Phantom-Halte. Der Rest bleibt benannte Restschuld, und hier
+ist er mit Zahl und Stellenliste. Frisch gemessen an meinem Stand, zweimal mit demselben
+Ergebnis (gefüllte Kampagne, 24 Ansichten, echte Tabulatorsprünge, Ahnenprüfung gegen
+geschlossene `<details>`): **355 sichtbare Bedienelemente, 90 nie per Tabulator erreicht
+(25,4 %), davon 0 natürlich fokussierbar.** Die Vermessung vom 2026-10-06 nannte 92; der
+Unterschied sind zwei Bestiar-Zeilen der virtuell gerollten Liste, deren Erreichbarkeit mit
+der Rollposition schwankt. Durch diese Einheit ist **keine** Funktion neu erreichbar
+geworden, wie die Entscheidung es vorhersagt.
+
+| Ansicht | Zahl | Stelle | was man ohne Maus nicht kann |
+| --- | --- | --- | --- |
+| spells | **26** | `div.filter-chip` | Zauber nach Typ, Stufe, Schule filtern |
+| bestiary | **23** | `div.bestiary-list-item` | ein Monster auswählen |
+| loot | **10** | `div.loot-filter-chip` | Beute nach Kategorie filtern |
+| dashboard | 7 | `div.dash-stat` | ins Feld springen, das die Kennzahl zeigt |
+| dashboard | 2 + 1 | `span.dash-card-link`, `div.dash-char` | „Alle →", Charakterkarte |
+| party | 4 | `span.slot-pip` | Zauberplätze abhaken |
+| party | 1 + 1 | `div.char-card-header`, `div.char-card-hp` | Karte öffnen, HP-Rechner |
+| npcs | 2 + 1 | `div.npc-filter-chip`, `div.npc-item` | filtern, NSC auswählen |
+| locations | 1 + 1 | `div.loc-filter-chip`, `div.loc-item` | filtern, Ort auswählen |
+| shops | 1 + 2 | `div.shop-header`, `span.entity-link` | Laden aufklappen, Verweis folgen |
+| party/encounter/notes | 3 | `div.collapsible-header` | Formular aufklappen |
+| encounter | 1 | `div.enc-filter-chip` | filtern |
+| initiative | 1 | `div.init-value` | Initiativwert direkt bearbeiten |
+| data | 1 | `div.campaign-item` | Kampagne wechseln |
+| fraktionen | 1 | `div.fr-faction-card` | Fraktion auswählen |
+
+Das Muster wiederholt sich dreimal, und die billigsten Stufen zuerst: (1) **ein**
+`keydown`-Zweig in der Ereignisdelegation (sie hört heute nur `click`, `change`, `input`) —
+ohne ihn ist jedes `tabindex` wirkungslos; (2) Elementtausch `div`/`span` → `<button
+type=button>` für die fünf Marken-Familien, deren Gegenprobe im Baum schon läuft
+(`.dice-chip` **ist** ein `<button>` und funktioniert vollständig); (3) `display: none` →
+`.sr-only` an zwei CSS-Zeilen (`dashboard.css` und `loot.css`) macht 57 versteckte Kästchen
+wieder fokussierbar, ohne sie zu zeigen — `.sr-only` existiert und ist 23-mal in Gebrauch,
+und F-16 ist der Präzedenzfall. Was danach bleibt und ein eigenes Vorhaben ist: `role=dialog`,
+Fokusfalle und Fokusrückgabe für die Modale (fast alles in **einem** Funktionspaar, plus vier
+Stellen, die es umgehen) und 188 Marken ohne Bindung.
+
+### Benannte Restschuld 2: 57 bis 58 unsichtbare Halte bleiben, aus drei anderen Quellen
+
+Nach dieser Einheit liegt **kein** Halt mehr unter der Editorleiste. Was bleibt, ist
+gemessen und nicht geschätzt — drei andere `opacity: 0`-Vorfahren, je Theme:
+
+| Vorfahr | Halte | was es ist | warum es nicht diese eine Zeile ist |
+| --- | --- | --- | --- |
+| `#shortcuts-overlay` | 31–32 | die Tastenkürzel-Übersicht | eigene Ein-/Ausblende, eigener Öffnungsweg |
+| `.search-clear-btn` | 18 | das Löschkreuz im Suchfeld | es blendet sich mit Texteingabe ein; es aus der Reihenfolge zu nehmen heißt entscheiden, ob es per Tastatur erreichbar sein soll |
+| `.dmscreen-widget-hide` | 7 | der Verstecken-Knopf am Widget | erscheint beim Überfahren; dasselbe Urteil |
+
+Jede der drei ist eine eigene Entscheidung über Bedienbarkeit, keine
+Aufräumarbeit — darum stehen sie hier und nicht im Commit.
+
+### Mitgezogene Arbeit, die im Schrittplan nicht steht
+
+- **Stil-Sollstand regulär neu erhoben**, und es ist die kleinste Neuerhebung der Reihe:
+  **0** bewegte Digests, **0** Abgänge, **genau 1** Zugang, in allen drei Durchgängen
+  derselbe (`spells/div.filter-count#0`). Der Zugang entsteht nicht aus einer
+  Stiländerung, sondern weil die Erfassung nur Elemente **mit** Klasse nimmt — die
+  Rückmeldung hatte bisher keine und fiel durch. Schlüsselweise verglichen, nicht als
+  Hashzahl. `EXPECTED_DEVIATION_KEYS` bleibt leer. Das `gap` der Filterleiste sieht der
+  Sollstand **nicht**: `gap` ist keine der zwölf gehashten Eigenschaften.
+- **F-19** `INLINE_MAX` 252 → 251. Nur um eins, obwohl der Inline-Stil vier Deklarationen
+  trug — diese Zahl zählt Attribute. Dasselbe Missverständnis ist in der Datei schon
+  zweimal aktenkundig.
+- **W5-R-08 Selbstprobe** Templates 37 → 36, Gesamt 130 → 129. Die **Dateizahl** bleibt 6:
+  `view-resources.html` führt gemessen noch zwei weitere Inline-Schriftgrößen und fällt
+  nicht aus dem Geltungsbereich.
+- **Zeilenanker nachgezogen,** alle aus den Meldungen der Ratschen selbst, keiner geraten:
+  `core.css` wächst um 25 Zeilen oberhalb von 2236 → `DAUER_GEDULDET` 3345 → 3370 und die
+  Blockangabe 3341 → 3366, dazu der Selbsttestfall, der denselben Anker führt.
+  `spells.css` wächst um 36 Zeilen → die drei Schattenstellen von R-19
+  (`.floating-toolbar` 450 → 454, `.table-context-toolbar` 539 → 575,
+  `.link-context-toolbar` 577 → 613). Die 123 Zeilenanker **dieser Akte** waren und sind
+  unberührt (`--check` meldet 0 Abweichungen) — sie liegen alle unterhalb der Einschübe
+  bzw. in anderen Dateien.
+
+### Zwei stille Fehlanker, beim Nachziehen gefunden (nicht von dieser Einheit verursacht)
+
+- `design-consistency.test.js`, Prosa im W4-R-04-Block: die zwei Anker des
+  reduced-motion-Blocks standen auf `:3325/:3327` und trafen am Vorzustand `186e4e7` eine
+  **Leerzeile** bzw. `width: 18px` in einer Avatar-Regel — 43 Zeilen zu hoch. Die
+  Verwesungsprobe prüft nur die **Schlüssel** der Erlaubnisliste, nicht die Anker in der
+  Prosa; das Paar ist darum nie aufgefallen. Jetzt `:3368/:3370`, gemessen.
+- **Noch offen, in Dateien, die diese Einheit nicht anfasst:** `hoehenbudget.spec.js`
+  nennt `core.css:2307` für eine `height: calc(100vh - var(--view-frame-height, …))`-Zeile
+  (am Vorzustand stand dort `color: var(--text-dim)`; die Deklaration liegt jetzt bei
+  2516), und `typo-map.test.js` nennt `core.css:2693` für die `font-size: inherit`-Regel
+  der Ortsleiste (am Vorzustand `.loc-view .loc-filter-chip`; jetzt 2779). Auch dieselbe
+  Akte nennt `core.css:2276` für die erste Zeile (am Vorzustand ein Kommentartrenner).
+  Alle drei waren **vor** dieser Einheit falsch und sind reine Prosa; keiner steht unter
+  R-06. Sie gehören in einen eigenen Durchgang, nicht in einen Zählerschritt.
+
+### Was diese Einheit NICHT in Prosa gebracht hat
+
+Die inhaltlichen Korrekturen der Einheiten **W6-A, W6-B und W6-C** stehen weiter nur in
+deren Commit-Rümpfen und in den Dateiköpfen ihrer Ratschen. Das ist Schritt 8 der Welle.
+Diese Einheit hat nur ihren eigenen Schritt und ihre eigene Entscheidung verschriftet.
+
+### Abnahme nachfahren
+
+```bash
+# Die drei Ratschen dieser Einheit
+npx jest tests/unit/design-consistency.test.js -t "W6-R-09"
+npx playwright test tests/e2e/features/zaehler.spec.js
+
+# Der Zählerstand am echten Pfad (2 Zauber / 1 Auftrag, NUR renderSpells/renderQuests)
+npx playwright test tests/e2e/features/zaehler.spec.js -g "W6-R-10"
+
+# Die Phantom-Halte und die Blende
+npx playwright test tests/e2e/features/zaehler.spec.js -g "W6-R-11"
+
+# Das Editor-Regressionsnetz — die Leiste muss bedienbar bleiben
+npx playwright test tests/e2e/features/editor-floating.spec.js tests/e2e/features/editor-formatting.spec.js tests/e2e/features/editor-insert.spec.js tests/e2e/features/editor-smoke.spec.js tests/e2e/features/tastenhilfen.spec.js
+
+# Der Fokusring der Welle, mit Schalter
+FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js
+
+# Der Sollstand: eine Neuerhebung muss jetzt byteidentisch sein
+UPDATE_STYLE_BASELINE=1 npx playwright test tests/e2e/features/computed-style-diff.spec.js
+git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss leer sein
+```
+
+---
