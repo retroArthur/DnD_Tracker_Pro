@@ -427,7 +427,7 @@ function deleteEntity(id) {
 
 | Shortcut   | Action                                         |
 | ---------- | ---------------------------------------------- |
-| `1-9`      | Switch to tab 1-9 — **not** while a focusable control has focus (TAST) |
+| `1-9`      | Switch to tab 1-9                              |
 | `Strg+Z`   | Undo                                           |
 | `Strg+Y`   | Redo                                           |
 | `Strg+S`   | Save                                           |
@@ -448,22 +448,6 @@ function deleteEntity(id) {
 | `Alt+1/2/4/6/8`  | Quick roll d12/d20/d4/d6/d8                    |
 | `Alt+Shift+1..5` | Activate Soundboard scene in quick-slot 1–5 (D-03) |
 | `Alt+Shift+0`    | Toggle Soundboard mute (D-03)                  |
-
-**Fokussiertes Bedienelement beansprucht `Space` und `1`-`9` (TAST, 2026-10-07).**
-`systems/spellslots/keyboard-shortcuts.js` nimmt neben INPUT/TEXTAREA/SELECT/
-contentEditable jetzt auch ein fokussiertes `button, a[href], [role="button"],
-[tabindex]:not([tabindex="-1"])` von GENAU DIESEN ZWEI Tastengruppen aus
-(`TASTEN_BEDIENELEMENT_SELEKTOR`). Grund, gemessen: 21 echte Tabulatorspruenge
-auf "◀ Zurueck" plus Leertaste liessen den Zug VORWAERTS gehen (nativer Klick am
-Ziel: 0, `nextTurn()` statt `prevTurn()`) — der Kampf war eine Runde falsch und
-niemand sah warum. Betroffen waren Knoepfe, die schon echte `<button>` SIND.
-Ohne Fokus (`activeElement = BODY`) bleibt der gewohnte Griff: Leertaste =
-naechster Zug. `r`/`t`/`l`/`k`/`n`/`p`/`/` und `Alt+Ziffer` sind bewusst NICHT
-mitgesperrt — `/` und `k` sind heute der einzige Zugang zu ihrer Flaeche. Die
-Schranke nicht "konsequent" auf alle Einzeltasten ausweiten, ohne jene Kuerzel
-zuerst durch echte Tabulatorwege zu ersetzen. Waechter:
-`tests/e2e/features/tastatur-ausloesung.spec.js` (11 Faelle, echte
-Tastendruecke, Klickzaehlung nach `isTrusted` getrennt).
 
 ## Conventions
 

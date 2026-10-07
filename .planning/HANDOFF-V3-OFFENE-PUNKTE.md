@@ -7434,7 +7434,6 @@ Kämpfern mit gleichem Ergebnis:
 | `addPartyToInit` (23) | Klick 0, 6 → 6 / 20 → 20 | Klick 1, 6 → 12 / 20 → 40 |
 | `rollAllInitiative` (24) | Klick 0, 0 Würfe | Klick 1, 6 / 20 Würfe |
 | `show-condition-reference` (27) | Klick 0, kein Modal | Klick 1, Modal offen |
-| `nextTurn`, Ziffer `1` (20) | Klick 0, Ansicht springt weg | Klick 0, Ansicht bleibt |
 
 Der Spielleiter tabulierte auf „◀ Zurück", drückte die Leertaste — und der Zug ging
 **vorwärts**. Der Kampf war eine Runde falsch und niemand sah warum. Ursache war die
@@ -7461,7 +7460,42 @@ dem Nutzer einen Weg weg, um einen Fehler zu beheben, den sie nicht verursachen.
 (`activeElement = BODY`) bleibt der gewohnte Griff: Leertaste = nächster Zug, bei 6 und bei
 20 Kämpfern nachgemessen.
 
-Wächter: `tests/e2e/features/tastatur-ausloesung.spec.js`, 11 Fälle, in der vollen E2E-Suite.
+**Nachtrag Runde 1 (2026-10-08): die Ziffern `1`–`9` gehören NICHT in diese Schranke.**
+Die erste Fassung hat sie mitgesperrt (O-7) und dabei „0 nativer Klick" mit „falsche
+Handlung" gleichgesetzt. Bei der Leertaste trifft das zu — der Knopf sagt „zurück", die
+Taste tat „vorwärts". Bei einer Ziffer nicht: `3` heißt „zeig mir die NSC", und das ist
+genau die dokumentierte, gewollte Handlung. Ein Ziffernanschlag ist keine Bitte, das
+fokussierte Ding zu bedienen. Gemessen gab es dort auch nichts zu schützen und etwas zu
+verlieren:
+
+| Messung | vorher (mit Ziffern-Schranke) | nachher |
+| --- | --- | --- |
+| Ziffer `3` auf ertabuliertem Knopf (Halt 25) | Klicks echt 0 / synth 0, Ansicht bleibt | Klicks echt 0 / synth 0, Ansicht → NSC |
+| Ziffer `3` nach echtem Mausklick, 6 von 6 dauerhaften Knöpfen | Ansicht unverändert | Ansicht → NSC |
+| ⌨️ per Maus → Escape → `7` | `view-dashboard` (Fokus bleibt am ⌨️-Knopf) | `view-initiative` |
+| Gegenprobe: Hilfe per `?` → Escape → `7` (Fokus BODY) | wirkt | wirkt |
+| Leertaste auf `prevTurn` (Halt 21) | Klick 0, Zug ging vorwärts | Klick 1, Zug 0 → 5 / 0 → 19 |
+
+Also: **null** native Klicks durch eine Ziffer, vorher wie nachher — ein `<button>` hat
+keine Ziffern-Handlung, es gab kein Doppelfeuer zu verhindern. Dafür war das Kürzel nach
+jedem gewöhnlichen Mausklick tot, bei 6 und bei 20 Einträgen je Typ und in allen vier
+Themes. Am schiefsten der Weg, der sich selbst widerlegt: wer den ⌨️-Knopf anklickt, in der
+Hilfe „Initiative = 7" liest, Escape drückt und 7 tippt, bekam nichts — die App warb weiter
+für eine Taste, die nach einem Klick nicht mehr ging, zweifach dokumentiert (Kürzeltabelle
+und `assets/templates/modals-editors.html`). Zu revidieren war die **Entscheidung** O-7,
+nicht die Treue ihrer Umsetzung. Die Variable heißt jetzt `beanspruchtLeertaste`, damit der
+Name nicht behauptet, was der Code nicht tut.
+
+Belegt nebenbei, warum die Nachrüstung der 90 Stellen unten hier gefahrlos ist: der
+Tabulatorring der Initiative-Ansicht enthält bei sechs Kämpfern **87 Halte und 0
+nicht-native Elemente** (80 `BUTTON`, 1 `BUTTON[role=tab]`, 2 `INPUT[text]`, 3
+`INPUT[number]`, 1 `SELECT`). Keines davon verarbeitet eine Ziffer nativ;
+`INPUT`/`TEXTAREA`/`SELECT`/`contentEditable` deckt `isTyping` unverändert ab.
+
+Wächter: `tests/e2e/features/tastatur-ausloesung.spec.js`, 12 Fälle, in der vollen E2E-Suite
+— Fall (g) sichert Ansichtswechsel UND `echt=0`/`synth=0` in **einem** Satz zu (wer nur das
+erste zusichert, lädt ein Doppelfeuer ein; wer nur das zweite zusichert, schreibt den
+Verlust des Kürzels fest), Fall (g2) den Maus-Weg über die In-App-Hilfe.
 Nebenbefund derselben Messung: beim **ersten** Aufbau belegen die zwei Knöpfe des
 Umzugs-Hinweises die Halte 1 und 2 — nach einem Neuladen ist er weg und die ganze Reihe
 rutscht um zwei nach vorn (19/20/21/22/18 statt 21/22/23/24/20). Wer Tabulatorwege
