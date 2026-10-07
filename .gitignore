@@ -34,7 +34,7 @@ tests/e2e/reports/
 # den Hinweis, dass jemand ohne Konfiguration geprueft hat.
 /test-results/
 # Ablichtungen der Sichtpruefung (welle-<N>-screens.spec.js mit
-# WELLE<N>_SCREENS=1, N = 1 bis 5; dazu mobil-screens und uat-funde-screens):
+# WELLE<N>_SCREENS=1, N = 1 bis 6; dazu mobil-screens und uat-funde-screens):
 # oertliches Material fuer die menschliche Runde, jederzeit neu erzeugbar —
 # ein Stapel Vollbilder gehoert nicht in die Historie. Die Aufzaehlung stand
 # seit Welle 2 auf zwei Namen und war ab Welle 3 falsch; eine Liste, die nicht
