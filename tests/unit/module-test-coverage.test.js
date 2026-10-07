@@ -245,7 +245,17 @@ const MODULE_TEST_EXCEPTIONS = [
     'systems/conditions.js',
     'systems/hp-calculator.js',
     'systems/markdown-import-export.js',
-    'systems/spellslots/keyboard-shortcuts.js',
+    // -- 2026-10-07, Tastatur-Strang T-A: 'systems/spellslots/keyboard-shortcuts.js'
+    //    ist hier GESTRICHEN. tests/e2e/features/tastatur-ausloesung.spec.js prueft
+    //    genau die isTyping-Schranke dieses Moduls und seine Leertasten-, Ziffern-
+    //    und Einzeltasten-Zweige: elf Faelle treiben sie mit echten Tastendruecken
+    //    am gebauten Buendel durch und urteilen ueber die Wirkung (Zug, Runde,
+    //    Kaempfer, Ansicht) UND ueber das ausgeloeste click-Ereignis. Das ist keine
+    //    Erwaehnung zur Gate-Beruhigung: ohne dieses Modul waere kein einziger der
+    //    elf Faelle erklaerbar. Dass der Pfad dabei im Erklaertext steht und nicht
+    //    in ausfuehrbarem Code, liegt in der Natur eines Verhaltensfalls — er liest
+    //    die Quelle nicht, er fuehrt sie aus. Die Liste darf nur schrumpfen; sie
+    //    tut es hier.
     'systems/spellslots/navigation.js',
     'systems/spellslots/notes-templates.js',
     'systems/spellslots/pwa-install.js',
