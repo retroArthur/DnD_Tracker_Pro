@@ -519,18 +519,48 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         expect(k.synthetisch).toBe(0);
         expect(wuerfe, 'der d4 muss gewuerfelt haben').toBeGreaterThanOrEqual(1);
     });
+});
 
-    test('(g) Ziffer auf einem fokussierten Knopf wechselt die Ansicht NICHT', async ({ page }) => {
-        // Ein Knopf hat keine native Ziffern-Handlung. Die Taste darf
-        // deshalb nichts tun — und vor allem nicht die Ansicht wechseln und
-        // damit den muehsam ertabulierten Fokus vernichten.
+/**
+ * DIE ZIFFERN SIND EIN KUERZEL, KEINE BEDIENUNG (T-A, Runde 1).
+ *
+ * Diese zwei Faelle trennen, was die erste Fassung dieser Datei vermischt
+ * hatte. Bei der Leertaste gilt: der Knopf sagt "◀ Zurueck", die Taste tat
+ * "vorwaerts" — dort ist "0 nativer Klick" gleichbedeutend mit "falsche
+ * Handlung". Bei einer Ziffer ist das NICHT so. `3` heisst "zeig mir die
+ * NSC", und das ist die dokumentierte, gewollte Handlung — in der
+ * Kuerzeltabelle der CLAUDE.md UND in der App-eigenen Hilfe
+ * (`assets/templates/modals-editors.html`, "1 Dashboard … 7 Initiative",
+ * ohne Einschraenkung). Ein Ziffernanschlag ist keine Bitte, das fokussierte
+ * Ding zu bedienen.
+ *
+ * Deshalb pruefen diese Faelle beides zusammen und als EIN Satz: die Ziffer
+ * wechselt die Ansicht, UND sie loest den Knopf unter dem Fokus nicht aus
+ * (`echt=0`, `synthetisch=0`). Wer nur das erste zusichert, laedt ein
+ * Doppelfeuer ein; wer nur das zweite zusichert, schreibt den Verlust des
+ * Kuerzels fest.
+ *
+ * MESSDISZIPLIN, ZWEITER FALL: hier wird mit `page.click()` geklickt, und
+ * das ist KEIN Verstoss gegen Regel 1 des Kopfkommentars. Jene Regel
+ * verbietet `.focus()` und `element.click()` — Dinge, die der Nutzer nicht
+ * tun kann. `page.click()` ist ein echter Mausklick ueber das
+ * Fernsteuerprotokoll (`isTrusted`), und der Mausklick IST hier der
+ * gemessene Weg: der Spielleiter klickt den ⌨️-Knopf, liest "Initiative =
+ * 7", drueckt Escape und dann 7. Dass der geklickte Knopf den Fokus behaelt,
+ * steht als Zusicherung mit drin — ohne sie wuerde der Fall gruen bleiben,
+ * sobald der Fokus aus einem anderen Grund auf BODY landet, und dann
+ * misst er nichts mehr.
+ */
+test.describe('Die Ziffern 1-9 bleiben ein Kuerzel', () => {
+    test('(g) Ziffer auf einem ertabulierten Knopf wechselt die Ansicht — und loest ihn nicht aus', async ({
+        page
+    }) => {
         const { spruenge, vorher } = await zielAnfahren(page, 'initiative', {
-            action: 'call',
-            value: 'nextTurn'
+            action: 'sort-initiative'
         });
         expect(vorher.ansicht).toBe('view-initiative');
 
-        await page.keyboard.press('1');
+        await page.keyboard.press('3');
         await page.waitForTimeout(500);
 
         const nachher = await kampfZustand(page);
@@ -538,11 +568,49 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
 
         expect(
             nachher.ansicht,
-            `Ziffer "1" am Halt ${spruenge} darf die Ansicht nicht wechseln`
-        ).toBe('view-initiative');
-        expect(k.echt, 'eine Ziffer loest keinen Knopf aus').toBe(0);
+            `Ziffer "3" am Halt ${spruenge} muss zu den NSC wechseln (Kuerzel laut Hilfe)`
+        ).toBe('view-npcs');
+        expect(k.echt, 'eine Ziffer loest den Knopf unter dem Fokus NICHT aus').toBe(0);
         expect(k.synthetisch).toBe(0);
         expect(nachher.zug, 'und sie bewegt den Zug nicht').toBe(0);
+        expect(nachher.scrollY, 'und sie scrollt nicht').toBe(0);
+    });
+
+    test('(g2) der dokumentierte Weg: ⌨️ per Maus, Escape, Ziffer 7', async ({ page }) => {
+        await ansichtOeffnen(page, 'dashboard');
+
+        await page.click('button[data-action="show-shortcuts-overlay"]');
+        await page.waitForTimeout(500);
+        expect(
+            await page.evaluate(
+                () => !!document.querySelector('#shortcuts-overlay')?.classList.contains('show')
+            ),
+            'der Klick muss die Hilfe oeffnen'
+        ).toBe(true);
+
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(500);
+        const nachEscape = await page.evaluate(() => ({
+            hilfeOffen: !!document.querySelector('#shortcuts-overlay')?.classList.contains('show'),
+            tag: document.activeElement?.tagName,
+            da: document.activeElement?.getAttribute?.('data-action')
+        }));
+        expect(nachEscape.hilfeOffen, 'Escape schliesst die Hilfe').toBe(false);
+        // Ohne diese Zusicherung misst der Fall nichts: landet der Fokus auf
+        // BODY, greift die Schranke ohnehin nicht.
+        expect(nachEscape.tag, 'der geklickte Knopf behaelt den Fokus').toBe('BUTTON');
+        expect(nachEscape.da).toBe('show-shortcuts-overlay');
+
+        const vorher = await kampfZustand(page);
+        expect(vorher.ansicht).toBe('view-dashboard');
+
+        await page.keyboard.press('7');
+        await page.waitForTimeout(600);
+
+        expect(
+            (await kampfZustand(page)).ansicht,
+            'die Hilfe nennt "Initiative = 7" ohne Einschraenkung — dann muss 7 dorthin fuehren'
+        ).toBe('view-initiative');
     });
 });
 
@@ -565,9 +633,10 @@ test.describe('Was unangetastet bleibt (Gegenproben, vor und nach der Korrektur 
     });
 
     test('(i) n / p / Shift+N wirken weiter auf einem fokussierten Knopf', async ({ page }) => {
-        // O-7: die Schranke wird NUR fuer die Leertaste und die Ziffern 1-9
-        // erweitert. Wer sie "konsequent" auf alle Einzeltasten ausweitet,
-        // nimmt dem Nutzer Wege weg, die heute funktionieren.
+        // Die Schranke gilt NUR fuer die Leertaste (O-7, in Runde 1 auf die
+        // Leertaste eingeschraenkt — s. der Block ueber (g)). Wer sie
+        // "konsequent" auf alle Einzeltasten ausweitet, nimmt dem Nutzer
+        // Wege weg, die heute funktionieren.
         for (const fall of [
             { taste: 'n', feld: 'zug', erwartet: 1 },
             { taste: 'p', feld: 'zug', erwartet: 5 },
