@@ -2230,10 +2230,35 @@
            ============================================================ */
         .filter-bar {
             display: flex;
-            gap: 6px;
+            /* 6px -> var(--space-sm) = 8px (Welle 6, Schritt 7). Paragraph 3.7
+               verlangt die Abstandsleiter; 6px stand auf keiner Sprosse. Drei
+               Verwendungen im Markup, alle im Zauberfilter (Typ, Stufe,
+               Schule) — die vier anderen Listenansichten fuehren eigene
+               Klassen (.npc-/.loc-/.enc-/.loot-filter-chips) und sind nicht
+               betroffen. Bewacht von W6-R-09 Fall 5, und zwar am TOKEN, nicht
+               an der Zahl. */
+            gap: var(--space-sm);
             flex-wrap: wrap;
         }
-        
+
+        /* Die Filterrueckmeldung unter den Filtermarken (#spells-filter-count).
+           SIE WAR EIN INLINE-STIL mit vier Deklarationen, und zwei davon sind
+           LAYOUT: ohne `white-space: nowrap` bricht die Form "n/N" um, ohne
+           `margin-left: auto` springt der Zaehler im Flex-Streifen 342,3 px
+           nach links an die Schulfilter (am gebauten Buendel gemessen, in vier
+           Themes). Das Elternelement .spell-filter-bar fuehrt kein
+           justify-content — `auto` ist dort das einzige Mittel. Beide
+           Eigenschaften sind namentlich bewacht: W6-R-09 Fall 2 am Quelltext,
+           W6-R-10 Fall 4 an der gemessenen rechten Kante. Wer hier aufraeumt
+           und die zwei fuer Kosmetik haelt, verschiebt den Zaehler sichtbar. */
+        .filter-count {
+            font-size: var(--text-sm);
+            color: var(--text-dim);
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+
         .spell-filter-bar {
             display: flex;
             flex-wrap: wrap;

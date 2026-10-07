@@ -183,7 +183,13 @@
                     <span class="spell-filter-label">Schule:</span>
                     <div class="filter-bar" id="spell-school-filters"></div>
                 </div>
-                <div id="spell-count" style="font-size: var(--text-sm); color: var(--text-dim); white-space: nowrap; margin-left: auto;"></div>
+                <!-- Die Filterrueckmeldung der Zauberansicht. Sie heisst
+                     spells-filter-count und NICHT spells-count: der Zaehler
+                     dieses Namens ist die Pille in der Werkzeugleiste und
+                     gehoert dem setViewCount()-Schema (F-10). Hier steht eine
+                     zweite, andere Aussage — der Bestand ODER der Filterstand
+                     in der Form n/N. Zwei Dinge, zwei Namen (W6-E-3 = A). -->
+                <div id="spells-filter-count" class="filter-count"></div>
             </div>
             <div class="spell-list" id="spell-list"></div>
         </section>

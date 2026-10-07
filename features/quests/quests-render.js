@@ -8,6 +8,14 @@ function renderQuests() {
     const renderDashboard = window.renderDashboard;
     const c = $('quests-list');
     if (!c) return;
+    /* DER WERKZEUGLEISTEN-ZAEHLER, aus dem Pfad geschrieben, den die
+       Auftragsverwaltung tatsaechlich geht. Vorher schrieb ihn nur
+       updateIOCounts() aus renderAll(); gemessen stand er im Normalbetrieb
+       dauerhaft auf "0". Er steht VOR der fruehen Rueckkehr des Leerzustands
+       weiter unten — sonst bliebe er nach dem Loeschen des letzten Auftrags
+       auf der alten Zahl stehen, also genau umgekehrt falsch (Welle 6,
+       Schritt 7; bewacht von W6-R-09 Fall 3 und W6-R-10 Fall 2). */
+    setViewCount('quests', (D.quests || []).length);
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');

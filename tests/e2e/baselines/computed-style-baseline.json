@@ -1059,7 +1059,7 @@
       }
     },
     "spells": {
-      "elementCount": 60,
+      "elementCount": 61,
       "capped": false,
       "keys": [
         "button.btn#0",
@@ -1104,6 +1104,7 @@
         "div.filter-chip#7",
         "div.filter-chip#8",
         "div.filter-chip#9",
+        "div.filter-count#0",
         "div.search-wrapper#0",
         "div.section-toolbar#0",
         "div.section-toolbar-actions#0",
@@ -1166,6 +1167,7 @@
         "div.filter-chip#7": "217dad0d5e35fc97",
         "div.filter-chip#8": "217dad0d5e35fc97",
         "div.filter-chip#9": "217dad0d5e35fc97",
+        "div.filter-count#0": "d1611b94924435c9",
         "div.search-wrapper#0": "133ba0201fddfa5d",
         "div.section-toolbar#0": "0b38ed2897f0f0ca",
         "div.section-toolbar-actions#0": "7575d70617ed5784",
@@ -3611,7 +3613,7 @@
       }
     },
     "spells": {
-      "elementCount": 60,
+      "elementCount": 61,
       "capped": false,
       "keys": [
         "button.btn#0",
@@ -3656,6 +3658,7 @@
         "div.filter-chip#7",
         "div.filter-chip#8",
         "div.filter-chip#9",
+        "div.filter-count#0",
         "div.search-wrapper#0",
         "div.section-toolbar#0",
         "div.section-toolbar-actions#0",
@@ -3718,6 +3721,7 @@
         "div.filter-chip#7": "217dad0d5e35fc97",
         "div.filter-chip#8": "217dad0d5e35fc97",
         "div.filter-chip#9": "217dad0d5e35fc97",
+        "div.filter-count#0": "d1611b94924435c9",
         "div.search-wrapper#0": "133ba0201fddfa5d",
         "div.section-toolbar#0": "023178657a095c7b",
         "div.section-toolbar-actions#0": "7575d70617ed5784",
@@ -6203,7 +6207,7 @@
       }
     },
     "spells": {
-      "elementCount": 60,
+      "elementCount": 61,
       "capped": false,
       "keys": [
         "button.btn#0",
@@ -6248,6 +6252,7 @@
         "div.filter-chip#7",
         "div.filter-chip#8",
         "div.filter-chip#9",
+        "div.filter-count#0",
         "div.search-wrapper#0",
         "div.section-toolbar#0",
         "div.section-toolbar-actions#0",
@@ -6310,6 +6315,7 @@
         "div.filter-chip#7": "217dad0d5e35fc97",
         "div.filter-chip#8": "217dad0d5e35fc97",
         "div.filter-chip#9": "217dad0d5e35fc97",
+        "div.filter-count#0": "d1611b94924435c9",
         "div.search-wrapper#0": "133ba0201fddfa5d",
         "div.section-toolbar#0": "0b38ed2897f0f0ca",
         "div.section-toolbar-actions#0": "7575d70617ed5784",

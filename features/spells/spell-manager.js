@@ -22,7 +22,10 @@ function renderSpells() {
     const fb = $('spell-filters');
     const lfb = $('spell-level-filters');
     const sfb = $('spell-school-filters');
-    const countEl = $('spell-count');
+    // Die Filterrueckmeldung unter den Filtermarken. Sie heisst seit Welle 6
+    // Schritt 7 spells-filter-count und ist NICHT der Werkzeugleisten-Zaehler
+    // (#spells-count) — der wird weiter unten ueber setViewCount() geschrieben.
+    const countEl = $('spells-filter-count');
     if (!c) return;
     if (fb) {
         fb.innerHTML = ['all', 'spell', 'healing', 'damage', 'buff', 'debuff']
@@ -123,6 +126,15 @@ function renderSpells() {
         }
         return true;
     });
+    /* DER WERKZEUGLEISTEN-ZAEHLER WIRD AUS DEM PFAD GESCHRIEBEN, DEN DIE
+       ZAUBERVERWALTUNG TATSAECHLICH GEHT. Vorher schrieb ihn nur
+       updateIOCounts(), und das laeuft ausschliesslich aus renderAll(), also
+       beim Import, beim Ruecknehmen und beim Wiederherstellen — nie aus einer
+       Zauber-CRUD. Gemessen: 2 Zauber in D.spells plus renderSpells() liessen
+       #spells-count dauerhaft auf "0". Er zeigt den BESTAND, nicht den
+       Filterstand; die Filterrueckmeldung daneben zeigt beides (Welle 6,
+       Schritt 7, W6-E-3 = A; bewacht von W6-R-09 Fall 3 und W6-R-10 Fall 1). */
+    setViewCount('spells', totalCount);
     if (countEl) {
         if (spells.length === totalCount) {
             countEl.textContent = `📖 ${totalCount}`;

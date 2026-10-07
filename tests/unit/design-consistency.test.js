@@ -12881,13 +12881,20 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
        Baums und laesst genau drei Toepfe zu.
 
        HANDOFF-/PLAN-KORREKTUR, gemessen: der Schritttext nennt "die zwei
-       Literale im reduced-motion-Block (core.css:3325/3327)" als Ausnahmen
+       Literale im reduced-motion-Block (core.css:3368/3370)" als Ausnahmen
        dieser Pruefung. Nur eines der beiden ist ueberhaupt ein Fall fuer sie:
-       :3327 ist `transition-duration: 0.01ms !important`, :3325 ist
+       :3370 ist `transition-duration: 0.01ms !important`, :3368 ist
        `animation-duration: 0.01ms !important` und faellt schon unter die
        Sammel-Ausnahme fuer `animation`. In der Erlaubnisliste steht deshalb
        EIN Eintrag, nicht zwei — zwei waeren einer, der nie gebraucht wird, und
-       die Verwesungsprobe unten wuerde ihn melden. */
+       die Verwesungsprobe unten wuerde ihn melden.
+       DIESE ZWEI ANKER WAREN STILL FALSCH, und zwar nicht erst seit Welle 6:
+       sie standen auf :3325/:3327 und trafen am Vorzustand 186e4e7 eine
+       Leerzeile bzw. `width: 18px` in einer Avatar-Regel — 43 Zeilen zu hoch.
+       Die Verwesungsprobe unten prueft nur die SCHLUESSEL von
+       DAUER_GEDULDET, nicht die Anker in der Prosa; dieses Paar ist darum
+       nie aufgefallen. Nachgezogen mit den gemessenen Werten, nicht
+       gerechnet. */
 
     // ESCAPE-LUKE: Schluessel `datei.css:zeile`, Wert = Begruendung. Form wie
     // SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in W4-R-02 und
@@ -12895,8 +12902,8 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
     // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
     // Gestaltungsmittel ist, sondern eine Abschaltung.
     const DAUER_GEDULDET = {
-        'core.css:3345':
-            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3341) schaltet ' +
+        'core.css:3370':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3366) schaltet ' +
             'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
             'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
             'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
@@ -13358,7 +13365,7 @@ describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Rats
             [
                 {
                     datei: 'core.css',
-                    zeile: 3345,
+                    zeile: 3370,
                     prop: 'transition-duration',
                     wert: '0.01ms !important'
                 }
@@ -15264,15 +15271,25 @@ describe('W5-R-08 — jede Inline-Schriftgroesse kommt aus der Skala (Ratsche)',
         // Deklarationszaehler waere dann eine Stolperfalle, die nichts
         // bewacht, was die Schranke oben nicht schon bewacht.
         //
-        // GEMESSENER BESTAND nach Schritt 7: 37 in Templates (von 39; zwei
-        // sind mit ihrem Attribut verschwunden) + 93 in JS (von 98; fuenf
-        // sind in npc-popup.js und sessions.js entfallen, weil dort die
+        // GEMESSENER BESTAND nach Schritt 7 der Welle 5: 37 in Templates (von
+        // 39; zwei sind mit ihrem Attribut verschwunden) + 93 in JS (von 98;
+        // fuenf sind in npc-popup.js und sessions.js entfallen, weil dort die
         // BASISREGEL entscheidet) = 130.
+        // NACHGEZOGEN in Welle 6, Schritt 7: Templates 37 -> 36. Die
+        // Filterrueckmeldung der Zauberansicht ist zur Klasse `.filter-count`
+        // geworden; ihr Attribut trug `font-size: var(--text-sm)` und ist mit
+        // dem Attribut verschwunden. Die DATEIZAHL bleibt 6:
+        // view-resources.html fuehrt gemessen noch zwei weitere
+        // Inline-Schriftgroessen ("Vorlagen:" und die Vorlagenwahl der
+        // Zauberkarte), die Datei faellt also nicht aus dem Geltungsbereich.
+        // Diese Untergrenzen duerfen SINKEN, wenn eine Stelle wirklich
+        // verschwindet — aber nur mit der gemessenen Zahl daneben, sonst ist
+        // die Schranke oben durch Weglassen erfuellbar.
         const tpl = alleInline.filter(d => d.datei.startsWith('assets/templates/'));
         const js = alleInline.filter(d => !d.datei.startsWith('assets/templates/'));
-        expect(tpl.length).toBeGreaterThanOrEqual(37);
+        expect(tpl.length).toBeGreaterThanOrEqual(36);
         expect(js.length).toBeGreaterThanOrEqual(93);
-        expect(alleInline.length).toBeGreaterThanOrEqual(130);
+        expect(alleInline.length).toBeGreaterThanOrEqual(129);
         expect(new Set(tpl.map(d => d.datei)).size).toBe(6);
         // 28 und nicht 30: die Vorhersage des Schrittes zaehlt `rich-text.js`
         // (drei `.style.fontSize`-Zuweisungen, Funktion) und

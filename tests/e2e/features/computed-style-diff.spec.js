@@ -418,6 +418,35 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Den Fokusring sieht er ueberhaupt nicht: `outline` ist in keiner Schreibweise unter
 // den zwoelf gehashten Eigenschaften.
 //
+// NEUERHEBUNG VOM 2026-10-07 -- Design-Handoff v3, Welle 6, Schritt 7 (die zwei Zaehler)
+// --------------------------------------------------------------------------------------
+// Die kleinste Neuerhebung der Reihe, und sie ist vollstaendig beziffert: NULL bewegte
+// Digests, NULL Abgaenge, GENAU EIN Zugang -- und in allen drei Durchgaengen derselbe.
+//
+//   Durchgang        geaendert  nur vorher  nur nachher
+//   ---------------  ---------  ----------  -----------
+//   standard                 0           0            1
+//   narrow                   0           0            1
+//   reducedMotion            0           0            1
+//
+// Der Zugang ist `spells/div.filter-count#0`. Er entsteht NICHT, weil sich ein Stil
+// geaendert haette, sondern weil die Erfassung nur Elemente MIT Klasse nimmt
+// (`el.classList.length > 0`): die Filterrueckmeldung der Zauberansicht trug ihre vier
+// Deklarationen bisher als Inline-Stil und hatte keine Klasse, fiel also durch. Sie
+// heisst jetzt `#spells-filter-count` und traegt `.filter-count` -- damit ist sie
+// erstmals im Sollstand. Dass sich dabei kein berechneter Wert bewegt, ist am gebauten
+// Buendel nachgemessen: fontSize 12px, color rgb(136, 136, 136), whiteSpace nowrap --
+// vor und nach dem Umbau dieselben Werte. Die Klasse ist dieselbe Angabe, nur an einem
+// Ort, an dem eine Medienabfrage sie erreichen kann.
+//
+// DAS `gap` DER FILTERLEISTE IST IM SOLLSTAND UNSICHTBAR und darum hier benannt:
+// derselbe Schritt hebt `.filter-bar { gap }` von 6px auf var(--space-sm) = 8px.
+// `gap` ist keine der zwoelf gehashten Eigenschaften. Gemessene Folge am Buendel: die
+// drei Marken-Reihen der Zauberansicht werden zusammen 46,0 px breiter (23 Spalte x
+// 2 px), der auto-Rest links von der Rueckmeldung sinkt von 342,3 auf 296,3 px. Ihre
+// rechte Kante bleibt bei 0,0 px Abstand zum Innenrand -- gedeckt von W6-R-10 Fall 4,
+// nicht von diesem Abzug.
+//
 // Globale Ausnahmen (alle drei Durchgaenge). WIEDER LEER nach dieser Neuerhebung --
 // dieselbe Regel wie nach M3b: die Liste traegt eine Welle, nicht den Dauerzustand.
 /** @type {string[]} */
