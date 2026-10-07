@@ -27,13 +27,10 @@
 }
 
 .npc-filter-chip {
-    padding: 5px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 0.8em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     color: var(--text-dim);
 }
 
@@ -50,10 +47,10 @@
 .npc-filter-select {
     padding: 5px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     cursor: pointer;
 }
 
@@ -65,7 +62,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 /* Tinte wechselt mit der Flaeche (R-03): var(--on-green) faellt auf
@@ -109,7 +106,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Avatar-Emoji in einem 44x44-px-Kreis — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -135,7 +132,7 @@
 }
 
 .npc-item-tag {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     background: var(--purple);
@@ -143,7 +140,7 @@
 }
 
 .npc-item-meta {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -159,9 +156,6 @@
 }
 
 .npc-badge {
-    font-size: 0.75em;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
     background: var(--bg-dark);
 }
 
@@ -196,7 +190,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2em;
+    font-size: var(--text-3xl);
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -212,21 +206,21 @@
 }
 
 .npc-detail-name {
-    font-size: 1.2em;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold-text);
     word-break: break-word;
 }
 
 .npc-detail-subtitle {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 4px;
 }
 
 .npc-detail-role {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .npc-detail-race {
@@ -234,7 +228,7 @@
 }
 
 .npc-detail-location {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--cyan);
     margin-top: 4px;
 }
@@ -245,16 +239,13 @@
 }
 
 .npc-detail-btn {
-    width: 36px;
-    height: 36px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .npc-detail-btn:hover {
@@ -267,9 +258,7 @@
 }
 
 .npc-detail-btn.small {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 .npc-detail-btn.success {
@@ -287,7 +276,7 @@
 }
 
 .npc-section-title {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--text-dim);
     text-transform: uppercase;
@@ -299,13 +288,10 @@
 }
 
 .npc-section-btn {
-    width: 24px;
-    height: 24px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 1em;
+    font-size: var(--text-xs);
     color: var(--text);
 }
 
@@ -317,7 +303,7 @@
     background: var(--bg-dark);
     padding: 12px;
     border-radius: var(--radius-md);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     line-height: 1.5;
 }
 
@@ -337,9 +323,9 @@
     padding: 4px 10px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .npc-link:hover {
@@ -394,20 +380,20 @@
 }
 
 .npc-empty-icon {
-    font-size: 3em;
+    font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (🎭) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     margin-bottom: 12px;
     opacity: 0.3;
 }
 
 .npc-empty-title {
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 600;
     color: var(--text);
     margin-bottom: 4px;
 }
 
 .npc-empty-desc {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
 }
 
@@ -455,13 +441,10 @@
 }
 
 .loot-filter-chip {
-    padding: 4px 12px;
-    border-radius: var(--radius-lg);
-    font-size: 0.85em;
     cursor: pointer;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .loot-filter-chip:hover {
@@ -482,7 +465,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 /* Tinte wechselt mit der Flaeche (R-03), wie bei .npc-add-btn:hover. */
@@ -529,7 +512,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3em;
+    font-size: var(--text-xl);
     flex-shrink: 0;
 }
 
@@ -561,13 +544,13 @@
    Was bleibt, ist echt: Schriftgroesse, Innenabstand und Eckenradius setzt
    der Inline-Stil nicht. */
 .loot-item-tag {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
 }
 
 .loot-item-meta {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -579,7 +562,7 @@
 }
 
 .loot-badge {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     padding: 2px 8px;
     border-radius: var(--radius-md);
     background: var(--bg-dark);
@@ -607,7 +590,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2em;
+    font-size: var(--text-3xl);
     flex-shrink: 0;
 }
 
@@ -616,14 +599,14 @@
 }
 
 .loot-detail-name {
-    font-size: 1.2em;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold-text);
     word-break: break-word;
 }
 
 .loot-detail-subtitle {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 4px;
 }
@@ -634,16 +617,13 @@
 }
 
 .loot-detail-btn {
-    width: 36px;
-    height: 36px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .loot-detail-btn:hover {
@@ -661,7 +641,7 @@
 }
 
 .loot-section-title {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -691,14 +671,14 @@
 }
 
 .loot-stat-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     margin-bottom: 4px;
 }
 
 .loot-stat-value {
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 600;
 }
 
@@ -712,7 +692,7 @@
     padding: 4px 10px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 @media (max-width: 900px) {
@@ -731,7 +711,7 @@
         }
 
         .loc-section-title {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -740,7 +720,7 @@
         }
 
         .loc-desc {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text);
             line-height: 1.6;
             background: var(--bg-dark);
@@ -756,7 +736,7 @@
             background: var(--bg-elevated);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .loc-npc-item:hover {
@@ -771,7 +751,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             overflow: hidden;
         }
 
@@ -783,11 +763,11 @@
 
         .loc-npc-name {
             flex: 1;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
 
         .loc-npc-role {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
         }
 
@@ -801,9 +781,9 @@
             padding: 4px 10px;
             background: var(--bg-elevated);
             border-radius: var(--radius-md);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
             display: inline-flex; /* F-18: aus der Dublette uebernommen */
             align-items: center; /* F-18: aus der Dublette uebernommen */
             gap: 4px; /* F-18: aus der Dublette uebernommen */
@@ -825,7 +805,7 @@
             padding: 3px 8px;
             background: var(--bg-dark);
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             display: inline-block; /* F-18: aus der Dublette uebernommen */
             font-weight: 500; /* F-18: aus der Dublette uebernommen */
@@ -845,7 +825,7 @@
 
         .loc-empty-icon,
         .loc-empty-state .empty-state-icon {
-            font-size: 3.5em;
+            font-size: 56px; /* war 3.5em; gemessen 56,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (🏠) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: 16px;
             opacity: 0.4;
             filter: grayscale(50%);
@@ -853,7 +833,7 @@
 
         .loc-empty-title,
         .loc-empty-state .empty-state-title {
-            font-size: 1.25em;
+            font-size: var(--text-xl);
             font-weight: 500;
             color: var(--text);
             margin-bottom: 8px;
@@ -861,7 +841,7 @@
 
         .loc-empty-desc,
         .loc-empty-state .empty-state-desc {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text-dim);
             max-width: 320px;
             line-height: 1.6;
@@ -922,10 +902,10 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--cyan-text);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .npc-tag:hover {
@@ -978,7 +958,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
         }
         
         .npc-popup-title {
@@ -986,13 +966,13 @@
         }
         
         .npc-popup-name {
-            font-size: 1.1em;
+            font-size: var(--text-lg);
             font-weight: 600;
             color: var(--cyan);
         }
         
         .npc-popup-role {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
         
@@ -1000,7 +980,7 @@
             background: transparent;
             border: none;
             color: var(--text-dim);
-            font-size: 1.2em;
+            font-size: var(--text-xl);
             cursor: pointer;
             padding: 4px;
         }
@@ -1020,7 +1000,7 @@
         }
         
         .npc-popup-section-title {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--gold);
             margin-bottom: 4px;
             text-transform: uppercase;
@@ -1054,7 +1034,7 @@
         }
         
         .npc-list-tag {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             padding: 3px 8px;
             background: var(--bg-elevated);
             border-radius: var(--radius-sm);
@@ -1066,7 +1046,7 @@
         .npc-list-tag.info { background: var(--cyan); color: var(--on-cyan); }
         .npc-list-tag.clickable { 
             cursor: pointer; 
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: transform var(--dur-fast), box-shadow var(--dur-fast);
         }
         .npc-list-tag.clickable:hover { 
             transform: scale(1.05); 
@@ -1090,7 +1070,7 @@
             gap: 8px;
             padding: 6px 0;
             border-bottom: 1px solid var(--border);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             background: var(--bg-dark); /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
         }
@@ -1109,8 +1089,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            transition: all 0.2s;
-            font-size: 0.7em; /* F-18: aus der Dublette uebernommen */
+            transition: var(--trans-std);
+            font-size: var(--text-xs); /* F-18: aus der Dublette uebernommen */
         }
         
         .npc-trigger-check:hover {
@@ -1126,12 +1106,12 @@
         .npc-trigger-condition {
             color: var(--cyan-text);
             font-weight: 500;
-            font-size: 0.9em; /* F-18: aus der Dublette uebernommen */
+            font-size: var(--text-md); /* F-18: aus der Dublette uebernommen */
         }
         
         .npc-trigger-reveal {
             color: var(--text-dim);
-            font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
+            font-size: var(--text-sm); /* F-18: aus der Dublette uebernommen */
             margin-top: 6px; /* F-18: aus der Dublette uebernommen */
             padding-top: 6px; /* F-18: aus der Dublette uebernommen */
             border-top: 1px dashed var(--border); /* F-18: aus der Dublette uebernommen */
@@ -1160,7 +1140,7 @@
         .npc-trigger-reveal.hidden::before {
             content: '🔒 Klick zum Anzeigen';
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
         }
         
         .npc-dialogs-content.open {
@@ -1192,8 +1172,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75em;
-            font-weight: 700;
+            font-size: var(--text-xs);
+            font-weight: 600;
             flex-shrink: 0;
         }
         
@@ -1223,7 +1203,7 @@
         
         .npc-dialog-title {
             flex: 1;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text);
             font-weight: 500;
             margin-bottom: 4px; /* F-18: aus der Dublette uebernommen */
@@ -1258,7 +1238,7 @@
         
         .npc-dialog-text {
             padding: 12px;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text);
             line-height: 1.6;
             border-left: 3px solid var(--purple);
@@ -1275,14 +1255,14 @@
         
         .npc-dialog-text::before {
             content: '"';
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
             color: var(--purple-text);
             margin-right: 4px;
         }
         
         .npc-dialog-text::after {
             content: '"';
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
             color: var(--purple-text);
             margin-left: 4px;
         }

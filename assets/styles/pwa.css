@@ -22,7 +22,7 @@
     cursor: pointer;
     white-space: nowrap;
     min-height: 28px;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
 .pwa-install-btn:hover {
@@ -173,7 +173,7 @@
     border: 1px solid var(--bg-dark, var(--bg-dark));
     padding: 2px 10px;
     border-radius: var(--radius-sm);
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
     min-height: 28px;
@@ -198,7 +198,7 @@
     border: 1px solid color-mix(in srgb, var(--on-yellow) 40%, transparent);
     padding: 2px 10px;
     border-radius: var(--radius-sm);
-    font-size: 12px;
+    font-size: var(--text-sm);
     cursor: pointer;
     min-height: 28px;
     white-space: nowrap;

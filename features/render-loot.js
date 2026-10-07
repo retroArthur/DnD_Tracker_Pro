@@ -88,16 +88,16 @@ function renderAssignItemList() {
                 window.RARITY_TEXT_COLORS[i.rarity] || window.RARITY_TEXT_COLORS.normal;
             return `<div class="assign-item-row" style="display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; margin-bottom:2px; ${assignedQty > 0 ? 'background:rgba(74,222,128,0.15);' : ''}" data-item-id="${i.id}">
             <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
-                <span style="font-size:1.1em; flex-shrink:0;">${catIcon}</span>
+                <span style="font-size:var(--text-lg); flex-shrink:0;">${catIcon}</span>
                 <span style="color:${rarityColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(i.name)}</span>
-                <span style="font-size:0.8em; color:var(--text-dim); flex-shrink:0;">(${maxQty} verf.)</span>
+                <span style="font-size:var(--text-sm); color:var(--text-dim); flex-shrink:0;">(${maxQty} verf.)</span>
             </div>
             <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="-1" style="padding:4px 8px; font-size:1.1em;">−</button>
+                <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="-1" style="padding:4px 8px; font-size:var(--text-lg);">−</button>
                 <input type="number" class="assign-item-qty" data-item-id="${i.id}" value="${assignedQty}" min="0" max="${maxQty}"
                        style="width:50px; text-align:center; padding:4px; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; color:var(--text);"
                        data-on-change="validateAssignItemQty" data-max-qty="${maxQty}">
-                <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="1" style="padding:4px 8px; font-size:1.1em;">+</button>
+                <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="1" style="padding:4px 8px; font-size:var(--text-lg);">+</button>
             </div>
         </div>`;
         })

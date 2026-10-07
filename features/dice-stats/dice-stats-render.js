@@ -161,6 +161,17 @@ function attributeRolls(records, characters) {
  * Expected-Overlay: gestrichelte Linie bei expected height (var(--gold)), nur wenn total>0.
  * KEIN User-HTML im SVG — nur numerische Face-Labels (T-07-NOTATION-XSS sicher).
  *
+ * Die Beschriftungen tragen seit dem 2026-10-06 (Design-Handoff v3, Welle 5,
+ * Schritt 8) die Klassen `ds-hist-face-label` und `ds-hist-axis-label` statt
+ * der Praesentationsattribute `font-size` und `fill`. Grund: ein
+ * Praesentationsattribut in einer Zeichenkette ist fuer jede Pruefung dieses
+ * Projekts unsichtbar — keine CSS-Suche sieht es, kein Inline-Stil-Zaehler,
+ * und der Stil-Sollstand erfasst den berechneten Wert ohne Quellenangabe
+ * (O-7). Die WERTE sind unveraendert (8 bzw. 7 Benutzereinheiten) und stehen
+ * jetzt mit ihrer Begruendung in assets/styles/tools.css; dort steht auch,
+ * warum sie nicht auf die Untergrenze von 11 px gehoben werden und was die
+ * viewBox-Skalierung aus ihnen macht (11,34 px bei 1440, 5,44 px bei 375).
+ *
  * @param {number[]} counts - Array(20) aus computeD20Counts
  * @returns {string}        - SVG-String
  */
@@ -191,7 +202,7 @@ function renderD20Histogram(counts) {
             + ' fill="' + fill + '" opacity="0.8"/>';
         // Face label — purely numeric, no user data
         bars += '<text x="' + (x + barW / 2).toFixed(1) + '" y="' + (H - PAD.bottom + 12) + '"'
-            + ' text-anchor="middle" font-size="8" fill="var(--text-dim)">' + face + '</text>';
+            + ' text-anchor="middle" class="ds-hist-face-label">' + face + '</text>';
     }
 
     // Expected-Overlay-Linie (gestrichelt, var(--gold)), nur bei total>0
@@ -207,10 +218,10 @@ function renderD20Histogram(counts) {
     // Y-Achsen-Beschriftung (0 und max)
     var yAxis = '';
     yAxis += '<text x="' + (PAD.left - 4) + '" y="' + (H - PAD.bottom) + '"'
-        + ' text-anchor="end" font-size="7" fill="var(--text-dim)">0</text>';
+        + ' text-anchor="end" class="ds-hist-axis-label">0</text>';
     if (total > 0) {
         yAxis += '<text x="' + (PAD.left - 4) + '" y="' + (PAD.top + 4) + '"'
-            + ' text-anchor="end" font-size="7" fill="var(--text-dim)">' + maxCount + '</text>';
+            + ' text-anchor="end" class="ds-hist-axis-label">' + maxCount + '</text>';
     }
 
     return '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '"'

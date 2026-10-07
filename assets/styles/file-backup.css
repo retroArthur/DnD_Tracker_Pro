@@ -46,7 +46,7 @@
 }
 
 .backup-status-text {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text);
     line-height: 1.4;
 }
@@ -63,9 +63,9 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     color: var(--yellow-text);
-    font-size: 12px;
+    font-size: var(--text-sm);
     background: transparent;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
 }
 
 .backup-warning-indicator:hover {
@@ -82,7 +82,7 @@
 
 .file-backup-fallback .backup-status-label {
     color: var(--text-dim);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     margin-bottom: 8px;
     line-height: 1.4;
 }
@@ -187,19 +187,35 @@
 /* Header-Zeile der Backup-Liste */
 .backup-entry-header {
     min-height: 32px;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     background: transparent;
     border-bottom: 2px solid var(--border);
 }
 
-.backup-entry-header:hover {
+.backup-entry-header:hover:not(:focus-visible) {
     /* Die Kopfzeile ist keine Zeile, die man anklickt — sie darf den
        Hover-Zustand also auch nicht melden. Bis Schritt 9 genuegte dafuer
        `background: transparent`, weil .backup-entry:hover eine Fuellung
        setzte; seit E3 setzt es einen Umriss, und der muss hier ausdruecklich
        zurueckgenommen werden. Ohne diese Zeile bekaeme die Kopfzeile einen
-       goldenen Ring. */
+       goldenen Ring.
+
+       WELLE 6 HAT DEN SELEKTOR VERENGT, nicht die Zeile geloescht. Diese
+       Regel ist die EINZIGE der 31 `outline: none` im Baum, die keinen Fokus
+       unterdrueckt: `.backup-entry-header` ist ein div mit BEIDEN Klassen
+       (`backup-entry backup-entry-header`, file-backup-ui.js), ohne tabindex
+       und ohne data-action — es ist kein Tastaturhalt, und
+       `.backup-entry:hover` trifft es ueber die erste Klasse. Loeschen haette
+       also nicht einen Fokusring freigelegt, sondern genau den goldenen
+       Hover-Ring erzeugt, vor dem der Absatz darueber warnt.
+
+       `:not(:focus-visible)` ist deshalb heute verhaltensneutral (ein nicht
+       fokussierbares div ist nie `:focus-visible`) und sagt trotzdem, was die
+       Regel meint: den HOVER-Umriss zuruecknehmen, niemals einen Fokusring.
+       Wird die Kopfzeile spaeter anklickbar — ein Sortierknopf etwa —, bleibt
+       ihr Ring erhalten, ohne dass jemand an diese Stelle denken muss. Und
+       W6-R-05 kommt damit ohne Ausnahmeliste aus. */
     outline: none;
 }
 
@@ -214,13 +230,13 @@
 
 /* Datum */
 .backup-entry-date {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
 /* Dateigröße */
 .backup-entry-size {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     text-align: right;
 }
@@ -243,12 +259,12 @@
     color: var(--red-text);
     border-color: var(--red-text);
     background: transparent;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
     border: 1px solid;
     cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+    transition: background var(--dur-fast), color var(--dur-fast);
     min-height: 32px;
 }
 
@@ -290,6 +306,6 @@
     .backup-entry {
         grid-template-columns: 1fr 80px 60px 90px;
         gap: 4px;
-        font-size: 0.9em;
+        font-size: var(--text-md);
     }
 }

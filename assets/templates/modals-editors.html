@@ -14,7 +14,7 @@
                     <!-- Text Formatting -->
                     <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
                         <h4 style="margin: 0 0 12px 0; color: var(--gold);">Textformatierung</h4>
-                        <table style="width: 100%; color: var(--text-dim); font-size: 14px;">
+                        <table style="width: 100%; color: var(--text-dim); font-size: var(--text-md);">
                             <tr class="u-rule-bottom">
                                 <td class="u-pad-sm"><code>**fett**</code></td>
                                 <td class="u-pad-sm">→</td>
@@ -41,11 +41,11 @@
                     <!-- Import/Export -->
                     <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
                         <h4 style="margin: 0 0 12px 0; color: var(--gold);">Import/Export</h4>
-                        <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+                        <p style="color: var(--text-dim); font-size: var(--text-md); margin: 0;">
                             <b>Export:</b> Exportiere Zauber, NPCs, Quests als .md-Dateien.<br>
                             → Öffne ein Entity zum Bearbeiten und klicke "📄 Export"
                         </p>
-                        <p style="color: var(--text-dim); font-size: 14px; margin: 12px 0 0 0;">
+                        <p style="color: var(--text-dim); font-size: var(--text-md); margin: 12px 0 0 0;">
                             <b>Import:</b> Importiere Markdown-Dateien zurück.<br>
                             → Öffne ein Entity und klicke "📥 Import"
                         </p>
@@ -54,7 +54,7 @@
                     <!-- Settings -->
                     <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
                         <h4 style="margin: 0 0 12px 0; color: var(--gold);">Einstellungen</h4>
-                        <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+                        <p style="color: var(--text-dim); font-size: var(--text-md); margin: 0;">
                             Markdown-Shortcuts können im <b>Data-Tab</b> unter "📝 Editor Features" aktiviert/deaktiviert werden.
                         </p>
                     </div>
@@ -116,7 +116,7 @@
             <div class="color-swatch" data-floating-action="highlight" data-color="#06b6d4" style="background:#06b6d4;" title="Türkis"></div>
             <div class="color-swatch" data-floating-action="highlight" data-color="transparent" style="background:transparent; border:1px dashed #666;" title="Keine Farbe"></div>
             <span style="flex:1;"></span>
-            <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888; font-size:11px;">✕ Format</button>
+            <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888; font-size:var(--text-xs);">✕ Format</button>
         </div>
         <div class="swipe-indicator">← Wischen für mehr →</div>
     </div>
@@ -651,7 +651,7 @@
                     <div class="shortcut-row"><span>Neue Runde</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">N</span></div></div>
                 </div>
             </div>
-            <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: 0.85em;">
+            <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
                 Drücke <span class="shortcut-key">Esc</span> zum Schließen
             </div>
         </div>
@@ -700,7 +700,7 @@
                 <button class="btn btn-sm" data-action="hide-modal" data-value="story-arc-modal">✕</button>
             </div>
             <div class="modal-body">
-                <p style="color: var(--text-dim); font-size: 0.9em; margin-bottom: 12px;">
+                <p style="color: var(--text-dim); font-size: var(--text-md); margin-bottom: 12px;">
                     Gruppiere deine Sessions in Story-Arcs (z.B. "Akt 1: Der Anfang", "Das Drachenproblem").
                 </p>
                 
@@ -716,7 +716,7 @@
                 <div class="form-group">
                     <label>Vorhandene Arcs</label>
                     <div id="story-arc-list" class="story-arc-list">
-                        <div style="color: var(--text-dim); font-size: 0.9em;">Keine Arcs vorhanden</div>
+                        <div style="color: var(--text-dim); font-size: var(--text-md);">Keine Arcs vorhanden</div>
                     </div>
                 </div>
             </div>

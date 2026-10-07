@@ -245,7 +245,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                 ${
                     ch.resistances?.length || ch.immunities?.length
                         ? `
-                    <div style="font-size: 0.7em; color: var(--text-dim); margin-bottom: 8px;">
+                    <div style="font-size: var(--text-xs); color: var(--text-dim); margin-bottom: 8px;">
                         ${ch.resistances?.length ? `<span style="color: var(--cyan);">🛡️ ${ch.resistances.join(', ')}</span>` : ''}
                         ${ch.immunities?.length ? `<span style="color: var(--gold);"> ⭐ ${ch.immunities.join(', ')}</span>` : ''}
                     </div>
@@ -329,8 +329,8 @@ function renderCompactSpellSlots(ch) {
     const cantrips = slots[0];
     if (cantrips && cantrips.max > 0) {
         html += `<span style="margin-right: 10px; display: inline-flex; align-items: center;" title="Bekannte Zaubertricks">`;
-        html += `<span style="font-size: 10px; color: var(--gold); margin-right: 3px;">🔮</span>`;
-        html += `<span style="font-size: 11px; color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--gold); margin-right: 3px;">🔮</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
         html += `</span>`;
     }
     // Grade 1-9 aufsteigend, Pips innerhalb eines Grades aufsteigend nach
@@ -340,7 +340,7 @@ function renderCompactSpellSlots(ch) {
         const slot = slots[level];
         if (slot && slot.max > 0) {
             html += `<span style="margin-right: 8px; display: inline-flex; align-items: center;">`;
-            html += `<span style="font-size: 10px; color: var(--text-dim); margin-right: 2px;">${level}:</span>`;
+            html += `<span style="font-size: var(--text-xs); color: var(--text-dim); margin-right: 2px;">${level}:</span>`;
             for (let i = 0; i < slot.max; i++) {
                 const filled = i < slot.current;
                 // Attribute exakt wie ui/event-delegation.js sie liest:

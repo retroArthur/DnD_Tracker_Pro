@@ -341,7 +341,7 @@ function showLoadError(error) {
         'margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;';
 
     const summary = document.createElement('summary');
-    summary.style.cssText = 'cursor: pointer; font-weight: bold;';
+    summary.style.cssText = 'cursor: pointer; font-weight: 600;';
     summary.textContent = 'Fehlerdetails anzeigen';
 
     const pre = document.createElement('pre');

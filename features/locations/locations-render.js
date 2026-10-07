@@ -234,7 +234,7 @@ function showLocationDetail(id) {
     `
               )
               .join('')
-        : '<div style="color: var(--text-dim); font-size: 0.85em;">Keine NPCs an diesem Ort</div>';
+        : '<div style="color: var(--text-dim); font-size: var(--text-sm);">Keine NPCs an diesem Ort</div>';
     // Build links - EntityLookup methods are singular (location, npc, etc.)
     const lookupMap = {
         locations: 'location',
@@ -301,7 +301,7 @@ function showLocationDetail(id) {
                     ${
                         npcs.length
                             ? `<div class="loc-npcs-inline">
-                        <span style="color: var(--text-dim); font-size: 0.85em;">👥 NPCs:</span>
+                        <span style="color: var(--text-dim); font-size: var(--text-sm);">👥 NPCs:</span>
                         ${npcs
                             .slice(0, 5)
                             .map(

@@ -125,7 +125,7 @@
 .calc-header h3 {
     margin: 0;
     color: var(--gold-text);
-    font-size: 16px;
+    font-size: var(--text-lg);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -136,11 +136,11 @@
     background: none;
     border: none;
     color: var(--text-dim);
-    font-size: 19px;
+    font-size: var(--text-xl);
     cursor: pointer;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-close:hover {
@@ -183,7 +183,7 @@
 }
 
 .calc-card-title {
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--text);
     display: flex;
@@ -202,9 +202,9 @@
     color: var(--text-dim);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    font-size: 12px;
+    font-size: var(--text-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-card-btn:hover {
@@ -226,17 +226,16 @@
 
 .calc-input {
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     color: var(--text);
     padding: 6px 10px;
     border-radius: var(--radius-sm);
-    font-size: 13px;
-    transition: border-color 0.2s;
+    font-size: var(--text-sm);
+    transition: border-color var(--dur);
 }
 
 .calc-input:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .calc-input::placeholder {
@@ -249,10 +248,10 @@
     color: var(--on-gold);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     white-space: nowrap;
 }
 
@@ -275,7 +274,7 @@
     background: var(--bg-card);
     border-radius: var(--radius-sm);
     margin-bottom: 4px;
-    font-size: 13px;
+    font-size: var(--text-sm);
 }
 
 .calc-list-item:last-child {
@@ -289,7 +288,7 @@
 
 .calc-list-xp {
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--text-sm);
     margin-left: 8px;
 }
 
@@ -299,9 +298,9 @@
     color: var(--text-dim);
     padding: 2px 6px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: var(--text-sm);
     opacity: 0.6;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-list-remove:hover {
@@ -331,8 +330,8 @@
 .calc-diff-badge {
     padding: 8px 16px;
     border-radius: var(--radius-md);
-    font-size: 16px;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -370,19 +369,19 @@
 }
 
 .calc-diff-xp {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: var(--text-2xl);
+    font-weight: 600;
     color: var(--gold);
 }
 
 .calc-diff-xp span {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     font-weight: 400;
 }
 
 .calc-diff-details {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 4px;
 }
@@ -396,7 +395,7 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 4px;
-    font-size: 11px;
+    font-size: var(--text-xs);
 }
 
 .calc-threshold-label {
@@ -456,13 +455,13 @@
 }
 
 .calc-stat-value {
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--text);
 }
 
 .calc-stat-label {
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     margin-top: 2px;
@@ -470,7 +469,7 @@
 
 /* Multiplier Info Tooltip */
 .calc-stat-info {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     cursor: help;
     margin-left: 4px;
@@ -492,7 +491,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     margin-top: 6px;
     min-height: 28px;
 }
@@ -545,7 +544,7 @@
 }
 
 .calc-budget-current-level {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     font-weight: 600;
     padding: 2px 10px;
     border-radius: var(--radius-lg);
@@ -591,7 +590,7 @@
 .calc-budget-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     margin-top: 4px;
     padding: 0 2px;
@@ -602,7 +601,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -616,10 +615,10 @@
     border: none;
     border-radius: var(--radius-sm);
     padding: 4px 12px;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-budget-apply:hover {
@@ -663,8 +662,8 @@
     gap: 8px;
     padding: 8px 12px;
     cursor: pointer;
-    transition: background 0.15s;
-    font-size: 0.85em;
+    transition: background var(--dur-fast);
+    font-size: var(--text-sm);
     border: none;
     background: none;
     width: 100%;
@@ -689,19 +688,19 @@
 
 .calc-fav-count {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .calc-fav-delete {
     background: none;
     border: none;
     color: var(--text-dim);
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     cursor: pointer;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     opacity: 0.5;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
 }
 
 .calc-fav-delete:hover {
@@ -723,10 +722,10 @@
     padding: 10px 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -794,7 +793,7 @@
 
 .calc-env-label {
     display: block;
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--text-dim);
     margin-bottom: 8px;
@@ -813,9 +812,9 @@
     border-radius: var(--radius-sm);
     background: var(--bg-card);
     color: var(--text-dim);
-    font-size: 11px;
+    font-size: var(--text-xs);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     white-space: nowrap;
 }
 
@@ -851,7 +850,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     position: relative;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-lair-slider::before {
@@ -863,7 +862,7 @@
     background: var(--text-dim);
     top: 2px;
     left: 2px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-lair-toggle input:checked + .calc-lair-slider {
@@ -877,7 +876,7 @@
 }
 
 .calc-lair-text {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -948,14 +947,11 @@
 }
 
 .enc-filter-chip {
-    padding: 4px 12px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 0.8em;
     color: var(--text-dim);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-filter-chip:hover {
@@ -972,10 +968,10 @@
 .enc-filter-select {
     padding: 4px 8px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text-dim);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 .enc-add-btn {
@@ -986,7 +982,7 @@
     color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-add-btn:hover {
@@ -1024,7 +1020,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4em;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 40x40-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
 }
 
@@ -1046,7 +1042,7 @@
 }
 
 .enc-item-cr {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 500;
     padding: 2px 6px;
     background: var(--red);
@@ -1055,7 +1051,7 @@
 }
 
 .enc-item-meta {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -1067,7 +1063,7 @@
 }
 
 .enc-stat-badge {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -1094,7 +1090,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8em;
+    font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 56x56-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     flex-shrink: 0;
 }
 
@@ -1104,14 +1100,14 @@
 }
 
 .enc-detail-name {
-    font-size: 1.2em;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold-text);
     word-break: break-word;
 }
 
 .enc-detail-subtitle {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -1122,17 +1118,14 @@
 }
 
 .enc-detail-btn {
-    width: 36px;
-    height: 36px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .enc-detail-btn:hover {
@@ -1186,7 +1179,7 @@
 }
 
 .enc-speed-line {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     white-space: nowrap;
     color: var(--cyan);
 }
@@ -1196,15 +1189,15 @@
 }
 
 .enc-core-stat-label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .enc-core-stat-value {
-    font-size: 1.1em;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     color: var(--cyan-text);
     margin-top: 2px;
 }
@@ -1215,7 +1208,7 @@
 }
 
 .enc-section-title {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--text-dim);
     text-transform: uppercase;
@@ -1238,20 +1231,20 @@
 }
 
 .enc-attr-name {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     font-weight: 600;
 }
 
 .enc-attr-value {
-    font-size: 1.1em;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     color: var(--text);
     margin: 2px 0;
 }
 
 .enc-attr-mod {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     font-weight: 600;
 }
 
@@ -1275,14 +1268,14 @@
     background: var(--green);
     color: var(--on-green);
     border-radius: var(--radius-sm);
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 600;
 }
 
 .enc-res-tag {
     padding: 3px 8px;
     border-radius: var(--radius-sm);
-    font-size: 0.75em;
+    font-size: var(--text-xs);
 }
 
 .enc-res-tag.res {
@@ -1302,7 +1295,7 @@
 
 /* Text Content */
 .enc-text {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text);
     line-height: 1.5;
 }
@@ -1318,20 +1311,20 @@
 }
 
 .enc-empty-icon {
-    font-size: 3em;
+    font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand (👹) — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     margin-bottom: 12px;
     opacity: 0.5;
 }
 
 .enc-empty-title {
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     font-weight: 600;
     color: var(--text);
     margin-bottom: 6px;
 }
 
 .enc-empty-desc {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
 }
 
@@ -1350,7 +1343,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color var(--dur);
 }
 
 .enc-lang-trigger:hover {
@@ -1359,13 +1352,13 @@
 
 .enc-lang-selected {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .enc-lang-arrow {
     color: var(--text-dim);
-    font-size: 0.8em;
-    transition: transform 0.2s;
+    font-size: var(--text-sm);
+    transition: transform var(--dur);
 }
 
 .enc-languages-wrapper.open .enc-lang-arrow {
@@ -1398,7 +1391,7 @@
     gap: 8px;
     padding: 8px 12px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
 }
 
 .enc-lang-item:hover {
@@ -1412,7 +1405,7 @@
 }
 
 .enc-lang-item span {
-    font-size: 0.9em;
+    font-size: var(--text-sm);
     color: var(--text);
 }
 
@@ -1426,7 +1419,7 @@
 
 .enc-speed-label {
     display: block;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--gold-text);
     margin-bottom: 10px;
     font-weight: 600;
@@ -1445,7 +1438,7 @@
 }
 
 .enc-speed-item label {
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1455,16 +1448,15 @@
     width: 100%;
     padding: 6px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-align: center;
 }
 
 .enc-speed-item input:focus {
-    border-color: var(--cyan);
-    outline: none;
+    border-color: var(--focus-ring);
 }
 
 .enc-speed-item input::placeholder {
@@ -1491,7 +1483,7 @@
     .enc-detail-icon {
         width: 44px;
         height: 44px;
-        font-size: 1.4em;
+        font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Mobilfassung derselben Ikone: der Kasten geht auf 44x44 px, das Zeichen mit — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
     }
 
     .enc-detail-header {
@@ -1499,7 +1491,7 @@
     }
 
     .enc-detail-name {
-        font-size: 1.05em;
+        font-size: var(--text-lg);
     }
 
     .enc-stats-row {
@@ -1512,7 +1504,7 @@
     }
 
     .enc-core-stat-value {
-        font-size: 0.95em;
+        font-size: var(--text-md);
     }
 
     .enc-attr-grid {
@@ -1547,13 +1539,13 @@
     .enc-item-icon {
         width: 32px;
         height: 32px;
-        font-size: 1.1em;
+        font-size: 17.6px; /* war 1.1em; gemessen 17,60 px auf 16-px-Eltern, Delta 0,00. Mobilfassung derselben Ikone: Kasten 32x32 px. Sprung waere nur -1,60 px, also unter der Schwelle — mitgezogen, weil der zeilenfreie Anker beide Fassungen fuehrt (MITGEZOGEN in W5-R-07) */
     }
 
     .enc-item-stats {
         flex-direction: column;
         gap: 2px;
-        font-size: 0.85em;
+        font-size: var(--text-sm);
     }
 }
 
@@ -1575,7 +1567,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 10px 12px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .calc-import-card:hover {
@@ -1591,14 +1583,14 @@
 .calc-import-name {
     font-weight: 600;
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--text-md);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .calc-import-meta {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -1614,29 +1606,25 @@
     width: 50px;
     padding: 6px 8px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--text-md);
     text-align: center;
 }
 
 .calc-import-count:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .calc-import-btn {
     background: var(--gold);
     border: none;
     color: var(--on-gold);
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    font-size: 18px;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;

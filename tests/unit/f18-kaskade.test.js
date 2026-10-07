@@ -29,6 +29,43 @@
  * standardmaessig eine Tiefe von 1 — `git show f514ba4~1:...` gibt es in der CI
  * nicht. Die Verlaufsanalyse (`--verlauf`) braucht die Historie und laeuft
  * deshalb von Hand; dieser Test kommt mit dem Arbeitsbaum aus.
+ *
+ * NEUERHEBUNG AM 2026-10-06, 126 -> 117 ABHAENGIGKEITEN (Design-Handoff v3,
+ * Welle 5, Schritt 5). Der mechanische Lauf von `tools/sync-typo-tokens.js`
+ * hat 801 `font-size`-Werte auf die Skala gelegt, und damit sind NEUN Paare
+ * entfallen: beide Konkurrentinnen tragen jetzt DENSELBEN Wert, also
+ * entscheidet die Reihenfolge nichts mehr. Alle neun sind einzeln
+ * nachgerechnet (alter Wert links, neuer Zustand rechts, sm = --text-sm):
+ *     .form-group label 13px      vs .rt-dice-section label   0.85em -> sm/sm
+ *     .form-group label 13px      vs .rt-field label          0.85em -> sm/sm
+ *     .form-group label 13px      vs .session-filter-grp lbl  0.85em -> sm/sm
+ *     .form-group label 13px      vs .spell-classes-grid lbl  0.8em  -> sm/sm
+ *     .npc-trigger-reveal 0.85em  vs .migration-step-error    13px   -> sm/sm
+ *     .qref-action-name   0.85em  vs .migration-step-error    13px   -> sm/sm
+ *     .wiki-link          0.85em  vs .migration-step-error    13px   -> sm/sm
+ *     .char-save-box      0.82em  vs .migration-step-error    13px   -> sm/sm
+ *     .editor-btn 13px (top)      vs .editor-btn-text         12px   -> sm/sm
+ * Die letzte nur im `(top)`-Zusammenhang: `.editor-toolbar .editor-btn`
+ * traegt unter `@media (max-width: 900px)` weiter einen anderen Wert (14px ->
+ * --text-md), und jener Zusammenhang hat seine eigene Zeile.
+ *
+ * DAS ABNAHMEMASZ IST NICHT DIE ZAHL, SONDERN IHRE ART: 0 GEDREHTE und 0 NEUE
+ * Paare. Eine Drehung ist die F-18-Fehlerklasse; ein entfallenes Paar ist das
+ * Gegenteil eines Befundes, weil der Streit, den es bewachte, nicht mehr
+ * besteht. Es bleibt trotzdem eine Entscheidung und steht darum hier mit
+ * Zahlen — ein Sollstand, der ohne Begruendung neu geschrieben wird, ist der
+ * bequeme Weg, einen Waechter blind zu machen.
+ *
+ * ZUERST FALSCH VERMUTET, und das gehoert in die Akte: die neun sahen
+ * zunaechst nach geloeschten `F-18: aus der Dublette uebernommen`-Markern aus,
+ * weil ein einseitiger Vergleich nur die ENTFERNTEN Zeilen mit Kommentar
+ * zaehlte und nicht die hinzugefuegten. Nachgemessen sind es 9 entfernte UND
+ * 9 hinzugefuegte Kommentarzeilen, und die Markerzahl je Datei ist gegen HEAD
+ * unveraendert (112 insgesamt: core 3, dashboard 19, dice 7, dmscreen 31,
+ * loot 1, npcs 25, party 3, spells 11, welt 12). Das Umstellungswerkzeug
+ * ersetzt nur die Zeichengrenzen des WERTES; ein nachgestellter Kommentar
+ * liegt dahinter und bleibt stehen (belegt an einem Kunstfall mit und ohne
+ * abschliessendes Semikolon).
  */
 
 const fs = require('fs');

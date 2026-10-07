@@ -66,8 +66,8 @@ function renderSpellSlotPips(charId) {
     if (cantrips && cantrips.max > 0) {
         hasSlots = true;
         html += `<span style="margin-right: 10px; display: inline-flex; align-items: center;" title="Bekannte Zaubertricks">`;
-        html += `<span style="font-size: 10px; color: var(--gold); margin-right: 3px;">🔮</span>`;
-        html += `<span style="font-size: 11px; color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--gold); margin-right: 3px;">🔮</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
         html += `</span>`;
     }
     for (let level = 1; level <= 9; level++) {
@@ -75,7 +75,7 @@ function renderSpellSlotPips(charId) {
         if (slot && slot.max > 0) {
             hasSlots = true;
             html += `<span style="margin-right: 8px; display: inline-flex; align-items: center;">`;
-            html += `<span style="font-size: 10px; color: var(--text-dim); margin-right: 2px;">${level}:</span>`;
+            html += `<span style="font-size: var(--text-xs); color: var(--text-dim); margin-right: 2px;">${level}:</span>`;
             for (let i = 0; i < slot.max; i++) {
                 const filled = i < slot.current;
                 html += `<span class="slot-pip ${filled ? 'filled' : ''}" data-action="toggle-spell-slot-stop" data-id="${charId}" data-value="${level}" title="Grad ${level} Slot ${filled ? '(verfügbar)' : '(verbraucht)'}"></span>`;
@@ -84,7 +84,7 @@ function renderSpellSlotPips(charId) {
         }
     }
     if (hasSlots) {
-        html += `<button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px; margin-left: 8px;" data-action="restore-spell-slots-stop" data-id="${charId}" title="Alle Slots wiederherstellen">🔄</button>`;
+        html += `<button class="btn btn-sm" style="font-size: var(--text-xs); padding: 2px 6px; margin-left: 8px;" data-action="restore-spell-slots-stop" data-id="${charId}" title="Alle Slots wiederherstellen">🔄</button>`;
     }
     return hasSlots
         ? `<div class="spell-slots-compact" data-stop-propagation="true">${html}</div>`

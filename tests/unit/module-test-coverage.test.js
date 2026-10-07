@@ -181,7 +181,15 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/bestiary/bestiary-crud.js',
     'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/command-palette/command-palette.js',
-    'features/dice-stats/dice-stats-render.js',
+    // GESTRICHEN am 2026-10-05 (Welle 5, Schritt 1): W5-R-05c in
+    // tests/unit/design-consistency.test.js liest jede .js-Datei unter
+    // features/ und urteilt ueber die drei SVG-Praesentationsattribute
+    // font-size="7|8" in features/dice-stats/dice-stats-render.js
+    // (Zeilen 194, 210, 213) — die kleinste Schrift der ganzen App. Der
+    // Modulpfad steht dort in AUSFUEHRBAREM Code (Zusicherung der
+    // Gegenprobe zur Dateimenge), nicht nur im Erklaertext; das ist genau
+    // das Kriterium, das die CR-01-Eintraege unten voneinander trennt.
+    // Die Liste darf nur schrumpfen — und sie tut es hier um eins.
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
     'features/dmscreen/dmscreen-widgets-base.js', // -- CR-01, 2026-09-07: s. Kommentar oben

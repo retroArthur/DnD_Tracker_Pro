@@ -14,15 +14,14 @@
             width: 200px;
             padding: 6px 12px 6px 30px;
             border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             background: var(--bg-dark);
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .global-search-input:focus {
-            border-color: var(--gold);
-            outline: none;
+            border-color: var(--focus-ring);
             width: 280px;
         }
         
@@ -32,7 +31,7 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-dim);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .global-search-results {
@@ -59,7 +58,7 @@
         }
         
         .search-result-type {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-md);
             margin-right: 8px;
@@ -77,7 +76,7 @@
         }
         
         .search-result-detail {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -100,7 +99,7 @@
             z-index: var(--z-floating);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s;
+            transition: opacity var(--dur);
         }
         
         .shortcuts-overlay.show {
@@ -120,7 +119,7 @@
         }
         
         .shortcuts-title {
-            font-size: 1.3em;
+            font-size: var(--text-xl);
             color: var(--gold-text);
             margin-bottom: 20px;
             display: flex;
@@ -141,7 +140,7 @@
         }
         
         .shortcuts-section-title {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--cyan-text);
             margin-bottom: 10px;
             font-weight: 600;
@@ -152,7 +151,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 6px 0;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .shortcut-keys {
@@ -166,7 +165,7 @@
             padding: 3px 8px;
             border-radius: var(--radius-sm);
             font-family: var(--font-mono);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--gold-text);
         }
         
@@ -186,9 +185,9 @@
             gap: 3px;
             padding: 2px 6px;
             border-radius: var(--radius-sm);
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .condition-badge.active {
@@ -257,13 +256,13 @@
             border: 1px solid var(--border);
             padding: 10px 14px;
             border-radius: var(--radius-md);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             width: 250px;
             z-index: var(--z-tooltip);
             box-shadow: var(--shadow-2);
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity var(--dur);
         }
         
         .condition-badge:hover .condition-tooltip {
@@ -290,7 +289,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .condition-pick-item:hover {
@@ -317,7 +316,7 @@
             gap: 4px;
             padding: 3px 8px;
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             margin: 2px;
         }
         
@@ -357,14 +356,13 @@
             flex: 1;
             padding: 8px 12px;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
         }
         
         .notes-search-input:focus {
-            border-color: var(--gold);
-            outline: none;
+            border-color: var(--focus-ring);
         }
         
         .notes-search-results {
@@ -378,7 +376,7 @@
             padding: 12px;
             border-bottom: 1px solid var(--border);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background var(--dur);
         }
         
         .notes-search-result:hover {
@@ -390,13 +388,13 @@
         }
         
         .notes-search-date {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--gold);
             margin-bottom: 4px;
         }
         
         .notes-search-excerpt {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text-dim);
         }
         
@@ -448,12 +446,12 @@
         }
         
         .encounter-round-num {
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
             color: var(--gold-text);
         }
         
         .encounter-round-label {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
         
@@ -481,9 +479,9 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .note-template-btn:hover {
@@ -503,7 +501,7 @@
             min-height: 36px;
             align-items: center;
         }
-        .session-tags-input-wrapper:focus-within { border-color: var(--gold); }
+        .session-tags-input-wrapper:focus-within { border-color: var(--focus-ring); }
         .session-tags-container { display: flex; flex-wrap: wrap; gap: 4px; }
         .session-tag {
             display: inline-flex;
@@ -513,13 +511,13 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--cyan-text);
         }
         .session-tag-remove {
             cursor: pointer;
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         .session-tag-remove:hover { color: var(--red); }
         #session-tags-input {
@@ -528,8 +526,7 @@
             border: none;
             background: transparent;
             color: var(--text);
-            font-size: 0.9em;
-            outline: none;
+            font-size: var(--text-md);
         }
         .session-tag-suggestions {
             display: flex;
@@ -542,7 +539,7 @@
             background: transparent;
             border: 1px dashed var(--border);
             border-radius: var(--radius-lg);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             cursor: pointer;
         }
@@ -566,18 +563,25 @@
             gap: 8px;
         }
         .session-filter-group label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             white-space: nowrap;
         }
-        .session-filter-group select { padding: 4px 8px; font-size: 0.85em; }
+        /* background ergaenzt in Welle 6 Schritt 6: #filter-session-arc hatte
+           keine Fuellung aus der App und stand damit auf der des Browsers.
+           Begruendung und Zahlen bei .bst-attr-input in bestiary.css. */
+        .session-filter-group select {
+            padding: 4px 8px;
+            font-size: var(--text-sm);
+            background: var(--bg-card);
+        }
         .session-filter-tags { display: flex; flex-wrap: wrap; gap: 4px; }
         .session-filter-tag {
             padding: 2px 8px;
             background: transparent;
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             cursor: pointer;
         }
@@ -598,8 +602,8 @@
         }
         .session-arc-header:hover { background: linear-gradient(90deg, var(--bg-dark), transparent); }
         .session-arc-title { font-weight: 600; color: var(--gold); flex: 1; }
-        .session-arc-count { font-size: 0.8em; color: var(--text-dim); }
-        .session-arc-toggle { color: var(--text-dim); font-size: 0.8em; }
+        .session-arc-count { font-size: var(--text-sm); color: var(--text-dim); }
+        .session-arc-toggle { color: var(--text-dim); font-size: var(--text-sm); }
         .session-arc-sessions {
             padding-left: 12px;
             border-left: 1px solid var(--border);
@@ -625,17 +629,17 @@
             margin-bottom: 8px;
         }
         .session-number {
-            font-size: 1.5em;
-            font-weight: 700;
+            font-size: var(--text-2xl);
+            font-weight: 600;
             color: var(--gold-text);
             line-height: 1;
             min-width: 50px;
         }
         .session-info { flex: 1; }
-        .session-title { font-weight: 600; color: var(--text); font-size: 1.05em; }
-        .session-date { font-size: 0.8em; color: var(--text-dim); }
+        .session-title { font-weight: 600; color: var(--text); font-size: var(--text-lg); }
+        .session-date { font-size: var(--text-sm); color: var(--text-dim); }
         .session-summary {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--text);
             font-style: italic;
             margin: 8px 0;
@@ -645,7 +649,7 @@
             border-left: 2px solid var(--cyan);
         }
         .session-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-        .session-content { font-size: 0.9em; color: var(--text); line-height: 1.5; }
+        .session-content { font-size: var(--text-md); color: var(--text); line-height: 1.5; }
         .session-content.collapsed {
             max-height: 80px;
             overflow: hidden;
@@ -666,7 +670,7 @@
         }
         
         .quick-ref-section-title {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--cyan);
             margin-bottom: 8px;
             font-weight: 600;
@@ -677,7 +681,7 @@
         }
         
         .quick-ref-section-content {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             line-height: 1.5;
             display: none;
@@ -692,7 +696,7 @@
         }
         
         .quick-ref-custom-content {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             line-height: 1.5;
         }
         
@@ -715,8 +719,8 @@
         }
         
         .quick-ref-toggle-arrow {
-            font-size: 0.8em;
-            transition: transform 0.2s;
+            font-size: var(--text-sm);
+            transition: transform var(--dur);
         }
         
         .quick-ref-custom-entry.expanded .quick-ref-toggle-arrow {
@@ -742,7 +746,7 @@
             align-items: center; /* F-18: aus der Dublette uebernommen */
             justify-content: center; /* F-18: aus der Dublette uebernommen */
             opacity: 0; /* F-18: aus der Dublette uebernommen */
-            transition: opacity 0.2s ease; /* F-18: aus der Dublette uebernommen */
+            transition: opacity var(--dur) ease; /* F-18: aus der Dublette uebernommen */
         }
         
         .modal {
@@ -781,7 +785,7 @@
             width: 90%; /* F-18: aus der Dublette uebernommen */
             box-shadow: var(--shadow-3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset; /* F-18: aus der Dublette uebernommen */
             transform: translateY(20px) scale(0.95); /* F-18: aus der Dublette uebernommen */
-            transition: transform 0.25s ease, opacity 0.25s ease; /* F-18: aus der Dublette uebernommen */
+            transition: transform var(--dur) ease, opacity var(--dur) ease; /* F-18: aus der Dublette uebernommen */
         }
         
         @media (max-width: 600px) {
@@ -837,9 +841,9 @@
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: var(--radius-md);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .io-btn:hover {
@@ -886,7 +890,7 @@
             color: var(--text);
             text-align: left;
             cursor: pointer;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .export-dropdown-item:hover {
@@ -909,10 +913,6 @@
         .loading-overlay.active {
             opacity: 1;
             pointer-events: auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         
         /* ============================================================
@@ -963,11 +963,11 @@
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-md);
-            font-size: 12px;
+            font-size: var(--text-sm);
             white-space: nowrap;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.15s ease;
+            transition: opacity var(--dur-fast) ease;
             z-index: var(--z-tooltip);
             box-shadow: var(--shadow-1);
             border: 1px solid var(--border);
@@ -984,7 +984,7 @@
         .encounter-card,
         .spell-card,
         .loot-item {
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            transition: transform var(--dur) ease, box-shadow var(--dur) ease, border-color var(--dur) ease;
         }
         
         .char-card:hover,
@@ -1027,7 +1027,7 @@
            Ueberblendung. */
         .view {
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: opacity var(--dur) ease;
         }
 
         .view.active {
@@ -1052,7 +1052,7 @@
         }
         
         .empty-state-icon {
-            font-size: 3.5em;
+            font-size: 56px; /* war 3.5em; gemessen 56,00 px auf 16-px-Eltern, Delta 0,00. Emoji im Leerzustand — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: 16px;
             opacity: 0.4;
             filter: grayscale(50%);
@@ -1060,7 +1060,7 @@
         }
         
         .empty-state-title {
-            font-size: 1.25em;
+            font-size: var(--text-xl);
             color: var(--text);
             margin-bottom: 8px;
             font-weight: 500;
@@ -1086,13 +1086,8 @@
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
             box-shadow: var(--ring-gold);
-            outline: none; /* F-18: aus der Dublette uebernommen */
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         
         /* Smooth Scrollbar */
@@ -1120,18 +1115,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Focus Visible for Accessibility */
-        :focus-visible {
-            outline: 2px solid var(--gold);
-            outline-offset: 2px;
-        }
-        
+        /* W6-R-03: die unbedingte `:focus-visible`-Weltregel stand hier und ist
+           nach core.css umgezogen (Welle 6, Schritt 2). Sie gilt fuer den
+           ganzen Baum und hatte in einer Modulstildatei nichts zu suchen — hier
+           war sie eine Weltregel durch Zufall der @import-Reihenfolge. NICHT
+           zurueckholen und NICHT danebenstellen: W6-R-03 laesst genau eine zu
+           und verlangt sie in core.css. */
+
         /* ============================================================
            DRAG AND DROP SORTING
            ============================================================ */
         [data-sortable] {
             cursor: grab;
-            transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+            transition: transform var(--dur-fast) ease, opacity var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
         }
         
         [data-sortable]:active {
@@ -1155,7 +1151,7 @@
             color: var(--text-dim);
             padding: 4px 8px;
             opacity: 0.5;
-            transition: opacity 0.2s;
+            transition: opacity var(--dur);
         }
         
         .drag-handle:hover {
@@ -1182,19 +1178,18 @@
             max-height: 300px;
             padding: 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
             resize: vertical;
             font-family: inherit;
-            font-size: 0.95em;
+            font-size: var(--text-md);
             line-height: 1.5;
             overflow-y: auto;
         }
         
         .dialog-text-area:focus {
-            border-color: var(--gold);
-            outline: none;
+            border-color: var(--focus-ring);
         }
 
 /* DM Screen grid — Masonry-style column layout */
@@ -1226,12 +1221,12 @@
 }
 
 .dmscreen-widget-icon {
-    font-size: 1.1em;
+    font-size: var(--text-lg);
 }
 
 .dmscreen-widget-title {
     font-weight: 600;
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text);
 }
 
@@ -1261,7 +1256,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .dms-stat-label {
@@ -1276,7 +1271,7 @@
 .dms-stat-char {
     font-weight: 400;
     color: var(--text-dim);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
 }
 
 .dms-stat-warning .dms-stat-value {
@@ -1296,7 +1291,7 @@
 
 .dms-hp-bar {
     height: 100%;
-    transition: width 0.3s ease;
+    transition: width var(--dur-slow) ease;
 }
 
 .dms-hp-bar.healthy { background: linear-gradient(90deg, var(--green), var(--green)); }
@@ -1308,7 +1303,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 600;
     /* BLEIBT weiss (Welle 1 Schritt 7). Die Regel hat keinen eigenen
        Hintergrund: der Text liegt absolut mittig UEBER dem HP-Balken, also
@@ -1334,7 +1329,7 @@
 .dms-init-header {
     font-weight: 600;
     color: var(--gold-text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-align: center;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--border);
@@ -1353,7 +1348,7 @@
 .dms-init-count {
     font-weight: 400;
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-sm);
 }
 
 .dms-init-entry {
@@ -1363,8 +1358,8 @@
     padding: 6px 10px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
-    font-size: 0.85em;
-    transition: all 0.2s;
+    font-size: var(--text-sm);
+    transition: var(--trans-std);
 }
 
 .dms-init-entry.active {
@@ -1379,7 +1374,7 @@
 .dms-init-marker {
     width: 16px;
     color: var(--gold);
-    font-size: 0.9em;
+    font-size: var(--text-sm);
 }
 
 .dms-init-name {
@@ -1393,7 +1388,7 @@
 .dms-init-value {
     color: var(--cyan);
     font-weight: 600;
-    font-size: 0.9em;
+    font-size: var(--text-sm);
 }
 
 /* Dice Widget */
@@ -1411,16 +1406,13 @@
 }
 
 .dms-dice-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--radius-md);
     background: var(--bg-dark);
     border: 1px solid var(--border);
     color: var(--text);
     font-weight: 600;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dms-dice-btn:hover {
@@ -1454,8 +1446,8 @@
 
 .dms-dice-result {
     text-align: center;
-    font-size: 1.4em;
-    font-weight: 700;
+    font-size: var(--text-xl); /* war 1.4em = 22,40 px gemessen -> 20 px, -2,40. Die Wurfzahl des Wuerfel-Widgets ist Text */
+    font-weight: 600;
     color: var(--gold-text);
     padding: 10px;
     background: var(--bg-dark);
@@ -1464,7 +1456,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.15s;
+    transition: transform var(--dur-fast);
 }
 
 .dms-dice-result.rolled {
@@ -1480,10 +1472,10 @@
     flex: 1;
     padding: 8px 12px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 /* DC Reference Widget */
@@ -1504,7 +1496,7 @@
 
 .dms-dc-desc {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 /* Tables Widget */
@@ -1524,12 +1516,12 @@
 }
 
 .dms-table-icon {
-    font-size: 1.1em;
+    font-size: var(--text-lg);
 }
 
 .dms-table-name {
     flex: 1;
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text);
     white-space: nowrap;
     overflow: hidden;
@@ -1541,7 +1533,7 @@
     padding: 10px;
     background: var(--bg);
     border-radius: var(--radius-md);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text);
     border-left: 3px solid var(--gold);
 }
@@ -1565,7 +1557,7 @@
 
 .dms-rule-title {
     font-weight: 600;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--gold-text);
     margin-bottom: 8px;
 }
@@ -1579,7 +1571,7 @@
 .dms-rule-item {
     display: flex;
     justify-content: space-between;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     padding: 4px 0;
     border-bottom: 1px solid var(--border);
 }
@@ -1609,17 +1601,16 @@
     min-height: 120px;
     padding: 10px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     resize: none;
     font-family: inherit;
 }
 
 .dms-notes-input:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 /* Responsive DM Screen - Column-based Masonry */
@@ -1633,9 +1624,7 @@
     }
 
     .dms-dice-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.75em;
+        font-size: var(--text-xs);
     }
 }
 
@@ -1677,7 +1666,7 @@
 
 /* Sektions-Titel */
 .dms-ref-title {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: var(--gold-text);
     padding-bottom: 4px;
@@ -1697,13 +1686,13 @@
     color: var(--text);
     padding: 3px 8px;
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     border: 1px solid var(--border);
 }
 
 /* Hinweis-Text */
 .dms-ref-note {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     font-style: italic;
     padding-top: 6px;
@@ -1731,12 +1720,12 @@
 }
 
 .dms-attr-abbr {
-    font-size: 1em;
-    font-weight: 700;
+    font-size: var(--text-md);
+    font-weight: 600;
 }
 
 .dms-attr-name {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     margin-top: 2px;
 }
@@ -1754,7 +1743,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2px;
-    font-size: 0.75em;
+    font-size: var(--text-xs);
 }
 
 .dms-mod-row {
@@ -1791,7 +1780,7 @@
     padding: 4px 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     align-items: center;
 }
 
@@ -1872,7 +1861,7 @@
    PREIS, benannt: die Beschriftung verliert ihre Farbe. Sie hatte sie in
    18 von 20 Zellen ohnehin nicht lesbar. */
 .dms-skill-header {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     font-weight: 600;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
@@ -1887,7 +1876,7 @@
 .dms-skill-header.cha { background: color-mix(in srgb, var(--attr-cha) 20%, transparent); color: var(--text); }
 
 .dms-skill-item {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     padding-left: 8px;
 }
@@ -1916,7 +1905,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 /* ========================================
@@ -1936,7 +1925,7 @@
     padding: 4px 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     align-items: center;
 }
 
@@ -1957,13 +1946,13 @@
     padding: 3px 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 .dms-obj-row.header {
     font-weight: 600;
     color: var(--text-dim);
-    font-size: 0.7em;
+    font-size: var(--text-xs);
 }
 
 .dms-obj-size-table .dms-obj-row {
@@ -1987,12 +1976,12 @@
     padding: 4px 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     border-left: 3px solid var(--border);
 }
 
 .dms-dmg-icon {
-    font-size: 1em;
+    font-size: var(--text-md);
 }
 
 /* Die Farben kommen aus den --dmg-*-Tokens, damit dieser Satz und der
@@ -2040,7 +2029,7 @@
 
 .dms-terrain-type {
     display: block;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     font-weight: 600;
     margin-bottom: 4px;
 }
@@ -2051,7 +2040,7 @@
 
 .dms-terrain-effect {
     display: block;
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
 }
 
@@ -2089,13 +2078,13 @@
 
 .dms-know-types {
     display: block;
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
 }
 
 .dms-dc-value {
-    font-size: 0.9em;
-    font-weight: 700;
+    font-size: var(--text-md);
+    font-weight: 600;
     color: var(--gold-text);
     min-width: 30px; /* F-18: aus der Dublette uebernommen */
 }
@@ -2113,14 +2102,14 @@
     padding: 3px 6px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     align-items: center;
 }
 
 .dms-travel-row.header {
     font-weight: 600;
     color: var(--text-dim);
-    font-size: 0.65em;
+    font-size: var(--text-xs);
 }
 
 /* Traglast-Tabelle */
@@ -2137,7 +2126,7 @@
     padding: 4px 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-sm);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
 }
 
 .dms-carry-row.penalty .dms-carry-label {
@@ -2161,16 +2150,12 @@
 }
 
 .dms-live-badge {
-    font-size: 0.55em;
-    font-weight: 500;
     color: var(--green-text);
     /* Welle 2 Schritt 7: 34,197,94 ist vierfach belegt (--attr-dex in Dark und
        Contrast, --dmg-acid, --know-nature). Nach dem Zweck ist es keins davon,
        sondern die Gruenrolle, die diese Regel als Tinte fuehrt.
        6,75 · 2,42 · 2,29 · 8,96 -> 6,32 · 2,33 · 2,25 · 8,17 (D-4, Schritt 8). */
     background: color-mix(in srgb, var(--green) min(15%, var(--tint-max)), transparent);
-    padding: 3px 8px;
-    border-radius: var(--radius-md);
     animation: dms-live-pulse 2s ease-in-out infinite;
 }
 
@@ -2211,7 +2196,7 @@
     gap: 8px;
     padding: 12px 14px;
     font-weight: 600;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text);
     background: var(--bg-dark);
     border-bottom: 1px solid var(--border);
@@ -2227,11 +2212,11 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text-dim);
-    font-size: 0.72em;
+    font-size: var(--text-xs);
     font-weight: 500;
     padding: 3px 6px;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background var(--dur-fast), color var(--dur-fast);
 }
 
 .dms-config-bulk-btn:hover {
@@ -2262,7 +2247,7 @@
     gap: 10px;
     padding: 10px 14px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
     border-bottom: 1px solid var(--border-light);
 }
 
@@ -2287,7 +2272,7 @@
 .dms-config-drag {
     cursor: grab;
     color: var(--text-dim);
-    font-weight: bold;
+    font-weight: 600;
     letter-spacing: -2px;
     user-select: none;
 }
@@ -2297,12 +2282,12 @@
 }
 
 .dms-config-icon {
-    font-size: 1em;
+    font-size: var(--text-md);
 }
 
 .dms-config-name {
     flex: 1;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text);
 }
 
@@ -2319,7 +2304,7 @@
 }
 
 .dms-config-hint {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
 }
 
@@ -2335,7 +2320,7 @@
 
 .dms-profile-section {
     padding: 8px 14px 4px;
-    font-size: 0.7em;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -2348,7 +2333,7 @@
     gap: 10px;
     padding: 10px 14px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--dur-fast);
     border-left: 3px solid transparent;
 }
 
@@ -2362,18 +2347,18 @@
 }
 
 .dms-profile-icon {
-    font-size: 1em;
+    font-size: var(--text-md);
 }
 
 .dms-profile-name {
     flex: 1;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text);
 }
 
 .dms-profile-check {
     color: var(--green);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .dms-profile-delete {
@@ -2384,7 +2369,7 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     opacity: 0;
-    transition: all 0.15s;
+    transition: var(--trans-fast);
 }
 
 .dms-profile-item:hover .dms-profile-delete {
@@ -2409,7 +2394,7 @@
 .dmscreen-widget-drag {
     cursor: grab;
     color: var(--text-dim);
-    font-weight: bold;
+    font-weight: 600;
     letter-spacing: -2px;
     user-select: none;
     padding: 0 4px;
@@ -2427,10 +2412,10 @@
     color: var(--text-dim);
     cursor: pointer;
     padding: 2px 6px;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     border-radius: var(--radius-sm);
     opacity: 0;
-    transition: opacity 0.15s, background 0.15s, color 0.15s;
+    transition: opacity var(--dur-fast), background var(--dur-fast), color var(--dur-fast);
 }
 
 .dmscreen-widget:hover .dmscreen-widget-hide {
@@ -2486,9 +2471,9 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     color: var(--text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
 }
 
 .dms-quick-btn:hover {
@@ -2497,10 +2482,10 @@
 }
 
 .dms-quick-icon {
-    font-size: 1em;
+    font-size: var(--text-sm);
 }
 
 .dms-quick-label {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     font-weight: 500;
 }

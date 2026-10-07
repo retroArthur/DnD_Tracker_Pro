@@ -1,7 +1,7 @@
 {
   "_hinweis": "Eingefrorener Stand der Reihenfolge-Abhaengigkeiten gleicher Spezifitaet an den F-18-Verschiebungen. Erzeugt von tools/check-f18-kaskade.js --write. Jede neue, entfallene oder GEDREHTE Zeile ist eine Entscheidung und muss begruendet werden — eine Drehung ist die F-18-Fehlerklasse.",
-  "erhoben": "2026-09-30",
-  "anzahl": 126,
+  "erhoben": "2026-10-06",
+  "anzahl": 117,
   "abhaengigkeiten": [
     {
       "id": "(top) >> @media (max-width: 600px) || .modal || .bst-editor-modal || border-radius || border-radius",
@@ -292,12 +292,6 @@
       "spezifitaet": "0,1,0"
     },
     {
-      "id": "(top) || .char-save-box || .migration-step-error || font-size || font-size",
-      "gewinner": "migration.css .migration-step-error { font-size }",
-      "verlierer": "dashboard.css .char-save-box { font-size }",
-      "spezifitaet": "0,1,0"
-    },
-    {
       "id": "(top) || .char-tag || .drag-over || background || background",
       "gewinner": "dmscreen.css .drag-over { background }",
       "verlierer": "core.css .char-tag { background }",
@@ -355,12 +349,6 @@
       "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || display || display",
       "gewinner": "editors.css .editor-toolbar .editor-btn-text { display }",
       "verlierer": "editors.css .editor-toolbar .editor-btn { display }",
-      "spezifitaet": "0,2,0"
-    },
-    {
-      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || font-size || font-size",
-      "gewinner": "editors.css .editor-toolbar .editor-btn-text { font-size }",
-      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
       "spezifitaet": "0,2,0"
     },
     {
@@ -526,12 +514,6 @@
       "spezifitaet": "0,1,1"
     },
     {
-      "id": "(top) || .form-group label || .rt-dice-section label || font-size || font-size",
-      "gewinner": "tools.css .rt-dice-section label { font-size }",
-      "verlierer": "core.css .form-group label { font-size }",
-      "spezifitaet": "0,1,1"
-    },
-    {
       "id": "(top) || .form-group label || .rt-dice-section label || margin-bottom || margin-bottom",
       "gewinner": "tools.css .rt-dice-section label { margin-bottom }",
       "verlierer": "core.css .form-group label { margin-bottom }",
@@ -544,33 +526,15 @@
       "spezifitaet": "0,1,1"
     },
     {
-      "id": "(top) || .form-group label || .rt-field label || font-size || font-size",
-      "gewinner": "tools.css .rt-field label { font-size }",
-      "verlierer": "core.css .form-group label { font-size }",
-      "spezifitaet": "0,1,1"
-    },
-    {
       "id": "(top) || .form-group label || .session-filter-group label || color || color",
       "gewinner": "dmscreen.css .session-filter-group label { color }",
       "verlierer": "core.css .form-group label { color }",
       "spezifitaet": "0,1,1"
     },
     {
-      "id": "(top) || .form-group label || .session-filter-group label || font-size || font-size",
-      "gewinner": "dmscreen.css .session-filter-group label { font-size }",
-      "verlierer": "core.css .form-group label { font-size }",
-      "spezifitaet": "0,1,1"
-    },
-    {
       "id": "(top) || .form-group label || .spell-classes-grid label || display || display",
       "gewinner": "spells.css .spell-classes-grid label { display }",
       "verlierer": "core.css .form-group label { display }",
-      "spezifitaet": "0,1,1"
-    },
-    {
-      "id": "(top) || .form-group label || .spell-classes-grid label || font-size || font-size",
-      "gewinner": "spells.css .spell-classes-grid label { font-size }",
-      "verlierer": "core.css .form-group label { font-size }",
       "spezifitaet": "0,1,1"
     },
     {
@@ -712,21 +676,9 @@
       "spezifitaet": "0,1,0"
     },
     {
-      "id": "(top) || .npc-trigger-reveal || .migration-step-error || font-size || font-size",
-      "gewinner": "migration.css .migration-step-error { font-size }",
-      "verlierer": "npcs.css .npc-trigger-reveal { font-size }",
-      "spezifitaet": "0,1,0"
-    },
-    {
       "id": "(top) || .npc-trigger-reveal || .migration-step-error || margin-top || margin-top",
       "gewinner": "migration.css .migration-step-error { margin-top }",
       "verlierer": "npcs.css .npc-trigger-reveal { margin-top }",
-      "spezifitaet": "0,1,0"
-    },
-    {
-      "id": "(top) || .qref-action-name || .migration-step-error || font-size || font-size",
-      "gewinner": "migration.css .migration-step-error { font-size }",
-      "verlierer": "dashboard.css .qref-action-name { font-size }",
       "spezifitaet": "0,1,0"
     },
     {
@@ -751,12 +703,6 @@
       "id": "(top) || .wiki-link || .drag-over || background || background",
       "gewinner": "dmscreen.css .drag-over { background }",
       "verlierer": "dashboard.css .wiki-link { background }",
-      "spezifitaet": "0,1,0"
-    },
-    {
-      "id": "(top) || .wiki-link || .migration-step-error || font-size || font-size",
-      "gewinner": "migration.css .migration-step-error { font-size }",
-      "verlierer": "dashboard.css .wiki-link { font-size }",
       "spezifitaet": "0,1,0"
     }
   ]

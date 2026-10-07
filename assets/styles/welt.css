@@ -45,7 +45,7 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-bottom: 8px;
 }
@@ -57,7 +57,7 @@
 }
 
 .wp-session-nr {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--gold);
     margin-right: 4px;
 }
@@ -65,11 +65,11 @@
 .wp-datum,
 .wp-ingame-datum {
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .wp-card-preview {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 4px;
 }
@@ -122,37 +122,36 @@
 }
 
 .wp-section-icon {
-    font-size: 18px;
+    font-size: var(--text-xl);
 }
 
 .wp-section-title {
     font-weight: 600;
-    font-size: 16px;
+    font-size: var(--text-lg);
     margin: 0;
     color: var(--text);
 }
 
 .wp-section-hint {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     flex: 1;
 }
 
 /* Rich-Text-Editor-Felder */
 .wp-rich-editor {
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     padding: 8px;
     min-height: 80px;
     background: var(--bg);
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--text-md);
     line-height: 1.5;
-    outline: none;
 }
 
 .wp-rich-editor:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
     box-shadow: var(--ring-gold);
 }
 
@@ -166,7 +165,7 @@
 .wp-textarea {
     resize: vertical;
     min-height: 70px;
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 /* Szenen-Karten */
@@ -192,7 +191,7 @@
 
 .wp-szene-nr {
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--gold-text);
 }
 
@@ -215,7 +214,7 @@
 }
 
 .wp-hint {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     font-weight: 400;
 }
@@ -277,7 +276,7 @@
 }
 
 .wp-section-block h4 {
-    font-size: 15px;
+    font-size: var(--text-md);
     font-weight: 600;
     margin: 0 0 8px 0;
     color: var(--text);
@@ -286,7 +285,7 @@
 }
 
 .wp-rich-content {
-    font-size: 14px;
+    font-size: var(--text-md);
     line-height: 1.5;
     color: var(--text);
 }
@@ -307,12 +306,12 @@
 }
 
 .wp-szene-ort-badge {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
 .wp-szene-detail-beschreibung {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text);
 }
 
@@ -326,13 +325,13 @@
     background: var(--surface-alt, var(--border));
     border-radius: 999px;
     padding: 4px 8px;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text);
     border: 1px solid var(--border);
 }
 
 #kalender-monat-anzeige {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tl-list {
@@ -348,7 +347,7 @@
 }
 
 .tl-event-datum {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-bottom: 4px;
 }
@@ -359,7 +358,7 @@
 }
 
 .tl-event-beschreibung {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 4px;
 }
@@ -378,7 +377,7 @@
 }
 
 .tl-empty-hint {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 8px;
 }
@@ -388,7 +387,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 999px;
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.03em;
 }
@@ -457,7 +456,7 @@
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     padding: var(--space-sm) var(--space-md);
-    font-size: 18px; /* F-18: aus der Dublette uebernommen */
+    font-size: var(--text-xl); /* F-18: aus der Dublette uebernommen */
     font-weight: 600; /* F-18: aus der Dublette uebernommen */
     color: var(--gold-text); /* F-18: aus der Dublette uebernommen */
 }
@@ -466,7 +465,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 18px;
+    font-size: var(--text-xl);
     font-weight: 600;
     color: var(--gold-text);
 }
@@ -476,7 +475,7 @@
 }
 
 .tl-jahreszeit-badge {
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 400;
     color: var(--text-dim);
     margin-left: 4px;
@@ -493,7 +492,7 @@
 
 .tl-vorschlag-header {
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-bottom: 8px;
 }
@@ -516,7 +515,7 @@
 }
 
 .tl-vorschlag-meta {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -590,14 +589,14 @@
 }
 
 .rs-tagesmarsch {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold);
 }
 
 .rs-config-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     margin: 0 0 var(--space-sm) 0;
     color: var(--text);
 }
@@ -613,14 +612,14 @@
 
 .rs-label {
     display: block;
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-bottom: 4px;
     font-weight: 500;
 }
 
 .rs-config-info {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     padding: 8px 0;
     margin-bottom: var(--space-sm);
@@ -640,16 +639,16 @@
 
 .rs-result-meta {
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .rs-result-gesamt {
-    font-size: 15px;
+    font-size: var(--text-md);
     margin-bottom: 4px;
 }
 
 .rs-result-jahreszeit {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-bottom: var(--space-sm);
 }
@@ -670,7 +669,7 @@
 
 .rs-tag-header {
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-bottom: 4px;
 }
@@ -681,7 +680,7 @@
     border-radius: var(--radius-md);
     background: var(--surface-alt, var(--surface));
     border: 1px solid var(--border);
-    font-size: 14px;
+    font-size: var(--text-md);
     margin-bottom: 4px;
     color: var(--text);
 }
@@ -692,7 +691,7 @@
     border-radius: var(--radius-md);
     background: var(--surface-alt, var(--surface));
     border: 1px solid var(--border);
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text-dim);
 }
 
@@ -723,7 +722,7 @@
     color: var(--green-text);
     border-radius: var(--radius-md);
     padding: 8px 12px;
-    font-size: 14px;
+    font-size: var(--text-md);
     margin-bottom: var(--space-sm);
 }
 
@@ -769,7 +768,7 @@
 }
 
 .npcg-filter-label {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     font-weight: 600;
     text-transform: uppercase;
@@ -804,8 +803,8 @@
 }
 
 .npcg-preview-name {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold-text);
     margin-bottom: 8px;
     line-height: 1.2;
@@ -819,7 +818,7 @@
 }
 
 .npcg-meta-tag {
-    font-size: 12px;
+    font-size: var(--text-sm);
     padding: 4px 8px;
     border-radius: 999px;
     background: var(--surface-alt);
@@ -843,7 +842,7 @@
 }
 
 .npcg-label {
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -853,7 +852,7 @@
 .npcg-zug,
 .npcg-marotte,
 .npcg-aussehen {
-    font-size: 15px;
+    font-size: var(--text-md);
     color: var(--text);
     line-height: 1.4;
 }
@@ -895,7 +894,7 @@
     border-radius: var(--radius-md);
     padding: 8px 12px;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color var(--dur-fast), background var(--dur-fast);
 }
 
 .fr-faction-card:hover {
@@ -909,7 +908,7 @@
 }
 
 .fr-card-symbol {
-    font-size: 24px;
+    font-size: var(--text-2xl);
     min-width: 32px;
     text-align: center;
     flex-shrink: 0;
@@ -926,7 +925,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 17px; /* F-18: aus der Dublette uebernommen */
+    font-size: var(--text-lg); /* F-18: aus der Dublette uebernommen */
 }
 
 .fr-card-ruf {
@@ -934,11 +933,11 @@
     align-items: center;
     gap: 8px;
     margin-top: 4px;
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .fr-card-meta {
-    font-size: 12px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 4px;
 }
@@ -951,7 +950,7 @@
 
 /* Ruf-Badge */
 .fr-ruf-badge {
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 600;
     display: inline-flex; /* F-18: aus der Dublette uebernommen */
     align-items: center; /* F-18: aus der Dublette uebernommen */
@@ -962,7 +961,7 @@
 }
 
 .fr-ruf-value {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -991,7 +990,7 @@
 }
 
 .fr-detail-symbol {
-    font-size: 32px;
+    font-size: var(--text-3xl);
     flex-shrink: 0;
 }
 
@@ -1002,7 +1001,7 @@
 
 .fr-detail-name {
     margin: 0 0 4px 0;
-    font-size: 18px;
+    font-size: var(--text-xl);
     color: var(--text);
 }
 
@@ -1010,7 +1009,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--text-md);
     font-weight: 500;
 }
 
@@ -1020,8 +1019,8 @@
 }
 
 .fr-section-title {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: var(--text-sm);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--text-dim);
@@ -1030,7 +1029,7 @@
 
 .fr-section-body {
     color: var(--text);
-    font-size: 15px;
+    font-size: var(--text-md);
     line-height: 1.5;
 }
 
@@ -1043,10 +1042,10 @@
     width: 100%;
     padding: 4px 8px;
     background: var(--bg-dark, var(--surface-alt));
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--text-md);
     box-sizing: border-box;
 }
 
@@ -1084,10 +1083,10 @@
     flex: 1;
     padding: 4px 8px;
     background: var(--bg-dark, var(--surface-alt));
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 /* Ruf-Historie */
@@ -1101,21 +1100,21 @@
 
 .fr-historie-empty {
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .fr-historie-eintrag {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: var(--text-md);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
     background: var(--surface-alt);
 }
 
 .fr-hist-delta {
-    font-weight: 700;
+    font-weight: 600;
     min-width: 40px;
     text-align: right;
     flex-shrink: 0;
@@ -1139,7 +1138,7 @@
 
 .fr-hist-ts {
     color: var(--text-dim);
-    font-size: 12px;
+    font-size: var(--text-sm);
     flex-shrink: 0;
 }
 
@@ -1152,14 +1151,14 @@
 
 .fr-mitglieder-empty {
     color: var(--text-dim);
-    font-size: 14px;
+    font-size: var(--text-md);
 }
 
 .fr-mitglied-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    font-size: var(--text-md);
     padding: 4px 0;
 }
 
@@ -1174,18 +1173,18 @@
 
 .fr-mitglied-rolle {
     color: var(--text-dim);
-    font-size: 13px;
+    font-size: var(--text-sm);
 }
 
 /* Sitz */
 .fr-sitz-name {
-    font-size: 15px;
+    font-size: var(--text-md);
     color: var(--text);
 }
 
 /* Freitext (Rivalen/Verbündete) */
 .fr-freitext {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--text);
     white-space: pre-line;
 }

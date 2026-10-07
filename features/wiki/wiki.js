@@ -225,7 +225,7 @@ function renderWikiQuickAccess() {
     const favorites = (D.wiki || []).filter(e => e.pinned);
     if (!recentIds.length && !favorites.length) {
         container.innerHTML =
-            '<span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>';
+            '<span style="color: var(--text-dim); font-size: var(--text-xs);">Besuche Einträge um Quick Access zu füllen</span>';
         return;
     }
     let html = '';
@@ -269,7 +269,7 @@ function renderWikiTree() {
     if (!D.wiki?.length) {
         tree.innerHTML = `
             <div style="padding: 20px; text-align: center; color: var(--text-dim);">
-                <div style="font-size: 2em; margin-bottom: 8px;">📚</div>
+                <div style="font-size: var(--text-3xl); margin-bottom: 8px;">📚</div>
                 <div>Keine Einträge</div>
             </div>
         `;

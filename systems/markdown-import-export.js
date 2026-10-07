@@ -122,7 +122,7 @@ function showMarkdownImportModal(entityType, entityId) {
                     </p>
                     <input type="file" id="markdown-import-file" accept=".md,.markdown,.txt" style="margin-bottom: 12px;">
                     <div id="markdown-import-preview" style="max-height: 300px; overflow-y: auto; display: none; padding: 8px; background: var(--bg-elevated); border-radius: 4px; margin-top: 12px;">
-                        <div style="color: var(--text-dim); font-size: 0.9em; margin-bottom: 8px;">Vorschau:</div>
+                        <div style="color: var(--text-dim); font-size: var(--text-md); margin-bottom: 8px;">Vorschau:</div>
                         <div id="markdown-import-preview-content"></div>
                     </div>
                 </div>

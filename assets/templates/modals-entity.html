@@ -495,7 +495,7 @@
             
             <!-- Standard-Zustände Grid -->
             <div class="u-mb-md">
-                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 0.9em;">Standard-Zustände (klicken zum Hinzufügen)</label>
+                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: var(--text-md);">Standard-Zustände (klicken zum Hinzufügen)</label>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto;" id="effect-conditions-grid">
                     <!-- Dynamisch generiert -->
                 </div>
@@ -503,7 +503,7 @@
             
             <!-- Benutzerdefinierter Effekt -->
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 0.9em;">Benutzerdefinierter Effekt</label>
+                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: var(--text-md);">Benutzerdefinierter Effekt</label>
                 <div class="form-grid" style="grid-template-columns: 1fr auto;">
                     <input type="text" id="effect-name" placeholder="Name (z.B. Brennend, Gesegnet)">
                     <select id="effect-color" style="width: 90px;">
@@ -608,7 +608,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Items wählen <span id="assign-item-count" style="color: var(--text-dim); font-size: 0.85em;">(0 ausgewählt)</span></label>
+                <label>Items wählen <span id="assign-item-count" style="color: var(--text-dim); font-size: var(--text-sm);">(0 ausgewählt)</span></label>
                 <div id="assign-item-list" style="max-height: 350px; overflow-y: auto; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 5px; padding: 6px;"></div>
             </div>
             <button class="btn btn-success" data-action="call" data-value="assignItems">Zuweisen</button>
@@ -634,7 +634,7 @@
                     </div>
                     <div class="form-group u-flex-1">
                         <label>Symbol / Icon (max. 2 Zeichen)</label>
-                        <input type="text" id="fraktion-symbol" placeholder="⚔️" maxlength="2" style="text-align: center; font-size: 1.2rem;">
+                        <input type="text" id="fraktion-symbol" placeholder="⚔️" maxlength="2" style="text-align: center; font-size: var(--text-xl);">
                     </div>
                 </div>
 
