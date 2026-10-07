@@ -182,6 +182,7 @@ export default {
     "SystemActions": 'readonly',
     "TAB_RENDER_REGISTRY": 'readonly',
     "TAG_COLORS": 'readonly',
+    "TASTEN_BEDIENELEMENT_SELEKTOR": 'readonly',
     "TERRAIN_MODIFIERS": 'readonly',
     "THIRD_CASTER_TABLE": 'readonly',
     "THRESHOLDS": 'readonly',

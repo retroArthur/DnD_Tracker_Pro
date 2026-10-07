@@ -636,19 +636,31 @@ test.describe('Was unangetastet bleibt (Gegenproben, vor und nach der Korrektur 
         // die Erreichbarkeit selbst ist zugesichert — und die gemessenen
         // Zahlen stehen hier als Befund, damit eine Verschiebung sichtbar
         // wird, ohne den Fall rot zu machen.
-        await ansichtOeffnen(page, 'initiative');
+        //
+        // JE ZIEL EINE EIGENE SEITE, nicht dieselbe neu geladen. Gemessen,
+        // warum das den Unterschied macht: beim ERSTEN Aufbau belegen die
+        // zwei Knoepfe des Umzugs-Hinweises ("Zum App-Umzug", "Hinweis
+        // schliessen") die Halte 1 und 2; nach einem Neuladen derselben
+        // Seite ist der Hinweis weg und die GANZE Reihe rutscht um zwei
+        // nach vorn (19/20/21/22/18 statt 21/22/23/24/20). Beides sind
+        // richtige Messungen zweier verschiedener, echter Lagen — aber ein
+        // Vergleich der einen gegen die Zahlen der anderen meldet eine
+        // Verschiebung, die es nicht gibt. TABULATORWEGE haelt den ersten
+        // Aufbau fest, also muss hier auch der erste Aufbau gemessen
+        // werden.
         const wege = {};
-        for (const [name, wert] of Object.entries({
-            prevTurn: 'prevTurn',
-            nextEncounterRound: 'nextEncounterRound',
-            addPartyToInit: 'addPartyToInit',
-            rollAllInitiative: 'rollAllInitiative',
-            nextTurn: 'nextTurn'
-        })) {
-            // Jedes Ziel von vorn: frischer Startpunkt der Tabulatornavigation.
-            await ansichtOeffnen(page, 'initiative');
-            wege[name] = await tabBisZiel(page, { action: 'call', value: wert });
-            expect(wege[name], `${name} muss per Tabulator erreichbar sein`).toBeGreaterThan(0);
+        for (const wert of [
+            'prevTurn',
+            'nextEncounterRound',
+            'addPartyToInit',
+            'rollAllInitiative',
+            'nextTurn'
+        ]) {
+            const seite = await page.context().newPage();
+            await ansichtOeffnen(seite, 'initiative');
+            wege[wert] = await tabBisZiel(seite, { action: 'call', value: wert });
+            await seite.close();
+            expect(wege[wert], `${wert} muss per Tabulator erreichbar sein`).toBeGreaterThan(0);
         }
         // Befundzeile fuer die Akte — die Zahlen aus TABULATORWEGE daneben.
         for (const name of Object.keys(wege)) {
