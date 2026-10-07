@@ -220,6 +220,10 @@
         
         .floating-toolbar.visible {
             opacity: 1;
+            /* Das Gegenstueck zu `visibility: hidden` in der Grundregel
+               (Welle 6, W6-E-4 = B). Ohne diese Zeile waere die Leiste nach
+               dem Schritt nie mehr zu sehen. */
+            visibility: visible;
             transform: translateY(0);
             pointer-events: auto;
         }
@@ -450,8 +454,40 @@
             box-shadow: var(--shadow-2), 0 0 10px var(--glow-yellow); /* F-18: aus der Dublette uebernommen */
             z-index: var(--z-floating); /* F-18: aus der Dublette uebernommen */
             opacity: 0; /* F-18: aus der Dublette uebernommen */
+            /* VISIBILITY NIMMT DIE LEISTE AUS DER TABULATORREIHENFOLGE
+               (Welle 6, Entscheidung W6-E-4 = B). `position: fixed` plus
+               `display: flex` plus `opacity: 0` hielt sie im Layout UND in der
+               Tabulatorreihenfolge: gemessen liefen in JEDER Ansicht zwoelf
+               Tabulaturschritte hierher — 9 .editor-btn und 3 .editor-select —
+               und der Fokus verschwand dort in nichts, weil ein Fokusring auf
+               einem durchsichtigen Vorfahren selbst durchsichtig ist. Im vollen
+               Tastaturlauf der Welle sind das 384 Halte je Theme (372 in
+               Contrast) ueber 32 von 33 Messphasen, rund ein Drittel aller
+               Halte. `pointer-events: none` deckte nur die Maus ab.
+               IHRE ZWEI GESCHWISTER WAREN NIE BETROFFEN: .table-context-toolbar
+               und .link-context-toolbar schalten ueber `display: none` und
+               tauchen darum in keinem Tabulatorlauf auf. Die Asymmetrie war der
+               ganze Befund; `display` statt `visibility` kaeme hier aber nicht
+               in Frage, weil `display` nicht uebergangsfaehig ist und die
+               Blende damit verloren waere.
+               0 Funktionen werden dadurch unerreichbar: die Leiste erscheint
+               erst bei Textauswahl, und dann traegt .visible `visibility:
+               visible`. */
+            visibility: hidden;
             transform: translateY(5px); /* F-18: aus der Dublette uebernommen */
-            transition: opacity var(--dur-fast), transform var(--dur-fast); /* F-18: aus der Dublette uebernommen */
+            /* `visibility` MUSS in dieser Liste stehen und mindestens so lang
+               laufen wie `opacity` (W4-R-02). Zwischen `visible` und `hidden`
+               liest jeder Zwischenwert `visible`, der Umschlag passiert erst am
+               Ende der Dauer — ohne den Eintrag springt die Sichtbarkeit im
+               ERSTEN Bild auf `hidden`, waehrend die Deckkraft weiterlaeuft:
+               die Ausblende findet statt, nur sieht sie niemand. Gemessen am
+               laufenden Browser (W6-R-11 Fall 2). Kein --trans-reveal-Token:
+               die beiden laufen auf 200 und 300 ms, diese Leiste auf
+               --dur-fast = 150 ms, und eine zu lange visibility-Dauer haelt die
+               Leiste nach dem Ausblenden sichtbar. */
+            transition:
+                opacity var(--dur-fast), transform var(--dur-fast),
+                visibility var(--dur-fast);
             pointer-events: none; /* F-18: aus der Dublette uebernommen */
         }
 
