@@ -7416,6 +7416,57 @@ tauchen in keinem Tabulatorlauf auf. Nur die eine Leiste wich ab. `display` stat
 `visibility` kommt hier trotzdem nicht in Frage — `display` ist nicht übergangsfähig, die
 Blende wäre verloren.
 
+### Abgetragen durch T-A (2026-10-07): die gekaperte Leertaste
+
+**Die Restschuld-Liste unten war nicht der schlimmste Teil.** Sie zählt Stellen, die man
+ohne Maus nicht *erreicht*. Darunter lag ein Fehler an Knöpfen, die man sehr wohl erreicht
+— sie taten beim Tastendruck etwas **anderes** als das, was draufsteht.
+
+Gemessen am gebauten Bündel, gefüllte Kampagne, echte Tabulatorsprünge, je Ziel ein
+frischer Seitenaufbau, Ziel über Objektidentität aufgelöst, `click`-Ereignisse am Dokument
+in der Capture-Phase gezählt und nach `isTrusted` getrennt — bei **sechs und bei zwanzig**
+Kämpfern mit gleichem Ergebnis:
+
+| Ziel (Halt) | vorher | nachher |
+| --- | --- | --- |
+| `prevTurn` (21) | Klick 0, Zug 0 → **1** (vorwärts!) | Klick 1, Zug 0 → 5 / 0 → 19 |
+| `nextEncounterRound` (22) | Klick 0, Runde bleibt 1 | Klick 1, Runde 1 → 2 |
+| `addPartyToInit` (23) | Klick 0, 6 → 6 / 20 → 20 | Klick 1, 6 → 12 / 20 → 40 |
+| `rollAllInitiative` (24) | Klick 0, 0 Würfe | Klick 1, 6 / 20 Würfe |
+| `show-condition-reference` (27) | Klick 0, kein Modal | Klick 1, Modal offen |
+| `nextTurn`, Ziffer `1` (20) | Klick 0, Ansicht springt weg | Klick 0, Ansicht bleibt |
+
+Der Spielleiter tabulierte auf „◀ Zurück", drückte die Leertaste — und der Zug ging
+**vorwärts**. Der Kampf war eine Runde falsch und niemand sah warum. Ursache war die
+`isTyping`-Schranke in `systems/spellslots/keyboard-shortcuts.js`: ein fokussierter
+`<button>` zählte dort nicht als „am Tippen", also fing der Leertasten-Zweig die Taste ab
+und schickte sie an `nextTurn()`.
+
+**Kein Doppelfeuer — gezählt, nicht vermutet.** An jedem Ziel steht nachher `echt=1` und
+`synthetisch=0`. Der tragende Fall ist „▶ Nächster Zug": dort täten Kaperung und Knopf
+*dasselbe*, ein Doppelfeuer wäre an der Wirkung nicht zu erkennen. Vorher 0 Klicks und Zug
++1 (das Kürzel), nachher 1 Klick und Zug **exakt +1**. Ebenso `addPartyToInit`: 6 → 12 und
+20 → 40, also genau **ein** Anhängen. `scrollY` bleibt überall 0 — ein fokussierter
+`<button>` unterdrückt die Vorgabe der Leertaste selbst.
+
+**Wichtig für die Liste unten:** das waren Knöpfe, die schon echte `<button>` **sind**. Kein
+`tabindex` und kein `role` hätte daran etwas geändert — die drei Stufen, die die Restschuld
+unten nennt, hätten diesen Fehler nicht berührt. Wer die 90 Stellen nachrüstet, **ohne**
+diese Schranke, macht 90 weitere Ziele erreichbar, auf denen die Leertaste dann dasselbe
+Falsche tut.
+
+Nicht mitgesperrt sind `r`/`t`/`l`/`k`/`n`/`p`/`/` und `Alt+Ziffer` — `/` und `k` sind
+heute der einzige Zugang zu ihrer Fläche; eine „konsequente" Ausweitung der Schranke nähme
+dem Nutzer einen Weg weg, um einen Fehler zu beheben, den sie nicht verursachen. Ohne Fokus
+(`activeElement = BODY`) bleibt der gewohnte Griff: Leertaste = nächster Zug, bei 6 und bei
+20 Kämpfern nachgemessen.
+
+Wächter: `tests/e2e/features/tastatur-ausloesung.spec.js`, 11 Fälle, in der vollen E2E-Suite.
+Nebenbefund derselben Messung: beim **ersten** Aufbau belegen die zwei Knöpfe des
+Umzugs-Hinweises die Halte 1 und 2 — nach einem Neuladen ist er weg und die ganze Reihe
+rutscht um zwei nach vorn (19/20/21/22/18 statt 21/22/23/24/20). Wer Tabulatorwege
+vergleicht, muss beide Lagen auseinanderhalten.
+
 ### Benannte Restschuld 1: der Rest des Tastatur-Strangs (90 Stellen)
 
 W6-E-4 = B deckt **nur** die Phantom-Halte. Der Rest bleibt benannte Restschuld, und hier
