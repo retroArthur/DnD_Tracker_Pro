@@ -7541,3 +7541,468 @@ git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss lee
 ```
 
 ---
+
+## W6-F — Die Abnahme der Welle 6: der Tastaturlauf als Hauptnachweis (2026-10-07)
+
+**Status: ERLEDIGT.** Schritt 8 des geprüften Plans und damit die **letzte Einheit des
+Design-Handoffs v3**. Basis `3a4a2a9`, Vorzustand der ganzen Welle `e4ac3a7`. Zwei
+Commits: die Ablichtung (`931b0cd`), dann diese Akte. Alle Zahlen sind an **meinem** Stand
+gemessen, mit eigenen Skripten, gegen ein aus `e4ac3a7` frisch gebautes Vergleichsbündel —
+nicht aus Plan, Vermessung oder den Commit-Rümpfen der vier Einheiten übernommen. Wo eine
+Zahl der Vorlage widerspricht, steht beides.
+
+### Der Tastaturlauf — die Hauptabnahme, vorher und nachher mit demselben Skript
+
+24 Ansichten + 3 Aufklapp-Formulare + 6 Modale, gefüllte Kampagne, 1600×1000, **echte
+Tabulatorsprünge**, vier Themes. Links das Bündel aus `e4ac3a7`, rechts der Wellenstand.
+
+| Theme | Halte | sichtbar | Phantom | mit Ring | **ohne Ring** | Ring <3:1 | schlechtestes Verhältnis |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| dark | 1727 → 1359 | 1298 → 1301 | 428 → **57** | 1104 → 1301 | **194 → 0** | 0 → 0 | 7,29 → 7,29 |
+| light | 1635 → 1239 | 1180 → 1180 | 454 → **58** | 1060 → 1180 | **120 → 0** | **333 → 0** | **2,64 → 3,86** |
+| sepia | 1597 → 1239 | 1155 → 1180 | 441 → **58** | 1036 → 1180 | **119 → 0** | 0 → 0 | **5,09 → 3,44** |
+| contrast | 1622 → 1233 | 1180 → 1175 | 441 → **57** | 1061 → 1175 | **119 → 0** | 0 → 0 | 11,34 → 11,34 |
+
+**552 sichtbare Tastaturhalte ohne jedes Fokuskennzeichen sind 0 geworden**, über vier
+Themes summiert. Jeder einzelne sichtbare Halt trägt danach einen Ring, und jeder dieser
+Ringe hält 3:1 gegen die Fläche, die er wirklich berührt — die Trägerfläche wird dabei
+geschichtet gerechnet (alle Füllungen vom Elternknoten bis zur Wurzel, mit Alpha), weil
+`outline-offset: 2px` den Ring **außerhalb** des Elements legt.
+
+**Der Ring ist danach EINE Farbe und EIN Maß je Theme** — über alle 1175 bis 1301
+sichtbaren Halte hinweg, ohne eine einzige Abweichung:
+
+| Theme | Ringfarbe vorher | nachher | Maß (vorher wie nachher) |
+| --- | --- | --- | --- |
+| dark | `rgb(212, 175, 55)` | unverändert | 2px solid, Abstand 2px |
+| light | `rgb(184, 134, 11)` | **`rgb(148, 108, 9)`** | 2px solid, Abstand 2px |
+| sepia | `rgb(139, 69, 19)` | **`rgb(181, 88, 25)`** | 2px solid, Abstand 2px |
+| contrast | `rgb(255, 215, 0)` | unverändert | 2px solid, Abstand 2px |
+
+**Sepia hat etwas abgegeben, und das gehört benannt.** Sein schlechtestes Verhältnis fällt
+von 5,09 auf 3,44. Das ist kein Mangel, sondern der Preis der Entscheidung W6-E-2: der
+alte Sattelbraun-Ring hielt mühelos auf den hellen Sepia-Flächen und fiel auf der dunklen,
+themenblinden Modalfläche auf 2,37. Der neue hält auf **beiden** — mit 15 % Puffer über der
+Schwelle statt mit 70 % auf der einen und einem Durchfall auf der anderen. Die Bildpaare
+`j-modalfeld-sepia-vorher/-nachher` zeigen genau das.
+
+**Die 333 Unterschreitungen in Light** verteilten sich im Vorzustand auf zwei Flächen:
+`#b8860b` auf `#f5f5f5` (2,98) und auf `#f3e4e4` (2,64). Beide sind weg.
+
+#### Die Phantom-Halte — und eine Zahl, die anders ausfällt als im Plan
+
+| | dark | light | sepia | contrast |
+| --- | --- | --- | --- | --- |
+| `#floating-toolbar` (unsichtbare Editorleiste) | 372 → **0** | 396 → **0** | 384 → **0** | 384 → **0** |
+| `#shortcuts-overlay` | 31 → 32 | 33 → 33 | 32 → 33 | 32 → 32 |
+| `.search-clear-btn` | 18 → 18 | 18 → 18 | 18 → 18 | 18 → 18 |
+| `.dmscreen-widget-hide` | 7 → 7 | 7 → 7 | 7 → 7 | 7 → 7 |
+| **Summe** | **428 → 57** | **454 → 58** | **441 → 58** | **441 → 57** |
+
+Der Plan führt „363 Phantom-Halte, davon 264 durch W6-E-4". **Beide Zahlen treffen meinen
+Messbereich nicht**, und der Unterschied ist kein Widerspruch, sondern ein anderer
+Ausschnitt: die Zahl des Plans stammt aus einem Lauf über die 24 Ansichten allein, meiner
+nimmt die drei Aufklapp-Formulare und die sechs Modale dazu — und genau dort steht die
+Editorleiste mehrfach im Weg. Gemessen fallen **371 bis 396 Phantom-Halte je Theme** weg,
+nicht 264. Die drei verbleibenden Gruppen sind **nicht** von dieser Welle und stehen als
+benannte Restschuld unten.
+
+#### Bei 375 px, mit Berührungsgerät
+
+| Theme | Halte | sichtbar | Phantom | mit Ring | ohne Ring | Ring <3:1 | min | Seitenüberhang |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| dark | 1681 | 1626 | 55 | 1626 | **0** | **0** | 7,29 | **0** |
+| light | 1598 | 1542 | 56 | 1542 | **0** | **0** | 3,86 | **0** |
+| sepia | 1598 | 1542 | 56 | 1542 | **0** | **0** | 3,44 | **0** |
+| contrast | 1598 | 1542 | 56 | 1542 | **0** | **0** | 11,34 | **0** |
+
+Dieselben Minima wie auf dem Schreibtisch, kein seitlicher Überhang, 1,4-mal so viele
+sichtbare Halte (die Telefonbreite klappt Leisten auf, die auf 1600 px nebeneinander
+liegen).
+
+### Die Weltregel: genau eine, in `core.css`, und in `dmscreen.css` steht nichts mehr
+
+`DUBLETTEN_MAX = 0` fängt eine **Dublette** sofort — einen **vergessenen Rest** fängt es
+nicht. Darum einzeln nachgesehen:
+
+- `grep -rn ":focus-visible" assets/styles/*.css` findet im ganzen Baum **acht**
+  Regelköpfe: die unbedingte Weltregel und `.btn:focus-visible` in `core.css`, vier
+  Leistenregeln in `editors.css`, eine in `tools.css`, und
+  `.backup-entry-header:hover:not(:focus-visible)` in `file-backup.css`. **Genau eine ist
+  unbedingt, und sie steht in `core.css`.**
+- In `dmscreen.css` ist von der Regel **nichts** übrig: die Datei enthält genau EIN
+  Vorkommen der Zeichenfolge `focus-visible`, und das ist der Hinweiskommentar an der
+  alten Stelle („stand hier und ist nach core.css umgezogen … NICHT zurückholen und NICHT
+  danebenstellen"). Kein verwaistes `outline`, keine leere Regelhülle, keine zweite
+  Deklaration.
+- `outline`-Deklarationen im ganzen Stilbaum: **11**, davon **genau eine**
+  `outline: none` — `file-backup.css`, und die ist kein Fokusunterdrücker (Begründung im
+  Rumpf von `a2b6784`). Vorzustand: 31.
+
+### Die zwei Zähler, mit echten Daten und ohne `renderAll()`
+
+Fünf Zauber und drei Aufträge angelegt, danach **ausschließlich** `renderSpells()` bzw.
+`renderQuests()` gerufen — der Pfad, den jede CRUD dieser beiden Ansichten geht:
+
+| Handgriff | Element | vorher (`e4ac3a7`) | nachher |
+| --- | --- | --- | --- |
+| 5 Zauber, nur `renderSpells()` | `#spells-count` | `0` | **`5`** |
+| auf 2 gekürzt, nur `renderSpells()` | `#spells-count` | `0` | **`2`** |
+| geleert, nur `renderSpells()` | `#spells-count` | `0` | **`0`** |
+| 3 Aufträge, nur `renderQuests()` | `#quests-count` | `0` | **`3`** |
+| auf 1 gekürzt, nur `renderQuests()` | `#quests-count` | `0` | **`1`** |
+| geleert, nur `renderQuests()` | `#quests-count` | `0` | **`0`** |
+
+Die Filterrückmeldung behält ihre eigene Aussage, über den **echten Bedienweg** geprüft
+(Stufenmarke anklicken, nicht ein Element setzen, das es nicht gibt — siehe Messfalle
+unten): ohne Filter `📖 5`, mit Stufenmarke 1 `📖 2/5`, mit Suchtext „Licht" `📖 1/5`,
+nach dem Zurücknehmen wieder `📖 5`. Sie heißt `#spells-filter-count`, trägt die Klasse
+`.filter-count` und **keinen** Inline-Stil; die alte ID `#spell-count` ist im ganzen Baum
+nicht mehr vorhanden. Ihre rechte Kante steht in allen vier Themes **10 px** vom inneren
+Rand des Filterstreifens — `white-space: nowrap` und `margin-left: auto` sind mit in die
+Klasse gegangen.
+
+**Eine Messfalle, die ich selbst gestellt habe und die hierher gehört:** mein erster
+Abnahmelauf setzte `select#spell-level-filter` — ein Element, das es **nicht gibt**. Der
+Stufenfilter ist eine Markenleiste (`#spell-level-filters` mit `.filter-chip` und
+`data-action`). Ein Zugriff auf ein nicht vorhandenes Element wirft nicht, er tut nichts:
+der Zähler las weiter `📖 5`, und das sah aus wie „die n/N-Form ist weg". Wer die
+Filterrückmeldung nachmisst, klickt die Marke an.
+
+### Der Stil-Sollstand, schlüsselweise
+
+Mit dem Vergleichswerkzeug des Projekts (`tools/vergleich-stil-sollstand.js`), auf den
+**Digestwerten** gerechnet, gegen `e4ac3a7`, mit dem lokalen Vollabzug dieses Laufs:
+
+| Durchgang | vorher | nachher | geändert | Zugänge | Abgänge |
+| --- | --- | --- | --- | --- | --- |
+| standard | 1234 | 1235 | 32 | 1 | 0 |
+| narrow | 1144 | 1145 | 32 | 1 | 0 |
+| reducedMotion | 1234 | 1235 | 32 | 1 | 0 |
+| **Summe** | **3612** | **3615** | **96** | **3** | **0** |
+
+**`outline` steht nicht unter den zwölf gehashten Eigenschaften** — am Werkzeug
+abgefragt, nicht abgeschrieben: color, backgroundColor, borderColor, borderRadius,
+padding, margin, fontSize, fontWeight, boxShadow, opacity, display, textAlign. Eine
+Bewegung hier kann also nur von `borderColor` kommen, und genau das ist der Befund:
+**96 von 96 bewegten Digests sind allein durch `borderColor` erklärt, 0 unerklärt**, alle
+mit demselben Übergang `rgb(58, 58, 58)` → `rgb(124, 124, 124)` (= `--border` →
+`--border-input` im Dark-Block, in dem der Sollstand erhoben wird), verteilt auf zehn
+Signaturen:
+
+```
+45x input.toolbar-search      15x select.toolbar-select     12x select.form-select
+ 6x input.form-input           3x input.dice-formula         3x input.dice-multi
+ 3x input.dms-dice-input       3x input.fr-ruf-grund-input   3x input.fr-ruf-set-input
+ 3x textarea.dms-notes-input
+```
+
+**Die drei Zugänge sind EIN Element, und das ist ein Nebenbefund mit Wert:**
+`spells/div.filter-count#0`, einmal je Durchgang. Der Erheber nimmt nur Elemente auf, die
+**mindestens eine Klasse** tragen (`computed-style-diff.spec.js`, die Filterzeile im
+Sammler). Die Filterrückmeldung hatte vorher nur eine ID und vier Inline-Deklarationen —
+sie war für den einzigen Wächter, der unbeabsichtigte Bildänderungen fängt, **unsichtbar**.
+Mit der Klasse aus Schritt 7 steht sie zum ersten Mal unter seiner Aufsicht. 0 Abgänge:
+nichts ist aus dem Sollstand gefallen.
+
+Die Neuerhebung ist inhaltlich **byteidentisch** (`UPDATE_STYLE_BASELINE=1`, danach
+`git diff --stat` leer). Der Arbeitsbaum zeigt danach CRLF → LF, weil der Erheber mit LF
+schreibt und der Baum CRLF führt; git normalisiert das weg, der Inhalt ist zeichengleich
+(mit `tr -d '\r'` gegengeprüft). Die Datei ist zurückgesetzt.
+
+### Linux-Nachstellung (die CI läuft auf ubuntu-latest)
+
+Rezept wörtlich aus der CI-Reproduktion übernommen: `--font-ui` `'Segoe UI'` → Verdana,
+`--font-mono` Consolas → Courier New. **Beleg, dass die Umstellung ankommt:** die
+Probezeichenkette „+ Neuer Charakter" misst 114,75 px gegen **132,59 px** — Faktor 1,155,
+das Linux-Vorbild liegt bei ~1,145.
+
+Der **vollständige Tastaturlauf** unter dieser Schrift, vier Themes:
+
+| Theme | Halte | sichtbar | Phantom | mit Ring | ohne Ring | Ring <3:1 | min |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| dark | 1337 | 1280 | 56 | 1280 | **0** | **0** | **7,29** |
+| light | 1239 | 1180 | 58 | 1180 | **0** | **0** | **3,86** |
+| sepia | 1214 | 1156 | 57 | 1156 | **0** | **0** | **3,44** |
+| contrast | 1239 | 1180 | 58 | 1180 | **0** | **0** | **11,34** |
+
+Die vier Minima sind **auf die dritte Stelle dieselben** wie unter Windows. Das ist keine
+Überraschung, sondern der Beleg einer Behauptung: Ring und Rahmen sind metrikfrei, eine
+breitere Schrift kann sie nicht bewegen. Gemessen statt behauptet.
+
+Metrikabhängig ist an dieser Welle genau **eine** Stelle: die umbenannte
+Filterrückmeldung mit `white-space: nowrap` und `margin-left: auto` in einem
+Flex-Streifen. Unter der breiten Schrift, in allen vier Themes, bei 1600 px **und** bei
+375 px: Zähler innerhalb der Leiste, 10 px vom rechten Innenrand, Überhang der Leiste 0,
+Überhang der Ansicht 0, Überhang der Seite 0 — identisch zum Windows-Lauf.
+
+### Die Bilder
+
+**376 Dateien** in `tests/e2e/__screens__/welle-6/`, 94 je Theme: 24 Ruhebilder, 24
+Fokusbilder mit einem **wirklich ertabulierten** Feld, 24 Naheinstellungen und 13
+Zustandsbilder. Dazu **26 Bilder und ein Kontaktbogen** mit **13 Vorher/Nachher-Paaren**
+in `tests/e2e/__screens__/welle-6/vorher-nachher/` (`kontaktbogen-welle-6.png`, daneben
+die HTML-Fassung). Beide Spalten des Bogens stammen aus demselben Skript, demselben Seed
+und demselben Bündelverfahren; links `e4ac3a7`, rechts der Wellenstand. Die Werte unter
+jeder Beschriftung sind gemessen.
+
+Neu erzeugen:
+
+```bash
+WELLE6_SCREENS=1 npx playwright test tests/e2e/features/welle-6-screens.spec.js
+```
+
+Der Kontaktbogen entsteht aus einem Handskript (Muster der Wellen 4 und 5) und braucht ein
+aus `e4ac3a7` gebautes Vergleichsbündel; er ist kein Teil der Suite.
+
+### Alle Tore, von mir unabhängig nachgefahren
+
+| | Basis (`e4ac3a7`) | jetzt (`931b0cd`) | Differenz |
+| --- | --- | --- | --- |
+| Jest | 2.110 in 78 Suiten | **2.137 in 78 Suiten** | +27, **alle** in `design-consistency.test.js` (292 → 319 Fälle); keine andere Unit-Datei ist angefasst |
+| Playwright | 604 / 31 / 0 | **634 / 39 / 0** | +34 Ratschen (fokusring 7+4, eingaberahmen 12, zaehler 11) und +4 übersprungene Ablichtung |
+| pytest | 30 | **30** | — |
+| Lint | exit 0, 363 Warnungen | **exit 0, 363 Warnungen** | Pin gehalten |
+| typecheck / strict | grün | **grün** | — |
+| Builds dev / prod | exit 0 | **exit 0** | — |
+| Anker-Wächter | OK, 123 Anker | **OK, 0 Abweichungen bei 123 Ankern** | — |
+| Editorleisten-Wächter | 22/22 | **22/22** | — |
+| F-18-Kaskade | 117/117 | **117/117** | — |
+| CLAUDE.md | — | **unverändert** | `git diff e4ac3a7..HEAD -- CLAUDE.md` leer |
+
+**Ratschen:** DUBLETTEN **0** (= Decke) · `!important` **104** (= Decke) · Inline-Stile
+**251** (von 252 **gesunken**, Nebenergebnis der Umbenennung in Schritt 7) ·
+`transition: all` **0** · `outline: none` **1** Deklaration (von 31). Keine ist gestiegen.
+
+**Die zwei bekannten Suiten-Wackler** (Toast-Rennen in `locations.spec.js` /
+`encounters.spec.js`, 08-02-Seed nie nachgezogen) sind in **beiden** vollen Läufen dieser
+Abnahme **nicht** aufgetreten. Sie bleiben als vorbestehend geführt und sind nicht geheilt
+worden.
+
+### Was die vier Einheiten W6-A bis W6-D inhaltlich korrigiert haben
+
+Die Akte führte das bis hierher nur für W6-D; der Rest stand in den Commit-Rümpfen. Das
+ist Schritt 8, also hier:
+
+**Vier tote Anker im Handoff.** `party.css:1485` ist in Wahrheit 1371 — und 1485 trägt
+heute eine **andere** Eingaberegel, der falsche Anker führt also an die falsche Stelle,
+nicht ins Leere. `core.css:1965` ist 2172. Diese Welle musste in zwei Einheiten **178
+Zeilenanker** nachziehen; die Stellenlisten sind darum am Baum erzeugt und führen
+Selektortexte statt Zeilennummern.
+
+**Die Teilaufgabe „border-radius aus der globalen `:focus-visible`-Regel streichen" hat
+keinen Gegenstand.** Die Regel enthielt an ihrem alten Ort genau zwei Deklarationen —
+dieselben zwei wie jetzt. Der Anspruch stammt aus einem v2-Patch, der nie eingebaut wurde,
+und der genannte Formsprung an `.nav-tab` von 12 auf 4 Bildpunkte aus demselben. Das steht
+jetzt im Kommentar an der Regel, damit niemand ein drittes Mal danach sucht.
+
+**`--border-input` existierte seit Welle 1** in allen vier Theme-Blöcken — und wurde von
+**keiner einzigen Regel gelesen**. Punkt 3 war reine Anwendung. Der Dark-Wert ist
+`#7c7c7c`, nicht das `#6b6b6b` des Handoffs; Welle 1 hat ihn mit Begründung korrigiert.
+
+**`:focus:not(:focus-visible)` wurde NICHT umgesetzt** (W6-E-1 = A, Orchestrator-Grund
+O-3). Chromium setzt `:focus-visible` bei Textfeldern und `select` **auch beim Mausklick**
+— an `#spell-search` und `#spell-class-filter` nachgewiesen und in dieser Abnahme erneut
+bestätigt (Paar `b` des Kontaktbogens: `:focus-visible=true` nach einem echten Klick,
+voller Ring). Alle 31 Unterdrücker saßen auf genau solchen Eingaben. Das Rezept hätte sein
+Ziel an keiner seiner Stellen erreichen können und dabei an 29 Regeln das damals
+**einzige** Kennzeichen entfernt.
+
+**„2 von 31 ohne Kennzeichen" waren SECHS, „7 Elemente" waren ACHT.** Der Plan zählte den
+ruhenden `border: 1px solid var(--border)` einer Grundregel als Kennzeichen mit; ein
+Ruhezustand ist keins. Und `.cf-combat-value` trägt sechs Felder, nicht fünf —
+`char-proficiency` ist `readonly` und darum leicht zu übersehen, tabulierbar ist es
+trotzdem.
+
+**Schritt 5 brauchte keine eigene Änderung, und das ist ein Befund.** Der Handoff wollte
+den vier blinden Selektoren ein `box-shadow: var(--ring-gold)` geben; gerechnet liest das
+auf ihrer Trägerfläche 1,27 / 1,16 / 1,24 / 14,97, der Ring aus Schritt 3 dort
+8,28 / 4,76 / 4,45 / 13,46. Sobald `outline: none` fiel, trug die Weltregel sie mit.
+
+**Die 31. Deklaration bleibt, verengt.** `file-backup.css {.backup-entry-header:hover}` ist
+kein Fokusunterdrücker — das Element ist ein `div` ohne `tabindex` und ohne `data-action`,
+also kein Tastaturhalt; die Zeile nimmt einen **Hover**-Umriss zurück. Löschen hätte keinen
+Fokusring freigelegt, sondern einen goldenen Hover-Ring erzeugt. Der Selektor ist auf
+`:hover:not(:focus-visible)` verengt: heute verhaltensneutral, aber die Regel sagt jetzt,
+was sie meint.
+
+**Das zentrale technische Problem der Welle ist aufgelöst, nicht umgangen.** Der
+aufgehellte Ruherahmen ließ den Fokus-**Rahmenwechsel** einbrechen (dark 5,41 → 1,98),
+auf dem 223 von 297 Feldern als zweites Kennzeichen standen. Alle drei Wege der
+Aufgabenstellung sind durchgerechnet; gewählt ist der erste **mit dem bestehenden Token
+`--focus-ring`**, weil WCAG 1.4.11 die Schwelle an den **Raum** legt und nicht an die
+**Zeit**: die Norm vergleicht benachbarte Farben, nicht einen Zustand mit seinem eigenen
+Vorzustand. Dabei stellte sich heraus, dass der Fokusrahmen seine 3:1 vorher in zwei von
+vier Themes **nicht** hielt (`--gold` in light 2,98, `--cyan` in sepia 2,93). Nebenbei ist
+ein Mangel weg, den niemand benannt hatte: in light und sepia zeigte jedes fokussierte
+Feld **zwei verschiedene Goldtöne, 2 px voneinander entfernt** — 0 von 219 gleich, jetzt
+146 von 146.
+
+**Die Elementregel nahm die Schieberegler mit.** `input[type="range"]` fehlte in der
+Aufzählung der ausgenommenen Nicht-Vertragstypen — der einzige, der auf dem Schirm steht.
+Der Budgetregler des Begegnungsrechners verlor ein Viertel seiner Höhe (8 → 6), die
+Lautstärkeschiene jeder Soundboard-Spur die **Hälfte** (4 → 2). Eine Zeile Ausnahme neben
+der Elementregel, nicht zwei an zwei Reglern — damit ist ein künftiger dritter Regler von
+selbst gedeckt.
+
+### Sichtungsliste — zehn Punkte, in der Reihenfolge der Themes
+
+Die Bilder liegen unter `tests/e2e/__screens__/welle-6/`; der Kontaktbogen ist der
+schnellste Weg, die Welle in einem Blick zu beurteilen.
+
+1. **Der Ring im hellen Theme nach der Farbänderung.** `#946c09` statt `#b8860b` — ein
+   gedecktes Gold, Farbwinkel 42,73 gegen 42,66 Grad, Sättigung 0,939 gegen 0,940. Zahlen
+   sagen „dasselbe Gold, nur dunkler". **Liest es sich auch so?**
+   → `a-suchfeld-tabulator-light-vorher/-nachher`, `<ansicht>-fokus-nah-light.png`
+2. **Die 26 Felder, die den Ring neu bekommen.** Das sind die Eingaben, auf denen die 31
+   Unterdrücker saßen: alle Suchfelder, die Filterwähler, die Initiativ-Eingaben, der
+   Würfelausdruck, das Notizfeld des DM-Schirms, die Bestiariums- und Kalenderfilter.
+   **Stört der Ring an einem Suchfeld?** (Frage 1 des Plans.)
+   → `suchfeld-fokus-*.png`, `b-suchfeld-maus-light-*`
+3. **Der Rahmenwechsel an den 29 Regeln — ist er noch da?** Gemessen: ja, alle 25
+   `border-color`-Zeilen stehen (21× Gold, 4× Cyan), nur lesen sie jetzt `--focus-ring`
+   statt `--gold`/`--cyan`. **Wirken Rahmen UND Ring zusammen als zu viel?** (Frage 2.)
+   → `d-formularfeld-fokus-light-*`, `formular-fokus-party-*.png`
+4. **Die ~300 aufgehellten Ruherahmen.** `#cccccc` → `#767676` in Light, `#3a3a3a` →
+   `#7c7c7c` in Dark. **Wirken die Formulare noch ruhig, oder jetzt wie ein Gitter?**
+   (Frage 3.)
+   → `e-formularfeld-ruhe-light-*`, `f-formularfeld-ruhe-dark-*`, `formular-ruhe-party-*.png`
+5. **Sepia im Modal.** Hier geht der Ring **herauf**, und das ist die Stelle, die die
+   ganze Token-Entscheidung ausgelöst hat: vorher 2,37 auf der dunklen Modalfläche.
+   → `j-modalfeld-sepia-vorher/-nachher`, `modal-zauber-fokus-sepia.png`
+6. **Die zwei Zähler in Zauber und Aufträgen.** Die Pille in der Werkzeugleiste zeigt zum
+   ersten Mal eine Zahl (0 → 5 bzw. 0 → 3); die Filterrückmeldung darunter behält ihre
+   n/N-Form. **Zwei Zahlen in einer Ansicht — verwirrt das?** (Frage 5.)
+   → `g-zaehler-zauber-dark-*`, `h-zaehler-auftraege-dark-*`, `zaehler-*-nah-*.png`
+7. **Der Tabulaturlauf durch eine Ansicht: verschwindet der Fokus noch irgendwo?**
+   Gemessen nein — 0 ringlose sichtbare Halte in vier Themes und auf zwei Breiten. Der
+   Lauf durch die 24 Fokusbilder einer Ansichtsreihe ist die menschliche Gegenprobe.
+   → `<ansicht>-fokus-<theme>.png`, 24 je Theme
+8. **Die geduldete Ausnahme.** `#char-hp-temp` behält seinen bedeutungstragenden cyanen
+   Rahmen und liest in Sepia 2,93 — die **einzige** Zelle unter 3:1, namentlich und mit
+   Zahl geführt. **Ist die Bedeutung die 0,07 wert?**
+   → `l-hp-temp-sepia-vorher/-nachher`
+9. **Contrast als Gegenprobe.** Ringfarbe unverändert `rgb(255,215,0)`, nur der Rahmen
+   wird heller. **Sieht man überhaupt, dass sich etwas geändert hat?** Wenn nein, ist das
+   das richtige Ergebnis.
+   → `k-ring-contrast-vorher/-nachher`
+10. **375 px.** Derselbe Ring auf Telefonbreite, 1542 bis 1626 sichtbare Halte je Theme,
+    kein Überhang. **Ist der 2-px-Ring mit 2 px Abstand auf dem Telefon zu dick?**
+    → `mobil-fokus-*.png`, `mobil-formular-rahmen-*.png`, `m-mobil-fokus-light-*`
+
+### Abnahme nachfahren
+
+```bash
+# Die Hauptabnahme: der Fokusring am echten Tabulatorlauf, vier Themes
+FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js
+
+# Der Eingaberahmen und die zwei Zaehler am Element
+npx playwright test tests/e2e/features/eingaberahmen.spec.js tests/e2e/features/zaehler.spec.js
+
+# Die elf Ratschen der Welle im Quelltext
+npx jest tests/unit/design-consistency.test.js -t "W6-R"
+
+# Die Weltregel: genau eine unbedingte, und sie steht in core.css
+grep -rn ":focus-visible" assets/styles/*.css | grep "{"
+grep -c "focus-visible" assets/styles/dmscreen.css      # 1 = nur der Hinweiskommentar
+grep -rn "outline\s*:\s*none" assets/styles/*.css       # 1 Deklaration, file-backup.css
+
+# Der Sollstand schluesselweise gegen den Vorzustand der Welle
+node tools/vergleich-stil-sollstand.js --alt e4ac3a7 \
+     --vollabzug tests/e2e/test-results/computed-style-snapshot.json
+
+# Der Sollstand: eine Neuerhebung muss inhaltlich byteidentisch sein
+UPDATE_STYLE_BASELINE=1 npx playwright test tests/e2e/features/computed-style-diff.spec.js
+git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss leer sein
+
+# Die Bilderserie und die Fokusbilder
+WELLE6_SCREENS=1 npx playwright test tests/e2e/features/welle-6-screens.spec.js
+
+# Die drei Waechter
+node tools/sync-aktenlage-anker.js --check
+node tools/sync-editor-toolbars.js --check
+node tools/check-f18-kaskade.js
+```
+
+---
+
+# NACH DEM HANDOFF — was offen bleibt
+
+Mit Welle 6 ist der **Design-Handoff v3 abgearbeitet**. Das Design-System ist damit nicht
+fertig. Dies ist die Übergabe, geordnet nach Größe. Die Zahlen sind die der jeweiligen
+Wellenberichte bzw. der Vermessung dieser Welle; wo ich sie in dieser Abnahme nachgemessen
+habe, steht meine Zahl.
+
+## 1 · Der Tastatur-Strang — der größte Posten, und er war nie Teil einer Designwelle
+
+§8 Punkt 5, Arbeitsregel 10, Welle 6 Punkt 6. Welle 6 hat davon **genau einen** Teil
+erledigt (die Phantom-Halte, W6-E-4 = B). Offen bleibt:
+
+- **84 sichtbare, bedienbare Elemente ohne Tastaturzugang.** Bestiarium-Liste 17,
+  Zauberfilter 26, Beutefilter 10, Armaturenbrett-Sprungfelder 10, Charakterbogen 7
+  (inkl. Lebenspunkte-Rechner und Zauberplatz-Punkte), NSC/Orte/Läden/Begegnungen 10,
+  Kampagnenwechsel 1, Initiative-Wertbearbeitung 1. Keines hat `tabindex`, keines `role`.
+  **Ein `tabindex` allein genügt nicht:** die Ereignisverteilung hört nur auf `click`,
+  `change` und `input` — es gibt keinen `keydown`-Zweig. Im ganzen Quellbaum existieren
+  genau **zwei** `tabindex` (im Umzugsassistenten, mit eigenem `keydown`-Handler — das
+  Vorbild).
+- **Die drei verbliebenen Phantom-Halte-Gruppen**, von mir in dieser Abnahme nachgemessen:
+  `#shortcuts-overlay` 32–33, `.search-clear-btn` 18, `.dmscreen-widget-hide` 7 — zusammen
+  **57 bis 58 je Theme**, auf 375 px 55 bis 56. Sie sind **nicht** von dieser Welle und
+  haben je einen eigenen Grund (ein durchsichtiges Overlay, ein Löschknopf in einem leeren
+  Suchfeld, ein Widget-Knopf unter einer Einblendung).
+- **35 Modale ohne `role="dialog"` und ohne Fokusfalle.** Im Lebenspunkte-Rechner
+  verlassen 15 von 25 Tabulaturschritten das Modal.
+- **38 versteckte Marken-Kästchen** (`display: none`) und **188 Marken ohne Bindung** von
+  413 (206 sind implizit gebunden und sollten nicht angefasst werden). `.sr-only` ist
+  bereits definiert und 23× in Gebrauch.
+
+## 2 · Die §7-Ausnahmen
+
+Acht geführte Ausnahmen, aber nur **zwei** tragen den von Arbeitsregel 9 geforderten
+Kommentar an der Deklaration. Der Welle-3-Bericht hält das für die Schattenfamilie
+ausdrücklich fest (keine der 14 R-19-Ausnahmen ist kommentiert). Entweder ein eigener
+Durchgang oder die Regel für diese Familien ausdrücklich aufheben — der heutige Zustand
+ist eine Regel, die nicht gilt.
+
+## 3 · Die Restschulden der sechs Wellen, wie ihre Berichte sie führen
+
+- **Welle 1** — fünf JS-Stellen mit der D-7-Fehlerart (Quests, Zauber) nicht erfasst; der
+  Ereignis-Log unten ist in Light und Sepia kaum lesbar (fest verdrahtete dunkle Fläche in
+  `party.css`, älter als Welle 1).
+- **Welle 2** — `.backup-entry-restore:hover` bleibt unter 4,5 (3,15–3,74) gegen
+  `--bg-hover`; die umgekehrte Zustandsleiter bei `.pwa-install-btn` (W2-D-05).
+- **Welle 3** — `.fdp-die.d20` steht mit 4,48 nur 0,02 unter der Schwelle; der
+  Offline-Hinweis hat eine Klasse `show`, die keine Regel trifft. Der dritte Punkt
+  (`--gold` hält in Light volldeckend nur 2,40 gegen die schlechteste neutrale Fläche)
+  ist **mit dieser Welle erledigt**, soweit er den Fokusring betrifft: dafür gibt es jetzt
+  ein eigenes Token. Für `--gold` selbst in seinen übrigen Verwendungen gilt er weiter.
+- **Welle 4** — fünf Bewegungsstellen außerhalb CSS (vier `style.transition` im JS, ein
+  Inline-Stil im Template); zwei Stellen springen künftig in der Randbreite statt zu
+  wachsen.
+- **Welle 5** — zehn kaputte `woff2` und der `file://`-Pfad der gebündelten Schriften; die
+  Schrift-**Familie** der Bedienelemente (Schritt 8 setzte nur `font-size`, Knöpfe und
+  Felder benutzen weiter die Systemschrift); die fehlende Sprosse zwischen 34 und 72 px;
+  die Layoutregel der Tastenhilfen als Voraussetzung, die 8 px auf 11 zu heben; die
+  Histogramm-Beschriftungen, die durch viewBox-Skalierung auf 4,76–5,44 px landen.
+- **Welle 6** — die drei Phantom-Halte-Gruppen und der Tastatur-Strang (oben); die eine
+  geduldete Kontrastzelle `#char-hp-temp` in Sepia mit 2,93; und die Decke von **3,50**,
+  gegen die der Ring in Light und Sepia läuft: solange er **ein** Wert je Theme ist, lässt
+  sich der Puffer über 3:1 nicht über 17 Prozent heben. Ein zweiter Wert für Modalflächen
+  wäre der Weg, falls das je nötig wird.
+
+## 4 · Was die Aktenlage sonst führt
+
+- **`.filter-bar` `gap: 6px`** gegen den §3.7-Vertrag `var(--space-sm)` = 8 px —
+  **erledigt** in Schritt 7 dieser Welle (Fall 5 von W6-R-09).
+- **GATE-04** (CLAUDE.md): `tools/sync-editor-toolbars.js --check` existiert als Fähigkeit,
+  aber **keine Testdatei, kein npm-Skript und kein CI-Schritt fahren ihn**. 22/22 sind
+  synchron — nichts hält sie so. Offene Restschuld aus v1.3.
+- **149 Hex-Farbliterale außerhalb CSS**, von keinem Requirement gedeckt. Achtung bei der
+  Nachmessung: die naive Regex trifft HTML-Entities wie `&#246;` mit.
+- **`npx prettier --check` ist projektweit rot, an jedem Stand.** Formatierung ist von
+  keinem Tor gedeckt, und `npm run format` bleibt gesperrt (es schreibt 135+ Dateien
+  einschließlich CLAUDE.md). Einzeldateien per `npx prettier --write <datei>` sind der Weg;
+  so sind die vier neuen Testdateien dieser Welle entstanden.
+- **Nichts ist gepusht.** Die Wellen 1 bis 6 liegen als lokale Commits auf
+  `design-welle-4`.
