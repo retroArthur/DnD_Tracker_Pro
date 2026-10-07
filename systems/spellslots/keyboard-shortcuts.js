@@ -5,10 +5,10 @@
 // KEYBOARD SHORTCUTS
 // ============================================================
 
-// Ein fokussiertes Bedienelement, das die Leertaste und die Ziffern 1-9 fuer
-// sich beansprucht (TAST, Schritt 2). INPUT/TEXTAREA/SELECT und
-// contentEditable stehen hier NICHT: die deckt `isTyping` unten schon ab,
-// und zwar fuer ALLE Einzeltasten-Kuerzel.
+// Ein fokussiertes Bedienelement, das die Leertaste fuer sich beansprucht
+// (TAST, Schritt 2). INPUT/TEXTAREA/SELECT und contentEditable stehen hier
+// NICHT: die deckt `isTyping` unten schon ab, und zwar fuer ALLE
+// Einzeltasten-Kuerzel.
 const TASTEN_BEDIENELEMENT_SELEKTOR =
     'button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])';
 
@@ -32,16 +32,28 @@ function initKeyboardShortcuts() {
         // `preventDefault()` und schickt sie an `nextTurn()`. Der Kampf ist
         // eine Runde falsch und niemand sieht warum. Dasselbe bei "Neue
         // Runde" (Halt 22), "+ Party" (23), "Alle wuerfeln" (24) und
-        // "Zustaende" (27); die Ziffer `1` wechselt dort zum
-        // Armaturenbrett und vernichtet den ertabulierten Fokus.
+        // "Zustaende" (27).
         //
         // Betroffen sind Knoepfe, die schon echte `<button>` SIND — keine
         // Nachruestung von `tabindex`/`role` hilft dagegen, nur diese
         // Schranke.
         //
-        // NUR Leertaste und Ziffern 1-9 (O-7). Bei diesen beiden Gruppen ist
-        // die Absicht eindeutig "bediene das fokussierte Ding" bzw. "tippe
-        // eine Zahl". Bei r/t/l/k/n/p// ist die Lage umgekehrt: niemand
+        // NUR DIE LEERTASTE. Die erste Fassung hat die Ziffern 1-9
+        // mitgesperrt (O-7) und damit ein dokumentiertes Kuerzel
+        // zerschlagen; Runde 1 hat das zurueckgenommen. Der Unterschied
+        // sitzt in der Absicht des Anschlags: die Leertaste auf einem
+        // fokussierten Knopf heisst "bediene DAS HIER", eine Ziffer heisst
+        // "zeig mir Ansicht 3" — und das ist, was sie tut, laut
+        // Kuerzeltabelle UND laut der App-eigenen Hilfe. Gemessen gab es bei
+        // Ziffern auch nichts zu schuetzen: auf einem ertabulierten
+        // `<button>` erzeugt `3` NULL Klicks (echt und synthetisch), es gibt
+        // also kein natives Doppelfeuer. Die Schranke nahm dort nur das
+        // Kuerzel weg — und zwar genau auf dem Weg, den der Spielleiter
+        // geht: nach einem gewoehnlichen Mausklick behaelt ein Knopf den
+        // Fokus, danach war jede Ziffer tot (sechs von sechs geprueften
+        // Knoepfen, bei 6 und bei 20 Eintraegen je Typ).
+        //
+        // Bei r/t/l/k/n/p// bleibt es ebenfalls beim Kuerzel: niemand
         // drueckt `r`, um einen Knopf zu bedienen, und mehrere dieser
         // Kuerzel sind heute der EINZIGE funktionierende Zugang zu ihrer
         // Flaeche — `/` oeffnet die Schnellreferenz, `k` das
@@ -57,7 +69,7 @@ function initKeyboardShortcuts() {
         // ein Klick, kein Doppelfeuer, und `scrollY` bleibt 0, weil ein
         // fokussierter `<button>` die Vorgabe der Leertaste selbst
         // unterdrueckt. Beides gemessen, nicht angenommen.
-        const beanspruchtTaste = !!activeEl?.matches?.(TASTEN_BEDIENELEMENT_SELEKTOR);
+        const beanspruchtLeertaste = !!activeEl?.matches?.(TASTEN_BEDIENELEMENT_SELEKTOR);
 
         // ============================================================
         // SOUNDBOARD QUICK-SLOTS (D-03) — Alt+Shift+0..5
@@ -183,18 +195,11 @@ function initKeyboardShortcuts() {
             return;
         }
         // Ziffern 1-9: Tab-Wechsel (entspricht der Standard-Tab-Reihenfolge)
-        // `beanspruchtTaste`: auf einem fokussierten Bedienelement wechselt die
-        // Ziffer die Ansicht NICHT — sie wuerde den ertabulierten Fokus
-        // vernichten. Alt+Ziffer (Schnellwuerfel, Zweig darunter) bleibt
-        // unberuehrt, dieser Zweig verlangt ohnehin !e.altKey.
-        if (
-            e.key >= '1' &&
-            e.key <= '9' &&
-            !e.ctrlKey &&
-            !e.metaKey &&
-            !e.altKey &&
-            !beanspruchtTaste
-        ) {
+        // KEIN `beanspruchtLeertaste` hier (Runde 1, nachgemessen): ein
+        // fokussierter Knopf verarbeitet keine Ziffer, es gibt also nichts zu
+        // schuetzen — eine Schranke nahm hier nur das dokumentierte Kuerzel
+        // weg. Begruendung im Block oben.
+        if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const tabs = [
                 'dashboard',
                 'party',
@@ -223,12 +228,12 @@ function initKeyboardShortcuts() {
             return;
         }
         // Space: Nächster Zug (nur im Initiative-Tab)
-        // `beanspruchtTaste`: liegt der Fokus auf einem Bedienelement, gehoert
-        // die Leertaste diesem Element. Ohne Fokus bleibt es beim gewohnten
-        // Griff — Leertaste = naechster Zug.
+        // `beanspruchtLeertaste`: liegt der Fokus auf einem Bedienelement,
+        // gehoert die Leertaste diesem Element. Ohne Fokus bleibt es beim
+        // gewohnten Griff — Leertaste = naechster Zug.
         if (
             e.key === ' ' &&
-            !beanspruchtTaste &&
+            !beanspruchtLeertaste &&
             document.querySelector('#view-initiative.active')
         ) {
             e.preventDefault();
