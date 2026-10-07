@@ -1216,7 +1216,20 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     // einem 16-px-Elternwert = 12,8 px — Delta -0,80 px.
     // Gemessener Ausgangswert danach: 252, gezaehlt mit derselben Regex ueber
     // dieselben Dateien.
-    const INLINE_MAX = 252;
+    // Gesenkt am 2026-10-07 (Design-Handoff v3, Welle 6, Schritt 7): 252 ->
+    // 251. UND NUR UM EINS, obwohl der geloeschte Inline-Stil VIER
+    // Deklarationen trug — diese Zahl zaehlt ATTRIBUTE. Es ist das Attribut
+    // der Filterrueckmeldung der Zauberansicht, die zur Klasse
+    // `.filter-count` geworden ist (W6-R-09 Fall 1). ZWEI der vier
+    // Deklarationen waren LAYOUT (`white-space: nowrap`, `margin-left: auto`)
+    // und sind genau darum in die Klasse mitgegangen: ohne sie springt der
+    // Zaehler im Flex-Streifen nach links an die Schulfilter, am gebauten
+    // Buendel in vier Themes nachgemessen (W6-R-10 Fall 4). Die Senkung ist
+    // das Nebenergebnis, nicht der Zweck; der Zweck war, dass die zwei
+    // Zaehler dieser Ansicht zwei Namen bekommen (W6-E-3 = A).
+    // Gemessener Ausgangswert danach: 251, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien.
+    const INLINE_MAX = 251;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
@@ -17192,5 +17205,311 @@ describe('W6-R-08 — --border-input ist angewendet und das Fokuskennzeichen hat
 
         // Der Lauf hat wirklich Regeln gelesen.
         expect(W6_FELDREGELN.length).toBe(52);
+    });
+});
+
+describe('W6-R-09 — zwei Zaehler, zwei Namen (Ratsche)', () => {
+    /* WAS HIER BEWACHT WIRD, und warum es eine EIGENE Ratsche braucht
+       (Design-Handoff v3, Welle 6, Schritt 7, Entscheidung W6-E-3 = A)
+
+       In der Zauberansicht standen zwei Zaehler fuer dieselbe Menge, unter
+       zwei Namen, die sich widersprachen:
+
+         #spells-count  die Pille in der Werkzeugleiste, geschrieben
+                        ausschliesslich von setViewCount() (F-10). Sie stand
+                        im Normalbetrieb DAUERHAFT auf 0 — am gebauten
+                        Buendel nachgemessen: 2 Zauber in D.spells plus
+                        renderSpells() (genau der Pfad, den jede
+                        Zauber-CRUD geht) liess sie auf "0". Erst renderAll()
+                        zog sie nach, und das laeuft nur beim Import, beim
+                        Ruecknehmen und beim Wiederherstellen.
+         #spell-count   die Filterrueckmeldung unter den Filtermarken, die
+                        "Buch 2" bzw. gefiltert "Buch 1/2" meldete — korrekt,
+                        aber unter einer ID, die dem <view>-count-Schema der
+                        F-10-Ratsche zum Verwechseln aehnlich sieht, ohne
+                        eines zu sein (die Ansicht heisst `spells`, nicht
+                        `spell`).
+
+       WARUM 'spell' NICHT IN COUNTED_VIEWS KOMMT, obwohl der Handoff es
+       verlangt: rot nachgefahren, bevor diese Ratsche entstand. Mit 'spell'
+       ergaenzt wird F-10 Test 3 ("setViewCount() ist die einzige
+       Schreibstelle") rot mit genau EINEM Befund, dem Leser der
+       Filterrueckmeldung. Gruen wird er nur, wenn dieser Leser verschwindet —
+       dann ist die Rueckmeldung, die Paragraph 3.7 desselben Handoffs
+       ausdruecklich behalten will, ein leeres div. Die Ratschenverschaerfung
+       und das "Element bleibt" sind nicht zugleich erfuellbar. Entschieden
+       (W6-E-3 = A): die zwei Dinge bekommen zwei Namen, die Rueckmeldung
+       heisst `spells-filter-count` und faellt damit nachweislich aus dem
+       Schema — die Regex von F-10 Test 3 kann sie nicht treffen, weil ihre
+       Zeichenklasse keinen Bindestrich enthaelt. F-10 bleibt dreifach gruen,
+       und zwar ohne Ausnahmeliste.
+
+       DIE ZWEI LAYOUT-EIGENSCHAFTEN SIND DER EIGENTLICHE RISIKOPUNKT, nicht
+       die Farbe. Der Inline-Stil der Rueckmeldung trug vier Deklarationen,
+       und ZWEI davon sind Layout: `white-space: nowrap` (sonst bricht
+       "Buch 1/2" um) und `margin-left: auto` (das einzige, was den Zaehler im
+       Filterstreifen nach rechts schiebt — das Elternelement ist ein
+       `display: flex` ohne `justify-content`). Eine Klasse, die nur Schrift
+       und Farbe mitnimmt, laesst den Zaehler nach links an die Schulfilter
+       springen. Fall 2 prueft genau diese zwei namentlich; der sichtbare
+       Beleg dafuer steht in tests/e2e/features/zaehler.spec.js (W6-R-10
+       Fall 4, rechte Kante in vier Themes am gebauten Buendel gemessen).
+
+       AUSGANGSWERTE DES ROTLAUFS, gemessen am 2026-10-07 an HEAD 186e4e7:
+         Fall 1  1 Befund   Rueckmeldung heisst spell-count, traegt vier
+                            Inline-Deklarationen und keine Klasse
+         Fall 2  1 Befund   .filter-count existiert nirgends (0 Treffer in
+                            assets/, core/, features/, ui/, tests/)
+         Fall 3  2 Befunde  renderSpells() und renderQuests() rufen
+                            setViewCount() nicht
+         Fall 4  2 Befunde  die alte ID steht im Markup und im JS
+         Fall 5  1 Befund   .filter-bar fuehrt gap: 6px, Paragraph 3.7
+                            verlangt var(--space-sm) = 8px
+       Dazu F-19: INLINE_MAX 252 -> 251 (gezaehlt mit derselben Regex ueber
+       dieselben Dateien, siehe Kommentar dort).
+
+       KEIN MODULPFAD IM KLARTEXT. Die zwei JS-Dateien stehen auf der
+       Ausnahmeliste des Abdeckungs-Gates. Dieses Gate liest jede woertliche
+       Nennung eines loader.js-Pfades unter tests/ als "Modul ist abgedeckt"
+       und faellt dann ueber den nun ueberfluessigen Ausnahmeeintrag. Diese
+       Ratsche prueft Quelltext als Text und deckt die Module nicht ab —
+       darum sind die Pfade als Teilstuecke zusammengesetzt und nicht
+       ausgeschrieben. */
+
+    /** Die zwei Renderpfade, die den Werkzeugleisten-Zaehler schreiben
+     *  muessen. Als Pfadteile, nicht als Pfad — siehe Kommentarschluss oben. */
+    const W6D_RENDERER = [
+        { teile: ['features', 'spells', 'spell-manager.js'], fn: 'renderSpells', view: 'spells' },
+        { teile: ['features', 'quests', 'quests-render.js'], fn: 'renderQuests', view: 'quests' }
+    ];
+
+    /** Die ID der Filterrueckmeldung nach dem Schritt und die alte davor. */
+    const W6D_NEU = 'spells-filter-count';
+    const W6D_ALT = 'spell-count';
+    const W6D_KLASSE = 'filter-count';
+
+    /**
+     * Das oeffnende Tag mit einer bestimmten id aus einem Markup-Text.
+     * Rueckgabe: null, wenn es sie nicht gibt.
+     */
+    function w6dTagMitId(markup, id) {
+        const m = new RegExp('<[a-z]+[^>]*\\bid="' + id + '"[^>]*>').exec(markup);
+        return m ? m[0] : null;
+    }
+
+    /**
+     * Der Rumpf einer Funktionsdeklaration, ueber Klammertiefe geschnitten.
+     * Eine Regex bis zur ersten schliessenden Klammer wuerde beim ersten
+     * if-Block enden; die gesuchten Aufrufe liegen weiter unten.
+     */
+    function w6dFunktionsrumpf(code, name) {
+        const start = code.indexOf('function ' + name + '(');
+        if (start < 0) return null;
+        const auf = code.indexOf('{', start);
+        if (auf < 0) return null;
+        let tiefe = 1;
+        for (let i = auf + 1; i < code.length; i++) {
+            if (code[i] === '{') tiefe++;
+            else if (code[i] === '}') {
+                tiefe--;
+                if (!tiefe) return code.slice(auf + 1, i);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Der Rumpf der Regel mit genau diesem Selektor (normalisiert), ueber
+     * alle Stildateien. Nimmt die ERSTE; eine zweite waere eine Dublette und
+     * Gegenstand von R-06.
+     */
+    function w6dRegelrumpf(selektor) {
+        for (const f of cssFiles) {
+            for (const r of regelnMitRumpf(f.content)) {
+                if (r.sel.replace(/\s+/g, ' ').trim() === selektor) {
+                    return { datei: f.name, zeile: r.zeile, rumpf: r.rumpf };
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Nennt der Rumpf diese Eigenschaft mit diesem Wert? */
+    const w6dHatDekl = (rumpf, prop, wert) =>
+        new RegExp('(?:^|[;{\\s])' + prop + '\\s*:\\s*' + wert + '\\s*(?:;|$)').test(rumpf || '');
+
+    /**
+     * Alle Vorkommen der alten ID in einem Text — OHNE `assign-spell-count`,
+     * das ein anderes Element ist (die Verfuegbar-Pille der Zauberzuweisung
+     * in modals-entity.html) und bleibt.
+     */
+    function w6dAlteId(text) {
+        return [...text.matchAll(/[\w-]*spell-count/g)].map(m => m[0]).filter(t => t === W6D_ALT);
+    }
+
+    test('Fall 1 — die Filterrueckmeldung traegt eine Klasse und keinen Inline-Stil', () => {
+        const befunde = [];
+        let gefunden = 0;
+        tplFiles.forEach(f => {
+            const tag = w6dTagMitId(f.content, W6D_NEU);
+            if (!tag) return;
+            gefunden++;
+            if (!new RegExp('class="[^"]*\\b' + W6D_KLASSE + '\\b').test(tag)) {
+                befunde.push(
+                    f.name + ': #' + W6D_NEU + ' traegt die Klasse .' + W6D_KLASSE + ' nicht'
+                );
+            }
+            if (/\sstyle="/.test(tag)) {
+                befunde.push(f.name + ': #' + W6D_NEU + ' traegt noch einen Inline-Stil');
+            }
+        });
+        if (gefunden !== 1) {
+            befunde.push(
+                'Die Filterrueckmeldung #' +
+                    W6D_NEU +
+                    ' kommt ' +
+                    gefunden +
+                    '-mal im Markup vor (verlangt: genau 1). Bei der Geburt dieser Ratsche: 0 — ' +
+                    'sie hiess ' +
+                    W6D_ALT +
+                    ' und trug vier Inline-Deklarationen.'
+            );
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 2 — .filter-count traegt die zwei Layout-Eigenschaften mit', () => {
+        /* OHNE DIESE ZWEI SPRINGT DER ZAEHLER NACH LINKS. Das ist kein
+           Stilgeschmack: `margin-left: auto` ist das einzige Mittel, das ihn
+           im Flex-Streifen nach rechts schiebt, und `nowrap` haelt die Form
+           "Buch 1/2" in einer Zeile. Beide standen im geloeschten
+           Inline-Stil. */
+        const regel = w6dRegelrumpf('.' + W6D_KLASSE);
+        if (!regel) {
+            expect([
+                '.' +
+                    W6D_KLASSE +
+                    ' ist in keiner Stildatei definiert. Bei der Geburt dieser Ratsche: 0 Treffer ' +
+                    'im ganzen Baum.'
+            ]).toEqual([]);
+            return;
+        }
+        const befunde = [];
+        if (!w6dHatDekl(regel.rumpf, 'white-space', 'nowrap')) {
+            befunde.push(regel.datei + ':' + regel.zeile + ': white-space: nowrap fehlt');
+        }
+        if (!w6dHatDekl(regel.rumpf, 'margin-left', 'auto')) {
+            befunde.push(regel.datei + ':' + regel.zeile + ': margin-left: auto fehlt');
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 3 — renderSpells() und renderQuests() schreiben ueber setViewCount()', () => {
+        /* DER BEHOBENE FEHLER. Beide Renderpfade liefen bisher ohne jeden
+           Zaehlerschreibzugriff; die einzige Stelle, die 'spells' und
+           'quests' schrieb, lief nur aus renderAll(). */
+        const befunde = [];
+        W6D_RENDERER.forEach(r => {
+            const abs = path.join(REPO, ...r.teile);
+            const code = fs.readFileSync(abs, 'utf8');
+            const rumpf = w6dFunktionsrumpf(code, r.fn);
+            if (rumpf === null) {
+                befunde.push(r.teile[r.teile.length - 1] + ': ' + r.fn + '() nicht gefunden');
+                return;
+            }
+            if (!new RegExp('setViewCount\\(\\s*[\'"]' + r.view + '[\'"]').test(rumpf)) {
+                befunde.push(
+                    r.teile[r.teile.length - 1] +
+                        ': ' +
+                        r.fn +
+                        "() ruft setViewCount('" +
+                        r.view +
+                        "', …) nicht"
+                );
+            }
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 4 — die alte ID spell-count kommt nirgends mehr vor', () => {
+        /* ABGRENZUNG: `assign-spell-count` ist ein anderes Element (die
+           Verfuegbar-Pille der Zauberzuweisung) und bleibt. Ein naives
+           toContain() wuerde sie mitzaehlen und waere dauerhaft rot. */
+        const befunde = [];
+        tplFiles.forEach(f => {
+            w6dAlteId(f.content).forEach(() => befunde.push('Markup ' + f.name + ': ' + W6D_ALT));
+        });
+        sourceJs().forEach(f => {
+            w6dAlteId(f.content).forEach(() =>
+                befunde.push('JS ' + path.basename(f.name) + ': ' + W6D_ALT)
+            );
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 5 — .filter-bar fuehrt gap aus der Abstandsleiter', () => {
+        /* Paragraph 3.7 verlangt var(--space-sm) = 8px; die Regel stand auf
+           6px, also auf einem Wert, den die Leiter nicht kennt. Drei
+           Verwendungen im Markup, alle im Zauberfilter. Diese Pruefung
+           urteilt ueber den TOKEN, nicht ueber die Zahl: ein spaeteres
+           var(--space-xs) waere ein anderer, aber kein roher Wert — darum
+           nennt der Befund den gelesenen Wert mit. */
+        const regel = w6dRegelrumpf('.filter-bar');
+        const befunde = [];
+        if (!regel) {
+            befunde.push('.filter-bar ist in keiner Stildatei definiert');
+        } else {
+            const m = /(?:^|[;{\s])gap\s*:\s*([^;}]+)/.exec(regel.rumpf);
+            if (!m) {
+                befunde.push(regel.datei + ':' + regel.zeile + ': .filter-bar fuehrt kein gap');
+            } else if (!/var\(\s*--space-/.test(m[1])) {
+                befunde.push(
+                    regel.datei +
+                        ':' +
+                        regel.zeile +
+                        ': gap: ' +
+                        m[1].trim() +
+                        ' kommt nicht aus der Abstandsleiter (bei der Geburt: 6px)'
+                );
+            }
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Gegenprobe: die fuenf Erkenner sehen ihre Verletzung ueberhaupt', () => {
+        // Fall 1: Inline-Stil und fehlende Klasse am Tag.
+        const gut = '<div id="' + W6D_NEU + '" class="' + W6D_KLASSE + '"></div>';
+        const schlecht = '<div id="' + W6D_NEU + '" style="margin-left: auto;"></div>';
+        expect(w6dTagMitId(gut, W6D_NEU)).toContain(W6D_KLASSE);
+        expect(/\sstyle="/.test(String(w6dTagMitId(schlecht, W6D_NEU)))).toBe(true);
+        expect(w6dTagMitId('<div id="anderes"></div>', W6D_NEU)).toBe(null);
+
+        // Fall 2: Deklarationserkenner. Der Praefixschutz muss halten —
+        // `-webkit-margin-left` ist keine margin-left-Deklaration.
+        expect(w6dHatDekl(' white-space: nowrap; ', 'white-space', 'nowrap')).toBe(true);
+        expect(w6dHatDekl(' white-space: pre; ', 'white-space', 'nowrap')).toBe(false);
+        expect(w6dHatDekl(' margin-left: auto; ', 'margin-left', 'auto')).toBe(true);
+        expect(w6dHatDekl(' margin-left: 0; ', 'margin-left', 'auto')).toBe(false);
+        expect(w6dHatDekl(' -webkit-margin-left: auto; ', 'margin-left', 'auto')).toBe(false);
+
+        // Fall 3: Rumpfschnitt ueber Klammertiefe. Eine Regex bis zur ersten
+        // schliessenden Klammer haette den Aufruf verfehlt.
+        const probe = 'function a() {\n  if (x) { return; }\n  setViewCount("spells", 2);\n}\n';
+        expect(w6dFunktionsrumpf(probe, 'a')).toContain('setViewCount("spells"');
+        expect(w6dFunktionsrumpf(probe, 'b')).toBe(null);
+
+        // Fall 4: die Abgrenzung gegen assign-spell-count ist die ganze
+        // Pointe dieses Falles.
+        expect(w6dAlteId("$('spell-count')")).toEqual(['spell-count']);
+        expect(w6dAlteId("$('assign-spell-count')")).toEqual([]);
+        expect(w6dAlteId("$('spells-filter-count')")).toEqual([]);
+
+        // Und F-10 Test 3 kann den neuen Namen nicht treffen — der Grund,
+        // warum 'spell' nicht in COUNTED_VIEWS muss.
+        expect(/['"]([a-z]+)-count['"]/.test("$('spells-filter-count')")).toBe(false);
+        expect(/['"]([a-z]+)-count['"]/.test("$('spell-count')")).toBe(true);
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(w6dRegelrumpf('.filter-bar')).not.toBe(null);
     });
 });
