@@ -71,6 +71,24 @@
  * `nextTurn()` von einer einmaligen nicht zu unterscheiden, wenn man nur den
  * Zug liest.
  *
+ * SEIT T-B KOMMT DER EINE KLICK SYNTHETISCH (Tastatur-Strang, Schritt 3).
+ * Die Faelle (a) bis (f) unten standen bis dahin auf `echt: 1`,
+ * `synthetisch: 0` — der Browser erzeugte aus der Leertaste selbst ein
+ * `click`. Der neue `keydown`-Zweig in `ui/event-delegation.js` faengt die
+ * Taste jetzt in der Capture-Phase ab, ruft `preventDefault()` (sonst
+ * feuerte beides) und schickt einen eigenen Klick: aus `echt: 1 /
+ * synthetisch: 0` wird `echt: 0 / synthetisch: 1`. Die SUMME bleibt 1, und
+ * das ist die Zusicherung, die hier zaehlt — jeder Fall prueft sie
+ * ausdruecklich als `gesamt`, damit ein Doppelfeuer auffaellt, egal aus
+ * welchem der beiden Toepfe es kommt. Die zusaetzliche Zeile `echt: 0`
+ * bewacht die andere Haelfte: feuerte der native Klick wieder mit, waere
+ * `preventDefault()` verloren gegangen. Die gemessenen WIRKUNGEN
+ * (prevTurn() springt auf den letzten Kaempfer, +Party haengt drei Helden
+ * an, …) sind unveraendert — der Weg zum Handler ist ein anderer, das
+ * Ergebnis dasselbe. Begruendung und Messung: `_handleKeydown` in
+ * `ui/event-delegation.js`, Regressionsnetz
+ * `tests/e2e/features/tastatur-verteiler.spec.js`.
+ *
  * GEFUELLTE KAMPAGNE, SECHS KAEMPFER. Der eigene Seed unten ersetzt
  * `seedPopulatedSession()` aus den Helfern, aus zwei gemessenen Gruenden:
  * jener Seed hat genau EINEN Kaempfer (die Wege in der Initiative-Ansicht
@@ -352,10 +370,11 @@ async function zielMerken(page) {
 
 /**
  * @param {import('@playwright/test').Page} page
- * @returns {Promise<{ echt: number, synthetisch: number }>}
+ * @returns {Promise<{ echt: number, synthetisch: number, gesamt: number }>}
  */
-function klicks(page) {
-    return page.evaluate(() => window.__klicks);
+async function klicks(page) {
+    const k = await page.evaluate(() => window.__klicks);
+    return { ...k, gesamt: k.echt + k.synthetisch };
 }
 
 /**
@@ -406,9 +425,11 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         const nachher = await kampfZustand(page);
         const k = await klicks(page);
 
-        // Der Knopf hat GENAU EINMAL ausgeloest — und zwar nativ (echt).
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch, 'kein zusaetzlicher synthetischer Klick').toBe(0);
+        // Der Knopf hat GENAU EINMAL ausgeloest — seit T-B synthetisch
+        // ueber den keydown-Zweig, der den nativen Klick unterdrueckt.
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch, 'der keydown-Zweig loest genau einmal aus').toBe(1);
         // prevTurn() aus Zug 0: springt auf den letzten der sechs Kaempfer.
         expect(nachher.zug, 'prevTurn() muss auf den letzten Kaempfer springen').toBe(5);
         // Die Runde bleibt: prevTurn() senkt sie nur bei encounterRound > 1.
@@ -430,8 +451,9 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         const nachher = await kampfZustand(page);
         const k = await klicks(page);
 
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch).toBe(0);
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch).toBe(1);
         expect(nachher.runde, 'nextEncounterRound() muss die Runde erhoehen').toBe(2);
         expect(nachher.zug, 'der Zug bleibt beim ersten Kaempfer').toBe(0);
     });
@@ -449,8 +471,9 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         const nachher = await kampfZustand(page);
         const k = await klicks(page);
 
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch).toBe(0);
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch).toBe(1);
         // Drei Helden mit Namen, die noch nicht unter den Kaempfern stehen.
         expect(nachher.kaempfer, 'addPartyToInit() muss die drei Helden anhaengen').toBe(9);
         expect(nachher.zug, 'der Zug darf sich dabei nicht verschieben').toBe(0);
@@ -469,8 +492,9 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         const nachher = await kampfZustand(page);
         const k = await klicks(page);
 
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch).toBe(0);
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch).toBe(1);
         // Deterministisches Merkmal: rollAllInitiative() setzt lastRoll auf JEDEM.
         expect(nachher.mitWurf, 'nach dem Wurf traegt jeder der sechs ein lastRoll').toBe(6);
         expect(nachher.zug, 'rollAllInitiative() setzt den Zug auf den ersten').toBe(0);
@@ -490,8 +514,9 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         );
         const nachher = await kampfZustand(page);
 
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch).toBe(0);
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch).toBe(1);
         expect(offen, 'der Zustands-Spickzettel muss offen sein').toBe(true);
         expect(nachher.zug, 'der Zug darf sich nicht bewegen').toBe(0);
     });
@@ -515,8 +540,9 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         // ist (Kurzform des Modulnamens: s. Kopfkommentar).
         const wuerfe = await page.evaluate(() => (window.diceHistory || []).length);
 
-        expect(k.echt, `nativer Klick am Ziel (Halt ${spruenge})`).toBe(1);
-        expect(k.synthetisch).toBe(0);
+        expect(k.gesamt, `Klicks am Ziel (Halt ${spruenge}) — 2 waere Doppelfeuer`).toBe(1);
+        expect(k.echt, 'der native Klick ist unterdrueckt').toBe(0);
+        expect(k.synthetisch).toBe(1);
         expect(wuerfe, 'der d4 muss gewuerfelt haben').toBeGreaterThanOrEqual(1);
     });
 });
