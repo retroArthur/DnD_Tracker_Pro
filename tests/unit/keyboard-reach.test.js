@@ -299,11 +299,25 @@ describe('Kehrschleife — wer die Leertaste beansprucht', () => {
         document.body.focus();
     });
 
+    /**
+     * Ereignis aus dem Fenster DIESES Dokuments. `MouseEvent` und
+     * `KeyboardEvent` stehen in der ESLint-Globals-Liste fuer `tests/**`
+     * nicht (`no-undef` ist dort `error`, und das Lint-Gate in
+     * `tests/unit/lint-gate.test.js` laesst 0 Fehler zu) — ueber
+     * `document.defaultView` kommt derselbe Konstruktor, und zwar aus genau
+     * dem Bereich, in den das Ereignis zugestellt wird.
+     * @param {'MouseEvent'|'KeyboardEvent'} art
+     * @param {string} typ
+     * @param {Record<string, any>} [eigenschaften]
+     */
+    const ereignis = (art, typ, eigenschaften = {}) =>
+        new document.defaultView[art](typ, { bubbles: true, ...eigenschaften });
+
     /** @param {string} id */
     const perZeigerFokussieren = id => {
         const el = document.getElementById(id);
         // Die Reihenfolge des Browsers: pointerdown, DANN der Fokus.
-        el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+        el.dispatchEvent(ereignis('MouseEvent', 'pointerdown'));
         el.focus();
         return el;
     };
@@ -312,7 +326,7 @@ describe('Kehrschleife — wer die Leertaste beansprucht', () => {
     const perTastaturFokussieren = id => {
         const el = document.getElementById(id);
         // Die Reihenfolge des Browsers: keydown (Tab), DANN der Fokus.
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        document.dispatchEvent(ereignis('KeyboardEvent', 'keydown', { key: 'Tab' }));
         el.focus();
         return el;
     };
