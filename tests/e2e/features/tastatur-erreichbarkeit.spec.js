@@ -67,6 +67,12 @@
  * KEINE Obergrenze fuer die anderen Ansichten zu — eine solche Zusicherung
  * waere eine Fessel um die Folgearbeit.
  *
+ * UND SIE URTEILT UEBER DEN PREIS DER NACHRUESTUNG. Wer rund 430 Elemente
+ * fokussierbar macht, verkleinert damit still die Menge der Lagen, in denen
+ * `document.activeElement` BODY ist — und an dieser Menge haengt der
+ * gewohnte Griff des Spielleiters: Leertaste = naechster Zug. Abschnitt (m)
+ * unten ist dieser Preis, mit echter Maus und echter Taste nachgemessen.
+ *
  * MESSDISZIPLIN — dieselben Regeln wie in `tastatur-ausloesung.spec.js` und
  * `tastatur-verteiler.spec.js`, jede aus einer verdorbenen Messung gelernt:
  *
@@ -764,5 +770,322 @@ test.describe('Kehrschleife — kein neuer Phantomhalt', () => {
         expect(attr.aktion, 'Die Blende traegt nicht mehr backdrop-close').toBe('backdrop-close');
         expect(attr.ti, 'Die Blende hat ein tabindex bekommen — Phantomhalt').toBeNull();
         expect(attr.rolle, 'Die Blende hat eine role bekommen').toBeNull();
+    });
+});
+
+// ============================================================
+// (m) DER MAUSKLICK GIBT DIE LEERTASTE NICHT AUS DER HAND
+// ============================================================
+
+//
+// WAS HIER SCHIEFGEHT, in der Sprache des Spieltischs. Der Spielleiter
+// klickt mit der Maus auf den Initiative-Wert eines Kaempfers, weil sich der
+// Spieler verwuerfelt hat, tippt die Korrektur, bestaetigt — und drueckt
+// dann die Leertaste, um den Zug weiterzugeben. Das ist sein gewohnter
+// Griff, und er funktionierte bis zur Kehrschleife.
+//
+// Seit der Kehrschleife funktioniert er nicht mehr: der Mausklick parkt den
+// Fokus AUF dem angeklickten `div` (bis dahin nahm es keinen Fokus an, der
+// Fokus blieb auf `BODY`), und die Leertaste bedient dann das Element unter
+// dem Fokus statt den Zug zu wechseln. Gemessen am gebauten Buendel, echte
+// Maus, echte Taste, gefuellte Kampagne, HEAD b469377:
+//
+//   Mausklick auf div.init-value  ->  activeElement = das div
+//                                     :focus true, :focus-visible FALSE
+//   danach Leertaste              ->  Zug 0 -> 0, Runde 1 -> 1
+//                                     und ein ZWEITER prompt() geht auf
+//                                     (Dialoge 1 -> 2, synthetischer Klick 1)
+//
+// Ohne die Kehrschleife laesst derselbe Mausklick den Fokus auf `BODY`, und
+// die Leertaste macht Zug 0 -> 1. Der Unterschied ist die Kehrschleife.
+//
+// WARUM DAS NICHT DIE SCHRANKE AUS T-A IST, obwohl es so aussieht. Die
+// Schranke (`beanspruchtLeertaste`) kommt in diesem Fall gar nicht zum Zug:
+// der `keydown`-Zweig in `ui/event-delegation.js` faengt die Taste schon in
+// der Capture-Phase ab, weil das `div` eine registrierte Aktion traegt. Die
+// Regel selbst ist alt; NEU an der Kehrschleife ist, dass sie fuer rund 430
+// Elemente gilt, die vorher ueberhaupt keinen Fokus annehmen konnten. Die
+// Akte von T-A verspricht ausdruecklich "ohne Fokus (activeElement = BODY)
+// ... die Leertaste wechselt weiter den Zug" — die Kehrschleife hat still
+// die Menge der Lagen verkleinert, in denen `activeElement` BODY ist.
+//
+// WAS DIE KORREKTUR TUT, und wie schmal sie ist: ein von der Kehrschleife
+// versorgtes Element beansprucht die LEERTASTE nur bei TASTATURFOKUS. Der
+// Browser trennt beides selbst — gemessen, nicht angenommen: Mausklick ->
+// `:focus` true, `:focus-visible` FALSE; Tabulator -> beide true. Enter
+// bleibt unberuehrt (Fall (p)), denn Enter konkurriert mit keinem Kuerzel.
+// Nativen Knoepfen wird nichts weggenommen (Fall (o)): auf ihnen ist die
+// Leertaste schon vor der Kehrschleife eine Bedienung gewesen, und das zu
+// aendern waere eine Ruecknahme von T-A statt eine Korrektur von T-C.
+//
+// MESSDISZIPLIN, DRITTER FALL. Hier wird mit `locator.click()` geklickt, und
+// das ist kein Bruch von Regel 1 oben: `page`/`locator.click()` ist ein
+// ECHTER Mausklick ueber das Fernsteuerprotokoll (`isTrusted`), kein
+// `element.click()` im Dokument. Der Mausklick IST hier der Messgegenstand.
+// Dieselbe Begruendung steht bei Fall (g2) in `tastatur-ausloesung.spec.js`.
+//
+// UND: IM `dialog`-HAKEN WIRD NICHT `page.evaluate()` GERUFEN. Solange ein
+// `prompt()` offen ist, laeuft im Dokument kein JavaScript — der Aufruf
+// haengt, der Dialog wird nie geschlossen, und der Fall laeuft in seinen
+// Zeitablauf statt zu urteilen. Gezaehlt wird darum in Node.
+
+/**
+ * Haengt einen zaehlenden `dialog`-Haken an und gibt das Zaehlwerk zurueck.
+ * @param {import('@playwright/test').Page} page
+ * @returns {{ n: number }}
+ */
+function dialogZaehler(page) {
+    const zaehlwerk = { n: 0 };
+    page.on('dialog', d => {
+        zaehlwerk.n++;
+        d.dismiss().catch(() => {});
+    });
+    return zaehlwerk;
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ */
+function kampfZustand(page) {
+    return page.evaluate(() => ({
+        zug: window.D.initiative.currentTurn,
+        runde: window.D.initiative.round,
+        ansicht: document.querySelector('.view.active')?.id || '?',
+        scrollY: Math.round(window.scrollY)
+    }));
+}
+
+/**
+ * ECHTER Mausklick auf das erste Vorkommen von `selektor`. Merkt das
+ * getroffene Objekt vorher unter `window.__ziel` — Objektidentitaet, damit
+ * der Klickzaehler unten nicht auf ein zweites, textgleiches Element zeigt
+ * (Messdisziplin 3).
+ * @param {import('@playwright/test').Page} page
+ * @param {string} selektor
+ */
+async function mausKlickAuf(page, selektor) {
+    const vorhanden = await page.evaluate(sel => {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        window.__ziel = el;
+        return true;
+    }, selektor);
+    expect(vorhanden, `Ziel "${selektor}" steht nicht im Dokument`).toBe(true);
+    await page.locator(selektor).first().click();
+    await page.waitForTimeout(500);
+}
+
+/**
+ * Liest, wo der Fokus steht und WIE er dort hingekommen ist.
+ * @param {import('@playwright/test').Page} page
+ */
+function fokuslage(page) {
+    return page.evaluate(() => {
+        const el = document.activeElement;
+        return {
+            tag: el ? el.tagName : null,
+            istZiel: el === window.__ziel,
+            aktion: el && el.getAttribute ? el.getAttribute('data-action') : null,
+            ti: el && el.getAttribute ? el.getAttribute('tabindex') : null,
+            focus: !!(el && el.matches && el.matches(':focus')),
+            focusVisible: !!(el && el.matches && el.matches(':focus-visible'))
+        };
+    });
+}
+
+/**
+ * Setzt den Klickzaehler am Dokument (Capture-Phase) auf `window.__ziel` und
+ * rollt die Seite auf 0 — Begruendung beider Punkte im Kopfkommentar bzw.
+ * bei Fall (i).
+ * @param {import('@playwright/test').Page} page
+ */
+function klickzaehlerSetzen(page) {
+    return page.evaluate(() => {
+        window.__klicks = { echt: 0, synthetisch: 0 };
+        document.addEventListener(
+            'click',
+            ev => {
+                if (ev.target !== window.__ziel) return;
+                if (ev.isTrusted) window.__klicks.echt++;
+                else window.__klicks.synthetisch++;
+            },
+            true
+        );
+        window.scrollTo(0, 0);
+    });
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ */
+async function klicks(page) {
+    const k = await page.evaluate(() => window.__klicks);
+    return { ...k, gesamt: k.echt + k.synthetisch };
+}
+
+/** Das Ziel aller Faelle dieses Abschnitts: die Initiative-Wertbearbeitung. */
+const INIT_WERT = 'div.init-value[data-action="edit-init-value"]';
+
+test.describe('Kehrschleife — der Mausklick gibt die Leertaste nicht aus der Hand', () => {
+    for (const n of GROESSEN) {
+        test(`(m) Mausklick auf die Initiative-Wertbearbeitung, dann Leertaste: der Zug geht um genau 1 weiter — ${n} Eintraege je Typ`, async ({
+            page
+        }) => {
+            test.setTimeout(120_000);
+            const dialoge = dialogZaehler(page);
+            await ansichtOeffnen(page, 'initiative', n);
+
+            await mausKlickAuf(page, INIT_WERT);
+
+            // Dass der Fokus ueberhaupt dort parkt, ist die halbe Diagnose —
+            // und seit der Kehrschleife die Voraussetzung des Fehlers.
+            const lage = await fokuslage(page);
+            expect(lage.istZiel, 'Der Mausklick hat den Fokus nicht auf dem Ziel geparkt').toBe(
+                true
+            );
+            expect(lage.ti, 'Das Ziel ist nicht von der Kehrschleife versorgt').toBe('0');
+            expect(lage.focus, ':focus greift nach dem Mausklick nicht').toBe(true);
+            expect(
+                lage.focusVisible,
+                'Der Browser meldet nach einem MAUSKLICK :focus-visible — dann traegt die ' +
+                    'ganze Korrektur nicht'
+            ).toBe(false);
+            expect(dialoge.n, 'Der Mausklick hat die Wertbearbeitung nicht geoeffnet').toBe(1);
+
+            const vorher = await kampfZustand(page);
+            expect(vorher.zug).toBe(0);
+            expect(vorher.runde).toBe(1);
+            expect(vorher.ansicht).toBe('view-initiative');
+
+            await klickzaehlerSetzen(page);
+            await page.keyboard.press(' ');
+            await page.waitForTimeout(700);
+
+            const nachher = await kampfZustand(page);
+            const k = await klicks(page);
+
+            expect(
+                nachher.zug,
+                'Nach einem MAUSKLICK gehoert die Leertaste wieder dem Zug — gemessen Zug ' +
+                    `${vorher.zug} -> ${nachher.zug}`
+            ).toBe(1);
+            expect(nachher.runde, 'und die Runde bleibt stehen').toBe(1);
+            expect(
+                dialoge.n,
+                `Die Leertaste hat die Wertbearbeitung erneut geoeffnet (Dialoge ${dialoge.n})`
+            ).toBe(1);
+            expect(
+                k.gesamt,
+                `Die Leertaste hat das angeklickte Element erneut bedient (${k.echt} echte + ` +
+                    `${k.synthetisch} synthetische Klicks)`
+            ).toBe(0);
+            expect(
+                nachher.scrollY,
+                'Die Leertaste hat die Seite weggerollt — die Vorgabe muss unterdrueckt bleiben'
+            ).toBe(0);
+        });
+    }
+
+    test('(n) Gegenprobe: per Tabulator erreicht, bedient die Leertaste dieselbe Stelle weiter', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        const dialoge = dialogZaehler(page);
+        await ansichtOeffnen(page, 'initiative', 6);
+
+        const spruenge = await tabBisZiel(page, INIT_WERT);
+        expect(spruenge, `${INIT_WERT} ist nicht per Tabulator erreichbar`).toBeGreaterThan(0);
+
+        const lage = await fokuslage(page);
+        expect(lage.istZiel).toBe(true);
+        expect(lage.focusVisible, 'Nach einem Tabulatorsprung muss :focus-visible greifen').toBe(
+            true
+        );
+
+        const vorher = await kampfZustand(page);
+        await klickzaehlerSetzen(page);
+        await page.keyboard.press(' ');
+        await page.waitForTimeout(700);
+
+        const nachher = await kampfZustand(page);
+        const k = await klicks(page);
+
+        expect(
+            dialoge.n,
+            'Die Leertaste muss die ertabulierte Wertbearbeitung oeffnen — sonst ist die ' +
+                'Korrektur zu breit und nimmt der Kehrschleife ihren Zweck'
+        ).toBe(1);
+        expect(k.gesamt, 'genau ein Klick').toBe(1);
+        expect(k.echt, 'und zwar der synthetische aus dem keydown-Zweig').toBe(0);
+        expect(nachher.zug, 'der Zug darf sich dabei NICHT bewegen').toBe(vorher.zug);
+        expect(nachher.runde).toBe(vorher.runde);
+        expect(nachher.scrollY, 'und die Seite rollt nicht weg').toBe(0);
+    });
+
+    test('(o) Gegenprobe: dem nativen Knopf wird nichts weggenommen', async ({ page }) => {
+        test.setTimeout(120_000);
+        dialogZaehler(page);
+        await ansichtOeffnen(page, 'initiative', 6);
+
+        // Auf einem echten `<button>` ist die Leertaste schon vor der
+        // Kehrschleife eine Bedienung gewesen — auch nach einem Mausklick
+        // (gemessen an HEAD b469377: Zug 1 -> 2, :focus-visible false). Das
+        // ist T-A, nicht T-C. Die Korrektur dieses Falls darf es nicht
+        // anfassen, sonst ist der Einschlag breiter als der Befund.
+        await mausKlickAuf(page, 'button[data-action="call"][data-value="nextTurn"]');
+
+        const lage = await fokuslage(page);
+        expect(lage.tag, 'Der Mausklick hat den Knopf nicht fokussiert').toBe('BUTTON');
+        expect(lage.istZiel).toBe(true);
+        expect(
+            lage.focusVisible,
+            'auch hier meldet der Browser nach der Maus kein :focus-visible'
+        ).toBe(false);
+
+        const vorher = await kampfZustand(page);
+        expect(vorher.zug, 'der Mausklick selbst hat den Zug weitergegeben').toBe(1);
+
+        await klickzaehlerSetzen(page);
+        await page.keyboard.press(' ');
+        await page.waitForTimeout(700);
+
+        const nachher = await kampfZustand(page);
+        const k = await klicks(page);
+
+        expect(
+            nachher.zug,
+            'Die Leertaste muss den nativen Knopf weiter bedienen (Zug 1 -> 2) — eine ' +
+                'Aenderung hier waere eine Ruecknahme von T-A'
+        ).toBe(2);
+        expect(k.gesamt, 'genau ein Klick, kein Doppelfeuer').toBe(1);
+        expect(k.echt, 'und zwar der synthetische aus dem keydown-Zweig').toBe(0);
+    });
+
+    test('(p) Gegenprobe: Enter bleibt unberuehrt — es konkurriert mit keinem Kuerzel', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        const dialoge = dialogZaehler(page);
+        await ansichtOeffnen(page, 'initiative', 6);
+
+        await mausKlickAuf(page, INIT_WERT);
+        expect(dialoge.n, 'Der Mausklick hat die Wertbearbeitung nicht geoeffnet').toBe(1);
+
+        const lage = await fokuslage(page);
+        expect(lage.istZiel).toBe(true);
+        expect(lage.focusVisible).toBe(false);
+
+        await klickzaehlerSetzen(page);
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(700);
+
+        const k = await klicks(page);
+        expect(
+            dialoge.n,
+            'Enter muss die angeklickte Stelle weiter bedienen — es gibt kein Enter-Kuerzel, ' +
+                'also nichts, was ihm die Taste streitig macht'
+        ).toBe(2);
+        expect(k.gesamt, 'genau ein Klick').toBe(1);
+        expect(k.echt, 'und zwar der synthetische aus dem keydown-Zweig').toBe(0);
     });
 });
