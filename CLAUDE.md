@@ -442,8 +442,8 @@ function deleteEntity(id) {
 | `N`        | Next turn (Initiative) / New element (context) |
 | `P`        | Previous turn (Initiative)                     |
 | `Shift+N`  | New round (Initiative)                         |
-| `Space`    | Next turn (Initiative) — **not** while a focusable control has focus (TAST) |
-| `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key |
+| `Space`    | Next turn (Initiative) — **not** while a focusable control has focus (TAST). Exception: a control made focusable at runtime by `ui/keyboard-reach.js` claims `Space` only on **keyboard** focus; after a mouse click on it, `Space` still changes the turn (TAST) |
+| `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key, and `Space` on a runtime-retrofitted control holding mouse focus |
 | `Escape`   | Close overlays/modals                          |
 | `Entf`/`Backspace` | Delete selected node (Network view only)     |
 | `Alt+1/2/4/6/8`  | Quick roll d12/d20/d4/d6/d8                    |

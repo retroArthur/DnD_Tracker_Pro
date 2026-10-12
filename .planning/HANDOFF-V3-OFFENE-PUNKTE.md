@@ -7854,6 +7854,36 @@ Ahnenprüfung gegen geschlossene `<details>`, die andere je Ansicht die sichtbar
 Bedienelemente). Die belastbare Zahl der Einheit T-C ist der Vorher/Nachher-Vergleich
 **mit demselben Skript**: 131 → 72 über alle 24 Ansichten.
 
+**Nachtrag T-C, Runde 1 (2026-10-13): der Preis der Nachrüstung — behoben, mit einer
+benannten Grenze.** Wer rund 430 Stellen fokussierbar macht, verkleinert still die Menge
+der Lagen, in denen `document.activeElement` BODY ist — und genau an dieser Menge hängt
+der gewohnte Griff „Leertaste = nächster Zug". Gemessen (echte Maus, echte Taste, 6 und 20
+Einträge je Typ): ein Mausklick auf `div.init-value` parkte den Fokus dort, und die
+Leertaste öffnete danach dieselbe Eingabe erneut (Zug 0 → 0, Dialoge 1 → 2). Behoben in
+`24372a2`: ein von der Kehrschleife versorgtes Element beansprucht die Leertaste nur bei
+**Tastaturfokus**; die Herkunft des Fokus wird in `KeyboardReach._fokusMitschrift()`
+mitgeschrieben. Wächter: Abschnitt (m) in
+`tests/e2e/features/tastatur-erreichbarkeit.spec.js` (4 Fälle) und 8 Fälle in
+`tests/unit/keyboard-reach.test.js`.
+
+Zwei Dinge daraus, die weiterleben:
+
+- **Bewusst nicht angefasst:** nach einem Mausklick auf einen **nativen** `<button>`
+  bedient die Leertaste weiter diesen Knopf (gemessen: Zug 1 → 2), statt den Zug zu
+  wechseln. Das ist T-A, älter als diese Einheit und für jeden `<button>` der App gleich;
+  es zu ändern wäre eine Rücknahme von T-A, keine Korrektur von T-C. Wenn der Spielleiter
+  das anders will, ist das eine eigene Entscheidung mit eigener Messung — Fall (o) hält
+  die heutige Lage fest und würde dabei rot. Ebenso bewusst: **Enter** bleibt auf einer
+  angeklickten Stelle eine Bedienung (Fall (p)), weil kein Kürzel ihm die Taste streitig
+  macht.
+- **Messbefund zum Mitnehmen, teuer bezahlt:** `:focus-visible` taugt **nicht** als
+  Schranke in einem `keydown`-Handler. Chromium setzt die Pseudoklasse, sobald eine Taste
+  fliegt — auch die Taste, über die entschieden werden soll. Gemessen mit einem Lauscher
+  am `window` in der Capture-Phase, nach einem echten Mausklick: vor dem Tastendruck
+  `:focus-visible` **false**, **im `keydown` schon true**, danach true. Die erste Fassung
+  der Korrektur fragte die Pseudoklasse und blieb rot. Wer eine ähnliche Schranke baut,
+  braucht eine eigene Mitschrift, die beim `focusin` stempelt.
+
 Zwei Punkte der Liste unten sind durch die gewählte Lösung **gegenstandslos**, nicht
 offen: der Elementtausch `div`/`span` → `<button type=button>` (Stufe 2) ist durch O-1
 ausdrücklich verworfen — drei Messungen sprechen dagegen, und `tabindex` + `role` leistet
