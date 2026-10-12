@@ -7618,7 +7618,250 @@ Würfelansicht liegen in einem **geschlossenen** `<details>` und sind auch nachg
 400 echten Tabulatorsprüngen nicht erreichbar. Wer sie messen will, muss die Klappe
 vorher öffnen — sonst liest die Messung „unerreichbar", wo „zugeklappt" steht.
 
+## TAST, Einheit T-C — die Kehrschleife: `tabindex` und `role` für die fünf Kampfansichten (2026-10-12)
+
+T-A hat repariert, was die **erreichbaren** Knöpfe beim Tastendruck tun; T-B hat den
+Mechanismus gebaut, mit dem Enter und die Leertaste ein nicht-natives Bedienelement
+überhaupt bedienen können. Beide haben **keine** Stelle neu erreichbar gemacht, und beide
+sagen das in ihrer Akte. Diese Einheit ist der dritte Teil: sie macht die Stellen
+erreichbar.
+
+**Was der Spielleiter jetzt kann:** per Tabulator auf die Initiativwerte, auf den
+Lebenspunkte-Rechner und den Charakterbogen jeder Heldenkarte, auf alle acht Sprungfelder
+des Armaturenbretts — und in **jeder** Ansicht auf die Schnell-Referenz, deren einziger
+Zugang bisher das Kürzel `/` war.
+
+### Die Hauptabnahme: dieselbe Messung vorher und nachher
+
+`sweep2.mjs` der Vermessung, unverändert benutzt — echte Tabulatorsprünge, je Ansicht ein
+frischer Seitenaufbau plus `switchView()` ohne Klick, Abgleich über **Objektidentität**
+(`window.__ops` + `indexOf`, nie über Signatur und Text: sechs textgleiche `div.init-value`
+verschmelzen sonst zu einem und die Schuld wird zu niedrig gezählt). Unerreichbare
+sichtbare Bedienelemente:
+
+| Ansicht | vorher | nachher | Tabulatorhalte vorher → nachher |
+| --- | --- | --- | --- |
+| Armaturenbrett | 12 | **0** | 31 → 43 |
+| Party | 8 | **0** | 40 → 48 |
+| Initiative | 9 | **0** | 63 → 71 |
+| Würfel | 1 | **0** | 48 → 49 |
+| DM-Schirm | 1 | **0** | 46 → 47 |
+| die übrigen 19 Ansichten | je 1–28 | je **−1** | je +1 |
+| **Summe über alle 24** | **131** | **72** | |
+
+Das `−1` der 19 anderen Ansichten ist **ein** Element: `div.qref-fab`, die Schnell-Referenz.
+Sie liegt außerhalb aller `.view`, also in der globalen Schale, und wäre sonst auch in den
+fünf Ansichten weiter unerreichbar. Acht der 19 (Fraktionen, Sitzungsvorbereitung,
+Kalender, Reise, Links, Würfelstatistik, Zeitmesser, Soundboard) stehen dadurch ebenfalls
+auf 0 — nicht weil diese Einheit sie bearbeitet hätte, sondern weil das ihr einziger
+unerreichbarer Halt war.
+
+Der Wächter prüft dasselbe bei **zwei** Kampagnengrößen, weil die Schuld mit den Daten
+wächst. Roter Nachweis als eigener Commit (`f941806`), zweimal reproduziert, 17
+Fehlschläge / 0 bestanden:
+
+| Ansicht | 6 Einträge/Typ | 20 Einträge/Typ |
+| --- | --- | --- |
+| Armaturenbrett | 44 bedienbar / **16** unerreichbar | 58 / **30** |
+| Initiative | 93 / **7** | 198 / **21** |
+| Party | 127 / **56** | 351 / **182** |
+| Würfel | 42 / **1** | 42 / **1** |
+| DM-Schirm | 37 / **1** | 37 / **1** |
+| **Summe** | **81** | **235** |
+
+### Der Weg: zwei Attribute zur Laufzeit, eine Stelle
+
+`ui/keyboard-reach.js` setzt `tabindex="0"` und — außer auf einer Marke — `role="button"`
+auf jedes `[data-action]`-Element, das der Browser nicht selbst in die Tabulatorreihe
+nimmt. Kein Tagwechsel `div` → `button` (O-1), kein Eingriff in 219 Quellstellen (O-3).
+Angehängt per `MutationObserver` plus Post-Save- und Undo-Haken, nicht per Aufruf in 149
+`render*`-Funktionen.
+
+**Der Beobachter wacht ausdrücklich nur über `childList`, nicht über Attribute.** Mit
+`attributes: true` weckt jedes `setAttribute()` der Schleife den Beobachter erneut — eine
+Rückkopplung, die bei einem Fehler im Filter nicht terminiert. Ein `innerHTML`-Ersatz, der
+die Attribute löscht und der einzige Pfad ist, der hier zählt, ist immer auch eine
+`childList`-Änderung. Ein Quelltextfall in `tests/unit/keyboard-reach.test.js` hält das
+fest.
+
+**Kosten, am gebauten Bündel, zwanzig Einträge je Typ, 1803 `[data-action]`-Knoten:**
+Dauerbetrieb 0,50 ms Median (max 1,10 ms über 40 Läufe), Kaltstart 0,80 ms für 299
+Elemente. `renderParty()` allein kostet 3,40 ms. Der Dauerbetrieb ist deshalb billig, weil
+die Rohauswahl `[data-action]:not([tabindex])` lautet — ein versorgtes Element fällt in der
+Selektor-Maschine heraus, nicht erst in der Schleife.
+
+**Die Umfangsgrenze aus E-1 ist gemessen, nicht angenommen.** Nachgerüstete Elemente liegen
+in: globale Schale 38, Armaturenbrett 29, Party 202, Initiative 20, Würfel 10 — und **null**
+in Bestiarium, Zaubern, Begegnungen, NSC oder einer der anderen 19 Ansichten, egal welche
+aktiv ist. Der DM-Schirm steht auf 0, weil seine Widgets durchweg echte `<button>` sind;
+sein einziger unerreichbarer Halt war die globale Schnell-Referenz.
+
+**Was die 38 der globalen Schale sind, und warum das über E-1 hinausgeht:** 35 davon liegen
+im Schnell-Referenz-Panel (`#qref-rules` 13, `#qref-condition-chips` 12, `#qref-combat` 5,
+`#qref-world` 5), drei unmittelbar unter `body`. Das Panel ist in allen 24 Ansichten
+derselbe Knoten; es wird also auch in den 19 Ansichten außerhalb des Pakets bedienbar,
+**sobald es offen ist**. Geschlossen kostet es nichts: `.qref-panel` trägt `display: none`
+(`assets/styles/dashboard.css:1225`), seine Inhalte stehen in keinem Tabulatorlauf.
+Nachgemessen in der Initiative-Ansicht: Klappe zu 40 bedienbar / 40 erreicht / 0 Phantome,
+Klappe offen 52 / 52 / 0. Das ist eine bewusste Zugabe und keine Umfangsüberschreitung
+durch Unachtsamkeit — die Schnell-Referenz **ist** das Kampf-Hilfsmittel, und ihre Fläche
+war in allen 24 Ansichten unerreichbar.
+
+### Ein Fehler dieser Einheit, gemessen und behoben, statt übersehen
+
+Der erste Lauf der Schleife hat auch `div#shortcuts-overlay` nachgerüstet — eine Blende
+(`data-action="backdrop-close"`), die außerhalb aller `.view` liegt und im geschlossenen
+Zustand **nur** über `opacity: 0` und `pointer-events: none` versteckt ist
+(`assets/styles/dmscreen.css`, kein `display: none`, kein `visibility: hidden`). Ein
+`tabindex` darauf bleibt fokussierbar. Ergebnis, mit `sweep2.mjs` gemessen: **+1
+Phantomhalt in 23 von 24 Ansichten** (Armaturenbrett 1 → 2, Party 2 → 3, DM-Schirm 8 → 9)
+— ein Tabulatorsprung auf eine unsichtbare Fläche von 1440×900 px, auf der der Fokusring
+nichts anzeigt, weil es nichts zu sehen gibt. Genau die Sorte Verschlechterung, die eine
+Erreichbarkeits-Nachrüstung einbringen kann, während ihre eigene Zahl besser wird.
+
+`backdrop-close` ist jetzt ausgenommen, und zwar aus einem Grund, nicht als Pflaster: eine
+Blende fängt einen Klick **neben** den Inhalt (der Haken in `ui/actions/ui-actions.js`
+prüft `ctx.event.target === ctx.target`). "Neben etwas klicken" hat auf der Tastatur kein
+Gegenstück; das Gegenstück ist Escape, und das funktioniert schon. Nachgemessen:
+Phantomhalte in allen 23 stabilen Ansichten wieder auf dem Ausgangswert; **0** von 430
+nachgerüsteten Elementen ist fokussierbar und dabei nur über Opazität versteckt. Fall (l)
+hält die **Klasse** fest, nicht dieses eine Element, in allen fünf Ansichten bei zwanzig
+Einträgen je Typ.
+
+Die naheliegende Alternative — ein Sichtbarkeitstest je Kandidat — wäre falsch gewesen: ein
+Element in einem geschlossenen Formular oder einem ungeöffneten Dialog ist zu Recht
+unsichtbar, bekommt sein `tabindex` und ist beim Öffnen sofort erreichbar. Ein Dialog
+öffnet sich über eine **Klasse**, und der Beobachter sieht nur `childList`. Mit
+Sichtbarkeitstest blieben alle 35 Dialoge leer.
+
+### Nichts löst doppelt aus — gezählt, nicht gefolgert
+
+Zwölf Messungen, echte Tastendrücke, Ziel über Objektidentität, je Ziel und Taste ein
+frischer Seitenaufbau. Gezählt werden die `click`-**Ereignisse** am Ziel, getrennt nach
+`isTrusted`, nicht die Wirkung:
+
+| Ziel | Leertaste | Enter | `scrollY` |
+| --- | --- | --- | --- |
+| `div.init-value` (nachgerüstet) | echt 0 / synth 1 | echt 0 / synth 1 | 0 |
+| `div.dash-stat` (nachgerüstet) | 0 / 1 | 0 / 1 | 0 |
+| `span.slot-pip` (nachgerüstet) | 0 / 1 | 0 / 1 | 0 |
+| `div.char-card-hp` (nachgerüstet, `-stop`) | 0 / 1 | 0 / 1 | 0 |
+| `button[nextTurn]` (Gegenprobe) | 0 / 1 | 0 / 1 | 0 |
+| `.dice-chip` (Gegenprobe) | 0 / 1 | 0 / 1 | 0 |
+
+Genau einer, überall. `role="button"` bringt den Browser **nicht** dazu, selbst ein `click`
+zu erzeugen — das war die offene Frage dieses Schritts, und sie ist gemessen, nicht
+nachgeschlagen. Die beiden Gegenproben zeigen zugleich, dass echte `<button>` von der
+Schleife unberührt bleiben (`tabindex=null role=null`) und weiter genau einmal feuern.
+
+### Kein Pixel, keine Zeile CSS, kein Template
+
+`git diff` über `assets/` ist **leer**. Der Fokusring kommt aus der Weltregel
+`:focus-visible` in `assets/styles/core.css`; es gibt im ganzen CSS-Baum **keine** Regel auf
+`[role=…]` oder `[tabindex…]`. Am nachgerüsteten `div.init-value` nach echten
+Tabulatorsprüngen gemessen: `solid`, `2px`, Versatz `2px`, Farbe gleich dem Token
+`--focus-ring`. Der Stil-Sollstand (`computed-style-diff.spec.js`) bleibt grün **ohne eine
+einzige neue Ausnahme**, `EXPECTED_DEVIATION_KEYS` unberührt; W6-R-01 ("kein sichtbarer
+Halt in 24 Ansichten bleibt ohne Ring") ist grün, und zwar jetzt über **mehr** Halte als
+vorher — eine unabhängige zweite Bestätigung des Rings. `INLINE_MAX` 251, `DUBLETTEN_MAX`
+0, `IMPORTANT_MAX` 104: unberührt, weil kein Template und kein CSS angefasst ist.
+
+### Wächter
+
+- `tests/e2e/features/tastatur-erreichbarkeit.spec.js` — 23 Fälle: (a)–(e) Reichweite je
+  Kampfansicht bei zwei Kampagnengrößen, (f) nach `renderAll()`, (g) nach Rückgängig,
+  (h) nach vollem Datentausch (`applyRestoredCampaign()`), (i) ein Tastendruck ein Klick
+  (Leertaste und Enter getrennt — `toggleQuickRef()` setzt den Fokus 100 ms nach dem
+  Öffnen auf das Suchfeld, ein zweiter Druck im selben Lauf träfe nicht mehr die
+  Schaltfläche), (j) Fokusring aus der Weltregel, (k) der MutationObserver-Pfad an einem
+  nachträglich eingehängten Knoten, (l) kein neuer Phantomhalt.
+- `tests/unit/keyboard-reach.test.js` — 22 Fälle gegen das echte jsdom-Dokument: jede
+  Regel einzeln (was gesetzt wird, was in Ruhe bleibt, Idempotenz, `innerHTML`-Ersatz,
+  Fehlerabschirmung) plus vier Quelltext-Zusicherungen (nur `childList`, der Umfang ist
+  genau die fünf Ansichten, die Rohauswahl schließt `[tabindex]` aus, die Schleife
+  schreibt keinen Stil und bewegt keinen Fokus).
+- `tests/build/test_build_deduplication.py` — die Modulzahl steigt 139 → 140, mit
+  Begründung an der Zusicherung.
+
+### Was offen bleibt
+
+- **O-3 ist nicht in CLAUDE.md dokumentiert.** Die Entscheidung verlangt es ausdrücklich
+  ("das ist eine Dokumentationsfrage, kein Mangel — sie gehört in CLAUDE.md"), und der
+  Punkt ist echt: ein `grep tabindex` im Quellbaum zeigt die nachgerüsteten Stellen
+  **nicht**, es zeigt weiter nur die zwei Ablagezonen des Umzugs-Assistenten. Der Auftrag
+  dieser Einheit erlaubte an CLAUDE.md nur die Kürzeltabelle (für E-4, Schritt 6). Der
+  Absatz steht deshalb im Modulkopf von `ui/keyboard-reach.js` und hier — und gehört beim
+  nächsten CLAUDE.md-Durchgang in den Abschnitt "Gotchas & Common Pitfalls".
+- **`role="button"` liegt an fünf Stellen auf einem Container mit verschachtelten
+  Bedienelementen** (`.char-card-header`, `.shop-header`, `.bestiary-list-item`,
+  `.fr-faction-card`, `.shortcuts-overlay`; von diesen im Umfang: `.char-card-header`). Für
+  die Tastaturbedienung ist das folgenlos — der Fokus der Kindelemente kommt aus deren
+  eigenem `tabindex`, nicht aus der Rolle, und (i) zeigt an `div.char-card-hp` **in**
+  `div.char-card-header`, dass der innerste Treffer gewinnt. Für eine Vorlesesoftware ist
+  eine Schaltfläche mit Schaltflächen darin falsch. Das ist eine
+  Barrierefreiheits-Aufgabe mit eigener Begründung und eigener Abnahme — dieselbe Schublade
+  wie O-5 (die 199 Marken ohne Bindung) und O-8 (`role="dialog"`).
+- **E-2 ist nicht umgesetzt** (Schritt 5): die Zauberplatz- und Initiative-Punkte haben
+  jetzt **je einen** Tabulatorhalt, nicht einen je Gruppe. Das ist der Grund, warum die
+  Party bei zwanzig Einträgen 182 neue Halte bekommt. Warnung für Schritt 5: wer die
+  Gruppenlösung baut, setzt den nicht-aktiven Punkten `tabindex="-1"` — und `sweep2.mjs`
+  zählt ein `[data-action][tabindex="-1"]` als **bedienbar und unerreichbar**, weil es
+  nicht mehr unter seinen `NATIVE`-Selektor fällt. Die Fälle (a)–(e) dieser Datei würden
+  dadurch rot, obwohl die Bedienung besser wird. Der Zähler muss dann mitgeändert werden,
+  und zwar bewusst.
+- **E-4** (ein Kürzel für den Lebenspunkte-Rechner auf den aktiven Kämpfer) ist nicht
+  umgesetzt — Schritt 6. Die Kürzeltabelle in CLAUDE.md ist dafür noch zu ergänzen.
+- **E-3 und O-8** (Fokusfalle, Rückkehr zum Öffner, `role="dialog"` in den 35 Modalen) sind
+  unberührt, wie geplant. Die Modale liegen im Umfang der Schleife, ihre nicht-nativen
+  Stellen sind also nachgerüstet — am Markup der 36 Schalen ist das genau **eine**
+  (`#quicknotes-modal`, und die ist eine Blende und ausgenommen); ihre Inhalte sind
+  praktisch durchweg echte `<button>`.
+- **O-9 bleibt eine echte Blockade für spätere Abnahmen:** `window.clearLootForm` wird in
+  `features/initiative-loot.js:254` und `:367` gerufen und nirgends definiert. Wer Schritt
+  6 oder 7 am Beute-Modal abnehmen will, muss `window.showModal('loot-modal')` nehmen.
+- **Fünf E2E-Fälle in `tests/e2e/features/eingaberahmen.spec.js` sind rot, und zwar schon
+  vorher.** T-B hat sie als Lastflattern geführt und einen grünen Isolationslauf gemeldet;
+  bei mir sind sie reproduzierbar (zwei volle Läufe, dieselben fünf, 689 bestanden / 39
+  übersprungen / 5 Fehlschläge) **und** ein Isolationslauf der Datei scheitert ebenso
+  (5/7). Es sind reine **Zeitüberschreitungen** (30 s), keine verletzte Zusicherung. Zwei
+  unabhängige Belege, dass es nicht von dieser Einheit kommt: (1) baut man das Bündel
+  **ohne** `ui/keyboard-reach.js`, scheitern genau dieselben fünf, gleiche Zahl, gleiche
+  Dauer; (2) mit dem Modul und `--workers=1` sind es **12/12** — Fall 2 braucht dann 26,7 s
+  und hat 3,3 s Luft. Die Fälle liegen an der 30-s-Grenze und fallen unter paralleler Last
+  darüber. Wer sie grün haben will, braucht einen eigenen `test.setTimeout()` dort, keine
+  Codeänderung.
+
 ### Benannte Restschuld 1: der Rest des Tastatur-Strangs (90 Stellen)
+
+**Nachtrag T-C (2026-10-12): drei Zeilen dieser Tabelle sind erledigt, die Tabelle selbst
+bleibt als Messung ihrer Einheit stehen.** Die Kehrschleife aus Schritt 4 hat den Umfang
+E-1 abgearbeitet; damit fallen aus der Liste unten:
+
+| Zeile | Stellen | Stand nach T-C |
+| --- | --- | --- |
+| dashboard `div.dash-stat` / `span.dash-card-link` / `div.dash-char` | 7 + 2 + 1 | **erledigt** |
+| party `span.slot-pip` | 4 | **erledigt** (je ein Halt, nicht je Gruppe — E-2 offen) |
+| party `div.char-card-header`, `div.char-card-hp` | 1 + 1 | **erledigt** |
+| initiative `div.init-value` | 1 | **erledigt** |
+| party/encounter/notes `div.collapsible-header` | 3 | **1 von 3** (party) erledigt |
+
+Nicht angefasst, weil außerhalb der fünf Kampfansichten: spells 26, bestiary 23, loot 10,
+npcs 3, locations 2, shops 3, encounter 1, data 1, fraktionen 1 sowie die zwei
+`div.collapsible-header` in Begegnungen und Sitzungen. Die Zahl 90 dieser Überschrift ist
+damit auf **rund 72** gesunken — „rund", weil die Zählung dieser Tabelle und die von
+`sweep2.mjs` nicht dieselbe Erhebung sind (die eine zählt Stellen über 24 Ansichten mit
+Ahnenprüfung gegen geschlossene `<details>`, die andere je Ansicht die sichtbaren
+Bedienelemente). Die belastbare Zahl der Einheit T-C ist der Vorher/Nachher-Vergleich
+**mit demselben Skript**: 131 → 72 über alle 24 Ansichten.
+
+Zwei Punkte der Liste unten sind durch die gewählte Lösung **gegenstandslos**, nicht
+offen: der Elementtausch `div`/`span` → `<button type=button>` (Stufe 2) ist durch O-1
+ausdrücklich verworfen — drei Messungen sprechen dagegen, und `tabindex` + `role` leistet
+dasselbe, ohne ein Pixel zu bewegen. Stufe 1 (der `keydown`-Zweig) ist mit T-B erledigt.
+Offen bleibt Stufe 3 (`display: none` → `.sr-only` an zwei CSS-Zeilen für die 57
+versteckten Kästchen) — und davon sind nach O-6 nur **19** echte Fälle: die 38
+`label.char-resistance-chip` brauchen nichts, weil ihr Zustand an der Klasse `.selected`
+der Marke hängt und nicht an `checked`.
 
 W6-E-4 = B deckt **nur** die Phantom-Halte. Der Rest bleibt benannte Restschuld, und hier
 ist er mit Zahl und Stellenliste. Frisch gemessen an meinem Stand, zweimal mit demselben

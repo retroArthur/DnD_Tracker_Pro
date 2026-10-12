@@ -293,7 +293,11 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # 'features/combat-log/combat-log-render.js' neu registriert (Kampfprotokoll —
         # Ringpuffer und Panel). Der Kern steht VOR dem Fenster (das Fenster liest
         # getCombatLog()), beide nach utils/performance-extras.js und vor den ui/-Modulen.
-        assert len(modules) == 139, f"Erwartet 139 Module, gefunden {len(modules)}"
+        # Tastatur-Strang, Einheit T-C (Schritt 4): 'ui/keyboard-reach.js' neu registriert
+        # (Kehrschleife — setzt tabindex/role zur Laufzeit auf die nicht-nativen
+        # Bedienelemente der fuenf Kampfansichten). Steht NACH ui/event-delegation.js:
+        # sie macht Elemente erreichbar, die der keydown-Zweig dort bedient.
+        assert len(modules) == 140, f"Erwartet 140 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
