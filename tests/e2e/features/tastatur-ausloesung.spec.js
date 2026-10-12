@@ -124,6 +124,23 @@
  * prueft genau dessen Schranke und Zweige, der Pfad steht darum voll da, und
  * der Eintrag ist aus der Ausnahmeliste gestrichen.
  *
+ * WER BEWACHT DIE SCHRANKE SELBST? Fall (l) am Ende, und zwar erst seit
+ * Runde 1 von T-B. Die Faelle (a) bis (f) standen bis dahin auf `echt: 1` und
+ * bewachten damit die Schranke aus T-A: sie liessen die Taste durch, der
+ * Browser erzeugte den Klick. Seit dem `keydown`-Zweig stehen sie auf
+ * `synthetisch: 1` — der Zweig faengt die Taste in der Capture-Phase ab und
+ * ruft `stopPropagation()`, BEVOR `keyboard-shortcuts.js` sie sieht. Damit
+ * bewachen sie den neuen Zweig, nicht mehr die Schranke. Nachgemessen: nimmt
+ * man `!beanspruchtLeertaste` aus dem Leertasten-Zweig heraus, bleiben beide
+ * Tastaturdateien gruen (36 bestanden), und kein anderer Fall im Baum
+ * drueckt ueberhaupt eine Leertaste. Die Schranke ist dabei WEITER tragend:
+ * in der Initiative-Ansicht gibt es genau einen Tabulatorhalt, der
+ * fokussierbar ist, nicht tippt und KEINE registrierte Aktion traegt
+ * (gemessen: `button.nav-tab` "🏠 Start", Halt 13 bei sechs Kaempfern) —
+ * dort greift der `keydown`-Zweig definitionsgemaess nicht. Mit entfernter
+ * Schranke springt die echte Leertaste dort von Zug 0 auf 1, und der Knopf
+ * loest nicht aus (Klicks 0/0 statt 1/0). Fall (l) deckt genau diese Luecke.
+ *
  * WAS DIESER FALL NICHT FESTSCHREIBT: die Zahl der Tabulatorspruenge bis zu
  * einem Ziel. Sie ist gemessen (21 / 22 / 23 / 24 / 27 in der Initiative, 20
  * in der Wuerfelansicht, bei sechs Kaempfern und 1440 px) und steht als
@@ -156,6 +173,14 @@ const TABULATORWEGE = {
 
 /** Obergrenze der Tabulatorsuche. 87 Halte hat die Initiative bei sechs Kaempfern. */
 const MAX_SPRUENGE = 200;
+
+/**
+ * Der einzige Halt der Initiative-Ansicht, den der `keydown`-Zweig aus T-B
+ * nicht deckt (gemessen bei af27996, sechs Kaempfer, 1440 px: 88 Halte je
+ * Umlauf, davon einer ohne registrierte Aktion). Befund, keine Zusicherung —
+ * Fall (l) sucht das Merkmal, nicht die Zahl.
+ */
+const UNGEDECKTER_HALT = { spruenge: 13, sig: 'button.nav-tab' };
 
 /**
  * Gefuellte Kampagne mit sechs Kaempfern. Die drei Helden tragen ANDERE
@@ -343,6 +368,44 @@ async function tabBisZiel(page, merkmal) {
         if (treffer) return i;
     }
     return 0;
+}
+
+/**
+ * Tabuliert mit ECHTEN Tastendruecken bis zum ersten `<button>`, den der
+ * `keydown`-Zweig aus T-B NICHT deckt: sein naechstes `[data-action]`-Element
+ * fehlt, oder dessen Aktion ist nicht registriert. Dort haengt die Leertaste
+ * ALLEIN an der `beanspruchtLeertaste`-Schranke aus T-A.
+ *
+ * Gesucht wird das MERKMAL, nicht die Haltnummer — die verschiebt sich mit
+ * jeder Nachruestung. Und gesucht wird ein `<button>`: nur dort ist "der
+ * Browser loest selbst aus" eine Aussage, auf die man sich berufen kann.
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{ spruenge: number, sig: string, text: string }>}
+ */
+async function tabBisUngedeckterKnopf(page) {
+    for (let i = 1; i <= MAX_SPRUENGE; i++) {
+        await page.keyboard.press('Tab');
+        const befund = await page.evaluate(() => {
+            const el = document.activeElement;
+            if (!el || el === document.body || el.tagName !== 'BUTTON') return null;
+            const ziel = el.closest('[data-action]');
+            const aktion = ziel?.getAttribute('data-action');
+            // `EventDelegation` ist ein top-level `const` und steht NICHT auf
+            // `window` — im Buendel liegt es im globalen Lexikal (CLAUDE.md,
+            // Dedup-Regel). Darum ohne `window.`-Vorsatz.
+            if (aktion && EventDelegation._handlers.has(aktion)) return null;
+            const klassen =
+                typeof el.className === 'string' && el.className.trim()
+                    ? '.' + el.className.trim().split(/\s+/).slice(0, 3).join('.')
+                    : '';
+            return {
+                sig: 'button' + (el.id ? '#' + el.id : '') + klassen,
+                text: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40)
+            };
+        });
+        if (befund) return { spruenge: i, ...befund };
+    }
+    return { spruenge: 0, sig: '?', text: '' };
 }
 
 /**
@@ -766,5 +829,91 @@ test.describe('Was unangetastet bleibt (Gegenproben, vor und nach der Korrektur 
                 );
             }
         }
+    });
+});
+
+/**
+ * DIE SCHRANKE AUS T-A HAT WIEDER EINEN WAECHTER (T-B, Runde 1).
+ *
+ * Dieser Fall ist der einzige im Baum, der `!beanspruchtLeertaste` in
+ * `systems/spellslots/keyboard-shortcuts.js` prueft — die Begruendung steht
+ * im Kopfkommentar unter "WER BEWACHT DIE SCHRANKE SELBST?". Er ist heute
+ * gruen und wird rot, sobald jene Zeile faellt; nachgemessen, nicht
+ * behauptet (Zug 0 -> 1, Klicks 1/0 -> 0/0).
+ *
+ * WARUM DER KNOPF OHNE REGISTRIERTE AKTION DIE RICHTIGE PROBE IST. Die zwei
+ * Schichten ueberschneiden sich fast vollstaendig: ueberall, wo ein
+ * `[data-action]` mit registrierter Aktion unter dem Fokus liegt, nimmt der
+ * `keydown`-Zweig die Taste schon in der Capture-Phase an sich. Die Schranke
+ * ist nur noch dort allein tragend, wo er das NICHT tut. Gemessen gibt es in
+ * der Initiative-Ansicht genau eine solche Stelle, und sie ist keine
+ * Kuriositaet: die Hauptnavigation arbeitet mit `data-view`, nicht mit
+ * `data-action`, und wird das auch nach den Nachruestungen der Schritte 4
+ * und 5 tun.
+ *
+ * WAS ZUGESICHERT WIRD, sind zwei Haelften derselben Aussage: der Zug
+ * bewegt sich NICHT (sonst ist der Kampf eine Runde falsch — der Fehler aus
+ * T-A), und der Knopf loest GENAU EINMAL und NATIV aus (`echt: 1`, denn hier
+ * laesst die Schranke die Taste durch und der Browser macht den Klick
+ * selbst; `synthetisch: 0`, denn der `keydown`-Zweig greift ohne registrierte
+ * Aktion nicht). Beide Zusicherungen kippen bei entfernter Schranke, jede
+ * fuer sich.
+ */
+test.describe('Die Schranke aus T-A ist bewacht', () => {
+    test('(l) Leertaste auf einem Knopf OHNE registrierte Aktion bewegt den Zug NICHT', async ({
+        page
+    }) => {
+        await ansichtOeffnen(page, 'initiative');
+
+        // Ohne geladene Aktionstabelle wuerde die Suche unten JEDEN Knopf
+        // fuer ungedeckt halten und der Fall nichts mehr messen.
+        expect(
+            await page.evaluate(
+                () => typeof EventDelegation !== 'undefined' && EventDelegation.actionCount > 0
+            ),
+            'die Aktionstabelle des Verteilers muss geladen sein'
+        ).toBe(true);
+
+        const ziel = await tabBisUngedeckterKnopf(page);
+        expect(
+            ziel.spruenge,
+            'in der Initiative-Ansicht war in ' +
+                `${MAX_SPRUENGE} echten Tabulatorspruengen kein <button> ohne registrierte ` +
+                'Aktion erreichbar — dann hat dieser Fall seine Probe verloren und die ' +
+                'Schranke braucht einen anderen Waechter'
+        ).toBeGreaterThan(0);
+        if (ziel.spruenge !== UNGEDECKTER_HALT.spruenge || ziel.sig !== UNGEDECKTER_HALT.sig) {
+            process.stdout.write(
+                `[Tastatur-Strang] ungedeckter Halt verschoben: gemessen ${ziel.spruenge} ` +
+                    `(${ziel.sig} "${ziel.text}"), Befund bei af27996 ` +
+                    `${UNGEDECKTER_HALT.spruenge} (${UNGEDECKTER_HALT.sig})\n`
+            );
+        }
+
+        await zielMerken(page);
+        const vorher = await kampfZustand(page);
+        expect(vorher.zug).toBe(0);
+        expect(vorher.runde).toBe(1);
+        expect(vorher.ansicht, 'die Leertaste wirkt nur in der Initiative-Ansicht').toBe(
+            'view-initiative'
+        );
+
+        await page.keyboard.press(' ');
+        await page.waitForTimeout(600);
+
+        const nachher = await kampfZustand(page);
+        const k = await klicks(page);
+
+        expect(
+            nachher.zug,
+            `Leertaste auf ${ziel.sig} "${ziel.text}" (Halt ${ziel.spruenge}) darf den Zug ` +
+                'nicht bewegen — genau das war der Fehler aus T-A'
+        ).toBe(0);
+        expect(nachher.runde, 'und die Runde auch nicht').toBe(1);
+        expect(
+            k.echt,
+            'die Schranke laesst die Taste durch, der Browser loest den Knopf selbst aus'
+        ).toBe(1);
+        expect(k.synthetisch, 'der keydown-Zweig greift ohne registrierte Aktion nicht').toBe(0);
     });
 });
