@@ -7553,6 +7553,30 @@ nur dort, wo dieser Zweig greift. Ein fokussierbares Element **ohne** `data-acti
 mit einer nicht registrierten Aktion (`<summary>`, die Assistenten-Ablagezonen) fällt
 weiterhin allein unter `beanspruchtLeertaste`. Beide Schichten bleiben nötig.
 
+**Nachtrag Runde 1 (2026-10-12): diese Aussage war bis `736404b` von keinem Wächter
+gedeckt.** Die sechs Fälle (a)–(f) in `tests/e2e/features/tastatur-ausloesung.spec.js`
+bewachten bis T-B die Schranke aus T-A — sie standen auf `echt: 1`, also auf dem nativen
+Klick, den die Schranke durchließ. Seit dem `keydown`-Zweig stehen sie auf `echt: 0 /
+synthetisch: 1` und bewachen damit den neuen Zweig. Nachgemessen: nimmt man
+`!beanspruchtLeertaste &&` aus dem Leertasten-Zweig heraus und baut neu, bleiben beide
+Tastaturdateien grün (36 bestanden), und keine andere Datei im Testbaum drückt überhaupt
+eine Leertaste. Tragend ist die Schranke dabei weiter — über 88 echte Tabulatorhalte der
+Initiative-Ansicht (sechs Kämpfer, 1440 px, Registrierung gegen
+`EventDelegation._handlers` geprüft) ist **genau ein** Halt fokussierbar, nicht tippend
+und ohne registrierte Aktion: `button.nav-tab` „🏠 Start" auf Halt 13, denn die
+Hauptnavigation arbeitet mit `data-view`.
+
+| Messung auf diesem Halt       | mit Schranke               | ohne Schranke     |
+| ----------------------------- | -------------------------- | ----------------- |
+| `D.initiative.currentTurn`    | 0 → **0**                  | 0 → **1**         |
+| aktive Ansicht                | initiative → **dashboard** | bleibt initiative |
+| Klicks am Ziel (echt / synth) | **1 / 0**                  | **0 / 0**         |
+
+Fall (l) „Die Schranke aus T-A ist bewacht" deckt die Lücke. Er sucht das **Merkmal**
+(`<button>` ohne registrierte Aktion), nicht die Haltnummer — die verschiebt sich mit den
+Nachrüstungen der Schritte 4 und 5. Roter Nachweis mit derselben Mutation: 1 Fehlschlag /
+36 bestanden, „Expected 0, Received 1".
+
 **Die riskantere Hälfte ist, was der Zweig NICHT anfasst.** Am gebauten Bündel gezählt
 sitzen im Dokument Tippflächen **mit** eigener Aktion oder **in** einem Element mit
 Aktion: der Wiki-Editor als `div[contenteditable][data-action="wiki-content-input"]`,
