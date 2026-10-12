@@ -810,13 +810,27 @@ test.describe('Kehrschleife — kein neuer Phantomhalt', () => {
 // die Menge der Lagen verkleinert, in denen `activeElement` BODY ist.
 //
 // WAS DIE KORREKTUR TUT, und wie schmal sie ist: ein von der Kehrschleife
-// versorgtes Element beansprucht die LEERTASTE nur bei TASTATURFOKUS. Der
-// Browser trennt beides selbst — gemessen, nicht angenommen: Mausklick ->
-// `:focus` true, `:focus-visible` FALSE; Tabulator -> beide true. Enter
+// versorgtes Element beansprucht die LEERTASTE nur bei TASTATURFOKUS. Enter
 // bleibt unberuehrt (Fall (p)), denn Enter konkurriert mit keinem Kuerzel.
 // Nativen Knoepfen wird nichts weggenommen (Fall (o)): auf ihnen ist die
 // Leertaste schon vor der Kehrschleife eine Bedienung gewesen, und das zu
 // aendern waere eine Ruecknahme von T-A statt eine Korrektur von T-C.
+//
+// UND WARUM SIE NICHT `:focus-visible` FRAGT, obwohl die Pseudoklasse genau
+// diese Frage beantwortet. Weil sie sie zu spaet beantwortet: Chromium setzt
+// `:focus-visible`, sobald eine Taste fliegt — auch die Taste, ueber die
+// gerade entschieden werden soll. Gemessen mit einem Lauscher am `window` in
+// der Capture-Phase (laeuft vor JEDEM Lauscher am `document`), nach einem
+// echten Mausklick auf `div.init-value`:
+//
+//   vor dem Tastendruck   :focus true, :focus-visible FALSE
+//   IM keydown            :focus true, :focus-visible TRUE   <-- zu spaet
+//   im keyup / danach     :focus true, :focus-visible TRUE
+//
+// Die Faelle (m), (o) und (p) lesen `:focus-visible` darum VOR dem
+// Tastendruck und nur als Diagnose. Die Schranke selbst haengt an einer
+// eigenen Mitschrift (`KeyboardReach._fokusMitschrift()`), die beim
+// `focusin` stempelt statt beim Tastendruck zu fragen.
 //
 // MESSDISZIPLIN, DRITTER FALL. Hier wird mit `locator.click()` geklickt, und
 // das ist kein Bruch von Regel 1 oben: `page`/`locator.click()` ist ein
@@ -945,10 +959,12 @@ test.describe('Kehrschleife — der Mausklick gibt die Leertaste nicht aus der H
             );
             expect(lage.ti, 'Das Ziel ist nicht von der Kehrschleife versorgt').toBe('0');
             expect(lage.focus, ':focus greift nach dem Mausklick nicht').toBe(true);
+            // Diagnose, nicht Mechanismus: VOR dem Tastendruck meldet der
+            // Browser hier kein `:focus-visible` — im `keydown` dann doch,
+            // und genau deshalb fragt die Schranke nicht danach (s. Kopf).
             expect(
                 lage.focusVisible,
-                'Der Browser meldet nach einem MAUSKLICK :focus-visible — dann traegt die ' +
-                    'ganze Korrektur nicht'
+                'Der Browser meldet nach einem MAUSKLICK :focus-visible'
             ).toBe(false);
             expect(dialoge.n, 'Der Mausklick hat die Wertbearbeitung nicht geoeffnet').toBe(1);
 

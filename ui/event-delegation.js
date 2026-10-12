@@ -185,6 +185,14 @@ const EventDelegation = {
      * bricht jeden `<button>` der App bzw. gibt die gekaperte Leertaste
      * zurueck.
      *
+     * EINE AUSNAHME, und sie ist gemessen: auf einer von der Kehrschleife
+     * (T-C) nachgeruesteten Stelle greift der Zweig fuer die LEERTASTE nicht,
+     * wenn der Fokus per MAUSKLICK dort steht. Sonst drueckt der Spielleiter
+     * nach der Korrektur eines Initiative-Werts die Leertaste und oeffnet
+     * dieselbe Eingabe wieder, statt den Zug weiterzugeben. Begruendung und
+     * Messwerte an `KeyboardReach.nurMausfokus()`; Enter und native Knoepfe
+     * sind ausdruecklich NICHT betroffen.
+     *
      * WAS ER NICHT ANFASST, und warum das die riskantere Haelfte ist. Im
      * Dokument sitzen Tippflaechen MIT eigener Aktion oder IN einem Element
      * mit Aktion (am gebauten Buendel gezaehlt): der Wiki-Editor als
@@ -217,6 +225,19 @@ const EventDelegation = {
 
         // Tippflaechen behalten ihre Taste — gemessen an der QUELLE.
         if (this._tasteGehoertDerQuelle(quelle, e.key)) return;
+
+        // NACH EINEM MAUSKLICK GEHOERT DIE LEERTASTE WEITER DEM ZUG (T-C,
+        // Runde 1). Eine von der Kehrschleife (`ui/keyboard-reach.js`)
+        // nachgeruestete Stelle nimmt beim Mausklick den Fokus an — vorher
+        // nahm sie ueberhaupt keinen. Ohne diese Zeile bedient die Leertaste
+        // danach das angeklickte Element ERNEUT statt den Zug weiterzugeben:
+        // gemessen auf `div.init-value` Zug 0 -> 0 und ein zweiter
+        // `prompt()`. Warum das nur versorgte Stellen und nur die Leertaste
+        // betrifft, warum ein nativer `<button>` ausdruecklich NICHT
+        // dazugehoert, und warum die Herkunft des Fokus NICHT ueber
+        // `:focus-visible` festgestellt werden kann: alles an
+        // `KeyboardReach.nurMausfokus()`.
+        if (e.key === ' ' && window.KeyboardReach?.nurMausfokus?.(quelle)) return;
 
         const ziel = quelle.closest('[data-action]');
         if (!ziel) return;

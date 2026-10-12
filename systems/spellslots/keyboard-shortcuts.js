@@ -69,7 +69,22 @@ function initKeyboardShortcuts() {
         // ein Klick, kein Doppelfeuer, und `scrollY` bleibt 0, weil ein
         // fokussierter `<button>` die Vorgabe der Leertaste selbst
         // unterdrueckt. Beides gemessen, nicht angenommen.
-        const beanspruchtLeertaste = !!activeEl?.matches?.(TASTEN_BEDIENELEMENT_SELEKTOR);
+        //
+        // UND SEIT T-C EINE AUSNAHME. Die Kehrschleife (`ui/keyboard-reach.js`)
+        // hat rund 430 Stellen fokussierbar gemacht, die vorher keinen Fokus
+        // annehmen konnten — sie fallen damit alle unter den Selektor oben.
+        // Der Satz zwei Absaetze hoeher ("ohne Fokus ... wechselt weiter den
+        // Zug") wuerde damit still fuer die halbe Kampfansicht ungueltig: ein
+        // Mausklick auf den Initiative-Wert parkt den Fokus dort, und die
+        // Leertaste bediente danach dieses `div` statt den Zug zu wechseln.
+        // `nurMausfokus()` nimmt genau diese Lage wieder heraus — versorgte
+        // Stelle UND Fokus nicht von der Tastatur. Nativen Knoepfen nimmt sie
+        // nichts: dort ist die Lage dieselbe, aber `istVersorgt()` ist falsch,
+        // und die Leertaste bleibt ihre Bedienung. Begruendung und Messwerte
+        // stehen an der Funktion.
+        const beanspruchtLeertaste =
+            !!activeEl?.matches?.(TASTEN_BEDIENELEMENT_SELEKTOR) &&
+            !window.KeyboardReach?.nurMausfokus?.(activeEl);
 
         // ============================================================
         // SOUNDBOARD QUICK-SLOTS (D-03) — Alt+Shift+0..5

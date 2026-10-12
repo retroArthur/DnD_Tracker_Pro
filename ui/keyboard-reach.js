@@ -84,6 +84,11 @@
 // Bedienelementen fern. Beide Schichten erkennen das hier Gesetzte bereits:
 // `[role="button"]` und `[tabindex]:not([tabindex="-1"])` stehen in ihren
 // Selektoren. Das war Absicht und ist nachgeprueft, nicht vorausgesetzt.
+//
+// WAS SIE DAFUER BEISTEUERT, seit Runde 1: `nurMausfokus()` weiter unten.
+// Beide Schranken fragen dort nach, bevor sie die Leertaste einem versorgten
+// Element zusprechen — denn nach einem MAUSKLICK gehoert sie weiter dem Zug.
+// Die lange Begruendung steht an der Funktion.
 
 /**
  * Die fuenf Kampfansichten aus E-1. Ein Element wird nachgeruestet, wenn es
@@ -166,6 +171,34 @@ const KeyboardReach = {
     _beobachter: null,
     _geplant: false,
 
+    /**
+     * Die Elemente, die DIESE Schleife fokussierbar gemacht hat.
+     *
+     * WOZU EINE LISTE, wenn man die drei Attribute auch abfragen koennte?
+     * Weil `[data-action][tabindex="0"][role="button"]` nur HEUTE eindeutig
+     * ist: ein Template, das die drei morgen von Hand setzt, waere nicht mehr
+     * zu unterscheiden — und genau dort liegt der Unterschied, auf den sich
+     * `nurMausfokus()` beruft. Die Frage ist nicht "sieht es nachgeruestet
+     * aus", sondern "hat die Kehrschleife es nachgeruestet".
+     *
+     * EIN `WeakSet`, damit die Liste nicht waechst: jede `render*`-Funktion,
+     * die `innerHTML` ersetzt, wirft ihre Knoten weg; sie fallen damit auch
+     * hier heraus, und der naechste Durchlauf traegt die neuen ein. Ein
+     * `Set` haette bei 149 Renderfunktionen jeden je erzeugten Knoten
+     * festgehalten.
+     */
+    _versorgt: new WeakSet(),
+
+    /** War die letzte Eingabe ein Zeigegeraet? Nur `_fokusMitschrift()`. */
+    _zeigerAnschlag: false,
+
+    /**
+     * Das Element, dessen AKTUELLER Fokus von einem Zeigegeraet kommt —
+     * oder `null`. Gesetzt beim `focusin`, nicht beim Tastendruck; die
+     * Begruendung steht an `_fokusMitschrift()`.
+     */
+    _zeigerFokus: null,
+
     /** Zahl der Durchlaeufe. Nur Diagnose — kein Verhalten haengt daran. */
     _laeufe: 0,
     /** Summe der ueber alle Laeufe nachgeruesteten Elemente. */
@@ -186,6 +219,7 @@ const KeyboardReach = {
         }
 
         this.aktualisieren();
+        this._fokusMitschrift();
 
         // NUR `childList`, ausdruecklich NICHT `attributes`. Mit
         // `attributes: true` wuerde jedes `setAttribute()` dieser Schleife
@@ -209,6 +243,70 @@ const KeyboardReach = {
         }
 
         log('[KeyboardReach] Kehrschleife aktiv (5 Kampfansichten + globale Schale)');
+    },
+
+    /**
+     * Schreibt mit, WIE der Fokus an seine jetzige Stelle gekommen ist —
+     * mit dem Zeigegeraet oder mit der Tastatur.
+     *
+     * WARUM NICHT EINFACH `:focus-visible`? Weil die Pseudoklasse genau die
+     * Frage beantwortet, die hier zaehlt, aber zu einem Zeitpunkt, an dem
+     * niemand sie mehr lesen kann. Chromium setzt sie, sobald eine Taste
+     * fliegt — auch die Taste, ueber die gerade entschieden werden soll.
+     * Gemessen am gebauten Buendel, Lauscher am `window` in der
+     * Capture-Phase (laeuft damit vor JEDEM Lauscher am `document`), nach
+     * einem echten Mausklick auf `div.init-value`:
+     *
+     *   vor dem Tastendruck   :focus true, :focus-visible FALSE
+     *   IM keydown            :focus true, :focus-visible TRUE   <-- zu spaet
+     *   im keyup / danach     :focus true, :focus-visible TRUE
+     *
+     * Eine Schranke, die im `keydown` `:focus-visible` abfragt, bekommt also
+     * immer "ja, Tastaturfokus" zu hoeren und greift nie. Das war der erste
+     * Versuch dieser Korrektur, er lief gegen einen roten Fall, und diese
+     * Messung ist der Grund, warum hier drei Lauscher stehen statt einer
+     * Pseudoklasse. Wer sie wieder einkuerzt, bekommt lautlos die alte Lage.
+     *
+     * DIE DREI LAUSCHER, und warum der Zeitpunkt des Stempels alles ist:
+     *   - `pointerdown`/`mousedown` merken nur die ABSICHT ("die letzte
+     *     Eingabe war ein Zeiger"), noch kein Element — beim `pointerdown`
+     *     steht das Fokusziel nicht fest (ein Klick auf ein Kind fokussiert
+     *     den versorgten Vorfahren), und ein Ziehen ohne Klick muesste auch
+     *     gelten.
+     *   - `keydown` setzt die Absicht zurueck. Das ist unschaedlich fuer den
+     *     bereits gesetzten Stempel: der aendert sich NUR beim `focusin`.
+     *     Genau darin liegt der Unterschied zu `:focus-visible`.
+     *   - `focusin` stempelt. Beim Mausklick liegt er vor dem `click`
+     *     (mousedown -> focus -> mouseup -> click), beim Tabulator nach dem
+     *     `keydown` — in beiden Faellen sieht der Stempel die Absicht, die
+     *     ZU DIESEM Fokus gefuehrt hat, und nicht die Taste danach.
+     *
+     * Alles in der Capture-Phase und `passive`: diese Mitschrift
+     * entscheidet nichts und darf nichts aufhalten.
+     */
+    _fokusMitschrift() {
+        const zeiger = () => {
+            this._zeigerAnschlag = true;
+        };
+        // `pointerdown` deckt Maus, Stift und Finger ab; `mousedown` ist der
+        // Guertel fuer eine Umgebung ohne PointerEvent. Beide setzen
+        // dasselbe Merkzeichen, doppeltes Setzen schadet nicht.
+        document.addEventListener('pointerdown', zeiger, { capture: true, passive: true });
+        document.addEventListener('mousedown', zeiger, { capture: true, passive: true });
+        document.addEventListener(
+            'keydown',
+            () => {
+                this._zeigerAnschlag = false;
+            },
+            { capture: true, passive: true }
+        );
+        document.addEventListener(
+            'focusin',
+            ev => {
+                this._zeigerFokus = this._zeigerAnschlag ? ev.target : null;
+            },
+            { capture: true, passive: true }
+        );
     },
 
     /**
@@ -257,6 +355,8 @@ const KeyboardReach = {
                 if (el.tagName !== 'LABEL' && !el.hasAttribute('role')) {
                     el.setAttribute('role', 'button');
                 }
+
+                this._versorgt.add(el);
                 n++;
             }
         } catch (e) {
@@ -293,6 +393,68 @@ const KeyboardReach = {
         const ansicht = el.closest('.view');
         // Kein `.view`-Vorfahre = globale Schale, immer im Umfang.
         return !ansicht || KAMPF_ANSICHTEN.has(ansicht.id);
+    },
+
+    /**
+     * Hat DIESE Schleife `el` fokussierbar gemacht?
+     * @param {Element|null} el
+     * @returns {boolean}
+     */
+    istVersorgt(el) {
+        return !!el && this._versorgt.has(el);
+    },
+
+    /**
+     * DIE EINE AUSNAHME, DIE DIE KEHRSCHLEIFE SICH SELBST AUFERLEGT.
+     *
+     * Wahr, wenn `el` von dieser Schleife versorgt ist UND den Fokus NICHT
+     * von der Tastatur hat. Die zwei Leertasten-Schranken des Strangs fragen
+     * das, bevor sie die Taste dem Element zusprechen:
+     * `_handleKeydown()` in `ui/event-delegation.js` und
+     * `beanspruchtLeertaste` in `systems/spellslots/keyboard-shortcuts.js`.
+     *
+     * WARUM ES DAS BRAUCHT — der Fall, der ohne diese Zeilen auf dem Tisch
+     * liegt. Der Spielleiter klickt mit der Maus auf den Initiative-Wert
+     * eines Kaempfers (eine der hier nachgeruesteten Stellen, eine je
+     * Kampfzeile), korrigiert ihn, und drueckt dann die Leertaste, um den Zug
+     * weiterzugeben. Bis zur Kehrschleife ging das: das `div` nahm keinen
+     * Fokus an, `activeElement` blieb `BODY`, die Leertaste wechselte den
+     * Zug. Danach parkt der Mausklick den Fokus AUF dem `div`, und die
+     * Leertaste bedient es erneut — gemessen Zug 0 -> 0 und ein zweiter
+     * `prompt()`. Die Akte von T-A verspricht ausdruecklich "ohne Fokus
+     * (activeElement = BODY) ... die Leertaste wechselt weiter den Zug"; die
+     * Kehrschleife hat still die Menge dieser Lagen verkleinert, fuer rund
+     * 430 Elemente, die vorher ueberhaupt keinen Fokus annehmen konnten.
+     *
+     * WIE DIE HERKUNFT DES FOKUS FESTGESTELLT WIRD: ueber die eigene
+     * Mitschrift in `_fokusMitschrift()`, NICHT ueber `:focus-visible`. Die
+     * Pseudoklasse beantwortet dieselbe Frage, aber zu spaet — Chromium setzt
+     * sie bei der Taste, ueber die hier entschieden werden soll (gemessen,
+     * Zahlen stehen dort). Das ist die eine Stelle dieser Korrektur, an der
+     * das Naheliegende nicht funktioniert.
+     *
+     * DREI BEDINGUNGEN, und jede traegt: `istVersorgt()` grenzt auf die
+     * Population dieses Pakets ein — auf einem nativen `<button>` ist die
+     * Leertaste schon lange eine Bedienung, und sie ihm wegzunehmen waere
+     * keine Korrektur dieses Falls, sondern eine Ruecknahme von T-A (dort
+     * gemessen: Mausklick, dann Leertaste, Zug 1 -> 2; so soll es bleiben).
+     * `_zeigerFokus` ist die Herkunft. Und `document.activeElement` ist die
+     * Gegenwart: ohne diesen Teil waere ein versorgtes, aber gar nicht
+     * fokussiertes Element ebenfalls "nicht per Tastatur fokussiert" — die
+     * Ausnahme wuerde zum Flaechenbrand.
+     *
+     * NUR DIE LEERTASTE, nicht Enter — das entscheiden die beiden Aufrufer.
+     * Enter konkurriert mit keinem Kuerzel; es gibt in der ganzen App keinen
+     * Enter-Zweig im Einzeltasten-Lauscher. Wer die Ausnahme dort ausweitet,
+     * nimmt der angeklickten Stelle ihre Bedienung, ohne etwas zu gewinnen.
+     * Dieselbe Abwaegung wie bei O-7, eine Ebene tiefer.
+     *
+     * @param {Element|null} el
+     * @returns {boolean}
+     */
+    nurMausfokus(el) {
+        if (!this.istVersorgt(el)) return false;
+        return el === this._zeigerFokus && el === document.activeElement;
     },
 
     /**

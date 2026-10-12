@@ -276,3 +276,110 @@ describe('Kehrschleife — Quelltext-Zusicherungen', () => {
         expect(gesetzt).toEqual(['role', 'tabindex']);
     });
 });
+
+describe('Kehrschleife — wer die Leertaste beansprucht', () => {
+    // WAS HIER GEPRUEFT WIRD. Die Kehrschleife macht rund 430 Stellen
+    // fokussierbar, die vorher keinen Fokus annehmen konnten. Damit fallen
+    // sie alle unter die Leertasten-Schranke aus T-A — und der gewohnte
+    // Griff des Spielleiters (Mausklick auf den Initiative-Wert, korrigieren,
+    // Leertaste = naechster Zug) war gebrochen. `nurMausfokus()` nimmt genau
+    // die Lage "versorgt UND per Zeiger fokussiert" wieder heraus.
+    //
+    // Die WIRKUNG davon — "der Zug geht nach dem Mausklick um genau 1
+    // weiter" — steht in `tests/e2e/features/tastatur-erreichbarkeit.spec.js`,
+    // Abschnitt (m); sie braucht einen echten Browser. Hier stehen die
+    // Regeln der Mitschrift.
+
+    beforeEach(() => {
+        dokumentAufbauen();
+        KeyboardReach.aktualisieren();
+        // Jeder Fall faengt ohne Fokus an — sonst traegt der Stempel des
+        // vorigen Falls in diesen hinein.
+        document.getElementById('f-div').blur();
+        document.body.focus();
+    });
+
+    /** @param {string} id */
+    const perZeigerFokussieren = id => {
+        const el = document.getElementById(id);
+        // Die Reihenfolge des Browsers: pointerdown, DANN der Fokus.
+        el.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+        el.focus();
+        return el;
+    };
+
+    /** @param {string} id */
+    const perTastaturFokussieren = id => {
+        const el = document.getElementById(id);
+        // Die Reihenfolge des Browsers: keydown (Tab), DANN der Fokus.
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        el.focus();
+        return el;
+    };
+
+    test('die Mitschrift haengt ueberhaupt (sonst prueft der Rest nichts)', () => {
+        expect(KeyboardReach.statistik().aktiv).toBe(true);
+        expect(perZeigerFokussieren('f-div')).toBe(document.activeElement);
+    });
+
+    test('istVersorgt() kennt genau die nachgeruesteten Stellen', () => {
+        expect(KeyboardReach.istVersorgt(document.getElementById('f-div'))).toBe(true);
+        expect(KeyboardReach.istVersorgt(document.getElementById('f-span'))).toBe(true);
+        // Ein nativer Knopf wird nicht versorgt — und genau daran haengt,
+        // dass ihm die Leertaste nicht weggenommen wird (T-A bleibt stehen).
+        expect(KeyboardReach.istVersorgt(document.getElementById('f-button'))).toBe(false);
+        // Eine Stelle, die ihr tabindex im Quelltext traegt, auch nicht.
+        expect(KeyboardReach.istVersorgt(document.getElementById('f-null'))).toBe(false);
+        expect(KeyboardReach.istVersorgt(null)).toBe(false);
+    });
+
+    test('per Zeiger fokussiert: das versorgte Element beansprucht die Leertaste NICHT', () => {
+        const el = perZeigerFokussieren('f-div');
+        expect(KeyboardReach.nurMausfokus(el)).toBe(true);
+    });
+
+    test('per Tastatur fokussiert: es beansprucht sie doch', () => {
+        const el = perTastaturFokussieren('f-div');
+        expect(KeyboardReach.nurMausfokus(el)).toBe(false);
+    });
+
+    test('derselbe Knoten, zweimal erreicht: der Stempel wird ueberschrieben', () => {
+        // Der Fall, der eine Mitschrift mit Gedaechtnis (`WeakSet`) falsch
+        // machen wuerde: wer eine Stelle anklickt, woanders hin tabuliert und
+        // dann zurueck, hat sie per TASTATUR erreicht.
+        const el = perZeigerFokussieren('f-div');
+        expect(KeyboardReach.nurMausfokus(el)).toBe(true);
+        perTastaturFokussieren('f-span');
+        perTastaturFokussieren('f-div');
+        expect(KeyboardReach.nurMausfokus(el)).toBe(false);
+    });
+
+    test('ein nativer Knopf per Zeiger: die Leertaste bleibt seine Bedienung', () => {
+        // Die Einschlagsgrenze der Korrektur, als Fall. Die Lage ist dort
+        // dieselbe (Mausfokus), aber der Knopf ist nicht versorgt — und auf
+        // ihm war die Leertaste schon vor der Kehrschleife eine Bedienung.
+        const el = perZeigerFokussieren('f-button');
+        expect(KeyboardReach.nurMausfokus(el)).toBe(false);
+    });
+
+    test('versorgt, aber gar nicht fokussiert: kein Anspruch und kein Flaechenbrand', () => {
+        perTastaturFokussieren('f-span');
+        const andere = document.getElementById('f-div');
+        expect(KeyboardReach.nurMausfokus(andere)).toBe(false);
+    });
+
+    test('die Herkunft des Fokus wird NICHT ueber :focus-visible erfragt', () => {
+        // Das ist die eine Stelle, an der das Naheliegende nicht
+        // funktioniert, und darum steht sie als Fall da. Gemessen am
+        // gebauten Buendel, Lauscher am `window` in der Capture-Phase: nach
+        // einem echten Mausklick meldet Chromium `:focus-visible` FALSE —
+        // aber IM `keydown` schon TRUE, also bevor irgendeine Schranke sie
+        // lesen kann. Wer die Mitschrift gegen die Pseudoklasse tauscht,
+        // bekommt lautlos den alten Fehler zurueck.
+        expect(SOURCE).not.toMatch(/matches\(\s*['"]:focus-visible/);
+        // Und der Stempel faellt beim `focusin`, nicht beim Tastendruck.
+        const mitschrift = SOURCE.slice(SOURCE.indexOf('_fokusMitschrift()'));
+        expect(mitschrift).toMatch(/addEventListener\(\s*\n?\s*'focusin'/);
+        expect(mitschrift).toMatch(/_zeigerFokus = this\._zeigerAnschlag \? ev\.target : null/);
+    });
+});
