@@ -7501,6 +7501,99 @@ Umzugs-Hinweises die Halte 1 und 2 — nach einem Neuladen ist er weg und die ga
 rutscht um zwei nach vorn (19/20/21/22/18 statt 21/22/23/24/20). Wer Tabulatorwege
 vergleicht, muss beide Lagen auseinanderhalten.
 
+### Abgetragen durch T-B (2026-10-12): der fehlende keydown-Zweig im Verteiler
+
+**Das ist die Vorarbeit für die Liste unten, nicht ihre Erledigung.** Durch diese Einheit
+wird **keine** einzige Stelle neu erreichbar — die Zahl der Tabulatorhalte ist vorher und
+nachher identisch (gemessen: 20/26/29/37/3/22/85/47/68/24 an zehn Zielen). Was sie baut,
+ist der Mechanismus, der bei der Nachrüstung darüber entscheidet, **ob ein nachgerüstetes
+Element auf Enter und Leertaste überhaupt etwas tut**. Ohne ihn wäre die Nachrüstung aus
+der Liste unten wirkungslos: ein `div[tabindex="0"]` ist fokussierbar und sieht wie ein
+Knopf aus, aber der Browser macht aus Enter und Leertaste darauf **kein** `click`.
+
+Gemessen am gebauten Bündel (Entwicklungs- **und** Produktionsbündel, Wert für Wert
+gleich), gefüllte Kampagne, 1440 px, echte Tastendrücke, je Ziel ein frischer
+Seitenaufbau, Ziel über Objektidentität aufgelöst, `click`-Ereignisse am Dokument in der
+Capture-Phase gezählt und nach `isTrusted` getrennt — bei **sechs und bei zwanzig**
+Einträgen je Typ mit gleichem Ergebnis:
+
+| Ziel (Halt) | vorher | nachher |
+| --- | --- | --- |
+| nachgerüstetes `div.dash-char` (20) | 0 Klicks, Ansicht bleibt, **scrollY 0 → 143 / 564** | 1 synth., → `view-party`, scrollY 0 |
+| nachgerüstetes `div.collapsible-header` (26) | 0 Klicks, Formular zu, **scrollY 0 → 123 / 787** | 1 synth., `#char-form` offen, scrollY 0 |
+| nachgerüstetes `div.char-card-hp` (29) | 0 Klicks, kein Rechner | 1 synth., Rechner offen, `#char-form` bleibt **zu** |
+| nachgerüstete `label.char-resistance-chip` (68) | 0 Klicks, `.selected` bleibt `false` | 1 synth., `.selected true`, `checked` bleibt `false` |
+| echter `button[roll-dice=4]` (20) | 1 Klick, echt 1 / synth 0, 1 Wurf | 1 Klick, echt 0 / synth 1, 1 Wurf |
+| echter `button[call=nextTurn]` (20) | 1 Klick, Zug 0 → 1 | 1 Klick, Zug 0 → 1 |
+
+Die beiden Spalten „vorher" mit dem Seitenlauf sind der Teil, der am Spieltisch weher tut
+als ein unerreichbarer Knopf: das Dokument **rollt bei jedem Anschlag weg**, und zwar um
+so weiter, je voller die Kampagne ist.
+
+**Kein Doppelfeuer — gezählt, nicht vermutet, und gegengeprobt.** Auf einem echten
+`<button>` ist der Zweig gefährlich: der Browser würde aus derselben Taste ohnehin ein
+`click` machen. Derselbe Zweig, zur Laufzeit durch eine Fassung **ohne**
+`preventDefault()`/`stopPropagation()` ersetzt, dann dieselbe Messung:
+
+| Gegenprobe (ohne die zwei Zeilen) | Messung |
+| --- | --- |
+| `button[roll-dice=4]`, Leertaste | **2 Klicks** (echt 1 / synth 1), **2 Würfe** |
+| `button[call=nextTurn]`, Leertaste | **2 Klicks**, Zug 0 → **2** |
+| nachgerüstetes `div.dash-char`, Leertaste | 1 Klick, **scrollY 787** |
+
+Zwei Würfe statt einem, und der Zug springt um **zwei** — genau der Fehler, den T-A gerade
+beseitigt hat, nur aus der anderen Richtung. **Wer eine der beiden Zeilen beim Aufräumen
+für redundant hält, bricht jeden `<button>` der App bzw. gibt die gekaperte Leertaste
+zurück.** Eine *gehaltene* Taste (1,5 s) löst ebenfalls nur **einmal** aus, bei
+Leertaste und Enter, und rollt dabei nicht.
+
+**Das `stopPropagation()` ersetzt die Schranke aus T-A nicht.** Es entzieht die Taste dem
+globalen Einzeltasten-Lauscher, der auf demselben Knoten in der *Bubble*-Phase sitzt — aber
+nur dort, wo dieser Zweig greift. Ein fokussierbares Element **ohne** `data-action` oder
+mit einer nicht registrierten Aktion (`<summary>`, die Assistenten-Ablagezonen) fällt
+weiterhin allein unter `beanspruchtLeertaste`. Beide Schichten bleiben nötig.
+
+**Die riskantere Hälfte ist, was der Zweig NICHT anfasst.** Am gebauten Bündel gezählt
+sitzen im Dokument Tippflächen **mit** eigener Aktion oder **in** einem Element mit
+Aktion: der Wiki-Editor als `div[contenteditable][data-action="wiki-content-input"]`,
+`textarea#quick-notes` innerhalb von `div[data-action="backdrop-close"]`, 38
+`input[type=checkbox]` in `label[data-action="toggle-selected"]`, 15 Suchfelder und ~45
+Auswahllisten mit eigener Aktion. Ein Zweig, der die Leertaste dort abfängt, macht den
+Wiki-Editor unbenutzbar und schließt die Schnellnotizen beim Tippen. Die Schranke hängt
+deshalb an der **Quelle** des Ereignisses, nicht am aufgelösten Ziel — hinge sie am Ziel,
+wäre genau der Fall „Textfeld in einer Schale mit Aktion" offen. Nachgemessen und grün:
+Suchfeld, Textfeld und Wiki-Editor nehmen weiter `"a b"` an, das Modal bleibt offen, ein
+Kontrollkästchen schaltet weiter **nativ** (echt 1 / synth 0), ein `<summary>` klappt
+weiter nativ auf (fünf in der Würfelansicht, keines mit einem `[data-action]`-Vorfahren).
+Keine Absende-Falle: der Quellbaum enthält **0** `<form>`-Elemente, nachgezählt in
+Quelltext und gebautem Dokument.
+
+**Der synthetische Klick geht auf die Quelle, nicht auf das aufgelöste Ziel.** Keine
+Geschmacksfrage: `backdrop-close` prüft `ctx.event.target === ctx.target` und schließt nur
+bei einem Treffer auf der Schale selbst. Ein Klick auf das aufgelöste Ziel würde diese
+Prüfung immer erfüllen — ein Tastendruck auf irgendetwas *innerhalb* der Schale würde den
+Dialog schließen.
+
+**Für die Liste unten heißt das:** die Nachrüstung braucht `tabindex="0"` plus — außer auf
+einer Marke — `role="button"` (O-1), und **sonst nichts**. Kein eigener Tastenlauscher je
+Stelle, keine `div → button`-Umbauten, keine Fallunterscheidung je Ansicht. Die 38
+`label.char-resistance-chip` sind nachgemessen der Beleg dafür, dass eine Marke **ohne**
+`role` trägt: Leertaste → 1 synthetischer Klick, `.selected false → true`, `checked`
+bleibt `false` — identisch zum Mausklick (O-6).
+
+Wächter: `tests/e2e/features/tastatur-verteiler.spec.js` (24 Fälle, zwei
+Kampagnengrößen, in der vollen E2E-Suite) und
+`tests/unit/event-delegation-keydown.test.js` (38 Fälle, die Entscheidungstabelle —
+dort stehen die Lagen, die im Browser nicht erreichbar sind: `a[href][data-action]` ist
+im Dokument unsichtbar, `input[type=button|submit|reset]` kommt nicht vor, und eine
+gehaltene Taste lässt sich mit Playwright nicht verlässlich erzeugen). Der rote Nachweis
+steht als eigener Commit: 16 Fehlschläge, 8 bestanden, zweimal reproduziert.
+
+Nebenbefund für künftige Messungen an nicht-nativen Zielen: die zehn `span.dmg-chip` der
+Würfelansicht liegen in einem **geschlossenen** `<details>` und sind auch nachgerüstet in
+400 echten Tabulatorsprüngen nicht erreichbar. Wer sie messen will, muss die Klappe
+vorher öffnen — sonst liest die Messung „unerreichbar", wo „zugeklappt" steht.
+
 ### Benannte Restschuld 1: der Rest des Tastatur-Strangs (90 Stellen)
 
 W6-E-4 = B deckt **nur** die Phantom-Halte. Der Rest bleibt benannte Restschuld, und hier

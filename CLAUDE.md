@@ -443,6 +443,7 @@ function deleteEntity(id) {
 | `P`        | Previous turn (Initiative)                     |
 | `Shift+N`  | New round (Initiative)                         |
 | `Space`    | Next turn (Initiative) — **not** while a focusable control has focus (TAST) |
+| `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key |
 | `Escape`   | Close overlays/modals                          |
 | `Entf`/`Backspace` | Delete selected node (Network view only)     |
 | `Alt+1/2/4/6/8`  | Quick roll d12/d20/d4/d6/d8                    |
