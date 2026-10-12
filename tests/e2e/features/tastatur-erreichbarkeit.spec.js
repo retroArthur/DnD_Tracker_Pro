@@ -661,3 +661,108 @@ test.describe('Kehrschleife — die zwei Attribute, und die Ausnahme fuer <label
         expect(attr.knopf.rolle, 'Ein echter <button> hat eine role bekommen').toBeNull();
     });
 });
+
+// ============================================================
+// (l) KEIN NEUER PHANTOMHALT
+// ============================================================
+//
+// DIESER FALL IST AUS EINEM EIGENEN FEHLER ENTSTANDEN, und darum steht er
+// hier. Der erste Lauf der Kehrschleife hat `div#shortcuts-overlay`
+// nachgeruestet — eine Blende (`data-action="backdrop-close"`), die
+// ausserhalb aller `.view` liegt und im geschlossenen Zustand NUR ueber
+// `opacity: 0` und `pointer-events: none` versteckt ist
+// (`assets/styles/dmscreen.css`, kein `display: none`, kein
+// `visibility: hidden`). Ein `tabindex` darauf bleibt fokussierbar.
+// Gemessen mit `sweep2.mjs` der Vermessung: +1 Phantomhalt in 23 von 24
+// Ansichten (Armaturenbrett 1 -> 2, Party 2 -> 3, DM-Schirm 8 -> 9) — ein
+// Tabulatorsprung auf eine unsichtbare Flaeche von 1440x900 px, auf der der
+// Fokusring nichts anzeigt, weil es nichts zu sehen gibt. Das ist genau die
+// Sorte Verschlechterung, die eine Erreichbarkeits-Nachruestung einbringen
+// kann, waehrend ihre eigene Zahl besser wird.
+//
+// Der Fall urteilt ueber die KLASSE, nicht ueber das eine Element: kein von
+// der Kehrschleife nachgeruestetes Element darf fokussierbar sein, waehrend
+// es nur ueber Opazitaet versteckt ist. Die Opazitaetskette ist aus
+// `phantom3.mjs` der Vermessung uebernommen.
+
+test.describe('Kehrschleife — kein neuer Phantomhalt', () => {
+    for (const ansicht of KAMPF_ANSICHTEN) {
+        test(`(l) ${ansicht.titel}: kein nachgeruestetes Element ist fokussierbar und dabei unsichtbar`, async ({
+            page
+        }) => {
+            test.setTimeout(90_000);
+            await ansichtOeffnen(page, ansicht.name, 20);
+
+            const phantome = await page.evaluate(() => {
+                const treffer = [];
+                document.querySelectorAll('[data-action][tabindex="0"]').forEach(el => {
+                    // Nur, was die Kehrschleife gesetzt haben kann.
+                    if (
+                        el.matches(
+                            'a[href],area[href],button,input,select,textarea,summary,details'
+                        )
+                    ) {
+                        return;
+                    }
+                    let n = el;
+                    let nullOpazitaetAn = null;
+                    let blockiert = false;
+                    while (n && n !== document.body) {
+                        const cs = getComputedStyle(n);
+                        if (
+                            cs.display === 'none' ||
+                            cs.visibility === 'hidden' ||
+                            n.hasAttribute('inert') ||
+                            n.hasAttribute('hidden')
+                        ) {
+                            // Richtig versteckt — der Browser nimmt es nicht
+                            // in die Tabulatorreihe, also kein Phantomhalt.
+                            blockiert = true;
+                            break;
+                        }
+                        if (parseFloat(cs.opacity) === 0 && !nullOpazitaetAn) {
+                            nullOpazitaetAn =
+                                n.tagName.toLowerCase() +
+                                (n.id ? '#' + n.id : '') +
+                                (typeof n.className === 'string' && n.className
+                                    ? '.' + n.className.trim().split(/\s+/)[0]
+                                    : '');
+                        }
+                        n = n.parentElement;
+                    }
+                    if (blockiert || !nullOpazitaetAn) return;
+                    treffer.push(
+                        `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''} ` +
+                            `[${el.getAttribute('data-action')}] — opacity:0 an ${nullOpazitaetAn}`
+                    );
+                });
+                return treffer;
+            });
+
+            expect(
+                phantome,
+                'Nachgeruestete Elemente, die fokussierbar und dabei unsichtbar sind:\n    ' +
+                    phantome.join('\n    ')
+            ).toEqual([]);
+        });
+    }
+
+    test('(l) die Blende div#shortcuts-overlay bleibt ohne tabindex', async ({ page }) => {
+        test.setTimeout(90_000);
+        await ansichtOeffnen(page, 'initiative', 6);
+        const attr = await page.evaluate(() => {
+            const el = document.getElementById('shortcuts-overlay');
+            return el
+                ? {
+                      aktion: el.getAttribute('data-action'),
+                      ti: el.getAttribute('tabindex'),
+                      rolle: el.getAttribute('role')
+                  }
+                : null;
+        });
+        expect(attr, 'div#shortcuts-overlay steht nicht im Dokument').not.toBeNull();
+        expect(attr.aktion, 'Die Blende traegt nicht mehr backdrop-close').toBe('backdrop-close');
+        expect(attr.ti, 'Die Blende hat ein tabindex bekommen — Phantomhalt').toBeNull();
+        expect(attr.rolle, 'Die Blende hat eine role bekommen').toBeNull();
+    });
+});

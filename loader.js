@@ -164,6 +164,11 @@ const MODULES = [
     'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+    // Die Kehrschleife NACH dem Verteiler: sie macht Elemente erreichbar,
+    // die der keydown-Zweig dort bedient. Umgekehrt gaebe es einen Moment,
+    // in dem ein Element fokussierbar ist und die Leertaste darauf nichts
+    // tut bzw. ein Einzeltasten-Kuerzel ausloest — der Fehler aus T-A.
+    'ui/keyboard-reach.js',
     'ui/editors/rich-text.js',
     'ui/editors/editor-toolbar-build.js',
     'ui/editors/rich-text-insert.js',
