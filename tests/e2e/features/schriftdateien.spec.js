@@ -689,12 +689,40 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
     // plattformunabhaengig, weil BEIDE Seiten denselben Rueckfall aufloesen:
     // fehlt Arial, loesen beide auf sans-serif auf und die GLEICHHEIT haelt
     // weiter. Nur die Ungleichheits-Richtung waere plattformabhaengig, und
-    // die traegt die Kontrolle in Teil 0, nicht dieser Fall.
+    // die traegt die Kontrolle in diesem Fall selbst (siehe unten), nicht
+    // mehr die in Teil 0.
+    //
+    // WARUM DIESER FALL SEINE EIGENE GEGENPROBE BRAUCHT (Gegenpruefung
+    // Runde 2, B-01). Er war der einzige Teil ohne Kontrolle, und das war
+    // messbar: seine lebenden Zusicherungen waren `rueck > 0` und
+    // `nichtda === rueck`, und die VOLLE Ausnahmeliste filterte den
+    // eigentlichen Befund (`unerwartetGleich`) strukturell leer. Beides
+    // ueberlebt zwei Verfaelschungen, beide im isolierten HEAD-Export
+    // nachgestellt:
+    //   MUT9b  `breiten[name] = 500` statt der echten Messung.
+    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN);
+    //          volle Datei 3 failed (Teil 0, Teil 1, Teil 5) / 11 passed.
+    //   MUT21  `rueckfallStack()` gibt den Stack unverkuerzt zurueck, der
+    //          Vergleich wird Stack-gegen-sich-selbst.
+    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN);
+    //          --grep "Teil 3" -> 1 failed.
+    // 500 === 500 und 500 > 0 sind wahr; ein Rueckfall, der die Familie noch
+    // nennt, ist von ihr nicht zu unterscheiden. Dieser Fall urteilte also
+    // gruen ueber eine Messung, die nicht stattgefunden hatte. Drei billige
+    // Zusicherungen schliessen das: der Messkoerper nennt die Familie, der
+    // Rueckfall nennt sie NICHT, und die Kontrolle in der Gegenrichtung
+    // zeigt mit einem Zeichen aus der cmap einen Abstand.
     // ------------------------------------------------------------------
     test.describe('Teil 2 — der echte Stack aus EDITOR_FONTS', () => {
         test('Jeder gebuendelte Menueeintrag unterscheidet sich von seinem Rueckfall', async ({
             page
         }) => {
+            // Eigene Untergrenze, wie in Teil 1 und Teil 3: die von Teil 0
+            // liegt in einem fremden describe und faehrt bei `--grep` nicht
+            // mit.
+            expect(CSS_FAMILIEN.length, 'fonts.css liefert keine Familien').toBeGreaterThanOrEqual(
+                MINDEST_CSS_FAMILIEN
+            );
             await ladeApp(page);
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             const gebuendelt = Object.entries(menue).filter(([, stack]) =>
@@ -705,30 +733,89 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             const stapel = {};
             for (const [schluessel, stack] of gebuendelt) {
                 const rueckfall = rueckfallStack(stack);
+                const dateien = dateienDerFamilie(ersteFamilie(stack));
                 stapel[`${schluessel}__voll`] = { stack };
                 stapel[`${schluessel}__rueckfall`] = { stack: rueckfall };
                 stapel[`${schluessel}__nichtda`] = {
                     stack: `'${FAMILIE_OHNE_DATEI}', ${rueckfall}`
                 };
+                // Die Gegenrichtung: DERSELBE Stack, aber mit Zeichen, die
+                // die Dateien dieser Familie laut cmap tragen.
+                stapel[`${schluessel}__kontrolle`] = { stack, text: kontrollText(dateien) };
+                stapel[`${schluessel}__kontrolleOhne`] = {
+                    stack: rueckfall,
+                    text: kontrollText(dateien)
+                };
             }
             const { breiten } = await messeBreiten(page, stapel);
 
             const befund = [];
+            const stummeKontrollen = [];
+            let gemessen = 0;
             for (const [schluessel, stack] of gebuendelt) {
+                const familie = ersteFamilie(stack);
+                const rueckfall = rueckfallStack(stack);
                 const voll = breiten[`${schluessel}__voll`];
                 const rueck = breiten[`${schluessel}__rueckfall`];
                 const nichtda = breiten[`${schluessel}__nichtda`];
                 expect(rueck).toBeGreaterThan(0);
                 // Auch hier: der Nichtvorhandene ist die Messlatte.
                 expect(nichtda).toBe(rueck);
+
+                // Der Messkoerper nennt die Familie ueberhaupt, und der
+                // Rueckfall nennt sie NICHT. Ohne die zweite Zusicherung
+                // vergleicht dieser Fall zwei gleiche Stacks (MUT21 oben).
+                expect(
+                    stapel[`${schluessel}__voll`].stack,
+                    `${schluessel}: der Messkoerper nennt "${familie}" nicht`
+                ).toContain(familie);
+                expect(
+                    rueckfall,
+                    `${schluessel}: der Rueckfall "${rueckfall}" nennt "${familie}" noch — ` +
+                        `dann vergleicht dieser Fall den Stack mit sich selbst.`
+                ).not.toContain(familie);
+
+                // DIE KONTROLLE. Ohne sie ueberlebt eine Messung, die nur
+                // eine Konstante liefert (MUT9b oben), dieses Urteil.
+                const dateien = dateienDerFamilie(familie);
+                const zeichen = kontrollZeichenNamen(dateien);
+                expect(
+                    zeichen.length,
+                    `${familie} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
+                ).toBeGreaterThan(0);
+                const abstand = Math.abs(
+                    breiten[`${schluessel}__kontrolle`] - breiten[`${schluessel}__kontrolleOhne`]
+                );
+                if (abstand <= KONTROLL_MINDESTABSTAND) {
+                    stummeKontrollen.push(
+                        `${schluessel} (${familie}): "${stack}" rendert ${zeichen.join(' ')} nur ` +
+                            `${abstand}px anders als "${rueckfall}"`
+                    );
+                }
+                gemessen++;
+
                 befund.push({
                     schluessel,
-                    familie: ersteFamilie(stack),
+                    familie,
                     voll,
                     rueck,
                     gleich: voll === rueck
                 });
             }
+            // Es wurde wirklich je Eintrag gemessen, nicht nur die Schleife
+            // betreten — `unerwartetGleich` unten ist bei leerer Schleife
+            // trivial leer.
+            expect(gemessen, 'kein einziger Menueeintrag wurde gemessen').toBe(gebuendelt.length);
+            // Erst die Kontrolle, dann der Befund: ist die Messung blind,
+            // sagt der Befund darunter nichts.
+            expect(
+                stummeKontrollen,
+                `Fuer diese Eintraege ist der Messweg von Teil 2 nicht empfindlich: er nennt ` +
+                    `die Familie, der Rueckfall nennt sie nicht, gemessen wird mit Zeichen aus ` +
+                    `ihrer cmap — und trotzdem kommt derselbe Wert heraus. Dann ist die ` +
+                    `Gleichheit beim Probetext kein Befund, sondern eine Eigenschaft der ` +
+                    `Messung.`
+            ).toEqual([]);
 
             const unerwartetGleich = befund.filter(
                 b =>
