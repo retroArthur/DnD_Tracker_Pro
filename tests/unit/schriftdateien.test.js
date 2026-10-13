@@ -13,7 +13,36 @@
  * Tabellenverzeichnis -> Brotli -> cmap, Glyph-ID-aufgeloest).
  *
  * Die Dateiliste kommt AUS fonts.css, nie aus einem Literal hier — ein
- * Waechter mit eigener Liste uebersieht die elfte Datei.
+ * Waechter mit eigener Liste uebersieht die achte Datei.
+ *
+ * ======================================================================
+ * DIE MESSLOGIK IST AM 2026-10-13 GEKIPPT (Dateiaustausch, Commit b0ada5b)
+ * ======================================================================
+ * Bis dahin trugen ALLE zehn gebuendelten Dateien das falsche Subset
+ * (Kyrillisch bzw. Devanagari), keine kannte ein lateinisches 'A'. Diese
+ * Ratsche hielt diesen Befund fest: die Ausnahmeliste war VOLL, und der
+ * Anker gegen Leerlauf war die KURZE Liste der wirklich getragenen Zeichen
+ * (' ' in allen zehn, dazu 'A'/'Ä' in Inter).
+ *
+ * Jetzt tragen alle sieben Dateien den lateinischen Satz vollstaendig.
+ * Damit ist jene Verankerung nicht nur ueberholt, sondern UNBRAUCHBAR, und
+ * zwar aus einem Grund, der beim Umbau leicht uebersehen wird:
+ *
+ *   Solange die Dateien kaputt waren, war "traegt fast nichts" eine
+ *   auffaellige Aussage. Eine auf `fehlend = alles` festgenagelte
+ *   Fehlliste liess sich daran erkennen. Heute ist "traegt alles" die
+ *   WAHRHEIT — eine auf `fehlend = []` festgenagelte Fehlliste ist vom
+ *   richtigen Urteil mit gesunden Dateien allein NICHT zu unterscheiden.
+ *
+ * Darum ist der Anker vom URTEIL auf die ROHDATEN der cmap umgezogen:
+ * exakte Glyphenzahl, die VOLLSTAENDIGE Blockverteilung (vorher nur ein
+ * Block je Datei) und `ZUGABE_ANKER` — Zeichen, die jede Datei traegt und
+ * die absichtlich NICHT im deutschen Satz stehen. Dazu kommt in Teil 0 eine
+ * Gegenprobe mit synthetischen cmap-Daten, weil der gesunde Bestand selbst
+ * keine Datei mehr hergibt, an der ein Nein des Messwerkzeugs zu sehen waere.
+ *
+ * Die Eigenschaft, auf die es ankommt, ist unveraendert:
+ * BEI KAPUTTEM MESSWERKZEUG WIRD DIESE RATSCHE ROT, NICHT GRUEN.
  */
 
 const path = require('path');
@@ -23,46 +52,72 @@ const werkzeug = require('../../tools/pruefe-schriftdateien.js');
 // SCHRIFT_AUSNAHMEN — Dateien, die den deutschen Zeichensatz NICHT tragen
 // und deren Zustand als bekannt gilt.
 //
-// DIESE LISTE IST BEWUSST VOLL, NICHT ABWESEND — nach dem Vorbild von
+// DIESE LISTE IST BEWUSST LEER, NICHT ABWESEND — nach dem Vorbild von
 // `EXEC_COMMAND_ALLOWLIST` in `tests/e2e/features/editor-floating.spec.js`,
-// die bewusst LEER und nicht abwesend ist. Hier ist es umgekehrt: alle zehn
-// gebuendelten Dateien tragen seit ihrer Geburt (Commit 1c3245b,
-// `feat(02-02): PWA-Grundlage`) das falsche Subset. Es gab nie eine richtige
-// Fassung. Die Liste beschreibt also keinen Sonderfall, sondern den
-// vollstaendigen Ist-Zustand.
+// deren leere Fassung ebenfalls eine Aussage ist und keine Auslassung.
 //
-// BEIM AUSTAUSCH DER DATEIEN MUSS DIESE LISTE LEER WERDEN. Jede Datei, die
-// hier steht und den deutschen Satz in Wahrheit traegt, stellt Teil 4
-// (Verwesungsprobe) rot — ohne diese Probe wuerde die Liste nach der
-// Reparatur zur Luege und der Waechter waere wertlos.
+// BIS ZUM 2026-10-13 STANDEN HIER ALLE ZEHN DATEIEN:
+//     roboto-400, roboto-700                 kyrillisch, 155 kyr. Glyphen
+//     inter-400, inter-500, inter-600        kyrillisch, 148 kyr. Glyphen
+//     poppins-400, poppins-500, poppins-600  Devanagari,  94 Dev. Glyphen
+//     source-sans-pro-400, -600              kyrillisch,  56 kyr. Glyphen
+// Sie trugen dieses Subset seit ihrer Geburt (1c3245b, `feat(02-02):
+// PWA-Grundlage`); eine richtige Fassung hat es nie gegeben. Die Liste
+// beschrieb also keinen Sonderfall, sondern den vollstaendigen Ist-Zustand.
 //
-// AUSNAHMEN_SOLL nagelt die Laenge auf genau 10. Eine elfte kaputte Datei
-// faellt damit sofort auf, statt sich in einer offenen Liste zu verstecken.
+// Mit dem Austausch (b0ada5b) ist sie leer geworden — nicht aus Nachsicht,
+// sondern weil kein Eintrag mehr WAHR waere: die Verwesungsprobe in Teil 4
+// hat genau das erzwungen und stellte beim Austausch von selbst rot.
+//
+// DIE GEFAHR HAT DIE RICHTUNG GEWECHSELT. Vorher war zu befuerchten, dass
+// die Liste nach einer Reparatur zur Luege wird. Jetzt ist zu befuerchten,
+// dass jemand eine Datei EINTRAEGT, um einen echten Regress stillzustellen.
+// Teil 4 prueft darum nicht mehr nur die (leeren) Eintraege, sondern
+// beweisend am gesunden Bestand, dass JEDER heute moegliche Eintrag
+// abgewiesen wuerde — eine leere Liste allein ist trivial sauber und waere
+// kein Beweis.
 // ----------------------------------------------------------------------
-const SCHRIFT_AUSNAHMEN = {
-    'roboto-400.woff2':
-        'kyrillisches Subset, 155 kyrillische Glyphen, 180 insgesamt, kein lateinisches A',
-    'roboto-700.woff2':
-        'kyrillisches Subset, 155 kyrillische Glyphen, 180 insgesamt, kein lateinisches A',
-    'inter-400.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
-    'inter-500.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
-    'inter-600.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
-    'poppins-400.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
-    'poppins-500.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
-    'poppins-600.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
-    'source-sans-pro-400.woff2': 'kyrillisches Subset, 56 kyrillische Glyphen, 61 insgesamt',
-    'source-sans-pro-600.woff2': 'kyrillisches Subset, 56 kyrillische Glyphen, 61 insgesamt'
-};
+const SCHRIFT_AUSNAHMEN = {};
 
-const AUSNAHMEN_SOLL = 10;
+const AUSNAHMEN_SOLL = 0;
 
-// Mindestzahl geprueefter Dateien. Gegen `>= 0`: ein leeres Parse-Ergebnis
-// (fonts.css-Regex kaputt, Verzeichnis verschoben) wuerde sonst gruen
+// ----------------------------------------------------------------------
+// SCHRIFTDATEIEN_SOLL — die Zahl der gebuendelten Dateien, EXAKT.
+//
+// ENTSCHEIDUNG (2026-10-13): festnageln (`toBe`), nicht als Untergrenze
+// fuehren (`toBeGreaterThanOrEqual`). Vorher stand hier `MINDEST_DATEIEN =
+// 10` an drei Stellen, geheftet an den damaligen Zehnerbau. Heute sind es
+// sieben Dateien und sieben @font-face-Bloecke (zwei variable Familien
+// liefern alle Gewichte aus je einer Datei).
+//
+// BEGRUENDUNG. Der Zweck dieser Zahl ist Leerlauf-Erkennung, nicht eine
+// Politik "die App muss mindestens N Schriften ausliefern". Der Kommentar
+// der alten Fassung sagte das schon: gegen `>= 0` wuerde ein leeres
+// Parse-Ergebnis (fonts.css-Regex kaputt, Verzeichnis verschoben) gruen
 // durchlaufen, weil "keine Datei verletzt die Regel" trivial wahr ist.
-const MINDEST_DATEIEN = 10;
+// Fuer diesen Zweck ist die exakte Zahl strikt staerker:
+//
+//   - Sie faengt den Leerlauf genauso (0 ist nicht 7).
+//   - Sie faengt zusaetzlich das WACHSEN. Eine achte Datei, die in
+//     fonts.css, sw.js und Verzeichnis gleichzeitig auftaucht, ist von
+//     Teil 5 und Teil 7 aus nicht zu sehen — die pruefen Mengen-
+//     GLEICHHEIT der drei Enden, und drei einträchtig gewachsene Enden
+//     sind untereinander gleich. Nur die exakte Zahl zwingt dann einen
+//     Menschen, die achte Datei zu bemerken.
+//   - Eine Untergrenze, die bei jeder Strukturaenderung nach unten
+//     korrigiert wird, ist leer: sie behauptet immer nur, was gerade
+//     ohnehin gilt. Genau das war der Zustand, in dem `10` vier Monate
+//     ueber zehn kaputten Dateien stand.
+//
+// DER PREIS IST GEWOLLT: jede Strukturaenderung am Schriftbestand macht
+// diese Zeile rot und muss hier ABSICHTLICH nachgezogen werden. Dasselbe
+// Prinzip tragen `AUSNAHMEN_SOLL` und `GEMESSENE_SCHRIFTEN`. Der SCHR-Vorfall
+// konnte vier Monate laufen, weil niemand den Bestand ansehen MUSSTE.
+// ----------------------------------------------------------------------
+const SCHRIFTDATEIEN_SOLL = 7;
 
 // ----------------------------------------------------------------------
-// GEMESSENE_BLOECKE — Gegenprobe gegen Leerlauf.
+// GEMESSENE_SCHRIFTEN — Gegenprobe gegen Leerlauf, auf ROHDATEN verankert.
 //
 // Der Zweck ist NICHT, die Subsets zu bewerten, sondern zu beweisen, dass
 // der Parser echte Daten liest. Bei einem kaputten Parser (Brotli-Block an
@@ -71,65 +126,202 @@ const MINDEST_DATEIEN = 10;
 // und der Test ist rot. Eine Ratsche, die auch bei kaputtem Messwerkzeug
 // gruen bleibt, ist wertlos.
 //
-// `getragen` ist die EINZIGE dieser Zahlen, die am URTEIL der Messung haengt.
-// Glyphenzahl, Blockzahl und `laengenStimmen` kommen aus `cmap.codepunkte`;
-// die Fehlliste ist ein eigener Rechenweg daneben (`pruefeDatei()`,
-// `DEUTSCHE_CODEPUNKTE.filter(...)`). Genau der liess sich bis hierher auf
-// "traegt nichts" festnageln, ohne dass eine der anderen Zahlen sich bewegte:
-// mit `const fehlend = DEUTSCHE_CODEPUNKTE.slice()` blieben alle 60 Faelle
-// dieser Datei gruen. Darum stehen hier die Zeichen, die jede Datei WIRKLICH
-// traegt — ' ' (U+0020) in allen zehn, dazu 'A'/'Ä' in Inter und 'A'/'B' in
-// Source Sans Pro. Aufsteigend sortiert, damit die Reihenfolge von
-// DEUTSCHER_ZEICHENSATZ keine Rolle spielt.
+// WARUM HIER DIE VOLLE BLOCKVERTEILUNG STEHT UND NICHT EIN BLOCK JE DATEI:
+// vorher genuegte ein Block, weil er das FALSCHE Subset benannte (Inter 148
+// kyrillisch) und damit von sich aus auffaellig war. Ein lateinischer Block
+// ist unauffaellig; erst die vollstaendige Verteilung ist eine Aussage, die
+// ein kaputter Parser nicht zufaellig trifft.
 //
-// Zahlen gemessen am Stand 4e0d810 mit `node tools/pruefe-schriftdateien.js`.
+// Zahlen gemessen am Stand b0ada5b mit `node tools/pruefe-schriftdateien.js`.
 // ----------------------------------------------------------------------
-const GEMESSENE_BLOECKE = {
-    'roboto-400.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180, getragen: [' '] },
-    'roboto-700.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180, getragen: [' '] },
-    'inter-400.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
-    'inter-500.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
-    'inter-600.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
-    'poppins-400.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
-    'poppins-500.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
-    'poppins-600.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
+const GEMESSENE_SCHRIFTEN = {
+    'roboto-variable.woff2': {
+        glyphen: 229,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 4,
+            Punctuation: 18,
+            Currency: 1,
+            'Letterlike/Arrows': 1,
+            'Math Operators': 1
+        }
+    },
+    'inter-variable.woff2': {
+        glyphen: 230,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 95,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 5,
+            Punctuation: 18,
+            Currency: 1,
+            'Letterlike/Arrows': 3,
+            'Math Operators': 1
+        }
+    },
+    'poppins-400.woff2': {
+        glyphen: 217,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 4,
+            Punctuation: 13,
+            Currency: 1,
+            'Letterlike/Arrows': 1,
+            'Math Operators': 2
+        }
+    },
+    'poppins-500.woff2': {
+        glyphen: 217,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 4,
+            Punctuation: 13,
+            Currency: 1,
+            'Letterlike/Arrows': 1,
+            'Math Operators': 2
+        }
+    },
+    'poppins-600.woff2': {
+        glyphen: 217,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 4,
+            Punctuation: 13,
+            Currency: 1,
+            'Letterlike/Arrows': 1,
+            'Math Operators': 2
+        }
+    },
     'source-sans-pro-400.woff2': {
-        block: 'Cyrillic',
-        anzahl: 56,
-        glyphen: 61,
-        getragen: [' ', 'A', 'B']
+        glyphen: 231,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 5,
+            Punctuation: 17,
+            Currency: 1,
+            'Letterlike/Arrows': 3,
+            'Math Operators': 2
+        }
     },
     'source-sans-pro-600.woff2': {
-        block: 'Cyrillic',
-        anzahl: 56,
-        glyphen: 61,
-        getragen: [' ', 'A', 'B']
+        glyphen: 231,
+        bloecke: {
+            'Basic Latin': 95,
+            'Latin-1 Supplement': 96,
+            'Latin Extended-A': 3,
+            'IPA/Modifier': 5,
+            Punctuation: 17,
+            Currency: 1,
+            'Letterlike/Arrows': 3,
+            'Math Operators': 2
+        }
     }
 };
 
-/**
- * Die Zeichen des deutschen Satzes, die diese Datei WIRKLICH traegt — das
- * Komplement der Fehlliste, aufsteigend sortiert.
- * @param {{fehlendeZeichen: string[]}} datei
- * @returns {string[]}
- */
-function getrageneDeutsche(datei) {
-    return werkzeug.DEUTSCHER_ZEICHENSATZ.filter(z => !datei.fehlendeZeichen.includes(z)).sort();
-}
+// ----------------------------------------------------------------------
+// ZUGABE_ANKER — der Ersatz fuer den alten `getragen`-Anker.
+//
+// Zeichen, die JEDE der sieben Dateien traegt (gemessen: 113 solche
+// Zeichen) und die ABSICHTLICH NICHT im deutschen Satz stehen. Genau das
+// macht sie als Anker brauchbar: sie koennen in `codepunkte` nur stehen,
+// wenn die cmap wirklich gelesen wurde. Kein Rechenweg, der aus
+// `DEUTSCHE_CODEPUNKTE` abgeleitet ist, kann sie erzeugen.
+//
+// U+2212 ist der sauberste der fuenf: das Werkzeug schliesst ihn
+// AUSDRUECKLICH aus `DEUTSCHER_ZEICHENSATZ` aus (dokumentiert in
+// `tools/pruefe-schriftdateien.js`, "Bewusst NICHT enthalten"). Er steht
+// trotzdem in Googles `latin`-unicode-range und damit in jeder der sieben
+// Dateien — ein Zeichen, das das Urteil nie anfasst und die Messung belegt.
+// ----------------------------------------------------------------------
+const ZUGABE_ANKER = Object.freeze([
+    0x00a0, // geschuetztes Leerzeichen
+    0x0152, // OE-Ligatur
+    0x0153, // oe-Ligatur
+    0x2122, // Markenzeichen
+    0x2212 // echtes Minus — vom deutschen Satz ausdruecklich ausgenommen
+]);
 
-// Einmal messen, alle Teile lesen dieselbe Messung.
+// Einmal messen, alle Teile lesen dieselbe Messung. Steht VOR den
+// Hilfsfunktionen, weil `verwesungsBefund()` auf NACH_NAME zugreift.
 const ERGEBNIS = werkzeug.pruefeAlle();
 const QUELLEN = werkzeug.leseSchriftQuellen();
 const NACH_NAME = new Map(ERGEBNIS.dateien.map(d => [d.name, d]));
 
+/**
+ * Baut eine cmap-Untertabelle im Format 4 aus Segmenten.
+ *
+ * Zweck: synthetische Gegenprobe. Der gesunde Bestand traegt ueberall
+ * alles, also gibt es keine Datei mehr, an der ein NEIN des Messwerkzeugs
+ * zu beobachten waere. Ohne eine solche Gegenprobe bliebe ungeprueft, ob
+ * der Leser ueberhaupt noch zwischen "Glyphe vorhanden" und "nicht
+ * vorhanden" unterscheidet.
+ *
+ * Feldfolge nach OpenType (format, length, language, segCountX2,
+ * searchRange, entrySelector, rangeShift, endCode[], reservedPad,
+ * startCode[], idDelta[], idRangeOffset[]).
+ * @param {Array<{start: number, ende: number, delta: number}>} segmente
+ * @returns {Buffer}
+ */
+function baueFormat4(segmente) {
+    const n = segmente.length;
+    const buf = Buffer.alloc(16 + 8 * n);
+    buf.writeUInt16BE(4, 0);
+    buf.writeUInt16BE(buf.length, 2);
+    buf.writeUInt16BE(0, 4);
+    buf.writeUInt16BE(n * 2, 6);
+    segmente.forEach((s, i) => {
+        buf.writeUInt16BE(s.ende, 14 + i * 2);
+        buf.writeUInt16BE(s.start, 16 + n * 2 + i * 2);
+        buf.writeInt16BE(s.delta, 16 + n * 4 + i * 2);
+        buf.writeUInt16BE(0, 16 + n * 6 + i * 2);
+    });
+    return buf;
+}
+
+/**
+ * Der Befund der Verwesungsprobe fuer EINEN moeglichen Ausnahme-Eintrag.
+ *
+ * Als eigene Funktion und nicht inline im Testkoerper, damit die Probe auch
+ * bei LEERER Ausnahmeliste Zaehne hat: Teil 4 kann sie so gegen den
+ * gesunden Bestand fahren und beweisen, dass jeder heute denkbare Eintrag
+ * abgewiesen wuerde.
+ * @param {string} name Dateiname, z. B. 'poppins-400.woff2'
+ * @returns {string|null} Begruendung der Abweisung, oder null wenn der
+ *   Eintrag berechtigt waere.
+ */
+function verwesungsBefund(name) {
+    const datei = NACH_NAME.get(name);
+    if (!datei) {
+        return `${name} steht auf SCHRIFT_AUSNAHMEN, wird von fonts.css aber nicht eingebunden`;
+    }
+    if (datei.traegtDeutsch) {
+        return (
+            `${name} steht auf SCHRIFT_AUSNAHMEN, traegt den deutschen ` +
+            `Zeichensatz aber vollstaendig. Die Datei ist in Ordnung — nimm sie ` +
+            `aus SCHRIFT_AUSNAHMEN heraus und senke AUSNAHMEN_SOLL.`
+        );
+    }
+    return null;
+}
+
 describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
     // ------------------------------------------------------------------
-    // Waechter des Waechters: ohne diese zwei Faelle koennte alles
+    // Teil 0 — Waechter des Waechters: ohne diese Faelle koennte alles
     // Folgende leer durchlaufen.
     // ------------------------------------------------------------------
-    describe('Waechter des Waechters', () => {
-        test(`Mindestens ${MINDEST_DATEIEN} Dateien werden ueberhaupt geprueft`, () => {
-            expect(ERGEBNIS.geprueft).toBeGreaterThanOrEqual(MINDEST_DATEIEN);
+    describe('Teil 0 — Waechter des Waechters', () => {
+        test(`Genau ${SCHRIFTDATEIEN_SOLL} Dateien werden geprueft`, () => {
+            expect(ERGEBNIS.geprueft).toBe(SCHRIFTDATEIEN_SOLL);
         });
 
         test('Der deutsche Zeichensatz ist nicht leer und enthaelt Alphabet, Ziffern, Umlaute', () => {
@@ -139,10 +331,10 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             }
         });
 
-        test.each(Object.keys(GEMESSENE_BLOECKE))(
+        test.each(Object.keys(GEMESSENE_SCHRIFTEN))(
             'Gegenprobe gegen Leerlauf: %s liest echte cmap-Daten',
             name => {
-                const soll = GEMESSENE_BLOECKE[name];
+                const soll = GEMESSENE_SCHRIFTEN[name];
                 const datei = NACH_NAME.get(name);
                 expect(datei).toBeDefined();
                 expect(datei.fehler).toBeNull();
@@ -153,16 +345,14 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                 expect(datei.laengenStimmen).toBe(true);
 
                 expect(datei.glyphen).toBe(soll.glyphen);
-                const block = datei.bloecke.find(b => b.name === soll.block);
-                expect(block).toBeDefined();
-                expect(block.anzahl).toBe(soll.anzahl);
 
-                // Und das URTEIL selbst, nicht nur seine Nebenprodukte: die
-                // Zeichen, die diese Datei vom deutschen Satz wirklich
-                // traegt. Ohne diese Zeile bleibt die ganze Datei gruen,
-                // wenn `pruefeDatei()` seine Fehlliste gar nicht mehr aus
-                // der cmap bildet.
-                expect(getrageneDeutsche(datei)).toEqual(soll.getragen);
+                // Die VOLLE Blockverteilung, nicht ein Block daraus. Als
+                // Objekt verglichen, damit auch ein ZUSAETZLICHER Block
+                // auffaellt (ein griechischer etwa) und nicht nur ein
+                // fehlender.
+                const gemessen = {};
+                for (const b of datei.bloecke) gemessen[b.name] = b.anzahl;
+                expect(gemessen).toEqual(soll.bloecke);
 
                 // Zwei Wege, dieselbe Aussage: die Fehlliste muss genau das
                 // Komplement der GELESENEN Codepunkte sein. Bricht einer der
@@ -175,6 +365,19 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             }
         );
 
+        test.each(Object.keys(GEMESSENE_SCHRIFTEN))(
+            'Gegenprobe gegen Leerlauf: %s traegt die Zugabe-Anker ausserhalb des deutschen Satzes',
+            name => {
+                const datei = NACH_NAME.get(name);
+                expect(datei).toBeDefined();
+                for (const codepunkt of ZUGABE_ANKER) {
+                    // Nicht im Urteilssatz — kann also nur aus der cmap kommen.
+                    expect(werkzeug.DEUTSCHE_CODEPUNKTE).not.toContain(codepunkt);
+                    expect(datei.codepunkte).toContain(codepunkt);
+                }
+            }
+        );
+
         test('Keine cmap-Untertabelle blieb wegen unbekannten Formats ungelesen', () => {
             for (const datei of ERGEBNIS.dateien) {
                 if (datei.fehler) continue;
@@ -182,14 +385,64 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                 expect(datei.untertabellen).toBeGreaterThan(0);
             }
         });
+
+        // --------------------------------------------------------------
+        // Synthetische Gegenprobe: das Messwerkzeug kann NEIN sagen.
+        //
+        // Notwendig geworden, weil der gesunde Bestand ueberall alles
+        // traegt. Mit zehn kaputten Dateien war jedes Nein im Bestand
+        // selbst zu sehen; heute gibt es dort kein Nein mehr, und ein
+        // Leser, der blind alles als abgedeckt meldet, waere am Bestand
+        // nicht von einem richtigen zu unterscheiden.
+        // --------------------------------------------------------------
+        describe('Synthetische Gegenprobe: der cmap-Leser unterscheidet vorhanden/fehlend', () => {
+            test('Eine cmap mit nur A und B liefert genau A und B', () => {
+                const buf = baueFormat4([
+                    { start: 0x41, ende: 0x42, delta: 1 },
+                    // Die normative Schlussgruppe zeigt auf Glyphe 0 und
+                    // darf NICHT als abgedeckt gemeldet werden.
+                    { start: 0xffff, ende: 0xffff, delta: 1 }
+                ]);
+                const gelesen = werkzeug.leseCmapUntertabelle(buf, 0);
+                expect(gelesen.unterstuetzt).toBe(true);
+                expect(gelesen.format).toBe(4);
+                expect(gelesen.codepunkte).toEqual([0x41, 0x42]);
+            });
+
+            test('Der deutsche Satz gilt an einer A/B-cmap als NICHT getragen', () => {
+                const buf = baueFormat4([{ start: 0x41, ende: 0x42, delta: 1 }]);
+                const vorhanden = new Set(werkzeug.leseCmapUntertabelle(buf, 0).codepunkte);
+                const fehlend = werkzeug.DEUTSCHE_CODEPUNKTE.filter(c => !vorhanden.has(c));
+                // 100 Zeichen im Satz, 'A' und 'B' davon getragen.
+                expect(fehlend.length).toBe(werkzeug.DEUTSCHE_CODEPUNKTE.length - 2);
+                expect(fehlend).toContain('Ä'.codePointAt(0));
+            });
+
+            test('Ein Bereich, der auf Glyphe 0 zeigt, gilt als NICHT getragen', () => {
+                // Die dokumentierte Falle: wer nur startCode/endCode liest,
+                // meldet 'A' hier als abgedeckt, obwohl die Schrift nur
+                // .notdef dafuer hat.
+                const buf = baueFormat4([{ start: 0x41, ende: 0x41, delta: -0x41 }]);
+                expect(werkzeug.leseCmapUntertabelle(buf, 0).codepunkte).toEqual([]);
+            });
+
+            test('zaehleBloecke ordnet synthetische Codepunkte dem richtigen Block zu', () => {
+                const bloecke = werkzeug.zaehleBloecke(new Set([0x41, 0x42, 0x410, 0x905]));
+                expect(bloecke).toEqual([
+                    { name: 'Basic Latin', anzahl: 2 },
+                    { name: 'Cyrillic', anzahl: 1 },
+                    { name: 'Devanagari', anzahl: 1 }
+                ]);
+            });
+        });
     });
 
     // ------------------------------------------------------------------
     // Teil 1 — Pfade
     // ------------------------------------------------------------------
     describe('Teil 1 — jede url() aus fonts.css zeigt auf eine vorhandene Datei', () => {
-        test(`fonts.css fuehrt ${MINDEST_DATEIEN} oder mehr Einbindungen`, () => {
-            expect(QUELLEN.length).toBeGreaterThanOrEqual(MINDEST_DATEIEN);
+        test(`fonts.css fuehrt genau ${SCHRIFTDATEIEN_SOLL} Einbindungen`, () => {
+            expect(QUELLEN.length).toBe(SCHRIFTDATEIEN_SOLL);
         });
 
         test.each(QUELLEN.map(q => [q.url, q]))('%s ist vorhanden', (url, quelle) => {
@@ -214,6 +467,11 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
 
     // ------------------------------------------------------------------
     // Teil 3 — die eigentliche Zusicherung
+    //
+    // GEKIPPT: vorher war der Ausnahmezweig der Normalfall (10 von 10) und
+    // der Erfolgszweig toter Code. Jetzt ist es umgekehrt — alle sieben
+    // Dateien laufen durch den Erfolgszweig, der Ausnahmezweig ist bei
+    // leerer Liste unerreichbar und bleibt als Falle fuer den Rueckfall.
     // ------------------------------------------------------------------
     describe('Teil 3 — jede Datei traegt den deutschen Satz oder steht auf SCHRIFT_AUSNAHMEN', () => {
         test(`SCHRIFT_AUSNAHMEN fuehrt genau ${AUSNAHMEN_SOLL} Eintraege`, () => {
@@ -232,25 +490,12 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             '%s traegt den deutschen Satz oder ist freigestellt',
             (name, datei) => {
                 if (Object.prototype.hasOwnProperty.call(SCHRIFT_AUSNAHMEN, name)) {
-                    // KEIN stiller Ausstieg mehr. Vorher verliess dieser
-                    // Zweig den Testkoerper vor beiden Zusicherungen — und
-                    // weil die Ausnahmeliste VOLL ist (10 von 10), waren das
-                    // zehn gruene Faelle, die null Zusicherungen ausfuehrten.
-                    // Der Ausnahmezweig nagelt jetzt das Gegenteil fest.
-                    const soll = GEMESSENE_BLOECKE[name];
-                    if (!soll) {
-                        // Jests `expect` nimmt keine Meldung als zweites
-                        // Argument (das kann nur Playwright) — darum der
-                        // Wurf, wie in Teil 4 daneben.
-                        throw new Error(
-                            `${name} steht auf SCHRIFT_AUSNAHMEN, fehlt aber in ` +
-                                `GEMESSENE_BLOECKE. Beide Listen muessen dieselben ` +
-                                `Dateien fuehren.`
-                        );
-                    }
+                    // Unerreichbar, solange die Liste leer ist. Bleibt
+                    // stehen, damit ein Rueckfall auf kaputte Dateien nicht
+                    // zugleich den Ausnahmeweg neu erfinden muss — und
+                    // damit ein Eintrag hier nicht still durchlaeuft.
                     expect(datei.traegtDeutsch).toBe(false);
                     expect(datei.fehlendeZeichen.length).toBeGreaterThan(0);
-                    expect(getrageneDeutsche(datei)).toEqual(soll.getragen);
                     return;
                 }
                 expect(datei.fehlendeZeichen).toEqual([]);
@@ -261,8 +506,16 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
 
     // ------------------------------------------------------------------
     // Teil 4 — Verwesungsprobe
+    //
+    // GEKIPPT. Vorher: "keine Ausnahme ueberlebt ihre Reparatur" — die
+    // Probe bewachte eine volle Liste gegen das Veralten. Jetzt ist die
+    // Liste leer, und eine leere Liste ist trivial sauber. Die Probe muss
+    // darum in der ANDEREN Richtung Zaehne haben: sie beweist am gesunden
+    // Bestand, dass ein Eintrag fuer eine funktionierende Datei abgewiesen
+    // wird. Erst damit ist die Freistellung kein Schlupfloch, mit dem sich
+    // ein kuenftiger echter Regress stillstellen laesst.
     // ------------------------------------------------------------------
-    describe('Teil 4 — Verwesungsprobe: keine Ausnahme ueberlebt ihre Reparatur', () => {
+    describe('Teil 4 — Verwesungsprobe: keine Freistellung ohne Befund', () => {
         const eintraege = Object.keys(SCHRIFT_AUSNAHMEN);
 
         test('Die Ausnahmeliste nennt nur Dateien, die fonts.css auch einbindet', () => {
@@ -275,20 +528,29 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             test.each(eintraege)(
                 '%s traegt den deutschen Satz wirklich nicht (sonst von der Liste nehmen)',
                 name => {
-                    const datei = NACH_NAME.get(name);
-                    expect(datei).toBeDefined();
-                    if (datei.traegtDeutsch) {
-                        throw new Error(
-                            `${name} steht auf SCHRIFT_AUSNAHMEN, traegt den deutschen ` +
-                                `Zeichensatz aber vollstaendig. Die Datei wurde repariert — ` +
-                                `nimm sie aus SCHRIFT_AUSNAHMEN heraus und senke ` +
-                                `AUSNAHMEN_SOLL auf ${eintraege.length - 1}.`
-                        );
-                    }
-                    expect(datei.traegtDeutsch).toBe(false);
+                    const befund = verwesungsBefund(name);
+                    if (befund) throw new Error(befund);
+                    expect(befund).toBeNull();
                 }
             );
         }
+
+        // Die Faelle, die bei LEERER Liste die Arbeit tun.
+        test.each(ERGEBNIS.dateien.map(d => d.name))(
+            '%s wuerde als Ausnahme-Eintrag heute abgewiesen',
+            name => {
+                // Haette jemand diese Datei eingetragen, um sie
+                // stillzustellen, waere der Eintrag unbegruendet — denn die
+                // Datei ist in Ordnung.
+                expect(verwesungsBefund(name)).toMatch(/traegt den deutschen Zeichensatz aber/);
+            }
+        );
+
+        test('Ein Eintrag fuer eine unbekannte Datei wird abgewiesen', () => {
+            expect(verwesungsBefund('gibt-es-nicht.woff2')).toMatch(
+                /wird von fonts\.css aber nicht eingebunden/
+            );
+        });
     });
 
     // ------------------------------------------------------------------
@@ -306,8 +568,10 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             expect(ERGEBNIS.drift.deckungsgleich).toBe(true);
         });
 
-        test('sw.js fuehrt ueberhaupt Schriftpfade (Gegenprobe gegen Leerlauf)', () => {
-            expect(ERGEBNIS.drift.swNamen.length).toBeGreaterThanOrEqual(MINDEST_DATEIEN);
+        test(`sw.js fuehrt genau ${SCHRIFTDATEIEN_SOLL} Schriftpfade`, () => {
+            // Auf der ROHEN Liste, nicht auf der Menge: ein doppelt
+            // eingetragener Pfad faellt damit ebenfalls auf.
+            expect(ERGEBNIS.drift.swNamen.length).toBe(SCHRIFTDATEIEN_SOLL);
         });
     });
 
@@ -322,7 +586,7 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                 'utf8'
             );
             // Der Waechter darf keinen konkreten Schriftnamen kennen; sonst
-            // uebersieht er die elfte Datei. Geprueft wird auf die gemessenen
+            // uebersieht er die achte Datei. Geprueft wird auf die gemessenen
             // Dateinamen, nicht auf die Endung '.woff2' — die braucht das
             // Werkzeug fuer den sw.js-Ausdruck legitim.
             const treffer = ERGEBNIS.drift.cssNamen.filter(name => quelle.includes(name));
@@ -347,7 +611,7 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
     //
     // Eine woff2, die im Verzeichnis liegt und keine @font-face-Regel hat,
     // wurde also von niemandem geprueft und von build.py veroeffentlicht.
-    // Das Versprechen im Kopf der E2E-Datei ("ein elftes Face faellt damit
+    // Das Versprechen im Kopf der E2E-Datei ("ein weiteres Face faellt damit
     // auf, statt uebersehen zu werden") galt nur fuer ein Face in fonts.css,
     // nicht fuer eine Datei auf der Platte. tests/build/test_build_fonts.py
     // vergleicht Verzeichnis gegen Verzeichnis und kann den Unterschied
@@ -359,9 +623,9 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
     // nicht aus einem Literal: Teil 6 bleibt gueltig.
     // ------------------------------------------------------------------
     describe('Teil 7 — das Verzeichnis traegt keine Datei, die fonts.css nicht nennt', () => {
-        test('Gegenprobe gegen Leerlauf: das Verzeichnis wird ueberhaupt gelesen', () => {
+        test(`Das Verzeichnis traegt genau ${SCHRIFTDATEIEN_SOLL} woff2`, () => {
             expect(ERGEBNIS.drift.verzeichnisse.length).toBeGreaterThan(0);
-            expect(ERGEBNIS.drift.verzeichnisNamen.length).toBeGreaterThanOrEqual(MINDEST_DATEIEN);
+            expect(ERGEBNIS.drift.verzeichnisNamen.length).toBe(SCHRIFTDATEIEN_SOLL);
         });
 
         test('Beide Listen sind mengengleich', () => {
