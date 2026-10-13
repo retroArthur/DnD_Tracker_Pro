@@ -71,7 +71,12 @@
  *    keydown am Eingabefeld) und bringt role/aria-modal/aria-label schon
  *    mit. Sie in die Falle zu nehmen waere eine Verhaltensaenderung ohne
  *    Messung und ohne Auftrag.
-
+ *
+ *    SIE AUS DEM SELEKTOR ZU NEHMEN REICHTE ABER NICHT — Befund von Runde 1.
+ *    Die Falle haengt am DOKUMENT in der CAPTURE-Phase und laeuft damit VOR
+ *    dem Lauscher der Palette; aus dem Selektor genommen heisst nicht aus der
+ *    WIRKUNG genommen. Darum zieht sich `_tab()` jetzt ausdruecklich zurueck,
+ *    solange die Palette offen ist (siehe `hoehereBlendeOffen`).
  *
  * GESCHRIEBEN IST ES TROTZDEM ALS LEBENDE SAMMLUNG PLUS classList, und das
  * ist gemessen und nicht gespart. Die Falle haengt an einem keydown am
@@ -98,6 +103,59 @@
 const SCHALEN_KLASSE = 'modal-overlay';
 const SCHALE_OHNE_KLASSE = 'quicknotes-modal';
 const schalenSammlung = document.getElementsByClassName(SCHALEN_KLASSE);
+
+/**
+ * DIE EINE BLENDE, DIE UEBER EINEM DIALOG LIEGT UND IHRE TASTATUR SELBST
+ * FUEHRT: die Befehlspalette.
+ *
+ * WAS GEMESSEN WAR (Befund von Runde 1, gefuellte Kampagne, nur echte
+ * Tastendruecke). Dialog offen, dann Strg+Shift+K: die Palette geht auf, der
+ * Fokus landet in ihrem Eingabefeld, Tippen kommt an. Der ERSTE echte
+ * Tabulatordruck zog den Fokus aber in den Dialog DARUNTER — 4 von 4 Halten
+ * im Dialog, alle 4 laut `elementFromPoint` VERDECKT (z-index beider Schichten
+ * 1000, die Palette steht spaeter im Dokument), und Enter darauf aenderte
+ * `data-theme` dark -> sepia. Eine Einstellungsaenderung an einem
+ * Bedienelement, das der Spielleiter nicht sieht.
+ *
+ * A/B-Gegenprobe, die die Ursache festnagelt: `window.ModalFocus._tab` zur
+ * Laufzeit stillgelegt — dieselben Tabulatordruecke bleiben zuerst IN der
+ * Palette und laufen ihre eigene Trefferliste ab. Die Falle war die Ursache,
+ * nicht die Palette.
+ *
+ * WARUM DER RUECKZUG NICHT AM FOKUS HAENGT, sondern an der Blende. Ein
+ * `activeElement.closest('.cp-overlay.cp-visible')` greift nur, solange der
+ * Fokus noch IN der Palette liegt. Gemessen: nachdem der Tabulator die
+ * Trefferliste der Palette abgelaufen ist, fuehrt er ueber `<body>` weiter
+ * (so war es auch vor dieser Datei). Beim naechsten Anschlag waere
+ * `activeElement` dann nicht mehr in der Palette, die Falle wuerde greifen
+ * und den Fokus in den verdeckten Dialog ziehen — derselbe Fehler, nur einen
+ * Anschlag spaeter. Darum entscheidet die offene Blende, nicht der Fokus.
+ *
+ * WARUM `.shortcuts-overlay.show` NICHT DAZUGEHOERT. Nachgemessen in beiden
+ * Armen: mit UND ohne Falle landen 4 von 4 Spruengen im verdeckten Dialog,
+ * und Enter aendert beide Male das Thema. Die Blende hat keine eigenen
+ * Haltepunkte — es gibt dort nichts zu entziehen, der Befund ist vorbestehend
+ * und nicht von der Falle verursacht. Ein unbelegter Selektor in einem Zweig,
+ * der bei jedem Tabulatordruck laeuft, ist keine Vorsichtsmassnahme, sondern
+ * ungemessener Code. Ebenso die Schnell-Referenz (`/`): ihr Panel liegt mit
+ * z-index 600 UNTER der Dialogflaeche (1000), und ohne Falle sind ihre Reiter
+ * verdeckt erreichbar — dort VERBESSERT die Falle die Lage.
+ *
+ * KOSTEN, gemessen in der Party-Ansicht bei zwanzig Eintraegen je Typ
+ * (9147 Knoten), je Tabulatordruck:
+ *
+ *   querySelector('.cp-overlay.cp-visible')             8,05 us
+ *   activeElement.closest(…)                            0,05 us
+ *   lebende Sammlung + classList (diese Fassung)   unter der Messgrenze
+ *
+ * Dieselbe Begruendung wie bei den Schalen, und derselbe Fehler, den
+ * f391b0b gerade behoben hat. Der Zweig steht ausserdem HINTER
+ * `oberstesModal()`: ohne offenen Dialog kostet er gar nichts, und die
+ * gemessene 1,5-us-Bilanz des Normalfalls bleibt unberuehrt.
+ */
+const BLENDEN_KLASSE = 'cp-overlay';
+const BLENDE_OFFEN_KLASSE = 'cp-visible';
+const blendenSammlung = document.getElementsByClassName(BLENDEN_KLASSE);
 
 /**
  * Was als Haltepunkt zaehlt. Dieselbe Liste, die auch die Vermessung und
@@ -241,6 +299,19 @@ const ModalFocus = {
             }
         }
         return beste;
+    },
+
+    /**
+     * Liegt eine Blende ueber dem Dialog, die ihre Tastatur selbst fuehrt?
+     * Dann gehoert der Tabulator ihr. Begruendung und Messung an
+     * `BLENDEN_KLASSE`.
+     * @returns {boolean}
+     */
+    hoehereBlendeOffen() {
+        for (let i = 0; i < blendenSammlung.length; i++) {
+            if (blendenSammlung[i].classList.contains(BLENDE_OFFEN_KLASSE)) return true;
+        }
+        return false;
     },
 
     /**
@@ -429,6 +500,12 @@ const ModalFocus = {
         if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
         const m = this.oberstesModal();
         if (!m) return;
+        // EINE BLENDE UEBER DEM DIALOG BEHAELT DEN TABULATOR. Dieser Zweig
+        // steht VOR jedem `preventDefault()` — der Anschlag geht unveraendert
+        // an die Blende weiter. Begruendung, A/B-Gegenprobe und Kosten an
+        // `BLENDEN_KLASSE`; bewacht von Fall (k) in
+        // `tests/e2e/features/modal-fokus.spec.js`.
+        if (this.hoehereBlendeOffen()) return;
         const h = this.haltepunkte(m);
         if (!h.length) {
             // Ein Dialog ohne Haltepunkt. Der Tabulator darf ihn nicht
@@ -471,14 +548,18 @@ const ModalFocus = {
 
     /**
      * Diagnose fuer die Konsole und fuer Messungen.
-     * @returns {{ aktiv: boolean, offen: string|null, haltepunkte: number }}
+     * @returns {{ aktiv: boolean, offen: string|null, haltepunkte: number,
+     *             blende: boolean }}
      */
     statistik() {
         const m = this.oberstesModal();
         return {
             aktiv: !!this._eingehaengt,
             offen: m ? m.id || '(ohne id)' : null,
-            haltepunkte: m ? this.haltepunkte(m).length : 0
+            haltepunkte: m ? this.haltepunkte(m).length : 0,
+            // `true` heisst: eine hoehere Schicht hat den Tabulator, die
+            // Falle ist gerade bewusst inert.
+            blende: this.hoehereBlendeOffen()
         };
     }
 };

@@ -560,3 +560,84 @@ describe('ModalFocus — der gleichwertige Oeffner, wenn der echte neu gezeichne
         ).toBeNull();
     });
 });
+
+describe('ModalFocus — eine hoehere Blende behaelt den Tabulator', () => {
+    /** @param {boolean} offen */
+    function palette(offen) {
+        const p = document.createElement('div');
+        p.id = 'cp-overlay';
+        p.className = 'cp-overlay' + (offen ? ' cp-visible' : '');
+        p.innerHTML = '<input class="cp-input"><div class="cp-result" tabindex="0">Treffer</div>';
+        document.body.appendChild(p);
+        return p;
+    }
+
+    /** Einen echten Tab-Anschlag auf das aktive Element schicken. */
+    function tab(shift = false) {
+        const ev = new window.KeyboardEvent('keydown', {
+            key: 'Tab',
+            shiftKey: shift,
+            bubbles: true,
+            cancelable: true
+        });
+        document.activeElement.dispatchEvent(ev);
+        return ev;
+    }
+
+    test('bei offener Palette greift die Falle nicht — der Anschlag geht durch', () => {
+        // DER BEFUND VON RUNDE 1. Am Buendel gemessen: Dialog auf,
+        // Strg+Shift+K, dann zog der ERSTE echte Tabulatordruck den Fokus in
+        // den Dialog DARUNTER — 4 von 4 Halten verdeckt, und Enter aenderte
+        // data-theme dark -> sepia. Die Falle haengt in der CAPTURE-Phase am
+        // Dokument und lief damit VOR dem Lauscher der Palette.
+        const m = schale('b1-modal', '<button>a</button><button>b</button>');
+        ModalFocus.einstieg(m);
+        const p = palette(true);
+        const feld = p.querySelector('.cp-input');
+        feld.focus();
+
+        const ev = tab();
+        expect(ev.defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(feld);
+    });
+
+    test('ohne Palette haelt die Falle wie bisher', () => {
+        const m = schale('b2-modal', '<button>a</button><button>b</button>');
+        ModalFocus.einstieg(m);
+        palette(false);
+        const h = ModalFocus.haltepunkte(m);
+        h[0].focus();
+
+        const ev = tab();
+        expect(ev.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(h[1]);
+    });
+
+    test('der Rueckzug gilt auch, wenn der Fokus die Palette schon verlassen hat', () => {
+        // WARUM DER ZWEIG AN DER BLENDE HAENGT UND NICHT AM FOKUS. Ein
+        // `activeElement.closest('.cp-overlay.cp-visible')` greift nur,
+        // solange der Fokus noch IN der Palette liegt. Gemessen am Buendel
+        // fuehrt der Tabulator hinter deren Trefferliste ueber <body> weiter
+        // — beim naechsten Anschlag waere die Falle dann wieder zustaendig
+        // und zoege den Fokus in den verdeckten Dialog. Derselbe Fehler, nur
+        // einen Anschlag spaeter.
+        const m = schale('b3-modal', '<button>a</button><button>b</button>');
+        ModalFocus.einstieg(m);
+        palette(true);
+        const draussen = document.createElement('button');
+        document.body.appendChild(draussen);
+        draussen.focus();
+
+        const ev = tab();
+        expect(ev.defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(draussen);
+    });
+
+    test('statistik meldet die Blende', () => {
+        const m = schale('b4-modal', '<button>a</button>');
+        ModalFocus.einstieg(m);
+        expect(ModalFocus.statistik().blende).toBe(false);
+        palette(true);
+        expect(ModalFocus.statistik().blende).toBe(true);
+    });
+});
