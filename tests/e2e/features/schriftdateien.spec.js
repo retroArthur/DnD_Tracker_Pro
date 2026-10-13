@@ -692,46 +692,105 @@ async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESS
 // Seiten auf denselben Wert — also direkt auf den Fehlschlag.
 const GENERIKA_FRIST = 15000;
 
+// ----------------------------------------------------------------------
+// DIE GENERIKA, AUF DIE GEWARTET WIRD — alle drei, die diese Datei
+// wirklich benutzt.
+//
+// HIER STANDEN NUR `monospace` UND `serif` (Gegenpruefung Runde 4,
+// Befund 4). Das ist genau zwei Drittel der Deckung, die der Satz
+// 'Gilt fuer JEDEN Fall dieser Datei' unten verspricht:
+//     `monospace`  Rueckfall von Teil 1 und Teil 6 (RUECKFALL)
+//     `serif`      nur Vergleichsgroesse der Meta-Kontrolle in Teil 0
+//     `sans-serif` Rueckfall von Teil 2 UND Teil 3 — und auf den wurde
+//                  NICHT gewartet
+// Belegt am Quelltext, nicht erschlossen: `core/constants.js:489-492`
+// fuehrt alle vier gebuendelten Menueeintraege als
+// "'<Familie>', Arial, sans-serif", `rueckfallStack()` liefert fuer
+// Teil 2 und Teil 3 also "Arial, sans-serif", und
+// `.github/workflows/ci.yml` laeuft sechsmal auf `ubuntu-latest`, wo
+// Arial fehlt — dort rendert `sans-serif`.
+//
+// Tritt der dokumentierte Lastzustand bei `sans-serif` ein und bei
+// `serif` nicht, laeuft der Waechter durch und Teil 2/Teil 3 melden
+// genau das Falsch-Rot, gegen das er gebaut ist. Ein solcher Fall ist
+// NICHT nachgestellt — ein noch nicht aufgeloestes Generikum laesst sich
+// nicht auf Zuruf herstellen; gedeckt wird die Luecke, nicht ein
+// gesehener Fehlschlag.
+//
+// GEMESSEN auf Windows/Chromium, Pangramm bei 40px:
+//     monospace 1363.515625 · serif 1042.8125 · sans-serif 1128.703125
+//     Abstaende: mono/serif 320.70 · mono/sans 234.81 · serif/sans 85.89
+// Der knappste Abstand liegt damit Faktor 85 vor der Schwelle von 1px.
+// Auf ubuntu-latest sind es die drei DejaVu-Schnitte (Serif, Sans,
+// Sans Mono), ebenfalls mit deutlich verschiedenen Metriken. Die
+// Forderung lautet PAARWEISE Unterscheidbarkeit: ein noch nicht
+// aufgeloestes Generikum zieht alle drei auf denselben Wert, also faellt
+// auch der Paarvergleich.
+// ----------------------------------------------------------------------
+const WAECHTER_GENERIKA = ['monospace', 'serif', 'sans-serif'];
+
 /**
- * Wartet, bis Chromium `monospace` und `serif` unterscheidbar aufgeloest hat.
- * Gegenprobe gegen Leerlauf: bleibt es dabei, WIRFT die Funktion — die Datei
- * misst dann nicht blind weiter, sondern sagt, warum sie nicht messen kann.
+ * Wartet, bis Chromium `monospace`, `serif` und `sans-serif` PAARWEISE
+ * unterscheidbar aufgeloest hat. Gegenprobe gegen Leerlauf: bleibt es dabei,
+ * WIRFT die Funktion — die Datei misst dann nicht blind weiter, sondern sagt,
+ * warum sie nicht messen kann, und mit welchen Zahlen.
  */
 async function warteAufGenerika(page) {
-    const gemessen = await page
-        .waitForFunction(
-            ({ groesse, text }) => {
-                const mess = fam => {
-                    const span = document.createElement('span');
-                    span.style.cssText =
-                        `font-family:${fam};font-size:${groesse};` +
-                        'white-space:pre;display:inline-block;' +
-                        'position:absolute;left:-99999px;top:0;visibility:hidden;';
-                    span.textContent = text;
-                    document.body.appendChild(span);
-                    const breite = span.getBoundingClientRect().width;
-                    span.remove();
-                    return breite;
-                };
-                const mono = mess('monospace');
-                const serif = mess('serif');
-                return Math.abs(mono - serif) > 1 ? { mono, serif } : false;
-            },
-            { groesse: MESSGROESSE, text: PROBETEXT },
-            { timeout: GENERIKA_FRIST }
-        )
-        .then(griff => griff.jsonValue())
-        .catch(() => null);
+    const messeAlle = ({ groesse, text, familien }) => {
+        const mess = fam => {
+            const span = document.createElement('span');
+            span.style.cssText =
+                `font-family:${fam};font-size:${groesse};` +
+                'white-space:pre;display:inline-block;' +
+                'position:absolute;left:-99999px;top:0;visibility:hidden;';
+            span.textContent = text;
+            document.body.appendChild(span);
+            const breite = span.getBoundingClientRect().width;
+            span.remove();
+            return breite;
+        };
+        const breiten = {};
+        for (const fam of familien) breiten[fam] = mess(fam);
+        const gleich = [];
+        for (let i = 0; i < familien.length; i++) {
+            for (let j = i + 1; j < familien.length; j++) {
+                const a = familien[i];
+                const b = familien[j];
+                if (Math.abs(breiten[a] - breiten[b]) <= 1) {
+                    gleich.push(`${a}/${b} (${breiten[a]}px gegen ${breiten[b]}px)`);
+                }
+            }
+        }
+        return { breiten, gleich };
+    };
+    const argumente = {
+        groesse: MESSGROESSE,
+        text: PROBETEXT,
+        familien: WAECHTER_GENERIKA
+    };
 
-    if (!gemessen) {
-        throw new Error(
-            `Chromium hat 'monospace' und 'serif' nach ${GENERIKA_FRIST} ms nicht ` +
-                'unterscheidbar aufgeloest (Differenz <= 1 px). Jede Breitenmessung ' +
-                'dieser Datei waere an dieser Stelle blind — der Lauf wird abgebrochen, ' +
-                'statt ein Falsch-Rot auf den Meta-Kontrollen zu melden.'
-        );
+    // Eigene Schleife statt `waitForFunction`: der Messausdruck soll EINE
+    // Quelle haben, und die Fehlermeldung soll die ZAHLEN der letzten Messung
+    // nennen. `waitForFunction` serialisiert seinen Rumpf in die Seite und
+    // haette entweder eine zweite Abschrift von `messeAlle` verlangt oder ein
+    // `eval` darauf. Kostet im gesunden Fall einen Rundlauf, wie vorher.
+    const ende = Date.now() + GENERIKA_FRIST;
+    let letzte = { breiten: {}, gleich: ['(noch nicht gemessen)'] };
+    for (;;) {
+        letzte = await page.evaluate(messeAlle, argumente);
+        if (letzte.gleich.length === 0) return letzte.breiten;
+        if (Date.now() >= ende) break;
+        await page.waitForTimeout(50);
     }
-    return gemessen;
+
+    throw new Error(
+        `Chromium hat ${WAECHTER_GENERIKA.map(f => `'${f}'`).join(', ')} nach ` +
+            `${GENERIKA_FRIST} ms nicht paarweise unterscheidbar aufgeloest. Nicht ` +
+            `unterscheidbar: ${letzte.gleich.join(', ')}. Gemessen: ` +
+            `${JSON.stringify(letzte.breiten)}. Jede Breitenmessung dieser Datei ` +
+            `waere an dieser Stelle blind — der Lauf wird abgebrochen, statt ein ` +
+            `Falsch-Rot auf den Meta-Kontrollen zu melden.`
+    );
 }
 
 async function ladeApp(page) {
