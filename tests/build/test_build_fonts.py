@@ -25,6 +25,17 @@ Darum kopiert build.py jetzt selbst, und diese Datei haelt das fest.
 
 Die Dateiliste kommt aus dem Verzeichnis, nie aus einem Literal hier — ein
 Waechter mit eigener Liste uebersieht die elfte Datei.
+
+STAND 2026-10-13: AUS ZEHN DATEIEN SIND SIEBEN GEWORDEN. Die zehn oben
+genannten trugen seit ihrer Geburt das falsche Subset (kyrillisch bzw.
+Devanagari, kein lateinisches 'A'); der Austausch hat sie durch sieben
+richtige ersetzt — Roboto und Inter als je EINE variable Datei fuer alle
+Gewichte, Poppins und Source Sans Pro statisch je Gewicht. Die Messprotokolle
+in den Docstrings dieser Datei nennen weiter 'zehn': sie sind auf einen Commit
+datiert und bleiben als Protokoll stehen. Die ZUSICHERUNGEN nennen
+SCHRIFTDATEIEN_SOLL, und das ist jetzt 7.
+
+Herkunft, Lizenz und Nachpruefung je Datei: assets/fonts/HERKUNFT.md.
 """
 
 import os
@@ -42,12 +53,40 @@ from build import kopiere_schriftdateien
 REPO = Path(__file__).parent.parent.parent
 QUELL_SCHRIFTEN = REPO / 'assets' / 'fonts'
 
+# Die Zahl der gebuendelten Schriftdateien, EXAKT — nicht '>= N'.
+#
+# Sie stand hier zweimal als '>= 10' und war nach dem Austausch (sieben Dateien)
+# an beiden Stellen rot. '>= 7' waere der bequeme Weg und der falsche: der Zweck
+# der Zahl ist Leerlauf-Erkennung, und eine untere Schranke uebersieht genau den
+# Fall, der hier schon einmal eingetreten ist — eine Datei, die versehentlich
+# DAZUKOMMT. Die Waisen in dist/assets/fonts/ (siehe TestKeineWaisenNebenDemBuendel
+# unten) sind dieselbe Krankheit eine Ebene weiter. Die exakte Zahl faengt den
+# Leerlauf genauso (0 != 7) und zusaetzlich das Wachsen.
+#
+# Dieselbe Zahl und dieselbe Begruendung in tests/unit/schriftdateien.test.js
+# (SCHRIFTDATEIEN_SOLL) und tests/e2e/features/schriftdateien.spec.js (FACES_SOLL).
+SCHRIFTDATEIEN_SOLL = 7
+
+# Endungen, die der Kopierschritt als Schrift behandelt. Spiegelt
+# build.SCHRIFT_DATEIENDUNGEN — hier bewusst ein eigenes Literal, damit der
+# Waechter rot wird, wenn dort jemand die Menge aufweitet.
+SCHRIFT_ENDUNGEN = {'.woff2', '.woff', '.ttf', '.otf'}
+
 
 def _woff2_namen(verzeichnis):
     """Die woff2-Dateinamen eines Verzeichnisses, sortiert."""
     if not verzeichnis.is_dir():
         return []
     return sorted(p.name for p in verzeichnis.iterdir() if p.suffix == '.woff2')
+
+
+def _alle_namen(verzeichnis):
+    """ALLE Dateinamen eines Verzeichnisses, sortiert — auch die, die keine
+    Schrift sind. Ohne diesen Blick ist nicht zu sehen, was der Kopierschritt
+    zusaetzlich mitnimmt."""
+    if not verzeichnis.is_dir():
+        return []
+    return sorted(p.name for p in verzeichnis.iterdir() if p.is_file())
 
 
 class TestSchriftenNebenDasBundle:
@@ -57,9 +96,12 @@ class TestSchriftenNebenDasBundle:
         """Gegenprobe gegen Leerlauf: ohne Quelldateien sagt alles Folgende
         nichts, weil 'alle kopiert' bei null Dateien trivial wahr ist."""
         namen = _woff2_namen(QUELL_SCHRIFTEN)
-        assert len(namen) >= 10, (
-            f"assets/fonts/ fuehrt nur {len(namen)} woff2 — erwartet mindestens 10. "
-            f"Ohne Quelldateien prueft diese Datei nichts."
+        assert len(namen) == SCHRIFTDATEIEN_SOLL, (
+            f"assets/fonts/ fuehrt {len(namen)} woff2 — erwartet genau "
+            f"{SCHRIFTDATEIEN_SOLL}: {namen}. Bei NULL prueft diese Datei nichts "
+            f"('alle kopiert' ist dann trivial wahr). Bei MEHR ist eine Datei "
+            f"dazugekommen, die weder fonts.css noch sw.js kennt — dann erst "
+            f"assets/fonts/HERKUNFT.md fortschreiben und die Zahl hier mitziehen."
         )
 
     def test_kopiert_alle_schriften_in_ein_leeres_ziel(self, tmp_path):
@@ -153,6 +195,104 @@ class TestSchriftenNebenDasBundle:
         assert len(kopien) == 1, f"Kopierschritt {len(kopien)}-mal aufgerufen, erwartet 1"
 
 
+class TestKeineWaisenNebenDemBuendel:
+    """Der Kopierschritt legt dazu, raeumt aber nicht auf (Befund Runde 2).
+
+    NACHGESTELLT, nicht vermutet. Im Arbeitsbaum dieses Repos, nach dem
+    Austausch von zehn auf sieben Dateien:
+
+        $ ls dist/assets/fonts/*.woff2 | wc -l
+          12
+        $ comm -13 <(ls assets/fonts | sort) <(ls dist/assets/fonts | sort)
+          inter-400.woff2  inter-500.woff2  inter-600.woff2
+          roboto-400.woff2 roboto-700.woff2        (66.140 Bytes)
+
+    Fuenf Waisen mit genau den Namen, die der Austausch abgeschafft hat — und
+    mit dem FALSCHEN Subset, das der ganze Vorfall war. shutil.copy2() je
+    Quelldatei legt dazu und nimmt nie weg, und nichts darunter stellt das rot:
+    pruefe_schriftverweise() prueft die Gegenrichtung ('jeder Verweis loest
+    auf'), eine Waise wird von keinem Verweis genannt.
+
+    WARUM DAS NICHT KOSMETIK IST. dist/ ist gitignoriert, der CI-Job startet
+    also sauber und sieht nichts — aber der Job 'deploy' veroeffentlicht dist/,
+    und ein Arbeitsbaum laeuft damit gruen, wo er es nicht sollte. Das ist
+    derselbe Mechanismus wie im Docstring oben, nur von der anderen Seite: dort
+    verdeckte alter Rueckstand in dist/ einen FEHLENDEN Kopierschritt, hier
+    verdeckt er abgeschaffte Dateien. Beides heisst: dist/ muss sagen, was der
+    Quellbaum sagt — nicht mehr.
+
+    Geprueft wird in tmp_path, nicht am echten dist/: eine Zusicherung gegen
+    das echte dist/ waere umgebungsabhaengig (in CI gruen, lokal rot) und
+    damit wertlos.
+    """
+
+    def test_entfernt_eine_waise_aus_dem_ziel(self, tmp_path):
+        """Eine Schriftdatei im Ziel, die die Quelle nicht (mehr) kennt, muss
+        verschwinden — sonst veroeffentlicht der Deploy eine abgeschaffte
+        Schrift weiter."""
+        ziel = tmp_path / 'dist'
+        (ziel / 'assets' / 'fonts').mkdir(parents=True)
+        waise = ziel / 'assets' / 'fonts' / 'roboto-400.woff2'
+        waise.write_bytes(b'abgeschaffte Schrift mit kyrillischem Subset')
+
+        kopiere_schriftdateien(str(ziel))
+
+        assert not waise.exists(), (
+            "roboto-400.woff2 liegt weiter neben dem Buendel, obwohl die Quelle "
+            "sie nicht kennt — der Deploy veroeffentlicht sie mit."
+        )
+        assert _woff2_namen(ziel / 'assets' / 'fonts') == _woff2_namen(QUELL_SCHRIFTEN)
+
+    def test_laesst_fremde_dateien_im_ziel_unberuehrt(self, tmp_path):
+        """Gegenprobe zum Aufraeumen: es darf NUR Schriften wegnehmen. Ein
+        'rm -rf dist/assets/fonts/*' waere der bequeme Weg und wuerde beim
+        naechsten Nachbarn im Verzeichnis Schaden anrichten."""
+        ziel = tmp_path / 'dist'
+        (ziel / 'assets' / 'fonts').mkdir(parents=True)
+        fremd = ziel / 'assets' / 'fonts' / 'LIZENZ.txt'
+        fremd.write_bytes(b'kein Schriftschnitt')
+
+        kopiere_schriftdateien(str(ziel))
+
+        assert fremd.exists(), "Der Kopierschritt hat eine Nicht-Schrift geloescht"
+        assert fremd.read_bytes() == b'kein Schriftschnitt'
+
+    def test_kopiert_nur_schriften_aus_der_quelle(self, tmp_path, monkeypatch):
+        """assets/fonts/ fuehrt seit 2026-10-13 auch HERKUNFT.md. Die gehoert
+        NICHT neben das Buendel: sie wird nicht verlinkt, und der Nutzer laedt
+        sie beim Deploy mit. Der Kopierschritt nimmt Schriften, nicht
+        Verzeichnisinhalt."""
+        quelle = tmp_path / 'quelle' / 'assets' / 'fonts'
+        quelle.mkdir(parents=True)
+        (quelle / 'echte-400.woff2').write_bytes(b'Schrift')
+        (quelle / 'HERKUNFT.md').write_text('Herkunftsnotiz', encoding='utf-8')
+        monkeypatch.setattr(build_module, 'SOURCE_DIR', str(tmp_path / 'quelle'))
+        ziel = tmp_path / 'dist'
+        ziel.mkdir()
+
+        anzahl = kopiere_schriftdateien(str(ziel))
+
+        kopiert = ziel / 'assets' / 'fonts'
+        assert _alle_namen(kopiert) == ['echte-400.woff2'], (
+            f"Neben dem Buendel liegt mehr als die Schrift: {_alle_namen(kopiert)}"
+        )
+        assert anzahl == 1, f"anzahl={anzahl} zaehlt Nicht-Schriften mit"
+
+    def test_das_echte_quellverzeichnis_fuehrt_nur_schriften_und_doku(self):
+        """Gegenprobe gegen Leerlauf des Falls darueber: er nimmt an, dass in
+        assets/fonts/ ueberhaupt etwas liegt, das keine Schrift ist. Faellt
+        HERKUNFT.md weg, prueft er eine Lage, die es nicht gibt."""
+        nicht_schrift = [
+            n for n in _alle_namen(QUELL_SCHRIFTEN)
+            if not any(n.endswith(e) for e in SCHRIFT_ENDUNGEN)
+        ]
+        assert nicht_schrift == ['HERKUNFT.md'], (
+            f"assets/fonts/ fuehrt neben den Schriften {nicht_schrift} — erwartet "
+            f"genau ['HERKUNFT.md']. Fehlt sie, ist die Herkunft der sieben Dateien "
+            f"nirgends festgehalten (der Vorfall, der sie verlangt hat: fonts.css)."
+        )
+
+
 class TestFehlendeSchriftenBeendenDenBuild:
     """Der Kopierschritt darf nicht weich scheitern (Gegenpruefung Runde 2, B-06).
 
@@ -241,9 +381,11 @@ class TestSchriftverweiseLoesenAuf:
 
         gefunden = build_module.pruefe_schriftverweise(umgeschrieben, str(ziel))
 
-        assert len(gefunden) >= 10, (
-            f"Nur {len(gefunden)} Schriftverweise im umgeschriebenen fonts.css gefunden — "
-            f"das Muster in pruefe_schriftverweise() greift nicht mehr."
+        assert len(gefunden) == SCHRIFTDATEIEN_SOLL, (
+            f"{len(gefunden)} Schriftverweise im umgeschriebenen fonts.css gefunden, "
+            f"erwartet {SCHRIFTDATEIEN_SOLL}: {gefunden}. Bei NULL greift das Muster "
+            f"in pruefe_schriftverweise() nicht mehr und alles darueber ist trivial "
+            f"erfuellt."
         )
         assert gefunden == _woff2_namen(QUELL_SCHRIFTEN)
 
@@ -251,7 +393,13 @@ class TestSchriftverweiseLoesenAuf:
         """Verdrahtung: der Build fuehrt die Pruefung wirklich, mit dem
         umgeschriebenen CSS und dem dist-Verzeichnis."""
         monkeypatch.setattr(build_module, 'write_file', lambda p, c: None)
-        monkeypatch.setattr(build_module, 'kopiere_schriftdateien', lambda d: 10)
+        # Rueckgabewert aus dem Verzeichnis, nicht als Literal: hier stand '10'
+        # und blieb beim Austausch stehen. Niemand prueft ihn, darum war er
+        # stumm falsch — genau die Sorte Zahl, die beim naechsten Mal gelesen
+        # und geglaubt wird.
+        monkeypatch.setattr(
+            build_module, 'kopiere_schriftdateien', lambda d: len(_woff2_namen(QUELL_SCHRIFTEN))
+        )
         aufrufe = []
         monkeypatch.setattr(
             build_module,
