@@ -39,7 +39,20 @@ const werkzeug = require('../../tools/pruefe-schriftdateien.js');
 // AUSNAHMEN_SOLL nagelt die Laenge auf genau 10. Eine elfte kaputte Datei
 // faellt damit sofort auf, statt sich in einer offenen Liste zu verstecken.
 // ----------------------------------------------------------------------
-const SCHRIFT_AUSNAHMEN = {};
+const SCHRIFT_AUSNAHMEN = {
+    'roboto-400.woff2':
+        'kyrillisches Subset, 155 kyrillische Glyphen, 180 insgesamt, kein lateinisches A',
+    'roboto-700.woff2':
+        'kyrillisches Subset, 155 kyrillische Glyphen, 180 insgesamt, kein lateinisches A',
+    'inter-400.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
+    'inter-500.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
+    'inter-600.woff2': 'kyrillisches Subset, 148 kyrillische Glyphen, 157 insgesamt',
+    'poppins-400.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
+    'poppins-500.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
+    'poppins-600.woff2': 'Devanagari-Subset, 94 Devanagari-Glyphen, 105 insgesamt',
+    'source-sans-pro-400.woff2': 'kyrillisches Subset, 56 kyrillische Glyphen, 61 insgesamt',
+    'source-sans-pro-600.woff2': 'kyrillisches Subset, 56 kyrillische Glyphen, 61 insgesamt'
+};
 
 const AUSNAHMEN_SOLL = 10;
 
