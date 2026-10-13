@@ -447,7 +447,7 @@ function initKeyboardShortcuts() {
             return;
         }
         // H: Lebenspunkte-Rechner auf den Kaempfer am Zug (TAST, E-4).
-        // Begruendung der Taste, der vier Schranken und des freien Rueckwegs
+        // Begruendung der Taste, der fuenf Schranken und des freien Rueckwegs
         // steht an `oeffneHpRechnerAmZug()`. `preventDefault()` nur, wenn der
         // Rechner wirklich aufgeht — greift eine Schranke, bleibt die Taste
         // unverbraucht und die gemessene Belegung entspricht der Lage.
