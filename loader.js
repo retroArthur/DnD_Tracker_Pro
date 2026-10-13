@@ -170,10 +170,20 @@ const MODULES = [
     // tut bzw. ein Einzeltasten-Kuerzel ausloest — der Fehler aus T-A.
     'ui/keyboard-reach.js',
     // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
-    // offenen Dialogs, und die entstehen zum Teil erst dort (nachgeruestete
-    // `tabindex="0"`). Zur Laufzeit ist die Reihenfolge folgenlos — beide
-    // haengen ihre Lauscher selbst ein und lesen das DOM erst beim
-    // Tastendruck —, aber sie haelt die Abhaengigkeit lesbar.
+    // offenen Dialogs, und die entstehen zum Teil erst dort (von der
+    // Kehrschleife nachgeruestete Tabulatorhalte). Zur Laufzeit ist die
+    // Reihenfolge folgenlos — beide haengen ihre Lauscher selbst ein und
+    // lesen das DOM erst beim Tastendruck —, aber sie haelt die
+    // Abhaengigkeit lesbar.
+    //
+    // KEINE ANFUEHRUNGSZEICHEN UND KEINE HOCHKOMMAS IN DIESEM BLOCK — auch
+    // nicht in einem Kommentar. Mehrere Waechtertests lesen das
+    // MODULES-Array rein textuell und nehmen JEDE so eingefasste
+    // Zeichenkette als Modulpfad (tests/unit/console-hygiene.test.js:54 und
+    // vier weitere Gates mit demselben Muster). Ein Attributbeispiel mit
+    // Anfuehrungszeichen liess hier fuenf Gates scheitern: sie meldeten eine
+    // Moduldatei, die nicht auf der Platte liegt, und gemeint war die Null
+    // aus dem Attributwert.
     'ui/modal-focus.js',
     'ui/editors/rich-text.js',
     'ui/editors/editor-toolbar-build.js',

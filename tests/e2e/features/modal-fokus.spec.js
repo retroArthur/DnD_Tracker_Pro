@@ -311,12 +311,12 @@ async function tabulierenImDialog(page, id) {
                 s.visibility !== 'hidden' &&
                 s.display !== 'none' &&
                 r.bottom > 0 &&
-                r.top < innerHeight &&
+                r.top < window.innerHeight &&
                 r.right > 0 &&
-                r.left < innerWidth;
+                r.left < window.innerWidth;
             if (!sichtbar) return;
-            const cx = Math.min(Math.max(r.left + r.width / 2, 1), innerWidth - 1);
-            const cy = Math.min(Math.max(r.top + r.height / 2, 1), innerHeight - 1);
+            const cx = Math.min(Math.max(r.left + r.width / 2, 1), window.innerWidth - 1);
+            const cy = Math.min(Math.max(r.top + r.height / 2, 1), window.innerHeight - 1);
             const oben = document.elementFromPoint(cx, cy);
             const verdeckt = !(oben === el || el.contains(oben) || (oben && oben.contains(el)));
             if (verdeckt) {
@@ -575,7 +575,15 @@ test.describe('Modalfokus — die Beschriftung fuer Vorlesesoftware', () => {
         }
         expect(
             ohne,
-            `Vorbild im Haus: features/command-palette/command-palette.js:20-22 steht zur ` +
+            // Der Pfad des Vorbilds steht hier ABSICHTLICH zerlegt. Das
+            // Abdeckungs-Gate (tests/unit/module-test-coverage.test.js)
+            // erkennt Abdeckung als Teilzeichenkette und haette den vollen
+            // Pfad in diesem Erklaertext als Testabdeckung gezaehlt — die
+            // Befehlspalette wird hier aber nur als Vorbild genannt, nicht
+            // geprueft. Ein falsch gestrichener Eintrag auf einer Ratsche,
+            // die nur schrumpfen darf, waere nicht zurueckzuholen.
+            `Vorbild im Haus: command-palette.js:20-22 (features/command-palette/) ` +
+                `steht zur ` +
                 `Laufzeit mit role+aria-modal+aria-label im DOM. ${ohne.length} von ` +
                 `${ids.length} Schalen fehlt etwas davon:\n  ` +
                 ohne.join('\n  ')
@@ -593,7 +601,7 @@ test.describe('Modalfokus — kein window.showModal-Mantel (O-4)', () => {
         await appLaden(page, 6);
         // `ui/actions/ui-actions.js:8` ruft `showModal(ctx.value)` BLANK — der
         // Aufruf bindet lexikalisch an die Funktionsdeklaration in
-        // systems/spellslots/navigation.js und geht an jedem `window.showModal`-
+        // navigation.js (systems/spellslots/) und geht an jedem `window.showModal`-
         // Mantel vorbei. Genau die Falle, die CLAUDE.md fuer `save()`
         // dokumentiert. Dieser Fall faehrt den Verteilerweg und prueft, dass
         // der Fokus trotzdem im Dialog landet.
