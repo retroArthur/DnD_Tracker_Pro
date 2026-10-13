@@ -25,6 +25,7 @@ Output:
 
 import os
 import re
+import shutil
 import sys
 import urllib.parse
 from pathlib import Path
@@ -248,6 +249,50 @@ def write_file(filepath, content):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
+
+def kopiere_schriftdateien(dist_dir):
+    """Legt assets/fonts/ neben das gebaute Bundle (SCHR).
+
+    WARUM HIER UND NICHT IN ci.yml. CR-08 oben schreibt die url()-Pfade aus
+    assets/styles/fonts.css auf './assets/fonts/' um — relativ zur erzeugten
+    HTML-Datei. Damit schuldet dieser Build die Dateien an genau dieser
+    Stelle; bisher kopierten sie zwei handgepflegte Schritte in ci.yml
+    ('build' und 'deploy'), und der dritte Job, der dist/ braucht ('e2e'),
+    hatte keinen. Ergebnis: zehn Schriften mit Status 'error' im CI, waehrend
+    jeder Arbeitsbaum durch alten Rueckstand in dist/ gruen lief. Das ist
+    dasselbe Muster, das CLAUDE.md fuer Modul-, Template- und CSS-Listen
+    verbietet (Gotcha 1, ARCH-01): eine Zusicherung, zwei Orte. Jetzt EIN Ort.
+
+    Keine Dateiliste: kopiert wird, was im Quellverzeichnis liegt — ein
+    Kopierschritt mit eigener Liste uebersieht die elfte Datei.
+
+    Datei fuer Datei statt copytree, damit NICHT der CR-09-Fall entsteht
+    (dist/assets/fonts/fonts/*, wenn das Ziel schon existiert).
+
+    @param dist_dir Zielverzeichnis des Builds (dist/).
+    @returns Anzahl kopierter Dateien.
+    """
+    quelle = os.path.join(SOURCE_DIR, 'assets', 'fonts')
+    if not os.path.isdir(quelle):
+        log.warning(f"Schriftverzeichnis fehlt: {quelle}")
+        return 0
+    ziel = os.path.join(dist_dir, 'assets', 'fonts')
+    try:
+        os.makedirs(ziel, exist_ok=True)
+        anzahl = 0
+        for name in sorted(os.listdir(quelle)):
+            pfad = os.path.join(quelle, name)
+            if not os.path.isfile(pfad):
+                continue
+            shutil.copy2(pfad, os.path.join(ziel, name))
+            anzahl += 1
+        log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
+        return anzahl
+    except OSError as e:
+        # Wie beim sw.js-Kopierschritt: NUR Datei-/EA-Fehler abfangen. Alles
+        # andere muss den Build beenden.
+        log.warning(f"Schriftdateien konnten nicht kopiert werden: {e}")
+        return 0
 
 def minify_js(js_code):
     """Sichere JS-Minifizierung: entfernt nur Leerzeilen.
@@ -650,6 +695,11 @@ if (document.readyState === 'loading') {{
 
     # Schreibe finale Datei
     write_file(output_file, html_template)
+
+    # Die Schriften NEBEN das Bundle. Erst nach dem erfolgreichen Schreiben:
+    # bricht eine der Validierungen oben ab (sys.exit(1)), wird weder das
+    # Bundle geschrieben noch etwas kopiert.
+    kopiere_schriftdateien(os.path.dirname(output_file))
 
     # Statistiken
     final_size = len(html_template)
