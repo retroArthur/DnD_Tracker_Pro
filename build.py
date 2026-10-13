@@ -514,7 +514,16 @@ def build(minify=False, production=False, verbose=False):
     # umschreiben. Inline-<style> loest gegen die DOKUMENT-URL auf, nicht mehr
     # gegen assets/styles/ — '../fonts/' zeigte damit eine Ebene UEBER das
     # App-Verzeichnis (404 in jedem dist-Build). Ziel: ./assets/fonts/ relativ
-    # zur HTML-Datei (Deploy legt assets/fonts/ daneben, siehe ci.yml).
+    # zur HTML-Datei.
+    #
+    # WER DIE GEGENLEISTUNG SCHULDET: dieser Build selbst, unten in
+    # kopiere_schriftdateien() + pruefe_schriftverweise(), abgesichert durch
+    # tests/build/test_build_fonts.py. NICHT MEHR ci.yml — die beiden
+    # handgepflegten 'cp -r assets/fonts dist/assets/' in den Jobs 'build' und
+    # 'deploy' sind in 81299c5 entfallen. Dieser Verweis zeigte danach auf eine
+    # Zusicherung, die dort nicht mehr stand (B-09); und genau weil er auf
+    # ci.yml zeigte, blieb lange unentdeckt, dass der dritte Job, der dist/
+    # braucht ('e2e'), nie einen Kopierschritt hatte.
     css_content = css_content.replace("url('../fonts/", "url('./assets/fonts/")
     if minify:
         log.info("Minifiziere CSS...")
