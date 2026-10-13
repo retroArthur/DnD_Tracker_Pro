@@ -945,9 +945,15 @@ test.describe('Modalfokus — der Rueckweg, wenn der Dialog seinen Oeffner neu z
             // dessen eigene Aktion seinen Oeffner zerstoert.
             //
             // Genau das tut der Lebenspunkte-Rechner. `applyHpChange()`
-            // (`systems/hp-calculator.js:69-71`) ruft `renderInit()`, die
+            // (hp-calculator.js:69-71, in systems/) ruft `renderInit()`, die
             // Kampfliste wird neu gezeichnet, und der Knopf, von dem aus der
-            // Dialog geoeffnet wurde, ist ein ANDERER Knoten als vorher.
+            // Dialog geoeffnet wurde, ist ein ANDERER Knoten als vorher. Der
+            // Modulpfad steht hier ZERLEGT: das Abdeckungs-Gate
+            // (`tests/unit/module-test-coverage.test.js`) sucht ihn woertlich
+            // in jeder Datei unter `tests/` und wuerde eine Erwaehnung im
+            // Kommentar als Testabdeckung zaehlen. Das Kriterium des Hauses
+            // ist der Pfad in AUSFUEHRBAREM Code — darum die Klammerform,
+            // wie schon bei command-palette.js und navigation.js oben.
             // Gemessen am gebauten Buendel, 20 Eintraege je Typ, nur echte
             // Tastendruecke (eigener Lauf, Ausgangslage HEAD b5f8526):
             //

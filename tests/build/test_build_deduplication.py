@@ -297,7 +297,15 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # (Kehrschleife — setzt tabindex/role zur Laufzeit auf die nicht-nativen
         # Bedienelemente der fuenf Kampfansichten). Steht NACH ui/event-delegation.js:
         # sie macht Elemente erreichbar, die der keydown-Zweig dort bedient.
-        assert len(modules) == 140, f"Erwartet 140 Module, gefunden {len(modules)}"
+        # Tastatur-Strang, Einheit T-D (Schritte 7+8): 'ui/modal-focus.js' neu
+        # registriert (Modalfokus — Einstieg, Fokusfalle, Rueckweg zum Oeffner).
+        # NACHGETRAGEN IN RUNDE 1: das Modul kam mit f55df5f in loader.js, diese
+        # Zahl blieb bei 140 stehen, und die Ratsche war seit f55df5f rot (an
+        # b5f8526 nachgeprueft: 29 bestanden, 1 Fehlschlag, bei loader.js und
+        # tests/build/ unberuehrt von meinen Commits). Die jest-Gates wurden
+        # damals gepflegt, dieses Python-Gate nicht — wer ein Modul registriert,
+        # muss BEIDE anfassen.
+        assert len(modules) == 141, f"Erwartet 141 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
