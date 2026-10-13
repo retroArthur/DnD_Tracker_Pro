@@ -1,29 +1,54 @@
 // @ts-check
 /**
- * E2E — Die gebuendelten Web-Schriften tragen nichts bei (SCHR, Einheit 2).
+ * E2E — Die gebuendelten Web-Schriften rendern wirklich (SCHR, Einheit 2).
  *
- * WAS EINHEIT 1 SCHON BEWIESEN HAT, und warum das nicht genuegt.
- * `tests/unit/schriftdateien.test.js` liest die zehn woff2 in `assets/fonts/`
- * auf Dateiebene (woff2-Kopf -> Tabellenverzeichnis -> Brotli -> cmap) und
- * zeigt: keine einzige traegt das lateinische Alphabet. Das ist eine Aussage
- * ueber DATEIKOEPFE. Diese Probe hier macht die Aussage ueber den
- * BROWSER — sie misst, was gerendert wird, nicht was in der cmap steht. Beide
- * Waechter muessen reden, weil ein Dateikopf-Befund nicht zwingend eine
- * Folge hat: ein Browser koennte den fehlenden Glyphen aus einer anderen
- * Quelle holen, eine `unicode-range` koennte die Datei gar nicht erst
- * anfordern, oder die Datei koennte ueberhaupt nicht geladen werden. Keine
- * dieser Erklaerungen trifft zu — aber das ist eine Messung, keine Annahme.
+ * DIESE DATEI HAT IHRE RICHTUNG GEWECHSELT. Bis `b0ada5b` lagen in
+ * `assets/fonts/` zehn Dateien mit dem falschen Subset: Inter, Roboto und
+ * Source Sans trugen Kyrillisch, Poppins trug Devanagari, keine einzige ein
+ * lateinisches 'A'. Der Befund war GLEICHHEIT — `'Inter', monospace` fiel
+ * zeichenweise auf monospace zurueck und misst bitgleich so breit wie
+ * `monospace` allein. Seit dem Austausch sind es sieben Dateien mit dem
+ * `latin`-Subset, alle sieben tragen den deutschen Satz vollstaendig
+ * (gemessen mit `tools/pruefe-schriftdateien.js`: 217 bis 231 Glyphen je
+ * Datei, 0 fehlende deutsche Zeichen). Damit gilt die Umkehrung:
  *
- * DIE POINTE, in zwei getrennten Teilen belegt:
- *   Teil 1-3  Die vier Familien sind von ihrem Rueckfall NICHT zu
- *             unterscheiden. Sie sind sogar von einer Familie, die es
- *             ueberhaupt nicht gibt, nicht zu unterscheiden.
- *   Teil 4    Und trotzdem laden sie. Zehn Dateien, zehn Antworten mit
- *             Status 200, 195.276 Byte, alle zehn Faces auf `loaded`.
- * Es ist also kein 404 und kein Ladefehler. Die Dateien sind in Ordnung und
- * nutzlos. Vier der sieben Eintraege im Schriftmenue der Editoren
- * (`EDITOR_FONTS`, core/constants.js) sind damit seit dem ersten Tag
- * Dekoration: wer "Inter" waehlt, bekommt Arial.
+ *     `'Inter', monospace` rendert in Inter und misst ANDERS als
+ *     `monospace`. UNGLEICHHEIT ist der Befund, GLEICHHEIT der Fehlschlag.
+ *
+ * WAS EINHEIT 1 SCHON BEWEIST, und warum das nicht genuegt.
+ * `tests/unit/schriftdateien.test.js` liest die sieben woff2 auf Dateiebene
+ * (woff2-Kopf -> Tabellenverzeichnis -> Brotli -> cmap -> fvar) und zeigt:
+ * jede traegt das lateinische Alphabet samt Umlauten und Eszett. Das ist
+ * eine Aussage ueber DATEIKOEPFE. Diese Probe hier macht die Aussage ueber
+ * den BROWSER — sie misst, was gerendert wird, nicht was in der cmap steht.
+ * Beide Waechter muessen reden, weil eine richtige cmap noch keine Folge
+ * hat: der Browser koennte die Datei gar nicht anfordern, eine
+ * `unicode-range` koennte sie ausschliessen, `font-display: swap` koennte
+ * ihn noch im Rueckfall rendern lassen, oder der Pfad in `url()` koennte
+ * neben dem Buendel nicht aufloesen. Keine dieser Erklaerungen trifft zu —
+ * aber das ist eine Messung, keine Annahme.
+ *
+ * DIE POINTE, in sechs Teilen belegt:
+ *   Teil 0   Waechter des Waechters. Unter anderem: der Probetext wird von
+ *            JEDER der sieben Dateien getragen — sonst koennten Teil 1-3
+ *            keinen Unterschied messen.
+ *   Teil 1-3 Jedes gebuendelte Face, jeder gebuendelte Menueeintrag und der
+ *            echte Weg durchs Schriftmenue des Editors rendern ANDERS als
+ *            ihr Rueckfall.
+ *   Teil 4   Und sie laden auch: sieben Antworten mit Status 200,
+ *            144.608 Byte, alle sieben Faces auf `loaded` — aber erst auf
+ *            Anforderung, nicht beim blanken Laden der App.
+ *   Teil 5   Die Ausnahmeliste ist LEER, und ein Eintrag wuerde auffallen.
+ *   Teil 6   Echte Gewichte. Roboto und Inter kommen aus JE EINER Datei mit
+ *            `font-weight: 100 900`; der Browser instanziert daraus echte
+ *            Gewichte. Die Gegenprobe an den statischen Familien zeigt den
+ *            Unterschied: dort gibt es zwischen den deklarierten Gewichten
+ *            nichts, und ein nicht deklariertes Gewicht rendert BITGLEICH
+ *            wie sein deklarierter Nachbar.
+ *
+ * Damit halten die vier Eintraege im Schriftmenue der Editoren
+ * (`EDITOR_FONTS`, core/constants.js), was sie versprechen: wer "Inter"
+ * waehlt, bekommt Inter.
  *
  * WIE GEMESSEN WIRD (Breitenvergleich, plattformunabhaengig). Zwei Spannen,
  * identisch in Groesse, Gewicht, Laufweite und Umbruchverhalten:
@@ -31,73 +56,111 @@
  *     A   font-family: 'Inter', monospace
  *     B   font-family: monospace
  *
- * Traegt Inter die Buchstaben des Probetexts, rendert A in Inter und ist
- * breiter oder schmaler als B. Traegt es sie nicht, faellt A zeichenweise auf
- * monospace zurueck und beide sind GENAU gleich breit. `monospace` als
+ * Traegt Inter die Zeichen des Probetexts, rendert A in Inter und ist
+ * breiter oder schmaler als B. Traegt es sie nicht, faellt A zeichenweise
+ * auf monospace zurueck und beide sind GENAU gleich breit. `monospace` als
  * Rueckfall und nicht der echte `Arial`-Rueckfall der App: Arial ist auf
  * `ubuntu-latest` nicht installiert, `monospace` auf jedem System. In dieser
  * Sitzung haben benannte Systemschriften schon zwoelf CI-Fehlschlaege
  * verursacht (siehe den Kopf von `breite-schrift.spec.js`); eine Probe, die
- * auf Arial oder Georgia baut, misst die Schriftausstattung des Laeufers,
- * nicht diesen Fehler. Teil 2 prueft den echten Stack zusaetzlich — dort
- * haelt die Aussage trotzdem plattformunabhaengig, weil BEIDE Seiten
- * denselben Rueckfall aufloesen (Begruendung dort).
+ * auf Arial oder Georgia baut, misst die Schriftausstattung des Laeufers.
+ * Teil 2 und Teil 3 pruefen den echten Stack zusaetzlich — mit einer
+ * gemessenen Begruendung dort, warum das trotzdem traegt.
  *
- * DREI MESSFALLEN, alle nachgemessen, alle vermieden:
+ * DIE MESSFALLEN DER NEUEN RICHTUNG. Sie sind NICHT dieselben wie vorher;
+ * mit der Richtung kippt auch, in welche Richtung ein Fehler faellt.
  *
- *   1. DER PROBETEXT DARF KEIN ZEICHEN ENTHALTEN, DAS DIE SCHRIFT TRAEGT.
- *      Die zehn Dateien sind nicht voellig leer: ueber alle zehn hinweg
- *      tragen sie genau vier Zeichen des deutschen Satzes — ' ', 'A', 'Ä',
- *      'B' (gemessen mit dem Werkzeug aus Einheit 1). Das LEERZEICHEN ist die
- *      gemeinste Falle: fuer `'Inter', monospace` kommt der Vorschub des
- *      Leerzeichens dann aus Inter (schmal) und der des Rests aus monospace
- *      (0.6em). Nachgemessen bei 40px:
- *          'Handgemenge 42 Zaehmkraft'   A=528.33  B=549.81   -> ungleich
- *          'Handgemenge42Zaehmkraft'     A=505.83  B=505.83   -> gleich
- *      Mit Leerzeichen haette diese Probe also "Inter funktioniert" gemeldet.
- *      Der Probetext unten enthaelt kein Leerzeichen, kein 'A', kein 'Ä' und
- *      kein 'B' — und Teil 0 nagelt genau das fest, gegen das Werkzeug aus
- *      Einheit 1 gemessen, statt es zu behaupten. Der Waechter schneidet
- *      gegen die VOLLE cmap (gemessen 289 Codepunkte), nicht gegen den
- *      deutschen Satz: 285 der 289 stehen ausserhalb, und U+00A0 — in allen
- *      zehn Dateien, optisch ein Leerzeichen — ist genau die Falle, fuer die
- *      dieser Punkt geschrieben wurde.
+ *   1. DER PROBETEXT MUSS VON JEDER DATEI GETRAGEN WERDEN — die genaue
+ *      UMKEHRUNG der alten Regel. Vorher durfte er kein Zeichen enthalten,
+ *      das eine Datei traegt (sonst verliess die Messung den Rueckfall und
+ *      meldete falsch "die Schrift funktioniert"). Jetzt gilt: enthaelt er
+ *      ein Zeichen, das eine Datei NICHT traegt, mischt sich fuer dieses
+ *      Zeichen der Rueckfall in Seite A, und der gemessene Unterschied
+ *      kaeme teils aus dem Rueckfall statt aus der Schrift. Teil 0 prueft
+ *      das gegen das Werkzeug aus Einheit 1, statt es zu behaupten, und
+ *      nennt in der Fehlermeldung die fehlenden Zeichen je Datei.
  *
- *   2. DIE FACES MUESSEN GELADEN SEIN, BEVOR GEMESSEN WIRD. fonts.css setzt
- *      `font-display: swap`. Waehrend der Tauschfrist rendert der Browser im
- *      Rueckfall — A und B waeren gleich breit, und die Probe waere gruen,
- *      ohne irgendetwas ueber die Schrift zu sagen. Darum wird jedes Face
- *      ueber `document.fonts.load()` erzwungen, auf `document.fonts.ready`
- *      gewartet, und Teil 0 prueft, dass alle zehn auf `loaded` stehen.
- *      Dass dieser Zustand sich wirklich verfehlen laesst, ist gemessen: aus
- *      einem Verzeichnis ohne `assets/fonts/` stehen alle zehn auf `error`
- *      (siehe die file://-Messung im Bericht).
+ *      Der Probetext ist darum ein deutsches Pangramm MIT Umlauten und
+ *      Eszett. Das ist Absicht und gemessen: es prueft genau das, was die
+ *      Reparatur geliefert hat (der alte Probetext `Handgemenge42Zaehmkraft`
+ *      umschrieb die Umlaute und haette ein reines ASCII-Subset nicht von
+ *      einem vollstaendigen unterscheiden koennen), und es verdoppelt
+ *      nebenbei den schwaechsten Abstand. Gemessen bei 40px gegen den
+ *      echten Stack `Arial, sans-serif` — Roboto ist der knappste Fall:
+ *          'Handgemenge42Zaehmkraft'   511.46875 gegen 509.203125  = 2.27px
+ *          das Pangramm               1123.28125 gegen 1128.703125 = 5.42px
+ *
+ *   2. DIE FACES MUESSEN GELADEN SEIN, BEVOR GEMESSEN WIRD — und das ist
+ *      jetzt GEFAEHRLICHER als vorher. fonts.css setzt `font-display: swap`.
+ *      Waehrend der Tauschfrist rendert der Browser im Rueckfall. Vorher war
+ *      das ein Falsch-GRUEN (A und B gleich breit = der erwartete Befund,
+ *      ohne dass die Schrift je gefragt wurde); jetzt ist es ein
+ *      Falsch-ROT. Darum wird jedes Face ueber `document.fonts.load()`
+ *      erzwungen, auf `document.fonts.ready` gewartet, und Teil 0 prueft,
+ *      dass alle sieben auf `loaded` stehen. Teil 3 messt an
+ *      `messeBreiten()` vorbei und ruft `ladeFaces()` darum selbst auf
+ *      (dort begruendet).
+ *
+ *      MIT DEM DATEIAUSTAUSCH IST DIESER ERZWUNGENE LADEWEG KAPUTT GEGANGEN,
+ *      still. `document.fonts.load()` nimmt eine `font`-Kurzschreibweise;
+ *      `'100 900 16px "Roboto"'` ist keine gueltige, der Aufruf wirft, und
+ *      der `catch` schluckte es. Gemessen am Stand `b0ada5b`:
+ *      `Roboto/100 900` und `Inter/100 900` standen auf `unloaded`, also
+ *      genau die zwei Familien, um die es beim Austausch ging. Geladen wird
+ *      darum ueber die EINZELGEWICHTE 100..900 (`MESSGEWICHTE`) statt ueber
+ *      die rohe `font-weight`-Angabe des Faces.
  *
  *   3. CHROMIUM LAEDT WEB-SCHRIFTEN FAUL. Ohne `unicode-range` und ohne
- *      Nutzung fordert der Browser KEINE der zehn Dateien an — beim blanken
- *      Laden der App sind es nachgemessen NULL Anfragen, nicht zehn. Die App
- *      selbst benutzt keine der vier Familien (die drei Tokens
- *      `--font-abadi`/`--font-roboto`/`--font-arial` in core.css:392-395
- *      haben je 0 Verweise, `--font-ui` ist 'Segoe UI'). Die 195.276 Byte
- *      fliessen erst, wenn jemand im Editor eine der vier Schriften waehlt.
- *      Teil 4 belegt beide Haelften getrennt.
+ *      Nutzung fordert der Browser KEINE der sieben Dateien an — beim
+ *      blanken Laden der App sind es nachgemessen NULL Anfragen. Die App
+ *      selbst benutzt keine der vier Familien (`--font-ui` ist 'Segoe UI';
+ *      die drei toten Tokens in core.css sind in dieser Runde entfernt
+ *      worden). Die 144.608 Byte fliessen erst, wenn jemand im Editor eine
+ *      der vier Schriften waehlt. Teil 4 belegt beide Haelften getrennt.
+ *
+ *   4. NEU MIT DER UMKEHRUNG: EINE MESSUNG, DIE IMMER EINEN UNTERSCHIED
+ *      FINDET, IST WERTLOS. Vorher war die Gefahr "wir haben die Familie nie
+ *      gefragt" (Gleichheit aus Versehen); jetzt ist sie "die beiden Spannen
+ *      sind aus einem anderen Grund verschieden" — etwa weil der
+ *      Rueckfall-Stapel versehentlich nicht derselbe ist. Dagegen stehen in
+ *      JEDEM messenden Teil zwei Gegenproben in der GLEICHHEITS-Richtung:
+ *        - `__nichtda`: eine Familie, die es garantiert nicht gibt, muss
+ *          BITGLEICH wie der reine Rueckfall messen;
+ *        - `__fremd`: ein Zeichen, das laut cmap KEINE der sieben Dateien
+ *          traegt, muss BITGLEICH wie der reine Rueckfall messen — auch
+ *          wenn der Messkoerper die Familie nennt.
+ *      Die zweite ist die scharfere: sie nennt die echte Familie und zeigt
+ *      trotzdem Gleichheit, beweist also, dass der Unterschied beim
+ *      Probetext aus der cmap kommt und nicht aus dem Aufbau der Spannen.
+ *      Das Fremdzeichen ist NICHT als Literal gewaehlt, sondern aus der
+ *      cmap-Vereinigung abgeleitet (`waehleFremdCodepunkt()`), mit einer
+ *      gemessenen Zusatzbedingung: HarfBuzz zerlegt ein zusammengesetztes
+ *      Zeichen und rendert es aus der Schrift, wenn Basis UND Kombinierer
+ *      darin stehen. U+0100 (Ā) ist der Beweis — es steht in keiner der
+ *      sieben cmaps, aber Inter traegt 'A' und U+0304, und gemessen rendert
+ *      `'Inter', monospace` es 1352.234375px breit gegen 1055.625px fuer
+ *      reines `monospace`. Die Ableitung ueberspringt darum alles, was sich
+ *      per NFD in getragene Teile zerlegt.
  *
  * KEINE EIGENEN LISTEN. Die Faces kommen aus `assets/styles/fonts.css`, die
- * Menuefamilien aus `window.EDITOR_FONTS` der laufenden App. Ein elftes Face
- * oder ein fuenfter Menueeintrag mit gebuendelter Schrift faellt damit auf,
- * statt uebersehen zu werden — dieselbe Regel wie in Einheit 1 ("ein
- * Waechter, der seine eigene Liste mitbringt, uebersieht die elfte Datei").
+ * Menuefamilien aus `window.EDITOR_FONTS` der laufenden App, die Codepunkte
+ * aus der cmap der Dateien. Ein achtes Face oder ein fuenfter Menueeintrag
+ * mit gebuendelter Schrift faellt damit auf, statt uebersehen zu werden —
+ * dieselbe Regel wie in Einheit 1 ("ein Waechter, der seine eigene Liste
+ * mitbringt, uebersieht die elfte Datei").
  */
 
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { seedPopulatedSession, waitForAppReady } from '../helpers/test-utils.js';
-// Das Messwerkzeug aus Einheit 1. Es liest die cmap der zehn Dateien und ist
-// hier die Quelle fuer EINE Frage: welche Zeichen tragen die Dateien
-// ueberhaupt? Daraus folgt, welche Zeichen im Probetext nicht vorkommen
-// duerfen (Messfalle 1). `tools/package.json` haelt das Werkzeug auf
-// CommonJS; der ESM-Import liefert die benannten Exporte ueber die Interop.
+// Das Messwerkzeug aus Einheit 1. Es liest die @font-face-Bloecke und die
+// cmap der sieben Dateien und ist hier die Quelle fuer zwei Fragen: welche
+// Zeichen tragen die Dateien (daraus folgt, was im Probetext stehen DARF und
+// welches Zeichen als Fremdzeichen taugt), und welches Gewicht steht laut
+// CSS auf welcher Datei (daraus folgt Teil 6). `tools/package.json` haelt das
+// Werkzeug auf CommonJS; der ESM-Import liefert die benannten Exporte ueber
+// die Interop.
 import * as schriftWerkzeug from '../../../tools/pruefe-schriftdateien.js';
 
 const REPO_ROOT = process.cwd();
@@ -107,83 +170,92 @@ const FONTS_CSS = path.join(REPO_ROOT, 'assets/styles/fonts.css');
 // SCHRIFT_FAMILIEN_AUSNAHMEN — Menuefamilien, die zu ihrem Rueckfall NICHTS
 // beitragen und deren Zustand als bekannt gilt.
 //
-// BEWUSST VOLL, NICHT ABWESEND — Gegenstueck zu `EXEC_COMMAND_ALLOWLIST` in
-// `editor-floating.spec.js`, die bewusst LEER und nicht abwesend ist, und
-// baugleich zu `SCHRIFT_AUSNAHMEN` in `tests/unit/schriftdateien.test.js`:
-// gezaehlte Laenge, Grund je Eintrag, Verwesungsprobe. Beide Waechter sollen
-// eine Sprache sprechen.
+// BEWUSST LEER, NICHT ABWESEND. Bis `b0ada5b` standen hier alle vier
+// Familien mit je einem gemessenen Grund; der Dateiaustausch hat jeden
+// Grund hinfaellig gemacht. Die Liste bleibt als Form stehen, weil ein
+// kuenftiger Rueckfall einer Familie einen benannten, gezaehlten Ort
+// braucht und nicht still durchlaufen soll — Gegenstueck zu
+// `EXEC_COMMAND_ALLOWLIST` in `editor-floating.spec.js`, die aus demselben
+// Grund leer und nicht abwesend ist, und baugleich zu `SCHRIFT_AUSNAHMEN`
+// in `tests/unit/schriftdateien.test.js`.
 //
-// BEIM AUSTAUSCH DER DATEIEN MUSS DIESE LISTE LEER WERDEN. Jede Familie, die
-// hier steht und in Wahrheit beitraegt, stellt Teil 5 (Verwesungsprobe) rot.
-// Ohne diese Probe wuerde die Liste nach der Reparatur zur Luege und der
-// Waechter waere wertlos.
-//
-// WARUM ALLE VIER DRINSTEHEN. Es gab nie eine richtige Fassung: `git log --
-// assets/fonts/` zeigt genau einen Commit (1c3245b, `feat(02-02):
-// PWA-Grundlage`). Die Liste beschreibt also keinen Sonderfall, sondern den
-// vollstaendigen Ist-Zustand des Schriftmenues — vier von sieben Eintraegen.
-//
-// DIE GRUENDE SIND GEMESSEN, NICHT GESCHAETZT. Breite in Pixel = diese Probe
-// bei 40px auf "Handgemenge42Zaehmkraft"; Glyphen und Block = das Werkzeug
-// aus Einheit 1 (`node tools/pruefe-schriftdateien.js`). Beide Zahlen stehen
-// bewusst in jedem Eintrag: die eine ist die Folge, die andere die Ursache.
+// EIN EINTRAG FUER EINE FUNKTIONIERENDE FAMILIE MUSS ROT WERDEN. Das ist
+// die Zaehne-in-der-anderen-Richtung-Probe, und sie ist hier nicht
+// theoretisch: eine Ausnahme behauptet GLEICHHEIT mit dem Rueckfall, und
+// alle vier Familien sind messbar ungleich. Teil 1, Teil 2, Teil 3 und
+// Teil 5 stellen den Eintrag darum von selbst rot. Ohne diese Probe waere
+// die Liste nach der naechsten Reparatur wieder eine Luege und der
+// Waechter wertlos.
 // ----------------------------------------------------------------------
-const SCHRIFT_FAMILIEN_AUSNAHMEN = {
-    Roboto:
-        'kyrillisches Subset (155 von 180 Glyphen), kein lateinisches A; 400 und 700 ' +
-        'rendern auf 505.828125px, exakt der monospace-Rueckfall',
-    Inter:
-        'kyrillisches Subset (148 von 157 Glyphen), nur A und Ä aus Latin; 400, 500 und ' +
-        '600 rendern auf 505.828125px, exakt der monospace-Rueckfall',
-    Poppins:
-        'Devanagari-Subset (94 von 105 Glyphen); 400, 500 und 600 rendern auf ' +
-        '505.828125px, exakt der monospace-Rueckfall',
-    'Source Sans Pro':
-        'kyrillisches Subset (56 von 61 Glyphen), nur A und B aus Latin; 400 und 600 ' +
-        'rendern auf 505.828125px, exakt der monospace-Rueckfall'
-};
+const SCHRIFT_FAMILIEN_AUSNAHMEN = {};
 
-// Festgenagelt auf genau 4. Eine fuenfte nutzlose Familie faellt damit sofort
-// auf, statt sich in einer offenen Liste zu verstecken — und eine reparierte
-// Familie zwingt zum Senken, weil Teil 5 sie sonst rot stellt.
-const AUSNAHMEN_SOLL = 4;
+// Festgenagelt auf genau 0. Dieselbe Entscheidung wie bei `AUSNAHMEN_SOLL`
+// in Einheit 1: nicht `<= 4`, sondern exakt. Eine Ausnahme, die wieder
+// eingefuehrt wird, soll diese Zeile anfassen muessen.
+const AUSNAHMEN_SOLL = 0;
+
+// ----------------------------------------------------------------------
+// Die Zahl der @font-face-Bloecke in fonts.css. EXAKT, nicht als Untergrenze
+// — und das ist eine bewusste Entscheidung, nicht die Fortschreibung des
+// alten `MINDEST_FACES = 10`.
+//
+// WARUM EXAKT. Die Zahl hat EINEN Zweck: Leerlauf erkennen. Ein kaputter
+// Leser oder eine geleerte fonts.css soll nicht gruen durchlaufen, weil
+// "keine Familie verletzt die Regel" trivial wahr ist. Eine Untergrenze
+// faengt den Leerlauf (0 < 7) — aber nur ihn. Mit `>= 7` waere der
+// eigentliche Schaden dieser Runde unsichtbar geblieben: der Leser dieser
+// Datei sah 5 von 7 Faces (er erkannte nur Einzelgewichte, nicht den
+// Bereich `100 900`), und 5 ist genauso `>= 0` wie 7. Die exakte Zahl
+// faengt zusaetzlich das Wachsen UND das Schrumpfen, und beides ist hier
+// das interessante Ereignis. Der Preis — jede Strukturaenderung an
+// fonts.css macht diese Zeile absichtlich rot — ist derselbe, den
+// Einheit 1 fuer `SCHRIFTDATEIEN_SOLL = 7` bezahlt hat, und er ist gewollt.
+//
+// SIEBEN BLOECKE, NICHT ZEHN: Roboto und Inter kommen als variable Schrift
+// aus je EINER Datei mit `font-weight: 100 900` (fonts.css begruendet das),
+// Poppins hat drei statische Bloecke, Source Sans Pro zwei.
+// ----------------------------------------------------------------------
+const FACES_SOLL = 7;
 
 // Untergrenzen gegen Leerlauf. Gegen `>= 0`: ein leeres Parse-Ergebnis
-// (fonts.css-Regex kaputt, EDITOR_FONTS nicht exportiert) wuerde sonst gruen
-// durchlaufen, weil "keine Familie verletzt die Regel" trivial wahr ist.
-const MINDEST_FACES = 10;
+// (EDITOR_FONTS nicht exportiert) wuerde sonst gruen durchlaufen.
 const MINDEST_MENUEEINTRAEGE = 7;
 // Untergrenze fuer die Zahl der Familien aus fonts.css (gemessen 4). Teil 1
-// und Teil 3 fuehren ihre Untergrenze selbst: die von Teil 0 liegt in einem
+// bis Teil 3 fuehren ihre Untergrenze selbst: die von Teil 0 liegt in einem
 // FREMDEN describe, und ein gezielter `--grep`-Lauf traegt sie nicht mit.
+//
+// BLEIBT UNTERGRENZE, anders als `FACES_SOLL`. Begruendung aus der Sache:
+// der Dateiaustausch hat die Zahl der FACES geaendert (10 -> 7), die Zahl
+// der FAMILIEN nicht (4 -> 4). Was die Reparatur angefasst hat, wird exakt
+// festgenagelt; was sie nicht angefasst hat, bleibt wie es war — eine
+// fuenfte gebuendelte Familie ist eine Produktentscheidung, ein achtes Face
+// an vier Familien ein Strukturbefund.
 const MINDEST_CSS_FAMILIEN = 4;
 
-// Untergrenze fuer die Vereinigung ALLER Codepunkte, die die zehn Dateien
-// tragen — gemessen 289 (`leseCmap()` je Datei, Mengenvereinigung). Der
-// Probetext-Waechter unten schneidet gegen diese Menge und nicht mehr gegen
-// die 100 Zeichen des deutschen Satzes: 285 der 289 stehen AUSSERHALB des
-// deutschen Satzes, U+00A0 unter ihnen, und U+00A0 tragen alle zehn. Es sieht
-// aus wie ein Leerzeichen und ist damit genau die "gemeinste Falle" aus
-// Messfalle 1 — die alte Fassung des Waechters konnte es nicht sehen
-// (gemessen: mit U+00A0 im Probetext blieb er gruen, waehrend Teil 1, Teil 3
-// und Teil 5 rot wurden und zum ABBAU der Ausnahmeliste aufforderten).
+// Untergrenze fuer die Vereinigung ALLER Codepunkte, die die sieben Dateien
+// tragen — gemessen 236. Sie sichert die Ableitung des Fremdzeichens gegen
+// Leerlauf: aus einer leeren Vereinigung waere JEDER Codepunkt "fremd", und
+// die Gegenprobe in der Gleichheits-Richtung wuerde nichts mehr pruefen.
+// Untergrenze und nicht exakt: die exakten Glyphenzahlen je Datei nagelt
+// Einheit 1 fest (217 bis 231), das ist dort der schaerfere Ort.
 const MINDEST_GETRAGENE_CODEPUNKTE = 200;
 
 // Genau so viele Menueeintraege nennen zuerst eine Familie, die fonts.css
 // einbindet. Festgenagelt, damit ein fuenfter gebuendelter Eintrag auffaellt.
 const GEBUENDELTE_MENUEEINTRAEGE_SOLL = 4;
 
-// Summe der zehn Dateigroessen, mit `ls -l` und ueber die Netzwerkantworten
-// gegengemessen. Nicht "gut 200 KB" — die genaue Zahl.
-const BYTE_SUMME_SOLL = 195276;
+// Summe der sieben Dateigroessen, mit `ls -l` und ueber die Netzwerkantworten
+// gegengemessen. Nicht "gut 140 KB" — die genaue Zahl.
+// 48256 + 43136 + 7884 + 7748 + 8000 + 14812 + 14772.
+const BYTE_SUMME_SOLL = 144608;
 
 // ----------------------------------------------------------------------
-// Der Probetext. Deutsche Buchstaben und Ziffern, und bewusst OHNE die vier
-// Zeichen, die irgendeine der zehn Dateien traegt (' ', 'A', 'Ä', 'B' —
-// siehe Messfalle 1 im Kopf). Teil 0 prueft das gegen das Werkzeug aus
-// Einheit 1, statt es zu behaupten.
+// Der Probetext: ein deutsches Pangramm. Es enthaelt ä, ö, ü und ß — also
+// genau die Zeichen, deren Fehlen den alten Bestand ausmachte. Teil 0
+// prueft gegen das Werkzeug aus Einheit 1, dass JEDE der sieben Dateien
+// JEDES dieser Zeichen traegt, statt es zu behaupten.
 // ----------------------------------------------------------------------
-const PROBETEXT = 'Handgemenge42Zaehmkraft';
+const PROBETEXT = 'Victor jagt zwölf Boxkämpfer quer über den großen Sylter Deich';
 
 // Messgroesse. 40px statt 16px: der Breitenunterschied zwischen zwei
 // Schriften waechst linear mit der Groesse, die Rundung auf Geraetepixel
@@ -191,10 +263,34 @@ const PROBETEXT = 'Handgemenge42Zaehmkraft';
 // besser.
 const MESSGROESSE = '40px';
 
-// Eine Familie, die es garantiert nicht gibt. Sie ist der haerteste
-// Vergleichspunkt von Teil 2: eine gebuendelte Schrift, die von DIESER nicht
-// zu unterscheiden ist, traegt nachweislich nichts bei.
+// Ab welchem Abstand in Pixel zwei Spannen als "unterscheidbar" gelten.
+// 1px bei 40px Messgroesse — dieselbe Schwelle wie die mono/serif-Kontrolle
+// in Teil 0. Der knappste gemessene echte Abstand ist Roboto gegen
+// `Arial, sans-serif` mit 5.42px (Teil 2 und Teil 3), also Faktor 5.4
+// davor; gegen `monospace` sind es 240.23px.
+const MINDESTABSTAND = 1;
+
+// Eine Familie, die es garantiert nicht gibt. Sie ist die erste Gegenprobe
+// in der Gleichheits-Richtung: ein Messkoerper, der sie nennt, muss
+// bitgleich wie der reine Rueckfall messen.
 const FAMILIE_OHNE_DATEI = 'Gibtesnichtxyzqjk';
+
+// Wie oft das Fremdzeichen wiederholt wird. 48-mal, damit ein etwaiger
+// Abstand gross genug waere, um gesehen zu werden — die Zusicherung ist
+// Bitgleichheit, aber eine Fehlermeldung ueber 48 Zeichen ist
+// aussagekraeftig (uebernommen von der alten Kontrolle, dort gemessen
+// begruendet).
+const FREMD_WIEDERHOLUNGEN = 48;
+
+// Die Einzelgewichte, mit denen geladen und in Teil 6 gemessen wird.
+// NICHT die rohe `font-weight`-Angabe des Faces: `document.fonts.load()`
+// nimmt eine `font`-Kurzschreibweise, und `'100 900 16px "Roboto"'` ist
+// keine gueltige (Messfalle 2 im Kopf).
+const MESSGEWICHTE = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+
+// Das Gewicht, mit dem ein variables Face in Teil 1 gemessen wird. 400 ist
+// die CSS-Vorgabe und liegt in jedem hier vorkommenden Bereich.
+const REGELGEWICHT = 400;
 
 // ----------------------------------------------------------------------
 // DER MESSKOERPER — eine Quelle, nicht fuenf.
@@ -203,11 +299,13 @@ const FAMILIE_OHNE_DATEI = 'Gibtesnichtxyzqjk';
 // einen Messkoerper geschrieben wird. Vorher stand derselbe Ausdruck
 // viermal im Text, und das war die Luecke: kuerzte man ihn auf den reinen
 // Rueckfall, nannte die Probe die Familie an keiner Stelle mehr und
-// verglich `monospace` gegen `monospace` — alle 13 Faelle blieben gruen,
-// weil die VOLLE Ausnahmeliste ueberall GLEICHHEIT fordert und keine
-// absolute Breite festgenagelt ist. Jede Verfaelschung in Richtung
-// Rueckfall machte die lebenden Zusicherungen also wahrer, nie falscher.
-// Die Gegenprobe dagegen steht unten: KONTROLLE.
+// verglich `monospace` gegen `monospace`.
+//
+// MIT DER UMKEHRUNG FAELLT GENAU DIESE VERFAELSCHUNG JETZT VON SELBST AUF:
+// `monospace` gegen `monospace` ist gleich breit, und Gleichheit ist der
+// Fehlschlag. Die Zusicherung "der Messkoerper nennt die Familie" bleibt
+// trotzdem stehen — sie benennt den Grund in der Fehlermeldung, statt ihn
+// in einer nackten Breitengleichheit raten zu lassen.
 // ----------------------------------------------------------------------
 const RUECKFALL = 'monospace';
 
@@ -216,88 +314,78 @@ function mitStack(familie) {
     return `'${familie}', ${RUECKFALL}`;
 }
 
-// ----------------------------------------------------------------------
-// KONTROLLE — die Gegenrichtung, ohne die "traegt nichts bei" nicht von
-// "wir haben die Familie nie gefragt" zu unterscheiden ist.
-//
-// Jede der zehn Dateien traegt mindestens EIN Zeichen (gemessen: U+0020 in
-// allen zehn, dazu 'A'/'Ä' in Inter und 'A'/'B' in Source Sans Pro). Mit
-// diesem Zeichen MUSS derselbe Messkoerper, der oben Gleichheit zeigt, einen
-// Unterschied zeigen. Das ist die Kontrolle in der Gegenrichtung:
-//   - zeigt sie keinen Unterschied, misst die Probe die Familie nicht, und
-//     die Gleichheit beim Probetext sagt nichts ueber die Schrift;
-//   - zeigt sie einen, ist die Gleichheit beim Probetext ein echter Befund.
-// Die Zeichen kommen aus der cmap (Werkzeug aus Einheit 1), nicht aus einem
-// Literal hier: nach einem Austausch der Dateien waehlt die Kontrolle von
-// selbst ein anderes Zeichen.
-//
-// Plattformunabhaengig, weil beide Seiten dieselbe GEBUENDELTE Datei gegen
-// denselben generischen Rueckfall stellen — keine benannte Systemschrift.
-//
-// WIEVIEL SIGNAL DA IST, gemessen und nicht geschaetzt. Je Wiederholung und
-// je 16px ist der Abstand klein; die Zahlen stammen aus dem Messweg von
-// Teil 3 (Rueckfall `Arial, sans-serif`, 8 Wiederholungen, 16px):
-//     Roboto 41.50px · Source Sans Pro 39.98px · Inter 10.31px
-//     Poppins 0.296875px   <- der schwaechste Fall, und er bestimmt die Wahl
-// Poppins traegt von den vier gewaehlten Zeichen nur U+0020 und U+00A0 mit
-// eigenem Vorschub (U+02BC und U+0901 sind Modifikator bzw. kombinierend,
-// also ohne Breite), und sein Leerzeichen liegt nah an dem von Arial. 48
-// Wiederholungen bei 40px heben diesen Fall auf rund 4.5px — Faktor 4.5 vor
-// der Schwelle. Auf `ubuntu-latest` ist der Abstand GROESSER, nicht kleiner:
-// dort fehlt Arial, der Rueckfall loest auf sans-serif (DejaVu/Liberation)
-// auf, und dessen Leerzeichen liegt deutlich weiter weg. Windows ist also
-// der unguenstige Fall, und er ist hier gemessen.
-// ----------------------------------------------------------------------
-const KONTROLL_WIEDERHOLUNGEN = 48;
-const KONTROLL_ZEICHEN_MAX = 4;
-// Ab welchem Abstand in Pixel die Kontrolle als "unterscheidbar" gilt. 1px
-// bei 40px Messgroesse — dieselbe Schwelle wie die mono/serif-Kontrolle in
-// Teil 0.
-const KONTROLL_MINDESTABSTAND = 1;
-
 const WERKZEUG_ERGEBNIS = schriftWerkzeug.pruefeAlle();
+
+// Codepunkte je Datei und ihre Vereinigung. Grundlage fuer zwei Dinge: den
+// umgekehrten Probetext-Waechter (Teil 0) und die Ableitung des
+// Fremdzeichens.
 const CODEPUNKTE_JE_DATEI = new Map(
-    WERKZEUG_ERGEBNIS.dateien.map(d => [d.name, d.codepunkte || []])
+    WERKZEUG_ERGEBNIS.dateien.map(d => [d.name, new Set(d.codepunkte || [])])
 );
-
-/**
- * Taugt der Codepunkt als Messzeichen? Steuerzeichen und kombinierende
- * Zeichen haben keinen eigenen Vorschub und messen darum nichts.
- */
-function messbarerCodepunkt(c) {
-    return c >= 0x20 && c !== 0x7f && !(c >= 0x0300 && c <= 0x036f);
+const GETRAGENE_CODEPUNKTE = new Set();
+for (const menge of CODEPUNKTE_JE_DATEI.values()) {
+    for (const c of menge) GETRAGENE_CODEPUNKTE.add(c);
 }
 
 /**
- * Die messbaren Codepunkte, die ALLE genannten Dateien tragen (Schnittmenge).
- * @param {string[]} dateinamen
- * @returns {number[]}
+ * Die Zeichen des Texts, die diese Datei laut cmap NICHT traegt.
+ * @param {string} dateiname
+ * @param {string} text
+ * @returns {string[]}
  */
-function kontrollCodepunkte(dateinamen) {
-    let menge = null;
-    for (const name of dateinamen) {
-        const cps = new Set((CODEPUNKTE_JE_DATEI.get(name) || []).filter(messbarerCodepunkt));
-        menge = menge === null ? cps : new Set([...menge].filter(c => cps.has(c)));
+function fehlendeZeichen(dateiname, text) {
+    const menge = CODEPUNKTE_JE_DATEI.get(dateiname);
+    if (!menge) return [...new Set([...text])];
+    return [...new Set([...text])].filter(z => !menge.has(z.codePointAt(0)));
+}
+
+/**
+ * Zerlegt sich der Codepunkt per NFD in Teile, die ALLE getragen werden?
+ *
+ * Dann taugt er NICHT als Fremdzeichen. HarfBuzz normalisiert beim Shapen:
+ * fehlt das zusammengesetzte Zeichen in der Schrift, stehen aber Basis und
+ * Kombinierer darin, rendert es doch aus der Schrift. Gemessen an U+0100
+ * (Ā = 'A' + U+0304): nicht in der cmap, und `'Inter', monospace` rendert
+ * es 1352.234375px breit gegen 1055.625px fuer reines `monospace`. Ohne
+ * diesen Filter waere die Gegenprobe in der Gleichheits-Richtung also
+ * falsch-rot — an genau dem Zeichen, das die Ableitung als erstes findet.
+ * @param {number} c
+ * @returns {boolean}
+ */
+function istZerlegbar(c) {
+    const zeichen = String.fromCodePoint(c);
+    const nfd = zeichen.normalize('NFD');
+    if (nfd === zeichen) return false;
+    return [...nfd].every(t => GETRAGENE_CODEPUNKTE.has(t.codePointAt(0)));
+}
+
+/**
+ * Der kleinste druckbare Codepunkt, den KEINE der sieben Dateien traegt und
+ * der sich auch nicht in getragene Teile zerlegt. Aus der cmap abgeleitet,
+ * nicht als Literal gewaehlt: nach einem weiteren Austausch der Dateien
+ * waehlt die Gegenprobe von selbst ein anderes Zeichen.
+ * @returns {number|null}
+ */
+function waehleFremdCodepunkt() {
+    for (let c = 0x21; c < 0x3000; c++) {
+        // Steuerzeichen (C0/C1) und kombinierende Zeichen haben keinen
+        // eigenen Vorschub und messen nichts.
+        if (c === 0x7f || (c >= 0x80 && c <= 0x9f)) continue;
+        if (c >= 0x0300 && c <= 0x036f) continue;
+        if (GETRAGENE_CODEPUNKTE.has(c)) continue;
+        if (istZerlegbar(c)) continue;
+        return c;
     }
-    return [...(menge || [])].sort((a, b) => a - b).slice(0, KONTROLL_ZEICHEN_MAX);
+    return null;
 }
 
-/** Der Kontrolltext zu einer Dateimenge, oder '' wenn sie nichts Messbares traegt. */
-function kontrollText(dateinamen) {
-    return kontrollCodepunkte(dateinamen)
-        .map(c => String.fromCodePoint(c).repeat(KONTROLL_WIEDERHOLUNGEN))
-        .join('');
-}
-
-/** Lesbare Benennung der Kontrollzeichen fuer die Fehlermeldung. */
-function kontrollZeichenNamen(dateinamen) {
-    return kontrollCodepunkte(dateinamen).map(c => schriftWerkzeug.zeigeCodepunkt(c));
-}
-
-/** Die Dateien einer Familie, aus fonts.css. */
-function dateienDerFamilie(familie) {
-    return FACES.filter(f => f.familie === familie).map(f => f.datei);
-}
+const FREMD_CODEPUNKT = waehleFremdCodepunkt();
+const FREMD_TEXT =
+    FREMD_CODEPUNKT === null
+        ? ''
+        : String.fromCodePoint(FREMD_CODEPUNKT).repeat(FREMD_WIEDERHOLUNGEN);
+const FREMD_NAME =
+    FREMD_CODEPUNKT === null ? '(keines)' : schriftWerkzeug.zeigeCodepunkt(FREMD_CODEPUNKT);
 
 const GENERISCHE_FAMILIEN = [
     'serif',
@@ -316,7 +404,7 @@ const GENERISCHE_FAMILIEN = [
 ];
 
 // ----------------------------------------------------------------------
-// fonts.css lesen — Familie, Gewicht und Datei je @font-face.
+// fonts.css lesen — Familie, Gewichtsangabe und Datei je @font-face.
 // ----------------------------------------------------------------------
 function leseFaces() {
     const quelle = fs.readFileSync(FONTS_CSS, 'utf8');
@@ -329,7 +417,10 @@ function leseFaces() {
         if (familie && gewicht && datei) {
             faces.push({
                 familie: familie.trim(),
-                gewicht: Number(gewicht),
+                gewichtRoh: gewicht,
+                gewichtVon: Number(gewicht),
+                gewichtBis: Number(gewicht),
+                istBereich: false,
                 datei: datei.split('/').pop()
             });
         }
@@ -339,6 +430,35 @@ function leseFaces() {
 
 const FACES = leseFaces();
 const CSS_FAMILIEN = [...new Set(FACES.map(f => f.familie))].sort();
+const DATEINAMEN = [...new Set(FACES.map(f => f.datei))].sort();
+
+/**
+ * Je Familie: variabel oder statisch, und welche Einzelgewichte fonts.css
+ * dafuer deklariert. Grundlage von Teil 6 — vollstaendig aus fonts.css
+ * abgeleitet, kein Literal je Familie.
+ */
+const FAMILIEN_INFO = CSS_FAMILIEN.map(familie => {
+    const faces = FACES.filter(f => f.familie === familie);
+    return {
+        familie,
+        faces,
+        variabel: faces.some(f => f.istBereich),
+        // Nur die statischen Bloecke tragen ein Einzelgewicht bei; ein
+        // Bereichs-Block deklariert keinen einzelnen Punkt.
+        einzelGewichte: [...new Set(faces.filter(f => !f.istBereich).map(f => f.gewichtVon))].sort(
+            (a, b) => a - b
+        ),
+        von: Math.min(...faces.map(f => f.gewichtVon)),
+        bis: Math.max(...faces.map(f => f.gewichtBis))
+    };
+});
+const VARIABLE_FAMILIEN = FAMILIEN_INFO.filter(i => i.variabel);
+const STATISCHE_FAMILIEN = FAMILIEN_INFO.filter(i => !i.variabel);
+
+/** Die Dateien einer Familie, aus fonts.css. */
+function dateienDerFamilie(familie) {
+    return FACES.filter(f => f.familie === familie).map(f => f.datei);
+}
 
 /** Erstes benanntes Glied eines font-family-Stacks, ohne Anfuehrungszeichen. */
 function ersteFamilie(stack) {
@@ -350,41 +470,62 @@ function rueckfallStack(stack) {
     return stack.split(',').slice(1).join(',').trim();
 }
 
+/** Das Gewicht, mit dem ein Face in Teil 1 gemessen wird. */
+function messGewicht(face) {
+    return face.istBereich ? REGELGEWICHT : face.gewichtVon;
+}
+
 // ----------------------------------------------------------------------
-// Die Messung im Browser. EINE Funktion, die alles in einem Rutsch tut:
-// Faces erzwingen, auf `ready` warten, dann Breiten abnehmen. Sie gibt den
-// Face-Status mit zurueck, damit Teil 0 beweisen kann, dass zum Messzeitpunkt
-// wirklich geladen war (Messfalle 2).
+// Die Faces erzwungen laden. EINE Quelle, von `messeBreiten()` und von
+// Teil 3 benutzt.
 //
-// `eintrag.text` ueberschreibt den gemeinsamen Probetext fuer EINEN Eintrag.
-// Das brauchen die Kontrollen: sie messen mit einem Zeichen, das die Datei
-// traegt, waehrend alle anderen Eintraege beim Probetext bleiben. Erzwungen
-// geladen wird ueber die Vereinigung aller vorkommenden Texte — sonst waere
-// der Kontrollglyph beim Messen moeglicherweise noch nicht da und die
-// Kontrolle meldete faelschlich "traegt nichts bei".
+// WARUM NICHT IN `ladeApp()`: Teil 4 behauptet, dass beim BLANKEN Laden der
+// App keine einzige woff2 angefordert wird. Ein Ladezwang in `ladeApp()`
+// wuerde genau diese Zusicherung von innen aushebeln — sie waere dann
+// strukturell unerfuellbar, und zwar ohne sichtbaren Grund. Der Zwang steht
+// darum da, wo gemessen wird, nicht da, wo geladen wird.
 // ----------------------------------------------------------------------
-async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESSE) {
+async function ladeFaces(page, ladeText = PROBETEXT) {
     return page.evaluate(
-        async ({ stapel, text, groesse }) => {
-            const ladeText = [
-                ...new Set([...text, ...Object.values(stapel).flatMap(e => [...(e.text || '')])])
-            ].join('');
-            const paare = [];
-            document.fonts.forEach(ff => paare.push([ff.family, ff.weight]));
-            for (const [familie, gewicht] of paare) {
-                try {
-                    await document.fonts.load(`${gewicht} 16px "${familie}"`, ladeText);
-                } catch (e) {
-                    /* Status wird unten mitgemeldet; hier nicht werfen. */
+        async ({ ladeText, gewichte }) => {
+            const familien = new Set();
+            document.fonts.forEach(ff => familien.add(ff.family));
+            for (const familie of familien) {
+                for (const gewicht of gewichte) {
+                    try {
+                        await document.fonts.load(`${gewicht} 16px "${familie}"`, ladeText);
+                    } catch (e) {
+                        /* Status wird unten mitgemeldet; hier nicht werfen. */
+                    }
                 }
             }
             await document.fonts.ready;
-
             const faceStatus = {};
             document.fonts.forEach(ff => {
                 faceStatus[`${ff.family}/${ff.weight}`] = ff.status;
             });
+            return faceStatus;
+        },
+        { ladeText, gewichte: MESSGEWICHTE }
+    );
+}
 
+// ----------------------------------------------------------------------
+// Die Messung im Browser. Sie gibt den Face-Status mit zurueck, damit Teil 0
+// beweisen kann, dass zum Messzeitpunkt wirklich geladen war (Messfalle 2).
+//
+// `eintrag.text` ueberschreibt den gemeinsamen Probetext fuer EINEN Eintrag.
+// Das brauchen die Gegenproben: sie messen mit dem Fremdzeichen, waehrend
+// alle anderen Eintraege beim Probetext bleiben. Erzwungen geladen wird
+// ueber die Vereinigung aller vorkommenden Texte.
+// ----------------------------------------------------------------------
+async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESSE) {
+    const ladeText = [
+        ...new Set([...text, ...Object.values(stapel).flatMap(e => [...(e.text || '')])])
+    ].join('');
+    const faceStatus = await ladeFaces(page, ladeText);
+    const breiten = await page.evaluate(
+        ({ stapel, text, groesse }) => {
             const host = document.createElement('div');
             host.id = 'schr-messplatz';
             host.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;';
@@ -403,10 +544,11 @@ async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESS
                 breiten[name] = span.getBoundingClientRect().width;
             }
             host.remove();
-            return { breiten, faceStatus };
+            return breiten;
         },
         { stapel, text, groesse }
     );
+    return { breiten, faceStatus };
 }
 
 /** Gefuellte Kampagne, gebautes Bundle, App fertig initialisiert. */
@@ -426,7 +568,12 @@ async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESS
 // Reproduktion. Kostet im gesunden Fall einen Frame.
 //
 // Ein Falsch-Rot ist hier besonders teuer: es trifft genau die Zeilen, die
-// beweisen sollen, dass die Messung ueberhaupt etwas misst.
+// beweisen sollen, dass die Messung ueberhaupt etwas misst. MIT DER UMKEHRUNG
+// IST DIESE HAERTUNG WICHTIGER GEWORDEN, NICHT UNWICHTIGER: solange der Befund
+// GLEICHHEIT war, half ein noch nicht aufgeloestes Generikum dem Ergebnis
+// (beide Seiten gleich = der erwartete Befund). Jetzt ist der Befund
+// UNGLEICHHEIT, und ein noch nicht aufgeloester Rueckfall-Stapel zieht beide
+// Seiten auf denselben Wert — also direkt auf den Fehlschlag.
 const GENERIKA_FRIST = 15000;
 
 /**
@@ -484,23 +631,47 @@ async function ladeApp(page) {
 // erzeugten HTML-Datei (build.py, CR-08).
 const DIST_SCHRIFTEN = path.join(REPO_ROOT, 'dist/assets/fonts');
 
-test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () => {
+test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => {
     // ------------------------------------------------------------------
     // Teil 0 — Waechter des Waechters.
     // Ohne diese Faelle koennte alles Folgende leer durchlaufen.
     // ------------------------------------------------------------------
     test.describe('Teil 0 — Waechter des Waechters', () => {
-        test(`fonts.css fuehrt mindestens ${MINDEST_FACES} Faces`, async () => {
-            expect(FACES.length).toBeGreaterThanOrEqual(MINDEST_FACES);
-            expect(CSS_FAMILIEN.length).toBeGreaterThanOrEqual(1);
+        test(`fonts.css fuehrt genau ${FACES_SOLL} Faces`, async () => {
+            expect(
+                FACES.length,
+                `fonts.css liefert ${FACES.length} @font-face-Bloecke, erwartet ` +
+                    `${FACES_SOLL}. Gelesen: ` +
+                    `${JSON.stringify(FACES.map(f => `${f.familie}/${f.gewichtRoh}`))}. ` +
+                    `Zwei Bloecke tragen einen BEREICH (font-weight: 100 900) — ein ` +
+                    `Leser, der nur Einzelgewichte erkennt, verliert genau diese zwei ` +
+                    `still, und das sind die beiden variablen Familien.`
+            ).toBe(FACES_SOLL);
+            expect(CSS_FAMILIEN.length).toBeGreaterThanOrEqual(MINDEST_CSS_FAMILIEN);
             for (const f of FACES) {
                 expect(f.familie).toBeTruthy();
-                expect(f.gewicht).toBeGreaterThan(0);
+                expect(f.gewichtVon, `${f.familie}: Gewicht von`).toBeGreaterThan(0);
+                expect(f.gewichtBis, `${f.familie}: Gewicht bis`).toBeGreaterThanOrEqual(
+                    f.gewichtVon
+                );
                 expect(f.datei).toMatch(/\.woff2$/);
             }
+            // Beide Bauarten muessen vorkommen, sonst laeuft Teil 6 leer:
+            // ohne variable Familie fehlt der Nachweis echter Instanzen,
+            // ohne statische die Gegenprobe dazu.
+            expect(
+                VARIABLE_FAMILIEN.map(i => i.familie),
+                'keine variable Familie in fonts.css gelesen — Teil 6 kann echte ' +
+                    'Gewichtsinstanzen dann nicht von nachgetaeuschten unterscheiden'
+            ).not.toEqual([]);
+            expect(
+                STATISCHE_FAMILIEN.map(i => i.familie),
+                'keine statische Familie in fonts.css gelesen — dann fehlt Teil 6 die ' +
+                    'Gegenprobe zu den variablen'
+            ).not.toEqual([]);
         });
 
-        test('Die zehn Dateien liegen neben dem gebauten Bundle', async () => {
+        test(`Die ${FACES_SOLL} Dateien liegen neben dem gebauten Bundle`, async () => {
             // EIGENE UNTERGRENZE, nicht die des Nachbarfalls (Gegenpruefung
             // Runde 2, B-02). `fehlend` ist bei leerer Facesliste trivial
             // leer: mit `const FACES = []` lief dieser Fall gruen ueber NULL
@@ -509,23 +680,21 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // 8 failed / 6 passed meldete). Teil 1 und Teil 3 fuehren ihre
             // Untergrenze aus genau diesem Grund selbst; dieser Fall kam in
             // 4d6574a dazu und folgte der eigenen Regel noch nicht.
-            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
-                MINDEST_FACES
-            );
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBe(FACES_SOLL);
             // VORAUSSETZUNG, nicht Formalie. Teil 0 (Faces auf "loaded") und
-            // Teil 4 (zehn Antworten) koennen nur gruen sein, wenn die
+            // Teil 4 (sieben Antworten) koennen nur gruen sein, wenn die
             // Dateien da liegen, wohin build.py die url()-Pfade umschreibt.
-            // Ohne diesen Fall meldet die Suite stattdessen 'Roboto/400 steht
-            // auf "error", nicht "loaded"' und 'Expected >= 10, Received 0' —
-            // zwei Meldungen, die auf die Schriftdateien zeigen statt auf den
-            // fehlenden Kopierschritt. Genau so war es im CI-Job 'e2e'
+            // Ohne diesen Fall meldet die Suite stattdessen 'Roboto/100 900
+            // steht auf "error", nicht "loaded"' und 'Expected 7, Received 0'
+            // — zwei Meldungen, die auf die Schriftdateien zeigen statt auf
+            // den fehlenden Kopierschritt. Genau so war es im CI-Job 'e2e'
             // (gemessen im nachgestellten Zustand: 2 failed / 11 passed,
-            // Retries erschoepft), waehrend der Projektbaum durch einen alten,
-            // nicht versionierten Rueckstand in dist/ gruen lief.
+            // Retries erschoepft), waehrend der Projektbaum durch einen
+            // alten, nicht versionierten Rueckstand in dist/ gruen lief.
             const vorhanden = fs.existsSync(DIST_SCHRIFTEN)
                 ? fs.readdirSync(DIST_SCHRIFTEN).filter(n => n.endsWith('.woff2'))
                 : [];
-            const fehlend = FACES.map(f => f.datei).filter(n => !vorhanden.includes(n));
+            const fehlend = DATEINAMEN.filter(n => !vorhanden.includes(n));
             expect(
                 fehlend,
                 `Diese Dateien fehlen in dist/assets/fonts/: ${JSON.stringify(fehlend)}. ` +
@@ -565,43 +734,86 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             expect(gebuendelt).toHaveLength(GEBUENDELTE_MENUEEINTRAEGE_SOLL);
         });
 
-        test('Der Probetext enthaelt kein Zeichen, das eine der zehn Dateien traegt', async () => {
-            // Gegen das Werkzeug aus Einheit 1 gemessen, nicht behauptet.
-            // Diese Probe ist der Grund, warum Teil 1-3 ueberhaupt etwas
-            // sagen: ein Probetext mit ' ', 'A', 'Ä' oder 'B' wuerde den
-            // Rueckfall VERLASSEN und die Breiten unterschiedlich machen —
-            // die Probe meldete dann "die Schrift funktioniert".
-            const werkzeug = schriftWerkzeug;
-            const ergebnis = werkzeug.pruefeAlle();
-            expect(ergebnis.dateien.length).toBeGreaterThanOrEqual(MINDEST_FACES);
+        test('Jede gebuendelte Datei traegt JEDES Zeichen des Probetexts', async () => {
+            // DIE UMKEHRUNG. Bis zum Dateiaustausch stand hier die
+            // Gegenrichtung: "der Probetext enthaelt kein Zeichen, das eine
+            // der zehn Dateien traegt". Die war die Voraussetzung dafuer,
+            // dass Teil 1 bis Teil 3 GLEICHHEIT messen konnten — jedes
+            // getragene Zeichen haette die Messung aus dem Rueckfall geholt
+            // und falsch "die Schrift funktioniert" gemeldet.
+            //
+            // Jetzt tragen alle sieben Dateien den lateinischen Satz, und die
+            // alte Zusicherung ist UNERFUELLBAR: es gibt keinen deutschen
+            // Probetext mehr, der mit keiner cmap kollidiert. Sie wird darum
+            // gekehrt und nicht durch einen exotischen Text gerettet — ein
+            // Probetext, den die Schriften nicht tragen, koennte in der neuen
+            // Richtung gar keinen Unterschied zeigen.
+            //
+            // Enthaelt der Probetext ein Zeichen, das eine Datei NICHT
+            // traegt, mischt sich fuer dieses Zeichen der Rueckfall in
+            // Seite A: der gemessene Unterschied kaeme dann teils aus dem
+            // Rueckfall statt aus der Schrift.
+            const ergebnis = schriftWerkzeug.pruefeAlle();
+            expect(ergebnis.dateien.length, 'das Werkzeug liest keine Dateien').toBe(FACES_SOLL);
 
-            // Gegen die VOLLE cmap, nicht gegen den deutschen Satz. Die alte
-            // Fassung schnitt gegen `DEUTSCHER_ZEICHENSATZ` und sah damit nur
-            // 4 der 289 getragenen Codepunkte — U+00A0 war fuer sie
-            // unsichtbar, obwohl alle zehn Dateien es tragen.
-            const getragen = new Set();
+            // Gegenprobe gegen Leerlauf: eine kaputte Messung wuerde eine
+            // leere Codepunktmenge liefern, und dann waere JEDES Zeichen
+            // "fehlend" — das faellt unten auf. Umgekehrt wuerde eine
+            // Messung, die ALLE Codepunkte behauptet, hier nicht auffallen;
+            // dagegen steht die Ableitung des Fremdzeichens (eigener Fall).
             for (const datei of ergebnis.dateien) {
                 expect(
                     Array.isArray(datei.codepunkte),
                     `${datei.name}: das Werkzeug liefert keine Codepunktliste`
                 ).toBe(true);
-                for (const c of datei.codepunkte) getragen.add(c);
             }
-            // Gegenprobe gegen Leerlauf: eine kaputte Messung wuerde hier
-            // eine leere Menge liefern und die Zusicherung trivial erfuellen.
-            expect(getragen.size).toBeGreaterThanOrEqual(MINDEST_GETRAGENE_CODEPUNKTE);
-            // Als Codepunkt gemeldet, nicht als Zeichen: ein unsichtbarer
-            // Treffer (U+00A0) waere in der Fehlermeldung sonst nicht zu
-            // erkennen.
-            const kollision = [...PROBETEXT]
-                .filter(z => getragen.has(z.codePointAt(0)))
-                .map(z => werkzeug.zeigeCodepunkt(z.codePointAt(0)));
+            expect(GETRAGENE_CODEPUNKTE.size).toBeGreaterThanOrEqual(MINDEST_GETRAGENE_CODEPUNKTE);
+
+            const luecken = {};
+            for (const name of DATEINAMEN) {
+                const fehlend = fehlendeZeichen(name, PROBETEXT);
+                if (fehlend.length) {
+                    luecken[name] = fehlend.map(
+                        z => `${z} (${schriftWerkzeug.zeigeCodepunkt(z.codePointAt(0))})`
+                    );
+                }
+            }
             expect(
-                kollision,
-                `Der Probetext "${PROBETEXT}" enthaelt Zeichen, die eine gebuendelte ` +
-                    `Datei traegt: ${JSON.stringify(kollision)}. Damit verlaesst die ` +
-                    `Messung den Rueckfall und Teil 1-3 messen nichts.`
-            ).toEqual([]);
+                luecken,
+                `Diese Dateien tragen Zeichen des Probetexts "${PROBETEXT}" NICHT: ` +
+                    `${JSON.stringify(luecken)}. Fuer jedes fehlende Zeichen faellt ` +
+                    `Seite A der Messung auf den Rueckfall zurueck — der gemessene ` +
+                    `Unterschied kaeme dann teils aus dem Rueckfall statt aus der ` +
+                    `Schrift. Entweder ist das Subset unvollstaendig (dann ist es ein ` +
+                    `echter Befund, siehe tests/unit/schriftdateien.test.js), oder der ` +
+                    `Probetext gehoert angepasst.`
+            ).toEqual({});
+        });
+
+        test(`Das Fremdzeichen ${FREMD_NAME} traegt wirklich keine der Dateien`, async () => {
+            // Die Ableitung selbst wird geprueft, nicht nur benutzt. Sie ist
+            // die Grundlage der Gegenprobe in der Gleichheits-Richtung, die
+            // in jedem messenden Teil steht: findet sie ein Zeichen, das
+            // doch getragen wird, waeren alle diese Gegenproben falsch-rot.
+            expect(
+                FREMD_CODEPUNKT,
+                'kein ungetragener, nicht zerlegbarer Codepunkt unter U+3000 gefunden — ' +
+                    'dann ist die Gegenprobe in der Gleichheits-Richtung nicht ' +
+                    'durchfuehrbar'
+            ).not.toBeNull();
+            expect(FREMD_TEXT.length).toBe(FREMD_WIEDERHOLUNGEN);
+            for (const name of DATEINAMEN) {
+                expect(
+                    CODEPUNKTE_JE_DATEI.get(name).has(FREMD_CODEPUNKT),
+                    `${name} traegt ${FREMD_NAME} doch`
+                ).toBe(false);
+            }
+            // Und es zerlegt sich nicht in getragene Teile — sonst rendert
+            // HarfBuzz es aus der Schrift (U+0100 im Kopf, Messfalle 4).
+            expect(
+                istZerlegbar(FREMD_CODEPUNKT),
+                `${FREMD_NAME} zerlegt sich per NFD in Zeichen, die die Dateien tragen`
+            ).toBe(false);
         });
 
         test('Nicht-Leerlauf: das Messwerkzeug unterscheidet, und alle Faces sind geladen', async ({
@@ -617,14 +829,23 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // auf ubuntu-latest. Keine benannte Systemschrift als Kontrolle:
             // Arial und Georgia fehlen auf Linux.
             expect(breiten.mono).toBeGreaterThan(0);
-            expect(Math.abs(breiten.mono - breiten.serif)).toBeGreaterThan(1);
-            // Und zwei gleich gebaute Spannen messen gleich — sonst ist die
-            // Gleichheit in Teil 1 kein Befund, sondern Rauschen.
-            expect(breiten.leer).toBe(breiten.mono);
+            expect(Math.abs(breiten.mono - breiten.serif)).toBeGreaterThan(MINDESTABSTAND);
+            // UND ZWEI GLEICH GEBAUTE SPANNEN MESSEN GLEICH. Das war schon
+            // vorher da, ist mit der Umkehrung aber von einer Formalie zur
+            // tragenden Gegenprobe geworden: der Befund dieser Datei ist
+            // jetzt UNGLEICHHEIT, und eine Messung, die zwei identische
+            // Spannen verschieden misst, wuerde ihn ueberall frei Haus
+            // liefern.
+            expect(
+                breiten.leer,
+                'zwei identisch gebaute Spannen messen verschieden — dann ist die ' +
+                    'Ungleichheit in Teil 1 bis Teil 3 kein Befund, sondern Rauschen'
+            ).toBe(breiten.mono);
 
-            // Messfalle 2: ohne diese Zusicherung messen Teil 1-3 nur die
-            // Tauschfrist von `font-display: swap`.
-            expect(Object.keys(faceStatus).length).toBeGreaterThanOrEqual(MINDEST_FACES);
+            // Messfalle 2: ohne diese Zusicherung messen Teil 1 bis Teil 3
+            // nur die Tauschfrist von `font-display: swap` — und zwar jetzt
+            // in Richtung Falsch-ROT.
+            expect(Object.keys(faceStatus).length).toBe(FACES_SOLL);
             for (const [name, status] of Object.entries(faceStatus)) {
                 expect(status, `${name} steht auf "${status}", nicht "loaded"`).toBe('loaded');
             }
@@ -633,11 +854,11 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
 
     // ------------------------------------------------------------------
     // Teil 1 — Breitenvergleich gegen den synthetischen Rueckfall.
-    // Je gebuendeltes Face ein Fall, also auch je Gewicht.
+    // Je gebuendeltes Face eine Messung, also auch je Gewicht.
     // ------------------------------------------------------------------
     test.describe('Teil 1 — jedes gebuendelte Face gegen monospace', () => {
-        // ALLE ZEHN FACES IN EINEM FALL AUF EINER SEITE, nicht zehn Faelle mit
-        // zehn Seiten. Das ist kein Stilentscheid, sondern gemessen: in der
+        // ALLE FACES IN EINEM FALL AUF EINER SEITE, nicht sieben Faelle mit
+        // sieben Seiten. Das ist kein Stilentscheid, sondern gemessen: in der
         // ersten Fassung lud diese Datei 25-mal das 3,7-MB-Bundle, und der
         // volle Lauf stellte fuenf FREMDE Faelle rot —
         // `eingaberahmen.spec.js` W6-R-07 Fall 1 (vier Themes) und Fall 2.
@@ -650,98 +871,102 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
         // lastempfindlich, und diese Probe nimmt darauf Ruecksicht, statt sie
         // umzuschreiben. Je Face bleibt der Befund einzeln benannt: die
         // Zusicherung meldet eine Liste, keine Summe.
-        test('Alle gebuendelten Faces tragen zum Rendern bei', async ({ page }) => {
+        test('Jedes gebuendelte Face rendert anders als sein Rueckfall', async ({ page }) => {
             // Eigene Untergrenze, nicht die des Nachbar-describe. Vorher lag
             // sie allein in Teil 0: mit leerer Facesliste lief dieser Fall
             // gruen ueber NULL Messungen durch, und ein gezielter
             // `--grep "Teil 1"`-Lauf konnte das nicht erkennen.
-            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
-                MINDEST_FACES
-            );
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBe(FACES_SOLL);
             await ladeApp(page);
             const stapel = {};
             for (const face of FACES) {
-                const s = `${face.familie}/${face.gewicht}`;
-                stapel[`${s}__mit`] = {
-                    stack: mitStack(face.familie),
-                    gewicht: face.gewicht
-                };
-                stapel[`${s}__ohne`] = { stack: RUECKFALL, gewicht: face.gewicht };
+                const s = `${face.familie}/${face.gewichtRoh}`;
+                const gewicht = messGewicht(face);
+                stapel[`${s}__mit`] = { stack: mitStack(face.familie), gewicht };
+                stapel[`${s}__ohne`] = { stack: RUECKFALL, gewicht };
+                // Gegenprobe 1 in der Gleichheits-Richtung: eine Familie, die
+                // es nicht gibt, ist vom reinen Rueckfall nicht zu
+                // unterscheiden.
                 stapel[`${s}__nichtda`] = {
                     stack: mitStack(FAMILIE_OHNE_DATEI),
-                    gewicht: face.gewicht
+                    gewicht
                 };
-                // Die Gegenrichtung: derselbe Messkoerper, aber mit einem
-                // Zeichen, das GENAU DIESE Datei traegt.
-                stapel[`${s}__kontrolle`] = {
+                // Gegenprobe 2, die scharfere: DERSELBE Messkoerper, der die
+                // echte Familie nennt, aber mit einem Zeichen, das KEINE der
+                // Dateien traegt. Muss bitgleich wie der Rueckfall messen.
+                stapel[`${s}__fremd`] = {
                     stack: mitStack(face.familie),
-                    gewicht: face.gewicht,
-                    text: kontrollText([face.datei])
+                    gewicht,
+                    text: FREMD_TEXT
                 };
-                stapel[`${s}__kontrolleOhne`] = {
-                    stack: RUECKFALL,
-                    gewicht: face.gewicht,
-                    text: kontrollText([face.datei])
-                };
+                stapel[`${s}__fremdOhne`] = { stack: RUECKFALL, gewicht, text: FREMD_TEXT };
             }
             const { breiten } = await messeBreiten(page, stapel);
 
             const stummeFaces = [];
+            const abstaende = {};
             let gemessen = 0;
             for (const face of FACES) {
-                const s = `${face.familie}/${face.gewicht}`;
+                const s = `${face.familie}/${face.gewichtRoh}`;
                 const mit = breiten[`${s}__mit`];
                 const ohne = breiten[`${s}__ohne`];
                 const nichtda = breiten[`${s}__nichtda`];
                 expect(ohne, `${s}: Rueckfall messbar`).toBeGreaterThan(0);
-                // Der haerteste Vergleichspunkt: eine Familie, die es nicht
-                // gibt, ist vom reinen Rueckfall nicht zu unterscheiden.
-                expect(nichtda, `${s}: nicht vorhandene Familie`).toBe(ohne);
+                expect(mit, `${s}: Messkoerper messbar`).toBeGreaterThan(0);
 
                 // Der Messkoerper nennt die Familie ueberhaupt. Billig, und
-                // genau die Luecke, die eine Kuerzung auf den reinen
-                // Rueckfall hinterliess.
+                // es benennt den Grund in der Fehlermeldung, statt ihn in
+                // einer nackten Breitengleichheit raten zu lassen.
                 expect(
                     stapel[`${s}__mit`].stack,
                     `${s}: der Messkoerper nennt die Familie nicht`
                 ).toContain(face.familie);
 
-                // DIE KONTROLLE. Ohne sie ist "traegt nichts bei" von "wir
-                // haben die Familie nie gefragt" nicht zu unterscheiden.
-                const zeichen = kontrollZeichenNamen([face.datei]);
+                // GEGENPROBE 1 — Gleichheits-Richtung.
                 expect(
-                    zeichen.length,
-                    `${face.datei} traegt kein messbares Zeichen — dann ist die ` +
-                        `Kontrolle in der Gegenrichtung nicht durchfuehrbar.`
-                ).toBeGreaterThan(0);
-                const kontrolle = breiten[`${s}__kontrolle`];
-                const kontrolleOhne = breiten[`${s}__kontrolleOhne`];
-                expect(kontrolle, `${s}: Kontrolle messbar`).toBeGreaterThan(0);
+                    nichtda,
+                    `${s}: "${mitStack(FAMILIE_OHNE_DATEI)}" misst ${nichtda}px, der reine ` +
+                        `Rueckfall ${ohne}px. Eine Familie ohne Datei MUSS bitgleich wie ` +
+                        `der Rueckfall messen — tut sie es nicht, findet diese Messung ` +
+                        `Unterschiede, die nicht aus der Schrift kommen, und der Befund ` +
+                        `unten ist frei Haus.`
+                ).toBe(ohne);
+
+                // GEGENPROBE 2 — Gleichheits-Richtung, mit genannter Familie.
                 expect(
-                    Math.abs(kontrolle - kontrolleOhne),
-                    `${s}: Der Messkoerper nennt "${face.familie}" und misst mit ` +
-                        `${zeichen.join(' ')} — Zeichen, die ${face.datei} laut cmap ` +
-                        `TRAEGT. Trotzdem ist er vom reinen Rueckfall nicht zu ` +
-                        `unterscheiden (${kontrolle}px gegen ${kontrolleOhne}px). Dann ` +
-                        `misst diese Probe die Familie ueberhaupt nicht, und die ` +
-                        `Gleichheit beim Probetext sagt nichts ueber die Schrift.`
-                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+                    breiten[`${s}__fremd`],
+                    `${s}: der Messkoerper nennt "${face.familie}" und misst mit ` +
+                        `${FREMD_NAME} — einem Zeichen, das laut cmap KEINE der ` +
+                        `${FACES_SOLL} Dateien traegt. Trotzdem weicht er vom reinen ` +
+                        `Rueckfall ab (${breiten[`${s}__fremd`]}px gegen ` +
+                        `${breiten[`${s}__fremdOhne`]}px). Dann unterscheidet diese ` +
+                        `Messung nicht nach cmap-Inhalt, und die Ungleichheit beim ` +
+                        `Probetext sagt nichts ueber die Schrift.`
+                ).toBe(breiten[`${s}__fremdOhne`]);
+
                 gemessen++;
+                abstaende[s] = Number((mit - ohne).toFixed(6));
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
                     face.familie
                 );
                 if (aufListe) {
+                    // Eine Ausnahme behauptet: traegt nichts bei. Dann MUSS
+                    // sie bitgleich wie der Rueckfall messen.
                     expect(
                         mit,
                         `${face.datei} steht auf SCHRIFT_FAMILIEN_AUSNAHMEN, rendert aber ` +
-                            `${mit}px statt ${ohne}px — die Datei traegt doch etwas bei.`
+                            `${mit}px statt ${ohne}px — die Datei traegt doch bei. Nimm sie ` +
+                            `von der Liste und senke AUSNAHMEN_SOLL.`
                     ).toBe(ohne);
                     continue;
                 }
-                if (mit === ohne) {
-                    stummeFaces.push(`${face.datei} (${s}) ${mit}px`);
+                if (Math.abs(mit - ohne) <= MINDESTABSTAND) {
+                    stummeFaces.push(
+                        `${face.datei} (${s}) ${mit}px gegen Rueckfall ${ohne}px, ` +
+                            `Abstand ${Math.abs(mit - ohne)}px`
+                    );
                 }
             }
             // Es wurde wirklich je Face gemessen, nicht nur die Schleife
@@ -749,9 +974,11 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             expect(gemessen, 'kein einziges Face wurde gemessen').toBe(FACES.length);
             expect(
                 stummeFaces,
-                `Diese Faces rendern "${PROBETEXT}" GENAU so breit wie der reine ` +
-                    `monospace-Rueckfall und genau so breit wie eine Familie, die es ` +
-                    `ueberhaupt nicht gibt. Sie tragen keinen der Buchstaben.`
+                `Diese Faces rendern "${PROBETEXT}" nicht mehr als ${MINDESTABSTAND}px ` +
+                    `anders als der reine ${RUECKFALL}-Rueckfall — obwohl ihre cmap jedes ` +
+                    `Zeichen des Probetexts traegt (Teil 0). Entweder laedt die Datei ` +
+                    `nicht, oder sie traegt doch nichts bei. Gemessene Abstaende: ` +
+                    `${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
@@ -760,33 +987,32 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
     // Teil 2 — derselbe Vergleich am ECHTEN Stack aus EDITOR_FONTS.
     //
     // Hier ist der Rueckfall nicht `monospace`, sondern der, den die App
-    // wirklich setzt (`Arial, sans-serif`). Das bleibt trotzdem
-    // plattformunabhaengig, weil BEIDE Seiten denselben Rueckfall aufloesen:
-    // fehlt Arial, loesen beide auf sans-serif auf und die GLEICHHEIT haelt
-    // weiter. Nur die Ungleichheits-Richtung waere plattformabhaengig, und
-    // die traegt die Kontrolle in diesem Fall selbst (siehe unten), nicht
-    // mehr die in Teil 0.
+    // wirklich setzt (`Arial, sans-serif`). Das bleibt plattformunabhaengig,
+    // weil die UNGLEICHHEIT aus der gebuendelten Datei kommt: fehlt Arial
+    // (ubuntu-latest), loest der Rueckfall auf sans-serif auf — eine andere
+    // Zahl, aber weiter eine ANDERE als die der gebuendelten Schrift. Der
+    // knappste gemessene Abstand ist Roboto gegen Arial mit 5.42px; auf
+    // Linux ist er groesser, weil Liberation/DejaVu weiter von Roboto
+    // wegliegt als Arial. Windows ist also der unguenstige Fall, und er ist
+    // hier gemessen.
     //
     // WARUM DIESER FALL SEINE EIGENE GEGENPROBE BRAUCHT (Gegenpruefung
     // Runde 2, B-01). Er war der einzige Teil ohne Kontrolle, und das war
     // messbar: seine lebenden Zusicherungen waren `rueck > 0` und
     // `nichtda === rueck`, und die VOLLE Ausnahmeliste filterte den
-    // eigentlichen Befund (`unerwartetGleich`) strukturell leer. Beides
-    // ueberlebt zwei Verfaelschungen, beide im isolierten HEAD-Export
-    // nachgestellt:
+    // eigentlichen Befund strukturell leer. Beides ueberlebte zwei
+    // Verfaelschungen, beide im isolierten HEAD-Export nachgestellt:
     //   MUT9b  `breiten[name] = 500` statt der echten Messung.
-    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN);
-    //          volle Datei 3 failed (Teil 0, Teil 1, Teil 5) / 11 passed.
+    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN).
     //   MUT21  `rueckfallStack()` gibt den Stack unverkuerzt zurueck, der
     //          Vergleich wird Stack-gegen-sich-selbst.
-    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN);
-    //          --grep "Teil 3" -> 1 failed.
-    // 500 === 500 und 500 > 0 sind wahr; ein Rueckfall, der die Familie noch
-    // nennt, ist von ihr nicht zu unterscheiden. Dieser Fall urteilte also
-    // gruen ueber eine Messung, die nicht stattgefunden hatte. Drei billige
-    // Zusicherungen schliessen das: der Messkoerper nennt die Familie, der
-    // Rueckfall nennt sie NICHT, und die Kontrolle in der Gegenrichtung
-    // zeigt mit einem Zeichen aus der cmap einen Abstand.
+    //          --grep "Teil 2" -> 1 passed (UNVERAENDERT GRUEN).
+    // Mit der Umkehrung fallen BEIDE jetzt auf die Hauptzusicherung: eine
+    // Konstante misst auf beiden Seiten dasselbe, und ein Rueckfall, der die
+    // Familie noch nennt, rendert in der Familie — beides ergibt
+    // GLEICHHEIT, und Gleichheit ist jetzt der Fehlschlag. Die drei billigen
+    // Zusicherungen bleiben trotzdem stehen: sie benennen den Grund, statt
+    // ihn aus einer nackten Breitengleichheit raten zu lassen.
     // ------------------------------------------------------------------
     test.describe('Teil 2 — der echte Stack aus EDITOR_FONTS', () => {
         test('Jeder gebuendelte Menueeintrag unterscheidet sich von seinem Rueckfall', async ({
@@ -808,24 +1034,21 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             const stapel = {};
             for (const [schluessel, stack] of gebuendelt) {
                 const rueckfall = rueckfallStack(stack);
-                const dateien = dateienDerFamilie(ersteFamilie(stack));
                 stapel[`${schluessel}__voll`] = { stack };
                 stapel[`${schluessel}__rueckfall`] = { stack: rueckfall };
                 stapel[`${schluessel}__nichtda`] = {
                     stack: `'${FAMILIE_OHNE_DATEI}', ${rueckfall}`
                 };
-                // Die Gegenrichtung: DERSELBE Stack, aber mit Zeichen, die
-                // die Dateien dieser Familie laut cmap tragen.
-                stapel[`${schluessel}__kontrolle`] = { stack, text: kontrollText(dateien) };
-                stapel[`${schluessel}__kontrolleOhne`] = {
-                    stack: rueckfall,
-                    text: kontrollText(dateien)
-                };
+                // Gegenprobe in der Gleichheits-Richtung: DERSELBE Stack,
+                // aber mit einem Zeichen, das keine Datei traegt.
+                stapel[`${schluessel}__fremd`] = { stack, text: FREMD_TEXT };
+                stapel[`${schluessel}__fremdOhne`] = { stack: rueckfall, text: FREMD_TEXT };
             }
             const { breiten } = await messeBreiten(page, stapel);
 
-            const befund = [];
-            const stummeKontrollen = [];
+            const stumm = [];
+            const blindeKontrollen = [];
+            const abstaende = {};
             let gemessen = 0;
             for (const [schluessel, stack] of gebuendelt) {
                 const familie = ersteFamilie(stack);
@@ -834,8 +1057,14 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 const rueck = breiten[`${schluessel}__rueckfall`];
                 const nichtda = breiten[`${schluessel}__nichtda`];
                 expect(rueck).toBeGreaterThan(0);
+                expect(voll).toBeGreaterThan(0);
                 // Auch hier: der Nichtvorhandene ist die Messlatte.
-                expect(nichtda).toBe(rueck);
+                expect(
+                    nichtda,
+                    `${schluessel}: eine Familie ohne Datei misst ${nichtda}px statt ` +
+                        `${rueck}px — diese Messung findet Unterschiede, die nicht aus ` +
+                        `der Schrift kommen.`
+                ).toBe(rueck);
 
                 // Der Messkoerper nennt die Familie ueberhaupt, und der
                 // Rueckfall nennt sie NICHT. Ohne die zweite Zusicherung
@@ -850,58 +1079,56 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                         `dann vergleicht dieser Fall den Stack mit sich selbst.`
                 ).not.toContain(familie);
 
-                // DIE KONTROLLE. Ohne sie ueberlebt eine Messung, die nur
-                // eine Konstante liefert (MUT9b oben), dieses Urteil.
-                const dateien = dateienDerFamilie(familie);
-                const zeichen = kontrollZeichenNamen(dateien);
-                expect(
-                    zeichen.length,
-                    `${familie} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
-                ).toBeGreaterThan(0);
-                const abstand = Math.abs(
-                    breiten[`${schluessel}__kontrolle`] - breiten[`${schluessel}__kontrolleOhne`]
-                );
-                if (abstand <= KONTROLL_MINDESTABSTAND) {
-                    stummeKontrollen.push(
-                        `${schluessel} (${familie}): "${stack}" rendert ${zeichen.join(' ')} nur ` +
-                            `${abstand}px anders als "${rueckfall}"`
+                // DIE GEGENPROBE. Gesammelt und am Ende als Liste gemeldet.
+                if (breiten[`${schluessel}__fremd`] !== breiten[`${schluessel}__fremdOhne`]) {
+                    blindeKontrollen.push(
+                        `${schluessel} (${familie}): "${stack}" rendert ${FREMD_NAME} ` +
+                            `${breiten[`${schluessel}__fremd`]}px, "${rueckfall}" ` +
+                            `${breiten[`${schluessel}__fremdOhne`]}px`
                     );
                 }
                 gemessen++;
+                abstaende[schluessel] = Number((voll - rueck).toFixed(6));
 
-                befund.push({
-                    schluessel,
-                    familie,
-                    voll,
-                    rueck,
-                    gleich: voll === rueck
-                });
+                const aufListe = Object.prototype.hasOwnProperty.call(
+                    SCHRIFT_FAMILIEN_AUSNAHMEN,
+                    familie
+                );
+                if (aufListe) {
+                    expect(
+                        voll,
+                        `${schluessel} (${familie}) steht auf SCHRIFT_FAMILIEN_AUSNAHMEN, ` +
+                            `rendert aber ${voll}px statt ${rueck}px.`
+                    ).toBe(rueck);
+                    continue;
+                }
+                if (Math.abs(voll - rueck) <= MINDESTABSTAND) {
+                    stumm.push(
+                        `${schluessel} (${familie}) ${voll}px gegen Rueckfall ` +
+                            `"${rueckfall}" ${rueck}px`
+                    );
+                }
             }
             // Es wurde wirklich je Eintrag gemessen, nicht nur die Schleife
-            // betreten — `unerwartetGleich` unten ist bei leerer Schleife
-            // trivial leer.
+            // betreten — `stumm` unten ist bei leerer Schleife trivial leer.
             expect(gemessen, 'kein einziger Menueeintrag wurde gemessen').toBe(gebuendelt.length);
-            // Erst die Kontrolle, dann der Befund: ist die Messung blind,
-            // sagt der Befund darunter nichts.
+            // Erst die Gegenprobe, dann der Befund: findet die Messung auch
+            // dort Unterschiede, wo es keine geben kann, sagt der Befund
+            // darunter nichts.
             expect(
-                stummeKontrollen,
-                `Fuer diese Eintraege ist der Messweg von Teil 2 nicht empfindlich: er nennt ` +
-                    `die Familie, der Rueckfall nennt sie nicht, gemessen wird mit Zeichen aus ` +
-                    `ihrer cmap — und trotzdem kommt derselbe Wert heraus. Dann ist die ` +
-                    `Gleichheit beim Probetext kein Befund, sondern eine Eigenschaft der ` +
-                    `Messung.`
+                blindeKontrollen,
+                `Fuer diese Eintraege findet der Messweg von Teil 2 einen Unterschied, ` +
+                    `obwohl mit ${FREMD_NAME} gemessen wird — einem Zeichen, das KEINE ` +
+                    `der gebuendelten Dateien traegt. Beide Seiten muessten denselben ` +
+                    `Rueckfall rendern. Dann ist die Ungleichheit beim Probetext kein ` +
+                    `Befund, sondern eine Eigenschaft der Messung.`
             ).toEqual([]);
 
-            const unerwartetGleich = befund.filter(
-                b =>
-                    b.gleich &&
-                    !Object.prototype.hasOwnProperty.call(SCHRIFT_FAMILIEN_AUSNAHMEN, b.familie)
-            );
             expect(
-                unerwartetGleich.map(b => `${b.schluessel} (${b.familie}) ${b.voll}px`),
-                'Diese Menueeintraege rendern GENAU so breit wie ihr Rueckfall ohne die ' +
-                    'erste Familie und genau so breit wie eine Familie, die es nicht gibt. ' +
-                    'Wer sie im Editor waehlt, bekommt den Rueckfall.'
+                stumm,
+                `Diese Menueeintraege rendern nicht mehr als ${MINDESTABSTAND}px anders ` +
+                    `als ihr Rueckfall ohne die erste Familie. Wer sie im Editor waehlt, ` +
+                    `bekommt den Rueckfall. Gemessene Abstaende: ${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
@@ -950,7 +1177,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             await page.waitForSelector(`#${EDITOR_ID} font[face]`);
         }
 
-        test('Jede gebuendelte Familie im Schriftmenue rendert wie ihr Rueckfall', async ({
+        test('Jede gebuendelte Familie im Schriftmenue rendert anders als ihr Rueckfall', async ({
             page
         }) => {
             // Eigene Untergrenze, wie in Teil 1: mit leerer Facesliste war
@@ -960,11 +1187,30 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 MINDEST_CSS_FAMILIEN
             );
             await ladeApp(page);
+            // DER LADEZWANG MUSS HIER STEHEN. Dieser Fall misst an
+            // `messeBreiten()` vorbei (eigenes `page.evaluate`), bekommt also
+            // deren erzwungenes `document.fonts.load()` nicht. Solange der
+            // Befund GLEICHHEIT war, war das harmlos bis hilfreich: ein noch
+            // nicht geladenes Face rendert im Rueckfall, also gleich — der
+            // erwartete Befund. Mit der Umkehrung ist genau daraus ein
+            // Falsch-ROT geworden. `ladeApp()` darf es NICHT tun, weil Teil 4
+            // die Abwesenheit von Anfragen beim blanken Laden behauptet.
+            const faceStatus = await ladeFaces(page, PROBETEXT + FREMD_TEXT);
+            for (const [name, status] of Object.entries(faceStatus)) {
+                expect(
+                    status,
+                    `${name} steht auf "${status}" — Teil 3 wuerde die Tauschfrist von ` +
+                        `font-display: swap messen und faelschlich "rendert wie der ` +
+                        `Rueckfall" melden.`
+                ).toBe('loaded');
+            }
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             await tippeProbetext(page);
 
-            const befunde = [];
-            const stummeKontrollen = [];
+            const stumm = [];
+            const blindeKontrollen = [];
+            const untreueNachbauten = [];
+            const abstaende = {};
             let gemessen = 0;
             for (const familie of CSS_FAMILIEN) {
                 const eintrag = Object.entries(menue).find(
@@ -976,7 +1222,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 await waehleSchrift(page, schluessel);
 
                 const messung = await page.evaluate(
-                    ({ editorId, rueckfall, kontrollZeichenText, kontrollGroesse }) => {
+                    ({ editorId, rueckfall, fremdText, fremdGroesse }) => {
                         const el = document.querySelector(`#${editorId} font[face]`);
                         const cs = getComputedStyle(el);
                         const host = document.createElement('div');
@@ -1007,17 +1253,16 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                             rueckfallStack: rueckfall,
                             text: el.textContent,
                             lebend: el.getBoundingClientRect().width,
+                            // Derselbe Text, dieselbe aufgeloeste Familie,
+                            // aber als nachgebaute Spanne. Belegt, dass der
+                            // Nachbauweg, ueber den die Gegenprobe laeuft,
+                            // dem lebenden Element entspricht.
+                            nachbau: mach(rechnerFamilie),
                             rueckfall: mach(rueckfall),
-                            // Die Kontrolle bei der groesseren Messgroesse,
-                            // sonst ist ihr Signal fuer Poppins kleiner als
-                            // die Rundung auf Geraetepixel (gemessen 0.3px
-                            // bei 16px). Derselbe Messweg, nur lauter.
-                            kontrolle: mach(rechnerFamilie, kontrollZeichenText, kontrollGroesse),
-                            kontrolleRueckfall: mach(
-                                rueckfall,
-                                kontrollZeichenText,
-                                kontrollGroesse
-                            )
+                            // Die Gegenprobe bei der groesseren Messgroesse,
+                            // derselbe Messweg, nur lauter.
+                            fremd: mach(rechnerFamilie, fremdText, fremdGroesse),
+                            fremdRueckfall: mach(rueckfall, fremdText, fremdGroesse)
                         };
                         host.remove();
                         return ergebnis;
@@ -1025,8 +1270,8 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     {
                         editorId: EDITOR_ID,
                         rueckfall: rueckfallStack(stack),
-                        kontrollZeichenText: kontrollText(dateienDerFamilie(familie)),
-                        kontrollGroesse: MESSGROESSE
+                        fremdText: FREMD_TEXT,
+                        fremdGroesse: MESSGROESSE
                     }
                 );
 
@@ -1048,38 +1293,43 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     messung.rueckfallStack,
                     `${familie}: der Rueckfall nennt die Familie noch`
                 ).not.toContain(familie);
-                // DIE KONTROLLE, hier am echten Menueweg: mit einem Zeichen,
-                // das die Dateien dieser Familie TRAGEN, muss derselbe
-                // Rechnerstil breiter oder schmaler rendern als der Rueckfall.
-                // Gesammelt und am Ende als Liste gemeldet, wie die Befunde
-                // daneben — eine Summe wuerde den ersten Treffer verdecken.
-                const zeichen = kontrollZeichenNamen(dateienDerFamilie(familie));
-                expect(
-                    zeichen.length,
-                    `${familie} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
-                ).toBeGreaterThan(0);
-                const abstand = Math.abs(messung.kontrolle - messung.kontrolleRueckfall);
-                if (abstand <= KONTROLL_MINDESTABSTAND) {
-                    stummeKontrollen.push(
+                expect(messung.lebend, `${familie}: lebendes Element messbar`).toBeGreaterThan(0);
+
+                // Der Nachbau ist dem lebenden Element treu. Ein lebendes
+                // Inline-Element und eine nachgebaute Spanne liegen nicht
+                // bitgenau, sondern unter 0.05px auseinander (gemessen).
+                // Ohne diese Zusicherung koennte die Gegenprobe, die ueber
+                // `mach()` laeuft, etwas anderes messen als das Element, um
+                // das es geht.
+                if (Math.abs(messung.lebend - messung.nachbau) >= 0.05) {
+                    untreueNachbauten.push(
+                        `${familie}: lebend ${messung.lebend}px, Nachbau ` +
+                            `${messung.nachbau}px (Rechnerstil "${messung.rechnerFamilie}")`
+                    );
+                }
+
+                // DIE GEGENPROBE, hier am echten Menueweg: mit einem Zeichen,
+                // das KEINE der Dateien traegt, muss derselbe Rechnerstil
+                // bitgleich wie der Rueckfall rendern. Gesammelt und am Ende
+                // als Liste gemeldet, wie die Befunde daneben.
+                if (messung.fremd !== messung.fremdRueckfall) {
+                    blindeKontrollen.push(
                         `${familie}: Rechnerstil "${messung.rechnerFamilie}" rendert ` +
-                            `${zeichen.join(' ')} nur ${abstand}px anders als der ` +
-                            `Rueckfall "${messung.rueckfallStack}"`
+                            `${FREMD_NAME} ${messung.fremd}px, der Rueckfall ` +
+                            `"${messung.rueckfallStack}" ${messung.fremdRueckfall}px`
                     );
                 }
                 gemessen++;
+                abstaende[familie] = Number((messung.lebend - messung.rueckfall).toFixed(6));
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
                     familie
                 );
-                // Gemessen wird am LEBENDEN Element, nicht an einem Nachbau
-                // mit derselben Familienangabe. Der Nachbau war der Punkt, an
-                // dem sich diese Messung auf Rueckfall-gegen-Rueckfall
-                // verkuerzen liess; `lebend` ist das <font face>, das die App
-                // selbst erzeugt hat. `toBeCloseTo(…, 1)` statt `toBe`: ein
-                // lebendes Inline-Element und eine nachgebaute Spanne liegen
-                // nicht bitgenau, sondern unter 0.05px auseinander (vorher
-                // ueber die Treue-Zusicherung des Nachbaus belegt).
+                // Gemessen wird am LEBENDEN Element, nicht am Nachbau. Der
+                // Nachbau war der Punkt, an dem sich diese Messung auf
+                // Rueckfall-gegen-Rueckfall verkuerzen liess; `lebend` ist
+                // das <font face>, das die App selbst erzeugt hat.
                 if (aufListe) {
                     expect(
                         messung.lebend,
@@ -1088,49 +1338,55 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     ).toBeCloseTo(messung.rueckfall, 1);
                     continue;
                 }
-                if (Math.abs(messung.lebend - messung.rueckfall) < 0.05) {
-                    befunde.push(
-                        `"${schluessel}" -> face="${messung.face}" ` +
-                            `${messung.lebend}px == Rueckfall "${rueckfallStack(stack)}"`
+                if (Math.abs(messung.lebend - messung.rueckfall) <= MINDESTABSTAND) {
+                    stumm.push(
+                        `"${schluessel}" -> face="${messung.face}" ${messung.lebend}px, ` +
+                            `Rueckfall "${rueckfallStack(stack)}" ${messung.rueckfall}px`
                     );
                 }
             }
             expect(gemessen, 'keine einzige Familie wurde gemessen').toBe(CSS_FAMILIEN.length);
-            // Erst die Kontrolle, dann der Befund: ist die Messung an dieser
-            // Stelle blind, sagt der Befund darunter nichts.
             expect(
-                stummeKontrollen,
-                `Fuer diese Familien ist der Messweg von Teil 3 nicht empfindlich: er ` +
-                    `nennt die Familie, misst mit Zeichen, die sie laut cmap TRAEGT, und ` +
-                    `rendert trotzdem wie der Rueckfall. Dann ist die Gleichheit beim ` +
-                    `Probetext kein Befund, sondern eine Eigenschaft der Messung.`
+                untreueNachbauten,
+                'Der Nachbau weicht vom lebenden Element ab. Dann messen die Gegenproben ' +
+                    'dieses Teils etwas anderes als das Element, um das es geht.'
+            ).toEqual([]);
+            // Erst die Gegenprobe, dann der Befund.
+            expect(
+                blindeKontrollen,
+                `Fuer diese Familien findet der Messweg von Teil 3 einen Unterschied, ` +
+                    `obwohl mit ${FREMD_NAME} gemessen wird — einem Zeichen, das KEINE ` +
+                    `gebuendelte Datei traegt. Dann ist die Ungleichheit beim Probetext ` +
+                    `kein Befund, sondern eine Eigenschaft der Messung.`
             ).toEqual([]);
             expect(
-                befunde,
-                'Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text GENAU so ' +
-                    'breit wie ohne die erste Familie. Der Nutzer bekommt den Rueckfall.'
+                stumm,
+                `Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text nicht ` +
+                    `mehr als ${MINDESTABSTAND}px anders als ohne die erste Familie. Der ` +
+                    `Nutzer bekommt den Rueckfall. Gemessene Abstaende: ` +
+                    `${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
 
     // ------------------------------------------------------------------
-    // Teil 4 — und trotzdem laden sie. Die Pointe, getrennt belegt.
+    // Teil 4 — und sie laden auch, aber erst auf Anforderung.
     // ------------------------------------------------------------------
-    test.describe('Teil 4 — die Dateien laden, sie sind nur nutzlos', () => {
-        test('Beim blanken Laden fordert Chromium KEINE der zehn Dateien an', async ({ page }) => {
+    test.describe('Teil 4 — die Dateien laden erst auf Anforderung', () => {
+        test(`Beim blanken Laden fordert Chromium KEINE der ${FACES_SOLL} Dateien an`, async ({
+            page
+        }) => {
             const gesehen = [];
             page.on('response', r => {
                 if (/\.woff2(\?|$)/i.test(r.url())) gesehen.push(r.url().split('/').pop());
             });
-            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
-                MINDEST_FACES
-            );
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBe(FACES_SOLL);
             await ladeApp(page);
             await page.evaluate(() => document.fonts.ready);
             await page.waitForTimeout(2000);
             // Messfalle 3: ohne `unicode-range` und ohne Nutzung laedt
             // Chromium faul. Die App selbst benutzt keine der vier Familien.
-            // Das ist ein Befund, keine Formalie: die 195.276 Byte fliessen
+            // Das ist ein Befund, keine Formalie: die 144.608 Byte fliessen
             // erst, wenn jemand im Editor eine der vier waehlt.
             const beimBlankenLaden = gesehen.slice();
             expect(beimBlankenLaden).toEqual([]);
@@ -1147,7 +1403,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // eigenen Horcher fuehrt.
             //
             // Darum muss DERSELBE Horcher im SELBEN Lauf zeigen, dass er
-            // sehen kann: erzwungen geladen, und die zehn Anfragen muessen
+            // sehen kann: erzwungen geladen, und die sieben Anfragen muessen
             // auftauchen. Das macht die feste Frist oben belastbar — nicht,
             // weil 2000 ms die richtige Zahl waeren, sondern weil der
             // Erkenner im selben Fenster nachweislich funktioniert.
@@ -1156,10 +1412,10 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             await messeBreiten(page, { mono: { stack: 'monospace' } });
             await expect
                 .poll(() => gesehen.length, { timeout: 15000 })
-                .toBeGreaterThanOrEqual(FACES.length);
+                .toBeGreaterThanOrEqual(DATEINAMEN.length);
         });
 
-        test(`Erzwungen laden alle ${MINDEST_FACES} mit Status 200, ${BYTE_SUMME_SOLL} Byte`, async ({
+        test(`Erzwungen laden alle ${FACES_SOLL} mit Status 200, ${BYTE_SUMME_SOLL} Byte`, async ({
             page
         }) => {
             // Der Horcher sammelt SYNCHRON. Ein `async`-Horcher, der erst
@@ -1188,7 +1444,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // jede feste Frist entweder zu kurz (Fehlalarm) oder verschwendet.
             await expect
                 .poll(() => rohAntworten.length, { timeout: 15000 })
-                .toBeGreaterThanOrEqual(FACES.length);
+                .toBeGreaterThanOrEqual(DATEINAMEN.length);
 
             // Im selben Lauf mitgenommen (eine Seite statt zwei, Lastgrund
             // siehe Teil 1): `document.fonts.check()` kann die Frage dieser
@@ -1211,9 +1467,10 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // nichts darueber, ob die GENANNTE Familie etwas beitraegt — hier
             // nachgemessen: es liefert `true` auch fuer eine Familie, zu der
             // es keine Datei und keine @font-face-Regel gibt. Darum laeuft der
-            // Ladebeleg ueber die Netzwerkantworten und nicht ueber `check()`.
-            // Solange diese Zusicherung haelt, ist die Entscheidung
-            // begruendet; kippt sie, gehoert sie neu bewertet.
+            // Ladebeleg ueber die Netzwerkantworten und nicht ueber `check()`,
+            // und darum laeuft der BEITRAGS-Beleg ueber Breiten. Solange diese
+            // Zusicherung haelt, ist die Entscheidung begruendet; kippt sie,
+            // gehoert sie neu bewertet.
             expect(
                 checkAntworten[FAMILIE_OHNE_DATEI],
                 'document.fonts.check() meldet eine Familie ohne Datei als nicht ' +
@@ -1235,10 +1492,10 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 antworten.push({ name: r.url().split('/').pop(), status: r.status(), laenge });
             }
 
-            // Kein 404, kein Ladefehler — das ist die Pointe.
+            // Kein 404, kein Ladefehler.
             expect(fehlgeschlagen).toEqual([]);
             const namen = antworten.map(a => a.name).sort();
-            expect(namen).toEqual(FACES.map(f => f.datei).sort());
+            expect(namen).toEqual(DATEINAMEN);
             for (const a of antworten) {
                 expect(a.status, `${a.name} antwortete mit ${a.status}`).toBe(200);
             }
@@ -1287,51 +1544,295 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             }
 
             if (eintraege.length === 0) {
-                // Leere Liste: nichts zu verwesen. Die Laengenprobe oben
-                // haelt den Zustand fest.
+                // Leere Liste: nichts zu verwesen. Dieser Zweig schlaeft
+                // BEWUSST — er ist die einzige Stelle dieser Datei, die bei
+                // leerer Liste nichts messendes tut. Einheit 1 hat dieselbe
+                // Stelle gemessen (M1): ein Eintrag weckt ihn von selbst,
+                // weil alle vier Familien messbar beitragen und eine
+                // Ausnahme GLEICHHEIT behauptet. Die Laengenprobe oben haelt
+                // den Zustand fest, und die beiden Zusicherungen hier halten
+                // den Zweig davon ab, zu einem stillen `return` zu werden.
                 expect(AUSNAHMEN_SOLL).toBe(0);
+                expect(CSS_FAMILIEN.length).toBeGreaterThanOrEqual(MINDEST_CSS_FAMILIEN);
                 return;
             }
             const stapel = {};
             for (const name of eintraege) {
                 stapel[`${name}__mit`] = { stack: mitStack(name) };
                 stapel[`${name}__ohne`] = { stack: RUECKFALL };
-                stapel[`${name}__kontrolle`] = {
-                    stack: mitStack(name),
-                    text: kontrollText(dateienDerFamilie(name))
-                };
-                stapel[`${name}__kontrolleOhne`] = {
-                    stack: RUECKFALL,
-                    text: kontrollText(dateienDerFamilie(name))
-                };
+                stapel[`${name}__fremd`] = { stack: mitStack(name), text: FREMD_TEXT };
+                stapel[`${name}__fremdOhne`] = { stack: RUECKFALL, text: FREMD_TEXT };
             }
             const { breiten } = await messeBreiten(page, stapel);
 
-            // Dieselbe Kontrolle wie in Teil 1, hier je Familie: ohne sie
-            // wuerde eine Verfaelschung des Messkoerpers in Richtung
-            // Rueckfall die Verwesungsprobe WAHRER machen statt falscher.
+            // Dieselbe Gegenprobe wie in Teil 1, hier je Familie: ohne sie
+            // koennte eine Messung, die ueberall Unterschiede findet, die
+            // Verwesungsprobe reihenweise rot stellen, ohne dass eine
+            // Familie wirklich beitraegt.
             for (const name of eintraege) {
-                const zeichen = kontrollZeichenNamen(dateienDerFamilie(name));
                 expect(
-                    zeichen.length,
-                    `${name} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
-                ).toBeGreaterThan(0);
-                expect(
-                    Math.abs(breiten[`${name}__kontrolle`] - breiten[`${name}__kontrolleOhne`]),
+                    breiten[`${name}__fremd`],
                     `${name}: der Messkoerper nennt die Familie und misst mit ` +
-                        `${zeichen.join(' ')}, Zeichen die ihre Dateien laut cmap TRAGEN — ` +
-                        `und ist trotzdem vom reinen Rueckfall nicht zu unterscheiden. ` +
-                        `Dann prueft die Verwesungsprobe nichts.`
-                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+                        `${FREMD_NAME}, einem Zeichen das KEINE ihrer Dateien ` +
+                        `(${dateienDerFamilie(name).join(', ')}) traegt — und weicht ` +
+                        `trotzdem vom reinen Rueckfall ab. Dann prueft die ` +
+                        `Verwesungsprobe nichts.`
+                ).toBe(breiten[`${name}__fremdOhne`]);
             }
 
-            const repariert = eintraege.filter(n => breiten[`${n}__mit`] !== breiten[`${n}__ohne`]);
+            const repariert = eintraege.filter(
+                n => Math.abs(breiten[`${n}__mit`] - breiten[`${n}__ohne`]) > MINDESTABSTAND
+            );
             expect(
                 repariert,
                 `Diese Familien stehen auf SCHRIFT_FAMILIEN_AUSNAHMEN, tragen aber in ` +
                     `Wahrheit bei. Nimm sie von der Liste und senke AUSNAHMEN_SOLL auf ` +
                     `${eintraege.length - repariert.length}.`
             ).toEqual([]);
+        });
+    });
+
+    // ------------------------------------------------------------------
+    // Teil 6 — ECHTE GEWICHTE. Der Nachweis, den der alte Zehnerbau nie
+    // treffen konnte.
+    //
+    // Roboto und Inter kommen seit `b0ada5b` aus JE EINER Datei mit
+    // `font-weight: 100 900` — eine variable Schrift mit `wght`-Achse
+    // (Einheit 1 liest die Achse aus der fvar-Tabelle und nagelt sie fest).
+    // Die Frage, die nur der Browser beantworten kann: macht er daraus
+    // ECHTE Instanzen, oder taeuscht er Fettschrift nach?
+    //
+    // DIE MESSUNG, und warum sie nicht zu umgehen ist. Derselbe Text,
+    // dieselbe Familie, nur das Gewicht wandert ueber 100..900. Fuer eine
+    // variable Familie muss JEDE Stufe eine EIGENE Breite ergeben — neun
+    // Gewichte, neun verschiedene Zahlen, monoton steigend. Fuer eine
+    // STATISCHE Familie gibt es zwischen den deklarierten Gewichten nichts:
+    // dort muessen genau so viele verschiedene Breiten herauskommen, wie
+    // fonts.css Einzelgewichte deklariert, und jedes NICHT deklarierte
+    // Gewicht rendert BITGLEICH wie der deklarierte Nachbar, den die
+    // CSS-Schriftzuordnung dafuer waehlt.
+    //
+    // DAS IST DIE GEGENPROBE ZUR GEGENPROBE: dieselbe Messung, aus fonts.css
+    // abgeleitet, muss fuer die eine Bauart UNGLEICHHEIT und fuer die andere
+    // BITGLEICHHEIT liefern. Eine Messung, die immer Unterschiede findet,
+    // scheitert an den statischen Familien; eine, die nie welche findet, an
+    // den variablen. Keine der beiden Haelften ist allein zu bestehen.
+    //
+    // GEMESSEN (40px, Probetext, Windows/Chromium, Probetext-Pangramm):
+    //   Roboto  100..900 -> neun verschiedene Werte, monoton steigend;
+    //            400 gegen 700 = 5.5625px Abstand
+    //   Inter   100..900 -> neun verschiedene Werte, monoton steigend;
+    //            400 gegen 600 = 14.046875px Abstand
+    //   Poppins 100..400 alle gleich · 500 eigener Wert · 600..900 alle
+    //            gleich -> DREI verschiedene Werte bei DREI deklarierten
+    //            Gewichten (400/500/600)
+    //   Source Sans Pro 100..500 alle gleich · 600..900 alle gleich
+    //            -> ZWEI verschiedene Werte bei ZWEI deklarierten
+    //            Gewichten (400/600)
+    //
+    // KORREKTUR ZUR AUFTRAGSANNAHME. Der Auftrag erwartete, dass der Browser
+    // das nicht deklarierte Gewicht 700 bei Source Sans Pro NACHTAEUSCHT und
+    // dass genau das den sichtbaren Unterschied macht. Gemessen taeuscht er
+    // NICHTS nach: 600 und 700 messen bitgleich. Der Grund steht in der
+    // CSS-Schriftzuordnung — fuer das Wunschgewicht 700 gibt es kein
+    // deklariertes Gewicht darueber, also wird das naechste darunter gewaehlt
+    // (600), und eine synthetische Fettung kommt bei einem bereits
+    // halbfetten Face nicht dazu. Der Nachweis wird dadurch SCHAERFER, nicht
+    // schwaecher: Bitgleichheit ist eine haertere Zusicherung als "irgendein
+    // anderer Unterschied". Dieselbe Mechanik liegt eine Stufe tiefer noch
+    // klarer: 400 gegen 500 ist bei Source Sans Pro bitgleich (kein 500
+    // deklariert) und bei Roboto und Inter verschieden (Achse).
+    // ------------------------------------------------------------------
+    test.describe('Teil 6 — echte Gewichtsinstanzen gegen statische Stufen', () => {
+        test('Variable Familien liefern je Gewicht eine eigene Breite, statische nicht', async ({
+            page
+        }) => {
+            // Eigene Untergrenzen, wie in Teil 1 bis Teil 3. Beide Bauarten
+            // muessen vorkommen, sonst prueft dieser Fall nur eine Haelfte
+            // seiner Aussage — und die andere ist die Gegenprobe dazu.
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBe(FACES_SOLL);
+            expect(
+                VARIABLE_FAMILIEN.length,
+                'keine variable Familie aus fonts.css gelesen — dann ist der Nachweis ' +
+                    'echter Gewichtsinstanzen nicht durchfuehrbar. Zwei Bloecke tragen ' +
+                    '`font-weight: 100 900`; ein Leser, der nur Einzelgewichte erkennt, ' +
+                    'verliert sie still.'
+            ).toBeGreaterThan(0);
+            expect(
+                STATISCHE_FAMILIEN.length,
+                'keine statische Familie aus fonts.css gelesen — dann fehlt die ' +
+                    'Gegenprobe, und eine Messung, die immer Unterschiede findet, ' +
+                    'bestuende diesen Fall.'
+            ).toBeGreaterThan(0);
+
+            await ladeApp(page);
+
+            // Ein Stapel ueber alle Familien und alle neun Gewichte, plus je
+            // Familie und Gewicht der reine Rueckfall als Vergleich.
+            const stapel = {};
+            for (const info of FAMILIEN_INFO) {
+                for (const gewicht of MESSGEWICHTE) {
+                    stapel[`${info.familie}__${gewicht}`] = {
+                        stack: mitStack(info.familie),
+                        gewicht
+                    };
+                    stapel[`${info.familie}__${gewicht}__ohne`] = {
+                        stack: RUECKFALL,
+                        gewicht
+                    };
+                }
+            }
+            const { breiten, faceStatus } = await messeBreiten(page, stapel);
+            // Ohne geladene Faces misst dieser Fall die Tauschfrist und
+            // meldete fuer JEDE Familie "keine eigenen Breiten".
+            for (const [name, status] of Object.entries(faceStatus)) {
+                expect(status, `${name} steht auf "${status}", nicht "loaded"`).toBe('loaded');
+            }
+
+            const befunde = [];
+            const gemesseneBreiten = {};
+            for (const info of FAMILIEN_INFO) {
+                const reihe = MESSGEWICHTE.map(g => breiten[`${info.familie}__${g}`]);
+                gemesseneBreiten[info.familie] = reihe;
+                for (const [i, b] of reihe.entries()) {
+                    expect(b, `${info.familie}/${MESSGEWICHTE[i]}: nicht messbar`).toBeGreaterThan(
+                        0
+                    );
+                }
+                // Die Familie rendert ueberhaupt aus ihrer Datei — sonst
+                // messen alle neun Stufen den Rueckfall und waeren
+                // trivialerweise gleich.
+                const ohneRegel = breiten[`${info.familie}__${REGELGEWICHT}__ohne`];
+                expect(
+                    Math.abs(breiten[`${info.familie}__${REGELGEWICHT}`] - ohneRegel),
+                    `${info.familie}: rendert bei Gewicht ${REGELGEWICHT} wie der ` +
+                        `Rueckfall — dann sagt die Gewichtsreihe nichts ueber die Datei.`
+                ).toBeGreaterThan(MINDESTABSTAND);
+
+                const verschieden = new Set(reihe);
+                if (info.variabel) {
+                    // ECHTE INSTANZEN: jede Stufe eine eigene Breite.
+                    if (verschieden.size !== MESSGEWICHTE.length) {
+                        befunde.push(
+                            `${info.familie} ist variabel (${info.von}..${info.bis}), ` +
+                                `liefert aber nur ${verschieden.size} verschiedene Breiten ` +
+                                `fuer ${MESSGEWICHTE.length} Gewichte: ` +
+                                `${JSON.stringify(reihe)}`
+                        );
+                    }
+                    // Monoton steigend — eine schwerere Instanz ist breiter.
+                    // Das ist mehr als "verschieden": es schliesst aus, dass
+                    // die neun Werte aus Rundungsrauschen kommen.
+                    for (let i = 1; i < reihe.length; i++) {
+                        if (!(reihe[i] > reihe[i - 1])) {
+                            befunde.push(
+                                `${info.familie}: Gewicht ${MESSGEWICHTE[i]} (${reihe[i]}px) ` +
+                                    `ist nicht breiter als ${MESSGEWICHTE[i - 1]} ` +
+                                    `(${reihe[i - 1]}px)`
+                            );
+                        }
+                    }
+                    // Mehr verschiedene Breiten als deklarierte Bloecke —
+                    // die Instanzen koennen also nicht aus den Bloecken
+                    // kommen, sondern nur aus der Achse.
+                    expect(
+                        verschieden.size,
+                        `${info.familie}: ${verschieden.size} verschiedene Breiten aus ` +
+                            `${info.faces.length} @font-face-Block/-Bloecken — nicht mehr ` +
+                            `als deklariert, also kein Beweis fuer die Achse.`
+                    ).toBeGreaterThan(info.faces.length);
+                } else {
+                    // STATISCHE STUFEN: genau so viele verschiedene Breiten,
+                    // wie fonts.css Einzelgewichte deklariert.
+                    if (verschieden.size !== info.einzelGewichte.length) {
+                        befunde.push(
+                            `${info.familie} ist statisch mit den deklarierten Gewichten ` +
+                                `${JSON.stringify(info.einzelGewichte)}, liefert aber ` +
+                                `${verschieden.size} verschiedene Breiten: ` +
+                                `${JSON.stringify(reihe)}`
+                        );
+                    }
+                    // UND KONKRET: jedes nicht deklarierte Gewicht rendert
+                    // bitgleich wie ein deklariertes. Das ist der Satz
+                    // "zwischen den Stufen gibt es nichts" in seiner
+                    // schaerfsten Form.
+                    const deklarierteBreiten = new Set(
+                        info.einzelGewichte.map(g => breiten[`${info.familie}__${g}`])
+                    );
+                    const nichtDeklariert = MESSGEWICHTE.filter(
+                        g => !info.einzelGewichte.includes(g)
+                    );
+                    // Gegen Leerlauf: gaebe es kein nicht deklariertes
+                    // Gewicht, pruefte die Schleife darunter nichts.
+                    expect(
+                        nichtDeklariert.length,
+                        `${info.familie} deklariert alle ${MESSGEWICHTE.length} gemessenen ` +
+                            `Gewichte — dann ist die Gegenprobe nicht durchfuehrbar.`
+                    ).toBeGreaterThan(0);
+                    for (const g of nichtDeklariert) {
+                        const b = breiten[`${info.familie}__${g}`];
+                        if (!deklarierteBreiten.has(b)) {
+                            befunde.push(
+                                `${info.familie}: Gewicht ${g} ist nicht deklariert ` +
+                                    `(${JSON.stringify(info.einzelGewichte)}), rendert aber ` +
+                                    `${b}px — keine der deklarierten Breiten ` +
+                                    `${JSON.stringify([...deklarierteBreiten])}. Der Browser ` +
+                                    `taeuscht hier ein Gewicht nach, das keine Datei ` +
+                                    `hergibt.`
+                            );
+                        }
+                    }
+                }
+            }
+
+            expect(
+                befunde,
+                `Gemessene Breiten je Familie, Gewichte ${JSON.stringify(MESSGEWICHTE)}: ` +
+                    `${JSON.stringify(gemesseneBreiten)}`
+            ).toEqual([]);
+
+            // DIE BEIDEN VOM AUFTRAG BENANNTEN PAARE, namentlich und mit
+            // Zahl. Die Gewichte stehen hier, die FAMILIEN nicht: welche
+            // variabel ist, kommt aus fonts.css.
+            for (const info of VARIABLE_FAMILIEN) {
+                for (const gewicht of [600, 700]) {
+                    const a = breiten[`${info.familie}__${REGELGEWICHT}`];
+                    const b = breiten[`${info.familie}__${gewicht}`];
+                    expect(
+                        Math.abs(b - a),
+                        `${info.familie}: Gewicht ${REGELGEWICHT} (${a}px) und ${gewicht} ` +
+                            `(${b}px) messen gleich breit. Aus EINER Datei mit ` +
+                            `font-weight: ${info.von} ${info.bis} muss der Browser echte ` +
+                            `Instanzen machen.`
+                    ).toBeGreaterThan(MINDESTABSTAND);
+                }
+            }
+
+            // UND DIE GEGENPROBE AN DER STATISCHEN FAMILIE, bitgleich: jedes
+            // Gewicht ueber dem hoechsten deklarierten rendert wie dieses.
+            // Hier taeuscht der Browser nichts nach — gemessen, nicht
+            // angenommen (siehe die Korrektur im Kopf dieses Teils).
+            for (const info of STATISCHE_FAMILIEN) {
+                const hoechstes = Math.max(...info.einzelGewichte);
+                const darueber = MESSGEWICHTE.filter(g => g > hoechstes);
+                expect(
+                    darueber.length,
+                    `${info.familie}: kein gemessenes Gewicht liegt ueber dem hoechsten ` +
+                        `deklarierten (${hoechstes}) — dann ist diese Gegenprobe nicht ` +
+                        `durchfuehrbar.`
+                ).toBeGreaterThan(0);
+                for (const g of darueber) {
+                    expect(
+                        breiten[`${info.familie}__${g}`],
+                        `${info.familie}: Gewicht ${g} ist nicht deklariert und misst ` +
+                            `${breiten[`${info.familie}__${g}`]}px, das deklarierte ` +
+                            `${hoechstes} misst ` +
+                            `${breiten[`${info.familie}__${hoechstes}`]}px. Ohne eigene ` +
+                            `Datei fuer ${g} muss der Browser auf ${hoechstes} ` +
+                            `zurueckfallen — bitgleich.`
+                    ).toBe(breiten[`${info.familie}__${hoechstes}`]);
+                }
+            }
         });
     });
 });
