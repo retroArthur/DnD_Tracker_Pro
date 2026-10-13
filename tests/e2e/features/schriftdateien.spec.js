@@ -1034,13 +1034,40 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 expect(ohne, `${s}: Rueckfall messbar`).toBeGreaterThan(0);
                 expect(mit, `${s}: Messkoerper messbar`).toBeGreaterThan(0);
 
-                // Der Messkoerper nennt die Familie ueberhaupt. Billig, und
-                // es benennt den Grund in der Fehlermeldung, statt ihn in
-                // einer nackten Breitengleichheit raten zu lassen.
+                // Der Messkoerper nennt die Familie — und zwar ALS ERSTES
+                // GLIED, nicht irgendwo im Stapel.
+                //
+                // HIER STAND `toContain(face.familie)`, und das war ein
+                // Teilstring-Vergleich (Gegenpruefung Runde 4, Befund 3).
+                // "'RobotoX', monospace" ENTHAELT "Roboto", also lief die
+                // Zeile gruen durch, obwohl der Messkoerper eine Familie
+                // nannte, die es nicht gibt. Nachgestellt, zwei Mutationen
+                // zusammen:
+                //     mitStack():     `'${familie}'`  ->  `'${familie}X'`
+                //     messeBreiten(): + (/__mit$/.test(name) ? 7 : 0)
+                // Ergebnis: 1 failed / 15 passed — und die eine rote Stelle
+                // war TEIL 6, nicht Teil 1. Teil 1, 2, 5 und 0 meldeten
+                // gruen, obwohl kein Byte der sieben Dateien an der Messung
+                // beteiligt war: `__nichtda` und `__fremd` tragen den
+                // Zuschlag nicht, also waren beide Gegenproben erfuellt, und
+                // die Hauptzusicherung `|mit - ohne| > 1` war allein vom
+                // Zuschlag erfuellt (7 > 1).
+                //
+                // Der Dateikopf erklaert diese Verfaelschung bei `mitStack()`
+                // fuer unbedenklich ('MIT DER UMKEHRUNG FAELLT GENAU DIESE
+                // VERFAELSCHUNG JETZT VON SELBST AUF') — das gilt nur,
+                // solange die Breitendifferenz ehrlich gemessen wird. Kommt
+                // ein von der Schrift unabhaengiger Unterschied dazu, ist
+                // Teil 1 gruen ohne Aussage. `ersteFamilie()` steht schon in
+                // dieser Datei; der Vergleich auf GLEICHHEIT des ersten
+                // Glieds kostet nichts und laesst "RobotoX" nicht durch.
                 expect(
-                    stapel[`${s}__mit`].stack,
-                    `${s}: der Messkoerper nennt die Familie nicht`
-                ).toContain(face.familie);
+                    ersteFamilie(stapel[`${s}__mit`].stack),
+                    `${s}: das erste Glied des Messkoerpers ist nicht die Familie — ` +
+                        `Stapel "${stapel[`${s}__mit`].stack}". Ein Teilstring genuegt ` +
+                        `nicht: "'${face.familie}X', ${RUECKFALL}" enthaelt den Namen und ` +
+                        `nennt trotzdem eine Familie, die es nicht gibt.`
+                ).toBe(face.familie);
 
                 // GEGENPROBE 1 — Gleichheits-Richtung.
                 expect(
@@ -1186,13 +1213,22 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                         `der Schrift kommen.`
                 ).toBe(rueck);
 
-                // Der Messkoerper nennt die Familie ueberhaupt, und der
-                // Rueckfall nennt sie NICHT. Ohne die zweite Zusicherung
+                // Der Messkoerper nennt die Familie ALS ERSTES GLIED, und der
+                // Rueckfall nennt sie GAR NICHT. Ohne die zweite Zusicherung
                 // vergleicht dieser Fall zwei gleiche Stacks (MUT21 oben).
+                //
+                // Erstes Glied und nicht Teilstring, aus demselben Grund wie
+                // in Teil 1 (dort begruendet, Befund 3): ein Stapel
+                // "'InterX', Arial, sans-serif" ENTHAELT "Inter" und nennt
+                // trotzdem eine Familie, die es nicht gibt. Die zweite
+                // Zusicherung bleibt dagegen `not.toContain`: der Rueckfall
+                // darf die Familie an KEINER Stelle fuehren, nicht bloss
+                // nicht an der ersten.
                 expect(
-                    stapel[`${schluessel}__voll`].stack,
-                    `${schluessel}: der Messkoerper nennt "${familie}" nicht`
-                ).toContain(familie);
+                    ersteFamilie(stapel[`${schluessel}__voll`].stack),
+                    `${schluessel}: das erste Glied von "${stapel[`${schluessel}__voll`].stack}" ` +
+                        `ist nicht "${familie}"`
+                ).toBe(familie);
                 expect(
                     rueckfall,
                     `${schluessel}: der Rueckfall "${rueckfall}" nennt "${familie}" noch — ` +
@@ -1470,16 +1506,26 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 // am falschen Element. Entscheidend beim Lauf im selben
                 // Editor: `face` muss die AKTUELLE Familie nennen, nicht noch
                 // die vorige.
-                expect(messung.face, `face nach der Wahl von "${schluessel}"`).toContain(familie);
+                expect(
+                    ersteFamilie(messung.face),
+                    `face nach der Wahl von "${schluessel}" ist "${messung.face}"`
+                ).toBe(familie);
                 expect(messung.text).toBe(PROBETEXT);
                 // Der Browser hat die Familie fuer das lebende Element
                 // wirklich angefordert, und der Rueckfall nennt sie wirklich
                 // nicht. Beides muss dastehen, sonst vergleicht der Schluss
                 // unten zwei Rueckfaelle.
+                //
+                // ERSTES GLIED, nicht Teilstring (Befund 3, in Teil 1
+                // begruendet): "'RobotoX', Arial, sans-serif" enthaelt
+                // "Roboto". Die Rueckfall-Zusicherung darunter bleibt
+                // `not.toContain` — dort ist die staerkere Aussage gefordert,
+                // naemlich an KEINER Stelle.
                 expect(
-                    messung.rechnerFamilie,
-                    `${familie}: der Rechnerstil des lebenden Elements nennt die Familie nicht`
-                ).toContain(familie);
+                    ersteFamilie(messung.rechnerFamilie),
+                    `${familie}: der Rechnerstil des lebenden Elements lautet ` +
+                        `"${messung.rechnerFamilie}" — sein erstes Glied ist nicht die Familie`
+                ).toBe(familie);
                 expect(
                     messung.rueckfallStack,
                     `${familie}: der Rueckfall nennt die Familie noch`
