@@ -8254,6 +8254,13 @@ npx jest tests/unit/console-hygiene.test.js tests/unit/eslint-globals-freshness.
 
 # Die Grenzfall-Datei, an der die Leistungsregression auffiel
 npx playwright test tests/e2e/features/eingaberahmen.spec.js --workers=1
+
+# Die Reichweite aus T-C — die Falle darf sie nicht beeinflussen (isoliert 3/3)
+npx playwright test tests/e2e/features/tastatur-erreichbarkeit.spec.js --workers=1
+
+# Der gated Fokusring-Lauf: er tabuliert durch sechs Modale in vier Themes
+# und liegt damit genau im Wirkungsbereich der Falle (gemessen 11/11)
+FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js --workers=1
 ```
 
 ---
