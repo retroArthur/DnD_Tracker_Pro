@@ -417,5 +417,135 @@ class TestSchriftverweiseLoesenAuf:
         assert os.path.normcase(os.path.abspath(verzeichnis)) == erwartet
 
 
+class TestKeineFremdschriftInDerQuelle:
+    """DIE GEGENRICHTUNG, und sie war offen (Gegenpruefung Runde 4, Befund 6).
+
+    pruefe_schriftverweise() oben prueft 'jede url() loest auf'. Eine
+    Schriftdatei, die im QUELLVERZEICHNIS liegt und die KEINE url() nennt,
+    wird davon nicht gesehen — sie wird mitkopiert, mitveroeffentlicht und von
+    keiner Zeile in build.py beanstandet.
+
+    NACHGESTELLT, nicht vermutet. Der Zustand nach einem Lauf von
+    tools/fetch-fonts.py (dessen FONT_FILENAMES noch die zehn abgeschafften
+    Namen fuehrt), simuliert durch die fuenf Zusatznamen im echten Baum:
+
+        $ for n in roboto-400 roboto-700 inter-400 inter-500 inter-600; do \\
+              cp assets/fonts/poppins-400.woff2 "assets/fonts/$n.woff2"; done
+        $ ls assets/fonts/*.woff2 | wc -l      -> 12
+        $ PYTHONIOENCODING=utf-8 python build.py
+          [OK] 12 Schriftdateien nach dist/assets/fonts/ kopiert
+          [OK] 7 Schriftverweise loesen neben dem Buendel auf
+          BUILD_EXIT=0
+        $ ls dist/assets/fonts/*.woff2 | wc -l -> 12
+
+    Zwei Erfolgsmeldungen, Exit 0, und zwoelf Dateien in dem Verzeichnis, das
+    der CI-Job 'deploy' veroeffentlicht — fuenf davon mit genau dem falschen
+    Subset, das der ganze SCHR-Vorfall war. Die Schutzwirkung lag
+    ausschliesslich bei den drei Test-/Werkzeugschichten:
+
+        $ node tools/pruefe-schriftdateien.js --check   -> exit 1
+          'nur im Verzeichnis [inter-400, inter-500, inter-600,
+           roboto-400, roboto-700]'
+        $ npx jest tests/unit/schriftdateien.test.js    -> 4 failed / 71 / 75
+        $ python -m pytest tests/build/test_build_fonts.py -q -> 3 failed / 13
+
+    Wer nur baut und deployt, faehrt an allen drei vorbei. Die Begruendung,
+    mit der auf eine Haertung verzichtet wurde ('der Schaden ist gedeckelt,
+    weil der Build hart scheitert'), traegt also nicht — der Build scheitert
+    nicht.
+
+    GEPRUEFT WIRD DIE QUELLE, nicht das Ziel. Nach kopiere_schriftdateien()
+    sind die beiden Schriftmengen deckungsgleich (alles kopiert, Waisen
+    entfernt); die QUELLE ist der Ort, an dem der Entwickler handeln muss, und
+    ihr Name gehoert darum in die Meldung. Eine zweite Pruefung auf dem Ziel
+    waere dieselbe Zusicherung an zwei Orten — genau das, was CLAUDE.md
+    (Gotcha 1, ARCH-01) verbietet.
+    """
+
+    def _quelle_mit(self, tmp_path, namen):
+        q = tmp_path / 'assets' / 'fonts'
+        q.mkdir(parents=True)
+        for n in namen:
+            (q / n).write_bytes(b'x')
+        return q
+
+    def test_meldet_eine_fremdschrift_und_beendet_den_build(self, tmp_path):
+        css = "@font-face{src:url('./assets/fonts/genannt-400.woff2') format('woff2')}"
+        self._quelle_mit(tmp_path, ['genannt-400.woff2', 'niemand-nennt-mich.woff2'])
+
+        with pytest.raises(SystemExit) as abbruch:
+            build_module.pruefe_keine_fremdschriften(css, str(tmp_path))
+        assert abbruch.value.code == 1
+
+    def test_ist_gruen_wenn_jede_quellschrift_genannt_ist(self, tmp_path):
+        css = (
+            "@font-face{src:url('./assets/fonts/a-400.woff2') format('woff2')}"
+            "@font-face{src:url('./assets/fonts/b-600.woff2') format('woff2')}"
+        )
+        self._quelle_mit(tmp_path, ['a-400.woff2', 'b-600.woff2', 'HERKUNFT.md'])
+
+        # HERKUNFT.md ist keine Schrift und darf NICHT beanstandet werden —
+        # sonst waere die Erlaubnisliste aus build.py hier nicht wirksam.
+        assert build_module.pruefe_keine_fremdschriften(css, str(tmp_path)) == []
+
+    def test_ein_fetch_fonts_lauf_beendet_den_build(self, tmp_path):
+        """Der Befund selbst, als Fall. Die fuenf abgeschafften Namen neben den
+        sieben aktuellen — genau der Zustand nach einem fetch-fonts-Lauf."""
+        fonts_css = (REPO / 'assets' / 'styles' / 'fonts.css').read_text(encoding='utf-8')
+        umgeschrieben = fonts_css.replace("url('../fonts/", "url('./assets/fonts/")
+        abgeschafft = [
+            'roboto-400.woff2', 'roboto-700.woff2',
+            'inter-400.woff2', 'inter-500.woff2', 'inter-600.woff2',
+        ]
+        self._quelle_mit(tmp_path, _woff2_namen(QUELL_SCHRIFTEN) + abgeschafft)
+
+        with pytest.raises(SystemExit) as abbruch:
+            build_module.pruefe_keine_fremdschriften(umgeschrieben, str(tmp_path))
+        assert abbruch.value.code == 1
+
+    def test_das_echte_quellverzeichnis_ist_deckungsgleich(self):
+        """Gegenprobe gegen Leerlauf: am ECHTEN Baum, durch dieselbe
+        Umschreibung, die der Build fuehrt. Findet das Muster nichts, waere
+        JEDE Datei fremd und die Faelle oben waeren aus dem falschen Grund
+        rot; nennt fonts.css eine Datei zu viel, waere sie trivial gruen."""
+        fonts_css = (REPO / 'assets' / 'styles' / 'fonts.css').read_text(encoding='utf-8')
+        umgeschrieben = fonts_css.replace("url('../fonts/", "url('./assets/fonts/")
+        genannt = sorted(set(build_module.SCHRIFT_URL_MUSTER.findall(umgeschrieben)))
+
+        assert len(genannt) == SCHRIFTDATEIEN_SOLL, (
+            f"{len(genannt)} Verweise in fonts.css, erwartet {SCHRIFTDATEIEN_SOLL}: {genannt}"
+        )
+        assert genannt == _woff2_namen(QUELL_SCHRIFTEN), (
+            f"fonts.css nennt {genannt}, im Verzeichnis liegen "
+            f"{_woff2_namen(QUELL_SCHRIFTEN)}"
+        )
+        assert build_module.pruefe_keine_fremdschriften(
+            umgeschrieben, str(REPO)
+        ) == []
+
+    def test_build_prueft_die_quelle_ebenfalls(self, monkeypatch):
+        """Verdrahtung: der Build fuehrt die Pruefung wirklich, mit dem
+        umgeschriebenen CSS. Ohne diesen Fall koennte die Funktion richtig sein
+        und nie gerufen werden — genau der Zustand, der den Befund ausgemacht
+        hat."""
+        monkeypatch.setattr(build_module, 'write_file', lambda p, c: None)
+        monkeypatch.setattr(
+            build_module, 'kopiere_schriftdateien', lambda d: len(_woff2_namen(QUELL_SCHRIFTEN))
+        )
+        monkeypatch.setattr(build_module, 'pruefe_schriftverweise', lambda css, d: [])
+        aufrufe = []
+        monkeypatch.setattr(
+            build_module,
+            'pruefe_keine_fremdschriften',
+            lambda css, q=None: aufrufe.append((css, q)) or [],
+        )
+
+        build_module.build()
+
+        assert len(aufrufe) == 1, f"Pruefung {len(aufrufe)}-mal aufgerufen, erwartet 1"
+        assert "url('./assets/fonts/" in aufrufe[0][0], \
+            "Die Pruefung bekommt nicht den umgeschriebenen CSS"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
