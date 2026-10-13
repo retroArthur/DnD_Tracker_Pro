@@ -329,4 +329,51 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             expect(treffer).toEqual([]);
         });
     });
+
+    // ------------------------------------------------------------------
+    // Teil 7 — Drift-Waechter Verzeichnis <-> fonts.css
+    //
+    // DER BLINDE FLECK, DEN DIESER TEIL SCHLIESST (Gegenpruefung Runde 2,
+    // B-07). Die Dateiliste dieses Waechters kommt aus fonts.css
+    // (`leseSchriftQuellen()`), die Liste des Kopierschritts in build.py
+    // aus dem VERZEICHNIS ("Keine Dateiliste", ausdruecklich so gewollt).
+    // Beide Enden waren dadurch verschieden, und das war messbar:
+    //
+    //     $ cp assets/fonts/roboto-400.woff2 assets/fonts/elfte-400.woff2
+    //     $ npx jest tests/unit/schriftdateien.test.js   -> 60 passed
+    //     $ python -m pytest tests/build/test_build_fonts.py -q -> 6 passed
+    //     $ python build.py   -> 11 Schriftdateien nach dist/assets/fonts/
+    //     $ ls dist/assets/fonts/elfte-400.woff2   -> vorhanden
+    //
+    // Eine woff2, die im Verzeichnis liegt und keine @font-face-Regel hat,
+    // wurde also von niemandem geprueft und von build.py veroeffentlicht.
+    // Das Versprechen im Kopf der E2E-Datei ("ein elftes Face faellt damit
+    // auf, statt uebersehen zu werden") galt nur fuer ein Face in fonts.css,
+    // nicht fuer eine Datei auf der Platte. tests/build/test_build_fonts.py
+    // vergleicht Verzeichnis gegen Verzeichnis und kann den Unterschied
+    // ebenfalls nicht sehen.
+    //
+    // Heute ist eine solche Datei ohne CSS-Verweis inert — aber sie wird
+    // ausgeliefert, und genau diese Luecke behauptet der Waechter zu
+    // schliessen. Die Verzeichnisse kommen aus den aufgeloesten url()-Pfaden,
+    // nicht aus einem Literal: Teil 6 bleibt gueltig.
+    // ------------------------------------------------------------------
+    describe('Teil 7 — das Verzeichnis traegt keine Datei, die fonts.css nicht nennt', () => {
+        test('Gegenprobe gegen Leerlauf: das Verzeichnis wird ueberhaupt gelesen', () => {
+            expect(ERGEBNIS.drift.verzeichnisse.length).toBeGreaterThan(0);
+            expect(ERGEBNIS.drift.verzeichnisNamen.length).toBeGreaterThanOrEqual(MINDEST_DATEIEN);
+        });
+
+        test('Beide Listen sind mengengleich', () => {
+            const cssMenge = [...new Set(ERGEBNIS.drift.cssNamen)].sort();
+            const verzeichnisMenge = [...new Set(ERGEBNIS.drift.verzeichnisNamen)].sort();
+            expect(verzeichnisMenge).toEqual(cssMenge);
+        });
+
+        test('Keine woff2 liegt im Verzeichnis, ohne in fonts.css zu stehen', () => {
+            // Diese Dateien wuerde build.py mitkopieren und veroeffentlichen,
+            // ohne dass irgendein Waechter sie je gelesen haette.
+            expect(ERGEBNIS.drift.nurImVerzeichnis).toEqual([]);
+        });
+    });
 });
