@@ -1700,17 +1700,30 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
     // scheitert an den statischen Familien; eine, die nie welche findet, an
     // den variablen. Keine der beiden Haelften ist allein zu bestehen.
     //
-    // GEMESSEN (40px, Probetext, Windows/Chromium, Probetext-Pangramm):
-    //   Roboto  100..900 -> neun verschiedene Werte, monoton steigend;
-    //            400 gegen 700 = 5.5625px Abstand
-    //   Inter   100..900 -> neun verschiedene Werte, monoton steigend;
-    //            400 gegen 600 = 14.046875px Abstand
-    //   Poppins 100..400 alle gleich · 500 eigener Wert · 600..900 alle
-    //            gleich -> DREI verschiedene Werte bei DREI deklarierten
-    //            Gewichten (400/500/600)
-    //   Source Sans Pro 100..500 alle gleich · 600..900 alle gleich
-    //            -> ZWEI verschiedene Werte bei ZWEI deklarierten
-    //            Gewichten (400/600)
+    // GEMESSEN, mit dem Probetext-Pangramm bei 40px, Windows/Chromium.
+    // Die volle Reihe 100..900 steht so auch in der Fehlermeldung dieses
+    // Falls, sie ist also nachlesbar und nicht nur hier abgeschrieben:
+    //   Roboto   1085.75 · 1093.203125 · 1104.265625 · 1123.28125 ·
+    //            1135.09375 · 1140.140625 · 1145 · 1150.484375 · 1155.53125
+    //            -> neun verschiedene Werte, streng steigend.
+    //            400 gegen 700 = 21.71875px, 400 gegen 600 = 16.859375px
+    //   Inter    1143 · 1165.125 · 1187.46875 · 1209.59375 · 1221.71875 ·
+    //            1233.671875 · 1245.640625 · 1260.375 · 1276.46875
+    //            -> neun verschiedene Werte, streng steigend.
+    //            400 gegen 600 = 24.078125px, 400 gegen 700 = 36.046875px
+    //   Poppins  1258.84375 (100..400, VIERMAL bitgleich) · 1271.609375
+    //            (500) · 1285 (600..900, VIERMAL bitgleich)
+    //            -> DREI Werte bei DREI deklarierten Gewichten (400/500/600)
+    //   Source Sans Pro 1054.40625 (100..500, FUENFMAL bitgleich) ·
+    //            1088.203125 (600..900, VIERMAL bitgleich)
+    //            -> ZWEI Werte bei ZWEI deklarierten Gewichten (400/600)
+    //
+    // Der schwaechste Schritt der variablen Reihe ist Roboto 500 -> 600 mit
+    // 5.046875px. Darum urteilt dieser Teil auf VERSCHIEDENHEIT (exakt) und
+    // nicht gegen MINDESTABSTAND: Schriftmetriken bei fester Groesse sind
+    // deterministisch, und die statische Haelfte verlangt ohnehin
+    // Bitgleichheit. Nur die beiden vom Auftrag benannten Paare unten
+    // bekommen zusaetzlich die Schwelle, weil dort eine Zahl berichtet wird.
     //
     // KORREKTUR ZUR AUFTRAGSANNAHME. Der Auftrag erwartete, dass der Browser
     // das nicht deklarierte Gewicht 700 bei Source Sans Pro NACHTAEUSCHT und
