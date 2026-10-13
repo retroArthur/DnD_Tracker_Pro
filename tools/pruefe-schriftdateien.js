@@ -684,10 +684,12 @@ function renderBericht(ergebnis) {
 
     zeilen.push('');
     zeilen.push(
-        `Drift sw.js <-> fonts.css: ${
+        // Die Beschriftung nennt alle drei Enden, die `deckungsgleich`
+        // zusammenfasst — sonst behauptet die Zeile weniger, als sie prueft.
+        `Drift sw.js <-> fonts.css <-> Verzeichnis: ${
             ergebnis.drift.deckungsgleich
                 ? 'deckungsgleich'
-                : `ABWEICHUNG — nur in CSS: [${ergebnis.drift.nurInCss.join(', ')}], nur in sw.js: [${ergebnis.drift.nurInSw.join(', ')}]`
+                : `ABWEICHUNG — nur in CSS: [${ergebnis.drift.nurInCss.join(', ')}], nur in sw.js: [${ergebnis.drift.nurInSw.join(', ')}], nur im Verzeichnis: [${ergebnis.drift.nurImVerzeichnis.join(', ')}]`
         }`
     );
     zeilen.push(
@@ -752,7 +754,7 @@ if (require.main === module) {
         ];
         if (!ergebnis.drift.deckungsgleich) {
             verstoesse.push(
-                `Drift sw.js <-> fonts.css: nur in CSS [${ergebnis.drift.nurInCss.join(', ')}], nur in sw.js [${ergebnis.drift.nurInSw.join(', ')}]`
+                `Drift sw.js <-> fonts.css <-> Verzeichnis: nur in CSS [${ergebnis.drift.nurInCss.join(', ')}], nur in sw.js [${ergebnis.drift.nurInSw.join(', ')}], nur im Verzeichnis [${ergebnis.drift.nurImVerzeichnis.join(', ')}]`
             );
         }
         if (verstoesse.length > 0) {
