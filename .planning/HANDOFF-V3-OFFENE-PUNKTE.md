@@ -8609,6 +8609,276 @@ FOKUSRING=1 npx playwright test tests/e2e/features/fokusring.spec.js --workers=1
 
 ---
 
+## TAST, Einheit T-E — Ein Kürzel für den Lebenspunkte-Rechner (E-4) (2026-10-13)
+
+**Status: ERLEDIGT.** Nutzerentscheidung **E-4**, Schritt 6 des Tastatur-Strangs — der Schritt,
+für den in T-A bis T-D keine Einheit zuständig war und den jede an die nächste weitergegeben hat.
+Basis `3316310` (Abschluss T-D), Ergebnis `239d042`. Vier Commits: roter Nachweis, Umsetzung,
+roter Nachweis Runde 2, Korrektur.
+
+**In einem Satz:** der Spielleiter trägt dem Kämpfer am Zug Schaden ein, und das kostet jetzt
+**vier Tastendrücke** statt 47 bis 189.
+
+### Was es vorher kostete, und was jetzt — gemessen, beides mit demselben Skript
+
+Echte Tastendrücke am gebauten Bündel, je Messung ein frischer Seitenaufbau, Ansicht per
+`switchView()` **ohne** Klick, zwei Kampagnengrößen:
+
+| Ziel                       | ohne Kürzel             | mit Kürzel |
+| -------------------------- | ----------------------- | ---------- |
+| 1. Kämpfer                 | 43 Tab → **47** Anschläge | **4**      |
+| 4. Kämpfer                 | 65 Tab → **69**         | **4**      |
+| letzter von 6              | 80 Tab → **84**         | **4**      |
+| letzter von 20             | 185 Tab → **189**       | **4**      |
+
+Die vier sind `H`, die Zahl, Tabulator, Enter. Sie bleiben vier, unabhängig davon, wie viele
+Kämpfer in der Reihe stehen und an welcher Stelle der am Zug steht — das ist der eigentliche
+Gewinn, denn die Spalte links wächst mit der Kampagne. HP 40 → 33, `scrollY` bleibt 0. Dieselben
+Zahlen am Produktionsbündel.
+
+Die Vermessung des Strangs nennt für den vierten Kämpfer 62 Sprünge und „rund 64 Tastendrücke";
+meine 65/69 sind derselbe Befund mit anderem Seed (zwanzig Helden statt drei verschieben die
+Kopfzeile um ein paar Halte). Größenordnung bestätigt.
+
+### Die Taste ist nachgezählt, nicht gewählt
+
+Der Auftrag nennt eine Liste belegter Tasten und sagt ausdrücklich, ihr nicht zu glauben. Also
+gemessen: **68 Kandidaten** (a–z, 0–9, 32 Zeichen) je Ansicht, ein echter Tastendruck bei Fokus
+auf `BODY`, gelesen wurden zwei Dinge —
+
+1. **`defaultPrevented`** in einem Lauscher am `window` in der **Bubble**-Phase. Der liegt hinter
+   allen App-Lauschern (die hängen an `document`), und **jeder** Einzeltasten-Zweig der App ruft
+   `preventDefault()`. Das ist das verlässlichere Signal als „hat sich sichtbar etwas geändert":
+   ein Zweig, dessen Wirkung gerade nichts tut (`7` in der Initiative-Ansicht — man ist schon
+   dort), fällt sonst durch.
+2. eine **Wirkungsspur** aus zwölf Größen: Runde, Zug, Ansicht, offene Schale, Schnellreferenz,
+   Tastenhilfe, Ereignislog, Kampfprotokoll, Würfelverlauf, Sitzungsuhr, Trefferpunkte aller
+   Kämpfer, `scrollY`.
+
+Ergebnis:
+
+| Ansicht        | belegt | frei | belegte Tasten                      |
+| -------------- | ------ | ---- | ----------------------------------- |
+| Initiative     | **17** | 51   | `k l n p r t 1 2 3 4 5 6 7 8 9 / ?` |
+| Armaturenbrett | 16     | 52   | dieselben ohne `p`                  |
+| DM-Schirm      | 16     | 52   | dieselben ohne `p`                  |
+
+`h` ist in allen drei frei — kein `preventDefault()`, keine Wirkung. Unter den 51 freien ist es
+die mnemonische: die App nennt die Sache selbst überall **„HP"** (`title="HP ändern"` am
+➗-Knopf, „❤️ HP" auf der Heldenkarte, „HP: \<Name\>" als Dialogüberschrift), und sie passt in
+das bestehende Schema, in dem jedes Einzeltasten-Kürzel der Anfangsbuchstabe seines Ziels ist
+(t=Timer, l=Log, k=Kampfprotokoll, n=Nächster, p=Vorheriger, r=Rollen). `l` für „Lebenspunkte"
+und `t` für „Trefferpunkte" sind beide gemessen belegt — deshalb nicht die naheliegende Wahl.
+
+**Nebenbefund der Zählung, nicht mein Auftrag:** im DM-Schirm feuern bei `1`, `2`, `3` **beide**
+Zweige — der globale Ziffern-Zweig (`switchView`) und der des Schirms
+(`switchDMSProfile`, `features/dmscreen/dmscreen-render.js:560`). Der globale gewinnt und
+wechselt die Ansicht weg; die Profilumschaltung ist über die Tastatur praktisch nicht erreichbar.
+Vorbestehend, von mir unberührt, eigener kleiner Auftrag.
+
+### Was das Kürzel tut: genau das, was der ➗-Knopf der aktiven Zeile tut
+
+`showHpCalculator('combatant', id)` mit der Kennung des Kämpfers am Zug. Nicht mehr — damit es
+nur **einen** Weg gibt, dessen Verhalten gepflegt werden muss. Fall (l) **vergleicht** beide
+Wege Feld für Feld, statt die Gleichheit zu behaupten: er fährt den ➗-Knopf der aktiven Zeile mit
+echten Tabulatorsprüngen an, löst ihn mit Enter aus, liest Typ, Kennung, Überschrift, Stand und
+Fokus, und stellt dasselbe gegen den Zustand, den das Kürzel herstellt.
+
+### Fünf Schranken, jede mit eigenem Fall
+
+| # | Schranke                      | warum                                                                                                               |
+| - | ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1 | nur bei aktiver Initiative    | E-4: „nur im Kampf". Gegenprobe über fünf Ansichten: keine Schale, `defaultPrevented` false                        |
+| 2 | nur mit Kämpfer am Zug        | leere Initiative, oder `currentTurn` zeigt ins Leere                                                                |
+| 3 | nicht auf einem Lair-Eintrag  | dessen Zeile hat **keine** Trefferpunkte und bietet auch der Maus keinen ➗-Knopf (`features/initiative.js`, `type: 'lair'`). Ohne die Prüfung ginge dort ein Rechner auf „0 / 0" auf, der auf ein nicht vorhandenes Feld schreibt |
+| 4 | nicht über einem offenen Dialog | ein zweiter Dialog über dem ersten wäre ein Stapel, den Escape nur Schicht für Schicht abbaut; die Fokusfalle aus T-D führt den Tabulator im **vordersten** |
+| 5 | nicht **unter** der Tastenhilfe | Befund von Runde 2, siehe unten                                                                                   |
+
+Greift eine Schranke, tut die Taste **nichts** — kein Hinweis, kein Toast — und verbraucht sich
+auch nicht (`preventDefault()` bleibt aus), damit die gemessene Belegung der Lage entspricht.
+
+**Kein `beanspruchtLeertaste` hier,** und das ist gemessen, nicht gemutmaßt: dieselbe Begründung
+wie bei den Ziffern (O-7, Runde 1 des Strangs). Ein fokussierter Knopf verarbeitet kein `h`, es
+gibt also kein natives Doppelfeuer zu verhindern — eine Schranke hätte hier nur das Kürzel
+weggenommen, und zwar genau auf dem Weg, den der Spielleiter geht: nach einem gewöhnlichen
+Mausklick behält ein Knopf den Fokus.
+
+### Der Rückweg bleibt bewusst frei — sonst wäre der Fehler aus T-A zurück
+
+Ein per Kürzel geöffneter Dialog bekommt **keinen** vorgetäuschten Öffner. `merkeOeffner()` sieht
+`activeElement === body` und löscht den Eintrag; nach Escape steht der Fokus auf `BODY`. Das ist
+Absicht: hängte man den Rückweg an den ➗-Knopf der aktiven Zeile, läge der Fokus danach auf
+einem Bedienelement — und die Leertaste gehörte nach T-A diesem Element statt dem Zugwechsel.
+Genau der Fehler, den T-A beseitigt hat, zurück durch die Hintertür. Fall (j) prüft deshalb
+beides: Fokus auf `BODY`, und ein echter Leertastendruck danach wechselt den Zug (0 → 1).
+
+### Keine Doppelauslösung — gemessen, nicht angenommen
+
+Der Auftrag warnt vor Doppelfeuer. Gemessen mit Zählern an `showHpCalculator`, `nextTurn`,
+`prevTurn`, `quickRoll` und einem `click`-Lauscher am Dokument in der Capture-Phase:
+
+| Anschlag                              | keydown | `showHpCalculator` | offene Schalen  |
+| ------------------------------------- | ------- | ------------------ | --------------- |
+| ein `h`, Fokus `BODY`                 | 1       | **1**              | `hp-calc-modal` |
+| drei weitere `h`, Fokus im Wertfeld   | 3       | **1** (unverändert) | `hp-calc-modal` (Feld enthält `hhh`) |
+| ein `h` auf einem Knopf **im** Dialog | 1       | **1** (unverändert) | `hp-calc-modal` |
+
+`nextTurn=0`, `prevTurn=0`, `quickRoll=0` über den ganzen Ablauf — kein Querfeuer der
+Nachbarkürzel. Die drei weiteren `h` im Wertfeld fallen unter die `isTyping`-Schranke und
+schreiben ihren Buchstaben, wie es sich gehört (das Feld nimmt Würfelformeln, ein `h` darin ist
+harmlos). Ein `click`-Ereignis im ganzen Ablauf: der synthetische Klick, den der `keydown`-Zweig
+aus T-B auf „💔 Schaden" erzeugt.
+
+### Runde 2 — ein Befund, bestätigt und behoben: Schaden durch einen unsichtbaren Dialog
+
+Die Umsetzung von Runde 1 hatte eine Lücke, die ich selbst eingebaut hatte. Die **Tastenhilfe**
+(`?`) ist keine `.modal-overlay`-Schale, Schranke (4) sah sie also nicht. Gemessen mit dem Kürzel
+aus `a2680d4`:
+
+| Messgröße                                  | vorher               | nachher     |
+| ------------------------------------------ | -------------------- | ----------- |
+| Rechner geht unter der Hilfe auf           | **true**             | false       |
+| `elementFromPoint` über dem Wertfeld       | `DIV.shortcuts-grid` | (kein Feld) |
+| HP[0] nach Zahl + Tabulator + Enter        | **40 → 33**          | 40          |
+| Escape, bis beides zu ist                  | **2**                | 1           |
+
+z-index 1000 gegen 2000: der Rechner lag **unter** der Hilfe, war verdeckt — und trotzdem
+bedienbar. Der Spielleiter teilt Schaden durch einen Dialog aus, den er nicht sieht. Und das
+erste Escape schloss die Hilfe und ließ den unsichtbaren Dialog stehen. Genau die Fehlerart, die
+T-D für die Fokusfalle beseitigt hat (1333 erreichte Ziele **unter** der Dialogfläche, unsichtbar
+aber auslösbar) — hier vom neuen Kürzel selbst erzeugt.
+
+Korrektur: zwei Zeilen, eine fünfte Schranke auf `#shortcuts-overlay.show`.
+
+**Und sie ist nicht zu breit, auch das gemessen** — ein unbelegter Selektor wäre ungemessener
+Code:
+
+- **Schnellreferenz (`/`)**: ihr Panel liegt mit z-index **600** unter der Dialogfläche (1000).
+  Der Rechner steht oben, sein Feld ist frei (`elementFromPoint` = `hp-calc-value`). Nichts zu
+  tun, und nach der Korrektur unverändert.
+- **Befehlspalette (Strg+Shift+K)**: sie hält den Fokus in ihrem Eingabefeld, dort greift die
+  `isTyping`-Schranke. Das `h` landete als Zeichen in der Palette, kein Dialog. Unverändert.
+
+### Vier Stellen, und drei davon sind eine Zeile
+
+- **`systems/spellslots/keyboard-shortcuts.js`**: `oeffneHpRechnerAmZug()` (die fünf Schranken
+  und der Aufruf), zwei Konstanten, und der `H`-Zweig hinter der `isTyping`-Schranke, direkt
+  neben den anderen Initiative-Kürzeln.
+- **`assets/templates/modals-editors.html`**: eine Zeile in der Tastenhilfe, im Abschnitt
+  „⚔️ Initiative". **Kein Inline-Stil** — die Ratsche F-19 steht unverändert auf 251.
+- **`CLAUDE.md`**: eine Zeile in der Kürzeltabelle, sonst nichts an der Datei.
+- **`eslint.generated-globals.js`**: aus `tools/generate-eslint-globals.js` nachgezogen, weil der
+  Drift-Wächter `tests/unit/eslint-globals-freshness.test.js` sonst rot wird (dieselbe Pflege,
+  die T-C und T-D zweimal nachholen mussten).
+
+Kein CSS, kein neues Modul, keine Änderung an `loader.js`. `git diff --stat ... -- assets/styles/`
+ist leer.
+
+### Der Suitenlauf, und der Beweis welche Fehlschläge NICHT von hier kommen
+
+`npx playwright test` am Endstand: **727 bestanden / 39 übersprungen / 5 Fehlschläge** (9,6 min).
+Die fünf sind `tests/e2e/features/eingaberahmen.spec.js`, Fall 1 (vier Themes) und Fall 2 —
+reine 30-s-Zeitüberschreitungen, **0** verletzte Zusicherungen im ganzen Lauf. Dieselben fünf,
+die T-C und T-D an ihren Ausgangsständen geführt haben.
+
+**Drei unabhängige Belege, dass sie nicht von mir kommen:**
+
+1. **A/B am Bündel.** Ich habe meine zwei Quelldateien auf `3316310` zurückgesetzt, neu gebaut
+   (`grep -c oeffneHpRechnerAmZug dist/…` = **0**, das Bündel ist nachweislich ohne meine
+   Änderung) und die **ganze** Suite unter derselben Last gefahren: **720 bestanden / 39
+   übersprungen / 12 Fehlschläge** — und das sind genau **dieselben fünf** `eingaberahmen`-Fälle
+   plus meine sieben noch nicht umgesetzten E-4-Fälle. Danach zurückgesetzt und neu gebaut.
+2. **Isoliert mit `--workers=1`**: 12/12, 3,1 min.
+3. **Dieselbe Datei allein mit den Standard-8-Workern**: 12/12, 31 s. Der Fehlschlag braucht die
+   Last der **ganzen** Suite, nicht Parallelität an sich.
+
+Wer sie grün haben will, braucht ein `test.setTimeout()` in **dieser** Datei, keine
+Codeänderung. Der Basiswert „0 Fehlschläge" der Auftragsvorgabe stammt von `4e0d810` und galt
+schon an `4830173` nicht mehr.
+
+Zur Buchführung: 727 gegen den Basiswert 634 sind +93 Fälle aus T-A bis T-E, davon 13 von mir.
+
+### Alle Tore
+
+| Tor                             | Ergebnis                                                      |
+| ------------------------------- | ------------------------------------------------------------- |
+| `npx jest`                      | **2250 / 2250** in 81 Suiten, 50 Snapshots                    |
+| `npx playwright test`           | 727 / 39 / 5 (fünf vorbestehend, drei Belege oben)             |
+| `python -m pytest tests/build`  | **30 / 30**                                                   |
+| `npm run lint`                  | Exit 0, **genau 363** Warnungen (Sollstand), 0 Fehler         |
+| `npm run typecheck`             | Exit 0                                                        |
+| `npm run typecheck:strict`      | Exit 0                                                        |
+| `python build.py`               | Exit 0                                                        |
+| `python build.py --production`  | Exit 0                                                        |
+| `sync-aktenlage-anker --check`  | OK, 0 Abweichungen bei 123 Ankern                             |
+| `sync-editor-toolbars --check`  | OK, alle 22 Leisten synchron                                  |
+
+**Ratschen, mit der Zählweise der Tests** (Kommentare entfernt, sonst zählt man Erwähnungen mit —
+mein erster Griff gab 114 statt 104): Dubletten **0**, `!important` **104**, Inline-Stile **251**,
+`transition: all` **0**, `outline: none` **1**. Keine kann sich bewegt haben: es ist keine Zeile
+CSS angefasst, und die eine neue Templatezeile trägt keinen Inline-Stil.
+
+### Abnahme nachfahren
+
+```bash
+# Die dreizehn Verhaltensfaelle (a)-(m)
+npx playwright test tests/e2e/features/tastatur-kuerzel.spec.js
+
+# Fall (m) allein — der Befund von Runde 2
+npx playwright test tests/e2e/features/tastatur-kuerzel.spec.js -g "Tastenhilfe tut die Taste"
+
+# Der Drift-Waechter zum Globals-Artefakt
+npx jest tests/unit/eslint-globals-freshness.test.js
+
+# Die Inline-Stil-Ratsche, die die neue Templatezeile beruehrt
+npx jest tests/unit/design-consistency.test.js -t "Inline-Stile"
+
+# Die Grenzfall-Datei: isoliert gruen, im Suitenlauf rot (vorbestehend)
+npx playwright test tests/e2e/features/eingaberahmen.spec.js --workers=1
+```
+
+### Was offen bleibt
+
+- **E-4 ist damit erledigt**, und mit ihm die vier Nutzerentscheidungen des Strangs: E-1 (T-C),
+  E-3 (T-D), E-4 (hier). **E-2 ist weiter offen** — die Zauberplatz- und Todesretter-Punkte haben
+  je einen Tabulatorhalt, nicht einen je Gruppe. T-C hat die Zahlen dafür vorgemessen und auch
+  die Messfalle festgehalten: `[data-action][tabindex="-1"]` zählt in `sweep2.mjs` und in den
+  Fällen (a)–(e) als **bedienbar und unerreichbar**, die Gruppenlösung setzt den nicht-aktiven
+  Punkten genau dieses Attribut. Die Fälle werden dadurch rot, obwohl die Bedienung besser wird;
+  dann muss der Zähler bewusst mitgeändert werden, nicht die Schleife.
+- **O-3 fehlt weiter in CLAUDE.md**, und mein Eingriff vergrößert die Lücke nicht, hebt sie aber
+  auch nicht. T-C: `tabindex`/`role` der fünf Kampfansichten entstehen zur Laufzeit in
+  `ui/keyboard-reach.js`; T-D: `role="dialog"`/`aria-modal`/`aria-labelledby` in
+  `ui/modal-focus.js`. Ein `grep tabindex` oder `grep role=` im Quellbaum zeigt beides nicht.
+  Konkreter Nachtrag für einen Durchgang, der CLAUDE.md breiter anfassen darf: ein Punkt unter
+  „Gotchas & Common Pitfalls", der **beide** Laufzeitquellen nennt. Mein Auftrag erlaubte dort
+  nur die Kürzeltabelle.
+- **Der Ziffern-Zweig des DM-Schirms ist über die Tastatur tot** (Nebenbefund meiner Zählung,
+  oben). `1`–`3` lösen dort beide Zweige aus, der globale gewinnt und wechselt die Ansicht weg.
+  Vorbestehend, eigener kleiner Auftrag.
+- **O-9 bleibt unberührt und bleibt eine echte Blockade** für spätere Abnahmen:
+  `window.clearLootForm` wird in `features/initiative-loot.js:254` und `:367` gerufen und nirgends
+  definiert. Wer am Beute-Modal abnehmen will, muss `window.showModal('loot-modal')` nehmen.
+- **Die 199 Marken ohne Bindung (O-5)**, die 19 `.loot-tag-chip`-Kästchen (O-6) und `role="button"`
+  auf fünf Containern mit verschachtelten Bedienelementen (T-C-Befund) sind unberührt, wie es die
+  Entscheidungen vorsehen.
+- **Der Einstieg greift den ersten Haltepunkt**, und beim Lebenspunkte-Rechner steht der
+  Schließknopf vor dem Feld. Das Kürzel ist davon **nicht** betroffen: `showHpCalculator` setzt
+  den Fokus selbst ins Wertfeld, und `einstieg()` rührt einen Fokus, der schon im Dialog liegt,
+  nicht an — Fall (c) misst `hp-calc-value`. Für andere Schalen bleibt es die offene Frage aus
+  T-D.
+- **Prettier:** `systems/spellslots/keyboard-shortcuts.js`, `CLAUDE.md` und
+  `assets/templates/modals-editors.html` sind nicht prettier-rein — alle drei waren es an
+  `3316310` schon nicht (einzeln gegengeprüft, indem ich die Fassungen aus dem Ausgangsstand
+  geholt und geprüft habe). **Meine** Zeilen sind rein: ein Prettier-Lauf auf eine Kopie der
+  Quelldatei fasst keine einzige davon an, und die Templatezeile behandelt er genauso wie ihre
+  23 Nachbarzeilen. `npm run format` ist **nicht** gelaufen; die neue Testdatei ist einzeln
+  geprüft und rein.
+- **Nichts ist gepusht.** Die 42 Commits von T-A bis T-E liegen lokal auf
+  `tastatur-strang`.
+
+---
+
 ## W6-F — Die Abnahme der Welle 6: der Tastaturlauf als Hauptnachweis (2026-10-07)
 
 **Status: ERLEDIGT.** Schritt 8 des geprüften Plans und damit die **letzte Einheit des
