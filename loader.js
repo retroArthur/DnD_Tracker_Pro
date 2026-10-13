@@ -169,6 +169,12 @@ const MODULES = [
     // in dem ein Element fokussierbar ist und die Leertaste darauf nichts
     // tut bzw. ein Einzeltasten-Kuerzel ausloest — der Fehler aus T-A.
     'ui/keyboard-reach.js',
+    // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
+    // offenen Dialogs, und die entstehen zum Teil erst dort (nachgeruestete
+    // `tabindex="0"`). Zur Laufzeit ist die Reihenfolge folgenlos — beide
+    // haengen ihre Lauscher selbst ein und lesen das DOM erst beim
+    // Tastendruck —, aber sie haelt die Abhaengigkeit lesbar.
+    'ui/modal-focus.js',
     'ui/editors/rich-text.js',
     'ui/editors/editor-toolbar-build.js',
     'ui/editors/rich-text-insert.js',

@@ -630,3 +630,213 @@ test.describe('Modalfokus — kein window.showModal-Mantel (O-4)', () => {
         ).toBe(true);
     });
 });
+
+// ============================================================================
+// (g) DER VORDERE DIALOG IST DER ZULETZT GEOEFFNETE, nicht der letzte in
+//     der Vorlage
+// ============================================================================
+test.describe('Modalfokus — verschachtelte Dialoge', () => {
+    test('(g) Escape schliesst den zuletzt geoeffneten Dialog, nicht den darunter', async ({
+        page
+    }) => {
+        // BEFUND DER EIGENEN MESSUNG, nicht eine Vorsichtsmassnahme. Die erste
+        // Fassung von `oberstesModal()` nahm "die letzte Schale in
+        // Dokumentreihenfolge". Fuer die zur Laufzeit angehaengten Schalen
+        // stimmt das, fuer die 35 aus den Vorlagen NICHT: ihre Reihenfolge
+        // steht in `assets/templates/`. Gemessen: #about-modal auf, dann
+        // #theme-modal auf, Escape — geschlossen wurde #about-modal, weil es
+        // in der Vorlage HINTER #theme-modal steht. Der Spielleiter schliesst
+        // den Dialog, den er sieht, und es verschwindet der darunter.
+        await appLaden(page, 6);
+        for (let i = 0; i < VORLAUF; i++) await page.keyboard.press('Tab');
+        await page.evaluate(() => {
+            window.__oeffner = document.activeElement;
+            window.__oeffnerFokus = 0;
+            window.__oeffner.addEventListener('focus', () => window.__oeffnerFokus++);
+        });
+        await page.evaluate(() => window.showModal('about-modal'));
+        await page.waitForTimeout(300);
+        await page.evaluate(() => window.showModal('theme-modal'));
+        await page.waitForTimeout(300);
+        for (let i = 0; i < 3; i++) await page.keyboard.press('Tab');
+
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+        const erstes = await page.evaluate(() => ({
+            themeOffen: document.getElementById('theme-modal').classList.contains('show'),
+            aboutOffen: document.getElementById('about-modal').classList.contains('show'),
+            fokusImAbout: document.getElementById('about-modal').contains(document.activeElement),
+            oeffnerFokus: window.__oeffnerFokus
+        }));
+        expect(
+            erstes.themeOffen,
+            'Escape muss den ZULETZT geoeffneten Dialog (#theme-modal) schliessen.'
+        ).toBe(false);
+        expect(
+            erstes.aboutOffen,
+            'Der Dialog darunter (#about-modal) muss offen bleiben — er steht in der ' +
+                'Vorlage HINTER #theme-modal, und genau daran ist die erste Fassung ' +
+                'gescheitert.'
+        ).toBe(true);
+        expect(
+            erstes.fokusImAbout,
+            'Nach dem Schliessen des oberen Dialogs gehoert der Fokus in den darunter ' +
+                'liegenden zurueck, nicht in den Hintergrund.'
+        ).toBe(true);
+        expect(
+            erstes.oeffnerFokus,
+            'Der Oeffner des UNTEREN Dialogs darf noch keinen Fokus bekommen haben.'
+        ).toBe(0);
+
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+        const zweites = await page.evaluate(() => ({
+            aboutOffen: document.getElementById('about-modal').classList.contains('show'),
+            aufOeffner: document.activeElement === window.__oeffner,
+            oeffnerFokus: window.__oeffnerFokus
+        }));
+        expect(zweites.aboutOffen, 'Das zweite Escape schliesst den unteren Dialog.').toBe(false);
+        expect(
+            zweites.aufOeffner,
+            'Erst jetzt kehrt der Fokus auf den urspruenglichen Oeffner zurueck.'
+        ).toBe(true);
+        expect(
+            zweites.oeffnerFokus,
+            'Und zwar GENAU EINMAL — mehr waere eine Doppelausloesung des Rueckwegs.'
+        ).toBe(1);
+    });
+});
+
+// ============================================================================
+// (h) KEINE DOPPELAUSLOESUNG — gezaehlt am Ereignis, nicht an der Wirkung
+// ============================================================================
+test.describe('Modalfokus — ein Anschlag, eine Wirkung', () => {
+    for (const taste of ['Enter', 'Space']) {
+        test(`(h) ${taste} auf einem Knopf im Dialog: genau 1 Klick, kein Seitenlauf`, async ({
+            page
+        }) => {
+            await appLaden(page, 6);
+            await page.evaluate(() => window.showModal('about-modal'));
+            await page.waitForTimeout(350);
+            const vor = await page.evaluate(() => {
+                const m = document.getElementById('about-modal');
+                const ziel = document.activeElement;
+                window.__ziel = ziel;
+                window.__echt = 0;
+                window.__synth = 0;
+                window.__scrollVor = window.scrollY;
+                // GEZAEHLT WIRD AM DOKUMENT IN DER CAPTURE-PHASE, gefiltert
+                // auf `ev.target === ziel` — NICHT mit einem Lauscher am Knopf
+                // selbst. Grund, gemessen: `_handleClick` in
+                // ui/event-delegation.js ruft `stopPropagation()`, BEVOR es den
+                // Handler aufruft. Ein Lauscher AM Element wird dadurch nie
+                // erreicht und meldet konstant 0, obwohl genau ein Klick
+                // gefeuert hat (nachgewiesen: am Knopf 0, am Dokument 1). Wer
+                // hier am Element zaehlt, misst die Ereignisbremse des
+                // Verteilers und nicht die Ausloesung.
+                document.addEventListener(
+                    'click',
+                    ev => {
+                        if (ev.target !== window.__ziel) return;
+                        if (ev.isTrusted) window.__echt++;
+                        else window.__synth++;
+                    },
+                    true
+                );
+                return {
+                    imDialog: !!(m && m.contains(ziel)),
+                    tag: ziel.tagName,
+                    aktion: ziel.getAttribute('data-action')
+                };
+            });
+            expect(
+                vor.imDialog,
+                'Vorbedingung: der Einstieg muss den Fokus in den Dialog gelegt haben.'
+            ).toBe(true);
+            expect(vor.tag, 'Vorbedingung: der erste Haltepunkt ist ein Knopf.').toBe('BUTTON');
+
+            await page.keyboard.press(taste);
+            await page.waitForTimeout(300);
+            const nach = await page.evaluate(() => ({
+                echt: window.__echt,
+                synth: window.__synth,
+                summe: window.__echt + window.__synth,
+                scrollLauf: window.scrollY - window.__scrollVor
+            }));
+            expect(
+                nach.summe,
+                `${taste} auf einem echten <button> darf GENAU einen Klick erzeugen. Der ` +
+                    `Browser macht aus der Taste selbst schon einen, der keydown-Zweig aus ` +
+                    `T-B einen zweiten, wenn preventDefault fehlt — und die Fokusfalle sitzt ` +
+                    `in derselben Capture-Phase. Gemessen: echt ${nach.echt}, ` +
+                    `synthetisch ${nach.synth}.`
+            ).toBe(1);
+            expect(
+                nach.scrollLauf,
+                'Die Leertaste darf die Seite nicht wegrollen — ein Dokument, das bei jedem ' +
+                    'Schalten springt, ist am Spieltisch schlimmer als ein unerreichbarer Knopf.'
+            ).toBe(0);
+        });
+    }
+
+    test('(h) ein Tabulatordruck bewegt den Fokus um GENAU einen Haltepunkt', async ({ page }) => {
+        await appLaden(page, 6);
+        await page.evaluate(() => window.showModal('npc-modal'));
+        await page.waitForTimeout(450);
+        const anzahl = await page.evaluate(() => {
+            const m = document.getElementById('npc-modal');
+            window.__h = window.ModalFocus.haltepunkte(m);
+            window.__focusin = 0;
+            window.__spur = [];
+            document.addEventListener(
+                'focusin',
+                () => {
+                    window.__focusin++;
+                    window.__spur.push(window.__h.indexOf(document.activeElement));
+                },
+                true
+            );
+            return window.__h.length;
+        });
+        expect(anzahl, 'Vorbedingung: der Dialog braucht genug Haltepunkte.').toBeGreaterThan(6);
+        for (let i = 0; i < 5; i++) await page.keyboard.press('Tab');
+        const r = await page.evaluate(() => ({
+            focusin: window.__focusin,
+            spur: window.__spur
+        }));
+        expect(
+            r.focusin,
+            'Die Falle uebernimmt den Tabulator vollstaendig (preventDefault an jedem ' +
+                'Zweig). Fehlte es, bewegte der Browser den Fokus zusaetzlich — zwei Halte ' +
+                'je Anschlag.'
+        ).toBe(5);
+        expect(
+            r.spur,
+            'Und zwar um genau einen Halt weiter, nicht um zwei: die Indexspur muss ' +
+                'lueckenlos aufsteigen.'
+        ).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    test('(h) OHNE offenen Dialog bleibt der Tabulator unberuehrt', async ({ page }) => {
+        // Die Gegenprobe, die zeigt, dass die Falle nicht die ganze App
+        // kapert: ohne Dialog muss sie inert sein.
+        await appLaden(page, 6);
+        await page.evaluate(() => {
+            window.__focusin = 0;
+            document.addEventListener('focusin', () => window.__focusin++, true);
+        });
+        for (let i = 0; i < 8; i++) await page.keyboard.press('Tab');
+        const r = await page.evaluate(() => ({
+            focusin: window.__focusin,
+            offen: window.ModalFocus.statistik().offen,
+            aktiv: window.ModalFocus.statistik().aktiv
+        }));
+        expect(r.aktiv, 'Die Falle muss eingehaengt sein.').toBe(true);
+        expect(r.offen, 'Ohne Dialog darf sie keine Schale sehen.').toBeNull();
+        expect(
+            r.focusin,
+            'Acht Tabulatordruecke, acht Fokuswechsel — die Falle greift nicht in den ' +
+                'normalen Lauf der App ein.'
+        ).toBe(8);
+    });
+});

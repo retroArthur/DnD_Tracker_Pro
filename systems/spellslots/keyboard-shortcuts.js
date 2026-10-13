@@ -131,17 +131,50 @@ function initKeyboardShortcuts() {
                 return;
             }
             // 3. Offenes Modal schließen
-            const openModal = document.querySelector('.modal-overlay.show');
+            //
+            // ZWEI AENDERUNGEN AUS T-D, SCHRITT 7 — beide messbar begruendet.
+            //
+            // (a) DIE SCHALE WIRD UEBER ModalFocus GESUCHT, nicht mehr nur
+            //     ueber `.modal-overlay.show`. #quicknotes-modal traegt
+            //     `.modal-backdrop` (assets/templates/modals-tools.html:194)
+            //     und fiel aus dem alten Selektor: gemessen blieb es als
+            //     EINZIGE von 36 Schalen auf Escape offen. Der Rueckfall auf
+            //     den alten Selektor bleibt stehen, damit Escape auch dann
+            //     schliesst, wenn ui/modal-focus.js nicht geladen ist.
+            //
+            // (b) GESCHLOSSEN WIRD UEBER hideModal(), nicht durch Abnehmen der
+            //     Klasse. Dieser Zweig ist der HAEUFIGSTE Schliessweg der App;
+            //     solange er `show` selbst abnahm, lief er an jedem Haken in
+            //     hideModal() vorbei — der Rueckweg zum Oeffner haette damit
+            //     fuer den Normalfall nie gefeuert (O-4, dritte Stelle).
+            //
+            // Die ~19 Modale aus den Templates gehören dauerhaft zum DOM —
+            // bei ihnen ist das Abnehmen der Klasse `show` der Weg. Eine
+            // per JS eingehängte Schale (Markierung `modal-transient`)
+            // muss dagegen ENTFERNT werden: sonst bleibt der Knoten samt
+            // seiner Feld-IDs liegen, unsichtbar aber nicht weg (U4).
+            const openModal =
+                window.ModalFocus?.oberstesModal?.() ||
+                document.querySelector('.modal-overlay.show');
             if (openModal) {
-                // Die ~19 Modale aus den Templates gehören dauerhaft zum DOM —
-                // bei ihnen ist das Abnehmen der Klasse `show` der Weg. Eine
-                // per JS eingehängte Schale (Markierung `modal-transient`)
-                // muss dagegen ENTFERNT werden: sonst bleibt der Knoten samt
-                // seiner Feld-IDs liegen, unsichtbar aber nicht weg (U4).
                 if (openModal.classList.contains('modal-transient')) {
+                    // Entfernen, DANN den Fokus zuruecknehmen: kehreZurueck
+                    // liest den Oeffner aus einer WeakMap am Knoten, und die
+                    // bleibt nach dem remove() lesbar.
                     openModal.remove();
+                    if (window.ModalFocus) window.ModalFocus.kehreZurueck(openModal);
+                } else if (openModal.id === 'quicknotes-modal') {
+                    // Eigene Schliessfunktion: sie nimmt zusaetzlich
+                    // `style.display` zurueck, das showQuickNotesModal setzt.
+                    if (typeof window.hideQuickNotesModal === 'function') {
+                        window.hideQuickNotesModal();
+                    }
+                } else if (openModal.id && typeof window.hideModal === 'function') {
+                    window.hideModal(openModal.id);
                 } else {
+                    // Schale ohne id — hideModal() hat keinen Griff.
                     openModal.classList.remove('show');
+                    if (window.ModalFocus) window.ModalFocus.kehreZurueck(openModal);
                 }
                 return;
             }

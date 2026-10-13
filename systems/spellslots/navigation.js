@@ -82,8 +82,18 @@ function switchView(name) {
         toggleText.textContent = viewNames[name] || '📍 Navigation';
     }
 }
+// Die ModalFocus-Aufrufe in showModal/hideModal stehen DIREKT in der
+// Deklaration und nicht in einem `window.showModal`-Mantel (O-4). Grund: die
+// 61 showModal- und 63 hideModal-Aufrufstellen binden LEXIKALISCH an diese
+// Deklarationen — unter ihnen `ui/actions/ui-actions.js:8`, der Weg jedes
+// Klicks auf `data-action="show-modal"`. Ein Mantel an `window` wuerde von
+// allen umgangen und feuerte bei normaler Arbeit nie; genau die Falle, die
+// CLAUDE.md fuer `save()` dokumentiert. Begruendung und Messwerte stehen in
+// `ui/modal-focus.js`.
 function showModal(id) {
     const modal = $(id);
+    // VOR dem Sichtbarmachen: danach kann der Fokus schon verschoben sein.
+    if (modal && window.ModalFocus) window.ModalFocus.merkeOeffner(modal);
     if (modal) modal.classList.add('show');
     const populateSelects = window.populateSelects;
     if (populateSelects) populateSelects();
@@ -95,10 +105,15 @@ function showModal(id) {
         const populateQuestSelects = window.populateQuestSelects;
         if (populateQuestSelects) populateQuestSelects();
     }
+    // NACH dem Befuellen: die populate-Aufrufe oben bauen Felder nach, und
+    // der Einstieg soll den ersten davon greifen, nicht einen Halt, der
+    // gleich wieder ersetzt wird.
+    if (modal && window.ModalFocus) window.ModalFocus.einstieg(modal);
 }
 function hideModal(id) {
     const modal = $(id);
     if (modal) modal.classList.remove('show');
+    if (modal && window.ModalFocus) window.ModalFocus.kehreZurueck(modal);
 }
 function toggleCollapse(id) {
     const el = $(id);
@@ -116,14 +131,20 @@ function toggleCollapse(id) {
         }
     }
 }
+// #quicknotes-modal geht NICHT durch showModal/hideModal — es traegt
+// `.modal-backdrop` und schaltet `style.display` selbst. Darum bekommt es
+// dieselben drei Haken einzeln; sonst waere es die eine Schale ohne
+// Fokusfuehrung (und war gemessen auch die eine, die auf Escape offen blieb).
 function showQuickNotesModal() {
     const D = window.D;
     const quickNotes = $('quick-notes');
     if (quickNotes) quickNotes.value = D.quickNotes || '';
     const modal = $('quicknotes-modal');
     if (modal) {
+        if (window.ModalFocus) window.ModalFocus.merkeOeffner(modal);
         modal.style.display = 'flex';
         modal.classList.add('show');
+        if (window.ModalFocus) window.ModalFocus.einstieg(modal);
     }
 }
 function hideQuickNotesModal() {
@@ -131,6 +152,7 @@ function hideQuickNotesModal() {
     if (modal) {
         modal.style.display = 'none';
         modal.classList.remove('show');
+        if (window.ModalFocus) window.ModalFocus.kehreZurueck(modal);
     }
 }
 function saveQuickNotes() {
