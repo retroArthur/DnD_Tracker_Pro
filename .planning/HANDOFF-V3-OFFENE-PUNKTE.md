@@ -8215,9 +8215,13 @@ unverändert, und die Gates bestätigen es.
 - ~~**Der Öffner wird nicht angesprungen, wenn sein Knoten weg ist.** Wird eine Listenzeile
   zwischen Öffnen und Schließen neu gezeichnet, bleibt der Fokus, wo er ist, statt irgendwohin
   zu springen. Gemessen trat der Fall in keiner der 36 Schalen auf; er ist bewusst so
-  behandelt.~~ **In Runde 1 behoben.** Der Satz „trat in keiner der 36 Schalen auf" war für
-  die Messung richtig und für die App falsch: der Sweep öffnet jede Schale generisch und
-  **benutzt sie nicht**. Sobald der Dialog etwas tut, tritt der Fall sofort ein. Siehe unten.
+  behandelt.~~ **In Runde 1 behoben, aber nur zur Hälfte — in Runde 2 vollständig.** Der Satz
+  „trat in keiner der 36 Schalen auf" war für die Messung richtig und für die App falsch: der
+  Sweep öffnet jede Schale generisch und **benutzt sie nicht**. Sobald der Dialog etwas tut,
+  tritt der Fall sofort ein. Runde 1 hat dafür zwei Stufen in `kehreZurueck()` gebaut — und
+  damit **eine** der beiden Reihenfolgen abgedeckt. Die zweite, häufigere
+  (`hideModal()` zuerst, `render*()` danach) fiel weiter durch; Runde 2 hat sie gemessen und
+  mit `_nachfassen()` geschlossen. Siehe unten.
 - **Fall (d) braucht Minuten** (36 Schalen × 45 Sprünge × zwei Größen, 2,2 bzw. 2,9 min) und
   trägt darum ein eigenes `test.setTimeout()`. Wer die Datei kürzen will, kürzt dort.
 
@@ -8375,6 +8379,176 @@ Wirkungsbereich der Falle liegt), `tastatur-erreichbarkeit` + `tastatur-ausloesu
   die Palette hat keine eigene Falle, und ihr eine zu bauen wäre eine Entscheidung ohne
   Auftrag.
 - **`?` und `/`** siehe Tabelle oben: beides kein Befund dieser Einheit.
+
+### Runde 2 — ein Befund, bestätigt und behoben: die andere Reihenfolge
+
+Drei Commits auf `tastatur-strang`: der rote Nachweis (`3a6a9ac`), die Behebung (`624466d`),
+die Logik in jsdom (`8a7543e`). Alles selbst nachgemessen, mit eigenen Skripten, nur
+`page.keyboard.press`, gefüllte Kampagne, beide Größen, **beide Bauarten**.
+
+**Der Befund: Runde 1 hat die falsche Hälfte des Problems abgedeckt.** Die zwei Stufen von
+`kehreZurueck()` entscheiden nach dem Zustand **zum Zeitpunkt des Schließens**. Das passt auf
+die Reihenfolge, die Runde 1 gemessen hat (der Dialog wirkt, zeichnet neu, der **Nutzer**
+drückt danach Escape — der Öffner fehlt da schon, Stufe 2 greift). Es passt **nicht** auf die
+umgekehrte und häufigere: der Dialog **schließt sich selbst** und zeichnet **danach** neu.
+Dann läuft `kehreZurueck()` noch **vor** dem Neuzeichnen, Stufe 1 greift völlig korrekt — und
+das danach laufende `renderInit()` zerstört den gerade fokussierten Knoten. Stufe 2 kann dort
+nichts retten: sie läuft nur, wenn der Knoten beim Schließen schon fehlte.
+
+Zwei Griffe gemessen, am gebauten Bündel, 1440 px, nur echte Tastendrücke:
+
+| Griff | Weg | Wirkung | Fokus danach | weitere echte Tabs |
+| --- | --- | --- | --- | --- |
+| Initiative / Effekt-Dialog | 43 Tabs bis „🔮", Enter, 17 Tabs bis `#effect-name`, tippen, 3 Tabs, Enter | `effects` 0 → 1 | `<body>` | **6** |
+| Party / Zustands-Dialog | 40 Tabs bis `show-conditions-modal`, Enter, 17 Tabs bis `#custom-condition-name`, tippen, 1 Tab, Enter | `conditions` 0 → 1 | `<body>` | **13** |
+| **Kontrollarm** (derselbe Effekt-Dialog, Escape **ohne** Wirkung) | 43 Tabs, Enter, 4 Tabs, Escape | keine | **Öffner** | **0** |
+
+Bei 6 und bei 20 Einträgen je Typ identisch. Die Wirkung ist jeweils korrekt und **genau
+einmal** — es ist kein Auslösefehler, sondern allein der Rückweg.
+
+**Die Ursache am Haken gemessen, nicht gefolgert.** `ModalFocus.kehreZurueck` zur Laufzeit
+umhüllt, Spur je Schließvorgang:
+
+```
+vor kehreZurueck:    BUTTON                      / Öffner im Dokument = true
+nach kehreZurueck:   BUTTON[show-add-effect]     / Fokusknoten im Dokument = true
+Mikrotask danach:    BODY                        / gemerkter Knoten im Dokument = false
+nächster Rahmen:     BODY                        / gemerkter Knoten im Dokument = false
+```
+
+Zeile 2 zeigt: Stufe 1 hat ihre Arbeit getan. Zeile 3 zeigt, wer sie wieder zunichte macht.
+
+**Breite:** **26 Aufrufstellen** im Quellbaum rufen `hideModal(...)` und innerhalb von sechs
+Zeilen danach eine `render*()`-Funktion (eigener statischer Lauf über `features/`, `systems/`,
+`ui/`) — u. a. `initiative-combat-widgets.js:97/408/650`, `conditions.js:86`,
+`rest-manager.js:258`, `render-loot.js:201`, `render-spells.js:296`, `random-tables.js:573`,
+`shops-core.js:317/788/1001`, `avatars.js:99/116`, `spell-manager.js:443`,
+`locations-crud.js:32`, `quests-crud.js:58`. Der Effekt-Dialog ist davon der kürzeste Griff.
+
+#### Die Behebung: ein Mikrotask je Schließvorgang
+
+`_nachfassen(gesetzt, kennung)` plant **genau einen** Mikrotask, nachdem der Fokus gesetzt ist.
+Er greift nur, wenn **beide** Bedingungen zutreffen, und beide sind tragend:
+
+- **`activeElement` ist auf `<body>`/`<html>` gefallen.** Damit sind die Fälle ausgenommen, in
+  denen ein Öffner oder eine Renderfunktion den Fokus **bewusst** selbst woanders hinsetzt.
+- **Der gesetzte Knoten ist nicht mehr im Dokument.** Nur das ist der gemessene Schaden. Steht
+  er noch und ist bloß unsichtbar geworden, darf er nicht durch einen fremden sichtbaren
+  ersetzt werden — dieselbe Begründung, aus der Stufe 2 hinter Stufe 1 steht.
+
+Ohne Kennung (ein Öffner ohne `data-action`) wird **kein** Mikrotask geplant; dort bleibt es
+beim alten Verhalten. **Beide** Stufen fassen nach, nicht nur die erste: derselbe Aufruf, die
+Prüfung ist in sich begrenzt, und `_nachfassen()` plant sich **nicht selbst neu** — also genau
+einmal je Schließvorgang, auch bei einem Dialog, der in einer Schleife zeichnet.
+
+**Mikrotask oder `requestAnimationFrame`? Gegeneinander gemessen, nicht entschieden und dann
+behauptet.** Beide Varianten zur Laufzeit eingehängt, derselbe echte Weg, beide Größen:
+
+| Variante | greift im Arm MIT Wirkung | greift im Kontrollarm | Fokus danach |
+| --- | --- | --- | --- |
+| Mikrotask | ja (1 Griff) | **nein** (0 Griffe) | gleichwertiger Knopf |
+| `requestAnimationFrame` | ja (1 Griff) | **nein** (0 Griffe) | gleichwertiger Knopf |
+
+Beide tun es. Der Mikrotask gewinnt aus zwei Gründen: er läuft einen Rahmen **früher** — der
+Fokus liegt also keinen Bildaufbau lang auf `<body>` — und er läuft auch dann, wenn `rAF`
+gedrosselt ist. Die nächste Stufe (ein eigener Task) bräuchte es nur, wenn eine Aufrufstelle
+das Neuzeichnen **verzögert**. Nachgesehen: unter allen Stellen mit `setTimeout` oder
+`requestAnimationFrame` hinter `hideModal(...)` ist genau **eine** (`systems/undo.js:752`), und
+die zeichnet nicht neu, sondern wechselt die Ansicht — ihr Rumpf ist ausserdem nachweislich
+toter Code (dort schon vermerkt). Also kein gemessener Fall, folglich kein Zweig.
+
+**Kosten, am echten Weg gemessen, je Schließvorgang genau einmal:**
+
+| Lage | Kosten |
+| --- | --- |
+| Prüfung greift **nicht** (der häufige Fall) | **0,000 ms** |
+| Prüfung greift (Suche + `focus()`) | bis zu **1,8 ms** |
+
+Der häufige Fall kostet nichts, weil die Prüfung mit zwei Vergleichen abbricht —
+`sucheGleichwertigen()` wird erst gerufen, wenn der Fokus wirklich gefallen und der Knoten
+wirklich weg ist. **Der `_tab()`-Zweig, der bei jedem Tabulatordruck der ganzen App läuft, ist
+vollständig unberührt**: hier hängt nichts am Tastendruck, sondern am Schließen eines Dialogs.
+Fall (i) bleibt grün.
+
+#### Vorher und nachher, beide Bündel
+
+| Maß | vorher | nachher |
+| --- | --- | --- |
+| Effekt-Dialog: Fokus auf `<body>` | ja | **nein** |
+| Effekt-Dialog: Fokus auf gleichwertigem Öffner | nein | **ja** |
+| Effekt-Dialog: weitere echte Tabs zurück | 6 | **0** |
+| Zustands-Dialog: Fokus auf `<body>` | ja | **nein** |
+| Zustands-Dialog: weitere echte Tabs zurück | 13 | **0** |
+| Kontrollarm (Dialog nicht benutzt) | Rückweg greift | **unverändert** |
+
+In **acht Läufen** identisch: 2 Bündel × 2 Kampagnengrößen × 2 Dialoge.
+
+#### Warum der eigene Wächter grün war — zum zweiten Mal dieselbe Lücke
+
+Fall (j) aus Runde 1 prüft **genau eine** Reihenfolge: Wirkung, dann Escape **durch den
+Nutzer**. Er kann die andere nicht treffen, weil er den Dialog selbst nie schließen lässt.
+Kein Fall der Datei fasste `saveCustomEffect`, `addCustomCondition` oder `save-table` an (Grep
+über `tests/e2e/features`: 0 Treffer). Der neue **Fall (l)** schließt den Dialog **durch seine
+eigene Aktion** und läuft bei beiden Kampagnengrößen; der Kontrollarm steckt im selben Test,
+damit ein künftiger Ausfall sofort zeigt, ob der Rückweg insgesamt kaputt ist oder nur die
+Reihenfolge.
+
+**Die Lehre, die zweimal dieselbe war:** ein Wächter, der einen Dialog nur *öffnet* oder nur
+*auf einem* Weg schließt, deckt den Rückweg nicht ab. Wer hier etwas hinzufügt, prüft **beide**
+Reihenfolgen — Nutzer schließt nach der Wirkung, und Dialog schließt sich selbst vor dem
+Neuzeichnen.
+
+Dazu **sechs Fälle in jsdom** (`tests/unit/modal-focus.test.js`), die die Entscheidungslogik
+isolieren. Die Hälfte davon bewacht die **Grenze nach oben**:
+
+| Fall | Erwartung | gegen `3a6a9ac` |
+| --- | --- | --- |
+| der zerstörte Öffner wird nachgefasst | greift | **rot** |
+| auch Stufe 2 fasst nach, wenn NOCH einmal gezeichnet wird | greift | **rot** |
+| nachgefasst wird GENAU EINMAL je Schließvorgang | greift einmal | **rot** |
+| steht der Öffner noch, fasst nichts nach | greift nicht | grün |
+| setzt jemand den Fokus BEWUSST woanders hin, bleibt es dabei | greift nicht | grün |
+| ein Öffner OHNE `data-action` wird nicht nachgefasst | greift nicht | grün |
+
+Die drei unteren sind **vor und nach** der Behebung grün, und das ist ihre Aufgabe: sie sind
+die Zusicherung gegen ein zu weit greifendes Nachfassen und wären sonst keine.
+
+#### Der Lauf von Runde 2 (Stand `8a7543e`, beide Bündel frisch gebaut)
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `npx jest` | **2250 / 2250** in 81 Suiten (Runde 1: 2244; +6 Unit-Fälle) |
+| `npx playwright test` | **714 bestanden / 39 übersprungen / 5 Fehlschläge** von 758 (Runde 1: 756; +2 Fälle) |
+| `npm run lint` | Exit 0, **genau 363** Warnungen, 0 Fehler |
+| `npm run typecheck` / `:strict` | Exit 0 / Exit 0 |
+| `python -m pytest tests/build` | **30 / 30** |
+| beide Builds | Exit 0 |
+| `sync-aktenlage-anker --check` | 0 Abweichungen bei 123 Ankern |
+| `sync-editor-toolbars --check` | 22 / 22 synchron |
+| Ratschen (R-06, F-18, F-19, W5-R-06b/08) | grün; `git diff` über `assets/**`, `*.css`, `*.html` gegen `392d1d3`: **0 Dateien** |
+| `modal-fokus.spec.js` vollständig | **20 / 20** (Runde 1: 18) |
+| `modal-focus.test.js` | **45 / 45** (Runde 1: 39) |
+
+**Alle fünf Fehlschläge sind `eingaberahmen.spec.js`** (Fall 1 in vier Themes, Fall 2) und
+**vorbestehend** — reine 30-s-Zeitüberschreitungen unter paralleler Last. Isoliert mit einem
+Arbeiter in Runde 2 noch einmal nachgefahren: **12 / 12** (3,1 min). Dieselbe Datei, dieselbe
+Ursache und dieselbe Entlastung, die Runde 1 und T-C schon geführt haben; die Menge schwankt
+mit der Last (4 in Runde 1, 5 hier), die Ursache nicht. `fokusring.spec.js` — der Lauf, der
+durch sechs Modale in vier Themes tabuliert und damit **im Wirkungsbereich dieser Änderung
+liegt** — ist im Hauptlauf grün mitgelaufen.
+
+#### Was Runde 2 NICHT angefasst hat
+
+- **E-4 ist weiterhin nicht umgesetzt** (ein Kürzel für den Lebenspunkte-Rechner auf den
+  aktiven Kämpfer, Schritt 6). Diese Runde hatte einen Befund zu beheben, keinen Schritt zu
+  fahren; die Kürzeltabelle in CLAUDE.md ist darum **unberührt** geblieben.
+- **Die 26 Aufrufstellen selbst sind unberührt.** Die Behebung sitzt in `ui/modal-focus.js`,
+  nicht in den 26 Dialogaktionen — sie alle einzeln auf „erst zeichnen, dann schließen"
+  umzustellen wäre 26 Verhaltensänderungen gegen eine.
+- **O-3 fehlt weiter in CLAUDE.md**, wie T-C und Runde 1 festgehalten haben, und gilt jetzt
+  zusätzlich für `role="dialog"`/`aria-modal`.
+- **O-9 bleibt eine echte Blockade** (`window.clearLootForm` wird gerufen und nirgends
+  definiert).
 
 ### Der Suitenlauf, und welche Fehlschläge NICHT von hier kommen
 
