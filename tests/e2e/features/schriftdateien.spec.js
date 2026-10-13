@@ -1444,9 +1444,11 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
             expect(
                 stumm,
                 `Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text nicht ` +
-                    `mehr als ${MINDESTABSTAND}px anders als ohne die erste Familie. Der ` +
-                    `Nutzer bekommt den Rueckfall. Gemessene Abstaende: ` +
-                    `${JSON.stringify(abstaende)}`
+                    `genug anders als ohne die erste Familie — der Nutzer bekommt den ` +
+                    `Rueckfall. Die Schwelle steht in jedem Eintrag: am lebenden Element ` +
+                    `die auf dessen Schriftgroesse umgerechnete (schwelleFuer), bei ` +
+                    `${MESSGROESSE} die volle von ${MINDESTABSTAND}px. Gemessene ` +
+                    `Abstaende am lebenden Element: ${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
