@@ -232,6 +232,41 @@ function leseServiceWorkerSchriften(swPfad = SERVICE_WORKER) {
     return treffer.map(t => t.slice(1, -1).split('/').pop());
 }
 
+/**
+ * Liest die woff2 im Verzeichnis — das ANDERE Ende der Zusicherung (B-07).
+ *
+ * WARUM DAS NOETIG IST. Diese Datei liest ihre Dateiliste aus fonts.css, der
+ * Kopierschritt in build.py aus dem Verzeichnis ("Keine Dateiliste",
+ * ausdruecklich so gewollt, weil eine eigene Liste die elfte Datei
+ * uebersieht). Beide Enden waren dadurch verschieden: eine woff2, die im
+ * Verzeichnis liegt und keine @font-face-Regel hat, wurde von niemandem
+ * geprueft und von build.py veroeffentlicht. Gemessen: eine Kopie als
+ * 'elfte-400.woff2' liess 60 von 60 Jest-Faellen gruen und wurde als
+ * elfte Datei nach dist/assets/fonts/ kopiert.
+ *
+ * DIE VERZEICHNISSE KOMMEN AUS DEN url()-PFADEN, nicht aus einem Literal:
+ * damit bleibt Teil 6 der Ratsche gueltig ("die Dateiliste stammt aus
+ * fonts.css, nicht aus einem Literal") und ein verschobenes
+ * Schriftverzeichnis wird mitgezogen, statt diese Pruefung leerlaufen zu
+ * lassen.
+ *
+ * @param {Array<{datei: string}>} quellen Ergebnis von leseSchriftQuellen().
+ * @returns {{verzeichnisse: string[], namen: string[]}}
+ */
+function leseVerzeichnisSchriften(quellen) {
+    const verzeichnisse = [...new Set(quellen.map(q => path.dirname(q.datei)))].sort();
+    const namen = [];
+    for (const verzeichnis of verzeichnisse) {
+        if (!fs.existsSync(verzeichnis)) continue;
+        for (const name of fs.readdirSync(verzeichnis)) {
+            if (/\.woff2$/i.test(name) && fs.statSync(path.join(verzeichnis, name)).isFile()) {
+                namen.push(name);
+            }
+        }
+    }
+    return { verzeichnisse, namen: namen.sort() };
+}
+
 // ----------------------------------------------------------------------
 // woff2-Parser
 // ----------------------------------------------------------------------
@@ -570,6 +605,8 @@ function pruefeAlle(opts = {}) {
     const swNamen = leseServiceWorkerSchriften(swPfad);
     const nurInCss = cssNamen.filter(n => !swNamen.includes(n));
     const nurInSw = swNamen.filter(n => !cssNamen.includes(n));
+    const verzeichnis = leseVerzeichnisSchriften(quellen);
+    const nurImVerzeichnis = verzeichnis.namen.filter(n => !cssNamen.includes(n));
 
     return {
         geprueft: dateien.length,
@@ -582,7 +619,15 @@ function pruefeAlle(opts = {}) {
             swNamen,
             nurInCss,
             nurInSw,
-            deckungsgleich: nurInCss.length === 0 && nurInSw.length === 0
+            // Das dritte Ende (B-07): was wirklich auf der Platte liegt.
+            // `deckungsgleich` nimmt es MIT auf — eine Datei ohne
+            // @font-face-Regel wird von build.py veroeffentlicht und war
+            // bisher von keiner Seite sichtbar.
+            verzeichnisse: verzeichnis.verzeichnisse,
+            verzeichnisNamen: verzeichnis.namen,
+            nurImVerzeichnis,
+            deckungsgleich:
+                nurInCss.length === 0 && nurInSw.length === 0 && nurImVerzeichnis.length === 0
         }
     };
 }
@@ -664,6 +709,7 @@ module.exports = {
     ohneKommentare,
     leseSchriftQuellen,
     leseServiceWorkerSchriften,
+    leseVerzeichnisSchriften,
     leseUIntBase128,
     parseWoff2,
     leseCmapUntertabelle,
