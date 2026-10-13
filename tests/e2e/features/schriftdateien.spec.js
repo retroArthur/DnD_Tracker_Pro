@@ -57,7 +57,11 @@
  *      Mit Leerzeichen haette diese Probe also "Inter funktioniert" gemeldet.
  *      Der Probetext unten enthaelt kein Leerzeichen, kein 'A', kein 'Ä' und
  *      kein 'B' — und Teil 0 nagelt genau das fest, gegen das Werkzeug aus
- *      Einheit 1 gemessen, statt es zu behaupten.
+ *      Einheit 1 gemessen, statt es zu behaupten. Der Waechter schneidet
+ *      gegen die VOLLE cmap (gemessen 289 Codepunkte), nicht gegen den
+ *      deutschen Satz: 285 der 289 stehen ausserhalb, und U+00A0 — in allen
+ *      zehn Dateien, optisch ein Leerzeichen — ist genau die Falle, fuer die
+ *      dieser Punkt geschrieben wurde.
  *
  *   2. DIE FACES MUESSEN GELADEN SEIN, BEVOR GEMESSEN WIRD. fonts.css setzt
  *      `font-display: swap`. Waehrend der Tauschfrist rendert der Browser im
@@ -149,6 +153,17 @@ const AUSNAHMEN_SOLL = 4;
 // durchlaufen, weil "keine Familie verletzt die Regel" trivial wahr ist.
 const MINDEST_FACES = 10;
 const MINDEST_MENUEEINTRAEGE = 7;
+
+// Untergrenze fuer die Vereinigung ALLER Codepunkte, die die zehn Dateien
+// tragen — gemessen 289 (`leseCmap()` je Datei, Mengenvereinigung). Der
+// Probetext-Waechter unten schneidet gegen diese Menge und nicht mehr gegen
+// die 100 Zeichen des deutschen Satzes: 285 der 289 stehen AUSSERHALB des
+// deutschen Satzes, U+00A0 unter ihnen, und U+00A0 tragen alle zehn. Es sieht
+// aus wie ein Leerzeichen und ist damit genau die "gemeinste Falle" aus
+// Messfalle 1 — die alte Fassung des Waechters konnte es nicht sehen
+// (gemessen: mit U+00A0 im Probetext blieb er gruen, waehrend Teil 1, Teil 3
+// und Teil 5 rot wurden und zum ABBAU der Ausnahmeliste aufforderten).
+const MINDEST_GETRAGENE_CODEPUNKTE = 200;
 
 // Genau so viele Menueeintraege nennen zuerst eine Familie, die fonts.css
 // einbindet. Festgenagelt, damit ein fuenfter gebuendelter Eintrag auffaellt.
@@ -338,16 +353,28 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             const werkzeug = schriftWerkzeug;
             const ergebnis = werkzeug.pruefeAlle();
             expect(ergebnis.dateien.length).toBeGreaterThanOrEqual(MINDEST_FACES);
+
+            // Gegen die VOLLE cmap, nicht gegen den deutschen Satz. Die alte
+            // Fassung schnitt gegen `DEUTSCHER_ZEICHENSATZ` und sah damit nur
+            // 4 der 289 getragenen Codepunkte — U+00A0 war fuer sie
+            // unsichtbar, obwohl alle zehn Dateien es tragen.
             const getragen = new Set();
             for (const datei of ergebnis.dateien) {
-                for (const zeichen of werkzeug.DEUTSCHER_ZEICHENSATZ) {
-                    if (!datei.fehlendeZeichen.includes(zeichen)) getragen.add(zeichen);
-                }
+                expect(
+                    Array.isArray(datei.codepunkte),
+                    `${datei.name}: das Werkzeug liefert keine Codepunktliste`
+                ).toBe(true);
+                for (const c of datei.codepunkte) getragen.add(c);
             }
             // Gegenprobe gegen Leerlauf: eine kaputte Messung wuerde hier
             // eine leere Menge liefern und die Zusicherung trivial erfuellen.
-            expect(getragen.size).toBeGreaterThan(0);
-            const kollision = [...PROBETEXT].filter(z => getragen.has(z));
+            expect(getragen.size).toBeGreaterThanOrEqual(MINDEST_GETRAGENE_CODEPUNKTE);
+            // Als Codepunkt gemeldet, nicht als Zeichen: ein unsichtbarer
+            // Treffer (U+00A0) waere in der Fehlermeldung sonst nicht zu
+            // erkennen.
+            const kollision = [...PROBETEXT]
+                .filter(z => getragen.has(z.codePointAt(0)))
+                .map(z => werkzeug.zeigeCodepunkt(z.codePointAt(0)));
             expect(
                 kollision,
                 `Der Probetext "${PROBETEXT}" enthaelt Zeichen, die eine gebuendelte ` +

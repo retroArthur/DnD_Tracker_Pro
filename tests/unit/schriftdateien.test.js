@@ -71,20 +71,51 @@ const MINDEST_DATEIEN = 10;
 // und der Test ist rot. Eine Ratsche, die auch bei kaputtem Messwerkzeug
 // gruen bleibt, ist wertlos.
 //
+// `getragen` ist die EINZIGE dieser Zahlen, die am URTEIL der Messung haengt.
+// Glyphenzahl, Blockzahl und `laengenStimmen` kommen aus `cmap.codepunkte`;
+// die Fehlliste ist ein eigener Rechenweg daneben (`pruefeDatei()`,
+// `DEUTSCHE_CODEPUNKTE.filter(...)`). Genau der liess sich bis hierher auf
+// "traegt nichts" festnageln, ohne dass eine der anderen Zahlen sich bewegte:
+// mit `const fehlend = DEUTSCHE_CODEPUNKTE.slice()` blieben alle 60 Faelle
+// dieser Datei gruen. Darum stehen hier die Zeichen, die jede Datei WIRKLICH
+// traegt — ' ' (U+0020) in allen zehn, dazu 'A'/'Ä' in Inter und 'A'/'B' in
+// Source Sans Pro. Aufsteigend sortiert, damit die Reihenfolge von
+// DEUTSCHER_ZEICHENSATZ keine Rolle spielt.
+//
 // Zahlen gemessen am Stand 4e0d810 mit `node tools/pruefe-schriftdateien.js`.
 // ----------------------------------------------------------------------
 const GEMESSENE_BLOECKE = {
-    'roboto-400.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180 },
-    'roboto-700.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180 },
-    'inter-400.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157 },
-    'inter-500.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157 },
-    'inter-600.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157 },
-    'poppins-400.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105 },
-    'poppins-500.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105 },
-    'poppins-600.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105 },
-    'source-sans-pro-400.woff2': { block: 'Cyrillic', anzahl: 56, glyphen: 61 },
-    'source-sans-pro-600.woff2': { block: 'Cyrillic', anzahl: 56, glyphen: 61 }
+    'roboto-400.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180, getragen: [' '] },
+    'roboto-700.woff2': { block: 'Cyrillic', anzahl: 155, glyphen: 180, getragen: [' '] },
+    'inter-400.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
+    'inter-500.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
+    'inter-600.woff2': { block: 'Cyrillic', anzahl: 148, glyphen: 157, getragen: [' ', 'A', 'Ä'] },
+    'poppins-400.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
+    'poppins-500.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
+    'poppins-600.woff2': { block: 'Devanagari', anzahl: 94, glyphen: 105, getragen: [' '] },
+    'source-sans-pro-400.woff2': {
+        block: 'Cyrillic',
+        anzahl: 56,
+        glyphen: 61,
+        getragen: [' ', 'A', 'B']
+    },
+    'source-sans-pro-600.woff2': {
+        block: 'Cyrillic',
+        anzahl: 56,
+        glyphen: 61,
+        getragen: [' ', 'A', 'B']
+    }
 };
+
+/**
+ * Die Zeichen des deutschen Satzes, die diese Datei WIRKLICH traegt — das
+ * Komplement der Fehlliste, aufsteigend sortiert.
+ * @param {{fehlendeZeichen: string[]}} datei
+ * @returns {string[]}
+ */
+function getrageneDeutsche(datei) {
+    return werkzeug.DEUTSCHER_ZEICHENSATZ.filter(z => !datei.fehlendeZeichen.includes(z)).sort();
+}
 
 // Einmal messen, alle Teile lesen dieselbe Messung.
 const ERGEBNIS = werkzeug.pruefeAlle();
@@ -125,6 +156,22 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                 const block = datei.bloecke.find(b => b.name === soll.block);
                 expect(block).toBeDefined();
                 expect(block.anzahl).toBe(soll.anzahl);
+
+                // Und das URTEIL selbst, nicht nur seine Nebenprodukte: die
+                // Zeichen, die diese Datei vom deutschen Satz wirklich
+                // traegt. Ohne diese Zeile bleibt die ganze Datei gruen,
+                // wenn `pruefeDatei()` seine Fehlliste gar nicht mehr aus
+                // der cmap bildet.
+                expect(getrageneDeutsche(datei)).toEqual(soll.getragen);
+
+                // Zwei Wege, dieselbe Aussage: die Fehlliste muss genau das
+                // Komplement der GELESENEN Codepunkte sein. Bricht einer der
+                // beiden Rechenwege allein, faellt es hier auf.
+                expect(datei.codepunkte.length).toBe(datei.glyphen);
+                const ausCodepunkten = werkzeug.DEUTSCHER_ZEICHENSATZ.filter(
+                    z => !datei.codepunkte.includes(z.codePointAt(0))
+                ).sort();
+                expect(datei.fehlendeZeichen.slice().sort()).toEqual(ausCodepunkten);
             }
         );
 
@@ -185,6 +232,19 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             '%s traegt den deutschen Satz oder ist freigestellt',
             (name, datei) => {
                 if (Object.prototype.hasOwnProperty.call(SCHRIFT_AUSNAHMEN, name)) {
+                    // KEIN stiller Ausstieg mehr. Vorher verliess dieser
+                    // Zweig den Testkoerper vor beiden Zusicherungen — und
+                    // weil die Ausnahmeliste VOLL ist (10 von 10), waren das
+                    // zehn gruene Faelle, die null Zusicherungen ausfuehrten.
+                    // Der Ausnahmezweig nagelt jetzt das Gegenteil fest.
+                    const soll = GEMESSENE_BLOECKE[name];
+                    expect(
+                        soll,
+                        `${name} steht auf SCHRIFT_AUSNAHMEN, fehlt aber in GEMESSENE_BLOECKE`
+                    ).toBeDefined();
+                    expect(datei.traegtDeutsch).toBe(false);
+                    expect(datei.fehlendeZeichen.length).toBeGreaterThan(0);
+                    expect(getrageneDeutsche(datei)).toEqual(soll.getragen);
                     return;
                 }
                 expect(datei.fehlendeZeichen).toEqual([]);
