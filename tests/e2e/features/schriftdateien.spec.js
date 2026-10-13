@@ -496,6 +496,81 @@ const FAMILIEN_INFO = CSS_FAMILIEN.map(familie => {
 const VARIABLE_FAMILIEN = FAMILIEN_INFO.filter(i => i.variabel);
 const STATISCHE_FAMILIEN = FAMILIEN_INFO.filter(i => !i.variabel);
 
+// ----------------------------------------------------------------------
+// DIE BAUART, AUS DER DATEI GELESEN — und warum es diese zweite Quelle
+// geben MUSS.
+//
+// `FAMILIEN_INFO.variabel` oben kommt aus fonts.css (`istBereich`). Teil 6
+// unten leitet daraus ab, WELCHES Verhalten es erwartet: variabel -> neun
+// verschiedene Breiten, statisch -> genau so viele wie deklarierte
+// Einzelgewichte. SOLL und Messgegenstand haengen damit an DERSELBEN
+// Datei — und genau dort war eine Luecke, nachgestellt und nicht vermutet
+// (Gegenpruefung, Befund 1):
+//
+//     # assets/styles/fonts.css Zeile 66 (Roboto):
+//     #   font-weight: 100 900;   ->   font-weight: 400;
+//     $ PYTHONIOENCODING=utf-8 python build.py            -> exit 0
+//     $ npx playwright test ...schriftdateien.spec.js
+//       VORHER  16 passed (4.1s)
+//       NACHHER 16 passed (4.1s)      <-- UNVERAENDERT GRUEN
+//     $ npx jest tests/unit/schriftdateien.test.js   -> 1 failed / 72 / 73
+//     $ node tools/pruefe-schriftdateien.js --check   -> exit 0
+//
+// Der Mechanismus: Roboto wandert durch die Mutation nach
+// `STATISCHE_FAMILIEN`, und der statische Zweig verlangt dann 'genau 1
+// verschiedene Breite bei 1 deklarierten Gewicht' — was exakt zutrifft.
+// Chromium schaltet die `wght`-Achse naemlich ab, sobald der Face kein
+// Bereich mehr ist: eigenstaendig am gebauten Buendel gemessen rendern alle
+// neun Gewichte dann bitgleich 1123.28125px (gesund: 1085.75 … 1155.53125,
+// neun verschiedene Werte). Der DM bekaeme im Editor fuer 400 und 700
+// dieselbe Strichstaerke, und diese Datei haette geschwiegen.
+//
+// DIE ZWEITE QUELLE IST DIE DATEI SELBST: die fvar-Tabelle im woff2. Sie
+// kennt kein fonts.css, und eine CSS-Mutation bewegt sie nicht. Das
+// Werkzeug aus Einheit 1 liest sie schon (`d.achsen`), es wird hier also
+// keine neue Leseart eingefuehrt, nur eine vorhandene als SOLL benutzt.
+//
+// WARUM DAS PAAR IN BEIDE RICHTUNGEN GILT. Die Richtung 'Bereich erklaert
+// -> Achse muss da sein und ihn decken' pruefen Einheit 1 (Teil 8) und
+// `--check` (`achsenVerstoesse`) schon. Die GEGENRICHTUNG — 'Achse da ->
+// der Face muss den Bereich auch erklaeren' — pruefte niemand, und sie ist
+// kein Schoenheitsfehler: eine variable Datei unter einem Einzelgewicht ist
+// 43.136 Byte fuer ein einziges Gewicht, acht weggeworfene Schnitte und
+// derselbe sichtbare Schaden wie synthetische Fettschrift.
+//
+// ARBEITSTEILUNG, hier und in Einheit 1 ausdruecklich festgehalten, weil
+// sie sonst Zufall bleibt:
+//   ZUSAMMENZIEHEN (`100 900` -> `400`)  faengt Einheit 1 Teil 8 ('genau 2
+//        Bereiche auf Inter+Roboto') UND ab jetzt diese Zusicherung.
+//   VERSCHMAELERN  (`100 900` -> `300 500`) ist in Einheit 1 und im
+//        Werkzeug unsichtbar (der Bereich bleibt ein Bereich, die Achse
+//        deckt ihn) und nur hier zu sehen — die Gewichte ausserhalb
+//        300..500 klemmen auf die Bereichsgrenzen und die neun Breiten
+//        werden zu fuenf. Gemessen: jest 73/73 gruen, `--check` exit 0,
+//        playwright 1 failed / 15 passed.
+//   Einheit 1 nagelt zusaetzlich den BEREICHSWERT auf die volle Achse fest
+//        (`Ein erklaerter Gewichtsbereich schoepft die wght-Achse voll
+//        aus`), damit auch dort nicht nur die ANZAHL der Bereiche zaehlt.
+// ----------------------------------------------------------------------
+const WGHT_ACHSE_JE_DATEI = new Map(
+    WERKZEUG_ERGEBNIS.dateien.map(d => [
+        d.name,
+        (d.achsen || []).find(a => a.tag === 'wght') || null
+    ])
+);
+
+/**
+ * Traegt diese Datei eine fvar-`wght`-Achse mit echter Spanne?
+ * `min === max` zaehlt NICHT als variabel — eine Achse ohne Spanne gibt
+ * genauso wenig Zwischengewichte her wie keine Achse.
+ * @param {string} dateiname
+ * @returns {boolean}
+ */
+function hatWghtAchse(dateiname) {
+    const a = WGHT_ACHSE_JE_DATEI.get(dateiname);
+    return Boolean(a) && a.max > a.min;
+}
+
 /** Die Dateien einer Familie, aus fonts.css. */
 function dateienDerFamilie(familie) {
     return FACES.filter(f => f.familie === familie).map(f => f.datei);
@@ -1760,6 +1835,70 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 'keine statische Familie aus fonts.css gelesen — dann fehlt die ' +
                     'Gegenprobe, und eine Messung, die immer Unterschiede findet, ' +
                     'bestuende diesen Fall.'
+            ).toBeGreaterThan(0);
+
+            // ----------------------------------------------------------
+            // DAS SOLL KOMMT NICHT AUS DERSELBEN DATEI WIE DER
+            // MESSGEGENSTAND. Begruendung, Mechanismus und die Messung,
+            // die diese Zusicherung erzwungen hat, stehen bei
+            // `hatWghtAchse()` oben. Kurz: ohne sie laeuft dieser Fall
+            // gruen durch, wenn jemand `font-weight: 100 900` auf ein
+            // Einzelgewicht zusammenzieht — die Familie wandert dann nach
+            // `STATISCHE_FAMILIEN` und der statische Zweig unten ist
+            // exakt erfuellt, obwohl Chromium die `wght`-Achse abschaltet
+            // und alle neun Gewichte bitgleich rendern.
+            //
+            // Geprueft wird das PAAR je @font-face, nicht je Familie: so
+            // faellt auch ein einzelner neuer Block mit Einzelgewicht auf
+            // einer variablen Datei auf, waehrend die Familie daneben
+            // weiter einen Bereich fuehrt.
+            // ----------------------------------------------------------
+            const bauartDrift = [];
+            for (const face of FACES) {
+                for (const name of face.dateinamen) {
+                    const achse = WGHT_ACHSE_JE_DATEI.get(name);
+                    const nachDatei = hatWghtAchse(name);
+                    if (nachDatei === face.istBereich) continue;
+                    bauartDrift.push(
+                        nachDatei
+                            ? `${face.familie}: fonts.css erklaert font-weight: ` +
+                                  `${face.gewichtRoh} (Einzelgewicht), aber ${name} traegt ` +
+                                  `eine wght-Achse ${achse.min}..${achse.max}. Chromium ` +
+                                  `schaltet die Achse damit ab: alle Gewichte rendern ` +
+                                  `bitgleich, 400 und 700 sehen im Editor gleich aus, und ` +
+                                  `${MESSGEWICHTE.length - 1} Schnitte der Datei sind ` +
+                                  `weggeworfen. Der Bereich muss zurueck in fonts.css.`
+                            : `${face.familie}: fonts.css erklaert den Gewichtsbereich ` +
+                                  `${face.gewichtVon}..${face.gewichtBis}, aber ${name} ` +
+                                  `traegt keine wght-Achse mit Spanne ` +
+                                  `(${achse ? `${achse.min}..${achse.max}` : 'keine fvar-Achse'}). ` +
+                                  `Dann taeuscht der Browser Fettschrift nur nach.`
+                    );
+                }
+            }
+            expect(
+                bauartDrift,
+                'Die in fonts.css erklaerte Bauart und die Faehigkeit der DATEI laufen ' +
+                    'auseinander. Das SOLL dieses Falls (variabel -> neun eigene Breiten, ' +
+                    'statisch -> so viele wie deklarierte Einzelgewichte) stammt aus ' +
+                    'fonts.css; stimmt fonts.css nicht mit den Dateien ueberein, prueft ' +
+                    'dieser Fall ein SOLL, das seinen eigenen Fehler beschreibt.'
+            ).toEqual([]);
+            // Gegenprobe gegen Leerlauf: das Paar ist auf beiden Seiten
+            // wirklich belegt. Liefert der fvar-Leser nichts, waeren oben
+            // alle Faces "statisch nach Datei" — und das faellt hier auf,
+            // nicht erst beim naechsten Schriftwechsel.
+            const variabelNachDatei = DATEINAMEN.filter(hatWghtAchse);
+            expect(
+                variabelNachDatei.length,
+                'keine einzige Datei traegt laut fvar eine wght-Achse mit Spanne — dann ' +
+                    'ist die Gegenquelle dieses Falls tot und der Vergleich darueber ' +
+                    'trivial erfuellt.'
+            ).toBeGreaterThan(0);
+            expect(
+                DATEINAMEN.length - variabelNachDatei.length,
+                'jede Datei traegt laut fvar eine wght-Achse — dann fehlt die statische ' +
+                    'Haelfte des Vergleichs.'
             ).toBeGreaterThan(0);
 
             await ladeApp(page);

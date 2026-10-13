@@ -751,6 +751,106 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             }
         });
 
+        // ------------------------------------------------------------------
+        // DIE GEGENRICHTUNG UND DER WERT — was die Faelle darueber NICHT
+        // sehen, und was die E2E-Haelfte allein nicht tragen soll.
+        //
+        // Der Fall darueber prueft 'Bereich erklaert -> Achse deckt ihn', und
+        // `Genau 2 @font-face-Bloecke fuehren einen Gewichtsbereich` prueft
+        // die ANZAHL der Bereiche gegen eine namentliche Liste. Zwei Luecken
+        // bleiben, beide nachgestellt und nicht vermutet (Gegenpruefung,
+        // Befund 1):
+        //
+        //   VERSCHMAELERN. `font-weight: 100 900` -> `300 500` auf Roboto:
+        //       $ npx jest tests/unit/schriftdateien.test.js  -> 73 passed / 73
+        //       $ node tools/pruefe-schriftdateien.js --check -> exit 0
+        //       $ npx playwright test ...schriftdateien.spec.js
+        //                                                     -> 1 failed / 15
+        //     Diese Datei und das Werkzeug sehen NICHTS: der Bereich bleibt
+        //     ein Bereich, und die Achse 100..900 deckt 300..500 muehelos.
+        //     Im Browser klemmen aber sechs der neun Gewichte auf die
+        //     Bereichsgrenzen — gemessen Roboto
+        //     [1104.27 x3, 1123.28, 1135.09 x5], drei verschiedene Breiten
+        //     statt neun. Die ANZAHL der Bereiche ist also nicht genug, der
+        //     WERT muss festgenagelt werden.
+        //
+        //   ZUSAMMENZIEHEN. `100 900` -> `400`: faengt diese Datei heute
+        //     schon (der Bereich verschwindet aus der namentlichen Liste),
+        //     aber nur deshalb, weil die Liste ein Literal ist. Als
+        //     STRUKTURAUSSAGE — 'genau die Dateien mit Achse stehen unter
+        //     einem Bereich' — gilt sie unabhaengig von der Liste und bleibt
+        //     richtig, wenn Google die Bauart der naechsten Familie wechselt.
+        //
+        // ARBEITSTEILUNG, ausdruecklich festgehalten: dasselbe Paar prueft
+        // `tests/e2e/features/schriftdateien.spec.js` Teil 6 am laufenden
+        // Browser (dort bei `hatWghtAchse()` begruendet). Dass sich die zwei
+        // Haelften ergaenzen, stand bis hierher in keiner der beiden Dateien
+        // und war damit Zufall statt Zusicherung.
+        // ------------------------------------------------------------------
+        test('Genau die Dateien mit wght-Achse stehen unter einem Gewichtsbereich', () => {
+            const faces = werkzeug.leseSchriftFaces();
+            expect(faces).toHaveLength(SCHRIFTDATEIEN_SOLL);
+
+            /** Achse mit echter Spanne — `min === max` gibt kein Zwischengewicht her. */
+            const achse = name => {
+                const a = (NACH_NAME.get(name)?.achsen || []).find(x => x.tag === 'wght');
+                return a && a.max > a.min ? a : null;
+            };
+
+            const drift = [];
+            let mitAchse = 0;
+            let ohneAchse = 0;
+            for (const face of faces) {
+                for (const name of face.dateinamen) {
+                    expect(NACH_NAME.get(name)).toBeDefined();
+                    const a = achse(name);
+                    if (a) mitAchse++;
+                    else ohneAchse++;
+                    if (Boolean(a) === face.istBereich) continue;
+                    drift.push(
+                        a
+                            ? `${face.familie}/${name}: Achse wght ${a.min}..${a.max}, ` +
+                                  `fonts.css erklaert aber font-weight: ${face.gewichtRoh} ` +
+                                  `(Einzelgewicht). Chromium schaltet die Achse dann ab.`
+                            : `${face.familie}/${name}: fonts.css erklaert den Bereich ` +
+                                  `${face.gewichtVon}..${face.gewichtBis}, die Datei hat ` +
+                                  `keine wght-Achse mit Spanne.`
+                    );
+                }
+            }
+            // Gegenprobe gegen Leerlauf: beide Seiten des Paars sind belegt.
+            // Haengt der fvar-Leser durch, waere `mitAchse` 0 und der
+            // Vergleich oben fuer die statischen Faces trivial erfuellt.
+            expect(mitAchse).toBeGreaterThan(0);
+            expect(ohneAchse).toBeGreaterThan(0);
+            expect(drift).toEqual([]);
+        });
+
+        test('Ein erklaerter Gewichtsbereich schoepft die wght-Achse voll aus', () => {
+            const faces = werkzeug.leseSchriftFaces();
+            const bereiche = faces.filter(f => f.istBereich);
+            // Gegenprobe gegen Leerlauf: ohne einen einzigen Bereich prueft
+            // die Schleife unten nichts.
+            expect(bereiche.length).toBeGreaterThan(0);
+
+            const zuEng = [];
+            for (const face of bereiche) {
+                for (const name of face.dateinamen) {
+                    const a = (NACH_NAME.get(name)?.achsen || []).find(x => x.tag === 'wght');
+                    expect(a).toBeDefined();
+                    if (a.min === face.gewichtVon && a.max === face.gewichtBis) continue;
+                    zuEng.push(
+                        `${face.familie}/${name}: fonts.css erklaert ` +
+                            `${face.gewichtVon}..${face.gewichtBis}, die Achse kann ` +
+                            `${a.min}..${a.max}. Was ausserhalb der Erklaerung liegt, ` +
+                            `klemmt der Browser auf die Bereichsgrenze — die Datei ist ` +
+                            `bezahlt und die Schnitte sind nicht nutzbar.`
+                    );
+                }
+            }
+            expect(zuEng).toEqual([]);
+        });
+
         test('Das Werkzeug urteilt selbst gleich (--check sieht dasselbe)', () => {
             // Zwei Wege, dieselbe Aussage — wie bei der Fehlliste in Teil 0.
             // Der Fall oben rechnet die Paarung im Test nach; `pruefeAlle()`
