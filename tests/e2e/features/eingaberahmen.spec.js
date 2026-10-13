@@ -615,10 +615,38 @@ test.describe('W6-R-07 — jedes Vertragsfeld traegt den Eingaberahmen (Ratsche)
     // Themes ueberspringen, sobald das erste faellt — aus einer Ratsche, die
     // vier Zahlen melden soll, wuerde eine, die eine meldet.
 
+    /* DAS ZEITDACH DIESER FUENF FAELLE, gemessen statt geschaetzt.
+       `alleFelder()` faehrt 24 Ansichten, 3 Formulare und 6 Modale ab und
+       wartet dabei nach festen Fristen, weil die Orte sich ohne sie nicht
+       verlaesslich gesetzt haben. Die Fristen allein summieren sich auf
+       20,43 s:
+           starte()     700 + 220        =   920 ms
+           setzeTheme()                  =   250 ms
+           24 Ansichten x (200 + 260)    = 11040 ms
+            3 Formulare x (400+260+160)  =  2460 ms
+            6 Modale    x (380+260+180+140) = 5760 ms
+       Dazu eine Ladung des 3,7-MB-Buendels und 34 Durchgaenge von
+       SAMMLE_FELDER ueber je 150+ Felder. GEMESSEN, Datei allein, ein
+       Arbeiter frei:
+           Fall 1 dark 29,6 s · light 29,9 s · sepia 29,6 s ·
+           contrast 29,6 s · Fall 2 29,7 s        (12 passed in 30,7 s)
+       Gegen das Vorgabe-Dach von 30 s (playwright.config.js) bleiben 0,1
+       bis 0,4 s. Diese fuenf Faelle waren damit kein Tor, sondern ein Los:
+       im vollen Lauf kippten sie (gemessen am Zweigstand: 5 failed /
+       643 passed, alle fuenf mit "Test timeout of 30000ms exceeded"), bei
+       weniger Last liefen sie durch. Beides war immer derselbe Code.
+       Darum ein eigenes Dach, dreifach ueber dem gemessenen Bedarf — wie
+       es fokusring.spec.js (300000), mobil-navigation.spec.js (180000) und
+       hoehenbudget.spec.js (150000) fuer ihre langen Faelle schon fuehren.
+       KEINE Beschleunigung: die festen Fristen gehoeren zur Messung dieser
+       Ratsche und werden hier nicht angetastet. */
+    const ZEITDACH_LANGE_FAELLE = 90000;
+
     for (const theme of ['dark', 'light', 'sepia', 'contrast']) {
         test(`Fall 1 — ${theme}: jedes sichtbare Vertragsfeld liest var(--border-input)`, async ({
             page
         }) => {
+            test.setTimeout(ZEITDACH_LANGE_FAELLE);
             await starte(page);
             await setzeTheme(page, theme);
 
@@ -682,6 +710,7 @@ test.describe('W6-R-07 — jedes Vertragsfeld traegt den Eingaberahmen (Ratsche)
            Vorgabe im dunklen Schema und steht in keinem Theme-Block der App
            (nachgezaehlt: 0 Treffer in allen vier Bloecken). Dazu bleibt der
            Stilvergleich fuer `inset`, weil die App NIRGENDS `inset` setzt. */
+        test.setTimeout(ZEITDACH_LANGE_FAELLE);
         await starte(page);
         await setzeTheme(page, 'dark');
         const felder = (await alleFelder(page)).filter(istSichtbar);
