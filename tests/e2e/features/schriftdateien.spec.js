@@ -300,18 +300,14 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             }
         });
 
-        test(`window.EDITOR_FONTS fuehrt mindestens ${MINDEST_MENUEEINTRAEGE} Eintraege`, async ({
+        test('Das Schriftmenue der laufenden App ist vollstaendig und hat ueberall Rueckfall', async ({
             page
         }) => {
             await ladeApp(page);
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             expect(menue).toBeTruthy();
             expect(Object.keys(menue).length).toBeGreaterThanOrEqual(MINDEST_MENUEEINTRAEGE);
-        });
 
-        test('Jeder Menuestack endet auf eine generische Familie', async ({ page }) => {
-            await ladeApp(page);
-            const menue = await page.evaluate(() => window.EDITOR_FONTS);
             // Die einzige Aussage, die sich fuer die drei Systemfamilien
             // (arial/serif/mono) plattformunabhaengig treffen laesst: kein
             // Eintrag kann ohne Rueckfall enden. Ob Georgia oder Courier New
@@ -325,21 +321,13 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     `${schluessel} endet auf "${glieder[glieder.length - 1]}"`
                 ).toContain(glieder[glieder.length - 1]);
             }
-        });
 
-        test(
-            `Genau ${GEBUENDELTE_MENUEEINTRAEGE_SOLL} Menueeintraege nennen zuerst eine ` +
-                `gebuendelte Familie`,
-            async ({ page }) => {
-                await ladeApp(page);
-                const menue = await page.evaluate(() => window.EDITOR_FONTS);
-                const gebuendelt = Object.entries(menue)
-                    .filter(([, stack]) => CSS_FAMILIEN.includes(ersteFamilie(stack)))
-                    .map(([k]) => k)
-                    .sort();
-                expect(gebuendelt).toHaveLength(GEBUENDELTE_MENUEEINTRAEGE_SOLL);
-            }
-        );
+            const gebuendelt = Object.entries(menue)
+                .filter(([, stack]) => CSS_FAMILIEN.includes(ersteFamilie(stack)))
+                .map(([k]) => k)
+                .sort();
+            expect(gebuendelt).toHaveLength(GEBUENDELTE_MENUEEINTRAEGE_SOLL);
+        });
 
         test('Der Probetext enthaelt kein Zeichen, das eine der zehn Dateien traegt', async () => {
             // Gegen das Werkzeug aus Einheit 1 gemessen, nicht behauptet.
@@ -368,9 +356,11 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             ).toEqual([]);
         });
 
-        test('Nicht-Leerlauf: monospace und serif sind messbar verschieden', async ({ page }) => {
+        test('Nicht-Leerlauf: das Messwerkzeug unterscheidet, und alle Faces sind geladen', async ({
+            page
+        }) => {
             await ladeApp(page);
-            const { breiten } = await messeBreiten(page, {
+            const { breiten, faceStatus } = await messeBreiten(page, {
                 mono: { stack: 'monospace' },
                 serif: { stack: 'serif' },
                 leer: { stack: 'monospace' }
@@ -383,13 +373,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // Und zwei gleich gebaute Spannen messen gleich — sonst ist die
             // Gleichheit in Teil 1 kein Befund, sondern Rauschen.
             expect(breiten.leer).toBe(breiten.mono);
-        });
 
-        test('Alle Faces stehen beim Messen auf "loaded", keines auf "unloaded"', async ({
-            page
-        }) => {
-            await ladeApp(page);
-            const { faceStatus } = await messeBreiten(page, { mono: { stack: 'monospace' } });
             // Messfalle 2: ohne diese Zusicherung messen Teil 1-3 nur die
             // Tauschfrist von `font-display: swap`.
             expect(Object.keys(faceStatus).length).toBeGreaterThanOrEqual(MINDEST_FACES);
@@ -404,40 +388,71 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
     // Je gebuendeltes Face ein Fall, also auch je Gewicht.
     // ------------------------------------------------------------------
     test.describe('Teil 1 — jedes gebuendelte Face gegen monospace', () => {
-        for (const face of FACES) {
-            const menueSchluessel = face.familie;
-            test(`${face.datei} (${face.familie} ${face.gewicht}) traegt zum Rendern bei`, async ({
-                page
-            }) => {
-                await ladeApp(page);
-                const { breiten } = await messeBreiten(page, {
-                    mit: { stack: `'${face.familie}', monospace`, gewicht: face.gewicht },
-                    ohne: { stack: 'monospace', gewicht: face.gewicht },
-                    nichtda: {
-                        stack: `'${FAMILIE_OHNE_DATEI}', monospace`,
-                        gewicht: face.gewicht
-                    }
-                });
+        // ALLE ZEHN FACES IN EINEM FALL AUF EINER SEITE, nicht zehn Faelle mit
+        // zehn Seiten. Das ist kein Stilentscheid, sondern gemessen: in der
+        // ersten Fassung lud diese Datei 25-mal das 3,7-MB-Bundle, und der
+        // volle Lauf stellte fuenf FREMDE Faelle rot —
+        // `eingaberahmen.spec.js` W6-R-07 Fall 1 (vier Themes) und Fall 2.
+        // Diese sammeln ihre Felder ueber feste Wartefristen (400/380/180 ms)
+        // und verlangen mehr als 150 sichtbare Felder; unter der zusaetzlichen
+        // Last reichten die Fristen nicht. Einzeln laufen sie gruen (12
+        // passed), und der Kontrolllauf der vollen Suite OHNE diese Datei
+        // ebenfalls (634 passed / 39 skipped / 0 failed). Die Last war die
+        // Ursache, nicht ein Logikfehler — die Fremdfaelle sind also
+        // lastempfindlich, und diese Probe nimmt darauf Ruecksicht, statt sie
+        // umzuschreiben. Je Face bleibt der Befund einzeln benannt: die
+        // Zusicherung meldet eine Liste, keine Summe.
+        test('Alle gebuendelten Faces tragen zum Rendern bei', async ({ page }) => {
+            await ladeApp(page);
+            const stapel = {};
+            for (const face of FACES) {
+                const s = `${face.familie}/${face.gewicht}`;
+                stapel[`${s}__mit`] = {
+                    stack: `'${face.familie}', monospace`,
+                    gewicht: face.gewicht
+                };
+                stapel[`${s}__ohne`] = { stack: 'monospace', gewicht: face.gewicht };
+                stapel[`${s}__nichtda`] = {
+                    stack: `'${FAMILIE_OHNE_DATEI}', monospace`,
+                    gewicht: face.gewicht
+                };
+            }
+            const { breiten } = await messeBreiten(page, stapel);
+
+            const stummeFaces = [];
+            for (const face of FACES) {
+                const s = `${face.familie}/${face.gewicht}`;
+                const mit = breiten[`${s}__mit`];
+                const ohne = breiten[`${s}__ohne`];
+                const nichtda = breiten[`${s}__nichtda`];
+                expect(ohne, `${s}: Rueckfall messbar`).toBeGreaterThan(0);
                 // Der haerteste Vergleichspunkt: eine Familie, die es nicht
                 // gibt, ist vom reinen Rueckfall nicht zu unterscheiden.
-                expect(breiten.nichtda).toBe(breiten.ohne);
+                expect(nichtda, `${s}: nicht vorhandene Familie`).toBe(ohne);
+
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
-                    menueSchluessel
+                    face.familie
                 );
                 if (aufListe) {
-                    expect(breiten.mit).toBe(breiten.ohne);
-                    return;
+                    expect(
+                        mit,
+                        `${face.datei} steht auf SCHRIFT_FAMILIEN_AUSNAHMEN, rendert aber ` +
+                            `${mit}px statt ${ohne}px — die Datei traegt doch etwas bei.`
+                    ).toBe(ohne);
+                    continue;
                 }
-                expect(
-                    breiten.mit,
-                    `'${face.familie}' ${face.gewicht} rendert GENAU so breit wie der ` +
-                        `reine monospace-Rueckfall (${breiten.ohne}px) und genau so breit ` +
-                        `wie eine Familie, die es nicht gibt. Die Datei ${face.datei} ` +
-                        `traegt keinen der Buchstaben aus "${PROBETEXT}".`
-                ).not.toBe(breiten.ohne);
-            });
-        }
+                if (mit === ohne) {
+                    stummeFaces.push(`${face.datei} (${s}) ${mit}px`);
+                }
+            }
+            expect(
+                stummeFaces,
+                `Diese Faces rendern "${PROBETEXT}" GENAU so breit wie der reine ` +
+                    `monospace-Rueckfall und genau so breit wie eine Familie, die es ` +
+                    `ueberhaupt nicht gibt. Sie tragen keinen der Buchstaben.`
+            ).toEqual([]);
+        });
     });
 
     // ------------------------------------------------------------------
@@ -515,14 +530,30 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
     test.describe('Teil 3 — der Menueweg im Wiki-Editor', () => {
         const EDITOR_ID = 'wiki-content';
 
-        async function waehleSchriftImEditor(page, menueSchluessel) {
+        // EIN FALL, EINE SEITE, EIN FORMULAR — aus demselben Lastgrund wie in
+        // Teil 1 (dort begruendet). Die vier Familien laufen nacheinander im
+        // SELBEN Editor, und das ist sogar der treuere Weg: ein zweiter Griff
+        // ins Schriftmenue trifft in `applyFontFamilyToSelection()` den Zweig
+        // `existingFont.setAttribute('face', ...)`, also genau das, was
+        // passiert, wenn ein DM im Editor die Schrift noch einmal wechselt.
+        async function tippeProbetext(page) {
             await page.evaluate(() => window.switchView('wiki'));
             await page.waitForSelector('#view-wiki', { state: 'visible' });
             await page.click('[data-action="call"][data-value="showWikiForm"]');
-            await page.fill('#wiki-title', `SCHR ${menueSchluessel}`);
+            await page.fill('#wiki-title', 'SCHR Messtext');
             const editor = page.locator(`#${EDITOR_ID}`);
             await editor.click();
             await editor.pressSequentially(PROBETEXT);
+        }
+
+        async function waehleSchrift(page, menueSchluessel) {
+            // Vor jedem Griff die Auswahl neu setzen: nach `selectOption`
+            // liegt der Fokus auf dem Select, und `setEditorFont()` stellt nur
+            // einen GESPEICHERTEN Bereich wieder her. Fokus per Tastatur, wie
+            // im Auftrag verlangt — der Klick bringt den Einfuegepunkt in den
+            // Editor, `Strg+A` markiert dessen Inhalt.
+            const editor = page.locator(`#${EDITOR_ID}`);
+            await editor.click();
             await page.keyboard.press('Control+a');
             await page.selectOption(
                 `[data-action="set-editor-font"][data-editor="${EDITOR_ID}"]`,
@@ -531,19 +562,22 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             await page.waitForSelector(`#${EDITOR_ID} font[face]`);
         }
 
-        for (const familie of CSS_FAMILIEN) {
-            test(`"${familie}" im Schriftmenue rendert nicht wie sein Rueckfall`, async ({
-                page
-            }) => {
-                await ladeApp(page);
-                const menue = await page.evaluate(() => window.EDITOR_FONTS);
+        test('Jede gebuendelte Familie im Schriftmenue rendert wie ihr Rueckfall', async ({
+            page
+        }) => {
+            await ladeApp(page);
+            const menue = await page.evaluate(() => window.EDITOR_FONTS);
+            await tippeProbetext(page);
+
+            const befunde = [];
+            for (const familie of CSS_FAMILIEN) {
                 const eintrag = Object.entries(menue).find(
                     ([, stack]) => ersteFamilie(stack) === familie
                 );
                 expect(eintrag, `Keine EDITOR_FONTS-Familie nennt "${familie}"`).toBeTruthy();
                 const [schluessel, stack] = eintrag;
 
-                await waehleSchriftImEditor(page, schluessel);
+                await waehleSchrift(page, schluessel);
 
                 const messung = await page.evaluate(
                     ({ editorId, rueckfall }) => {
@@ -579,30 +613,43 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 );
 
                 // Die App hat die Schrift wirklich gesetzt — sonst messen wir
-                // am falschen Element.
-                expect(messung.face).toContain(familie);
+                // am falschen Element. Entscheidend beim Lauf im selben
+                // Editor: `face` muss die AKTUELLE Familie nennen, nicht noch
+                // die vorige.
+                expect(messung.face, `face nach der Wahl von "${schluessel}"`).toContain(familie);
                 expect(messung.text).toBe(PROBETEXT);
                 // Und der Nachbau ist dem lebenden Element treu — sonst sagt
                 // der Vergleich unten nichts ueber das, was im Editor steht.
-                expect(messung.nachgebaut).toBeCloseTo(messung.lebend, 1);
+                expect(
+                    messung.nachgebaut,
+                    `${familie}: Nachbau gegen lebendes Element`
+                ).toBeCloseTo(messung.lebend, 1);
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
                     familie
                 );
                 if (aufListe) {
-                    expect(messung.nachgebaut).toBe(messung.rueckfall);
-                    return;
+                    expect(
+                        messung.nachgebaut,
+                        `${familie} steht auf SCHRIFT_FAMILIEN_AUSNAHMEN, rendert im Editor ` +
+                            `aber ${messung.nachgebaut}px statt ${messung.rueckfall}px.`
+                    ).toBe(messung.rueckfall);
+                    continue;
                 }
-                expect(
-                    messung.nachgebaut,
-                    `Nach der Wahl von "${schluessel}" im Schriftmenue traegt der Text ` +
-                        `face="${messung.face}" und rendert GENAU so breit ` +
-                        `(${messung.rueckfall}px) wie ohne die erste Familie. Der Nutzer ` +
-                        `bekommt den Rueckfall.`
-                ).not.toBe(messung.rueckfall);
-            });
-        }
+                if (messung.nachgebaut === messung.rueckfall) {
+                    befunde.push(
+                        `"${schluessel}" -> face="${messung.face}" ` +
+                            `${messung.nachgebaut}px == Rueckfall "${rueckfallStack(stack)}"`
+                    );
+                }
+            }
+            expect(
+                befunde,
+                'Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text GENAU so ' +
+                    'breit wie ohne die erste Familie. Der Nutzer bekommt den Rueckfall.'
+            ).toEqual([]);
+        });
     });
 
     // ------------------------------------------------------------------
@@ -627,20 +674,15 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
         test(`Erzwungen laden alle ${MINDEST_FACES} mit Status 200, ${BYTE_SUMME_SOLL} Byte`, async ({
             page
         }) => {
-            const antworten = [];
-            page.on('response', async r => {
-                if (!/\.woff2(\?|$)/i.test(r.url())) return;
-                let laenge = null;
-                try {
-                    laenge = (await r.body()).length;
-                } catch (e) {
-                    laenge = null;
-                }
-                antworten.push({
-                    name: r.url().split('/').pop(),
-                    status: r.status(),
-                    laenge
-                });
+            // Der Horcher sammelt SYNCHRON. Ein `async`-Horcher, der erst
+            // `await r.body()` abwartet und danach schiebt, waere ein Rennen:
+            // Playwright wartet auf das Versprechen eines Horchers NICHT, der
+            // Eintrag koennte also nach den Zusicherungen unten landen und die
+            // Namensliste waere mal vollstaendig, mal nicht. Die Koerper
+            // werden darum erst im Testkoerper gelesen, wo `await` zaehlt.
+            const rohAntworten = [];
+            page.on('response', r => {
+                if (/\.woff2(\?|$)/i.test(r.url())) rohAntworten.push(r);
             });
             const fehlgeschlagen = [];
             page.on('requestfailed', r => {
@@ -654,7 +696,56 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
 
             await ladeApp(page);
             const { faceStatus } = await messeBreiten(page, { mono: { stack: 'monospace' } });
-            await page.waitForTimeout(1500);
+            // Auf die Namen warten statt auf eine feste Frist: unter Last ist
+            // jede feste Frist entweder zu kurz (Fehlalarm) oder verschwendet.
+            await expect
+                .poll(() => rohAntworten.length, { timeout: 15000 })
+                .toBeGreaterThanOrEqual(FACES.length);
+
+            // Im selben Lauf mitgenommen (eine Seite statt zwei, Lastgrund
+            // siehe Teil 1): `document.fonts.check()` kann die Frage dieser
+            // Probe nicht beantworten.
+            const checkAntworten = await page.evaluate(
+                ({ text, nichtda }) => {
+                    const familien = new Set();
+                    document.fonts.forEach(ff => familien.add(ff.family));
+                    const antworten = {};
+                    for (const f of [...familien, nichtda]) {
+                        antworten[f] = document.fonts.check(`400 16px "${f}"`, text);
+                    }
+                    return antworten;
+                },
+                { text: PROBETEXT, nichtda: FAMILIE_OHNE_DATEI }
+            );
+            // WARUM DAS EINE ZUSICHERUNG IST UND KEIN KOMMENTAR.
+            // `check()` liefert nach Spezifikation `true`, sobald der Text mit
+            // der Liste INKLUSIVE Rueckfaellen darstellbar ist. Es sagt also
+            // nichts darueber, ob die GENANNTE Familie etwas beitraegt — hier
+            // nachgemessen: es liefert `true` auch fuer eine Familie, zu der
+            // es keine Datei und keine @font-face-Regel gibt. Darum laeuft der
+            // Ladebeleg ueber die Netzwerkantworten und nicht ueber `check()`.
+            // Solange diese Zusicherung haelt, ist die Entscheidung
+            // begruendet; kippt sie, gehoert sie neu bewertet.
+            expect(
+                checkAntworten[FAMILIE_OHNE_DATEI],
+                'document.fonts.check() meldet eine Familie ohne Datei als nicht ' +
+                    'darstellbar — dann ist check() hier doch brauchbar und der ' +
+                    'Ladebeleg gehoert neu bewertet.'
+            ).toBe(true);
+            for (const familie of CSS_FAMILIEN) {
+                expect(checkAntworten[familie], `check() fuer ${familie}`).toBe(true);
+            }
+
+            const antworten = [];
+            for (const r of rohAntworten) {
+                let laenge = null;
+                try {
+                    laenge = (await r.body()).length;
+                } catch (e) {
+                    laenge = null;
+                }
+                antworten.push({ name: r.url().split('/').pop(), status: r.status(), laenge });
+            }
 
             // Kein 404, kein Ladefehler — das ist die Pointe.
             expect(fehlgeschlagen).toEqual([]);
@@ -668,49 +759,6 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             }
             const summe = antworten.reduce((s, a) => s + (a.laenge || 0), 0);
             expect(summe).toBe(BYTE_SUMME_SOLL);
-        });
-
-        test('document.fonts.check() beantwortet die Frage NICHT', async ({ page }) => {
-            await ladeApp(page);
-            const ergebnis = await page.evaluate(
-                async ({ text, nichtda }) => {
-                    const paare = [];
-                    document.fonts.forEach(ff => paare.push([ff.family, ff.weight]));
-                    for (const [f, w] of paare) {
-                        try {
-                            await document.fonts.load(`${w} 16px "${f}"`, text);
-                        } catch (e) {
-                            /* egal */
-                        }
-                    }
-                    await document.fonts.ready;
-                    const familien = [...new Set(paare.map(p => p[0]))];
-                    const antworten = {};
-                    for (const f of [...familien, nichtda]) {
-                        antworten[f] = document.fonts.check(`400 16px "${f}"`, text);
-                    }
-                    return antworten;
-                },
-                { text: PROBETEXT, nichtda: FAMILIE_OHNE_DATEI }
-            );
-            // WARUM DIESE PROBE EINE ZUSICHERUNG IST UND KEIN KOMMENTAR.
-            // `check()` liefert nach Spezifikation `true`, sobald der Text mit
-            // der Liste INKLUSIVE Rueckfaellen darstellbar ist. Es sagt also
-            // nichts darueber, ob die GENANNTE Familie etwas beitraegt — hier
-            // nachgemessen: es liefert `true` auch fuer eine Familie, zu der
-            // es keine Datei und keine @font-face-Regel gibt. Darum laeuft der
-            // Ladebeleg oben ueber die Netzwerkantworten und nicht ueber
-            // `check()`. Solange diese Zusicherung haelt, ist die
-            // Entscheidung begruendet; kippt sie, gehoert sie neu bewertet.
-            expect(
-                ergebnis[FAMILIE_OHNE_DATEI],
-                'document.fonts.check() meldet eine Familie ohne Datei als nicht ' +
-                    'darstellbar — dann ist check() hier doch brauchbar und dieser ' +
-                    'Teil gehoert neu bewertet.'
-            ).toBe(true);
-            for (const familie of CSS_FAMILIEN) {
-                expect(ergebnis[familie]).toBe(true);
-            }
         });
     });
 
@@ -737,17 +785,19 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             }
         });
 
-        test('Jeder Eintrag nennt eine Familie, die EDITOR_FONTS anbietet', async ({ page }) => {
+        test('Verwesungsprobe: keine Ausnahme ueberlebt ihre Reparatur', async ({ page }) => {
             await ladeApp(page);
+
+            // Im selben Lauf mitgenommen (Lastgrund siehe Teil 1): jeder
+            // Eintrag muss eine Familie nennen, die das Menue wirklich
+            // anbietet. Ein Tippfehler im Schluessel koennte die
+            // Verwesungsprobe sonst leerlaufen lassen.
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             const menueFamilien = Object.values(menue).map(ersteFamilie);
             for (const name of eintraege) {
                 expect(menueFamilien, `${name} steht in keinem Menueeintrag`).toContain(name);
             }
-        });
 
-        test('Verwesungsprobe: keine Ausnahme ueberlebt ihre Reparatur', async ({ page }) => {
-            await ladeApp(page);
             if (eintraege.length === 0) {
                 // Leere Liste: nichts zu verwesen. Die Laengenprobe oben
                 // haelt den Zustand fest.
