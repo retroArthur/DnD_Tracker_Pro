@@ -46,6 +46,27 @@
  *   (e) Beschriftung fehlt                  36 / 36                 —
  *   (f) blanker showModal(): Fokus auf     <body>                  —
  *
+ * ZWEI FAELLE SIND IN RUNDE 1 NACHGETRAGEN, weil die Liste oben eine Luecke
+ * hatte, die keine Zusicherung dieser Datei treffen konnte (eigene Messung am
+ * gebauten Buendel, Ausgangslage HEAD b5f8526):
+ *
+ *   (j) Rueckweg nach einer HANDLUNG im Dialog     Fokus auf <body>, 47 Tabs
+ *   (k) Tabulator bei offener Befehlspalette       4 / 4 im verdeckten Dialog
+ *
+ * (j) FUELLT EINE LUECKE VON (b). (b) setzt seinen Oeffner ueber `VORLAUF`
+ * blinde Tabulatorspruenge — das trifft ein Kopfzeilen-Element, das niemals
+ * neu gezeichnet wird — und oeffnet den Dialog danach per App-Funktion. Kein
+ * Fall von (b) kann darum einen Dialog treffen, dessen eigene Aktion seinen
+ * Oeffner ZERSTOERT. Genau das tut der Lebenspunkte-Rechner: `applyHpChange()`
+ * ruft `renderInit()`, und der Knopf, von dem aus geoeffnet wurde, ist danach
+ * ein anderer Knoten. (b) blieb dabei gruen, der Rueckweg fiel trotzdem aus.
+ *
+ * (k) DECKT DIE AUSNAHME AB, DIE DAS MODUL BISHER NUR BEHAUPTETE. Die
+ * Befehlspalette steht ausdruecklich nicht im Schalen-Selektor, weil sie ihre
+ * Tastatur selbst fuehrt — aber die Falle haengt am DOKUMENT in der
+ * CAPTURE-Phase und laeuft VOR ihrem Lauscher. Aus dem Selektor genommen
+ * heisst nicht aus der Wirkung genommen.
+ *
  * Dass (d) bei 20 Eintraegen NIEDRIGER liegt als bei 6, ist kein Widerspruch
  * zur Skalierung oben: ohne Seitenaufbau je Modal haengt die Zahl davon ab,
  * wie viele Hintergrundhalte der Tabulator in 45 Spruengen ueberhaupt
@@ -905,5 +926,348 @@ test.describe('Modalfokus — ein Anschlag, eine Wirkung', () => {
             'Acht Tabulatordruecke, acht Fokuswechsel — die Falle greift nicht in den ' +
                 'normalen Lauf der App ein.'
         ).toBe(8);
+    });
+});
+
+// ============================================================================
+// (j) DER RUECKWEG UEBERLEBT EINE HANDLUNG IM DIALOG
+// ============================================================================
+test.describe('Modalfokus — der Rueckweg, wenn der Dialog seinen Oeffner neu zeichnet', () => {
+    for (const n of GROESSEN) {
+        test(`(j) nach einer Handlung IM Dialog kehrt der Fokus zum Oeffner — ${n} Eintraege je Typ`, async ({
+            page
+        }) => {
+            // WARUM DIESER FALL NEBEN (b) STEHT, obwohl (b) denselben Satz
+            // zusichert. (b) setzt seinen Oeffner ueber `VORLAUF` blinde
+            // Tabulatorspruenge — das trifft ein Kopfzeilen-Element, das
+            // NIEMALS neu gezeichnet wird, und oeffnet den Dialog danach per
+            // App-Funktion. Kein Fall von (b) kann darum einen Dialog treffen,
+            // dessen eigene Aktion seinen Oeffner zerstoert.
+            //
+            // Genau das tut der Lebenspunkte-Rechner. `applyHpChange()`
+            // (`systems/hp-calculator.js:69-71`) ruft `renderInit()`, die
+            // Kampfliste wird neu gezeichnet, und der Knopf, von dem aus der
+            // Dialog geoeffnet wurde, ist ein ANDERER Knoten als vorher.
+            // Gemessen am gebauten Buendel, 20 Eintraege je Typ, nur echte
+            // Tastendruecke (eigener Lauf, Ausgangslage HEAD b5f8526):
+            //
+            //   42 echte Tabs bis "➗" am Kaempfer 1, Enter -> Dialog auf,
+            //   Fokus in #hp-calc-value, "7" tippen, Tab -> 💔 Schaden,
+            //   Enter -> currentHp 30 -> 23 (GENAU einmal). Danach:
+            //   document.contains(Oeffner) = false, ein GLEICHWERTIGER Knopf
+            //   ist wieder da. Escape -> document.activeElement === BODY,
+            //   und es kostet 47 weitere echte Tabs, bis wieder irgendein
+            //   Rechner-Knopf erreicht ist.
+            //
+            // DER KONTROLLFALL IM ERSTEN TEIL DIESES TESTS ISOLIERT DEN
+            // MECHANISMUS: derselbe Dialog, SOFORT Escape, ohne etwas zu tun —
+            // da kehrt der Fokus zurueck. Der Unterschied liegt also nicht am
+            // Dialog, sondern an seiner Wirkung.
+            test.setTimeout(180000);
+            await appLaden(page, n);
+            await page.evaluate(() => window.switchView('initiative'));
+            await page.waitForTimeout(600);
+
+            // --- Echte Tabulatorspruenge bis auf den Oeffner ---------------
+            const ZIEL = '[data-action="show-hp-calculator"][data-id="1"]';
+            let tabs = 0;
+            let getroffen = false;
+            while (tabs < 160 && !getroffen) {
+                await page.keyboard.press('Tab');
+                tabs++;
+                getroffen = await page.evaluate(
+                    sel => !!(document.activeElement && document.activeElement.matches(sel)),
+                    ZIEL
+                );
+            }
+            expect(
+                getroffen,
+                'Vorbedingung: der Rechner-Knopf am Kaempfer 1 muss per Tabulator erreichbar ' +
+                    `sein (gemessen bei ${tabs} Spruengen, Grenze 160).`
+            ).toBe(true);
+            await page.evaluate(() => {
+                window.__oeffner = document.activeElement;
+            });
+
+            // --- Kontrollfall: oeffnen, tabulieren, SOFORT Escape ----------
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(450);
+            const kontrollLage = await page.evaluate(() => {
+                const m = document.getElementById('hp-calc-modal');
+                return {
+                    offen: !!(m && m.classList.contains('show')),
+                    innen: !!(m && m.contains(document.activeElement)),
+                    fokus: document.activeElement.id || document.activeElement.tagName
+                };
+            });
+            expect(
+                kontrollLage.offen,
+                'Vorbedingung: Enter auf dem Knopf muss den Lebenspunkte-Rechner oeffnen.'
+            ).toBe(true);
+            expect(
+                kontrollLage.innen,
+                `Vorbedingung: der Fokus muss im Dialog liegen (gemessen: ${kontrollLage.fokus}).`
+            ).toBe(true);
+            for (let i = 0; i < INNEN_VOR_ESC; i++) await page.keyboard.press('Tab');
+            const kontrolleVorEsc = await page.evaluate(
+                () => document.activeElement === window.__oeffner
+            );
+            expect(
+                kontrolleVorEsc,
+                'KONTROLLE DER MESSUNG: der Fokus muss den Oeffner verlassen haben, sonst ' +
+                    'sagt die Zusicherung unten nichts.'
+            ).toBe(false);
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(350);
+            const kontrolle = await page.evaluate(() => ({
+                aufOeffner: document.activeElement === window.__oeffner,
+                tag: document.activeElement.tagName
+            }));
+            expect(
+                kontrolle.aufOeffner,
+                'KONTROLLFALL: wird im Dialog NICHTS getan, kehrt der Fokus auf den Oeffner ' +
+                    `zurueck (gemessen: ${kontrolle.tag}). Scheitert schon das, ist der ` +
+                    'Rueckweg insgesamt kaputt und nicht erst der Fall mit Wirkung.'
+            ).toBe(true);
+
+            // --- Derselbe Dialog, diesmal BENUTZT --------------------------
+            const hpVor = await page.evaluate(
+                () => window.D.initiative.combatants.find(c => c.id === 1).currentHp
+            );
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(450);
+            await page.keyboard.type('7');
+            await page.keyboard.press('Tab');
+            const aufSchaden = await page.evaluate(() =>
+                document.activeElement.getAttribute('data-action')
+            );
+            expect(
+                aufSchaden,
+                'Vorbedingung: ein Tabulatorsprung hinter dem Eingabefeld muss auf dem ' +
+                    'Schadensknopf landen.'
+            ).toBe('apply-hp-change');
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(600);
+
+            const wirkung = await page.evaluate(() => ({
+                hp: window.D.initiative.combatants.find(c => c.id === 1).currentHp,
+                oeffnerImDokument: document.contains(window.__oeffner),
+                ersatzVorhanden: !!document.querySelector(
+                    '[data-action="show-hp-calculator"][data-id="1"]'
+                )
+            }));
+            expect(
+                wirkung.hp,
+                `Vorbedingung: der Dialog muss GENAU EINMAL gewirkt haben — ${hpVor} minus 7. ` +
+                    `Gemessen: ${wirkung.hp}.`
+            ).toBe(hpVor - 7);
+            expect(
+                wirkung.ersatzVorhanden,
+                'Vorbedingung: ein gleichwertiger Oeffner muss nach dem Neuzeichnen wieder ' +
+                    'im Dokument stehen — sonst gaebe es nichts, wohin der Fokus kehren kann.'
+            ).toBe(true);
+
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(400);
+            const nach = await page.evaluate(() => {
+                const el = document.activeElement;
+                const m = document.getElementById('hp-calc-modal');
+                return {
+                    dialogOffen: !!(m && m.classList.contains('show')),
+                    istBody: el === document.body || el === document.documentElement,
+                    aufGleichwertigem: !!(
+                        el.matches && el.matches('[data-action="show-hp-calculator"][data-id="1"]')
+                    ),
+                    fokus:
+                        el.tagName +
+                        (el.id ? '#' + el.id : '') +
+                        (el.getAttribute && el.getAttribute('data-action')
+                            ? '[' + el.getAttribute('data-action') + ']'
+                            : '')
+                };
+            });
+            expect(nach.dialogOffen, 'Escape schliesst den Dialog.').toBe(false);
+            expect(
+                nach.istBody,
+                'Der Fokus darf nach dem Schliessen NICHT auf <body> liegen. Gemessen heute: ' +
+                    `${nach.fokus} — und von dort sind es 47 weitere echte Tabulatorspruenge, ` +
+                    'bis wieder irgendein Rechner-Knopf erreicht ist. Der Oeffner war ' +
+                    `${wirkung.oeffnerImDokument ? 'noch' : 'nicht mehr'} im Dokument.`
+            ).toBe(false);
+            expect(
+                nach.aufGleichwertigem,
+                'Der Fokus gehoert auf die Schaltflaeche zurueck, die den Dialog geoeffnet ' +
+                    'hat — und wenn deren Knoten zwischenzeitlich neu gezeichnet wurde, auf ' +
+                    'die GLEICHWERTIGE an derselben Stelle (data-action + data-id + ' +
+                    `data-type). Gemessen: ${nach.fokus}.`
+            ).toBe(true);
+        });
+    }
+});
+
+// ============================================================================
+// (k) EINE HOEHERE SCHICHT BEHAELT DEN TABULATOR
+// ============================================================================
+test.describe('Modalfokus — die Befehlspalette ueber einem offenen Dialog', () => {
+    test('(k) die Falle entzieht der Befehlspalette den Tabulator NICHT', async ({ page }) => {
+        // WARUM DAS EIN EIGENER FALL IST. Das Modul nimmt die Befehlspalette
+        // ausdruecklich NICHT in den Schalen-Selektor, mit der Begruendung,
+        // sie fuehre ihre Tastatur selbst. Sie aus dem SELEKTOR zu nehmen
+        // nimmt sie aber nicht aus der WIRKUNG der Falle: die haengt als
+        // keydown am DOKUMENT in der CAPTURE-Phase und laeuft VOR dem eigenen
+        // Lauscher der Palette (`command-palette.js:41`, ein keydown AM
+        // Eingabefeld).
+        //
+        // Gemessen am gebauten Buendel, gefuellte Kampagne, nur echte
+        // Tastendruecke (eigener Lauf, Ausgangslage HEAD b5f8526):
+        //
+        //   Dialog auf, Strg+Shift+K -> Palette auf, Fokus in .cp-input,
+        //   Tippen kommt an ("zug"). Dann 4 echte Tabulatordruecke:
+        //   4 von 4 landen IM DIALOG DARUNTER (✕, Dunkel, Hell, Pergament),
+        //   elementFromPoint meldet alle 4 als VERDECKT, und Enter darauf
+        //   aendert data-theme dark -> sepia. Eine Einstellungsaenderung an
+        //   einem Bedienelement, das der Nutzer nicht sieht.
+        //
+        //   A/B-Gegenprobe (`window.ModalFocus._tab` zur Laufzeit
+        //   stillgelegt): dieselben 4 Tabs bleiben zuerst IN der Palette und
+        //   laufen ihre eigene Trefferliste ab. Die Falle ist die Ursache,
+        //   nicht die Palette.
+        //
+        // ABGEGRENZT UND NICHT HIER: die Kuerzel-Blende (`?`,
+        // `.shortcuts-overlay.show`, z-index 2000) verhaelt sich mit UND ohne
+        // Falle identisch — 4 von 4 Spruengen im verdeckten Dialog in beiden
+        // Armen, Enter aendert beide Male das Thema. Sie hat keine eigenen
+        // Haltepunkte, also gibt es dort nichts zu entziehen; der Befund ist
+        // vorbestehend und nicht von der Falle verursacht. Ebenso die
+        // Schnell-Referenz (`/`): ihr Panel liegt mit z-index 600 UNTER der
+        // Dialogflaeche (1000), und ohne Falle sind ihre Reiter VERDECKT
+        // erreichbar — dort verbessert die Falle die Lage. Darum steht hier
+        // genau eine Blende und nicht drei.
+        await appLaden(page, 6);
+        for (let i = 0; i < VORLAUF; i++) await page.keyboard.press('Tab');
+        await page.evaluate(() => window.showModal('theme-modal'));
+        await page.waitForTimeout(400);
+
+        await page.keyboard.press('Control+Shift+KeyK');
+        await page.waitForTimeout(600);
+        const lage = await page.evaluate(() => {
+            const p = document.querySelector('.cp-overlay');
+            return {
+                paletteOffen: !!(p && p.classList.contains('cp-visible')),
+                fokusInPalette: !!(p && p.contains(document.activeElement)),
+                dialogOffen: document.getElementById('theme-modal').classList.contains('show'),
+                falleSiehtSchale: window.ModalFocus.statistik().offen
+            };
+        });
+        expect(lage.paletteOffen, 'Vorbedingung: Strg+Shift+K oeffnet die Palette.').toBe(true);
+        expect(
+            lage.dialogOffen,
+            'Vorbedingung: der Dialog darunter muss offen bleiben — sonst prueft der Fall ' +
+                'nichts.'
+        ).toBe(true);
+        expect(
+            lage.falleSiehtSchale,
+            'Vorbedingung: die Falle muss die Schale sehen, sonst waere der Fall leer.'
+        ).toBe('theme-modal');
+        expect(lage.fokusInPalette, 'Vorbedingung: der Fokus liegt im Eingabefeld.').toBe(true);
+
+        await page.keyboard.type('zug');
+        await page.waitForTimeout(200);
+        const getippt = await page.evaluate(() => {
+            const i = document.querySelector('.cp-overlay .cp-input');
+            return i ? i.value : null;
+        });
+        expect(
+            getippt,
+            'Vorbedingung: das Tippen kommt in der Palette an — sie fuehrt ihre Tastatur ' +
+                'tatsaechlich selbst.'
+        ).toBe('zug');
+
+        const spur = [];
+        for (let i = 0; i < 4; i++) {
+            await page.keyboard.press('Tab');
+            await page.waitForTimeout(80);
+            spur.push(
+                await page.evaluate(() => {
+                    const p = document.querySelector('.cp-overlay');
+                    const m = document.getElementById('theme-modal');
+                    const el = document.activeElement;
+                    const r = el.getBoundingClientRect();
+                    let verdeckt = false;
+                    if (r.width > 0 && r.height > 0) {
+                        const cx = Math.min(
+                            Math.max(r.left + r.width / 2, 1),
+                            window.innerWidth - 1
+                        );
+                        const cy = Math.min(
+                            Math.max(r.top + r.height / 2, 1),
+                            window.innerHeight - 1
+                        );
+                        const oben = document.elementFromPoint(cx, cy);
+                        verdeckt = !(
+                            oben === el ||
+                            el.contains(oben) ||
+                            (oben && oben.contains(el))
+                        );
+                    }
+                    return {
+                        inPalette: !!(p && p.contains(el)),
+                        imDialog: !!(m && m.contains(el)),
+                        verdeckt,
+                        was:
+                            el.tagName +
+                            (el.className ? '.' + String(el.className).split(' ')[0] : '') +
+                            ' "' +
+                            (el.textContent || '').trim().slice(0, 14) +
+                            '"'
+                    };
+                })
+            );
+        }
+        const imDialog = spur.filter(s => s.imDialog);
+        expect(
+            spur[0].inPalette,
+            'Der ERSTE Tabulatordruck gehoert der Palette, nicht dem Dialog darunter. ' +
+                `Gemessen: ${spur[0].was} (imDialog=${spur[0].imDialog}, ` +
+                `verdeckt=${spur[0].verdeckt}).`
+        ).toBe(true);
+        expect(
+            imDialog.length,
+            'Kein Tabulatordruck darf den Fokus in den Dialog UNTER der Palette ziehen. ' +
+                `Gemessen: ${imDialog.length} von 4, davon ` +
+                `${imDialog.filter(s => s.verdeckt).length} verdeckt:\n  ` +
+                spur.map((s, i) => `${i + 1}. ${s.was} verdeckt=${s.verdeckt}`).join('\n  ')
+        ).toBe(0);
+
+        // Und der Rueckzug gilt NUR fuer die Dauer der Blende. Palette zu
+        // (dasselbe Kuerzel schaltet um), Falle wieder zustaendig.
+        await page.keyboard.press('Control+Shift+KeyK');
+        await page.waitForTimeout(400);
+        const zu = await page.evaluate(() => {
+            const p = document.querySelector('.cp-overlay');
+            return {
+                paletteOffen: !!(p && p.classList.contains('cp-visible')),
+                dialogOffen: document.getElementById('theme-modal').classList.contains('show')
+            };
+        });
+        expect(zu.paletteOffen, 'Vorbedingung: dasselbe Kuerzel schliesst die Palette.').toBe(
+            false
+        );
+        expect(zu.dialogOffen, 'Vorbedingung: der Dialog ist noch offen.').toBe(true);
+        const nachher = [];
+        for (let i = 0; i < 3; i++) {
+            await page.keyboard.press('Tab');
+            await page.waitForTimeout(60);
+            nachher.push(
+                await page.evaluate(() =>
+                    document.getElementById('theme-modal').contains(document.activeElement)
+                )
+            );
+        }
+        expect(
+            nachher,
+            'Sobald die Blende weg ist, haelt die Falle wieder — der Rueckzug gilt NUR, ' +
+                'solange eine hoehere Schicht offen ist.'
+        ).toEqual([true, true, true]);
     });
 });
