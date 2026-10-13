@@ -269,13 +269,23 @@ def kopiere_schriftdateien(dist_dir):
     Datei fuer Datei statt copytree, damit NICHT der CR-09-Fall entsteht
     (dist/assets/fonts/fonts/*, wenn das Ziel schon existiert).
 
+    HART, NICHT WEICH (B-06). Bis hierher meldete jeder Fehlschlag eine
+    Warnung und gab 0 zurueck — der Build schrieb dann ein Buendel mit zehn
+    unaufloesbaren url()-Pfaden und endete mit Exit 0 (nachgemessen). Vorher
+    liess 'cp -r assets/fonts dist/assets/' in ci.yml den Schritt hart
+    scheitern; der Umzug an EINEN Ort war richtig, das Weichmachen nicht. Auf
+    dem Deploy-Pfad stellte nichts mehr rot: die zehn SW-Precache-Pfade in
+    sw.js werden zu 404 und cache.addAll() scheitert beim Nutzer.
+
     @param dist_dir Zielverzeichnis des Builds (dist/).
     @returns Anzahl kopierter Dateien.
     """
     quelle = os.path.join(SOURCE_DIR, 'assets', 'fonts')
     if not os.path.isdir(quelle):
-        log.warning(f"Schriftverzeichnis fehlt: {quelle}")
-        return 0
+        print(f"[FEHLER] Schriftverzeichnis fehlt: {quelle}")
+        print("   Das Buendel verweist auf ./assets/fonts/*.woff2 (CR-08) und")
+        print("   schuldet damit die Dateien. Ohne Quellverzeichnis kein Build.")
+        sys.exit(1)
     ziel = os.path.join(dist_dir, 'assets', 'fonts')
     try:
         os.makedirs(ziel, exist_ok=True)
@@ -286,13 +296,48 @@ def kopiere_schriftdateien(dist_dir):
                 continue
             shutil.copy2(pfad, os.path.join(ziel, name))
             anzahl += 1
-        log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
-        return anzahl
     except OSError as e:
         # Wie beim sw.js-Kopierschritt: NUR Datei-/EA-Fehler abfangen. Alles
-        # andere muss den Build beenden.
-        log.warning(f"Schriftdateien konnten nicht kopiert werden: {e}")
-        return 0
+        # andere muss den Build ebenso beenden — nur mit anderem Traceback.
+        print(f"[FEHLER] Schriftdateien konnten nicht kopiert werden: {e}")
+        sys.exit(1)
+    if anzahl == 0:
+        print(f"[FEHLER] Schriftverzeichnis {quelle} ist leer.")
+        print("   Siehe oben: das Buendel nennt Dateien, die niemand daneben legt.")
+        sys.exit(1)
+    log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
+    return anzahl
+
+# Jeder Schriftverweis, den die CSS-Umschreibung (CR-08) erzeugt. Gelesen wird
+# der UMGESCHRIEBENE CSS, nicht fonts.css: geprueft werden soll, was im Buendel
+# steht, nicht was im Quellbaum stand.
+SCHRIFT_URL_MUSTER = re.compile(r"""url\(\s*['"]?\./assets/fonts/([^'")]+)['"]?\s*\)""")
+
+def pruefe_schriftverweise(css_content, dist_dir):
+    """Jeder Schriftverweis IM BUENDEL muss neben dem Buendel aufloesen (B-06).
+
+    'Das Quellverzeichnis war da' ist die falsche Frage. build.py schreibt die
+    url()-Pfade auf './assets/fonts/' um und schuldet damit genau die Dateien,
+    die es nennt — nicht mehr und nicht weniger. Darum wird gegen den
+    erzeugten CSS geprueft und gegen das erzeugte Verzeichnis, nicht gegen
+    eine Liste.
+
+    @param css_content Der fertige, umgeschriebene CSS des Buendels.
+    @param dist_dir Zielverzeichnis des Builds (dist/).
+    @returns Sortierte Liste der geprueften Dateinamen.
+    """
+    namen = sorted(set(SCHRIFT_URL_MUSTER.findall(css_content)))
+    fehlend = [
+        n for n in namen if not os.path.isfile(os.path.join(dist_dir, 'assets', 'fonts', n))
+    ]
+    if fehlend:
+        print(f"[FEHLER] {len(fehlend)} Schriftverweis(e) des Buendels loesen nicht auf:")
+        for n in fehlend:
+            print(f"   assets/fonts/{n}")
+        print("\n[ABORTED] Build NICHT brauchbar! Der Nutzer bekaeme 404 je Datei.")
+        sys.exit(1)
+    log.success(f"{len(namen)} Schriftverweise loesen neben dem Buendel auf")
+    return namen
 
 def minify_js(js_code):
     """Sichere JS-Minifizierung: entfernt nur Leerzeilen.
@@ -699,7 +744,14 @@ if (document.readyState === 'loading') {{
     # Die Schriften NEBEN das Bundle. Erst nach dem erfolgreichen Schreiben:
     # bricht eine der Validierungen oben ab (sys.exit(1)), wird weder das
     # Bundle geschrieben noch etwas kopiert.
-    kopiere_schriftdateien(os.path.dirname(output_file))
+    #
+    # Der Rueckgabewert wird bewusst NICHT geprueft: ein Fehlschlag beendet den
+    # Build selbst (B-06). Das Urteil darueber, ob genug kopiert wurde, faellt
+    # die Zeile danach — und zwar gegen die Verweise des erzeugten Buendels,
+    # nicht gegen eine Zahl.
+    dist_dir = os.path.dirname(output_file)
+    kopiere_schriftdateien(dist_dir)
+    pruefe_schriftverweise(css_content, dist_dir)
 
     # Statistiken
     final_size = len(html_template)
