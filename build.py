@@ -386,6 +386,85 @@ def pruefe_schriftverweise(css_content, dist_dir):
     log.success(f"{len(namen)} Schriftverweise loesen neben dem Buendel auf")
     return namen
 
+def pruefe_keine_fremdschriften(css_content, quell_basis=None):
+    """Keine Schrift in der Quelle, die das Buendel nicht nennt (Befund 6).
+
+    DIE GEGENRICHTUNG ZU pruefe_schriftverweise(). Die Funktion darueber
+    fragt 'loest jede url() auf?' und sieht damit genau die Lage NICHT, die
+    hier gemeint ist: eine Schriftdatei, die im Quellverzeichnis liegt und die
+    KEINE url() nennt. Sie wird von kopiere_schriftdateien() mitgenommen (das
+    kopiert absichtlich das Verzeichnis und keine Liste — ein Kopierschritt
+    mit eigener Liste uebersieht die elfte Datei), landet in dist/ und wird
+    vom CI-Job 'deploy' veroeffentlicht.
+
+    NACHGESTELLT, nicht vermutet. Es wurde berichtet, ein Lauf von
+    tools/fetch-fonts.py liesse den Build hart scheitern. Gemessen am echten
+    Baum (die fuenf abgeschafften Namen zurueck, die sieben aktuellen
+    bleiben) trifft das nicht zu:
+
+        $ ls assets/fonts/*.woff2 | wc -l      -> 12
+        $ python build.py
+          [OK] 12 Schriftdateien nach dist/assets/fonts/ kopiert
+          [OK] 7 Schriftverweise loesen neben dem Buendel auf
+          BUILD_EXIT=0
+        $ ls dist/assets/fonts/*.woff2 | wc -l -> 12
+
+    Zwei Erfolgsmeldungen, Exit 0 — und fuenf veroeffentlichte Dateien mit
+    genau dem falschen Subset, das der ganze SCHR-Vorfall war. Die
+    Schutzwirkung lag ausschliesslich bei drei Test-/Werkzeugschichten
+    (pruefe-schriftdateien.js --check exit 1, jest 4 failed, pytest 3
+    failed); wer nur baut und deployt, faehrt an allen drei vorbei. Diese
+    Funktion schliesst das auf dem Build-Pfad selbst.
+
+    GEPRUEFT WIRD DIE QUELLE, nicht das Ziel. kopiere_schriftdateien() macht
+    die beiden Schriftmengen deckungsgleich (alles kopiert, Waisen entfernt);
+    eine Aussage ueber die Quelle ist damit auch eine ueber das Ziel, und die
+    Quelle ist der Ort, an dem der Entwickler handeln muss. Ihr Name gehoert
+    darum in die Meldung. Eine zweite Pruefung auf dem Ziel waere dieselbe
+    Zusicherung an zwei Orten (Gotcha 1, ARCH-01).
+
+    UND SIE STEHT VOR DEM ERSTEN SCHREIBEN, nicht am Ende neben
+    pruefe_schriftverweise(). Sie braucht nur den umgeschriebenen CSS, kein
+    dist/ — unten waere das Buendel schon geschrieben, und 'Build NICHT
+    geschrieben' waere eine halbe Luege. Nachgemessen: der Zeitstempel von
+    dist/dnd-tracker-bundled.html bleibt beim Abbruch unveraendert.
+
+    Gelesen wird der UMGESCHRIEBENE CSS und dasselbe SCHRIFT_URL_MUSTER wie
+    oben — eine Quelle fuer das Muster, nicht zwei. Nicht-Schriften
+    (HERKUNFT.md) fallen durch SCHRIFT_DATEIENDUNGEN heraus, genau wie beim
+    Kopierschritt.
+
+    @param css_content Der fertige, umgeschriebene CSS des Buendels.
+    @param quell_basis Wurzel, unter der assets/fonts/ liegt (Vorgabe:
+        SOURCE_DIR). Nur fuer die Tests ein Parameter.
+    @returns Sortierte Liste der nicht genannten Schriften (leer = in Ordnung).
+    """
+    basis = quell_basis if quell_basis is not None else SOURCE_DIR
+    quelle = os.path.join(basis, 'assets', 'fonts')
+    genannt = set(SCHRIFT_URL_MUSTER.findall(css_content))
+    vorhanden = []
+    if os.path.isdir(quelle):
+        for name in sorted(os.listdir(quelle)):
+            if not os.path.isfile(os.path.join(quelle, name)):
+                continue
+            if os.path.splitext(name)[1].lower() in SCHRIFT_DATEIENDUNGEN:
+                vorhanden.append(name)
+    fremd = [n for n in vorhanden if n not in genannt]
+    if fremd:
+        print(f"[FEHLER] {len(fremd)} Schriftdatei(en) in {quelle} nennt kein @font-face:")
+        for n in fremd:
+            print(f"   {n}")
+        print("   Sie werden mitkopiert und vom Job 'deploy' veroeffentlicht,")
+        print("   obwohl sie niemand anfordert. Genau so lagen von 2026-06-12")
+        print("   bis 2026-10-13 zehn Dateien mit dem FALSCHEN Subset im Baum.")
+        print("   Haeufigste Ursache: ein Lauf von tools/fetch-fonts.py, dessen")
+        print("   Namensliste nicht mehr zu assets/styles/fonts.css passt.")
+        print("   Entweder die Dateien loeschen oder in fonts.css einbinden.")
+        print("\n[ABORTED] Build NICHT geschrieben!")
+        sys.exit(1)
+    log.success(f"{len(vorhanden)} Quellschriften sind alle in fonts.css eingebunden")
+    return fremd
+
 def minify_js(js_code):
     """Sichere JS-Minifizierung: entfernt nur Leerzeilen.
     Kommentare werden NICHT entfernt, da regex-basierte Entfernung unsicher ist:
@@ -572,6 +651,13 @@ def build(minify=False, production=False, verbose=False):
     # ci.yml zeigte, blieb lange unentdeckt, dass der dritte Job, der dist/
     # braucht ('e2e'), nie einen Kopierschritt hatte.
     css_content = css_content.replace("url('../fonts/", "url('./assets/fonts/")
+    # SOFORT, VOR dem ersten Schreiben: keine Schrift in der Quelle, die das
+    # Buendel nicht nennt (Befund 6). Die Gegenrichtung zu
+    # pruefe_schriftverweise() braucht nur den umgeschriebenen CSS und das
+    # Quellverzeichnis, kein dist/ — und dann gehoert sie HIERHIN und nicht
+    # ans Ende: ganz unten waere das Buendel schon geschrieben und die
+    # Abbruchmeldung eine halbe Luege.
+    pruefe_keine_fremdschriften(css_content)
     if minify:
         log.info("Minifiziere CSS...")
         css_content = minify_css(css_content)
