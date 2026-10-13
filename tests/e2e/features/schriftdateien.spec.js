@@ -1232,23 +1232,32 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 MINDEST_CSS_FAMILIEN
             );
             await ladeApp(page);
-            // DER LADEZWANG MUSS HIER STEHEN. Dieser Fall misst an
-            // `messeBreiten()` vorbei (eigenes `page.evaluate`), bekommt also
-            // deren erzwungenes `document.fonts.load()` nicht. Solange der
-            // Befund GLEICHHEIT war, war das harmlos bis hilfreich: ein noch
-            // nicht geladenes Face rendert im Rueckfall, also gleich — der
-            // erwartete Befund. Mit der Umkehrung ist genau daraus ein
-            // Falsch-ROT geworden. `ladeApp()` darf es NICHT tun, weil Teil 4
-            // die Abwesenheit von Anfragen beim blanken Laden behauptet.
-            const faceStatus = await ladeFaces(page, PROBETEXT + FREMD_TEXT);
-            for (const [name, status] of Object.entries(faceStatus)) {
-                expect(
-                    status,
-                    `${name} steht auf "${status}" — Teil 3 wuerde die Tauschfrist von ` +
-                        `font-display: swap messen und faelschlich "rendert wie der ` +
-                        `Rueckfall" melden.`
-                ).toBe('loaded');
-            }
+            // DER LADEZWANG. Dieser Fall misst an `messeBreiten()` vorbei
+            // (eigenes `page.evaluate`), bekommt also deren erzwungenes
+            // `document.fonts.load()` nicht. `waitForSelector('font[face]')`
+            // unten wartet darauf, dass das ELEMENT da ist, nicht darauf, dass
+            // die Schrift eingetauscht ist — und `font-display: swap` rendert
+            // bis dahin im Rueckfall. Solange der Befund GLEICHHEIT war, war
+            // das harmlos bis hilfreich (Rueckfall = der erwartete Befund);
+            // mit der Umkehrung ist genau daraus ein Falsch-ROT geworden.
+            //
+            // EHRLICHE EINORDNUNG, gemessen und nicht behauptet: nimmt man
+            // diesen Aufruf heraus, bleiben alle 16 Faelle GRUEN (Mutation M5
+            // im Bericht). Der Editor rendert den Text ja selbst, und das
+            // laedt die Schrift von allein. Der Aufruf ist also eine Haertung
+            // gegen ein Zeitfenster, kein Fix fuer einen reproduzierbaren
+            // Fehlschlag — genau wie `warteAufGenerika()`, das aus demselben
+            // Grund dasteht (5 von 18 Fremdlaeufen rot, nur unter Last, nie
+            // nachgestellt). Er kostet einen Rundlauf und schliesst das
+            // Fenster; der Face-Status wird hier NICHT noch einmal geprueft,
+            // das ist Teil 0s Aussage und war als Doppelung messbar: unter M4
+            // (kaputter Ladeweg) meldete Teil 3 den Ladefehler ein zweites
+            // Mal, obwohl seine eigene Messung in Ordnung war (M5b: Teil 3
+            // gruen, Teil 0 rot).
+            //
+            // `ladeApp()` darf das NICHT tun, weil Teil 4 die Abwesenheit von
+            // Anfragen beim blanken Laden behauptet.
+            await ladeFaces(page, PROBETEXT + FREMD_TEXT);
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             await tippeProbetext(page);
 
