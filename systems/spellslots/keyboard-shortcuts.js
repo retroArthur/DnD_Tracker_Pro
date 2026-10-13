@@ -12,6 +12,100 @@
 const TASTEN_BEDIENELEMENT_SELEKTOR =
     'button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])';
 
+// Das Kuerzel fuer den Lebenspunkte-Rechner (TAST, E-4). Begruendung der
+// Wahl an `oeffneHpRechnerAmZug()`.
+const TASTE_HP_RECHNER = 'h';
+
+/**
+ * Der Lebenspunkte-Rechner auf den Kaempfer, der am Zug ist (TAST, E-4).
+ *
+ * WARUM ES DAS BRAUCHT. Gemessen am gebauten Buendel, gefuellte Kampagne,
+ * sechs Kaempfer, 1440 px, echte Tabulatorspruenge: der ➗-Knopf des n-ten
+ * Kaempfers liegt 42/49/56/62/68/74 Spruenge vom Seitenanfang entfernt — 7
+ * Halte je Kampfzeile. "Schaden auf den vierten Kaempfer eintragen" kostet
+ * damit rund 64 Tastendruecke (62 Tab + Enter + Zahl + Tab + Enter), und die
+ * Zahl waechst mit jedem Kaempfer. Alle anderen Kampfwerkzeuge haben ein
+ * Kuerzel — Zugwechsel (n/p/Leertaste/Shift+N), Wuerfel (r, Alt+Ziffer),
+ * Kampfprotokoll (k), Schnellreferenz (/), Sitzungsuhr (t), Ereignislog (l).
+ * Die Trefferpunkte waren das EINZIGE ohne. Mit dem Kuerzel kostet derselbe
+ * Weg vier Anschlaege.
+ *
+ * WARUM `h`. Nachgezaehlt, nicht der Tabelle geglaubt: 68 Kandidaten (a-z,
+ * 0-9, 32 Zeichen) je Ansicht, ein echter Tastendruck bei Fokus auf BODY,
+ * gelesen wurden `defaultPrevented` in einem Lauscher am `window` in der
+ * BUBBLE-Phase (er liegt hinter allen App-Lauschern, die an `document`
+ * haengen — jeder Einzeltasten-Zweig hier ruft `preventDefault()`) und eine
+ * Wirkungsspur aus zwoelf Groessen. Initiative-Ansicht: 17 belegt
+ * (`k l n p r t 1 2 3 4 5 6 7 8 9 / ?`), 51 frei; Armaturenbrett und
+ * DM-Schirm je 16 belegt. `h` ist in allen drei frei.
+ *
+ * Unter den 51 freien ist `h` die mnemonische: die App nennt die Sache
+ * selbst ueberall "HP" — `title="HP ändern"` am ➗-Knopf der Kampfzeile,
+ * "❤️ HP" auf der Heldenkarte, "HP: <Name>" als Dialogueberschrift. Und sie
+ * passt in das bestehende Schema, in dem jedes Einzeltasten-Kuerzel der
+ * Anfangsbuchstabe seines Ziels ist (t=Timer, l=Log, k=Kampfprotokoll,
+ * n=Naechster, p=Vorheriger, r=Rollen). `l` fuer "Lebenspunkte" und `t` fuer
+ * "Trefferpunkte" sind beide gemessen belegt.
+ *
+ * ES TUT GENAU DAS, was ein Klick auf den ➗-Knopf der aktiven Kampfzeile
+ * tut: `showHpCalculator('combatant', id)`. Nicht mehr — damit es nur EINEN
+ * Weg gibt, dessen Verhalten gepflegt werden muss. Fall (l) in
+ * `tests/e2e/features/tastatur-kuerzel.spec.js` vergleicht beide Wege
+ * Feld fuer Feld, statt die Gleichheit zu behaupten.
+ *
+ * VIER SCHRANKEN, jede mit eigenem Fall in derselben Datei:
+ *  (1) nur bei aktiver Initiative-Ansicht — E-4 sagt "nur im Kampf";
+ *  (2) nur mit einem Kaempfer am Zug;
+ *  (3) nicht auf einem Lair-Eintrag: dessen Zeile hat gar keine
+ *      Trefferpunkte und bietet auch der Maus keinen ➗-Knopf an
+ *      (`features/initiative.js`, Sonderzweig fuer `type: 'lair'`). Ohne
+ *      diese Pruefung oeffnete das Kuerzel dort einen Rechner auf "0 / 0",
+ *      der auf ein nicht vorhandenes Feld schreibt;
+ *  (4) nicht ueber einem offenen Dialog. Die Fokusfalle aus T-D fuehrt den
+ *      Tabulator im VORDERSTEN Dialog (`oberstesModal()` = der zuletzt
+ *      geoeffnete); ein zweiter Dialog ueber dem ersten waere ein Stapel,
+ *      den Escape nur Schicht fuer Schicht abbaut. Der Rueckfall auf den
+ *      alten Selektor steht aus demselben Grund dort wie im Escape-Zweig:
+ *      damit die Schranke auch greift, wenn `ui/modal-focus.js` fehlt.
+ * Greift eine Schranke, tut die Taste NICHTS — kein Hinweis, kein Toast.
+ * Sie wird dann auch nicht verbraucht (`preventDefault()` bleibt aus), damit
+ * die gemessene Belegung der Lage entspricht.
+ *
+ * KEIN `beanspruchtLeertaste` HIER, und das ist gemessen, nicht gemutmasst
+ * — dieselbe Begruendung wie bei den Ziffern (O-7, Runde 1 des Strangs): ein
+ * fokussierter Knopf verarbeitet kein `h`, es gibt also kein natives
+ * Doppelfeuer zu verhindern. Eine Schranke haette hier nur das Kuerzel
+ * weggenommen, und zwar genau auf dem Weg, den der Spielleiter geht: nach
+ * einem gewoehnlichen Mausklick behaelt ein Knopf den Fokus.
+ *
+ * UND ES SCHIEBT DEM DIALOG KEINEN OEFFNER UNTER. `merkeOeffner()` sieht
+ * `activeElement === body` und loescht den Eintrag, der Fokus kommt nach
+ * Escape also FREI zurueck. Das ist Absicht: haengte man den Rueckweg an den
+ * ➗-Knopf der aktiven Zeile, laege der Fokus danach auf einem Bedienelement
+ * — und die Leertaste gehoerte nach T-A diesem Element statt dem
+ * Zugwechsel. Genau der Fehler, den T-A beseitigt hat, zurueck durch die
+ * Hintertuer. Fall (j) bewacht das.
+ *
+ * @returns {boolean} true, wenn der Rechner geoeffnet wurde
+ */
+function oeffneHpRechnerAmZug() {
+    // (1) Nur im Kampf.
+    if (!document.querySelector('#view-initiative.active')) return false;
+    // (4) Nicht ueber einem offenen Dialog.
+    const offeneSchale =
+        window.ModalFocus?.oberstesModal?.() || document.querySelector('.modal-overlay.show');
+    if (offeneSchale) return false;
+    const init = window.D?.initiative;
+    // (2) Nur mit einem Kaempfer am Zug.
+    const amZug = init?.combatants?.[init.currentTurn];
+    if (!amZug) return false;
+    // (3) Ein Lair-Eintrag hat keine Trefferpunkte.
+    if (amZug.type === 'lair') return false;
+    if (typeof window.showHpCalculator !== 'function') return false;
+    window.showHpCalculator('combatant', amZug.id);
+    return true;
+}
+
 function initKeyboardShortcuts() {
     document.addEventListener('keydown', e => {
         // Ignoriere Shortcuts wenn in Input/Textarea
@@ -313,6 +407,15 @@ function initKeyboardShortcuts() {
         if (e.key === 'p' && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
             if (typeof window.prevTurn === 'function') window.prevTurn();
+            return;
+        }
+        // H: Lebenspunkte-Rechner auf den Kaempfer am Zug (TAST, E-4).
+        // Begruendung der Taste, der vier Schranken und des freien Rueckwegs
+        // steht an `oeffneHpRechnerAmZug()`. `preventDefault()` nur, wenn der
+        // Rechner wirklich aufgeht — greift eine Schranke, bleibt die Taste
+        // unverbraucht und die gemessene Belegung entspricht der Lage.
+        if (e.key === TASTE_HP_RECHNER && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+            if (oeffneHpRechnerAmZug()) e.preventDefault();
             return;
         }
         // R: Quick Roll d20
