@@ -142,5 +142,121 @@ class TestSchriftenNebenDasBundle:
         assert len(kopien) == 1, f"Kopierschritt {len(kopien)}-mal aufgerufen, erwartet 1"
 
 
+class TestFehlendeSchriftenBeendenDenBuild:
+    """Der Kopierschritt darf nicht weich scheitern (Gegenpruefung Runde 2, B-06).
+
+    NACHGESTELLT, nicht vermutet. Im isolierten HEAD-Export:
+
+        $ mv assets/fonts assets/fonts_weg && python build.py
+          WARNUNG Schriftverzeichnis fehlt: .../assets/fonts
+          [SUCCESS] Build abgeschlossen! (Development)
+          BUILD_EXIT=0
+        $ grep -o "url('./assets/fonts/[a-z0-9-]*\\.woff2')" \\
+              dist/dnd-tracker-bundled.html | wc -l
+          10
+
+    Also: ein Buendel mit zehn unaufloesbaren url()-Pfaden, eine Warnung, und
+    Exit 0. Vorher liess 'cp -r assets/fonts dist/assets/' in den Jobs 'build'
+    und 'deploy' den Schritt HART scheitern; der Umzug nach build.py hat die
+    Zusicherung an einen Ort gezogen (richtig) und dabei weich gemacht
+    (falsch). Auf dem Deploy-Pfad stellt nichts mehr rot: die zehn
+    SW-Precache-Pfade in sw.js werden zu 404 und cache.addAll() scheitert
+    beim Nutzer, nicht im CI.
+    """
+
+    def test_fehlendes_quellverzeichnis_beendet_den_build(self, tmp_path, monkeypatch):
+        """Kein assets/fonts/ -> sys.exit(1), nicht log.warning + return 0."""
+        leere_wurzel = tmp_path / 'quelle'
+        leere_wurzel.mkdir()
+        monkeypatch.setattr(build_module, 'SOURCE_DIR', str(leere_wurzel))
+        ziel = tmp_path / 'dist'
+        ziel.mkdir()
+
+        with pytest.raises(SystemExit) as abbruch:
+            kopiere_schriftdateien(str(ziel))
+        assert abbruch.value.code == 1
+
+    def test_leeres_quellverzeichnis_beendet_den_build(self, tmp_path, monkeypatch):
+        """Ein vorhandenes, aber leeres assets/fonts/ ist derselbe Fall: das
+        Buendel verweist auf Dateien, die niemand neben es legt."""
+        wurzel = tmp_path / 'quelle'
+        (wurzel / 'assets' / 'fonts').mkdir(parents=True)
+        monkeypatch.setattr(build_module, 'SOURCE_DIR', str(wurzel))
+        ziel = tmp_path / 'dist'
+        ziel.mkdir()
+
+        with pytest.raises(SystemExit) as abbruch:
+            kopiere_schriftdateien(str(ziel))
+        assert abbruch.value.code == 1
+
+
+class TestSchriftverweiseLoesenAuf:
+    """Die eigentliche Schuld: jeder Schriftverweis IM BUENDEL muss neben dem
+    Buendel aufloesen.
+
+    'Das Verzeichnis war da' ist die falsche Frage — build.py schreibt die
+    url()-Pfade auf './assets/fonts/' um (CR-08) und schuldet damit genau die
+    Dateien, die es nennt. Geprueft wird darum gegen den umgeschriebenen CSS,
+    nicht gegen eine Liste und nicht gegen das Quellverzeichnis.
+    """
+
+    def test_meldet_eine_fehlende_datei_und_beendet_den_build(self, tmp_path):
+        css = "@font-face{src:url('./assets/fonts/gibtesnicht-400.woff2') format('woff2')}"
+        ziel = tmp_path / 'dist'
+        (ziel / 'assets' / 'fonts').mkdir(parents=True)
+
+        with pytest.raises(SystemExit) as abbruch:
+            build_module.pruefe_schriftverweise(css, str(ziel))
+        assert abbruch.value.code == 1
+
+    def test_ist_gruen_wenn_die_datei_daneben_liegt(self, tmp_path):
+        css = "@font-face{src:url('./assets/fonts/da-400.woff2') format('woff2')}"
+        ziel = tmp_path / 'dist'
+        (ziel / 'assets' / 'fonts').mkdir(parents=True)
+        (ziel / 'assets' / 'fonts' / 'da-400.woff2').write_bytes(b'x')
+
+        assert build_module.pruefe_schriftverweise(css, str(ziel)) == ['da-400.woff2']
+
+    def test_findet_die_echten_verweise_des_baums(self, tmp_path):
+        """Gegenprobe gegen Leerlauf: ein kaputtes Muster wuerde NICHTS finden
+        und alles oben trivial erfuellen. Gemessen wird am echten fonts.css,
+        durch dieselbe Umschreibung, die der Build fuehrt."""
+        fonts_css = (REPO / 'assets' / 'styles' / 'fonts.css').read_text(encoding='utf-8')
+        umgeschrieben = fonts_css.replace("url('../fonts/", "url('./assets/fonts/")
+        ziel = tmp_path / 'dist'
+        (ziel / 'assets' / 'fonts').mkdir(parents=True)
+        for name in _woff2_namen(QUELL_SCHRIFTEN):
+            (ziel / 'assets' / 'fonts' / name).write_bytes(b'x')
+
+        gefunden = build_module.pruefe_schriftverweise(umgeschrieben, str(ziel))
+
+        assert len(gefunden) >= 10, (
+            f"Nur {len(gefunden)} Schriftverweise im umgeschriebenen fonts.css gefunden — "
+            f"das Muster in pruefe_schriftverweise() greift nicht mehr."
+        )
+        assert gefunden == _woff2_namen(QUELL_SCHRIFTEN)
+
+    def test_build_prueft_die_verweise_des_erzeugten_buendels(self, monkeypatch):
+        """Verdrahtung: der Build fuehrt die Pruefung wirklich, mit dem
+        umgeschriebenen CSS und dem dist-Verzeichnis."""
+        monkeypatch.setattr(build_module, 'write_file', lambda p, c: None)
+        monkeypatch.setattr(build_module, 'kopiere_schriftdateien', lambda d: 10)
+        aufrufe = []
+        monkeypatch.setattr(
+            build_module,
+            'pruefe_schriftverweise',
+            lambda css, d: aufrufe.append((css, d)) or [],
+        )
+
+        build_module.build()
+
+        assert len(aufrufe) == 1, f"Pruefung {len(aufrufe)}-mal aufgerufen, erwartet 1"
+        css, verzeichnis = aufrufe[0]
+        assert "url('./assets/fonts/" in css, \
+            "Die Pruefung bekommt nicht den umgeschriebenen CSS"
+        erwartet = os.path.normcase(os.path.abspath(os.path.join(build_module.SCRIPT_DIR, 'dist')))
+        assert os.path.normcase(os.path.abspath(verzeichnis)) == erwartet
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
