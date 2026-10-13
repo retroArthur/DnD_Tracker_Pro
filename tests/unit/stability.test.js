@@ -51,9 +51,9 @@
 // drei Zeilen. Als offener Posten notiert, hier nicht mitgemacht.
 // ============================================================
 const AUDIT_MUSTER = {
-    saveImmediate: /async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/,
-    save: /const save = function[\s\S]*?\n};\n/,
-    persistNow: /async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/
+    saveImmediate: /async function saveImmediate\(\)\s*{[\s\S]*?\r?\n}\r?\n/,
+    save: /const save = function[\s\S]*?\r?\n};\r?\n/,
+    persistNow: /async function _persistNow\([^)]*\)\s*{[\s\S]*?\r?\n}\r?\n/
 };
 
 describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
@@ -61,33 +61,49 @@ describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
     const path = require('path');
     const PERSISTENZ = path.join(__dirname, '../../systems/spellslots/persistence.js');
 
+    /** Die Quelle einmal mit reinem LF und einmal mit reinem CRLF. */
+    function beideFassungen() {
+        const lf = fs.readFileSync(PERSISTENZ, 'utf-8').replace(/\r\n/g, '\n');
+        return { lf, crlf: lf.replace(/\n/g, '\r\n') };
+    }
+
+    // KEIN ZWEITES expect-ARGUMENT. Jest nimmt genau einen Wert; ein
+    // Meldungsargument wie in Playwright laesst `expect()` SELBST werfen
+    // ('Expect takes at most one argument.') — der Fall ist dann rot, ohne je
+    // gemessen zu haben. Genau das ist der ersten Fassung dieses Waechters
+    // passiert, und es ist dieselbe Fehlerklasse, die der Waechter aufdecken
+    // soll: rot aus einem fremden Grund. Die Befunde werden darum GESAMMELT
+    // und als Liste verglichen; so steht der Grund in der Diff-Ausgabe und
+    // nicht in einem Argument, das Jest verwirft.
     test('Die drei Audit-Muster urteilen ueber Code, nicht ueber Zeilenenden', () => {
-        const roh = fs.readFileSync(PERSISTENZ, 'utf-8');
-        const lf = roh.replace(/\r\n/g, '\n');
-        const crlf = lf.replace(/\n/g, '\r\n');
+        const { lf, crlf } = beideFassungen();
 
         // Gegenprobe gegen Leerlauf: die beiden Fassungen sind wirklich
-        // verschieden, und die Umschreibung hat wirklich gewirkt. Ohne diese
-        // drei Zeilen koennte der Fall gruen laufen, weil er zweimal
-        // DASSELBE prueft.
+        // verschieden, die Umschreibung hat gewirkt, und sie hat keine Zeile
+        // verloren. Ohne diese drei Zeilen koennte der Fall gruen laufen,
+        // weil er zweimal DASSELBE prueft.
         expect(lf).not.toBe(crlf);
         expect(lf.includes('\r')).toBe(false);
         expect(crlf.split('\r\n').length).toBe(lf.split('\n').length);
 
+        const garNicht = [];
+        const nurLf = [];
         for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
-            expect(
-                lf.match(muster),
-                `${name}: greift nicht einmal auf der LF-Fassung — dann ist nicht das ` +
-                    `Zeilenende das Problem, sondern das Muster oder die Quelle.`
-            ).not.toBeNull();
-            expect(
-                crlf.match(muster),
-                `${name}: greift auf LF, aber nicht auf CRLF. Genau dieser Zustand macht ` +
-                    `die beiden Quelltext-Audits dieser Datei in JEDEM frischen Checkout ` +
-                    `auf Windows (core.autocrlf=true, keine .gitattributes) rot, ohne dass ` +
-                    `am Code etwas falsch ist. Das Endeanker muss \\r?\\n lauten, nicht \\n.`
-            ).not.toBeNull();
+            if (!lf.match(muster)) {
+                garNicht.push(name);
+                continue;
+            }
+            if (!crlf.match(muster)) nurLf.push(name);
         }
+        // Greift ein Muster nicht einmal auf der LF-Fassung, ist nicht das
+        // Zeilenende das Problem, sondern das Muster oder die Quelle.
+        expect(garNicht).toEqual([]);
+        // Greift es auf LF, aber nicht auf CRLF, dann macht genau dieser
+        // Zustand die beiden Quelltext-Audits dieser Datei in JEDEM frischen
+        // Checkout auf Windows rot (core.autocrlf=true, keine
+        // .gitattributes), ohne dass am Code etwas falsch ist. Der Endeanker
+        // muss `\r?\n` lauten, nicht `\n`.
+        expect(nurLf).toEqual([]);
     });
 
     test('Die Muster schneiden unter LF und CRLF denselben Koerper heraus', () => {
@@ -96,13 +112,24 @@ describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
         // Falsch-GRUEN-Richtung desselben Fehlers: die Audits unten pruefen
         // dann einen Ausschnitt, in dem der gesuchte Aufruf gar nicht mehr
         // stehen kann.
-        const lf = fs.readFileSync(PERSISTENZ, 'utf-8').replace(/\r\n/g, '\n');
-        const crlf = lf.replace(/\n/g, '\r\n');
+        const { lf, crlf } = beideFassungen();
+        const abweichend = [];
         for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
-            const a = lf.match(muster)[0];
-            const b = crlf.match(muster)[0].replace(/\r\n/g, '\n');
-            expect(b, `${name}: CRLF-Fassung liefert einen anderen Koerper`).toBe(a);
+            const a = lf.match(muster);
+            const b = crlf.match(muster);
+            if (!a || !b) {
+                abweichend.push(`${name}: greift nicht auf beiden Fassungen`);
+                continue;
+            }
+            const bNormalisiert = b[0].replace(/\r\n/g, '\n');
+            if (bNormalisiert !== a[0]) {
+                abweichend.push(
+                    `${name}: LF-Koerper ${a[0].length} Zeichen, CRLF-Koerper ` +
+                        `${bNormalisiert.length} Zeichen (nach Normalisierung)`
+                );
+            }
         }
+        expect(abweichend).toEqual([]);
     });
 });
 
