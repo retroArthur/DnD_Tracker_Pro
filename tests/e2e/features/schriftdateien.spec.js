@@ -416,6 +416,10 @@ async function ladeApp(page) {
     await waitForAppReady(page);
 }
 
+// Wohin build.py die url()-Pfade umschreibt: './assets/fonts/' relativ zur
+// erzeugten HTML-Datei (build.py, CR-08).
+const DIST_SCHRIFTEN = path.join(REPO_ROOT, 'dist/assets/fonts');
+
 test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () => {
     // ------------------------------------------------------------------
     // Teil 0 — Waechter des Waechters.
@@ -430,6 +434,31 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 expect(f.gewicht).toBeGreaterThan(0);
                 expect(f.datei).toMatch(/\.woff2$/);
             }
+        });
+
+        test('Die zehn Dateien liegen neben dem gebauten Bundle', async () => {
+            // VORAUSSETZUNG, nicht Formalie. Teil 0 (Faces auf "loaded") und
+            // Teil 4 (zehn Antworten) koennen nur gruen sein, wenn die
+            // Dateien da liegen, wohin build.py die url()-Pfade umschreibt.
+            // Ohne diesen Fall meldet die Suite stattdessen 'Roboto/400 steht
+            // auf "error", nicht "loaded"' und 'Expected >= 10, Received 0' —
+            // zwei Meldungen, die auf die Schriftdateien zeigen statt auf den
+            // fehlenden Kopierschritt. Genau so war es im CI-Job 'e2e'
+            // (gemessen im nachgestellten Zustand: 2 failed / 11 passed,
+            // Retries erschoepft), waehrend der Projektbaum durch einen alten,
+            // nicht versionierten Rueckstand in dist/ gruen lief.
+            const vorhanden = fs.existsSync(DIST_SCHRIFTEN)
+                ? fs.readdirSync(DIST_SCHRIFTEN).filter(n => n.endsWith('.woff2'))
+                : [];
+            const fehlend = FACES.map(f => f.datei).filter(n => !vorhanden.includes(n));
+            expect(
+                fehlend,
+                `Diese Dateien fehlen in dist/assets/fonts/: ${JSON.stringify(fehlend)}. ` +
+                    `build.py schreibt die url()-Pfade auf './assets/fonts/' um und legt ` +
+                    `die Dateien dorthin — fehlen sie, wurde das Bundle mit einem ` +
+                    `build.py OHNE Kopierschritt erzeugt, oder dist/ wurde geleert. ` +
+                    `Abhilfe: python build.py erneut laufen lassen.`
+            ).toEqual([]);
         });
 
         test('Das Schriftmenue der laufenden App ist vollstaendig und hat ueberall Rueckfall', async ({
