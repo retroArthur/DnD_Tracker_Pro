@@ -250,6 +250,13 @@ def write_file(filepath, content):
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
 
+# Was der Kopierschritt als Schrift behandelt — Erlaubnisliste, keine
+# Verbotsliste (CLAUDE.md: 'validate input with whitelists'). Heute traegt
+# assets/fonts/ ausschliesslich woff2; die drei anderen Endungen stehen hier,
+# damit ein spaeterer Fallback-Schnitt nicht stumm liegen bleibt. Eine
+# Nicht-Schrift daneben (HERKUNFT.md) wird dadurch von selbst uebergangen.
+SCHRIFT_DATEIENDUNGEN = {'.woff2', '.woff', '.ttf', '.otf'}
+
 def kopiere_schriftdateien(dist_dir):
     """Legt assets/fonts/ neben das gebaute Bundle (SCHR).
 
@@ -277,8 +284,31 @@ def kopiere_schriftdateien(dist_dir):
     dem Deploy-Pfad stellte nichts mehr rot: die zehn SW-Precache-Pfade in
     sw.js werden zu 404 und cache.addAll() scheitert beim Nutzer.
 
+    SCHRIFTEN, NICHT VERZEICHNISINHALT. Kopiert werden nur Dateien mit einer
+    Endung aus SCHRIFT_DATEIENDUNGEN. assets/fonts/ fuehrt seit 2026-10-13 auch
+    HERKUNFT.md (Herkunft, Lizenz und Nachpruefung der sieben Dateien); die
+    gehoert nicht neben das Buendel — sie wird von nichts verlinkt und der
+    Nutzer laedt sie beim Deploy mit.
+
+    UND ES RAEUMT AUF (Befund Runde 2). shutil.copy2() je Quelldatei legt dazu
+    und nimmt nie weg. Nach dem Austausch von zehn auf sieben Dateien lagen im
+    Arbeitsbaum 12 woff2 in dist/assets/fonts/ — fuenf Waisen mit genau den
+    Namen, die der Austausch abgeschafft hat (inter-400/500/600,
+    roboto-400/700) und mit dem falschen Subset, das der ganze Vorfall war.
+    pruefe_schriftverweise() unten prueft die GEGENRICHTUNG ('jeder Verweis
+    loest auf'); eine Waise wird von keinem Verweis genannt und bleibt darum
+    unsichtbar. dist/ ist gitignoriert, der CI-Job startet also sauber — aber
+    der Job 'deploy' veroeffentlicht dist/, und ein Arbeitsbaum laeuft damit
+    gruen, wo er es nicht sollte. Das ist derselbe Mechanismus wie oben, nur
+    von der anderen Seite: dort verdeckte alter Rueckstand einen FEHLENDEN
+    Kopierschritt, hier verdeckt er abgeschaffte Dateien.
+
+    Weggenommen werden NUR Schriften, nie etwas anderes und nie ein
+    Verzeichnis: ein 'rm -rf' auf dem Ziel waere der bequeme Weg und wuerde
+    beim naechsten Nachbarn im Verzeichnis Schaden anrichten.
+
     @param dist_dir Zielverzeichnis des Builds (dist/).
-    @returns Anzahl kopierter Dateien.
+    @returns Anzahl kopierter Schriftdateien.
     """
     quelle = os.path.join(SOURCE_DIR, 'assets', 'fonts')
     if not os.path.isdir(quelle):
@@ -289,23 +319,40 @@ def kopiere_schriftdateien(dist_dir):
     ziel = os.path.join(dist_dir, 'assets', 'fonts')
     try:
         os.makedirs(ziel, exist_ok=True)
+        gewollt = set()
         anzahl = 0
         for name in sorted(os.listdir(quelle)):
             pfad = os.path.join(quelle, name)
             if not os.path.isfile(pfad):
                 continue
+            if os.path.splitext(name)[1].lower() not in SCHRIFT_DATEIENDUNGEN:
+                continue
             shutil.copy2(pfad, os.path.join(ziel, name))
+            gewollt.add(name)
             anzahl += 1
+        # Waisen wegnehmen: was im Ziel eine Schrift ist, die Quelle aber nicht
+        # (mehr) kennt. Nur Dateien, nur Schriftendungen.
+        waisen = []
+        for name in sorted(os.listdir(ziel)):
+            if name in gewollt or not os.path.isfile(os.path.join(ziel, name)):
+                continue
+            if os.path.splitext(name)[1].lower() not in SCHRIFT_DATEIENDUNGEN:
+                continue
+            os.remove(os.path.join(ziel, name))
+            waisen.append(name)
     except OSError as e:
         # Wie beim sw.js-Kopierschritt: NUR Datei-/EA-Fehler abfangen. Alles
         # andere muss den Build ebenso beenden — nur mit anderem Traceback.
         print(f"[FEHLER] Schriftdateien konnten nicht kopiert werden: {e}")
         sys.exit(1)
     if anzahl == 0:
-        print(f"[FEHLER] Schriftverzeichnis {quelle} ist leer.")
+        print(f"[FEHLER] Schriftverzeichnis {quelle} fuehrt keine Schriftdatei.")
         print("   Siehe oben: das Buendel nennt Dateien, die niemand daneben legt.")
+        print(f"   Erwartete Endungen: {', '.join(sorted(SCHRIFT_DATEIENDUNGEN))}")
         sys.exit(1)
     log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
+    if waisen:
+        log.success(f"{len(waisen)} Waise(n) entfernt: {', '.join(waisen)}")
     return anzahl
 
 # Jeder Schriftverweis, den die CSS-Umschreibung (CR-08) erzeugt. Gelesen wird
