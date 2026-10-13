@@ -113,10 +113,36 @@ const FONTS_CSS = path.join(REPO_ROOT, 'assets/styles/fonts.css');
 // hier steht und in Wahrheit beitraegt, stellt Teil 5 (Verwesungsprobe) rot.
 // Ohne diese Probe wuerde die Liste nach der Reparatur zur Luege und der
 // Waechter waere wertlos.
+//
+// WARUM ALLE VIER DRINSTEHEN. Es gab nie eine richtige Fassung: `git log --
+// assets/fonts/` zeigt genau einen Commit (1c3245b, `feat(02-02):
+// PWA-Grundlage`). Die Liste beschreibt also keinen Sonderfall, sondern den
+// vollstaendigen Ist-Zustand des Schriftmenues — vier von sieben Eintraegen.
+//
+// DIE GRUENDE SIND GEMESSEN, NICHT GESCHAETZT. Breite in Pixel = diese Probe
+// bei 40px auf "Handgemenge42Zaehmkraft"; Glyphen und Block = das Werkzeug
+// aus Einheit 1 (`node tools/pruefe-schriftdateien.js`). Beide Zahlen stehen
+// bewusst in jedem Eintrag: die eine ist die Folge, die andere die Ursache.
 // ----------------------------------------------------------------------
-const SCHRIFT_FAMILIEN_AUSNAHMEN = {};
+const SCHRIFT_FAMILIEN_AUSNAHMEN = {
+    Roboto:
+        'kyrillisches Subset (155 von 180 Glyphen), kein lateinisches A; 400 und 700 ' +
+        'rendern auf 505.828125px, exakt der monospace-Rueckfall',
+    Inter:
+        'kyrillisches Subset (148 von 157 Glyphen), nur A und Ä aus Latin; 400, 500 und ' +
+        '600 rendern auf 505.828125px, exakt der monospace-Rueckfall',
+    Poppins:
+        'Devanagari-Subset (94 von 105 Glyphen); 400, 500 und 600 rendern auf ' +
+        '505.828125px, exakt der monospace-Rueckfall',
+    'Source Sans Pro':
+        'kyrillisches Subset (56 von 61 Glyphen), nur A und B aus Latin; 400 und 600 ' +
+        'rendern auf 505.828125px, exakt der monospace-Rueckfall'
+};
 
-const AUSNAHMEN_SOLL = 0;
+// Festgenagelt auf genau 4. Eine fuenfte nutzlose Familie faellt damit sofort
+// auf, statt sich in einer offenen Liste zu verstecken — und eine reparierte
+// Familie zwingt zum Senken, weil Teil 5 sie sonst rot stellt.
+const AUSNAHMEN_SOLL = 4;
 
 // Untergrenzen gegen Leerlauf. Gegen `>= 0`: ein leeres Parse-Ergebnis
 // (fonts.css-Regex kaputt, EDITOR_FONTS nicht exportiert) wuerde sonst gruen
