@@ -437,6 +437,17 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
         });
 
         test('Die zehn Dateien liegen neben dem gebauten Bundle', async () => {
+            // EIGENE UNTERGRENZE, nicht die des Nachbarfalls (Gegenpruefung
+            // Runde 2, B-02). `fehlend` ist bei leerer Facesliste trivial
+            // leer: mit `const FACES = []` lief dieser Fall gruen ueber NULL
+            // Dateien durch (nachgestellt, MUT23: `--grep` auf diesen
+            // Fallnamen -> 1 passed in 575ms, waehrend die volle Datei
+            // 8 failed / 6 passed meldete). Teil 1 und Teil 3 fuehren ihre
+            // Untergrenze aus genau diesem Grund selbst; dieser Fall kam in
+            // 4d6574a dazu und folgte der eigenen Regel noch nicht.
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
+                MINDEST_FACES
+            );
             // VORAUSSETZUNG, nicht Formalie. Teil 0 (Faces auf "loaded") und
             // Teil 4 (zehn Antworten) koennen nur gruen sein, wenn die
             // Dateien da liegen, wohin build.py die url()-Pfade umschreibt.
