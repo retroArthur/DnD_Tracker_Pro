@@ -534,6 +534,15 @@ function pruefeDatei(quelle) {
         numTables: woff2.numTables,
         laengenStimmen: woff2.laengenStimmen,
         glyphen: cmap.codepunkte.size,
+        // Die GELESENEN Codepunkte, aufsteigend. Nicht Deko, sondern die
+        // Grundlage, aus der ein Aufrufer `fehlend` nachrechnen kann: ohne sie
+        // war das Urteil dieser Funktion von aussen nicht pruefbar, und eine
+        // auf "traegt nichts" festgenagelte Fehlliste blieb in der
+        // Jest-Ratsche unsichtbar (alle 60 Faelle gruen). Der Probetext-
+        // Waechter in tests/e2e/features/schriftdateien.spec.js braucht sie
+        // ausserdem VOLL: er muss auch getragene Zeichen AUSSERHALB des
+        // deutschen Satzes sehen (U+00A0, in allen zehn Dateien).
+        codepunkte: [...cmap.codepunkte].sort((a, b) => a - b),
         formate: cmap.formate,
         nichtUnterstuetzteFormate: cmap.nichtUnterstuetzt,
         untertabellen: cmap.untertabellen,

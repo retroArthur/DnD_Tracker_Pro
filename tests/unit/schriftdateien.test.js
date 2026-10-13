@@ -238,10 +238,16 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                     // zehn gruene Faelle, die null Zusicherungen ausfuehrten.
                     // Der Ausnahmezweig nagelt jetzt das Gegenteil fest.
                     const soll = GEMESSENE_BLOECKE[name];
-                    expect(
-                        soll,
-                        `${name} steht auf SCHRIFT_AUSNAHMEN, fehlt aber in GEMESSENE_BLOECKE`
-                    ).toBeDefined();
+                    if (!soll) {
+                        // Jests `expect` nimmt keine Meldung als zweites
+                        // Argument (das kann nur Playwright) — darum der
+                        // Wurf, wie in Teil 4 daneben.
+                        throw new Error(
+                            `${name} steht auf SCHRIFT_AUSNAHMEN, fehlt aber in ` +
+                                `GEMESSENE_BLOECKE. Beide Listen muessen dieselben ` +
+                                `Dateien fuehren.`
+                        );
+                    }
                     expect(datei.traegtDeutsch).toBe(false);
                     expect(datei.fehlendeZeichen.length).toBeGreaterThan(0);
                     expect(getrageneDeutsche(datei)).toEqual(soll.getragen);
