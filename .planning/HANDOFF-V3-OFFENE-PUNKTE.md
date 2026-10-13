@@ -8187,9 +8187,11 @@ unverändert, und die Gates bestätigen es.
   Durchgang: ein Punkt unter „Gotchas & Common Pitfalls", der beide Laufzeit-Quellen nennt.
 - **Die Befehlspalette ist absichtlich nicht in der Falle.** Sie führt ihre Tastatur selbst und
   bringt role/aria-modal/aria-label schon mit. Sie aufzunehmen wäre eine Verhaltensänderung ohne
-  Messung und ohne Auftrag.
+  Messung und ohne Auftrag. **Korrektur aus Runde 1: sie aus dem Selektor zu nehmen genügte
+  nicht** — siehe unten, der Rückzug steht jetzt in `_tab()` selbst.
 - **`.shortcuts-overlay` ist ebenfalls nicht in der Falle.** Es ist eine Blende mit eigenem
-  Escape-Zweig, und T-C hat es bewusst ohne `tabindex` gelassen.
+  Escape-Zweig, und T-C hat es bewusst ohne `tabindex` gelassen. In Runde 1 in beiden Armen
+  nachgemessen: die Falle verändert dort **nichts**, der Befund ist vorbestehend.
 - **O-9 bleibt unberührt und bleibt eine echte Blockade:** `window.clearLootForm` wird in
   `features/initiative-loot.js:254` und `:367` gerufen und nirgends definiert. Das Beute-Modal
   wurde für diese Einheit über `window.showModal('loot-modal')` abgenommen, wie der Plan vorsieht.
@@ -8210,11 +8212,169 @@ unverändert, und die Gates bestätigen es.
   Schließknopf (beim Lebenspunkte-Rechner steht er vor dem Feld). Wo ein Öffner den Fokus selbst
   setzt, bleibt das unberührt — `einstieg()` rührt einen Fokus, der schon im Dialog liegt, nicht
   an. Eine feinere Regel („erstes Feld statt erster Knopf") wäre eine eigene Entscheidung.
-- **Der Öffner wird nicht angesprungen, wenn sein Knoten weg ist.** Wird eine Listenzeile zwischen
-  Öffnen und Schließen neu gezeichnet, bleibt der Fokus, wo er ist, statt irgendwohin zu springen.
-  Gemessen trat der Fall in keiner der 36 Schalen auf; er ist bewusst so behandelt.
+- ~~**Der Öffner wird nicht angesprungen, wenn sein Knoten weg ist.** Wird eine Listenzeile
+  zwischen Öffnen und Schließen neu gezeichnet, bleibt der Fokus, wo er ist, statt irgendwohin
+  zu springen. Gemessen trat der Fall in keiner der 36 Schalen auf; er ist bewusst so
+  behandelt.~~ **In Runde 1 behoben.** Der Satz „trat in keiner der 36 Schalen auf" war für
+  die Messung richtig und für die App falsch: der Sweep öffnet jede Schale generisch und
+  **benutzt sie nicht**. Sobald der Dialog etwas tut, tritt der Fall sofort ein. Siehe unten.
 - **Fall (d) braucht Minuten** (36 Schalen × 45 Sprünge × zwei Größen, 2,2 bzw. 2,9 min) und
   trägt darum ein eigenes `test.setTimeout()`. Wer die Datei kürzen will, kürzt dort.
+
+### Runde 1 — zwei Befunde, beide bestätigt, beide behoben
+
+Vier Commits auf `tastatur-strang`: der rote Nachweis (`64cffd5`), der Rückweg (`13171a9`),
+die Blende (`7c70281`), das Globals-Artefakt (`ff67b7f`). Alles selbst nachgemessen, mit
+eigenen Skripten, nur `page.keyboard.press`, gefüllte Kampagne.
+
+**1. Der Rückweg fiel genau dort aus, wo der Dialog etwas TUT.** Griff: 42 echte
+Tabulatorsprünge bis „➗" am Kämpfer 1 in der Initiative-Ansicht, Enter (Dialog auf, Fokus
+in `#hp-calc-value`), „7" tippen, Tab (→ 💔 Schaden), Enter. Die Wirkung ist korrekt und
+genau einmal: `currentHp` 30 → 23. Dann Escape — und der Fokus lag auf `<body>`.
+
+Ursache gemessen, nicht vermutet: `applyHpChange()` ruft `renderInit()`
+(`systems/hp-calculator.js:69-71`), die Kampfliste wird neu gezeichnet, und
+`document.contains(öffner)` ist schon **vor** dem Escape falsch. Ein **gleichwertiger** Knopf
+steht wieder da. Kosten: **47 weitere echte Tabulatorsprünge**, bis überhaupt wieder ein
+Rechner-Knopf erreicht ist.
+
+Der Kontrollfall isoliert den Mechanismus: derselbe Dialog, **sofort** Escape, ohne etwas zu
+tun → Fokus zurück auf dem Öffner, genau ein `focus`-Ereignis. Es ist also nicht der Dialog,
+sondern seine Wirkung.
+
+| Maß | vorher | nachher |
+| --- | --- | --- |
+| Fokus nach Escape auf `<body>` | ja | **nein** |
+| Fokus auf einem gleichwertigen Öffner | nein | **ja** |
+| weitere echte Tabs bis zum Rechner-Knopf | 47 | **0** |
+| Kontrollfall (Dialog nicht benutzt) | Rückweg greift | unverändert |
+
+In **16 Läufen** identisch: 2 Bündel × 2 Kampagnengrößen × 4 Themes.
+
+`merkeOeffner()` führt jetzt neben dem Knoten eine Kennung mit — `data-action`, `data-id`,
+`data-type`, `data-value`. `kehreZurueck()` läuft in zwei Stufen: der gemerkte Knoten, falls
+er noch steht, sonst der gleichwertige an derselben Stelle. **„Gleichwertig" ist keine
+Heuristik:** der Verteiler baut genau aus diesen vier Werten das Kontextobjekt der Aktion
+(`ui/event-delegation.js:111-117`); zwei Elemente mit identischen vier Werten lösen dieselbe
+Handlung mit demselben Ziel aus, sie unterscheiden sich nur in `ctx.target`. Stufe 2
+überstimmt Stufe 1 **nicht** — ein noch stehender, nur unsichtbarer Öffner wird nicht durch
+einen fremden sichtbaren ersetzt. Ein Öffner ohne `data-action` bekommt keine Kennung und
+damit keinen Rückfall; dort bleibt es beim alten Verhalten.
+
+Verglichen wird in JavaScript und **nicht** über einen zusammengebauten Selektor: `data-id`
+und `data-value` kommen aus dem DOM, ein Anführungszeichen darin wäre ein Syntaxfehler.
+Kosten (Party, 20 Einträge je Typ, 2033 `[data-action]`-Stellen): **176 µs, einmal je
+Schließvorgang**. Der Zweig von `_tab()` ist unberührt, Fall (i) bleibt grün.
+
+**Warum der eigene Wächter grün war.** Fall (b) setzt seinen Öffner über `VORLAUF` = 6 blinde
+Tabulatorsprünge — das trifft ein Kopfzeilen-Element, das niemals neu gezeichnet wird — und
+öffnet den Dialog danach per App-Funktion. **Kein Fall der Datei konnte einen Dialog treffen,
+dessen eigene Aktion seinen Öffner zerstört.** Der neue Fall (j) benutzt den Dialog, bevor er
+Escape drückt, und läuft bei beiden Kampagnengrößen.
+
+**2. Die Falle entzog der Befehlspalette den Tabulator.** Dialog offen, dann Strg+Shift+K:
+Lage korrekt — Palette auf, Fokus in `.cp-input`, Tippen kommt an („zug"). Der **erste** echte
+Tabulatordruck zog den Fokus in den Dialog **darunter**: 4 von 4 Halten im Dialog,
+`elementFromPoint` meldet alle 4 als **verdeckt** (z-index beider Schichten 1000, die Palette
+steht später im Dokument), und Enter darauf änderte `data-theme` dark → sepia. Eine
+Einstellungsänderung an einem Bedienelement, das der Spielleiter nicht sieht.
+
+A/B-Gegenprobe, die die Ursache festnagelt: `window.ModalFocus._tab` zur Laufzeit stillgelegt
+(derselbe Objektverweis, den der Capture-Lauscher über `this` erreicht) → dieselben vier Tabs
+bleiben zuerst **in** der Palette und laufen ihre eigene Trefferliste ab.
+
+Die bisherige Begründung („sie führt ihre Tastatur selbst") trägt nicht: die Falle hängt als
+keydown am **Dokument** in der **Capture**-Phase und läuft damit **vor** dem Lauscher der
+Palette (`command-palette.js:41`, ein keydown am Eingabefeld). Sie aus dem **Selektor** zu
+nehmen nimmt sie nicht aus der **Wirkung**.
+
+`_tab()` zieht sich jetzt zurück, solange `.cp-overlay.cp-visible` offen ist — vor jedem
+`preventDefault()`, der Anschlag geht unverändert weiter. **Der Zweig hängt an der Blende,
+nicht am Fokus**, und das ist gemessen: hinter der Trefferliste der Palette führt der
+Tabulator über `<body>` weiter (so war es auch vor dieser Datei). Ein
+`activeElement.closest('.cp-overlay.cp-visible')` hätte beim nächsten Anschlag wieder
+gegriffen und den Fokus in den verdeckten Dialog gezogen — derselbe Fehler, nur einen
+Anschlag später. Ein Unit-Fall hält genau das fest.
+
+Nachher deckt sich die Spur **Schritt für Schritt** mit dem Arm ohne Falle: zwei Halte in der
+Trefferliste der Palette, dann `<body>`, dann der Hintergrund. 0 von 4 im Dialog, in allen
+vier Läufen (2 Bündel × 2 Größen).
+
+**Was NICHT dazugehört, und warum — in beiden Armen nachgemessen statt vermutet:**
+
+| Blende | z-index | mit Falle | ohne Falle | Urteil |
+| --- | --- | --- | --- | --- |
+| Befehlspalette (`.cp-overlay.cp-visible`) | 1000 | 4/4 im verdeckten Dialog | 2 Halte in der Palette | **Regression, behoben** |
+| Kürzel-Blende (`?`) | 2000 | 4/4 im verdeckten Dialog | 4/4 im verdeckten Dialog | vorbestehend, nicht aufgenommen |
+| Schnell-Referenz (`/`) | 600 | 4/4 im Dialog, **nicht** verdeckt | 4/4 in der Blende, **verdeckt** | Falle verbessert die Lage |
+
+Die Kürzel-Blende hat keine eigenen Haltepunkte — es gibt dort nichts zu entziehen. Ein
+unbelegter Selektor in einem Zweig, der bei **jedem** Tabulatordruck der App läuft, ist keine
+Vorsichtsmaßnahme, sondern ungemessener Code. Die Schnell-Referenz liegt **unter** der
+Dialogfläche; ohne Falle sind ihre Reiter verdeckt erreichbar.
+
+**Kosten des neuen Zweigs**, je Tabulatordruck (Party, 20 Einträge je Typ, 9147 Knoten):
+
+| Fassung | je Aufruf |
+| --- | --- |
+| `querySelector('.cp-overlay.cp-visible')` | 8,05 µs |
+| `activeElement.closest(…)` | 0,05 µs |
+| lebende Sammlung + `classList` (jetzt) | **unter der Messgrenze** |
+
+Dieselbe Begründung wie bei den Schalen und derselbe Fehler, den `f391b0b` gerade behoben
+hat. Der Zweig steht außerdem **hinter** `oberstesModal()`: ohne offenen Dialog kostet er gar
+nichts, die 1,5-µs-Bilanz des Normalfalls bleibt unberührt, Fall (i) grün.
+
+**Der Lauf von Runde 1** (Stand `73ef15a`, beide Bündel frisch gebaut, nichts sonst auf der
+Maschine):
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `npx jest` | **2244 / 2244** in 81 Suiten (vorher 2233; +11 Unit-Fälle) |
+| `npx playwright test` | **713 bestanden / 39 übersprungen / 4 Fehlschläge** von 756 (vorher 753; +3 Fälle) |
+| `npm run lint` | Exit 0, **genau 363** Warnungen, 0 Fehler |
+| `npm run typecheck` / `:strict` | Exit 0 / Exit 0 |
+| `python -m pytest tests/build` | **30 / 30** (an `b5f8526` noch 29 / 1 — siehe unten) |
+| beide Builds | Exit 0 |
+| `sync-aktenlage-anker --check` | 0 Abweichungen bei 123 Ankern |
+| `sync-editor-toolbars --check` | 22 / 22 synchron |
+| Ratschen | Dubletten 0, `!important` 104, Inline-Stile 251 — unverändert (`git diff` über `assets/**`, `*.css`, `*.html`: **0 Dateien**) |
+
+**Alle vier Fehlschläge sind `eingaberahmen.spec.js`** (Fall 1 in dark/light/sepia, Fall 2) und
+**vorbestehend** — reine 30-s-Zeitüberschreitungen unter paralleler Last, 0 verletzte
+Zusicherungen im ganzen Lauf. Isoliert mit einem Arbeiter: **12 / 12** (3,2 min). Es sind vier
+statt der fünf, die der Abschlusslauf der Einheit zählte; die Menge schwankt mit der Last, die
+Ursache nicht. Zusätzlich isoliert nachgefahren, alles grün: `fokusring.spec.js` gated **11/11**
+(5,6 min — der Lauf, der durch sechs Modale in vier Themes tabuliert und damit genau im
+Wirkungsbereich der Falle liegt), `tastatur-erreichbarkeit` + `tastatur-ausloesung` +
+`tastenhilfen` zusammen **45/45**.
+
+**Zwei Gates hatte die Einheit rot gelassen; beide sind in Runde 1 nachgezogen** (`73ef15a`):
+
+- **`tests/build/test_build_deduplication.py` erwartete 140 Module in `loader.js`.** Mit
+  `f55df5f` kam `ui/modal-focus.js` dazu, die Zahl blieb stehen — das Gate war seit `f55df5f`
+  rot. An `b5f8526` nachgeprüft: 29 bestanden, 1 Fehlschlag, bei `loader.js` und `tests/build/`
+  unberührt von meinen Commits. Der Commit `511aca5` („die Gates ihre Pflege") hat die
+  jest-Gates gepflegt, dieses Python-Gate nicht. **Wer ein Modul in `loader.js` registriert,
+  muss BEIDE Seiten anfassen** — die Datei führt dafür eine Chronik, in der jetzt auch T-D steht.
+- **Das Abdeckungs-Gate zählte einen Kommentar als Test.** Mein neuer Fall (j) nannte den
+  Modulpfad von `hp-calculator.js` als ganze Zeichenkette im Erklärtext;
+  `tests/unit/module-test-coverage.test.js` sucht Modulpfade wörtlich in **jeder** Datei unter
+  `tests/` und wollte darauf einen Eintrag aus der Ausnahmeliste streichen lassen, obwohl kein
+  Test für das Modul existiert. Genau die Falle, die die Einheit in dieser Akte schon
+  beschrieben hat. Der Pfad steht jetzt zerlegt, wie bei `command-palette.js` und
+  `navigation.js` in derselben Datei.
+
+**Was in Runde 1 geprüft und NICHT geändert wurde**
+
+- **Escape schließt bei offener Palette den Dialog und lässt die Palette offen.** In beiden
+  Armen identisch, also **vorbestehend** und nicht von der Falle verursacht. Gehört zum
+  Escape-Zweig, nicht zur Fokusführung.
+- **Der vierte Tabulatordruck bei offener Palette erreicht einen verdeckten
+  Hintergrundknopf** (die Umzugs-Blende). Das ist genau der Ausgangsstand ohne diese Datei —
+  die Palette hat keine eigene Falle, und ihr eine zu bauen wäre eine Entscheidung ohne
+  Auftrag.
+- **`?` und `/`** siehe Tabelle oben: beides kein Befund dieser Einheit.
 
 ### Der Suitenlauf, und welche Fehlschläge NICHT von hier kommen
 
@@ -8249,14 +8409,18 @@ Die 689 liegen also um 5 zu niedrig; meine eigenen Läufe gehen auf (752 vor dem
 ### Abnahme nachfahren
 
 ```bash
-# Die Verhaltensfaelle (15, davon vier je Kampagnengroesse; (d) braucht Minuten)
+# Die Verhaltensfaelle (18 nach Runde 1, davon fuenf je Kampagnengroesse;
+# (d) braucht Minuten, (j) und (k) sind die zwei Faelle aus Runde 1)
 npx playwright test tests/e2e/features/modal-fokus.spec.js
 
-# Die Modullogik isoliert (28 Faelle, jsdom)
+# Die Modullogik isoliert (39 Faelle nach Runde 1, jsdom)
 npx jest tests/unit/modal-focus.test.js
 
 # Die drei Gates, die auf ein neues Modul reagieren
 npx jest tests/unit/console-hygiene.test.js tests/unit/eslint-globals-freshness.test.js tests/unit/module-test-coverage.test.js
+
+# Das VIERTE Gate zum neuen Modul — Python, und in Runde 1 erst nachgezogen
+python -m pytest tests/build -q
 
 # Die Grenzfall-Datei, an der die Leistungsregression auffiel
 npx playwright test tests/e2e/features/eingaberahmen.spec.js --workers=1
