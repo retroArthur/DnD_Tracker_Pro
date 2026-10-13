@@ -233,8 +233,22 @@ function mitStack(familie) {
 //
 // Plattformunabhaengig, weil beide Seiten dieselbe GEBUENDELTE Datei gegen
 // denselben generischen Rueckfall stellen — keine benannte Systemschrift.
+//
+// WIEVIEL SIGNAL DA IST, gemessen und nicht geschaetzt. Je Wiederholung und
+// je 16px ist der Abstand klein; die Zahlen stammen aus dem Messweg von
+// Teil 3 (Rueckfall `Arial, sans-serif`, 8 Wiederholungen, 16px):
+//     Roboto 41.50px · Source Sans Pro 39.98px · Inter 10.31px
+//     Poppins 0.296875px   <- der schwaechste Fall, und er bestimmt die Wahl
+// Poppins traegt von den vier gewaehlten Zeichen nur U+0020 und U+00A0 mit
+// eigenem Vorschub (U+02BC und U+0901 sind Modifikator bzw. kombinierend,
+// also ohne Breite), und sein Leerzeichen liegt nah an dem von Arial. 48
+// Wiederholungen bei 40px heben diesen Fall auf rund 4.5px — Faktor 4.5 vor
+// der Schwelle. Auf `ubuntu-latest` ist der Abstand GROESSER, nicht kleiner:
+// dort fehlt Arial, der Rueckfall loest auf sans-serif (DejaVu/Liberation)
+// auf, und dessen Leerzeichen liegt deutlich weiter weg. Windows ist also
+// der unguenstige Fall, und er ist hier gemessen.
 // ----------------------------------------------------------------------
-const KONTROLL_WIEDERHOLUNGEN = 8;
+const KONTROLL_WIEDERHOLUNGEN = 48;
 const KONTROLL_ZEICHEN_MAX = 4;
 // Ab welchem Abstand in Pixel die Kontrolle als "unterscheidbar" gilt. 1px
 // bei 40px Messgroesse — dieselbe Schwelle wie die mono/serif-Kontrolle in
@@ -341,15 +355,25 @@ function rueckfallStack(stack) {
 // Faces erzwingen, auf `ready` warten, dann Breiten abnehmen. Sie gibt den
 // Face-Status mit zurueck, damit Teil 0 beweisen kann, dass zum Messzeitpunkt
 // wirklich geladen war (Messfalle 2).
+//
+// `eintrag.text` ueberschreibt den gemeinsamen Probetext fuer EINEN Eintrag.
+// Das brauchen die Kontrollen: sie messen mit einem Zeichen, das die Datei
+// traegt, waehrend alle anderen Eintraege beim Probetext bleiben. Erzwungen
+// geladen wird ueber die Vereinigung aller vorkommenden Texte — sonst waere
+// der Kontrollglyph beim Messen moeglicherweise noch nicht da und die
+// Kontrolle meldete faelschlich "traegt nichts bei".
 // ----------------------------------------------------------------------
 async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESSE) {
     return page.evaluate(
         async ({ stapel, text, groesse }) => {
+            const ladeText = [
+                ...new Set([...text, ...Object.values(stapel).flatMap(e => [...(e.text || '')])])
+            ].join('');
             const paare = [];
             document.fonts.forEach(ff => paare.push([ff.family, ff.weight]));
             for (const [familie, gewicht] of paare) {
                 try {
-                    await document.fonts.load(`${gewicht} 16px "${familie}"`, text);
+                    await document.fonts.load(`${gewicht} 16px "${familie}"`, ladeText);
                 } catch (e) {
                     /* Status wird unten mitgemeldet; hier nicht werfen. */
                 }
@@ -374,7 +398,7 @@ async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESS
                     `font-weight:${eintrag.gewicht || 400};` +
                     'font-style:normal;letter-spacing:0;word-spacing:0;' +
                     'white-space:pre;display:inline-block;';
-                span.textContent = text;
+                span.textContent = eintrag.text || text;
                 host.appendChild(span);
                 breiten[name] = span.getBoundingClientRect().width;
             }
@@ -749,6 +773,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             await tippeProbetext(page);
 
             const befunde = [];
+            const stummeKontrollen = [];
             let gemessen = 0;
             for (const familie of CSS_FAMILIEN) {
                 const eintrag = Object.entries(menue).find(
@@ -760,17 +785,17 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 await waehleSchrift(page, schluessel);
 
                 const messung = await page.evaluate(
-                    ({ editorId, rueckfall, kontrollZeichenText }) => {
+                    ({ editorId, rueckfall, kontrollZeichenText, kontrollGroesse }) => {
                         const el = document.querySelector(`#${editorId} font[face]`);
                         const cs = getComputedStyle(el);
                         const host = document.createElement('div');
                         host.style.cssText =
                             'position:absolute;left:-99999px;top:0;visibility:hidden;';
                         document.body.appendChild(host);
-                        const mach = (familie, text = el.textContent) => {
+                        const mach = (familie, text = el.textContent, groesse = cs.fontSize) => {
                             const s = document.createElement('span');
                             s.style.cssText =
-                                `font-family:${familie};font-size:${cs.fontSize};` +
+                                `font-family:${familie};font-size:${groesse};` +
                                 `font-weight:${cs.fontWeight};font-style:${cs.fontStyle};` +
                                 `letter-spacing:${cs.letterSpacing};` +
                                 `word-spacing:${cs.wordSpacing};` +
@@ -792,8 +817,16 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                             text: el.textContent,
                             lebend: el.getBoundingClientRect().width,
                             rueckfall: mach(rueckfall),
-                            kontrolle: mach(rechnerFamilie, kontrollZeichenText),
-                            kontrolleRueckfall: mach(rueckfall, kontrollZeichenText)
+                            // Die Kontrolle bei der groesseren Messgroesse,
+                            // sonst ist ihr Signal fuer Poppins kleiner als
+                            // die Rundung auf Geraetepixel (gemessen 0.3px
+                            // bei 16px). Derselbe Messweg, nur lauter.
+                            kontrolle: mach(rechnerFamilie, kontrollZeichenText, kontrollGroesse),
+                            kontrolleRueckfall: mach(
+                                rueckfall,
+                                kontrollZeichenText,
+                                kontrollGroesse
+                            )
                         };
                         host.remove();
                         return ergebnis;
@@ -801,7 +834,8 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     {
                         editorId: EDITOR_ID,
                         rueckfall: rueckfallStack(stack),
-                        kontrollZeichenText: kontrollText(dateienDerFamilie(familie))
+                        kontrollZeichenText: kontrollText(dateienDerFamilie(familie)),
+                        kontrollGroesse: MESSGROESSE
                     }
                 );
 
@@ -826,18 +860,21 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 // DIE KONTROLLE, hier am echten Menueweg: mit einem Zeichen,
                 // das die Dateien dieser Familie TRAGEN, muss derselbe
                 // Rechnerstil breiter oder schmaler rendern als der Rueckfall.
+                // Gesammelt und am Ende als Liste gemeldet, wie die Befunde
+                // daneben — eine Summe wuerde den ersten Treffer verdecken.
                 const zeichen = kontrollZeichenNamen(dateienDerFamilie(familie));
                 expect(
                     zeichen.length,
                     `${familie} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
                 ).toBeGreaterThan(0);
-                expect(
-                    Math.abs(messung.kontrolle - messung.kontrolleRueckfall),
-                    `${familie}: der Rechnerstil "${messung.rechnerFamilie}" rendert ` +
-                        `${zeichen.join(' ')} — Zeichen, die diese Familie laut cmap ` +
-                        `TRAEGT — genau so breit wie der Rueckfall. Dann misst Teil 3 ` +
-                        `die Familie nicht und der Vergleich unten sagt nichts.`
-                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+                const abstand = Math.abs(messung.kontrolle - messung.kontrolleRueckfall);
+                if (abstand <= KONTROLL_MINDESTABSTAND) {
+                    stummeKontrollen.push(
+                        `${familie}: Rechnerstil "${messung.rechnerFamilie}" rendert ` +
+                            `${zeichen.join(' ')} nur ${abstand}px anders als der ` +
+                            `Rueckfall "${messung.rueckfallStack}"`
+                    );
+                }
                 gemessen++;
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
@@ -868,6 +905,15 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 }
             }
             expect(gemessen, 'keine einzige Familie wurde gemessen').toBe(CSS_FAMILIEN.length);
+            // Erst die Kontrolle, dann der Befund: ist die Messung an dieser
+            // Stelle blind, sagt der Befund darunter nichts.
+            expect(
+                stummeKontrollen,
+                `Fuer diese Familien ist der Messweg von Teil 3 nicht empfindlich: er ` +
+                    `nennt die Familie, misst mit Zeichen, die sie laut cmap TRAEGT, und ` +
+                    `rendert trotzdem wie der Rueckfall. Dann ist die Gleichheit beim ` +
+                    `Probetext kein Befund, sondern eine Eigenschaft der Messung.`
+            ).toEqual([]);
             expect(
                 befunde,
                 'Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text GENAU so ' +
