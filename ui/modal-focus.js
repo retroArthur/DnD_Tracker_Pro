@@ -392,6 +392,92 @@ const ModalFocus = {
     },
 
     /**
+     * EINMAL NACHFASSEN, nachdem der Fokus gesetzt ist.
+     *
+     * WARUM ES DAS BRAUCHT — Befund von Runde 2, gemessen und nicht vermutet.
+     * Die zwei Stufen in `kehreZurueck()` deckten nur EINE der beiden
+     * Reihenfolgen ab. Die andere ist die haeufigere: der Dialog schliesst
+     * SICH SELBST und zeichnet DANACH neu. `saveCustomEffect()` tut genau das
+     * — `hideModal('effect-modal')`, dann `renderInit()`
+     * (initiative-combat-widgets.js:97/98). Dann laeuft `kehreZurueck()` noch
+     * VOR dem Neuzeichnen, Stufe 1 greift korrekt, und das DANACH laufende
+     * Neuzeichnen zerstoert den gerade fokussierten Knoten. Stufe 2 kann dort
+     * nichts retten: sie laeuft nur, wenn der Knoten beim Schliessen schon
+     * fehlte.
+     *
+     * Gemessen am gebauten Buendel, gefuellte Kampagne, 1440 px, nur echte
+     * Tastendruecke, beide Groessen identisch (Ausgangslage HEAD b6a7f37):
+     *
+     *   Initiative / Effekt-Dialog     Fokus auf BODY,  6 weitere echte Tabs
+     *   Party / Zustands-Dialog        Fokus auf BODY, 13 weitere echte Tabs
+     *   Kontrollarm (Escape, ohne Wirkung)   Fokus auf dem Oeffner, 0 Tabs
+     *
+     * Die Spur am Haken nagelt die Reihenfolge fest: "nach kehreZurueck:
+     * BUTTON[show-add-effect], Fokusknoten im Dokument=true", dann "Mikrotask
+     * danach: BODY, gemerkter Knoten im Dokument=false".
+     *
+     * BREITE: 26 Aufrufstellen im Quellbaum rufen `hideModal(...)` und
+     * innerhalb von sechs Zeilen danach eine `render*()`-Funktion (eigener
+     * statischer Lauf ueber features/, systems/, ui/), u. a.
+     * initiative-combat-widgets.js:97/408/650, conditions.js:86,
+     * rest-manager.js:258, render-loot.js:201, render-spells.js:296,
+     * random-tables.js:573, shops-core.js:317/788.
+     *
+     * WARUM EIN MIKROTASK UND KEIN `requestAnimationFrame`. Beide wurden am
+     * echten Weg gegeneinander gemessen (Effekt-Dialog, beide Groessen, nur
+     * echte Tastendruecke): BEIDE greifen, beide landen auf dem
+     * gleichwertigen Knopf, und in beiden greift der Zweig im Kontrollarm
+     * NICHT (0 Griffe bei Escape ohne Wirkung). Der Mikrotask gewinnt aus
+     * zwei Gruenden: er laeuft einen Rahmen FRUEHER — der Fokus liegt also
+     * keinen Bildaufbau lang auf `<body>` — und er laeuft auch dann, wenn
+     * `requestAnimationFrame` gedrosselt ist. Die naechste Stufe nach dem
+     * Mikrotask waere ein eigener Task (`setTimeout`); die braeuchte es nur,
+     * wenn eine Aufrufstelle das Neuzeichnen VERZOEGERT. Nachgesehen: unter
+     * allen Stellen, die hinter `hideModal(...)` ein `setTimeout` oder
+     * `requestAnimationFrame` stehen haben, ist genau eine
+     * (`systems/undo.js:752`), und die zeichnet nicht neu, sondern wechselt
+     * die Ansicht — ihr Rumpf ist ausserdem nachweislich toter Code. Also
+     * gibt es dafuer keinen gemessenen Fall und folglich keinen Zweig.
+     *
+     * KOSTEN, am echten Weg gemessen, je Schliessvorgang GENAU EINMAL:
+     *
+     *   Pruefung greift NICHT (der haeufige Fall)       0,000 ms
+     *   Pruefung greift (Suche + focus)        bis zu   1,8  ms
+     *
+     * Der haeufige Fall kostet nichts, weil die Pruefung mit zwei Vergleichen
+     * abbricht: `sucheGleichwertigen()` wird erst gerufen, wenn der Fokus
+     * wirklich auf `<body>` gefallen und der gesetzte Knoten wirklich weg
+     * ist. Der `_tab()`-Zweig, der bei JEDEM Tabulatordruck der ganzen App
+     * laeuft, ist davon vollstaendig unberuehrt — hier haengt nichts am
+     * Tastendruck, sondern am Schliessen eines Dialogs.
+     *
+     * DIE ZWEI BEDINGUNGEN SIND BEIDE TRAGEND, und zwar als UND:
+     *
+     *  - `activeElement` auf `<body>`/`<html>`: damit sind die Faelle
+     *    ausgenommen, in denen ein Oeffner oder eine Renderfunktion den Fokus
+     *    BEWUSST selbst woanders hinsetzt. Dort wird nichts ueberschrieben.
+     *  - der gesetzte Knoten ist nicht mehr im Dokument: nur das ist der
+     *    gemessene Schaden. Steht er noch (und ist nur unsichtbar geworden),
+     *    darf er nicht durch einen fremden sichtbaren ersetzt werden — das
+     *    ist dieselbe Begruendung, aus der Stufe 2 hinter Stufe 1 steht.
+     *
+     * Ohne Kennung (ein Oeffner ohne `data-action`) gibt es nichts zu suchen;
+     * dann wird kein Mikrotask geplant.
+     * @param {Element} gesetzt Der Knoten, den `kehreZurueck()` fokussiert hat.
+     * @param {{aktion: string, id: string, typ: string, wert: string}|undefined} kennung
+     */
+    _nachfassen(gesetzt, kennung) {
+        if (!gesetzt || !kennung || !kennung.aktion) return;
+        Promise.resolve().then(() => {
+            const a = document.activeElement;
+            if (a !== document.body && a !== document.documentElement) return;
+            if (document.contains(gesetzt)) return;
+            const ersatz = this.sucheGleichwertigen(kennung);
+            if (ersatz) ersatz.focus();
+        });
+    },
+
+    /**
      * Beschriftet die Schale fuer Vorlesesoftware (O-8). Vorbild im Haus:
      * `features/command-palette/command-palette.js:20-22`.
      *
@@ -452,6 +538,20 @@ const ModalFocus = {
      * GLEICHWERTIGE an derselben Stelle gesucht (dieselbe `data-action`,
      * `data-id`, `data-type`, `data-value`). Erst wenn auch der fehlt,
      * bleibt der Fokus, wo er ist — statt irgendwohin zu springen.
+     *
+     * UND DANACH EINMAL NACHFASSEN, der Befund von Runde 2. Die zwei Stufen
+     * oben entscheiden nach dem Zustand ZUM ZEITPUNKT DES SCHLIESSENS — und
+     * bei der haeufigeren der beiden Reihenfolgen (`hideModal()` zuerst,
+     * `render*()` danach) ist der Oeffner da noch vollstaendig in Ordnung und
+     * verschwindet erst danach. Begruendung, Messung und die Wahl des
+     * Zeitpunkts stehen an `_nachfassen()`.
+     *
+     * Beide Stufen fassen nach, nicht nur die erste: es ist derselbe Aufruf,
+     * die Pruefung ist in sich begrenzt (sie greift nur, wenn der von IHR
+     * gesetzte Knoten verschwunden ist), und auch ein Dialog, der nach dem
+     * Schliessen ZWEIMAL zeichnet, bleibt damit versorgt. Nachgefasst wird
+     * genau einmal je Schliessvorgang; `_nachfassen()` plant sich nicht
+     * selbst neu.
      * @param {Element} m
      */
     kehreZurueck(m) {
@@ -467,6 +567,7 @@ const ModalFocus = {
         if (ziel && document.contains(ziel) && typeof ziel.focus === 'function') {
             if (!this.sichtbar(ziel)) return;
             ziel.focus();
+            this._nachfassen(ziel, kennung);
             return;
         }
         // Stufe 2: der gleichwertige Knopf an derselben Stelle. OHNE Stufe 1
@@ -474,7 +575,10 @@ const ModalFocus = {
         // darf nicht durch einen fremden sichtbaren ersetzt werden.
         if (!ziel) return;
         const ersatz = this.sucheGleichwertigen(kennung);
-        if (ersatz) ersatz.focus();
+        if (ersatz) {
+            ersatz.focus();
+            this._nachfassen(ersatz, kennung);
+        }
     },
 
     /**
