@@ -1306,6 +1306,39 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
             expect(CSS_FAMILIEN.length, 'fonts.css liefert keine Familien').toBeGreaterThanOrEqual(
                 MINDEST_CSS_FAMILIEN
             );
+            // UND DIE VORAUSSETZUNG DER EIGENEN BLINDKONTROLLE, aus demselben
+            // Grund (Gegenpruefung Runde 4, Befund 2). Die Gegenprobe unten
+            // vergleicht zwei Spannen mit FREMD_TEXT. Kann das Werkzeug kein
+            // ungetragenes Zeichen mehr benennen, ist FREMD_CODEPUNKT `null`
+            // und FREMD_TEXT der LEERE String — dann tragen beide Spannen
+            // nichts, messen beide 0, und `messung.fremd !== messung.
+            // fremdRueckfall` wird nie wahr. Die Kontrolle laeuft also still
+            // mit und prueft nichts.
+            //
+            // NACHGESTELLT: `leseCmap()` im Werkzeug behauptet, jeder
+            // Codepunkt sei getragen (`for (let c = 0x20; c < 0x3000; c++)`).
+            //     $ npx playwright test ...schriftdateien.spec.js
+            //       3 failed / 13 passed — Teil 0, Teil 1 und Teil 2,
+            //       TEIL 3 BLIEB GRUEN.
+            //     $ npx jest tests/unit/schriftdateien.test.js
+            //       7 failed / 68 passed / 75
+            // Heute harmlos, weil Teil 0 denselben Zustand mit eigener
+            // Meldung rot stellt und der Lauf ohnehin steht — aber Teil 0
+            // liegt in einem FREMDEN describe, und ein gezielter
+            // `--grep "Teil 3"`-Lauf traegt seine Aussage nicht mit. Dieselbe
+            // Begruendung wie bei der Familienuntergrenze darueber.
+            expect(
+                FREMD_CODEPUNKT,
+                'Das Werkzeug kann kein ungetragenes Zeichen benennen — dann ist die ' +
+                    'Blindkontrolle dieses Falls nicht durchfuehrbar und wuerde zwei leere ' +
+                    'Spannen vergleichen.'
+            ).not.toBeNull();
+            expect(
+                FREMD_TEXT.length,
+                `FREMD_TEXT ist ${FREMD_TEXT.length} Zeichen lang, erwartet ` +
+                    `${FREMD_WIEDERHOLUNGEN}. Mit leerem Text messen beide Seiten der ` +
+                    `Blindkontrolle 0, und 0 === 0 erfuellt sie, ohne etwas zu pruefen.`
+            ).toBe(FREMD_WIEDERHOLUNGEN);
             await ladeApp(page);
             // DER LADEZWANG. Dieser Fall misst an `messeBreiten()` vorbei
             // (eigenes `page.evaluate`), bekommt also deren erzwungenes
@@ -1359,6 +1392,21 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                             'position:absolute;left:-99999px;top:0;visibility:hidden;';
                         document.body.appendChild(host);
                         const mach = (familie, text = el.textContent, groesse = cs.fontSize) => {
+                            // LEERER TEXT IST EIN FEHLER, keine Messung von 0.
+                            // Ein Standardparameter greift bei `''` NICHT, und
+                            // zwei leere Spannen sind bitgleich 0 breit — die
+                            // Blindkontrolle unten waere damit erfuellt, ohne
+                            // etwas verglichen zu haben (Befund 2). Oben steht
+                            // dieselbe Voraussetzung als Zusicherung; hier
+                            // steht sie an der Stelle, an der sie gebrochen
+                            // wuerde.
+                            if (!text || text.length === 0) {
+                                throw new Error(
+                                    `mach("${familie}") wurde mit leerem Text gerufen. ` +
+                                        `Zwei leere Spannen messen beide 0 und machen jede ` +
+                                        `Gleichheitskontrolle dieses Falls wertlos.`
+                                );
+                            }
                             const s = document.createElement('span');
                             s.style.cssText =
                                 `font-family:${familie};font-size:${groesse};` +
