@@ -437,3 +437,126 @@ describe('ModalFocus.statistik — Diagnose', () => {
         expect(ModalFocus.statistik().offen).toBeNull();
     });
 });
+
+describe('ModalFocus — der gleichwertige Oeffner, wenn der echte neu gezeichnet wurde', () => {
+    /**
+     * Einen Oeffnerknopf mit Kennung bauen.
+     * @param {Record<string,string>} daten
+     */
+    function knopf(daten) {
+        const b = document.createElement('button');
+        Object.entries(daten).forEach(([k, v]) => b.setAttribute('data-' + k, v));
+        document.body.appendChild(b);
+        return b;
+    }
+
+    test('der ersetzte Oeffner bekommt den Fokus, nicht <body>', () => {
+        // DER BEFUND VON RUNDE 1 in seiner kleinsten Form. Am Buendel
+        // gemessen: `applyHpChange()` ruft `renderInit()`, der Knopf, von dem
+        // aus geoeffnet wurde, ist danach ein ANDERER Knoten — und der Fokus
+        // landete auf <body>, 47 echte Tabulatorspruenge vom Ziel entfernt.
+        const alt = knopf({ action: 'show-hp-calculator', id: '1', type: 'combatant' });
+        alt.focus();
+        const m = schale('g1-modal', '<button>im Dialog</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        // Die Liste wird neu gezeichnet: alter Knoten weg, gleichwertiger da.
+        alt.remove();
+        const neu = knopf({ action: 'show-hp-calculator', id: '1', type: 'combatant' });
+
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(neu);
+    });
+
+    test('ein Knopf mit anderer id ist NICHT gleichwertig', () => {
+        // Sonst landete der Fokus am falschen Kaempfer — schlimmer als
+        // <body>, weil die naechste Leertaste dort etwas tut.
+        const alt = knopf({ action: 'show-hp-calculator', id: '1', type: 'combatant' });
+        alt.focus();
+        const m = schale('g2-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        alt.remove();
+        knopf({ action: 'show-hp-calculator', id: '2', type: 'combatant' });
+
+        const vorher = document.activeElement;
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(vorher);
+    });
+
+    test('auch data-type und data-value muessen stimmen', () => {
+        // `data-value` traegt bei `show-modal` die Schalen-ID. Ohne diesen
+        // Vergleich gaebe der Rueckweg den Fokus an den Knopf eines FREMDEN
+        // Dialogs mit derselben Aktion.
+        const alt = knopf({ action: 'show-modal', value: 'about-modal' });
+        alt.focus();
+        const m = schale('g3-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        alt.remove();
+        knopf({ action: 'show-modal', value: 'theme-modal' });
+        const richtig = knopf({ action: 'show-modal', value: 'about-modal' });
+
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(richtig);
+    });
+
+    test('ein unsichtbarer Treffer wird uebersprungen', () => {
+        const alt = knopf({ action: 'neu-npc', id: '7' });
+        alt.focus();
+        const m = schale('g4-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        alt.remove();
+        const leer = knopf({ action: 'neu-npc', id: '7' });
+        leer.setAttribute('data-leer', ''); // 0x0 im Rect-Ersatz
+        const sichtbar = knopf({ action: 'neu-npc', id: '7' });
+
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(sichtbar);
+    });
+
+    test('ein Oeffner OHNE data-action bekommt keinen Rueckfall', () => {
+        // Das alte Verhalten bleibt: der Fokus bleibt, wo er ist. Ein
+        // Kopfzeilen-Element ohne Aktion hat keine Kennung, nach der sich
+        // suchen liesse.
+        const alt = document.createElement('button');
+        document.body.appendChild(alt);
+        alt.focus();
+        const m = schale('g5-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        alt.remove();
+        knopf({ action: 'irgendwas' });
+
+        const vorher = document.activeElement;
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(vorher);
+    });
+
+    test('ein noch stehender, nur unsichtbarer Oeffner wird NICHT ersetzt', () => {
+        // Stufe 2 darf Stufe 1 nicht ueberstimmen. Sonst gaebe ein
+        // vorruebergehend ausgeblendeter Oeffner den Fokus an einen anderen
+        // Knopf weiter, obwohl sein eigener Knoten noch steht.
+        const alt = knopf({ action: 'show-hp-calculator', id: '1' });
+        alt.focus();
+        const m = schale('g6-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        alt.setAttribute('data-leer', '');
+        const anderer = knopf({ action: 'show-hp-calculator', id: '1' });
+
+        const vorher = document.activeElement;
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(vorher);
+        expect(document.activeElement).not.toBe(anderer);
+    });
+
+    test('sucheGleichwertigen ohne Kennung gibt null', () => {
+        expect(ModalFocus.sucheGleichwertigen(undefined)).toBeNull();
+        expect(
+            ModalFocus.sucheGleichwertigen({ aktion: '', id: '', typ: '', wert: '' })
+        ).toBeNull();
+    });
+});

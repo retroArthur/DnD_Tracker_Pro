@@ -71,6 +71,7 @@
  *    keydown am Eingabefeld) und bringt role/aria-modal/aria-label schon
  *    mit. Sie in die Falle zu nehmen waere eine Verhaltensaenderung ohne
  *    Messung und ohne Auftrag.
+
  *
  * GESCHRIEBEN IST ES TROTZDEM ALS LEBENDE SAMMLUNG PLUS classList, und das
  * ist gemessen und nicht gespart. Die Falle haengt an einem keydown am
@@ -125,6 +126,43 @@ const FOKUSSIERBAR =
  * @type {WeakMap<Element, Element>}
  */
 const oeffnerVon = new WeakMap();
+
+/**
+ * Die KENNUNG des Oeffners, neben seinem Knoten.
+ *
+ * WARUM DER KNOTEN ALLEIN NICHT REICHT — Befund von Runde 1, gemessen und
+ * nicht vermutet. Der Rueckweg fiel genau dort aus, wo der Dialog etwas TUT.
+ * Am Lebenspunkte-Rechner: 42 echte Tabulatorspruenge bis "➗" am Kaempfer 1,
+ * Enter, "7" tippen, Tab, Enter — `currentHp` 30 -> 23, Wirkung korrekt und
+ * genau einmal. Aber `applyHpChange()` ruft `renderInit()`
+ * (`systems/hp-calculator.js:69-71`), die Kampfliste wird neu gezeichnet, und
+ * `document.contains(oeffner)` ist schon VOR dem Escape false. Der Knopf ist
+ * weg, ein GLEICHWERTIGER steht an seiner Stelle. Der Fokus landete auf
+ * `<body>`, und von dort waren es 47 weitere echte Tabulatorspruenge, bis
+ * wieder irgendein Rechner-Knopf erreicht war.
+ *
+ * Der Kontrollfall isoliert den Mechanismus: derselbe Dialog, sofort Escape,
+ * ohne etwas zu tun — da kehrt der Fokus zurueck. Es ist also nicht der
+ * Dialog, sondern seine Wirkung. Und es ist kein Einzelfall des
+ * Lebenspunkte-Rechners: jeder Dialog, dessen Aktion eine Liste neu zeichnet,
+ * zerstoert seinen eigenen Oeffner, wenn der Oeffner in dieser Liste steht.
+ *
+ * WAS "GLEICHWERTIG" HEISST, und warum es keine Heuristik ist. Der Verteiler
+ * baut aus `data-action`, `data-id`, `data-type` und `data-value` das
+ * Kontextobjekt, mit dem die Aktion laeuft (`ui/event-delegation.js:111-117`).
+ * Zwei Elemente mit identischen vier Werten loesen also dieselbe Handlung mit
+ * demselben Ziel aus — sie sind austauschbar, bis auf `ctx.target`. Darum ist
+ * der Rueckfall eine Gleichheitspruefung auf genau diese vier Werte und keine
+ * Suche nach Text, Klasse oder Position. Treffen mehrere, gewinnt der erste
+ * sichtbare in Dokumentreihenfolge; sie sind nach dieser Definition
+ * ohnehin austauschbar.
+ *
+ * Ein Oeffner OHNE `data-action` (ein Kopfzeilen-Element etwa, oder ein Aufruf
+ * aus der Konsole) bekommt keine Kennung und damit keinen Rueckfall — dort
+ * bleibt es beim alten Verhalten: der Fokus bleibt, wo er ist.
+ * @type {WeakMap<Element, {aktion: string, id: string, typ: string, wert: string}>}
+ */
+const oeffnerKennung = new WeakMap();
 
 /**
  * Die Oeffnungsreihenfolge je Schale, und ihr Zaehler.
@@ -225,12 +263,61 @@ const ModalFocus = {
         const a = document.activeElement;
         if (a && a !== document.body && a !== document.documentElement) {
             oeffnerVon.set(m, a);
+            // Neben dem Knoten die Kennung, fuer den Fall, dass der Dialog
+            // seinen eigenen Oeffner neu zeichnen laesst. Begruendung an
+            // `oeffnerKennung`.
+            const aktion = a.dataset ? a.dataset.action || '' : '';
+            if (aktion) {
+                oeffnerKennung.set(m, {
+                    aktion,
+                    id: a.dataset.id || '',
+                    typ: a.dataset.type || '',
+                    wert: a.dataset.value || ''
+                });
+            } else {
+                oeffnerKennung.delete(m);
+            }
         } else {
             // Kein Oeffner (Aufruf aus der Konsole, aus einem Kuerzel oder
             // beim Start). Einen alten Eintrag wegnehmen, sonst gibt der
             // Dialog den Fokus an einen Oeffner von vorletztem Mal zurueck.
             oeffnerVon.delete(m);
+            oeffnerKennung.delete(m);
         }
+    },
+
+    /**
+     * Der gleichwertige Oeffner zu einer Kennung, oder `null`.
+     *
+     * EINE ABFRAGE, UND ZWAR GENAU EINMAL JE SCHLIESSVORGANG. Hier ist ein
+     * `querySelectorAll` ausdruecklich richtig — anders als in `_tab()`, das
+     * bei JEDEM Tabulatordruck der ganzen App laeuft. Gemessen in der
+     * Party-Ansicht bei zwanzig Eintraegen je Typ (9147 Knoten,
+     * 2033 `[data-action]`-Stellen): 176 us. Einmal beim Schliessen eines
+     * Dialogs, nicht je Anschlag — fuer einen Menschen unsichtbar.
+     *
+     * Verglichen wird in JavaScript und NICHT ueber einen zusammengebauten
+     * Selektor: `data-id` und `data-value` kommen aus dem DOM, und ein
+     * Anfuehrungszeichen darin waere ein Syntaxfehler im Selektor. Eine
+     * Gleichheitspruefung auf `dataset` kann das nicht passieren.
+     * @param {{aktion: string, id: string, typ: string, wert: string}|undefined} k
+     * @returns {Element|null}
+     */
+    sucheGleichwertigen(k) {
+        if (!k || !k.aktion) return null;
+        const alle = document.querySelectorAll('[data-action]');
+        for (let i = 0; i < alle.length; i++) {
+            const kandidat = alle[i];
+            const d = kandidat.dataset;
+            if (d.action !== k.aktion) continue;
+            if ((d.id || '') !== k.id) continue;
+            if ((d.type || '') !== k.typ) continue;
+            if ((d.value || '') !== k.wert) continue;
+            if (typeof kandidat.focus !== 'function') continue;
+            if (!this.sichtbar(kandidat)) continue;
+            return kandidat;
+        }
+        return null;
     },
 
     /**
@@ -286,22 +373,37 @@ const ModalFocus = {
     },
 
     /**
-     * Der Rueckweg: Fokus auf den Oeffner, falls er noch im Dokument
-     * steht. Wird der Oeffner zwischenzeitlich neu gezeichnet (eine
-     * Listenzeile etwa), ist der Knoten weg — dann bleibt der Fokus, wo er
-     * ist, statt irgendwohin zu springen.
+     * Der Rueckweg: Fokus auf den Oeffner.
+     *
+     * ZWEI STUFEN, und die zweite ist der Befund von Runde 1. Steht der
+     * gemerkte Knoten noch im Dokument, bekommt er den Fokus. Ist er weg,
+     * weil die Aktion des Dialogs seine Liste neu gezeichnet hat, wird der
+     * GLEICHWERTIGE an derselben Stelle gesucht (dieselbe `data-action`,
+     * `data-id`, `data-type`, `data-value`). Erst wenn auch der fehlt,
+     * bleibt der Fokus, wo er ist — statt irgendwohin zu springen.
      * @param {Element} m
      */
     kehreZurueck(m) {
         if (!m) return;
-        // Beide Eintraege abraeumen: so gilt "hat eine Oeffnungsnummer" genau
+        // Alle Eintraege abraeumen: so gilt "hat eine Oeffnungsnummer" genau
         // so lange, wie die Schale offen ist.
         oeffnungsNr.delete(m);
         const ziel = oeffnerVon.get(m);
+        const kennung = oeffnerKennung.get(m);
         oeffnerVon.delete(m);
-        if (!ziel || !document.contains(ziel) || typeof ziel.focus !== 'function') return;
-        if (!this.sichtbar(ziel)) return;
-        ziel.focus();
+        oeffnerKennung.delete(m);
+        // Stufe 1: der gemerkte Knoten, falls er noch steht und sichtbar ist.
+        if (ziel && document.contains(ziel) && typeof ziel.focus === 'function') {
+            if (!this.sichtbar(ziel)) return;
+            ziel.focus();
+            return;
+        }
+        // Stufe 2: der gleichwertige Knopf an derselben Stelle. OHNE Stufe 1
+        // waere das falsch — ein noch stehender, nur unsichtbarer Oeffner
+        // darf nicht durch einen fremden sichtbaren ersetzt werden.
+        if (!ziel) return;
+        const ersatz = this.sucheGleichwertigen(kennung);
+        if (ersatz) ersatz.focus();
     },
 
     /**
