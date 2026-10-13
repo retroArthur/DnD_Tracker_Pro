@@ -8218,18 +8218,24 @@ unverändert, und die Gates bestätigen es.
 
 ### Der Suitenlauf, und welche Fehlschläge NICHT von hier kommen
 
-Sauberer Lauf, nichts sonst auf der Maschine: **708 bestanden / 39 übersprungen / 6
-Fehlschläge** von 753 Fällen (die 753 schließen meine 15 ein; der Ausgangsstand hat 738).
+Abschlusslauf gegen das fertige Bündel, nichts sonst auf der Maschine: **709 bestanden /
+39 übersprungen / 5 Fehlschläge** von 753 Fällen (die 753 schließen meine 15 ein; der
+Ausgangsstand hat 738).
 
-- **Fünf davon sind `eingaberahmen.spec.js`** (`Fall 1` in vier Themes, `Fall 2`) und
+- **Alle fünf sind `eingaberahmen.spec.js`** (`Fall 1` in vier Themes, `Fall 2`) und
   **vorbestehend**: reine 30-s-Zeitüberschreitungen, **0 verletzte Zusicherungen** im ganzen
   Lauf. T-C hat sie bereits an ihrem Ausgangsstand geführt. Isoliert mit einem Arbeiter sind
   es 12/12 — auch mit meinem Modul, nachdem die Leistungskorrektur drin ist.
-- **Der sechste war `tastatur-erreichbarkeit.spec.js`, Armaturenbrett 6/Typ** — und der ist
-  **nicht meiner**. Zwei unabhängige Belege: (1) isoliert dreimal nachgefahren, 3/3 bestanden,
-  je rund 10 s bei einer 30-s-Grenze; (2) die Messung oben zeigt, dass die Falle in genau
-  dieser Ansicht bei 200 echten Tabs **null** Mal greift und **null** Mal einen Dialog sieht.
-  Ein Fall, der unter paralleler Last über seine Zeitgrenze fällt, nicht eine Verhaltensänderung.
+- **Ein Zwischenlauf hatte zusätzlich `tastatur-erreichbarkeit.spec.js`, Armaturenbrett
+  6/Typ** — und der ist **nicht meiner**; im Abschlusslauf tritt er nicht mehr auf. Zwei
+  unabhängige Belege: (1) isoliert dreimal nachgefahren, 3/3 bestanden, je rund 10 s bei
+  einer 30-s-Grenze; (2) die Messung oben zeigt, dass die Falle in genau dieser Ansicht bei
+  200 echten Tabs **null** Mal greift und **null** Mal einen Dialog sieht. Ein Fall, der
+  unter paralleler Last über seine Zeitgrenze fällt, nicht eine Verhaltensänderung.
+- **Zwei weitere Fälle sind unter Last ebenso gefallen** und in Isolation grün (13/13):
+  `tastatur-ausloesung.spec.js` (g2) und (j), beide rund 13 s lang. Dieselbe Ursache,
+  dieselbe Entlastung — wer die Suite auf einer belasteten Maschine fährt, sollte diese
+  Dateien bei Fehlschlag zuerst isoliert nachfahren, bevor er eine Regression annimmt.
 
 **Der Basiswert „0 Fehlschläge" aus der Auftragsvorgabe stammt von `4e0d810` und galt schon an
 `392d1d3` nicht mehr** — dasselbe hat T-C festgehalten. Wer diese Datei grün haben will,
