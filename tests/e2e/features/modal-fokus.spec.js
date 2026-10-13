@@ -1277,3 +1277,215 @@ test.describe('Modalfokus — die Befehlspalette ueber einem offenen Dialog', ()
         ).toEqual([true, true, true]);
     });
 });
+
+// ============================================================================
+// (l) DER RUECKWEG BEI DER UMGEKEHRTEN REIHENFOLGE: hideModal ZUERST,
+//     render DANACH
+// ============================================================================
+test.describe('Modalfokus — der Rueckweg, wenn der Dialog NACH dem Schliessen neu zeichnet', () => {
+    for (const n of GROESSEN) {
+        test(`(l) Schliessen durch die Dialogaktion: der Fokus kehrt zurueck — ${n} Eintraege je Typ`, async ({
+            page
+        }) => {
+            // WARUM DIESER FALL NEBEN (j) STEHT, obwohl (j) denselben Satz
+            // zusichert. (j) prueft GENAU EINE Reihenfolge: der Dialog wirkt
+            // und zeichnet neu, der NUTZER schliesst danach mit Escape. Zu
+            // diesem Zeitpunkt ist der Oeffner schon weg, `kehreZurueck()`
+            // sieht das und greift zu Stufe 2.
+            //
+            // Es gibt aber die UMGEKEHRTE Reihenfolge, und sie ist die
+            // haeufigere: der Dialog schliesst SICH SELBST und zeichnet DANACH
+            // neu. `saveCustomEffect()` tut genau das —
+            // `hideModal('effect-modal')`, dann `renderInit()`
+            // (initiative-combat-widgets.js:97/98). Dann laeuft
+            // `kehreZurueck()` noch VOR dem Neuzeichnen, Stufe 1 greift
+            // korrekt, und das DANACH laufende `renderInit()` zerstoert den
+            // gerade fokussierten Knoten. Stufe 2 kann dort nichts retten:
+            // sie laeuft nur, wenn der Knoten beim Schliessen schon fehlte.
+            //
+            // Gemessen am gebauten Buendel, gefuellte Kampagne, 1440 px, nur
+            // echte Tastendruecke, beide Groessen identisch (eigener Lauf,
+            // Ausgangslage HEAD b6a7f37):
+            //
+            //   43 echte Tabs bis "Effekt" (show-add-effect, data-id=1),
+            //   Enter -> Dialog auf, Fokus innen. 17 Tabs bis #effect-name,
+            //   "Pruefeffekt" tippen, 3 Tabs bis "+ Hinzufuegen", Enter ->
+            //   effects 0 -> 1 (Wirkung korrekt). Danach: Dialog zu,
+            //   document.activeElement === BODY, Oeffnerknoten nicht mehr im
+            //   Dokument, 1 GLEICHWERTIGER im DOM, und es kostet 6 weitere
+            //   echte Tabs, bis wieder der Effekt-Knopf erreicht ist.
+            //
+            //   Die Spur am Haken (`kehreZurueck` zur Laufzeit umhuellt)
+            //   nagelt die Reihenfolge fest:
+            //     vor kehreZurueck:    BUTTON, Oeffner im Dokument = true
+            //     nach kehreZurueck:   BUTTON[show-add-effect], im Dok. = true
+            //     Mikrotask danach:    BODY, gemerkter Knoten im Dok. = false
+            //     naechster Rahmen:    BODY, gemerkter Knoten im Dok. = false
+            //
+            // DER KONTROLLARM UNTEN ISOLIERT DIE URSACHE: derselbe Dialog,
+            // Escape OHNE Wirkung — da kehrt der Fokus zurueck (identisch,
+            // 0 weitere Tabs). Der Unterschied liegt also an der Wirkung und
+            // nicht am Dialog.
+            //
+            // BREITE: 26 Aufrufstellen im Quellbaum rufen `hideModal(...)` und
+            // innerhalb von sechs Zeilen danach eine `render*()`-Funktion
+            // (eigener statischer Lauf ueber features/, systems/, ui/), u. a.
+            // conditions.js:86, rest-manager.js:258, render-loot.js:201,
+            // render-spells.js:296, random-tables.js:573,
+            // shops-core.js:317/788. Der Effekt-Dialog ist davon der
+            // kuerzeste Griff und steht hier als Stellvertreter.
+            test.setTimeout(180000);
+            await appLaden(page, n);
+            await page.evaluate(() => window.switchView('initiative'));
+            await page.waitForTimeout(600);
+
+            // --- Echte Tabulatorspruenge bis auf den Oeffner ---------------
+            const ZIEL = '[data-action="show-add-effect"][data-id="1"]';
+            let tabs = 0;
+            let getroffen = false;
+            while (tabs < 160 && !getroffen) {
+                await page.keyboard.press('Tab');
+                tabs++;
+                getroffen = await page.evaluate(
+                    sel => !!(document.activeElement && document.activeElement.matches(sel)),
+                    ZIEL
+                );
+            }
+            expect(
+                getroffen,
+                'Vorbedingung: der Effekt-Knopf am Kaempfer 1 muss per Tabulator erreichbar ' +
+                    `sein (gemessen bei ${tabs} Spruengen, Grenze 160).`
+            ).toBe(true);
+            await page.evaluate(() => {
+                window.__oeffner = document.activeElement;
+            });
+
+            // --- Kontrollarm: oeffnen, tabulieren, SOFORT Escape -----------
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(450);
+            const kontrollLage = await page.evaluate(() => {
+                const m = document.getElementById('effect-modal');
+                return {
+                    offen: !!(m && m.classList.contains('show')),
+                    innen: !!(m && m.contains(document.activeElement))
+                };
+            });
+            expect(
+                kontrollLage.offen,
+                'Vorbedingung: Enter auf dem Knopf muss den Effekt-Dialog oeffnen.'
+            ).toBe(true);
+            expect(kontrollLage.innen, 'Vorbedingung: der Fokus muss im Dialog liegen.').toBe(true);
+            for (let i = 0; i < INNEN_VOR_ESC; i++) await page.keyboard.press('Tab');
+            const kontrolleVorEsc = await page.evaluate(
+                () => document.activeElement === window.__oeffner
+            );
+            expect(
+                kontrolleVorEsc,
+                'KONTROLLE DER MESSUNG: der Fokus muss den Oeffner verlassen haben.'
+            ).toBe(false);
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(350);
+            const kontrolle = await page.evaluate(() => ({
+                aufOeffner: document.activeElement === window.__oeffner,
+                tag: document.activeElement.tagName
+            }));
+            expect(
+                kontrolle.aufOeffner,
+                'KONTROLLARM: wird im Dialog NICHTS getan, kehrt der Fokus auf den Oeffner ' +
+                    `zurueck (gemessen: ${kontrolle.tag}). Scheitert schon das, ist der ` +
+                    'Rueckweg insgesamt kaputt und nicht erst die Reihenfolge.'
+            ).toBe(true);
+
+            // --- Derselbe Dialog, diesmal BENUTZT: er schliesst sich selbst -
+            const effVor = await page.evaluate(
+                () => (window.D.initiative.combatants.find(c => c.id === 1).effects || []).length
+            );
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(450);
+            let imFeld = false;
+            let feldTabs = 0;
+            while (feldTabs < 40) {
+                imFeld = await page.evaluate(
+                    () => !!(document.activeElement && document.activeElement.id === 'effect-name')
+                );
+                if (imFeld) break;
+                await page.keyboard.press('Tab');
+                feldTabs++;
+            }
+            expect(
+                imFeld,
+                'Vorbedingung: #effect-name muss im Dialog per Tabulator erreichbar sein ' +
+                    `(gemessen bei ${feldTabs} Spruengen, Grenze 40).`
+            ).toBe(true);
+            await page.keyboard.type('Pruefeffekt');
+            let aufKnopf = false;
+            let knopfTabs = 0;
+            while (knopfTabs < 20 && !aufKnopf) {
+                await page.keyboard.press('Tab');
+                knopfTabs++;
+                aufKnopf = await page.evaluate(
+                    () =>
+                        !!(
+                            document.activeElement &&
+                            document.activeElement.matches('[data-value="saveCustomEffect"]')
+                        )
+                );
+            }
+            expect(
+                aufKnopf,
+                'Vorbedingung: der Knopf "+ Hinzufuegen" muss erreichbar sein (gemessen bei ' +
+                    `${knopfTabs} Spruengen, Grenze 20).`
+            ).toBe(true);
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(700);
+
+            const nach = await page.evaluate(sel => {
+                const el = document.activeElement;
+                const m = document.getElementById('effect-modal');
+                return {
+                    dialogOffen: !!(m && m.classList.contains('show')),
+                    effekte: (window.D.initiative.combatants.find(c => c.id === 1).effects || [])
+                        .length,
+                    oeffnerImDokument: document.contains(window.__oeffner),
+                    gleichwertigeImDom: document.querySelectorAll(sel).length,
+                    istBody: el === document.body || el === document.documentElement,
+                    aufGleichwertigem: !!(el && el.matches && el.matches(sel)),
+                    fokus:
+                        (el ? el.tagName : 'null') +
+                        (el && el.id ? '#' + el.id : '') +
+                        (el && el.getAttribute && el.getAttribute('data-action')
+                            ? '[' + el.getAttribute('data-action') + ']'
+                            : '')
+                };
+            }, ZIEL);
+            expect(
+                nach.effekte,
+                `Vorbedingung: der Dialog muss GENAU EINMAL gewirkt haben — ${effVor} plus 1. ` +
+                    `Gemessen: ${nach.effekte}.`
+            ).toBe(effVor + 1);
+            expect(
+                nach.dialogOffen,
+                'Vorbedingung: der Dialog schliesst sich durch seine eigene Aktion selbst.'
+            ).toBe(false);
+            expect(
+                nach.gleichwertigeImDom,
+                'Vorbedingung: ein gleichwertiger Oeffner muss nach dem Neuzeichnen wieder im ' +
+                    'Dokument stehen — sonst gaebe es nichts, wohin der Fokus kehren kann.'
+            ).toBeGreaterThan(0);
+            expect(
+                nach.istBody,
+                'Der Fokus darf nach dem Schliessen NICHT auf <body> liegen. Gemessen vor der ' +
+                    `Behebung: ${nach.fokus}, Oeffner im Dokument=${nach.oeffnerImDokument} — ` +
+                    'und von dort sind es 6 weitere echte Tabulatorspruenge zurueck. Die ' +
+                    'Reihenfolge ist hier hideModal ZUERST, renderInit DANACH: Stufe 1 greift, ' +
+                    'und das Neuzeichnen zerstoert den gerade fokussierten Knoten.'
+            ).toBe(false);
+            expect(
+                nach.aufGleichwertigem,
+                'Der Fokus gehoert auf die Schaltflaeche zurueck, die den Dialog geoeffnet hat ' +
+                    '— und wenn deren Knoten NACH dem Schliessen neu gezeichnet wurde, auf die ' +
+                    `GLEICHWERTIGE an derselben Stelle. Gemessen: ${nach.fokus}.`
+            ).toBe(true);
+        });
+    }
+});
