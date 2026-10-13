@@ -53,22 +53,48 @@
 // Schalen-Selektor.
 
 /**
- * Die Schalen, die als Dialog gelten. `.modal-overlay.show` deckt die 35
- * Vorlagen-Schalen UND die zur Laufzeit erzeugten ab: auch die tragen
- * `.modal-overlay` und werden ueber `showModal()` sichtbar gemacht, das
- * `show` setzt (nachgelesen an `features/timeline/timeline-render.js:281`).
+ * WAS ALS DIALOG GILT. In Selektorschreibweise waere es
+ * `.modal-overlay.show, #quicknotes-modal.show`:
  *
- * `#quicknotes-modal.show` ist der namentliche Nachtrag fuer die eine
- * Schale mit `.modal-backdrop`. Die Klasse `show` MUSS im Selektor stehen:
- * der Knoten liegt dauerhaft im Dokument und waere sonst immer "offen".
+ *  - `.modal-overlay` deckt die 35 Vorlagen-Schalen UND die zur Laufzeit
+ *    erzeugten ab. Auch die tragen die Klasse und werden ueber
+ *    `showModal()` sichtbar gemacht, das `show` setzt (nachgelesen an
+ *    `features/timeline/timeline-render.js:281`).
+ *  - `#quicknotes-modal` ist der namentliche Nachtrag fuer die eine Schale
+ *    mit `.modal-backdrop`.
+ *  - `show` MUSS mitgeprueft werden: die Vorlagen-Schalen liegen dauerhaft
+ *    im Dokument und waeren sonst alle immer "offen".
+ *  - Die Befehlspalette (`.cp-overlay.cp-visible`) gehoert ABSICHTLICH NICHT
+ *    dazu. Sie fuehrt ihre Tastatur selbst (`command-palette.js:41`, ein
+ *    keydown am Eingabefeld) und bringt role/aria-modal/aria-label schon
+ *    mit. Sie in die Falle zu nehmen waere eine Verhaltensaenderung ohne
+ *    Messung und ohne Auftrag.
  *
- * Die Befehlspalette (`.cp-overlay.cp-visible`) steht ABSICHTLICH NICHT
- * hier. Sie fuehrt ihre Tastatur selbst (`command-palette.js:41`, ein
- * keydown am Eingabefeld) und bringt role/aria-modal/aria-label schon
- * mit. Sie in die Falle zu nehmen waere eine Verhaltensaenderung ohne
- * Messung und ohne Auftrag.
+ * GESCHRIEBEN IST ES TROTZDEM ALS LEBENDE SAMMLUNG PLUS classList, und das
+ * ist gemessen und nicht gespart. Die Falle haengt an einem keydown am
+ * Dokument und wird bei JEDEM Tabulatordruck der ganzen App gefragt, auch
+ * wenn gar kein Dialog offen ist. In der Party-Ansicht bei zwanzig
+ * Eintraegen je Typ (10 820 Knoten, 35 Schalen) kostet ein Aufruf:
+ *
+ *   querySelectorAll(selektor)                        169,5 us
+ *   querySelector(selektor)                           179,4 us
+ *   lebende Sammlung + classList (diese Fassung)         1,5 us
+ *
+ * Also 110-fach. Auf 2000 Tabulatordruecke gerechnet waren das 369 ms
+ * gegenueber 6,8 ms ohne das Modul — fuer einen Menschen unsichtbar, aber
+ * es ist Arbeit, die bei jedem Tastendruck fuer nichts geleistet wird, und
+ * sie hat einen Grenzfall der E2E-Suite ueber seine Zeitgrenze geschoben.
+ *
+ * Die Bedeutung bleibt dieselbe: `getElementsByClassName` gibt eine von der
+ * DOM-Maschine gepflegte, LEBENDE Sammlung — zur Laufzeit angehaengte
+ * Schalen stehen automatisch darin —, und `show` wird je Knoten einzeln
+ * geprueft. Kein Verlust an Verlaesslichkeit, nur billiger.
+ * `getComputedStyle` kommt erst dazu, wenn eine Schale `show` traegt; im
+ * Normalfall (nichts offen) gar nicht.
  */
-const MODAL_SCHALEN = '.modal-overlay.show, #quicknotes-modal.show';
+const SCHALEN_KLASSE = 'modal-overlay';
+const SCHALE_OHNE_KLASSE = 'quicknotes-modal';
+const schalenSammlung = document.getElementsByClassName(SCHALEN_KLASSE);
 
 /**
  * Was als Haltepunkt zaehlt. Dieselbe Liste, die auch die Vermessung und
@@ -148,10 +174,20 @@ const ModalFocus = {
      * @returns {Element|null}
      */
     oberstesModal() {
-        const offen = Array.from(document.querySelectorAll(MODAL_SCHALEN)).filter(n => {
+        const offen = [];
+        for (let i = 0; i < schalenSammlung.length; i++) {
+            const n = schalenSammlung[i];
+            if (!n.classList.contains('show')) continue;
             const s = getComputedStyle(n);
-            return s.display !== 'none' && s.visibility !== 'hidden';
-        });
+            if (s.display !== 'none' && s.visibility !== 'hidden') offen.push(n);
+        }
+        // Die eine Schale mit `.modal-backdrop` statt `.modal-overlay`. Sie
+        // steht nicht in der Sammlung und wird namentlich nachgeholt.
+        const q = document.getElementById(SCHALE_OHNE_KLASSE);
+        if (q && q.classList.contains('show') && !q.classList.contains(SCHALEN_KLASSE)) {
+            const s = getComputedStyle(q);
+            if (s.display !== 'none' && s.visibility !== 'hidden') offen.push(q);
+        }
         if (!offen.length) return null;
         let beste = offen[0];
         let besteNr = oeffnungsNr.get(beste) || 0;

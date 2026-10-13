@@ -825,6 +825,65 @@ test.describe('Modalfokus — ein Anschlag, eine Wirkung', () => {
         ).toEqual([1, 2, 3, 4, 5]);
     });
 
+    test('(i) OHNE offenen Dialog kostet die Falle fast nichts', async ({ page }) => {
+        // BEFUND DER EIGENEN MESSUNG, und der Grund fuer die Fassung von
+        // `oberstesModal()`. Die Falle haengt an einem keydown am Dokument und
+        // wird bei JEDEM Tabulatordruck der App gefragt, auch wenn kein Dialog
+        // offen ist. Die erste Fassung fragte mit
+        // `querySelectorAll('.modal-overlay.show, #quicknotes-modal.show')` —
+        // 169,5 us je Aufruf in der Party-Ansicht bei zwanzig Eintraegen je
+        // Typ (10 820 Knoten). Auf 2000 Anschlaege waren das 369 ms gegen
+        // 6,8 ms ohne das Modul, und sie haben `eingaberahmen.spec.js`, das
+        // sehr viele echte Tabulatorspruenge macht und ohnehin an seiner
+        // 30-s-Grenze liegt, ueber die Grenze geschoben: 11/12 mit Modul
+        // gegen 12/12 ohne, derselbe Code sonst. Mit der lebenden Sammlung
+        // (1,5 us) sind es 12,4 ms und wieder 12/12.
+        //
+        // Gemessen wird der Lauscher, NICHT der Tastendruck: ein echter
+        // `keyboard.press` kostet einen Protokoll-Rundlauf in
+        // Millisekundenhoehe und wuerde den Unterschied vollstaendig
+        // verdecken. Darum wird das Ereignis im Seitenkontext erzeugt — die
+        // einzige Stelle dieser Datei, die das tut, und nur weil hier die
+        // Kosten des Lauschers selbst die Messgroesse sind.
+        //
+        // DIE GRENZE IST BEWUSST WEIT (150 ms fuer 2000 Anschlaege, rund
+        // zwoelffache Luft auf den gemessenen Wert). Sie soll eine
+        // Groessenordnung fangen, nicht Rauschen bestrafen — die alte Fassung
+        // laege mit 369 ms klar darueber.
+        await appLaden(page, 20);
+        await page.evaluate(() => window.switchView('party'));
+        await page.waitForTimeout(700);
+        const r = await page.evaluate(() => {
+            const el = document.querySelector('button');
+            el.focus();
+            const machen = () =>
+                new window.KeyboardEvent('keydown', {
+                    key: 'Tab',
+                    bubbles: true,
+                    cancelable: true
+                });
+            for (let i = 0; i < 200; i++) el.dispatchEvent(machen()); // aufwaermen
+            const t0 = performance.now();
+            for (let i = 0; i < 2000; i++) el.dispatchEvent(machen());
+            return {
+                dauer: performance.now() - t0,
+                knoten: document.querySelectorAll('*').length,
+                offen: window.ModalFocus.statistik().offen
+            };
+        });
+        expect(r.offen, 'Vorbedingung: es darf kein Dialog offen sein.').toBeNull();
+        expect(
+            r.knoten,
+            'Vorbedingung: eine gefuellte Ansicht, kein leeres Dokument.'
+        ).toBeGreaterThan(5000);
+        expect(
+            r.dauer,
+            `2000 Tabulatordruecke ohne offenen Dialog brauchten ${r.dauer.toFixed(1)} ms. ` +
+                `Die Falle darf den Tabulator der ganzen App nicht verteuern — wer hier ` +
+                `wieder auf querySelectorAll umstellt, landet bei rund 369 ms.`
+        ).toBeLessThan(150);
+    });
+
     test('(h) OHNE offenen Dialog bleibt der Tabulator unberuehrt', async ({ page }) => {
         // Die Gegenprobe, die zeigt, dass die Falle nicht die ganze App
         // kapert: ohne Dialog muss sie inert sein.
