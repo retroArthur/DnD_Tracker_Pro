@@ -9343,3 +9343,476 @@ ist eine Regel, die nicht gilt.
   so sind die vier neuen Testdateien dieser Welle entstanden.
 - **Nichts ist gepusht.** Die Wellen 1 bis 6 liegen als lokale Commits auf
   `design-welle-4`.
+
+---
+
+## TAST, Abnahme — die Kampfrunde ohne Maus (2026-10-13)
+
+**Status: ERLEDIGT.** Die Abnahme des ganzen Tastatur-Strangs (T-A bis T-E), Punkte 1–9 des
+Auftrags. Basis `ddeb65e` (Abschluss T-E), Vorzustand des Strangs `4e0d810`. Alle Zahlen sind
+an **meinem** Stand gemessen, mit eigenen Skripten, gegen ein aus `4e0d810` frisch gebautes
+Vergleichsbündel — nicht aus Plan, Vermessung oder den fünf Einheitenakten übernommen. Wo
+eine Zahl der Vorlage widerspricht, steht beides.
+
+**In einem Satz:** vier der sieben Handgriffe einer Kampfrunde waren ohne Maus **nicht
+ausführbar**; jetzt sind alle sieben ausführbar, und zwei von ihnen kosten einen Tastendruck.
+
+### Das Vergleichsbündel ist gebaut, nicht erinnert
+
+Jede Vorher-Zahl kommt aus einem Bündel, das ich aus `4e0d810` gebaut habe: die sechs
+geänderten Quelldateien auf den Ausgangsstand zurückgesetzt, die zwei neuen Module
+(`ui/keyboard-reach.js`, `ui/modal-focus.js`) gelöscht, gebaut, abgelegt, Arbeitsbaum
+wiederhergestellt (`git status --porcelain` leer), neu gebaut. **Gegenprobe am Bündel:**
+`grep -c "oeffneHpRechnerAmZug\|KeyboardReach\|ModalFocus\|AUSLOESE_TASTEN"` = **0** im
+Vorzustandsbündel, **5/10/…** im Nachzustandsbündel. Das Vorher ist also nachweislich ohne
+den Strang gemessen.
+
+**Ein Messfehler von mir, benannt, weil er die Zahlen der ersten Runde verdorben hat.** Mein
+erster Seed führte Kämpfer mit `init`/`hp`/`hpMax`. Die App schreibt `initiative`/
+`initBonus`/`currentHp`/`maxHp`/`ac`/`effects` (`features/initiative.js:431-442`). Mit den
+falschen Namen rechnet `modHp()` auf `undefined` und liefert `NaN` — „Schaden wirkt nicht"
+wäre als Befund gemeldet worden, der keiner ist. Zweiter Fehler: meine Messsonde hat sich
+bei Wiederverwendung ein zweites Mal an `click` gehängt und **denselben** Klick doppelt
+gezählt (`klickAmZiel=2`) — das hätte als Doppelauslösung durchgehen können. Beides behoben
+(ein gemeinsamer Seed, idempotente Sonde), alle Zahlen unten danach neu erhoben.
+
+### 1. Die Hauptabnahme: eine Kampfrunde ohne Maus
+
+Sieben Handgriffe, je Handgriff ein frischer Seitenaufbau, Ansicht per `switchView()` **ohne
+Klick**, nur `page.keyboard.press` — kein `.focus()`, kein `.click()`. Gefüllte Kampagne,
+sechs Kämpfer, 1440×900. Links der Vorzustand, rechts mein Stand.
+
+| # | Handgriff | Weg | vorher | nachher |
+| - | --------- | --- | ------ | ------- |
+| 1 | Initiative starten | „+ Party" + „Alle würfeln" per Tabulator | **kein Weg** | **26** Anschläge |
+| 2 | Zug weiterschalten | Leertaste (Kürzel) | **1** Anschlag | **1** Anschlag |
+| 2b | Zug weiterschalten | Tabulator auf „▶ Nächster" + Leertaste | **21** Anschläge | **21** Anschläge |
+| 3 | Zug zurückschalten | `p` (Kürzel) | **1** Anschlag | **1** Anschlag |
+| 3b | Zug zurückschalten | Tabulator auf „◀ Zurück" + Leertaste | **kein Weg** | **22** Anschläge |
+| 4 | Schaden eintragen | `H` + Zahl + Tabulator + Enter | **kein Weg** | **4** Anschläge |
+| 4b | Schaden eintragen | Tabulator auf „➗" + Enter + Zahl + Tabulator + Enter | **46** Anschläge | **55** Anschläge |
+| 5 | Zustand setzen | `/` + Tabulator auf den `+` des Zustands | **kein Weg** | **kein Weg** |
+| 5b | Zustand setzen | Tabulator auf „🔮" + Enter + Tabulator auf die Kachel + Enter | **kein Weg** | **55** Anschläge |
+| 6 | Zauberplatz abstreichen | Tabulator auf den **ersten** Punkt + Leertaste | **kein Weg** | **43** Anschläge |
+| 6b | Zauberplatz abstreichen | Tabulator auf den **letzten belegten** Punkt + Leertaste | **kein Weg** | **46** Anschläge |
+| 7 | Todesretter schalten | Tabulator auf den Punkt + Leertaste | **kein Weg** | **42** Anschläge |
+| 8 | Eine Runde weiter | `Shift+N` (Kürzel) | **1** Anschlag | **1** Anschlag |
+| 8b | Eine Runde weiter | Tabulator auf „Neue Runde" + Leertaste | **kein Weg** | **23** Anschläge |
+
+**Vier der sieben waren ohne Maus nicht ausführbar:** Initiative starten, Schaden eintragen,
+Zauberplatz abstreichen, Todesretter schalten. Zwei weitere liefen nur über das Kürzel,
+nicht über den Knopf, auf dem der Fokus stand. Jetzt sind alle sieben ausführbar.
+
+**Drei Dinge, die in dieser Tabelle gegen den Strang sprechen, und die deshalb hier stehen:**
+
+1. **Der Tabulatorweg zum Lebenspunkte-Rechner ist LÄNGER geworden: 46 → 55 Anschläge.** Das
+   ist der Preis der Kehrschleife (T-C): sie hat vor dem ➗-Knopf neue Halte eingefügt
+   (Initiativwert, Name, Zauberplätze). Wer den Rechner per Tabulator sucht, zahlt neun
+   Anschläge mehr. Die Antwort darauf ist `H` mit **4** — und genau deshalb war E-4 Teil
+   desselben Pakets. Ohne das Kürzel wäre die Nachrüstung an dieser Stelle eine
+   Verschlechterung.
+2. **Zustand setzen über die Schnellreferenz geht weiterhin nicht** (Zeile 5) — vorher nicht
+   und nachher nicht. Der Strang hat das nicht verschlechtert, aber auch nicht behoben;
+   Begründung und Messwerte in der Sichtungsliste, Punkt 7.
+3. **Der erste Zauberplatz-Punkt löscht den ganzen Grad** (Zeile 6 gegen 6b: `4 → 0` statt
+   `4 → 3`). Die Semantik ist vorbestehend und für die Maus dieselbe; neu ist, dass die
+   Tastatur zuerst auf den zerstörendsten Punkt trifft. Sichtungsliste, Punkt 8.
+
+**Und die Runde einmal durchgehend**, ein Seitenaufbau, die sieben Handgriffe
+hintereinander, so wie man am Tisch spielt. Jeder Schritt gilt nur dann als gelungen, wenn
+**die Größe sich bewegt hat, auf die es ankommt** — nicht wenn „irgendetwas" passiert ist:
+
+| Schritt der Runde | Anschläge vorher | Anschläge nachher | belegt an der Größe | vorher → nachher |
+| --- | --- | --- | --- | --- |
+| Zug weiter (Leertaste) | **1** | **1** | `zug` | 0 -> 1 |
+| Zug zurück (`p`) | **1** | **1** | `zug` | 1 -> 0 |
+| Schaden 7 (H) | **kein Weg** | **4** | `hp` | 40/40/0/40/40/40 -> 33/40/0/40/40/40 |
+| Zustand (Zustandskachel im 🔮) | **kein Weg** | **61** | `effekte` | 0/0/0/0/0/0 -> 1/0/0/0/0/0 |
+| Zauberplatz (Leertaste) | **kein Weg** | **20** | `zauberplaetze` | 4.3/4.3/4.3/4.3/4.3/4.3 -> 4.3/4.3/0.3/4.3/4.3/4.3 |
+| Todesretter (Leertaste) | **kein Weg** | **28** | `todesretter` | -/-/0s0f/-/-/- -> -/-/1s0f/-/-/- |
+| Neue Runde (Shift+N) | **1** | **1** | `runde` | 1 -> 2 |
+| **Summe** | **3** Anschläge, **3/7** belegt | **116** Anschläge, **7/7** belegt | | |
+
+**Vorher 3 Anschläge für 3 von 7 Handgriffen, nachher 116 Anschläge für 7 von 7.**
+Dass die Summe steigt, ist der Gewinn und nicht der Preis: vorher gab es vier dieser
+Handgriffe über die Tastatur überhaupt nicht, man griff zur Maus.
+
+**Ein Fehler in meinem ersten Lauf, benannt:** dort stand der bewusstlose Kämpfer auf Platz
+eins, also genau auf dem, der am Zug war. Der Schadensschritt traf damit einen Kämpfer, der
+schon auf 0 TP stand — `modHp()` rechnet `Math.max(0, 0-7)` = 0, und die Wirkungsspur zeigte
+nur den geöffneten Dialog. Der Schritt lief, aber er war nicht **belegt**. Im Lauf oben steht
+der Bewusstlose auf Platz drei: der Schadensschritt trifft 40 TP, der Todesretter-Schritt
+findet seine Punkte. Beide Läufe liegen im Scratch, die Zahlen oben sind die des zweiten.
+
+### 2. Die gekaperte Leertaste — jeder Halt der Initiative-Ansicht einzeln
+
+Für **jeden** Tabulatorhalt der Initiative-Ansicht ein eigener Seitenaufbau, echte
+Tabulatorsprünge bis zum Halt, ein echter Leertastendruck. Gezählt wurden drei Dinge:
+`click`-Ereignisse **am Ziel** (Capture-Lauscher am Dokument, Ziel über Objektidentität),
+Aufrufe des Leertasten-Zweigs (`window.nextTurn` wird **nur** von dort gerufen —
+nachgezählt: `keyboard-shortcuts.js:419` und `:434`, kein weiterer Aufrufer im Quellbaum),
+und Zug/Runde/`scrollY`.
+
+**Gekapert heißt hier: der Knopf unter dem Fokus löste NICHT aus (0 Klicks am Ziel), UND der
+Leertasten-Zweig lief statt seiner.** Beide Hälften sind nötig, und die zweite allein wäre
+falsch gewesen — ein Messfehler, in den ich zuerst gelaufen bin. „▶ Nächster" trägt
+`data-action="call"` mit `data-value="nextTurn"`, und die `call`-Aktion löst ihr Ziel über
+`window[ctx.value]` auf (`ui/actions/ui-actions.js:204`). Mein Zähler an `window.nextTurn`
+zählt dort also mit, obwohl alles richtig läuft — der Knopf tut genau das, was draufsteht,
+und der Zug bewegt sich um **genau +1** (Punkt 3). Wer nur „der Zweig lief" zählt, meldet
+diesen Knopf als gekapert und hat einen Fehlalarm. Mit beiden Hälften bleibt genau ein Halt
+übrig, und der ist kein Knopf.
+
+| Bündel / Kampagnengröße | Halte | **gekapert** | davon `<button>` | genau 1 Klick am Ziel | mehr als 1 | gerollt |
+| --- | --- | --- | --- | --- | --- | --- |
+| Vorzustand `4e0d810`, 6 Einträge/Typ | 88 | 82 | 81 | 0 | 0 | 0 |
+| **mein Stand**, 6 Einträge/Typ | 119 | 1 | 0 | 112 | 0 | 0 |
+| Vorzustand `4e0d810`, 20 Einträge/Typ (erste 70 Halte) | 179 | 69 | 69 | 0 | 0 | 0 |
+| **mein Stand**, 20 Einträge/Typ (erste 70 Halte) | 280 | 0 | 0 | 69 | 0 | 0 |
+| Vorzustand `4e0d810`, 1 Eintrag/Typ (Abgleich mit der Vorlage) | 56 | 50 | 49 | 0 | 0 | 0 |
+
+**Vorher war es nicht „29 von 34", sondern praktisch jeder Knopf — und die Zahl der Vorlage
+konnte ich bei keiner Kampagnengröße nachstellen.** Der Auftrag nennt 29 von 34 Halten. Ich
+habe **drei** Größen gemessen und komme jedes Mal höher: **50 von 56** (ein Eintrag je Typ),
+**82 von 88** (sechs), **69 von den ersten 70** (zwanzig). Die Regel dahinter ist in allen
+drei Läufen dieselbe und trägt besser als jede Einzelzählung: **gekapert war alles außer den
+Formularfeldern.** Die nicht betroffenen Halte sind in jedem Lauf genau die fünf
+Eingabefelder und die eine Auswahlliste des Hinzufügen-Formulars sowie das globale Suchfeld —
+dort lässt die `isTyping`-Schranke die Taste zu Recht durch und es entsteht ein Leerzeichen.
+Es war also kein Teilproblem einzelner Knöpfe, sondern die ganze Ansicht.
+
+**Nachher bleibt genau ein Halt übrig, und er ist kein Bedienelement:** `div#event-log`, ohne
+`tabindex` und ohne `data-action` (Sichtungsliste, Punkt 9). Bei zwanzig Einträgen je Typ
+liegt er jenseits der ersten 70 Halte — deshalb steht in jener Zeile **0**.
+
+**Ohne fokussiertes Bedienelement rollt die Leertaste weiter die Seite** — gemessen in sechs
+Ansichten, Fokus auf `BODY` nach frischem Aufbau, nichts angefasst:
+
+| Ansicht | Fokus | rollbar | `scrollY` vorher → nachher | Leertasten-Zweig | `defaultPrevented` |
+| --- | --- | --- | --- | --- | --- |
+| initiative | BODY | 225 px | 0 → 0 | 1 | true |
+| wiki | BODY | 132 px | 0 → 132 **(rollt)** | 0 | false |
+| party | BODY | 183 px | 0 → 183 **(rollt)** | 0 | false |
+| dashboard | BODY | 212 px | 0 → 212 **(rollt)** | 0 | false |
+| npcs | BODY | 0 px | 0 → 0 | 0 | false |
+| spells | BODY | 0 px | 0 → 0 | 0 | false |
+
+In der Initiative-Ansicht rollt sie **nicht**, und das ist richtig: dort ist sie das
+dokumentierte Kürzel für den Zugwechsel und ruft `preventDefault()`. In den drei rollbaren
+Ansichten ohne Leertastenbindung rollt sie um genau die Seitenhöhe. In den drei Ansichten mit
+`rollbar 0 px` gibt es nichts zu rollen. **Vorzustand identisch** — der Strang hat an dieser
+Stelle nichts verändert.
+
+### 3. Keine Doppelauslösung — 17 Aktionsarten gezählt
+
+Je Aktionsart das Ziel mit echten Tabulatorsprüngen angefahren, **ein** Tastendruck, dann
+die `click`-Ereignisse am Ziel gezählt **und** die Wirkungsgröße gemessen. Die Wirkungsgröße
+ist der tragende Teil: bei „Zug weiter" täten Kaperung und Knopf dasselbe, ein Doppelfeuer
+wäre an der Wirkung allein nicht zu erkennen — an der Größe schon (+1 statt +2).
+
+| Aktionsart | Taste | Halt | Element | Klicks **am Ziel** | Wirkungsgröße | vorher: Klicks am Ziel |
+| --- | --- | --- | --- | --- | --- | --- |
+| Zug weiter („▶ Nächster") | Leertaste | 20 | `button` | **1** | Zug **+1** | 0 |
+| Zug zurück („◀ Zurück") | Leertaste | 21 | `button` | **1** | Zug 0 → 5, also **genau ein Schritt zurück** (Umlauf bei sechs Kämpfern) | 0 — **und der Zug ging vorwärts** |
+| Neue Runde | Leertaste | 22 | `button` | **1** | Runde **+1** | 0 |
+| Zug weiter per Enter | Enter | 20 | `button` | **1** | Zug **+1** | 1 (Enter war am nativen Knopf nie kaputt) |
+| Schaden (➖) | Leertaste | 50 | `button` | **1** | TP des ersten Kämpfers **40 → 39**, alle anderen unverändert | 0 |
+| Heilung (➕) | Leertaste | 49 | `button` | **1** | TP **40 → 40** — der Kämpfer stand schon auf `maxHp`, der Deckel greift (die Regel, kein Fehlschlag) | 0 |
+| Kämpfer entfernen (❌) | Leertaste | 53 | `button` | **1** | Kämpferzahl **−1** | 0 |
+| Lebenspunkte-Rechner öffnen (➗) | Leertaste | 51 | `button` | **1** | Schale → `hp-calc-modal` | 0 |
+| Zustände-Spickzettel | Leertaste | 27 | `button` | **1** | Schale → `condition-ref-modal` | 0 |
+| Statblock anzeigen (📖) | Leertaste | 54 | `button` | **1** | Schale → `init-statblock-panel` | 0 |
+| Konzentration setzen (🔮) | Leertaste | 41 | `button` | **1** | Schale → `concentration-modal` | 0 |
+| Würfelfeld `d20` (Würfelansicht) | Leertaste | 25 | `button` | **1** | Würfelverlauf **+1** | 1 (dort ist die Leertaste unbelegt) |
+| Beute löschen | Leertaste | 27 | `button` | **1** | Beutestücke **−1** | 1 (dto.) |
+| Beute löschen | Enter | 27 | `button` | **1** | Beutestücke **−1** | 1 (dto.) |
+| Initiativwert (`div`, von T-C nachgerüstet) | Enter | 40 | `div` | **1** | Schale → `entity-preview-modal` | **per Tabulator nicht erreichbar** |
+| Party zur Initiative | Leertaste | 23 | `button` | **1** | Kämpferzahl **0** — die sechs Helden stehen im Seed schon namensgleich in der Reihe, und `addPartyToInit()` überspringt Namensdubletten. Der Knopf löste aus (1 Klick), er hatte nichts zu tun; belegt wird er in Handgriff 1 (leere Initiative, 0 → 6) | 0 |
+| Alle würfeln | Leertaste | 24 | `button` | **1** | Zug **0** — die Aktion schreibt die Initiativwerte, nicht den Zug; ihr Nachweis steht in Handgriff 1 („Würfe gesetzt") | 0 |
+
+**17 von 17 mit genau einem Klick am Ziel, 0 mit mehr als einem, 0 mit keinem.** `scrollY`
+bleibt in allen 17 Fällen unverändert. Sechs der Aktionsarten sind nicht idempotent (Zug
+vor, Zug zurück, Runde, Kämpfer entfernen, Beute löschen, Trefferpunkte) und jede hat sich
+um **genau einen** Schritt bewegt. Vorzustand zum Vergleich: **4 von 16** mit einem Klick am
+Ziel, **12 mit keinem** — und „Zug zurück" bewegte den Zug **vorwärts**.
+
+### 4. Kein verlorenes Kürzel — 44 Tasten einzeln nachgefahren
+
+Jede Taste auf frischer Seite, Fokus auf `BODY`, ein echter Anschlag; gelesen wurden
+`defaultPrevented` in einem Lauscher am `window` **und** eine Wirkungsspur aus achtzehn
+Größen (Runde, Zug, Ansicht, offene Schalen, Schnellreferenz, Tastenhilfe, Ereignislog,
+Kampfprotokoll, Würfelverlauf, Sitzungsuhr, Trefferpunkte, Kämpferzahl, Beute, Effekte,
+Zauberplätze, Todesretter, `scrollY`, Fokus). Dieselbe Erhebung an beiden Bündeln, dann
+Taste für Taste verglichen.
+
+**Bilanz: 44 Tasten · 43 wirkungsgleich · 0 verloren · 1 neu belegt (`h`).** Keine einzige
+Taste hat ihre Wirkung geändert.
+
+Belegt und unverändert: Leertaste (Zug), `r` (Wurf), `t` (Sitzungsuhr), `l` (Ereignislog),
+`k` (Kampfprotokoll), `n`/`p` (Zug vor/zurück), `/` (Schnellreferenz, Fokus ins Suchfeld),
+`?` (Tastenhilfe), `Shift+N` (Runde), `1`–`9` (Ansichtswechsel; `7` ohne sichtbare Wirkung,
+weil die Initiative Ansicht 7 **ist**), `Strg+K`/`Strg+F` (Fokus ins globale Suchfeld),
+`Strg+Shift+K` (Befehlspalette), `Alt+1/2/4/6/8` (Würfe), dazu `r`/`t`/`l`/`k`/`3`/`/`/`?`
+im Armaturenbrett und die Leertaste dort (rollt).
+
+**Die Ziffern sind ausdrücklich mitgeprüft** — Orchestrator-Entscheidung O-7 wollte sie in
+die Leertastenschranke aufnehmen, Runde 1 von T-A hat das nach eigener Messung
+zurückgenommen. Meine Erhebung bestätigt die Rücknahme: `1`–`9` wechseln am Nachstand
+dieselben Ansichten wie am Vorstand. Das ist eine **bewusste, in der Akte und im Quelltext
+begründete Abweichung von O-7**, keine Lücke.
+
+Acht Tasten sind an **beiden** Ständen ohne Wirkung und damit kein Verlust: `Strg+Z`/`Strg+Y`
+(leerer Rückgängig-Stapel), `Strg+S` (ohne Spur in meinen achtzehn Größen),
+`Alt+Shift+1`/`Alt+Shift+0` (keine Soundboard-Szenen im Seed), `Escape` (nichts offen),
+`Entf`/`Rückschritt` (kein Knoten gewählt). Dass sie nichts tun, liegt an der Lage, nicht am
+Strang — nachgewiesen dadurch, dass sie am Vorzustand genauso nichts tun.
+
+### 5. Alle Tore, jede Abweichung auseinandergerechnet
+
+| Tor | Sollstand (`4e0d810`) | gemessen | Rechnung |
+| --- | --------------------- | -------- | -------- |
+| `python build.py` | Exit 0 | **Exit 0** | — |
+| `python build.py --production` | Exit 0 | **Exit 0** | — |
+| `npx jest` | 2137 in 78 Suiten | **2250 in 81 Suiten** | +113 / +3: genau die drei neuen Dateien, einzeln nachgezählt — `event-delegation-keydown` **38**, `keyboard-reach` **30**, `modal-focus` **45**. 38+30+45 = **113**. Keine Bestandsdatei hat einen Fall dazubekommen |
+| `python -m pytest tests/build` | 30 | **30** | — |
+| `npm run lint` | Exit 0, **genau 363** Warnungen | **Exit 0, genau 363**, 0 Fehler | — |
+| `npm run typecheck` | Exit 0 | **Exit 0** | — |
+| `npm run typecheck:strict` | Exit 0 | **Exit 0** | — |
+| `sync-aktenlage-anker --check` | OK, 0/123 | **OK, 0 Abweichungen bei 123 Ankern** | — |
+| `sync-editor-toolbars --check` | OK, 22 Leisten | **OK, alle 22 synchron** | — |
+| `npx playwright test` | 634 / 39 / 0 | **732 / 47 / 0**, Exit 0 (9,4 min) | +98 bestanden / +8 übersprungen / **±0 Fehlschläge**. Die +98 sind die fünf Verhaltensdateien des Strangs, einzeln nachgezählt: `tastatur-ausloesung` **13**, `tastatur-erreichbarkeit` **28**, `tastatur-verteiler` **24**, `tastatur-kuerzel` **13**, `modal-fokus` **20** — 13+28+24+13+20 = **98**. Die +8 übersprungenen sind meine Ablichtungsdatei (ohne `TASTATUR_SCREENS=1`). Siehe darunter zu den fünf Fehlschlägen, die T-C, T-D und T-E gemeldet haben |
+
+**Die fünf Fehlschläge, die T-C, T-D und T-E gemeldet haben, treten bei mir NICHT auf — und
+das ist kein Widerspruch, sondern ihre Bestätigung.** Die drei Einheiten haben
+`eingaberahmen.spec.js` (Fall 1 in vier Themes, Fall 2) als reine 30-s-Zeitüberschreitungen
+unter Suitenlast geführt, mit 0 verletzten Zusicherungen und 12/12 in Isolation. In meinem
+Lauf lief nichts anderes auf der Maschine, und **alle 12 Fälle der Datei sind durchgelaufen**
+(`grep "eingaberahmen" | grep -c "^  ok"` = 12, keine Zeile ohne `ok`). Damit ist die
+Lastabhängigkeit nachgewiesen, nicht behauptet: dieselbe Datei, dasselbe Bündel, nur eine
+ruhige Maschine. Der Basiswert „0 Fehlschläge" der Auftragsvorgabe ist also erreicht — wer
+die Suite auf einer belasteten Maschine fährt, sollte diese Datei bei Fehlschlag zuerst
+isoliert nachfahren, bevor er eine Regression annimmt.
+
+**Ratschen, mit der Zählweise der Tests** (Kommentare entfernt — mein erster Griff gab sonst
+Erwähnungen mit): Dubletten **0**, `!important` **104**, Inline-Stile **251**,
+`transition: all` **0**, `outline: none` **1**. Alle fünf auf dem Sollstand, keine gestiegen.
+Es ist in diesem Strang keine Zeile CSS angefasst (`git diff --stat 4e0d810..HEAD --
+assets/styles/` ist leer) und die eine neue Templatezeile trägt keinen Inline-Stil.
+
+**CLAUDE.md:** der Eingriff liegt vollständig in der Tastenkürzel-Tabelle (`git diff` zeigt
+genau einen Block, Zeilen 442–450: eine neue Zeile für `H`, drei neue Zeilen für
+`Enter`/`Leertaste`, `Tab`/`Shift+Tab` und die Ergänzung an `Escape`). Keine andere Stelle
+der Datei.
+
+**Kein Test ist aufgeweicht, kein Pin angehoben** — am Diff `4e0d810..HEAD` über `tests/`
+nachgeprüft, nicht zugesichert:
+
+- **0 gelöschte Testdateien** (`git diff --diff-filter=D --name-only -- tests/` ist leer).
+- **0 neue `skip`/`only`/`todo`/`xit`** in den zwei angefassten Bestandsdateien.
+- Die **einzige** bewegte Zahl in einer Bestandsdatei ist die Modulzählung in
+  `tests/build/test_build_deduplication.py`: 139 → **141**. Das ist eine Tatsachenzählung
+  der in `loader.js` registrierten Module, und sie MUSSTE mitwachsen, weil zwei Module
+  dazugekommen sind. Die Akte von T-D hält dazu fest, dass dieses Python-Gate seit `f55df5f`
+  rot stand, weil nur die jest-Gates gepflegt wurden — wer ein Modul registriert, muss beide
+  anfassen.
+- Die zweite Änderung ist eine **Verschärfung**: in `tests/unit/module-test-coverage.test.js`
+  wurde `systems/spellslots/keyboard-shortcuts.js` aus der Ausnahmeliste **gestrichen**. Die
+  Liste darf nur schrumpfen; sie tut es.
+- Alle übrigen `MAX_*`-Konstanten im Diff stehen in den **neuen** Dateien und sind
+  Schleifengrenzen für Tabulatorsprünge, keine Qualitätsschranken.
+
+### 6. Stil-Sollstand: zwei unabhängige Belege, dass sich nichts bewegt hat
+
+Der versionierte Sollstand (`tests/e2e/baselines/computed-style-baseline.json`) hasht zwölf
+berechnete Eigenschaften je Element: `color`, `backgroundColor`, `borderColor`,
+`borderRadius`, `padding`, `margin`, `fontSize`, `fontWeight`, `boxShadow`, `opacity`,
+`display`, `textAlign`.
+
+1. **Argument am Quellbaum, schlüsselweise nachgezählt:** `tabindex` und `role` sind keine
+   dieser zwölf Eigenschaften, und **keine** CSS-Regel im Quellbaum selektiert auf sie —
+   `grep -c "\[role=\|\[tabindex" assets/styles/*.css` = **0 Treffer über alle 20 Dateien**.
+   Ohne Selektor kann ein Attribut keinen berechneten Wert verschieben.
+2. **Messung, nicht Argument:** `tests/e2e/features/computed-style-diff.spec.js` urteilt im
+   Suitenlauf über den echten Sollstand, und **alle vier Fälle sind durchgelaufen** —
+   „Standard" (14,5 s), „Schmales Layout" (15,0 s), „Emulierte reduzierte Bewegung"
+   (15,8 s) und „Breitere Schriftmetrik bewegt den Digest nicht" (28,1 s). Erfasst wurden
+   dabei alle 24 Ansichten in drei Lagen (`standard`, `narrow`, `reducedMotion`). **Kein
+   bewegter Digest.**
+
+Eine Bewegung wäre ein echter Befund gewesen. Es gibt keine.
+
+### 7. Die Bilder
+
+`tests/e2e/features/tastatur-screens.spec.js`, eigener Schalter `TASTATUR_SCREENS=1`,
+Ablage in `tests/e2e/__screens__/tastatur/`. Gleiche Bauart wie die sieben bestehenden
+Ablichtungsdateien: sie **prüft nichts** und fällt bei keinem Farbwert durch — ein grüner
+Lauf ist keine Abnahme. Fokus immer mit **echten** Tabulatorsprüngen, nie mit `.focus()`
+(bei programmatischem Fokus greift `:focus-visible` nicht, und das Bild zeigte einen
+Zustand, den kein Benutzer sieht).
+
+| Bild | zeigt |
+| --- | --- |
+| `kampfansicht-{dashboard,initiative,party,dice,dmscreen}.png` + `-nah.png` | je Kampfansicht ein **ertabuliertes** Element, bevorzugt eine von T-C nachgerüstete Stelle (`[data-action][tabindex="0"]`, kein `<button>`); die Naheinstellung, weil der Ring 2 px breit ist und im Vollbild von 1440 px untergeht |
+| `dialog-fokus-beim-oeffnen.png` | der per `H` geöffnete Lebenspunkte-Rechner, Fokus im Wertfeld |
+| `dialog-fokus-nach-12-spruengen.png` + `-nah.png` | derselbe Dialog nach **12 echten** Tabulatorsprüngen — der Fokus ist noch drinnen (Fokusfalle T-D); die Begleitdatei führt jede der 12 Stationen mit `innen: true/false` |
+| `punktgruppe-zauberplaetze-ein-halt-je-punkt.png` + `-nah.png` | die Zauberplatz-Gruppe mit Fokus auf **einem** Punkt, dazu die Zahl der Punkte in Gruppe und Ansicht |
+| `punktgruppe-todesretter-ein-halt-je-punkt.png` + `-nah.png` | dasselbe für die Todesretter-Punkte |
+| `begleitdatei.json` | zu jedem Bild Signatur, Beschriftung, `data-action`, `tabindex`, `role`, Umrissfarbe, Rechteck |
+
+Zu jedem Bild liegt eine `begleitdatei.json` mit Signatur, Beschriftung, `data-action`,
+`tabindex`, `role`, Umrissfarbe und Rechteck des fokussierten Elements — damit ein Mensch
+beim Urteilen weiß, **was** er ansieht. Der Lauf: **8 bestanden in 30 s**, 18 Bilder.
+Was darin steht:
+
+- In **allen fünf** Kampfansichten traf der Tabulator eine **nachgerüstete** Stelle, nicht
+  einen Knopf als Notnagel: `div.dash-char` (Halt 20), `div.init-value` (39),
+  `div.collapsible-header` (26), `div.qref-fab` (44 bzw. 42) — jede mit `tabindex="0"`,
+  `role="button"` und einem Umriss von `2px solid rgb(212, 175, 55)`. Dass in Würfel und
+  DM-Schirm dieselbe Stelle (`div.qref-fab`) dran war, steht in der Begleitdatei; es ist die
+  globale Schale, nicht die Ansicht.
+- Der per `H` geöffnete Rechner setzt den Fokus auf `input#hp-calc-value`, und nach 12
+  echten Tabulatorsprüngen ist er **12 von 12 Mal noch im Dialog**.
+- Die Zauberplatz-Gruppe hat **4 Punkte, 7 in der Ansicht, jeder mit eigenem Halt**; die
+  Todesretter **6 Punkte, jeder mit eigenem Halt**. Genau das ist der Gegenstand von E-2.
+
+**Was die Bilder nicht zeigen können, und warum das hier steht:** die Punktgruppe im
+**Pfeiltastenmodus**. Nutzerentscheidung **E-2** ist nicht umgesetzt; heute hat jeder Punkt
+seinen eigenen Halt. Die beiden Punktgruppen-Bilder zeigen deshalb den IST-Zustand und sagen
+es im Dateinamen (`-ein-halt-je-punkt`). Ein Bild eines Modus, den es nicht gibt, wäre eine
+Behauptung.
+
+### 8. Sichtungsliste — zehn Handgriffe für einen Menschen am Spieltisch
+
+Jeder Punkt ist ein Handgriff, den ein Mensch am Tisch macht und beurteilt. Die ersten sechs
+sollen bestätigen, die letzten vier sind Befunde, über die der Nutzer entscheiden muss.
+
+| # | Handgriff am Spieltisch | Worauf zu achten ist |
+| - | ----------------------- | -------------------- |
+| 1 | Initiative-Ansicht öffnen, **21× Tabulator** bis „◀ Zurück", dann **Leertaste** (22 Anschläge) | Der Zug geht **zurück**. Vorher ging er vorwärts — das war der Fehler, der eine Kampfrunde verfälscht hat. Dies ist der Hauptnachweis des ganzen Strangs; wenn ein Punkt geprüft wird, dann dieser |
+| 2 | Im Kampf **`H`** drücken, **`7`** tippen, **Tabulator**, **Enter** | Der Kämpfer am Zug verliert 7 Trefferpunkte. Vier Anschläge statt 55. Prüfe, ob der Rechner auf dem **richtigen** Kämpfer aufgeht — dem, der am Zug ist, nicht dem ersten der Liste |
+| 3 | Mit leerer Initiative: Tabulator bis „**+ Party**", Leertaste; dann Tabulator bis „**Alle würfeln**", Leertaste | Ein Kampf lässt sich ohne Maus **starten**. Vorher ging das nicht: der Knopf löste nicht aus, und stattdessen wechselte der Zug einer leeren Reihe |
+| 4 | Tabulator bis „**Neue Runde**", Leertaste | Die Runde zählt um eins hoch. Vorher blieb sie stehen und der Zug sprang — man drückte „Neue Runde" und bekam „Nächster Zug" |
+| 5 | **`H`** drücken, dann **12× Tabulator** im offenen Rechner | Der Fokus bleibt im Dialog und läuft im Kreis. Er darf nicht hinter den Dialog wandern — vorher landete er auf Knöpfen **unter** der Dialogfläche, die man nicht sieht und trotzdem auslöst. Danach **Escape**: der Fokus soll dort landen, wo man herkam |
+| 6 | Einen Kämpfer auf 0 TP bringen, dann Tabulator bis zu den **Todesretter-Punkten**, Leertaste | Der erste Erfolgspunkt schaltet. Vorher waren diese Punkte per Tastatur **gar nicht erreichbar**. Dasselbe für die **Zauberplätze** |
+| 7 | **BEFUND.** `/` drücken (Schnellreferenz), Abschnitt „Zustände", mit Tabulator einen Zustand anfahren | **Geht nicht.** Der `+`-Knopf, der einen Zustand auf den Kämpfer legt, ist `opacity: 0` und 0×0 px groß — er erscheint erst, wenn die Maus über der Zeile liegt. Mit der Tastatur erreicht man ihn nie. Der Weg, der funktioniert, ist der **🔮 an der Kampfzeile** (55 Anschläge). Frage an den Nutzer: soll der `+` dauerhaft sichtbar werden, oder genügt der 🔮? |
+| 8 | **BEFUND.** Tabulator bis zum **ersten Zauberplatz-Punkt** eines Grades, Leertaste | **Der ganze Grad ist weg** (4 → 0), nicht ein Platz. `toggleInitSlot()` setzt `current = index`; der erste Punkt bedeutet „null übrig". Mit der Maus zielt man auf den letzten belegten Punkt, mit der Tastatur trifft man zuerst den zerstörendsten. Genau drei Tabulatorsprünge weiter (Punkt 4 von 4) streicht **einen** Platz ab (4 → 3). Vorbestehende Semantik, aber die Tastatur-Reihenfolge macht sie gefährlich — und **E-2** (ein Halt je Gruppe, Pfeiltasten darin) würde sie beheben |
+| 9 | **BEFUND.** Mit einer Meldung im Ereignislog in der Initiative-Ansicht bis **Halt 114** tabulieren (dort steht das Log-Feld selbst), Leertaste drücken | Der Zug wechselt, obwohl der Fokus auf dem Log steht. Es ist der **einzige** verbliebene Halt dieser Art — 1 von 119. Gemessen: das Feld trägt **kein** `tabindex` (`el.tabIndex` = −1) und **keine** `data-action`; es wird zum Halt, weil Chromium rollbare Behälter in die Tabulatorfolge aufnimmt, und genau deshalb greift die Leertastenschranke nicht (sie fragt nach `tabindex`/`role`/Aktion). **Nicht** im Dauermodus (`l`): dort ist das Feld nicht mehr rollbar (Inhalt 69 px, Fläche 71 px) und fällt aus der Folge — der Halt existiert also nur, solange eine Meldung überläuft. Harmlos gegen den Vorzustand, aber kein Nullwert |
+| 10 | **BEFUND, vorbestehend.** Im **DM-Schirm** die Tasten `1`, `2`, `3` drücken | Die Ansicht wechselt weg, statt das Profil umzuschalten. Beide Zweige feuern, der globale gewinnt. Die Profilumschaltung des Schirms ist über die Tastatur praktisch nicht erreichbar. Von T-E als Nebenbefund gefunden, von diesem Strang nicht angefasst, eigener kleiner Auftrag |
+
+### 9. Benannte Restschuld
+
+Der Auftrag verlangt, die Restschuld zu **benennen** statt sie zu verschweigen. Sechs Posten,
+je mit der Zahl, die ich selbst gemessen habe, und der Entscheidung, auf die sie zurückgeht.
+
+**1. Die 19 Ansichten der Vorbereitung.** Nutzerentscheidung **E-1** („Kampf zuerst") hat den
+Umfang auf fünf Ansichten begrenzt: Armaturenbrett, Initiative, Party, Würfel, DM-Schirm.
+Die übrigen 19 sind **ausdrücklich nicht** Teil des Pakets. Mit `sweep2.mjs` über alle 24
+Ansichten, beide Bündel, derselbe Lauf:
+
+| Menge | unerreichbar vorher | unerreichbar nachher | Halte vorher → nachher |
+| --- | --- | --- | --- |
+| die **5 Kampfansichten** (Umfang E-1) | 31 | **0** | 228 → 259 |
+| die **19 Ansichten der Vorbereitung** (Restschuld) | 91 | **72** | 641 → 660 |
+| alle 24 Ansichten | 122 | **72** | 869 → 919 |
+
+Je Ansicht, wo nachher noch etwas unerreichbar ist:
+
+| Ansicht | vorher | nachher | Paket |
+| --- | --- | --- | --- |
+| `spells` | 28 | **27** | Vorbereitung |
+| `bestiary` | 18 | **17** | Vorbereitung |
+| `loot` | 12 | **11** | Vorbereitung |
+| `npcs` | 4 | **3** | Vorbereitung |
+| `quests` | 4 | **3** | Vorbereitung |
+| `encounter` | 4 | **3** | Vorbereitung |
+| `shops` | 4 | **3** | Vorbereitung |
+| `locations` | 3 | **2** | Vorbereitung |
+| `wiki` | 2 | **1** | Vorbereitung |
+| `notes` | 2 | **1** | Vorbereitung |
+| `data` | 2 | **1** | Vorbereitung |
+
+Der Vorzustand der Vermessung zählt dieselbe Lage anders herum: von 122 unerreichbaren
+Stellen lagen **91 in den 19 Vorbereitungsansichten** und 31 in den fünf Kampfansichten —
+die Schwerpunkte sind `spells` (28), `bestiary` (18) und `loot` (12). Die Zahl „145 von 462"
+aus dem Auftrag ist die datenskalierte Zählung der Quellstellen; sie und meine
+Ansichtszählung sind zwei Erhebungen derselben Sache, nicht zwei Werte eines Maßes.
+
+**2. Die Beute-Marken hinter `display: none`** (Orchestrator-Entscheidung **O-6**). Im
+Beute-Modal sitzen **19** `.loot-tag-chip` — ein `<label>` um ein Kästchen, und das Kästchen
+ist per `.loot-tag-chip input { display: none; }` (`assets/styles/loot.css`) unsichtbar
+geschaltet. Ein `display: none`-Element nimmt keinen Fokus; per Tastatur existieren diese 19
+Marken nicht. O-6 trennt sie bewusst von den 38 anderen versteckten Kästchen (die brauchen
+nichts) und bemisst sie mit **einer CSS-Zeile**. Nicht angefasst, weil CSS in diesem Strang
+tabu war — der Beleg dafür ist, dass `git diff 4e0d810..HEAD -- assets/styles/` leer ist und
+alle fünf Stil-Ratschen auf ihrem Sollstand stehen. Zugleich die Begründung, warum „Beute
+löschen" in meiner Doppelauslösungs-Messung **ein** erreichbares Ziel ist und die Marken
+daneben keines.
+
+**3. Die 199 Marken ohne Bindung** (Orchestrator-Entscheidung **O-5**: „gehören NICHT in
+diesen Strang"). Begründung dort: für einen sehenden, tastaturgebundenen Nutzer blockiert
+eine ungebundene Beschriftung nichts — sie kostet Klickfläche, keinen Weg. Nachgezählt an
+meinem Stand: **432 `<label>`-Elemente** im Quellbaum (380 in den Vorlagen, 52 aus
+JS-Renderfunktionen), davon **11 mit `for=`**. Die Zahl 199 der Vermessung ist die Teilmenge,
+die auch wie ein Bedienelement aussieht; die größere Zahl hier ist die vollständige Menge.
+Unberührt, wie vorgesehen.
+
+**4. Die verbleibenden Phantom-Halte.** Ein Phantom-Halt ist ein Tabulatorhalt auf einem
+Element, das unsichtbar oder 0×0 px groß ist — der Fokus verschwindet, der Nutzer drückt ins
+Leere. Gemessen mit `sweep2.mjs`, beide Bündel:
+
+| Menge | Phantom-Halte vorher | nachher |
+| --- | --- | --- |
+| die 5 Kampfansichten | 13 | **13** |
+| die 19 Vorbereitungsansichten | 33 | **33** |
+| alle 24 Ansichten | 46 | **46** |
+
+Die sechs Ansichten mit den meisten verbliebenen Phantom-Halten: `dmscreen` 8, `party` 2, `npcs` 2, `fraktionen` 2, `locations` 2, `quests` 2.
+
+Der Strang hat daran **nichts verbessert und nichts verschlechtert** — er war dafür nicht
+zuständig; die Phantome kommen aus Welle 6 des Design-Handoffs (dort 428 → 57 je Theme) und
+aus eingeklappten Flächen. Der auffälligste Rest sitzt im **DM-Schirm** (8 Halte).
+
+**5. E-2 ist offen, und das mit einer gemessenen Begründung für den nächsten Durchgang.**
+Zauberplatz- und Todesretter-Punkte haben je einen **eigenen** Tabulatorhalt statt einen pro
+Gruppe. Meine Messung bemisst, was E-2 einspart und warum es mehr als Bequemlichkeit ist:
+der erste Punkt einer Gruppe löscht den ganzen Zaubergrad (Sichtungspunkt 8). Wer E-2 fährt,
+muss die **Messfalle** kennen, die T-C festgehalten hat: `[data-action][tabindex="-1"]` zählt
+in `sweep2.mjs` und in den Fällen (a)–(e) als **bedienbar und unerreichbar**, und genau
+dieses Attribut bekommen die nicht-aktiven Punkte der Gruppenlösung. Die Fälle werden dadurch
+rot, obwohl die Bedienung besser wird — dann ist der Zähler bewusst mitzuändern, nicht die
+Schleife.
+
+**6. Zwei Posten, die nicht meine sind, aber in der Akte bleiben müssen.** **O-3** fehlt
+weiter in CLAUDE.md: dass `tabindex`/`role` der fünf Kampfansichten zur Laufzeit in
+`ui/keyboard-reach.js` entstehen und `role="dialog"`/`aria-modal`/`aria-labelledby` in
+`ui/modal-focus.js` — ein `grep tabindex` oder `grep role=` im Quellbaum zeigt beides nicht.
+T-C, T-D und T-E haben die Lücke je festgehalten; mein Auftrag erlaubte in CLAUDE.md nur die
+Kürzeltabelle, also bleibt sie stehen. Und **O-9** bleibt eine echte Blockade für spätere
+Abnahmen: `window.clearLootForm` wird in `features/initiative-loot.js:254` und `:367` gerufen
+und nirgends definiert; wer am Beute-Modal abnehmen will, muss `window.showModal('loot-modal')`
+nehmen.
+
+### Abnahme nachfahren
+
+```bash
+# Die fünf Verhaltensdateien des Strangs
+npx playwright test tests/e2e/features/tastatur-ausloesung.spec.js \
+                    tests/e2e/features/tastatur-erreichbarkeit.spec.js \
+                    tests/e2e/features/tastatur-verteiler.spec.js \
+                    tests/e2e/features/tastatur-kuerzel.spec.js \
+                    tests/e2e/features/modal-fokus.spec.js
+
+# Die drei neuen Unit-Dateien (38 + 30 + 45 = 113 Faelle)
+npx jest tests/unit/event-delegation-keydown.test.js \
+         tests/unit/keyboard-reach.test.js tests/unit/modal-focus.test.js
+
+# Der Stil-Sollstand — urteilt ueber die zwoelf gehashten Eigenschaften
+npx playwright test tests/e2e/features/computed-style-diff.spec.js
+
+# Die Bilder (eigener Schalter, nicht Teil der Standardlaeufe)
+TASTATUR_SCREENS=1 npx playwright test tests/e2e/features/tastatur-screens.spec.js
+
+# Die Ratschen dieses Strangs
+npx jest tests/unit/design-consistency.test.js -t "F-18"
+npx jest tests/unit/design-consistency.test.js -t "Inline-Stile"
+```
