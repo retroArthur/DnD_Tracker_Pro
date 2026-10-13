@@ -132,6 +132,12 @@ const SCHRIFTDATEIEN_SOLL = 7;
 // ist unauffaellig; erst die vollstaendige Verteilung ist eine Aussage, die
 // ein kaputter Parser nicht zufaellig trifft.
 //
+// `fvar` ist die Gewichtsachse der Datei (Teil 8): `null` heisst "keine
+// fvar-Tabelle, statische Schrift", sonst `{ <achse>: [min, standard, max] }`.
+// Dass bei fuenf Dateien ausdruecklich `null` steht, ist Absicht — liefert
+// Google Poppins kuenftig variabel, wird diese Zeile rot und ein Mensch muss
+// entscheiden, ob `font-weight: 400` dort ein Bereich werden soll.
+//
 // Zahlen gemessen am Stand b0ada5b mit `node tools/pruefe-schriftdateien.js`.
 // ----------------------------------------------------------------------
 const GEMESSENE_SCHRIFTEN = {
@@ -146,7 +152,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 1,
             'Math Operators': 1
-        }
+        },
+        fvar: { wght: [100, 400, 900] }
     },
     'inter-variable.woff2': {
         glyphen: 230,
@@ -159,7 +166,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 3,
             'Math Operators': 1
-        }
+        },
+        fvar: { wght: [100, 400, 900] }
     },
     'poppins-400.woff2': {
         glyphen: 217,
@@ -172,7 +180,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 1,
             'Math Operators': 2
-        }
+        },
+        fvar: null
     },
     'poppins-500.woff2': {
         glyphen: 217,
@@ -185,7 +194,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 1,
             'Math Operators': 2
-        }
+        },
+        fvar: null
     },
     'poppins-600.woff2': {
         glyphen: 217,
@@ -198,7 +208,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 1,
             'Math Operators': 2
-        }
+        },
+        fvar: null
     },
     'source-sans-pro-400.woff2': {
         glyphen: 231,
@@ -211,7 +222,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 3,
             'Math Operators': 2
-        }
+        },
+        fvar: null
     },
     'source-sans-pro-600.woff2': {
         glyphen: 231,
@@ -224,7 +236,8 @@ const GEMESSENE_SCHRIFTEN = {
             Currency: 1,
             'Letterlike/Arrows': 3,
             'Math Operators': 2
-        }
+        },
+        fvar: null
     }
 };
 
@@ -638,6 +651,100 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             // Diese Dateien wuerde build.py mitkopieren und veroeffentlichen,
             // ohne dass irgendein Waechter sie je gelesen haette.
             expect(ERGEBNIS.drift.nurImVerzeichnis).toEqual([]);
+        });
+    });
+
+    // ------------------------------------------------------------------
+    // Teil 8 — die Gewichtsachse: `font-weight: 100 900` nur auf einer
+    // Datei, die das wirklich kann.
+    //
+    // DER REGRESS, DEN NUR DIESER TEIL SIEHT. Seit b0ada5b liefern Roboto
+    // und Inter alle Gewichte aus je EINER variablen Datei; fonts.css
+    // schreibt dafuer `font-weight: 100 900`. Diese Angabe ist ein
+    // VERSPRECHEN UEBER DEN DATEIINHALT, und niemand prueft es: holt
+    // jemand wieder eine Einzelgewicht-Datei, oder faellt Google auf
+    // statische Dateien zurueck, dann steht der Bereich auf einer Datei
+    // ohne `wght`-Achse. Der Browser meldet keinen Fehler — er taeuscht
+    // Fettschrift dann nur noch synthetisch nach (verzerrte Glyphen statt
+    // echter Schnitte). Kein 404, kein Konsolenfehler, keine fehlende
+    // Glyphe: genau die Fehlerklasse, fuer die diese Ratsche gebaut ist.
+    //
+    // Geprueft wird das PAAR aus CSS-Angabe und Dateifaehigkeit, nicht nur
+    // die Datei: so faellt auch ein NEUER Face mit Bereich auf einer
+    // statischen Datei auf. Die Faces kommen aus fonts.css, nicht aus
+    // einem Literal — Teil 6 bleibt gueltig.
+    // ------------------------------------------------------------------
+    describe('Teil 8 — jeder Gewichtsbereich in fonts.css steht auf einer variablen Datei', () => {
+        test.each(Object.keys(GEMESSENE_SCHRIFTEN))('%s: fvar-Achsen wie gemessen', name => {
+            const soll = GEMESSENE_SCHRIFTEN[name];
+            const datei = NACH_NAME.get(name);
+            expect(datei).toBeDefined();
+            expect(datei.fehler).toBeNull();
+
+            // Eine fvar-Tabelle, die vorhanden aber unlesbar ist, darf NICHT
+            // als "statisch" durchgehen — das waere von einer echten
+            // statischen Schrift nicht zu unterscheiden.
+            expect(datei.achsenFehler).toBeNull();
+
+            if (soll.fvar === null) {
+                expect(datei.hatFvar).toBe(false);
+                expect(datei.achsen).toEqual([]);
+                return;
+            }
+
+            expect(datei.hatFvar).toBe(true);
+            const gemessen = {};
+            for (const a of datei.achsen) gemessen[a.tag] = [a.min, a.standard, a.max];
+            expect(gemessen).toEqual(soll.fvar);
+        });
+
+        test('Genau 2 der 7 Dateien tragen eine fvar-Tabelle', () => {
+            // Gegenprobe gegen Leerlauf: haengt der fvar-Leser durch und
+            // meldet ueberall "keine Achse", faellt es hier auf, nicht erst
+            // beim naechsten Schriftwechsel.
+            const variabel = ERGEBNIS.dateien.filter(d => d.hatFvar).map(d => d.name);
+            expect(variabel.sort()).toEqual(['inter-variable.woff2', 'roboto-variable.woff2']);
+        });
+
+        test('Genau 2 @font-face-Bloecke fuehren einen Gewichtsbereich', () => {
+            const faces = werkzeug.leseSchriftFaces();
+            expect(faces).toHaveLength(SCHRIFTDATEIEN_SOLL);
+            const bereiche = faces.filter(f => f.istBereich);
+            expect(bereiche.map(f => f.familie).sort()).toEqual(['Inter', 'Roboto']);
+            // Und die uebrigen fuehren ein Einzelgewicht, keines ohne Angabe:
+            // ein `font-weight`, das der Leser nicht versteht, wuerde sonst
+            // still als "kein Bereich" gelten und die Pruefung umgehen.
+            for (const face of faces) {
+                expect(Number.isFinite(face.gewichtVon)).toBe(true);
+                expect(Number.isFinite(face.gewichtBis)).toBe(true);
+                expect(face.gewichtBis).toBeGreaterThanOrEqual(face.gewichtVon);
+            }
+        });
+
+        test('Jeder Face mit Gewichtsbereich zeigt auf eine Datei mit passender wght-Achse', () => {
+            const faces = werkzeug.leseSchriftFaces();
+            for (const face of faces) {
+                if (!face.istBereich) continue;
+                for (const name of face.dateinamen) {
+                    const datei = NACH_NAME.get(name);
+                    expect(datei).toBeDefined();
+                    const wght = (datei.achsen || []).find(a => a.tag === 'wght');
+                    if (!wght) {
+                        throw new Error(
+                            `${face.familie} erklaert in fonts.css den Gewichtsbereich ` +
+                                `${face.gewichtVon}..${face.gewichtBis}, aber ${name} hat keine ` +
+                                `wght-Achse. Der Browser taeuscht Fettschrift dann nur nach. ` +
+                                `Entweder eine variable Datei holen oder den Bereich in ` +
+                                `Einzelgewichte aufloesen.`
+                        );
+                    }
+                    // Die Achse muss den erklaerten Bereich DECKEN, nicht nur
+                    // existieren: eine Achse 400..700 unter der Angabe
+                    // `100 900` ist derselbe Fehler, nur kleiner.
+                    expect(wght.min).toBeLessThanOrEqual(face.gewichtVon);
+                    expect(wght.max).toBeGreaterThanOrEqual(face.gewichtBis);
+                }
+            }
         });
     });
 });
