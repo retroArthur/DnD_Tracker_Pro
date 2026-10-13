@@ -4,6 +4,109 @@
  */
 
 // ============================================================
+// AUDIT_MUSTER — die drei Regexe der Quelltext-Audits, EINE Quelle.
+//
+// Zwei Faelle dieser Datei schneiden Funktionskoerper aus
+// `systems/spellslots/persistence.js` heraus und urteilen ueber deren
+// Inhalt: der SAFE-06-Audit ('ruft der catch-Zweig den IndexedDB-Fallback?')
+// und der Nachzug-R12-Audit ('steht in den Koerpern eine DOM-Abfrage als
+// Vorab-Guard?'). Beide brauchen dieselben drei Muster, und beide trugen sie
+// bis hierher als EIGENE Literale — sechs Kopien von drei Ausdruecken, in
+// 450 Zeilen Abstand.
+//
+// WARUM SIE JETZT HIER STEHEN. Die Kopien waren nicht nur Dopplung, sie
+// waren SECHSMAL DERSELBE FEHLER: das Endeanker lautete `\n}\n`, verlangte
+// also ein `}` mit einem reinen LF davor und dahinter. Der Arbeitsbaum des
+// Entwicklers traegt diese Datei mit LF (von einem Editor geschrieben und
+// nie neu ausgecheckt), jeder frische `git clone` oder `git worktree` auf
+// Windows mit `core.autocrlf=true` — dem hier gesetzten Wert, ohne
+// `.gitattributes` — traegt sie mit CRLF. Dort steht `}\r\n`, das Muster
+// greift nicht, `src.match()` gibt `null`, und beide Audits melden
+// `expect(received).not.toBeNull() / Received: null`.
+//
+// GEMESSEN, nicht erschlossen (frischer `git worktree --detach` auf 00bdd0f,
+// nichts mutiert):
+//     $ python -c "...count(b'\r\n')"
+//       Worktree   1027 CRLF / 0 LF-only
+//       Hauptbaum  0 CRLF / 1027 LF-only
+//     $ npx jest tests/unit/stability.test.js --silent
+//       Worktree   2 failed, 106 passed, 108 total  (:1260 und :1708)
+//       Hauptbaum  108 passed, 108 total
+// Die CI (ubuntu-latest, LF) sah das nie. Die Faelle urteilten also still
+// ueber Zeilenenden statt ueber Code, und das in der Richtung Falsch-ROT:
+// wer die Suite im frischen Checkout zum ersten Mal faehrt, bekommt zwei
+// Fehlschlaege, die nichts mit seiner Aenderung zu tun haben und auf die
+// Persistenzschicht zeigen.
+//
+// `\r?\n` statt `\n` an beiden Enden. Unter LF ist das Verhalten
+// unveraendert (das `\r?` greift ins Leere), unter CRLF greift es. Der
+// Waechter 'Die drei Audit-Muster urteilen ueber Code, nicht ueber
+// Zeilenenden' unten haelt beide Richtungen fest — er prueft jedes Muster
+// gegen EINE LF- und EINE CRLF-Fassung derselben Quelle und ist damit auch
+// im LF-Arbeitsbaum aussagekraeftig, wo der Fehler sonst unsichtbar ist.
+//
+// Die Alternative — eine `.gitattributes` mit `* text=auto eol=lf` — waere
+// der strukturelle Ort fuer die ganze Fehlerklasse, aendert aber die
+// Zeilenenden JEDER Datei bei jedem Checkout und damit weit mehr als diese
+// drei Zeilen. Als offener Posten notiert, hier nicht mitgemacht.
+// ============================================================
+const AUDIT_MUSTER = {
+    saveImmediate: /async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/,
+    save: /const save = function[\s\S]*?\n};\n/,
+    persistNow: /async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/
+};
+
+describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const PERSISTENZ = path.join(__dirname, '../../systems/spellslots/persistence.js');
+
+    test('Die drei Audit-Muster urteilen ueber Code, nicht ueber Zeilenenden', () => {
+        const roh = fs.readFileSync(PERSISTENZ, 'utf-8');
+        const lf = roh.replace(/\r\n/g, '\n');
+        const crlf = lf.replace(/\n/g, '\r\n');
+
+        // Gegenprobe gegen Leerlauf: die beiden Fassungen sind wirklich
+        // verschieden, und die Umschreibung hat wirklich gewirkt. Ohne diese
+        // drei Zeilen koennte der Fall gruen laufen, weil er zweimal
+        // DASSELBE prueft.
+        expect(lf).not.toBe(crlf);
+        expect(lf.includes('\r')).toBe(false);
+        expect(crlf.split('\r\n').length).toBe(lf.split('\n').length);
+
+        for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
+            expect(
+                lf.match(muster),
+                `${name}: greift nicht einmal auf der LF-Fassung — dann ist nicht das ` +
+                    `Zeilenende das Problem, sondern das Muster oder die Quelle.`
+            ).not.toBeNull();
+            expect(
+                crlf.match(muster),
+                `${name}: greift auf LF, aber nicht auf CRLF. Genau dieser Zustand macht ` +
+                    `die beiden Quelltext-Audits dieser Datei in JEDEM frischen Checkout ` +
+                    `auf Windows (core.autocrlf=true, keine .gitattributes) rot, ohne dass ` +
+                    `am Code etwas falsch ist. Das Endeanker muss \\r?\\n lauten, nicht \\n.`
+            ).not.toBeNull();
+        }
+    });
+
+    test('Die Muster schneiden unter LF und CRLF denselben Koerper heraus', () => {
+        // Nicht nur "greift", sondern "greift gleich weit". Ein Muster, das
+        // unter CRLF einen KUERZEREN Koerper liefert, waere die
+        // Falsch-GRUEN-Richtung desselben Fehlers: die Audits unten pruefen
+        // dann einen Ausschnitt, in dem der gesuchte Aufruf gar nicht mehr
+        // stehen kann.
+        const lf = fs.readFileSync(PERSISTENZ, 'utf-8').replace(/\r\n/g, '\n');
+        const crlf = lf.replace(/\n/g, '\r\n');
+        for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
+            const a = lf.match(muster)[0];
+            const b = crlf.match(muster)[0].replace(/\r\n/g, '\n');
+            expect(b, `${name}: CRLF-Fassung liefert einen anderen Koerper`).toBe(a);
+        }
+    });
+});
+
+// ============================================================
 // 1. DATA PERSISTENCE TESTS
 // ============================================================
 
@@ -1254,9 +1357,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
 
             // saveImmediate(): Funktionskörper isolieren, um sicherzugehen, dass der
             // catch-Zweig DIESER Funktion (nicht z. B. der von save()) geprüft wird.
-            const saveImmediateMatch = src.match(
-                /async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/
-            );
+            const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
             expect(saveImmediateMatch).not.toBeNull();
             const saveImmediateBody = saveImmediateMatch[0];
             const saveImmediateCatch = saveImmediateBody.slice(saveImmediateBody.indexOf('} catch (e) {'));
@@ -1265,10 +1366,10 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             // save(): dasselbe Muster im Koerper des entprellten Durchlaufs. Seit U7 (R02) ist
             // der setTimeout-Callback-Koerper nach _persistNow() ausgelagert (flushPendingSave()
             // zieht ihn vor); save() selbst plant nur noch diesen Durchlauf ein.
-            const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+            const saveMatch = src.match(AUDIT_MUSTER.save);
             expect(saveMatch).not.toBeNull();
             expect(saveMatch[0]).toMatch(/_persistNow\(showMessage\)/);
-            const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+            const persistNowMatch = src.match(AUDIT_MUSTER.persistNow);
             expect(persistNowMatch).not.toBeNull();
             const saveBody = persistNowMatch[0];
             const saveCatch = saveBody.slice(saveBody.lastIndexOf('} catch (e) {'));
@@ -1704,12 +1805,12 @@ describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', 
     test('saveImmediate()- und save()-Koerper enthalten ueberhaupt keine DOM-Abfrage als Vorab-Guard', () => {
         const src = quelle('systems/spellslots/persistence.js');
 
-        const saveImmediateMatch = src.match(/async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/);
+        const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
         expect(saveImmediateMatch).not.toBeNull();
-        const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+        const saveMatch = src.match(AUDIT_MUSTER.save);
         expect(saveMatch).not.toBeNull();
         // Seit U7 (R02) liegt der entprellte Save-Koerper in _persistNow()
-        const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+        const persistNowMatch = src.match(AUDIT_MUSTER.persistNow);
         expect(persistNowMatch).not.toBeNull();
 
         // Der geloeschte Codepfad war ein Vorab-Guard, der bei nicht gesetztem
