@@ -153,6 +153,10 @@ const AUSNAHMEN_SOLL = 4;
 // durchlaufen, weil "keine Familie verletzt die Regel" trivial wahr ist.
 const MINDEST_FACES = 10;
 const MINDEST_MENUEEINTRAEGE = 7;
+// Untergrenze fuer die Zahl der Familien aus fonts.css (gemessen 4). Teil 1
+// und Teil 3 fuehren ihre Untergrenze selbst: die von Teil 0 liegt in einem
+// FREMDEN describe, und ein gezielter `--grep`-Lauf traegt sie nicht mit.
+const MINDEST_CSS_FAMILIEN = 4;
 
 // Untergrenze fuer die Vereinigung ALLER Codepunkte, die die zehn Dateien
 // tragen — gemessen 289 (`leseCmap()` je Datei, Mengenvereinigung). Der
@@ -191,6 +195,95 @@ const MESSGROESSE = '40px';
 // Vergleichspunkt von Teil 2: eine gebuendelte Schrift, die von DIESER nicht
 // zu unterscheiden ist, traegt nachweislich nichts bei.
 const FAMILIE_OHNE_DATEI = 'Gibtesnichtxyzqjk';
+
+// ----------------------------------------------------------------------
+// DER MESSKOERPER — eine Quelle, nicht fuenf.
+//
+// `mitStack()` ist die EINZIGE Stelle, an der eine gebuendelte Familie in
+// einen Messkoerper geschrieben wird. Vorher stand derselbe Ausdruck
+// viermal im Text, und das war die Luecke: kuerzte man ihn auf den reinen
+// Rueckfall, nannte die Probe die Familie an keiner Stelle mehr und
+// verglich `monospace` gegen `monospace` — alle 13 Faelle blieben gruen,
+// weil die VOLLE Ausnahmeliste ueberall GLEICHHEIT fordert und keine
+// absolute Breite festgenagelt ist. Jede Verfaelschung in Richtung
+// Rueckfall machte die lebenden Zusicherungen also wahrer, nie falscher.
+// Die Gegenprobe dagegen steht unten: KONTROLLE.
+// ----------------------------------------------------------------------
+const RUECKFALL = 'monospace';
+
+/** Der Messkoerper, der die Familie nennt. Einzige Quelle. */
+function mitStack(familie) {
+    return `'${familie}', ${RUECKFALL}`;
+}
+
+// ----------------------------------------------------------------------
+// KONTROLLE — die Gegenrichtung, ohne die "traegt nichts bei" nicht von
+// "wir haben die Familie nie gefragt" zu unterscheiden ist.
+//
+// Jede der zehn Dateien traegt mindestens EIN Zeichen (gemessen: U+0020 in
+// allen zehn, dazu 'A'/'Ä' in Inter und 'A'/'B' in Source Sans Pro). Mit
+// diesem Zeichen MUSS derselbe Messkoerper, der oben Gleichheit zeigt, einen
+// Unterschied zeigen. Das ist die Kontrolle in der Gegenrichtung:
+//   - zeigt sie keinen Unterschied, misst die Probe die Familie nicht, und
+//     die Gleichheit beim Probetext sagt nichts ueber die Schrift;
+//   - zeigt sie einen, ist die Gleichheit beim Probetext ein echter Befund.
+// Die Zeichen kommen aus der cmap (Werkzeug aus Einheit 1), nicht aus einem
+// Literal hier: nach einem Austausch der Dateien waehlt die Kontrolle von
+// selbst ein anderes Zeichen.
+//
+// Plattformunabhaengig, weil beide Seiten dieselbe GEBUENDELTE Datei gegen
+// denselben generischen Rueckfall stellen — keine benannte Systemschrift.
+// ----------------------------------------------------------------------
+const KONTROLL_WIEDERHOLUNGEN = 8;
+const KONTROLL_ZEICHEN_MAX = 4;
+// Ab welchem Abstand in Pixel die Kontrolle als "unterscheidbar" gilt. 1px
+// bei 40px Messgroesse — dieselbe Schwelle wie die mono/serif-Kontrolle in
+// Teil 0.
+const KONTROLL_MINDESTABSTAND = 1;
+
+const WERKZEUG_ERGEBNIS = schriftWerkzeug.pruefeAlle();
+const CODEPUNKTE_JE_DATEI = new Map(
+    WERKZEUG_ERGEBNIS.dateien.map(d => [d.name, d.codepunkte || []])
+);
+
+/**
+ * Taugt der Codepunkt als Messzeichen? Steuerzeichen und kombinierende
+ * Zeichen haben keinen eigenen Vorschub und messen darum nichts.
+ */
+function messbarerCodepunkt(c) {
+    return c >= 0x20 && c !== 0x7f && !(c >= 0x0300 && c <= 0x036f);
+}
+
+/**
+ * Die messbaren Codepunkte, die ALLE genannten Dateien tragen (Schnittmenge).
+ * @param {string[]} dateinamen
+ * @returns {number[]}
+ */
+function kontrollCodepunkte(dateinamen) {
+    let menge = null;
+    for (const name of dateinamen) {
+        const cps = new Set((CODEPUNKTE_JE_DATEI.get(name) || []).filter(messbarerCodepunkt));
+        menge = menge === null ? cps : new Set([...menge].filter(c => cps.has(c)));
+    }
+    return [...(menge || [])].sort((a, b) => a - b).slice(0, KONTROLL_ZEICHEN_MAX);
+}
+
+/** Der Kontrolltext zu einer Dateimenge, oder '' wenn sie nichts Messbares traegt. */
+function kontrollText(dateinamen) {
+    return kontrollCodepunkte(dateinamen)
+        .map(c => String.fromCodePoint(c).repeat(KONTROLL_WIEDERHOLUNGEN))
+        .join('');
+}
+
+/** Lesbare Benennung der Kontrollzeichen fuer die Fehlermeldung. */
+function kontrollZeichenNamen(dateinamen) {
+    return kontrollCodepunkte(dateinamen).map(c => schriftWerkzeug.zeigeCodepunkt(c));
+}
+
+/** Die Dateien einer Familie, aus fonts.css. */
+function dateienDerFamilie(familie) {
+    return FACES.filter(f => f.familie === familie).map(f => f.datei);
+}
 
 const GENERISCHE_FAMILIEN = [
     'serif',
@@ -430,23 +523,43 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
         // umzuschreiben. Je Face bleibt der Befund einzeln benannt: die
         // Zusicherung meldet eine Liste, keine Summe.
         test('Alle gebuendelten Faces tragen zum Rendern bei', async ({ page }) => {
+            // Eigene Untergrenze, nicht die des Nachbar-describe. Vorher lag
+            // sie allein in Teil 0: mit leerer Facesliste lief dieser Fall
+            // gruen ueber NULL Messungen durch, und ein gezielter
+            // `--grep "Teil 1"`-Lauf konnte das nicht erkennen.
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
+                MINDEST_FACES
+            );
             await ladeApp(page);
             const stapel = {};
             for (const face of FACES) {
                 const s = `${face.familie}/${face.gewicht}`;
                 stapel[`${s}__mit`] = {
-                    stack: `'${face.familie}', monospace`,
+                    stack: mitStack(face.familie),
                     gewicht: face.gewicht
                 };
-                stapel[`${s}__ohne`] = { stack: 'monospace', gewicht: face.gewicht };
+                stapel[`${s}__ohne`] = { stack: RUECKFALL, gewicht: face.gewicht };
                 stapel[`${s}__nichtda`] = {
-                    stack: `'${FAMILIE_OHNE_DATEI}', monospace`,
+                    stack: mitStack(FAMILIE_OHNE_DATEI),
                     gewicht: face.gewicht
+                };
+                // Die Gegenrichtung: derselbe Messkoerper, aber mit einem
+                // Zeichen, das GENAU DIESE Datei traegt.
+                stapel[`${s}__kontrolle`] = {
+                    stack: mitStack(face.familie),
+                    gewicht: face.gewicht,
+                    text: kontrollText([face.datei])
+                };
+                stapel[`${s}__kontrolleOhne`] = {
+                    stack: RUECKFALL,
+                    gewicht: face.gewicht,
+                    text: kontrollText([face.datei])
                 };
             }
             const { breiten } = await messeBreiten(page, stapel);
 
             const stummeFaces = [];
+            let gemessen = 0;
             for (const face of FACES) {
                 const s = `${face.familie}/${face.gewicht}`;
                 const mit = breiten[`${s}__mit`];
@@ -456,6 +569,36 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 // Der haerteste Vergleichspunkt: eine Familie, die es nicht
                 // gibt, ist vom reinen Rueckfall nicht zu unterscheiden.
                 expect(nichtda, `${s}: nicht vorhandene Familie`).toBe(ohne);
+
+                // Der Messkoerper nennt die Familie ueberhaupt. Billig, und
+                // genau die Luecke, die eine Kuerzung auf den reinen
+                // Rueckfall hinterliess.
+                expect(
+                    stapel[`${s}__mit`].stack,
+                    `${s}: der Messkoerper nennt die Familie nicht`
+                ).toContain(face.familie);
+
+                // DIE KONTROLLE. Ohne sie ist "traegt nichts bei" von "wir
+                // haben die Familie nie gefragt" nicht zu unterscheiden.
+                const zeichen = kontrollZeichenNamen([face.datei]);
+                expect(
+                    zeichen.length,
+                    `${face.datei} traegt kein messbares Zeichen — dann ist die ` +
+                        `Kontrolle in der Gegenrichtung nicht durchfuehrbar.`
+                ).toBeGreaterThan(0);
+                const kontrolle = breiten[`${s}__kontrolle`];
+                const kontrolleOhne = breiten[`${s}__kontrolleOhne`];
+                expect(kontrolle, `${s}: Kontrolle messbar`).toBeGreaterThan(0);
+                expect(
+                    Math.abs(kontrolle - kontrolleOhne),
+                    `${s}: Der Messkoerper nennt "${face.familie}" und misst mit ` +
+                        `${zeichen.join(' ')} — Zeichen, die ${face.datei} laut cmap ` +
+                        `TRAEGT. Trotzdem ist er vom reinen Rueckfall nicht zu ` +
+                        `unterscheiden (${kontrolle}px gegen ${kontrolleOhne}px). Dann ` +
+                        `misst diese Probe die Familie ueberhaupt nicht, und die ` +
+                        `Gleichheit beim Probetext sagt nichts ueber die Schrift.`
+                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+                gemessen++;
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
@@ -473,6 +616,9 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                     stummeFaces.push(`${face.datei} (${s}) ${mit}px`);
                 }
             }
+            // Es wurde wirklich je Face gemessen, nicht nur die Schleife
+            // betreten. `stummeFaces` ist bei leerer Schleife trivial leer.
+            expect(gemessen, 'kein einziges Face wurde gemessen').toBe(FACES.length);
             expect(
                 stummeFaces,
                 `Diese Faces rendern "${PROBETEXT}" GENAU so breit wie der reine ` +
@@ -592,11 +738,18 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
         test('Jede gebuendelte Familie im Schriftmenue rendert wie ihr Rueckfall', async ({
             page
         }) => {
+            // Eigene Untergrenze, wie in Teil 1: mit leerer Facesliste war
+            // dieser Fall gruen ueber null Messungen, und die Untergrenze lag
+            // im fremden describe von Teil 0.
+            expect(CSS_FAMILIEN.length, 'fonts.css liefert keine Familien').toBeGreaterThanOrEqual(
+                MINDEST_CSS_FAMILIEN
+            );
             await ladeApp(page);
             const menue = await page.evaluate(() => window.EDITOR_FONTS);
             await tippeProbetext(page);
 
             const befunde = [];
+            let gemessen = 0;
             for (const familie of CSS_FAMILIEN) {
                 const eintrag = Object.entries(menue).find(
                     ([, stack]) => ersteFamilie(stack) === familie
@@ -607,14 +760,14 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 await waehleSchrift(page, schluessel);
 
                 const messung = await page.evaluate(
-                    ({ editorId, rueckfall }) => {
+                    ({ editorId, rueckfall, kontrollZeichenText }) => {
                         const el = document.querySelector(`#${editorId} font[face]`);
                         const cs = getComputedStyle(el);
                         const host = document.createElement('div');
                         host.style.cssText =
                             'position:absolute;left:-99999px;top:0;visibility:hidden;';
                         document.body.appendChild(host);
-                        const mach = familie => {
+                        const mach = (familie, text = el.textContent) => {
                             const s = document.createElement('span');
                             s.style.cssText =
                                 `font-family:${familie};font-size:${cs.fontSize};` +
@@ -622,21 +775,34 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                                 `letter-spacing:${cs.letterSpacing};` +
                                 `word-spacing:${cs.wordSpacing};` +
                                 'white-space:pre;display:inline-block;';
-                            s.textContent = el.textContent;
+                            s.textContent = text;
                             host.appendChild(s);
                             return s.getBoundingClientRect().width;
                         };
+                        // `rechnerFamilie` ist der Stapel, den der Browser
+                        // fuer das LEBENDE Element wirklich aufgeloest hat.
+                        // Er wird mitgemeldet und unten geprueft: ohne ihn
+                        // liess sich diese Messung auf Rueckfall-gegen-
+                        // Rueckfall verkuerzen, ohne dass etwas rot wurde.
+                        const rechnerFamilie = cs.fontFamily;
                         const ergebnis = {
                             face: el.getAttribute('face'),
+                            rechnerFamilie,
+                            rueckfallStack: rueckfall,
                             text: el.textContent,
                             lebend: el.getBoundingClientRect().width,
-                            nachgebaut: mach(cs.fontFamily),
-                            rueckfall: mach(rueckfall)
+                            rueckfall: mach(rueckfall),
+                            kontrolle: mach(rechnerFamilie, kontrollZeichenText),
+                            kontrolleRueckfall: mach(rueckfall, kontrollZeichenText)
                         };
                         host.remove();
                         return ergebnis;
                     },
-                    { editorId: EDITOR_ID, rueckfall: rueckfallStack(stack) }
+                    {
+                        editorId: EDITOR_ID,
+                        rueckfall: rueckfallStack(stack),
+                        kontrollZeichenText: kontrollText(dateienDerFamilie(familie))
+                    }
                 );
 
                 // Die App hat die Schrift wirklich gesetzt — sonst messen wir
@@ -645,32 +811,63 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
                 // die vorige.
                 expect(messung.face, `face nach der Wahl von "${schluessel}"`).toContain(familie);
                 expect(messung.text).toBe(PROBETEXT);
-                // Und der Nachbau ist dem lebenden Element treu — sonst sagt
-                // der Vergleich unten nichts ueber das, was im Editor steht.
+                // Der Browser hat die Familie fuer das lebende Element
+                // wirklich angefordert, und der Rueckfall nennt sie wirklich
+                // nicht. Beides muss dastehen, sonst vergleicht der Schluss
+                // unten zwei Rueckfaelle.
                 expect(
-                    messung.nachgebaut,
-                    `${familie}: Nachbau gegen lebendes Element`
-                ).toBeCloseTo(messung.lebend, 1);
+                    messung.rechnerFamilie,
+                    `${familie}: der Rechnerstil des lebenden Elements nennt die Familie nicht`
+                ).toContain(familie);
+                expect(
+                    messung.rueckfallStack,
+                    `${familie}: der Rueckfall nennt die Familie noch`
+                ).not.toContain(familie);
+                // DIE KONTROLLE, hier am echten Menueweg: mit einem Zeichen,
+                // das die Dateien dieser Familie TRAGEN, muss derselbe
+                // Rechnerstil breiter oder schmaler rendern als der Rueckfall.
+                const zeichen = kontrollZeichenNamen(dateienDerFamilie(familie));
+                expect(
+                    zeichen.length,
+                    `${familie} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
+                ).toBeGreaterThan(0);
+                expect(
+                    Math.abs(messung.kontrolle - messung.kontrolleRueckfall),
+                    `${familie}: der Rechnerstil "${messung.rechnerFamilie}" rendert ` +
+                        `${zeichen.join(' ')} — Zeichen, die diese Familie laut cmap ` +
+                        `TRAEGT — genau so breit wie der Rueckfall. Dann misst Teil 3 ` +
+                        `die Familie nicht und der Vergleich unten sagt nichts.`
+                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+                gemessen++;
 
                 const aufListe = Object.prototype.hasOwnProperty.call(
                     SCHRIFT_FAMILIEN_AUSNAHMEN,
                     familie
                 );
+                // Gemessen wird am LEBENDEN Element, nicht an einem Nachbau
+                // mit derselben Familienangabe. Der Nachbau war der Punkt, an
+                // dem sich diese Messung auf Rueckfall-gegen-Rueckfall
+                // verkuerzen liess; `lebend` ist das <font face>, das die App
+                // selbst erzeugt hat. `toBeCloseTo(…, 1)` statt `toBe`: ein
+                // lebendes Inline-Element und eine nachgebaute Spanne liegen
+                // nicht bitgenau, sondern unter 0.05px auseinander (vorher
+                // ueber die Treue-Zusicherung des Nachbaus belegt).
                 if (aufListe) {
                     expect(
-                        messung.nachgebaut,
+                        messung.lebend,
                         `${familie} steht auf SCHRIFT_FAMILIEN_AUSNAHMEN, rendert im Editor ` +
-                            `aber ${messung.nachgebaut}px statt ${messung.rueckfall}px.`
-                    ).toBe(messung.rueckfall);
+                            `aber ${messung.lebend}px statt ${messung.rueckfall}px.`
+                    ).toBeCloseTo(messung.rueckfall, 1);
                     continue;
                 }
-                if (messung.nachgebaut === messung.rueckfall) {
+                if (Math.abs(messung.lebend - messung.rueckfall) < 0.05) {
                     befunde.push(
                         `"${schluessel}" -> face="${messung.face}" ` +
-                            `${messung.nachgebaut}px == Rueckfall "${rueckfallStack(stack)}"`
+                            `${messung.lebend}px == Rueckfall "${rueckfallStack(stack)}"`
                     );
                 }
             }
+            expect(gemessen, 'keine einzige Familie wurde gemessen').toBe(CSS_FAMILIEN.length);
             expect(
                 befunde,
                 'Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text GENAU so ' +
@@ -833,10 +1030,37 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             }
             const stapel = {};
             for (const name of eintraege) {
-                stapel[`${name}__mit`] = { stack: `'${name}', monospace` };
-                stapel[`${name}__ohne`] = { stack: 'monospace' };
+                stapel[`${name}__mit`] = { stack: mitStack(name) };
+                stapel[`${name}__ohne`] = { stack: RUECKFALL };
+                stapel[`${name}__kontrolle`] = {
+                    stack: mitStack(name),
+                    text: kontrollText(dateienDerFamilie(name))
+                };
+                stapel[`${name}__kontrolleOhne`] = {
+                    stack: RUECKFALL,
+                    text: kontrollText(dateienDerFamilie(name))
+                };
             }
             const { breiten } = await messeBreiten(page, stapel);
+
+            // Dieselbe Kontrolle wie in Teil 1, hier je Familie: ohne sie
+            // wuerde eine Verfaelschung des Messkoerpers in Richtung
+            // Rueckfall die Verwesungsprobe WAHRER machen statt falscher.
+            for (const name of eintraege) {
+                const zeichen = kontrollZeichenNamen(dateienDerFamilie(name));
+                expect(
+                    zeichen.length,
+                    `${name} traegt kein messbares Zeichen — Kontrolle nicht durchfuehrbar.`
+                ).toBeGreaterThan(0);
+                expect(
+                    Math.abs(breiten[`${name}__kontrolle`] - breiten[`${name}__kontrolleOhne`]),
+                    `${name}: der Messkoerper nennt die Familie und misst mit ` +
+                        `${zeichen.join(' ')}, Zeichen die ihre Dateien laut cmap TRAGEN — ` +
+                        `und ist trotzdem vom reinen Rueckfall nicht zu unterscheiden. ` +
+                        `Dann prueft die Verwesungsprobe nichts.`
+                ).toBeGreaterThan(KONTROLL_MINDESTABSTAND);
+            }
+
             const repariert = eintraege.filter(n => breiten[`${n}__mit`] !== breiten[`${n}__ohne`]);
             expect(
                 repariert,
