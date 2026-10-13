@@ -2,51 +2,82 @@
    FONTS - Lokal gebündelte Webfonts (D-07)
    ALLE @font-face-Regeln in EINER Datei (Pitfall 8 vermeiden)
    Kein Google Fonts CDN-Link mehr — vollständige Offline-Fähigkeit
+   ========================================
+
+   HERKUNFT UND DIE FALLE, IN DIE DER ERSTE GRIFF GERATEN IST
+   ----------------------------------------------------------
+   Von 2026-06-12 (1c3245b) bis 2026-10-13 lagen hier zehn Dateien mit dem
+   FALSCHEN Subset: Inter, Roboto und Source Sans trugen Kyrillisch, Poppins
+   trug Devanagari. Keine einzige Datei kannte ein lateinisches 'A'. Der Browser
+   lud sie ohne 404, fand keinen Glyphen und fiel zeichenweise auf Arial zurück
+   — vier der sieben Einträge im Schriftmenü des Editors waren Dekoration.
+
+   Die Ursache ist mechanisch und wiederholbar: Googles CSS-Antwort ordnet die
+   @font-face-Blöcke cyrillic-ext, cyrillic, greek-ext, greek, vietnamese,
+   latin-ext, LATIN — latin steht ZULETZT. Bei Poppins steht devanagari ZUERST.
+   Wer nicht den ganzen Block liest, greift verlässlich daneben.
+
+   Die hier gebündelten Dateien sind das `latin`-Subset, geholt am 2026-10-13
+   von fonts.gstatic.com über
+       https://fonts.googleapis.com/css2?family=<Familie>&display=swap
+   mit Chrome-User-Agent. Deren unicode-range lautet:
+       U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+       U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+       U+2212, U+2215, U+FEFF, U+FFFD
+   Das deckt den deutschen Satz vollständig: Umlaute und Eszett liegen in
+   U+0000-00FF, die Typografie („ " – — …) in U+2000-206F.
+
+   `unicode-range` steht hier ABSICHTLICH NICHT in den Regeln. Sie würde nur
+   den Download sparen; die zeichenweise Rückfall-Logik des Browsers richtet
+   sich ohnehin nach der cmap der Datei, nicht nach dieser Angabe. Weniger
+   Angabe heißt hier: eine Stelle weniger, die mit der Datei auseinanderlaufen
+   kann.
+
+   GEPRÜFT, NICHT BEHAUPTET
+   ------------------------
+   `tools/pruefe-schriftdateien.js` liest die Dateiliste aus GENAU DIESER DATEI,
+   entpackt jedes woff2 (Brotli) und prüft dessen cmap gegen den deutschen
+   Zeichensatz. `tests/unit/schriftdateien.test.js` fährt das als Ratsche, und
+   `tests/e2e/features/schriftdateien.spec.js` beweist am laufenden Browser,
+   dass jede Familie anders rendert als ihr Rückfall. Ein neuer @font-face hier
+   wird automatisch mitgeprüft — die Listen stehen nirgends doppelt.
+
+   LIZENZEN
+   --------
+   Alle vier Familien stehen unter der SIL Open Font License 1.1, bündelbar mit
+   Lizenzhinweis. Einzelnachweis in `assets/fonts/HERKUNFT.md`.
+
+   ZWEI VARIABLE, DREI STATISCHE FAMILIEN
+   --------------------------------------
+   Google liefert Roboto und Inter heute als VARIABLE Schrift: alle Gewichte
+   kommen aus derselben Datei. Zehn Dateinamen beizubehalten hätte 139.648 Bytes
+   bitgleiche Duplikate bedeutet (Roboto zweimal, Inter dreimal dieselbe Datei).
+   Deshalb je eine Datei mit Gewichtsbereich `100 900` statt mehrerer Regeln mit
+   Einzelgewicht — so instanziert der Browser echte Gewichte statt Fettschrift
+   nachzutäuschen, und jedes Gewicht dazwischen ist nutzbar.
+   Poppins und Source Sans Pro sind weiter statisch, eine Datei je Gewicht.
+   Summe: 7 Dateien, 144.608 Bytes — 50.668 Bytes WENIGER als die zehn kaputten.
    ======================================== */
 
-/* Roboto — Standard-Schrift der App */
+/* Roboto — variabel, wght 100..900 */
 @font-face {
     font-family: 'Roboto';
     font-style: normal;
-    font-weight: 400;
+    font-weight: 100 900;
     font-display: swap;
-    src: url('../fonts/roboto-400.woff2') format('woff2');
+    src: url('../fonts/roboto-variable.woff2') format('woff2');
 }
 
-@font-face {
-    font-family: 'Roboto';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('../fonts/roboto-700.woff2') format('woff2');
-}
-
-/* Inter — Editor-Schrift */
+/* Inter — Editor-Schrift, variabel, wght 100..900 */
 @font-face {
     font-family: 'Inter';
     font-style: normal;
-    font-weight: 400;
+    font-weight: 100 900;
     font-display: swap;
-    src: url('../fonts/inter-400.woff2') format('woff2');
+    src: url('../fonts/inter-variable.woff2') format('woff2');
 }
 
-@font-face {
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-    src: url('../fonts/inter-500.woff2') format('woff2');
-}
-
-@font-face {
-    font-family: 'Inter';
-    font-style: normal;
-    font-weight: 600;
-    font-display: swap;
-    src: url('../fonts/inter-600.woff2') format('woff2');
-}
-
-/* Poppins — Editor-Schrift */
+/* Poppins — Editor-Schrift, statisch */
 @font-face {
     font-family: 'Poppins';
     font-style: normal;
@@ -71,7 +102,7 @@
     src: url('../fonts/poppins-600.woff2') format('woff2');
 }
 
-/* Source Sans Pro — Editor-Schrift */
+/* Source Sans Pro — Editor-Schrift, statisch */
 @font-face {
     font-family: 'Source Sans Pro';
     font-style: normal;
