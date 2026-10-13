@@ -8069,9 +8069,13 @@ in jedem Lauf auf `0 / 36 noch auf dem Öffner`, vorher wie nachher.
 
 - **`ui/modal-focus.js`** (neu) führt Falle, Einstieg, Rückweg und Beschriftung.
 - **`systems/spellslots/navigation.js`**: die Haken stehen **direkt in `showModal`/`hideModal`**,
-  nicht in einem `window`-Mantel (O-4). Die 61 bzw. 63 Aufrufstellen binden lexikalisch, unter
-  ihnen `ui/actions/ui-actions.js:8` — der Weg jedes Klicks auf `data-action="show-modal"`. Ein
-  Mantel feuerte bei normaler Arbeit nie; dieselbe Falle, die CLAUDE.md für `save()` dokumentiert.
+  nicht in einem `window`-Mantel (O-4). Nachgezählt: von den 60 `showModal`- und 63
+  `hideModal`-Aufrufstellen rufen **52 bzw. 58 blank** und binden damit lexikalisch; nur die
+  restlichen 8 bzw. 5 gehen über `window.` und würden einen Mantel überhaupt erreichen. Unter
+  den blanken ist `ui/actions/ui-actions.js:8` — der Weg jedes Klicks auf
+  `data-action="show-modal"`. Ein Mantel feuerte bei normaler Arbeit nie; dieselbe Falle, die
+  CLAUDE.md für `save()` dokumentiert. (Der Plan führt 61 und 63; die Differenz ist die
+  Zählweise, die Aussage dieselbe.)
   Fall (f) fährt diesen blanken Weg vor, damit ein späterer Umbau auf einen Mantel rot wird statt
   still zu versagen.
 - **`systems/spellslots/keyboard-shortcuts.js`**: der Escape-Zweig nahm `show` selbst ab und lief
@@ -8147,6 +8151,23 @@ las deshalb „0 Klicks" und sah wie eine Regression aus. Die Gegenprobe (am Kno
 1) hat es geklärt. Wer hier am Element zählt, misst die Ereignisbremse des Verteilers und nicht
 die Auslösung. Die Risikoliste des Plans sagt dasselbe über die 53 `-stop`-Aktionen.
 
+### Die Falle greift ausserhalb von Dialogen NICHT — und das ist nachgemessen
+
+Die wichtigste Entlastungsmessung dieser Einheit, weil sie eine Frage beantwortet, die der
+volle Suitenlauf aufgeworfen hat (siehe unten). Gezählt wird `defaultPrevented` am
+Tab-Ereignis in der **Bubble**-Phase, also NACH dem Capture-Lauscher der Falle: jedes Mal,
+wenn die Falle gegriffen hat, steht es auf `true`, denn sie ruft `preventDefault()` an jedem
+ihrer Zweige.
+
+| Ansichten | echte Tabs je Ansicht | von der Falle gebremst | Dialog offen gesehen |
+| --- | --- | --- | --- |
+| Armaturenbrett, Initiative, Party, Würfel, DM-Schirm — 6/Typ | 200 | **0** | **0** |
+| dieselben fünf — 20/Typ | 200 | **0** | **0** |
+
+Also 2000 Tastendrücke über zehn Läufe, **null** Eingriffe. Die Falle ist außerhalb eines
+offenen Dialogs vollständig inert und kann die Reichweiten-Messung aus T-C
+(`tastatur-erreichbarkeit.spec.js`) nicht beeinflusst haben.
+
 ### Kein Pixel, keine Zeile CSS, kein Template
 
 `git diff --name-only` gegen den Ausgangsstand über `assets/**`, `*.css`, `*.html`: **0 Dateien**.
@@ -8194,6 +8215,30 @@ unverändert, und die Gates bestätigen es.
   Gemessen trat der Fall in keiner der 36 Schalen auf; er ist bewusst so behandelt.
 - **Fall (d) braucht Minuten** (36 Schalen × 45 Sprünge × zwei Größen, 2,2 bzw. 2,9 min) und
   trägt darum ein eigenes `test.setTimeout()`. Wer die Datei kürzen will, kürzt dort.
+
+### Der Suitenlauf, und welche Fehlschläge NICHT von hier kommen
+
+Sauberer Lauf, nichts sonst auf der Maschine: **708 bestanden / 39 übersprungen / 6
+Fehlschläge** von 753 Fällen (die 753 schließen meine 15 ein; der Ausgangsstand hat 738).
+
+- **Fünf davon sind `eingaberahmen.spec.js`** (`Fall 1` in vier Themes, `Fall 2`) und
+  **vorbestehend**: reine 30-s-Zeitüberschreitungen, **0 verletzte Zusicherungen** im ganzen
+  Lauf. T-C hat sie bereits an ihrem Ausgangsstand geführt. Isoliert mit einem Arbeiter sind
+  es 12/12 — auch mit meinem Modul, nachdem die Leistungskorrektur drin ist.
+- **Der sechste war `tastatur-erreichbarkeit.spec.js`, Armaturenbrett 6/Typ** — und der ist
+  **nicht meiner**. Zwei unabhängige Belege: (1) isoliert dreimal nachgefahren, 3/3 bestanden,
+  je rund 10 s bei einer 30-s-Grenze; (2) die Messung oben zeigt, dass die Falle in genau
+  dieser Ansicht bei 200 echten Tabs **null** Mal greift und **null** Mal einen Dialog sieht.
+  Ein Fall, der unter paralleler Last über seine Zeitgrenze fällt, nicht eine Verhaltensänderung.
+
+**Der Basiswert „0 Fehlschläge" aus der Auftragsvorgabe stammt von `4e0d810` und galt schon an
+`392d1d3` nicht mehr** — dasselbe hat T-C festgehalten. Wer diese Datei grün haben will,
+braucht ein `test.setTimeout()` in ihr, keine Codeänderung.
+
+**Nebenbefund zur Buchführung:** T-C nennt „689 bestanden / 39 übersprungen / 5 Fehlschläge"
+= 733 Fälle. `npx playwright test --list` gibt am Ausgangsstand aber 738 (753 minus meine 15).
+Die 689 liegen also um 5 zu niedrig; meine eigenen Läufe gehen auf (752 vor dem Leistungsfall,
+753 danach). Keine Code-Frage, aber wer die Zahlen fortschreibt, sollte von 738 ausgehen.
 
 ### Abnahme nachfahren
 

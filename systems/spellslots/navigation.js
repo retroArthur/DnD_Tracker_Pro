@@ -83,11 +83,12 @@ function switchView(name) {
     }
 }
 // Die ModalFocus-Aufrufe in showModal/hideModal stehen DIREKT in der
-// Deklaration und nicht in einem `window.showModal`-Mantel (O-4). Grund: die
-// 61 showModal- und 63 hideModal-Aufrufstellen binden LEXIKALISCH an diese
+// Deklaration und nicht in einem `window.showModal`-Mantel (O-4). Grund,
+// nachgezaehlt: von den 60 showModal- und 63 hideModal-Aufrufstellen im
+// Quellbaum rufen 52 bzw. 58 BLANK und binden damit LEXIKALISCH an diese
 // Deklarationen — unter ihnen `ui/actions/ui-actions.js:8`, der Weg jedes
 // Klicks auf `data-action="show-modal"`. Ein Mantel an `window` wuerde von
-// allen umgangen und feuerte bei normaler Arbeit nie; genau die Falle, die
+// diesen umgangen und feuerte bei normaler Arbeit nie; genau die Falle, die
 // CLAUDE.md fuer `save()` dokumentiert. Begruendung und Messwerte stehen in
 // `ui/modal-focus.js`.
 function showModal(id) {

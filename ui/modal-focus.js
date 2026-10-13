@@ -28,10 +28,12 @@
 //
 // WARUM DIE HAKEN NICHT IN EINEM `window.showModal`-MANTEL SITZEN
 // (Orchestrator-Entscheidung O-4). `showModal` und `hideModal` sind blanke
-// Funktionsdeklarationen in `systems/spellslots/navigation.js`. Die 61
-// `showModal`- und 63 `hideModal`-Aufrufstellen im Quellbaum binden
-// LEXIKALISCH an diese Deklarationen und gehen an jedem `window.*`-Mantel
-// vorbei — unter ihnen `ui/actions/ui-actions.js:8`, der Weg, den JEDER
+// Funktionsdeklarationen in `systems/spellslots/navigation.js`. Von den
+// 60 `showModal`- und 63 `hideModal`-Aufrufstellen im Quellbaum rufen
+// **52 bzw. 58 BLANK** — sie binden LEXIKALISCH an diese Deklarationen und
+// gehen an jedem `window.*`-Mantel vorbei. Nur die restlichen 8 bzw. 5
+// gehen ueber `window.` und wuerden einen Mantel ueberhaupt erreichen.
+// Unter den blanken ist `ui/actions/ui-actions.js:8`, der Weg, den JEDER
 // Klick auf `data-action="show-modal"` nimmt. Genau die Falle, die
 // CLAUDE.md fuer `save()` dokumentiert ("NEVER wrap `window.save`"): der
 // Mantel feuert bei normaler Arbeit nie. Darum ruft `navigation.js` die
