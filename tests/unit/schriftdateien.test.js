@@ -620,6 +620,13 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
     // aus dem VERZEICHNIS ("Keine Dateiliste", ausdruecklich so gewollt).
     // Beide Enden waren dadurch verschieden, und das war messbar:
     //
+    // (Das Rezept ist auf den Stand VOR dem Dateiaustausch datiert und bleibt
+    // als Protokoll stehen — `roboto-400.woff2` gibt es seit `b0ada5b` nicht
+    // mehr. Heute lautet es `cp assets/fonts/roboto-variable.woff2
+    // assets/fonts/elfte-400.woff2`, und seit Gegenpruefungsrunde 4 beendet
+    // dieselbe Lage zusaetzlich den Build: `pruefe_keine_fremdschriften()` in
+    // build.py, Ratsche in tests/build/test_build_fonts.py.)
+    //
     //     $ cp assets/fonts/roboto-400.woff2 assets/fonts/elfte-400.woff2
     //     $ npx jest tests/unit/schriftdateien.test.js   -> 60 passed
     //     $ python -m pytest tests/build/test_build_fonts.py -q -> 6 passed

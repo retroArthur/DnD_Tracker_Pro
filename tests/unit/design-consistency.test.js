@@ -526,7 +526,10 @@ describe('F-08 — Werkzeugleisten-Kontrakt', () => {
 /**
  * Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css, ohne
  * fonts.css). fonts.css bleibt aussen vor, weil dort ausschliesslich
- * @font-face-Bloecke stehen (inter-500, poppins-500 etc.) — eine spaetere
+ * @font-face-Bloecke stehen (seit dem Dateiaustausch vom 2026-10-13: zwei
+ * Gewichtsbereiche `100 900` fuer die variablen Roboto/Inter und fuenf
+ * Einzelgewichte fuer die statischen Poppins/Source Sans Pro — das frueher
+ * hier genannte `inter-500` gibt es nicht mehr) — eine spaetere
  * font-weight-Ratsche (D-42, zurueckgestellt bis TYPO-07 ausgefuehrt wird)
  * wuerde sonst @font-face-Deklarationen mitzaehlen. Vorarbeit, keine
  * Freigabe: die Ratsche selbst wird hier NICHT geschrieben.

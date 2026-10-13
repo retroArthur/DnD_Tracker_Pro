@@ -169,8 +169,57 @@ jede Familie messbar anders rendert als ihr Rückfall;
 `tests/build/test_build_fonts.py` hält fest, dass der Build die Dateien neben
 das Bundle legt und dort keine Waisen stehen lässt.
 
-**`tools/fetch-fonts.py` gibt diesen Stand NICHT her** (Stand 2026-10-13). Das
-Skript nennt die zehn abgeschafften Dateinamen, lädt Roboto und Inter als
-Einzelgewichte statt als variable Schrift und holt `Source+Sans+3` unter dem
-Namen `source-sans-pro-*`. Seine `latin`-Erkennung ist richtig, die Dateiliste
-ist überholt. Die sieben Dateien hier stammen **nicht** daraus.
+**`tools/fetch-fonts.py` gibt diesen Stand jetzt her** (Stand 2026-10-14). Bis
+dahin nicht: das Skript nannte die zehn abgeschafften Dateinamen, lud Roboto
+und Inter als Einzelgewichte statt als variable Schrift und holte
+`Source+Sans+3` unter dem Namen `source-sans-pro-*`. Die sieben Dateien hier
+stammen **nicht** daraus, sondern aus dem Austausch vom 2026-10-13.
+
+Repariert in Gegenprüfungsrunde 4 (Befunde 6 und 12):
+
+- `SCHRIFT_PLAN` nennt die sieben aktuellen Dateien mit den URLs oben —
+  Roboto und Inter mit `wght@100..900`, Source Sans Pro als
+  `Source+Sans+Pro`.
+- `pruefe_plan_gegen_fonts_css()` vergleicht den Plan **vor dem ersten
+  Download** in beide Richtungen mit den `url()`-Angaben in `fonts.css` und
+  bricht bei Abweichung ab. `fonts.css` ist also auch dort die einzige Liste.
+- Der Rückfall „nimm den ersten `woff2`-Treffer" ist entfernt — er hätte bei
+  einem Formatwechsel bei Google schweigend das kyrillische Subset geholt.
+- Nachgemessen, nicht behauptet: `roboto-variable.woff2` gelöscht,
+  `python tools/fetch-fonts.py` geholt → 43.136 Bytes,
+  `sha256 1404ca348bd75ef8…`, **bitgleich** zum Git-Objekt.
+- Ratsche: `tests/build/test_fetch_fonts.py` (8 Fälle, lädt nichts).
+
+Und `build.py` lässt eine Schriftdatei, die kein `@font-face` nennt, nicht
+mehr durch: `pruefe_keine_fremdschriften()` bricht den Build ab, bevor etwas
+geschrieben wird. Vorher lief ein Baum mit zwölf Schriftdateien grün durch
+(zwei Erfolgsmeldungen, Exit 0) und der Job `deploy` veröffentlichte alle
+zwölf.
+
+## Die Dateien gegen das Git-Objekt prüfen
+
+```bash
+# Die sieben woff2 sind BINÄR — der rohe sha256sum IST der Objekt-Hash:
+for f in assets/fonts/*.woff2; do
+  r=$(sha256sum "$f" | cut -d' ' -f1)
+  g=$(git cat-file blob HEAD:"$f" | sha256sum | cut -d' ' -f1)
+  [ "$r" = "$g" ] && echo "BITGLEICH $f" || echo "ABWEICHUNG $f"
+done
+```
+
+Das funktioniert, und es ist erwähnenswert, weil im Projekt mehrfach das
+Gegenteil behauptet wurde: „`sha256sum` gegen das Git-Objekt geht hier nicht,
+`core.autocrlf=true` macht den Datei-Hash systematisch ungleich dem
+Blob-Hash." Das gilt für **Text**, nicht für diese Dateien — Git markiert
+`woff2` als binär und wandelt dort keine Zeilenenden. Gemessen im Arbeitsbaum:
+
+| Datei                            | Art   | roher `sha256sum` == Objekt-Hash | nach `tr -d '\r'` |
+| -------------------------------- | ----- | -------------------------------- | ----------------- |
+| `roboto-variable.woff2`          | binär | **ja**                           | nein              |
+| `tools/pruefe-schriftdateien.js` | Text  | nein                             | **ja**            |
+
+Für Textdateien ist der richtige Nachweis darum `git hash-object <pfad>` gegen
+`git rev-parse :<pfad>` — beide normalisieren — und nicht `sha256sum`. Wer die
+pauschale Fassung der Korrektur liest, hält für die sieben Dateien hier einen
+gültigen Nachweisweg für unmöglich und weicht auf `git hash-object` aus, das
+die Bytes des Arbeitsbaums gerade **nicht** prüft.
