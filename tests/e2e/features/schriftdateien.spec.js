@@ -1058,6 +1058,9 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             page.on('response', r => {
                 if (/\.woff2(\?|$)/i.test(r.url())) gesehen.push(r.url().split('/').pop());
             });
+            expect(FACES.length, 'fonts.css liefert keine Faces').toBeGreaterThanOrEqual(
+                MINDEST_FACES
+            );
             await ladeApp(page);
             await page.evaluate(() => document.fonts.ready);
             await page.waitForTimeout(2000);
@@ -1065,7 +1068,31 @@ test.describe('SCHR — die gebuendelten Web-Schriften tragen nichts bei', () =>
             // Chromium faul. Die App selbst benutzt keine der vier Familien.
             // Das ist ein Befund, keine Formalie: die 195.276 Byte fliessen
             // erst, wenn jemand im Editor eine der vier waehlt.
-            expect(gesehen).toEqual([]);
+            const beimBlankenLaden = gesehen.slice();
+            expect(beimBlankenLaden).toEqual([]);
+
+            // DIE GEGENPROBE ZUR VERNEINUNG (Gegenpruefung Runde 2, B-08).
+            // Eine Zusicherung, die die ABWESENHEIT von Anfragen behauptet,
+            // scheitert in Richtung falsch-gruen: ein blinder Horcher, eine
+            // zu kurze Frist oder ein Muster, das nicht mehr greift, sehen
+            // alle genauso aus wie "Chromium hat nichts angefordert".
+            // Nachgestellt im isolierten HEAD-Export: mit einem Horcher, der
+            // grundsaetzlich nichts schiebt (`if (false && ...)`), blieb
+            // dieser Fall gruen UND die ganze Datei gruen (14 passed) — die
+            // Nachbarfaelle fangen es nicht, weil der Fall darunter seinen
+            // eigenen Horcher fuehrt.
+            //
+            // Darum muss DERSELBE Horcher im SELBEN Lauf zeigen, dass er
+            // sehen kann: erzwungen geladen, und die zehn Anfragen muessen
+            // auftauchen. Das macht die feste Frist oben belastbar — nicht,
+            // weil 2000 ms die richtige Zahl waeren, sondern weil der
+            // Erkenner im selben Fenster nachweislich funktioniert.
+            // `expect.poll` statt einer zweiten festen Frist, aus dem Grund,
+            // der im Fall darunter steht.
+            await messeBreiten(page, { mono: { stack: 'monospace' } });
+            await expect
+                .poll(() => gesehen.length, { timeout: 15000 })
+                .toBeGreaterThanOrEqual(FACES.length);
         });
 
         test(`Erzwungen laden alle ${MINDEST_FACES} mit Status 200, ${BYTE_SUMME_SOLL} Byte`, async ({
