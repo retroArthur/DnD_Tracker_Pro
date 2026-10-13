@@ -3,12 +3,19 @@
 /**
  * pruefe-schriftdateien — Messwerkzeug fuer die gebuendelten woff2 (SCHR)
  *
- * Beantwortet genau eine Frage: traegt jede in `assets/styles/fonts.css`
- * eingebundene Schriftdatei ueberhaupt die Zeichen, die diese deutsche App
- * darstellen muss? Eine woff2 ohne lateinische Glyphen laedt ohne 404, der
- * Browser findet darin kein `A` und faellt zeichenweise auf den Rueckfall
- * (`Arial`) zurueck — ein Fehler, den kein Netzwerk-Log und kein
- * Konsolenfehler zeigt. Nur ein Blick in die cmap zeigt ihn.
+ * Beantwortet zwei Fragen, die beide kein Netzwerk-Log und kein
+ * Konsolenfehler beantwortet:
+ *
+ *  1. Traegt jede in `assets/styles/fonts.css` eingebundene Schriftdatei
+ *     ueberhaupt die Zeichen, die diese deutsche App darstellen muss? Eine
+ *     woff2 ohne lateinische Glyphen laedt ohne 404, der Browser findet
+ *     darin kein `A` und faellt zeichenweise auf den Rueckfall (`Arial`)
+ *     zurueck. Nur ein Blick in die cmap zeigt das.
+ *  2. Kann jede Datei das Gewicht halten, das fonts.css fuer sie erklaert?
+ *     `font-weight: 100 900` auf einer Datei ohne `wght`-Achse laesst den
+ *     Browser Fettschrift synthetisch nachtaeuschen — wieder ohne Fehler,
+ *     ohne 404 und ohne fehlende Glyphe. Nur ein Blick in die fvar-Tabelle
+ *     zeigt das.
  *
  * Formvorbild: `tools/css-usage-report.js` (strikter Modus, nur
  * Node-Standardmodule, benannte Pfadkonstanten, alle Kernfunktionen einzeln
@@ -219,6 +226,91 @@ function leseSchriftQuellen(cssPfad = FONTS_CSS) {
         }
     }
     return quellen;
+}
+
+// ----------------------------------------------------------------------
+// `font-weight` einer @font-face-Regel ist entweder ein Einzelgewicht oder
+// ein BEREICH aus zwei Zahlen (CSS Fonts 4, `font-weight: 100 900`). Der
+// Bereich ist eine Zusicherung UEBER DEN DATEIINHALT: nur eine variable
+// Schrift mit `wght`-Achse kann ihn einhalten. Darum wird er hier gelesen,
+// nicht nur die url().
+//
+// Die Schluesselwoerter sind erlaubt und normativ festgelegt; `normal` und
+// `bold` sind die einzigen, die in einer @font-face-Regel vorkommen duerfen
+// (`bolder`/`lighter` sind dort ungueltig, weil sie relativ sind).
+// ----------------------------------------------------------------------
+const GEWICHT_WORTE = Object.freeze({ normal: 400, bold: 700 });
+
+/**
+ * Loest eine `font-weight`-Angabe in [von, bis] auf.
+ *
+ * Fehlt die Angabe, gilt die CSS-Vorgabe `normal` (400) — das ist ein
+ * gueltiges Einzelgewicht, kein Fehler. Eine Angabe, die der Leser NICHT
+ * versteht, ergibt bewusst NaN und nicht etwa 400: sie wuerde sonst still
+ * als "kein Bereich" gelten und die Achsenpruefung umgehen.
+ * @param {string|null|undefined} roh
+ * @returns {[number, number]}
+ */
+function leseGewichtsbereich(roh) {
+    if (roh === null || roh === undefined || roh.trim() === '') return [400, 400];
+    const teile = roh
+        .trim()
+        .split(/\s+/)
+        .map(t => {
+            const wort = GEWICHT_WORTE[t.toLowerCase()];
+            if (wort !== undefined) return wort;
+            return t !== '' && Number.isFinite(Number(t)) ? Number(t) : NaN;
+        });
+    if (teile.length === 1) return [teile[0], teile[0]];
+    return [teile[0], teile[teile.length - 1]];
+}
+
+/**
+ * Liest die @font-face-Bloecke aus fonts.css — Familie, Gewichtsangabe und
+ * Dateien je Block.
+ *
+ * Gegenueber `leseSchriftQuellen()` (das nur url()s erntet, dedupliziert
+ * und ueber Blockgrenzen hinweg) behaelt dies die ZUORDNUNG: welche
+ * CSS-Angabe steht auf welcher Datei. Nur so ist pruefbar, ob ein
+ * `font-weight: 100 900` auf einer Datei steht, die das auch kann.
+ *
+ * KEINE EIGENE DATEILISTE, wie im Kopf dieser Datei begruendet: die Namen
+ * stammen aus den url()-Angaben, nicht aus einem Literal.
+ * @param {string} [cssPfad=FONTS_CSS]
+ * @returns {Array<{familie: string|null, gewichtRoh: string|null, gewichtVon: number,
+ *   gewichtBis: number, istBereich: boolean, urls: string[], dateien: string[],
+ *   dateinamen: string[]}>}
+ */
+function leseSchriftFaces(cssPfad = FONTS_CSS) {
+    const css = ohneKommentare(fs.readFileSync(cssPfad, 'utf8'));
+    const cssVerzeichnis = path.dirname(cssPfad);
+    const faces = [];
+
+    const blockRegex = /@font-face\s*\{([^}]*)\}/gi;
+    let block;
+    while ((block = blockRegex.exec(css)) !== null) {
+        const inhalt = block[1];
+        const familie = (inhalt.match(/font-family\s*:\s*(['"]?)([^;'"]+)\1/i) || [])[2];
+        const gewichtRoh = (inhalt.match(/font-weight\s*:\s*([^;]+)/i) || [])[1];
+        const [von, bis] = leseGewichtsbereich(gewichtRoh);
+
+        const urls = [];
+        const urlRegex = /url\(\s*(['"]?)([^'")]+)\1\s*\)/gi;
+        let urlTreffer;
+        while ((urlTreffer = urlRegex.exec(inhalt)) !== null) urls.push(urlTreffer[2].trim());
+
+        faces.push({
+            familie: familie ? familie.trim() : null,
+            gewichtRoh: gewichtRoh ? gewichtRoh.trim() : null,
+            gewichtVon: von,
+            gewichtBis: bis,
+            istBereich: von !== bis,
+            urls,
+            dateien: urls.map(u => path.resolve(cssVerzeichnis, u)),
+            dateinamen: urls.map(u => path.basename(u))
+        });
+    }
+    return faces;
 }
 
 /**
@@ -515,6 +607,86 @@ function leseCmap(font, offset) {
 }
 
 // ----------------------------------------------------------------------
+// fvar — die Variationsachsen einer variablen Schrift.
+//
+// WARUM DAS HIER STEHT. fonts.css erklaert fuer Roboto und Inter
+// `font-weight: 100 900`. Das ist eine Zusicherung ueber den DATEIINHALT:
+// nur eine Datei mit `wght`-Achse liefert dort echte Schnitte. Steht der
+// Bereich auf einer statischen Datei, taeuscht der Browser Fettschrift
+// synthetisch nach — ohne 404, ohne Konsolenfehler, ohne fehlende Glyphe.
+// Dieselbe unsichtbare Fehlerklasse wie das falsche cmap-Subset, nur eine
+// Ebene tiefer, und nur an der fvar-Tabelle zu sehen.
+// ----------------------------------------------------------------------
+const FVAR_KOPF_LAENGE = 16;
+const FVAR_ACHSENSATZ_LAENGE = 20;
+
+/**
+ * Liest ein 16.16-Festkommawort (OpenType `Fixed`).
+ *
+ * Bewusst `readInt32BE` / 65536 und keine Bitschieberei: der Wert ist
+ * vorzeichenbehaftet (Achsen wie `slnt` haben negative Minima).
+ * @param {Buffer} buf
+ * @param {number} offset
+ * @returns {number}
+ */
+function leseFixed1616(buf, offset) {
+    return buf.readInt32BE(offset) / 65536;
+}
+
+/**
+ * Liest die Variationsachsen aus der fvar-Tabelle.
+ *
+ * Wirft bei allem, was nicht sicher zu lesen ist, statt eine leere
+ * Achsenliste zu liefern — eine leere Liste waere von einer echten
+ * statischen Schrift nicht zu unterscheiden (dasselbe Argument wie bei
+ * `leseCmapUntertabelle`, die unbekannte Formate nicht als "leer"
+ * durchlaesst).
+ * @param {Buffer} font Entpackter Schriftstrom
+ * @param {number} offset Offset der fvar-Tabelle
+ * @param {number} [laenge] Laenge der fvar-Tabelle, fuer die Grenzpruefung
+ * @returns {{major: number, minor: number, achsen: Array<{tag: string, min: number,
+ *   standard: number, max: number}>, instanzen: number}}
+ */
+function leseFvar(font, offset, laenge) {
+    const ende = laenge === undefined ? font.length : Math.min(offset + laenge, font.length);
+    if (offset + FVAR_KOPF_LAENGE > ende) {
+        throw new Error('fvar-Kopf reicht ueber das Tabellenende');
+    }
+
+    const major = font.readUInt16BE(offset);
+    const minor = font.readUInt16BE(offset + 2);
+    if (major !== 1) throw new Error(`fvar-Version ${major}.${minor} wird nicht unterstuetzt`);
+
+    const achsenOffset = font.readUInt16BE(offset + 4);
+    const achsenZahl = font.readUInt16BE(offset + 8);
+    const achsenGroesse = font.readUInt16BE(offset + 10);
+    const instanzen = font.readUInt16BE(offset + 12);
+
+    // Die Satzgroesse ist normativ mindestens 20; ein kuenftiges Format darf
+    // sie VERGROESSERN, darum wird mit `achsenGroesse` geschritten und nicht
+    // mit der Konstanten. Kleiner als 20 heisst: nicht lesbar.
+    if (achsenGroesse < FVAR_ACHSENSATZ_LAENGE) {
+        throw new Error(`fvar-Achsensatz ist ${achsenGroesse} Byte, erwartet mindestens 20`);
+    }
+
+    const achsen = [];
+    for (let i = 0; i < achsenZahl; i++) {
+        const a = offset + achsenOffset + i * achsenGroesse;
+        if (a + FVAR_ACHSENSATZ_LAENGE > ende) {
+            throw new Error(`fvar-Achsensatz ${i} reicht ueber das Tabellenende`);
+        }
+        achsen.push({
+            tag: font.toString('latin1', a, a + 4),
+            min: leseFixed1616(font, a + 4),
+            standard: leseFixed1616(font, a + 8),
+            max: leseFixed1616(font, a + 12)
+        });
+    }
+
+    return { major, minor, achsen, instanzen };
+}
+
+// ----------------------------------------------------------------------
 // Pruefung
 // ----------------------------------------------------------------------
 
@@ -563,11 +735,30 @@ function pruefeDatei(quelle) {
     const cmap = leseCmap(woff2.font, cmapTabelle.offset);
     const fehlend = DEUTSCHE_CODEPUNKTE.filter(c => !cmap.codepunkte.has(c));
 
+    // Die Achsen stehen bewusst NICHT unter `fehler`: eine Datei ohne
+    // fvar-Tabelle ist voellig in Ordnung (statische Schrift), und eine
+    // unlesbare fvar-Tabelle ist ein eigener Befund, der die cmap-Aussage
+    // nicht entwertet. `achsenFehler` trennt beide Faelle — ohne diese
+    // Trennung waere "unlesbar" von "statisch" nicht zu unterscheiden.
+    const fvarTabelle = woff2.tabellen['fvar'];
+    let achsen = [];
+    let achsenFehler = null;
+    if (fvarTabelle) {
+        try {
+            achsen = leseFvar(woff2.font, fvarTabelle.offset, fvarTabelle.laenge).achsen;
+        } catch (e) {
+            achsenFehler = `fvar unlesbar: ${e.message}`;
+        }
+    }
+
     return {
         ...basis,
         fehler: null,
         numTables: woff2.numTables,
         laengenStimmen: woff2.laengenStimmen,
+        hatFvar: Boolean(fvarTabelle),
+        achsen,
+        achsenFehler,
         glyphen: cmap.codepunkte.size,
         // Die GELESENEN Codepunkte, aufsteigend. Nicht Deko, sondern die
         // Grundlage, aus der ein Aufrufer `fehlend` nachrechnen kann: ohne sie
@@ -608,9 +799,39 @@ function pruefeAlle(opts = {}) {
     const verzeichnis = leseVerzeichnisSchriften(quellen);
     const nurImVerzeichnis = verzeichnis.namen.filter(n => !cssNamen.includes(n));
 
+    // Paarung CSS-Angabe <-> Dateifaehigkeit. Ein `font-weight: 100 900` auf
+    // einer Datei ohne deckende `wght`-Achse laesst den Browser Fettschrift
+    // nachtaeuschen — unsichtbar fuer jede andere Pruefung hier.
+    const nachName = new Map(dateien.map(d => [d.name, d]));
+    const achsenVerstoesse = [];
+    for (const face of leseSchriftFaces(cssPfad)) {
+        for (const name of face.dateinamen) {
+            const datei = nachName.get(name);
+            if (!datei || datei.fehler) continue;
+            if (datei.achsenFehler) {
+                achsenVerstoesse.push(`${name}: ${datei.achsenFehler}`);
+                continue;
+            }
+            if (!face.istBereich) continue;
+            const wght = (datei.achsen || []).find(a => a.tag === 'wght');
+            if (!wght) {
+                achsenVerstoesse.push(
+                    `${name}: fonts.css erklaert fuer ${face.familie} den Gewichtsbereich ` +
+                        `${face.gewichtVon}..${face.gewichtBis}, die Datei hat keine wght-Achse`
+                );
+            } else if (wght.min > face.gewichtVon || wght.max < face.gewichtBis) {
+                achsenVerstoesse.push(
+                    `${name}: wght-Achse ${wght.min}..${wght.max} deckt den erklaerten ` +
+                        `Bereich ${face.gewichtVon}..${face.gewichtBis} nicht`
+                );
+            }
+        }
+    }
+
     return {
         geprueft: dateien.length,
         dateien,
+        achsenVerstoesse,
         fehlendeDateien: dateien.filter(d => !d.vorhanden).map(d => d.url),
         unlesbar: dateien.filter(d => d.fehler).map(d => ({ name: d.name, fehler: d.fehler })),
         ohneDeutsch: dateien.filter(d => !d.traegtDeutsch).map(d => d.name),
@@ -677,6 +898,15 @@ function renderBericht(ergebnis) {
         zeilen.push(
             `${' '.repeat(32)}Bloecke: ${d.bloecke.map(b => `${b.name}:${b.anzahl}`).join(', ') || '(keine)'}`
         );
+        zeilen.push(
+            `${' '.repeat(32)}Achsen: ${
+                d.achsenFehler
+                    ? `FEHLER: ${d.achsenFehler}`
+                    : d.hatFvar
+                      ? d.achsen.map(a => `${a.tag} ${a.min}..${a.max}`).join(', ')
+                      : '(statisch, keine fvar)'
+            }`
+        );
         if (!d.traegtDeutsch) {
             zeilen.push(`${' '.repeat(32)}Fehlend: ${d.fehlend.map(zeigeCodepunkt).join(' ')}`);
         }
@@ -696,6 +926,13 @@ function renderBericht(ergebnis) {
         `Ohne deutschen Zeichensatz: ${ergebnis.ohneDeutsch.length} von ${ergebnis.geprueft}` +
             (ergebnis.ohneDeutsch.length ? ` (${ergebnis.ohneDeutsch.join(', ')})` : '')
     );
+    zeilen.push(
+        `Gewichtsbereich ohne deckende wght-Achse: ${
+            ergebnis.achsenVerstoesse.length === 0
+                ? 'keiner'
+                : `${ergebnis.achsenVerstoesse.length}\n  - ${ergebnis.achsenVerstoesse.join('\n  - ')}`
+        }`
+    );
     zeilen.push('');
     return zeilen.join('\n');
 }
@@ -708,14 +945,19 @@ module.exports = {
     DEUTSCHE_CODEPUNKTE,
     UNICODE_BLOECKE,
     BEKANNTE_TAGS,
+    GEWICHT_WORTE,
     ohneKommentare,
+    leseGewichtsbereich,
     leseSchriftQuellen,
+    leseSchriftFaces,
     leseServiceWorkerSchriften,
     leseVerzeichnisSchriften,
     leseUIntBase128,
     parseWoff2,
     leseCmapUntertabelle,
     leseCmap,
+    leseFixed1616,
+    leseFvar,
     zaehleBloecke,
     pruefeDatei,
     pruefeAlle,
@@ -750,7 +992,12 @@ if (require.main === module) {
             ...ergebnis.unlesbar.map(u => `${u.name}: ${u.fehler}`),
             ...ergebnis.ohneDeutsch
                 .filter(n => !ausnahmen.includes(n))
-                .map(n => `${n}: traegt den deutschen Zeichensatz nicht`)
+                .map(n => `${n}: traegt den deutschen Zeichensatz nicht`),
+            // Bewusst NICHT per --ausnahme freistellbar: anders als ein
+            // falsches Subset ist das ein reiner Verdrahtungsfehler zwischen
+            // fonts.css und der Datei, fuer den es keinen legitimen
+            // Uebergangszustand gibt.
+            ...ergebnis.achsenVerstoesse
         ];
         if (!ergebnis.drift.deckungsgleich) {
             verstoesse.push(
@@ -765,7 +1012,9 @@ if (require.main === module) {
             process.exit(1);
         }
         console.error(
-            '[pruefe-schriftdateien --check] OK — alle Schriften tragen den deutschen Zeichensatz.'
+            '[pruefe-schriftdateien --check] OK — alle Schriften tragen den deutschen ' +
+                'Zeichensatz, und jeder Gewichtsbereich steht auf einer Datei mit deckender ' +
+                'wght-Achse.'
         );
     }
 }

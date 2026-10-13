@@ -270,6 +270,10 @@ const ERGEBNIS = werkzeug.pruefeAlle();
 const QUELLEN = werkzeug.leseSchriftQuellen();
 const NACH_NAME = new Map(ERGEBNIS.dateien.map(d => [d.name, d]));
 
+// Laenge des fvar-Kopfes (OpenType): major, minor, axesArrayOffset,
+// reserved, axisCount, axisSize, instanceCount, instanceSize — 8 x uint16.
+const FVAR_KOPF_LAENGE = 16;
+
 /**
  * Baut eine cmap-Untertabelle im Format 4 aus Segmenten.
  *
@@ -745,6 +749,46 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
                     expect(wght.max).toBeGreaterThanOrEqual(face.gewichtBis);
                 }
             }
+        });
+
+        test('Das Werkzeug urteilt selbst gleich (--check sieht dasselbe)', () => {
+            // Zwei Wege, dieselbe Aussage — wie bei der Fehlliste in Teil 0.
+            // Der Fall oben rechnet die Paarung im Test nach; `pruefeAlle()`
+            // fuehrt sie fuer `--check` selbst. Laufen die beiden
+            // auseinander, prueft die CI etwas anderes als diese Ratsche.
+            expect(ERGEBNIS.achsenVerstoesse).toEqual([]);
+        });
+
+        test('leseGewichtsbereich trennt Bereich, Einzelgewicht und Unlesbares', () => {
+            // Gegenprobe am Leser selbst: der gesunde Bestand enthaelt kein
+            // Gegenbeispiel, an dem ein NEIN zu sehen waere.
+            expect(werkzeug.leseGewichtsbereich('100 900')).toEqual([100, 900]);
+            expect(werkzeug.leseGewichtsbereich('400')).toEqual([400, 400]);
+            expect(werkzeug.leseGewichtsbereich('normal')).toEqual([400, 400]);
+            expect(werkzeug.leseGewichtsbereich('bold')).toEqual([700, 700]);
+            // Fehlende Angabe ist die CSS-Vorgabe `normal`, kein Fehler.
+            expect(werkzeug.leseGewichtsbereich(null)).toEqual([400, 400]);
+            // Unlesbares ergibt NaN und nicht 400 — sonst wuerde es still
+            // als "kein Bereich" gelten und die Achsenpruefung umgehen.
+            expect(werkzeug.leseGewichtsbereich('bolder')[0]).toBeNaN();
+        });
+
+        test('leseFvar laesst eine unlesbare Tabelle nicht als statisch durchgehen', () => {
+            // Eine fvar-Tabelle, die eine Achse ankuendigt, aber abgeschnitten
+            // ist: muss WERFEN, nicht eine leere Achsenliste liefern — die
+            // waere von einer echten statischen Schrift nicht zu
+            // unterscheiden. Dasselbe Argument wie bei unbekannten
+            // cmap-Formaten.
+            const buf = Buffer.alloc(FVAR_KOPF_LAENGE);
+            buf.writeUInt16BE(1, 0); // major
+            buf.writeUInt16BE(0, 2); // minor
+            buf.writeUInt16BE(FVAR_KOPF_LAENGE, 4); // achsenOffset
+            buf.writeUInt16BE(2, 6); // reserved
+            buf.writeUInt16BE(1, 8); // achsenZahl — eine Achse angekuendigt
+            buf.writeUInt16BE(20, 10); // achsenGroesse
+            expect(() => werkzeug.leseFvar(buf, 0, buf.length)).toThrow(
+                /reicht ueber das Tabellenende/
+            );
         });
     });
 });
