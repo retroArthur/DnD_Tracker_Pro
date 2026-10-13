@@ -641,3 +641,153 @@ describe('ModalFocus — eine hoehere Blende behaelt den Tabulator', () => {
         expect(ModalFocus.statistik().blende).toBe(true);
     });
 });
+
+describe('ModalFocus — das Nachfassen, wenn das Neuzeichnen NACH dem Schliessen laeuft', () => {
+    /**
+     * Einen Oeffnerknopf bauen, mit oder ohne Kennung.
+     * @param {Record<string,string>} daten
+     */
+    function knopf(daten) {
+        const b = document.createElement('button');
+        Object.entries(daten).forEach(([k, v]) => b.setAttribute('data-' + k, v));
+        document.body.appendChild(b);
+        return b;
+    }
+
+    /** Alle offenen Mikrotasks abarbeiten lassen. */
+    function mikrotasksLeeren() {
+        return new Promise(fertig => setTimeout(fertig, 0));
+    }
+
+    test('der nach dem Schliessen zerstoerte Oeffner wird nachgefasst', async () => {
+        // DER BEFUND VON RUNDE 2 in seiner kleinsten Form. Die zwei Stufen von
+        // `kehreZurueck()` entscheiden nach dem Zustand ZUM ZEITPUNKT DES
+        // SCHLIESSENS — und bei der haeufigeren Reihenfolge (`hideModal()`
+        // zuerst, `render*()` danach) ist der Oeffner da noch in Ordnung. Am
+        // Buendel gemessen: Stufe 1 greift korrekt, und das DANACH laufende
+        // `renderInit()` zerstoert den gerade fokussierten Knoten; der Fokus
+        // fiel auf <body>, 6 bzw. 13 echte Tabulatorspruenge vom Ziel weg.
+        const alt = knopf({ action: 'show-add-effect', id: '1' });
+        alt.focus();
+        const m = schale('n1-modal', '<button>im Dialog</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        // Schliessen: der Oeffner steht noch, Stufe 1 greift.
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(alt);
+
+        // Und JETZT zeichnet die Liste neu — genau die Reihenfolge, die
+        // vorher durchfiel.
+        alt.remove();
+        const neu = knopf({ action: 'show-add-effect', id: '1' });
+
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(neu);
+    });
+
+    test('steht der Oeffner noch, fasst nichts nach', async () => {
+        // Der haeufige Fall. Nichts darf passieren — sonst wuerde das
+        // Nachfassen bei JEDEM Schliessvorgang den Fokus noch einmal
+        // anfassen.
+        const alt = knopf({ action: 'show-add-effect', id: '1' });
+        alt.focus();
+        const m = schale('n2-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+        // Ein gleichwertiger Zwilling steht BEREIT — er darf nicht gewinnen,
+        // solange der echte Oeffner noch da ist.
+        knopf({ action: 'show-add-effect', id: '1' });
+
+        ModalFocus.kehreZurueck(m);
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(alt);
+    });
+
+    test('setzt jemand den Fokus BEWUSST woanders hin, bleibt es dabei', async () => {
+        // Die erste der zwei tragenden Bedingungen. Mehrere Renderfunktionen
+        // und Oeffner setzen den Fokus selbst; das Nachfassen darf das nicht
+        // ueberschreiben. Darum greift es nur, wenn der Fokus auf
+        // <body>/<html> GEFALLEN ist.
+        const alt = knopf({ action: 'show-add-effect', id: '1' });
+        alt.focus();
+        const m = schale('n3-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        ModalFocus.kehreZurueck(m);
+        alt.remove();
+        knopf({ action: 'show-add-effect', id: '1' });
+        // Etwas Drittes nimmt den Fokus — eine Renderfunktion etwa.
+        const woanders = knopf({ action: 'ganz-andere-aktion' });
+        woanders.focus();
+
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(woanders);
+    });
+
+    test('ein Oeffner OHNE data-action wird nicht nachgefasst', async () => {
+        // Ohne Kennung gibt es nichts zu suchen — dann wird kein Mikrotask
+        // geplant. Dasselbe Verhalten wie bei Stufe 2.
+        const alt = document.createElement('button');
+        document.body.appendChild(alt);
+        alt.focus();
+        const m = schale('n4-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        ModalFocus.kehreZurueck(m);
+        alt.remove();
+        knopf({ action: 'show-add-effect', id: '1' });
+
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(document.body);
+    });
+
+    test('auch Stufe 2 fasst nach, wenn NOCH einmal gezeichnet wird', async () => {
+        // Ein Dialog, der beim Schliessen schon seinen Oeffner verloren hat
+        // (Stufe 2 greift) und danach ein zweites Mal zeichnet. Es ist
+        // derselbe Aufruf und kostet nichts extra.
+        const alt = knopf({ action: 'show-add-effect', id: '1' });
+        alt.focus();
+        const m = schale('n5-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        alt.remove();
+        const ersterErsatz = knopf({ action: 'show-add-effect', id: '1' });
+        ModalFocus.kehreZurueck(m);
+        expect(document.activeElement).toBe(ersterErsatz);
+
+        // Zweiter Durchgang des Zeichnens.
+        ersterErsatz.remove();
+        const zweiterErsatz = knopf({ action: 'show-add-effect', id: '1' });
+
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(zweiterErsatz);
+    });
+
+    test('nachgefasst wird GENAU EINMAL je Schliessvorgang', async () => {
+        // `_nachfassen()` plant sich nicht selbst neu. Verschwindet der
+        // nachgefasste Knoten auch noch, bleibt es dabei — sonst haette ein
+        // Dialog, der in einer Schleife zeichnet, einen Fokus, der nie zur
+        // Ruhe kommt.
+        const alt = knopf({ action: 'show-add-effect', id: '1' });
+        alt.focus();
+        const m = schale('n6-modal', '<button>x</button>');
+        ModalFocus.merkeOeffner(m);
+        ModalFocus.einstieg(m);
+
+        ModalFocus.kehreZurueck(m);
+        alt.remove();
+        const neu = knopf({ action: 'show-add-effect', id: '1' });
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(neu);
+
+        // Noch ein Durchgang, OHNE neues Schliessen.
+        neu.remove();
+        knopf({ action: 'show-add-effect', id: '1' });
+        await mikrotasksLeeren();
+        expect(document.activeElement).toBe(document.body);
+    });
+});
