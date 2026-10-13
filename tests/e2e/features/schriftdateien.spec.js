@@ -410,10 +410,74 @@ async function messeBreiten(page, stapel, text = PROBETEXT, groesse = MESSGROESS
 }
 
 /** Gefuellte Kampagne, gebautes Bundle, App fertig initialisiert. */
+// Chromium hat die generischen Familien beim Start eines Arbeiters noch nicht
+// aufgeloest: unter schwerer Maschinenlast messen `monospace` und `serif`
+// kurzzeitig EXAKT gleich breit (Differenz 0,0 px). `document.fonts.ready` deckt
+// das NICHT ab — es kennt nur @font-face-Ladungen, nicht die Zuordnung
+// generischer Familien.
+//
+// Gemeldet aus der Gegenpruefung, Runde 3: 5 von 18 Eigenlaeufen rot, und zwar
+// auf den Meta-Kontrollen selbst (`Math.abs(mono - serif) > 1` -> `Received: 0`
+// in Teil 0, und die Empfindlichkeitskontrolle in Teil 3). Die roten Laeufe
+// dauerten 35,4 s und 59,3 s statt 4 s — die Maschine lief unter der Last
+// anderer Suiten. In 98 Fall-Laeufen nicht nachstellbar (3 gleichzeitige
+// Instanzen, dann 4 Instanzen mit je 4 Arbeitern, alles gruen); gehaertet wird
+// auf den Mechanismus und die genaue Fehlerausgabe hin, nicht auf eine eigene
+// Reproduktion. Kostet im gesunden Fall einen Frame.
+//
+// Ein Falsch-Rot ist hier besonders teuer: es trifft genau die Zeilen, die
+// beweisen sollen, dass die Messung ueberhaupt etwas misst.
+const GENERIKA_FRIST = 15000;
+
+/**
+ * Wartet, bis Chromium `monospace` und `serif` unterscheidbar aufgeloest hat.
+ * Gegenprobe gegen Leerlauf: bleibt es dabei, WIRFT die Funktion — die Datei
+ * misst dann nicht blind weiter, sondern sagt, warum sie nicht messen kann.
+ */
+async function warteAufGenerika(page) {
+    const gemessen = await page
+        .waitForFunction(
+            ({ groesse, text }) => {
+                const mess = fam => {
+                    const span = document.createElement('span');
+                    span.style.cssText =
+                        `font-family:${fam};font-size:${groesse};` +
+                        'white-space:pre;display:inline-block;' +
+                        'position:absolute;left:-99999px;top:0;visibility:hidden;';
+                    span.textContent = text;
+                    document.body.appendChild(span);
+                    const breite = span.getBoundingClientRect().width;
+                    span.remove();
+                    return breite;
+                };
+                const mono = mess('monospace');
+                const serif = mess('serif');
+                return Math.abs(mono - serif) > 1 ? { mono, serif } : false;
+            },
+            { groesse: MESSGROESSE, text: PROBETEXT },
+            { timeout: GENERIKA_FRIST }
+        )
+        .then(griff => griff.jsonValue())
+        .catch(() => null);
+
+    if (!gemessen) {
+        throw new Error(
+            `Chromium hat 'monospace' und 'serif' nach ${GENERIKA_FRIST} ms nicht ` +
+                'unterscheidbar aufgeloest (Differenz <= 1 px). Jede Breitenmessung ' +
+                'dieser Datei waere an dieser Stelle blind — der Lauf wird abgebrochen, ' +
+                'statt ein Falsch-Rot auf den Meta-Kontrollen zu melden.'
+        );
+    }
+    return gemessen;
+}
+
 async function ladeApp(page) {
     await seedPopulatedSession(page);
     await page.goto(`file:///${REPO_ROOT.replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`);
     await waitForAppReady(page);
+    // Erst messen, wenn die generischen Familien stehen. Gilt fuer JEDEN Fall
+    // dieser Datei — auch fuer Teil 3, das an messeBreiten() vorbei misst.
+    await warteAufGenerika(page);
 }
 
 // Wohin build.py die url()-Pfade umschreibt: './assets/fonts/' relativ zur
