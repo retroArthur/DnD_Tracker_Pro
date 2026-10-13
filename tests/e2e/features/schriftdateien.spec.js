@@ -270,6 +270,28 @@ const MESSGROESSE = '40px';
 // davor; gegen `monospace` sind es 240.23px.
 const MINDESTABSTAND = 1;
 
+// Die Messgroesse, auf die sich `MINDESTABSTAND` bezieht, als Zahl.
+const MESSGROESSE_PX = Number.parseFloat(MESSGROESSE);
+
+/**
+ * Die Schwelle, umgerechnet auf eine andere Schriftgroesse.
+ *
+ * Der Breitenunterschied zweier Schriften skaliert LINEAR mit der
+ * Schriftgroesse, die Schwelle muss das also mitgehen. Teil 1, 2 und 6
+ * messen bei `MESSGROESSE` und nehmen `MINDESTABSTAND` unveraendert; Teil 3
+ * misst am LEBENDEN Element des Editors, und das rendert gemessen bei 14px.
+ * Dort ist 1px keine gleich strenge, sondern eine 2.9-fach STRENGERE
+ * Schwelle — der knappste Fall (Roboto, gemessen 1.890625px Abstand bei
+ * 14px) laege nur Faktor 1.9 davor statt der 5.4, die bei 40px gelten
+ * (5.421875px gegen 1px). Umgerechnet sind es 0.35px, und der Faktor ist
+ * wieder 5.4 — dieselbe Strenge, nicht eine andere.
+ * @param {number} groessePx
+ * @returns {number}
+ */
+function schwelleFuer(groessePx) {
+    return (MINDESTABSTAND * groessePx) / MESSGROESSE_PX;
+}
+
 // Eine Familie, die es garantiert nicht gibt. Sie ist die erste Gegenprobe
 // in der Gleichheits-Richtung: ein Messkoerper, der sie nennt, muss
 // bitgleich wie der reine Rueckfall messen.
@@ -405,32 +427,51 @@ const GENERISCHE_FAMILIEN = [
 
 // ----------------------------------------------------------------------
 // fonts.css lesen — Familie, Gewichtsangabe und Datei je @font-face.
+//
+// GELESEN WIRD MIT DEM WERKZEUG AUS EINHEIT 1, nicht mit einem eigenen
+// Regex. Der eigene Regex war bis `de0a237` genau eine Zeile lang und
+// genau eine Zeile falsch:
+//
+//     const gewicht = (block.match(/font-weight\s*:\s*(\d+)\s*;/) || [])[1];
+//
+// `font-weight: 100 900;` trifft er nicht — nach `100` folgt kein `;`.
+// `gewicht` wurde `undefined`, der Filter `if (familie && gewicht &&
+// datei)` warf den Block weg, und diese Datei sah 5 der 7 @font-face-
+// Bloecke. Es fehlten AUSGERECHNET Roboto und Inter, also genau die zwei
+// Familien, um die es beim Dateiaustausch ging — und das alte
+// `MINDEST_FACES = 10` verdeckte es, weil es ohnehin rot war.
+//
+// `leseSchriftFaces()` loest die Gewichtsangabe ueber
+// `leseGewichtsbereich()` in `[von, bis]` auf, kennt also Einzelgewicht,
+// Bereich und die Schluesselwoerter `normal`/`bold`, und meldet mit
+// `istBereich`, welcher Fall vorliegt. Das ist die Grundlage von Teil 6:
+// ohne diese Unterscheidung ist eine variable Familie von einer statischen
+// nicht zu trennen.
+//
+// KEINE EIGENE LISTE wird dadurch eingefuehrt: das Werkzeug liest dieselbe
+// fonts.css und nimmt die Dateinamen aus deren `url()`-Angaben.
 // ----------------------------------------------------------------------
 function leseFaces() {
-    const quelle = fs.readFileSync(FONTS_CSS, 'utf8');
-    const faces = [];
-    const bloecke = quelle.match(/@font-face\s*\{[^}]*\}/g) || [];
-    for (const block of bloecke) {
-        const familie = (block.match(/font-family\s*:\s*['"]?([^;'"]+)['"]?\s*;/) || [])[1];
-        const gewicht = (block.match(/font-weight\s*:\s*(\d+)\s*;/) || [])[1];
-        const datei = (block.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/) || [])[1];
-        if (familie && gewicht && datei) {
-            faces.push({
-                familie: familie.trim(),
-                gewichtRoh: gewicht,
-                gewichtVon: Number(gewicht),
-                gewichtBis: Number(gewicht),
-                istBereich: false,
-                datei: datei.split('/').pop()
-            });
-        }
-    }
-    return faces;
+    return schriftWerkzeug.leseSchriftFaces(FONTS_CSS).map(f => ({
+        familie: f.familie ? f.familie.trim() : null,
+        gewichtRoh: f.gewichtRoh,
+        gewichtVon: f.gewichtVon,
+        gewichtBis: f.gewichtBis,
+        istBereich: f.istBereich,
+        // Ein @font-face kann mehrere `url()` fuehren. Hier ist es je eine;
+        // `dateinamen` bleibt trotzdem die Quelle fuer DATEINAMEN, damit ein
+        // zweites `url()` nicht still verloren geht.
+        dateinamen: f.dateinamen,
+        datei: f.dateinamen[0]
+    }));
 }
 
 const FACES = leseFaces();
 const CSS_FAMILIEN = [...new Set(FACES.map(f => f.familie))].sort();
-const DATEINAMEN = [...new Set(FACES.map(f => f.datei))].sort();
+// Alle Dateinamen, die fonts.css einbindet. Ueber `dateinamen` und nicht
+// ueber `datei`: ein @font-face mit zwei `url()` wuerde sonst die zweite
+// Datei verlieren, und Teil 4 verglich eine zu kurze Namensliste.
+const DATEINAMEN = [...new Set(FACES.flatMap(f => f.dateinamen))].sort();
 
 /**
  * Je Familie: variabel oder statisch, und welche Einzelgewichte fonts.css
@@ -654,7 +695,11 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 expect(f.gewichtBis, `${f.familie}: Gewicht bis`).toBeGreaterThanOrEqual(
                     f.gewichtVon
                 );
-                expect(f.datei).toMatch(/\.woff2$/);
+                expect(
+                    f.dateinamen.length,
+                    `${f.familie}/${f.gewichtRoh}: kein url() im Block`
+                ).toBeGreaterThan(0);
+                for (const n of f.dateinamen) expect(n).toMatch(/\.woff2$/);
             }
             // Beide Bauarten muessen vorkommen, sonst laeuft Teil 6 leer:
             // ohne variable Familie fehlt der Nachweis echter Instanzen,
@@ -1252,6 +1297,10 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                             rechnerFamilie,
                             rueckfallStack: rueckfall,
                             text: el.textContent,
+                            // Die Groesse, bei der das LEBENDE Element
+                            // rendert (gemessen 14px). Die Schwelle unten
+                            // rechnet darauf um.
+                            groesse: Number.parseFloat(cs.fontSize),
                             lebend: el.getBoundingClientRect().width,
                             // Derselbe Text, dieselbe aufgeloeste Familie,
                             // aber als nachgebaute Spanne. Belegt, dass der
@@ -1259,6 +1308,16 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                             // dem lebenden Element entspricht.
                             nachbau: mach(rechnerFamilie),
                             rueckfall: mach(rueckfall),
+                            // Dasselbe noch einmal LAUT, bei
+                            // MESSGROESSE statt den 14px des Editors.
+                            // Nicht als Ersatz fuer das lebende
+                            // Element, sondern als zweite, rund
+                            // 2.9-fach deutlichere Ablesung desselben
+                            // Rechnerstils — der Nachbauweg ist
+                            // gleich darunter auf 0.05px Treue
+                            // geprueft.
+                            lautMit: mach(rechnerFamilie, el.textContent, fremdGroesse),
+                            lautOhne: mach(rueckfall, el.textContent, fremdGroesse),
                             // Die Gegenprobe bei der groesseren Messgroesse,
                             // derselbe Messweg, nur lauter.
                             fremd: mach(rechnerFamilie, fremdText, fremdGroesse),
@@ -1338,10 +1397,24 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                     ).toBeCloseTo(messung.rueckfall, 1);
                     continue;
                 }
-                if (Math.abs(messung.lebend - messung.rueckfall) <= MINDESTABSTAND) {
+                const schwelle = schwelleFuer(messung.groesse);
+                if (Math.abs(messung.lebend - messung.rueckfall) <= schwelle) {
                     stumm.push(
                         `"${schluessel}" -> face="${messung.face}" ${messung.lebend}px, ` +
-                            `Rueckfall "${rueckfallStack(stack)}" ${messung.rueckfall}px`
+                            `Rueckfall "${rueckfallStack(stack)}" ${messung.rueckfall}px ` +
+                            `(bei ${messung.groesse}px, Schwelle ${schwelle}px)`
+                    );
+                }
+                // Und dieselbe Aussage noch einmal bei MESSGROESSE, wo die
+                // volle Schwelle gilt. Zwei Ablesungen desselben
+                // Rechnerstils: die authentische am lebenden Element bei
+                // 14px und die laute bei 40px. Dass eine davon allein
+                // genuegen koennte, ist nicht der Punkt — stimmen sie
+                // nicht ueberein, ist etwas an der Messung faul.
+                if (Math.abs(messung.lautMit - messung.lautOhne) <= MINDESTABSTAND) {
+                    stumm.push(
+                        `"${schluessel}" bei ${MESSGROESSE}: ${messung.lautMit}px gegen ` +
+                            `Rueckfall ${messung.lautOhne}px`
                     );
                 }
             }
