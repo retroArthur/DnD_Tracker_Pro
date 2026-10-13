@@ -17,6 +17,39 @@ const TASTEN_BEDIENELEMENT_SELEKTOR =
 const TASTE_HP_RECHNER = 'h';
 
 /**
+ * DIE EINE BLENDE, UNTER DIE DAS KUERZEL KEINEN DIALOG LEGEN DARF: die
+ * Tastenhilfe (`?`).
+ *
+ * WAS GEMESSEN WAR (Befund von Runde 2, gebautes Buendel, gefuellte
+ * Kampagne, nur echte Tastendruecke). Die Tastenhilfe ist keine
+ * `.modal-overlay`-Schale, die Dialogschranke in `oeffneHpRechnerAmZug()`
+ * sah sie also nicht. Mit offener Hilfe ging der Rechner DARUNTER auf —
+ * z-index 1000 gegen 2000, `elementFromPoint` ueber dem Wertfeld lieferte
+ * `DIV.shortcuts-grid`, das Feld war verdeckt. Und trotzdem bedienbar:
+ * `7`, Tabulator, Enter teilten 7 Schaden aus (40 -> 33). Der Spielleiter
+ * teilt Schaden durch einen Dialog aus, den er nicht sieht. Herauszukommen
+ * kostete ZWEI Escape, und das erste schloss die Hilfe und liess den
+ * unsichtbaren Dialog stehen.
+ *
+ * Dieselbe Fehlerart, die T-D fuer die Fokusfalle beseitigt hat (1333
+ * erreichte Ziele UNTER der Dialogflaeche, unsichtbar aber ausloesbar) —
+ * hier vom Kuerzel selbst erzeugt.
+ *
+ * WARUM NUR SIE, und keine zweite Blende dazu — auch das ist gemessen, denn
+ * ein unbelegter Selektor ist keine Vorsichtsmassnahme, sondern
+ * ungemessener Code:
+ *   · Schnellreferenz (`/`): ihr Panel liegt mit z-index 600 UNTER der
+ *     Dialogflaeche (1000). Gemessen steht der Rechner oben und sein Feld
+ *     ist frei (`elementFromPoint` liefert `hp-calc-value`). Nichts zu tun.
+ *   · Befehlspalette (Strg+Shift+K): sie haelt den Fokus in ihrem
+ *     Eingabefeld, dort greift die `isTyping`-Schranke weiter oben.
+ *     Gemessen landete das "h" als Zeichen in der Palette, kein Dialog.
+ *
+ * Bewacht von Fall (m) in `tests/e2e/features/tastatur-kuerzel.spec.js`.
+ */
+const TASTENHILFE_ID = 'shortcuts-overlay';
+
+/**
  * Der Lebenspunkte-Rechner auf den Kaempfer, der am Zug ist (TAST, E-4).
  *
  * WARUM ES DAS BRAUCHT. Gemessen am gebauten Buendel, gefuellte Kampagne,
@@ -53,7 +86,7 @@ const TASTE_HP_RECHNER = 'h';
  * `tests/e2e/features/tastatur-kuerzel.spec.js` vergleicht beide Wege
  * Feld fuer Feld, statt die Gleichheit zu behaupten.
  *
- * VIER SCHRANKEN, jede mit eigenem Fall in derselben Datei:
+ * FUENF SCHRANKEN, jede mit eigenem Fall in derselben Datei:
  *  (1) nur bei aktiver Initiative-Ansicht — E-4 sagt "nur im Kampf";
  *  (2) nur mit einem Kaempfer am Zug;
  *  (3) nicht auf einem Lair-Eintrag: dessen Zeile hat gar keine
@@ -66,7 +99,9 @@ const TASTE_HP_RECHNER = 'h';
  *      geoeffnete); ein zweiter Dialog ueber dem ersten waere ein Stapel,
  *      den Escape nur Schicht fuer Schicht abbaut. Der Rueckfall auf den
  *      alten Selektor steht aus demselben Grund dort wie im Escape-Zweig:
- *      damit die Schranke auch greift, wenn `ui/modal-focus.js` fehlt.
+ *      damit die Schranke auch greift, wenn `ui/modal-focus.js` fehlt;
+ *  (5) nicht UNTER der Tastenhilfe — Befund von Runde 2, Begruendung und
+ *      Messwerte an `TASTENHILFE_ID` oben.
  * Greift eine Schranke, tut die Taste NICHTS — kein Hinweis, kein Toast.
  * Sie wird dann auch nicht verbraucht (`preventDefault()` bleibt aus), damit
  * die gemessene Belegung der Lage entspricht.
@@ -95,6 +130,8 @@ function oeffneHpRechnerAmZug() {
     const offeneSchale =
         window.ModalFocus?.oberstesModal?.() || document.querySelector('.modal-overlay.show');
     if (offeneSchale) return false;
+    // (5) Und nicht UNTER der Tastenhilfe. Begruendung an `TASTENHILFE_ID`.
+    if (document.getElementById(TASTENHILFE_ID)?.classList.contains('show')) return false;
     const init = window.D?.initiative;
     // (2) Nur mit einem Kaempfer am Zug.
     const amZug = init?.combatants?.[init.currentTurn];

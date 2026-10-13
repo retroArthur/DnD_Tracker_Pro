@@ -195,6 +195,7 @@ export default {
     "SystemActions": 'readonly',
     "TAB_RENDER_REGISTRY": 'readonly',
     "TAG_COLORS": 'readonly',
+    "TASTENHILFE_ID": 'readonly',
     "TASTEN_BEDIENELEMENT_SELEKTOR": 'readonly',
     "TASTE_HP_RECHNER": 'readonly',
     "TERRAIN_MODIFIERS": 'readonly',
