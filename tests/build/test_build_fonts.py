@@ -119,6 +119,15 @@ class TestSchriftenNebenDasBundle:
         monkeypatch.setattr(
             build_module, 'kopiere_schriftdateien', lambda d: kopien.append(d) or 0
         )
+        # Auch die Verweispruefung stilllegen — wie im Geschwisterfall
+        # test_build_prueft_die_verweise_des_erzeugten_buendels. Dieser Fall prueft die
+        # VERDRAHTUNG des Kopierschritts, nicht die Pruefung. Lief sie hier echt, pruefte
+        # sie dist/assets/fonts/ gegen Dateien, die der stillgelegte Kopierschritt gerade
+        # nicht gelegt hat: auf einem frischen Baum '[FEHLER] 10 Schriftverweis(e) ...
+        # loesen nicht auf' und sys.exit(1). Gruen war der Fall nur, wenn ein FRUEHERER
+        # Build die Dateien schon dorthin gelegt hatte — er hing an einem Rueckstand in
+        # dist/ und an der Schrittreihenfolge in ci.yml (build vor pytest).
+        monkeypatch.setattr(build_module, 'pruefe_schriftverweise', lambda css, d: [])
 
         build_module.build()
 
@@ -136,6 +145,8 @@ class TestSchriftenNebenDasBundle:
         monkeypatch.setattr(
             build_module, 'kopiere_schriftdateien', lambda d: kopien.append(d) or 0
         )
+        # Verweispruefung stilllegen, gleiche Begruendung wie im Dev-Fall darueber.
+        monkeypatch.setattr(build_module, 'pruefe_schriftverweise', lambda css, d: [])
 
         build_module.build(production=True)
 
