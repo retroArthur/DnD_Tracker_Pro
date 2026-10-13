@@ -15162,7 +15162,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Eigenschaft — KEINE Zeile). Bewusst LEER, nicht abwesend: fuer das
      *  Gewicht ist nach heutigem Stand KEINE Ausnahme begruendet. Die zehn
      *  `bold`, die eine `normal` und die eine `300` sitzen alle an sichtbarem
-     *  Text. Die 10 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
+     *  Text. Die 7 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
      *  sondern liegen ausserhalb des Geltungsbereichs — sie benennen
      *  Schriftdateien, sie gestalten nichts. */
     const FONT_WEIGHT_GEDULDET = {};
@@ -15302,15 +15302,29 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     });
 
     test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
-        // Die 10 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
-        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der 700er-Datei
-        // — und sie WIRD sie mitzaehlen, sobald jemand den Geltungsbereich
-        // "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        // Die 7 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
+        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der zwei
+        // variablen Dateien — und sie WIRD sie mitzaehlen, sobald jemand den
+        // Geltungsbereich "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        //
+        // NACHGEZOGEN NACH DEM DATEIAUSTAUSCH (SCHR, b0ada5b). Bis dahin
+        // standen hier 10 Deklarationen mit einer `700`; seit Roboto und Inter
+        // als je EINE variable Datei kommen, sind es 7 mit zwei `100 900`. Der
+        // Fall war seit b0ada5b die einzige rote Stelle der Jest-Suite und
+        // keinem der SCHR-Auftraege zugewiesen. Die beiden `100 900` sind
+        // genau die Gewichtsbereiche, die `tests/unit/schriftdateien.test.js`
+        // Teil 8 gegen die fvar-Achsen der Dateien prueft; dass sie NICHT in
+        // `ERLAUBT` stehen, ist derselbe Satz wie zuvor fuer die `700` — eine
+        // @font-face-Gewichtsangabe gestaltet nichts und gehoert nicht in die
+        // Gestaltungsskala. `ERLAUBT` bleibt darum unberuehrt.
         const fonts = cssFiles.find(f => f.name === 'fonts.css');
         expect(fonts).toBeTruthy();
         const dort = typoDeklarationen(fonts.content).filter(d => d.prop === 'font-weight');
-        expect(dort.length).toBe(10);
-        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual(['700']);
+        expect(dort.length).toBe(7);
+        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual([
+            '100 900',
+            '100 900'
+        ]);
         expect(typoGeltungsbereich().map(f => f.name)).not.toContain('fonts.css');
     });
 
