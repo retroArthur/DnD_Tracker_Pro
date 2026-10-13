@@ -444,7 +444,8 @@ function deleteEntity(id) {
 | `Shift+N`  | New round (Initiative)                         |
 | `Space`    | Next turn (Initiative) — **not** while a focusable control has focus (TAST). Exception: a control made focusable at runtime by `ui/keyboard-reach.js` claims `Space` only on **keyboard** focus; after a mouse click on it, `Space` still changes the turn (TAST) |
 | `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key, and `Space` on a runtime-retrofitted control holding mouse focus |
-| `Escape`   | Close overlays/modals                          |
+| `Tab`/`Shift+Tab` | Next/previous control. **Inside an open modal the focus is trapped** and cycles within the dialog — it no longer reaches the background (TAST). `ui/modal-focus.js` takes the key over completely (`preventDefault` on every branch) rather than only guarding the two edges; measured before: 45 real presses left the dialog 1396–1610 times across the 36 shells, 1333–1606 of those landing on targets *under* the dialog that were invisible but still activatable. Without an open modal the key is untouched |
+| `Escape`   | Close overlays/modals — and returns focus to the control that opened the dialog (TAST). Closes the **last-opened** shell, not the last one in template order; also covers `#quicknotes-modal`, which carries `.modal-backdrop` and was previously the one shell of 36 that Escape left open |
 | `Entf`/`Backspace` | Delete selected node (Network view only)     |
 | `Alt+1/2/4/6/8`  | Quick roll d12/d20/d4/d6/d8                    |
 | `Alt+Shift+1..5` | Activate Soundboard scene in quick-slot 1–5 (D-03) |

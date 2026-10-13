@@ -8017,6 +8017,202 @@ git diff --stat -- tests/e2e/baselines/computed-style-baseline.json   # muss lee
 
 ---
 
+---
+
+## TAST, Einheit T-D — Modale: Einstieg, Fokusfalle und Rückkehr zum Öffner (2026-10-13)
+
+**Was am Spieltisch anders ist:** der Spielleiter öffnet einen Dialog und der Fokus ist
+drin. Er tabuliert, und der Tabulator bleibt drin. Er drückt Escape, und der Fokus liegt
+wieder auf der Schaltfläche, von der er kam. Vorher lag der Fokus bei **34 von 36** Schalen
+beim Öffnen außerhalb, verließ den Dialog bei **45 echten Sprüngen 1396- bzw. 1610-mal**,
+und kehrte **nie** zum Öffner zurück.
+
+Die Zahl, auf die es ankommt, ist nicht die Zahl der Austritte, sondern wohin sie führen:
+**1333 bzw. 1606 der erreichten Hintergrundziele liegen UNTER der Dialogfläche** — sichtbar
+nicht, auslösbar ja. Der Spielleiter tabuliert aus einem offenen Dialog in einen Hintergrund,
+den er nicht sieht, und bedient dort mit der Leertaste etwas, das er nicht gewollt hat.
+
+### Vorher und nachher, dasselbe Skript, beide Kampagnengrößen
+
+Gemessen am gebauten Bündel, gefüllte Kampagne, 1440 px, echte Tabulatorsprünge, **je Modal
+ein frischer Seitenaufbau** (`modalsweep.mjs`). 36 Schalen: die 35 `.modal-overlay` aus den
+Vorlagen plus `#quicknotes-modal`.
+
+| Maß | vorher 6/Typ | vorher 20/Typ | nachher 6/Typ | nachher 20/Typ |
+| --- | --- | --- | --- | --- |
+| Modale geöffnet | 36 / 36 | 36 / 36 | 36 / 36 | 36 / 36 |
+| Fokus landet beim Öffnen INNEN | 2 / 36 | 2 / 36 | **36 / 36** | **36 / 36** |
+| Fokusfalle hält (0 Austritte bei 45) | 0 / 36 | 0 / 36 | **36 / 36** | **36 / 36** |
+| Summe Austritte | 1396 | 1610 | **0** | **0** |
+| davon verdeckt UND bedienbar | 1333 | 1606 | **0** | **0** |
+| Escape schließt | 35 / 36 | 35 / 36 | **36 / 36** | **36 / 36** |
+| Rückkehr zum Öffner | 0 / 36 | 0 / 36 | **36 / 36** | **36 / 36** |
+| `role="dialog"` im DOM | 0 / 36 | 0 / 36 | **36 / 36** | **36 / 36** |
+| `aria-modal` im DOM | 0 / 36 | 0 / 36 | **36 / 36** | **36 / 36** |
+
+E-3 und O-8 sind damit erfüllt, einschließlich der Beschriftung, die O-8 ausdrücklich
+entfallen lassen durfte.
+
+### Die zwei Messfallen, die diese Einheit ausdrücklich vermeidet
+
+**(1) Der Rückweg braucht zwischenzeitliche Tabulatorsprünge.** Prüft man „Fokus nach Escape
+== Öffner" ohne sie, hat der Fokus den Öffner nie verlassen — die Zusicherung ist dann grün,
+ohne dass eine Zeile Rückweg existiert. Genau dieser Trugschluss ist der Modale-Vermessung im
+ersten Durchgang passiert. Darum wird vor dem Escape vier Mal **im** Dialog tabuliert **und**
+gegengeprüft, dass der Fokus den Öffner dabei wirklich verlassen hat. Die Kontrollzeile stand
+in jedem Lauf auf `0 / 36 noch auf dem Öffner`, vorher wie nachher.
+
+**(2) Der Öffner wird über Objektidentität festgehalten** (`window.__oeffner`, Vergleich mit
+`===`), nie über Signatur oder Text.
+
+### Vier Stellen, weil es vier braucht
+
+- **`ui/modal-focus.js`** (neu) führt Falle, Einstieg, Rückweg und Beschriftung.
+- **`systems/spellslots/navigation.js`**: die Haken stehen **direkt in `showModal`/`hideModal`**,
+  nicht in einem `window`-Mantel (O-4). Die 61 bzw. 63 Aufrufstellen binden lexikalisch, unter
+  ihnen `ui/actions/ui-actions.js:8` — der Weg jedes Klicks auf `data-action="show-modal"`. Ein
+  Mantel feuerte bei normaler Arbeit nie; dieselbe Falle, die CLAUDE.md für `save()` dokumentiert.
+  Fall (f) fährt diesen blanken Weg vor, damit ein späterer Umbau auf einen Mantel rot wird statt
+  still zu versagen.
+- **`systems/spellslots/keyboard-shortcuts.js`**: der Escape-Zweig nahm `show` selbst ab und lief
+  damit an jedem Haken in `hideModal()` vorbei — als **häufigster** Schließweg der App. Er leitet
+  jetzt über `hideModal()`.
+- **`showQuickNotesModal`/`hideQuickNotesModal`** bekommen dieselben Haken einzeln:
+  `#quicknotes-modal` trägt `.modal-backdrop`, schaltet `style.display` selbst und war gemessen
+  die **einzige von 36** Schalen, die auf Escape offen blieb.
+
+Die Falle übernimmt den Tabulator **vollständig** (`preventDefault` an jedem Zweig), statt nur
+die beiden Ränder abzufangen. Eine Randerkennung setzt voraus, dass die Browserreihenfolge und
+die eigene Haltepunktliste übereinstimmen, und das tun sie nicht zuverlässig: ein fokussierbarer
+Knoten, den der Sichtbarkeitstest herausnimmt, steht beim Browser trotzdem in der Reihe und läge
+hinter dem vermeintlich letzten Halt — dort hätte die Randerkennung nicht ausgelöst und der Fokus
+wäre entkommen.
+
+### Drei Fehler dieser Einheit, gemessen und behoben, statt übersehen
+
+**1. Escape schloss den falschen Dialog.** Die erste Fassung bestimmte „die oberste Schale" als
+die **letzte in Dokumentreihenfolge**. Für die zur Laufzeit angehängten Schalen stimmt das, für
+die 35 aus den Vorlagen **nicht**: ihre Reihenfolge steht im Template. Gemessen: `#about-modal`
+auf, dann `#theme-modal` auf, Escape — und geschlossen wurde `#about-modal`, weil es in der
+Vorlage dahinter steht. Der Spielleiter schließt den Dialog, den er sieht, und es verschwindet
+der darunter. Jetzt entscheidet eine mitgeführte Öffnungsreihenfolge; Fall (g) hält es fest.
+
+**2. Die Falle verteuerte den Tabulator der ganzen App.** Aufgefallen in der vollen Suite: mit
+dem Modul scheiterte ein Fall in `eingaberahmen.spec.js` (11/12), ohne das Modul nicht (12/12),
+gleicher Code sonst — beide Bündel aufbewahrt und gegeneinander gefahren. Die Datei macht sehr
+viele echte Tabulatorsprünge und liegt ohnehin an ihrer 30-s-Grenze. Ursache, gemessen statt
+vermutet: die Falle hängt an einem keydown am Dokument und wird bei **jedem** Tabulatordruck
+gefragt, auch wenn kein Dialog offen ist. Kosten je Aufruf in der Party-Ansicht bei zwanzig
+Einträgen je Typ (10 820 Knoten, 35 Schalen):
+
+| Fassung | je Aufruf | 2000 Anschläge |
+| --- | --- | --- |
+| `querySelectorAll(selektor)` | 169,5 µs | 369 ms |
+| `querySelector(selektor)` | 179,4 µs | — |
+| lebende Sammlung + `classList` (jetzt) | **1,5 µs** | **12,4 ms** |
+| ohne das Modul überhaupt | — | 6,1 ms |
+
+`getElementsByClassName` gibt eine von der DOM-Maschine gepflegte, **lebende** Sammlung — zur
+Laufzeit angehängte Schalen stehen automatisch darin. Bedeutung unverändert, kein Verlust an
+Verlässlichkeit; `getComputedStyle` kommt erst dazu, wenn eine Schale wirklich offen ist.
+`eingaberahmen.spec.js` ist wieder 12/12. Fall (i) hält die Größenordnung fest (2000 Anschläge
+unter 150 ms, rund zwölffache Luft auf den gemessenen Wert).
+
+**3. Eine Zeichenkette in einem Kommentar brach fünf Wächter.** Der Kommentar am neuen
+`loader.js`-Eintrag führte ein Attributbeispiel mit Anführungszeichen. **Fünf Wächtertests lesen
+das `MODULES`-Array rein textuell** (`tests/unit/console-hygiene.test.js:54` und vier weitere mit
+demselben Muster) und nehmen **jede** eingefasste Zeichenkette als Modulpfad — auch eine aus
+einem Kommentar. Sie meldeten daraufhin eine Moduldatei, die nicht auf der Platte liegt; gemeint
+war die Null aus dem Attributwert. Der Kommentar ist umformuliert und warnt jetzt davor. **Wer
+künftig im `MODULES`-Array kommentiert, darf dort keine Anführungszeichen und keine Hochkommas
+verwenden.**
+
+### Nichts löst doppelt aus — gezählt, nicht gefolgert
+
+Gezählt wird das **Ereignis am Ziel**, nicht die Wirkung, bei beiden Kampagnengrößen:
+
+- Enter auf einem Knopf im Dialog: **1 click** (0 echt / 1 synthetisch), Seitenlauf 0.
+- Leertaste ebenso: **1 click**, Seitenlauf 0.
+- Ein Tabulatordruck: **1 focusin**, Indexspur `[1,2,3,4,5]` — genau ein Halt weiter, nicht zwei.
+- Zwei verschachtelte Dialoge, Escape: der obere schließt, der untere bleibt, der Fokus kehrt in
+  den unteren zurück, der ursprüngliche Öffner bekommt **0** focus-Ereignisse. Erst das zweite
+  Escape gibt ihn frei — **genau einmal**.
+- Ohne Dialog: 8 Tabulatordrücke, **8** Fokuswechsel. Die Falle ist inert.
+
+**Gezählt wird am Dokument in der Capture-Phase, gefiltert auf `ev.target === ziel` — NICHT mit
+einem Lauscher am Knopf selbst.** `_handleClick` in `ui/event-delegation.js` ruft
+`stopPropagation()`, **bevor** es den Handler aufruft; ein Lauscher **am** Element wird dadurch
+nie erreicht und meldet konstant 0, obwohl genau ein Klick gefeuert hat. Der erste Messversuch
+las deshalb „0 Klicks" und sah wie eine Regression aus. Die Gegenprobe (am Knopf 0, am Dokument
+1) hat es geklärt. Wer hier am Element zählt, misst die Ereignisbremse des Verteilers und nicht
+die Auslösung. Die Risikoliste des Plans sagt dasselbe über die 53 `-stop`-Aktionen.
+
+### Kein Pixel, keine Zeile CSS, kein Template
+
+`git diff --name-only` gegen den Ausgangsstand über `assets/**`, `*.css`, `*.html`: **0 Dateien**.
+Die Ratschen sind damit strukturell unberührt — Inline-Stile 251, Dubletten 0, `transition: all` 0
+unverändert, und die Gates bestätigen es.
+
+### Was offen bleibt
+
+- **E-4 ist nicht umgesetzt** (ein Kürzel für den Lebenspunkte-Rechner auf den aktiven Kämpfer).
+  Es liegt in Schritt 6 und damit außerhalb dieser Einheit; Schritt 6 ist nach wie vor von keiner
+  Einheit gefahren.
+- **O-3 fehlt weiter in CLAUDE.md**, wie T-C schon festgehalten hat: dass `tabindex`/`role` für
+  die fünf Kampfansichten zur Laufzeit in `ui/keyboard-reach.js` entstehen und nicht im Markup zu
+  suchen sind. Der Auftrag dieser Einheit erlaubte in CLAUDE.md nur die Kürzeltabelle. **Dasselbe
+  gilt jetzt zusätzlich für `role="dialog"`/`aria-modal`**: die stehen ebenfalls nur zur Laufzeit
+  im DOM, ein `grep role=` im Quellbaum zeigt sie nicht. Konkreter Nachtrag für den nächsten
+  Durchgang: ein Punkt unter „Gotchas & Common Pitfalls", der beide Laufzeit-Quellen nennt.
+- **Die Befehlspalette ist absichtlich nicht in der Falle.** Sie führt ihre Tastatur selbst und
+  bringt role/aria-modal/aria-label schon mit. Sie aufzunehmen wäre eine Verhaltensänderung ohne
+  Messung und ohne Auftrag.
+- **`.shortcuts-overlay` ist ebenfalls nicht in der Falle.** Es ist eine Blende mit eigenem
+  Escape-Zweig, und T-C hat es bewusst ohne `tabindex` gelassen.
+- **O-9 bleibt unberührt und bleibt eine echte Blockade:** `window.clearLootForm` wird in
+  `features/initiative-loot.js:254` und `:367` gerufen und nirgends definiert. Das Beute-Modal
+  wurde für diese Einheit über `window.showModal('loot-modal')` abgenommen, wie der Plan vorsieht.
+- **Die 199 Marken ohne Bindung (O-5)** sind unberührt, wie O-5 es vorsieht.
+- **`systems/spellslots/navigation.js` und `keyboard-shortcuts.js` sind nicht prettier-rein** —
+  waren sie an diesem Ausgangsstand schon nicht (einzeln gegengeprüft, beide Fassungen aus dem
+  Ausgangsstand geholt und geprüft). `npm run format` ist nicht gelaufen; die eigenen Dateien sind
+  einzeln geprüft und rein. `eslint.generated-globals.js` ist ebenfalls prettier-unrein und war es
+  schon vorher: es ist Generatorausgabe.
+- **Die Ausnahmeliste des Abdeckungs-Gates ist unberührt.** Zwei Modulpfade standen in meinem
+  Erklärtext und hätten mechanisch als Testabdeckung gezählt, womit
+  `features/command-palette/command-palette.js` und `navigation.js` aus der Liste hätten
+  verschwinden „müssen". Das wäre eine Behauptung über Abdeckung, die ich nicht geschrieben habe:
+  das Kriterium des Hauses ist der Pfad in **ausführbarem** Code, nicht im Kommentar. Beide Pfade
+  sind darum zerlegt. Eine Ratsche, die nur schrumpfen darf, ist nicht zurückzuholen, wenn man sie
+  zu früh zieht — wer die beiden Einträge streichen will, sollte dafür echte Tests schreiben.
+- **Der Einstieg greift den ersten Haltepunkt**, und das ist bei einigen Schalen der
+  Schließknopf (beim Lebenspunkte-Rechner steht er vor dem Feld). Wo ein Öffner den Fokus selbst
+  setzt, bleibt das unberührt — `einstieg()` rührt einen Fokus, der schon im Dialog liegt, nicht
+  an. Eine feinere Regel („erstes Feld statt erster Knopf") wäre eine eigene Entscheidung.
+- **Der Öffner wird nicht angesprungen, wenn sein Knoten weg ist.** Wird eine Listenzeile zwischen
+  Öffnen und Schließen neu gezeichnet, bleibt der Fokus, wo er ist, statt irgendwohin zu springen.
+  Gemessen trat der Fall in keiner der 36 Schalen auf; er ist bewusst so behandelt.
+- **Fall (d) braucht Minuten** (36 Schalen × 45 Sprünge × zwei Größen, 2,2 bzw. 2,9 min) und
+  trägt darum ein eigenes `test.setTimeout()`. Wer die Datei kürzen will, kürzt dort.
+
+### Abnahme nachfahren
+
+```bash
+# Die Verhaltensfaelle (15, davon vier je Kampagnengroesse; (d) braucht Minuten)
+npx playwright test tests/e2e/features/modal-fokus.spec.js
+
+# Die Modullogik isoliert (28 Faelle, jsdom)
+npx jest tests/unit/modal-focus.test.js
+
+# Die drei Gates, die auf ein neues Modul reagieren
+npx jest tests/unit/console-hygiene.test.js tests/unit/eslint-globals-freshness.test.js tests/unit/module-test-coverage.test.js
+
+# Die Grenzfall-Datei, an der die Leistungsregression auffiel
+npx playwright test tests/e2e/features/eingaberahmen.spec.js --workers=1
+```
+
+---
+
 ## W6-F — Die Abnahme der Welle 6: der Tastaturlauf als Hauptnachweis (2026-10-07)
 
 **Status: ERLEDIGT.** Schritt 8 des geprüften Plans und damit die **letzte Einheit des
