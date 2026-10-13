@@ -623,6 +623,69 @@ test.describe('E-4 · Ein Kuerzel fuer den Lebenspunkte-Rechner', () => {
         );
     });
 
+    test('(m) unter der offenen Tastenhilfe tut die Taste nichts', async ({ page }) => {
+        // BEFUND VON RUNDE 2, gemessen am gebauten Buendel, nicht befuerchtet.
+        // Die Tastenhilfe (`?`) ist KEINE `.modal-overlay`-Schale — Schranke
+        // (4) sah sie deshalb nicht. Gemessen mit dem Kuerzel aus a2680d4:
+        // der Rechner ging unter der Hilfe auf (z-index 1000 gegen 2000),
+        // `elementFromPoint` ueber dem Wertfeld lieferte `DIV.shortcuts-grid`
+        // — das Feld war VERDECKT. Und trotzdem bedienbar: `7`, Tab, Enter
+        // teilten 7 Schaden aus (40 -> 33). Der Spielleiter teilt Schaden
+        // durch einen Dialog aus, den er nicht sieht. Dazu brauchte es ZWEI
+        // Escape, und das erste schloss die Hilfe und liess den unsichtbaren
+        // Dialog stehen.
+        //
+        // Genau die Fehlerart, die T-D fuer die Fokusfalle beseitigt hat
+        // (1333 erreichte Ziele UNTER der Dialogflaeche, unsichtbar aber
+        // ausloesbar) — hier erzeugt durch das neue Kuerzel selbst.
+        //
+        // NUR die Tastenhilfe, und das ist auch gemessen: die
+        // Schnellreferenz (`/`) liegt mit z-index 600 UNTER der
+        // Dialogflaeche — dort ist der Rechner oben und das Feld frei
+        // (`elementFromPoint` liefert `hp-calc-value`). Und die
+        // Befehlspalette (Strg+Shift+K) haelt den Fokus in ihrem Eingabefeld,
+        // da greift die `isTyping`-Schranke: gemessen landete das "h" als
+        // Zeichen in der Palette, kein Dialog. Ein unbelegter Selektor mehr
+        // waere ungemessener Code.
+        await ansichtOeffnen(page, 'initiative');
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(450);
+        const hilfeOffen = await page.evaluate(
+            () => !!document.querySelector('#shortcuts-overlay.show')
+        );
+        expect(hilfeOffen, 'Vorbedingung: "?" oeffnet die Tastenhilfe').toBe(true);
+        const hpVor = await page.evaluate(() => window.D.initiative.combatants[0].currentHp);
+
+        await page.keyboard.press(KUERZEL);
+        await page.waitForTimeout(450);
+
+        const z = await rechnerZustand(page);
+        expect(
+            z.offen,
+            `Unter der offenen Tastenhilfe darf "${KUERZEL}" keinen Rechner oeffnen — er ` +
+                'laege mit z-index 1000 UNTER der Hilfe (2000), waere verdeckt und trotzdem ' +
+                'bedienbar'
+        ).toBe(false);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'die Hilfe bleibt offen — die Taste tut nichts, sie schliesst auch nichts'
+        ).toBe(true);
+
+        // Und der Nachweis, dass hier nichts Unsichtbares mitschreibt: die
+        // drei Anschlaege, die im gemessenen Fehlerbild 7 Schaden ausgeteilt
+        // haben, duerfen die Trefferpunkte nicht anfassen.
+        await page.keyboard.type('7');
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(450);
+        const hpNach = await page.evaluate(() => window.D.initiative.combatants[0].currentHp);
+        expect(
+            hpNach,
+            `Zahl, Tabulator und Enter unter der Hilfe duerfen keinen Schaden austeilen. ` +
+                `Vorher ${hpVor}, nachher ${hpNach}`
+        ).toBe(hpVor);
+    });
+
     test('(j) nach Escape gehoert die Leertaste wieder dem Zug', async ({ page }) => {
         await ansichtOeffnen(page, 'initiative');
         const vor = await kampfZustand(page);
