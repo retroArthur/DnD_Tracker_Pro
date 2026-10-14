@@ -259,9 +259,9 @@ describe('DOC — CLAUDE.md widerspricht sich nicht ueber die Vorlagenzahl', () 
 // als Daten gelesen (und dort nur fuer CSS- und Vorlagenzahlen),
 // docs/bugfixes.md von keiner.
 //
-// WAS DABEI SCHIEFGEHT, BELEGT: der Katalog fuehrt an drei Stellen "21
+// WAS DABEI SCHIEFGEHT, BELEGT: der Katalog fuehrte an drei Stellen "21
 // Call-Sites" von `document.execCommand` in `ui/editors/rich-text.js`,
-// waehrend der Quellbaum seit Phase 9 NULL Aufrufe enthaelt und CLAUDE.md
+// waehrend der Quellbaum seit Phase 9 NULL Aufrufe enthielt und CLAUDE.md
 // die Abloesung als abgeschlossen fuehrt. Und die Gruppenzeilen der
 // Kuerzeltabelle nannten die Tasten, aber keine der Zahlen, die
 // `tastatur-gruppen.spec.js` zusichert — eine Tabelle, die die Wirkung
