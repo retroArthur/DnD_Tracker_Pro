@@ -51,7 +51,22 @@ beforeAll(() => {
             // Dieselben Abweisungsregeln wie im echten Modul — eine Art,
             // die dort durchfaellt, muss hier auch durchfallen.
             if (!art || !art.name || !art.behaelter || !art.glied) return false;
-            if (art.achse !== 'horizontal' && art.achse !== 'vertical') return false;
+            // Die Achse darf seit Runde 3 eine FUNKTION sein — fuer die eine
+            // Reihe, deren Gestalt an der Fensterbreite haengt (das
+            // Zaubergitter: 1440 px drei Spalten, 390 px eine). Die Attrappe
+            // fuehrt dieselben Regeln wie `KeyboardGroup.registriere()`,
+            // sonst faellt hier eine Art durch, die dort angenommen wird —
+            // und der Fall meldete eine Abweisung, die es nicht gibt.
+            if (
+                typeof art.achse !== 'function' &&
+                art.achse !== 'horizontal' &&
+                art.achse !== 'vertical'
+            ) {
+                return false;
+            }
+            if (art.zustand && (!art.zustand.attribut || typeof art.zustand.wert !== 'function')) {
+                return false;
+            }
             if (namen.has(art.name)) return false;
             namen.add(art.name);
             angemeldet.push(art);
@@ -96,8 +111,47 @@ describe('Ansichtsgruppen — die Anmeldung', () => {
 
     test('jede Art hat eine der zwei gemessenen Achsen', () => {
         for (const a of ANSICHTSGRUPPEN) {
-            expect(['horizontal', 'vertical']).toContain(a.achse);
+            // Eine GEMESSENE Achse ist eine Funktion; sie muss einen der
+            // zwei Werte liefern, auch wenn sie nichts zu messen hat. Das
+            // ist strenger als die Pruefung auf die Zeichenkette, nicht
+            // schwaecher: eine Funktion, die `undefined` zurueckgibt, faellt
+            // hier auf.
+            expect(['horizontal', 'vertical']).toContain(
+                typeof a.achse === 'function' ? a.achse([]) : a.achse
+            );
         }
+    });
+
+    test('genau EINE Art misst ihre Achse — alle uebrigen tragen eine feste', () => {
+        // Eine gemessene Achse ist die Ausnahme und soll es bleiben: sie
+        // kostet zwei `getBoundingClientRect()` je Durchlauf, und Fall (7)
+        // in `tastatur-reichweite.spec.js` kann eine so gesetzte Achse
+        // nicht mehr widerlegen (sie IST die Gestalt). Erlaubt ist sie fuer
+        // das Zaubergitter, dessen Spaltenzahl an der Fensterbreite haengt.
+        const gemessen = ANSICHTSGRUPPEN.filter(a => typeof a.achse === 'function').map(
+            a => a.name
+        );
+        expect(gemessen).toEqual(['zauberkarten']);
+    });
+
+    test('jede Art mit Zustand nennt ein Attribut und eine Funktion', () => {
+        // `zustand` traegt das EINE ARIA-Attribut, das den Zustand des
+        // Glieds hinschreibt (`aria-pressed`, `aria-current`,
+        // `aria-expanded`). Eine Art ohne Zustand ist erlaubt — die
+        // Party-Punkte tragen ihn im `title` —, eine mit halbem Zustand
+        // nicht: `registriere()` wiese sie ab, und die Ansicht sahe aus,
+        // als haette sie eben keine Gruppe.
+        const mitZustand = [];
+        for (const a of ANSICHTSGRUPPEN) {
+            if (!a.zustand) continue;
+            mitZustand.push(a.name);
+            expect(typeof a.zustand.attribut).toBe('string');
+            expect(a.zustand.attribut.startsWith('aria-')).toBe(true);
+            expect(typeof a.zustand.wert).toBe('function');
+        }
+        // Nicht alle, aber die Mehrheit — faellt die Zahl, ist eine Reihe
+        // wieder stumm gegenueber dem Vorleseprogramm.
+        expect(mitZustand.length).toBeGreaterThanOrEqual(20);
     });
 
     test('jede Art hat eine Beschriftung — sie wird das aria-label der Leiste', () => {

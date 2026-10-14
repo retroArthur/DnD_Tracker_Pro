@@ -330,9 +330,13 @@ const ANSICHTSGRUPPEN = [
         // `ui/keyboard-group.js`.
         //
         // DER NACHLADE-KNOPF BLEIBT EIN EIGENER HALT. Er liegt im selben
-        // `div#spell-list`, ist aber ein `<button>` mit
-        // `data-action="call"` und damit kein Glied dieser Art — richtig
-        // so: er ist keine Karte, sondern das Ende der Liste.
+        // `div#spell-list`, ist aber ein `<button>`, dessen `data-action`
+        // auf `call` lautet, und damit kein Glied dieser Art — richtig so:
+        // er ist keine Karte, sondern das Ende der Liste.
+        // (Die Schreibweise ohne das Attribut im Klartext ist Absicht: der
+        // Waechter in tests/unit/event-delegation.test.js liest ZEILENWEISE
+        // und haelte eine Erwaehnung ohne data-value fuer ein vergessenes
+        // Aufrufziel.)
         name: 'zauberkarten',
         behaelter: 'div#spell-list',
         glied: '[data-action="toggle-spell-card"]',
@@ -422,15 +426,15 @@ const ANSICHTSGRUPPEN = [
         //
         // Die Ursache war allein die neu bedienbare, aber nicht
         // angemeldete Zeile `toggle-shop-item` (15 Halte, senkrechte
-        // Spalte in `div.si-list`, dx 0, dy 42/58). Die Pruefsaat gab
+        // Spalte in `.si-list`, dx 0, dy 42/58). Die Pruefsaat gab
         // keinem Laden Artikel — darum war in der Ansicht nichts zu sehen.
         //
-        // EINE LEISTE JE LADEN, nicht eine fuer alle: `div.si-list` steht
+        // EINE LEISTE JE LADEN, nicht eine fuer alle: `.si-list` steht
         // je Ladenkarte einmal, und zwischen zwei Laeden liegt der ganze
         // Ladenkopf. Zwanzig Laeden ergeben zwanzig Leisten — aber nur der
         // aufgeklappte ist sichtbar, und nur der kostet einen Halt.
         name: 'ladenartikel',
-        behaelter: 'div.si-list',
+        behaelter: '.si-list',
         glied: '[data-action="toggle-shop-item"]',
         achse: 'vertical',
         beschriftung: () => 'Artikel',
@@ -444,7 +448,7 @@ const ANSICHTSGRUPPEN = [
         // vorkommender Artikelkategorie); in einem echten Laden bis zu
         // acht.
         name: 'ladenkategorien',
-        behaelter: 'div.shop-category-tabs',
+        behaelter: '.shop-category-tabs',
         glied: '[data-action="filter-shop-category"]',
         achse: 'horizontal',
         beschriftung: () => 'Artikelkategorien',
@@ -532,7 +536,7 @@ const ANSICHTSGRUPPEN = [
         // bis "Bearbeiten", davon 17 die Eintraege). Mit mehreren offenen
         // Kategorien und einem echten Wiki waechst das linear.
         //
-        // EINE LEISTE JE KATEGORIE: `div.wiki-tree-items` steht je
+        // EINE LEISTE JE KATEGORIE: `.wiki-tree-items` steht je
         // Kategorie einmal. Der Kategoriekopf
         // (`[data-action="toggle-wiki-category"]`) liegt DANEBEN, nicht
         // darin — er bleibt die Einzelstelle, die er war (Punkt 1 im
@@ -541,7 +545,7 @@ const ANSICHTSGRUPPEN = [
         // DER SELEKTOR GREIFT NUR IM BAUM. `select-wiki-entry` steht im
         // Haus an fuenf Stellen (Baum, Brotkrumen, Suchtreffer,
         // Schnellzugriff, Querverweise im Text); nur die des Baums liegen
-        // in `div.wiki-tree-items`. Die uebrigen sind Einzelstellen in
+        // in `.wiki-tree-items`. Die uebrigen sind Einzelstellen in
         // ihrem jeweiligen Zusammenhang und bleiben unberuehrt.
         //
         // UNTEREINTRAEGE ZAEHLEN MIT. `querySelectorAll` findet auch die
@@ -551,7 +555,7 @@ const ANSICHTSGRUPPEN = [
         // Kategorie. Das ist die Gestalt, die auf dem Schirm steht (dx 0,
         // dy 30, eine y-Linie je Eintrag).
         name: 'wikieintraege',
-        behaelter: 'div.wiki-tree-items',
+        behaelter: '.wiki-tree-items',
         glied: '[data-action="select-wiki-entry"]',
         achse: 'vertical',
         beschriftung: () => 'Wiki-Eintraege',
