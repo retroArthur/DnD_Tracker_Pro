@@ -2625,9 +2625,6 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
         await ansichtOeffnen(page, 'initiative');
 
         const hilfe = await hilfeLesen(page);
-        /** Alle Beschriftungen der Hilfe, klein geschrieben, in einem Text. */
-        const beschriftungen = hilfe.reihen.map(r => r.text);
-        const alleWorte = beschriftungen.join(' \n ').toLowerCase();
         /** Die Zeilen, die eine bestimmte Taste nennen. */
         const zeilenMit = token =>
             hilfe.reihen.filter(r => hilfeTastenmenge([r]).has(token)).map(r => r.text);
@@ -2724,8 +2721,11 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                 'nicht auf Firefox EINSCHRAENKEN: gemessen oeffnet es die Palette auch in ' +
                 'Chromium, und der Quellkommentar daneben nennt es ausdruecklich ' +
                 '"browserneutral". Ein Nutzer in Chrome oder Edge liest die Klammer als ' +
-                '"gilt hier nicht" und ueberspringt das kuerzere Kuerzel.'
-        ).not.toMatch(/in Firefox/i);
+                '"gilt hier nicht" und ueberspringt das kuerzere Kuerzel. Verboten ist ' +
+                'die EINSCHRAENKENDE Klammer, nicht jede Nennung von Firefox: dass dort ' +
+                'Strg+Shift+K von der Web-Konsole belegt ist, darf die Zeile sagen — nur ' +
+                'nicht so, dass sie wie eine Bedingung klingt.'
+        ).not.toMatch(/\(\s*(nur\s+)?(in|unter)\s+Firefox\s*\)/i);
         expect(
             punktZeilen[0].toLowerCase(),
             `Die Zeile fuer \`Strg+.\` ("${punktZeilen[0]}") muss sagen, dass sie neben ` +
@@ -2821,10 +2821,23 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                 'die 2715 px lange Beuteliste ist mit der Tastatur erst erreichbar, ' +
                 'nachdem man blind in die Gruppe hineintabuliert hat.'
         ).toMatch(/fokus|liegt auf|steht auf/);
+        // UND DIE HILFE MUSS SAGEN, WIE MAN AUF EIN GLIED KOMMT. Ohne das
+        // ist die Vorbedingung genannt und unerfuellbar. Gesucht wird in den
+        // Beschriftungen der TAB-Zeilen, nicht im ganzen Text: der blosse
+        // Tastenname `Tab` steht in der MARKE, und eine Suche darueber waere
+        // schon durch die vorhandene Zeile "Naechstes Bedienelement"
+        // befriedigt — die sagt ueber Reihen nichts.
+        const tabZeilen = hilfe.reihen
+            .filter(r => hilfeTastenmenge([r]).has('TAB'))
+            .map(r => r.text);
         expect(
-            alleWorte,
-            'Und die Hilfe muss sagen, WIE man auf ein Glied kommt: mit dem Tabulator. ' +
-                'Ohne das ist die Vorbedingung genannt und unerfuellbar.'
-        ).toMatch(/tab/);
+            tabZeilen.join(' ').toLowerCase(),
+            `Die TAB-Zeilen der Hilfe lauten "${tabZeilen.join(' | ')}". Keine sagt, dass ` +
+                'der Tabulator der Weg auf eine solche Reihe ist — damit nennen die drei ' +
+                'E-2-Zeilen eine Vorbedingung, die der Nutzer nicht herstellen kann. ' +
+                'Gemessen ist der Tabulator der einzige Weg: in der Beute-Ansicht liegt ' +
+                'das erste Glied rund 40 Halte vom Seitenanfang entfernt, und bei ' +
+                'BODY-Fokus tut keine der vier Tasten etwas.'
+        ).toMatch(/reihe|gruppe|glied/);
     });
 });
