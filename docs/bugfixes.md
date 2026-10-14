@@ -787,6 +787,69 @@ sichtbar gemacht — das ist die gemeinsame Lehre dieses Blocks.
 - **Dateien:** `docs/bugfixes.md`, `tests/build/test_build_deduplication.py`, `tests/unit/docs-consistency.test.js`, `tests/unit/keyboard-group-views.test.js`
 - **Tests:** `tests/unit/docs-consistency.test.js` (DOC-08 bis DOC-12), `tests/unit/keyboard-group-views.test.js`
 
+### Die Tastenhilfe sicherte eine Fokusfalle zu, die in ihr selbst nicht griff
+
+- **Problem:** Die Hilfe druckt die Zeile „Nächstes Bedienelement (im Dialog bleibt er darin)". Gemessen am gebauten Bündel (1440x900, echte Tastendrücke) verließen **44 von 45** Tabulatorsprüngen die **offene** Hilfe, 35 davon landeten auf einem Ziel, das die Blende verdeckt (`document.elementFromPoint` über der Mitte liefert `DIV.shortcuts-overlay`), während die Hilfe sichtbar offen blieb. Shift+Tab: 10 von 10 draußen. Von 109 sichtbaren Haltepunkten der Seite lag genau **einer** in der Hilfe. Kontrollmessung im selben Lauf: `about-modal`, eine gewöhnliche Schale, hielt 20 von 20.
+- **Ursache:** `ui/modal-focus.js` sucht die Schale über `.modal-overlay.show` plus `#quicknotes-modal`. Die Hilfe trägt `.shortcuts-overlay` und fiel aus beiden — `oberstesModal()` gab `null`, die Falle zog sich zurück (nachgemessen: `ModalFocus.statistik().offen === null` bei offener Hilfe). Der Kommentar dort begründete das ausdrücklich, aber mit einer Messung aus einer **anderen** Lage: Hilfe **über** einem offenen Dialog, wo sie damals keinen eigenen Haltepunkt hatte. Seit der Fokusübergabe in `systems/undo.js` liegt der Fokus beim Öffnen in der Hilfe, und die Begründung trägt nicht mehr.
+- **Fix:** `offeneTastenhilfe()` als eigener Griff **neben** `oberstesModal()`, und `_tab()` fragt ihn zuerst. Nicht **in** `oberstesModal()` hinein: jene Frage („welche Schale ist offen") wird außerhalb der Datei als genau das gelesen — der Escape-Zweig in `systems/spellslots/keyboard-shortcuts.js` schließt damit über `hideModal(m.id)`, und die vierte Schranke des HP-Kürzels verweigert damit einen Dialog über einem Dialog.
+- **Regel:** Eine gemessene Begründung gilt **für die gemessene Lage**. Wer einen Selektor mit „nachgemessen, hat keine Wirkung" auslässt, schreibt dazu, in **welcher** Lage gemessen wurde — sonst überlebt die Begründung die Änderung, die sie ungültig macht. Und: eine Zusage, die eine Hilfe über ihr eigenes Verhalten druckt, braucht einen Fall. Eine falsche Hilfe ist schlimmer als eine fehlende.
+- **Dateien:** `ui/modal-focus.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (13)
+
+### Die offene Tastenhilfe war eine lebende Tastaturfläche
+
+- **Problem:** Von 44 Proben bei offener Hilfe änderten **30** den Zustand **hinter** der Blende, und die Hilfe blieb in allen 44 Fällen offen. `2` wechselte die Ansicht, `9` nach Beute, `N` den Zug (0 → 1), `P` rückwärts (0 → 5), `Shift+N` die Runde (1 → 2), `R` und `Alt+Ziffer` würfelten, `T` startete die Sitzungsuhr, `L` stellte das Ereignislog dauerhaft, `Strg+Z/Y/S` schrieben je einen Protokolleintrag. **Fünf** Tasten zogen den Fokus in ein Eingabefeld **unter** der Blende (`Strg+K`/`Strg+F` → globale Suche, `Strg+Shift+K`/`Strg+.` → Befehlspalette, `/` → Schnellreferenz); ein dort getipptes Wort stand nach dem Schließen im Suchfeld.
+- **Ursache:** Kein Zweig des `keydown`-Lauschers fragte nach der offenen Hilfe. Die Hilfe ist genau die Fläche, die man aufschlägt, wenn man **nicht** weiß, was eine Taste tut — sie lädt zum Ausprobieren ein, und am Spieltisch rückte jede Probe Zug und Runde des laufenden Kampfes, ohne dass der Spielleiter es sah (die Blende deckt mit 85 % Schwarz).
+- **Fix:** Eine Schranke **vor** dem Soundboard-Block: solange die Hilfe offen ist, ist die App für App-Kürzel taub. Sie kehrt **ohne** `preventDefault()` zurück — Bild-ab, Pfeile und Leertaste lassen den Lauf der Hilfe weiterlaufen, und das ist notwendig: ihr Inhalt ist länger als ihre Fläche (gemessen 2119 px in 673 px bei 390 px Breite). `Escape` läuft in seinen eigenen Zweig.
+- **Regel:** Eine modale Fläche, die Tasten **erklärt**, darf sie nicht gleichzeitig **ausführen**. Die Schranke gehört vor jeden Zweig, der bewusst vor dem Tipp-Guard steht — die Soundboard-Kürzel stehen dort und hätten eine spätere Schranke umgangen.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (14)
+
+### Zwanzig Modifikator-Kollisionen, von denen vier bekannt waren
+
+- **Problem:** Die Kürzeltabelle führte vier Modifikator-Kollisionen als abgeschlossenen Befund. Gemessen mit einer **gerechneten** Kreuzung aus den acht Einzeltasten-Kürzeln (`r t l k n p h /`) und vier Modifikatorlagen, 80 Kombinationen je Ansicht, waren es **zwanzig**: `Strg+/` und `Alt+/` (Schnellreferenz auf, Fokus ins Suchfeld), `Alt+R`, `Alt+T`, `Alt+L`, `Alt+P`, `Strg+P`, `Strg+N`, `Alt+N`, `Strg+Shift+N`, `Alt+Shift+N`, `Strg+Shift+?`, `Alt+Shift+?`, `Strg+Shift+/`, `Alt+Shift+/`, `Alt+Shift+6`, `Alt+Shift+8`, `Strg+Leertaste`, `Alt+Leertaste`, `Shift+Leertaste`. Vier davon nehmen dem Browser etwas weg: `Strg+P` ist das Drucken, `Strg+Leertaste` die Eingabemethode, `Alt+Leertaste` das Fenstermenü, `Shift+Leertaste` der Seitenlauf nach oben.
+- **Ursache:** Die Negationen (`!e.ctrlKey`, `!e.metaKey`, `!e.altKey`) sind je Zweig von Hand gewachsen und waren an elf Zweigen unterschiedlich lückenhaft; der `p`-Zweig hatte gar keine. Und die **Messmenge** des Wächters war handverlesen (46 Kandidaten) — sie ließ genau die Lagen aus, in denen eine fehlende Schranke entsteht.
+- **Fix:** Ein Prädikat `OHNE_MODIFIKATOR(e)` an allen elf Zweigen, dazu einzeln begründete `!e.shiftKey` an der Leertaste, am Würfelzweig, bei `/` und bei `p`. `e.shiftKey` steht **nicht** im Prädikat: bei Buchstaben ändert Shift die Taste selbst, und der `?`-Zweig braucht sie. Die Messmenge ist jetzt zum großen Teil gerechnet; die Ausnahmeliste des Wächters ist **leer**.
+- **Regel:** Wer eine Kollision auf eine Entschuldigungsliste schreibt, hat sie nicht gemessen, sondern gezählt. Eine **gerechnete** Kreuzung über die Achsen, an denen der Fehler entsteht, findet, was eine getippte Auswahl übersieht — hier sechzehn weitere Fälle. Zweite Lehre: eine Entschuldigungsliste braucht **drei** Proben, nicht zwei — Eintrag ohne Grund, Eintrag **und** Hilfe, und Eintrag **ohne Belegung**. Die dritte fehlte, und genau sie hätte die vier alten Einträge nach ihrer Behebung gemeldet.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (3), (4), (6), (10)
+
+### `Strg+Shift+Z` war ein toter Zweig — der Browser liefert `'Z'`
+
+- **Problem:** Die Bedingung lautete `e.key === 'y' || (e.key === 'z' && e.shiftKey)`. Mit gedrückter Umschalttaste liefert der Browser `e.key === 'Z'`, niemals `'z'` — die zweite Hälfte war unerreichbar. In einer Matrix über 80 Modifikatorkombinationen in zwei Ansichten taucht `Strg+Shift+Z` in keiner Belegtliste auf, weder über `defaultPrevented` noch über eine Wirkungsspur aus dreizehn Größen; `Strg+Y` dagegen in beiden.
+- **Ursache:** Ein `e.key`-Vergleich, der die Groß-/Kleinschreibung der Umschalttaste nicht berücksichtigt. Dieselbe Art toter Zweig wie `Entf` gegen `#view-network`, nur unauffälliger: das Kürzel stand nicht in der Hilfe, also fiel niemand darauf herein.
+- **Fix:** `e.key === 'Z' && e.shiftKey`, und das Kürzel in die Hilfe nachgetragen („Wiederholen (gleichwertig)") — sonst wäre der Mengenvergleich zu Recht rot.
+- **Regel:** Ein `e.key`-Vergleich auf einen Buchstaben **mit** `e.shiftKey` muss den Großbuchstaben prüfen. Und: ein Kürzel, dessen Belegung nie gemessen wurde, ist eine Behauptung — die Belegungsmatrix findet den toten Zweig, die Kürzeltabelle nicht.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (3), (5)
+
+### Für ein Vorleseprogramm war die ganze Tastenhilfe ein Textknoten
+
+- **Problem:** Der Zugänglichkeitsbaum der offenen Hilfe bestand aus **drei** Knoten: ein Text, ein Knopf, und ein rund hundert Wörter langer Satz für vierzig Zeilen — ohne Trennung zwischen Handlung und Taste und ohne Überschrift, nach der man springen könnte. `#shortcuts-overlay` und `.shortcuts-modal` trugen `role`, `aria-label`, `aria-labelledby` und `aria-modal` je auf `null`; im Dialog null Überschriften, null Rollen, null `aria-*`-Attribute, null `<kbd>`, null Listen.
+- **Ursache:** Reines `div`/`span`-Markup. Die Hilfe ist dabei das Werkzeug dessen, der die Maus nicht benutzt — inhaltlich war sie nahezu vollständig und für den Vorleseprogramm-Nutzer trotzdem unbenutzbar: ohne `role="dialog"`/`aria-modal` kündigt nichts an, dass sich überhaupt etwas geöffnet hat.
+- **Fix:** Vier Fassungen am laufenden Bündel eingesetzt und die Knoten gezählt, **bevor** eine gewählt wurde: Ausgangsstand 3, mit `dialog`/`heading`/`<kbd>` 15, zusätzlich mit `role="listitem"` 57, mit `<dl>`/`<dt>`/`<dd>` 98. Genommen ist die vierte, und der Unterschied zur dritten ist genau der Befund: `listitem` macht aus einer Zeile **einen** Knoten („Dashboard 1"), `<dt>`/`<dd>` machen **zwei** („Begriff Dashboard", „Definition 1"). Das `<span>` bleibt **innerhalb** des `<dt>`: zwei Leser der Wächterdatei greifen die Beschriftung über `row.querySelector('span')`, und ein blinder Leser macht jeden Mengenvergleich grün.
+- **Regel:** Eine Auszeichnung für Hilfsmittel wird am **Zugänglichkeitsbaum** gemessen, nicht an den Attributen: ein `<dt>` unter `display: none` trägt alle Attribute und erscheint in keinem Baum. Und wer Markup umbaut, prüft zuerst, welche **Leser** (Tests, Generatoren) daran hängen.
+- **Dateien:** `assets/templates/modals-editors.html`, `assets/styles/dmscreen.css`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (15)
+
+### Der Ausweg aus der Hilfe lag 2161 px tiefer, und das Ereignislog legte sich darüber
+
+- **Problem:** Mit `hasTouch`/`isMobile` gemessen: bei 390 px waren **12 von 41** Zeilen sichtbar (673 px Fläche, 2119 px Inhalt), bei 360 px zehn, bei 1440 px 23 von 41. Die Fußzeile lautete „Drücke Esc zum Schließen" und stand 2161 px bzw. 2199 px unter dem Anfang — beim Öffnen nicht sichtbar. Ein Telefon hat keine Escape-Taste; der wirkliche Ausweg stand nirgends, und der ✕-Knopf war **36x36 px** im Berührungsarm (27x23 am Schreibtisch). Dazu verdeckte **ein** Hinweis bei 390 px drei der zwölf sichtbaren Zeilen.
+- **Ursache:** Zwei getrennte Sachen. Die Fußzeile war ein gewöhnliches letztes Kind eines Laufbereichs. Und das Ereignislog liegt mit `--z-toast` über der Hilfe (`--z-floating`) — das ist in `assets/styles/variables.css` eine ausdrückliche Entscheidung („Meldungen liegen über allem").
+- **Fix:** Die Fußzeile klebt (`position: sticky`) am Fuß des Laufbereichs und nennt alle drei Wege samt dem Hinweis, dass die Liste weitergeht; der ✕-Knopf ist 44 px unter 601 px und 32 px darüber. Das Log tritt beiseite, solange die Hilfe offen ist — über eine Marke am `<body>`, **nicht** über die Ebenenleiter: eine Ausnahme für eine Blende hätte die Leiter entwertet. Der Preis steht im Kommentar: ein Hinweis, der währenddessen abläuft, ist danach weg; dafür gibt es die dauerhafte Betriebsart des Logs, und die steht in der Hilfe.
+- **Regel:** Eine modale Fläche, die länger ist als ihr Platz, braucht ihren Ausweg **sichtbar** — und zwar den Ausweg des Geräts, nicht den der Tastatur. Und: eine gezählte Ebenenleiter ist nicht der Ort, an dem man einen Überdeckungsfehler repariert; die obere Schicht tritt beiseite.
+- **Dateien:** `assets/templates/modals-editors.html`, `assets/styles/dmscreen.css`, `systems/undo.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (16), (17)
+
+### Ein `min-width: 0` auf der Tastenreihe machte aus einem lauten Fehler einen stillen
+
+- **Problem:** Beim Umbau der Hilfe zur Beschreibungsliste bekamen `<dt>` **und** `<dd>` ein `min-width: 0`. Isoliert nachgemessen bei 601 px (Spalte 237,4 px), mit einer langen Beschriftung auf einer **dreigliedrigen** Marke: `min-width` auf beiden → Querlauf 9 px, keine dreizeilige Zeile; `min-width` nur auf `dt` → Querlauf 0, die Zeile dreizeilig. Der Ausgangsstand hatte an allen gemessenen Breiten Querlauf 0.
+- **Ursache:** Auf der Definition erlaubt `min-width: 0` der **Tastenreihe**, unter ihren Inhalt zu schrumpfen; die Marken hängen dann rechts aus dem Dialog. Ein Querlauf **in** einem Dialog ist auf dem Telefon praktisch unauffindbar — und kein Fall sah ihn: der zuständige Fall fuhr nur 390, 360 und 1440 px, und dort tritt er nicht auf. Die Begründung für das `min-width` war außerdem falsch: das früher dort stehende `<span>` war ebenso ein Flex-Kind mit `min-width: auto` und brach korrekt um.
+- **Fix:** `min-width: 0` nur auf dem Begriff. Eine zu lange Beschriftung bricht dann auf drei Zeilen um, und **das** meldet der Fall laut. Der Fall fährt seit diesem Befund auch 601, 700 und 1440 px, mit der Spaltenbreite je Stufe als eigener Zusicherung.
+- **Regel:** Zwischen zwei Fehlerbildern ist das **auffällige** zu wählen. Ein Fehler, der einen Wächter auslöst, ist dem vorzuziehen, der sich versteckt — und eine Zusicherung, die nur an drei Breiten fährt, deckt kein Band. Zweite Lehre: eine Breitenangabe in einem Kommentar („zwei Spalten von 267 px für 601-900 px") ist eine Zusicherung ohne Wächter; gemessen sind es bei 601 px 237,4 px.
+- **Dateien:** `assets/styles/dmscreen.css`, `tests/e2e/features/tastenhilfe.spec.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (8)
+
 ---
 
 ## Known Technical Debt
