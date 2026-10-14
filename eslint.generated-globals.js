@@ -131,6 +131,7 @@ export default {
     "MARKDOWN_EMPHASIS_ITALIC_UNDERSCORE_SRC": 'readonly',
     "MARKDOWN_PATTERNS": 'readonly',
     "MARKER_TEXT_COLOR": 'readonly',
+    "MARKE_GEDRUECKT": 'readonly',
     "MAX_ADVANCE_DAYS": 'writable',
     "MAX_AUDIO_BYTES": 'readonly',
     "MAX_AUDIO_BYTES_HARD": 'readonly',
@@ -330,6 +331,7 @@ export default {
     "_zeigeTimelineVorschlag": 'readonly',
     "abilityMod": 'readonly',
     "abschliessenReise": 'readonly',
+    "achseNachGestalt": 'readonly',
     "activateSceneBySlot": 'readonly',
     "activateSoundScene": 'readonly',
     "activeShopFilters": 'readonly',
@@ -913,6 +915,7 @@ export default {
     "isValidEntityId": 'readonly',
     "jahreszeitAusDatum": 'readonly',
     "knownBackupCampaignKeys": 'readonly',
+    "kopfAufgeklappt": 'readonly',
     "kpLogFilter": 'writable',
     "kpLogGeladen": 'writable',
     "kpLogLiesRoh": 'readonly',
@@ -1514,6 +1517,7 @@ export default {
     "switchView": 'readonly',
     "tabFnName": 'readonly',
     "tabId": 'readonly',
+    "tastSichtbar": 'readonly',
     "testAutoSave": 'readonly',
     "testEventLog": 'readonly',
     "testIndexedDB": 'readonly',
@@ -1646,5 +1650,6 @@ export default {
     "writeCampaignData": 'readonly',
     "writeLocalBackup": 'readonly',
     "xpDistSelectAll": 'readonly',
-    "xpDistSelectNone": 'readonly'
+    "xpDistSelectNone": 'readonly',
+    "zeileAktuell": 'readonly'
 };

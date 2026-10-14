@@ -556,7 +556,7 @@ const KeyboardGroup = {
         let gemessen;
         try {
             gemessen = art.achse(glieder);
-        } catch (e) {
+        } catch {
             gemessen = null;
         }
         return gemessen === 'horizontal' ? 'horizontal' : 'vertical';
@@ -596,7 +596,7 @@ const KeyboardGroup = {
         let wert;
         try {
             wert = z.wert(glied);
-        } catch (e) {
+        } catch {
             return;
         }
         if (wert === null || wert === undefined || wert === false) {
