@@ -119,12 +119,97 @@
 // einer Zeile aus zurueck. Kein Eingriff in `VirtualScroll` noetig.
 
 /**
+ * Ist `el` hier und jetzt sichtbar? Dieselbe Regel wie in
+ * `KeyboardGroup._bedienbar()` und in den Pruefdateien.
+ * @param {Element} el
+ * @returns {boolean}
+ */
+function tastSichtbar(el) {
+    if (typeof el.checkVisibility === 'function') {
+        return el.checkVisibility({
+            opacityProperty: true,
+            visibilityProperty: true,
+            contentVisibilityAuto: true
+        });
+    }
+    const r = el.getBoundingClientRect ? el.getBoundingClientRect() : null;
+    return !!r && r.width > 0 && r.height > 0;
+}
+
+/**
+ * DIE ACHSE AUS DER GESTALT — fuer die eine Reihe, deren Gestalt an der
+ * Fensterbreite haengt.
+ *
+ * Die Regel ist woertlich die der Pruefung (Fall (7) in
+ * `tastatur-reichweite.spec.js`): waagerecht heisst, die ersten zwei
+ * SICHTBAREN Glieder liegen auf einer y-Linie (dy 0) und nebeneinander
+ * (dx != 0); alles andere ist senkrecht. Weniger als zwei sichtbare
+ * Glieder haben keine Gestalt — dann `vertical`, weil ein einzelnes Glied
+ * ohnehin keine Fahrt kennt und eine Spalte die haeufigere Lage ist.
+ * @param {Element[]} glieder
+ * @returns {'horizontal'|'vertical'}
+ */
+function achseNachGestalt(glieder) {
+    let a = null;
+    for (const g of glieder) {
+        if (!tastSichtbar(g)) continue;
+        if (!a) {
+            a = g.getBoundingClientRect();
+            continue;
+        }
+        const b = g.getBoundingClientRect();
+        const dx = Math.round(b.left - a.left);
+        const dy = Math.round(b.top - a.top);
+        return dy === 0 && dx !== 0 ? 'horizontal' : 'vertical';
+    }
+    return 'vertical';
+}
+
+/**
+ * `aria-pressed` fuer eine Filtermarke: die Marke, die gerade filtert,
+ * traegt im Markup die Klasse `active`.
+ */
+const MARKE_GEDRUECKT = {
+    attribut: 'aria-pressed',
+    wert: g => (g.classList.contains('active') ? 'true' : 'false')
+};
+
+/**
+ * `aria-current` fuer eine Listenzeile. KEIN `aria-selected`: das ist an
+ * `role="button"` nicht erlaubt, und Fall (7) in
+ * `tastatur-gruppen.spec.js` prueft ausdruecklich, dass keine Auswahl
+ * behauptet wird. Eine nicht gewaehlte Zeile traegt das Attribut GAR
+ * NICHT (nicht `aria-current="false"`) — so ist es gedacht.
+ * @param {string} klasse Die Klasse, die die Auswahl im Markup traegt
+ */
+const zeileAktuell = (klasse = 'selected') => ({
+    attribut: 'aria-current',
+    wert: g => (g.classList.contains(klasse) ? 'true' : null)
+});
+
+/**
+ * `aria-expanded` fuer einen Aufklappkopf. Die Klasse sitzt nicht am Kopf,
+ * sondern an der KARTE darueber (`.quest-item.expanded`,
+ * `.shop-card.expanded`, `.spell-card.expanded`, `.si-item.expanded`) —
+ * darum ein `closest()`.
+ * @param {string} selektor Die aufklappbare Karte
+ */
+const kopfAufgeklappt = selektor => ({
+    attribut: 'aria-expanded',
+    wert: g => {
+        const karte = g.closest(selektor);
+        return karte && karte.classList.contains('expanded') ? 'true' : 'false';
+    }
+});
+
+/**
  * Die Gruppen, die diese Datei anmeldet.
  *
  * `behaelter` ist der tiefste gemeinsame DOM-Behaelter der Reihe,
  * `glied` waehlt die Glieder DARIN (auch ueber Zwischenknoten hinweg),
  * `achse` ist gemessen (siehe Tabelle im Kopf), `beschriftung` wird zum
- * `aria-label` der Leiste.
+ * `aria-label` der Leiste, `zustand` zum einen ARIA-Attribut, das den
+ * Zustand des Glieds traegt.
  *
  * DIE GLIEDER SIND UEBER `data-action` GEWAEHLT, NICHT UEBER DIE KLASSE.
  * Beides waere moeglich; `data-action` ist das staerkere Merkmal, weil es
@@ -141,7 +226,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#quests-list',
         glied: '[data-action="toggle-quest"]',
         achse: 'vertical',
-        beschriftung: () => 'Auftraege'
+        beschriftung: () => 'Auftraege',
+        zustand: kopfAufgeklappt('.quest-item')
     },
     {
         // Je Auftragszeile eine eigene Leiste mit zwei Marken.
@@ -149,7 +235,12 @@ const ANSICHTSGRUPPEN = [
         behaelter: '[data-tastgruppe="auftrag-status"]',
         glied: '[data-action="toggle-quest-status-stop"]',
         achse: 'horizontal',
-        beschriftung: () => 'Auftragsstatus'
+        beschriftung: () => 'Auftragsstatus',
+        zustand: {
+            // Die Marke traegt im Markup `color-green`, wenn der Haken sitzt.
+            attribut: 'aria-pressed',
+            wert: g => (g.classList.contains('color-green') ? 'true' : 'false')
+        }
     },
 
     // ---- BEUTE ----
@@ -158,14 +249,16 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#loot-list',
         glied: '[data-action="select-loot"]',
         achse: 'vertical',
-        beschriftung: () => 'Beute'
+        beschriftung: () => 'Beute',
+        zustand: zeileAktuell()
     },
     {
         name: 'beutefilter',
         behaelter: 'div#loot-filters',
         glied: '[data-action="set-loot-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Beutefilter'
+        beschriftung: () => 'Beutefilter',
+        zustand: MARKE_GEDRUECKT
     },
 
     // ---- NSC ----
@@ -174,14 +267,16 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#npc-list',
         glied: '[data-action="select-npc"]',
         achse: 'vertical',
-        beschriftung: () => 'Nichtspielercharaktere'
+        beschriftung: () => 'Nichtspielercharaktere',
+        zustand: zeileAktuell()
     },
     {
         name: 'nscFilter',
         behaelter: 'div#npc-filters',
         glied: '[data-action="set-npc-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'NSC-Filter'
+        beschriftung: () => 'NSC-Filter',
+        zustand: MARKE_GEDRUECKT
     },
 
     // ---- ZAUBER: DREI getrennte Leisten, drei Behaelter, drei Gruppen ----
@@ -190,21 +285,60 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#spell-level-filters',
         glied: '[data-action="spell-level-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Zaubergrade'
+        beschriftung: () => 'Zaubergrade',
+        zustand: MARKE_GEDRUECKT
     },
     {
         name: 'zauberschulen',
         behaelter: 'div#spell-school-filters',
         glied: '[data-action="spell-school-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Zauberschulen'
+        beschriftung: () => 'Zauberschulen',
+        zustand: MARKE_GEDRUECKT
     },
     {
         name: 'zauberklassen',
         behaelter: 'div#spell-filters',
         glied: '[data-action="set-spell-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Zauberklassen'
+        beschriftung: () => 'Zauberklassen',
+        zustand: MARKE_GEDRUECKT
+    },
+    {
+        // DIE ZAUBERKARTEN — nachgetragen in Runde 3, Befund 1 der
+        // Gegenpruefung, und der Grund, warum er erst dort gefunden wurde,
+        // steht in der SAAT und nicht in der Mechanik: jede Pruefsaat
+        // dieses Strangs fuehrt `spells: []`, und in einer leeren
+        // Zauberansicht gibt es keine Karte. Sobald der Spielleiter auf
+        // "📚 SRD" drueckt, stehen 75 Zauber im Bestand und 30 Karten auf
+        // Seite 1 — jede mit `tabindex="0"` und jede ein eigener Halt.
+        // Gemessen am gebauten Buendel, 1440 px, gefuellte Kampagne:
+        //
+        //   ohne Gruppe   65 Halte, 64 Anschlaege bis zur Schnell-Referenz
+        //   mit Gruppe    36 Halte, 35 Anschlaege
+        //
+        // und nach einem einzigen "45 weitere laden" waeren es 60
+        // Kartenhalte statt einem. Bei 400 ms je Anschlag ist das der
+        // Unterschied zwischen 26 s und 14 s, und er waechst mit jedem
+        // eigenen Zauber.
+        //
+        // DIE ACHSE IST GEMESSEN UND NICHT FEST, und das ist die eine
+        // Ausnahme im Haus. Das Zaubergitter ist die einzige angemeldete
+        // Reihe, deren Gestalt an der Fensterbreite haengt: 1440 px drei
+        // Spalten (dx 406, dy 0), 900 px zwei (dx 406, dy 0), 390 und
+        // 360 px eine (dx 0, dy 100). Begruendung bei `_achse()` in
+        // `ui/keyboard-group.js`.
+        //
+        // DER NACHLADE-KNOPF BLEIBT EIN EIGENER HALT. Er liegt im selben
+        // `div#spell-list`, ist aber ein `<button>` mit
+        // `data-action="call"` und damit kein Glied dieser Art — richtig
+        // so: er ist keine Karte, sondern das Ende der Liste.
+        name: 'zauberkarten',
+        behaelter: 'div#spell-list',
+        glied: '[data-action="toggle-spell-card"]',
+        achse: achseNachGestalt,
+        beschriftung: () => 'Zauber',
+        zustand: kopfAufgeklappt('.spell-card')
     },
 
     // ---- BEGEGNUNGEN ----
@@ -213,7 +347,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#encounter-list',
         glied: '[data-action="select-encounter"]',
         achse: 'vertical',
-        beschriftung: () => 'Begegnungen'
+        beschriftung: () => 'Begegnungen',
+        zustand: zeileAktuell()
     },
     {
         // MIT DER PRUEFSAAT IST HIER NUR EINE MARKE SICHTBAR ("Alle"), weil
@@ -228,7 +363,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#encounter-filters',
         glied: '[data-action="set-enc-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Begegnungsfilter'
+        beschriftung: () => 'Begegnungsfilter',
+        zustand: MARKE_GEDRUECKT
     },
 
     // ---- ORTE ----
@@ -237,7 +373,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#locations-list',
         glied: '[data-action="select-location"]',
         achse: 'vertical',
-        beschriftung: () => 'Orte'
+        beschriftung: () => 'Orte',
+        zustand: zeileAktuell()
     },
     {
         // Wie bei den Begegnungen: mit der Pruefsaat eine Marke, in einer
@@ -246,7 +383,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#location-filters',
         glied: '[data-action="set-loc-filter"]',
         achse: 'horizontal',
-        beschriftung: () => 'Ortsfilter'
+        beschriftung: () => 'Ortsfilter',
+        zustand: MARKE_GEDRUECKT
     },
 
     // ---- FRAKTIONEN ----
@@ -255,7 +393,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#fr-list',
         glied: '[data-action="select-fraktion"]',
         achse: 'vertical',
-        beschriftung: () => 'Fraktionen'
+        beschriftung: () => 'Fraktionen',
+        zustand: zeileAktuell('fr-selected')
     },
 
     // ---- LAEDEN ----
@@ -269,7 +408,47 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#shop-list',
         glied: '[data-action="toggle-shop"]',
         achse: 'vertical',
-        beschriftung: () => 'Laeden'
+        beschriftung: () => 'Laeden',
+        zustand: kopfAufgeklappt('.shop-card')
+    },
+    {
+        // DIE ARTIKEL EINES AUFGEKLAPPTEN LADENS — Befund 3, und der
+        // einzige, bei dem ein HANDGRIFF nach E-2 LAENGER war als davor.
+        // Gemessen, Laden 1 mit 15 Artikeln, letzten Artikel loeschen:
+        //
+        //   vor E-2   54 Anschlaege, 139 Halte in der Ansicht
+        //   nach E-2  64 Anschlaege, 157 Halte   <-- die Verschlechterung
+        //   mit dieser Gruppe  wieder 54/143
+        //
+        // Die Ursache war allein die neu bedienbare, aber nicht
+        // angemeldete Zeile `toggle-shop-item` (15 Halte, senkrechte
+        // Spalte in `div.si-list`, dx 0, dy 42/58). Die Pruefsaat gab
+        // keinem Laden Artikel — darum war in der Ansicht nichts zu sehen.
+        //
+        // EINE LEISTE JE LADEN, nicht eine fuer alle: `div.si-list` steht
+        // je Ladenkarte einmal, und zwischen zwei Laeden liegt der ganze
+        // Ladenkopf. Zwanzig Laeden ergeben zwanzig Leisten — aber nur der
+        // aufgeklappte ist sichtbar, und nur der kostet einen Halt.
+        name: 'ladenartikel',
+        behaelter: 'div.si-list',
+        glied: '[data-action="toggle-shop-item"]',
+        achse: 'vertical',
+        beschriftung: () => 'Artikel',
+        zustand: kopfAufgeklappt('.si-item')
+    },
+    {
+        // DIE KATEGORIEMARKEN EINES AUFGEKLAPPTEN LADENS. Sie sind in
+        // derselben Messung aufgefallen und haben dieselbe Gestalt wie die
+        // sechs anderen Filterleisten des Hauses (eine Zeile, dx 91,
+        // dy 0). Mit der Pruefsaat sind es drei Marken ("Alle" plus eine je
+        // vorkommender Artikelkategorie); in einem echten Laden bis zu
+        // acht.
+        name: 'ladenkategorien',
+        behaelter: 'div.shop-category-tabs',
+        glied: '[data-action="filter-shop-category"]',
+        achse: 'horizontal',
+        beschriftung: () => 'Artikelkategorien',
+        zustand: MARKE_GEDRUECKT
     },
 
     // ---- BESTIARIUM ----
@@ -285,7 +464,8 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#bestiary-list',
         glied: '[data-action="bestiary-select"]',
         achse: 'vertical',
-        beschriftung: () => 'Monster'
+        beschriftung: () => 'Monster',
+        zustand: zeileAktuell()
     },
     {
         // DIE EINE AUSNAHME VON PUNKT 2 OBEN ("keine Gruppe fasst native
@@ -333,7 +513,49 @@ const ANSICHTSGRUPPEN = [
         behaelter: 'div#bestiary-list',
         glied: '[data-action="bestiary-toggle-fav"]',
         achse: 'vertical',
-        beschriftung: () => 'Monster: Favoriten'
+        beschriftung: () => 'Monster: Favoriten',
+        zustand: MARKE_GEDRUECKT
+    },
+
+    // ---- WIKI ----
+    {
+        // DIE EINTRAEGE EINER AUFGEKLAPPTEN KATEGORIE — Befund 2. Die
+        // Kategorien sind laut CLAUDE.md standardmaessig ZU, und die
+        // Pruefsaat klappte keine auf; darum war die Reihe in keiner
+        // Messung zu sehen. Gemessen, eine Kategorie mit 20 Eintraegen:
+        //
+        //   Halte der Ansicht   zu 30   auf 50 ohne Gruppe   auf 31 mit
+        //
+        // Der Handgriff dahinter: wer Eintrag 3 oeffnet und ihn bearbeiten
+        // will, zahlte 17 Anschlaege fuer die Eintraege 4..20, die er
+        // schon hinter sich hatte (Kategoriekopf nach 27 Tab, dann 23 Tab
+        // bis "Bearbeiten", davon 17 die Eintraege). Mit mehreren offenen
+        // Kategorien und einem echten Wiki waechst das linear.
+        //
+        // EINE LEISTE JE KATEGORIE: `div.wiki-tree-items` steht je
+        // Kategorie einmal. Der Kategoriekopf
+        // (`[data-action="toggle-wiki-category"]`) liegt DANEBEN, nicht
+        // darin — er bleibt die Einzelstelle, die er war (Punkt 1 im
+        // Kopf), und behaelt seinen eigenen Halt.
+        //
+        // DER SELEKTOR GREIFT NUR IM BAUM. `select-wiki-entry` steht im
+        // Haus an fuenf Stellen (Baum, Brotkrumen, Suchtreffer,
+        // Schnellzugriff, Querverweise im Text); nur die des Baums liegen
+        // in `div.wiki-tree-items`. Die uebrigen sind Einzelstellen in
+        // ihrem jeweiligen Zusammenhang und bleiben unberuehrt.
+        //
+        // UNTEREINTRAEGE ZAEHLEN MIT. `querySelectorAll` findet auch die
+        // Kinder in `div.wiki-tree-item-children`; ein aufgeklappter
+        // Untereintrag wird damit Teil derselben Spalte, und die
+        // Pfeiltastenfahrt laeuft in Leseordnung durch den ganzen Baum der
+        // Kategorie. Das ist die Gestalt, die auf dem Schirm steht (dx 0,
+        // dy 30, eine y-Linie je Eintrag).
+        name: 'wikieintraege',
+        behaelter: 'div.wiki-tree-items',
+        glied: '[data-action="select-wiki-entry"]',
+        achse: 'vertical',
+        beschriftung: () => 'Wiki-Eintraege',
+        zustand: zeileAktuell()
     },
 
     // ---- PARTY (Kampfansicht, von Einheit 1 benannt nachgetragen) ----
@@ -349,6 +571,13 @@ const ANSICHTSGRUPPEN = [
         // dieselbe Gestalt wie `.init-slot-box` (Behaelter
         // `.spell-slots-compact`, die Rang-Wrapper sind klassenlose
         // Inline-Stil-`span`), also dieselbe Loesung.
+        //
+        // KEIN `zustand` — ABSICHT, und die Gegenpruefung hat den Grund
+        // selbst geliefert: jeder Punkt traegt im Markup ein `title`
+        // ("Grad 1 Slot (verfuegbar)"), der Zustand steht also im NAMEN und
+        // nicht nur in der Klasse. Ein `aria-pressed` daneben wuerde
+        // dasselbe zweimal sagen. Diese Reihe war in Befund 5 ausdruecklich
+        // das Gegenbeispiel aus dem Haus.
         name: 'partyZauberplaetze',
         behaelter: '.spell-slots-compact',
         glied: '.slot-pip',

@@ -72,10 +72,16 @@ const GRUPPEN_TASTEN = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown
  *                 eine Gruppe ist.
  *   glied         Selektor der Glieder INNERHALB des Behaelters.
  *   achse         'horizontal' -> Links/Rechts, 'vertical' -> Oben/Unten.
- *                 Gemessen, nicht gefuehlt (Begruendung je Eintrag).
+ *                 Gemessen, nicht gefuehlt (Begruendung je Eintrag). DARF
+ *                 EINE FUNKTION SEIN, `(glieder) => 'horizontal'|'vertical'`,
+ *                 fuer Reihen, deren Gestalt an der Fensterbreite haengt —
+ *                 Begruendung bei `_achse()`.
  *   beschriftung  Name der Leiste fuers Vorleseprogramm. Funktion, damit
  *                 eine Art mit zwei Bedeutungen (Erfolge/Fehlschlaege)
  *                 beide richtig benennen kann.
+ *   zustand       OPTIONAL, `{ attribut, wert: (glied) => string|null }`:
+ *                 das EINE ARIA-Attribut, das den Zustand des Glieds
+ *                 traegt. Begruendung bei `_zustand()`.
  *
  * WARUM `role="toolbar"` UND NICHT `listbox`/`option` — der Ausschluss ist
  * die Begruendung:
@@ -162,8 +168,37 @@ const KeyboardGroup = {
      * ist genau das, was verloren geht. Der Schluessel haengt darum an den
      * DATEN (`data-id`, `data-type`), nicht am Knoten — siehe
      * `_schluessel()`.
+     *
+     * DER SCHLUESSEL HAENGT AM BEHAELTER, NICHT MEHR AM ERSTEN GLIED
+     * (nachgetragen in E-2, Runde 3 — Befunde 8/9/12 der Gegenpruefung).
+     * Die erste Fassung bildete ihn aus `glieder[0]`, und das war an zwei
+     * Stellen falsch: in `div#bestiary-list` ist `glieder[0]` die erste
+     * Zeile des GEZEICHNETEN FENSTERS, also nach jeder Rollstellung ein
+     * anderes Monster — gemessen wuchs `_stand` dort von 55 auf 131
+     * Eintraege in 40 Radstufen, und der Halt fand seine Gruppe nach dem
+     * Rollen nicht mehr. Und nach einem Datentausch (Import,
+     * Kampagnenwechsel) lautete der Schluessel von `#npc-list`
+     * `nscZeilen|100|` statt `nscZeilen|1|`, weshalb `_holeFokusZurueck()`
+     * keine Gruppe fand und der Fokus auf `BODY` liegen blieb. Siehe
+     * `_schluessel()`.
+     *
+     * DER WERT IST `{ index, kennung }`, nicht mehr eine nackte Zahl: die
+     * `kennung` (`data-id|data-value` des Glieds, nur wenn sie eindeutig
+     * ist) findet NACH einem Neuzeichnen dasselbe Glied wieder, auch wenn
+     * es seinen Platz gewechselt hat. Der Index bleibt als Rueckfall, fuer
+     * Glieder ohne Datenmerkmal und fuer das virtuelle Fenster, in dem das
+     * gemerkte Glied gar nicht mehr gezeichnet ist.
      */
     _stand: new Map(),
+
+    /**
+     * Die Behaelter, deren `aria-label` DIESE Datei geschrieben hat. Nur
+     * die darf sie beim Aufraeumen wieder entfernen — ein Label aus dem
+     * Markup (die Auftragsleiste traegt eines mit dem Auftragsnamen) bleibt
+     * stehen. `WeakSet`, damit ein weggezeichneter Behaelter nichts
+     * festhaelt.
+     */
+    _eigeneLabel: new WeakSet(),
 
     /**
      * Der ANSPRUCH AUF RUECKKEHR: `{ knoten, schluessel, index }` des
@@ -236,6 +271,16 @@ const KeyboardGroup = {
         this._beobachter = new MutationObserver(() => this._planen());
         this._beobachter.observe(document.body, { childList: true, subtree: true });
 
+        // DIE FENSTERBREITE IST EINE EINGABE DER MECHANIK, seit eine Achse
+        // gemessen sein darf (`_achse()`): das Zaubergitter steht bei
+        // 1440 px in drei Spalten (dx 406, dy 0) und bei 390 px in einer
+        // (dx 0, dy 100). Ohne diesen Lauscher traegt es nach einer
+        // Drehung des Geraets eine `aria-orientation`, die der Gestalt
+        // widerspricht — bis zum naechsten Neuzeichnen. `_planen()` ist
+        // rAF-entprellt; ein Zugsturm von Groessenaenderungen ergibt also
+        // einen Durchlauf je Bild (gemessen 0,5-0,8 ms).
+        window.addEventListener('resize', () => this._planen(), { passive: true });
+
         if (typeof window.registerPostSaveHook === 'function') {
             window.registerPostSaveHook(() => this._planen());
         }
@@ -250,17 +295,37 @@ const KeyboardGroup = {
      * Nimmt eine weitere Gruppenart auf — der Weg, auf dem die
      * Vorbereitungsansichten dazukommen, ohne diese Datei zu veraendern.
      * @param {{name: string, behaelter: string, glied: string,
-     *          achse: 'horizontal'|'vertical',
-     *          beschriftung?: (glieder: Element[]) => string}} art
+     *          achse: 'horizontal'|'vertical'|((glieder: Element[]) => string),
+     *          beschriftung?: (glieder: Element[]) => string,
+     *          zustand?: {attribut: string, wert: (glied: Element) => string|null}}} art
      * @returns {boolean} Wahr, wenn die Art aufgenommen wurde
      */
     registriere(art) {
         if (!art || !art.name || !art.behaelter || !art.glied) return false;
-        if (art.achse !== 'horizontal' && art.achse !== 'vertical') return false;
+        if (
+            typeof art.achse !== 'function' &&
+            art.achse !== 'horizontal' &&
+            art.achse !== 'vertical'
+        ) {
+            return false;
+        }
+        if (art.zustand && (!art.zustand.attribut || typeof art.zustand.wert !== 'function')) {
+            return false;
+        }
         if (this._arten.some(a => a.name === art.name)) return false;
         this._arten.push(art);
         this._planen();
         return true;
+    },
+
+    /**
+     * Die angemeldeten Arten, als Abschriften ohne Funktionen — fuer
+     * Diagnose und fuer Messungen, die ihre Erwartung aus der ANMELDUNG
+     * ableiten wollen statt aus einem abgetippten Literal.
+     * @returns {{name: string, behaelter: string, glied: string}[]}
+     */
+    artenListe() {
+        return this._arten.map(a => ({ name: a.name, behaelter: a.behaelter, glied: a.glied }));
     },
 
     /**
@@ -360,13 +425,32 @@ const KeyboardGroup = {
                 window.KeyboardReach.aktualisieren();
             }
 
+            // ZWEI PHASEN, UND DIE ERSTE SAMMELT NUR. Ein Behaelter mit
+            // null Gliedern darf seine Rolle nicht behalten (Befund 7 der
+            // Gegenpruefung: nach einer Suche ohne Treffer meldete
+            // `div#npc-list` weiter eine Werkzeugleiste
+            // "Nichtspielercharaktere" mit null Bedienelementen — eine
+            // Falschaussage gegenueber dem Hilfsmittel). Aufgeraeumt wird
+            // aber erst, wenn KEINE Art in diesem Behaelter Glieder hat:
+            // `div#bestiary-list` fuehrt ZWEI Gruppen, und waere die
+            // Favoritenspalte gerade leer, naehme sie der Zeilenspalte
+            // sonst in jedem Durchlauf die Rolle wieder weg.
+            const geregelt = new Set();
+            const leer = [];
             for (const art of this._arten) {
                 for (const behaelter of document.querySelectorAll(art.behaelter)) {
                     const glieder = this._glieder(behaelter, art);
-                    if (!glieder.length) continue;
+                    if (!glieder.length) {
+                        leer.push(behaelter);
+                        continue;
+                    }
+                    geregelt.add(behaelter);
                     this._regleGruppe(behaelter, art, glieder);
                     n++;
                 }
+            }
+            for (const behaelter of leer) {
+                if (!geregelt.has(behaelter)) this._raeumeGruppe(behaelter);
             }
 
             this._holeFokusZurueck();
@@ -393,16 +477,25 @@ const KeyboardGroup = {
         if (behaelter.getAttribute('role') !== 'toolbar') {
             behaelter.setAttribute('role', 'toolbar');
         }
-        if (behaelter.getAttribute('aria-orientation') !== art.achse) {
-            behaelter.setAttribute('aria-orientation', art.achse);
+        const achse = this._achse(art, glieder);
+        if (behaelter.getAttribute('aria-orientation') !== achse) {
+            behaelter.setAttribute('aria-orientation', achse);
         }
         if (!behaelter.hasAttribute('aria-label')) {
             const name = art.beschriftung ? art.beschriftung(glieder) : art.name;
-            if (name) behaelter.setAttribute('aria-label', name);
+            if (name) {
+                behaelter.setAttribute('aria-label', name);
+                this._eigeneLabel.add(behaelter);
+            }
         }
 
         const schluessel = this._schluessel(art, glieder, behaelter);
-        let ziel = this._stand.has(schluessel) ? Number(this._stand.get(schluessel)) : 0;
+        const merk = this._stand.get(schluessel);
+        let ziel = 0;
+        if (merk) {
+            const gemerkt = this._findeKennung(glieder, merk.kennung);
+            ziel = gemerkt >= 0 ? gemerkt : Number(merk.index);
+        }
         if (!(ziel >= 0) || ziel >= glieder.length) ziel = 0;
 
         // DER HALT SOLL AUF EINEM BEDIENBAREN GLIED LIEGEN — sonst
@@ -430,8 +523,166 @@ const KeyboardGroup = {
             if (glieder[i].tagName !== 'LABEL' && !glieder[i].hasAttribute('role')) {
                 glieder[i].setAttribute('role', 'button');
             }
+            if (art.zustand) this._zustand(glieder[i], art.zustand);
         }
-        this._stand.set(schluessel, ziel);
+        this._stand.set(schluessel, { index: ziel, kennung: this._haltKennung(glieder, ziel) });
+    },
+
+    /**
+     * Die Achse einer Gruppe — die Angabe der Art, oder, wenn sie eine
+     * Funktion ist, die GEMESSENE.
+     *
+     * WARUM EINE MESSBARE ACHSE SEIN MUSS. Alle Reihen der Anmeldung
+     * behalten ihre feste Achse; genau EINE Gestalt haengt an der
+     * Fensterbreite, und zwar das Zaubergitter. Gemessen an denselben 30
+     * Karten:
+     *
+     *     1440 px   dx 406, dy   0, 10 y-Linien   (3 Spalten)
+     *      900 px   dx 406, dy   0, 15 y-Linien   (2 Spalten)
+     *      390 px   dx   0, dy 100, 30 y-Linien   (1 Spalte)
+     *      360 px   dx   0, dy 100, 30 y-Linien   (1 Spalte)
+     *
+     * Eine feste Achse waere hier auf jeder Breite zur Haelfte eine
+     * Falschaussage: `horizontal` behauptet dem Vorleseprogramm auf dem
+     * Telefon Marken nebeneinander, wo eine Spalte steht; `vertical`
+     * behauptet am Schreibtisch eine Spalte, wo drei Karten nebeneinander
+     * liegen. Die Messung sagt auf jeder Breite dasselbe wie das Auge.
+     * @param {Record<string, any>} art
+     * @param {Element[]} glieder
+     * @returns {'horizontal'|'vertical'}
+     */
+    _achse(art, glieder) {
+        if (typeof art.achse !== 'function') return art.achse;
+        let gemessen;
+        try {
+            gemessen = art.achse(glieder);
+        } catch (e) {
+            gemessen = null;
+        }
+        return gemessen === 'horizontal' ? 'horizontal' : 'vertical';
+    },
+
+    /**
+     * Schreibt den EINEN Zustandsträger eines Glieds — oder entfernt ihn,
+     * wenn die Art `null` liefert.
+     *
+     * WARUM DAS HIERHER GEHOERT UND NICHT IN DIE RENDERFUNKTIONEN. Die
+     * Gegenpruefung hat es als Befund 5 gemeldet und an den eigenen
+     * Party-Punkten den Gegenbeweis gleich mitgeliefert: dort traegt jedes
+     * Glied ein `title` ("Grad 1 Slot (verfuegbar)"), der Zustand steht
+     * also im Namen. An den Reihen, die E-2 neu bedienbar gemacht hat,
+     * stand er nirgends — sechs NSC-Filtermarken klangen alle gleich,
+     * obwohl eine davon filterte, und die Auskunft steckte allein in der
+     * CSS-Klasse `active`. Dasselbe fuer die ausgewaehlte Listenzeile
+     * (`selected`) und fuer offen/zu an Auftrags- und Ladenkoepfen.
+     *
+     * Die Zustandsklasse steht im Markup; wer das Attribut daneben in 14
+     * Renderfunktionen von Hand nachzieht, hat 14 Stellen, an denen es
+     * kuenftig vergessen wird. Hier ist es EINE Stelle, und sie laeuft in
+     * demselben Durchlauf, der den Tabindex setzt — also auch nach jedem
+     * `innerHTML`-Ersatz.
+     *
+     * WELCHES ATTRIBUT WOFUER, und warum nicht `aria-selected`:
+     *   — `aria-pressed` an Filtermarken: sie sind Schalter.
+     *   — `aria-current` an Listenzeilen. `aria-selected` waere das
+     *     naheliegende Attribut und ist an `role="button"` NICHT erlaubt;
+     *     ausserdem prueft Fall (7) in `tastatur-gruppen.spec.js`
+     *     ausdruecklich, dass keine Auswahl behauptet wird.
+     *   — `aria-expanded` an Aufklappkoepfen.
+     * @param {Element} glied
+     * @param {{attribut: string, wert: (glied: Element) => string|null}} z
+     */
+    _zustand(glied, z) {
+        let wert;
+        try {
+            wert = z.wert(glied);
+        } catch (e) {
+            return;
+        }
+        if (wert === null || wert === undefined || wert === false) {
+            if (glied.hasAttribute(z.attribut)) glied.removeAttribute(z.attribut);
+            return;
+        }
+        const soll = wert === true ? 'true' : String(wert);
+        if (glied.getAttribute(z.attribut) !== soll) glied.setAttribute(z.attribut, soll);
+    },
+
+    /**
+     * Nimmt Rolle, Achse und das SELBST GESETZTE Label von einem Behaelter
+     * zurueck, in dem keine Art mehr ein Glied findet.
+     *
+     * DIE SCHRANKE `if (!glieder.length) continue` GREIFT NUR VOR DEM
+     * ERSTEN FUELLEN. Gemessen (Befund 7): in einer nie gefuellten
+     * Kampagne traegt `div#npc-list` keine Rolle — richtig. Wer aber erst
+     * zwanzig NSC hat und dann nach "zzzzz" sucht, behaelt die Rolle und
+     * die Beschriftung bei null Gliedern; harmlos fuer Maus und Tabulator
+     * (es gibt keinen Halt mehr), aber eine Werkzeugleiste ohne
+     * Bedienelemente ist fuers Vorleseprogramm eine Falschaussage, und sie
+     * blieb bis zum naechsten Treffer stehen.
+     *
+     * NUR WAS WIR GESETZT HABEN: `aria-orientation` muss dastehen, sonst
+     * ist die Leiste nicht unsere; das Label nur, wenn es in
+     * `_eigeneLabel` steht.
+     * @param {Element} behaelter
+     */
+    _raeumeGruppe(behaelter) {
+        if (behaelter.getAttribute('role') !== 'toolbar') return;
+        if (!behaelter.hasAttribute('aria-orientation')) return;
+        behaelter.removeAttribute('role');
+        behaelter.removeAttribute('aria-orientation');
+        if (this._eigeneLabel.has(behaelter)) {
+            behaelter.removeAttribute('aria-label');
+            this._eigeneLabel.delete(behaelter);
+        }
+    },
+
+    /**
+     * Die Kennung des Glieds `i` — `data-id|data-value`, aber NUR wenn sie
+     * in dieser Gruppe eindeutig ist.
+     *
+     * DIE EINDEUTIGKEITSPRUEFUNG IST NOETIG: vier Zauberplaetze des ersten
+     * Grades tragen dieselbe `data-id` UND dieselbe `data-value` ("1").
+     * Ohne sie wuerde der Halt nach jedem Neuzeichnen auf den ersten Punkt
+     * des Rangs zurueckfallen statt auf den vierten. Ist die Kennung nicht
+     * eindeutig, bleibt der Index das Gedaechtnis — fuer Punktreihen
+     * genau richtig, weil ihre Laenge sich nicht aendert.
+     * @param {Element[]} glieder
+     * @param {number} i
+     * @returns {string|null}
+     */
+    _haltKennung(glieder, i) {
+        const g = glieder[i];
+        if (!g) return null;
+        const k = this._gliedKennung(g);
+        if (!k) return null;
+        let n = 0;
+        for (const x of glieder) {
+            if (this._gliedKennung(x) === k && ++n > 1) return null;
+        }
+        return k;
+    },
+
+    /**
+     * `data-id|data-value` eines Glieds, oder `null`, wenn es keines von
+     * beiden traegt.
+     * @param {Element} g
+     * @returns {string|null}
+     */
+    _gliedKennung(g) {
+        const id = g.getAttribute('data-id') || '';
+        const wert = g.getAttribute('data-value') || '';
+        return id || wert ? `${id}|${wert}` : null;
+    },
+
+    /**
+     * Index des Glieds mit dieser Kennung, oder -1.
+     * @param {Element[]} glieder
+     * @param {string|null|undefined} kennung
+     * @returns {number}
+     */
+    _findeKennung(glieder, kennung) {
+        if (!kennung) return -1;
+        return glieder.findIndex(g => this._gliedKennung(g) === kennung);
     },
 
     /**
@@ -520,8 +771,9 @@ const KeyboardGroup = {
         // beiden quer dazu laufen unberuehrt durch — auf einer
         // waagerechten Leiste ist Oben/Unten der Seitenlauf des Browsers,
         // und den wegzunehmen waere ein Verlust ohne Gewinn.
-        const vor = art.achse === 'vertical' ? 'ArrowDown' : 'ArrowRight';
-        const zurueck = art.achse === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
+        const achse = this._achse(art, glieder);
+        const vor = achse === 'vertical' ? 'ArrowDown' : 'ArrowRight';
+        const zurueck = achse === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
 
         let ziel;
         if (e.key === vor) ziel = this._naechstesGlied(glieder, index, 1);
@@ -598,7 +850,10 @@ const KeyboardGroup = {
                 glieder[i].setAttribute('tabindex', soll);
             }
         }
-        this._stand.set(this._schluessel(art, glieder, behaelter), ziel);
+        this._stand.set(this._schluessel(art, glieder, behaelter), {
+            index: ziel,
+            kennung: this._haltKennung(glieder, ziel)
+        });
     },
 
     /**
@@ -635,14 +890,33 @@ const KeyboardGroup = {
      * Der Schluessel einer Gruppe fuer das Haltgedaechtnis.
      *
      * ER HAENGT AN DEN DATEN, NICHT AM KNOTEN — der Knoten ist genau das,
-     * was ein `innerHTML`-Ersatz wegnimmt. `data-id` (Charakter bzw.
-     * Kaempfer) und `data-type` (Erfolg/Fehlschlag) stehen an jedem Glied
-     * und ueberleben das Neuzeichnen unveraendert.
+     * was ein `innerHTML`-Ersatz wegnimmt.
      *
-     * Der Rueckfall auf den Index unter den Behaeltern derselben Art ist
-     * fuer Gruppen gedacht, deren Glieder kein Datenmerkmal tragen. Er ist
-     * schwaecher (eine eingeschobene Zeile verschiebt ihn), aber besser als
-     * ein Schluessel, der alle Gruppen einer Art zusammenwirft.
+     * ERSTE STUFE: TRAGEN ALLE GLIEDER DASSELBE DATENMERKMAL, dann
+     * benennt es den BEHAELTER und ist der beste Schluessel, den es gibt.
+     * Das ist der Fall bei jeder Gruppe, die zu EINEM Gegenstand gehoert:
+     * die sieben Zauberplaetze von Kaempfer 5 (`data-id="5"`), die drei
+     * Todeswuerfe einer Vorzeichenreihe (`data-id` plus `data-type`), die
+     * zwei Statusmarken von Auftrag 17, die fuenfzehn Artikel von Laden 1.
+     *
+     * ZWEITE STUFE: SONST DIE EIGENE KENNUNG DES BEHAELTERS. Das ist die
+     * Korrektur aus Runde 3. Die erste Fassung nahm auch hier
+     * `glieder[0]`, und bei Listen mit UNTERSCHIEDLICHEN `data-id` war
+     * das die id der ersten ZEILE — eine Zahl, die sich bei jedem
+     * Datentausch und in `div#bestiary-list` bei jeder Rollstellung
+     * aendert. Gemessen: `_stand` wuchs im Bestiarium von 55 auf 131
+     * Eintraege in 40 Radstufen (ein Eintrag je besuchter Fensterlage,
+     * nie geraeumt), und nach dem Ersetzen von `D.npcs` fand
+     * `_holeFokusZurueck()` keine Gruppe mit dem Anspruchsschluessel mehr
+     * — der Fokus lag danach auf `BODY` und der Spielleiter musste sich
+     * die rund 28 Anschlaege von oben neu ertabulieren. `div#npc-list`
+     * und `div#bestiary-list` tragen eine id; sie wechselt nie.
+     *
+     * DRITTE STUFE: DER INDEX unter den Behaeltern derselben Art, fuer
+     * Behaelter ohne eigene Kennung (`div.wiki-tree-items` — einer je
+     * Kategorie, in der festen Reihenfolge von `WIKI_CATEGORIES`). Er ist
+     * schwaecher (ein eingeschobener Behaelter verschiebt ihn), aber
+     * besser als ein Schluessel, der alle Gruppen einer Art zusammenwirft.
      * @param {Record<string, any>} art
      * @param {Element[]} glieder
      * @param {Element} behaelter
@@ -652,9 +926,18 @@ const KeyboardGroup = {
         const g = glieder[0];
         const id = (g && g.getAttribute('data-id')) || '';
         const typ = (g && g.getAttribute('data-type')) || '';
-        if (id || typ) return `${art.name}|${id}|${typ}`;
+        if (id || typ) {
+            const gemeinsam = glieder.every(
+                x =>
+                    (x.getAttribute('data-id') || '') === id &&
+                    (x.getAttribute('data-type') || '') === typ
+            );
+            if (gemeinsam) return `${art.name}|${id}|${typ}`;
+        }
+        const eigen = behaelter.id || behaelter.getAttribute('data-id') || '';
+        if (eigen) return `${art.name}|#${eigen}`;
         const alle = Array.from(document.querySelectorAll(art.behaelter));
-        return `${art.name}|#${alle.indexOf(behaelter)}`;
+        return `${art.name}|@${alle.indexOf(behaelter)}`;
     },
 
     /**
