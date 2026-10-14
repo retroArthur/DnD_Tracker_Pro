@@ -364,7 +364,7 @@
 | `saveUndoState()` fehlt bei Delete/Edit                                        | Bei jeder Lösch-/Bearbeitungsfunktion prüfen                                                                  |
 | CSS-Klassen im HTML ohne Definition                                            | HTML + CSS immer zusammen implementieren                                                                      |
 | Selbstbezüge in hierarchischen Daten                                           | Filter auf `parentId !== id` prüfen                                                                           |
-| `document.execCommand()` deprecated (21 Call-Sites in ui/editors/rich-text.js) | Neue Editor-Funktionen mit Selection/Range API implementieren; vollständige Ablösung in eigener Phase geplant |
+| `document.execCommand()` deprecated (abgelöst, Phase 9 — 0 Aufrufe im Quellbaum, Stand 2026-10-14) | Neue Editor-Funktionen über die Selection/Range-Helfer in `ui/editors/rich-text.js`; `execCommand` nicht wiederbeleben (`DOC-12` hält die Zahl) |
 | Dropdowns nur bei Init gefüllt                                                 | Beim Öffnen des Formulars Selects neu populieren                                                              |
 | Kategorie-übergreifende Parent-Refs                                            | Prüfen ob Parent in gleicher Kategorie ist, sonst als Root behandeln                                          |
 | `setInterval` ohne Cleanup                                                     | Immer prüfen ob Interval existiert und clearInterval vor neuem Start                                          |
@@ -732,16 +732,71 @@
 
 ---
 
+## 2026-10-14 — Tastatur-Strang (TASV/E-2, HILF)
+
+Vier Fehler aus den Vorbereitungsansichten und der Tastenhilfe. Drei davon
+hat erst eine Messung in **Menschentempo** oder erst die **volle** Suite
+sichtbar gemacht — das ist die gemeinsame Lehre dieses Blocks.
+
+### Virtuelles Scrollen löschte den fokussierten Knoten (Tabulator-Endlosschleife)
+
+- **Problem:** Im Bestiarium war alles, was in der Dokumentreihenfolge **hinter** der virtuellen Liste steht, mit der Tastatur unerreichbar: die sechs `button.bestiary-fav`, `div.qref-fab`, `button#floating-dice-trigger` und die zwei Knöpfe des Umzugs-Hinweises. Gemessen am gebauten Bündel (gefüllte Kampagne, 1440 px, echte Tastendrücke): in 400 Sprüngen 34 `BODY`-Halte, 329 Halte auf frisch erzeugten Knoten, 860 entfernte Knoten. Zum Vergleich über drei Ansichten mit derselben globalen Schale und je 20 Zeilen: NSC erreicht die Schnell-Referenz in 37 Anschlägen, die Initiative in 196, das Bestiarium in 220 **nicht**.
+- **Ursache:** `render()` ersetzte bei **jedem** `scroll`-Ereignis `visibleContainer.innerHTML` — auch wenn `startIdx`/`endIdx` unverändert blieben. Der eben fokussierte Knoten war danach `isConnected === false`, `document.activeElement` fiel auf `BODY`, und der nächste Tabulator setzte **innerhalb** der frisch gebauten Zeilen wieder auf statt dahinter.
+- **Fix:** Zwei Teile in `ui/virtual-scroll.js`. (1) Kein Neuzeichnen bei unverändertem Fenster — das war der häufigste Fokusverlust und zugleich Arbeit ohne Wirkung. (2) Verschiebt sich das Fenster wirklich, wird der **absolute Zeilenindex** plus die Stelle des fokussierten Elements **innerhalb** der Zeile gemerkt (nicht der Knoten — er ist genau das, was verloren geht) und der Fokus an den frischen Knoten derselben Zeile zurückgegeben. Steht die Zeile nicht mehr im Fenster, bleibt es beim Verlust: dann ist der Spielleiter über sie hinausgerollt, und ihm den Fokus nachzuziehen wäre ein Griff in die Bedienung.
+- **Zwei Fallen in der Reparatur selbst:** `div.focus()` auf einem `div` **ohne** `tabindex` ist ein Nichts — kein Fehler, keine Wirkung; die Fokussierbarkeit entsteht erst in der Nachrüstung (`ui/keyboard-reach.js`), einen Bildwechsel später. Darum wird `KeyboardGroup.aktualisieren()` in **derselben** Aufgabe angestoßen. Und `focus()` **muss** hier `preventScroll: true` tragen, sonst rollt es sein Ziel in den sichtbaren Bereich, das erzeugt ein `scroll`, das denselben Lauscher erneut weckt — Rückkopplung.
+- **Regel (Messdisziplin):** **Eine Messung in Maschinengeschwindigkeit unterschätzt diesen Fehler.** Mit 0 ms Pause zwischen den Tastendrücken waren 17 Stellen unerreichbar, ab 30 ms deterministisch 27; Menschentempo liegt bei 250–600 ms, der Spielleiter trifft also immer den schlechten Fall. Wer Tastaturwege prüft, misst mit Pause. Und: wer in einer Liste `innerHTML` ersetzt, verliert den Fokus — die Reparatur gehört an die Ursache (das Neuzeichnen), nicht in die Tastaturmechanik.
+- **Datei:** `ui/virtual-scroll.js`
+- **Tests:** `tests/e2e/features/tastatur-reichweite.spec.js`
+
+### Fokusrückgabe ohne `preventScroll` ließ die Liste zurückspringen
+
+- **Problem:** Im Bestiarium: Fokus auf der ersten Monsterzeile, 300 px mit dem Rad gerollt — danach stand `scrollTop` wieder auf 0 statt auf 300. Die Liste sprang unter der Hand des Spielleiters zurück und machte genau die Bewegung zunichte, aus der das Neuzeichnen entstanden war.
+- **Ursache:** `_holeFokusZurueck()` rief `ziel.focus()` ohne `preventScroll`. Der Standardwert rollt das Ziel in den sichtbaren Bereich — eine **Fokusrückgabe ist aber keine Navigation** und darf die Ansicht nicht bewegen.
+- **Warum im Kampfpaket unsichtbar:** `renderInit()` rollt nichts, und `.init-spell-slots` liegt in keinem rollbaren Behälter. Der Fehler entstand nicht mit den Vorbereitungsansichten, er wurde dort nur erstmals sichtbar.
+- **Fix:** `ziel.focus({ preventScroll: true })` in `_holeFokusZurueck()`. Der Gegensatz dazu steht bewusst daneben: in `_tasten()` **ist** die Bewegung gewollt, weil der Spielleiter selbst fährt und sein Ziel sehen will. Darum steht `preventScroll` an der einen Stelle und nicht an der anderen.
+- **Regel:** `focus()` zur Wiederherstellung immer mit `preventScroll: true`; `focus()` als Folge einer Benutzerfahrt ohne. Wer beides gleich behandelt, hat entweder einen Sprung oder ein unsichtbares Ziel.
+- **Datei:** `ui/keyboard-group.js`
+- **Tests:** `tests/e2e/features/tastatur-gruppen.spec.js`
+
+### `aria-expanded` folgte dem Zustand nicht (Auftragsköpfe)
+
+- **Problem:** Ein Klick auf einen Auftragskopf klappte die Karte auf, `aria-expanded` blieb aber auf `"false"`. Das Vorleseprogramm hörte „eingeklappt", während der Auftrag offen stand. Gemessen mit je einem echten Klick und 1,5 s Nachbeobachtung: `toggle-quest` „false" → „false" bei offener Karte (falsch), `toggle-shop` „false" → „true" (richtig). **Genau eine** der vier Aufklapp-Familien war betroffen, nicht drei — die beiden Einzelstellen (`toggle-collapse`, `toggle-wiki-category`) tragen gar kein `aria-expanded`.
+- **Ursache:** `toggleQuest()` in `features/quests/quests-render.js` schaltet **nur eine Klasse** um (`element?.classList.toggle('expanded')`) — keine `childList`-Änderung, kein `save()`. Der `MutationObserver` von `KeyboardGroup` horchte ausdrücklich nur auf `childList`, der Post-Save-Haken feuerte nicht, die Regelfunktion lief nie.
+- **Gegen den Ausgangsstand war das eine Verschlechterung:** vorher trug der Kopf gar kein `aria-expanded`, das Hilfsmittel schwieg. Eine Falschaussage ist schlechter als Schweigen.
+- **Fix:** Am allgemeinen Ort, nicht in `toggleQuest()`: der Beobachter horcht zusätzlich auf `attributeFilter: ['class']`. In `toggleQuest()` wäre es eine Zusicherung an einer von vier Familien gewesen, und die nächste Funktion, die nur eine Klasse umschaltet, wäre wieder stumm. Dass der Beobachter sich damit nicht selbst weckt, ist nachgemessen: `grep -n "classList\|className" ui/keyboard-group.js` ist **leer**.
+- **Regel:** **Ein Zustandswechsel, der nur eine Klasse umschaltet, ist für einen `childList`-Beobachter unsichtbar.** Wer ARIA aus einer Klasse ableitet, muss auf `attributeFilter: ['class']` horchen. Zweite Lehre, aus dem Nebenbefund: `toggleCollapse()` in `systems/spellslots/navigation.js` entging demselben Fehler nur **beiläufig**, weil es sein Pfeil-Icon per `textContent` umschreibt und damit zufällig eine `childList`-Änderung erzeugt. Eine Abhängigkeit von einem Icon ist keine Zusicherung.
+- **Dritte Lehre, über den Wächter:** die vorhandenen Fälle lasen den Zustand **einmal**, direkt nach dem Öffnen der Ansicht, und prüften eine Anzahl gegen ein Soll. Damit belegen sie die **Anwesenheit** des Attributs, nie seine **Richtigkeit** — ein tautologischer Wächter. Ein Fall über ein Zustandsattribut muss **zuerst bedienen und danach lesen**, und vorher prüfen, dass die Bedienung den Zustand überhaupt geändert hat.
+- **Datei:** `ui/keyboard-group.js`
+- **Tests:** `tests/e2e/features/tastatur-gruppen.spec.js` (18g, 18g-T)
+
+### Die Tastenhilfe gab den Fokus frei, statt ihn ihrem Öffner zurückzugeben
+
+- **Problem:** Nach dem Nachziehen der Tastenhilfe (Fokus fällt beim Öffnen in den Dialog) lag der Fokus beim Schließen mit Escape auf `BODY` statt auf dem geklickten ⌨️-Knopf. Nachgewiesen von der **vollen** Playwright-Suite, von genau dem Fall, der dafür gebaut ist: `tastatur-ausloesung.spec.js` (g2) klickt den Knopf, drückt Escape und sichert zu, dass der geklickte Knopf den Fokus **behält** — „ohne diese Zusicherung misst der Fall nichts".
+- **Ursache:** Eine halb richtige Begründung. Ein Öffner wurde absichtlich nicht gemerkt, weil ein **vorgetäuschter** Öffner die Leertaste verbraucht (derselbe Fehler, den `tastatur-kuerzel.spec.js` (j) für den HP-Rechner festhält). Richtig ist nur die Hälfte davon: einen Öffner **erfinden** ist falsch, einen vorhandenen **wiederherstellen** ist richtig — und `ui/modal-focus.js` tut für die 36 Schalen genau Letzteres.
+- **Fix:** Beim Öffnen wird das fokussierte Bedienelement gemerkt, **sofern es eines gibt**. Bei `?` liegt der Fokus auf `BODY`, der Öffner ist `null`, und der Fokus wird beim Schließen freigegeben — die Leertaste gehört wieder dem Zugwechsel. Beim Klick auf den ⌨️-Knopf gibt es einen, und er bekommt den Fokus zurück. Keine `WeakMap` nötig: es gibt eine Tastenhilfe, sie schachtelt nicht, und `showShortcutsOverlay()` ist ihr einziger Öffner im Baum.
+- **Regel:** Eine Fokusübergabe in einen Dialog braucht **immer** den Rückweg, und zwei Zusicherungen aus **zwei Richtungen**: eine, dass der Fokus hineingeht, eine, dass er zurückkommt. Eine Umsetzung, die nur eines kann, ist dann in genau einem der beiden Fälle rot. Und: eine Teilsuite hätte diesen Regress nicht gefunden — er lag in einer anderen Datei als die Änderung.
+- **Datei:** `systems/undo.js` (dort steht `showShortcutsOverlay()`)
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (7, 7b), `tests/e2e/features/tastatur-ausloesung.spec.js` (g2)
+
+### Zwei überholte Zahlen in diesem Katalog und eine im Prüfstand
+
+- **Problem:** Dieser Katalog führte an drei Stellen einundzwanzig Call-Sites von `document.execCommand` in `ui/editors/rich-text.js` (Zahl hier in Worten, sonst schlägt `DOC-12` auf der Fehlerbeschreibung selbst an) und „641 data-action-Attribute". Beide Zahlen stammen aus der Zeit vor den Ablösungen bzw. vor den Vorlagenteilungen; gemessen am 2026-10-14 sind es **0 Aufrufe** von `execCommand` im ganzen Quellbaum und **865** `data-action`-Vorkommen in `assets/templates/` (dazu 489 in den JS-Modulen, zusammen 1354). Dazu nannte ein Kommentar in `tests/build/test_build_deduplication.py` „18 Gruppenarten", wo 22 angemeldet sind.
+- **Ursache:** Keine Ratsche über den beiden Akten. `CLAUDE.md` wurde im ganzen Baum nur von `tests/unit/docs-consistency.test.js` als Daten gelesen — und dort nur für die CSS- und die Vorlagenzahl; dieser Katalog von keiner Datei. Zahlen in Prosa verwesen lautlos.
+- **Fix:** Die Zahlen korrigiert und drei neue Wächter gezogen: `DOC-11` nagelt die Zahl toter Pfadangaben in diesem Katalog fest (88 Angaben, 8 tot), `DOC-12` hält jede Zahlangabe über `execCommand`-Aufrufe gegen einen Lauf über `core/ utils/ systems/ features/ ui/ render/`, und ein Fall in `tests/unit/keyboard-group-views.test.js` hält jede Zahlangabe über „Gruppenarten" gegen `ANSICHTSGRUPPEN.length`.
+- **Regel:** Eine Zahl in einer Akte ist eine Zusicherung ohne Wächter. Wer eine hinschreibt, zieht entweder den Wächter mit oder schreibt dazu, wann und wie gemessen wurde. Die `*-BERICHT.md` sind davon ausgenommen: sie sind datierte Abnahmeprotokolle, und ein nachträglich korrigiertes Protokoll wäre eine Fälschung.
+- **Dateien:** `docs/bugfixes.md`, `tests/build/test_build_deduplication.py`, `tests/unit/docs-consistency.test.js`, `tests/unit/keyboard-group-views.test.js`
+- **Tests:** `tests/unit/docs-consistency.test.js` (DOC-08 bis DOC-12), `tests/unit/keyboard-group-views.test.js`
+
+---
+
 ## Known Technical Debt
 
-### ui/editors/rich-text.js: document.execCommand() (21 Call-Sites)
+### ui/editors/rich-text.js: document.execCommand() — ERLEDIGT (Phase 9)
 
-- **Status:** Bekanntes Tech Debt - nicht kritisch
-- **Details:** Rich-Text-Editor nutzt deprecated execCommand API für bold, italic, underline, insertHTML etc. an 21 Stellen in `ui/editors/rich-text.js`.
-- **Bereits gefixt:** insertUnorderedList wurde durch manuelle DOM-Manipulation ersetzt
-- **Risiko:** Gering - API ist deprecated aber funktioniert in allen aktuellen Browsern
-- **Aufwand:** Hoch - Komplett-Ersatz durch Selection/Range API wäre umfangreich
-- **Empfehlung:** Ablösung in eigener Phase; bei neuen Editor-Funktionen Selection/Range API bevorzugen
+- **Status:** Abgelöst, kein Tech Debt mehr. Dieser Eintrag stand bis 2026-10-14 mit einer Zahl aus der Zeit davor hier und ist der Anlass für `DOC-12`.
+- **Details:** Der Eintrag nannte einundzwanzig Call-Sites in `ui/editors/rich-text.js` (Zahl in Worten, damit der Wächter nicht die eigene Fehlerbeschreibung anschlägt). Gemessen am 2026-10-14 enthält der Quellbaum **0 Aufrufe** von `document.execCommand` — gezählt über `core/ utils/ systems/ features/ ui/ render/` auf `/\.execCommand\s*\(/`, also auf den Aufruf und nicht auf die Nennung. Die beiden verbliebenen Nennungen in `utils/basic.js` sind Kommentare, die erklären, warum `<font face|size>` in der Sanitizer-Erlaubnisliste steht.
+- **Ersatz:** `wrapRangeWithElement()`/`closestEditorAncestor()`, `clearInlineFormattingAtSelection()`, `applyFontFamilyToSelection()`/`applyFontSizeToSelection()`, `insertHtmlAtSelection()`/`insertTextAtSelection()`/`insertLineBreakAtSelection()`.
+- **Regel:** Für neue Editor-Funktionalität diese Helfer verwenden statt `execCommand` wiederzubeleben. `DOC-12` in `tests/unit/docs-consistency.test.js` hält jede Zahlangabe darüber gegen den Quellbaum.
 
 ### testable-utils.js: Duplizierte Utility-Funktionen
 
@@ -753,6 +808,6 @@
 ### Inline Event-Handler (onchange, oninput)
 
 - **Status:** Abgeschlossen (Phase 1, Juni 2026) - Migration vollständig
-- **Details:** Inline Handler vollständig auf data-action-Delegation migriert; 641 data-action-Attribute, 0 inline Handler verbleibend
+- **Details:** Inline Handler vollständig auf data-action-Delegation migriert. Die hier geführte Zahl 641 stammt aus der Zeit der einen `assets/body.html`; gemessen am 2026-10-14 sind es **865** `data-action`-Vorkommen in `assets/templates/*.html` und 489 in den JS-Modulen (zusammen 1354), und **0** verbleibende Inline-Handler in den Vorlagen (`grep -roEh " on(click|change|input|submit|keyup|keydown|blur|focus)=" assets/templates/*.html | wc -l` = 0)
 - **Betroffene Dateien:** shops-core.js, npc-dialogs.js, encounters-render.js, render-spells.js, render-loot.js — alle migriert
 - **Risiko:** Keines mehr
