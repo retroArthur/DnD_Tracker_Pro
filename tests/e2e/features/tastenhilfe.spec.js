@@ -9,8 +9,13 @@
  * die die Hilfe nennt, tut auch etwas.**
  *
  * WARUM DIESE DATEI DER WERTVOLLE TEIL DES PAKETS IST UND NICHT DIE ZEILE
- * FUER E-2. Die Hilfe war beim Schreiben dieser Datei um ZEHN Kuerzel
- * veraltet, und sie ist nicht einmal veraltet, sondern laufend: sie hat seit
+ * FUER E-2. Die Hilfe war beim Schreiben dieser Datei um DREIZEHN gemessen
+ * belegte Tasten veraltet (`8`, `9`, `Strg+F`, `Strg+Shift+K`, `Strg+.`,
+ * `Alt+8`, `Alt+Shift+0` bis `Alt+Shift+5`, `Leertaste`), dazu `Esc`, `Tab`
+ * und `Shift+Tab` ohne eigene Zeile und die sechs Gruppentasten aus E-2.
+ * Von den 48 gemessen belegten Tasten nannte sie 25 — in 25 Zeilen und vier
+ * Abschnitten. Und sie ist nicht einmal veraltet, sondern laufend
+ * veraltend: sie hat seit
  * ihrer Entstehung jede neue Taste verpasst, die kein Fall erzwungen hat. Das
  * eine Kuerzel, das sie kennt und das nicht aus ihrer Entstehungszeit stammt
  * (`H`, E-4), steht darin, weil `tastatur-kuerzel.spec.js` (i) eine Zeile
