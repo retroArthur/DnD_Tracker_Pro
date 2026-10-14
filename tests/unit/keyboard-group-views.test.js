@@ -268,44 +268,69 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
         expect(glieder).not.toContain('toggle-wiki-category');
     });
 });
-// ============================================================
-// DIE ZAHL DER ARTEN WIRD IM BAUM NICHT FALSCH ZITIERT (HILF)
-// ============================================================
-//
-// WARUM DIESER FALL. `ANSICHTSGRUPPEN` ist gewachsen — Runde 3 hat vier
-// Arten nachgetragen (Zauberkarten, Wiki-Eintraege, Ladenartikel,
-// Ladenkategorien). Die Zahl stand zu diesem Zeitpunkt an mehreren
-// Stellen im Baum, und EINE davon blieb stehen: der Kommentar in
-// `tests/build/test_build_deduplication.py`, der die Anmeldung der
-// Ansichtsgruppen erklaert, nannte weiter 18. Gefunden wurde das nicht
-// von einem Test, sondern beim Lesen — genau die Abnahmeform, die DOC-02
-// in `tests/unit/docs-consistency.test.js` fuer die CSS-Dateizahl schon
-// einmal ersetzt hat.
-//
-// DIE QUELLE IST DIE LISTE, NICHT DER KOMMENTAR. Gezaehlt wird
-// `ANSICHTSGRUPPEN.length` aus dem geladenen Modul; jede Zahlangabe im
-// Baum wird dagegen gehalten.
-//
-// WARUM DIE BERICHTE AUSGENOMMEN SIND. Die `*-BERICHT.md` im
-// Wurzelverzeichnis sind datierte Abnahmeprotokolle. Eines von ihnen
-// zitiert die falsche Zahl ALS BEFUND (der Kommentar nenne 18, es seien
-// 22); ein nachtraeglich korrigierter Bericht waere eine Faelschung des
-// Protokolls. Die Ausnahme haengt am Namensmuster und gilt nicht fuer
-// Code, Tests oder docs/.
-//
-// MUTATIONSBEWEISE (2026-10-14), beide Richtungen, danach `git checkout
-// --` und `git hash-object` gegen `git rev-parse :<pfad>` — identisch:
-//
-//   22 -> 18 im Python-Kommentar          rot: "…py:316 nennt 18,
-//                                              angemeldet sind 22"
-//   eine 23. Art in ANSICHTSGRUPPEN       rot: DREI Stellen auf einmal
-//                                              (…py:316, …reichweite.spec.js
-//                                              :916 und :1295 nennen 22,
-//                                              angemeldet sind 23)
-//
-// Die zweite ist der eigentliche Zweck: wer eine Art nachtraegt, wird an
-// JEDE Stelle erinnert, die die alte Zahl fuehrt — genau das, was in
-// Runde 3 unterblieb.
+/**
+ * DIE ZWEI GROESSEN HINTER DEM EINEN WORT — Befund der Gegenpruefung.
+ *
+ * "Gruppenart" hiess im Baum ZWEIERLEI, und dieser Fall nagelte bis hierher
+ * die falsche der beiden fest. Am gebauten Buendel gemessen:
+ *
+ *   window.KeyboardGroup.statistik().arten        24
+ *   window.KeyboardGroup._arten.map(a => a.name)  24 Namen
+ *   window.ANSICHTSGRUPPEN.length                 22
+ *   Differenz                                     'zauberplaetze',
+ *                                                 'todeswuerfe'
+ *
+ * Die zwei ueberzaehligen sind die GRUNDARTEN: sie stehen als Literal
+ * `GRUPPEN_ARTEN` in `ui/keyboard-group.js` selbst, nicht in der Anmeldung
+ * der Ansichten. Und `ui/keyboard-group.js` protokolliert zur Laufzeit
+ * `${this._arten.length} Gruppenarten` — also 24, mit demselben Wort, mit
+ * dem drei Stellen im Baum die 22 benannten.
+ *
+ * WAS DAS WERT WAR. Wer die beiden Grundarten in eine Zaehlung aufnimmt —
+ * und zur Laufzeit sind sie dabei —, machte diesen Fall rot, obwohl er recht
+ * hatte. Eine Ratsche, die eine von zwei Bedeutungen festnagelt, ist genau
+ * so teuer wie keine: Einheit 2 hat hier eine falsche 18 durch eine Zahl
+ * ersetzt, die fuer die Mechanik ebenfalls falsch ist.
+ *
+ * DARUM ZWEI WOERTER UND ZWEI ZAHLEN:
+ *
+ *   "N Ansichtsgruppen"  ->  ANSICHTSGRUPPEN.length            (22)
+ *   "N Gruppenarten"     ->  GRUNDARTEN + ANSICHTSGRUPPEN      (24)
+ *
+ * Die drei Stellen, die vorher "22 Gruppenarten" schrieben, heissen jetzt
+ * "22 Ansichtsgruppen" — sie zaehlen genau die Anmeldung. Das Wort
+ * "Gruppenarten" gehoert der Gesamtzahl, so wie das Laufzeitprotokoll es
+ * verwendet.
+ *
+ * WIE DIE GRUNDARTEN GEZAEHLT WERDEN. Nicht per `name:`-Zaehlung quer durch
+ * die Datei (eine Beschriftungsfunktion darf das Wort auch enthalten),
+ * sondern ueber die KLAMMERTIEFE des Literals `GRUPPEN_ARTEN` — dieselbe
+ * Technik, mit der `build.py` doppelte Deklarationen findet. Gezaehlt werden
+ * die Eintraege auf Tiefe 1. Gemessen am 2026-10-15: zwei.
+ *
+ * WARUM DIE BERICHTE AUSGENOMMEN SIND. Die `*-BERICHT.md` im
+ * Wurzelverzeichnis sind datierte Abnahmeprotokolle. Eines von ihnen
+ * zitiert die falsche Zahl ALS BEFUND (der Kommentar nenne 18, es seien
+ * 22); ein nachtraeglich korrigierter Bericht waere eine Faelschung des
+ * Protokolls. Die Ausnahme haengt am Namensmuster und gilt nicht fuer
+ * Code, Tests oder docs/.
+ *
+ * MUTATIONSBEWEISE (2026-10-14/15), beide Richtungen und beide Woerter,
+ * danach `git checkout --` und `git hash-object` gegen
+ * `git rev-parse :<pfad>` — identisch:
+ *
+ *   22 -> 18 im Python-Kommentar          rot: "…py:316 nennt 18,
+ *                                              angemeldet sind 22
+ *                                              Ansichtsgruppen"
+ *   eine 23. Art in ANSICHTSGRUPPEN       rot: DREI Stellen auf einmal
+ *   "24 Gruppenarten" -> "22"             rot: "nennt 22, zur Laufzeit sind
+ *                                              es 24 Gruppenarten"
+ *   eine dritte Grundart in GRUPPEN_ARTEN rot: jede "24 Gruppenarten"-Stelle
+ *
+ * Die zweite und die vierte sind der eigentliche Zweck: wer eine Art
+ * nachtraegt, wird an JEDE Stelle erinnert, die die alte Zahl fuehrt — genau
+ * das, was in Runde 3 unterblieb.
+ */
 
 const AUSNAHME_MUSTER = /-BERICHT\.md$/;
 
@@ -323,8 +348,35 @@ function dateienUnter(verzeichnis, treffer = []) {
     return treffer;
 }
 
+/**
+ * Die GRUNDARTEN: die Eintraege des Literals `GRUPPEN_ARTEN` in
+ * `ui/keyboard-group.js`. Gezaehlt ueber die Klammertiefe, nicht ueber eine
+ * Mustersuche nach `name:` — Begruendung im Block oben.
+ * @returns {number}
+ */
+function grundartenZaehlen() {
+    const quelle = fs.readFileSync(path.join(WURZEL, 'ui', 'keyboard-group.js'), 'utf8');
+    const anfang = quelle.indexOf('const GRUPPEN_ARTEN = [');
+    if (anfang < 0) return -1;
+    let tiefe = 0;
+    let gezaehlt = 0;
+    for (let i = quelle.indexOf('[', anfang); i < quelle.length; i++) {
+        const z = quelle[i];
+        if (z === '[' || z === '{') {
+            tiefe++;
+            // Ein `{` genau auf Tiefe 1 (also direkt in der Liste) ist ein
+            // Eintrag; alles Tiefere gehoert zu seinem Inneren.
+            if (z === '{' && tiefe === 2) gezaehlt++;
+        } else if (z === ']' || z === '}') {
+            tiefe--;
+            if (tiefe === 0) break;
+        }
+    }
+    return gezaehlt;
+}
+
 describe('Ansichtsgruppen — die Zahl der Arten', () => {
-    test('jede Zahlangabe ueber "Gruppenarten" im Baum nennt ANSICHTSGRUPPEN.length', () => {
+    test('jede Zahlangabe im Baum nennt die Groesse, die sie zu nennen behauptet', () => {
         const kandidaten = [
             ...dateienUnter(path.join(WURZEL, 'ui')),
             ...dateienUnter(path.join(WURZEL, 'tests')),
@@ -335,30 +387,65 @@ describe('Ansichtsgruppen — die Zahl der Arten', () => {
             p => /\.(js|ts|py|md|html|css)$/.test(p) && !AUSNAHME_MUSTER.test(path.basename(p))
         );
 
+        const GRUNDARTEN = grundartenZaehlen();
+        const GESAMT = GRUNDARTEN + ANSICHTSGRUPPEN.length;
+
+        /** @type {{ort: string, zahl: number, wort: string, soll: number}[]} */
         const behauptungen = [];
         for (const datei of kandidaten) {
             fs.readFileSync(datei, 'utf8')
                 .split('\n')
                 .forEach((zeile, i) => {
+                    const ort = `${path.relative(WURZEL, datei).replace(/\\/g, '/')}:${i + 1}`;
+                    for (const m of zeile.matchAll(/(\d+)\s+Ansichtsgruppen\b/g)) {
+                        behauptungen.push({
+                            ort,
+                            zahl: parseInt(m[1], 10),
+                            wort: 'Ansichtsgruppen',
+                            soll: ANSICHTSGRUPPEN.length
+                        });
+                    }
                     for (const m of zeile.matchAll(/(\d+)\s+Gruppenarten\b/g)) {
                         behauptungen.push({
-                            ort: `${path.relative(WURZEL, datei).replace(/\\/g, '/')}:${i + 1}`,
-                            zahl: parseInt(m[1], 10)
+                            ort,
+                            zahl: parseInt(m[1], 10),
+                            wort: 'Gruppenarten',
+                            soll: GESAMT
                         });
                     }
                 });
         }
 
-        // BASE-01/empty: ohne Kandidaten misst der Fall nichts. Gemessen am
-        // 2026-10-14 sind es drei Stellen — ein Kommentar in
-        // tests/build/test_build_deduplication.py sowie ein Fallname und ein
-        // Kommentar in tests/e2e/features/tastatur-reichweite.spec.js.
-        expect(behauptungen.length).toBeGreaterThanOrEqual(2);
+        // BASE-01/empty: ohne Kandidaten misst der Fall nichts. Und ohne eine
+        // Angabe JE WORT misst er nur die Haelfte — genau der Fehler, den die
+        // Gegenpruefung hier gefunden hat.
+        // Jest-`expect` nimmt nur EIN Argument — die Begruendung steht darum als
+        // Kommentar und nicht als zweiter Parameter: GRUNDARTEN sind die Eintraege
+        // des Literals `GRUPPEN_ARTEN`, und ohne sie ist die Gesamtzahl falsch.
+        expect(GRUNDARTEN).toBeGreaterThan(0);
         expect(ANSICHTSGRUPPEN.length).toBeGreaterThanOrEqual(1);
+        expect(behauptungen.length).toBeGreaterThanOrEqual(2);
+        // Mindestens eine Stelle im Baum muss eine Zahl von ANSICHTSGRUPPEN nennen,
+        // sonst prueft diese Haelfte nichts.
+        expect(
+            behauptungen.filter(b => b.wort === 'Ansichtsgruppen').length
+        ).toBeGreaterThanOrEqual(1);
+        // Und mindestens eine muss die GESAMTZAHL nennen — genau diese Haelfte
+        // fehlte bis zur Gegenpruefung.
+        expect(behauptungen.filter(b => b.wort === 'Gruppenarten').length).toBeGreaterThanOrEqual(
+            1
+        );
 
         const falsch = behauptungen
-            .filter(b => b.zahl !== ANSICHTSGRUPPEN.length)
-            .map(b => `${b.ort} nennt ${b.zahl}, angemeldet sind ${ANSICHTSGRUPPEN.length}`);
+            .filter(b => b.zahl !== b.soll)
+            .map(
+                b =>
+                    `${b.ort} nennt ${b.zahl} ${b.wort}, es sind ${b.soll} ` +
+                    (b.wort === 'Gruppenarten'
+                        ? `(${GRUNDARTEN} Grundarten aus GRUPPEN_ARTEN plus ` +
+                          `${ANSICHTSGRUPPEN.length} Ansichtsgruppen)`
+                        : '(ANSICHTSGRUPPEN.length)')
+            );
         expect(falsch).toEqual([]);
     });
 });
