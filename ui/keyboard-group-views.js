@@ -57,6 +57,45 @@
 //   #bestiary-list    > bestiary-select       17 Zeilen, dx 0, dy 56            -> senkrecht
 //   .spell-slots-compact > .slot-pip           1 Zeile,  dx 18, dy 0            -> waagerecht
 //
+// NACHGETRAGEN IN RUNDE 3, aus den Befunden 1 bis 3 der Gegenpruefung
+// (gemessen bei 1440, 900, 390 UND 360 px):
+//
+//   #spell-list       > toggle-spell-card     30 Karten, 1440/900: dx 406, dy 0
+//                                                        390/360:  dx 0, dy 100
+//                                             -> GEMESSEN, siehe unten
+//   .wiki-tree-items  > select-wiki-entry     20 Zeilen, dx 0, dy 30 (alle vier) -> senkrecht
+//   .si-list          > toggle-shop-item      15 Zeilen, dx 0, dy 42/42/58/58    -> senkrecht
+//   .shop-category-tabs > filter-shop-category 1 Zeile,  dx 91, dy 0 (alle vier) -> waagerecht
+//
+// DAS ZAUBERGITTER IST DIE EINE AUSNAHME von "die Achse steht fest": seine
+// Spaltenzahl haengt an der Fensterbreite (drei Spalten bei 1440, zwei bei
+// 900, eine bei 390). Es traegt darum `achse: achseNachGestalt` und misst
+// die Achse bei jedem Durchlauf; Begruendung bei `_achse()` in
+// `ui/keyboard-group.js`. Eine feste Achse waere hier auf jeder Breite zur
+// Haelfte eine Falschaussage gegenueber dem Vorleseprogramm.
+//
+// DIE DREI ZUSTAENDE, DIE DIE PRUEFSAAT NICHT HERSTELLT, und darum war
+// diese Flut in Runde 2 unsichtbar — keine Zauber im Bestand, keine
+// aufgeklappte Wiki-Kategorie, kein Laden mit Artikeln:
+//
+//                                      Halte ohne Gruppe   mit Gruppe
+//   Zauber, SRD geladen (75 Zauber)           65               36
+//   Wiki, eine Kategorie offen                50               31
+//   Laden mit 15 Artikeln, offen             158              142
+//
+// Der Handgriff dahinter, ganz mit echten Tasten und vom Ladenkopf an
+// gezaehlt: den letzten Artikel eines Ladens loeschen kostete 69
+// Anschlaege ohne die Artikelgruppe und 53 mit ihr. Vor E-2 gab es diesen
+// Weg nicht — der Ladenkopf war in 120 Anschlaegen nicht erreichbar.
+//
+// DER ZUSTAND GEHOERT ZUR GRUPPE. Jede Art traegt ein `zustand`, das EIN
+// ARIA-Attribut am Glied fuehrt: `aria-pressed` an Filtermarken,
+// `aria-current` an der ausgewaehlten Listenzeile (und NUR an ihr),
+// `aria-expanded` an Aufklappkoepfen. Vorher steckte diese Auskunft allein
+// in der CSS-Klasse (`active`, `selected`, `expanded`) und war fuer ein
+// Vorleseprogramm nicht vorhanden. Ausnahme mit Grund: die Party-Punkte
+// tragen ihren Zustand schon im `title`.
+//
 // EINE EINSCHRAENKUNG, DIE IN DIE AKTE GEHOERT: bei 375 px brechen die
 // Zauberleisten um (`spell-level-filters` 11 Marken auf 2 Zeilen,
 // `spell-school-filters` 9 auf 2). Die Achse bleibt trotzdem waagerecht,
