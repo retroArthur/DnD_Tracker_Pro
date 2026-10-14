@@ -1486,3 +1486,359 @@ test.describe('HILF — die Hilfe hat genau eine Quelle', () => {
         ).toBe(false);
     });
 });
+
+// ============================================================
+// (13)-(14) DIE OFFENE HILFE IST EIN DIALOG — zwei Zusicherungen,
+//           die sie bis hierher GEDRUCKT, aber nicht gehalten hat
+// ============================================================
+//
+// WARUM DAS EINE EIGENE GRUPPE IST UND NICHT EINE ZEILE MEHR IN (7). Fall
+// (7) prueft, dass der Fokus in die Hilfe GEHT und zurueckkommt. Diese zwei
+// Faelle pruefen, was gilt, SOLANGE sie offen steht — und das war zweierlei,
+// beides gemessen und beides falsch:
+//
+//   (13) IHRE EIGENE TAB-ZEILE WAR EINE FALSCHAUSSAGE. Die Hilfe druckt
+//        "Naechstes Bedienelement (im Dialog bleibt er darin)". Gemessen am
+//        gebauten Buendel (1440x900, echte Tastendruecke, 45 Spruenge):
+//        44 von 45 verliessen die offene Hilfe, ab dem zweiten Anschlag stand
+//        der Fokus auf Bedienelementen UNTER der Blende — `BODY`, dann drei
+//        Knoepfe, dann `INPUT#global-search` —, alle laut
+//        `document.elementFromPoint` von `DIV.shortcuts-overlay` verdeckt,
+//        waehrend die Hilfe sichtbar offen blieb. Dasselbe fuer Shift+Tab
+//        (5 von 5 sofort draussen). Zum Vergleich in derselben Messung:
+//        `about-modal`, eine gewoehnliche Schale, hielt 20 von 20; und von
+//        109 sichtbaren Haltepunkten der Seite lag genau EINER in der Hilfe.
+//        URSACHE: `ui/modal-focus.js` sucht die Schale ueber
+//        `.modal-overlay.show` (plus `#quicknotes-modal`). Die Hilfe traegt
+//        `.shortcuts-overlay` und fiel aus beiden — `oberstesModal()` gab
+//        `null` (nachgemessen: `ModalFocus.statistik().offen === null` bei
+//        offener Hilfe), die Falle zog sich zurueck. Der Kommentar dort
+//        begruendete das ausdruecklich ("WARUM `.shortcuts-overlay.show`
+//        NICHT DAZUGEHOERT"), aber mit einer Messung aus einer ANDEREN Lage:
+//        Hilfe UEBER einem offenen Dialog, wo sie damals keinen eigenen
+//        Haltepunkt hatte und es nichts zu entziehen gab. Seit der
+//        Fokusuebergabe von Fall (7) ist die Lage eine andere, und die
+//        Begruendung traegt nicht mehr.
+//        EINE FALSCHE HILFE IST SCHLIMMER ALS EINE FEHLENDE: der Nutzer liest
+//        die Zusage, tabuliert zur Probe und drueckt Enter auf einem Knopf,
+//        den er nicht sieht.
+//
+//   (14) DIE OFFENE HILFE WAR EINE LEBENDE TASTATURFLAECHE. Gemessen (je
+//        Taste frischer Zustand, Hilfe mit `?` geoeffnet, Initiative-Ansicht):
+//        von 34 geprueften Tasten aenderten 29 den Zustand HINTER der Blende,
+//        und die Hilfe blieb in allen 34 Faellen offen. Auszug: `2` ->
+//        Ansicht view-initiative -> view-party | `9` -> view-loot | `N` ->
+//        Zug 0 -> 1 | `P` -> Zug 0 -> 5 | `Shift+N` -> Runde 1 -> 2 | `R`,
+//        `Alt+1/2/4/6/8` -> Wuerfelverlauf 0 -> 1 | `T` -> Sitzungsuhr laeuft
+//        | `L` -> Ereignislog dauerhaft | `Strg+Z/Y/S` -> je ein
+//        Protokolleintrag. Und FUENF Tasten zogen den Fokus in ein
+//        Eingabefeld unter der Blende: `Strg+K`, `Strg+F` ->
+//        `INPUT#global-search`, `Strg+Shift+K`, `Strg+.` -> `INPUT.cp-input`,
+//        `/` -> `INPUT#qref-search-input`. Danach landeten Anschlaege in
+//        einem Feld, das der Nutzer nicht sehen kann.
+//        Die Hilfe ist genau die Flaeche, die man aufschlaegt, wenn man nicht
+//        weiss, was eine Taste tut — sie laedt zum Ausprobieren ein, und am
+//        Spieltisch rueckte jede Probe Zug und Runde des laufenden Kampfes.
+//
+// WAS BEIDE FAELLE NICHT VERLANGEN: dass die Hilfe die BROWSERVORGABEN
+// schluckt. Ihr Inhalt ist laenger als ihre Flaeche (gemessen 2081 px in
+// 673 px bei 390 px Breite), und Bild-ab, Pfeile und Leertaste muessen ihn
+// weiter laufen lassen. "Taub" heisst hier: kein APP-Kuerzel feuert; `Escape`
+// bleibt der Ausweg. Fall (7) prueft den Lauf, Fall (14) die Stille.
+
+test.describe('HILF — die offene Hilfe ist ein Dialog', () => {
+    test('(13) der Tabulator bleibt in der offenen Hilfe', async ({ page }) => {
+        test.setTimeout(180_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        // DIE KONTROLLMESSUNG ZUERST, und sie ist nicht Zierde: ohne sie
+        // wuerde dieser Fall auch dann gruen, wenn die Fokusfalle UEBERALL
+        // kaputt waere — "0 von 0 Spruengen verliessen den Dialog" ist wahr.
+        // Eine gewoehnliche Schale muss im selben Lauf halten.
+        await page.evaluate(() => {
+            document.activeElement?.blur?.();
+            window.showModal('about-modal');
+        });
+        await page.waitForTimeout(400);
+        let drin = 0;
+        for (let i = 0; i < 20; i++) {
+            await page.keyboard.press('Tab');
+            if (
+                await page.evaluate(() =>
+                    document.getElementById('about-modal').contains(document.activeElement)
+                )
+            ) {
+                drin++;
+            }
+        }
+        expect(
+            drin,
+            'Vorbedingung: eine gewoehnliche Schale (`about-modal`) haelt den Tabulator. ' +
+                `Gemessen ${drin} von 20 Spruengen darin. Haelt sie nicht, ist die ` +
+                'Fokusfalle selbst kaputt und dieser Fall misst nichts — dann zuerst ' +
+                '`tests/e2e/features/modal-fokus.spec.js` lesen.'
+        ).toBe(20);
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(350);
+
+        // UND JETZT DIE HILFE, mit der Taste geoeffnet — der Weg des Nutzers.
+        await page.evaluate(() => {
+            document.activeElement?.blur?.();
+        });
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(450);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Vorbedingung: "?" oeffnet die Hilfe'
+        ).toBe(true);
+
+        // Die Zeile, fuer die dieser Fall haftet — aus dem Buendel gelesen,
+        // nicht abgetippt. Fehlt sie, ist die Zusage weg, und der Fall soll
+        // es sagen statt stillschweigend etwas anderes zu pruefen.
+        const tabZeile = await page.evaluate(() => {
+            const r = Array.from(document.querySelectorAll('#shortcuts-overlay .shortcut-row'));
+            const t = r.find(x =>
+                Array.from(x.querySelectorAll('.shortcut-key')).some(
+                    k => (k.textContent || '').trim().toUpperCase() === 'TAB'
+                )
+            );
+            return t
+                ? (t.querySelector('span')?.textContent || '').replace(/\s+/g, ' ').trim()
+                : null;
+        });
+        expect(
+            tabZeile,
+            'Die Hilfe muss eine Zeile fuer `Tab` fuehren — dieser Fall haftet fuer die ' +
+                'Zusage, die darin steht.'
+        ).not.toBeNull();
+        expect(
+            tabZeile,
+            `Die Tab-Zeile der Hilfe lautet "${tabZeile}". Sie sagt zu, dass der Fokus im ` +
+                'Dialog BLEIBT — und genau das prueft dieser Fall. Wird die Zusage ' +
+                'zurueckgenommen, muss auch dieser Fall weichen; stillschweigend ' +
+                'umformulieren darf sie niemand.'
+        ).toMatch(/[Dd]ialog/);
+
+        /** @type {{nr: number, drin: boolean, el: string, ueber: string|null}[]} */
+        const spruenge = [];
+        for (let i = 1; i <= 45; i++) {
+            await page.keyboard.press('Tab');
+            spruenge.push(
+                await page.evaluate(nr => {
+                    const a = document.activeElement;
+                    const o = document.getElementById('shortcuts-overlay');
+                    const r = a?.getBoundingClientRect?.();
+                    let ueber = null;
+                    if (r && r.width > 0 && r.height > 0) {
+                        const t = document.elementFromPoint(
+                            r.left + r.width / 2,
+                            r.top + r.height / 2
+                        );
+                        ueber = t
+                            ? t.tagName +
+                              '.' +
+                              (typeof t.className === 'string' ? t.className.split(/\s+/)[0] : '')
+                            : null;
+                    }
+                    return {
+                        nr,
+                        drin: !!o?.contains(a),
+                        el:
+                            (a?.tagName || '?') +
+                            (a?.id ? '#' + a.id : '') +
+                            '.' +
+                            (typeof a?.className === 'string' ? a.className.split(/\s+/)[0] : ''),
+                        ueber
+                    };
+                }, i)
+            );
+        }
+        const raus = spruenge.filter(s => !s.drin);
+        const verdeckt = raus.filter(s => s.ueber && /shortcuts-/.test(s.ueber));
+        expect(
+            raus.map(s => `#${s.nr} ${s.el}${s.ueber ? ' (verdeckt von ' + s.ueber + ')' : ''}`),
+            `${raus.length} von 45 Tabulatorspruengen verlassen die OFFENE Hilfe, ` +
+                `${verdeckt.length} davon landen auf einem Ziel, das die Blende verdeckt. ` +
+                'Die Hilfe druckt dabei selbst die Zusage ' +
+                `"${tabZeile}". Der Nutzer liest sie, tabuliert zur Probe und bedient ab ` +
+                'dem zweiten Anschlag etwas, das er nicht sieht — Enter dort oeffnet ' +
+                'einen Dialog UNTER der Blende (z-index 1000 gegen 2000), der zwei Escape ' +
+                'kostet.\nAbhilfe: die Falle in `ui/modal-focus.js` muss die Hilfe ' +
+                'mitfuehren. Sie traegt `.shortcuts-overlay`, nicht `.modal-overlay`, und ' +
+                'fiel darum aus `oberstesModal()`.'
+        ).toEqual([]);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Vorbedingung dieses Falls: die Hilfe stand die ganze Messung ueber offen. ' +
+                'Hat ein Tabulatordruck sie geschlossen, misst der Fall etwas anderes.'
+        ).toBe(true);
+
+        // UND DIE GEGENRICHTUNG. Shift+Tab lief am Ausgangsstand sofort
+        // hinaus (5 von 5) — eine Falle, die nur eine Richtung haelt, ist
+        // keine.
+        const srausZiele = [];
+        for (let i = 1; i <= 10; i++) {
+            await page.keyboard.press('Shift+Tab');
+            const z = await page.evaluate(() => ({
+                drin: !!document
+                    .getElementById('shortcuts-overlay')
+                    ?.contains(document.activeElement),
+                el:
+                    (document.activeElement?.tagName || '?') +
+                    (document.activeElement?.id ? '#' + document.activeElement.id : '')
+            }));
+            if (!z.drin) srausZiele.push(`#${i} ${z.el}`);
+        }
+        expect(
+            srausZiele,
+            `Shift+Tab verlaesst die offene Hilfe (${srausZiele.length} von 10). Eine ` +
+                'Fokusfalle, die nur vorwaerts haelt, laesst den Nutzer rueckwaerts ' +
+                'hinaus — und die Hilfe nennt Shift+Tab in einer eigenen Zeile.'
+        ).toEqual([]);
+    });
+
+    test('(14) bei offener Hilfe feuert kein App-Kuerzel', async ({ page }) => {
+        test.setTimeout(900_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        // DIE MENGE: alles, was die Hilfe selbst als Kuerzel nennt, plus die
+        // Modifikatorkuerzel, die am Ausgangsstand gemessen durchgeschlagen
+        // haben. `Escape` steht NICHT darin — es ist der Ausweg und muss
+        // wirken; die Gegenprobe am Ende haelt das fest.
+        const PROBEN = [
+            ...'123456789'.split(''),
+            'r',
+            't',
+            'l',
+            'k',
+            'n',
+            'p',
+            'h',
+            '/',
+            '?',
+            'Shift+N',
+            'Control+z',
+            'Control+y',
+            'Control+s',
+            'Control+k',
+            'Control+f',
+            'Control+Shift+K',
+            'Control+.',
+            'Control+/',
+            'Alt+1',
+            'Alt+2',
+            'Alt+4',
+            'Alt+6',
+            'Alt+8',
+            'Alt+r',
+            'Alt+p',
+            'Alt+l',
+            'Alt+t',
+            'Alt+Shift+0',
+            'Alt+Shift+1',
+            'Alt+Shift+6',
+            'Alt+Shift+8',
+            'Space',
+            'Enter',
+            'Delete',
+            'Backspace'
+        ];
+
+        /** @type {string[]} */
+        const durchgeschlagen = [];
+        /** @type {string[]} */
+        const fokusDiebe = [];
+        /** @type {string[]} */
+        const zugeschlagen = [];
+
+        for (const taste of PROBEN) {
+            await page.evaluate(ZURUECKSETZEN('initiative'));
+            await page.waitForTimeout(220);
+            await page.evaluate(ZURUECKSETZEN('initiative'));
+            await page.waitForTimeout(60);
+            // Mit der Taste oeffnen, nicht per Aufruf — der Weg des Nutzers.
+            await page.keyboard.press('Shift+/');
+            await page.waitForTimeout(380);
+            expect(
+                await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+                `Vorbedingung: "?" oeffnet die Hilfe vor der Probe "${taste}"`
+            ).toBe(true);
+            const vor = await page.evaluate(SPUR);
+            await page.keyboard.press(taste);
+            await page.waitForTimeout(280);
+            const nach = await page.evaluate(SPUR);
+            const fokus = await page.evaluate(() => ({
+                drin: !!document.activeElement?.closest?.('#shortcuts-overlay'),
+                el:
+                    (document.activeElement?.tagName || '?') +
+                    (document.activeElement?.id ? '#' + document.activeElement.id : '') +
+                    '.' +
+                    (typeof document.activeElement?.className === 'string'
+                        ? document.activeElement.className.split(/\s+/)[0]
+                        : '')
+            }));
+            // `hilfe` gehoert nicht in die Wirkungsspur dieses Falls: dass
+            // die Hilfe offen BLEIBT, ist Vorbedingung und wird eigens
+            // gemeldet.
+            const wirkung = spurDelta(vor, nach, [...KEINE_BELEGUNG, 'hilfe']);
+            if (wirkung.length) {
+                durchgeschlagen.push(`${alsHilfeToken(taste)} -> ${wirkung.join('; ')}`);
+            }
+            if (!fokus.drin) fokusDiebe.push(`${alsHilfeToken(taste)} -> ${fokus.el}`);
+            if (!nach.hilfe) zugeschlagen.push(alsHilfeToken(taste));
+            // Aufraeumen, damit der naechste Durchgang frisch oeffnet.
+            await page.evaluate(() =>
+                document.getElementById('shortcuts-overlay')?.classList.remove('show')
+            );
+        }
+
+        expect(
+            durchgeschlagen,
+            'Diese Tasten aendern den Zustand der App, WAEHREND die Tastenhilfe offen ' +
+                `vor ihm steht (${durchgeschlagen.length} von ${PROBEN.length}):\n` +
+                durchgeschlagen.map(x => '   ' + x).join('\n') +
+                '\n\nDie Hilfe ist die Flaeche, die man aufschlaegt, wenn man NICHT weiss, ' +
+                'was eine Taste tut — sie laedt zum Ausprobieren ein. Am Spieltisch ' +
+                'ruecken `N`/`P`/`Shift+N` dabei Zug und Runde des laufenden Kampfes, und ' +
+                'der Spielleiter sieht es nicht: die Blende deckt mit 85 % Schwarz. ' +
+                'Abhilfe: solange die Hilfe offen ist, ist die App fuer App-Kuerzel taub ' +
+                '(`systems/spellslots/keyboard-shortcuts.js`). Browservorgaben — Bild-ab, ' +
+                'Pfeile, Leertaste fuer den Lauf der Hilfe — bleiben unberuehrt; die ' +
+                'messen wir hier nicht.'
+        ).toEqual([]);
+
+        expect(
+            fokusDiebe,
+            'Diese Tasten ziehen den Fokus AUS der offenen Hilfe HERAUS ' +
+                `(${fokusDiebe.length} von ${PROBEN.length}):\n` +
+                fokusDiebe.map(x => '   ' + x).join('\n') +
+                '\n\nDer naechste Anschlag landet dann in einem Feld, das die Blende ' +
+                'verdeckt, und der Nutzer erfaehrt es erst beim Schliessen — gemessen am ' +
+                'Ausgangsstand blieb ein getipptes Wort im globalen Suchfeld stehen, ' +
+                'eingegeben in ein unsichtbares Feld.'
+        ).toEqual([]);
+
+        expect(
+            zugeschlagen,
+            `Diese Tasten schliessen die Hilfe (${zugeschlagen.join(' ')}). Der Ausweg ist ` +
+                '`Escape` und der ✕-Knopf; eine Taste, die sie nebenbei zuschlaegt, ist ' +
+                'eine Ueberraschung.'
+        ).toEqual([]);
+
+        // UND DIE GEGENPROBE, die aus der Stille erst eine Aussage macht:
+        // `Escape` muss wirken. Ohne sie wuerde dieser Fall auch dann gruen,
+        // wenn die Hilfe JEDE Taste schluckt — einschliesslich ihres eigenen
+        // Auswegs.
+        await page.evaluate(ZURUECKSETZEN('initiative'));
+        await page.waitForTimeout(250);
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(400);
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(400);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Gegenprobe: `Escape` muss die Hilfe weiter schliessen. Eine Hilfe, die auch ' +
+                'ihren eigenen Ausweg schluckt, ist eine Falle.'
+        ).toBe(false);
+    });
+});
