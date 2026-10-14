@@ -312,7 +312,14 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # versorgten Elemente (daran haengt nurMausfokus). Dieses zweite Gate
         # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
         # Absatz darueber einklagt.
-        assert len(modules) == 142, f"Erwartet 142 Module, gefunden {len(modules)}"
+        # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
+        # (die Anmeldung der Ansichtsgruppen — 18 Gruppenarten fuer die
+        # Vorbereitungsansichten plus die Party-Zauberplaetze). Steht NACH
+        # ui/keyboard-group.js: ihr Selbstaufruf ruft
+        # KeyboardGroup.registriere() und findet das Modul sonst nicht.
+        # Beide Register sind auch diesmal mitgepflegt (142 -> 143, und
+        # eslint.generated-globals.js neu erzeugt).
+        assert len(modules) == 143, f"Erwartet 143 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

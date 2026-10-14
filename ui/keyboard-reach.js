@@ -67,14 +67,42 @@
 // INLINE_MAX nicht). Kosten gemessen: 0,4 ms Median ueber 2273
 // `[data-action]`-Knoten; `renderParty()` allein kostet 2,1 ms.
 //
-// UMFANG: FUENF KAMPFANSICHTEN (Nutzerentscheidung E-1, "Kampf zuerst").
-// Begruendung des Nutzers: in der Vorbereitung greift man zur Maus und macht
-// weiter, im Kampf stockt man vor sechs wartenden Spielern. Die uebrigen 19
-// Ansichten sind ausdruecklich NICHT Teil dieses Pakets und werden als
-// benannte Restschuld gefuehrt. Erweitern heisst: eine Kennung in
-// `KAMPF_ANSICHTEN` aufnehmen und die Reichweitenfaelle in
-// `tests/e2e/features/tastatur-erreichbarkeit.spec.js` um die Ansicht
-// ergaenzen. Sonst nichts.
+// UMFANG: ALLE ANSICHTEN (E-2 / Einheit 2). Bis b8a1a5c waren es fuenf
+// (E-1, "Kampf zuerst" — Begruendung des Nutzers: in der Vorbereitung greift
+// man zur Maus und macht weiter, im Kampf stockt man vor sechs wartenden
+// Spielern); die uebrigen 19 liefen als benannte Restschuld. Sie ist
+// beglichen: gemessen waren dort 255 sichtbare Stellen in 12 von 19
+// Ansichten unerreichbar, unter ihnen jede Zeile jeder Liste (Auftraege,
+// Beute, NSC, Orte, Begegnungen, Fraktionen, Laeden, Bestiarium) und jede
+// Filtermarke.
+//
+// DIE SCHRANKE IST GANZ VERSCHWUNDEN, nicht erweitert — eine Entscheidung,
+// keine Nachlaessigkeit. Ein `Set` namens `KAMPF_ANSICHTEN`, das alle 24
+// Kennungen enthaelt, ist eine Luege im Namen: es behauptet eine Auswahl,
+// die es nicht mehr trifft. Eine umbenannte Variante (`ALLE_ANSICHTEN`,
+// `IM_UMFANG`) waere ehrlicher und bliebe toter Aufwand — eine Liste, die
+// jede Ansicht enthaelt, muss bei jeder neuen Ansicht nachgetragen werden
+// und faellt lautlos zurueck, wenn das jemand vergisst. Genau dieses
+// Vergessen ist die Restschuld, die hier geschlossen wird. Das Gegenstueck
+// steht in `tests/e2e/features/tastatur-erreichbarkeit.spec.js`: dort wird
+// die Ansichtenliste aus dem gebauten Buendel abgeleitet statt abgetippt,
+// eine 25. Ansicht laeuft also ohne eine Zeile Pflege mit — hier UND dort.
+//
+// WAS AN IHRER STELLE DIE GRENZE ZIEHT. `_imUmfang()` hat drei Ausnahmen
+// behalten, und alle drei sind inhaltlich statt nach Ansicht: nativ
+// fokussierbare Elemente (schon erreichbar), `backdrop-close` (eine Blende
+// ist kein Tastaturziel) und `aria-hidden="true"`. Die globale Schale
+// ausserhalb aller `.view` war vorher ein Sonderzweig und ist jetzt
+// einfach der Normalfall.
+//
+// UND SIE DURFTE NICHT OHNE DIE GRUPPENMECHANIK FALLEN. Eine Nachruestung
+// ohne Zusammenfassung verschiebt das Problem nur in eine Tabulatorflut:
+// gemessen haetten die Auftraege dann 108 statt 48 Halte und das
+// Bestiarium mit allen 112 Zeilen im Dokument 253 (252 Anschlaege bis zur
+// Schnell-Referenz, bei 400 ms je Anschlag 1,7 min).
+// `ui/keyboard-group-views.js` meldet darum jede Reihe gleichartiger
+// Stellen als Gruppe an; die beiden Dateien sind ein Paar, und die
+// Haltzahlen vorher/nachher stehen dort.
 //
 // WAS DIESE DATEI NICHT TUT: sie bringt keinen eigenen Tastenlauscher mit.
 // Enter und die Leertaste bedienen das nachgeruestete Element ueber den
@@ -89,21 +117,6 @@
 // Beide Schranken fragen dort nach, bevor sie die Leertaste einem versorgten
 // Element zusprechen — denn nach einem MAUSKLICK gehoert sie weiter dem Zug.
 // Die lange Begruendung steht an der Funktion.
-
-/**
- * Die fuenf Kampfansichten aus E-1. Ein Element wird nachgeruestet, wenn es
- * in einer davon liegt ODER ausserhalb aller `.view`-Abschnitte (die globale
- * Schale: Kopfzeile, Schnell-Referenz, Modale). Die globale Schale MUSS
- * mitlaufen, denn `div.qref-fab` liegt dort und waere sonst auch in den
- * fuenf Ansichten weiter unerreichbar.
- */
-const KAMPF_ANSICHTEN = new Set([
-    'view-dashboard',
-    'view-initiative',
-    'view-party',
-    'view-dice',
-    'view-dmscreen'
-]);
 
 /**
  * Rohauswahl der Kehrschleife. Das `:not([tabindex])` ist nicht Kosmetik,
@@ -242,7 +255,7 @@ const KeyboardReach = {
             window.registerUndoHook(() => this._planen());
         }
 
-        log('[KeyboardReach] Kehrschleife aktiv (5 Kampfansichten + globale Schale)');
+        log('[KeyboardReach] Kehrschleife aktiv (alle Ansichten + globale Schale)');
     },
 
     /**
@@ -390,9 +403,13 @@ const KeyboardReach = {
         // Vorsorge, keine Reparatur.
         if (el.getAttribute('aria-hidden') === 'true') return false;
 
-        const ansicht = el.closest('.view');
-        // Kein `.view`-Vorfahre = globale Schale, immer im Umfang.
-        return !ansicht || KAMPF_ANSICHTEN.has(ansicht.id);
+        // KEINE ANSICHTSGRENZE MEHR (E-2). Hier stand bis b8a1a5c
+        //     const ansicht = el.closest('.view');
+        //     return !ansicht || KAMPF_ANSICHTEN.has(ansicht.id);
+        // Die Begruendung, warum das Set nicht erweitert, sondern entfernt
+        // wurde, steht im Kopfkommentar. Was bleibt, sind die drei
+        // inhaltlichen Ausnahmen oben.
+        return true;
     },
 
     /**

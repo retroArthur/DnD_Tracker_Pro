@@ -176,6 +176,11 @@ const MODULES = [
     // die Reihenfolge nicht an der Reihenfolge zweier rAF-Rueckrufe haengt;
     // diese Zeile haelt die Abhaengigkeit lesbar.
     'ui/keyboard-group.js',
+    // Die Anmeldung der Ansichtsgruppen NACH der Mechanik: ihr Selbstaufruf
+    // ruft KeyboardGroup.registriere() und findet das Modul sonst nicht.
+    // Davor geladen bliebe sie still, und die Nachruestung liefe ohne
+    // Gruppen weiter — mit der gemessenen Tabulatorflut, aber ohne Fehler.
+    'ui/keyboard-group-views.js',
     // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
     // offenen Dialogs, und die entstehen zum Teil erst dort (von der
     // Kehrschleife nachgeruestete Tabulatorhalte). Zur Laufzeit ist die

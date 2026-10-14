@@ -471,7 +471,26 @@ const KeyboardGroup = {
                     // Der `focusin`-Lauscher setzt danach Halt und Anspruch
                     // auf den frischen Knoten; hier wird nichts von Hand
                     // nachgezogen.
-                    ziel.focus();
+                    //
+                    // `preventScroll: true` (nachgetragen in E-2, Einheit 2).
+                    // EINE FOKUSRUECKGABE IST KEINE NAVIGATION und darf die
+                    // Ansicht nicht bewegen. Ohne diese Angabe rollte sie den
+                    // Behaelter unter dem Fokus wieder in den sichtbaren
+                    // Bereich — und machte damit genau die Bewegung
+                    // zunichte, aus der das Neuzeichnen entstanden war.
+                    // Gemessen im Bestiarium: Fokus auf der ersten
+                    // Monsterzeile, 300 px mit dem Rad gerollt, danach
+                    // `scrollTop` wieder 0 statt 300; die Liste sprang unter
+                    // der Hand des Spielleiters zurueck. Der Fall war nicht
+                    // zu sehen, solange es nur die Kampfgruppen gab:
+                    // `renderInit()` rollt nichts, und `.init-spell-slots`
+                    // liegt in keinem rollbaren Behaelter.
+                    //
+                    // Der Gegensatz dazu ist `_tasten()` weiter unten: dort
+                    // IST die Bewegung gewollt, weil der Spielleiter selbst
+                    // faehrt und das Ziel sehen will. Darum steht das
+                    // `preventScroll` hier und nicht dort.
+                    ziel.focus({ preventScroll: true });
                 }
                 return;
             }

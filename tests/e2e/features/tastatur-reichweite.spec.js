@@ -273,7 +273,13 @@ const SAMMELN = `(() => {
     return meta;
 })()`;
 
-/** Ein Schritt der Pfeiltastenfahrt — liest die ARIA-Zusage, nicht das Modul. */
+/**
+ * Ein Schritt der Pfeiltastenfahrt — liest die ARIA-Zusage, nicht das
+ * Modul. Der Begehungsschluessel traegt die Aktion mit, weil ZWEI Gruppen
+ * EINEN Behaelter teilen koennen (`div#bestiary-list` fuehrt die Spalte der
+ * Zeilen und die der Favoritenknoepfe); Begruendung in
+ * `tastatur-erreichbarkeit.spec.js`.
+ */
 const GRUPPEN_SCHRITT = `(() => {
     const el = document.activeElement;
     if (!el || !el.closest) return null;
@@ -284,12 +290,16 @@ const GRUPPEN_SCHRITT = `(() => {
     if (eigene.indexOf(el) < 0 || eigene.length < 2) return null;
     window.__begangen = window.__begangen || new Set();
     const schl = (leiste.id || '') + '|' + (leiste.getAttribute('aria-label') || '') + '|' +
-        [...document.querySelectorAll('[role="toolbar"][aria-orientation]')].indexOf(leiste);
+        [...document.querySelectorAll('[role="toolbar"][aria-orientation]')].indexOf(leiste) +
+        '|' + (el.getAttribute('data-action') || el.tagName);
     if (window.__begangen.has(schl)) return null;
     window.__begangen.add(schl);
+    const gleichartig = eigene.filter(g =>
+        (g.getAttribute('data-action') || g.tagName) ===
+        (el.getAttribute('data-action') || el.tagName));
     return {
         taste: leiste.getAttribute('aria-orientation') === 'vertical' ? 'ArrowDown' : 'ArrowRight',
-        glieder: eigene.length
+        glieder: gleichartig.length
     };
 })()`;
 
@@ -345,15 +355,33 @@ async function reichweiteMessen(page, { pause = MENSCHENTEMPO } = {}) {
         await page.waitForTimeout(pause);
         const schritt = await page.evaluate(GRUPPEN_SCHRITT);
         if (!schritt) continue;
-        let vorher = null;
-        for (let k = 0; k < Math.max(schritt.glieder, 130); k++) {
-            await page.keyboard.press(schritt.taste);
-            pfeile++;
-            await page.waitForTimeout(pause);
-            const jetzt = await page.evaluate(FOKUS);
-            const marke = JSON.stringify(jetzt);
-            if (marke === vorher) break;
-            vorher = marke;
+        // ERST ZURUECK, DANN VOR. In einer virtuell gescrollten Gruppe sind
+        // die Glieder nur die des FENSTERS (17 von 112); wer sie in der
+        // Mitte betritt, erreicht nach vorn alles dahinter und nichts
+        // davor. Begruendung mit Messung in
+        // `tastatur-erreichbarkeit.spec.js`.
+        // Das Ende der Fahrt wird ueber OBJEKTIDENTITAET erkannt
+        // (Messdisziplin 3) — eine Signatur taeuscht, weil zwei
+        // benachbarte Zauberplatz-Punkte desselben Grades identische
+        // Attribute und Klassen tragen. Begruendung mit Messung in
+        // `tastatur-erreichbarkeit.spec.js`.
+        const rueckwaerts = schritt.taste === 'ArrowDown' ? 'ArrowUp' : 'ArrowLeft';
+        for (const taste of [rueckwaerts, schritt.taste]) {
+            await page.evaluate(() => {
+                window.__letzterFokus = document.activeElement;
+            });
+            for (let k = 0; k < Math.max(schritt.glieder, 130); k++) {
+                await page.keyboard.press(taste);
+                pfeile++;
+                await page.waitForTimeout(pause);
+                const stehen = await page.evaluate(() => {
+                    const a = document.activeElement;
+                    const gleich = a === window.__letzterFokus;
+                    window.__letzterFokus = a;
+                    return gleich;
+                });
+                if (stehen) break;
+            }
         }
     }
     const erreicht = new Set(await page.evaluate(() => [...window.__erreicht]));

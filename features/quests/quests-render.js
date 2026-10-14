@@ -94,7 +94,18 @@ function renderQuestItem(q) {
                 <span class="quest-type-badge ${q.type || 'quest'}">${typeLabel}</span>
                 ${giverDisplay ? renderEntityLink('npcs', q.giverId, giverDisplay, { icon: '👤', fallbackColor: 'var(--cyan)' }) : ''}
             </div>
-            <div style="display:flex; gap:6px; align-items:center;">
+            <!-- data-tastgruppe: der Behaelter der zwei Statusmarken hatte
+                 weder Klasse noch id und war damit fuer keinen Selektor
+                 erreichbar. Die Gruppenmechanik (ui/keyboard-group-views.js,
+                 E-2) braucht ihn, um die Marken zu EINEM Tabulatorhalt
+                 zusammenzufassen — ohne ihn sind es 40 Halte bei 20
+                 Auftraegen. Ein data-Attribut und keine Klasse, weil der
+                 Stil-Sollstand (computed-style-diff.spec.js) nur Elemente
+                 mit Klasse erfasst und sie als tag.klassen#index
+                 schluesselt: eine Klasse hier erzeugte 20 neue Schluessel
+                 fuer reine Kosmetik. Vorbild im Haus: data-tb an jeder
+                 .toolbar-group. -->
+            <div style="display:flex; gap:6px; align-items:center;" data-tastgruppe="auftrag-status">
                 <span class="chip ${q.completed ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${q.id}" data-value="completed">${q.completed ? '✓' : '○'} Done</span>
                 <span class="chip ${q.rewardReceived ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${q.id}" data-value="reward">${q.rewardReceived ? '✓' : '○'} Loot</span>
                 <span style="color:var(--text-dim);">▼</span>

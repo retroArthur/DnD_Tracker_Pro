@@ -178,11 +178,14 @@ describe('Kehrschleife — was sie in Ruhe laesst', () => {
         expect(attr('f-ohne-aktion')).toEqual({ ti: null, rolle: null });
     });
 
-    test('eine Ansicht AUSSERHALB der fuenf Kampfansichten bleibt unberuehrt (E-1)', () => {
-        // Die uebrigen 19 Ansichten sind benannte Restschuld, nicht Teil
-        // dieses Pakets. Wer den Umfang erweitert, aendert diesen Fall mit —
-        // und genau das soll er muessen.
-        expect(attr('f-ausserhalb')).toEqual({ ti: null, rolle: null });
+    test('eine Vorbereitungsansicht ist seit E-2 im Umfang', () => {
+        // Hier stand bis b8a1a5c das Gegenteil ("eine Ansicht AUSSERHALB der
+        // fuenf Kampfansichten bleibt unberuehrt", E-1) — mit der Bemerkung
+        // "Wer den Umfang erweitert, aendert diesen Fall mit, und genau das
+        // soll er muessen." Genau das ist passiert. `#f-ausserhalb` liegt in
+        // `view-spells`, einer der 19 Vorbereitungsansichten, in denen
+        // gemessen 255 sichtbare Stellen unerreichbar waren.
+        expect(attr('f-ausserhalb')).toEqual({ ti: '0', rolle: 'button' });
     });
 });
 
@@ -241,21 +244,25 @@ describe('Kehrschleife — Quelltext-Zusicherungen', () => {
         expect(aufruf[0]).toContain('subtree');
     });
 
-    test('der Umfang ist genau die fuenf Kampfansichten aus E-1', () => {
-        const block = SOURCE.match(/KAMPF_ANSICHTEN = new Set\(\[([^\]]*)\]\)/);
-        if (!block) throw new Error('KAMPF_ANSICHTEN nicht in ' + MODULE_PATH + ' gefunden');
-        const kennungen = block[1]
-            .split(',')
-            .map(s => s.trim().replace(/^['"]|['"]$/g, ''))
-            .filter(Boolean)
-            .sort();
-        expect(kennungen).toEqual([
-            'view-dashboard',
-            'view-dice',
-            'view-dmscreen',
-            'view-initiative',
-            'view-party'
-        ]);
+    test('der Umfang kennt KEINE Ansichtsliste mehr (E-2)', () => {
+        // Bis b8a1a5c stand hier die Gegenprobe: ein `Set KAMPF_ANSICHTEN`
+        // mit genau fuenf Kennungen. Es ist nicht erweitert, sondern
+        // ENTFERNT worden — ein Set, das alle 24 enthaelt, ist eine Luege im
+        // Namen, und eine Liste, die jede Ansicht fuehren muss, faellt
+        // lautlos zurueck, sobald jemand die 25. vergisst.
+        //
+        // Dieser Fall bewacht die Entscheidung von der Quelltextseite: im
+        // Code (ohne Kommentare) darf `_imUmfang()` keine Ansicht mehr
+        // ansehen. Der Kopfkommentar der Datei zitiert die entfernten zwei
+        // Zeilen absichtlich weiter, darum werden Kommentare vorher
+        // herausgenommen.
+        const code = SOURCE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+        expect(code).not.toMatch(/KAMPF_ANSICHTEN/);
+        expect(code).not.toMatch(/closest\(\s*'\.view'\s*\)/);
+        // Und die drei inhaltlichen Ausnahmen muessen stehen bleiben.
+        expect(code).toMatch(/NATIV_FOKUSSIERBAR/);
+        expect(code).toMatch(/KEINE_TASTATURZIELE/);
+        expect(code).toMatch(/aria-hidden/);
     });
 
     test('die Rohauswahl schliesst vorhandene tabindex-Attribute aus', () => {

@@ -212,7 +212,10 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/party/party-crud.js',
     'features/party/party-details.js',
     'features/quests/quests-crud.js',
-    'features/quests/quests-render.js',
+    // 'features/quests/quests-render.js' — gestrichen in E-2/Einheit 2:
+    // tests/unit/keyboard-group-views.test.js liest die Datei und sichert
+    // zu, dass der Behaelter der zwei Statusmarken sein
+    // data-tastgruppe-Attribut behaelt. Die Liste darf nur schrumpfen.
     'features/quick-actions.js',
     'features/reise/reise-crud.js',
     'features/reise/reise-default-tables.js',

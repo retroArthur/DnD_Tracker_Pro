@@ -71,6 +71,164 @@ const VirtualScroll = {
         container.innerHTML = '';
         container.appendChild(wrapper);
 
+        // ============================================================
+        // DER FOKUS MUSS DAS NEUZEICHNEN UEBERLEBEN  (TASV/E-2)
+        // ============================================================
+        //
+        // DER FEHLER, UM DEN ES GEHT. `render()` ersetzt bei jedem Rollen
+        // `visibleContainer.innerHTML` und wirft damit ALLE Zeilen des
+        // Fensters weg — auch die, auf der gerade der Fokus liegt. Gemessen
+        // am gebauten Buendel (gefuellte Kampagne, 1440 px, echte
+        // Tastendruecke, 150 ms Pause): tabuliert der Spielleiter im
+        // Bestiarium auf einen Favoritenknopf unterhalb der Kante, rollt
+        // der Browser den Behaelter, dieser Lauscher feuert, der eben
+        // fokussierte Knoten ist `isConnected === false` und
+        // `document.activeElement` faellt auf `BODY`. Der naechste
+        // Tabulator setzt INNERHALB der frisch gebauten Zeilen wieder auf,
+        // nicht dahinter — eine Dauerschleife: in 400 Spruengen 34
+        // BODY-Halte, 329 Halte auf frisch erzeugten Knoten, 860 entfernte
+        // Knoten. Alles, was in der Dokumentreihenfolge HINTER der Liste
+        // steht, wurde dadurch unerreichbar: die sechs
+        // `button.bestiary-fav`, `div.qref-fab`,
+        // `button#floating-dice-trigger` und die zwei Knoepfe des
+        // Umzugs-Hinweises. Zur Gegenprobe gemessen: mit entferntem
+        // Scroll-Lauscher fiel die Zahl der unerreichbaren Stellen von 27
+        // auf 17, und alle zehn wurden erreicht.
+        //
+        // WARUM DIE REPARATUR HIER STEHT UND NICHT IN DER
+        // GRUPPENMECHANIK. Die Ursache ist nicht die Tastatur, sondern das
+        // Neuzeichnen — und `VirtualScroll.create()` hat GENAU EINEN
+        // Aufrufer im ganzen Baum (`features/bestiary/bestiary-render.js`).
+        // Eine Nachbesserung in `ui/keyboard-group.js` haette das
+        // Haltgedaechtnis gebraucht, dessen Schluessel am ERSTEN Glied
+        // haengt: nach dem Rollen ist das ein anderes Monster, der
+        // Schluessel also ein anderer, und der Anspruch auf Rueckkehr
+        // findet seine Gruppe nicht mehr. Die Reparatur an der Ursache ist
+        // kleiner UND deckt den Mausfall mit (Rad rollen, waehrend der
+        // Fokus in der Liste steht).
+        //
+        // ZWEI TEILE, und der erste traegt den grossen Teil der Last:
+        //
+        //  1. KEIN NEUZEICHNEN BEI UNVERAENDERTEM FENSTER. Ein Rollen um
+        //     wenige Pixel laesst `startIdx`/`endIdx` unberuehrt; der alte
+        //     Stand baute die Zeilen trotzdem neu. Das war Arbeit ohne
+        //     Wirkung und zugleich der haeufigste Fokusverlust.
+        //  2. FOKUSUEBERTRAGUNG, wenn das Fenster sich WIRKLICH
+        //     verschiebt. Gemerkt wird der ABSOLUTE Index der Zeile (nicht
+        //     der Knoten — er ist genau das, was verloren geht) und die
+        //     Stelle des fokussierten Elements INNERHALB der Zeile. Steht
+        //     dieselbe Zeile im neuen Fenster, bekommt ihr frischer Knoten
+        //     den Fokus zurueck.
+        //
+        // `preventScroll: true` ist nicht Kosmetik, sondern die Bedingung
+        // dafuer, dass das Ganze terminiert: ein `focus()` ohne diese
+        // Angabe rollt sein Ziel in den sichtbaren Bereich, das erzeugt ein
+        // `scroll`, das diesen Lauscher erneut weckt — Rueckkopplung.
+
+        /** Fenstergrenzen des letzten Durchlaufs. -1 = noch keiner. */
+        let letzterStart = -1;
+        let letztesEnde = -1;
+
+        /** Selektor der Elemente, die in einer Zeile den Fokus tragen koennen. */
+        const FOKUSTRAEGER =
+            '[data-action],button,a[href],input,select,textarea,[tabindex],[contenteditable="true"]';
+
+        /**
+         * Was der Browser von sich aus fokussiert — darauf wirkt `focus()`
+         * sofort, auch im frisch gebauten Markup. Nur fuer alles andere muss
+         * die Kehrschleife erst gelaufen sein. Das ist der Grund, warum die
+         * NATIVEN `button.bestiary-fav` schon ohne diesen Zweig wieder den
+         * Fokus bekamen und die nicht-nativen Zeilen nicht.
+         */
+        const NATIV_FOKUSSIERBAR_VS =
+            'a[href],area[href],button,input:not([type="hidden"]),select,textarea,summary,' +
+            'details,iframe,[contenteditable=""],[contenteditable="true"]';
+
+        /**
+         * Wo steht der Fokus gerade — als Anspruch, der ein Neuzeichnen
+         * ueberlebt? `null`, wenn er nicht in dieser Liste liegt.
+         * @returns {{zeile: number, stelle: number}|null}
+         */
+        const fokusAnspruch = () => {
+            const aktiv = document.activeElement;
+            if (!aktiv || aktiv === document.body || !visibleContainer.contains(aktiv)) return null;
+            const kinder = Array.from(visibleContainer.children);
+            const zeile = kinder.findIndex(k => k === aktiv || k.contains(aktiv));
+            if (zeile < 0) return null;
+            // -1 bedeutet "die Zeile selbst traegt den Fokus".
+            const stelle =
+                kinder[zeile] === aktiv
+                    ? -1
+                    : Array.from(kinder[zeile].querySelectorAll(FOKUSTRAEGER)).indexOf(aktiv);
+            return { zeile: letzterStart + zeile, stelle };
+        };
+
+        /**
+         * Gibt den Fokus an den frischen Knoten derselben Zeile zurueck.
+         * Steht die Zeile nicht mehr im Fenster, bleibt es beim Verlust —
+         * dann ist der Spielleiter ueber sie hinausgerollt, und ihm den
+         * Fokus nachzuziehen waere ein Griff in die Bedienung.
+         * @param {{zeile: number, stelle: number}} anspruch
+         * @param {number} startIdx
+         */
+        const fokusZurueck = (anspruch, startIdx) => {
+            const i = anspruch.zeile - startIdx;
+            const zeile = visibleContainer.children[i];
+            if (!zeile) return;
+            const ziel =
+                anspruch.stelle < 0 ? zeile : zeile.querySelectorAll(FOKUSTRAEGER)[anspruch.stelle];
+            if (!ziel || typeof ziel.focus !== 'function') return;
+
+            // DER FRISCHE KNOTEN MUSS ERST FOKUSSIERBAR SEIN. Das ist die
+            // Stelle, an der das Naheliegende nicht funktioniert, und sie
+            // ist gemessen: ein `div.focus()` auf einem `div` OHNE
+            // `tabindex` ist ein Nichts — kein Fehler, keine Wirkung. Die
+            // Zeilen dieser Liste sind `div`, und ihre Fokussierbarkeit
+            // entsteht erst in der Kehrschleife
+            // (`ui/keyboard-reach.js`), die auf einem
+            // `requestAnimationFrame` nach dem `MutationObserver` laeuft —
+            // also einen Bildwechsel SPAETER als dieses Neuzeichnen.
+            // Spur des ersten Versuchs (ArrowDown in der Monsterspalte,
+            // 150 ms Pause, Zeile 11):
+            //     render  startIdx 0->1, endIdx 17->24, aktiv DIV/kobold,
+            //             drin true, anspruch {zeile: 11, stelle: -1}
+            //     zurueck i 10, kinder 23, danach BODY   <-- focus() wirkungslos
+            // Danach blieb der Fokus auf `BODY` und die Fahrt brach bei
+            // Monster 11 von 112 ab.
+            //
+            // WARUM DIE KEHRSCHLEIFE HIER UND JETZT ANGESTOSSEN WIRD und
+            // nicht auf ihren eigenen Durchlauf gewartet wird: ein
+            // Bildwechsel mit `activeElement === BODY` ist nicht nur
+            // haesslich, er ist eine Luecke mit Verhalten — in ihr gehoert
+            // ein Tastendruck dem globalen Einzeltasten-Lauscher, und eine
+            // festgehaltene Pfeiltaste (Tastenwiederholung) faellt genau
+            // dort hinein. Darum geschieht die Reparatur in DERSELBEN
+            // Aufgabe wie der Verlust.
+            //
+            // Bevorzugt ueber `KeyboardGroup.aktualisieren()`, nicht ueber
+            // die Kehrschleife allein: die Gruppenmechanik stoesst die
+            // Kehrschleife selbst an und legt danach den wandernden
+            // Tabindex wieder richtig. Nur die Kehrschleife zu rufen
+            // liesse alle 23 frischen Zeilen fuer einen Bildwechsel als
+            // eigenen Tabulatorhalt stehen. Beide Aufrufe sind
+            // ausdruecklich idempotent und kosten in einer unveraenderten
+            // Ansicht nichts.
+            if (!ziel.hasAttribute('tabindex') && !ziel.matches(NATIV_FOKUSSIERBAR_VS)) {
+                if (
+                    window.KeyboardGroup &&
+                    typeof window.KeyboardGroup.aktualisieren === 'function'
+                ) {
+                    window.KeyboardGroup.aktualisieren();
+                } else if (
+                    window.KeyboardReach &&
+                    typeof window.KeyboardReach.aktualisieren === 'function'
+                ) {
+                    window.KeyboardReach.aktualisieren();
+                }
+            }
+            ziel.focus({ preventScroll: true });
+        };
+
         const render = () => {
             const scrollTop = container.scrollTop;
             const startIdx = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferSize);
@@ -79,8 +237,18 @@ const VirtualScroll = {
                 Math.ceil((scrollTop + viewportHeight) / itemHeight) + bufferSize
             );
 
+            // Teil 1: unveraendertes Fenster = nichts zu tun.
+            if (startIdx === letzterStart && endIdx === letztesEnde) return;
+
+            // Teil 2: Fokus merken, BEVOR die Zeilen verschwinden.
+            const anspruch = fokusAnspruch();
+
+            letzterStart = startIdx;
+            letztesEnde = endIdx;
             visibleContainer.style.top = startIdx * itemHeight + 'px';
             visibleContainer.innerHTML = items.slice(startIdx, endIdx).map(renderItem).join('');
+
+            if (anspruch) fokusZurueck(anspruch, startIdx);
         };
 
         render();

@@ -392,6 +392,15 @@ const SAMMELN = `(() => {
  * Auftraegen liegt die Marken-Leiste jeder Zeile INNERHALB der Zeilenliste,
  * und ohne diesen Filter zaehlte die aeussere Gruppe die 40 Marken zu ihren
  * eigenen Gliedern.
+ *
+ * DER BEGEHUNGSSCHLUESSEL TRAEGT DIE AKTION MIT, nicht nur die Leiste —
+ * weil ZWEI Gruppen EINEN Behaelter teilen koennen. Im Bestiarium ist das
+ * so: `div#bestiary-list` fuehrt die Spalte der Zeilen
+ * (`bestiary-select`) UND die Spalte der Favoritenknoepfe
+ * (`bestiary-toggle-fav`), jede mit eigenem wanderndem Tabindex. Ohne die
+ * Aktion im Schluessel gaelte die Leiste nach der ersten Fahrt als
+ * begangen, die zweite Spalte wuerde nie abgefahren, und ihre 111 uebrigen
+ * Glieder zaehlten als unerreichbar.
  */
 const GRUPPEN_SCHRITT = `(() => {
     const el = document.activeElement;
@@ -403,12 +412,16 @@ const GRUPPEN_SCHRITT = `(() => {
     if (eigene.indexOf(el) < 0 || eigene.length < 2) return null;
     window.__begangen = window.__begangen || new Set();
     const schl = (leiste.id || '') + '|' + (leiste.getAttribute('aria-label') || '') + '|' +
-        [...document.querySelectorAll('[role="toolbar"][aria-orientation]')].indexOf(leiste);
+        [...document.querySelectorAll('[role="toolbar"][aria-orientation]')].indexOf(leiste) +
+        '|' + (el.getAttribute('data-action') || el.tagName);
     if (window.__begangen.has(schl)) return null;
     window.__begangen.add(schl);
+    const gleichartig = eigene.filter(g =>
+        (g.getAttribute('data-action') || g.tagName) ===
+        (el.getAttribute('data-action') || el.tagName));
     return {
         taste: leiste.getAttribute('aria-orientation') === 'vertical' ? 'ArrowDown' : 'ArrowRight',
-        glieder: eigene.length
+        glieder: gleichartig.length
     };
 })()`;
 
@@ -474,25 +487,47 @@ async function reichweiteMessen(page, { pause = 0 } = {}) {
         // Liste wachsen die Glieder waehrend der Fahrt nach (17 im Fenster,
         // 112 in der Liste). Die Fahrt endet, wenn sich der Fokus nicht
         // mehr bewegt — am Rand gibt es bewusst keinen Umlauf.
-        let vorher = null;
-        for (let k = 0; k < Math.max(schritt.glieder, 130); k++) {
-            await page.keyboard.press(schritt.taste);
-            pfeile++;
-            if (pause) await page.waitForTimeout(pause);
-            const jetzt = await page.evaluate(() => {
-                const a = document.activeElement;
-                return a
-                    ? (a.getAttribute('data-action') || '-') +
-                          '|' +
-                          (a.getAttribute('data-id') || '-') +
-                          '|' +
-                          (a.getAttribute('data-value') || '-') +
-                          '|' +
-                          a.className
-                    : null;
+        //
+        // UND SIE FAEHRT IN BEIDE RICHTUNGEN, erst zurueck und dann vor.
+        // Das ist keine Vorsicht, sondern in einer virtuell gescrollten
+        // Gruppe die einzige vollstaendige Fahrt: ihre Glieder sind nur die
+        // des FENSTERS (gemessen 17 von 112), und ein Glied ausserhalb des
+        // Fensters existiert nicht, bis die Fahrt dorthin gerollt hat. Wer
+        // eine solche Gruppe in der Mitte betritt, erreicht nach vorn alles
+        // dahinter und nichts davor. Gemessen im Bestiarium: die
+        // Favoritenspalte wurde in einem Lauf erst betreten, nachdem die
+        // Zeilenfahrt die Liste bis ans Ende gerollt hatte — eine
+        // Vorwaertsfahrt allein liess 17 von 112 Knoepfen als
+        // "unerreichbar" stehen, obwohl sie es nicht sind.
+        //
+        // DAS ENDE DER FAHRT WIRD UEBER OBJEKTIDENTITAET ERKANNT
+        // (Messdisziplin 3), nicht ueber eine Signatur. Der erste Versuch
+        // verglich `data-action|data-id|data-value|className` — und brach
+        // in der Party nach fuenf statt sieben Gliedern ab, weil zwei
+        // benachbarte Zauberplatz-Punkte desselben Grades und desselben
+        // Charakters IDENTISCHE Signaturen haben (bei `{max: 4,
+        // current: 2}` sind Punkt 3 und 4 beide leer:
+        // `toggle-spell-slot-stop|1|1|slot-pip`). Gemessen fielen dadurch
+        // 18 bzw. 60 Punkte des Grades 2 als "unerreichbar" durch, obwohl
+        // sie es nicht sind. "Der Pfeil hat den Fokus nicht bewegt" heisst
+        // genau: dasselbe OBJEKT, und nichts anderes.
+        const rueckwaerts = schritt.taste === 'ArrowDown' ? 'ArrowUp' : 'ArrowLeft';
+        for (const taste of [rueckwaerts, schritt.taste]) {
+            await page.evaluate(() => {
+                window.__letzterFokus = document.activeElement;
             });
-            if (jetzt === vorher) break;
-            vorher = jetzt;
+            for (let k = 0; k < Math.max(schritt.glieder, 130); k++) {
+                await page.keyboard.press(taste);
+                pfeile++;
+                if (pause) await page.waitForTimeout(pause);
+                const stehen = await page.evaluate(() => {
+                    const a = document.activeElement;
+                    const gleich = a === window.__letzterFokus;
+                    window.__letzterFokus = a;
+                    return gleich;
+                });
+                if (stehen) break;
+            }
         }
     }
     const erreicht = new Set(await page.evaluate(() => [...window.__erreicht]));
