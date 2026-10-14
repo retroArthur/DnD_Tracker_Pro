@@ -653,7 +653,7 @@ const KeyboardGroupViews = {
             if (window.KeyboardGroup.registriere(art)) n++;
         }
         this._angemeldet = n;
-        log(`[KeyboardGroupViews] ${n} von ${ANSICHTSGRUPPEN.length} Gruppenarten angemeldet`);
+        log(`[KeyboardGroupViews] ${n} von ${ANSICHTSGRUPPEN.length} Ansichtsgruppen angemeldet`);
         return n;
     },
 

@@ -313,7 +313,7 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
         # Absatz darueber einklagt.
         # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
-        # (die Anmeldung der Ansichtsgruppen — 22 Gruppenarten: 21 fuer die
+        # (die Anmeldung der Ansichtsgruppen — 22 Ansichtsgruppen: 21 fuer die
         # Vorbereitungsansichten, dazu die Party-Zauberplaetze. Die Zahl stand
         # hier auf 18 und blieb stehen, als Runde 3 vier Arten nachtrug
         # (Zauberkarten, Wiki-Eintraege, Ladenartikel, Ladenkategorien).

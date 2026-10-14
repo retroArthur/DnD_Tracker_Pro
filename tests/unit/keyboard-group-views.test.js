@@ -297,10 +297,11 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
  *   "N Ansichtsgruppen"  ->  ANSICHTSGRUPPEN.length            (22)
  *   "N Gruppenarten"     ->  GRUNDARTEN + ANSICHTSGRUPPEN      (24)
  *
- * Die drei Stellen, die vorher "22 Gruppenarten" schrieben, heissen jetzt
- * "22 Ansichtsgruppen" — sie zaehlen genau die Anmeldung. Das Wort
- * "Gruppenarten" gehoert der Gesamtzahl, so wie das Laufzeitprotokoll es
- * verwendet.
+ * Die drei Stellen, die vorher das erste Wort fuer die Anmeldung fuehrten,
+ * heissen jetzt "Ansichtsgruppen" — sie zaehlen genau sie. Das zweite Wort
+ * gehoert der Gesamtzahl, so wie das Laufzeitprotokoll es verwendet: zur
+ * Laufzeit sind es 24 Gruppenarten (gemessen am gebauten Buendel,
+ * `window.KeyboardGroup.statistik().arten`).
  *
  * WIE DIE GRUNDARTEN GEZAEHLT WERDEN. Nicht per `name:`-Zaehlung quer durch
  * die Datei (eine Beschriftungsfunktion darf das Wort auch enthalten),

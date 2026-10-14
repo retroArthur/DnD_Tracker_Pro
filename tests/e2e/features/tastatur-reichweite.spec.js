@@ -913,7 +913,7 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         ).toEqual({ ohneGrenze: [], ohneAnsicht: [] });
     });
 
-    test('(5) alle 22 Gruppenarten sind angemeldet', async ({ page }) => {
+    test('(5) alle 22 Ansichtsgruppen sind angemeldet', async ({ page }) => {
         test.setTimeout(120_000);
         await ansichtOeffnen(page, 'dashboard');
         const s = await page.evaluate(() => window.KeyboardGroupViews.statistik());
@@ -1292,7 +1292,7 @@ test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
 // WAS DIESE SCHICHT NICHT FAENGT, und darum steht es hier: faellt die
 // ANMELDUNG aus, ist auch die Erwartung 0 und der Fall wieder stumm. Diese
 // Luecke deckt die zweite Schicht, und zwar gemessen: unter derselben
-// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 22 Gruppenarten` und
+// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 22 Ansichtsgruppen` und
 // die Volkszaehlung `UNGRUPPIERT` rot. Zwei Schichten, zwei Fehlerbilder —
 // eine Probe, die beides allein leisten koennte, gibt es nicht.
 

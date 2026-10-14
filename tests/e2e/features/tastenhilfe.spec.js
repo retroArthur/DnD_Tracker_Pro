@@ -1399,42 +1399,109 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
             await page.waitForTimeout(250);
         }
 
-        // UND AM SCHREIBTISCH, zwei Spalten. Der Fall heisst "Telefon", aber
-        // die Laenge der Beschriftungen entscheidet sich bei 1440 px zuerst:
-        // dort sind die Spalten 267 px breit, also nur 7 px weiter als die
-        // EINE Spalte bei 360 px. Eine Beschriftung, die hier dreizeilig
-        // wird, ist einfach zu lang — und genau so war es im ersten Entwurf
-        // dieser Arbeit (eine Zeile mit 60 Zeichen, gemessen dreizeilig).
-        await page.setViewportSize(BREIT);
-        await page.waitForTimeout(250);
-        await page.keyboard.press('Shift+/');
-        await page.waitForTimeout(400);
-        const breit = await page.evaluate(() => {
-            const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
-            const g = document.querySelector('.shortcuts-grid');
-            const zh = parseFloat(getComputedStyle(reihen[0]).lineHeight) || 18;
-            return {
-                spalten: getComputedStyle(g).gridTemplateColumns.split(' ').length,
-                spaltenRoh: getComputedStyle(g).gridTemplateColumns,
-                dreiZeilig: reihen
-                    .map(r => ({
-                        z: Math.round((r.getBoundingClientRect().height - 12) / zh),
-                        t: (r.querySelector('span')?.textContent || '').trim()
-                    }))
-                    .filter(x => x.z >= 3)
-                    .map(x => `${x.t} (${x.z} Zeilen)`)
-            };
-        });
-        expect(breit.spalten, 'bei 1440 px stehen zwei Spalten').toBe(2);
-        expect(
-            breit.spaltenRoh,
-            'die zwei Spalten sind gleich breit — `minmax(0, 1fr)`, nicht `1fr`. ' +
-                `Gemessen: ${breit.spaltenRoh}`
-        ).toBe('267px 267px');
-        expect(
-            breit.dreiZeilig,
-            `Bei 1440 px braucht eine Beschriftung drei Zeilen: ${breit.dreiZeilig.join(' | ')}`
-        ).toEqual([]);
+        // UND DIE ZWEISPALTIGE HAELFTE — 601 bis 1440 px, und das ist eine
+        // Erweiterung aus der Gegenpruefung.
+        //
+        // WARUM SIE NOETIG WAR. Der Fall heisst "Telefon" und fuhr 390, 360
+        // und 1440 px. Der Kommentar im CSS behauptete fuer das Band darueber
+        // ("gemessen stehen bei 601-900 px zwei Spalten von 267 px") etwas,
+        // das kein Fall prueft — und die Zahl war falsch: gemessen sind es
+        // bei 601 px 237 px, bei 650 px 259,5 px, und erst ab 700 px 267 px.
+        //
+        // UND DIE LUECKE HAT SOFORT ETWAS DURCHGELASSEN. Beim Umbau der Hilfe
+        // zur Beschreibungsliste bekamen `<dt>` und `<dd>` ein `min-width: 0`.
+        // Folge, gemessen: der Dialog lief zwischen 601 und 900 px QUER
+        // (scrollWidth 552 in 539 px Flaeche bei 601 px), waehrend 360, 390
+        // und 1440 px unauffaellig blieben — genau die drei Breiten, die
+        // dieser Fall kannte. Der Fehler ist behoben (`assets/styles/
+        // dmscreen.css`, Abschnitt "DIE TASTENHILFE ALS BESCHREIBUNGSLISTE"),
+        // und das Band wird jetzt mitgefahren, damit der naechste nicht
+        // wieder durchkommt.
+        //
+        // 601 IST DIE UNTERE KANTE DER ZWEI SPALTEN (die Media-Query greift
+        // bis 600 px), 700 die Breite, ab der der Dialog seine 600 px
+        // Hoechstbreite erreicht, und 1440 die Messbreite des uebrigen
+        // Waechters. 650 und 800 laufen nicht mit: sie liegen zwischen zwei
+        // schon gemessenen Stufen und haben gemessen dasselbe Bild.
+        for (const breite of [601, 700, 1440]) {
+            await page.setViewportSize({ width: breite, height: 900 });
+            await page.waitForTimeout(250);
+            await page.keyboard.press('Shift+/');
+            await page.waitForTimeout(400);
+            const breit = await page.evaluate(() => {
+                const m = document.querySelector('.shortcuts-modal');
+                const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
+                const g = document.querySelector('.shortcuts-grid');
+                const zh = parseFloat(getComputedStyle(reihen[0]).lineHeight) || 18;
+                return {
+                    modalBreite: Math.round(m.getBoundingClientRect().width),
+                    spalten: getComputedStyle(g).gridTemplateColumns.split(' ').length,
+                    spaltenRoh: getComputedStyle(g).gridTemplateColumns,
+                    modalQuerlauf: m.scrollWidth > m.clientWidth + 1,
+                    docQuerlauf: document.documentElement.scrollWidth > window.innerWidth + 1,
+                    abgeschnitten: reihen
+                        .filter(r => {
+                            const s = r.querySelector('span');
+                            return s && s.scrollWidth > s.clientWidth + 1;
+                        })
+                        .map(r => (r.querySelector('span')?.textContent || '').trim()),
+                    dreiZeilig: reihen
+                        .map(r => ({
+                            z: Math.round((r.getBoundingClientRect().height - 12) / zh),
+                            t: (r.querySelector('span')?.textContent || '').trim()
+                        }))
+                        .filter(x => x.z >= 3)
+                        .map(x => `${x.t} (${x.z} Zeilen)`)
+                };
+            });
+            expect(breit.spalten, `bei ${breite} px stehen zwei Spalten`).toBe(2);
+            expect(
+                breit.modalQuerlauf,
+                `Bei ${breite} px laeuft die Hilfe selbst quer (Raster ` +
+                    `${breit.spaltenRoh} in ${breit.modalBreite} px Dialog). Genau das hat ` +
+                    'ein `min-width: 0` auf `<dd>` verursacht, und genau das hat dieser ' +
+                    'Fall uebersehen, solange er nur 390, 360 und 1440 px fuhr.'
+            ).toBe(false);
+            expect(
+                breit.abgeschnitten,
+                `Bei ${breite} px sind Beschriftungen abgeschnitten: ` +
+                    `${breit.abgeschnitten.join(' | ')}`
+            ).toEqual([]);
+            expect(
+                breit.dreiZeilig,
+                `Bei ${breite} px braucht eine Beschriftung drei Zeilen: ` +
+                    `${breit.dreiZeilig.join(' | ')}. Die Spalte ist dort ` +
+                    `${breit.spaltenRoh} breit.`
+            ).toEqual([]);
+
+            // DIE SPALTENBREITE JE STUFE, gemessen und nicht gerundet. Die
+            // 267 px gelten erst ab etwa 700 px; bei 601 px sind es 237 px.
+            // Der CSS-Kommentar nannte fuer das ganze Band 267 — die Zahl
+            // steht jetzt hier, wo sie nachgefahren wird.
+            if (breite >= 700) {
+                expect(
+                    breit.spaltenRoh,
+                    'ab 700 px sind die zwei Spalten gleich breit und 267 px — ' +
+                        '`minmax(0, 1fr)`, nicht `1fr`. ' +
+                        `Gemessen bei ${breite} px: ${breit.spaltenRoh}`
+                ).toBe('267px 267px');
+            } else {
+                const werte = breit.spaltenRoh.split(' ').map(parseFloat);
+                expect(
+                    Math.round(Math.min(...werte)),
+                    `Bei 601 px sind die Spalten gemessen 237 px breit, nicht 267 — die ` +
+                        '267 gelten erst ab etwa 700 px. ' +
+                        `Gemessen: ${breit.spaltenRoh}`
+                ).toBe(237);
+                expect(
+                    Math.abs(werte[0] - werte[1]),
+                    `und sie sind gleich breit (${breit.spaltenRoh})`
+                ).toBeLessThan(1);
+            }
+
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(250);
+        }
     });
 
     // ============================================================
@@ -2766,8 +2833,17 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
             soundZeilen.length,
             'Die Hilfe fuehrt die zwei Soundboard-Zeilen'
         ).toBeGreaterThanOrEqual(2);
+
+        // DIE VORBEDINGUNG DARF AM ABSCHNITT STEHEN und nicht je Zeile, und
+        // das ist gemessen entschieden: eine Abschnittsueberschrift ist keine
+        // `.shortcut-row` und hat darum kein Umbruchbudget. In die zwei Zeilen
+        // geschrieben wurde "Eingerichtete Szene, Platz 1-5" bei 601 px
+        // DREIZEILIG (ihre Marke `Alt Shift 1-5` nimmt drei Felder), und Fall
+        // (8) verbietet drei Zeilen zu Recht. Die Vorbedingung gilt ohnehin
+        // fuer alle sechs Tasten des Abschnitts.
+        const soundTitel = hilfe.abschnitte.find(s => /Soundboard/.test(s.titel))?.titel || '';
         expect(
-            soundZeilen.join(' ').toLowerCase(),
+            (soundTitel + ' ' + soundZeilen.join(' ')).toLowerCase(),
             `Die Soundboard-Zeilen lauten "${soundZeilen.join(' | ')}". Sie muessen die ` +
                 'Vorbedingung nennen — eine EINGERICHTETE Szene. Gemessen schlucken die ' +
                 'sechs Tasten in einer frischen Kampagne ihren Anschlag und geben keine ' +

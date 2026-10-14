@@ -2514,9 +2514,19 @@
    (900/680). Falsch: jene Leiter laeuft nicht ueber CSS-Grenzen, und F-12
    laesst im CSS GENAU 600, 900 und 1200 zu (bzw. 601/901/1201). 680 war
    dort eine fuenfte, fremde Grenze und hat den Fall rot gestellt. 600
-   traegt dasselbe: gemessen stehen bei 601-900 px zwei Spalten von 267 px
-   mit hoechstens zweizeiligen Beschriftungen, und die beiden gemessenen
-   Engstellen (390 und 360 px) liegen darunter.
+   traegt dasselbe: ueber 600 px stehen zwei Spalten mit hoechstens
+   zweizeiligen Beschriftungen, und die beiden gemessenen Engstellen
+   (390 und 360 px) liegen darunter.
+
+   DIE SPALTEN SIND IN DIESEM BAND NICHT ALLE 267 px BREIT, und hier
+   stand dazu eine falsche Zahl ("zwei Spalten von 267 px" fuer
+   601-900 px). Nachgemessen: 601 px -> 237,4 px, 650 px -> 259,5 px, ab
+   700 px -> 267 px, weil der Dialog dort seine Hoechstbreite von 600 px
+   erreicht. Die 267 gelten also NICHT fuer das ganze Band. Die tragende
+   Aussage (hoechstens zweizeilig, nichts abgeschnitten, kein Querlauf)
+   haelt bei 601, 650, 700, 800, 900 und 1440 px — und wird seit der
+   Gegenpruefung auch gefahren: Fall (8) misst 601, 700 und 1440 px, mit
+   der Spaltenbreite je Stufe als eigener Zusicherung.
 
    `minmax(0, 1fr)` an der Grundregel oben, NICHT `1fr`: `1fr` loest zu
    `minmax(auto, 1fr)` auf, und `auto` ist der Mindestinhalt. Bei 351 px
