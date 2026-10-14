@@ -58,14 +58,23 @@
  * Rueckgaengig und nach einem vollen Datentausch nicht erneut greift,
  * sieht aus wie "war schon immer so" und niemand findet sie wieder.
  *
- * UMFANG: FUENF ANSICHTEN (Nutzerentscheidung E-1, "Kampf zuerst").
- * Armaturenbrett, Initiative, Party, Wuerfel, DM-Schirm — plus die
- * globale Schale ausserhalb aller `.view`-Abschnitte, denn `div.qref-fab`
- * liegt dort und waere sonst in den fuenf Ansichten weiter unerreichbar.
- * Die uebrigen 19 Ansichten sind ausdruecklich NICHT Teil dieses Pakets
- * und werden als benannte Restschuld gefuehrt. Diese Datei sichert darum
- * KEINE Obergrenze fuer die anderen Ansichten zu — eine solche Zusicherung
- * waere eine Fessel um die Folgearbeit.
+ * UMFANG: ALLE ANSICHTEN (E-2, "die Reichweite der Vorbereitung").
+ * Bis b8a1a5c waren es fuenf (E-1, "Kampf zuerst"), und die uebrigen 19
+ * liefen als benannte Restschuld mit. Diese Restschuld ist beglichen: die
+ * Ansichtenliste wird nicht mehr abgetippt, sondern aus dem gebauten
+ * Buendel abgeleitet (siehe `ansichtenAusBuendel()`), und eine 25. Ansicht
+ * laeuft ohne eine Zeile hier mit. Dazu kommt weiter die globale Schale
+ * ausserhalb aller `.view`-Abschnitte, denn `div.qref-fab` liegt dort.
+ *
+ * UND SIE MISST SEIT E-2 AUCH DIE PFEILTASTEN. Die Gruppenmechanik
+ * (`ui/keyboard-group.js`) gibt einer Reihe gleichartiger Stellen EINEN
+ * Tabulatorhalt; die uebrigen Glieder tragen `tabindex="-1"`. Ein reiner
+ * Tabulatorlauf meldete sie als unerreichbar — gemessen 40 falsche Befunde
+ * in der Initiative mit verknuepften Zauberwirkern. `reichweiteMessen()`
+ * faehrt darum jede Gruppe, die es betritt, mit ihrer Achsentaste ab. Die
+ * Gruppe erkennt es an der ARIA-Zusage (`role="toolbar"` +
+ * `aria-orientation`), NICHT an den Innereien des Moduls — sonst pruefte
+ * die Datei das Modul gegen sich selbst.
  *
  * UND SIE URTEILT UEBER DEN PREIS DER NACHRUESTUNG. Wer rund 430 Elemente
  * fokussierbar macht, verkleinert damit still die Menge der Lagen, in denen
@@ -105,33 +114,100 @@
  * meldet konstant 0.
  */
 
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
-const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+const APP_PFAD = `${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+const APP_URL = `file:///${APP_PFAD}`;
 
 /** Breite der Vermessung. Unter 901 px greifen andere Media-Queries. */
 const BREIT = { width: 1440, height: 900 };
 
 /**
- * Die fuenf Kampfansichten aus E-1, als Argument fuer `switchView()`.
- * Die `.view`-Kennungen daneben sind das, was die Kehrschleife prueft.
+ * DIE ANSICHTENLISTE IST KEIN LITERAL MEHR (TASV/E-2, Auftrag 4).
+ *
+ * Bis zur Mobil-Runde stand sie hier als Aufzaehlung, und die ausgewiesene
+ * Restschuld lautete woertlich: "Kein Waechter nimmt eine 25. Ansicht
+ * automatisch in die Pruefung auf; die Reiterliste steht als Literal in der
+ * Probe." Diese Zeilen schliessen sie.
+ *
+ * SIE WIRD AUS DEM GEBAUTEN BUENDEL GELESEN, aus BEIDEN Quellen, die eine
+ * Ansicht im Dokument hat:
+ *   - dem Abschnitt selbst  `id="view-X" class="view …"`
+ *   - dem Navigationsreiter `data-view="X"`
+ * Beide Mengen muessen deckungsgleich sein; Fall (0) unten ist die
+ * Zusicherung darauf. Wer eine 25. Ansicht einbaut, bekommt sie damit ohne
+ * eine Zeile hier mitgeprueft — und wer nur die Haelfte einbaut (Abschnitt
+ * ohne Reiter oder umgekehrt), bekommt einen roten Fall statt einer still
+ * ungeprueften Ansicht.
+ *
+ * WARUM AUS DEM BUENDEL UND NICHT AUS `assets/templates/*.html`: das
+ * Buendel ist das, wogegen diese Datei laeuft. Eine Vorlage, die der Bau
+ * nicht einsammelt, waere sonst eine Ansicht, die die Probe fordert und die
+ * es im Lauf nicht gibt.
+ *
+ * WARUM SYNCHRON BEIM EINLESEN DER DATEI und nicht in einem `beforeAll`:
+ * Playwright muss die Faelle beim Einsammeln kennen, lange bevor ein
+ * Browser laeuft. Gemessen: der Lesevorgang ueber 3,8 MB kostet rund 30 ms,
+ * einmal je Arbeiter.
  */
-const KAMPF_ANSICHTEN = [
-    { name: 'dashboard', id: 'view-dashboard', titel: 'Armaturenbrett' },
-    { name: 'initiative', id: 'view-initiative', titel: 'Initiative' },
-    { name: 'party', id: 'view-party', titel: 'Party' },
-    { name: 'dice', id: 'view-dice', titel: 'Wuerfel' },
-    { name: 'dmscreen', id: 'view-dmscreen', titel: 'DM-Schirm' }
-];
+function ansichtenAusBuendel() {
+    const html = readFileSync(APP_PFAD, 'utf8');
+    const abschnitte = new Set();
+    for (const m of html.matchAll(/id="view-([a-z0-9-]+)"\s+class="view\b/g)) {
+        abschnitte.add(m[1]);
+    }
+    const reiter = new Set();
+    const beschriftung = new Map();
+    for (const m of html.matchAll(/data-view="([a-z0-9-]+)"([^>]*)>([^<]*)/g)) {
+        reiter.add(m[1]);
+        // Die Beschriftung des Reiters ist der Name, den der Spielleiter
+        // sieht — der Fallbericht nennt damit dieselbe Ansicht wie die App.
+        // Fehlt sie, bleibt die Kennung; eine 25. Ansicht laeuft so oder so.
+        const text = (m[3] || '').replace(/\s+/g, ' ').trim();
+        if (text && !beschriftung.has(m[1])) beschriftung.set(m[1], text);
+    }
+    return { abschnitte: [...abschnitte].sort(), reiter: [...reiter].sort(), beschriftung };
+}
+
+const { abschnitte: ABSCHNITTE, reiter: REITER, beschriftung: REITERTEXT } = ansichtenAusBuendel();
 
 /**
- * Zwei Kampagnengroessen. Die Schuld skaliert mit den Daten (vermessen: 84
+ * Die fuenf Kampfansichten aus E-1. Sie sind KEINE Umfangsgrenze mehr —
+ * der Umfang sind seit E-2 alle Ansichten —, sondern nur noch die Marke
+ * dafuer, welche Ansicht bei ZWEI Kampagnengroessen geprueft wird. Die
+ * Begruendung steht bei `GROESSEN`.
+ */
+const KAMPFANSICHTEN = new Set(['dashboard', 'initiative', 'party', 'dice', 'dmscreen']);
+
+/** Alle Ansichten des Buendels, als Argument fuer `switchView()`. */
+const ALLE_ANSICHTEN = ABSCHNITTE.map(name => ({
+    name,
+    id: `view-${name}`,
+    titel: REITERTEXT.get(name) || name,
+    kampf: KAMPFANSICHTEN.has(name)
+}));
+
+/**
+ * Kampagnengroessen. Die Schuld skaliert mit den Daten (vermessen: 84
  * unerreichbare Stellen bei fast leerer Kampagne, 462 bei zwanzig
  * Eintraegen je Typ). Ein Fall, der nur bei sechs Eintraegen geprueft ist,
  * sagt nichts ueber den Spieltisch.
+ *
+ * ZWEI GROESSEN NUR FUER DIE FUENF KAMPFANSICHTEN, eine fuer die uebrigen
+ * neunzehn — und das ist eine Laufzeit-Abwaegung, keine inhaltliche.
+ * Gemessen an dieser Datei: ein voller Durchlauf bei zwanzig Eintraegen
+ * kostet in der Party rund 70 s (822 echte Tastendruecke), im Schnitt rund
+ * 25 s. 24 Ansichten x 2 Groessen waeren 48 Faelle und rund 20 Minuten
+ * allein hier — mehr als die gesamte uebrige E2E-Suite. Zwanzig ist der
+ * haertere Fall; die fuenf Kampfansichten behalten die zweite Groesse,
+ * weil ihre Ratsche aus E-1 nicht geschwaecht werden darf.
+ *
+ * Eine 25. Ansicht laeuft damit automatisch bei zwanzig Eintraegen mit.
+ * @param {{kampf: boolean}} a
  */
-const GROESSEN = [6, 20];
+const groessenFuer = a => (a.kampf ? [6, 20] : [20]);
 
 /**
  * Gefuellte Kampagne mit `n` Eintraegen je Typ. Die Kaempfer tragen ANDERE
@@ -219,6 +295,25 @@ function kampagne(n) {
  * Herkunft: Sammlung und Sichtbarkeitsregel sind aus `sweep2.mjs` der
  * Vermessung uebernommen, damit die Zahlen hier mit den dort gemessenen
  * vergleichbar sind.
+ *
+ * DER DATENSCHLUESSEL (`dk`) — Messdisziplin 3 bekommt eine zweite Lesart,
+ * und zwar eine gemessene. In einer virtuell gescrollten Liste ist die
+ * Objektidentitaet keine brauchbare Identitaet mehr: `VirtualScroll.create()`
+ * ersetzt bei jedem Scrollen `visibleContainer.innerHTML`, der gesammelte
+ * Knoten ist danach ein anderer, und ein Mitschnitt, der nur ueber
+ * `indexOf` abgleicht, meldet eine ERREICHTE Zeile als unerreichbar.
+ * Gemessen im Bestiarium: die Zeilen 11 bis 17 des Fensters liegen unter
+ * der Kante, sie zu fokussieren rollt den Behaelter, und das Rollen
+ * tauscht sie aus.
+ *
+ * Der Schluessel haengt darum an den DATEN
+ * (`data-action|data-id|data-value`), die das Neuzeichnen unveraendert
+ * ueberleben. ER ZAEHLT NUR, WENN ER IN DER SAMMLUNG EINDEUTIG IST —
+ * sonst schriebe er zu viel gut: vier Zauberplatz-Punkte desselben Grades
+ * teilen sich `data-id` und `data-value`, und ein Treffer auf dem ersten
+ * wiese die anderen drei faelschlich als erreicht aus. In der virtuellen
+ * Liste ist er eindeutig (`data-id` ist die Monsterkennung) — genau dort
+ * wird er gebraucht und nirgends sonst.
  */
 const SAMMELN = `(() => {
     const NATIV = 'button,a[href],input:not([type="hidden"]),select,textarea,' +
@@ -233,6 +328,11 @@ const SAMMELN = `(() => {
         const v = el.closest('.view');
         return v ? v.classList.contains('active') : true;
     };
+    // Der Datenschluessel. Die lange Begruendung steht ueber SAMMELN —
+    // sie kann hier nicht stehen, weil dieser Block ein Schablonentext ist
+    // und ein Gegenhaken darin die Zeichenkette beenden wuerde.
+    const dschluessel = el => (el.getAttribute('data-action') || '-') + '|' +
+        (el.getAttribute('data-id') || '-') + '|' + (el.getAttribute('data-value') || '-');
     const beschreibe = el => ({
         sig: el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
             ((typeof el.className === 'string' && el.className.trim())
@@ -243,6 +343,7 @@ const SAMMELN = `(() => {
         aktion: el.getAttribute('data-action') || null,
         rolle: el.getAttribute('role') || null,
         ti: el.getAttribute('tabindex') || null,
+        dk: dschluessel(el),
         ansicht: el.closest('.view') ? el.closest('.view').id : 'global'
     });
     const ops = [], meta = [], gesehen = new Set();
@@ -260,14 +361,55 @@ const SAMMELN = `(() => {
     });
     window.__ops = ops;
     window.__erreicht = new Set();
+    window.__erreichtK = new Set();
+    window.__begangen = new Set();
     if (!window.__reichweiteLauscher) {
         window.__reichweiteLauscher = ev => {
             const i = (window.__ops || []).indexOf(ev.target);
             if (i >= 0) window.__erreicht.add(i);
+            if (ev.target && ev.target.getAttribute) {
+                window.__erreichtK.add((ev.target.getAttribute('data-action') || '-') + '|' +
+                    (ev.target.getAttribute('data-id') || '-') + '|' +
+                    (ev.target.getAttribute('data-value') || '-'));
+            }
         };
         document.addEventListener('focusin', window.__reichweiteLauscher, true);
     }
     return meta;
+})()`;
+
+/**
+ * Ein Schritt der Pfeiltastenfahrt: liegt der Fokus in einer noch nicht
+ * begangenen Gruppe, meldet dieser Ausdruck die Taste ihrer Achse zurueck.
+ *
+ * ER LIEST DIE ARIA-ZUSAGE, NICHT DIE INNEREIEN DES MODULS. Eine Gruppe ist
+ * hier, was ein Vorleseprogramm als Gruppe sieht: ein Behaelter mit
+ * `role="toolbar"` und `aria-orientation`. Haette die Probe stattdessen
+ * `KeyboardGroup._gruppeVon()` gefragt, pruefte sie das Modul gegen sich
+ * selbst — und eine Gruppe, die ihre Rolle vergisst, bliebe gruen.
+ *
+ * `eigene` schliesst die Glieder VERSCHACHTELTER Gruppen aus: in den
+ * Auftraegen liegt die Marken-Leiste jeder Zeile INNERHALB der Zeilenliste,
+ * und ohne diesen Filter zaehlte die aeussere Gruppe die 40 Marken zu ihren
+ * eigenen Gliedern.
+ */
+const GRUPPEN_SCHRITT = `(() => {
+    const el = document.activeElement;
+    if (!el || !el.closest) return null;
+    const leiste = el.closest('[role="toolbar"][aria-orientation]');
+    if (!leiste) return null;
+    const eigene = [...leiste.querySelectorAll('[tabindex]')]
+        .filter(g => g.closest('[role="toolbar"][aria-orientation]') === leiste);
+    if (eigene.indexOf(el) < 0 || eigene.length < 2) return null;
+    window.__begangen = window.__begangen || new Set();
+    const schl = (leiste.id || '') + '|' + (leiste.getAttribute('aria-label') || '') + '|' +
+        [...document.querySelectorAll('[role="toolbar"][aria-orientation]')].indexOf(leiste);
+    if (window.__begangen.has(schl)) return null;
+    window.__begangen.add(schl);
+    return {
+        taste: leiste.getAttribute('aria-orientation') === 'vertical' ? 'ArrowDown' : 'ArrowRight',
+        glieder: eigene.length
+    };
 })()`;
 
 /**
@@ -306,18 +448,65 @@ async function ansichtOeffnen(page, ansicht, n) {
  * @returns {Promise<{ bedienbar: number, nichtNativ: number, spruenge: number,
  *   unerreichbar: Array<Record<string, any>> }>}
  */
-async function reichweiteMessen(page) {
+async function reichweiteMessen(page, { pause = 0 } = {}) {
     const meta = await page.evaluate(SAMMELN);
     const budget = 2 * meta.length + 120;
+    let pfeile = 0;
     for (let i = 0; i < budget; i++) {
         await page.keyboard.press('Tab');
+        if (pause) await page.waitForTimeout(pause);
+
+        // DIE PFEILTASTENFAHRT — ohne sie misst diese Datei an E-2 vorbei.
+        // Seit der Gruppenmechanik verbraucht eine Reihe gleichartiger
+        // Stellen EINEN Tabulatorhalt; ihre uebrigen Glieder tragen
+        // `tabindex="-1"` und bekommen in einem reinen Tabulatorlauf nie
+        // den Fokus. Eine Messung, die nur tabuliert, meldet sie als
+        // unerreichbar, OBWOHL der Spielleiter sie mit zwei Tasten
+        // erreicht — gemessen in der Initiative mit verknuepften
+        // Zauberwirkern: 40 falsche Befunde (36 `toggle-init-slot-stop`,
+        // 4 `toggle-death-save-stop`). Die Fahrt steht hier und nicht in
+        // einem eigenen Fall, weil sie IM Lauf passieren muss: der Fokus
+        // darf nur per echtem Tastendruck in die Gruppe kommen
+        // (Messdisziplin 1), und das tut er genau hier.
+        const schritt = await page.evaluate(GRUPPEN_SCHRITT);
+        if (!schritt) continue;
+        // Obergrenze statt `glieder - 1`: in einer virtuell gescrollten
+        // Liste wachsen die Glieder waehrend der Fahrt nach (17 im Fenster,
+        // 112 in der Liste). Die Fahrt endet, wenn sich der Fokus nicht
+        // mehr bewegt — am Rand gibt es bewusst keinen Umlauf.
+        let vorher = null;
+        for (let k = 0; k < Math.max(schritt.glieder, 130); k++) {
+            await page.keyboard.press(schritt.taste);
+            pfeile++;
+            if (pause) await page.waitForTimeout(pause);
+            const jetzt = await page.evaluate(() => {
+                const a = document.activeElement;
+                return a
+                    ? (a.getAttribute('data-action') || '-') +
+                          '|' +
+                          (a.getAttribute('data-id') || '-') +
+                          '|' +
+                          (a.getAttribute('data-value') || '-') +
+                          '|' +
+                          a.className
+                    : null;
+            });
+            if (jetzt === vorher) break;
+            vorher = jetzt;
+        }
     }
     const erreicht = new Set(await page.evaluate(() => [...window.__erreicht]));
+    const erreichtK = new Set(await page.evaluate(() => [...window.__erreichtK]));
+    const dkZaehler = new Map();
+    for (const m of meta) dkZaehler.set(m.dk, (dkZaehler.get(m.dk) || 0) + 1);
     return {
         bedienbar: meta.length,
         nichtNativ: meta.filter(m => m.art === 'nichtNativ').length,
         spruenge: budget,
-        unerreichbar: meta.map((m, i) => ({ ...m, i })).filter(m => !erreicht.has(m.i))
+        pfeile,
+        unerreichbar: meta
+            .map((m, i) => ({ ...m, i }))
+            .filter(m => !erreicht.has(m.i) && !(dkZaehler.get(m.dk) === 1 && erreichtK.has(m.dk)))
     };
 }
 
@@ -339,7 +528,8 @@ function bericht(m) {
     }
     return (
         `${m.bedienbar} sichtbare Bedienelemente (davon ${m.nichtNativ} nicht-nativ), ` +
-        `${m.spruenge} echte Tabulatorspruenge, ${m.unerreichbar.length} unerreichbar:\n` +
+        `${m.spruenge} echte Tabulatorspruenge + ${m.pfeile} Pfeiltasten, ` +
+        `${m.unerreichbar.length} unerreichbar:\n` +
         zeilen.join('\n')
     );
 }
@@ -373,12 +563,51 @@ async function tabBisZiel(page, selektor, maxSpruenge = 400) {
 }
 
 // ============================================================
-// (a)-(e) REICHWEITE JE KAMPFANSICHT, BEI ZWEI KAMPAGNENGROESSEN
+// (0) DIE ANSICHTENLISTE SELBST
 // ============================================================
 
-test.describe('Kehrschleife — Reichweite der Kampfansichten', () => {
-    for (const ansicht of KAMPF_ANSICHTEN) {
-        for (const n of GROESSEN) {
+test.describe('Kehrschleife — die Ansichtenliste ist abgeleitet, nicht abgetippt', () => {
+    test('(0) jeder .view-Abschnitt hat einen Reiter und umgekehrt', async () => {
+        // Die eine Zusicherung, die eine abgeleitete Liste braucht: sie
+        // darf nicht still leerlaufen. Faende der Ausdruck nichts, waeren
+        // NULL Reichweitenfaelle erzeugt und die Datei trotzdem gruen.
+        expect(ABSCHNITTE.length, 'Keine .view-Abschnitte im Buendel gefunden').toBeGreaterThan(20);
+        const nurAbschnitt = ABSCHNITTE.filter(v => !REITER.includes(v));
+        const nurReiter = REITER.filter(v => !ABSCHNITTE.includes(v));
+        expect(
+            { nurAbschnitt, nurReiter },
+            'Abschnitt ohne Reiter oder Reiter ohne Abschnitt — eine davon waere ' +
+                'eine Ansicht, die diese Datei nicht prueft'
+        ).toEqual({ nurAbschnitt: [], nurReiter: [] });
+    });
+});
+
+// ============================================================
+// (a)-(x) REICHWEITE JE ANSICHT
+// ============================================================
+//
+// SEIT E-2 SIND ES ALLE ANSICHTEN, NICHT MEHR FUENF. Gemessen am Stand
+// b8a1a5c, gefuellte Kampagne, 20 Eintraege je Typ, 1440 px, echte
+// Tabulatorspruenge — 245 unerreichbare Stellen in 12 der 19
+// Vorbereitungsansichten (plus 10 im Bestiarium, die erst bei
+// Menschentempo sichtbar werden; die stehen in
+// `tastatur-reichweite.spec.js`):
+//
+//   Auftraege   108 bedienbar /  60 un.   Fraktionen   87 /  20
+//   Beute        60 /  30                 Laeden      110 /  20
+//   Bestiarium   63 /  17                 Daten        36 /   1
+//   NSC          63 /  26                 Notizen      27 /   1
+//   Zauber       58 /  26                 Wiki         30 /   1
+//   Begegnungen  53 /  22
+//   Orte         52 /  21
+//
+// Sieben Vorbereitungsansichten waren schon sauber (Wuerfelstatistik,
+// Kalender, Netzwerk, Sitzungsvorbereitung, Reise, Klangbrett, Zeitgeber),
+// die fuenf Kampfansichten ebenfalls.
+
+test.describe('Kehrschleife — Reichweite aller Ansichten', () => {
+    for (const ansicht of ALLE_ANSICHTEN) {
+        for (const n of groessenFuer(ansicht)) {
             test(`${ansicht.titel} (${ansicht.name}): kein sichtbares Bedienelement bleibt unerreichbar — ${n} Eintraege je Typ`, async ({
                 page
             }) => {
@@ -692,7 +921,7 @@ test.describe('Kehrschleife — die zwei Attribute, und die Ausnahme fuer <label
 // `phantom3.mjs` der Vermessung uebernommen.
 
 test.describe('Kehrschleife — kein neuer Phantomhalt', () => {
-    for (const ansicht of KAMPF_ANSICHTEN) {
+    for (const ansicht of ALLE_ANSICHTEN) {
         test(`(l) ${ansicht.titel}: kein nachgeruestetes Element ist fokussierbar und dabei unsichtbar`, async ({
             page
         }) => {
@@ -941,7 +1170,10 @@ async function klicks(page) {
 const INIT_WERT = 'div.init-value[data-action="edit-init-value"]';
 
 test.describe('Kehrschleife — der Mausklick gibt die Leertaste nicht aus der Hand', () => {
-    for (const n of GROESSEN) {
+    // Die Initiative ist eine Kampfansicht, also beide Groessen — dieselbe
+    // Abwaegung wie bei `groessenFuer()`, hier von Hand, weil der Fall nicht
+    // ueber die Ansichtenliste laeuft.
+    for (const n of [6, 20]) {
         test(`(m) Mausklick auf die Initiative-Wertbearbeitung, dann Leertaste: der Zug geht um genau 1 weiter — ${n} Eintraege je Typ`, async ({
             page
         }) => {
