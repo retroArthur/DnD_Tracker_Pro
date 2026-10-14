@@ -353,8 +353,23 @@ describe('DOC — die Kuerzeltabelle in CLAUDE.md faellt nicht hinter die Gruppe
         expect(typeof gemesseneHalte).toBe('number');
         expect(keyboardSection.length).toBeGreaterThan(0);
 
+        // NUR die Zeilen der Gruppenmechanik, nicht der ganze Abschnitt.
+        // Der erste Entwurf dieses Falls mass gegen den ganzen Abschnitt und
+        // war fuer die Haltzahl damit wertlos: die Zeile `Alt+1/2/4/6/8`
+        // enthaelt eine freistehende 6, der Fall war an dieser Haelfte gruen,
+        // bevor die Zahl irgendwo stand.
+        const gruppenZeilen = keyboardSection
+            .split('\n')
+            .filter(
+                l =>
+                    l.startsWith('|') &&
+                    (l.includes('ui/keyboard-group.js') || l.includes('tastatur-gruppen.spec.js'))
+            );
+        expect(gruppenZeilen.length).toBeGreaterThanOrEqual(1);
+        const gruppenText = gruppenZeilen.join('\n');
+
         // Ziffernschranken, damit "42" nicht als Teil von "142" durchgeht.
-        const nennt = zahl => new RegExp(`(?<!\\d)${zahl}(?!\\d)`).test(keyboardSection);
+        const nennt = zahl => new RegExp(`(?<!\\d)${zahl}(?!\\d)`).test(gruppenText);
         const fehlendeZahlen = [
             { was: 'Punkte je sechs Kaempfer', zahl: gemessenePunkte },
             { was: 'Halte darunter', zahl: gemesseneHalte }
