@@ -1518,6 +1518,7 @@ export default {
     "tabFnName": 'readonly',
     "tabId": 'readonly',
     "tastSichtbar": 'readonly',
+    "tastenhilfeOeffner": 'writable',
     "testAutoSave": 'readonly',
     "testEventLog": 'readonly',
     "testIndexedDB": 'readonly',
