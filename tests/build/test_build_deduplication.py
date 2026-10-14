@@ -313,8 +313,13 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
         # Absatz darueber einklagt.
         # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
-        # (die Anmeldung der Ansichtsgruppen — 18 Gruppenarten fuer die
-        # Vorbereitungsansichten plus die Party-Zauberplaetze). Steht NACH
+        # (die Anmeldung der Ansichtsgruppen — 22 Gruppenarten: 21 fuer die
+        # Vorbereitungsansichten, dazu die Party-Zauberplaetze. Die Zahl stand
+        # hier auf 18 und blieb stehen, als Runde 3 vier Arten nachtrug
+        # (Zauberkarten, Wiki-Eintraege, Ladenartikel, Ladenkategorien).
+        # Seit HILF haelt ein Fall in tests/unit/keyboard-group-views.test.js
+        # jede Zahlangabe darueber im Baum gegen ANSICHTSGRUPPEN.length.)
+        # Steht NACH
         # ui/keyboard-group.js: ihr Selbstaufruf ruft
         # KeyboardGroup.registriere() und findet das Modul sonst nicht.
         # Beide Register sind auch diesmal mitgepflegt (142 -> 143, und
