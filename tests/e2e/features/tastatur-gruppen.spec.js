@@ -719,6 +719,60 @@ test('(13) nach der Bedienung mit der Leertaste liegt der Fokus wieder auf einem
 });
 
 // ============================================================
+// (17) DAS HALTGEDAECHTNIS FUER SICH ALLEIN
+// ============================================================
+//
+// DIESER FALL IST EINE LUECKE, DIE DIE MUTATIONSPROBE GEFUNDEN HAT, kein
+// geplanter Fall. Die Mutation "das Haltgedaechtnis wird ignoriert"
+// (`let ziel = this._stand.has(...) ? … : 0` -> `let ziel = 0`) liess alle
+// sechzehn Faelle GRUEN. Grund: Fall (12) wird in Wahrheit von der
+// Fokusrueckgabe gruen gehalten — sie setzt den Fokus auf das gemerkte
+// Glied, und der `focusin`-Lauscher zieht den Halt hinterher. Das
+// Gedaechtnis war damit von keiner einzigen Zusicherung gedeckt.
+//
+// Hier ist es allein auf dem Posten: der Fokus VERLAESST die Gruppe, bevor
+// neu gezeichnet wird. Damit ist der Anspruch auf Rueckkehr verfallen
+// (der `focusin`-Lauscher loescht ihn beim Verlassen), und der Halt kann
+// nur noch aus dem Gedaechtnis kommen. Genau das ist die Lage, auf die
+// sich die Zusage beruft, `Tab` steige wieder dort ein, wo man war.
+
+test('(17) der Halt ueberlebt ein Neuzeichnen AUCH dann, wenn der Fokus die Gruppe verlassen hat', async ({
+    page
+}) => {
+    test.setTimeout(90_000);
+    await ansichtOeffnen(page, 'initiative', 6);
+
+    const halt = await tabBis(page, AUF_GLIED(ZAUBER));
+    expect(halt, 'Kein Zauberplatz-Punkt ertabuliert').not.toBeNull();
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+    expect((await page.evaluate(FOKUS)).wert).toBe('2,0');
+
+    // Die Gruppe mit dem Tabulator verlassen — ab hier gibt es keinen
+    // Anspruch auf Rueckkehr mehr.
+    await page.keyboard.press('Tab');
+    const draussen = await page.evaluate(FOKUS);
+    expect(draussen.sig, 'Der Tabulator hat die Gruppe nicht verlassen').not.toContain(
+        'init-slot-box'
+    );
+
+    await page.evaluate(() => window.renderInit());
+    await page.waitForTimeout(600);
+
+    const nachFokus = await page.evaluate(FOKUS);
+    const stand = await page.evaluate(GRUPPEN_LESEN(ZAUBER));
+    expect(
+        stand[0].haltIndex,
+        'Ohne Fokus in der Gruppe kann der Halt nur aus dem Gedaechtnis kommen. ' +
+            `Fokus nach dem Neuzeichnen: ${JSON.stringify(nachFokus)}`
+    ).toBe(4);
+    expect(
+        nachFokus.sig,
+        'Und die Fokusrueckgabe darf hier gerade NICHT greifen — der ' +
+            'Spielleiter war nicht mehr in der Gruppe'
+    ).not.toContain('init-slot-box');
+});
+
+// ============================================================
 // (14) REGRESSIONSWACHE: AUSSERHALB EINER GRUPPE AENDERT SICH NICHTS
 // ============================================================
 
