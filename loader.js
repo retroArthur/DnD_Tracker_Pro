@@ -169,6 +169,13 @@ const MODULES = [
     // in dem ein Element fokussierbar ist und die Leertaste darauf nichts
     // tut bzw. ein Einzeltasten-Kuerzel ausloest — der Fehler aus T-A.
     'ui/keyboard-reach.js',
+    // Die Gruppenmechanik NACH der Kehrschleife: sie verteilt die Halte
+    // anders, die dort entstehen, und sie braucht deren Verzeichnis der
+    // versorgten Elemente — daran haengt nurMausfokus. Sie stoesst die
+    // Kehrschleife in ihrem eigenen Durchlauf ausdruecklich selbst an, damit
+    // die Reihenfolge nicht an der Reihenfolge zweier rAF-Rueckrufe haengt;
+    // diese Zeile haelt die Abhaengigkeit lesbar.
+    'ui/keyboard-group.js',
     // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
     // offenen Dialogs, und die entstehen zum Teil erst dort (von der
     // Kehrschleife nachgeruestete Tabulatorhalte). Zur Laufzeit ist die
