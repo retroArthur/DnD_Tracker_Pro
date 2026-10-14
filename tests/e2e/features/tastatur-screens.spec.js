@@ -24,8 +24,9 @@
  *   — Ist der Ring auf einem nachgeruesteten `div`/`span` so deutlich wie auf
  *     einem echten Knopf, oder faellt er dort optisch aus?
  *   — Erkennt man im offenen Dialog, dass der Fokus DRINNEN liegt?
- *   — Wie liest eine Punktgruppe (Zauberplaetze, Todesretter), wenn der Fokus
- *     auf EINEM Punkt von sieben steht?
+ *   — Wie liest eine Punktgruppe (Zauberplaetze, Todesretter) im
+ *     PFEILTASTENMODUS, wenn der Fokus auf EINEM Punkt von sieben steht und
+ *     die sechs anderen keinen eigenen Tabulatorhalt mehr haben?
  *
  * DER FOKUS WIRD MIT ECHTEN TABULATORSPRUENGEN GESETZT, NIE MIT `.focus()`.
  * Dieselbe Lehre wie in `welle-6-screens.spec.js`: bei programmatischem Fokus
@@ -37,13 +38,31 @@
  * gruener Lauf dieser Datei ist KEINE Abnahme. Gleiche Bauart wie die sieben
  * bestehenden Ablichtungsdateien.
  *
- * WAS SIE NICHT ZEIGEN KANN, und warum das hier steht statt im Nichts: die
- * Punktgruppe im PFEILTASTENMODUS. Nutzerentscheidung E-2 (ein Tabulatorhalt
- * je Gruppe, darin Links/Rechts) ist NICHT umgesetzt und als Restschuld
- * gefuehrt. Heute hat jeder Punkt seinen eigenen Halt. Das Bild
- * `punktgruppe-*.png` zeigt deshalb den IST-Zustand, und der Dateiname sagt
- * das auch (`-ein-halt-je-punkt`). Ein Bild eines Modus, den es nicht gibt,
- * waere eine Behauptung.
+ * WAS SICH MIT E-2 GEAENDERT HAT — und warum hier ein ganzer Absatz davon
+ * handelt: an dieser Stelle stand bis zur Umsetzung die Gegenaussage. Die
+ * Punktgruppe im PFEILTASTENMODUS liess sich nicht zeigen, weil es den Modus
+ * nicht gab; Nutzerentscheidung E-2 ("ein Tabulatorhalt je Gruppe, darin
+ * Links/Rechts") war beantwortet und nicht gebaut, und die Bilder hiessen
+ * ehrlich `-ein-halt-je-punkt`. Ein Bild eines Modus, den es nicht gibt, waere
+ * eine Behauptung gewesen.
+ *
+ * Mit `ui/keyboard-group.js` gibt es ihn. Gemessen in der Initiative mit
+ * verknuepften Spielerkaempfern:
+ *
+ *                              vorher              nachher
+ *    6 Kaempfer    42 Punkte / 42 Halte     42 Punkte /  6 Halte
+ *   20 Kaempfer   140 Punkte /140 Halte    140 Punkte / 20 Halte
+ *   Todeswuerfe     6 Punkte /  6 Halte      6 Punkte /  2 Halte
+ *   Anschlaege bis `.qref-fab`, 20 Kaempfer      366 -> 246
+ *
+ * Darum sind die zwei Punktgruppen-Faelle unten umgeschrieben: sie fahren
+ * jetzt mit ECHTEN Pfeiltastendruecken IN die Gruppe hinein, bevor sie
+ * ablichten. Das Bild zeigt den Fokus auf einem MITTLEREN Punkt — eine Lage,
+ * die vor E-2 nur ueber einen Tabulatorhalt je Punkt erreichbar war, und die
+ * damit auch optisch die Frage beantwortet, ob ein Punkt von sieben als
+ * fokussiert zu erkennen ist. Die Dateinamen tragen den neuen Zustand
+ * (`-pfeiltastenmodus`); die alten Bilder (`-ein-halt-je-punkt.png`) sind
+ * ueberholt und werden von dieser Datei nicht mehr erzeugt.
  *
  * AUFRUF (eigener Schalter, nicht Teil der Standardlaeufe):
  *     TASTATUR_SCREENS=1 npx playwright test tests/e2e/features/tastatur-screens.spec.js
@@ -296,10 +315,57 @@ test.describe('TAST — Ablichtung: Fokus in den Kampfansichten, im Dialog, auf 
         });
     });
 
-    // ---- (3) Die Punktgruppen — IST-Zustand: ein Halt JE PUNKT (E-2 offen) ----
-    test('Punktgruppe Zauberplaetze — ein Halt je Punkt (E-2 nicht umgesetzt)', async ({
-        page
-    }) => {
+    // ---- (3) Die Punktgruppen im PFEILTASTENMODUS (E-2 umgesetzt) ----
+    //
+    // Der Ablauf ist der des Spielleiters und nicht der kuerzeste: EIN
+    // Tabulatorsprung in die Gruppe, dann mit echten Pfeiltastendruecken
+    // nach innen. Das Bild zeigt den Fokus auf einem MITTLEREN Punkt — die
+    // Lage, die vor E-2 nur ueber einen eigenen Halt je Punkt erreichbar war.
+    // `stationen` in der Begleitdatei macht die Fahrt nachlesbar; ohne sie
+    // waere am Bild nicht zu sehen, WIE der Fokus dorthin kam.
+
+    /**
+     * Fuehrt die Pfeiltastenfahrt in einer Gruppe aus und sammelt, was
+     * fuer das Urteil am Bild gebraucht wird.
+     * @param {import('@playwright/test').Page} page
+     * @param {string} behaelterSel
+     * @param {string} gliedSel
+     * @param {number} schritte
+     */
+    async function fahreInGruppe(page, behaelterSel, gliedSel, schritte) {
+        const stationen = [];
+        for (let i = 0; i < schritte; i++) {
+            await page.keyboard.press('ArrowRight');
+            stationen.push(await page.evaluate(FOKUS));
+        }
+        const gruppe = await page.evaluate(
+            ([bSel, gSel]) => {
+                const b = document.activeElement?.closest(bSel);
+                const alle = Array.from(document.querySelectorAll(gSel));
+                const halte = alle.filter(x => x.getAttribute('tabindex') === '0');
+                return {
+                    punkteInGruppe: b ? b.querySelectorAll(gSel).length : null,
+                    punkteInAnsicht: alle.length,
+                    halteInAnsicht: halte.length,
+                    gruppenInAnsicht: document.querySelectorAll(bSel).length,
+                    einHaltJeGruppe:
+                        Array.from(document.querySelectorAll(bSel)).every(
+                            x =>
+                                Array.from(x.querySelectorAll(gSel)).filter(
+                                    y => y.getAttribute('tabindex') === '0'
+                                ).length === 1
+                        ) && alle.length > 0,
+                    rolleBehaelter: b ? b.getAttribute('role') : null,
+                    ausrichtung: b ? b.getAttribute('aria-orientation') : null,
+                    beschriftung: b ? b.getAttribute('aria-label') : null
+                };
+            },
+            [behaelterSel, gliedSel]
+        );
+        return { stationen, gruppe };
+    }
+
+    test('Punktgruppe Zauberplaetze — Pfeiltastenmodus (E-2)', async ({ page }) => {
         await seedPopulatedSession(page);
         await ergaenzeKampfSeed(page);
         await page.setViewportSize({ width: 1440, height: 900 });
@@ -314,42 +380,41 @@ test.describe('TAST — Ablichtung: Fokus in den Kampfansichten, im Dialog, auf 
             320
         );
         if (halt) {
+            // Drei Schritte nach rechts: der vierte Platz von sieben.
+            const { stationen, gruppe } = await fahreInGruppe(
+                page,
+                '.init-spell-slots',
+                '.init-slot-box',
+                3
+            );
             const f = await page.evaluate(FOKUS);
-            // Wie viele Halte verbraucht die GANZE Gruppe? Das ist die Zahl,
-            // die E-2 auf eins druecken wuerde.
-            const gruppe = await page.evaluate(() => {
-                const g = document.activeElement?.closest('.init-slot-boxes');
-                const alle = document.querySelectorAll('.init-slot-box');
-                return {
-                    punkteInGruppe: g ? g.querySelectorAll('.init-slot-box').length : null,
-                    punkteInAnsicht: alle.length,
-                    eigenerHaltJePunkt: Array.from(alle).every(
-                        b => b.getAttribute('tabindex') === '0'
-                    )
-                };
-            });
             await page.screenshot({
-                path: path.join(ORDNER, 'punktgruppe-zauberplaetze-ein-halt-je-punkt.png')
+                path: path.join(ORDNER, 'punktgruppe-zauberplaetze-pfeiltastenmodus.png')
             });
             await naheinstellung(page, 'punktgruppe-zauberplaetze-nah.png', 40);
             begleit.push({
-                bild: 'punktgruppe-zauberplaetze-ein-halt-je-punkt.png',
+                bild: 'punktgruppe-zauberplaetze-pfeiltastenmodus.png',
                 halt,
+                pfeilschritte: stationen.length,
+                stationen,
                 fokus: f,
                 gruppe,
                 hinweis:
-                    'IST-Zustand. E-2 (ein Halt je Gruppe, Pfeiltasten darin) ist NICHT umgesetzt.'
+                    'E-2 umgesetzt: EIN Tabulatorhalt je Gruppe, darin Links/Rechts, ' +
+                    'Pos1/Ende an die Raender, kein Umlauf. Das Bild zeigt den Fokus ' +
+                    'auf dem vierten von sieben Punkten, erreicht mit einem ' +
+                    'Tabulatorsprung und drei Pfeiltastendruecken.'
             });
         } else {
             begleit.push({
-                bild: 'punktgruppe-zauberplaetze-ein-halt-je-punkt.png',
+                bild: 'punktgruppe-zauberplaetze-pfeiltastenmodus.png',
                 halt: null,
                 hinweis: 'kein .init-slot-box ertabuliert'
             });
         }
     });
 
-    test('Punktgruppe Todesretter — ein Halt je Punkt (E-2 nicht umgesetzt)', async ({ page }) => {
+    test('Punktgruppe Todesretter — Pfeiltastenmodus (E-2)', async ({ page }) => {
         await seedPopulatedSession(page);
         await ergaenzeKampfSeed(page);
         await page.setViewportSize({ width: 1440, height: 900 });
@@ -364,30 +429,35 @@ test.describe('TAST — Ablichtung: Fokus in den Kampfansichten, im Dialog, auf 
             320
         );
         if (halt) {
+            // Die Vorzeichen-Reihe hat drei Punkte; EIN Schritt setzt den
+            // Fokus auf den mittleren. Zwei waeren der Rand, und dort ist
+            // nicht zu sehen, dass es weitergeht.
+            const { stationen, gruppe } = await fahreInGruppe(
+                page,
+                '.death-saves-dots',
+                '.death-save-dot',
+                1
+            );
             const f = await page.evaluate(FOKUS);
-            const gruppe = await page.evaluate(() => {
-                const alle = document.querySelectorAll('.death-save-dot');
-                return {
-                    punkteInAnsicht: alle.length,
-                    eigenerHaltJePunkt: Array.from(alle).every(
-                        b => b.getAttribute('tabindex') === '0'
-                    )
-                };
-            });
             await page.screenshot({
-                path: path.join(ORDNER, 'punktgruppe-todesretter-ein-halt-je-punkt.png')
+                path: path.join(ORDNER, 'punktgruppe-todesretter-pfeiltastenmodus.png')
             });
             await naheinstellung(page, 'punktgruppe-todesretter-nah.png', 40);
             begleit.push({
-                bild: 'punktgruppe-todesretter-ein-halt-je-punkt.png',
+                bild: 'punktgruppe-todesretter-pfeiltastenmodus.png',
                 halt,
+                pfeilschritte: stationen.length,
+                stationen,
                 fokus: f,
                 gruppe,
-                hinweis: 'IST-Zustand. E-2 ist NICHT umgesetzt.'
+                hinweis:
+                    'E-2 umgesetzt: je Vorzeichen-Reihe EIN Halt. Erfolge und ' +
+                    'Fehlschlaege sind ZWEI Gruppen — Rechts tritt nicht in die ' +
+                    'Gegenseite ueber.'
             });
         } else {
             begleit.push({
-                bild: 'punktgruppe-todesretter-ein-halt-je-punkt.png',
+                bild: 'punktgruppe-todesretter-pfeiltastenmodus.png',
                 halt: null,
                 hinweis: 'kein .death-save-dot ertabuliert'
             });
