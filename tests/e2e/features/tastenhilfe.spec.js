@@ -2559,3 +2559,272 @@ test.describe('HILF — der Ausweg aus der Hilfe', () => {
         await pruefeUeberdeckung(page, '1440 px (Schreibtisch)');
     });
 });
+
+// ============================================================
+// (18) DIE HILFE SAGT AUCH, WANN UND WO EINE TASTE GILT
+// ============================================================
+//
+// WAS DIESER FALL VON (3) UND (5) UNTERSCHEIDET. Jene zwei pruefen die
+// MENGE: jede belegte Taste steht drin, jede genannte tut etwas. Beide
+// waren gruen, waehrend vier Zeilen der Hilfe trotzdem in die Irre
+// fuehrten — weil eine Zeile mehr ist als ein Tastenname. Sie ist eine
+// Zusage darueber, WANN die Taste gilt, und genau die fehlte bzw. war
+// falsch:
+//
+//   (a) `N` STAND NUR UNTER "Initiative". Gemessen tut `n` bei BODY-Fokus
+//       in FUENF Ansichten etwas, und in vier davon etwas ANDERES als den
+//       Zugwechsel: npcs -> `npc-modal` auf, quests -> `quest-modal` auf,
+//       party -> `char-form` aufgeklappt, encounter -> `enc-form`
+//       aufgeklappt, initiative -> Zug 0 -> 1. Der Spielleiter in der
+//       NSC-Ansicht liest "Naechster Zug", drueckt `n` und bekommt ein
+//       Anlegen-Fenster. Die Kuerzeltabelle in `CLAUDE.md` fuehrt die
+//       Doppelbedeutung seit je; die Hilfe, aus der sie nachgezogen wurde,
+//       nicht.
+//
+//   (b) "Befehlspalette (in Firefox)" LAS SICH ALS EINSCHRAENKUNG. Gemessen
+//       in Chromium: `Strg+.` oeffnet die Palette und zieht den Fokus in
+//       ihr Eingabefeld (`defaultPrevented`, `INPUT.cp-input`). Der
+//       Quellkommentar daneben nennt das Kuerzel ausdruecklich
+//       "browserneutral" — die Klammer machte daraus "gilt hier nicht",
+//       und ein Nutzer in Chrome oder Edge ueberspringt das kuerzere,
+//       zuverlaessigere Kuerzel.
+//
+//   (c) DIE ZWEI SOUNDBOARD-ZEILEN VERSPRACHEN SECHS TASTEN, die ohne
+//       eingerichtete Szene wortlos nichts tun. Gemessen in einer frischen
+//       Kampagne: `Alt+Shift+0`, `Alt+Shift+1` und `Alt+Shift+5` aendern
+//       keine der dreizehn beobachteten Groessen, die Konsole bleibt leer,
+//       und die Taste wird dennoch verbraucht (`defaultPrevented`).
+//       `features/soundboard/soundboard-crud.js` sagt es selbst: `if
+//       (!scene) { return; }` mit dem Kommentar "still ignorieren". Der
+//       Nutzer probiert, nichts geschieht, und er sucht den Fehler bei
+//       sich. Die Vorbedingung stand nirgends.
+//
+//   (d) DIE DREI E-2-ZEILEN SAGTEN NICHT, WANN SIE GELTEN. Gemessen in der
+//       Beute-Ansicht bei BODY-Fokus: Pfeil ab, Pfeil rechts, Pos1, Ende
+//       und Bild ab bewegen NICHTS — kein Rollen, kein Fokus, kein
+//       `defaultPrevented` (der Koerper dieser App laeuft nie, gemessen
+//       `scrollHeight === innerHeight`). Auf einem Gruppenglied tun
+//       dieselben Tasten genau das, was die Zeilen sagen (Fall 11 belegt
+//       es). Das Verhalten ist richtig; falsch war, was die Hilfe
+//       verschwieg: dass der Fokus ERST auf einem Glied liegen muss, und
+//       wie man dorthin kommt.
+//
+// WARUM DIESER FALL KEINE WORTKLAUBEREI IST. Jede Zusicherung unten haengt
+// an einer MESSUNG im selben Lauf, nicht an einem Wunsch: erst wird
+// gemessen, dass `n` in mehreren Ansichten etwas tut, DANN wird die zweite
+// Zeile verlangt. Verschwindet die Doppelbedeutung aus dem Quelltext, faellt
+// die Messung weg und mit ihr die Forderung — die Hilfe darf dann
+// schrumpfen. Ein Fall, der nur Woerter gegen Woerter haelt, waere
+// tautologisch; dieser haelt Woerter gegen gemessenes Verhalten.
+
+test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
+    test('(18) jede Zeile nennt ihre Vorbedingung, und jede Vorbedingung ist gemessen', async ({
+        page
+    }) => {
+        test.setTimeout(300_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        const hilfe = await hilfeLesen(page);
+        /** Alle Beschriftungen der Hilfe, klein geschrieben, in einem Text. */
+        const beschriftungen = hilfe.reihen.map(r => r.text);
+        const alleWorte = beschriftungen.join(' \n ').toLowerCase();
+        /** Die Zeilen, die eine bestimmte Taste nennen. */
+        const zeilenMit = token =>
+            hilfe.reihen.filter(r => hilfeTastenmenge([r]).has(token)).map(r => r.text);
+
+        // ----------------------------------------------------------
+        // (a) `N` IST ZWEIDEUTIG — erst messen, dann fordern.
+        // ----------------------------------------------------------
+        /** @type {Record<string, string>} */
+        const wirkungVonN = {};
+        for (const ansicht of ['initiative', 'npcs', 'quests', 'party', 'encounter', 'loot']) {
+            await ansichtOeffnen(page, ansicht);
+            const lage = () =>
+                page.evaluate(() => ({
+                    schalen: Array.from(
+                        document.querySelectorAll('.modal-overlay.show, .modal.show')
+                    )
+                        .map(e => e.id)
+                        .sort()
+                        .join(','),
+                    aufgeklappt: Array.from(document.querySelectorAll('.collapsible.open'))
+                        .map(e => e.id)
+                        .sort()
+                        .join(','),
+                    zug: window.D?.initiative?.currentTurn ?? null
+                }));
+            const vor = await lage();
+            await page.keyboard.press('n');
+            await page.waitForTimeout(400);
+            const nach = await lage();
+            const d = [];
+            if (vor.schalen !== nach.schalen) d.push(`Schale ${vor.schalen} -> ${nach.schalen}`);
+            if (vor.aufgeklappt !== nach.aufgeklappt)
+                d.push(`aufgeklappt ${vor.aufgeklappt} -> ${nach.aufgeklappt}`);
+            if (vor.zug !== nach.zug) d.push(`Zug ${vor.zug} -> ${nach.zug}`);
+            wirkungVonN[ansicht] = d.join('; ') || '(keine)';
+        }
+        const ansichtenMitN = Object.entries(wirkungVonN).filter(([, w]) => w !== '(keine)');
+        const ansichtenOhneZug = ansichtenMitN.filter(([, w]) => !/^Zug /.test(w));
+        expect(
+            ansichtenMitN.length,
+            'Vorbedingung: `n` muss in mehr als einer Ansicht etwas tun, sonst ist die ' +
+                'Forderung unten unbegruendet. Gemessen: ' +
+                Object.entries(wirkungVonN)
+                    .map(([a, w]) => `${a}: ${w}`)
+                    .join(' | ')
+        ).toBeGreaterThan(1);
+        expect(
+            ansichtenOhneZug.length,
+            '`n` muss in mindestens zwei Ansichten etwas ANDERES tun als den Zugwechsel. ' +
+                `Gemessen: ${ansichtenOhneZug.map(([a, w]) => `${a}: ${w}`).join(' | ')}`
+        ).toBeGreaterThanOrEqual(2);
+
+        const nZeilen = zeilenMit('N');
+        expect(
+            nZeilen.length,
+            `Die Hilfe fuehrt ${nZeilen.length} Zeile(n) fuer \`N\` (${nZeilen.join(' | ')}), ` +
+                `aber \`n\` tut gemessen in ${ansichtenMitN.length} Ansichten etwas, und in ` +
+                `${ansichtenOhneZug.length} davon etwas anderes als den Zugwechsel: ` +
+                `${ansichtenOhneZug.map(([a, w]) => `${a}: ${w}`).join(' | ')}. Eine ` +
+                'einzige Zeile unter "Initiative" schickt den Spielleiter in der ' +
+                'NSC-Ansicht ins Leere: er liest "Naechster Zug" und bekommt ein ' +
+                'Anlegen-Fenster. `CLAUDE.md` fuehrt die Doppelbedeutung seit je.'
+        ).toBeGreaterThanOrEqual(2);
+        expect(
+            nZeilen.join(' ').toLowerCase(),
+            `Die zweite \`N\`-Zeile muss die andere Bedeutung benennen. Gemessen: ` +
+                `${nZeilen.join(' | ')}`
+        ).toMatch(/neu/);
+
+        // ----------------------------------------------------------
+        // (b) `Strg+.` GILT UEBERALL — gemessen in Chromium.
+        // ----------------------------------------------------------
+        await ansichtOeffnen(page, 'initiative');
+        const vorPalette = await page.evaluate(
+            () => !!document.querySelector('.cp-overlay.cp-visible')
+        );
+        await page.keyboard.press('Control+.');
+        await page.waitForTimeout(400);
+        expect(
+            await page.evaluate(() => ({
+                palette: !!document.querySelector('.cp-overlay.cp-visible'),
+                fokus: document.activeElement?.className || ''
+            })),
+            'Vorbedingung: `Strg+.` oeffnet die Befehlspalette IN DIESEM BROWSER ' +
+                `(Chromium). Vorher offen: ${vorPalette}. Tut es das nicht, ist die ` +
+                'Forderung unten unbegruendet und die Klammer "(in Firefox)" waere richtig.'
+        ).toEqual({ palette: true, fokus: 'cp-input' });
+
+        const punktZeilen = zeilenMit('STRG+.');
+        expect(punktZeilen.length, 'Die Hilfe fuehrt genau eine Zeile fuer `Strg+.`').toBe(1);
+        expect(
+            punktZeilen[0],
+            `Die Zeile fuer \`Strg+.\` lautet "${punktZeilen[0]}". Sie darf das Kuerzel ` +
+                'nicht auf Firefox EINSCHRAENKEN: gemessen oeffnet es die Palette auch in ' +
+                'Chromium, und der Quellkommentar daneben nennt es ausdruecklich ' +
+                '"browserneutral". Ein Nutzer in Chrome oder Edge liest die Klammer als ' +
+                '"gilt hier nicht" und ueberspringt das kuerzere Kuerzel.'
+        ).not.toMatch(/in Firefox/i);
+        expect(
+            punktZeilen[0].toLowerCase(),
+            `Die Zeile fuer \`Strg+.\` ("${punktZeilen[0]}") muss sagen, dass sie neben ` +
+                'Strg+Shift+K gleichwertig gilt — sonst liest sie sich wie ein zweites, ' +
+                'anderes Kuerzel.'
+        ).toMatch(/gleichwertig|überall|ueberall/);
+
+        // ----------------------------------------------------------
+        // (c) DIE SOUNDBOARD-TASTEN BRAUCHEN EINE EINGERICHTETE SZENE.
+        // ----------------------------------------------------------
+        const ohneSzene = {};
+        for (const taste of ['Alt+Shift+0', 'Alt+Shift+1', 'Alt+Shift+5']) {
+            await page.evaluate(ZURUECKSETZEN('initiative'));
+            await page.waitForTimeout(220);
+            await page.evaluate(() => {
+                if (window.D) window.D.soundboard = { scenes: [] };
+            });
+            const vor = await page.evaluate(SPUR);
+            await page.keyboard.press(taste);
+            await page.waitForTimeout(300);
+            const nach = await page.evaluate(SPUR);
+            ohneSzene[taste] = spurDelta(vor, nach, KEINE_BELEGUNG);
+        }
+        expect(
+            ohneSzene,
+            'Vorbedingung: ohne eingerichtete Szene tun die Soundboard-Kuerzel gemessen ' +
+                'NICHTS. Tun sie doch etwas, ist die Forderung unten unbegruendet.'
+        ).toEqual({ 'Alt+Shift+0': [], 'Alt+Shift+1': [], 'Alt+Shift+5': [] });
+
+        const soundZeilen = hilfe.reihen
+            .filter(
+                r =>
+                    hilfeTastenmenge([r]).has('ALT+SHIFT+1') ||
+                    hilfeTastenmenge([r]).has('ALT+SHIFT+0')
+            )
+            .map(r => r.text);
+        expect(
+            soundZeilen.length,
+            'Die Hilfe fuehrt die zwei Soundboard-Zeilen'
+        ).toBeGreaterThanOrEqual(2);
+        expect(
+            soundZeilen.join(' ').toLowerCase(),
+            `Die Soundboard-Zeilen lauten "${soundZeilen.join(' | ')}". Sie muessen die ` +
+                'Vorbedingung nennen — eine EINGERICHTETE Szene. Gemessen schlucken die ' +
+                'sechs Tasten in einer frischen Kampagne ihren Anschlag und geben keine ' +
+                'Rueckmeldung: kein Hinweis, kein Toast, keine Konsolenmeldung ' +
+                '(`soundboard-crud.js`: `if (!scene) { return; }`, Kommentar "still ' +
+                'ignorieren"). Sechs der 41 Hilfezeilen gehoerten damit Tasten, bei denen ' +
+                'der Nutzer den Fehler bei sich sucht.'
+        ).toMatch(/eingerichtet|angelegt|belegt|hinterlegt/);
+
+        // ----------------------------------------------------------
+        // (d) DIE GRUPPENTASTEN GELTEN NUR AUF EINEM GLIED.
+        // ----------------------------------------------------------
+        await ansichtOeffnen(page, 'loot');
+        const ohneGlied = {};
+        for (const taste of ['ArrowDown', 'ArrowRight', 'Home', 'End']) {
+            await page.evaluate(ZURUECKSETZEN('loot'));
+            await page.waitForTimeout(220);
+            const vor = await page.evaluate(SPUR);
+            await page.keyboard.press(taste);
+            await page.waitForTimeout(280);
+            const nach = await page.evaluate(SPUR);
+            ohneGlied[taste] = spurDelta(vor, nach, KEINE_BELEGUNG);
+        }
+        expect(
+            ohneGlied,
+            'Vorbedingung: bei BODY-Fokus tun die Gruppentasten gemessen NICHTS — kein ' +
+                'Rollen, kein Fokus, keine App-Groesse (der Koerper dieser App laeuft nie, ' +
+                '`scrollHeight === innerHeight`). Genau deshalb MUSS die Hilfe sagen, dass ' +
+                'der Fokus erst auf einem Glied liegen muss.'
+        ).toEqual({ ArrowDown: [], ArrowRight: [], Home: [], End: [] });
+
+        const gruppenAbschnitt = hilfe.abschnitte.find(s => /Gruppen/.test(s.titel));
+        expect(
+            gruppenAbschnitt,
+            'die Hilfe hat einen Abschnitt fuer Tabulator & Gruppen'
+        ).toBeTruthy();
+        const gruppenZeilen = hilfe.reihen
+            .filter(r =>
+                ['←', '→', '↑', '↓', 'POS1', 'ENDE'].some(t => hilfeTastenmenge([r]).has(t))
+            )
+            .map(r => r.text);
+        expect(gruppenZeilen.length, 'die Hilfe fuehrt die drei E-2-Zeilen').toBeGreaterThanOrEqual(
+            3
+        );
+        expect(
+            gruppenZeilen.join(' ').toLowerCase(),
+            `Die Zeilen fuer Pfeile/Pos1/Ende lauten "${gruppenZeilen.join(' | ')}". Keine ` +
+                'nennt die Vorbedingung: der Fokus muss ERST auf einem Glied der Reihe ' +
+                'liegen. Gemessen bewegen dieselben Tasten bei BODY-Fokus nichts — wer sie ' +
+                'nach Browsergewohnheit fuer den Seitenlauf haelt, bekommt gar nichts, und ' +
+                'die 2715 px lange Beuteliste ist mit der Tastatur erst erreichbar, ' +
+                'nachdem man blind in die Gruppe hineintabuliert hat.'
+        ).toMatch(/fokus|liegt auf|steht auf/);
+        expect(
+            alleWorte,
+            'Und die Hilfe muss sagen, WIE man auf ein Glied kommt: mit dem Tabulator. ' +
+                'Ohne das ist die Vorbedingung genannt und unerfuellbar.'
+        ).toMatch(/tab/);
+    });
+});
