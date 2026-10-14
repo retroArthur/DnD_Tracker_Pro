@@ -271,6 +271,28 @@ describe('DOC — CLAUDE.md widerspricht sich nicht ueber die Vorlagenzahl', () 
 // aus der Zusicherung eines Falls; die Dokumente werden dagegen gehalten,
 // nie umgekehrt.
 //
+// MUTATIONSBEWEISE (2026-10-14). Jede der fuenf Ratschen einzeln
+// mutiert, Lauf nachgewiesen, Baum danach per `git checkout --`
+// wiederhergestellt und das Ergebnis per `git hash-object <pfad>`
+// gegen `git rev-parse :<pfad>` geprueft — jedes Mal identisch (NICHT
+// per rohem sha256sum: core.autocrlf=true, Arbeitsbaum CRLF, Blob LF,
+// die Hashes waeren systematisch ungleich).
+//
+//   Mutation                                      Fall    rot als
+//   "counts 42 spell-slot pips" entzahlt          DOC-08  zahl 42 fehlt
+//   die Pos1/Ende-Zeile aus der Tabelle            DOC-09  "End (Ende)"
+//   'PageDown' in GRUPPEN_TASTEN                   DOC-09  "PageDown"
+//     (ohne Eintrag in TASTE_IM_DOKUMENT)
+//   ui/keyboard-group.js -> keyboard-gruppe.js     DOC-10  toter Pfad
+//   tastatur-gruppen.spec.js (4) -> (99)           DOC-10  "kein Fall (99)"
+//   `ui/gibt-es-nicht.js` in einen Eintrag         DOC-11  anzahl 9 statt 8
+//   document.execCommand("bold") in rich-text.js   DOC-12  "nennt 0,
+//                                                          gemessen sind 1"
+//
+// Die letzte ist die wichtigere Haelfte von DOC-12: sie zeigt, dass der
+// Fall nicht die Dokumente gegeneinander haelt, sondern gegen eine
+// Messung am Quellbaum.
+//
 // ZUR FORM DER ZUSICHERUNGEN: Jest kennt das zweite Argument von
 // `expect()` NICHT (das ist Playwright). Was der Fehlschlag nennen soll,
 // steht darum IM verglichenen Wert — eine leere Liste als Sollwert, die

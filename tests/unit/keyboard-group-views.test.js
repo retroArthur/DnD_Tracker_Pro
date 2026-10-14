@@ -292,6 +292,20 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
 // 22); ein nachtraeglich korrigierter Bericht waere eine Faelschung des
 // Protokolls. Die Ausnahme haengt am Namensmuster und gilt nicht fuer
 // Code, Tests oder docs/.
+//
+// MUTATIONSBEWEISE (2026-10-14), beide Richtungen, danach `git checkout
+// --` und `git hash-object` gegen `git rev-parse :<pfad>` — identisch:
+//
+//   22 -> 18 im Python-Kommentar          rot: "…py:316 nennt 18,
+//                                              angemeldet sind 22"
+//   eine 23. Art in ANSICHTSGRUPPEN       rot: DREI Stellen auf einmal
+//                                              (…py:316, …reichweite.spec.js
+//                                              :916 und :1295 nennen 22,
+//                                              angemeldet sind 23)
+//
+// Die zweite ist der eigentliche Zweck: wer eine Art nachtraegt, wird an
+// JEDE Stelle erinnert, die die alte Zahl fuehrt — genau das, was in
+// Runde 3 unterblieb.
 
 const AUSNAHME_MUSTER = /-BERICHT\.md$/;
 
