@@ -619,3 +619,269 @@ test.describe('Reichweite — die Flut der Party', () => {
         ).toBeGreaterThan(0);
     });
 });
+
+// ============================================================
+// (5) DIE HALTGRENZE JE ANSICHT — DIE RATSCHE GEGEN DIE FLUT
+// ============================================================
+//
+// WAS DIESER FALL BEWACHT. Reichweite ohne Obergrenze ist keine
+// Verbesserung: die Nachruestung macht 255 Stellen erreichbar, und ohne
+// Gruppen waeren das 255 zusaetzliche Tabulatorhalte. Diese Zahlen sind
+// der Nachweis, dass die Gruppen greifen — und die Ratsche dagegen, dass
+// eine kuenftige Reihe wieder einzeln anfahrbar wird.
+//
+// DIE SIEBEN SAUBEREN VORBEREITUNGSANSICHTEN sind der zweite, strengere
+// Teil: sie hatten vor E-2 null unerreichbare Stellen, und eine
+// Nachruestung, die dort HALTE ERFINDET, waere eine Verschlechterung, die
+// in keiner Reichweitenzahl auftaucht. Gemessen vorher/nachher, beide
+// Laeufe mit derselben Saat: Statistiken 26/26, Kalender 28/28, Links
+// 29/29, Session-Prep 27/27, Reise 30/30, Soundboard 26/26, Timer 34/34 —
+// Zeichen fuer Zeichen gleich, 0 neue Halte.
+//
+// WARUM EINE OBERGRENZE UND KEINE GLEICHHEIT: eine Haltzahl haengt an der
+// Fensterbreite, an der Saat und an Kleinigkeiten wie dem
+// Umzugs-Hinweisband. Eine Gleichheitsforderung waere flockig, ohne
+// strenger zu sein — was dieser Fall verhindern soll, ist das WACHSEN.
+// Dieselbe Idiomatik wie INLINE_MAX in
+// `tests/unit/design-consistency.test.js`.
+
+/**
+ * Gemessene Obergrenzen, 20 Eintraege je Typ, 1440 px. Wer eine Zahl
+ * anhebt, soll begruenden, welche Reihe einen eigenen Halt bekommen hat.
+ */
+const HALTGRENZEN = {
+    dashboard: 58,
+    initiative: 198,
+    party: 231,
+    dice: 46,
+    dmscreen: 37,
+    quests: 69,
+    loot: 32,
+    bestiary: 47,
+    npcs: 39,
+    spells: 35,
+    encounter: 34,
+    locations: 33,
+    fraktionen: 68,
+    shops: 91,
+    data: 36,
+    notes: 27,
+    wiki: 30,
+    // Die sieben, die vor E-2 schon sauber waren — diese Zahlen sind die
+    // VORHER-Zahlen und duerfen sich nicht bewegen.
+    dicestats: 26,
+    kalender: 28,
+    links: 29,
+    sessionprep: 27,
+    reise: 30,
+    soundboard: 26,
+    timers: 34
+};
+
+/** Die sieben, die vor E-2 null unerreichbare Stellen hatten. */
+const SAUBER_VOR_E2 = [
+    'dicestats',
+    'kalender',
+    'links',
+    'sessionprep',
+    'reise',
+    'soundboard',
+    'timers'
+];
+
+test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
+    for (const [ansicht, grenze] of Object.entries(HALTGRENZEN)) {
+        test(`(5) ${ansicht}: nicht mehr als ${grenze} sichtbare Tabulatorhalte`, async ({
+            page
+        }) => {
+            test.setTimeout(120_000);
+            await ansichtOeffnen(page, ansicht);
+            const halte = await page.evaluate(HALTE);
+            expect(
+                halte,
+                `${ansicht} hat ${halte} sichtbare Halte, gemessene Grenze ${grenze}. ` +
+                    (SAUBER_VOR_E2.includes(ansicht)
+                        ? 'Diese Ansicht war vor E-2 sauber (0 unerreichbar); jeder neue Halt ' +
+                          'hier ist eine Verschlechterung ohne Gegenwert.'
+                        : 'Eine Reihe gleichartiger Stellen ist offenbar wieder einzeln ' +
+                          'anfahrbar — pruefe ui/keyboard-group-views.js.')
+            ).toBeLessThanOrEqual(grenze);
+        });
+    }
+
+    test('(5) jede angemeldete Gruppe traegt GENAU EINEN Halt', async ({ page }) => {
+        test.setTimeout(600_000);
+        // `offen` ist die Zahl der Gruppen, die nicht genau einen Halt
+        // tragen. Im geregelten Zustand ist sie 0 — und zwar in jeder
+        // Ansicht, nicht nur in der, in der die Gruppe "wohnt": eine
+        // ausgeblendete Gruppe muss ebenfalls geregelt sein, sonst
+        // tabuliert der Spielleiter nach dem Ansichtswechsel in eine
+        // Reihe mit zwanzig Halten.
+        for (const ansicht of Object.keys(HALTGRENZEN)) {
+            await ansichtOeffnen(page, ansicht);
+            const s = await page.evaluate(() => window.KeyboardGroup.statistik());
+            expect(s.aktiv, `KeyboardGroup laeuft in ${ansicht} nicht`).toBe(true);
+            expect(
+                s.offen,
+                `${ansicht}: ${s.offen} von ${s.gruppen} Gruppen tragen nicht genau einen Halt`
+            ).toBe(0);
+        }
+    });
+
+    test('(5) alle 18 Gruppenarten sind angemeldet', async ({ page }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'dashboard');
+        const s = await page.evaluate(() => window.KeyboardGroupViews.statistik());
+        // Eine Art, die `registriere()` abweist, verschwindet lautlos —
+        // die Ansicht sieht danach aus, als haette sie eben keine Gruppe.
+        expect(s.angemeldet, `angemeldet: ${s.namen.join(', ')}`).toBe(s.arten);
+        expect(s.arten).toBe(18);
+    });
+});
+
+// ============================================================
+// (6) MIT DER MAUS AENDERT SICH NICHTS
+// ============================================================
+//
+// DIE GEGENPROBE, DIE GENAUSO ZAEHLT. Wer klickt statt tabuliert, soll von
+// dieser Arbeit nichts merken. Das galt im Kampfpaket und gilt hier —
+// und es ist nicht selbstverstaendlich: die Listenzeilen und
+// Filtermarken tragen jetzt `tabindex="-1"`, und ein Element mit
+// `tabindex` NIMMT beim Anklicken den Fokus an, was es vorher nicht tat.
+// Daran haengt die Zusage aus T-C: nach einem MAUSKLICK gehoert die
+// Leertaste weiter dem Zug, nicht dem angeklickten Element.
+//
+// DIE SCHARFE STELLE IST `_versorgt`. `nurMausfokus()` in
+// `ui/keyboard-reach.js` fragt `istVersorgt(el)` — und die Rohauswahl der
+// Kehrschleife ist `[data-action]:not([tabindex])`. Wer zuerst ein
+// `tabindex` setzt, nimmt der Kehrschleife das Element dauerhaft aus der
+// Auswahl UND aus ihrem Verzeichnis. Die Gruppenmechanik stoesst die
+// Kehrschleife darum in ihrem eigenen Durchlauf selbst an. Faellt dieser
+// Aufruf weg, ist die Zusage still weg — ohne dass eine Reichweitenzahl
+// sich ruehrt. Fall (6b) ist der Waechter darauf.
+
+test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
+    test('(6a) ein Klick auf eine Listenzeile mit tabindex="-1" waehlt sie weiter aus', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'npcs');
+
+        const vor = await page.evaluate(() => {
+            const z = document.querySelectorAll('.npc-item');
+            return {
+                zeilen: z.length,
+                tiZweite: z[1].getAttribute('tabindex'),
+                id: z[1].getAttribute('data-id')
+            };
+        });
+        // Die Vorbedingung des Falls: die Zeile IST ein Gruppenglied mit
+        // wanderndem Tabindex. Ohne sie prueft der Klick nichts Neues.
+        expect(vor.tiZweite, 'Die zweite NSC-Zeile ist kein Gruppenglied').toBe('-1');
+
+        await page.click(`.npc-item[data-id="${vor.id}"]`);
+        await page.waitForTimeout(400);
+
+        const nach = await page.evaluate(() => {
+            const gewaehlt = document.querySelector('.npc-item.selected');
+            return { gewaehlt: gewaehlt ? gewaehlt.getAttribute('data-id') : null };
+        });
+        expect(nach.gewaehlt, 'Der Klick hat die Zeile nicht ausgewaehlt').toBe(vor.id);
+    });
+
+    test('(6b) eine angeklickte Filtermarke bleibt im Verzeichnis der Kehrschleife', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'loot');
+
+        const marken = await page.evaluate(() => {
+            const m = [...document.querySelectorAll('.loot-filter-chip')];
+            return { zahl: m.length, ti: m.map(x => x.getAttribute('tabindex')) };
+        });
+        expect(marken.zahl, 'Keine Beutefilter-Marken gefunden').toBeGreaterThan(1);
+        // Genau ein Halt in der Leiste — der Rest traegt -1.
+        expect(marken.ti.filter(t => t === '0').length).toBe(1);
+
+        await page.click('.loot-filter-chip:nth-of-type(3)');
+        await page.waitForTimeout(400);
+
+        const lage = await page.evaluate(() => {
+            const el = document.activeElement;
+            return {
+                istMarke: !!(el && el.classList && el.classList.contains('loot-filter-chip')),
+                versorgt: window.KeyboardReach.istVersorgt(el),
+                nurMaus: window.KeyboardReach.nurMausfokus(el)
+            };
+        });
+        // Der Klick parkt den Fokus auf der Marke — das ist die Folge des
+        // `tabindex` und unvermeidlich.
+        expect(lage.istMarke, 'Der Klick hat die Marke nicht fokussiert').toBe(true);
+        // Und GENAU DARUM muss sie versorgt sein: nur dann erkennt
+        // nurMausfokus() die Lage und laesst die Leertaste dem Zug.
+        expect(
+            { versorgt: lage.versorgt, nurMaus: lage.nurMaus },
+            'Die angeklickte Marke ist der Kehrschleife unbekannt — die Zusage aus T-C ' +
+                '("nach einem Mausklick gehoert die Leertaste weiter dem Zug") ist damit ' +
+                'still weg. Wahrscheinliche Ursache: der Aufruf von ' +
+                'KeyboardReach.aktualisieren() in KeyboardGroup.aktualisieren() fehlt.'
+        ).toEqual({ versorgt: true, nurMaus: true });
+    });
+
+    test('(6c) ein Klick auf eine Auftragsmarke schaltet sie weiter um', async ({ page }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'quests');
+
+        const vor = await page.evaluate(() => {
+            const m = document.querySelector('[data-action="toggle-quest-status-stop"]');
+            return {
+                id: m.getAttribute('data-id'),
+                text: m.textContent.trim(),
+                leiste: m.parentElement.getAttribute('role'),
+                achse: m.parentElement.getAttribute('aria-orientation')
+            };
+        });
+        // Vorbedingung: die Marke sitzt in einer geregelten Leiste.
+        expect({ leiste: vor.leiste, achse: vor.achse }).toEqual({
+            leiste: 'toolbar',
+            achse: 'horizontal'
+        });
+
+        await page.click('[data-action="toggle-quest-status-stop"]');
+        await page.waitForTimeout(500);
+
+        // GEURTEILT WIRD UEBER DIE DATEN, NICHT UEBER DEN MARKENTEXT — und
+        // das ist eine Korrektur an meinem ersten Versuch, nicht eine
+        // Abschwaechung. Der las den Text der ERSTEN Marke nach dem Klick
+        // und erwartete "✓ Done"; er war rot, obwohl der Klick wirkte.
+        // Gemessen: `toggleQuestStatus()` setzt `completed` und ruft
+        // `renderQuests()`, und der erledigte Auftrag verschwindet dabei
+        // aus der Liste des aktiven Filters — die Marke zu Auftrag 1 ist
+        // danach GAR NICHT mehr im Dokument (`querySelector(… data-id="1"
+        // …)` ist `null`), und die erste Marke gehoert zu Auftrag 2 und
+        // zeigt zu Recht wieder "○ Done". Das ist das Verhalten des
+        // ausgelieferten Stands und von dieser Arbeit unberuehrt.
+        const nach = await page.evaluate(
+            id => ({
+                erledigt: !!window.D.quests.find(q => q.id === Number(id)).completed,
+                markeNochDa: !!document.querySelector(
+                    `[data-action="toggle-quest-status-stop"][data-id="${id}"][data-value="completed"]`
+                )
+            }),
+            vor.id
+        );
+        expect(
+            nach.erledigt,
+            `Der Klick auf die Marke von Auftrag ${vor.id} ("${vor.text}") hat ` +
+                `completed nicht gesetzt`
+        ).toBe(true);
+        // Die Gegenprobe zur Begruendung oben: der erledigte Auftrag ist
+        // aus der Liste gefallen. Stimmt das eines Tages nicht mehr, soll
+        // der Fall auffallen und nicht stillschweigend weniger pruefen.
+        expect(
+            nach.markeNochDa,
+            'Der erledigte Auftrag steht noch in der Liste — dann ist die Begruendung ' +
+                'ueber ihm veraltet und der Markentext waere wieder die staerkere Probe'
+        ).toBe(false);
+    });
+});
