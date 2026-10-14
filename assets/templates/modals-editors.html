@@ -608,9 +608,9 @@
 
     <!-- Tastenkürzel-Overlay -->
     <div class="shortcuts-overlay" id="shortcuts-overlay" data-action="backdrop-close" data-value="hideShortcutsOverlay">
-        <div class="shortcuts-modal" data-stop-propagation="true">
+        <div class="shortcuts-modal" data-stop-propagation="true" role="dialog" aria-modal="true" aria-labelledby="shortcuts-overlay-titel">
             <div class="shortcuts-title">
-                <span>⌨️ Tastenkürzel</span>
+                <span id="shortcuts-overlay-titel">⌨️ Tastenkürzel</span>
                 <button class="btn btn-sm" data-action="call" data-value="hideShortcutsOverlay">✕</button>
             </div>
             <!--
@@ -626,67 +626,79 @@
             -->
             <div class="shortcuts-grid">
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">📍 Navigation</div>
-                    <div class="shortcut-row"><span>Dashboard</span><div class="shortcut-keys"><span class="shortcut-key">1</span></div></div>
-                    <div class="shortcut-row"><span>Party</span><div class="shortcut-keys"><span class="shortcut-key">2</span></div></div>
-                    <div class="shortcut-row"><span>NPCs</span><div class="shortcut-keys"><span class="shortcut-key">3</span></div></div>
-                    <div class="shortcut-row"><span>Orte</span><div class="shortcut-keys"><span class="shortcut-key">4</span></div></div>
-                    <div class="shortcut-row"><span>Quests</span><div class="shortcut-keys"><span class="shortcut-key">5</span></div></div>
-                    <div class="shortcut-row"><span>Encounter</span><div class="shortcut-keys"><span class="shortcut-key">6</span></div></div>
-                    <div class="shortcut-row"><span>Initiative</span><div class="shortcut-keys"><span class="shortcut-key">7</span></div></div>
-                    <div class="shortcut-row"><span>Läden</span><div class="shortcut-keys"><span class="shortcut-key">8</span></div></div>
-                    <div class="shortcut-row"><span>Beute</span><div class="shortcut-keys"><span class="shortcut-key">9</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">📍 Navigation</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Dashboard</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">1</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Party</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">2</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>NPCs</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">3</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Orte</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">4</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Quests</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">5</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Encounter</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">6</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Initiative</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">7</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Läden</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">8</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Beute</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">9</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">⚡ Aktionen</div>
-                    <div class="shortcut-row"><span>Rückgängig</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Z</span></div></div>
-                    <div class="shortcut-row"><span>Wiederholen</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Y</span></div></div>
-                    <div class="shortcut-row"><span>Wiederholen (gleichwertig)</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Shift</span><span class="shortcut-key">Z</span></div></div>
-                    <div class="shortcut-row"><span>Speichern</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">S</span></div></div>
-                    <div class="shortcut-row"><span>Suche</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Suche (gleichwertig)</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">F</span></div></div>
-                    <div class="shortcut-row"><span>Befehlspalette</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Shift</span><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Befehlspalette (in Firefox)</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">.</span></div></div>
-                    <div class="shortcut-row"><span>Würfeln (W20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
-                    <div class="shortcut-row"><span>Timer Start/Stop</span><div class="shortcut-keys"><span class="shortcut-key">T</span></div></div>
-                    <div class="shortcut-row"><span>Event Log</span><div class="shortcut-keys"><span class="shortcut-key">L</span></div></div>
-                    <div class="shortcut-row"><span>Kampfprotokoll</span><div class="shortcut-keys"><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Quick Reference</span><div class="shortcut-keys"><span class="shortcut-key">/</span></div></div>
-                    <div class="shortcut-row"><span>Diese Hilfe</span><div class="shortcut-keys"><span class="shortcut-key">?</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⚡ Aktionen</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Rückgängig</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Z</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Wiederholen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Y</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Wiederholen (gleichwertig)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">Z</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Speichern</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">S</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Suche</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Suche (gleichwertig)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">F</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Befehlspalette</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Befehlspalette (in Firefox)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">.</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Würfeln (W20)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">R</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Timer Start/Stop</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">T</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Event Log</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">L</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Kampfprotokoll</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Quick Reference</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">/</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Diese Hilfe</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">?</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">🎲 Würfel</div>
-                    <div class="shortcut-row"><span>W20</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">2</span></div></div>
-                    <div class="shortcut-row"><span>W12</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">1</span></div></div>
-                    <div class="shortcut-row"><span>W8</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">8</span></div></div>
-                    <div class="shortcut-row"><span>W6</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">6</span></div></div>
-                    <div class="shortcut-row"><span>W4</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">4</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">🎲 Würfel</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>W20</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">2</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W12</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">1</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W8</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">8</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W6</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">6</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W4</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">4</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">⚔️ Initiative</div>
-                    <div class="shortcut-row"><span>Nächster Zug</span><div class="shortcut-keys"><span class="shortcut-key">N</span></div></div>
-                    <div class="shortcut-row"><span>Nächster Zug (Fokus auf keinem Bedienelement)</span><div class="shortcut-keys"><span class="shortcut-key">Leertaste</span></div></div>
-                    <div class="shortcut-row"><span>Vorheriger Zug</span><div class="shortcut-keys"><span class="shortcut-key">P</span></div></div>
-                    <div class="shortcut-row"><span>Neue Runde</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">N</span></div></div>
-                    <div class="shortcut-row"><span>HP des Kämpfers am Zug</span><div class="shortcut-keys"><span class="shortcut-key">H</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⚔️ Initiative</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Nächster Zug</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">N</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Nächster Zug (Fokus auf keinem Bedienelement)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Leertaste</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Vorheriger Zug</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">P</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Neue Runde</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">N</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>HP des Kämpfers am Zug</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">H</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">⌨️ Tabulator &amp; Gruppen</div>
-                    <div class="shortcut-row"><span>Nächstes Bedienelement (im Dialog bleibt er darin)</span><div class="shortcut-keys"><span class="shortcut-key">Tab</span></div></div>
-                    <div class="shortcut-row"><span>Vorheriges Bedienelement</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">Tab</span></div></div>
-                    <div class="shortcut-row"><span>Dialog oder Overlay schließen</span><div class="shortcut-keys"><span class="shortcut-key">Esc</span></div></div>
-                    <div class="shortcut-row"><span>Reihe gleichartiger Punkte (z. B. Zauberplätze): weiter</span><div class="shortcut-keys"><span class="shortcut-key">←</span><span class="shortcut-key">→</span></div></div>
-                    <div class="shortcut-row"><span>Steht die Reihe untereinander (z. B. Beute)</span><div class="shortcut-keys"><span class="shortcut-key">↑</span><span class="shortcut-key">↓</span></div></div>
-                    <div class="shortcut-row"><span>Erster bzw. letzter Punkt der Reihe</span><div class="shortcut-keys"><span class="shortcut-key">Pos1</span><span class="shortcut-key">Ende</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⌨️ Tabulator &amp; Gruppen</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Nächstes Bedienelement (im Dialog bleibt er darin)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Tab</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Vorheriges Bedienelement</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">Tab</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Dialog oder Overlay schließen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Esc</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Reihe gleichartiger Punkte (z. B. Zauberplätze): weiter</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">←</kbd><kbd class="shortcut-key">→</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Steht die Reihe untereinander (z. B. Beute)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">↑</kbd><kbd class="shortcut-key">↓</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Erster bzw. letzter Punkt der Reihe</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Pos1</kbd><kbd class="shortcut-key">Ende</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">🔊 Soundboard</div>
-                    <div class="shortcut-row"><span>Szene auf Schnellplatz 1-5</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">Shift</span><span class="shortcut-key">1-5</span></div></div>
-                    <div class="shortcut-row"><span>Stumm ein/aus</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">Shift</span><span class="shortcut-key">0</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">🔊 Soundboard</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Szene auf Schnellplatz 1-5</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">1-5</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Stumm ein/aus</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">0</kbd></dd></div>
+                    </dl>
                 </div>
             </div>
             <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
-                Drücke <span class="shortcut-key">Esc</span> zum Schließen
+                Drücke <kbd class="shortcut-key">Esc</kbd> zum Schließen
             </div>
         </div>
     </div>

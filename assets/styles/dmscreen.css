@@ -2531,3 +2531,47 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   DIE TASTENHILFE ALS BESCHREIBUNGSLISTE (HILF)
+   ============================================================
+   WARUM DIESE REGELN HIER UNTEN STEHEN: dieselbe Aktenlage wie beim
+   Media-Query darueber. tests/unit/design-consistency.test.js fuehrt
+   Schatten-, Ring- und Farbstellen als `dmscreen.css:<zeile>` und prueft,
+   dass der Anker seine Deklaration trifft. Ein Einschub oben verschiebt
+   jede Nummer darunter; am Dateiende verschiebt er nichts.
+
+   WOZU SIE DA SIND. Jede Hilfezeile ist seit HILF ein Begriff-/
+   Definitionspaar (`<dt>` Handlung, `<dd>` Taste) in einer `<dl>` je
+   Abschnitt — gemessen wuchs der Zugaenglichkeitsbaum der Hilfe damit von
+   DREI Knoten auf 98, und das Vorleseprogramm nennt Handlung und Taste
+   getrennt statt die ganze Hilfe als einen Satz. Die drei Vorgabewerte des
+   Browsers muessen dafuer zurueckgenommen werden, sonst bezahlt die
+   Gestalt fuer die Semantik:
+
+     · `<dl>` bringt `margin: 1em 0` mit. In einem Abschnitt von 12 px
+       Polster sind das 16 px oben und unten je Abschnitt.
+     · `<dd>` bringt `margin-inline-start: 40px` mit. Die Tastenmarken
+       stehen rechts in einer Reihe mit `justify-content: space-between`;
+       40 px Einzug schoben sie bei 360 px Breite aus der Spalte.
+     · `<dt>` ist ein Blockelement und bringt als Flex-Kind `min-width:
+       auto` mit — die Beschriftung haette dann nicht mehr umgebrochen,
+       sondern die Zeile verbreitert. Fall (8) in
+       tests/e2e/features/tastenhilfe.spec.js misst genau das (Umbruch,
+       Abschneiden, Querlauf bei 360, 390 und 1440 px).
+
+   `display: contents` WAERE DER KUERZERE WEG UND IST FALSCH: es nimmt dem
+   Element seine Box, und `<dd>` traegt hier die Klasse `.shortcut-keys`
+   mit `display: flex; gap: 4px` — die Marken verloeren damit ihren
+   Abstand. Zuruecknehmen, was der Browser vorgibt, ist billiger als die
+   Box aufzugeben.
+   ============================================================ */
+.shortcuts-section-list {
+    margin: 0;
+}
+
+.shortcut-row dt,
+.shortcut-row dd {
+    margin: 0;
+    min-width: 0;
+}
