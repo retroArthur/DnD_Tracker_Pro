@@ -305,7 +305,14 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # tests/build/ unberuehrt von meinen Commits). Die jest-Gates wurden
         # damals gepflegt, dieses Python-Gate nicht — wer ein Modul registriert,
         # muss BEIDE anfassen.
-        assert len(modules) == 141, f"Erwartet 141 Module, gefunden {len(modules)}"
+        # Nutzerentscheidung E-2 (TASV): 'ui/keyboard-group.js' neu registriert
+        # (Gruppenmechanik — ein Tabulatorhalt je Gruppe, darin Pfeiltasten plus
+        # Pos1/Ende). Steht NACH ui/keyboard-reach.js: es verteilt die Halte
+        # anders, die dort entstehen, und braucht deren Verzeichnis der
+        # versorgten Elemente (daran haengt nurMausfokus). Dieses zweite Gate
+        # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
+        # Absatz darueber einklagt.
+        assert len(modules) == 142, f"Erwartet 142 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
