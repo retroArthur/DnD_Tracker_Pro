@@ -1511,7 +1511,14 @@ test('(9) verschachtelte role="button" wachsen in keiner Ansicht', async ({ page
             'Struktur ist trotzdem falsch. Entweder die Nachfahren aus dem Behaelter ' +
             'herausziehen oder die Zahl mit einer Begruendung anheben.'
     ).toEqual({});
-    // Die Summe steht im Bericht, damit eine Verschiebung zwischen zwei
-    // Ansichten nicht unbemerkt bleibt.
-    expect(summe, `Summe der verschachtelten role="button" ueber alle Ansichten`).toBe(97);
+    // DIE SUMME ALS OBERGRENZE, nicht als Gleichheit. Sie steht daneben,
+    // weil die Zahl je Ansicht eine Verschiebung in eine neue Ansicht
+    // schon faengt, eine Summe aber auch dann noch etwas sagt, wenn
+    // jemand eine Grenze oben anhebt. SINKEN darf sie: jede Zeile, deren
+    // Knoepfe aus ihrem Behaelter herausgezogen werden, ist eine
+    // Verbesserung und soll keinen roten Fall erzeugen.
+    expect(
+        summe,
+        `Summe der verschachtelten role="button" ueber alle Ansichten (gemessen 97)`
+    ).toBeLessThanOrEqual(97);
 });
