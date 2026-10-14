@@ -543,9 +543,47 @@ function getCurrentStorageKey() {
 // Leertaste verbraucht, die eigentlich den Zug wechselt. Statt dessen wird
 // der Fokus beim Schliessen FREIGELASSEN (`blur()`), und die Leertaste
 // gehoert wieder dem Zug.
+/**
+ * Das Bedienelement, von dem aus die Hilfe geoeffnet wurde — oder `null`.
+ *
+ * DER UNTERSCHIED, DER MICH EINEN ROTEN FALL GEKOSTET HAT. Die erste Fassung
+ * merkte sich gar keinen Oeffner und gab den Fokus beim Schliessen frei. Das
+ * war fuer `?` richtig und fuer die Maus falsch:
+ * `tastatur-ausloesung.spec.js` (g2) klickt den ⌨️-Knopf, drueckt Escape und
+ * sichert zu, dass der geklickte Knopf den Fokus BEHAELT ("ohne diese
+ * Zusicherung misst der Fall nichts"). Gemessen nach der ersten Fassung:
+ * `BODY` statt `BUTTON` — der Fokus war weg, weil `showShortcutsOverlay()`
+ * ihn in die Hilfe geholt und `hideShortcutsOverlay()` ihn danach freigegeben
+ * hat.
+ *
+ * Richtig ist beides zugleich, und die Unterscheidung ist einfach: einen
+ * vorhandenen Oeffner WIEDERHERSTELLEN, aber keinen ERFINDEN. Bei `?` liegt
+ * der Fokus auf `BODY`, es gibt keinen Oeffner, und der Fokus wird
+ * freigegeben — sonst verbrauchte ein untergeschobener Oeffner die
+ * Leertaste, die danach wieder dem Zug gehoert (derselbe Fehler, den
+ * `tastatur-kuerzel.spec.js` (j) fuer den HP-Rechner festhaelt). Beim Klick
+ * auf den ⌨️-Knopf gibt es einen, und er bekommt den Fokus zurueck — so wie
+ * `ui/modal-focus.js` es fuer die 36 Schalen tut.
+ *
+ * EINE EINFACHE VARIABLE UND KEINE WeakMap, anders als bei den Schalen: es
+ * gibt genau EINE Tastenhilfe, sie kann nicht geschachtelt auftreten, und
+ * `showShortcutsOverlay()` ist der einzige Oeffner im Baum.
+ */
+let tastenhilfeOeffner = null;
+
 function showShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
     if (!overlay) return;
+    // Erst merken, dann den Fokus holen — in dieser Reihenfolge, sonst ist
+    // der Oeffner schon die Hilfe selbst.
+    const aktiv = document.activeElement;
+    tastenhilfeOeffner =
+        aktiv &&
+        aktiv !== document.body &&
+        !overlay.contains(aktiv) &&
+        typeof aktiv.focus === 'function'
+            ? aktiv
+            : null;
     overlay.classList.add('show');
     const flaeche = overlay.querySelector('.shortcuts-modal');
     if (flaeche) {
@@ -560,8 +598,13 @@ function hideShortcutsOverlay() {
     // Den Fokus nicht auf einer Flaeche mit `opacity: 0` stehen lassen: der
     // naechste Anschlag bediente sonst etwas Unsichtbares.
     if (document.activeElement && overlay.contains(document.activeElement)) {
-        document.activeElement.blur();
+        if (tastenhilfeOeffner && document.contains(tastenhilfeOeffner)) {
+            tastenhilfeOeffner.focus();
+        } else {
+            document.activeElement.blur();
+        }
     }
+    tastenhilfeOeffner = null;
     const flaeche = overlay.querySelector('.shortcuts-modal');
     if (flaeche) flaeche.removeAttribute('tabindex');
 }

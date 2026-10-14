@@ -1051,6 +1051,56 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
     });
 
     // ============================================================
+    // (7b) DIE ANDERE HAELFTE DERSELBEN SACHE
+    // ============================================================
+    //
+    // WARUM DIESER FALL HIER STEHT, OBWOHL `tastatur-ausloesung.spec.js` (g2)
+    // dasselbe zusichert. Weil (g2) mich erwischt hat und ich den Grund nicht
+    // ein zweites Mal selbst finden will. Die erste Fassung von Fall (7) hat
+    // den Fokus in die Hilfe geholt und beim Schliessen FREIGEGEBEN — richtig
+    // fuer `?`, falsch fuer die Maus: (g2) klickt den ⌨️-Knopf und sichert
+    // zu, dass der geklickte Knopf den Fokus behaelt. Gemessen nach jener
+    // Fassung: `BODY` statt `BUTTON`.
+    //
+    // (g2) liegt in einer Datei ueber die AUSLOESUNG von Kuerzeln; wer an der
+    // Fokusuebergabe der Hilfe arbeitet, fasst `showShortcutsOverlay()` an
+    // und fuehrt diese Datei. Die zwei Faelle bewachen dieselbe Zusicherung
+    // aus zwei Richtungen, und das ist hier Absicht und nicht Versehen: Fall
+    // (7) verlangt, dass der Fokus HINEIN geht, dieser hier, dass er
+    // ZURUECKKOMMT. Eine Umsetzung, die nur eines von beiden kann, ist rot —
+    // in genau einem der zwei Faelle.
+    test('(7b) per Maus geoeffnet, gibt Escape den Fokus an den Oeffner zurueck', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        await page.click('button[data-action="show-shortcuts-overlay"]');
+        await page.waitForTimeout(450);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Vorbedingung: der Klick oeffnet die Hilfe'
+        ).toBe(true);
+        expect(
+            await page.evaluate(() => !!document.activeElement?.closest?.('#shortcuts-overlay')),
+            'auch per Maus geoeffnet liegt der Fokus in der Hilfe — sonst ist ihr ' +
+                'Laufbereich wieder unerreichbar'
+        ).toBe(true);
+
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(450);
+        expect(
+            await page.evaluate(() => ({
+                tag: document.activeElement?.tagName,
+                aktion: document.activeElement?.getAttribute?.('data-action')
+            })),
+            'Nach Escape gehoert der Fokus dem geklickten ⌨️-Knopf zurueck. Liegt er auf ' +
+                'BODY, ist der Oeffner verloren — der Nutzer steht nach dem Schliessen am ' +
+                'Anfang der Tabulatorreihe und muss sich seinen Platz neu erlaufen.'
+        ).toEqual({ tag: 'BUTTON', aktion: 'show-shortcuts-overlay' });
+    });
+
+    // ============================================================
     // (8) DIE HILFE AUF DEM TELEFON
     // ============================================================
 
