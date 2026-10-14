@@ -150,52 +150,125 @@ const EINZELTASTEN = [
  * ihrer Ausgangsfassung). Ein Waechter, der nur Einzeltasten misst, haette
  * genau die Haelfte bewacht, die am wenigsten Drift zeigt, und die Luecken
  * `Strg+F`, `Strg+Shift+K`, `Alt+8` und die sechs Soundboard-Kuerzel waeren
- * ihm entgangen — also eben jene, die hier nachgetragen werden. Die Messung
- * wird darum ERWEITERT statt die Luecke erklaert.
+ * ihm entgangen — also eben jene, die in HILF nachgetragen wurden. Die
+ * Messung wird darum ERWEITERT statt die Luecke erklaert.
  *
- * Die Liste ist eine AUSWAHL und keine Aufzaehlung: eine vollstaendige
- * Kreuzung aus 4 Modifikatorlagen und 68 Kandidaten waere 272 Anschlaege je
- * Ansicht und liefe in kein Zeitbudget. Sie enthaelt (a) jedes in `CLAUDE.md`
- * gefuehrte Modifikatorkuerzel, (b) alle neun `Alt+Ziffer` und alle sieben
- * `Alt+Shift+Ziffer` (lueckenlos, weil dort die Belegung ziffernweise
- * springt), (c) die Buchstaben, auf denen ein Browser selbst ein Kuerzel
- * fuehrt (`a c v x p o n b i u g h l s f`) — dort tut eine App-Belegung am
- * meisten weh und faellt am ehesten unbemerkt an. Was NICHT gemessen wird,
- * steht in Fall (10) als gezaehlte Restschuld.
+ * WARUM DIE HANDVERLESENE LISTE NICHT GENUEGT HAT — Befund der Gegenpruefung.
+ * Ihre erste Fassung zaehlte 46 Kandidaten und erklaerte vier
+ * Modifikator-Kollisionen fuer abgeschlossen (`Strg+N`, `Strg+P`, `Alt+N`,
+ * `Alt+Shift+6`). Nachgemessen am gebauten Buendel waren es siebzehn weitere,
+ * und alle fehlten ausgerechnet DESHALB, weil die Liste von Hand gewaehlt
+ * war: `Strg+/` und `Alt+/` (Schnellreferenz auf, Fokus ins Suchfeld),
+ * `Alt+R` und `Alt+Shift+R` (wuerfeln), `Alt+P`, `Alt+Shift+P` und
+ * `Strg+Shift+P` (Zug rueckwaerts), `Alt+T`/`Alt+Shift+T` (Sitzungsuhr),
+ * `Alt+L`/`Alt+Shift+L` (Ereignislog), `Strg+Shift+N`/`Alt+Shift+N` (neue
+ * Kampfrunde), `Alt+Shift+8` (wuerfelt W8), `Strg+Shift+?`/`Alt+Shift+?`
+ * (oeffnen die Hilfe) und `Strg+Leertaste`/`Alt+Leertaste`/`Shift+Leertaste`
+ * (wechseln den Zug). Jede einzelne ist dieselbe Fehlerart: ein Zweig in
+ * `systems/spellslots/keyboard-shortcuts.js`, dem eine Modifikator-Schranke
+ * fehlt.
+ *
+ * DARUM IST DIE LISTE JETZT ZUM GROSSEN TEIL GERECHNET UND NICHT GETIPPT.
+ * Sie enthaelt:
+ *   (a) jedes in `CLAUDE.md` gefuehrte Modifikatorkuerzel;
+ *   (b) `Alt+Ziffer` und `Alt+Shift+Ziffer` LUECKENLOS ueber alle zehn
+ *       Ziffern — dort springt die Belegung ziffernweise (die
+ *       Soundboard-Familie prueft `e.code` 0-5, die Wuerfelfamilie `e.key`
+ *       1-9), und genau in dieser Luecke sass `Alt+Shift+8`;
+ *   (c) DIE VOLLE KREUZUNG der acht Einzeltasten-Kuerzel der App
+ *       (`r t l k n p h /`) mit den vier Modifikatorlagen `Strg`, `Alt`,
+ *       `Strg+Shift`, `Alt+Shift`. Das ist die Stelle, an der eine fehlende
+ *       Schranke entsteht, und eine gerechnete Kreuzung kann sie nicht
+ *       uebersehen — eine getippte Auswahl hat es siebzehnmal getan;
+ *   (d) die Buchstaben, auf denen ein Browser selbst ein Kuerzel fuehrt
+ *       (`a c v x o b i u g s`) — dort tut eine App-Belegung am meisten weh;
+ *   (e) die Shift-Lagen der uebrigen Kuerzel und die drei Leertasten-Lagen.
+ *
+ * IN DEN ZWEI SHIFT-LAGEN TRAGEN DIE KANDIDATEN DIE GESCHIFTETE GESTALT, und
+ * das ist keine Schoenheitsfrage. Playwright nimmt den Namen WOERTLICH:
+ * nachgemessen liefert `Control+Shift+n` ein `keydown` mit `key === 'n'` UND
+ * `shiftKey === true` — eine Lage, die kein Tastenbrett erzeugt (dort gibt
+ * Shift+N `key === 'N'`). Der erste Durchgang dieser Kreuzung hat damit
+ * gemessen, dass `Strg+Shift+P` und `Shift+N` "belegt" seien, weil die
+ * Zweige fuer die KLEINEN Buchstaben ansprangen. Das waeren Befunde ueber
+ * eine Tastatur, die es nicht gibt. Die Lagen heissen darum
+ * `Control+Shift+R`, `Alt+Shift+?` usw. — nachgemessen `key === 'R'` bzw.
+ * `key === '?'` mit `shiftKey === true`, also genau das, was ein Geraet
+ * schickt.
+ *
+ * DIE DREI `Shift+/`-FORMEN BLEIBEN TROTZDEM DRIN, als eigene Zeilen in (e).
+ * Der `?`-Zweig der App fuehrt ausdruecklich einen Rueckfall
+ * (`e.shiftKey && e.key === '/'`) fuer Tastaturbilder, auf denen Shift+/
+ * eben KEIN `?` liefert. Dieser Rueckfall ist Code und gehoert gemessen —
+ * auf einem solchen Geraet waere `Strg+Shift+/` eine echte Kollision,
+ * derselben Art wie `Alt+Shift+6`.
+ *
+ * Eine vollstaendige Kreuzung aus vier Lagen und allen 68 Kandidaten waere
+ * 272 Anschlaege JE ANSICHT und liefe in kein Zeitbudget. Was NICHT gemessen
+ * wird, steht in Fall (10) als gezaehlte Restschuld.
  */
+const APP_EINZELKUERZEL = [
+    { ohne: 'r', mitShift: 'R' },
+    { ohne: 't', mitShift: 'T' },
+    { ohne: 'l', mitShift: 'L' },
+    { ohne: 'k', mitShift: 'K' },
+    { ohne: 'n', mitShift: 'N' },
+    { ohne: 'p', mitShift: 'P' },
+    { ohne: 'h', mitShift: 'H' },
+    { ohne: '/', mitShift: '?' }
+];
+const MODIFIKATORLAGEN = [
+    { vorsatz: 'Control+', geschiftet: false },
+    { vorsatz: 'Alt+', geschiftet: false },
+    { vorsatz: 'Control+Shift+', geschiftet: true },
+    { vorsatz: 'Alt+Shift+', geschiftet: true }
+];
+/** Die gerechnete Kreuzung aus (c) — 4 Lagen x 8 Kuerzel. */
+const KREUZUNG = MODIFIKATORLAGEN.flatMap(lage =>
+    APP_EINZELKUERZEL.map(k => lage.vorsatz + (lage.geschiftet ? k.mitShift : k.ohne))
+);
 const MODIFIKATORTASTEN = [
-    'Control+z',
-    'Control+y',
-    'Control+s',
-    'Control+k',
-    'Control+f',
-    'Control+Shift+K',
-    'Control+.',
-    'Control+a',
-    'Control+c',
-    'Control+v',
-    'Control+x',
-    'Control+p',
-    'Control+o',
-    'Control+n',
-    'Control+b',
-    'Control+i',
-    'Control+u',
-    'Control+g',
-    'Control+h',
-    'Control+l',
-    'Control+Shift+Z',
-    'Control+Shift+S',
-    'Control+Shift+F',
-    ...Array.from({ length: 9 }, (_, i) => `Alt+${i + 1}`),
-    ...Array.from({ length: 7 }, (_, i) => `Alt+Shift+${i}`),
-    'Alt+a',
-    'Alt+s',
-    'Alt+n',
-    'Shift+N',
-    'Shift+P',
-    'Shift+K',
-    'Shift+/'
+    ...new Set([
+        // (a) jedes in CLAUDE.md gefuehrte Modifikatorkuerzel
+        'Control+z',
+        'Control+y',
+        'Control+s',
+        'Control+k',
+        'Control+f',
+        'Control+Shift+K',
+        'Control+.',
+        // (b) die zwei Ziffernfamilien, lueckenlos
+        ...Array.from({ length: 10 }, (_, i) => `Alt+${i}`),
+        ...Array.from({ length: 10 }, (_, i) => `Alt+Shift+${i}`),
+        // (c) die gerechnete Kreuzung — der Kern dieser Liste
+        ...KREUZUNG,
+        // (d) die Buchstaben mit eigenem Browserkuerzel
+        'Control+a',
+        'Control+c',
+        'Control+v',
+        'Control+x',
+        'Control+o',
+        'Control+b',
+        'Control+i',
+        'Control+u',
+        'Control+g',
+        'Control+Shift+Z',
+        'Control+Shift+S',
+        'Control+Shift+F',
+        'Alt+a',
+        'Alt+s',
+        // (e) die Shift-Lagen, die drei Leertasten-Lagen und die drei
+        //     Rueckfall-Formen von Shift+/
+        'Shift+N',
+        'Shift+P',
+        'Shift+K',
+        'Shift+/',
+        'Control+Shift+/',
+        'Alt+Shift+/',
+        'Control+Space',
+        'Alt+Space',
+        'Shift+Space'
+    ])
 ];
 
 /** Die benannten Tasten — keine Zeichen, darum eine eigene Reihe. */
@@ -309,16 +382,21 @@ const NUR_HILFE = [
             'Tabulator ist bei BODY-Fokus die Browservorgabe (gemessen: ' +
             'defaultPrevented false, nur der Fokus wandert) und wird nach der Belegungs- ' +
             'regel dieser Datei zu Recht nicht als App-Taste gezaehlt. Seine App-Wirkung ' +
-            '— die Fokusfalle — liegt im offenen Dialog und ist in `modal-fokus.spec.js` ' +
-            'bewacht, nicht hier.'
+            'liegt im offenen Dialog — fuer die 36 Schalen bewacht von ' +
+            '`modal-fokus.spec.js`, FUER DIESE HILFE von Fall (13) in dieser Datei. Die ' +
+            'frueher hier stehende Begruendung verwies allein auf jene Datei und war ' +
+            'falsch: `ui/modal-focus.js` liess die Hilfe per gemessener Entscheidung aus, ' +
+            'und 44 von 45 Spruengen verliessen sie, waehrend sie die Zusage druckte.'
     },
     {
         taste: 'SHIFT+TAB',
         grund:
             'Dieselbe Lage wie TAB, nur die Gegenrichtung: bei BODY-Fokus die ' +
-            'Browservorgabe, und die App-Wirkung liegt im offenen Dialog, wo ' +
-            '`modal-fokus.spec.js` sie bewacht. Eine eigene Messung hier waere eine ' +
-            'zweite, schwaechere Kopie jener Datei.'
+            'Browservorgabe. Die App-Wirkung im offenen Dialog misst fuer die Hilfe ' +
+            'Fall (13) dieser Datei mit — er fuehrt BEIDE Richtungen, weil eine Falle, ' +
+            'die nur vorwaerts haelt, keine ist (gemessen: 10 von 10 Shift+Tab draussen). ' +
+            'Fuer die 36 Schalen bleibt `modal-fokus.spec.js` zustaendig; eine eigene ' +
+            'Messung dafuer waere hier eine zweite, schwaechere Kopie jener Datei.'
     }
 ];
 
@@ -846,6 +924,34 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
                 '`#shortcuts-overlay` — oder, wenn der Eintrag falsch waere, mit Grund ' +
                 'auf `AUSNAHMEN` in dieser Datei (dann steigt die Zahl in Fall 6).'
         ).toEqual([]);
+
+        // UND DIE DRITTE RICHTUNG, die bis zur Gegenpruefung fehlte: ein
+        // Eintrag auf `AUSNAHMEN`, dessen Taste GAR NICHT MEHR BELEGT ist.
+        //
+        // WARUM DAS EINE EIGENE PRUEFUNG BRAUCHT. Fall (4) faengt den Eintrag,
+        // der in der Hilfe nachgetragen WURDE. Er faengt NICHT den Eintrag,
+        // dessen Grund jemand BEHOBEN hat: `AUSNAHMEN` entschuldigt
+        // ausschliesslich fehlende Modifikator-Schranken, und wer eine
+        // nachtraegt, nimmt der Kollision die Belegung — die Taste steht dann
+        // weder in der Hilfe noch wirkt sie, und der Eintrag entschuldigt
+        // nichts mehr. Liegengeblieben ist er dann eine stille Freigabe
+        // genau derselben Art, die der `nurHilfeTot`-Zweig in Fall (4) fuer
+        // die Gegenliste schon kennt: beim naechsten Mal, wenn jemand die
+        // Schranke versehentlich wieder entfernt, meldet Fall (3) es NICHT.
+        // Diese Pruefung steht hier und nicht in (4), weil die Messung
+        // schon vorliegt — ein zweiter Lauf ueber 170 Anschlaege nur fuer
+        // vier Namen waere Verschwendung.
+        const ausnahmenOhneBelegung = AUSNAHMEN.map(a => a.taste).filter(t => !alle.has(t));
+        expect(
+            ausnahmenOhneBelegung,
+            'Diese Eintraege von `AUSNAHMEN` nennen eine Taste, die in keiner der ' +
+                `gemessenen Lagen etwas tut: ${ausnahmenOhneBelegung.join(' ')}. Die Liste ` +
+                'entschuldigt damit nichts mehr — sie ist an dieser Stelle toter Ballast ' +
+                'und wuerde einen echten Rueckfall an derselben Taste verschlucken. ' +
+                'Eintrag aus `AUSNAHMEN` streichen und die Zahl in Fall (6) senken.\n' +
+                'Gemessen belegt wurden: ' +
+                [...alle.keys()].sort().join(' ')
+        ).toEqual([]);
     });
 
     // ============================================================
@@ -1297,24 +1403,50 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
         // nachpruefbar bleibt und nicht mit der Zeit groesser erzaehlt wird.
         expect(EINZELTASTEN.length, '68 Einzelkandidaten wie in der Vermessung zu E-4').toBe(68);
         expect(new Set(EINZELTASTEN).size, 'ohne Dubletten').toBe(68);
-        expect(MODIFIKATORTASTEN.length, 'die benannte Auswahl der Modifikatorkuerzel').toBe(46);
-        expect(new Set(MODIFIKATORTASTEN).size, 'ohne Dubletten').toBe(46);
+        expect(MODIFIKATORTASTEN.length, 'die gerechnete Menge der Modifikatorkuerzel').toBe(80);
+        expect(new Set(MODIFIKATORTASTEN).size, 'ohne Dubletten').toBe(80);
         expect(SONDERTASTEN.length, 'die benannten Tasten').toBe(14);
         expect(GRUPPENTASTEN.length, 'die Gruppentasten aus E-2').toBe(6);
+
+        // UND DER GERECHNETE KERN IST VOLLSTAENDIG. Diese zwei Zusicherungen
+        // sind der Unterschied zur ersten Fassung: die Kreuzung aus den acht
+        // Einzeltasten-Kuerzeln und den vier Modifikatorlagen muss
+        // LUECKENLOS in der Messmenge stehen. Genau dort sassen die acht
+        // Kollisionen, die eine handverlesene Liste von 46 Kandidaten
+        // uebersehen hat.
+        expect(APP_EINZELKUERZEL.length, 'die acht Einzeltasten-Kuerzel der App').toBe(8);
+        expect(MODIFIKATORLAGEN.length, 'die vier Modifikatorlagen').toBe(4);
+        expect(KREUZUNG.length, 'vier Lagen mal acht Kuerzel').toBe(32);
+        const kreuzungFehlt = KREUZUNG.filter(k => !MODIFIKATORTASTEN.includes(k));
+        expect(
+            kreuzungFehlt,
+            'Diese Kombinationen der gerechneten Kreuzung fehlen in der Messmenge: ' +
+                `${kreuzungFehlt.join(' ')}. Die Kreuzung ist der Kern dieser Liste — ` +
+                'eine Luecke darin ist genau der Fehler, den die erste Fassung achtmal ' +
+                'gemacht hat.'
+        ).toEqual([]);
+        for (const ziffer of '0123456789'.split('')) {
+            expect(MODIFIKATORTASTEN, `Alt+${ziffer} wird gemessen`).toContain(`Alt+${ziffer}`);
+            expect(MODIFIKATORTASTEN, `Alt+Shift+${ziffer} wird gemessen`).toContain(
+                `Alt+Shift+${ziffer}`
+            );
+        }
 
         // NICHT GEMESSEN, und das ist die ehrliche Rechnung: die volle
         // Kreuzung aus vier Modifikatorlagen (Strg, Alt, Shift, Alt+Shift)
         // und 68 Kandidaten waere 272 Anschlaege JE ANSICHT. Gemessen werden
-        // 46 — also 226 Kombinationen weniger, und das in zwei von 24
-        // Ansichten. Die Auswahl deckt (a) alle in `CLAUDE.md` gefuehrten
-        // Modifikatorkuerzel, (b) alle 16 `Alt+Ziffer` und
-        // `Alt+Shift+Ziffer` lueckenlos, (c) die Buchstaben, auf denen der
-        // Browser selbst ein Kuerzel fuehrt. Was fehlt, sind
-        // Modifikator-Kombinationen auf Buchstaben OHNE Browserkuerzel und
-        // auf Satzzeichen. Ein Kuerzel dort waere ein ungewoehnlicher Griff;
-        // die Luecke ist bekannt und nicht verschwiegen.
+        // 80 — also 192 Kombinationen weniger, und das in zwei von 24
+        // Ansichten. Was fehlt, sind Modifikator-Kombinationen auf
+        // Buchstaben OHNE eigenes App- oder Browserkuerzel und auf
+        // Satzzeichen; dazu die DREIFACHEN Lagen (`Strg+Alt+…`,
+        // `Strg+Alt+Shift+…`), die in dieser Datei gar nicht vorkommen — dort
+        // sitzen die drei Zweige, die nur `(e.ctrlKey || e.metaKey)` pruefen
+        // (`Strg+S`, `Strg+K/F`, die Soundboard-Familie) und die eine
+        // `Strg+Alt`-Lage mitnehmen wuerden. Ein Kuerzel dort waere ein
+        // ungewoehnlicher Griff; die Luecke ist gezaehlt und nicht
+        // verschwiegen.
         const VOLLE_KREUZUNG = 4 * 68;
-        expect(VOLLE_KREUZUNG - MODIFIKATORTASTEN.length).toBe(226);
+        expect(VOLLE_KREUZUNG - MODIFIKATORTASTEN.length).toBe(192);
     });
 });
 
