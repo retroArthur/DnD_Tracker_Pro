@@ -131,15 +131,47 @@ const schalenSammlung = document.getElementsByClassName(SCHALEN_KLASSE);
  * und den Fokus in den verdeckten Dialog ziehen — derselbe Fehler, nur einen
  * Anschlag spaeter. Darum entscheidet die offene Blende, nicht der Fokus.
  *
- * WARUM `.shortcuts-overlay.show` NICHT DAZUGEHOERT. Nachgemessen in beiden
- * Armen: mit UND ohne Falle landen 4 von 4 Spruengen im verdeckten Dialog,
- * und Enter aendert beide Male das Thema. Die Blende hat keine eigenen
- * Haltepunkte — es gibt dort nichts zu entziehen, der Befund ist vorbestehend
- * und nicht von der Falle verursacht. Ein unbelegter Selektor in einem Zweig,
- * der bei jedem Tabulatordruck laeuft, ist keine Vorsichtsmassnahme, sondern
- * ungemessener Code. Ebenso die Schnell-Referenz (`/`): ihr Panel liegt mit
- * z-index 600 UNTER der Dialogflaeche (1000), und ohne Falle sind ihre Reiter
- * verdeckt erreichbar — dort VERBESSERT die Falle die Lage.
+ * WARUM `.shortcuts-overlay.show` NICHT IN DIESEN SELEKTOR GEHOERT, WOHL ABER
+ * IN DIE FALLE — und warum die frueher hier stehende Begruendung ("die Blende
+ * hat keine eigenen Haltepunkte, es gibt nichts zu entziehen") nicht mehr
+ * traegt. Jene Messung lief in EINER Lage: Tastenhilfe UEBER einem offenen
+ * Dialog. Dort war sie richtig — mit UND ohne Falle landeten 4 von 4
+ * Spruengen im verdeckten Dialog, der Befund war vorbestehend. Nur ist das
+ * nicht die Lage, die der Spielleiter herstellt: er drueckt `?` und hat NUR
+ * die Hilfe offen, und seit der Fokusuebergabe von HILF Fall (7) liegt der
+ * Fokus dabei in ihr. Nachgemessen am gebauten Buendel (1440x900, echte
+ * Tastendruecke): 44 von 45 Tabulatorspruengen verliessen die offene Hilfe,
+ * 35 davon landeten auf einem Ziel, das die Blende verdeckt
+ * (`document.elementFromPoint` ueber der Mitte liefert
+ * `DIV.shortcuts-overlay`), waehrend die Hilfe sichtbar offen blieb;
+ * Shift+Tab 10 von 10. Von 109 sichtbaren Haltepunkten der Seite lag genau
+ * EINER in der Hilfe. Und die Hilfe DRUCKT die Zusage selbst: "Naechstes
+ * Bedienelement (im Dialog bleibt er darin)". Eine falsche Hilfe ist
+ * schlimmer als eine fehlende.
+ *
+ * SIE KOMMT DARUM IN DIE FALLE, ABER NICHT IN `oberstesModal()`. Der
+ * Unterschied ist nicht Kosmetik: `oberstesModal()` beantwortet die Frage
+ * "welche SCHALE ist offen" und wird ausserhalb dieser Datei als genau das
+ * gelesen — der Escape-Zweig in `systems/spellslots/keyboard-shortcuts.js`
+ * schliesst damit ueber `hideModal(m.id)`, und die vierte Schranke des
+ * HP-Kuerzels verweigert damit einen Dialog ueber einem Dialog. Die Hilfe
+ * ist keine Schale: sie hat ihr eigenes `hideShortcutsOverlay()` (es nimmt
+ * das `tabindex` von der Flaeche zurueck) und wird im Escape-Zweig schon
+ * eine Stufe vorher behandelt. Haengte man sie in `oberstesModal()`, erbte
+ * sie stillschweigend beide fremden Bedeutungen.
+ *
+ * `offeneTastenhilfe()` ist darum ein eigener, danebenstehender Griff, und
+ * `_tab()` fragt ihn ZUERST: liegt die Hilfe offen, gehoert der Tabulator
+ * ihr — auch dann, wenn darunter noch eine Schale steht. Das ist die
+ * Schichtung des Bildschirms (z-index 2000 gegen 1000) und zugleich die
+ * Lage, die der HP-Befund von Runde 2 als Fehler festgehalten hat: ein
+ * Dialog UNTER der Hilfe ist nichts, dessen Tabulatorreihe man noch bedienen
+ * soll.
+ *
+ * NICHT BETROFFEN, und auch das ist gemessen: die Schnell-Referenz (`/`).
+ * Ihr Panel liegt mit z-index 600 UNTER der Dialogflaeche (1000), und ohne
+ * Falle sind ihre Reiter verdeckt erreichbar — dort VERBESSERT die Falle die
+ * Lage.
  *
  * KOSTEN, gemessen in der Party-Ansicht bei zwanzig Eintraegen je Typ
  * (9147 Knoten), je Tabulatordruck:
@@ -156,6 +188,20 @@ const schalenSammlung = document.getElementsByClassName(SCHALEN_KLASSE);
 const BLENDEN_KLASSE = 'cp-overlay';
 const BLENDE_OFFEN_KLASSE = 'cp-visible';
 const blendenSammlung = document.getElementsByClassName(BLENDEN_KLASSE);
+
+/**
+ * Die Tastenhilfe (`?`). Begruendung, Messwerte und die Abgrenzung zu
+ * `oberstesModal()` stehen im Block oben; bewacht von Fall (13) in
+ * `tests/e2e/features/tastenhilfe.spec.js`.
+ *
+ * Als lebende Sammlung plus `classList`, aus demselben gemessenen Grund wie
+ * die Schalen und die Palette daneben: der Griff laeuft bei JEDEM
+ * Tabulatordruck der ganzen App. Sie enthaelt genau einen Knoten, und `show`
+ * muss mitgeprueft werden — die Blende liegt dauerhaft im Dokument und ist
+ * geschlossen nur ueber `opacity: 0` und `pointer-events: none` verborgen.
+ */
+const TASTENHILFE_KLASSE = 'shortcuts-overlay';
+const tastenhilfeSammlung = document.getElementsByClassName(TASTENHILFE_KLASSE);
 
 /**
  * Was als Haltepunkt zaehlt. Dieselbe Liste, die auch die Vermessung und
@@ -299,6 +345,22 @@ const ModalFocus = {
             }
         }
         return beste;
+    },
+
+    /**
+     * Die offene Tastenhilfe, oder `null`. Sie ist KEINE Schale und steht
+     * darum nicht in `oberstesModal()` — Begruendung und Messwerte an
+     * `TASTENHILFE_KLASSE`.
+     * @returns {Element|null}
+     */
+    offeneTastenhilfe() {
+        for (let i = 0; i < tastenhilfeSammlung.length; i++) {
+            const n = tastenhilfeSammlung[i];
+            if (!n.classList.contains('show')) continue;
+            const s = getComputedStyle(n);
+            if (s.display !== 'none' && s.visibility !== 'hidden') return n;
+        }
+        return null;
     },
 
     /**
@@ -602,7 +664,14 @@ const ModalFocus = {
      */
     _tab(e) {
         if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
-        const m = this.oberstesModal();
+        // DIE TASTENHILFE ZUERST, und zwar VOR `oberstesModal()`: liegt sie
+        // offen, gehoert der Tabulator ihr, auch wenn darunter eine Schale
+        // steht (z-index 2000 gegen 1000). Sie ist keine Schale und steht
+        // darum nicht in `oberstesModal()` — die ganze Begruendung samt
+        // Messwerten an `TASTENHILFE_KLASSE`, bewacht von Fall (13) in
+        // `tests/e2e/features/tastenhilfe.spec.js`.
+        const hilfe = this.offeneTastenhilfe();
+        const m = hilfe || this.oberstesModal();
         if (!m) return;
         // EINE BLENDE UEBER DEM DIALOG BEHAELT DEN TABULATOR. Dieser Zweig
         // steht VOR jedem `preventDefault()` — der Anschlag geht unveraendert
@@ -652,14 +721,20 @@ const ModalFocus = {
 
     /**
      * Diagnose fuer die Konsole und fuer Messungen.
-     * @returns {{ aktiv: boolean, offen: string|null, haltepunkte: number,
-     *             blende: boolean }}
+     * @returns {{ aktiv: boolean, offen: string|null, tastenhilfe: boolean,
+     *             haltepunkte: number, blende: boolean }}
      */
     statistik() {
-        const m = this.oberstesModal();
+        const hilfe = this.offeneTastenhilfe();
+        const m = hilfe || this.oberstesModal();
         return {
             aktiv: !!this._eingehaengt,
             offen: m ? m.id || '(ohne id)' : null,
+            // `true` heisst: die Tastenhilfe fuehrt den Tabulator, nicht
+            // eine Schale. Sie steht nicht in `oberstesModal()` — darum
+            // diese eigene Zeile, damit eine Messung die Lage unterscheiden
+            // kann, ohne den Selektor abzutippen.
+            tastenhilfe: !!hilfe,
             haltepunkte: m ? this.haltepunkte(m).length : 0,
             // `true` heisst: eine hoehere Schicht hat den Tabulator, die
             // Falle ist gerade bewusst inert.

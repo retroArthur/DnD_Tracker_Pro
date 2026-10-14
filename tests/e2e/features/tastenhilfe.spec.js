@@ -310,56 +310,46 @@ const GRUPPE_SENKRECHT = {
 };
 
 /**
- * DIE AUSNAHMELISTE — gezaehlt, begruendet, und mit Verwesungsprobe.
+ * DIE AUSNAHMELISTE — LEER, und das ist der Punkt.
  *
  * Hierhin gehoert eine gemessen belegte Taste AUSSCHLIESSLICH dann, wenn ihr
- * Eintrag in die Hilfe falsch WAERE. Alle vier Eintraege sind von derselben
- * Art: ein Zweig in `systems/spellslots/keyboard-shortcuts.js`, dem eine
- * Modifikator-Schranke fehlt, sodass das Einzeltasten-Kuerzel auch mit
- * Modifikator feuert. Das ist eine unbeabsichtigte Kollision und ein Befund
- * fuer sich — sie in die Hilfe zu schreiben hiesse, sie als Zusage
- * festzuschreiben, und der naechste, der die Schranke nachtraegt, muesste
- * die Hilfe wieder zuruecknehmen.
+ * Eintrag in die Hilfe falsch WAERE. Sie hatte vier Eintraege, und alle vier
+ * waren von derselben Art: ein Zweig in
+ * `systems/spellslots/keyboard-shortcuts.js`, dem eine Modifikator-Schranke
+ * fehlte, sodass das Einzeltasten-Kuerzel auch mit Modifikator feuerte
+ * (`Strg+N`, `Strg+P`, `Alt+N`, `Alt+Shift+6`). In die Hilfe geschrieben
+ * waere das eine Zusage gewesen; also standen sie hier.
  *
- * Fall (4) ist die VERWESUNGSPROBE: steht eine Taste hier UND in der Hilfe,
- * wird es rot. Die Liste kann also nicht als stille Freigabe liegenbleiben,
- * und beim Nachtragen eines Eintrags in die Hilfe MUSS sie schrumpfen.
- * Fall (6) nagelt ihre Laenge fest: ein fuenfter Eintrag braucht eine
- * Aenderung an dieser Zahl und damit eine bewusste Entscheidung.
+ * WARUM SIE JETZT LEER IST UND NICHT LAENGER. Die gerechnete Kreuzung oben
+ * hat sechzehn WEITERE Kollisionen derselben Art gefunden — zwanzig
+ * insgesamt, von denen vier bekannt waren. Zwanzig Eintraege auf einer
+ * Entschuldigungsliste sind keine Ausnahme mehr, sondern ein Zustand. Und
+ * die Entschuldigung war von Anfang an die zweitbeste Loesung: `Strg+P` ist
+ * das Drucken des Browsers, `Strg+Leertaste` die Eingabemethode,
+ * `Shift+Leertaste` der Seitenlauf nach oben — die App nahm sie, ohne es
+ * irgendwo zu sagen. Die Schranke `OHNE_MODIFIKATOR(e)` nimmt allen zwanzig
+ * die Belegung; damit braucht keine eine Entschuldigung und keine eine
+ * Zeile in der Hilfe.
+ *
+ * SIE BLEIBT TROTZDEM STEHEN, als leeres Feld mit diesem Text — wie die
+ * `EXEC_COMMAND_ALLOWLIST` in `editor-floating.spec.js`, die laut CLAUDE.md
+ * "bewusst leer, nicht abwesend" ist. Drei Faelle haengen daran, und jeder
+ * beantwortet eine andere Frage:
+ *   · Fall (3) laesst eine belegte Taste durch, die hier steht — mit leerer
+ *     Liste also keine;
+ *   · Fall (4) wird rot, wenn eine Taste hier UND in der Hilfe steht;
+ *   · Fall (3), dritte Richtung, wird rot, wenn eine Taste hier steht und
+ *     gar nicht mehr belegt ist. Genau dieser Zweig haette die vier alten
+ *     Eintraege nach dieser Arbeit gemeldet, und er ist der Grund, warum sie
+ *     nicht als toter Ballast liegengeblieben sind.
+ * Fall (6) nagelt die Laenge auf NULL. Ein erster Eintrag braucht damit eine
+ * Aenderung an jener Zahl und also eine bewusste Entscheidung — und einen
+ * Grund von mehr als 80 Zeichen, der sagt, warum die Taste nicht in die
+ * Hilfe gehoert.
+ *
+ * @type {{taste: string, grund: string}[]}
  */
-const AUSNAHMEN = [
-    {
-        taste: 'STRG+N',
-        grund:
-            'Unbeabsichtigte Kollision: dem `n`-Zweig (naechster Zug) fehlt die ' +
-            '`!e.ctrlKey`-Schranke, darum wechselt Strg+N den Zug statt ein Fenster zu ' +
-            'oeffnen. Gemessen: zug 0 -> 1, defaultPrevented. Befund, keine Zusage — in ' +
-            'die Hilfe geschrieben waere es eine.'
-    },
-    {
-        taste: 'STRG+P',
-        grund:
-            'Unbeabsichtigte Kollision: dem `p`-Zweig (vorheriger Zug) fehlt die ' +
-            '`!e.ctrlKey`-Schranke, darum verschluckt Strg+P in der Initiative-Ansicht ' +
-            'das Drucken des Browsers. Gemessen: zug 0 -> 5, defaultPrevented.'
-    },
-    {
-        taste: 'ALT+N',
-        grund:
-            'Unbeabsichtigte Kollision: dem `n`-Zweig fehlt auch die `!e.altKey`-Schranke. ' +
-            'Gemessen: zug 0 -> 1, defaultPrevented.'
-    },
-    {
-        taste: 'ALT+SHIFT+6',
-        grund:
-            'Unbeabsichtigte Kollision zwischen zwei Familien: Alt+Shift+0..5 sind die ' +
-            'Soundboard-Plaetze (die pruefen `e.code`), Alt+Ziffer sind die Schnellwuerfel ' +
-            '(die pruefen `e.key` ohne `!e.shiftKey`). Alt+Shift+6 fallen durch die erste ' +
-            'in die zweite und wuerfeln W6. Ob es im echten Browser feuert, haengt am ' +
-            'Tastaturbild (ob Shift+6 `e.key === "6"` liefert) — eine Zusage, die von der ' +
-            'Belegung des Geraets abhaengt, gehoert nicht in eine Hilfe.'
-    }
-];
+const AUSNAHMEN = [];
 
 /**
  * DIE GEGENRICHTUNG (Fall 5): Reihen der Hilfe, deren Taste in KEINER der
@@ -1048,7 +1038,7 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
         // eine Entscheidung und kein Nebenprodukt: nach OBEN heisst sie "eine
         // weitere Taste bleibt undokumentiert", nach UNTEN "eine Luecke ist
         // geschlossen". Beides gehoert in eine Commit-Botschaft.
-        expect(AUSNAHMEN.length, 'Die Ausnahmeliste hat vier Eintraege').toBe(4);
+        expect(AUSNAHMEN.length, 'Die Ausnahmeliste ist leer — Begruendung an `AUSNAHMEN`').toBe(0);
         expect(NUR_HILFE.length, 'Die Gegenliste hat drei Eintraege').toBe(3);
 
         for (const eintrag of [...AUSNAHMEN, ...NUR_HILFE]) {

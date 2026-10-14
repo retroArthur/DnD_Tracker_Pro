@@ -17,6 +17,50 @@ const TASTEN_BEDIENELEMENT_SELEKTOR =
 const TASTE_HP_RECHNER = 'h';
 
 /**
+ * EIN EINZELTASTEN-KUERZEL GILT OHNE STRG, OHNE ALT, OHNE META (HILF).
+ *
+ * WARUM DAS EINE FUNKTION IST UND NICHT DREIMAL DREI NEGATIONEN. Weil die
+ * Negationen genau so entstanden sind — einzeln, je Zweig, von Hand — und
+ * darum an elf Zweigen unterschiedlich lueckenhaft waren. Nachgemessen am
+ * gebauten Buendel mit einer GERECHNETEN Kreuzung aus den acht
+ * Einzeltasten-Kuerzeln (`r t l k n p h /`) und vier Modifikatorlagen, 80
+ * Kombinationen je Ansicht, echte Tastendruecke, `defaultPrevented` am
+ * `window` in der Blasenphase plus eine Wirkungsspur aus dreizehn Groessen:
+ *
+ *   Strg+/, Alt+/                 Schnellreferenz auf, Fokus in ihr Suchfeld
+ *   Alt+R                         wuerfelt W20
+ *   Alt+T                         startet die Sitzungsuhr
+ *   Alt+L                         stellt das Ereignislog dauerhaft
+ *   Alt+P, Strg+P                 Zug rueckwaerts (0 -> 5)
+ *   Strg+N, Alt+N                 Zug vorwaerts (0 -> 1)
+ *   Strg+Shift+N, Alt+Shift+N     neue Kampfrunde
+ *   Strg+Shift+?, Alt+Shift+?     oeffnen die Hilfe
+ *   Strg+Shift+/, Alt+Shift+/     dito, ueber den Rueckfallzweig
+ *   Alt+Shift+6, Alt+Shift+8      wuerfeln W6 bzw. W8
+ *   Strg+/Alt+/Shift+Leertaste    Zug vorwaerts
+ *
+ * Zwanzig Kollisionen, von denen die Vorgabe vier kannte. Keine davon war
+ * gewollt, und mehrere nehmen dem Browser etwas weg: `Strg+P` ist das
+ * Drucken, `Strg+Leertaste` und `Alt+Leertaste` sind Eingabemethode bzw.
+ * Fenstermenue, `Shift+Leertaste` ist der Seitenlauf nach oben. Die App nahm
+ * sie alle, ohne es irgendwo zu sagen.
+ *
+ * `e.shiftKey` IST ABSICHTLICH NICHT DABEI. Shift aendert bei einem
+ * Buchstaben die Taste selbst (`n` wird zu `N`), die Zweige unterscheiden
+ * sich also schon ueber `e.key`; und der `?`-Zweig BRAUCHT Shift. Wo eine
+ * Shift-Lage trotzdem zu sperren war, steht `!e.shiftKey` daneben und
+ * einzeln begruendet — bei der Leertaste, beim Wuerfelzweig, bei `/` und
+ * bei `p`.
+ *
+ * Bewacht von Fall (3) in `tests/e2e/features/tastenhilfe.spec.js`: jede
+ * gemessen belegte Taste steht in der Tastenhilfe oder auf einer
+ * begruendeten Ausnahmeliste. Nach dieser Schranke ist jene Liste LEER.
+ * @param {KeyboardEvent} e
+ * @returns {boolean}
+ */
+const OHNE_MODIFIKATOR = e => !e.ctrlKey && !e.metaKey && !e.altKey;
+
+/**
  * DIE EINE BLENDE, UNTER DIE DAS KUERZEL KEINEN DIALOG LEGEN DARF: die
  * Tastenhilfe (`?`).
  *
@@ -218,6 +262,55 @@ function initKeyboardShortcuts() {
             !window.KeyboardReach?.nurMausfokus?.(activeEl);
 
         // ============================================================
+        // DIE OFFENE TASTENHILFE MACHT DIE APP TAUB (HILF, Befund 2)
+        // ============================================================
+        // WAS GEMESSEN WAR, am gebauten Buendel, je Taste frischer Zustand,
+        // Hilfe mit `?` geoeffnet, Initiative-Ansicht: von 44 Proben
+        // aenderten 30 den Zustand HINTER der Blende, und die Hilfe blieb in
+        // allen 44 Faellen offen. `2` wechselte die Ansicht
+        // (view-initiative -> view-party), `9` nach view-loot, `N` den Zug
+        // (0 -> 1), `P` rueckwaerts (0 -> 5), `Shift+N` die Runde (1 -> 2),
+        // `R` und `Alt+1/2/4/6/8` wuerfelten, `T` startete die Sitzungsuhr,
+        // `L` stellte das Ereignislog dauerhaft, `Strg+Z/Y/S` schrieben je
+        // einen Protokolleintrag. Und FUENF Tasten zogen den Fokus in ein
+        // Eingabefeld UNTER der Blende: `Strg+K`/`Strg+F` nach
+        // `INPUT#global-search`, `Strg+Shift+K`/`Strg+.` nach
+        // `INPUT.cp-input`, `/` nach `INPUT#qref-search-input`. Ein dort
+        // getipptes Wort stand nach dem Schliessen im Suchfeld.
+        //
+        // WARUM DAS SCHLIMMER IST ALS ES KLINGT. Die Hilfe ist genau die
+        // Flaeche, die man aufschlaegt, wenn man NICHT weiss, was eine Taste
+        // tut — sie laedt zum Ausprobieren ein. Am Spieltisch ruecken
+        // `N`/`P`/`Shift+N` dabei Zug und Runde des laufenden Kampfes, und
+        // der Spielleiter sieht es nicht: die Blende deckt mit 85 % Schwarz
+        // (`--scrim-85`). Es ist dieselbe Fehlerart wie beim HP-Rechner von
+        // Runde 2 (Schranke 5 an `oeffneHpRechnerAmZug()`), nur breiter: dort
+        // ging EIN Dialog unter der Hilfe auf, hier wirkt das halbe
+        // Kuerzelwerk.
+        //
+        // WAS HIER NICHT GESCHLUCKT WIRD, und warum:
+        //  · `Escape` — der Ausweg. Es laeuft eine Zeile weiter unten in den
+        //    eigenen Zweig und schliesst die Hilfe.
+        //  · DIE BROWSERVORGABEN. Dieser Zweig kehrt OHNE `preventDefault()`
+        //    zurueck. Bild-ab, Pfeile und Leertaste lassen den Lauf der Hilfe
+        //    darum weiterlaufen — und das ist notwendig, nicht geduldet: ihr
+        //    Inhalt ist laenger als ihre Flaeche (gemessen 2081 px in 673 px
+        //    bei 390 px Breite), Fall (7) besteht darauf.
+        //  · `Tab`/`Shift+Tab` — die fuehrt `ui/modal-focus.js` in einem
+        //    eigenen Lauscher am Dokument, und seit HILF haelt sie den Fokus
+        //    in der Hilfe (Fall 13).
+        //
+        // WARUM DIE SCHRANKE HIER OBEN STEHT und nicht hinter dem
+        // Soundboard-Block: `Alt+Shift+0..5` steht dort ABSICHTLICH vor dem
+        // `isTyping`-Guard, und gemessen schluckte es seine Taste auch bei
+        // offener Hilfe (`defaultPrevented`, ohne Wirkung ohne eingerichtete
+        // Szene). Eine Schranke, die erst danach greift, liesse genau diese
+        // sechs Kuerzel durch.
+        //
+        // Bewacht von Fall (14) in `tests/e2e/features/tastenhilfe.spec.js`.
+        if (e.key !== 'Escape' && $(TASTENHILFE_ID)?.classList.contains('show')) return;
+
+        // ============================================================
         // SOUNDBOARD QUICK-SLOTS (D-03) — Alt+Shift+0..5
         // MUSS vor dem isTyping-Guard stehen, damit der Shortcut auch
         // beim Tippen in Textfeldern funktioniert (Modifier-Combo).
@@ -317,7 +410,21 @@ function initKeyboardShortcuts() {
             return;
         }
         // Strg+Y oder Strg+Shift+Z: Redo (immer aktiv)
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        //
+        // `e.key === 'Z'`, GROSS — und das ist eine Korrektur, kein Stil.
+        // Mit gedrueckter Umschalttaste liefert der Browser `'Z'`, niemals
+        // `'z'`; die zweite Haelfte der Bedingung war damit unerreichbar und
+        // `Strg+Shift+Z` tat nichts (gemessen: in der Belegungsmatrix ueber
+        // 80 Modifikatorkombinationen taucht es in keiner Belegtliste auf,
+        // weder `defaultPrevented` noch eine Spur in dreizehn Groessen —
+        // `Strg+Y` dagegen in beiden gepruefien Ansichten). Ein im Quelltext
+        // sichtbar gepflegtes Kuerzel, das nichts tut, ist derselbe tote
+        // Zweig wie `Entf` gegen `#view-network`.
+        //
+        // Es ist jetzt belegt und steht darum in der Hilfe ("Wiederholen
+        // (gleichwertig)") — anders waere Fall (3) in
+        // `tests/e2e/features/tastenhilfe.spec.js` zu Recht rot.
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) {
             e.preventDefault();
             if (typeof window.redo === 'function') window.redo();
             return;
@@ -352,13 +459,19 @@ function initKeyboardShortcuts() {
         // Folgende nur wenn nicht am Tippen
         if (isTyping) return;
         // ?: Shortcuts-Overlay
-        if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        // OHNE_MODIFIKATOR: ohne diese Schranke oeffneten gemessen auch
+        // Strg+Shift+?, Alt+Shift+?, Strg+Shift+/ und Alt+Shift+/ die Hilfe.
+        // `e.shiftKey` bleibt ERLAUBT — der Rueckfall `Shift+/` ist der
+        // Zugang auf Tastaturbildern, die darauf kein `?` liefern.
+        if (OHNE_MODIFIKATOR(e) && (e.key === '?' || (e.shiftKey && e.key === '/'))) {
             e.preventDefault();
             if (typeof window.showShortcutsOverlay === 'function') window.showShortcutsOverlay();
             return;
         }
         // /: Quick Reference öffnen und Suche fokussieren
-        if (e.key === '/') {
+        // OHNE_MODIFIKATOR: ohne diese Schranke zogen gemessen auch Strg+/
+        // und Alt+/ die Schnellreferenz auf UND den Fokus in ihr Suchfeld.
+        if (OHNE_MODIFIKATOR(e) && !e.shiftKey && e.key === '/') {
             e.preventDefault();
             const panel = $('quick-ref-panel');
             if (panel && !panel.classList.contains('active')) {
@@ -368,7 +481,8 @@ function initKeyboardShortcuts() {
             return;
         }
         // T: Session Timer toggle
-        if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
+        // Gemessen fehlte hier `!e.altKey`: Alt+T startete die Sitzungsuhr.
+        if (e.key === 't' && OHNE_MODIFIKATOR(e)) {
             e.preventDefault();
             if (typeof window.toggleSessionTimer === 'function') window.toggleSessionTimer();
             return;
@@ -398,7 +512,12 @@ function initKeyboardShortcuts() {
             return;
         }
         // Alt+Ziffern: Schnellwürfel
-        if (e.altKey && e.key >= '1' && e.key <= '9') {
+        // `!e.shiftKey`: die Soundboard-Familie darueber prueft `e.code`
+        // nur fuer Digit0..5, also fielen Alt+Shift+6 UND Alt+Shift+8 durch
+        // sie hindurch in diesen Zweig und wuerfelten (gemessen W6 bzw. W8).
+        // Eine Zusage, die am Tastaturbild haengt, gehoert in keine Hilfe —
+        // darum die Schranke und nicht eine Zeile mehr dort.
+        if (e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.key >= '1' && e.key <= '9') {
             const dice = { 1: 12, 2: 20, 4: 4, 6: 6, 8: 8 };
             if (dice[e.key]) {
                 e.preventDefault();
@@ -410,8 +529,14 @@ function initKeyboardShortcuts() {
         // `beanspruchtLeertaste`: liegt der Fokus auf einem Bedienelement,
         // gehoert die Leertaste diesem Element. Ohne Fokus bleibt es beim
         // gewohnten Griff — Leertaste = naechster Zug.
+        // OHNE_MODIFIKATOR plus `!e.shiftKey`: gemessen wechselten auch
+        // Strg+Leertaste, Alt+Leertaste und Shift+Leertaste den Zug.
+        // Shift+Leertaste ist dabei der teuerste der drei: im Browser ist
+        // es der Seitenlauf nach OBEN.
         if (
             e.key === ' ' &&
+            OHNE_MODIFIKATOR(e) &&
+            !e.shiftKey &&
             !beanspruchtLeertaste &&
             document.querySelector('#view-initiative.active')
         ) {
@@ -429,19 +554,41 @@ function initKeyboardShortcuts() {
             return;
         }
         // N: Nächster Zug im Initiative
-        if (e.key === 'n' && !e.shiftKey && document.querySelector('#view-initiative.active')) {
+        // Gemessen fehlten `!e.ctrlKey` und `!e.altKey`: Strg+N und Alt+N
+        // wechselten den Zug statt ein Fenster zu oeffnen. Das waren zwei
+        // der vier Eintraege der alten Ausnahmeliste.
+        if (
+            e.key === 'n' &&
+            !e.shiftKey &&
+            OHNE_MODIFIKATOR(e) &&
+            document.querySelector('#view-initiative.active')
+        ) {
             e.preventDefault();
             if (typeof window.nextTurn === 'function') window.nextTurn();
             return;
         }
         // Shift+N: Neue Runde
-        if (e.key === 'N' && e.shiftKey && document.querySelector('#view-initiative.active')) {
+        // Gemessen fehlten `!e.ctrlKey` und `!e.altKey`: Strg+Shift+N und
+        // Alt+Shift+N begannen eine neue Kampfrunde.
+        if (
+            e.key === 'N' &&
+            e.shiftKey &&
+            OHNE_MODIFIKATOR(e) &&
+            document.querySelector('#view-initiative.active')
+        ) {
             e.preventDefault();
             if (typeof window.nextEncounterRound === 'function') window.nextEncounterRound();
             return;
         }
         // P: Vorheriger Zug
-        if (e.key === 'p' && document.querySelector('#view-initiative.active')) {
+        // Dieser Zweig hatte GAR KEINE Modifikatorschranke. Gemessen gingen
+        // Strg+P (das Drucken des Browsers) und Alt+P den Zug rueckwaerts.
+        if (
+            e.key === 'p' &&
+            OHNE_MODIFIKATOR(e) &&
+            !e.shiftKey &&
+            document.querySelector('#view-initiative.active')
+        ) {
             e.preventDefault();
             if (typeof window.prevTurn === 'function') window.prevTurn();
             return;
@@ -451,31 +598,34 @@ function initKeyboardShortcuts() {
         // steht an `oeffneHpRechnerAmZug()`. `preventDefault()` nur, wenn der
         // Rechner wirklich aufgeht — greift eine Schranke, bleibt die Taste
         // unverbraucht und die gemessene Belegung entspricht der Lage.
-        if (e.key === TASTE_HP_RECHNER && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        if (e.key === TASTE_HP_RECHNER && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             if (oeffneHpRechnerAmZug()) e.preventDefault();
             return;
         }
         // R: Quick Roll d20
-        if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+        // Gemessen fehlte `!e.altKey`: Alt+R wuerfelte.
+        if (e.key === 'r' && OHNE_MODIFIKATOR(e)) {
             e.preventDefault();
             quickRoll(20);
             return;
         }
         // L: Event Log toggle
-        if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
+        // Gemessen fehlte `!e.altKey`: Alt+L stellte das Ereignislog dauerhaft.
+        if (e.key === 'l' && OHNE_MODIFIKATOR(e)) {
             e.preventDefault();
             if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
             return;
         }
         // K: Kampfprotokoll-Panel (U5). Bare 'k' war frei — Strg+K ist die globale
         // Suche und Strg+Shift+K die Kommandopalette, beide fangen weiter oben ab.
-        if (e.key === 'k' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.key === 'k' && OHNE_MODIFIKATOR(e)) {
             e.preventDefault();
             if (typeof window.toggleCombatLog === 'function') window.toggleCombatLog();
             return;
         }
         // N: Neues Element (kontextabhängig)
-        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+        // Gemessen fehlte `!e.altKey`: Alt+N oeffnete das Anlegen-Fenster.
+        if (e.key === 'n' && OHNE_MODIFIKATOR(e)) {
             e.preventDefault();
             const activeView = document.querySelector('.view.active')?.id;
             if (activeView === 'view-party') toggleCollapse('char-form');
