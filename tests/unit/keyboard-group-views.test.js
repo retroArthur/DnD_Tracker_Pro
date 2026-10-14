@@ -268,3 +268,83 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
         expect(glieder).not.toContain('toggle-wiki-category');
     });
 });
+// ============================================================
+// DIE ZAHL DER ARTEN WIRD IM BAUM NICHT FALSCH ZITIERT (HILF)
+// ============================================================
+//
+// WARUM DIESER FALL. `ANSICHTSGRUPPEN` ist gewachsen — Runde 3 hat vier
+// Arten nachgetragen (Zauberkarten, Wiki-Eintraege, Ladenartikel,
+// Ladenkategorien). Die Zahl stand zu diesem Zeitpunkt an mehreren
+// Stellen im Baum, und EINE davon blieb stehen: der Kommentar in
+// `tests/build/test_build_deduplication.py`, der die Anmeldung der
+// Ansichtsgruppen erklaert, nannte weiter 18. Gefunden wurde das nicht
+// von einem Test, sondern beim Lesen — genau die Abnahmeform, die DOC-02
+// in `tests/unit/docs-consistency.test.js` fuer die CSS-Dateizahl schon
+// einmal ersetzt hat.
+//
+// DIE QUELLE IST DIE LISTE, NICHT DER KOMMENTAR. Gezaehlt wird
+// `ANSICHTSGRUPPEN.length` aus dem geladenen Modul; jede Zahlangabe im
+// Baum wird dagegen gehalten.
+//
+// WARUM DIE BERICHTE AUSGENOMMEN SIND. Die `*-BERICHT.md` im
+// Wurzelverzeichnis sind datierte Abnahmeprotokolle. Eines von ihnen
+// zitiert die falsche Zahl ALS BEFUND (der Kommentar nenne 18, es seien
+// 22); ein nachtraeglich korrigierter Bericht waere eine Faelschung des
+// Protokolls. Die Ausnahme haengt am Namensmuster und gilt nicht fuer
+// Code, Tests oder docs/.
+
+const AUSNAHME_MUSTER = /-BERICHT\.md$/;
+
+/** Alle Dateien unter `verzeichnis`, rekursiv, ohne node_modules und .git. */
+function dateienUnter(verzeichnis, treffer = []) {
+    for (const eintrag of fs.readdirSync(verzeichnis, { withFileTypes: true })) {
+        const voll = path.join(verzeichnis, eintrag.name);
+        if (eintrag.isDirectory()) {
+            if (eintrag.name === 'node_modules' || eintrag.name === '.git') continue;
+            dateienUnter(voll, treffer);
+        } else {
+            treffer.push(voll);
+        }
+    }
+    return treffer;
+}
+
+describe('Ansichtsgruppen — die Zahl der Arten', () => {
+    test('jede Zahlangabe ueber "Gruppenarten" im Baum nennt ANSICHTSGRUPPEN.length', () => {
+        const kandidaten = [
+            ...dateienUnter(path.join(WURZEL, 'ui')),
+            ...dateienUnter(path.join(WURZEL, 'tests')),
+            ...dateienUnter(path.join(WURZEL, 'tools')),
+            ...dateienUnter(path.join(WURZEL, 'docs')),
+            path.join(WURZEL, 'CLAUDE.md')
+        ].filter(
+            p => /\.(js|ts|py|md|html|css)$/.test(p) && !AUSNAHME_MUSTER.test(path.basename(p))
+        );
+
+        const behauptungen = [];
+        for (const datei of kandidaten) {
+            fs.readFileSync(datei, 'utf8')
+                .split('\n')
+                .forEach((zeile, i) => {
+                    for (const m of zeile.matchAll(/(\d+)\s+Gruppenarten\b/g)) {
+                        behauptungen.push({
+                            ort: `${path.relative(WURZEL, datei).replace(/\\/g, '/')}:${i + 1}`,
+                            zahl: parseInt(m[1], 10)
+                        });
+                    }
+                });
+        }
+
+        // BASE-01/empty: ohne Kandidaten misst der Fall nichts. Gemessen am
+        // 2026-10-14 sind es drei Stellen — ein Kommentar in
+        // tests/build/test_build_deduplication.py sowie ein Fallname und ein
+        // Kommentar in tests/e2e/features/tastatur-reichweite.spec.js.
+        expect(behauptungen.length).toBeGreaterThanOrEqual(2);
+        expect(ANSICHTSGRUPPEN.length).toBeGreaterThanOrEqual(1);
+
+        const falsch = behauptungen
+            .filter(b => b.zahl !== ANSICHTSGRUPPEN.length)
+            .map(b => `${b.ort} nennt ${b.zahl}, angemeldet sind ${ANSICHTSGRUPPEN.length}`);
+        expect(falsch).toEqual([]);
+    });
+});
