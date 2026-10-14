@@ -2153,3 +2153,283 @@ test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
         ).toBe(baum.reihen);
     });
 });
+
+// ============================================================
+// (16)-(17) DER AUSWEG, UND WAS SICH DARUEBERLEGT
+// ============================================================
+//
+// WAS GEMESSEN WAR, mit `hasTouch`/`isMobile` am gebauten Buendel:
+//
+//   390x844  Flaeche 673 px, Inhalt 2119 px — 32 % sichtbar, 12 von 41 Zeilen
+//   360x740  Flaeche 590 px, Inhalt 2167 px — 27 % sichtbar, 10 von 41 Zeilen
+//   1440x900 Flaeche 718 px, Inhalt 1331 px — 54 % sichtbar, 23 von 41 Zeilen
+//
+// Die Fusszeile lautete "Drücke Esc zum Schließen" und stand 2161 px (390 px
+// Breite) bzw. 2199 px (360 px) unter dem Anfang — beim Oeffnen also nicht
+// sichtbar. Ein Telefon hat ausserdem keine Escape-Taste. Der tatsaechliche
+// Ausweg (Tipp neben das Fenster, oder der ✕-Knopf) stand nirgends, und der
+// Knopf war 36x36 px gross — unter dem 44-px-Mindestziel, das dieses Projekt
+// an den Reitern der Navigationsleiste gesichert hat (`core.css`, M1).
+//
+// WARUM DAS NICHT "NUR" KOSMETIK IST. Vier der sechs Abschnitte — Wuerfel,
+// Initiative, Tabulator & Gruppen, Soundboard — liegen auf dem Telefon
+// ausserhalb der Flaeche. Die Hilfe ist von 25 auf 41 Zeilen gewachsen, die
+// Flaeche nicht. Wer sie aufschlaegt, sieht die Navigation und ein Stueck
+// "Aktionen" und hat keinen Hinweis, dass es weitergeht — und keinen, wie er
+// wieder herauskommt.
+//
+// (17) IST DIE ZWEITE HAELFTE DESSELBEN BILDSCHIRMS. Das Ereignislog liegt
+// mit `--z-toast` (4000) ueber der Hilfe (`--z-floating`, 2000), und das ist
+// eine ausdrueckliche Entscheidung dieses Projekts ("Meldungen liegen ueber
+// allem, auch ueber der Werkzeug-Blase", `party.css`). Gemessen verdeckte
+// EIN Hinweis bei 390 px drei der zwoelf sichtbaren Zeilen (Rueckgaengig,
+// Wiederholen, Wiederholen (gleichwertig)) — knapp ein Viertel dessen, was
+// von der Hilfe ueberhaupt zu sehen ist.
+//
+// DIE URSPRUENGLICHE HAELFTE DES BEFUNDES IST SCHON WEG, und zwar durch Fall
+// (14): die Probe einer Hilfezeile erzeugt keinen Hinweis mehr, weil die
+// offene Hilfe die App taub macht. Nachgemessen nach jener Arbeit: `r`
+// gedrueckt, Ereignislog nicht sichtbar, 0 verdeckte Zeilen. Geblieben ist
+// die Meldung, die VON WOANDERS kommt — der Begruessungshinweis, ein
+// Sicherungslauf —, und die deckt weiter.
+//
+// DIE RICHTUNG DER REPARATUR IST DARUM NICHT "die Hilfe nach oben". Die
+// Ebenenleiter in `variables.css` ist gezaehlt und begruendet, und
+// `--z-toast` steht dort mit Absicht an der Spitze. Statt dessen tritt das
+// Log beiseite, solange die Hilfe offen ist. DAS KOSTET ETWAS, und das soll
+// hier stehen: ein Hinweis, der waehrend der offenen Hilfe ablaeuft, ist
+// danach weg. Dafuer gibt es die dauerhafte Betriebsart des Logs (`L`), und
+// die steht in der Hilfe. Ein Hinweis ueber einer modalen Hilfe ist ohnehin
+// nichts, worauf der Nutzer gerade handeln kann.
+
+test.describe('HILF — der Ausweg aus der Hilfe', () => {
+    test('(16) die Fusszeile steht sichtbar, nennt den Ausweg, und das Ziel ist gross genug', async ({
+        page
+    }) => {
+        test.setTimeout(180_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        for (const breite of [...TELEFON, 1440]) {
+            await page.setViewportSize({ width: breite, height: breite === 1440 ? 900 : 780 });
+            await page.waitForTimeout(250);
+            await page.keyboard.press('Shift+/');
+            await page.waitForTimeout(400);
+
+            const mass = await page.evaluate(() => {
+                const m = document.querySelector('.shortcuts-modal');
+                const r = m.getBoundingClientRect();
+                const fuss = m.querySelector('.shortcuts-footer');
+                const sch = document.querySelector('.shortcuts-title .btn');
+                const sr = sch?.getBoundingClientRect();
+                const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
+                const sicht = el => {
+                    const q = el.getBoundingClientRect();
+                    return q.top >= r.top - 1 && q.bottom <= r.bottom + 1;
+                };
+                return {
+                    fussGefunden: !!fuss,
+                    fussText: (fuss?.textContent || '').replace(/\s+/g, ' ').trim(),
+                    fussSichtbar: fuss ? sicht(fuss) : null,
+                    fussKlebt: fuss ? getComputedStyle(fuss).position : null,
+                    schliesserBreite: sr ? Math.round(sr.width) : null,
+                    schliesserHoehe: sr ? Math.round(sr.height) : null,
+                    zeilen: reihen.length,
+                    sichtbar: reihen.filter(sicht).length,
+                    innen: m.clientHeight,
+                    inhalt: m.scrollHeight
+                };
+            });
+
+            expect(
+                mass.fussGefunden,
+                `bei ${breite} px traegt die Fusszeile der Hilfe keine Klasse ` +
+                    '`.shortcuts-footer` — ohne sie kann sie nicht kleben und dieser Fall ' +
+                    'misst nichts'
+            ).toBe(true);
+            expect(
+                mass.fussKlebt,
+                `bei ${breite} px ist die Fusszeile nicht \`position: sticky\` ` +
+                    `(gemessen: ${mass.fussKlebt})`
+            ).toBe('sticky');
+            expect(
+                mass.fussSichtbar,
+                `Bei ${breite} px ist die Fusszeile beim Oeffnen nicht sichtbar. Von ` +
+                    `${mass.zeilen} Zeilen sind ${mass.sichtbar} zu sehen ` +
+                    `(${mass.innen} px Flaeche, ${mass.inhalt} px Inhalt) — der Hinweis, ` +
+                    'wie man wieder herauskommt, stand gemessen 2161 px tiefer. Auf einem ' +
+                    'Telefon ist das unauffindbar.'
+            ).toBe(true);
+
+            // DER TEXT MUSS DREI WEGE NENNEN, und keiner davon darf eine Taste
+            // sein, die das Geraet nicht hat. "Drücke Esc" allein war auf dem
+            // Telefon eine Anweisung ins Leere.
+            expect(
+                mass.fussText,
+                `Bei ${breite} px lautet die Fusszeile "${mass.fussText}". Sie muss den ` +
+                    'ACHTUNGSPUNKT nennen, dass die Liste weitergeht — gemessen sind auf ' +
+                    'dem Telefon nur 10 von 41 Zeilen zu sehen, und nichts sagte es.'
+            ).toMatch(/[Rr]oll|[Ss]croll|weiter/);
+            expect(
+                mass.fussText,
+                `Bei ${breite} px nennt die Fusszeile Escape nicht: "${mass.fussText}"`
+            ).toMatch(/Esc/);
+            expect(
+                mass.fussText,
+                `Bei ${breite} px nennt die Fusszeile "${mass.fussText}" keinen Weg ohne ` +
+                    'Tastatur. Ein Telefon hat keine Escape-Taste; der ✕-Knopf und ein ' +
+                    'Tipp neben das Fenster sind die Wege, die dort wirklich gehen.'
+            ).toMatch(/✕/);
+            expect(
+                mass.fussText,
+                `Bei ${breite} px nennt die Fusszeile den Tipp neben das Fenster nicht: ` +
+                    `"${mass.fussText}"`
+            ).toMatch(/[Tt]ipp|[Tt]ippe|neben/);
+
+            // UND DAS ZIEL MUSS TREFFBAR SEIN. 44 px ist die Schranke, die
+            // dieses Projekt an den Reitern der Navigationsleiste gesichert hat
+            // (core.css, M1); dort steht auch die Begruendung, wo sie NICHT
+            // gilt — bei sieben Knoepfen in 304 px Kopfzeile. Hier steht EIN
+            // Knopf in einer eigenen Zeile, der Platz ist da.
+            const schranke = breite <= 600 ? 44 : 32;
+            expect(
+                Math.min(mass.schliesserBreite, mass.schliesserHoehe),
+                `Bei ${breite} px ist der ✕-Knopf ${mass.schliesserBreite}x` +
+                    `${mass.schliesserHoehe} px. Mindestens ${schranke} px — gemessen am ` +
+                    'Ausgangsstand 36x36 auf dem Telefon und 27x23 am Schreibtisch. Er ist ' +
+                    'auf dem Telefon der einzige sichtbare Ausweg.'
+            ).toBeGreaterThanOrEqual(schranke);
+
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(250);
+        }
+
+        // UND DIE ZWEI WEGE, DIE DIE FUSSZEILE VERSPRICHT, TUN ES AUCH. Ohne
+        // das waere der Text nur eine zweite Behauptung — genau die Art, gegen
+        // die diese Datei angetreten ist.
+        await page.setViewportSize({ width: 390, height: 780 });
+        await page.waitForTimeout(250);
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(400);
+        await page.click('.shortcuts-title .btn');
+        await page.waitForTimeout(400);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'der ✕-Knopf schliesst die Hilfe'
+        ).toBe(false);
+
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(400);
+        // Ein Tipp NEBEN die Flaeche: links oben in der Blende, ausserhalb des
+        // Dialogs.
+        await page.mouse.click(8, 8);
+        await page.waitForTimeout(400);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'ein Tipp neben das Fenster schliesst die Hilfe'
+        ).toBe(false);
+    });
+
+    test('(17) nichts legt sich ueber die offene Hilfe', async ({ page }) => {
+        test.setTimeout(180_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        for (const breite of [...TELEFON, 1440]) {
+            await page.setViewportSize({ width: breite, height: breite === 1440 ? 900 : 780 });
+            await page.waitForTimeout(250);
+
+            // DIE GEGENPROBE ZUERST: ohne offene Hilfe ist das Log SICHTBAR.
+            // Ohne sie waere dieser Fall auch dann gruen, wenn das Log
+            // ueberhaupt nicht mehr erscheint — und das wuerde einen echten
+            // Verlust verschlucken.
+            await page.evaluate(() => {
+                document.getElementById('shortcuts-overlay')?.classList.remove('show');
+                const l = document.getElementById('event-log');
+                if (l) {
+                    l.className = 'event-log';
+                    l.innerHTML = '';
+                }
+            });
+            await page.waitForTimeout(200);
+            await page.evaluate(() => window.showToast('Automatisch gespeichert', 'success'));
+            await page.waitForTimeout(400);
+            expect(
+                await page.evaluate(() => {
+                    const l = document.getElementById('event-log');
+                    if (!l) return false;
+                    const r = l.getBoundingClientRect();
+                    return getComputedStyle(l).display !== 'none' && r.width > 0 && r.height > 0;
+                }),
+                `Gegenprobe bei ${breite} px: ohne offene Hilfe muss das Ereignislog ` +
+                    'sichtbar sein. Ist es das nicht, misst dieser Fall nichts — und die ' +
+                    'App haette ihre Meldungen verloren.'
+            ).toBe(true);
+
+            // UND JETZT MIT OFFENER HILFE, mit einer Meldung, die von WOANDERS
+            // kommt (die Probe einer Hilfezeile erzeugt seit Fall (14) keine
+            // mehr).
+            await page.keyboard.press('Shift+/');
+            await page.waitForTimeout(400);
+            await page.evaluate(() => window.showToast('Automatisch gespeichert', 'success'));
+            await page.waitForTimeout(450);
+
+            const mass = await page.evaluate(() => {
+                const m = document.querySelector('.shortcuts-modal');
+                const r = m.getBoundingClientRect();
+                const log = document.getElementById('event-log');
+                const lr = log?.getBoundingClientRect();
+                const logSichtbar =
+                    !!log &&
+                    getComputedStyle(log).display !== 'none' &&
+                    !!lr &&
+                    lr.width > 0 &&
+                    lr.height > 0;
+                const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
+                const sicht = el => {
+                    const q = el.getBoundingClientRect();
+                    return q.top >= r.top - 1 && q.bottom <= r.bottom + 1;
+                };
+                const schnitt = q =>
+                    logSichtbar &&
+                    !(
+                        q.right < lr.left ||
+                        q.left > lr.right ||
+                        q.bottom < lr.top ||
+                        q.top > lr.bottom
+                    );
+                const sichtbare = reihen.filter(sicht);
+                return {
+                    logSichtbar,
+                    logZ: log ? getComputedStyle(log).zIndex : null,
+                    hilfeZ: getComputedStyle(document.getElementById('shortcuts-overlay')).zIndex,
+                    sichtbar: sichtbare.length,
+                    verdeckt: sichtbare
+                        .filter(x => schnitt(x.getBoundingClientRect()))
+                        .map(x => (x.querySelector('span')?.textContent || '').trim()),
+                    // Und die Fusszeile, der einzige sichtbare Ausweg, zuerst.
+                    fussVerdeckt: (() => {
+                        const f = m.querySelector('.shortcuts-footer');
+                        return f ? schnitt(f.getBoundingClientRect()) : null;
+                    })()
+                };
+            });
+
+            expect(
+                mass.verdeckt,
+                `Bei ${breite} px verdeckt das Ereignislog ${mass.verdeckt.length} der ` +
+                    `${mass.sichtbar} sichtbaren Hilfezeilen: ${mass.verdeckt.join(' | ')}. ` +
+                    `Es liegt mit z-index ${mass.logZ} ueber der Hilfe (${mass.hilfeZ}), ` +
+                    'und das ist in `variables.css` eine ausdrueckliche Entscheidung — ' +
+                    'die Ebenenleiter ist nicht der Ort der Reparatur. Das Log tritt ' +
+                    'beiseite, solange die Hilfe offen ist.'
+            ).toEqual([]);
+            expect(
+                mass.fussVerdeckt,
+                `Bei ${breite} px verdeckt das Ereignislog die Fusszeile — den einzigen ` +
+                    'Ausweg, der auf dem Telefon sichtbar ist.'
+            ).toBe(false);
+
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(300);
+        }
+    });
+});
