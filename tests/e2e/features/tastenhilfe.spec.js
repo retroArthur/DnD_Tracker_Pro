@@ -73,14 +73,28 @@
  *       in (A) nicht vorkommen, und belegt umgekehrt, dass `h`, `n`, `p` und
  *       die Leertaste dort WIRKLICH nichts tun.
  *   (C) Fokus auf einem GRUPPENGLIED (E-2), erreicht mit echten
- *       Tabulatorspruengen — Pfeiltasten, `Pos1`, `Ende`. Zwei Durchgaenge,
- *       waagerechte und senkrechte Gruppe, weil die Achse an der Gestalt der
- *       Gruppe haengt (`ui/keyboard-group.js`, `_achse()`): auf der
- *       waagerechten Zauberplatz-Reihe sind `←/→` belegt und `↑/↓` NICHT,
- *       auf der senkrechten Beutezeilen-Liste genau umgekehrt. Ohne den
- *       zweiten Durchgang wuerde die Hilfe `↑/↓` nennen, ohne dass ein Fall
- *       das belegt.
+ *       Tabulatorspruengen. Zwei Durchgaenge, waagerechte und senkrechte
+ *       Gruppe, weil die Achse an der Gestalt der Gruppe haengt
+ *       (`ui/keyboard-group.js`, `_achse()`): auf der waagerechten
+ *       Zauberplatz-Reihe sind `←/→` belegt und `↑/↓` NICHT, auf der
+ *       senkrechten Beutezeilen-Liste genau umgekehrt. Ohne den zweiten
+ *       Durchgang wuerde die Hilfe `↑/↓` nennen, ohne dass ein Fall das
+ *       belegt.
  *   (D) Bei offener Tastenhilfe — fuer die Bedienbarkeit der Hilfe selbst.
+ *
+ * UND WO DIE VIER LAGEN WIRKLICH LAUFEN, weil diese Aufzaehlung bis zur
+ * Gegenpruefung mehr versprach als die Faelle hielten:
+ *
+ *   (A) (B)   Faelle (3) und (5)
+ *   (C)       Fall (3) (seit der Gegenpruefung, mit den 14 BENANNTEN Tasten
+ *             auf der senkrechten Gruppe), Fall (5) und Fall (11)
+ *   (D)       Fall (14) — und zwar als UMKEHRUNG: dort darf keine App-Taste
+ *             wirken, die Lage traegt also nichts zur Tastenmenge von (3) bei
+ *
+ * Was vorher fehlte und was es kostete, steht an Lage (C) in Fall (3): der
+ * Fall fuhr nur (A) und (B), 42 Tasten gegen die 48 von Fall (5), und eine
+ * neu in `GRUPPEN_TASTEN` aufgenommene Taste lief durch. Nachgewiesen mit
+ * `'PageDown'` in jener Menge — Fall (3) blieb gruen.
  *
  * WARUM DIE MESSUNG ZWISCHEN ZWEI ANSCHLAEGEN ZURUECKSETZT. Der erste
  * Durchgang dieser Vermessung hat sich selbst verdorben, und der Fehler ist
@@ -918,7 +932,7 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
     test('(3) jede gemessen belegte Taste steht in der Hilfe oder auf der Ausnahmeliste', async ({
         page
     }) => {
-        test.setTimeout(600_000);
+        test.setTimeout(900_000);
         await ansichtOeffnen(page, 'initiative');
 
         const hilfe = await hilfeLesen(page);
@@ -948,6 +962,38 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
         // vier ansichtsgebundenen Kuerzel dort wirklich schweigen.
         merken('B/Beute', await messeTasten(page, EINZELTASTEN, 'loot'));
         merken('B/Beute', await messeTasten(page, SONDERTASTEN, 'loot'));
+
+        // Lage (C): FOKUS AUF EINEM GRUPPENGLIED (E-2).
+        //
+        // WARUM SIE HIER FEHLTE UND WAS DAS KOSTETE — Befund der
+        // Gegenpruefung. Der Kopf dieser Datei kuendigt VIER Messlagen an,
+        // und `CLAUDE.md` schreibt es als Eigenschaft dieses Waechters fest.
+        // Gemessen fuhr dieser Fall nur (A) und (B): 42 Tasten gegen die 48
+        // von Fall (5), und die Differenz waren genau die sechs
+        // Gruppentasten. Die Folge war keine Kosmetik: wer eine weitere
+        // Taste in `GRUPPEN_TASTEN` (`ui/keyboard-group.js`) nachtraegt, lief
+        // hier durch. NACHGEWIESEN, nicht vermutet — `'PageDown'` in jene
+        // Menge eingesetzt und einen Zweig dafuer gebaut: dieser Fall blieb
+        // GRUEN (3,3 min), obwohl die Hilfe `Bild↓` nicht nennt. Die
+        // Rueckrichtung (5) kann das nicht melden, sie schlaegt erst an,
+        // wenn die Zeile schon in der Hilfe STEHT.
+        //
+        // GEMESSEN WERDEN HIER DIE 14 BENANNTEN TASTEN, nicht die sechs aus
+        // E-2. Die sechs waeren eine Tautologie: sie sind genau die, die
+        // `GRUPPEN_TASTEN` heute enthaelt — eine siebte faende man damit nie.
+        //
+        // UND NUR AUF DER SENKRECHTEN GRUPPE, mit Grund: der
+        // Tastaturzweig ist EINER (`ui/keyboard-group.js`, ein `keydown`, eine
+        // `GRUPPEN_TASTEN`-Menge). Eine neu aufgenommene Taste ist darum auf
+        // JEDER Gruppe zu sehen; die Achse entscheidet nur, welche Pfeiltaste
+        // was tut. Die waagerechte Gruppe laeuft mit den sechs Pfeil-/Rand-
+        // tasten mit, damit die Achsen-Aussage der Hilfe gedeckt bleibt — das
+        // ist dieselbe Arbeit, die Fall (11) vertieft.
+        // Preis: je Taste ein frischer Seitenaufbau samt Tabulatorweg zum
+        // Glied, gemessen rund 13 s. 14 + 6 Messungen sind darum rund 4,5 min
+        // obendrauf; die Zeitgrenze dieses Falls steht deshalb auf 15 min.
+        merken('C/Beutezeile', await messeGruppentasten(page, GRUPPE_SENKRECHT, SONDERTASTEN));
+        merken('C/Zauberplatz', await messeGruppentasten(page, GRUPPE_WAAGERECHT, GRUPPENTASTEN));
 
         const alle = new Map();
         for (const b of belegt) {
@@ -1504,14 +1550,17 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
  * Suche nach dem Glied faende ein anderes.
  * @param {import('@playwright/test').Page} page
  * @param {{name: string, ansicht: string, glied: string, achse: string}} gruppe
+ * @param {string[]} tasten Welche Tasten gemessen werden. Vorgabe sind die sechs
+ *   aus E-2; Fall (3) reicht hier die 14 BENANNTEN Tasten herein — Begruendung
+ *   dort an Lage (C).
  */
-async function messeGruppentasten(page, gruppe) {
+async function messeGruppentasten(page, gruppe, tasten = GRUPPENTASTEN) {
     /** @type {Record<string, any>} */
     const erg = {};
     const AUF_GLIED = `(() => { const el = document.activeElement;
         return !!(el && el.matches && el.matches('${gruppe.glied}')); })()`;
 
-    for (const taste of GRUPPENTASTEN) {
+    for (const taste of tasten) {
         await ansichtOeffnen(page, gruppe.ansicht);
         let gefunden = false;
         for (let i = 1; i <= 320; i++) {
