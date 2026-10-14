@@ -1051,6 +1051,148 @@ test.describe('E-2 — der Zustand steht im ARIA, nicht nur in der Klasse', () =
             'Jeder Punkt traegt ein title mit dem Zustand ("Grad 1 Slot (verfuegbar)")'
         ).toBe(z.glieder);
     });
+
+    // ----------------------------------------------------------------
+    // (18g) DAS ATTRIBUT MUSS DEM ZUSTAND FOLGEN, nicht nur dastehen.
+    //
+    // WARUM DIESER FALL EXISTIERT (Abnahme TASV, der eine Durchfaller).
+    // Die Faelle (18) oben lesen den Zustand EINMAL, direkt nach dem
+    // Oeffnen der Ansicht, und pruefen eine Anzahl gegen ein Soll. Damit
+    // belegen sie die ANWESENHEIT des Attributs, nie seine RICHTIGKEIT —
+    // und genau dort lag ein echter Fehler, den dieser Waechter in der
+    // Fassung von Runde 2 nicht sehen konnte:
+    //
+    //     toggle-quest   aria "false" -> "false"   Klasse danach: offen   FALSCH
+    //     toggle-shop    aria "false" -> "true"    Klasse danach: offen   richtig
+    //
+    // (gemessen am gebauten Buendel, gefuellte Kampagne, je ein echter
+    // Klick, 1,5 s Nachbeobachtung). Ursache: `toggleQuest()` schaltet NUR
+    // eine Klasse um — keine `childList`-Aenderung, kein `save()` —, und
+    // der Beobachter von `KeyboardGroup` horchte nur auf `childList`. Das
+    // Vorleseprogramm hoerte "eingeklappt", waehrend der Auftrag offen
+    // stand. Behoben durch `attributeFilter: ['class']` am Beobachter;
+    // dieser Fall ist die Ratsche darauf.
+    //
+    // ER BEDIENT ZUERST UND LIEST DANACH, und zwar auf BEIDEN Wegen, weil
+    // beide vorkommen: echter Mausklick und echter Tastendruck. Keine
+    // feste Wartezeit — es wird auf die Bedingung gewartet (hoechstens 5 s)
+    // und danach mit lesbarer Meldung geurteilt, damit ein Fehlschlag die
+    // gemessenen Werte nennt und nicht nur "timeout".
+    // ----------------------------------------------------------------
+    const AUFKLAPPFAMILIEN = [
+        { ansicht: 'quests', sel: '[data-action="toggle-quest"]' },
+        { ansicht: 'shops', sel: '[data-action="toggle-shop"]' }
+    ];
+
+    /** Zustand EINES Gliedes: was das Attribut sagt und was die Klasse sagt. */
+    const ZUSTAND_EINES = sel => `(() => {
+        const el = document.querySelector('${sel}');
+        if (!el) return { fehlt: true };
+        return {
+            fehlt: false,
+            aria: el.getAttribute('aria-expanded'),
+            offen: !!(el.closest('.expanded, .open') ||
+                el.parentElement?.querySelector('.expanded, .open'))
+        };
+    })()`;
+
+    /** Wartet, bis das Attribut der Klasse folgt — oder laeuft ab. */
+    async function warteAufGleichlauf(page, sel) {
+        await page
+            .waitForFunction(
+                auswahl => {
+                    const el = document.querySelector(auswahl);
+                    if (!el) return false;
+                    const offen = !!(
+                        el.closest('.expanded, .open') ||
+                        el.parentElement?.querySelector('.expanded, .open')
+                    );
+                    return el.getAttribute('aria-expanded') === String(offen);
+                },
+                sel,
+                { timeout: 5000 }
+            )
+            .catch(() => {
+                /* Das Urteil faellt unten, mit Zahlen. */
+            });
+    }
+
+    for (const f of AUFKLAPPFAMILIEN) {
+        test(`(18g) ${f.ansicht}: aria-expanded FOLGT dem Mausklick`, async ({ page }) => {
+            test.setTimeout(120_000);
+            await ansichtOeffnen(page, f.ansicht, 6);
+
+            const vor = await page.evaluate(ZUSTAND_EINES(f.sel));
+            expect(vor.fehlt, `${f.sel}: die Saat erzeugt keinen Aufklappkopf`).toBe(false);
+            expect(
+                vor.aria,
+                `${f.sel} traegt gar kein aria-expanded — ohne das Attribut kann dieser ` +
+                    'Fall nichts ueber seine Richtigkeit sagen.'
+            ).not.toBeNull();
+
+            await page.locator(f.sel).first().click();
+            await warteAufGleichlauf(page, f.sel);
+            const nach = await page.evaluate(ZUSTAND_EINES(f.sel));
+
+            // Gegenprobe gegen Leerlauf: hat der Klick ueberhaupt gewirkt?
+            // Ohne diese Zeile waere der Fall auch bei einem toten Kopf gruen.
+            expect(
+                nach.offen,
+                `Der Klick hat den Zustand nicht geaendert (vorher offen=${vor.offen}, ` +
+                    `nachher offen=${nach.offen}). Dann prueft der Fall darunter nichts.`
+            ).toBe(!vor.offen);
+
+            expect(
+                nach.aria,
+                `${f.sel}: die Klasse sagt offen=${nach.offen}, aria-expanded sagt ` +
+                    `"${nach.aria}". Das Vorleseprogramm hoert damit das Gegenteil des ` +
+                    'Schirms. Vorher: aria="' +
+                    vor.aria +
+                    '", offen=' +
+                    vor.offen +
+                    '.'
+            ).toBe(String(nach.offen));
+        });
+    }
+
+    test('(18g-T) quests: aria-expanded folgt auch dem echten Tastendruck', async ({ page }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'quests', 6);
+
+        // ECHTE Tabulatorspruenge bis zum Kopf, nie `.focus()` — bei
+        // programmatischem Fokus greift `:focus-visible` nicht, und die
+        // Bedienung ueber `Enter` laeuft dann durch einen anderen Pfad.
+        const SEL = '[data-action="toggle-quest"]';
+        let erreicht = false;
+        let spruenge = 0;
+        for (; spruenge < 120 && !erreicht; spruenge++) {
+            await page.keyboard.press('Tab');
+            erreicht = await page.evaluate(
+                auswahl => !!document.activeElement?.matches?.(auswahl),
+                SEL
+            );
+        }
+        expect(
+            erreicht,
+            `Der Auftragskopf war in ${spruenge} echten Tabulatorspruengen nicht erreichbar.`
+        ).toBe(true);
+
+        const vor = await page.evaluate(ZUSTAND_EINES(SEL));
+        await page.keyboard.press('Enter');
+        await warteAufGleichlauf(page, SEL);
+        const nach = await page.evaluate(ZUSTAND_EINES(SEL));
+
+        expect(
+            nach.offen,
+            `Enter hat den Zustand nicht geaendert (vorher ${vor.offen}, nachher ` +
+                `${nach.offen}) — nach ${spruenge} Spruengen auf dem Kopf.`
+        ).toBe(!vor.offen);
+        expect(
+            nach.aria,
+            `Nach Enter sagt die Klasse offen=${nach.offen}, aria-expanded sagt ` +
+                `"${nach.aria}".`
+        ).toBe(String(nach.offen));
+    });
 });
 
 // ============================================================

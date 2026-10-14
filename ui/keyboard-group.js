@@ -263,13 +263,61 @@ const KeyboardGroup = {
         // nicht von dieser Lage abhaengen.
         document.addEventListener('keydown', e => this._tasten(e), { capture: true });
 
-        // NUR `childList`, ausdruecklich NICHT `attributes` — dieselbe
-        // Begruendung wie in `ui/keyboard-reach.js`: mit `attributes: true`
-        // weckt jedes `setAttribute()` dieses Durchlaufs den Beobachter
-        // erneut. Ein `innerHTML`-Ersatz, der die Attribute loescht (der
-        // Pfad, der hier zaehlt), ist immer auch eine `childList`-Aenderung.
+        // `childList` UND `class` — nicht `attributes` im Ganzen.
+        //
+        // `childList` deckt den Hauptpfad: ein `innerHTML`-Ersatz, der die
+        // Attribute loescht, ist immer auch eine `childList`-Aenderung.
+        // Nicht `attributes: true` im Ganzen, dieselbe Begruendung wie in
+        // `ui/keyboard-reach.js`: damit weckt jedes `setAttribute()` dieses
+        // Durchlaufs den Beobachter erneut.
+        //
+        // `attributeFilter: ['class']` KANN SICH NICHT SELBST AUSLOESEN:
+        // dieses Modul schreibt nirgends eine Klasse (nachgemessen,
+        // `grep -n "classList\|className" ui/keyboard-group.js` ist leer) —
+        // es setzt `role`, `aria-orientation`, `aria-label`, `tabindex` und
+        // die Zustandsattribute. Der Selbstweck-Einwand gilt also fuer
+        // `class` nicht.
+        //
+        // WARUM ES GEBRAUCHT WIRD (Abnahme TASV, der eine Durchfaller).
+        // Ein Zustandswechsel, der NUR eine Klasse umschaltet, erzeugt
+        // weder eine `childList`-Aenderung noch einen `save()`-Aufruf — der
+        // Beobachter schwieg, der Post-Save-Haken schwieg, und
+        // `_regleGruppe()` lief nie. `features/quests/quests-render.js`:
+        //
+        //     function toggleQuest(id) {
+        //         const element = $(`quest-${id}`);
+        //         element?.classList.toggle('expanded');
+        //     }
+        //
+        // Gemessen am gebauten Buendel, gefuellte Kampagne, 1,5 s
+        // Nachbeobachtung, je ein echter Klick:
+        //
+        //     toggle-quest           aria false -> false   Klasse: offen  FALSCH
+        //     toggle-shop            aria false -> true    Klasse: offen  richtig
+        //     toggle-collapse        aria null  -> null    (Einzelstelle, keine Gruppe)
+        //     toggle-wiki-category   aria null  -> null    (Einzelstelle, keine Gruppe)
+        //
+        // Das Vorleseprogramm hoerte "eingeklappt", waehrend der Auftrag
+        // offen stand. Am Ausgangsstand trug der Kopf gar kein
+        // `aria-expanded`; eine Falschaussage ist schlechter als Schweigen —
+        // nach demselben Maszstab, mit dem in dieser Runde eine
+        // Werkzeugleiste ohne Bedienelemente verworfen wurde.
+        //
+        // Die Abhilfe gehoert HIERHIN und nicht in `toggleQuest()`: dort
+        // waere sie eine Zusicherung an einer von vier Aufklappfamilien, und
+        // die naechste, die nur eine Klasse umschaltet, waere wieder stumm.
+        // Nebenwirkung, die ebenso zaehlt: `toggleCollapse()` in
+        // `systems/spellslots/navigation.js` erzeugte seine `childList`-
+        // Aenderung nur BEILAEUFIG, durch das Umschreiben des Pfeil-Icons
+        // (`icon.textContent = …`). Wer dieses Icon entfernt, haette dort
+        // denselben stillen Fehler gehabt.
         this._beobachter = new MutationObserver(() => this._planen());
-        this._beobachter.observe(document.body, { childList: true, subtree: true });
+        this._beobachter.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
 
         // DIE FENSTERBREITE IST EINE EINGABE DER MECHANIK, seit eine Achse
         // gemessen sein darf (`_achse()`): das Zaubergitter steht bei
