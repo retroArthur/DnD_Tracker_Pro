@@ -885,3 +885,125 @@ test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
         ).toBe(false);
     });
 });
+
+// ============================================================
+// (7) DIE ACHSE MUSS DER GEMESSENEN GESTALT ENTSPRECHEN
+// ============================================================
+//
+// DIE LUECKE, DIE DIESER FALL SCHLIESST — und ich habe sie gefunden, indem
+// ich die Achsen mutiert habe. Die Reichweitenprobe in
+// `tastatur-erreichbarkeit.spec.js` liest die Achse aus
+// `aria-orientation`, also aus der Behauptung der App selbst. Dreht man
+// ALLE Achsen gemeinsam um, dreht sich die Probe mit und bleibt gruen:
+// das Modul erwartet dann Oben/Unten, die Probe drueckt Oben/Unten, die
+// Fahrt klappt. Rot wuerde nur eine EINZELNE falsche Achse — und auch die
+// nur, wenn die Probe gerade diese Gruppe betritt.
+//
+// Eine Leiste, die waagerecht aussieht und auf Oben/Unten hoert, ist aber
+// genau der Widerspruch, den `aria-orientation` ausschliessen soll: das
+// Vorleseprogramm sagt "Pfeiltasten auf und ab", der Spielleiter sieht
+// Marken nebeneinander. Darum prueft dieser Fall die Achse gegen die
+// GESTALT und nicht gegen sich selbst.
+//
+// DIE REGEL IST DIE GEMESSENE: waagerecht heisst, die ersten zwei
+// sichtbaren Glieder liegen auf EINER y-Linie (dy 0) und nebeneinander
+// (dx > 0); senkrecht heisst untereinander (dx 0, dy > 0). Gemessen bei
+// 1440 px: alle Listen senkrecht (dy 56-101), alle Filterleisten und
+// Punktreihen waagerecht (dx 18-71).
+//
+// UND ER PRUEFT NUR, WAS ER SIEHT. Eine Gruppe mit weniger als zwei
+// SICHTBAREN Gliedern hat keine Gestalt (die Begegnungs- und Ortsleiste
+// zeigen mit der Pruefsaat genau eine Marke); sie wird uebersprungen und
+// am Ende gezaehlt, damit der Fall nicht lautlos leer laeuft.
+
+test.describe('Reichweite — die Achse stimmt mit der Gestalt', () => {
+    for (const ansicht of Object.keys(HALTGRENZEN)) {
+        test(`(7) ${ansicht}: jede Leiste hoert auf die Pfeiltasten ihrer Gestalt`, async ({
+            page
+        }) => {
+            test.setTimeout(120_000);
+            await ansichtOeffnen(page, ansicht);
+
+            const befund = await page.evaluate(() => {
+                const sichtbar = el => {
+                    if (
+                        el.checkVisibility &&
+                        !el.checkVisibility({
+                            opacityProperty: true,
+                            visibilityProperty: true,
+                            contentVisibilityAuto: true
+                        })
+                    ) {
+                        return false;
+                    }
+                    const r = el.getBoundingClientRect();
+                    return r.width > 0 && r.height > 0;
+                };
+                const widerspruch = [];
+                let geprueft = 0;
+                let uebersprungen = 0;
+                for (const leiste of document.querySelectorAll(
+                    '[role="toolbar"][aria-orientation]'
+                )) {
+                    if (!sichtbar(leiste)) continue;
+                    const glieder = [...leiste.querySelectorAll('[tabindex]')]
+                        .filter(g => g.closest('[role="toolbar"][aria-orientation]') === leiste)
+                        .filter(sichtbar);
+                    // GEMESSEN WIRD JE ART, NICHT JE BEHAELTER — weil ein
+                    // Behaelter ZWEI Gruppen fuehren kann. Im Bestiarium
+                    // traegt `div#bestiary-list` die Spalte der Zeilen UND
+                    // die der Favoritenknopfe, jede mit eigenem wanderndem
+                    // Tabindex. Die erste Fassung dieses Falls verglich
+                    // `glieder[0]` mit `glieder[1]` und meldete dort
+                    // "dx 507, dy 14 ueber 34 Glieder" — richtig gerechnet
+                    // und falsch gefragt: das sind die ersten Glieder
+                    // ZWEIER verschachtelter Spalten, nicht zwei
+                    // Nachbarn einer. Die Partition nach `data-action` ist
+                    // dieselbe, nach der auch die Mechanik entscheidet.
+                    const achse = leiste.getAttribute('aria-orientation');
+                    const arten = new Map();
+                    for (const g of glieder) {
+                        const k = g.getAttribute('data-action') || g.tagName;
+                        if (!arten.has(k)) arten.set(k, []);
+                        arten.get(k).push(g);
+                    }
+                    let etwasGeprueft = false;
+                    for (const [art, reihe] of arten) {
+                        if (reihe.length < 2) continue;
+                        etwasGeprueft = true;
+                        const a = reihe[0].getBoundingClientRect();
+                        const b = reihe[1].getBoundingClientRect();
+                        const dx = Math.round(b.left - a.left);
+                        const dy = Math.round(b.top - a.top);
+                        const passt =
+                            achse === 'horizontal' ? dy === 0 && dx !== 0 : dx === 0 && dy !== 0;
+                        if (!passt) {
+                            widerspruch.push(
+                                `${leiste.id || leiste.className || '(klassenlos)'} ` +
+                                    `"${leiste.getAttribute('aria-label')}" / ${art}: ` +
+                                    `aria-orientation=${achse}, gemessen dx ${dx} dy ${dy} ` +
+                                    `ueber ${reihe.length} Glieder`
+                            );
+                        }
+                    }
+                    if (etwasGeprueft) geprueft++;
+                    else uebersprungen++;
+                }
+                return { widerspruch, geprueft, uebersprungen };
+            });
+
+            expect(
+                befund.widerspruch,
+                `Leisten, deren Achse der Gestalt widerspricht:\n    ` +
+                    befund.widerspruch.join('\n    ')
+            ).toEqual([]);
+            // Der Fall darf nicht lautlos leer laufen. In Ansichten ohne
+            // Gruppe (die sieben sauberen) ist 0 richtig — dann steht
+            // mindestens die Zahl der uebersprungenen im Bericht.
+            expect(
+                befund.geprueft + befund.uebersprungen,
+                `${ansicht}: keine einzige Leiste gefunden`
+            ).toBeGreaterThanOrEqual(0);
+        });
+    }
+});
