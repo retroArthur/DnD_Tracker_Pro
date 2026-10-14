@@ -921,8 +921,19 @@ const ZUSTAND_LESEN = sel => `(() => {
 })()`;
 
 /**
- * Je Familie: wo sie wohnt, wie viele Glieder die Saat erzeugt, welches
- * Attribut den Zustand traegt und wie viele Glieder gerade "an" sind.
+ * Je Familie: wo sie wohnt, welches Attribut den Zustand traegt, wie viele
+ * Glieder gerade "an" sind — und ob das Attribut an JEDEM Glied stehen
+ * muss oder nur am aktuellen.
+ *
+ * `nurWahr` IST KEINE ABSCHWAECHUNG, SONDERN DIE REGEL DES ATTRIBUTS, und
+ * sie ist eine Korrektur an meiner ersten Fassung: die forderte
+ * `aria-current` an allen zwanzig Zeilen und war damit rot, obwohl die
+ * Umsetzung richtig war. `aria-pressed` und `aria-expanded` sind
+ * ZWEIWERTIG — "nicht gedrueckt" ist ein Zustand und gehoert hingeschrieben
+ * (`"false"`). `aria-current` ist EINWERTIG: es gibt kein
+ * `aria-current="false"`, das etwas sagt, und manche Vorleseprogramme lesen
+ * schon die bloße Anwesenheit der Marke als "hier bist du". Nicht gewaehlt
+ * heisst darum: Attribut weg. Fall (18e) ist die Ratsche darauf.
  */
 const ZUSTANDSFAMILIEN = [
     {
@@ -936,6 +947,7 @@ const ZUSTANDSFAMILIEN = [
         ansicht: 'npcs',
         sel: '[data-action="select-npc"]',
         attribut: 'current',
+        nurWahr: true,
         wahr: 'aktuellWahr',
         anzWahr: 1
     },
@@ -971,20 +983,20 @@ const ZUSTANDSFAMILIEN = [
 
 test.describe('E-2 — der Zustand steht im ARIA, nicht nur in der Klasse', () => {
     for (const f of ZUSTANDSFAMILIEN) {
-        test(`(18) ${f.ansicht}: ${f.sel} traegt aria-${f.attribut} an JEDEM Glied`, async ({
-            page
-        }) => {
+        const wo = f.nurWahr ? 'am aktuellen Glied' : 'an JEDEM Glied';
+        test(`(18) ${f.ansicht}: ${f.sel} traegt aria-${f.attribut} ${wo}`, async ({ page }) => {
             test.setTimeout(120_000);
             await ansichtOeffnen(page, f.ansicht, 20);
             const z = await page.evaluate(ZUSTAND_LESEN(f.sel));
             expect(z.glieder, `${f.sel}: die Saat erzeugt keine Glieder`).toBeGreaterThan(1);
+            const soll = f.nurWahr ? f.anzWahr : z.glieder;
             expect(
                 z[f.attribut],
                 `${f.sel}: ${z[f.attribut]} von ${z.glieder} Gliedern tragen ` +
-                    `aria-${f.attribut}. Ohne das Attribut steckt der Zustand allein in ` +
-                    'der CSS-Klasse und ist fuer ein Vorleseprogramm nicht da. ' +
-                    `Gemessen: ${JSON.stringify(z)}`
-            ).toBe(z.glieder);
+                    `aria-${f.attribut}, erwartet ${soll}. Ohne das Attribut steckt der ` +
+                    'Zustand allein in der CSS-Klasse und ist fuer ein Vorleseprogramm ' +
+                    `nicht da. Gemessen: ${JSON.stringify(z)}`
+            ).toBe(soll);
             expect(
                 z[f.wahr],
                 `${f.sel}: ${z[f.wahr]} Glieder stehen auf "wahr", erwartet ${f.anzWahr}`
