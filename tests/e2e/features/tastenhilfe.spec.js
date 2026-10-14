@@ -126,10 +126,30 @@
  * (gemessene Elternkette: `DIV#shortcuts-overlay` -> `BODY` -> `HTML`) und
  * liegt in keinem davon. Die Hilfe ist darum auch GEOEFFNET nicht erfassbar
  * (`o.closest('[id^="view-"]')` liefert `null` in beiden Zustaenden, beides
- * nachgemessen) — und entsprechend nennen 0 von 3.831 Blattschluesseln des
- * Sollstands das Wort "shortcut". Fall (9) haelt diese Lage fest, damit eine
- * spaetere Verschiebung der Hilfe in einen Ansichtsbehaelter nicht still
- * durchlaeuft.
+ * nachgemessen) — und entsprechend kommt das Wort "shortcut" im ganzen
+ * Sollstand NULL Mal vor.
+ *
+ * DIE ZAHL, DIE HIER FRUEHER STAND, WAR FALSCH BESCHRIFTET, und die
+ * Richtigstellung der Richtigstellung ist selbst eine Lehre. Hier stand "0 von
+ * 3.831 Blattschluesseln". Die Gegenpruefung hielt 3.831 fuer die Blattzahl und
+ * 7.374 fuer "keine Groesse der Datei". Beides nachgezaehlt an der Datei, und
+ * beide Zahlen sind echt — nur messen sie verschiedene Ebenen:
+ *
+ *     3 Messlagen (standard, narrow, reducedMotion)
+ *     24 Ansichten je Lage                      ->  72 Ansichtsknoten
+ *     4 Eintraege je Ansicht                     -> 288 Eintraege
+ *     Schluessel eine Ebene darunter             -> 3.831
+ *     skalare Blaetter, voll rekursiv            -> 7.374
+ *
+ * "Blattschluessel" traf also keine von beiden: 3.831 sind Schluessel, aber
+ * keine Blaetter (ihre Werte sind teils selbst verschachtelt), und 7.374 sind
+ * die Blaetter. Die Aussage haelt fuer jede Zaehlweise — das Wort kommt NULL
+ * Mal vor —, und darum steht hier jetzt die Aussage und nicht die Zahl: eine
+ * Zahl ohne Waechter ist genau das, was dieser Strang zu reparieren versucht,
+ * und drei Durchgaenge haben sie dreimal verschieden gelesen.
+ *
+ * Fall (9) haelt diese Lage fest, damit eine spaetere Verschiebung der Hilfe in
+ * einen Ansichtsbehaelter nicht still durchlaeuft.
  */
 
 import { test, expect } from '@playwright/test';
