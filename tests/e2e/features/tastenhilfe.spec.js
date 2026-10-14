@@ -1964,3 +1964,192 @@ test.describe('HILF — die offene Hilfe ist ein Dialog', () => {
         ).toBe(false);
     });
 });
+
+// ============================================================
+// (15) DIE HILFE FUER DEN, DER SIE SICH VORLESEN LASSEN MUSS
+// ============================================================
+//
+// WAS GEMESSEN WAR, am gebauten Buendel mit geoeffneter Hilfe: fuer ein
+// Vorleseprogramm war die ganze Hilfe DREI Knoten. Der Zugaenglichkeitsbaum
+// (`locator.ariaSnapshot()`) lautete:
+//
+//     - text: ⌨️ Tastenkürzel
+//     - button "✕"
+//     - text: "📍 Navigation Dashboard 1 Party 2 NPCs 3 Orte 4 … Drücke Esc
+//              zum Schließen"
+//
+// Ein rund hundert Woerter langer Satz fuer 40 Zeilen, ohne Trennung
+// zwischen Handlung und Taste und ohne Ueberschrift, nach der man springen
+// koennte. Dazu: `#shortcuts-overlay` und `.shortcuts-modal` trugen je
+// `role`, `aria-label`, `aria-labelledby` und `aria-modal` auf `null`; im
+// ganzen Dialog 0 Ueberschriften, 0 Rollen, 0 `aria-*`-Attribute, 0
+// `<kbd>`-Elemente und 0 Listen. 95 `DIV`, 104 `SPAN`, ein `BUTTON`.
+//
+// WARUM DAS DIE SCHLIMMSTE STELLE DAFUER IST. Die Tastenhilfe ist das
+// Werkzeug dessen, der die Maus nicht benutzt. Inhaltlich war sie nach HILF
+// nahezu vollstaendig — und fuer den Vorleseprogramm-Nutzer trotzdem
+// unbenutzbar: ohne `role="dialog"`/`aria-modal` kuendigt nichts an, dass
+// sich ueberhaupt etwas geoeffnet hat.
+//
+// DIE VIER STUFEN, GEMESSEN UND NICHT GERATEN. Vier Fassungen, je am
+// laufenden Buendel eingesetzt und der Zugaenglichkeitsbaum gezaehlt:
+//
+//     Ausgangsstand                              3 Knoten
+//     + dialog/aria-modal + heading + <kbd>      15 Knoten
+//     + role="group" und role="listitem"         57 Knoten
+//     + <dl>/<dt>/<dd> statt der Rollen          98 Knoten
+//
+// Genommen ist die vierte, und der Unterschied zur dritten ist genau der
+// Befund: `role="listitem"` macht aus einer Zeile EINEN Knoten
+// ("Dashboard 1"), `<dt>`/`<dd>` machen daraus ZWEI ("Begriff Dashboard",
+// "Definition 1"). Die Trennung zwischen Handlung und Taste ist das, was
+// fehlte — eine Liste allein haette sie nicht gebracht.
+//
+// DAS `<span>` BLEIBT INNERHALB DES `<dt>` STEHEN, und das ist kein
+// Zierrat: `hilfeLesen()` in dieser Datei und die Umbruchmessung in Fall (8)
+// greifen die Beschriftung ueber `row.querySelector('span')`. Ein `<dt>`
+// ohne inneres `<span>` haette beide blind gemacht — und ein blinder Leser
+// macht jeden Mengenvergleich dieser Datei gruen (die Falle, gegen die
+// Faelle 1 und 2 stehen).
+//
+// `aria-hidden` ODER `inert` AUF DEM HINTERGRUND STEHT HIER NICHT, und das
+// ist eine Entscheidung mit Messung: der Hintergrund ist seit Fall (13) fuer
+// den Tabulator unerreichbar, und `aria-modal="true"` sagt dem
+// Vorleseprogramm dasselbe. Ein `inert` auf dem App-Behaelter waere eine
+// zweite, breitere Zusicherung, die jede Ansicht beruehrt — ungemessen und
+// ohne Auftrag.
+
+test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
+    test('(15) die offene Hilfe ist ein Dialog mit Ueberschriften und Tastenpaaren', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'initiative');
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(450);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Vorbedingung: "?" oeffnet die Hilfe'
+        ).toBe(true);
+
+        const baum = await page.evaluate(() => {
+            const o = document.getElementById('shortcuts-overlay');
+            const m = o.querySelector('.shortcuts-modal');
+            const reihen = Array.from(o.querySelectorAll('.shortcut-row'));
+            const titelId = m.getAttribute('aria-labelledby');
+            return {
+                rolle: m.getAttribute('role'),
+                modal: m.getAttribute('aria-modal'),
+                labelledby: titelId,
+                // Die Beschriftung MUSS auf einen Knoten zeigen, der Text
+                // traegt — ein `aria-labelledby` ins Leere ist schlimmer als
+                // keines: das Vorleseprogramm nennt den Dialog dann gar nicht.
+                labelText: titelId
+                    ? (document.getElementById(titelId)?.textContent || '').trim()
+                    : null,
+                ueberschriften: Array.from(
+                    o.querySelectorAll('[role="heading"], h1, h2, h3, h4, h5, h6')
+                ).map(e => (e.textContent || '').trim()),
+                abschnitte: o.querySelectorAll('.shortcuts-section').length,
+                kbd: o.querySelectorAll('kbd').length,
+                marken: o.querySelectorAll('.shortcut-key').length,
+                markenNichtKbd: Array.from(o.querySelectorAll('.shortcut-key')).filter(
+                    k => k.tagName !== 'KBD'
+                ).length,
+                reihen: reihen.length,
+                // Jede Zeile ein Begriff-/Definitionspaar.
+                ohneBegriff: reihen.filter(r => !r.querySelector('dt')).length,
+                ohneDefinition: reihen.filter(r => !r.querySelector('dd')).length,
+                // Und das `<span>`, von dem die Leser dieser Datei leben.
+                ohneSpanImBegriff: reihen.filter(r => !r.querySelector('dt span')).length,
+                // Ein `<dt>` darf nur in einer Beschreibungsliste stehen.
+                ausserhalbDerListe: reihen.filter(r => !r.closest('dl')).length
+            };
+        });
+
+        expect(baum.rolle, 'Die Hilfeflaeche traegt `role="dialog"`').toBe('dialog');
+        expect(baum.modal, 'und `aria-modal="true"`').toBe('true');
+        expect(
+            baum.labelText,
+            'Der Dialog traegt eine Beschriftung ueber `aria-labelledby`, und der ' +
+                `verwiesene Knoten hat Text. Gemessen: "${baum.labelText}".`
+        ).toMatch(/\S/);
+
+        expect(
+            baum.ueberschriften.length,
+            'Jeder Abschnitt der Hilfe ist eine Ueberschrift, nach der ein ' +
+                `Vorleseprogramm springen kann. Gemessen: ${baum.ueberschriften.length} ` +
+                `Ueberschriften bei ${baum.abschnitte} Abschnitten ` +
+                `(${baum.ueberschriften.join(' | ')}).`
+        ).toBe(baum.abschnitte);
+        expect(baum.abschnitte, 'die Hilfe hat sechs Abschnitte').toBeGreaterThanOrEqual(6);
+
+        expect(
+            baum.markenNichtKbd,
+            `${baum.markenNichtKbd} von ${baum.marken} Tastenmarken sind kein \`<kbd>\`. ` +
+                'Eine Taste ist semantisch eine Taste; am Ausgangsstand waren es 0 von 47.'
+        ).toBe(0);
+        expect(baum.kbd, 'und es gibt ueberhaupt Tastenmarken').toBeGreaterThanOrEqual(40);
+
+        expect(
+            baum.ohneBegriff,
+            `${baum.ohneBegriff} von ${baum.reihen} Zeilen haben kein \`<dt>\`. Ohne ` +
+                'Begriff-/Definitionspaar liest das Vorleseprogramm Handlung und Taste als ' +
+                'einen Satz — am Ausgangsstand war die ganze Hilfe EIN Textknoten.'
+        ).toBe(0);
+        expect(
+            baum.ohneDefinition,
+            `${baum.ohneDefinition} von ${baum.reihen} Zeilen haben kein \`<dd>\`.`
+        ).toBe(0);
+        expect(
+            baum.ausserhalbDerListe,
+            `${baum.ausserhalbDerListe} von ${baum.reihen} Zeilen liegen in keiner ` +
+                '`<dl>`. Ein `<dt>` ausserhalb einer Beschreibungsliste ist ungueltiges ' +
+                'HTML, und der Zugaenglichkeitsbaum fuehrt es dann nicht als Paar.'
+        ).toBe(0);
+        expect(
+            baum.ohneSpanImBegriff,
+            `${baum.ohneSpanImBegriff} von ${baum.reihen} Zeilen haben kein \`<span>\` im ` +
+                '`<dt>`. `hilfeLesen()` und Fall (8) greifen die Beschriftung ueber ' +
+                '`row.querySelector("span")` — ohne das sind beide blind, und ein blinder ' +
+                'Leser macht jeden Mengenvergleich dieser Datei gruen.'
+        ).toBe(0);
+
+        // UND DIE EIGENTLICHE AUSSAGE, am Zugaenglichkeitsbaum selbst und
+        // nicht an den Attributen: er muss die Paare FUEHREN. Die Attribute
+        // oben sind der Weg, dieser Vergleich ist das Ziel — und er ist der
+        // Grund, warum die Attributpruefungen nicht genuegen: `<dt>` in einem
+        // Behaelter mit `display: none` traegt alle Attribute und erscheint
+        // trotzdem in keinem Baum.
+        const schnappschuss = await page.locator('#shortcuts-overlay').ariaSnapshot();
+        const zeilen = schnappschuss.split('\n');
+        expect(
+            zeilen.length,
+            'Der Zugaenglichkeitsbaum der Hilfe hatte am Ausgangsstand DREI Knoten fuer ' +
+                `40 Zeilen. Gemessen sind es jetzt ${zeilen.length}. Unter 80 bedeutet, ` +
+                'dass die Paare nicht ankommen.\n\n' +
+                zeilen.slice(0, 12).join('\n')
+        ).toBeGreaterThanOrEqual(80);
+        expect(
+            zeilen.filter(z => /^\s*- dialog /.test(z)).length,
+            'Der Baum fuehrt die Hilfe als `dialog` — das ist die Ankuendigung, dass sich ' +
+                'ueberhaupt etwas geoeffnet hat.\n' +
+                zeilen.slice(0, 6).join('\n')
+        ).toBe(1);
+        expect(
+            zeilen.filter(z => /^\s*- heading /.test(z)).length,
+            `Der Baum fuehrt ${zeilen.filter(z => /^\s*- heading /.test(z)).length} ` +
+                'Ueberschriften; sechs Abschnitte brauchen sechs.'
+        ).toBeGreaterThanOrEqual(6);
+        expect(
+            zeilen.filter(z => /^\s*- term:/.test(z)).length,
+            'Der Baum fuehrt jede Zeile als Begriff. Gemessen: ' +
+                `${zeilen.filter(z => /^\s*- term:/.test(z)).length} von ${baum.reihen}.`
+        ).toBe(baum.reihen);
+        expect(
+            zeilen.filter(z => /^\s*- definition:/.test(z)).length,
+            'und jede Taste als Definition dazu. Gemessen: ' +
+                `${zeilen.filter(z => /^\s*- definition:/.test(z)).length} von ${baum.reihen}.`
+        ).toBe(baum.reihen);
+    });
+});
