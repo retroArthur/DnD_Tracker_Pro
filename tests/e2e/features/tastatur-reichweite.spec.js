@@ -96,8 +96,35 @@
 
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
+import { ansichtenAusBuendel } from '../helpers/ansichten.js';
 
-const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+const APP_PFAD = `${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+const APP_URL = `file:///${APP_PFAD}`;
+
+/**
+ * DIE ANSICHTENLISTE IST ABGELEITET, NICHT ABGETIPPT (TASV/E-2, Runde 3,
+ * Befund 11).
+ *
+ * Drei Waechterfamilien dieser Datei hingen an einem Literal mit 24
+ * Kennungen: die Haltgrenze, "jede angemeldete Gruppe traegt genau einen
+ * Halt" und die Achse. Nachgestellt und belegt: eine 25. Ansicht in das
+ * Buendel gehaengt, dann
+ *
+ *   tastatur-erreichbarkeit  67 -> 69 Faelle   (laeuft mit)
+ *   tastatur-reichweite      57 -> 57 Faelle   (laeuft NICHT mit)
+ *
+ * Genau die drei Dinge, die diese Phase neu zugesichert hat, fielen fuer
+ * eine neue Ansicht still aus. Die Liste kommt jetzt aus derselben Quelle
+ * wie dort (`../helpers/ansichten.js`).
+ *
+ * DIE HALTGRENZEN BLEIBEN EIN LITERAL, und das ist richtig: sie sind
+ * GEMESSENE Zahlen, die niemand ableiten kann. Dass es fuer JEDE
+ * abgeleitete Ansicht eine gibt, ist der eigene Fall "(5) die Haltgrenzen
+ * decken jede Ansicht des Buendels" — wer eine Ansicht einbaut, bekommt
+ * dort eine rote Aufforderung, ihre Zahl zu messen, statt einer still
+ * ungeprueften Ansicht.
+ */
+const { abschnitte: ANSICHTEN } = ansichtenAusBuendel(APP_PFAD);
 
 /** Breite der Vermessung. Unter 901 px greifen andere Media-Queries. */
 const BREIT = { width: 1440, height: 900 };
@@ -857,7 +884,7 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         // ausgeblendete Gruppe muss ebenfalls geregelt sein, sonst
         // tabuliert der Spielleiter nach dem Ansichtswechsel in eine
         // Reihe mit zwanzig Halten.
-        for (const ansicht of Object.keys(HALTGRENZEN)) {
+        for (const ansicht of ANSICHTEN) {
             await ansichtOeffnen(page, ansicht);
             const s = await page.evaluate(() => window.KeyboardGroup.statistik());
             expect(s.aktiv, `KeyboardGroup laeuft in ${ansicht} nicht`).toBe(true);
@@ -866,6 +893,24 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
                 `${ansicht}: ${s.offen} von ${s.gruppen} Gruppen tragen nicht genau einen Halt`
             ).toBe(0);
         }
+    });
+
+    test('(5) die Haltgrenzen decken jede Ansicht des Buendels', async () => {
+        // DIE EINE ZUSICHERUNG, DIE EINE ABGELEITETE LISTE NEBEN EINEM
+        // LITERAL BRAUCHT. Die Grenzen sind gemessene Zahlen und bleiben
+        // abgetippt; ohne diesen Fall waere eine 25. Ansicht in den drei
+        // Familien oben wieder still ungeprueft. Jetzt fordert sie eine
+        // Messung — laut, mit Namen, an einer Stelle.
+        expect(ANSICHTEN.length, 'Keine Ansicht im Buendel gefunden').toBeGreaterThan(20);
+        const ohneGrenze = ANSICHTEN.filter(v => !(v in HALTGRENZEN));
+        const ohneAnsicht = Object.keys(HALTGRENZEN).filter(v => !ANSICHTEN.includes(v));
+        expect(
+            { ohneGrenze, ohneAnsicht },
+            'Eine Ansicht ohne gemessene Haltgrenze laeuft in drei Waechterfamilien nicht ' +
+                'mit (Flut, "ein Halt je Gruppe", Achse). Eine Grenze ohne Ansicht ist eine ' +
+                'Zahl fuer etwas, das es nicht mehr gibt. Messen: Ansicht oeffnen, ' +
+                'HALTE auswerten, Zahl eintragen.'
+        ).toEqual({ ohneGrenze: [], ohneAnsicht: [] });
     });
 
     test('(5) alle 22 Gruppenarten sind angemeldet', async ({ page }) => {
@@ -1224,10 +1269,35 @@ test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
 // UND ER PRUEFT NUR, WAS ER SIEHT. Eine Gruppe mit weniger als zwei
 // SICHTBAREN Gliedern hat keine Gestalt (die Begegnungs- und Ortsleiste
 // zeigen mit der Pruefsaat genau eine Marke); sie wird uebersprungen und
-// am Ende gezaehlt, damit der Fall nicht lautlos leer laeuft.
+// am Ende gezaehlt.
+//
+// DIE SELBSTPRUEFUNG WAR KOSMETIK, UND ZWAR NACHWEISLICH (TASV/E-2,
+// Runde 3, Befund 10). Sie lautete
+//
+//     expect(befund.geprueft + befund.uebersprungen).toBeGreaterThanOrEqual(0)
+//
+// und beide Zaehler starten bei 0 und werden nur hochgezaehlt — die Summe
+// ist IMMER >= 0. Nachgestellt: mit `const ANSICHTSGRUPPEN = []` (keine
+// einzige Gruppe angemeldet, 0 Leisten im Dokument) blieben `(7) quests`
+// und `(7) loot` gruen, obwohl der Fall ueber NICHTS geurteilt hatte.
+//
+// JETZT KOMMT DIE ERWARTUNG AUS DER ANMELDUNG, nicht aus dem Fall selbst:
+// `KeyboardGroup.artenListe()` nennt Behaelter- und Gliedselektor jeder
+// Art, und daraus zaehlt die Probe, WIE VIELE sichtbare Leisten in dieser
+// Ansicht stehen muessten und wie viele davon eine Gestalt haben (zwei
+// sichtbare Glieder). Faellt die Mechanik aus — setzt also niemand mehr
+// `role="toolbar"` —, ist `erwartet` groesser als `gefunden` und der Fall
+// rot.
+//
+// WAS DIESE SCHICHT NICHT FAENGT, und darum steht es hier: faellt die
+// ANMELDUNG aus, ist auch die Erwartung 0 und der Fall wieder stumm. Diese
+// Luecke deckt die zweite Schicht, und zwar gemessen: unter derselben
+// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 22 Gruppenarten` und
+// die Volkszaehlung `UNGRUPPIERT` rot. Zwei Schichten, zwei Fehlerbilder —
+// eine Probe, die beides allein leisten koennte, gibt es nicht.
 
 test.describe('Reichweite — die Achse stimmt mit der Gestalt', () => {
-    for (const ansicht of Object.keys(HALTGRENZEN)) {
+    for (const ansicht of ANSICHTEN) {
         test(`(7) ${ansicht}: jede Leiste hoert auf die Pfeiltasten ihrer Gestalt`, async ({
             page
         }) => {
@@ -1299,7 +1369,31 @@ test.describe('Reichweite — die Achse stimmt mit der Gestalt', () => {
                     if (etwasGeprueft) geprueft++;
                     else uebersprungen++;
                 }
-                return { widerspruch, geprueft, uebersprungen };
+
+                // DIE ERWARTUNG AUS DER ANMELDUNG. `artenListe()` nennt je
+                // Art den Behaelter- und den Gliedselektor; daraus faellt
+                // ab, wie viele sichtbare Leisten hier stehen muessten
+                // (`erwartet`) und wie viele davon eine Gestalt haben
+                // (`erwartetMitGestalt`, zwei sichtbare Glieder). Als
+                // MENGEN, nicht als Summe: `div#bestiary-list` fuehrt zwei
+                // Arten und ist EINE Leiste.
+                const mitGlied = new Set();
+                const mitZwei = new Set();
+                for (const art of window.KeyboardGroup.artenListe()) {
+                    for (const b of document.querySelectorAll(art.behaelter)) {
+                        if (!sichtbar(b)) continue;
+                        const g = [...b.querySelectorAll(art.glied)].filter(sichtbar);
+                        if (g.length >= 1) mitGlied.add(b);
+                        if (g.length >= 2) mitZwei.add(b);
+                    }
+                }
+                return {
+                    widerspruch,
+                    geprueft,
+                    uebersprungen,
+                    erwartet: mitGlied.size,
+                    erwartetMitGestalt: mitZwei.size
+                };
             });
 
             expect(
@@ -1307,13 +1401,117 @@ test.describe('Reichweite — die Achse stimmt mit der Gestalt', () => {
                 `Leisten, deren Achse der Gestalt widerspricht:\n    ` +
                     befund.widerspruch.join('\n    ')
             ).toEqual([]);
-            // Der Fall darf nicht lautlos leer laufen. In Ansichten ohne
-            // Gruppe (die sieben sauberen) ist 0 richtig — dann steht
-            // mindestens die Zahl der uebersprungenen im Bericht.
+            // DER FALL MUSS ZEIGEN, DASS ER GEURTEILT HAT. Begruendung im
+            // Abschnittskopf: die erste Fassung verglich zwei
+            // nicht-negative Zaehler mit 0 und war unter jeder Mutation
+            // gruen. Jetzt steht die Erwartung aus der Anmeldung daneben.
             expect(
-                befund.geprueft + befund.uebersprungen,
-                `${ansicht}: keine einzige Leiste gefunden`
-            ).toBeGreaterThanOrEqual(0);
+                { gefunden: befund.geprueft + befund.uebersprungen, mitGestalt: befund.geprueft },
+                `${ansicht}: die Probe hat ${befund.geprueft + befund.uebersprungen} sichtbare ` +
+                    `Leisten gefunden, die Anmeldung fordert ${befund.erwartet} ` +
+                    `(davon ${befund.erwartetMitGestalt} mit Gestalt). Fehlen Leisten, setzt ` +
+                    'die Mechanik kein role="toolbar"/aria-orientation mehr und diese Probe ' +
+                    'ist blind — pruefe KeyboardGroup._regleGruppe().'
+            ).toEqual({
+                gefunden: befund.erwartet,
+                mitGestalt: befund.erwartetMitGestalt
+            });
         });
     }
+});
+
+// ============================================================
+// (9) VERSCHACHTELTE role="button" WACHSEN NICHT
+// ============================================================
+//
+// WAS DIESER FALL BEWACHT (TASV/E-2, Runde 3, Befund 13). Mit der
+// gefallenen Ansichtsgrenze in `ui/keyboard-reach.js` bekommen auch
+// Zeilen-BEHAELTER `tabindex="0" role="button"` — und manche davon
+// ENTHALTEN native Bedienelemente. Gemessen (sichtbares `[role="button"]`,
+// selbst nicht nativ, mit mindestens einem sichtbaren fokussierbaren
+// Nachfahren):
+//
+//   vor E-1/E-2 (b8a1a5c)   party 20                           SUMME 20
+//   jetzt                   party 20, quests 20, fraktionen 20,
+//                           shops 20, bestiary 17              SUMME 97
+//
+// Nach WAI-ARIA sind Kinder einer Schaltflaeche praesentational, und das
+// ist hier ein Autorenfehler. ER IST ABER NICHT ALS VERLUST NACHGEWIESEN:
+// Chromiums echter Barrierefreiheitsbaum zeigt die verschachtelten
+// Knoepfe weiter an (gemessen ueber `Accessibility.getFullAXTree`: der
+// Pinnknopf der Auftragszeile, die zwei Knoepfe des Ladenkopfes). Die
+// Regel schlaegt dort nicht durch.
+//
+// DARUM EINE RATSCHE UND KEINE REPARATUR. Die Struktur zu richten heisst,
+// die Knoepfe aus den Zeilen-Behaeltern herauszuziehen — eine Umstellung
+// des Markups in fuenf Ansichten mit Folgen fuer den Stil-Sollstand. Was
+// gefehlt hat, ist ein Waechter: die Zahl darf nicht weiter wachsen, und
+// wer eine sechste Ansicht so baut, bekommt es gesagt.
+//
+// EIN FALL FUER ALLE ANSICHTEN, ein Seitenaufbau: die Messung ist rein
+// strukturell, kostet keinen Tastendruck und braucht keine frische Seite
+// je Ansicht.
+
+/** Gemessene Obergrenzen je Ansicht; nicht genannte Ansichten: 0. */
+const VERSCHACHTELT_ERLAUBT = {
+    // Je Charakterkarte der Kopf, der den Bearbeiten-Knopf enthaelt (E-1).
+    party: 20,
+    // div.quest-header enthaelt den Pinnknopf und zwei Marken.
+    quests: 20,
+    // div.fr-faction-card enthaelt Bearbeiten und Loeschen.
+    fraktionen: 20,
+    // div.shop-header enthaelt Handzettel, Bearbeiten, Loeschen.
+    shops: 20,
+    // div.bestiary-list-item enthaelt den Favoritenknopf (17 im Fenster).
+    bestiary: 17
+};
+
+const VERSCHACHTELT = `(() => {
+    const NATIV = 'button,a[href],input:not([type="hidden"]),select,textarea,summary';
+    const FOKUSSIERBAR = NATIV + ',[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
+    const sichtbar = el => {
+        if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true,
+            visibilityProperty: true, contentVisibilityAuto: true })) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    };
+    const inAktiv = el => { const v = el.closest('.view'); return v ? v.classList.contains('active') : true; };
+    let n = 0;
+    const woher = {};
+    document.querySelectorAll('[role="button"]').forEach(el => {
+        if (el.matches(NATIV)) return;
+        if (!sichtbar(el) || !inAktiv(el)) return;
+        if (![...el.querySelectorAll(FOKUSSIERBAR)].filter(sichtbar).length) return;
+        n++;
+        const k = el.getAttribute('data-action') || String(el.className).split(' ')[0] || '?';
+        woher[k] = (woher[k] || 0) + 1;
+    });
+    return { n, woher };
+})()`;
+
+test('(9) verschachtelte role="button" wachsen in keiner Ansicht', async ({ page }) => {
+    test.setTimeout(300_000);
+    await ansichtOeffnen(page, 'dashboard');
+    /** @type {Record<string, any>} */
+    const ueber = {};
+    let summe = 0;
+    for (const ansicht of ANSICHTEN) {
+        await page.evaluate(v => window.switchView(v), ansicht);
+        await page.waitForTimeout(650);
+        const m = await page.evaluate(VERSCHACHTELT);
+        summe += m.n;
+        const grenze = VERSCHACHTELT_ERLAUBT[ansicht] || 0;
+        if (m.n > grenze) ueber[ansicht] = { gemessen: m.n, grenze, woher: m.woher };
+    }
+    expect(
+        ueber,
+        'In diesen Ansichten liegt ein role="button" um ein eigenes Bedienelement, und ' +
+            'die Zahl ist gewachsen. Nach WAI-ARIA sind Kinder einer Schaltflaeche ' +
+            'praesentational; in Chromium gemessen schlaegt die Regel nicht durch, die ' +
+            'Struktur ist trotzdem falsch. Entweder die Nachfahren aus dem Behaelter ' +
+            'herausziehen oder die Zahl mit einer Begruendung anheben.'
+    ).toEqual({});
+    // Die Summe steht im Bericht, damit eine Verschiebung zwischen zwei
+    // Ansichten nicht unbemerkt bleibt.
+    expect(summe, `Summe der verschachtelten role="button" ueber alle Ansichten`).toBe(97);
 });

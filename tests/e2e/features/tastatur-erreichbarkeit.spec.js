@@ -114,9 +114,9 @@
  * meldet konstant 0.
  */
 
-import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
+import { ansichtenAusBuendel } from '../helpers/ansichten.js';
 
 const APP_PFAD = `${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 const APP_URL = `file:///${APP_PFAD}`;
@@ -132,46 +132,18 @@ const BREIT = { width: 1440, height: 900 };
  * automatisch in die Pruefung auf; die Reiterliste steht als Literal in der
  * Probe." Diese Zeilen schliessen sie.
  *
- * SIE WIRD AUS DEM GEBAUTEN BUENDEL GELESEN, aus BEIDEN Quellen, die eine
- * Ansicht im Dokument hat:
- *   - dem Abschnitt selbst  `id="view-X" class="view …"`
- *   - dem Navigationsreiter `data-view="X"`
- * Beide Mengen muessen deckungsgleich sein; Fall (0) unten ist die
- * Zusicherung darauf. Wer eine 25. Ansicht einbaut, bekommt sie damit ohne
- * eine Zeile hier mitgeprueft — und wer nur die Haelfte einbaut (Abschnitt
- * ohne Reiter oder umgekehrt), bekommt einen roten Fall statt einer still
- * ungeprueften Ansicht.
- *
- * WARUM AUS DEM BUENDEL UND NICHT AUS `assets/templates/*.html`: das
- * Buendel ist das, wogegen diese Datei laeuft. Eine Vorlage, die der Bau
- * nicht einsammelt, waere sonst eine Ansicht, die die Probe fordert und die
- * es im Lauf nicht gibt.
- *
- * WARUM SYNCHRON BEIM EINLESEN DER DATEI und nicht in einem `beforeAll`:
- * Playwright muss die Faelle beim Einsammeln kennen, lange bevor ein
- * Browser laeuft. Gemessen: der Lesevorgang ueber 3,8 MB kostet rund 30 ms,
- * einmal je Arbeiter.
+ * SIE LIEGT SEIT RUNDE 3 IN `../helpers/ansichten.js` — eine Quelle fuer
+ * diese Datei UND fuer `tastatur-reichweite.spec.js`, deren drei
+ * Waechterfamilien bis dahin an einem abgetippten Literal mit 24 Kennungen
+ * hingen (Befund 11 der Gegenpruefung). Die Begruendung der Ableitung und
+ * die Pruefung der Erkennung selbst stehen dort bzw. in
+ * `tests/unit/ansichten-erkennung.test.js`.
  */
-function ansichtenAusBuendel() {
-    const html = readFileSync(APP_PFAD, 'utf8');
-    const abschnitte = new Set();
-    for (const m of html.matchAll(/id="view-([a-z0-9-]+)"\s+class="view\b/g)) {
-        abschnitte.add(m[1]);
-    }
-    const reiter = new Set();
-    const beschriftung = new Map();
-    for (const m of html.matchAll(/data-view="([a-z0-9-]+)"([^>]*)>([^<]*)/g)) {
-        reiter.add(m[1]);
-        // Die Beschriftung des Reiters ist der Name, den der Spielleiter
-        // sieht — der Fallbericht nennt damit dieselbe Ansicht wie die App.
-        // Fehlt sie, bleibt die Kennung; eine 25. Ansicht laeuft so oder so.
-        const text = (m[3] || '').replace(/\s+/g, ' ').trim();
-        if (text && !beschriftung.has(m[1])) beschriftung.set(m[1], text);
-    }
-    return { abschnitte: [...abschnitte].sort(), reiter: [...reiter].sort(), beschriftung };
-}
-
-const { abschnitte: ABSCHNITTE, reiter: REITER, beschriftung: REITERTEXT } = ansichtenAusBuendel();
+const {
+    abschnitte: ABSCHNITTE,
+    reiter: REITER,
+    beschriftung: REITERTEXT
+} = ansichtenAusBuendel(APP_PFAD);
 
 /**
  * Die fuenf Kampfansichten aus E-1. Sie sind KEINE Umfangsgrenze mehr —
