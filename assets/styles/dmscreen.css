@@ -2575,3 +2575,78 @@
     margin: 0;
     min-width: 0;
 }
+
+/* ============================================================
+   DER AUSWEG AUS DER TASTENHILFE (HILF)
+   ============================================================
+   Auch diese Regeln stehen am DATEIENDE, aus derselben Aktenlage wie die
+   zwei Abschnitte darueber: tests/unit/design-consistency.test.js ankert
+   Stellen dieser Datei per Zeilennummer.
+
+   WAS GEMESSEN WAR, mit hasTouch/isMobile am gebauten Buendel: bei 390 px
+   waren 12 von 41 Zeilen sichtbar (673 px Flaeche, 2119 px Inhalt), bei
+   360 px zehn. Die Fusszeile stand 2161 px unter dem Anfang und lautete
+   "Druecke Esc zum Schliessen" — unerreichbar, und auf einem Geraet ohne
+   Escape-Taste ausserdem eine Anweisung ins Leere. Vier der sechs
+   Abschnitte (Wuerfel, Initiative, Tabulator & Gruppen, Soundboard) lagen
+   ausserhalb der Flaeche, ohne Hinweis, dass es weitergeht.
+
+   `position: sticky` AM FUSS DES LAUFBEREICHS. `.shortcuts-modal` ist der
+   Laufbereich (`max-height: 80vh; overflow-y: auto`), die Fusszeile ist
+   sein letztes Kind — sie klebt damit an seiner unteren Kante und ist beim
+   Oeffnen wie beim Rollen sichtbar. Der undurchsichtige Hintergrund
+   (`var(--bg-card)`, dieselbe Farbe wie die Flaeche) ist dabei nicht
+   Kosmetik: ohne ihn liefen die Zeilen darunter durch den Text.
+   `margin-inline: -24px` und `padding-inline: 24px` heben das Polster der
+   Flaeche auf, damit der Streifen die ganze Breite deckt; `bottom: -24px`
+   zieht ihn auf die untere Polsterkante, sonst bliebe darunter ein
+   24 px hoher Spalt, durch den Zeilen sichtbar waeren.
+
+   DAS ZIEL MUSS TREFFBAR SEIN. Der ✕-Knopf war 36x36 px auf dem Telefon
+   und 27x23 am Schreibtisch. 44 px ist die Schranke, die dieses Projekt an
+   den Reitern der Navigationsleiste gesichert hat (core.css, M1); dort
+   steht auch die Begruendung, wo sie NICHT gilt — bei sieben Knoepfen in
+   304 px Kopfzeile ist der Platz nicht da. Hier steht EIN Knopf in einer
+   eigenen Zeile. 32 px am Schreibtisch deckt die 24-px-Schranke von
+   WCAG 2.5.8 mit Rand.
+
+   DAS EREIGNISLOG TRITT BEISEITE, SOLANGE DIE HILFE OFFEN IST. Gemessen
+   verdeckte EIN Hinweis bei 390 px drei der zwoelf sichtbaren Zeilen. Das
+   Log liegt mit `--z-toast` (4000) ueber der Hilfe (`--z-floating`, 2000),
+   und das ist in variables.css eine ausdrueckliche Entscheidung
+   ("Meldungen liegen ueber allem"). Die Ebenenleiter ist darum NICHT der
+   Ort der Reparatur — eine Ausnahme fuer eine Blende haette die Leiter
+   entwertet. Statt dessen setzt `showShortcutsOverlay()` die Marke
+   `tastenhilfe-offen` auf `<body>` und nimmt sie beim Schliessen zurueck.
+   DAS KOSTET ETWAS, und es soll hier stehen: ein Hinweis, der waehrend der
+   offenen Hilfe ablaeuft, ist danach weg. Dafuer gibt es die dauerhafte
+   Betriebsart des Logs (`L`), und die steht in der Hilfe. Ein Hinweis
+   ueber einer modalen Hilfe ist ohnehin nichts, worauf der Nutzer gerade
+   handeln kann.
+
+   Bewacht von den Faellen (16) und (17) in
+   tests/e2e/features/tastenhilfe.spec.js.
+   ============================================================ */
+.shortcuts-footer {
+    position: sticky;
+    bottom: -24px;
+    margin-inline: -24px;
+    padding: 8px 24px 24px;
+    background: var(--bg-card);
+}
+
+.shortcuts-title .btn {
+    min-width: 32px;
+    min-height: 32px;
+}
+
+body.tastenhilfe-offen .event-log {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .shortcuts-title .btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}

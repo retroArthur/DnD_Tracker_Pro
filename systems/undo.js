@@ -585,6 +585,14 @@ function showShortcutsOverlay() {
             ? aktiv
             : null;
     overlay.classList.add('show');
+    // DIE MARKE AM `<body>`, an der das Ereignislog beiseitetritt (HILF).
+    // Gemessen verdeckte EIN Hinweis bei 390 px drei der zwoelf sichtbaren
+    // Hilfezeilen; das Log liegt mit `--z-toast` (4000) ueber der Hilfe
+    // (`--z-floating`, 2000), und diese Ebenenleiter ist in variables.css
+    // eine ausdrueckliche Entscheidung — eine Ausnahme fuer eine Blende
+    // haette sie entwertet. Die Regel steht am Ende von
+    // `assets/styles/dmscreen.css`, dort auch der Preis dieser Wahl.
+    document.body.classList.add('tastenhilfe-offen');
     const flaeche = overlay.querySelector('.shortcuts-modal');
     if (flaeche) {
         flaeche.setAttribute('tabindex', '-1');
@@ -595,6 +603,7 @@ function hideShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
     if (!overlay) return;
     overlay.classList.remove('show');
+    document.body.classList.remove('tastenhilfe-offen');
     // Den Fokus nicht auf einer Flaeche mit `opacity: 0` stehen lassen: der
     // naechste Anschlag bediente sonst etwas Unsichtbares.
     if (document.activeElement && overlay.contains(document.activeElement)) {

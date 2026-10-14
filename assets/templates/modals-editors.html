@@ -697,8 +697,17 @@
                     </dl>
                 </div>
             </div>
-            <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
-                Drücke <kbd class="shortcut-key">Esc</kbd> zum Schließen
+            <!--
+                DIE FUSSZEILE IST DER EINZIGE AUSWEG, DER AUF DEM TELEFON SICHTBAR
+                IST — darum klebt sie (`.shortcuts-footer`, position: sticky) und
+                nennt alle drei Wege. Gemessen stand sie vorher 2161 px unter dem
+                Anfang und sagte "Drücke Esc", auf einem Gerät ohne Escape-Taste.
+                DER INLINE-STIL BLEIBT: der projektweite Zähler steht auf 251
+                (tests/unit/design-consistency.test.js), und dies ist der eine
+                erlaubte in der Hilfe (Fall 9). Das Kleben kommt aus der Klasse.
+            -->
+            <div class="shortcuts-footer" style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
+                Rollen zeigt mehr · Schließen mit <kbd class="shortcut-key">Esc</kbd>, mit ✕ oben rechts oder mit einem Tipp neben dieses Fenster
             </div>
         </div>
     </div>
