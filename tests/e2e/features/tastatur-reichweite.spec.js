@@ -185,6 +185,17 @@ function kampagne(n) {
  * Zaehlt die sichtbaren Tabulatorhalte der aktiven Ansicht plus der
  * globalen Schale — STRUKTURELL, ohne eine Taste zu druecken. Diese Zahl
  * ist die Grundlage der Flutgrenze und des Budgets.
+ *
+ * `tabindex="-1"` SCHLIESST JEDES ELEMENT AUS, auch ein natives. Das ist
+ * eine Korrektur an meiner ersten Fassung, und sie war falsch um 16: der
+ * Selektor fuehrte `button` und `[tabindex]:not([tabindex="-1"])` als
+ * ZWEI Zweige, und ein `<button tabindex="-1">` passt auf den ersten. Die
+ * 17 `button.bestiary-fav` wurden darum weiter als Halte gezaehlt,
+ * nachdem die Gruppenmechanik ihnen den Halt genommen hatte — gemeldete
+ * 47 statt der wirklichen 31. Aufgefallen ist es an einem Widerspruch in
+ * den eigenen Zahlen: 47 gezaehlte Halte, aber `div.qref-fab` nach 30
+ * echten Tastendruecken. Ein Element mit `tabindex="-1"` ist KEIN
+ * Tabulatorhalt, egal welches Tag es traegt.
  */
 const HALTE = `(() => {
     const SEL = 'button,a[href],input:not([type="hidden"]),select,textarea,summary,' +
@@ -201,6 +212,7 @@ const HALTE = `(() => {
     };
     let n = 0;
     document.querySelectorAll(SEL).forEach(el => {
+        if (el.getAttribute('tabindex') === '-1') return;
         if (el.disabled || !sichtbar(el) || !inAktiverAnsicht(el)) return;
         n++;
     });
@@ -657,7 +669,13 @@ const HALTGRENZEN = {
     dmscreen: 37,
     quests: 69,
     loot: 32,
-    bestiary: 47,
+    // 31 und nicht 47: die erste Zahl stammte aus dem fehlerhaften Zaehler
+    // oben, der 16 Favoritenknoepfe mit `tabindex="-1"` mitzaehlte. Die
+    // Bestiarium-Ansicht ist die EINZIGE, in der die Korrektur etwas
+    // bewegt — nur dort traegt ein NATIVES Bedienelement ein
+    // `tabindex="-1"`. Vor E-2 waren es 46 Halte, es ist also eine
+    // Verringerung um 15, nicht eine Zunahme um 1.
+    bestiary: 31,
     npcs: 39,
     spells: 35,
     encounter: 34,
