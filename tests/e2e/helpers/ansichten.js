@@ -46,10 +46,41 @@ import { readFileSync } from 'node:fs';
  * @param {string} html
  * @returns {{abschnitte: string[], reiter: string[], beschriftung: Map<string, string>}}
  */
+/**
+ * DER ERKENNER DER ABSCHNITTE — in zwei Schritten statt in einem Ausdruck.
+ *
+ * WARUM NICHT MEHR EIN AUSDRUCK (Befund 14 der Gegenpruefung). Er lautete
+ * `/id="view-([a-z0-9-]+)"\s+class="view\b/` und verlangte damit, dass `id`
+ * UNMITTELBAR vor `class="view"` steht. Gemessen gegen fuenf Schreibweisen
+ * desselben Abschnitts fand er genau eine; `class` vor `id`, ein Attribut
+ * dazwischen, ein Grossbuchstabe oder ein Unterstrich in der Kennung
+ * verfehlten ihn. Und er war gleichzeitig zu GIERIG: `\bview\b` passt auch
+ * auf `class="view-header"`, weil der Bindestrich eine Wortgrenze ist — ein
+ * solches Element waere als Ansicht gezaehlt worden.
+ *
+ * SO GEHT ES JETZT: erst das ganze Starttag einsammeln (ein beliebiges
+ * Element mit `id="view-X"`), dann in seinem Attributteil nachsehen, ob
+ * `class` ein Wort `view` fuehrt — mit Leerzeichen oder Anfuehrungszeichen
+ * als Grenze, nicht mit `\b`. Die Reihenfolge der Attribute ist damit
+ * gleichgueltig, und `view-header` oder `viewport` zaehlen nicht.
+ *
+ * `[^>]*` ist hier richtig und nicht zu gierig: ein Attributwert in HTML
+ * darf kein unmaskiertes `>` enthalten.
+ */
+const ABSCHNITT_TAG = /<[a-zA-Z][a-zA-Z0-9]*((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+const KENNUNG = /\bid\s*=\s*"view-([A-Za-z0-9_-]+)"/;
+const KLASSE_VIEW = /\bclass\s*=\s*"([^"]*)"/;
+
 export function ansichtenAusHtml(html) {
     const abschnitte = new Set();
-    for (const m of html.matchAll(/id="view-([a-z0-9-]+)"\s+class="view\b/g)) {
-        abschnitte.add(m[1]);
+    for (const tag of html.matchAll(ABSCHNITT_TAG)) {
+        const attribute = tag[1] || '';
+        const kennung = attribute.match(KENNUNG);
+        if (!kennung) continue;
+        const klasse = attribute.match(KLASSE_VIEW);
+        if (!klasse) continue;
+        if (!klasse[1].split(/\s+/).includes('view')) continue;
+        abschnitte.add(kennung[1]);
     }
     const reiter = new Set();
     const beschriftung = new Map();
