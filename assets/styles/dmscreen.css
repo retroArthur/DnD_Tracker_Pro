@@ -2565,10 +2565,34 @@
        stehen rechts in einer Reihe mit `justify-content: space-between`;
        40 px Einzug schoben sie bei 360 px Breite aus der Spalte.
      · `<dt>` ist ein Blockelement und bringt als Flex-Kind `min-width:
-       auto` mit — die Beschriftung haette dann nicht mehr umgebrochen,
-       sondern die Zeile verbreitert. Fall (8) in
-       tests/e2e/features/tastenhilfe.spec.js misst genau das (Umbruch,
-       Abschneiden, Querlauf bei 360, 390 und 1440 px).
+       auto` mit — das haelt die Beschriftung auf ihrem laengsten Wort
+       fest und verbreitert bei 237 px Spalte die Zeile, statt sie
+       umzubrechen.
+
+   `min-width: 0` STEHT DARUM NUR AUF DEM BEGRIFF UND NICHT AUF DER
+   DEFINITION, und das ist der Unterschied zwischen einem lauten und
+   einem stillen Fehler. Der erste Entwurf gab beiden Elementen
+   `min-width: 0`. Isoliert nachgemessen bei 601 px (Spalte 237,4 px),
+   mit einer langen Beschriftung auf einer DREIGLIEDRIGEN Marke
+   (`Alt` `Shift` `1-5`):
+
+     min-width auf dt UND dd   Querlauf 9 px   dreizeilig: keine
+     min-width nur auf dt      Querlauf 0      dreizeilig: die Zeile
+
+   Auf der Definition erlaubt es der TASTENREIHE, unter ihren Inhalt zu
+   schrumpfen; die Marken haengen dann rechts aus dem Dialog heraus. Ein
+   Querlauf in einem Dialog ist auf dem Telefon praktisch unauffindbar,
+   und kein Fall sah ihn: Fall (8) fuhr damals nur 390, 360 und 1440 px,
+   und dort tritt er nicht auf. Ohne sie bricht statt dessen die
+   BESCHRIFTUNG auf drei Zeilen um — und das meldet Fall (8) laut. Ein
+   Fehler, der einen Waechter ausloest, ist dem vorzuziehen, der sich
+   versteckt.
+
+   Nachgemessen mit den heutigen Beschriftungen bei 360, 390, 601, 650,
+   700, 800, 900 und 1440 px: kein Querlauf, keine dreizeilige
+   Beschriftung, nichts abgeschnitten — dasselbe Bild wie am
+   Ausgangsstand 52c0a5b. Fall (8) faehrt seit diesem Befund auch 601,
+   700 und 1440 px.
 
    `display: contents` WAERE DER KUERZERE WEG UND IST FALSCH: es nimmt dem
    Element seine Box, und `<dd>` traegt hier die Klasse `.shortcut-keys`
@@ -2583,6 +2607,9 @@
 .shortcut-row dt,
 .shortcut-row dd {
     margin: 0;
+}
+
+.shortcut-row dt {
     min-width: 0;
 }
 
