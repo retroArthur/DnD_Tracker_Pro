@@ -14,7 +14,9 @@ DIE FALLE, IN DIE DIESES WERKZEUG GEFUEHRT HAT
 ================================================================
 Von 2026-06-12 bis 2026-10-13 lagen in assets/fonts/ ZEHN Dateien mit dem
 FALSCHEN Subset: Inter, Roboto und Source Sans trugen Kyrillisch, Poppins trug
-Devanagari, keine einzige ein lateinisches 'A'. Der Browser lud sie ohne 404,
+Devanagari. Fuenf der zehn trugen ein grosses 'A' (Inter dreimal, Source Sans
+Pro zweimal), keine einzige ein kleines 'a', einen Umlaut oder ein Eszett.
+Der Browser lud sie ohne 404,
 fand keinen Glyphen und fiel zeichenweise auf Arial zurueck — vier der sieben
 Eintraege im Schriftmenue des Editors waren Dekoration. Ursache: Googles
 CSS-Antwort ordnet die @font-face-Bloecke cyrillic-ext, cyrillic, greek-ext,

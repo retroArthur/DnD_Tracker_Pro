@@ -4,8 +4,9 @@
  *
  * DIESE DATEI HAT IHRE RICHTUNG GEWECHSELT. Bis `b0ada5b` lagen in
  * `assets/fonts/` zehn Dateien mit dem falschen Subset: Inter, Roboto und
- * Source Sans trugen Kyrillisch, Poppins trug Devanagari, keine einzige ein
- * lateinisches 'A'. Der Befund war GLEICHHEIT — `'Inter', monospace` fiel
+ * Source Sans trugen Kyrillisch, Poppins trug Devanagari. Fuenf der zehn
+ * trugen ein grosses 'A' (Inter, Source Sans Pro), keine einzige ein kleines
+ * 'a', einen Umlaut oder ein Eszett. Der Befund war GLEICHHEIT — `'Inter', monospace` fiel
  * zeichenweise auf monospace zurueck und misst bitgleich so breit wie
  * `monospace` allein. Seit dem Austausch sind es sieben Dateien mit dem
  * `latin`-Subset, alle sieben tragen den deutschen Satz vollstaendig
@@ -2222,6 +2223,102 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                     ).toBe(breiten[`${info.familie}__${hoechstes}`]);
                 }
             }
+        });
+    });
+
+    // ------------------------------------------------------------------
+    // Teil 7 — jeder Eintrag im Schriftmenue ist gedeckt.
+    //
+    // NACHGESTELLT (Abnahme der Umkehrung, Befund D), nicht vermutet: ein
+    // ACHTER Eintrag ohne jeden `@font-face` laeuft durch ALLES gruen.
+    //
+    //     lora: "'Lora', Arial, sans-serif"      in EDITOR_FONTS ergaenzt
+    //     $ python build.py                      -> BUILD_EXIT=0
+    //     $ node tools/pruefe-schriftdateien.js --check -> exit 0
+    //     $ npx jest                             -> 2217 passed / 2217
+    //     $ npx playwright test ...schriftdateien.spec.js -> 16 passed
+    //
+    // Der Nutzer waehlt "Lora" und liest Arial. Das ist derselbe Fehlermodus,
+    // der diesen ganzen Strang ausgeloest hat, nur von der anderen Seite:
+    // damals fehlten der vorhandenen Datei die Glyphen, hier fehlt die Datei
+    // ueberhaupt. In beiden Faellen verspricht das Menue etwas, was es nicht
+    // halten kann, und kein Tor sagt etwas.
+    //
+    // WARUM DIE BESTEHENDEN FAELLE DAS NICHT FANGEN: Teil 3 prueft die
+    // GEGENRICHTUNG (jede Familie aus fonts.css wird von einem Menueeintrag
+    // genannt — ein ungedeckter Eintrag kommt darin nicht vor), und
+    // MINDEST_MENUEEINTRAEGE prueft die ANZAHL nach unten. Ein Zugang ohne
+    // Datei verletzt keine der beiden Aussagen.
+    //
+    // SYSTEMFAMILIEN sind ausdruecklich erlaubt und GEZAEHLT: drei Eintraege
+    // kommen ohne Datei aus, weil sie auf Schriften des Betriebssystems
+    // zeigen. Die Liste ist eine Erlaubnisliste mit Soll-Laenge — waechst
+    // sie, ist das eine Entscheidung und kein Versehen.
+    // ------------------------------------------------------------------
+    test.describe('Teil 7 — jeder Menueeintrag ist gedeckt', () => {
+        // Die Familien, die ohne gebuendelte Datei auskommen duerfen. Keine
+        // Mustererkennung ("enthaelt sans-serif"), sondern Namen: eine Regel
+        // wuerde `'Lora', Arial, sans-serif` durchlassen, weil der STACK
+        // generisch endet. Entscheidend ist das ERSTE Glied.
+        const SYSTEMFAMILIEN = Object.freeze(['Arial', 'Georgia', 'Courier New']);
+        const SYSTEMEINTRAEGE_SOLL = 3;
+
+        test('Jede erste Familie ist entweder Systemschrift oder hat einen @font-face', async ({
+            page
+        }) => {
+            await ladeApp(page);
+            const menue = await page.evaluate(() => window.EDITOR_FONTS);
+
+            // Gegenprobe gegen Leerlauf, beide Enden: ein leeres Menue oder
+            // eine leere CSS-Familienliste wuerde die Schleife ueberspringen
+            // und den Fall trivial erfuellen.
+            const eintraege = Object.entries(menue);
+            expect(eintraege.length).toBeGreaterThanOrEqual(MINDEST_MENUEEINTRAEGE);
+            expect(CSS_FAMILIEN.length).toBeGreaterThanOrEqual(1);
+
+            const ungedeckt = [];
+            const system = [];
+            for (const [schluessel, stack] of eintraege) {
+                const familie = ersteFamilie(stack);
+                if (SYSTEMFAMILIEN.includes(familie)) {
+                    system.push(schluessel);
+                    continue;
+                }
+                if (!CSS_FAMILIEN.includes(familie)) {
+                    ungedeckt.push(`"${schluessel}" -> "${familie}" (Stack: ${stack})`);
+                }
+            }
+
+            expect(
+                ungedeckt,
+                `Diese Menueeintraege versprechen eine Schrift, fuer die weder ein ` +
+                    `@font-face in fonts.css steht noch eine Systemfamilie der ` +
+                    `Erlaubnisliste (${SYSTEMFAMILIEN.join(', ')}) genannt ist. Der Nutzer ` +
+                    `waehlt sie und bekommt still den Rueckfall. Entweder eine Datei ` +
+                    `buendeln (tools/fetch-fonts.py) oder den Eintrag entfernen.`
+            ).toEqual([]);
+
+            // Gezaehlt, nicht nur erlaubt: ein vierter Eintrag ohne Datei
+            // soll eine Entscheidung sein. Ohne diese Zahl liesse sich jeder
+            // ungedeckte Eintrag durch Aufnahme in SYSTEMFAMILIEN stillstellen.
+            expect(
+                system.sort(),
+                `Genau ${SYSTEMEINTRAEGE_SOLL} Eintraege duerfen ohne gebuendelte Datei ` +
+                    `auskommen; gefunden: ${system.length}.`
+            ).toHaveLength(SYSTEMEINTRAEGE_SOLL);
+        });
+
+        test('Die Erlaubnisliste nennt keine Familie, die fonts.css selbst buendelt', async () => {
+            // Verwesungsprobe: wird eine Systemfamilie spaeter gebuendelt,
+            // gehoert sie aus der Erlaubnisliste heraus — sonst deckt die
+            // Liste eine Datei mit ab, deren Ausfall niemand mehr bemerkt.
+            const doppelt = SYSTEMFAMILIEN.filter(f => CSS_FAMILIEN.includes(f));
+            expect(
+                doppelt,
+                `Diese Familien stehen in der Erlaubnisliste UND in fonts.css: ` +
+                    `${doppelt.join(', ')}. Aus der Erlaubnisliste nehmen und ` +
+                    `SYSTEMEINTRAEGE_SOLL senken.`
+            ).toEqual([]);
         });
     });
 });

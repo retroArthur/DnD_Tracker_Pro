@@ -4,8 +4,9 @@ TDD-Tests: tools/fetch-fonts.py holt GENAU die Schriften, die fonts.css nennt.
 
 WARUM DIESE DATEI EXISTIERT. Von 2026-06-12 bis 2026-10-13 lagen in
 assets/fonts/ zehn Dateien mit dem FALSCHEN Subset — Inter, Roboto und Source
-Sans trugen Kyrillisch, Poppins trug Devanagari, keine einzige ein lateinisches
-'A'. Der Austausch in `b0ada5b` hat sie durch sieben richtige ersetzt.
+Sans trugen Kyrillisch, Poppins trug Devanagari. Fuenf der zehn trugen ein
+grosses 'A' (Inter, Source Sans Pro), keine einzige ein kleines 'a', einen
+Umlaut oder ein Eszett. Der Austausch in `b0ada5b` hat sie durch sieben richtige ersetzt.
 
 tools/fetch-fonts.py fuehrte danach WEITER die zehn alten Dateinamen. Es ist
 die einzige ausfuehrbare Stelle im Baum, die den kaputten Stand

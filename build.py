@@ -257,6 +257,19 @@ def write_file(filepath, content):
 # Nicht-Schrift daneben (HERKUNFT.md) wird dadurch von selbst uebergangen.
 SCHRIFT_DATEIENDUNGEN = {'.woff2', '.woff', '.ttf', '.otf'}
 
+# Dateien, die mit den Schriften MITREISEN MUESSEN — keine Dokumentation,
+# sondern eine Bedingung der Lizenz. SIL OFL 1.1, Bedingung 2: jede Kopie der
+# Schriftsoftware fuehrt den Urhebervermerk UND den Lizenztext mit. Weitergegeben
+# wird nicht nur assets/fonts/, sondern auch dist/ (Job 'deploy') und ueber die
+# Precache-Liste in sw.js jede Installation beim Nutzer. Ohne diesen Schritt
+# truege die ausgelieferte Kopie die Schriften ohne ihre Lizenz.
+#
+# Abgrenzung zu HERKUNFT.md, die ABSICHTLICH im Quellbaum bleibt: die ist
+# Herkunfts- und Pruefdokumentation fuer Entwickler, wird von nichts verlinkt und
+# haette neben dem Buendel nur Ladezeit gekostet. OFL.txt ist das Gegenteil: sie
+# gehoert rechtlich neben die Dateien, auch wenn sie niemand anklickt.
+SCHRIFT_PFLICHTDATEIEN = {'OFL.txt'}
+
 def kopiere_schriftdateien(dist_dir):
     """Legt assets/fonts/ neben das gebaute Bundle (SCHR).
 
@@ -284,11 +297,14 @@ def kopiere_schriftdateien(dist_dir):
     dem Deploy-Pfad stellte nichts mehr rot: die zehn SW-Precache-Pfade in
     sw.js werden zu 404 und cache.addAll() scheitert beim Nutzer.
 
-    SCHRIFTEN, NICHT VERZEICHNISINHALT. Kopiert werden nur Dateien mit einer
-    Endung aus SCHRIFT_DATEIENDUNGEN. assets/fonts/ fuehrt seit 2026-10-13 auch
-    HERKUNFT.md (Herkunft, Lizenz und Nachpruefung der sieben Dateien); die
-    gehoert nicht neben das Buendel — sie wird von nichts verlinkt und der
-    Nutzer laedt sie beim Deploy mit.
+    SCHRIFTEN UND IHRE LIZENZ, NICHT VERZEICHNISINHALT. Kopiert werden Dateien
+    mit einer Endung aus SCHRIFT_DATEIENDUNGEN sowie die Namen aus
+    SCHRIFT_PFLICHTDATEIEN (OFL.txt). assets/fonts/ fuehrt seit 2026-10-13 auch
+    HERKUNFT.md (Herkunft und Nachpruefung der sieben Dateien); die gehoert
+    nicht neben das Buendel — sie wird von nichts verlinkt und der Nutzer laedt
+    sie beim Deploy mit. Die Lizenz dagegen MUSS mit (OFL 1.1, Bedingung 2);
+    nachgemessen fehlte sie bis hierher in dist/assets/fonts/, waehrend die
+    sieben Schriften dort lagen.
 
     UND ES RAEUMT AUF (Befund Runde 2). shutil.copy2() je Quelldatei legt dazu
     und nimmt nie weg. Nach dem Austausch von zehn auf sieben Dateien lagen im
@@ -321,15 +337,24 @@ def kopiere_schriftdateien(dist_dir):
         os.makedirs(ziel, exist_ok=True)
         gewollt = set()
         anzahl = 0
+        pflicht = []
         for name in sorted(os.listdir(quelle)):
             pfad = os.path.join(quelle, name)
             if not os.path.isfile(pfad):
                 continue
-            if os.path.splitext(name)[1].lower() not in SCHRIFT_DATEIENDUNGEN:
+            ist_schrift = os.path.splitext(name)[1].lower() in SCHRIFT_DATEIENDUNGEN
+            ist_pflicht = name in SCHRIFT_PFLICHTDATEIEN
+            if not ist_schrift and not ist_pflicht:
                 continue
             shutil.copy2(pfad, os.path.join(ziel, name))
             gewollt.add(name)
-            anzahl += 1
+            # Getrennt gezaehlt: `anzahl` ist die Zahl der SCHRIFTEN und wird
+            # von pruefe_schriftverweise() und den pytest-Faellen gelesen. Eine
+            # Lizenzdatei darf sie nicht aufblaehen.
+            if ist_schrift:
+                anzahl += 1
+            else:
+                pflicht.append(name)
         # Waisen wegnehmen: was im Ziel eine Schrift ist, die Quelle aber nicht
         # (mehr) kennt. Nur Dateien, nur Schriftendungen.
         waisen = []
@@ -345,12 +370,23 @@ def kopiere_schriftdateien(dist_dir):
         # andere muss den Build ebenso beenden — nur mit anderem Traceback.
         print(f"[FEHLER] Schriftdateien konnten nicht kopiert werden: {e}")
         sys.exit(1)
+    fehlende_pflicht = sorted(SCHRIFT_PFLICHTDATEIEN - set(pflicht))
+    if fehlende_pflicht:
+        print(f"[FEHLER] Pflichtdatei(en) fehlen in {quelle}: {', '.join(fehlende_pflicht)}")
+        print("   SIL OFL 1.1, Bedingung 2: jede Kopie der Schriftsoftware fuehrt den")
+        print("   Urhebervermerk UND den Lizenztext mit. dist/ wird veroeffentlicht und")
+        print("   sw.js spielt die Dateien beim Nutzer aus — ohne Lizenz ist das ein")
+        print("   Lizenzverstoss, kein Schoenheitsfehler. Datei anlegen oder, falls eine")
+        print("   Schrift ohne OFL dazukam, SCHRIFT_PFLICHTDATEIEN anpassen.")
+        sys.exit(1)
     if anzahl == 0:
         print(f"[FEHLER] Schriftverzeichnis {quelle} fuehrt keine Schriftdatei.")
         print("   Siehe oben: das Buendel nennt Dateien, die niemand daneben legt.")
         print(f"   Erwartete Endungen: {', '.join(sorted(SCHRIFT_DATEIENDUNGEN))}")
         sys.exit(1)
     log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
+    if pflicht:
+        log.success(f"Lizenz mitkopiert: {', '.join(sorted(pflicht))}")
     if waisen:
         log.success(f"{len(waisen)} Waise(n) entfernt: {', '.join(waisen)}")
     return anzahl

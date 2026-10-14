@@ -8,7 +8,9 @@
    ----------------------------------------------------------
    Von 2026-06-12 (1c3245b) bis 2026-10-13 lagen hier zehn Dateien mit dem
    FALSCHEN Subset: Inter, Roboto und Source Sans trugen Kyrillisch, Poppins
-   trug Devanagari. Keine einzige Datei kannte ein lateinisches 'A'. Der Browser
+   trug Devanagari. Fuenf der zehn trugen ein grosses 'A' (Inter dreimal,
+   Source Sans Pro zweimal), KEINE EINZIGE ein kleines 'a', einen Umlaut oder
+   ein Eszett; Roboto und Poppins kannten auch das 'A' nicht. Der Browser
    lud sie ohne 404, fand keinen Glyphen und fiel zeichenweise auf Arial zurück
    — vier der sieben Einträge im Schriftmenü des Editors waren Dekoration.
 

@@ -28,7 +28,8 @@ Waechter mit eigener Liste uebersieht die elfte Datei.
 
 STAND 2026-10-13: AUS ZEHN DATEIEN SIND SIEBEN GEWORDEN. Die zehn oben
 genannten trugen seit ihrer Geburt das falsche Subset (kyrillisch bzw.
-Devanagari, kein lateinisches 'A'); der Austausch hat sie durch sieben
+Devanagari; fuenf trugen ein grosses 'A', keine ein kleines 'a' oder einen
+Umlaut); der Austausch hat sie durch sieben
 richtige ersetzt — Roboto und Inter als je EINE variable Datei fuer alle
 Gewichte, Poppins und Source Sans Pro statisch je Gewicht. Die Messprotokolle
 in den Docstrings dieser Datei nennen weiter 'zehn': sie sind auf einen Commit
@@ -257,15 +258,27 @@ class TestKeineWaisenNebenDemBuendel:
         assert fremd.exists(), "Der Kopierschritt hat eine Nicht-Schrift geloescht"
         assert fremd.read_bytes() == b'kein Schriftschnitt'
 
-    def test_kopiert_nur_schriften_aus_der_quelle(self, tmp_path, monkeypatch):
-        """assets/fonts/ fuehrt seit 2026-10-13 auch HERKUNFT.md. Die gehoert
-        NICHT neben das Buendel: sie wird nicht verlinkt, und der Nutzer laedt
-        sie beim Deploy mit. Der Kopierschritt nimmt Schriften, nicht
-        Verzeichnisinhalt."""
+    def test_kopiert_schriften_und_lizenz_aber_nicht_die_doku(self, tmp_path, monkeypatch):
+        """Der Kopierschritt nimmt Schriften und ihre LIZENZ, nicht
+        Verzeichnisinhalt.
+
+        Zwei Nicht-Schriften liegen in assets/fonts/, und sie werden
+        verschieden behandelt — das ist der Kern dieses Falls:
+
+          HERKUNFT.md bleibt im Quellbaum. Entwicklerdokumentation, von nichts
+            verlinkt; neben dem Buendel haette sie nur Ladezeit gekostet.
+          OFL.txt MUSS mit. SIL OFL 1.1, Bedingung 2 verlangt, dass jede Kopie
+            der Schriftsoftware den Urhebervermerk UND den Lizenztext
+            mitfuehrt. Der Job 'deploy' veroeffentlicht dist/, und sw.js
+            spielt das Verzeichnis beim Nutzer aus — beides sind Kopien im
+            Sinne der Lizenz. Nachgemessen trug dist/assets/fonts/ bis
+            2026-10-14 die sieben Schriften OHNE ihre Lizenz.
+        """
         quelle = tmp_path / 'quelle' / 'assets' / 'fonts'
         quelle.mkdir(parents=True)
         (quelle / 'echte-400.woff2').write_bytes(b'Schrift')
         (quelle / 'HERKUNFT.md').write_text('Herkunftsnotiz', encoding='utf-8')
+        (quelle / 'OFL.txt').write_text('Lizenztext', encoding='utf-8')
         monkeypatch.setattr(build_module, 'SOURCE_DIR', str(tmp_path / 'quelle'))
         ziel = tmp_path / 'dist'
         ziel.mkdir()
@@ -273,23 +286,53 @@ class TestKeineWaisenNebenDemBuendel:
         anzahl = kopiere_schriftdateien(str(ziel))
 
         kopiert = ziel / 'assets' / 'fonts'
-        assert _alle_namen(kopiert) == ['echte-400.woff2'], (
-            f"Neben dem Buendel liegt mehr als die Schrift: {_alle_namen(kopiert)}"
+        assert _alle_namen(kopiert) == ['OFL.txt', 'echte-400.woff2'], (
+            f"Erwartet Schrift UND Lizenz, ohne die Doku: {_alle_namen(kopiert)}"
         )
+        # `anzahl` ist die Zahl der SCHRIFTEN. pruefe_schriftverweise() und die
+        # Verdrahtungsfaelle lesen sie; eine Lizenzdatei darf sie nicht
+        # aufblaehen.
         assert anzahl == 1, f"anzahl={anzahl} zaehlt Nicht-Schriften mit"
 
-    def test_das_echte_quellverzeichnis_fuehrt_nur_schriften_und_doku(self):
-        """Gegenprobe gegen Leerlauf des Falls darueber: er nimmt an, dass in
-        assets/fonts/ ueberhaupt etwas liegt, das keine Schrift ist. Faellt
-        HERKUNFT.md weg, prueft er eine Lage, die es nicht gibt."""
+    def test_fehlende_lizenz_beendet_den_build(self, tmp_path, monkeypatch):
+        """Die Lizenzpflicht ist HART, nicht hoeflich.
+
+        Ohne diese Schranke ist der Zustand von 2026-10-13 wieder erreichbar:
+        sieben Schriften neben dem Buendel, kein Lizenztext, Exit 0. Ein
+        Lizenzverstoss faellt niemandem auf, weil nichts rot wird.
+        """
+        quelle = tmp_path / 'quelle' / 'assets' / 'fonts'
+        quelle.mkdir(parents=True)
+        (quelle / 'echte-400.woff2').write_bytes(b'Schrift')
+        monkeypatch.setattr(build_module, 'SOURCE_DIR', str(tmp_path / 'quelle'))
+        ziel = tmp_path / 'dist'
+        ziel.mkdir()
+
+        with pytest.raises(SystemExit) as abbruch:
+            kopiere_schriftdateien(str(ziel))
+        assert abbruch.value.code == 1
+
+    def test_die_pflichtliste_ist_nicht_leer(self):
+        """Gegenprobe gegen Leerlauf: waere SCHRIFT_PFLICHTDATEIEN leer, waeren
+        die zwei Faelle darueber trivial erfuellt — nichts muesste mitreisen,
+        und nichts koennte fehlen."""
+        assert build_module.SCHRIFT_PFLICHTDATEIEN == {'OFL.txt'}
+
+    def test_das_echte_quellverzeichnis_fuehrt_nur_schriften_doku_und_lizenz(self):
+        """Gegenprobe gegen Leerlauf der Faelle darueber: sie nehmen an, dass in
+        assets/fonts/ ueberhaupt etwas liegt, das keine Schrift ist — eines
+        davon mitzukopieren, eines nicht. Faellt eine der beiden Dateien weg,
+        pruefen sie eine Lage, die es nicht gibt."""
         nicht_schrift = [
             n for n in _alle_namen(QUELL_SCHRIFTEN)
             if not any(n.endswith(e) for e in SCHRIFT_ENDUNGEN)
         ]
-        assert nicht_schrift == ['HERKUNFT.md'], (
+        assert nicht_schrift == ['HERKUNFT.md', 'OFL.txt'], (
             f"assets/fonts/ fuehrt neben den Schriften {nicht_schrift} — erwartet "
-            f"genau ['HERKUNFT.md']. Fehlt sie, ist die Herkunft der sieben Dateien "
-            f"nirgends festgehalten (der Vorfall, der sie verlangt hat: fonts.css)."
+            f"genau ['HERKUNFT.md', 'OFL.txt']. Ohne HERKUNFT.md ist die Herkunft "
+            f"der sieben Dateien nirgends festgehalten (der Vorfall, der sie "
+            f"verlangt hat: fonts.css); ohne OFL.txt ist die Weitergabe ein "
+            f"Lizenzverstoss (OFL 1.1, Bedingung 2)."
         )
 
 

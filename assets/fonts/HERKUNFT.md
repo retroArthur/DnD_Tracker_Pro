@@ -22,8 +22,11 @@ Zeichen-Teilstück, und **`latin` steht ZULETZT**. Gemessen am 2026-10-13:
 
 Wer den ersten Treffer nimmt, bekommt bei drei Familien Kyrillisch und bei
 Poppins Devanagari. Genau das ist passiert: **von 2026-06-12 (`1c3245b`) bis
-2026-10-13** lagen hier zehn Dateien mit dem falschen Subset. Keine einzige
-kannte ein lateinisches `A`. Der Browser lud sie ohne 404, fand keinen Glyphen
+2026-10-13** lagen hier zehn Dateien mit dem falschen Subset. **Fuenf der zehn
+trugen ein grosses `A`** (Inter dreimal, Source Sans Pro zweimal); ein kleines
+`a`, einen Umlaut oder ein Eszett trug **keine einzige**, und Roboto und Poppins
+kannten auch das `A` nicht (gemessen an `git show 4e0d810:assets/fonts/*`).
+Der Browser lud sie ohne 404, fand keinen Glyphen
 und fiel zeichenweise auf Arial zurück — vier Einträge im Schriftmenü des
 Editors waren Dekoration. Eine richtige Fassung hat es nie gegeben.
 
@@ -122,28 +125,51 @@ die mit der Datei auseinanderlaufen kann.
 Alle vier Familien stehen unter der **SIL Open Font License 1.1**. Am
 2026-10-13 am Lizenztext selbst nachgeprüft, nicht aus zweiter Hand:
 
-| Familie         | Copyright-Vermerk                                          | Lizenztext geprüft unter                 |
-| --------------- | ---------------------------------------------------------- | ---------------------------------------- |
-| Roboto          | Copyright 2011 The Roboto Project Authors                  | `google/fonts` → `ofl/roboto/OFL.txt`    |
-| Inter           | Copyright 2020 The Inter Project Authors                   | `google/fonts` → `ofl/inter/OFL.txt`     |
-| Poppins         | Copyright 2020 The Poppins Project Authors                 | `google/fonts` → `ofl/poppins/OFL.txt`   |
-| Source Sans Pro | Copyright 2010–2024 Adobe, mit reserviertem Namen „Source" | `adobe-fonts/source-sans` → `LICENSE.md` |
+Die Vermerke stehen **in den Dateien selbst** (OpenType `name`-Tabelle,
+name-ID 0) und sind von dort gelesen, nicht abgeschrieben:
+
+| Familie         | Copyright-Vermerk der Datei                                                      |
+| --------------- | -------------------------------------------------------------------------------- |
+| Roboto          | Copyright 2011 The Roboto Project Authors (github.com/googlefonts/roboto-classic) |
+| Inter           | Copyright **2016** The Inter Project Authors (github.com/rsms/inter)             |
+| Poppins         | Copyright 2020 The Poppins Project Authors (github.com/itfoundry/Poppins)        |
+| Source Sans Pro | © 2010 - **2018** Adobe Systems Incorporated, with Reserved Font Name ‚Source'   |
+
+**Zwei Jahreszahlen standen hier falsch** und sind korrigiert: Inter mit 2020
+statt 2016 und Adobe mit 2010–2024 statt 2010–2018. Die Abweichung ist echt und
+liegt upstream — `google/fonts` → `ofl/inter/OFL.txt` nennt tatsächlich 2020,
+während die ausgelieferte Datei 2016 trägt. Maßgeblich ist hier die **Datei**,
+weil genau sie weitergegeben wird.
 
 `ofl/sourcesanspro/` gibt in `google/fonts` **404** — die Familie ist aus dem
 Katalog genommen. Der Nachweis kommt darum aus Adobes eigenem Depot, wo die
 Schrift herstammt; `ofl/sourcesans3/OFL.txt` (der Nachfolger) existiert und
 ist ebenfalls OFL 1.1.
 
-**Offene Pflicht.** OFL 1.1 Bedingung 2 verlangt, dass **jede Kopie** der
-Schriftsoftware den Copyright-Vermerk **und den Lizenztext** mitführt. Die
-Vermerke stehen oben; der Lizenztext liegt **nicht** im Baum. Weitergegeben
-werden die Dateien hier (Depot), in `dist/` und über `sw.js` an jeden Nutzer.
-Die Pflicht ist damit nur halb erfüllt. Abhilfe wäre eine `OFL.txt` neben
-dieser Datei — bewusst nicht ohne Entscheid angelegt, weil zu klären ist, ob
-ein gemeinsamer Lizenztext für alle vier genügt oder je Familie einer
-beiliegen soll. Der reservierte Name „Source" betrifft nur Weitergabe
-**unter diesem Namen nach Änderung**; hier liegen Googles unveränderte
-Subsets.
+**Die Pflicht ist erfüllt.** OFL 1.1 Bedingung 2 verlangt, dass **jede Kopie**
+der Schriftsoftware den Copyright-Vermerk **und den Lizenztext** mitführt.
+Beides liegt jetzt in **`OFL.txt`** neben dieser Datei.
+
+Der offene Entscheid — ein gemeinsamer Lizenztext oder einer je Familie — ist
+durch eine Messung entschieden worden: die drei Fassungen in `google/fonts`
+(`ofl/roboto`, `ofl/inter`, `ofl/poppins`) sind nach ihrer Kopfzeile
+**bitgleich bis auf genau eine Zeile**, nämlich die Adresse der Lizenz selbst
+(`https://openfontlicense.org` gegen `http[s]://scripts.sil.org/OFL`). Es ist
+dieselbe Lizenz; nur die Vermerke unterscheiden sich, und die stehen alle vier
+vollständig in `OFL.txt`. Übernommen ist die Fassung aus `ofl/roboto`, weil sie
+die heute gültige Adresse nennt.
+
+**Und sie reist mit.** `build.py` kopierte bis hierher nur Dateien mit einer
+Schriftendung — `dist/assets/fonts/` trug die sieben Schriften ohne ihre
+Lizenz, obwohl der Job `deploy` genau dieses Verzeichnis veröffentlicht und
+`sw.js` es beim Nutzer ausspielt. `SCHRIFT_PFLICHTDATEIEN` in `build.py` nimmt
+`OFL.txt` jetzt mit, und ihr **Fehlen beendet den Build** (gemessen: Exit 1
+ohne die Datei, Exit 0 mit ihr). `HERKUNFT.md` bleibt dagegen absichtlich im
+Quellbaum: sie ist Entwicklerdokumentation, wird von nichts verlinkt und hätte
+neben dem Bündel nur Ladezeit gekostet.
+
+Der reservierte Name „Source" betrifft nur Weitergabe **unter diesem Namen
+nach Änderung**; hier liegen Googles unveränderte Subsets.
 
 ## Nachprüfen
 

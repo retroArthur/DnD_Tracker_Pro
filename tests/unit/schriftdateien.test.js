@@ -19,7 +19,8 @@
  * DIE MESSLOGIK IST AM 2026-10-13 GEKIPPT (Dateiaustausch, Commit b0ada5b)
  * ======================================================================
  * Bis dahin trugen ALLE zehn gebuendelten Dateien das falsche Subset
- * (Kyrillisch bzw. Devanagari), keine kannte ein lateinisches 'A'. Diese
+ * (Kyrillisch bzw. Devanagari). Fuenf kannten ein grosses 'A' (Inter, Source
+ * Sans Pro), keine ein kleines 'a', einen Umlaut oder ein Eszett. Diese
  * Ratsche hielt diesen Befund fest: die Ausnahmeliste war VOLL, und der
  * Anker gegen Leerlauf war die KURZE Liste der wirklich getragenen Zeichen
  * (' ' in allen zehn, dazu 'A'/'Ä' in Inter).
@@ -115,6 +116,18 @@ const AUSNAHMEN_SOLL = 0;
 // konnte vier Monate laufen, weil niemand den Bestand ansehen MUSSTE.
 // ----------------------------------------------------------------------
 const SCHRIFTDATEIEN_SOLL = 7;
+
+// ZEICHENSATZ_SOLL — die Groesse des Urteilssatzes, EXAKT.
+//
+// Hier stand `toBeGreaterThanOrEqual(90)`. Nachgestellt (Abnahme der
+// Umkehrung, Befund C): damit laesst sich der Urteilssatz um zehn Zeichen
+// kuerzen, ohne dass eine Zeile rot wird — weg waren 'ae', 'ue', die
+// deutschen Anfuehrungszeichen und das Eurozeichen, und der Bericht meldete
+// weiter woertlich "Ohne deutschen Zeichensatz: 0 von 7". Eine Schranke, die
+// ein Zehntel des Satzes verschenkt, prueft nicht das Urteil, sondern nur
+// seine Groessenordnung: die vollstaendige Leerung wurde gefangen, die
+// schleichende nicht.
+const ZEICHENSATZ_SOLL = 100;
 
 // ----------------------------------------------------------------------
 // GEMESSENE_SCHRIFTEN — Gegenprobe gegen Leerlauf, auf ROHDATEN verankert.
@@ -342,7 +355,10 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
         });
 
         test('Der deutsche Zeichensatz ist nicht leer und enthaelt Alphabet, Ziffern, Umlaute', () => {
-            expect(werkzeug.DEUTSCHE_CODEPUNKTE.length).toBeGreaterThanOrEqual(90);
+            expect(werkzeug.DEUTSCHE_CODEPUNKTE.length).toBe(ZEICHENSATZ_SOLL);
+            // Und keine Dubletten: ein doppelt gefuehrtes Zeichen wuerde
+            // die Zahl halten, waehrend ein echtes verschwindet.
+            expect(new Set(werkzeug.DEUTSCHE_CODEPUNKTE).size).toBe(ZEICHENSATZ_SOLL);
             for (const zeichen of ['A', 'Z', 'a', 'z', '0', '9', 'Ä', 'ö', 'ß']) {
                 expect(werkzeug.DEUTSCHE_CODEPUNKTE).toContain(zeichen.codePointAt(0));
             }
@@ -896,6 +912,99 @@ describe('SCHR — Schriftdateien tragen den deutschen Zeichensatz', () => {
             expect(() => werkzeug.leseFvar(buf, 0, buf.length)).toThrow(
                 /reicht ueber das Tabellenende/
             );
+        });
+    });
+
+    // ------------------------------------------------------------------
+    // Teil 9 — jede Datei ist die, fuer die fonts.css sie ausgibt.
+    //
+    // NACHGESTELLT (Abnahme der Umkehrung, Befund B), nicht vermutet: ein
+    // KREUZTAUSCH laeuft durch alle vier Tore gruen. poppins-400.woff2 und
+    // poppins-600.woff2 gegeneinander getauscht
+    //   - tragen beide den deutschen Satz                  -> Teil 3 gruen
+    //   - haben beide keine fvar-Achse                     -> Teil 8 gruen
+    //   - stehen beide in fonts.css, sw.js und im Verzeichnis
+    //                                                      -> Teil 5/6/7 gruen
+    // und der Nutzer bekommt die Gewichte verdreht: wer `400` waehlt, liest
+    // SemiBold, wer `600` waehlt, liest Regular.
+    //
+    // WARUM NICHT SHA-256. Ein Hash-Nagel faellt hier auch auf, sagt aber
+    // nichts darueber, ob die Datei die RICHTIGE ist — er nagelt fest, was
+    // gerade liegt, und muss bei jedem legitimen Schriftwechsel von Hand
+    // nachgezogen werden. Der Selbstname aus der `name`-Tabelle und
+    // `usWeightClass` aus OS/2 sagen beides: welche Familie, welches Gewicht.
+    // Sie halten auch, wenn Google morgen neue Bytes mit demselben Inhalt
+    // ausliefert, und sie fangen zusaetzlich den Fall, dass von vornherein
+    // die falsche Datei geholt wurde — also genau den Vorfall, der diesen
+    // Strang ausgeloest hat.
+    //
+    // PRAEFIXVERGLEICH, nicht Gleichheit: statische Schnitte tragen den
+    // Stilzusatz im Familiennamen ("Poppins SemiBold", "Source Sans Pro
+    // SemiBold"), weil name-ID 16 (typografische Familie) in diesen Dateien
+    // fehlt und name-ID 1 den Zusatz mitfuehrt.
+    // ------------------------------------------------------------------
+    describe('Teil 9 — jede Datei ist die, fuer die fonts.css sie ausgibt', () => {
+        const FACES_IDENT = werkzeug.leseSchriftFaces();
+
+        test.each(FACES_IDENT.map((f, i) => [`${f.familie} #${i + 1}`, f]))(
+            '%s: Selbstname und Gewicht passen zur Erklaerung in fonts.css',
+            (_titel, face) => {
+                for (const name of face.dateinamen) {
+                    const datei = NACH_NAME.get(name);
+                    expect(datei).toBeDefined();
+                    expect(datei.namenFehler).toBeNull();
+                    expect(datei.gewichtsklasseFehler).toBeNull();
+
+                    const selbst = datei.eigenerFamilienname;
+                    if (typeof selbst !== 'string' || selbst.length === 0) {
+                        throw new Error(`${name} fuehrt keinen eigenen Familiennamen`);
+                    }
+                    if (!selbst.toLowerCase().startsWith(face.familie.toLowerCase())) {
+                        throw new Error(
+                            `fonts.css gibt ${name} als "${face.familie}" aus, die Datei ` +
+                                `nennt sich aber "${selbst}". Entweder ist die falsche ` +
+                                `Datei gebuendelt, oder der @font-face nennt die falsche ` +
+                                `Familie.`
+                        );
+                    }
+
+                    // Ein Einzelgewicht MUSS das Gewicht der Datei sein. Bei
+                    // einem Bereich ist usWeightClass nur die Standardinstanz
+                    // (400) und sagt nichts — dort urteilt Teil 8 ueber die
+                    // fvar-Achse.
+                    if (!face.istBereich && datei.gewichtsklasse !== face.gewichtVon) {
+                        throw new Error(
+                            `fonts.css erklaert ${name} als font-weight ` +
+                                `${face.gewichtVon}, die Datei fuehrt usWeightClass ` +
+                                `${datei.gewichtsklasse}. Verdrehte Schnitte: der Nutzer ` +
+                                `bekommt ein anderes Gewicht, als er waehlt.`
+                        );
+                    }
+                }
+            }
+        );
+
+        test('Die Gewichte der statischen Dateien sind wirklich verschieden', () => {
+            // Gegenprobe gegen Leerlauf: truege jede Datei usWeightClass 400,
+            // waere der Fall darueber fuer alle 400er-Faces trivial erfuellt
+            // und ein Kreuztausch INNERHALB einer Familie unsichtbar.
+            const gewichte = FACES_IDENT.filter(f => !f.istBereich)
+                .flatMap(f => f.dateinamen)
+                .map(n => NACH_NAME.get(n).gewichtsklasse);
+            expect(gewichte).toHaveLength(5);
+            expect(gewichte.filter(g => Number.isFinite(g))).toHaveLength(5);
+            expect([...new Set(gewichte)].sort((a, b) => a - b)).toEqual([400, 500, 600]);
+        });
+
+        test('Die sieben Selbstnamen nennen genau die vier erwarteten Familien', () => {
+            // Gegenprobe in der anderen Richtung: haengt der name-Leser durch
+            // und liefert ueberall denselben Namen, faellt es hier auf.
+            const STILWORTE =
+                /\s+(Thin|ExtraLight|Light|Regular|Medium|SemiBold|Bold|ExtraBold|Black)$/;
+            const familien = new Set(
+                ERGEBNIS.dateien.map(d => (d.eigenerFamilienname || '').replace(STILWORTE, ''))
+            );
+            expect([...familien].sort()).toEqual(['Inter', 'Poppins', 'Roboto', 'Source Sans Pro']);
         });
     });
 });

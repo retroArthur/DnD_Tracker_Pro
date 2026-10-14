@@ -80,6 +80,11 @@ const DEUTSCHER_ZEICHENSATZ = Object.freeze([
 
 const DEUTSCHE_CODEPUNKTE = Object.freeze(DEUTSCHER_ZEICHENSATZ.map(c => c.codePointAt(0)));
 
+// Die `name`-Einträge, die hier etwas entscheiden (OpenType name-IDs):
+//   1 Familienname · 2 Unterfamilie/Stil · 16 typografische Familie ·
+//   17 typografischer Stil. 16/17 fehlen in den Google-Dateien; dann gilt 1.
+const NAME_IDS = Object.freeze([1, 2, 16, 17]);
+
 // ----------------------------------------------------------------------
 // Unicode-Bloecke fuer die Diagnoseausgabe. Sie dienen NICHT dem Urteil
 // (das faellt allein ueber DEUTSCHE_CODEPUNKTE), sondern beantworten die
@@ -695,6 +700,73 @@ function leseFvar(font, offset, laenge) {
  * @param {Set<number>} codepunkte
  * @returns {Array<{name: string, anzahl: number}>}
  */
+/**
+ * Liest die `name`-Tabelle: die Namen, die die Schrift UEBER SICH SELBST
+ * fuehrt. Das ist die eigentliche Identitaet einer Schriftdatei — ein
+ * Dateiname ist nur eine Behauptung dessen, der sie heruntergeladen hat, und
+ * genau diese Behauptung war von 2026-06-12 bis 2026-10-13 falsch.
+ *
+ * @param {Buffer} font  der entpackte Schriftkoerper
+ * @param {number} offset
+ * @returns {Object<number, string>}
+ */
+function leseNamen(font, offset) {
+    if (offset + 6 > font.length) throw new Error('name-Tabelle abgeschnitten');
+    const anzahl = font.readUInt16BE(offset + 2);
+    const stringBasis = offset + font.readUInt16BE(offset + 4);
+    const namen = {};
+    for (let i = 0; i < anzahl; i++) {
+        const rec = offset + 6 + i * 12;
+        if (rec + 12 > font.length) throw new Error('name-Satz abgeschnitten');
+        const plattform = font.readUInt16BE(rec);
+        const id = font.readUInt16BE(rec + 6);
+        if (!NAME_IDS.includes(id)) continue;
+        const laenge = font.readUInt16BE(rec + 8);
+        const start = stringBasis + font.readUInt16BE(rec + 10);
+        if (start + laenge > font.length) {
+            throw new Error(`name-Zeichenkette ${id} abgeschnitten`);
+        }
+        // Plattform 3 (Windows) und 0 (Unicode) fuehren UTF-16BE, Plattform 1
+        // (Macintosh) Mac-Roman — fuer ASCII-Namen deckungsgleich mit latin1.
+        const utf16 = plattform === 3 || plattform === 0;
+        if (utf16 && laenge % 2 !== 0) {
+            throw new Error(`name-Zeichenkette ${id} hat ungerade Laenge ${laenge}`);
+        }
+        // UTF-16BE von Hand, Codeeinheit fuer Codeeinheit. Der naheliegende
+        // Weg (`Buffer.from(sicht).swap16().toString('utf16le')`) hat zwei
+        // Nachteile: `swap16()` schreibt AN DER STELLE, und `font` ist der
+        // gemeinsame Schriftkoerper aller folgenden Leser — ohne die Kopie
+        // waere die Tabelle danach verdreht. Und `Buffer` ist in der
+        // ESLint-Konfiguration dieses Verzeichnisses kein bekanntes Global
+        // (`no-undef`, Lint-Gate R09). Die Schleife braucht keines von beidem.
+        let wert = '';
+        if (utf16) {
+            for (let k = 0; k < laenge; k += 2) {
+                wert += String.fromCharCode(font.readUInt16BE(start + k));
+            }
+        } else {
+            wert = font.toString('latin1', start, start + laenge);
+        }
+        // Der ERSTE Treffer je id gewinnt; mehrsprachige Dubletten tragen
+        // denselben Namen, und Windows-Unicode steht in den Google-Dateien vorn.
+        if (namen[id] === undefined) namen[id] = wert;
+    }
+    return namen;
+}
+
+/**
+ * `usWeightClass` aus der OS/2-Tabelle (OpenType, Offset 4, uint16): das
+ * Gewicht, das die Schrift ueber sich selbst fuehrt.
+ *
+ * @param {Buffer} font
+ * @param {number} offset
+ * @returns {number}
+ */
+function leseGewichtsklasse(font, offset) {
+    if (offset + 6 > font.length) throw new Error('OS/2-Tabelle abgeschnitten');
+    return font.readUInt16BE(offset + 4);
+}
+
 function zaehleBloecke(codepunkte) {
     const ergebnis = [];
     for (const [name, von, bis] of UNICODE_BLOECKE) {
@@ -751,10 +823,52 @@ function pruefeDatei(quelle) {
         }
     }
 
+    // Die Identitaet der Datei, aus der Datei selbst. Ohne sie laeuft ein
+    // Kreuztausch durch jedes Tor: zwei Schnitte DERSELBEN Familie
+    // gegeneinander getauscht tragen beide den deutschen Satz, haben beide
+    // keine fvar-Achse und stehen beide in fonts.css — vier Tore gruen, und
+    // der Nutzer bekommt die Gewichte verdreht. Ein SHA-256-Nagel faengt das
+    // auch, sagt aber nichts darueber, ob die Datei die RICHTIGE ist; der
+    // Selbstname und usWeightClass sagen beides.
+    const nameTabelle = woff2.tabellen['name'];
+    let namen = {};
+    let namenFehler = null;
+    if (!nameTabelle) {
+        namenFehler = 'keine name-Tabelle';
+    } else {
+        try {
+            namen = leseNamen(woff2.font, nameTabelle.offset);
+        } catch (e) {
+            namenFehler = `name unlesbar: ${e.message}`;
+        }
+    }
+
+    const os2Tabelle = woff2.tabellen['OS/2'];
+    let gewichtsklasse = null;
+    let gewichtsklasseFehler = null;
+    if (!os2Tabelle) {
+        gewichtsklasseFehler = 'keine OS/2-Tabelle';
+    } else {
+        try {
+            gewichtsklasse = leseGewichtsklasse(woff2.font, os2Tabelle.offset);
+        } catch (e) {
+            gewichtsklasseFehler = `OS/2 unlesbar: ${e.message}`;
+        }
+    }
+
     return {
         ...basis,
         fehler: null,
         numTables: woff2.numTables,
+        namen,
+        namenFehler,
+        // 16 vor 1: die typografische Familie ist der Name OHNE Stilzusatz,
+        // wo sie gefuehrt wird. Fehlt sie, traegt 1 den Zusatz mit
+        // ("Poppins SemiBold") — der Vergleich muss darum ein Praefixvergleich
+        // sein, kein Gleichheitsvergleich.
+        eigenerFamilienname: namen[16] || namen[1] || null,
+        gewichtsklasse,
+        gewichtsklasseFehler,
         laengenStimmen: woff2.laengenStimmen,
         hatFvar: Boolean(fvarTabelle),
         achsen,
@@ -946,6 +1060,7 @@ module.exports = {
     UNICODE_BLOECKE,
     BEKANNTE_TAGS,
     GEWICHT_WORTE,
+    NAME_IDS,
     ohneKommentare,
     leseGewichtsbereich,
     leseSchriftQuellen,
@@ -958,6 +1073,8 @@ module.exports = {
     leseCmap,
     leseFixed1616,
     leseFvar,
+    leseNamen,
+    leseGewichtsklasse,
     zaehleBloecke,
     pruefeDatei,
     pruefeAlle,
