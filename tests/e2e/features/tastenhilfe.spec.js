@@ -642,10 +642,13 @@ function hilfeTokens(reihen) {
             continue;
         }
         for (const z of ziele) {
-            // Eine Spanne wie `1`…`9` schreibt die Hilfe als zwei Marken mit
-            // einem Bindestrich im Text; hier zaehlt jede Marke fuer sich,
-            // und die Spanne wird beim Vergleich ueber `spanneDeckt()`
-            // aufgeloest.
+            // EINE MARKE, DIE SELBST EINE SPANNE IST (`1-5`), wird hier NICHT
+            // als Taste gezaehlt — `spannenTokens()` loest sie in ihre
+            // Einzeltasten auf. Ohne diese Ausnahme stuende in der Tastenmenge
+            // zusaetzlich das Gebilde `ALT+SHIFT+1-5`, das keine Taste ist
+            // und das Fall (5) zu Recht als Luege meldete (gemessen, erster
+            // Durchgang nach dem Nachtragen der Hilfe).
+            if (/^[0-9]\s*[-–…]\s*[0-9]$/.test(z)) continue;
             raus.add([...vorsatz, z].join('+'));
         }
     }
@@ -653,28 +656,47 @@ function hilfeTokens(reihen) {
 }
 
 /**
- * Loest eine Ziffernspanne auf: nennt die Hilfe `1` und `9` in einer Reihe,
- * deren Text einen Bindestrich dazwischen fuehrt, gelten alle Ziffern
- * dazwischen als genannt.
+ * Loest eine Ziffernspanne auf. Zwei Schreibweisen gelten:
  *
- * WARUM DAS SEIN MUSS UND KEINE NACHSICHT IST: die Hilfe soll `1`-`9` als
- * EINE Reihe fuehren koennen ("Dashboard … Beute" waeren sonst neun Reihen
- * fuer eine einzige Mechanik). Ohne diese Aufloesung muesste sie neun Reihen
- * fuehren, oder der Waechter waere rot. Die Aufloesung ist eng gefasst: sie
- * greift nur bei zwei Marken, die beide EINE Ziffer sind, und nur wenn der
- * Reihentext oder die Reihe selbst einen Bindestrich fuehrt.
+ *   (a) EINE Marke der Form `1-5` — so schreibt ein Mensch eine Spanne, und
+ *       so steht sie bei den fuenf Soundboard-Plaetzen. Fuenf eigene Reihen
+ *       waeren dort Rauschen: dieselbe Mechanik, nur die Ziffer anders.
+ *   (b) ZWEI Ziffernmarken in einer Reihe, deren Text einen Bindestrich
+ *       fuehrt.
+ *
+ * WARUM DAS KEINE NACHSICHT IST, obwohl es die Pruefung weicher aussehen
+ * laesst: die Aufloesung schneidet in BEIDE Richtungen. Sie macht `1-5` zu
+ * fuenf genannten Tasten — und damit haftet die Hilfe fuer alle fuenf. Wer
+ * `1-9` schreibt, wo nur `1-5` wirken, bekommt in Fall (5) vier Luegen
+ * gemeldet (ALT+SHIFT+6 … 9 genannt, aber nicht belegt). Eine Spanne ist
+ * also teurer als eine Einzelmarke, nicht billiger.
+ *
+ * Eng gefasst ist sie trotzdem: Marken wie `W20` oder `Pos1` enthalten
+ * Ziffern, aber keine Spannenform, und bleiben unberuehrt.
  * @param {{text: string, tasten: string[]}[]} reihen
  */
 function spannenTokens(reihen) {
     const raus = new Set();
+    const MOD = ['STRG', 'ALT', 'SHIFT'];
     for (const r of reihen) {
-        const ziffern = r.tasten.map(t => t.trim()).filter(t => /^[0-9]$/.test(t));
-        const hatSpanne = /[-–…]/.test(r.tasten.join(' ')) || /[-–…]/.test(r.text);
+        const marken = r.tasten.map(t => t.trim());
+        const vorsatz = marken.map(t => t.toUpperCase()).filter(t => MOD.includes(t));
+
+        // (a) eine Marke, die selbst eine Spanne ist
+        for (const m of marken) {
+            const treffer = m.match(/^([0-9])\s*[-–…]\s*([0-9])$/);
+            if (!treffer) continue;
+            const [a, b] = [Number(treffer[1]), Number(treffer[2])];
+            for (let i = Math.min(a, b); i <= Math.max(a, b); i++) {
+                raus.add([...vorsatz, String(i)].join('+'));
+            }
+        }
+
+        // (b) zwei Ziffernmarken plus ein Bindestrich im Reihentext
+        const ziffern = marken.filter(t => /^[0-9]$/.test(t));
+        const hatSpanne = /[-–…]/.test(marken.join(' ')) || /[-–…]/.test(r.text);
         if (ziffern.length === 2 && hatSpanne) {
             const [a, b] = ziffern.map(Number);
-            const vorsatz = r.tasten
-                .map(t => t.trim().toUpperCase())
-                .filter(t => ['STRG', 'ALT', 'SHIFT'].includes(t));
             for (let i = Math.min(a, b); i <= Math.max(a, b); i++) {
                 raus.add([...vorsatz, String(i)].join('+'));
             }
@@ -971,6 +993,36 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
                 'Die Hilfe ist dabei genau das Werkzeug des Tastaturnutzers.'
         ).toBe(true);
 
+        // UND DAS IST DER GRUND, WARUM DER FOKUS DORT HINGEHOERT — die
+        // Behauptung "der Fokus liegt drin" ist nur so viel wert wie das, was
+        // sie ermoeglicht. Die Hilfe laeuft seit dem Nachtragen auch bei
+        // 1440 px ueber (gemessen 1283 px Inhalt in 638 px Flaeche), und ein
+        // Laufbereich bewegt sich mit der Tastatur nur, wenn der Fokus darin
+        // liegt. Gemessen vor der Behebung: KEINE Taste bewegte ihn. Danach:
+        // Bild-ab 0 -> 558 px, Pfeil-ab weitere 40 px.
+        const laufVor = await page.evaluate(
+            () => document.querySelector('.shortcuts-modal').scrollTop
+        );
+        await page.keyboard.press('PageDown');
+        await page.waitForTimeout(300);
+        const laufNach = await page.evaluate(
+            () => document.querySelector('.shortcuts-modal').scrollTop
+        );
+        expect(
+            await page.evaluate(() => {
+                const m = document.querySelector('.shortcuts-modal');
+                return m.scrollHeight > m.clientHeight + 1;
+            }),
+            'Vorbedingung: die Hilfe hat mehr Inhalt als Flaeche — sonst gibt es nichts zu ' +
+                'laufen und dieser Teil des Falls prueft nichts'
+        ).toBe(true);
+        expect(
+            laufNach,
+            `Bild-ab muss die offene Hilfe laufen lassen (von ${laufVor} px aus). Bleibt ` +
+                'sie stehen, liegt der Fokus nicht in ihrem Laufbereich, und der untere ' +
+                'Teil der Hilfe ist mit der Tastatur unerreichbar.'
+        ).toBeGreaterThan(laufVor);
+
         // Und der Rueckweg: Escape schliesst und laesst den Fokus nicht im
         // Nichts stehen.
         await page.keyboard.press('Escape');
@@ -1033,11 +1085,15 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
                     spaltenRoh: getComputedStyle(g).gridTemplateColumns,
                     docQuerlauf: document.documentElement.scrollWidth > window.innerWidth + 1,
                     modalQuerlauf: m.scrollWidth > m.clientWidth + 1,
-                    // Eine Zeile, die auf zwei Zeilen umbricht, ist hoeher als
-                    // ihre Zeilenhoehe plus das Polster von 2x6 px.
-                    umgebrochen: reihen
-                        .filter(r => r.getBoundingClientRect().height > zeilenhoehe * 1.9 + 12)
-                        .map(r => (r.querySelector('span')?.textContent || '').trim()),
+                    // Die Satzhoehe je Zeile in ZEILEN, aus der gemessenen
+                    // Hoehe abzueglich des Polsters (`padding: 6px 0`).
+                    dreiZeilig: reihen
+                        .map(r => ({
+                            z: Math.round((r.getBoundingClientRect().height - 12) / zeilenhoehe),
+                            t: (r.querySelector('span')?.textContent || '').trim()
+                        }))
+                        .filter(x => x.z >= 3)
+                        .map(x => `${x.t} (${x.z} Zeilen)`),
                     abgeschnitten: reihen
                         .filter(r => {
                             const s = r.querySelector('span');
@@ -1073,16 +1129,61 @@ test.describe('HILF — der Waechter der Tastenhilfe', () => {
                     'Spalte gewinnt. Mit sechs Abschnitten wird die schmale Spalte zur ' +
                     'Schlucht. Eine Spalte unter einer Media-Query ist der Ausweg.'
             ).toBe(1);
+            // ZWEI ZEILEN SIND ERLAUBT, DREI NICHT — und diese Grenze ist
+            // gemessen, nicht gesetzt. In einer Spalte von 274 px bricht eine
+            // erklaerende Beschriftung wie "Nächster Zug (Fokus auf keinem
+            // Bedienelement)" auf zwei Zeilen um, und das ist richtig so: die
+            // Erklaerung ist der Zweck der Zeile. Drei Zeilen heissen, dass
+            // die Spalte den Text wortweise bricht. Gemessen nach dieser
+            // Arbeit: Hoechstwert 2 Zeilen bei allen fuenf gepruefien
+            // Breiten, 6 von 40 Reihen zweizeilig bei 360 px.
             expect(
-                mass.umgebrochen,
-                `Bei ${breite} px brechen diese Beschriftungen auf zwei Zeilen um: ` +
-                    `${mass.umgebrochen.join(' | ')}. In einer Spalte ist dafuer Platz; ` +
-                    'in zwei nicht.'
+                mass.dreiZeilig,
+                `Bei ${breite} px braucht eine Beschriftung drei Zeilen oder mehr: ` +
+                    `${mass.dreiZeilig.join(' | ')}. Entweder ist die Beschriftung zu lang ` +
+                    'oder die Spalte zu schmal.'
             ).toEqual([]);
 
             await page.keyboard.press('Escape');
             await page.waitForTimeout(250);
         }
+
+        // UND AM SCHREIBTISCH, zwei Spalten. Der Fall heisst "Telefon", aber
+        // die Laenge der Beschriftungen entscheidet sich bei 1440 px zuerst:
+        // dort sind die Spalten 267 px breit, also nur 7 px weiter als die
+        // EINE Spalte bei 360 px. Eine Beschriftung, die hier dreizeilig
+        // wird, ist einfach zu lang — und genau so war es im ersten Entwurf
+        // dieser Arbeit (eine Zeile mit 60 Zeichen, gemessen dreizeilig).
+        await page.setViewportSize(BREIT);
+        await page.waitForTimeout(250);
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(400);
+        const breit = await page.evaluate(() => {
+            const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
+            const g = document.querySelector('.shortcuts-grid');
+            const zh = parseFloat(getComputedStyle(reihen[0]).lineHeight) || 18;
+            return {
+                spalten: getComputedStyle(g).gridTemplateColumns.split(' ').length,
+                spaltenRoh: getComputedStyle(g).gridTemplateColumns,
+                dreiZeilig: reihen
+                    .map(r => ({
+                        z: Math.round((r.getBoundingClientRect().height - 12) / zh),
+                        t: (r.querySelector('span')?.textContent || '').trim()
+                    }))
+                    .filter(x => x.z >= 3)
+                    .map(x => `${x.t} (${x.z} Zeilen)`)
+            };
+        });
+        expect(breit.spalten, 'bei 1440 px stehen zwei Spalten').toBe(2);
+        expect(
+            breit.spaltenRoh,
+            'die zwei Spalten sind gleich breit — `minmax(0, 1fr)`, nicht `1fr`. ' +
+                `Gemessen: ${breit.spaltenRoh}`
+        ).toBe('267px 267px');
+        expect(
+            breit.dreiZeilig,
+            `Bei 1440 px braucht eine Beschriftung drei Zeilen: ${breit.dreiZeilig.join(' | ')}`
+        ).toEqual([]);
     });
 
     // ============================================================

@@ -3418,7 +3418,7 @@ bei 13,46 unberührt. Läßt die Runde Sepia durchfallen, greift **Rücknahmestu
 die Sichtprobe nennen muß, rechnet **R-22** aus den Tokens und verlangt jedes namentlich in D3 —
 die erste Fassung von D3 nannte Sepia nicht.
 
-**Eine der beiden Ringstellen ist unerreichbar.** `systems/undo.js:778` wird **nie gemalt**:
+**Eine der beiden Ringstellen ist unerreichbar.** `systems/undo.js:821` wird **nie gemalt**:
 `goToNote()` sucht die Notiz über `document.querySelector('[data-note-date="…"]')`, und
 `data-note-date` kommt im **ganzen Quellbaum genau einmal** vor — in dieser Abfrage selbst. Es
 gibt keinen Setzer, kein Template, kein `setAttribute`. Die Sitzungsnotizen werden nach `n.id`
@@ -3452,7 +3452,7 @@ Schritt 8 genau einmal im Test und wird von der CSS- und der JS-Prüfung geteilt
 | D3 | Der Ring an der **Auftragskarte** (Auftrag aus einem Verweis anspringen) in **Dark**, **Light** UND **Sepia** | Der Ring ist von 8,28 auf 3,61 (dark), 3,25 auf 1,90 (light) und 6,58 auf **2,66** (sepia) gefallen — das ist selbst **mit** der Verstärkung die stärkste Abschwächung der ganzen Einheit. **Sepia ist mit Faktor 0,40 der größte Sturz und gehört deshalb ausdrücklich dazu**; Light und Sepia treten dabei von „hält" zu „hält nicht" über (siehe den Absatz über der Tabelle). Reicht Ring plus Hof, oder muss die Marke voll deckend bleiben? |
 | D4 | Der Ring an der Auftragskarte in **Contrast** | Dort ist `--ring-gold` volles Gold: der Wert bleibt 13,46, nur die **Dicke** wächst 2 → 3 px. Wirkt der Ring dort jetzt zu fett neben dem `border` des Kastens? |
 | D5 | `entity-links.js` — die Marke des Querverweis-Systems | Sie ist die einzige der vier, die zusätzlich `transform: scale(1.02)` setzt, also die robusteste. Wenn **diese** in einem Theme nicht auffällt, fallen die anderen drei dort sicher durch. Guter Prüfeinstieg. |
-| D6 | **Kein Sichtpunkt:** die Notizsuche (`systems/undo.js:778`) | Diese Ringstelle ist **unerreichbar** — nicht anzuschauen, weil sie nicht gemalt wird (Beleg im Absatz „Eine der beiden Ringstellen ist unerreichbar"). Wer hier keine Marke sieht, hat **nichts** über die Stärke der Marke gelernt. Die Zeile steht nur zur Kenntnis in der Liste, damit sie nicht als übersehene Sichtprobe gilt. |
+| D6 | **Kein Sichtpunkt:** die Notizsuche (`systems/undo.js:821`) | Diese Ringstelle ist **unerreichbar** — nicht anzuschauen, weil sie nicht gemalt wird (Beleg im Absatz „Eine der beiden Ringstellen ist unerreichbar"). Wer hier keine Marke sieht, hat **nichts** über die Stärke der Marke gelernt. Die Zeile steht nur zur Kenntnis in der Liste, damit sie nicht als übersehene Sichtprobe gilt. |
 
 **Der Rücknahmeweg, falls die Runde widerspricht.** Drei Stufen, jede billig:
 

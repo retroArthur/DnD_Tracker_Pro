@@ -510,17 +510,60 @@ function getCurrentStorageKey() {
 // ============================================================
 // TASTENKÜRZEL-OVERLAY
 // ============================================================
+// DER FOKUS GEHOERT IN DIE HILFE, SOLANGE SIE OFFEN IST (HILF, Fall 7).
+//
+// GEMESSENER AUSGANGSSTAND (HEAD 52caf1d, gebautes Buendel, echte
+// Tastendruecke): `?` oeffnete die Hilfe, und der Fokus blieb auf `BODY`.
+// 45 von 45 Tabulatorspruengen liefen danach in die Seite UNTER der Hilfe,
+// kein einziger in die Hilfe. Das ist nicht nur unschoen, es macht die Hilfe
+// fuer den Tastaturnutzer unvollstaendig: `.shortcuts-modal` traegt
+// `max-height: 80vh; overflow-y: auto` und laeuft gemessen schon bei 1440 px
+// ueber (785 px Inhalt in 638 px Flaeche), auf dem Telefon noch mehr. Einen
+// Laufbereich bewegt die Tastatur nur, wenn der Fokus DARIN liegt — ohne das
+// ist die untere Haelfte der Hilfe allein mit der Tastatur nicht zu lesen.
+// Und die Hilfe ist genau das Werkzeug dessen, der nur die Tastatur hat.
+//
+// WARUM `tabindex="-1"` AUF DER FLAECHE UND NICHT AUF DER BLENDE, und warum
+// nur solange sie offen ist. `ui/keyboard-reach.js` hat genau hier schon
+// einen Phantomhalt erzeugt und ihn dokumentiert: die Blende
+// `#shortcuts-overlay` ist im geschlossenen Zustand NUR ueber `opacity: 0`
+// und `pointer-events: none` verborgen (kein `display: none`, kein
+// `visibility: hidden`), ein `tabindex` darauf bleibt also fokussierbar und
+// brachte +1 unsichtbaren Halt in 23 von 24 Ansichten. Beides ist hier
+// vermieden: das Attribut sitzt auf `.shortcuts-modal` (kein `data-action`,
+// damit ausserhalb der Kehrschleife), es lautet `-1` (nie ein Tabulatorhalt
+// — `ui/modal-focus.js` schliesst `[tabindex="-1"]` ausdruecklich aus seiner
+// Haltepunktliste aus), und es verschwindet beim Schliessen wieder.
+//
+// WAS HIER ABSICHTLICH NICHT PASSIERT: ein Oeffner wird nicht gemerkt und
+// der Fokus nicht auf ihn zurueckgesetzt. Die Hilfe wird fast immer per `?`
+// geoeffnet, und dann gibt es keinen Oeffner. Ein vorgetaeuschter waere
+// schaedlich — `tastatur-kuerzel.spec.js` (j) hat fuer den HP-Rechner
+// gemessen, dass der Fokus danach auf diesem Element haengt und die
+// Leertaste verbraucht, die eigentlich den Zug wechselt. Statt dessen wird
+// der Fokus beim Schliessen FREIGELASSEN (`blur()`), und die Leertaste
+// gehoert wieder dem Zug.
 function showShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
-    if (overlay) {
-        overlay.classList.add('show');
+    if (!overlay) return;
+    overlay.classList.add('show');
+    const flaeche = overlay.querySelector('.shortcuts-modal');
+    if (flaeche) {
+        flaeche.setAttribute('tabindex', '-1');
+        flaeche.focus();
     }
 }
 function hideShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
-    if (overlay) {
-        overlay.classList.remove('show');
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    // Den Fokus nicht auf einer Flaeche mit `opacity: 0` stehen lassen: der
+    // naechste Anschlag bediente sonst etwas Unsichtbares.
+    if (document.activeElement && overlay.contains(document.activeElement)) {
+        document.activeElement.blur();
     }
+    const flaeche = overlay.querySelector('.shortcuts-modal');
+    if (flaeche) flaeche.removeAttribute('tabindex');
 }
 // ============================================================
 // CONDITIONS / ZUSTÄNDE HELPER

@@ -129,7 +129,7 @@
         
         .shortcuts-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr)); /* minmax statt 1fr: HILF, Begruendung am Media-Query am Dateiende */
             gap: 16px;
         }
         
@@ -2488,4 +2488,46 @@
 .dms-quick-label {
     font-size: var(--text-sm);
     font-weight: 500;
+}
+
+/* ============================================================
+   TASTENKUERZEL-HILFE AUF DEM TELEFON (HILF)
+   ============================================================
+   WARUM DIESE REGEL HIER UNTEN STEHT UND NICHT BEIM UEBRIGEN
+   .shortcuts-*-BLOCK (Zeile ~106-170). Die Zeilennummern dieser Datei
+   sind Aktenlage: tests/unit/design-consistency.test.js fuehrt Schatten-,
+   Ring- und Farbstellen als `dmscreen.css:<zeile>` und prueft, dass der
+   Anker seine Deklaration trifft (R-06, R-19, R-21). Ein Einschub oben
+   verschiebt jede Nummer darunter — gemessen fuenf rote Faelle beim ersten
+   Versuch. Am Dateiende verschiebt er nichts. Die Kaskade bleibt richtig:
+   eine Media-Query NACH der Grundregel ist genau die Reihenfolge, die sie
+   braucht.
+
+   EINE SPALTE AUF DEM TELEFON. Gemessen bei 360 px: der Dialog ist 324 px
+   breit (90 %), nach 2x24 px Polster bleiben 276 px, abzueglich 16 px
+   Spaltenabstand 130 px je Spalte. Darin brechen Beschriftungen wie "HP des
+   Kaempfers am Zug" um, und die Hilfe traegt seit HILF sechs Abschnitte
+   statt vier (40 Zeilen statt 25).
+
+   DIE GRENZE IST 600 px UND NICHT FREI GEWAEHLT. Der erste Entwurf nahm
+   680 px — die Stufe, die CLAUDE.md fuer die Editor-Werkzeugleisten nennt
+   (900/680). Falsch: jene Leiter laeuft nicht ueber CSS-Grenzen, und F-12
+   laesst im CSS GENAU 600, 900 und 1200 zu (bzw. 601/901/1201). 680 war
+   dort eine fuenfte, fremde Grenze und hat den Fall rot gestellt. 600
+   traegt dasselbe: gemessen stehen bei 601-900 px zwei Spalten von 267 px
+   mit hoechstens zweizeiligen Beschriftungen, und die beiden gemessenen
+   Engstellen (390 und 360 px) liegen darunter.
+
+   `minmax(0, 1fr)` an der Grundregel oben, NICHT `1fr`: `1fr` loest zu
+   `minmax(auto, 1fr)` auf, und `auto` ist der Mindestinhalt. Bei 351 px
+   Dialogbreite hat das die zwei Spalten gemessen in 120 px und 165 px
+   geteilt. Bei 1440 px aendert es nichts (dort stehen beide schon auf
+   267 px).
+
+   Bewacht von Fall (8) in tests/e2e/features/tastenhilfe.spec.js.
+   ============================================================ */
+@media (max-width: 600px) {
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
 }

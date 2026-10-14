@@ -613,6 +613,17 @@
                 <span>⌨️ Tastenkürzel</span>
                 <button class="btn btn-sm" data-action="call" data-value="hideShortcutsOverlay">✕</button>
             </div>
+            <!--
+                WAS HIER DAZUKOMMEN DARF UND WAS NICHT — bewacht von
+                tests/e2e/features/tastenhilfe.spec.js (HILF). Der Waechter
+                misst am gebauten Buendel, welche Tasten in der App etwas tun,
+                und vergleicht die Menge mit DIESEM Block. Beide Richtungen:
+                eine belegte Taste, die hier fehlt, macht ihn rot (Fall 3);
+                eine Zeile fuer eine Taste, die nichts tut, ebenso (Fall 5).
+                Jede Zeile nennt mindestens eine .shortcut-key (Fall 1).
+                KEINE Inline-Stile — der projektweite Zaehler steht auf 251,
+                und der eine erlaubte liegt in der Fusszeile unten (Fall 9).
+            -->
             <div class="shortcuts-grid">
                 <div class="shortcuts-section">
                     <div class="shortcuts-section-title">📍 Navigation</div>
@@ -623,6 +634,8 @@
                     <div class="shortcut-row"><span>Quests</span><div class="shortcut-keys"><span class="shortcut-key">5</span></div></div>
                     <div class="shortcut-row"><span>Encounter</span><div class="shortcut-keys"><span class="shortcut-key">6</span></div></div>
                     <div class="shortcut-row"><span>Initiative</span><div class="shortcut-keys"><span class="shortcut-key">7</span></div></div>
+                    <div class="shortcut-row"><span>Läden</span><div class="shortcut-keys"><span class="shortcut-key">8</span></div></div>
+                    <div class="shortcut-row"><span>Beute</span><div class="shortcut-keys"><span class="shortcut-key">9</span></div></div>
                 </div>
                 <div class="shortcuts-section">
                     <div class="shortcuts-section-title">⚡ Aktionen</div>
@@ -630,7 +643,10 @@
                     <div class="shortcut-row"><span>Wiederholen</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Y</span></div></div>
                     <div class="shortcut-row"><span>Speichern</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">S</span></div></div>
                     <div class="shortcut-row"><span>Suche</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Würfeln (d20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
+                    <div class="shortcut-row"><span>Suche (gleichwertig)</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">F</span></div></div>
+                    <div class="shortcut-row"><span>Befehlspalette</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Shift</span><span class="shortcut-key">K</span></div></div>
+                    <div class="shortcut-row"><span>Befehlspalette (in Firefox)</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">.</span></div></div>
+                    <div class="shortcut-row"><span>Würfeln (W20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
                     <div class="shortcut-row"><span>Timer Start/Stop</span><div class="shortcut-keys"><span class="shortcut-key">T</span></div></div>
                     <div class="shortcut-row"><span>Event Log</span><div class="shortcut-keys"><span class="shortcut-key">L</span></div></div>
                     <div class="shortcut-row"><span>Kampfprotokoll</span><div class="shortcut-keys"><span class="shortcut-key">K</span></div></div>
@@ -641,15 +657,31 @@
                     <div class="shortcuts-section-title">🎲 Würfel</div>
                     <div class="shortcut-row"><span>W20</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">2</span></div></div>
                     <div class="shortcut-row"><span>W12</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">1</span></div></div>
+                    <div class="shortcut-row"><span>W8</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">8</span></div></div>
                     <div class="shortcut-row"><span>W6</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">6</span></div></div>
                     <div class="shortcut-row"><span>W4</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">4</span></div></div>
                 </div>
                 <div class="shortcuts-section">
                     <div class="shortcuts-section-title">⚔️ Initiative</div>
-                    <div class="shortcut-row"><span>Nächster</span><div class="shortcut-keys"><span class="shortcut-key">N</span></div></div>
-                    <div class="shortcut-row"><span>Vorheriger</span><div class="shortcut-keys"><span class="shortcut-key">P</span></div></div>
+                    <div class="shortcut-row"><span>Nächster Zug</span><div class="shortcut-keys"><span class="shortcut-key">N</span></div></div>
+                    <div class="shortcut-row"><span>Nächster Zug (Fokus auf keinem Bedienelement)</span><div class="shortcut-keys"><span class="shortcut-key">Leertaste</span></div></div>
+                    <div class="shortcut-row"><span>Vorheriger Zug</span><div class="shortcut-keys"><span class="shortcut-key">P</span></div></div>
                     <div class="shortcut-row"><span>Neue Runde</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">N</span></div></div>
                     <div class="shortcut-row"><span>HP des Kämpfers am Zug</span><div class="shortcut-keys"><span class="shortcut-key">H</span></div></div>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">⌨️ Tabulator &amp; Gruppen</div>
+                    <div class="shortcut-row"><span>Nächstes Bedienelement (im Dialog bleibt er darin)</span><div class="shortcut-keys"><span class="shortcut-key">Tab</span></div></div>
+                    <div class="shortcut-row"><span>Vorheriges Bedienelement</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">Tab</span></div></div>
+                    <div class="shortcut-row"><span>Dialog oder Overlay schließen</span><div class="shortcut-keys"><span class="shortcut-key">Esc</span></div></div>
+                    <div class="shortcut-row"><span>Reihe gleichartiger Punkte (z. B. Zauberplätze): weiter</span><div class="shortcut-keys"><span class="shortcut-key">←</span><span class="shortcut-key">→</span></div></div>
+                    <div class="shortcut-row"><span>Steht die Reihe untereinander (z. B. Beute)</span><div class="shortcut-keys"><span class="shortcut-key">↑</span><span class="shortcut-key">↓</span></div></div>
+                    <div class="shortcut-row"><span>Erster bzw. letzter Punkt der Reihe</span><div class="shortcut-keys"><span class="shortcut-key">Pos1</span><span class="shortcut-key">Ende</span></div></div>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">🔊 Soundboard</div>
+                    <div class="shortcut-row"><span>Szene auf Schnellplatz 1-5</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">Shift</span><span class="shortcut-key">1-5</span></div></div>
+                    <div class="shortcut-row"><span>Stumm ein/aus</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">Shift</span><span class="shortcut-key">0</span></div></div>
                 </div>
             </div>
             <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
