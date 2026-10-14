@@ -870,3 +870,439 @@ test('(16) die Anschlaege bis zur Schnell-Referenz sinken deutlich', async ({ pa
             `und ${vorab.halte} Halten.`
     ).toBeLessThanOrEqual(120);
 });
+
+// ============================================================
+// (18) DER ZUSTAND DER GLIEDER — WAS DAS VORLESEPROGRAMM HOERT
+// ============================================================
+//
+// WAS DIESER FALL BEWACHT (TASV/E-2, Runde 3, Befund 5). Die Rolle allein
+// sagt, dass eine Stelle bedienbar ist — nicht, in welchem Zustand sie
+// steht. Gemessen am ausgelieferten Stand von Runde 2: sechs
+// NSC-Filtermarken, alle `role="button"`, keine mit `aria-pressed`;
+// zwanzig Listenzeilen, eine davon ausgewaehlt, keine mit `aria-current`;
+// zwanzig Auftrags- und zwanzig Ladenkoepfe, auf- oder zugeklappt, keine
+// mit `aria-expanded`. Die ganze Auskunft steckte in der CSS-Klasse
+// (`active`, `selected`, `expanded`) und damit im Auge.
+//
+// Ein Spielleiter mit Vorleseprogramm betritt die Leiste "NSC-Filter,
+// Werkzeugleiste" und hoert sechs Schaltflaechen "Alle", "Ort 1" … —
+// welche gerade filtert, sagt ihm niemand.
+//
+// DASS ES ANDERS GEHT, zeigte dieselbe Umsetzung an den Party-Punkten:
+// dort traegt jedes Glied ein `title` ("Grad 1 Slot (verfuegbar)"), der
+// Zustand steht also im Namen. Diese Reihe ist darum unten AUSDRUECKLICH
+// als Gegenbeispiel aufgefuehrt und bekommt KEIN zusaetzliches Attribut.
+//
+// DREI ATTRIBUTE, EINS JE BEDEUTUNG, und `aria-selected` ist keines davon:
+// es ist an `role="button"` nicht erlaubt, und Fall (7) oben prueft
+// ausdruecklich, dass keine Auswahl behauptet wird.
+
+/** Liest Zustandsattribute einer Familie. */
+const ZUSTAND_LESEN = sel => `(() => {
+    const sichtbar = el => {
+        if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true,
+            visibilityProperty: true, contentVisibilityAuto: true })) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    };
+    const g = [...document.querySelectorAll('${sel}')].filter(sichtbar);
+    const mit = a => g.filter(x => x.hasAttribute(a)).length;
+    return {
+        glieder: g.length,
+        pressed: mit('aria-pressed'),
+        current: mit('aria-current'),
+        expanded: mit('aria-expanded'),
+        selected: mit('aria-selected'),
+        title: mit('title'),
+        gedruecktWahr: g.filter(x => x.getAttribute('aria-pressed') === 'true').length,
+        aktuellWahr: g.filter(x => x.getAttribute('aria-current') === 'true').length,
+        aufWahr: g.filter(x => x.getAttribute('aria-expanded') === 'true').length
+    };
+})()`;
+
+/**
+ * Je Familie: wo sie wohnt, wie viele Glieder die Saat erzeugt, welches
+ * Attribut den Zustand traegt und wie viele Glieder gerade "an" sind.
+ */
+const ZUSTANDSFAMILIEN = [
+    {
+        ansicht: 'npcs',
+        sel: '[data-action="set-npc-filter"]',
+        attribut: 'pressed',
+        wahr: 'gedruecktWahr',
+        anzWahr: 1
+    },
+    {
+        ansicht: 'npcs',
+        sel: '[data-action="select-npc"]',
+        attribut: 'current',
+        wahr: 'aktuellWahr',
+        anzWahr: 1
+    },
+    {
+        ansicht: 'loot',
+        sel: '[data-action="set-loot-filter"]',
+        attribut: 'pressed',
+        wahr: 'gedruecktWahr',
+        anzWahr: 1
+    },
+    {
+        ansicht: 'quests',
+        sel: '[data-action="toggle-quest"]',
+        attribut: 'expanded',
+        wahr: 'aufWahr',
+        anzWahr: 0
+    },
+    {
+        ansicht: 'quests',
+        sel: '[data-action="toggle-quest-status-stop"]',
+        attribut: 'pressed',
+        wahr: 'gedruecktWahr',
+        anzWahr: 0
+    },
+    {
+        ansicht: 'shops',
+        sel: '[data-action="toggle-shop"]',
+        attribut: 'expanded',
+        wahr: 'aufWahr',
+        anzWahr: 0
+    }
+];
+
+test.describe('E-2 — der Zustand steht im ARIA, nicht nur in der Klasse', () => {
+    for (const f of ZUSTANDSFAMILIEN) {
+        test(`(18) ${f.ansicht}: ${f.sel} traegt aria-${f.attribut} an JEDEM Glied`, async ({
+            page
+        }) => {
+            test.setTimeout(120_000);
+            await ansichtOeffnen(page, f.ansicht, 20);
+            const z = await page.evaluate(ZUSTAND_LESEN(f.sel));
+            expect(z.glieder, `${f.sel}: die Saat erzeugt keine Glieder`).toBeGreaterThan(1);
+            expect(
+                z[f.attribut],
+                `${f.sel}: ${z[f.attribut]} von ${z.glieder} Gliedern tragen ` +
+                    `aria-${f.attribut}. Ohne das Attribut steckt der Zustand allein in ` +
+                    'der CSS-Klasse und ist fuer ein Vorleseprogramm nicht da. ' +
+                    `Gemessen: ${JSON.stringify(z)}`
+            ).toBe(z.glieder);
+            expect(
+                z[f.wahr],
+                `${f.sel}: ${z[f.wahr]} Glieder stehen auf "wahr", erwartet ${f.anzWahr}`
+            ).toBe(f.anzWahr);
+            // Die Luege, die hier nicht stehen darf — dieselbe Schranke wie
+            // in Fall (7) fuer die Kampfgruppen.
+            expect(z.selected, `${f.sel}: aria-selected behauptet eine Auswahl`).toBe(0);
+        });
+    }
+
+    test('(18e) die ausgewaehlte Zeile traegt aria-current="true", die uebrigen GAR NICHTS', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'npcs', 20);
+        // `aria-current="false"` waere ein eigener Fehler: ein
+        // Vorleseprogramm liest die bloße Anwesenheit mancher ARIA-Marken
+        // als Zustand. Nicht gewaehlt heisst: Attribut weg.
+        const vor = await page.evaluate(ZUSTAND_LESEN('[data-action="select-npc"]'));
+        expect(vor.current, 'mehr als eine Zeile traegt aria-current').toBe(1);
+
+        await page.click('.npc-item[data-id="5"]');
+        await page.waitForTimeout(600);
+        const nach = await page.evaluate(() => {
+            const g = [...document.querySelectorAll('[data-action="select-npc"]')];
+            return {
+                mitAttribut: g.filter(x => x.hasAttribute('aria-current')).length,
+                wahrBei: g
+                    .filter(x => x.getAttribute('aria-current') === 'true')
+                    .map(x => x.getAttribute('data-id'))
+            };
+        });
+        expect(
+            nach,
+            'Nach dem Klick muss genau die angeklickte Zeile aria-current="true" tragen'
+        ).toEqual({ mitAttribut: 1, wahrBei: ['5'] });
+    });
+
+    test('(18f) die Party-Punkte tragen ihren Zustand im NAMEN und brauchen kein Attribut', async ({
+        page
+    }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'party', 6);
+        const z = await page.evaluate(ZUSTAND_LESEN('.slot-pip'));
+        expect(z.glieder, 'Die Saat erzeugt keine Zauberplatz-Punkte').toBe(42);
+        // Das Gegenbeispiel aus dem Haus: hier steht der Zustand schon im
+        // `title`, und ein `aria-pressed` daneben wuerde dasselbe zweimal
+        // sagen. Faellt das `title` eines Tages weg, soll dieser Fall rot
+        // werden und nicht die Reihe stumm.
+        expect(
+            z.title,
+            'Jeder Punkt traegt ein title mit dem Zustand ("Grad 1 Slot (verfuegbar)")'
+        ).toBe(z.glieder);
+    });
+});
+
+// ============================================================
+// (19) DIE NAMEN EINER AUFTRAGSZEILE
+// ============================================================
+//
+// WAS DIESER FALL BEWACHT (TASV/E-2, Runde 3, Befund 6). In der
+// Auftragsliste stehen 41 Halte: EINER fuer die zwanzig Zeilen (die
+// Gruppe), zwanzig native Pinnknoepfe und zwanzig Markenleisten. Gemessen
+// am Zugaenglichkeitsbaum von Chromium (Accessibility.getFullAXTree,
+// Teilbaum #quests-list) hiessen sie vorher:
+//
+//   20 x  button  :: "⋮⋮ 📌 Auftrag Quest Auftragsstatus"
+//   20 x  button  :: "📌"
+//   20 x  toolbar :: "Auftragsstatus"
+//   20 x  button  :: "○ Done"   /   20 x  button :: "○ Loot"
+//
+// Zwei Fehler in einem Bild. Erstens: ab dem 27. Halt hoert der
+// Spielleiter nur noch "📌" und "○ Done" — welchem Auftrag sie gehoeren,
+// sagt nichts, weil der einzige Halt mit dem Auftragsnamen gerade der
+// weggruppierte ist. Wer Auftrag 17 auf erledigt setzen will, muss Halte
+// zaehlen. Zweitens: in den Namen der ZEILE leckt das aria-label der
+// Markenleiste darin — "Auftragsstatus" ist ein Wort, das auf dem Schirm
+// nirgends steht.
+//
+// DER FALL URTEILT UEBER DIE ANSAGE, NICHT UEBER DIE FOKUSSIERBARKEIT, und
+// das ist in diesem Strang neu: alle uebrigen Faelle fragen, WO der Fokus
+// landet. Dieser fragt, was dort gesagt wird — und darum liest er den
+// echten Baum des Browsers und nicht die Attribute.
+
+/**
+ * Die Namen aller Knoepfe und Leisten des Zugaenglichkeitsbaums, gezaehlt.
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{rolle: string, name: string, anzahl: number}[]>}
+ */
+async function axNamen(page) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Accessibility.enable');
+    const { nodes } = await cdp.send('Accessibility.getFullAXTree');
+    await cdp.detach();
+    const zaehl = new Map();
+    for (const n of nodes) {
+        if (n.ignored) continue;
+        const rolle = n.role && n.role.value;
+        if (rolle !== 'button' && rolle !== 'toolbar') continue;
+        const name = ((n.name && n.name.value) || '').replace(/\s+/g, ' ').trim();
+        const k = rolle + '\u0000' + name;
+        zaehl.set(k, (zaehl.get(k) || 0) + 1);
+    }
+    return [...zaehl.entries()]
+        .map(([k, anzahl]) => ({
+            rolle: k.split('\u0000')[0],
+            name: k.split('\u0000')[1],
+            anzahl
+        }))
+        .sort((a, b) => b.anzahl - a.anzahl);
+}
+
+test('(19) jede Stelle einer Auftragszeile nennt ihren Auftrag', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize(BREIT);
+    // UNTERSCHEIDBARE TITEL — die Saat oben nennt jeden Auftrag "Auftrag",
+    // und dann saehe "Auftrag: Auftrag" wie ein Erfolg aus, obwohl der
+    // Titel fehlte. Hier traegt jeder Auftrag seine Nummer.
+    const saat = kampagne(6);
+    saat.quests = saat.quests.map((q, i) => ({ ...q, title: 'Rattenplage ' + (i + 1) }));
+    await page.addInitScript(seed => {
+        try {
+            localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
+        } catch {
+            // file://-localStorage ist je Browserbau unterschiedlich streng.
+        }
+    }, saat);
+    await page.goto(APP_URL);
+    await waitForAppReady(page);
+    await page.waitForTimeout(400);
+    await page.evaluate(() => window.switchView('quests'));
+    await page.waitForTimeout(700);
+
+    const namen = await axNamen(page);
+    const titel = 'Rattenplage 3';
+    const mitTitel = namen.filter(x => x.name.includes(titel));
+    const bericht =
+        'Namen im Zugaenglichkeitsbaum (Rolle / Anzahl / Name):\n' +
+        namen
+            .slice(0, 12)
+            .map(
+                x =>
+                    '    ' +
+                    x.rolle.padEnd(8) +
+                    String(x.anzahl).padStart(3) +
+                    ' x  "' +
+                    x.name +
+                    '"'
+            )
+            .join('\n');
+
+    // DREI STELLEN je Zeile muessen den Titel tragen: die Zeile selbst,
+    // der Pinnknopf und die Markenleiste.
+    expect(
+        mitTitel.map(x => x.rolle).sort(),
+        'Nur ' +
+            mitTitel.length +
+            ' Stelle(n) nennen "' +
+            titel +
+            '" — erwartet sind drei ' +
+            '(Zeile, Pinnknopf, Markenleiste).\n' +
+            bericht
+    ).toEqual(['button', 'button', 'toolbar']);
+
+    // UND DIE ZEILE DARF DIE LEISTE NICHT MITSPRECHEN. "Auftragsstatus"
+    // ist die Beschriftung der Leiste IN der Zeile; stand sie im Namen der
+    // Zeile, war es ein Leck aus dem Inhalt.
+    const zeile = mitTitel.find(x => x.rolle === 'button' && x.name.startsWith('Auftrag:'));
+    expect(zeile, 'Keine Zeile mit dem Namen "Auftrag: ' + titel + '".\n' + bericht).toBeTruthy();
+    expect(
+        zeile.name,
+        'Der Name der Zeile enthaelt die Beschriftung der Leiste darin — ein Leck ' +
+            'aus dem Inhalt.\n' +
+            bericht
+    ).toBe('Auftrag: ' + titel);
+
+    // KEIN NAMENLOSES PINNSYMBOL MEHR. Der Pinnknopf traegt den Titel;
+    // sein Inhalt allein waere wieder der alte Zustand.
+    expect(
+        namen.filter(x => x.name === '📌').length,
+        'Pinnknoepfe ohne Auftragsnamen gefunden.\n' + bericht
+    ).toBe(0);
+});
+
+// ============================================================
+// (20)-(22) DREI KLEINE BEFUNDE DER MECHANIK
+// ============================================================
+
+test('(20) ein leer gefilterter Behaelter behaelt keine Werkzeugleiste', async ({ page }) => {
+    test.setTimeout(120_000);
+    // Befund 7: die Schranke `if (!glieder.length) continue` greift nur
+    // VOR dem ersten Fuellen. Wer erst zwanzig NSC hat und dann nach
+    // "zzzzz" sucht, behaelt Rolle und Beschriftung bei NULL Gliedern —
+    // das Vorleseprogramm meldet weiter eine Werkzeugleiste
+    // "Nichtspielercharaktere" ohne ein einziges Bedienelement.
+    await ansichtOeffnen(page, 'npcs', 20);
+    const lies = () =>
+        page.evaluate(() => {
+            const c = document.getElementById('npc-list');
+            return {
+                rolle: c.getAttribute('role'),
+                achse: c.getAttribute('aria-orientation'),
+                label: c.getAttribute('aria-label'),
+                glieder: c.querySelectorAll('[data-action="select-npc"]').length
+            };
+        });
+    const vor = await lies();
+    expect(vor, 'Vorbedingung: die gefuellte Liste IST eine Leiste').toEqual({
+        rolle: 'toolbar',
+        achse: 'vertical',
+        label: 'Nichtspielercharaktere',
+        glieder: 20
+    });
+
+    await page.fill('#npc-search', 'zzzzz');
+    await page.waitForTimeout(900);
+    const leer = await lies();
+    expect(leer, 'Nach einer Suche ohne Treffer darf keine Werkzeugleiste stehenbleiben').toEqual({
+        rolle: null,
+        achse: null,
+        label: null,
+        glieder: 0
+    });
+
+    // UND SIE MUSS WIEDERKOMMEN. Ein Aufraeumen, das die Leiste dauerhaft
+    // abmeldet, waere der schlechtere Fehler.
+    await page.fill('#npc-search', '');
+    await page.waitForTimeout(900);
+    expect(await lies(), 'Nach dem Zuruecksetzen der Suche fehlt die Leiste').toEqual(vor);
+});
+
+test('(21) nach einem Datentausch bleibt der Fokus in der Liste', async ({ page }) => {
+    test.setTimeout(180_000);
+    // Befund 8: der Gruppenschluessel hing an der `data-id` des ERSTEN
+    // Glieds. Wer `D.npcs` ersetzt (Import, Kampagnenwechsel), aendert
+    // damit den Schluessel — `_holeFokusZurueck()` fand keine Gruppe und
+    // der Fokus lag danach auf BODY. Gemessen: Pfeiltasten taten nichts,
+    // und die rund 28 Anschlaege von oben waren neu zu zahlen.
+    await ansichtOeffnen(page, 'npcs', 20);
+    const drin = await tabBis(page, AUF_GLIED({ glied: '[data-action="select-npc"]' }), 120);
+    expect(drin, 'Kein Tabulatorhalt in der NSC-Liste gefunden').not.toBeNull();
+    for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowDown');
+    const vor = await page.evaluate(FOKUS);
+    expect(vor.aktion, 'Die Pfeiltasten haben die Liste verlassen').toBe('select-npc');
+
+    await page.evaluate(() => {
+        window.D.npcs = Array.from({ length: 20 }, (_, i) => ({
+            id: 100 + i,
+            name: 'Neu ' + (i + 1),
+            role: 'Merchant',
+            race: 'Mensch'
+        }));
+        window.renderNPCList();
+    });
+    await page.waitForTimeout(700);
+
+    const nach = await page.evaluate(FOKUS);
+    expect(
+        nach.aktion,
+        'Vor dem Tausch: ' +
+            JSON.stringify(vor) +
+            ' — danach: ' +
+            JSON.stringify(nach) +
+            '. Faellt der Fokus auf BODY, haengt der Gruppenschluessel an den DATEN der ' +
+            'ersten Zeile statt am Behaelter (ui/keyboard-group.js, _schluessel()).'
+    ).toBe('select-npc');
+});
+
+test('(22) das Haltgedaechtnis waechst beim Rollen der virtuellen Liste nicht', async ({
+    page
+}) => {
+    test.setTimeout(180_000);
+    // Befund 9/12: `_schluessel()` nahm die `data-id` des ersten
+    // GEZEICHNETEN Glieds. Im virtuellen Fenster wechselt die mit jeder
+    // Rollstellung — gemessen wuchs `statistik().gemerkt` im Bestiarium
+    // von 55 auf 131 Eintraege in 40 Radstufen, und der Halt fand seine
+    // Gruppe nach dem Rollen nicht mehr wieder.
+    await ansichtOeffnen(page, 'bestiary', 20);
+    const vor = await page.evaluate(() => window.KeyboardGroup.statistik());
+    expect(vor.gemerkt, 'Es ist noch keine Gruppe gemerkt').toBeGreaterThan(0);
+
+    // GEROLLT WIRD MIT DEM RAD (Messdisziplin 2) und ueber der Mitte der
+    // Liste — eine geratene Koordinate rollt daneben und beweist nichts.
+    const mitte = await page.evaluate(() => {
+        const c = document.getElementById('bestiary-list');
+        const r = c.getBoundingClientRect();
+        return {
+            x: r.x + r.width / 2,
+            y: r.y + r.height / 2,
+            rollbar: c.scrollHeight > c.clientHeight
+        };
+    });
+    expect(
+        mitte.rollbar,
+        'Die Bestiarium-Liste ist nicht rollbar — der Fall prueft dann nichts'
+    ).toBe(true);
+    await page.mouse.move(mitte.x, mitte.y);
+    for (let i = 0; i < 40; i++) {
+        await page.mouse.wheel(0, 120);
+        await page.waitForTimeout(40);
+    }
+    await page.waitForTimeout(400);
+
+    const nach = await page.evaluate(() => window.KeyboardGroup.statistik());
+    const gerollt = await page.evaluate(() => document.getElementById('bestiary-list').scrollTop);
+    expect(gerollt, 'Das Rad hat die Liste nicht gerollt').toBeGreaterThan(0);
+    expect(
+        nach.gemerkt,
+        'gemerkt ' +
+            vor.gemerkt +
+            ' -> ' +
+            nach.gemerkt +
+            ' nach 40 Radstufen (scrollTop ' +
+            gerollt +
+            '). Waechst die Zahl, haengt der Schluessel am ersten gezeichneten ' +
+            'Glied und das Gedaechtnis ist fensterweise statt listenweise.'
+    ).toBe(vor.gemerkt);
+    expect(nach.offen, nach.offen + ' Gruppen tragen nach dem Rollen nicht genau einen Halt').toBe(
+        0
+    );
+});

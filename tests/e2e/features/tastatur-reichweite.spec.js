@@ -330,21 +330,136 @@ const FOKUS = `(() => {
 })()`;
 
 /**
+ * DIE VOLKSZAEHLUNG DER UNGRUPPIERTEN REIHEN — die Ratsche, die eine
+ * Haltzahl nicht ersetzen kann.
+ *
+ * WARUM SIE NEBEN DIE HALTGRENZEN GEHOERT (TASV/E-2, Runde 3, Befund 4).
+ * Die Haltgrenzen unten sind gemessene Zahlen EINES Zustands: der Saat
+ * dieser Datei. Diese Saat fuehrt `spells: []`, klappt keine
+ * Wiki-Kategorie auf und gibt keinem Laden Artikel — und genau in den drei
+ * Zustaenden, die ein Spielleiter mit einem Knopfdruck herstellt, war die
+ * Tabulatorflut zurueck, ohne dass eine Grenze sich ruehrte (`spells`
+ * Grenze 35 gegen gemessene 65, `wiki` 30 gegen 50, `shops` 91 gegen 157).
+ * Eine Grenze sichert den Messaufbau, solange sie die einzige Ratsche ist.
+ *
+ * WAS DIESE ZAEHLUNG STATTDESSEN FRAGT — eine STRUKTURELLE Frage, die von
+ * Saat und Zahl unabhaengig ist: traegt eine Reihe gleichartiger,
+ * NACHGERUESTETER Bedienstellen mehr als EINEN Halt? Je Topf (naechste
+ * umgebende Leiste, sonst die Ansicht) und je `data-action` wird gezaehlt,
+ * wie viele sichtbare nicht-native Glieder es gibt und wie viele davon
+ * einen Halt tragen. Zwei Glieder und zwei Halte heissen: die Reihe ist
+ * einzeln anfahrbar, also ungruppiert.
+ *
+ * MITGLIEDSCHAFT, NICHT UMSCHLIESSUNG. Die erste Fassung fragte
+ * `closest('[role=toolbar]') !== null` und war damit blind fuer genau den
+ * Fall, der gemeldet war: die fuenfzehn Artikelzeilen liegen INNERHALB von
+ * `div#shop-list`, und das ist die Leiste der Ladenkoepfe — in ihr, aber
+ * nicht von ihr. Erst die Zaehlung der Halte IM TOPF sieht es.
+ *
+ * NUR NICHT-NATIVE GLIEDER. Zwanzig `<button>` je Ladenzeile waren schon
+ * vor dieser Arbeit zwanzig Halte; sie sind bewusst nicht gruppiert
+ * (Begruendung in `ui/keyboard-group-views.js`, Punkt 2), und sie zu
+ * zaehlen hiesse, eine fremde Entscheidung zur Ratsche zu machen.
+ */
+const UNGRUPPIERT = `(() => {
+    const NATIV = 'button,a[href],input:not([type="hidden"]),select,textarea,summary';
+    const sichtbar = el => {
+        if (el.checkVisibility && !el.checkVisibility({ opacityProperty: true,
+            visibilityProperty: true, contentVisibilityAuto: true })) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+    };
+    const inAktiverAnsicht = el => {
+        const v = el.closest('.view');
+        return v ? v.classList.contains('active') : true;
+    };
+    const toepfe = new Map();
+    document.querySelectorAll('[data-action]').forEach(el => {
+        if (el.matches(NATIV)) return;
+        if (!sichtbar(el) || !inAktiverAnsicht(el)) return;
+        const topf = el.closest('[role="toolbar"][aria-orientation]') ||
+            el.closest('.view') || document.body;
+        if (!toepfe.has(topf)) toepfe.set(topf, new Map());
+        const je = toepfe.get(topf);
+        const k = el.getAttribute('data-action');
+        if (!je.has(k)) je.set(k, { glieder: 0, halte: 0 });
+        const e = je.get(k);
+        e.glieder++;
+        if (el.getAttribute('tabindex') === '0') e.halte++;
+    });
+    const flut = {};
+    for (const [, je] of toepfe) {
+        for (const [k, e] of je) {
+            if (e.glieder >= 2 && e.halte >= 2) flut[k] = (flut[k] || 0) + e.halte;
+        }
+    }
+    return flut;
+})()`;
+
+/**
+ * Die Reihen, die DUERFEN — gemessen, mit Zahl, und jede mit einem Grund.
+ *
+ * Alle vier stammen aus dem Kampfpaket (E-1) und waren vor E-2 schon
+ * einzeln anfahrbar; sie zu gruppieren ist eine eigene Entscheidung ueber
+ * Kampfansichten und nicht Teil dieser Arbeit. Die Zahlen sind
+ * Obergrenzen: sie duerfen sinken, nicht steigen. Dieselbe Idiomatik wie
+ * INLINE_MAX in `tests/unit/design-consistency.test.js`.
+ */
+const UNGRUPPIERT_ERLAUBT = {
+    // Armaturenbrett: 29 Kacheln, jede fuehrt in eine ANDERE Ansicht —
+    // eher ein Menue als eine Reihe gleichartiger Schalter.
+    'show-view': 29,
+    // Initiative: je Kaempfer ein Feld "Wert aendern".
+    'edit-init-value': 20,
+    // Party: je Charakter "bearbeiten" und "TP rechnen".
+    'edit-char': 20,
+    'show-hp-calculator-stop': 20
+};
+
+/**
+ * Lesbare Fehlermeldung der Volkszaehlung.
+ * @param {string} wo
+ * @param {Record<string, number>} flut
+ */
+function flutBericht(wo, flut) {
+    const zeilen = Object.entries(flut)
+        .filter(([k, v]) => v > (UNGRUPPIERT_ERLAUBT[k] || 1))
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `    ${k.padEnd(28)} ${v} Halte (erlaubt ${UNGRUPPIERT_ERLAUBT[k] || 1})`);
+    return (
+        `${wo}: eine Reihe gleichartiger, nachgeruesteter Stellen ist einzeln anfahrbar.\n` +
+        `Jede dieser Familien liegt mit mehreren Gliedern in EINEM Topf und traegt dort\n` +
+        `mehr als einen Halt — melde sie in ui/keyboard-group-views.js an:\n` +
+        zeilen.join('\n')
+    );
+}
+
+/**
+ * Die Familien, die ueber ihrer Erlaubnis liegen.
+ * @param {Record<string, number>} flut
+ */
+const flutUeberschuss = flut =>
+    Object.fromEntries(Object.entries(flut).filter(([k, v]) => v > (UNGRUPPIERT_ERLAUBT[k] || 1)));
+
+/**
  * Frischer Seitenaufbau, gefuellte Kampagne, Ansicht per `switchView()` —
  * ohne Klick (Messdisziplin).
  * @param {import('@playwright/test').Page} page
  * @param {string} ansicht
  * @param {number} n
+ * @param {((saat: Record<string, any>) => void)|null} saatAnpassen
  */
-async function ansichtOeffnen(page, ansicht, n = 20) {
+async function ansichtOeffnen(page, ansicht, n = 20, saatAnpassen = null) {
     await page.setViewportSize(BREIT);
+    const saat = kampagne(n);
+    if (saatAnpassen) saatAnpassen(saat);
     await page.addInitScript(seed => {
         try {
             localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
         } catch {
             // file://-localStorage ist je Browserbau unterschiedlich streng.
         }
-    }, kampagne(n));
+    }, saat);
     await page.goto(APP_URL);
     await waitForAppReady(page);
     await page.waitForTimeout(400);
@@ -709,7 +824,7 @@ const SAUBER_VOR_E2 = [
 
 test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
     for (const [ansicht, grenze] of Object.entries(HALTGRENZEN)) {
-        test(`(5) ${ansicht}: nicht mehr als ${grenze} sichtbare Tabulatorhalte`, async ({
+        test(`(5) ${ansicht}: nicht mehr als ${grenze} Halte, keine Reihe einzeln anfahrbar`, async ({
             page
         }) => {
             test.setTimeout(120_000);
@@ -724,6 +839,13 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
                         : 'Eine Reihe gleichartiger Stellen ist offenbar wieder einzeln ' +
                           'anfahrbar — pruefe ui/keyboard-group-views.js.')
             ).toBeLessThanOrEqual(grenze);
+
+            // DIE STRUKTURELLE FRAGE DANEBEN, im selben Seitenaufbau und
+            // damit ohne Zeitpreis: eine Haltzahl kann unter der Grenze
+            // bleiben und trotzdem eine ungruppierte Reihe fuehren (eine
+            // kleine Saat, eine kurze Liste). Begruendung bei `UNGRUPPIERT`.
+            const flut = await page.evaluate(UNGRUPPIERT);
+            expect(flutUeberschuss(flut), flutBericht(ansicht, flut)).toEqual({});
         });
     }
 
@@ -746,14 +868,184 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         }
     });
 
-    test('(5) alle 18 Gruppenarten sind angemeldet', async ({ page }) => {
+    test('(5) alle 22 Gruppenarten sind angemeldet', async ({ page }) => {
         test.setTimeout(120_000);
         await ansichtOeffnen(page, 'dashboard');
         const s = await page.evaluate(() => window.KeyboardGroupViews.statistik());
         // Eine Art, die `registriere()` abweist, verschwindet lautlos —
         // die Ansicht sieht danach aus, als haette sie eben keine Gruppe.
         expect(s.angemeldet, `angemeldet: ${s.namen.join(', ')}`).toBe(s.arten);
-        expect(s.arten).toBe(18);
+        // 18 aus Runde 2, vier aus Runde 3: die Zauberkarten, die
+        // Wiki-Baumeintraege, die Ladenartikel und die Artikelkategorien.
+        expect(s.arten).toBe(22);
+    });
+});
+
+// ============================================================
+// (8) DIE ZUSTAENDE, DIE ERST EINE HANDLUNG HERSTELLT
+// ============================================================
+//
+// WARUM ES DIESE DREI FAELLE BRAUCHT, und warum die Grenzen oben sie nicht
+// sehen koennen (TASV/E-2, Runde 3, Befund 4). Die Saat dieser Datei ist
+// ein Zustand, nicht DER Zustand: sie fuehrt keinen Zauber im Bestand,
+// klappt keine Wiki-Kategorie auf und gibt keinem Laden einen Artikel. Drei
+// Reihen waren darum in jeder Messung dieses Strangs unsichtbar — und in
+// allen drei war die Tabulatorflut nach E-2 zurueck:
+//
+//                                   ohne Gruppe   mit Gruppe   Saat oben
+//   Zauber, SRD geladen (75)            65            36           35
+//   Wiki, eine Kategorie offen          50            31           30
+//   Laden mit 15 Artikeln, offen       157           142           91
+//
+// Jede dieser Lagen stellt der Spielleiter mit EINEM Knopfdruck her.
+//
+// UND DER DRITTE FALL KOSTET EINEN HANDGRIFF. Den letzten Artikel eines
+// Ladens loeschen, ganz mit echten Tasten gemessen und vom Ladenkopf an
+// gezaehlt: 69 Anschlaege ohne die Gruppe der Artikelzeilen, 53 mit ihr.
+// Vor E-2 gab es diesen Weg GAR NICHT — der Ladenkopf war in 120
+// Anschlaegen nicht erreichbar, der Handgriff also nur mit der Maus zu
+// machen. Fall (8d) ist die Ratsche darauf.
+
+/** Ein Laden mit 15 Artikeln in drei Kategorien. */
+function ladenMitArtikeln(saat) {
+    saat.shops[0].items = Array.from({ length: 15 }, (_, k) => ({
+        name: `Artikel ${k + 1}`,
+        cost: '10 GM',
+        qty: 2,
+        category: k % 3 === 0 ? 'weapon' : 'misc',
+        available: true
+    }));
+}
+
+/**
+ * Die drei Zustaende. `herstellen` darf klicken — hier wird NICHT der
+ * Tabulatorweg gemessen, sondern die Lage danach, und der Spielleiter
+ * stellt sie mit der Maus oder mit der Tastatur genauso her.
+ */
+const ZUSTAENDE = [
+    {
+        kennung: '8a',
+        name: 'Zauber mit geladenem SRD (75 Zauber, 30 Karten)',
+        ansicht: 'spells',
+        grenze: 36,
+        saat: null,
+        herstellen: async page => {
+            const srd = await page.evaluate(() => window.loadSRDSpells());
+            void srd;
+            await page.waitForTimeout(1500);
+            await page.evaluate(() => window.switchView('spells'));
+            await page.waitForTimeout(900);
+            const karten = await page.evaluate(
+                () => document.querySelectorAll('[data-action="toggle-spell-card"]').length
+            );
+            expect(karten, 'Der SRD hat keine Zauberkarten erzeugt').toBe(30);
+        }
+    },
+    {
+        kennung: '8b',
+        name: 'Wiki mit einer aufgeklappten Kategorie (20 Eintraege)',
+        ansicht: 'wiki',
+        grenze: 31,
+        saat: null,
+        herstellen: async page => {
+            await page.click('[data-action="toggle-wiki-category"]');
+            await page.waitForTimeout(900);
+            const eintraege = await page.evaluate(
+                () =>
+                    document.querySelectorAll('.wiki-tree-items [data-action="select-wiki-entry"]')
+                        .length
+            );
+            expect(eintraege, 'Die Kategorie ist nicht aufgeklappt').toBe(20);
+        }
+    },
+    {
+        kennung: '8c',
+        name: 'Laden mit 15 Artikeln, aufgeklappt',
+        ansicht: 'shops',
+        grenze: 142,
+        saat: ladenMitArtikeln,
+        herstellen: async page => {
+            await page.click('[data-action="toggle-shop"]');
+            await page.waitForTimeout(1100);
+            const artikel = await page.evaluate(
+                () => document.querySelectorAll('[data-action="toggle-shop-item"]').length
+            );
+            expect(artikel, 'Der Laden ist nicht aufgeklappt').toBe(15);
+        }
+    }
+];
+
+test.describe('Reichweite — die Zustaende, die erst eine Handlung herstellt', () => {
+    for (const z of ZUSTAENDE) {
+        test(`(${z.kennung}) ${z.name}: nicht mehr als ${z.grenze} Halte, keine Reihe einzeln anfahrbar`, async ({
+            page
+        }) => {
+            test.setTimeout(180_000);
+            await ansichtOeffnen(page, z.ansicht, 20, z.saat);
+            await z.herstellen(page);
+
+            const flut = await page.evaluate(UNGRUPPIERT);
+            expect(flutUeberschuss(flut), flutBericht(z.name, flut)).toEqual({});
+
+            const halte = await page.evaluate(HALTE);
+            expect(
+                halte,
+                `${z.name}: ${halte} sichtbare Halte, gemessene Grenze ${z.grenze}. ` +
+                    'Diese Lage stellt der Spielleiter mit EINEM Knopfdruck her; die ' +
+                    'Grenzen der Grundsaat sehen sie nicht.'
+            ).toBeLessThanOrEqual(z.grenze);
+        });
+    }
+
+    test('(8d) den letzten Artikel eines Ladens loeschen kostet nicht mehr als 60 Anschlaege', async ({
+        page
+    }) => {
+        test.setTimeout(300_000);
+        await ansichtOeffnen(page, 'shops', 20, ladenMitArtikeln);
+
+        // GANZ MIT ECHTEN TASTEN, und zwar vom Ladenkopf an. Ein `click()`
+        // auf den Kopf waere der kuerzere Weg, aber er PARKT den Fokus dort
+        // und verschiebt damit den Nullpunkt der Zaehlung — die erste
+        // Fassung dieses Falls war darum gruen, obwohl die Flut dastand.
+        const zumKopf = await tabBisZiel(page, '[data-action="toggle-shop"]', 60);
+        expect(zumKopf, 'Der erste Ladenkopf ist per Tabulator nicht erreichbar').toBeGreaterThan(
+            0
+        );
+        await page.keyboard.press('Enter');
+        await page.waitForTimeout(1100);
+        const artikel = await page.evaluate(
+            () => document.querySelectorAll('[data-action="toggle-shop-item"]').length
+        );
+        expect(artikel, 'Die Eingabetaste hat den Laden nicht aufgeklappt').toBe(15);
+
+        // DAS ZIEL IST DIE DOM-LETZTE ARTIKELZEILE, nicht `data-value="14"`:
+        // die Liste wird nach NAMEN sortiert ("Artikel 1, Artikel 10, …"),
+        // und der Artikel mit dem hoechsten Index steht darin in der Mitte.
+        const letzte = await page.evaluate(() => {
+            const g = [...document.querySelectorAll('[data-action="toggle-shop-item"]')];
+            return g[g.length - 1].getAttribute('data-value');
+        });
+        const spruenge = await tabBisZiel(
+            page,
+            `[data-action="delete-shop-item"][data-value="${letzte}"]`,
+            100
+        );
+        expect(
+            spruenge,
+            'Der Loeschknopf der letzten Artikelzeile wurde in 100 Anschlaegen nicht erreicht'
+        ).toBeGreaterThan(0);
+        // Gemessen am gebauten Buendel: ohne diese Gruppe 69 Anschlaege,
+        // mit ihr 53. Vor E-2 gab es diesen Weg GAR NICHT — der Ladenkopf
+        // war in 120 Anschlaegen nicht erreichbar, der Handgriff also nur
+        // mit der Maus zu machen. Die Grenze 60 liegt zwischen den zwei
+        // gemessenen Zahlen.
+        expect(
+            spruenge,
+            `Vom Ladenkopf bis zum Loeschknopf der letzten Artikelzeile: ${spruenge} ` +
+                'Anschlaege (gemessen 53 mit, 69 ohne die Gruppe der Artikelzeilen). ' +
+                'Wird dieser Handgriff laenger, ist die Artikelspalte wieder einzeln ' +
+                'anfahrbar — pruefe ui/keyboard-group-views.js.'
+        ).toBeLessThanOrEqual(60);
     });
 });
 
