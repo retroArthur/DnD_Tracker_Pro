@@ -783,3 +783,102 @@ test('(6) der Punkte-Knopf schaltet das Menue, und aria-expanded folgt jedem Sch
     expect(wirkung.hilfe, 'Der Menue-Eintrag hat die Tastenhilfe nicht geoeffnet').toBe(true);
     expect(wirkung.expanded, 'Das Menue blieb nach der Handlung offen').toBe('false');
 });
+
+// ===========================================================================
+// (7) DAS OFFENE MENUE IM QUERFORMAT — sieben Eintraege a 43px in 320px Hoehe
+// ===========================================================================
+//
+// WARUM ES DIESEN FALL BRAUCHT, und warum Fall (5) ihn nicht sieht: der faehrt
+// 390x844, und dort passen die sieben Eintraege (gemessen 196x311) bequem
+// unter die 64px hohe Leiste. Im QUERFORMAT eines Telefons (568x320, 740x360,
+// 844x390) ist darunter weniger Platz als das Menue hoch ist — und `.mobile-header`
+// ist `position: fixed`, was ueber dem unteren Rand liegt, ist dort
+// unerreichbar. Dagegen steht `max-height: calc(100vh - 78px)` plus
+// `overflow-y: auto` am Menue (core.css). Dieser Fall misst, dass die Deckelung
+// wirklich greift UND dass jeder Eintrag per echtem Mausrad erreichbar wird.
+//
+// PER MAUSRAD UND NICHT PER `scrollTop`: ein gesetztes `scrollTop` bewegt auch
+// einen Bereich, den der Nutzer nicht scrollen kann, und meldet Erreichbarkeit,
+// wo keine ist. Vorbild: `mobil-navigation.spec.js`, `ansichts-schalen.spec.js`.
+for (const { b, h } of QUERFORMAT) {
+    test(`(7) ${b}x${h}: das offene Menue bleibt im Fenster, und jeder Eintrag wird erreichbar`, async ({
+        page
+    }) => {
+        test.setTimeout(120000);
+        await seedPopulatedSession(page);
+        await ladenDannVerkleinern(page, b, h);
+        await page.click('#mobile-header-menu-btn');
+        await page.waitForTimeout(300);
+
+        const lage = await page.evaluate(() => {
+            const menu = document.getElementById('mobile-header-menu');
+            const r = menu.getBoundingClientRect();
+            return {
+                kasten: `${Math.round(r.width)}x${Math.round(r.height)} bei ${Math.round(r.left)},${Math.round(r.top)}`,
+                unten: Math.round(r.bottom),
+                fensterHoehe: window.innerHeight,
+                imFenster: r.bottom <= window.innerHeight + 0.5 && r.top >= -0.5,
+                links: Math.round(r.left),
+                rechts: Math.round(r.right),
+                waagerechtImFenster: r.left >= -0.5 && r.right <= window.innerWidth + 0.5,
+                scrollH: menu.scrollHeight,
+                clientH: menu.clientHeight,
+                gedeckelt: menu.scrollHeight > menu.clientHeight,
+                anzahl: menu.querySelectorAll('button').length
+            };
+        });
+
+        expect(
+            lage.imFenster,
+            `Das offene Menue ragt aus dem Fenster: ${lage.kasten}, Unterkante ${lage.unten} ` +
+                `bei einer Fensterhoehe von ${lage.fensterHoehe}`
+        ).toBe(true);
+        expect(
+            lage.waagerechtImFenster,
+            `Das offene Menue ragt seitlich aus dem Fenster (${lage.links}..${lage.rechts} ` +
+                `in ${b}px)`
+        ).toBe(true);
+
+        // JEDER EINTRAG WIRD ERREICHBAR, notfalls nach echtem Radscrollen im
+        // Menue. Gemessen wird der Mittelpunkt per `elementFromPoint` — ein
+        // Eintrag unter der Deckelung ist "sichtbar" und trotzdem kein Weg.
+        const erreicht = new Set();
+        for (let runde = 0; runde < 12; runde++) {
+            const frei = await page.evaluate(() => {
+                const menu = document.getElementById('mobile-header-menu');
+                const out = [];
+                Array.from(menu.querySelectorAll('button')).forEach((el, i) => {
+                    const r = el.getBoundingClientRect();
+                    if (r.width <= 0 || r.height <= 0) return;
+                    const cx = Math.round(r.left + r.width / 2);
+                    const cy = Math.round(r.top + r.height / 2);
+                    if (cx < 0 || cy < 0 || cx >= window.innerWidth || cy >= window.innerHeight) {
+                        return;
+                    }
+                    const e = document.elementFromPoint(cx, cy);
+                    if (e && (el === e || el.contains(e))) out.push(i);
+                });
+                return out;
+            });
+            frei.forEach(i => erreicht.add(i));
+            if (erreicht.size >= lage.anzahl) break;
+            const mitte = await page.evaluate(() => {
+                const r = document.getElementById('mobile-header-menu').getBoundingClientRect();
+                return [
+                    Math.round(r.left + r.width / 2),
+                    Math.round(Math.min(r.bottom, window.innerHeight) - r.height / 4)
+                ];
+            });
+            await page.mouse.move(mitte[0], mitte[1]);
+            await page.mouse.wheel(0, 60);
+            await page.waitForTimeout(120);
+        }
+
+        expect(
+            [...erreicht].sort((x, y) => x - y).length,
+            `Bei ${b}x${h} wurden ${erreicht.size} von ${lage.anzahl} Menue-Eintraegen ` +
+                `erreichbar (Menue ${lage.kasten}, scrollHeight ${lage.scrollH} in ` +
+                `clientHeight ${lage.clientH}, gedeckelt=${lage.gedeckelt})`
+        ).toBe(lage.anzahl);
+    });
+}
