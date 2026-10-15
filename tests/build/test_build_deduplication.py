@@ -326,7 +326,17 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # KeyboardGroup.registriere() und findet das Modul sonst nicht.
         # Beide Register sind auch diesmal mitgepflegt (142 -> 143, und
         # eslint.generated-globals.js neu erzeugt).
-        assert len(modules) == 143, f"Erwartet 143 Module, gefunden {len(modules)}"
+        # MKOPF: 'ui/mobile-header-menu.js' neu registriert (das Punkte-Menue des
+        # Mobil-Kopfs — es baut seine Eintraege bei jedem Oeffnen AUS
+        # .header-actions .header-action-btn und schaltet sie auf). Steht NACH
+        # ui/keyboard-group-views.js: es stoesst beim Oeffnen
+        # KeyboardGroup.aktualisieren() an, damit der Halt sitzt, bevor der erste
+        # Tabulatordruck kommt. Dieses Gate hat gemeldet und ist mitgepflegt
+        # (143 -> 144) — es ist genau die Pflicht, die der Absatz oben einklagt,
+        # und diesmal war das Python-Gate das, das sie eingetrieben hat (jest
+        # blieb gruen, weil der Waechter tests/e2e/features/mobil-kopfmenue.spec.js
+        # den Modulpfad nennt).
+        assert len(modules) == 144, f"Erwartet 144 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
