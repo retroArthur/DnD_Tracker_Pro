@@ -318,6 +318,43 @@
             <button class="mobile-search-btn" data-action="call" data-value="showMobileSearch">🔍</button>
             <button class="mobile-search-btn" data-action="toggle-layout" id="mobile-layout-btn">📱</button>
             <button class="mobile-search-btn" data-action="show-modal" data-value="theme-modal">🎨</button>
+            <!-- MKOPF — DER EINE AUFFINDBARE ORT fuer die Aktionen der Kopfzeile.
+                 Im Mobil-Layout ist `.header-actions` display:none (core.css), und
+                 gemessen waren damit bei 390/360/320 px NULL von sieben
+                 `.header-action-btn` bedienbar. VIER davon hatten auf dem Telefon
+                 keinen eigenen Weg: show-about-modal, toggle-quick-notes, redo und
+                 show-shortcuts-overlay. Fuer `redo` und `show-about-modal` gibt es
+                 im ganzen Vorlagenbaum keinen zweiten Knopf; die Tastenhilfe hat
+                 einen, aber er liegt drei Griffe tief im Debug-Dialog — genau der
+                 Fall, den der Kommentar in `header.html` selbst als Begruendung
+                 fuehrt ("deshalb hat ihn niemand gefunden").
+                 DAS MENUE IST IM MARKUP LEER UND BLEIBT ES: seine Eintraege baut
+                 `ui/mobile-header-menu.js` bei jedem Oeffnen AUS der Kopfzeile. So
+                 gibt es weiter nur EINE Liste der Kopfzeilen-Aktionen
+                 (`header.html`), und ein achter Kopfzeilen-Knopf steht ohne
+                 weiteres Zutun im Menue — dieselbe Richtung, in die
+                 `buildEditorToolbar()` die 24 Editor-Leisten aufgeloest hat. Der
+                 Waechter (`tests/e2e/features/mobil-kopfmenue.spec.js`) liest seine
+                 Erwartung aus derselben Quelle.
+                 DIE DREI PUNKTE SIND EIN SVG und keine Glyphe: ein `⋯` ist unter
+                 Verdana gemessen 17.1px breit und unter einer anderen Schrift
+                 anders breit — bei 13.3px Restluft in einem 320px-Fenster ist das
+                 der Unterschied zwischen einer Zeile und zwei. Dieselben drei
+                 Kreise wie in den Editor-Leisten
+                 (`ui/editors/editor-toolbar-build.js`), nachgebildet statt aus dem
+                 Generator geholt — der schreibt die 22 statischen Leisten und darf
+                 hier nicht mitreden.
+                 KEIN `aria-haspopup`, ABSICHTLICH: dieses Attribut sagt
+                 "dahinter liegt ein MENUE", und dahinter liegt eine Gruppe im
+                 Sinne von E-2 — `ui/keyboard-group.js` setzt dem Behaelter
+                 `role="toolbar"` und die gemessene Achse. Die Auskunft
+                 "aufgeklappt / zugeklappt" traegt `aria-expanded`, das
+                 kontrollierte Feld `aria-controls`; beide sind wahr, ein
+                 `aria-haspopup="true"` daneben waere es nicht. -->
+            <span class="mobile-header-more">
+                <button class="mobile-search-btn mobile-header-more-btn" id="mobile-header-menu-btn" data-action="toggle-mobile-header-menu" title="Weitere Aktionen" aria-label="Weitere Aktionen" aria-expanded="false" aria-controls="mobile-header-menu"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+                <div class="mobile-header-menu" id="mobile-header-menu" aria-label="Weitere Aktionen" hidden></div>
+            </span>
         </div>
     </div>
     

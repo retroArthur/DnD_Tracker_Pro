@@ -181,6 +181,12 @@ const MODULES = [
     // Davor geladen bliebe sie still, und die Nachruestung liefe ohne
     // Gruppen weiter — mit der gemessenen Tabulatorflut, aber ohne Fehler.
     'ui/keyboard-group-views.js',
+    // Das Punkte-Menue des Mobil-Kopfs NACH der Anmeldung der Gruppen: es
+    // stoesst beim Oeffnen KeyboardGroup.aktualisieren() an, damit der Halt
+    // sitzt, bevor der erste Tabulatordruck kommt. Davor geladen fehlte der
+    // Anstoss nicht dauerhaft — der Beobachter dort holt es im naechsten Bild
+    // nach —, aber die Reihenfolge haelt die Abhaengigkeit lesbar.
+    'ui/mobile-header-menu.js',
     // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
     // offenen Dialogs, und die entstehen zum Teil erst dort (von der
     // Kehrschleife nachgeruestete Tabulatorhalte). Zur Laufzeit ist die

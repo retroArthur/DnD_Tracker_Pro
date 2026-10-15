@@ -114,6 +114,11 @@
  *     und 320 px ergeben alle `data-layout="mobile"`).
  *   · GEFUELLTE KAMPAGNE (`seedPopulatedSession`), nie leer.
  *   · FOKUS NUR PER `page.keyboard.press`, nie `.focus()`.
+ *   · DAS GEPRUEFTE MODUL ist `ui/mobile-header-menu.js` (Aufbau der
+ *     Eintraege aus der Kopfzeile, Auf/Zu, Fokusrueckgabe), dazu
+ *     `ui/keyboard-group-views.js` (die Anmeldung der Gruppe),
+ *     `ui/actions/ui-actions.js` (die Aktion) und
+ *     `systems/spellslots/keyboard-shortcuts.js` (der Escape-Zweig).
  *   · DREI PRUEFUNGEN FUER EINE FRAGE: `checkVisibility({opacityProperty:true,
  *     visibilityProperty:true, contentVisibilityAuto:true})`, Rechteck mit
  *     Breite UND Hoehe > 0, und `elementFromPoint` auf dem Mittelpunkt — der
@@ -544,7 +549,12 @@ test('(5) das Punkte-Menue oeffnet mit der Tastatur, faehrt mit Pfeiltasten und 
         const r = menu ? menu.getBoundingClientRect() : null;
         return {
             expanded: kn ? kn.getAttribute('aria-expanded') : '(kein Knopf)',
-            haspopup: kn ? kn.getAttribute('aria-haspopup') : null,
+            // KEIN `aria-haspopup`: dahinter liegt eine Gruppe mit
+            // `role="toolbar"` (E-2), kein Menue. Die Begruendung steht im
+            // Markup; hier wird sie BEWACHT — ein nachtraeglich
+            // hinzugefuegtes `aria-haspopup` waere eine Falschaussage
+            // gegenueber dem Vorleseprogramm.
+            haspopup: kn ? kn.getAttribute('aria-haspopup') : '(kein Knopf)',
             controls: kn ? kn.getAttribute('aria-controls') : null,
             menuDa: !!menu,
             menuFlaeche: r ? `${Math.round(r.width)}x${Math.round(r.height)}` : '(kein Menue)'
@@ -552,7 +562,11 @@ test('(5) das Punkte-Menue oeffnet mit der Tastatur, faehrt mit Pfeiltasten und 
     });
     expect(stand.menuDa, 'Das Menue #mobile-header-menu fehlt').toBe(true);
     expect(stand.expanded, 'aria-expanded steht geschlossen nicht auf "false"').toBe('false');
-    expect(stand.haspopup, 'aria-haspopup fehlt am Punkte-Knopf').toBe('true');
+    expect(
+        stand.haspopup,
+        'aria-haspopup steht am Punkte-Knopf — dahinter liegt aber eine Gruppe ' +
+            'mit role="toolbar" (E-2) und kein Menue'
+    ).toBeNull();
     expect(stand.controls, 'aria-controls zeigt nicht auf das Menue').toBe('mobile-header-menu');
     expect(stand.menuFlaeche, 'Das geschlossene Menue hat Flaeche').toBe('0x0');
 

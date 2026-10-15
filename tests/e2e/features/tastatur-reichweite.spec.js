@@ -913,16 +913,21 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         ).toEqual({ ohneGrenze: [], ohneAnsicht: [] });
     });
 
-    test('(5) alle 22 Ansichtsgruppen sind angemeldet', async ({ page }) => {
+    test('(5) alle 23 Ansichtsgruppen sind angemeldet', async ({ page }) => {
         test.setTimeout(120_000);
         await ansichtOeffnen(page, 'dashboard');
         const s = await page.evaluate(() => window.KeyboardGroupViews.statistik());
         // Eine Art, die `registriere()` abweist, verschwindet lautlos —
         // die Ansicht sieht danach aus, als haette sie eben keine Gruppe.
         expect(s.angemeldet, `angemeldet: ${s.namen.join(', ')}`).toBe(s.arten);
-        // 18 aus Runde 2, vier aus Runde 3: die Zauberkarten, die
-        // Wiki-Baumeintraege, die Ladenartikel und die Artikelkategorien.
-        expect(s.arten).toBe(22);
+        // 18 aus Runde 2, vier aus Runde 3 (die Zauberkarten, die
+        // Wiki-Baumeintraege, die Ladenartikel und die Artikelkategorien),
+        // und seit MKOPF eine 23.: das Punkte-Menue des Mobil-Kopfs
+        // (`kopfmenue`). Es ist die eine Gruppe aus `<button>`-Elementen; die
+        // Begruendung fuer diese Ausnahme steht an ihrer Anmeldung in
+        // `ui/keyboard-group-views.js`.
+        expect(s.arten).toBe(23);
+        expect(s.namen, 'die 23. Art fehlt oder heisst anders').toContain('kopfmenue');
     });
 });
 
@@ -1292,7 +1297,7 @@ test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
 // WAS DIESE SCHICHT NICHT FAENGT, und darum steht es hier: faellt die
 // ANMELDUNG aus, ist auch die Erwartung 0 und der Fall wieder stumm. Diese
 // Luecke deckt die zweite Schicht, und zwar gemessen: unter derselben
-// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 22 Ansichtsgruppen` und
+// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 23 Ansichtsgruppen` und
 // die Volkszaehlung `UNGRUPPIERT` rot. Zwei Schichten, zwei Fehlerbilder —
 // eine Probe, die beides allein leisten koennte, gibt es nicht.
 

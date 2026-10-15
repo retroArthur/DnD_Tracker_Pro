@@ -848,16 +848,35 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
                 `die Probenschrift ist SCHMALER als 'Segoe UI' (${schrift.ist} gegen ${schrift.segoe}px)`
             ).toBeGreaterThanOrEqual(schrift.segoe - 0.5);
 
-            // VORBEDINGUNG B — die Leiste ist da und traegt ihre sieben Elemente.
+            /* VORBEDINGUNG B — die Leiste ist da und traegt ihre acht Elemente.
+               SIEBEN -> ACHT MIT MKOPF, und die Zahl ist nicht nebenbei
+               gewachsen: das achte ist der Punkte-Knopf
+               (`#mobile-header-menu-btn`), und er ist der EINZIGE Weg zu vier
+               Aktionen der Kopfzeile — `show-about-modal`,
+               `toggle-quick-notes`, `redo` und `show-shortcuts-overlay` waren
+               bei 390/360/320 px gemessen auf KEINEM sichtbaren und
+               anklickbaren Weg erreichbar (`.header-actions` ist im
+               Mobil-Layout display:none). Bewacht von
+               `tests/e2e/features/mobil-kopfmenue.spec.js`.
+               DIE RESERVE DIESES FALLES HAT DAFUER BEZAHLT, und das ist der
+               Grund, warum die Zahl hier und nicht nur dort steht: der achte
+               Knopf kostet 26px Breite plus einen Zwischenraum, und die 28.3px
+               Luft des Vorzustands haetten das nicht getragen. Finanziert ist
+               er aus drei TOTEN Zwischenraeumen im bestehenden
+               `@media (max-width: 600px)`-Block (Kopf-Innenabstand 8 -> 4px,
+               Gruppen-Zwischenraum 4 -> 3px, waagerechter Zaehler-Innenabstand
+               6 -> 4px) — gemessen 15.3px Luft danach, also weiter ueber
+               MIN_KOPF_LUFT. Die Rechnung steht am Dateiende von
+               `assets/styles/core.css`. Keine Tippflaeche ist dabei kleiner
+               geworden: ZUSICHERUNG 4 unten misst 26x39 gegen den Boden
+               24x36. */
             expect(m.da, 'die Mobil-Kopfzeile fehlt').toBe(true);
-            expect(m.anzahl, `die Kopfzeile traegt ${m.anzahl} Bedienelemente statt sieben`).toBe(
-                7
-            );
+            expect(m.anzahl, `die Kopfzeile traegt ${m.anzahl} Bedienelemente statt acht`).toBe(8);
 
             // ZUSICHERUNG 1 — die RESERVE. Siehe Kommentar an messeKopfzeile().
             expect(
                 m.luft,
-                `die sieben Bedienelemente brauchen ${m.bedarf}px von ${m.kopfInhalt}px ` +
+                `die ${m.anzahl} Bedienelemente brauchen ${m.bedarf}px von ${m.kopfInhalt}px ` +
                     `Inhaltsbreite — ${m.luft}px frei, verlangt ${MIN_KOPF_LUFT}px`
             ).toBeGreaterThanOrEqual(MIN_KOPF_LUFT);
 

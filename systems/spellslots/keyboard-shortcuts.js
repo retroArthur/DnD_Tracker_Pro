@@ -371,7 +371,38 @@ function initKeyboardShortcuts() {
                 if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
                 return;
             }
-            // 3. Offenes Modal schließen
+            // 3. Punkte-Menue im Mobil-Kopf schliessen (MKOPF)
+            //
+            // ES STEHT HIER UND NICHT WEITER OBEN, und die Stelle ist die
+            // Aussage: das Menue ist eine an einen Knopf gebundene Blase
+            // (`--z-dropdown` = 300), keine Schale. Tastenhilfe (1) und
+            // Schnellreferenz (2) liegen darueber und muessen zuerst
+            // weichen — stuende dieser Zweig vorn, nahm das Menue einem
+            // offenen Dialog den Ausweg weg, obwohl der Nutzer den Dialog
+            // vor sich hat.
+            //
+            // ES STEHT VOR DEN DIALOGEN (4), weil es ueber ihnen liegt,
+            // wenn ein Eintrag gerade einen geoeffnet hat — und das kann es
+            // nicht: ein Eintrag schliesst das Menue in einem Mikrotask
+            // nach seiner Handlung (`ui/mobile-header-menu.js`). Beide
+            // Zustaende zugleich sind damit nicht herstellbar; die
+            // Reihenfolge ist trotzdem festgelegt, statt sich auf diese
+            // Eigenschaft zu verlassen.
+            //
+            // `fokusZurueck` ist der Unterschied zum Klick daneben: `Escape`
+            // gibt den Fokus an den Punkte-Knopf zurueck (dieselbe Zusage,
+            // die `ui/modal-focus.js` fuer die Schalen gibt), ein Klick
+            // daneben laesst ihn, wo die Hand ihn hingesetzt hat.
+            if (
+                typeof window.isMobileHeaderMenuOpen === 'function' &&
+                window.isMobileHeaderMenuOpen()
+            ) {
+                if (typeof window.closeMobileHeaderMenu === 'function') {
+                    window.closeMobileHeaderMenu({ fokusZurueck: true });
+                }
+                return;
+            }
+            // 4. Offenes Modal schließen
             //
             // ZWEI AENDERUNGEN AUS T-D, SCHRITT 7 — beide messbar begruendet.
             //

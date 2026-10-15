@@ -313,8 +313,10 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
         # Absatz darueber einklagt.
         # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
-        # (die Anmeldung der Ansichtsgruppen — 22 Ansichtsgruppen: 21 fuer die
-        # Vorbereitungsansichten, dazu die Party-Zauberplaetze. Die Zahl stand
+        # (die Anmeldung der Ansichtsgruppen — 23 Ansichtsgruppen: 21 fuer die
+        # Vorbereitungsansichten, dazu die Party-Zauberplaetze und das
+        # Punkte-Menue des Mobil-Kopfs (MKOPF, nachgetragen am 2026-10-15).
+        # Die Zahl stand
         # hier auf 18 und blieb stehen, als Runde 3 vier Arten nachtrug
         # (Zauberkarten, Wiki-Eintraege, Ladenartikel, Ladenkategorien).
         # Seit HILF haelt ein Fall in tests/unit/keyboard-group-views.test.js

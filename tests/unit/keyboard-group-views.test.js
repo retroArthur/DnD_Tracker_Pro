@@ -294,13 +294,13 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
  *
  * DARUM ZWEI WOERTER UND ZWEI ZAHLEN:
  *
- *   "N Ansichtsgruppen"  ->  ANSICHTSGRUPPEN.length            (22)
- *   "N Gruppenarten"     ->  GRUNDARTEN + ANSICHTSGRUPPEN      (24)
+ *   "N Ansichtsgruppen"  ->  ANSICHTSGRUPPEN.length            (23)
+ *   "N Gruppenarten"     ->  GRUNDARTEN + ANSICHTSGRUPPEN      (25)
  *
  * Die drei Stellen, die vorher das erste Wort fuer die Anmeldung fuehrten,
  * heissen jetzt "Ansichtsgruppen" — sie zaehlen genau sie. Das zweite Wort
  * gehoert der Gesamtzahl, so wie das Laufzeitprotokoll es verwendet: zur
- * Laufzeit sind es 24 Gruppenarten (gemessen am gebauten Buendel,
+ * Laufzeit sind es 25 Gruppenarten (gemessen am gebauten Buendel,
  * `window.KeyboardGroup.statistik().arten`).
  *
  * WIE DIE GRUNDARTEN GEZAEHLT WERDEN. Nicht per `name:`-Zaehlung quer durch
@@ -318,19 +318,37 @@ describe('Ansichtsgruppen — Quelltext-Zusicherungen', () => {
  *
  * MUTATIONSBEWEISE (2026-10-14/15), beide Richtungen und beide Woerter,
  * danach `git checkout --` und `git hash-object` gegen
- * `git rev-parse :<pfad>` — identisch:
+ * `git rev-parse :<pfad>` — identisch. DIE ZAHLEN STEHEN HIER IN WORTEN,
+ * und das ist derselbe Griff, den `docs/bugfixes.md` an seiner eigenen
+ * Fehlerbeschreibung anwendet ("Zahl hier in Worten, sonst schlaegt DOC-12
+ * auf der Fehlerbeschreibung selbst an"): ein Protokoll eines VERGANGENEN
+ * Mutationslaufs ist keine Angabe ueber den heutigen Stand, und in Ziffern
+ * geschrieben wuerde dieser Fall auf seinem eigenen Beweisteil anschlagen.
+ * Bis MKOPF stand hier Zweiundzwanzig/Vierundzwanzig in Ziffern — genau das
+ * ist am 2026-10-15 passiert:
  *
- *   22 -> 18 im Python-Kommentar          rot: "…py:316 nennt 18,
- *                                              angemeldet sind 22
- *                                              Ansichtsgruppen"
- *   eine 23. Art in ANSICHTSGRUPPEN       rot: DREI Stellen auf einmal
- *   "24 Gruppenarten" -> "22"             rot: "nennt 22, zur Laufzeit sind
- *                                              es 24 Gruppenarten"
- *   eine dritte Grundart in GRUPPEN_ARTEN rot: jede "24 Gruppenarten"-Stelle
+ *   zweiundzwanzig -> achtzehn im        rot: "…py:316 nennt achtzehn,
+ *   Python-Kommentar                          angemeldet sind
+ *                                             zweiundzwanzig"
+ *   eine dreiundzwanzigste Art in        rot: DREI Stellen auf einmal
+ *   ANSICHTSGRUPPEN
+ *   "vierundzwanzig Gruppenarten"        rot: "nennt zweiundzwanzig, zur
+ *   -> "zweiundzwanzig"                       Laufzeit sind es
+ *                                             vierundzwanzig"
+ *   eine dritte Grundart in              rot: jede Gesamtzahl-Stelle
+ *   GRUPPEN_ARTEN
  *
  * Die zweite und die vierte sind der eigentliche Zweck: wer eine Art
  * nachtraegt, wird an JEDE Stelle erinnert, die die alte Zahl fuehrt — genau
  * das, was in Runde 3 unterblieb.
+ *
+ * UND GENAU SO IST ER IN MKOPF GELAUFEN, ohne Mutation, am echten Nachtrag:
+ * die dreiundzwanzigste Art (`kopfmenue`, das Punkte-Menue des Mobil-Kopfs)
+ * hat NEUN Stellen auf einmal gemeldet — `test_build_deduplication.py:316`,
+ * `tastatur-reichweite.spec.js:916` und `:1295`, diese Datei viermal, und
+ * `docs/bugfixes.md:783` zweimal (einmal je Wort). Das ist die Vorhersage
+ * "DREI Stellen auf einmal" von oben, nur drei Runden spaeter und mit einer
+ * gewachsenen Aktenlage.
  */
 
 const AUSNAHME_MUSTER = /-BERICHT\.md$/;

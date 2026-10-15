@@ -165,6 +165,18 @@ const UIActions = {
     'show-shortcuts': () => showShortcutsOverlay(),
     'show-shortcuts-overlay': () => showShortcutsOverlay(),
 
+    // Punkte-Menue im Mobil-Kopf (MKOPF). Der EINE auffindbare Ort fuer die
+    // sieben Aktionen der Kopfzeile, die im Mobil-Layout alle hinter
+    // `.header-actions { display: none }` liegen — gemessen waren bei
+    // 390/360/320 px null von sieben bedienbar. Mechanik und Begruendung:
+    // `ui/mobile-header-menu.js`. Direktaufruf ueber `window` und KEIN
+    // function-scoped `const` — CLAUDE.md, Dedup-Regel vom 2026-01-10.
+    'toggle-mobile-header-menu': () => {
+        if (typeof window.toggleMobileHeaderMenu === 'function') {
+            window.toggleMobileHeaderMenu();
+        }
+    },
+
     // Quick Notes
     'toggle-quick-notes': () => showQuickNotesModal(),
     'save-and-hide-quick-notes': () => {

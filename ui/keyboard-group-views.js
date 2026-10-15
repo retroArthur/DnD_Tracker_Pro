@@ -626,6 +626,58 @@ const ANSICHTSGRUPPEN = [
         glied: '.slot-pip',
         achse: 'horizontal',
         beschriftung: () => 'Zauberplätze'
+    },
+
+    // ---- MOBIL-KOPF (MKOPF, nachgetragen) ----
+    {
+        // DIE EINE GRUPPE AUS `<button>`-ELEMENTEN — und damit die
+        // ausdrueckliche Ausnahme zu Punkt 2 im Kopf dieser Datei ("Keine
+        // Gruppe fasst `<button>`, `<a href>` oder `<select>` zusammen").
+        // Die Regel dort hat einen gemessenen Grund: bei einem `<button>`
+        // NAEHME die Gruppe Reichweite weg, die der Browser seit immer
+        // gibt. Hier nimmt sie keine, und das ist der Unterschied:
+        //
+        //  (a) GESCHLOSSEN IST DAS MENUE `hidden`. Keines der sieben
+        //      Glieder ist dann im Tabulatorweg — mit Gruppe wie ohne.
+        //      Die Gruppe kann also nichts wegnehmen, was ohne sie da
+        //      waere; die betroffenen Faelle der Regel (17 Favoritenknoepfe
+        //      im Bestiarium, zwei je Fraktionskarte, drei je Ladenkopf)
+        //      stehen dauerhaft offen auf dem Schirm.
+        //  (b) OFFEN IST SIE DER GEWINN. Gemessen bei 390 px, gefuellte
+        //      Kampagne: der Mobil-Kopf liegt auf den Tabulatorhalten
+        //      47 bis 53, der Punkte-Knopf also auf 54. Ohne Gruppe kostete
+        //      ein offenes Menue SIEBEN weitere Halte, mit Gruppe EINEN —
+        //      und zwar genau den, auf dem die Hand gerade steht.
+        //  (c) ES IST EIN AUFKLAPPFELD, und "ein Halt, Pfeiltasten darin"
+        //      ist dafuer das erwartete Verhalten, nicht eine Abweichung
+        //      davon.
+        //
+        // WARUM NICHT `role="menu"`/`menuitem`, was fuer ein Aufklappfeld
+        // praeziser waere: `KeyboardGroup._regleGruppe()` setzt dem
+        // Behaelter `role="toolbar"` und dem Glied `role="button"`. Das zu
+        // umgehen hiesse, neben E-2 eine ZWEITE Pfeiltastenlogik zu bauen —
+        // genau das, was E-2 abgeschafft hat. `toolbar` ist dabei keine
+        // Falschaussage: `ui/keyboard-group.js` begruendet die Rolle
+        // ausdruecklich damit, dass sie "das ARIA-Muster 'ein Halt,
+        // Pfeiltasten darin'" benennt. Der Punkte-Knopf traegt deshalb
+        // KEIN `aria-haspopup` (das verspraeche ein Menue), sondern
+        // `aria-expanded` und `aria-controls`.
+        //
+        // DIE ACHSE IST GEMESSEN: sieben Eintraege, dx 0, dy 43 — die
+        // Eintraege liegen als Spalte untereinander, auf jeder der drei
+        // Telefonbreiten und im Querformat. Senkrecht.
+        //
+        // KEIN `zustand` — dieselbe Begruendung wie bei den Party-Punkten
+        // darueber, nur mit einem anderen Traeger: die Abschriften bringen
+        // ihr `aria-expanded` aus der Kopfzeile mit, und
+        // `features/combat-log/combat-log-render.js` zieht es an JEDEM
+        // Traeger nach (`[data-action="toggle-combat-log"][aria-expanded]`).
+        // Ein `zustand` hier schriebe demselben Attribut einen zweiten Wert.
+        name: 'kopfmenue',
+        behaelter: '#mobile-header-menu',
+        glied: '.mobile-header-menu-item',
+        achse: 'vertical',
+        beschriftung: () => 'Weitere Aktionen'
     }
 ];
 
