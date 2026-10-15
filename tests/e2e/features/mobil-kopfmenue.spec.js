@@ -374,11 +374,19 @@ test('(3) der Weg durch den Debug-Dialog kostet drei Griffe und zaehlt darum nic
         const r = el.getBoundingClientRect();
         return r.width > 0 && r.height > 0 ? 'flaeche' : 'nullflaeche';
     });
+    // ZWEI ZULAESSIGE ANTWORTEN, und der Unterschied gehoert in die Meldung:
+    // `nullflaeche` heisst "der Knopf ist da, aber der Dialog ist zu" — der
+    // gemessene Zustand. `fehlt` heisst "den Knopf gibt es nicht mehr", und
+    // das ist kein Fehler dieses Schrittes, sondern ein Befund, den die
+    // Zusicherung weiter unten namentlich meldet. Nur `flaeche` waere hier
+    // ein Fehlschlag: dann waere der Dialogweg kuerzer als gemessen.
+    // (Gemessen an der Mutation "Debug-Knopf entfernt": vorher meldete dieser
+    // Fall "hat der Debug-Knopf schon Flaeche" und log dabei.)
     expect(
-        imDialog,
-        'Nach EINEM Griff (Navigation ausfahren) hat der Debug-Knopf schon Flaeche — ' +
-            'dann waere der Dialogweg kuerzer als gemessen'
-    ).toBe('nullflaeche');
+        ['fehlt', 'nullflaeche'],
+        `Nach EINEM Griff (Navigation ausfahren) antwortet der Debug-Knopf mit ` +
+            `"${imDialog}" — bei "flaeche" waere der Dialogweg kuerzer als gemessen`
+    ).toContain(imDialog);
 
     // Griff 2: Reiter "Debug". Er liegt im Mobil-Layout flach im Raster
     // (`.nav-group { display: contents }`), also ohne Gruppenmenue davor.
@@ -592,7 +600,16 @@ test('(5) das Punkte-Menue oeffnet mit der Tastatur, faehrt mit Pfeiltasten und 
             anzahl: eintraege.length,
             aktionen: eintraege.map(e => e.getAttribute('data-action')),
             beschriftungen: eintraege.map(e => (e.textContent || '').replace(/\s+/g, ' ').trim()),
-            halte: eintraege.filter(e => e.getAttribute('tabindex') === '0').length
+            // DIE HALTE, DIE DER BROWSER WIRKLICH ANFAEHRT, und nicht die mit
+            // `tabindex="0"`. Der Unterschied ist der ganze Fall: ein
+            // `<button>` OHNE `tabindex`-Attribut ist ein Halt, eines mit
+            // `tabindex="-1"` keiner. Gezaehlt nach `tabindex === '0'` haette
+            // eine fehlende Gruppe NULL gemeldet (gemessen an der Mutation
+            // "Gruppenbehaelter greift ins Leere") — also dieselbe Richtung
+            // wie "zu viele", nur mit einer Zahl, die nichts sagt. So gezaehlt
+            // meldet sie SIEBEN, und das ist die Aussage: ohne Gruppe kostet
+            // das offene Menue sieben Tabulatorhalte statt einem.
+            halte: eintraege.filter(e => e.getAttribute('tabindex') !== '-1').length
         };
     });
     expect(offen.expanded, 'aria-expanded folgt dem Zustand nicht (offen)').toBe('true');
