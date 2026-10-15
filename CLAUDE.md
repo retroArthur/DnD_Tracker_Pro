@@ -349,6 +349,55 @@ function deleteEntity(id) {
 - File: `assets/templates/modals-tools.html` → `#about-modal`
 - Action: `show-about-modal` in `ui/actions/system-actions.js`
 
+### ⋯ Menu in the Mobile Header (MKOPF)
+
+`[data-layout="mobile"] .header-actions { display: none }` hides the **whole**
+header button row, and the layout profile follows the window size since the
+mobile round. Measured over all seven `.header-action-btn` (verdict from
+`checkVisibility({opacityProperty:true})` **and** rect **and** `elementFromPoint`
+on the button centre):
+
+| Window | Layout | operable |
+| --- | --- | --- |
+| 1440 / 1200 px | desktop | 7 of 7 |
+| 900 px | desktop | **4 of 7** — `redo` (x=921), `show-shortcuts-overlay` (x=965), `toggle-layout` (x=1009) lie **outside** the window |
+| 680 / 390 / 360 / 320 px | mobile | **0 of 7** |
+
+Four actions had no path of their own on the phone: `show-about-modal`,
+`toggle-quick-notes`, `redo`, `show-shortcuts-overlay`. All seven now sit behind
+one ⋯ button in `.mobile-header`.
+
+- **One source for the list:** the entries are built **at runtime from
+  `.header-actions .header-action-btn`** (`ui/mobile-header-menu.js`), rebuilt on
+  every open so `#layout-icon` and the combat-log `aria-expanded` show the current
+  state. An eighth header button appears in the menu without further work.
+- **Keyboard:** the menu is a **KeyboardGroup** (E-2) registered in
+  `ui/keyboard-group-views.js` — one tab stop, arrow keys inside, `Home`/`End`, no
+  wrap-around. It is the one group made of `<button>` elements; the reasoning for
+  that exception is at its registration.
+- **ARIA:** `aria-expanded` + `aria-controls` on the ⋯ button, deliberately **no**
+  `aria-haspopup` (that would promise a `menu`; `KeyboardGroup` writes
+  `role="toolbar"`). Entries carry their label, not just their icon.
+- **Width:** the ⋯ button is `26px × min-height 43px` — the width of the narrowest
+  existing neighbour, not the 35.5px of the others, which do not fit. It was paid
+  for out of three **dead** gaps inside the existing `@media (max-width: 600px)`
+  block (header padding 8 → 4px, group gap 4 → 3px, timer horizontal padding
+  6 → 4px): 15.3px of slack remain at 320px under the wide probe font, above the
+  12px `MIN_KOPF_LUFT` of `breite-schrift.spec.js`. **No tap area shrank**, the
+  43px tap height is untouched, and there is **no fourth media query** (F-12).
+- **Closing:** click on the ⋯ again, click outside (`mousedown`), activate an entry
+  (closed in a microtask **after** the action, so `ui/modal-focus.js` does not get a
+  hidden node as the dialog's opener), or `Escape` (returns focus to the ⋯).
+- Files: `ui/mobile-header-menu.js`, `assets/templates/modals-tools.html`,
+  end of `assets/styles/core.css`, `ui/actions/ui-actions.js`,
+  `systems/spellslots/keyboard-shortcuts.js`, `ui/keyboard-group-views.js`
+- Guard: `tests/e2e/features/mobil-kopfmenue.spec.js` — "every header action is
+  reachable on the phone, visible, clickable, in at most two handles", with the
+  action list read **from the bundle**, not from a literal.
+- **Still measured and open:** the 900px gap. There the layout is still `desktop`,
+  but three header buttons lie outside the window. The ⋯ menu does not fix it (it
+  only exists in the mobile layout) — see `docs/bugfixes.md`.
+
 ### Campaign Manager
 
 - Multiple campaigns support with separate LocalStorage keys
@@ -447,7 +496,7 @@ function deleteEntity(id) {
 | `Space`    | Next turn (Initiative) — **not** with any of `Strg`, `Alt`, `Meta` or `Shift` held (all four measured taken before HILF: `Strg+Space` is an input method, `Alt+Space` the window menu, `Shift+Space` the browser's page-up), and **not** while a focusable control has focus (TAST). Exception: a control made focusable at runtime by `ui/keyboard-reach.js` claims `Space` only on **keyboard** focus; after a mouse click on it, `Space` still changes the turn (TAST) |
 | `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key, and `Space` on a runtime-retrofitted control holding mouse focus |
 | `Tab`/`Shift+Tab` | Next/previous control. **Inside an open modal the focus is trapped** and cycles within the dialog — it no longer reaches the background (TAST). `ui/modal-focus.js` takes the key over completely (`preventDefault` on every branch) rather than only guarding the two edges; measured before: 45 real presses left the dialog 1396–1610 times across the 36 shells, 1333–1606 of those landing on targets *under* the dialog that were invisible but still activatable. Without an open modal the key is untouched |
-| `Escape`   | Close overlays/modals — and returns focus to the control that opened the dialog (TAST). Closes the **last-opened** shell, not the last one in template order; also covers `#quicknotes-modal`, which carries `.modal-backdrop` and was previously the one shell of 36 that Escape left open |
+| `Escape`   | Close overlays/modals — and returns focus to the control that opened the dialog (TAST). Closes the **last-opened** shell, not the last one in template order; also covers `#quicknotes-modal`, which carries `.modal-backdrop` and was previously the one shell of 36 that Escape left open. Since MKOPF it also closes the mobile header's **⋯ menu** and hands focus back to the ⋯ button — one step **before** the dialogs and **after** the keyboard help and the quick reference, because the menu is a button-anchored bubble (`--z-dropdown`), not a shell |
 | `←`/`→` or `↑`/`↓` | Move between the members of a group — **one Tab stop per group**, the arrows inside it (TAST E-2, `ui/keyboard-group.js`). **The reduction is measured, not asserted:** `tests/e2e/features/tastatur-gruppen.spec.js` (1) counts 42 spell-slot pips at six combatants and exactly 6 stops under them, one per group, every other member carrying `tabindex="-1"`; the pre-measurement at twenty combatants counted 140 pips, which the same rule turns into 20 stops. The reduction is only allowed because nothing becomes unreachable: case (10) rides all seven members of a group with Tab plus arrows. **The last member visited keeps the stop**, so `Shift+Tab` re-enters where you left (case (6)), and the stop survives a redraw even when the focus has left the group (cases (12)/(17)) — it hangs on the data, not on the node an `innerHTML` swap takes away. **Which pair applies follows the group's shape, not a fixed choice:** on a horizontal group (spell slots, death-save dots) `←`/`→` lead and `↑`/`↓` stay with the browser's page scroll (case (8)); on a vertical one (quest rows, loot rows, encounter rows) it is the other way round. The container carries the answer in `aria-orientation`, and one group kind (the spell grid) measures it per redraw. Any modifier — `Strg`, `Alt`, `Shift`, `Meta` — hands the key straight back to the browser (`Strg+Pos1` stays "top of document"), and outside a group no arrow key is touched (case (14)). Measured both ways in `tests/e2e/features/tastenhilfe.spec.js` (11) |
 | `Pos1`/`Ende` | First/last member of the current group (TAST E-2, `tests/e2e/features/tastatur-gruppen.spec.js` (4)). First/last **operable** one: an invisible or disabled member is skipped and not counted — measured, the encounter filter bar carries 20 rows and only one visible mark, and a ride that stalled on an invisible mark would be a dead end without a focus ring. **No wrap-around at the edges, by decision:** a silent wrap makes "am I at the end of the row?" unanswerable and puts the next keystroke on the wrong spot. `preventDefault()` fires at the edge too, where nothing moves — the key *has* been served, the answer is only "this is the end"; without it the page would scroll sideways at the last member (case (5)). See `_naechstesGlied()` |
 | ~~`Entf`/`Backspace`~~ | ~~Delete selected node (Network view only)~~ — **dead since this table was written, measured (HILF).** The branch in `systems/spellslots/keyboard-shortcuts.js` tests `#view-network.active`, and no `#view-network` exists in the bundle: the view is `view-links` (24 view ids, checked). `#view-network` appears exactly once in the whole source tree — in that branch. Both keys measure free (`defaultPrevented` false, no effect). Fix the selector or drop the branch; until then it must **not** go into the in-app help, and `tastenhilfe.spec.js` (5) turns red if it does |
