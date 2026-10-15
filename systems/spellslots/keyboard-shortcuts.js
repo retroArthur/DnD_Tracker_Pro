@@ -349,8 +349,25 @@ function initKeyboardShortcuts() {
                 return;
             }
             // 2. Quick-Ref schließen
+            //
+            // `active`, NICHT `open`. Hier stand `open` — eine Klasse, die
+            // niemand setzt: `toggleQuickRef()` in
+            // `systems/spellslots/quick-reference.js:77` schaltet `active`.
+            // Gemessen am gebauten Buendel: Schnellreferenz geoeffnet
+            // (`class="qref-panel active"`), `Escape` gedrueckt, danach
+            // weiter `class="qref-panel active"` — die Schale hatte KEINEN
+            // Tastaturausweg, waehrend die Tastenhilfe `Esc` fuer sie zusagte.
+            //
+            // Drei Namen fuer eine Sache, und das ist der Grund, warum es
+            // niemandem auffiel: das Markup traegt `qref-panel`
+            // (`assets/templates/modals-editors.html:155`), das JS schaltet
+            // `active`, und `assets/styles/dmscreen.css:668` bemalt
+            // `.quick-ref-panel.open` — ein Selektor, der WEDER die Klasse des
+            // Elements noch die Zustandsklasse trifft. Die toten CSS-Regeln
+            // sind ausgewiesene Restschuld (160 Stueck) und hier nicht
+            // angefasst.
             const quickRef = $('quick-ref-panel');
-            if (quickRef?.classList.contains('open')) {
+            if (quickRef?.classList.contains('active')) {
                 if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
                 return;
             }
@@ -463,7 +480,31 @@ function initKeyboardShortcuts() {
         // Strg+Shift+?, Alt+Shift+?, Strg+Shift+/ und Alt+Shift+/ die Hilfe.
         // `e.shiftKey` bleibt ERLAUBT — der Rueckfall `Shift+/` ist der
         // Zugang auf Tastaturbildern, die darauf kein `?` liefern.
-        if (OHNE_MODIFIKATOR(e) && (e.key === '?' || (e.shiftKey && e.key === '/'))) {
+        //
+        // ABER NUR, WO `/` EINE EIGENE TASTE IST (`e.code === 'Slash'`).
+        // Ohne diese Schranke war das Kuerzel auf dem DEUTSCHEN Tastaturbild
+        // genau falsch herum, und das ist das Bild, fuer das diese App
+        // geschrieben ist. Gemessen am gebauten Buendel mit echten
+        // Eingabeereignissen auf Browserebene (CDP `Input.dispatchKeyEvent`,
+        // weil Playwright kein Tastaturbild emuliert):
+        //
+        //   deutsch `/` = Shift+7   key '/'  code 'Digit7'  -> HILFE offen,
+        //                                                      Schnellreferenz zu
+        //   US      `/`             key '/'  code 'Slash'   -> Schnellreferenz offen
+        //   deutsch `?` = Shift+ss  key '?'  code 'Minus'   -> Hilfe offen (richtig)
+        //
+        // Auf deutschen Tastaturen oeffnete `/` also die Hilfe, und die
+        // Schnellreferenz hatte UEBERHAUPT KEIN Kuerzel: der Zweig darunter
+        // verlangte `!e.shiftKey`, was fuer `/` auf diesem Bild unerfuellbar
+        // ist. Die Zeile "Quick Reference — /" in der Tastenhilfe war damit
+        // eine Falschaussage.
+        //
+        // `?` selbst braucht keinen Rueckfall: der Browser meldet in `e.key`
+        // das ERZEUGTE Zeichen, auf jedem Bild, das ein `?` hat.
+        if (
+            OHNE_MODIFIKATOR(e) &&
+            (e.key === '?' || (e.shiftKey && e.key === '/' && e.code === 'Slash'))
+        ) {
             e.preventDefault();
             if (typeof window.showShortcutsOverlay === 'function') window.showShortcutsOverlay();
             return;
@@ -471,7 +512,13 @@ function initKeyboardShortcuts() {
         // /: Quick Reference öffnen und Suche fokussieren
         // OHNE_MODIFIKATOR: ohne diese Schranke zogen gemessen auch Strg+/
         // und Alt+/ die Schnellreferenz auf UND den Fokus in ihr Suchfeld.
-        if (OHNE_MODIFIKATOR(e) && !e.shiftKey && e.key === '/') {
+        //
+        // KEINE `!e.shiftKey`-SCHRANKE MEHR. Sie sperrte das deutsche
+        // Tastaturbild aus, auf dem `/` Shift+7 IST (Begruendung und Messung
+        // am Zweig darueber). Ein Konflikt entsteht nicht: wo `Shift+/` ein
+        // `?` erzeugt, meldet der Browser `e.key === '?'` und der Zweig
+        // darueber hat den Druck schon verbraucht.
+        if (OHNE_MODIFIKATOR(e) && e.key === '/') {
             e.preventDefault();
             const panel = $('quick-ref-panel');
             if (panel && !panel.classList.contains('active')) {
