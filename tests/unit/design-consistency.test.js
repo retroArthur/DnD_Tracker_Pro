@@ -15017,7 +15017,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
      *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
      *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
-     *                loader.js:344 (die Zusammenfassungszeile des Ladefehlers)
+     *                loader.js:383 (die Zusammenfassungszeile des Ladefehlers)
      *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
      *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
      *  Modulpfade als Teilzeichenkette und zaehlt JEDEN Treffer als

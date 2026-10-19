@@ -271,11 +271,19 @@ function initMobileHeaderMenu() {
     );
 }
 
+// NUR DIE DREI MIT VERBRAUCHER (CLAUDE.md, Export-Audit-Regel: "Only export
+// functions/variables to `window` if they are used by OTHER modules or HTML
+// event handlers"). Gemessen am ganzen Baum:
+//   isMobileHeaderMenuOpen  <- systems/spellslots/keyboard-shortcuts.js
+//   closeMobileHeaderMenu   <- systems/spellslots/keyboard-shortcuts.js
+//   toggleMobileHeaderMenu  <- ui/actions/ui-actions.js
+// `openMobileHeaderMenu` und `buildMobileHeaderMenu` standen hier ebenfalls und
+// wurden von keinem anderen Modul, keiner Vorlage und keinem Test gelesen — sie
+// laufen ausschliesslich modulintern (aus `toggleMobileHeaderMenu()` bzw. aus
+// `openMobileHeaderMenu()`) und weiteten nur die generierte Globals-Liste.
 window.isMobileHeaderMenuOpen = isMobileHeaderMenuOpen;
-window.openMobileHeaderMenu = openMobileHeaderMenu;
 window.closeMobileHeaderMenu = closeMobileHeaderMenu;
 window.toggleMobileHeaderMenu = toggleMobileHeaderMenu;
-window.buildMobileHeaderMenu = buildMobileHeaderMenu;
 
 // Selbstaufruf, dasselbe Muster wie `ui/keyboard-group-views.js`,
 // `ui/keyboard-reach.js` und `ui/modal-focus.js`: die Lauscher haengen an

@@ -2829,6 +2829,47 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                 `${nZeilen.join(' | ')}`
         ).toMatch(/neu/);
 
+        // JEDE ANSICHT, DIE EINE HILFEZEILE IN KLAMMERN NENNT, MUSS SO AUF
+        // EINEM REITER STEHEN. Die Zeile las "Neues Element (Party, NSC,
+        // Aufträge, Begegnung)" — drei von vier Namen kommen in KEINER
+        // Reiterbeschriftung vor (gemessen: `👥 Party`, `🎭 NPCs`,
+        // `📜 Quests`, `👹 Encounter`). Dieselbe Begruendung, mit der ABN
+        // "Dashboard"→"Start", "Läden"→"Shops" und "Beute"→"Truhe"
+        // umgeschrieben hat: wer "Aufträge" liest, sucht "Aufträge" in der
+        // Reiterleiste. Und dieselbe Hilfe nannte dieselbe Ansicht in ihrem
+        // Navigationsabschnitt anders als hier.
+        //
+        // GEPRUEFT WIRD NUR DIE KLAMMER, nicht die ganze Zeile: "Neues
+        // Element" ist eine Handlung und steht auf keinem Reiter. Die
+        // Reiterbeschriftungen kommen aus dem BUENDEL, nicht aus einer Liste
+        // hier.
+        const reiterWorte = await page.evaluate(() =>
+            Array.from(document.querySelectorAll('.nav-tab'))
+                .map(t => (t.textContent || '').trim())
+                .join(' | ')
+        );
+        const genannteAnsichten = [];
+        for (const zeile of nZeilen) {
+            const klammer = zeile.match(/\(([^)]*)\)/);
+            if (!klammer) continue;
+            for (const wort of klammer[1].split(/[,/]/)) {
+                const w = wort.trim();
+                // Nur ansichtsnamenartige Woerter: ein Grosswortanfang ohne
+                // Leerzeichen. "im Kampf" oder "nichts angeklickt" sind
+                // Bedingungen, keine Reiternamen.
+                if (/^[A-ZÄÖÜ][\wÄÖÜäöüß-]*$/.test(w)) genannteAnsichten.push(w);
+            }
+        }
+        const nichtAufReitern = genannteAnsichten.filter(w => !reiterWorte.includes(w));
+        expect(
+            nichtAufReitern,
+            `Die \`N\`-Zeilen nennen ${genannteAnsichten.length} Ansicht(en) in Klammern ` +
+                `(${genannteAnsichten.join(', ')}), und ${nichtAufReitern.length} davon stehen ` +
+                `auf keinem Reiter. Gemessene Reiterbeschriftungen: ${reiterWorte}. Wer einen ` +
+                `Namen liest, sucht ihn in der Reiterleiste — steht er dort nicht, sucht er ` +
+                `eine Ansicht, die es nicht gibt. Zeilen: ${nZeilen.join(' | ')}`
+        ).toEqual([]);
+
         // ----------------------------------------------------------
         // (b) `Strg+.` GILT UEBERALL — gemessen in Chromium.
         // ----------------------------------------------------------

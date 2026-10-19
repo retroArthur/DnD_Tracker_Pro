@@ -1206,6 +1206,84 @@ wiedergefunden.
 - **Dateien:** `tests/e2e/features/mobil-kopfmenue.spec.js`
 - **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (2), (6)
 
+### Drei kleine Befunde derselben Runde, mitgenommen
+
+- **Problem:** (a) Die Hilfezeile zu `N` nannte „Neues Element (Party, NSC,
+  Aufträge, Begegnung)" — drei von vier Namen stehen auf **keinem** Reiter
+  (gemessen: `👥 Party`, `🎭 NPCs`, `📜 Quests`, `👹 Encounter`), und dieselbe
+  Hilfe nannte dieselbe Ansicht in ihrem Navigationsabschnitt anders. Genau die
+  Begründung, mit der ABN drei Zeilen darüber „Dashboard"→„Start",
+  „Läden"→„Shops" und „Beute"→„Truhe" umgeschrieben hat.
+  (b) Zwei **Zeilenanker** zeigten daneben: `ui/actions/ui-actions.js:237` (in
+  `modal-fokus.spec.js`) traf nach dem MKOPF-Einschub eine Leerzeile — die
+  gemeinte Zeile ist 249 —, und `loader.js:344` (in
+  `design-consistency.test.js`) war schon bei der Niederschrift 33 Zeilen
+  schief und ist jetzt 39; die `font-weight`-Zeile steht auf 383.
+  (c) `window.openMobileHeaderMenu` und `window.buildMobileHeaderMenu` wurden
+  von keinem anderen Modul, keiner Vorlage und keinem Test gelesen — beide
+  laufen ausschließlich modulintern. Das verstößt gegen die Export-Audit-Regel
+  in `CLAUDE.md`.
+- **Fix:** (a) Die Zeile nennt die gemessenen Reiterbeschriftungen. **Dazu eine
+  Ratsche**, weil die Fehlerart in dieser Akte zum zweiten Mal vorkommt: Fall
+  (18) in `tastenhilfe.spec.js` liest die `.nav-tab`-Beschriftungen aus dem
+  Bündel und verlangt, dass jeder ansichtsnamenartige Name in der Klammer einer
+  `N`-Zeile dort vorkommt. (b) Beide Anker nachgezogen. (c) Beide Exporte
+  entfernt, die drei mit Verbraucher (`isMobileHeaderMenuOpen`,
+  `closeMobileHeaderMenu`, `toggleMobileHeaderMenu`) stehen namentlich mit ihrem
+  Verbraucher im Kommentar daneben.
+- **Berichtigung zu (c), nachgemessen:** die Meldung sagte zusätzlich, die zwei
+  Exporte weiteten „die generierte Globals-Liste (2 der 10 neuen Zeilen in
+  `eslint.generated-globals.js`) für nichts auf". Das trifft **nicht** zu:
+  `tools/generate-eslint-globals.js` listet Top-Level-`function`-Deklarationen
+  ohnehin, und beide Namen sind solche. Ein Neulauf des Generators nach dem
+  Entfernen der zwei `window.`-Zeilen ändert die Datei **nicht**
+  (`git diff --stat` leer, beide Namen stehen weiter auf Zeile 434 und 996). Der
+  Hauptbefund (Exporte ohne Verbraucher) hält, die Nebenbegründung nicht.
+- **Regel:** Ein Zeilenanker in einem Kommentar ist eine Aussage über den
+  **heutigen** Code und verwest lautlos; wer ihn setzt, prüft ihn beim nächsten
+  Einschub mit. Und: eine Beschriftung in einer Hilfe ist nur dann eine Hilfe,
+  wenn der Nutzer den genannten Namen an der Oberfläche **findet** — eine
+  Ratsche, die die Oberfläche liest, ist dafür billiger als drei Korrekturrunden.
+- **Dateien:** `assets/templates/modals-editors.html`,
+  `ui/mobile-header-menu.js`, `tests/e2e/features/modal-fokus.spec.js`,
+  `tests/unit/design-consistency.test.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (18)
+
+### Nicht behoben, mit Begründung: zwei kleine Befunde bleiben offen
+
+- **Wirkungsdauern bei „◀ Zurück" (`features/initiative.js`):** dreimal vor und
+  dreimal zurück kostet drei Runden Segen. `nextTurn()` **entfernt** abgelaufene
+  Effekte; eine Umkehrung, die nur die Dauer erhöht, brächte einen abgelaufenen
+  Effekt nicht zurück und verfälschte einen permanenten. Der vorhandene Weg ist
+  `Strg+Z` — `prevTurn()` schreibt den Punkt selbst (`pushUndo`). Die
+  Begründung steht am Code.
+- **`DOC-11` braucht einen Produktionsbau (`tests/unit/docs-consistency.test.js`):**
+  in einem frischen Baum ohne `dist/` zählt die Ratsche 10 statt 8 tote Pfade,
+  weil `dist/dnd-tracker-optimized.html` und `dist/sw.js` in diesem Katalog
+  genannt sind und `dist/` in `.gitignore` steht. Im CI-Job `test` läuft Jest
+  **vor** `python build.py`, und `--production` läuft dort nie. Der Befund ist
+  vorbestehend und macht die gemeldete Jest-Torzahl an einen Nebenzustand des
+  Arbeitsverzeichnisses gebunden. Nicht hier behoben, weil die Korrektur
+  entweder den Pin senkt (dann meldet die Ratsche eine Reparatur als Verstoß)
+  oder die CI-Reihenfolge ändert — beides gehört in eine eigene Runde mit
+  eigenem Rotbeweis.
+- **Die Tastenkürzel in vier Namen des ⋯-Menüs (`ui/mobile-header-menu.js`):**
+  „Rückgängig (Strg+Z)" in einem Menü, das es nur im Mobil-Layout gibt. Die
+  ausgeschriebenen `aria-label` liegen in `header.html` bereit. Nicht hier
+  geändert, weil der Wächter dieselben Namen über `aria-label || title` liest
+  (Fall (5) vergleicht Menü gegen Kopfzeile) und ein Wechsel der Quelle den
+  Vergleich mitverschiebt — das braucht einen eigenen Rotbeweis, nicht einen
+  Einzeiler am Rand dieser Runde.
+- **Der Stil-Sollstand kann die Kopfzeile nicht sehen
+  (`tests/e2e/baselines/computed-style-baseline.json`):** der Erfassungsbereich
+  ist `#view-<id>`, und `.header-actions`, `.mobile-header`, `.mobile-timer` und
+  `.mobile-header-group` liegen außerhalb jedes Ansichtsbehälters. „0 geänderte
+  Digests" ist dort also keine Entwarnung für die Kopfzeile, sondern Abwesenheit
+  von Deckung; sie hängt allein an `breite-schrift.spec.js` und
+  `mobil-kopfmenue.spec.js`. **Steht jetzt hier, damit der nächste Durchgang die
+  0/0/0 nicht als Beleg liest.** Die Datei selbst ist gesperrt und wurde nicht
+  angefasst.
+
 ---
 
 ## Known Technical Debt

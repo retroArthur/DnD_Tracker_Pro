@@ -630,7 +630,7 @@ test.describe('Modalfokus — kein window.showModal-Mantel (O-4)', () => {
             // Genau die Funktion, die der Verteiler bei einem Klick ausfuehrt.
             // `EventDelegation` ist ein globales `const` und steht NICHT an
             // `window` — der Zugriff laeuft ueber den blanken Namen, so wie ihn
-            // auch ui/actions/ui-actions.js:237 nimmt.
+            // auch ui/actions/ui-actions.js:249 nimmt.
             const reg = typeof EventDelegation !== 'undefined' ? EventDelegation : null;
             const handler = reg && reg._handlers && reg._handlers.get('show-modal');
             if (typeof handler !== 'function') return { weg: 'kein Handler' };

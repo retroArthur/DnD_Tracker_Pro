@@ -398,6 +398,14 @@ one ⋯ button in `.mobile-header`.
 - **Closing:** click on the ⋯ again, click outside (`mousedown`), activate an entry
   (closed in a microtask **after** the action, so `ui/modal-focus.js` does not get a
   hidden node as the dialog's opener), or `Escape` (returns focus to the ⋯).
+- **Exports: exactly the three with a consumer** (`isMobileHeaderMenuOpen` and
+  `closeMobileHeaderMenu` for `systems/spellslots/keyboard-shortcuts.js`,
+  `toggleMobileHeaderMenu` for `ui/actions/ui-actions.js`), each named next to
+  its consumer in the source. `openMobileHeaderMenu` and `buildMobileHeaderMenu`
+  were exported too and read by nothing — module-internal callers only, against
+  the Export-Audit rule; both are gone. (Side note, measured: removing them does
+  NOT shrink `eslint.generated-globals.js` — the generator lists top-level
+  `function` declarations anyway, and both names are such.)
 - Files: `ui/mobile-header-menu.js`, `assets/templates/modals-tools.html`,
   end of `assets/styles/core.css`, `ui/actions/ui-actions.js`,
   `systems/spellslots/keyboard-shortcuts.js`, `ui/keyboard-group-views.js`
