@@ -882,3 +882,153 @@ for (const { b, h } of QUERFORMAT) {
         ).toBe(lage.anzahl);
     });
 }
+
+// ===========================================================================
+// (8) DAS IMPRESSUM NENNT DIE WIRKLICHE VERSION
+// ===========================================================================
+//
+// WARUM DIESER FALL IN DIESE DATEI GEHOERT. `show-about-modal` ist einer der
+// vier Eintraege, die vor dem Punkte-Menue UEBERHAUPT KEINEN Weg auf dem
+// Telefon hatten (`redo`, `show-shortcuts-overlay`, `show-about-modal`,
+// `toggle-quick-notes`). Das Erste, was ein Spielleiter auf dem neuen Weg
+// liest, war GEMESSEN falsch: der Dialog nannte "Version 2.4.0", waehrend
+// `core/config.js` und `package.json` beide 2.6.1 fuehrten — zwei
+// Nebenversionen zu alt, an dem einen Ort der App, an dem man die Version
+// nachsieht. Die Zahl stand festgeschrieben in `modals-tools.html` und las
+// `APP_CONFIG.VERSION` nicht.
+//
+// WARUM GEGEN `APP_CONFIG.VERSION` UND NICHT GEGEN EINE ZAHL IM TEST. Eine
+// getippte "2.6.1" hier waere dieselbe Drift an einer zweiten Stelle. Der Fall
+// vergleicht darum, was der Dialog ZEIGT, mit dem, was die App von sich SAGT.
+// Die Gegenprobe gegen `package.json` liegt in
+// `tests/unit/version-konsistenz.test.js`, wo sie ohne Browser laeuft.
+//
+// BEDIENT, DANN GELESEN: der Dialog wird ueber das Punkte-Menue aufgerufen,
+// nicht per `showModal()` — die Version wird beim Oeffnen gesetzt, und ein
+// Test, der nur das Markup liest, saehe den Rueckfallwert.
+test('(8) der Eintrag "Ueber diese App" nennt die Version aus APP_CONFIG', async ({ page }) => {
+    test.setTimeout(120000);
+    await seedPopulatedSession(page);
+    await ladenDannVerkleinern(page, 390, 844);
+
+    await page.click('#mobile-header-menu-btn');
+    await page.waitForTimeout(250);
+    await page.click('#mobile-header-menu [data-action="show-about-modal"]');
+    await page.waitForTimeout(400);
+
+    const stand = await page.evaluate(() => {
+        const m = document.getElementById('about-modal');
+        const r = m ? m.getBoundingClientRect() : null;
+        return {
+            offen: !!m && m.classList.contains('show'),
+            imFenster: !!r && r.width > 0 && r.height > 0,
+            text: m ? (m.textContent || '').replace(/\s+/g, ' ').trim() : '(kein Dialog)',
+            config: window.APP_CONFIG ? window.APP_CONFIG.VERSION : '(kein APP_CONFIG)'
+        };
+    });
+
+    expect(stand.offen, 'Der Eintrag hat den Impressum-Dialog nicht geoeffnet').toBe(true);
+    expect(stand.imFenster, 'Der Dialog hat keine Flaeche').toBe(true);
+    expect(
+        stand.config,
+        'APP_CONFIG.VERSION fehlt — dann hat dieser Fall keine Quelle zum Vergleichen'
+    ).toMatch(/^\d+\.\d+\.\d+$/);
+
+    const gezeigt = stand.text.match(/Version\s+(\d+\.\d+\.\d+)/);
+    expect(
+        gezeigt && gezeigt[1],
+        'Der Impressum-Dialog nennt keine Versionsnummer der Form X.Y.Z.\n' +
+            `Dialogtext: ${stand.text}`
+    ).toBeTruthy();
+    expect(
+        gezeigt[1],
+        `Der Impressum-Dialog zeigt Version ${gezeigt[1]}, die App fuehrt ` +
+            `${stand.config} (APP_CONFIG.VERSION). Das ist der eine Ort, an dem ein ` +
+            'Nutzer die Version nachsieht — und der Weg dorthin existiert erst seit ' +
+            `dem Punkte-Menue.\nDialogtext: ${stand.text}`
+    ).toBe(stand.config);
+});
+
+// ===========================================================================
+// (9) "LAYOUT WECHSELN" IST KEINE EINBAHNSTRASSE
+// ===========================================================================
+//
+// DER BEFUND. Der Eintrag `toggle-layout` fuehrt auf dem Telefon in das
+// Schreibtisch-Layout — und dort war GEMESSEN (390x844, Buendel zu 279ad98)
+// keine der sieben Kopfzeilen-Aktionen im Fenster, das Dokument 1027px breit
+// bei 390px Fenster (637px Querlauf), `.mobile-header` samt Punkte-Knopf
+// `display:none` und KEIN Traeger von `toggle-layout` bedienbar. Dieselben
+// Zahlen bei 360x740 (667px), 320x568 (707px) und 740x360 (287px, 2 von 7).
+// Zwei Auswege gab es, beide unbeschriftet: 637px waagerecht wischen oder neu
+// laden. Mit der Tastatur lag der Schalter auf Halt 17 — auf einem
+// Beruehrungsgeraet kein Weg.
+//
+// VORBESTEHEND, nicht von dieser Einheit erzeugt: dieselbe Probe ueber
+// `#mobile-layout-btn` lieferte an 28bcab2 Zeichen fuer Zeichen dieselben
+// Zahlen. Das Punkte-Menue hat die Lage nicht gebaut, aber eine zweite,
+// erstmals auffindbare Tuer dorthin aufgemacht — und damit gehoert sie hierher.
+//
+// WAS DIESER FALL VERLANGT, und warum nicht weniger: nach dem Wechsel muss
+// (a) kein Querlauf entstehen und (b) jede Kopfzeilen-Aktion bedienbar sein.
+// (b) allein waere zu schwach — ein Knopf kann bedienbar sein, waehrend die
+// halbe Kopfzeile rechts aus dem Fenster ragt. (a) allein waere zu schwach,
+// weil auch ein `overflow:hidden` den Querlauf nimmt und die Knoepfe
+// trotzdem wegschneidet. Der Rueckweg ist Teil von (b): `toggle-layout` ist
+// selbst eine der sieben.
+for (const { b, h } of [...TELEFON, { b: 740, h: 360 }]) {
+    test(`(9) ${b}x${h}: nach "Layout wechseln" bleibt jede Kopfzeilen-Aktion erreichbar`, async ({
+        page
+    }) => {
+        test.setTimeout(180000);
+        await seedPopulatedSession(page);
+        await ladenDannVerkleinern(page, b, h);
+
+        const aktionen = await kopfAktionen(page);
+        expect(aktionen.length, 'Die Kopfzeile fuehrt keine .header-action-btn').toBeGreaterThan(0);
+
+        await page.click('#mobile-header-menu-btn');
+        await page.waitForTimeout(250);
+        await page.click('#mobile-header-menu [data-action="toggle-layout"]');
+        await page.waitForTimeout(600);
+
+        // Das Ereignis-Log meldet den Wechsel und liegt dabei UEBER der
+        // Kopfzeile — es wird geraeumt, sonst misst dieser Fall eine
+        // vorbeiziehende Meldung statt der Lage.
+        await page.evaluate(() => {
+            document.querySelectorAll('.event-log-entry').forEach(e => e.remove());
+        });
+        await page.waitForTimeout(150);
+
+        const lage = await page.evaluate(() => ({
+            layout: document.documentElement.getAttribute('data-layout'),
+            scrollW: document.documentElement.scrollWidth,
+            clientW: document.documentElement.clientWidth,
+            maxScrollLeft:
+                document.documentElement.scrollWidth - document.documentElement.clientWidth
+        }));
+        expect(
+            lage.layout,
+            'Der Eintrag hat das Layout nicht gewechselt — dann prueft dieser Fall nichts'
+        ).toBe('desktop');
+
+        const urteile = await page.evaluate(urteileImFenster, aktionen);
+        const nicht = Object.keys(urteile).filter(k => !urteile[k].bedienbar);
+
+        expect(
+            lage.maxScrollLeft,
+            `Nach dem Wechsel auf das Schreibtisch-Layout ist das Dokument ` +
+                `${lage.scrollW}px breit bei ${lage.clientW}px Fenster — ` +
+                `${lage.maxScrollLeft}px Querlauf. Waagerecht wischen ist am Spieltisch ` +
+                'keine Bedienung, und es steht nirgends.'
+        ).toBeLessThanOrEqual(1);
+
+        expect(
+            nicht,
+            `Nach "Layout wechseln" bei ${b}x${h} sind ${nicht.length} von ` +
+                `${aktionen.length} Kopfzeilen-Aktionen nicht bedienbar — darunter der ` +
+                'Rueckweg selbst, wenn "toggle-layout" in der Liste steht.\n' +
+                `Dokument ${lage.scrollW}px in ${lage.clientW}px, Querlauf ` +
+                `${lage.maxScrollLeft}px.\n${JSON.stringify(urteile, null, 1)}`
+        ).toEqual([]);
+    });
+}
