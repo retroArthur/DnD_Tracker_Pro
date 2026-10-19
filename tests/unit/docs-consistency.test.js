@@ -531,3 +531,183 @@ describe('DOC — docs/bugfixes.md verwest nicht', () => {
         expect(falsch).toEqual([]);
     });
 });
+
+// ============================================================
+// DOC-13/DOC-14 — DIE ZWEI ZAHLEN, DIE DIE ABNAHME GEFUNDEN HAT
+// ============================================================
+//
+// WARUM SIE NICHT BLOSS KORRIGIERT WERDEN. Die Regel des Eintrags "Zwei
+// ueberholte Zahlen in diesem Katalog" lautet: eine Zahl in einer Akte ist
+// eine Zusicherung ohne Waechter. Die Abnahme hat danach ZWEI weitere
+// gefunden, die sich seit ihrer Messung bewegt hatten:
+//
+//   "40 Zeilen statt 25" / "12 von 41 Zeilen"  -> 43 `.shortcut-row`
+//   "an allen elf Zweigen"                      -> 12 Zweige mit
+//                                                  OHNE_MODIFIKATOR(e)
+//
+// Beide Zahlen sind aus demselben Grund verwest wie die zwei davor: sie
+// wurden einmal gemessen, danach hat die Hilfe Zeilen bekommen und der
+// Lauscher einen Zweig. Die Korrektur allein wuerde den naechsten Durchgang
+// nicht retten — darum diese zwei Faelle.
+//
+// SIE PRUEFEN DIE AKTEN UND DIE PRUEFDATEIEN. Die falschen Zahlen standen
+// nicht nur in `docs/bugfixes.md`, sondern auch in `assets/styles/dmscreen.css`
+// (zwei Kommentarbloecke) und im Kopf von `tastenhilfe.spec.js`. Ein
+// Kommentar in einer Pruefdatei ist dieselbe Art Zusicherung wie eine Zeile
+// in der Akte; wer die eine deckt und die andere nicht, hat die Haelfte
+// gedeckt.
+
+const SHORTCUTS_TEMPLATE_PATH = path.join(REPO, 'assets', 'templates', 'modals-editors.html');
+const DMSCREEN_CSS_PATH = path.join(REPO, 'assets', 'styles', 'dmscreen.css');
+const HILFE_SPEC_PATH = path.join(REPO, 'tests', 'e2e', 'features', 'tastenhilfe.spec.js');
+const SHORTCUTS_JS_PATH = path.join(REPO, 'systems', 'spellslots', 'keyboard-shortcuts.js');
+
+describe('DOC — die Zahlen ueber die Tastenhilfe und ueber die Modifikatorschranke', () => {
+    test('DOC-13: jede Zahlangabe ueber die Zeilen der Tastenhilfe nennt die gemessene Zahl', () => {
+        // DIE MESSUNG: `.shortcut-row` in der Vorlage. Nicht im Buendel —
+        // dieser Fall ist ein Jest-Fall und baut nicht; die Vorlage IST die
+        // Quelle, aus der `build.py` das Buendel schreibt (nachgemessen:
+        // 43 in der Vorlage, 43 im Buendel).
+        const vorlage = fs.readFileSync(SHORTCUTS_TEMPLATE_PATH, 'utf8');
+        const zeilen = (vorlage.match(/class="shortcut-row"/g) || []).length;
+        // BASE-01/empty: ohne gefundene Zeilen misst der Fall nichts.
+        expect(zeilen).toBeGreaterThanOrEqual(10);
+
+        // WELCHE FORMEN GEPRUEFT WERDEN, und warum nicht jede Zahl neben dem
+        // Wort "Zeilen". Beide Akten fuehren auch HISTORISCHE Zeilenzahlen
+        // ("25 war ihr gemessener Ausgangsstand"), und die duerfen nicht
+        // mitwachsen — eine Messung von damals bleibt die Messung von damals.
+        // Geprueft werden darum genau die drei Formen, in denen die Zahl eine
+        // Aussage ueber den HEUTIGEN Umfang ist:
+        //
+        //   "<a> von <n> Zeilen"      ein Teil des Ganzen -> n ist das Ganze
+        //   "<n> Zeilen statt <m>"    eine Veraenderung    -> n ist das Neue
+        //   "auf <n> Zeilen"          eine Veraenderung    -> n ist das Neue
+        //
+        // Eine blosse "<n> Zeilen"-Angabe laeuft bewusst durch: sie ist ohne
+        // Zusammenhang nicht als Gegenwart oder Vergangenheit zu lesen, und
+        // ein Fall, der sie mitnaehme, wuerde verlangen, Geschichte zu
+        // faelschen. Der erste Entwurf dieses Falls tat genau das und meldete
+        // die Ausgangsstandzahl 25 als Fehler.
+        const kandidaten = [
+            ['docs/bugfixes.md', bugfixesMdContent],
+            ['assets/styles/dmscreen.css', fs.readFileSync(DMSCREEN_CSS_PATH, 'utf8')],
+            ['tests/e2e/features/tastenhilfe.spec.js', fs.readFileSync(HILFE_SPEC_PATH, 'utf8')]
+        ];
+        const FORMEN = [
+            /\d+\s+von\s+(\d+)\s+Zeilen/g,
+            /(\d+)\s+Zeilen\s+statt\s+\d+/g,
+            /auf\s+(\d+)\s+Zeilen/g
+        ];
+        // DIE AUSZEICHNUNG MUSS WEG, BEVOR GEMESSEN WIRD. In der Akte steht
+        // "**12 von 41** Zeilen" — die Sternchen stehen MITTEN in der Form,
+        // und der erste Entwurf hat die Stelle deshalb nicht gesehen,
+        // obwohl sie die gesuchte war. Dieselbe Falle wie bei dem
+        // Decision-Coverage-Gate, das an Kursiv-Sternchen scheiterte.
+        const nackt = z => z.replace(/[*`_]/g, '');
+        // UND KEIN ZUSAMMENHANGSFENSTER, sondern die ganze Datei — eine
+        // Entscheidung, die eine Messung erzwungen hat. Der Zusammenhang
+        // ("die Hilfe", "TASTENHILFE") steht regelmaessig im Absatzkopf und
+        // nicht in der Zeile mit der Zahl. Von den NEUN Stellen der drei
+        // Formen fand ein Fall
+        //
+        //     nur die eigene Zeile          1 von 9
+        //     +/- 6 Zeilen Fenster          3 von 9
+        //     +/- 15 Zeilen Fenster         8 von 9
+        //
+        // — die neunte (`tastenhilfe.spec.js`, Fusszeilen-Zusicherung) nennt
+        // das Wort "Hilfe" in 30 Zeilen Umgebung nicht. Ein Fenster, das
+        // auch sie traegt, ist kein Fenster mehr. Die drei Formen sind in
+        // diesen drei Dateien eindeutig: nachgezaehlt sprechen 9 von 9 von
+        // Hilfezeilen, keine von Quelltextzeilen. Darum die ganze Datei und
+        // eine Untergrenze darunter, die bemerkt, wenn die Stellen
+        // verschwinden.
+        const behauptungen = [];
+        for (const [datei, inhalt] of kandidaten) {
+            inhalt.split('\n').forEach((roh, i) => {
+                const zeile = nackt(roh);
+                for (const form of FORMEN) {
+                    for (const m of zeile.matchAll(form)) {
+                        behauptungen.push({
+                            ort: `${datei}:${i + 1}`,
+                            zahl: parseInt(m[1], 10),
+                            text: zeile.trim().slice(0, 120)
+                        });
+                    }
+                }
+            });
+        }
+        // BASE-01/empty: ohne Kandidatenzeile misst der Fall nichts — und
+        // hier ist die Untergrenze KEINE 1. Gemessen sind es neun Stellen;
+        // faellt die Zahl der gefundenen auf eins, hat eine Umformulierung
+        // die Stellen aus dem Blickfeld geschoben, nicht behoben.
+        expect(behauptungen.length).toBeGreaterThanOrEqual(6);
+
+        const falsch = behauptungen
+            .filter(b => b.zahl !== zeilen)
+            .map(b => `${b.ort} nennt ${b.zahl}, gemessen sind ${zeilen}: ${b.text}`);
+        expect(falsch).toEqual([]);
+    });
+
+    test('DOC-14: jede Zahlangabe ueber die Zweige mit OHNE_MODIFIKATOR nennt die gemessene Zahl', () => {
+        // DIE MESSUNG: Verwendungen des Praedikats, NICHT Nennungen. Die
+        // Definitionszeile (`const OHNE_MODIFIKATOR = e => …`) und
+        // Kommentarzeilen zaehlen nicht mit — sonst waere die Zahl von der
+        // Menge der Erklaerungen daneben abhaengig.
+        const quelle = fs.readFileSync(SHORTCUTS_JS_PATH, 'utf8');
+        const zweige = quelle
+            .split('\n')
+            .filter(z => !/^\s*(\/\/|\*|\/\*)/.test(z))
+            .filter(z => !/const\s+OHNE_MODIFIKATOR\s*=/.test(z))
+            .reduce((n, z) => n + (z.match(/OHNE_MODIFIKATOR\s*\(/g) || []).length, 0);
+        // BASE-01/empty: null Zweige heisst, dass der Leser kaputt ist.
+        expect(zweige).toBeGreaterThanOrEqual(1);
+
+        // ZAHLWOERTER, nicht Ziffern: die Akte schreibt "an allen elf
+        // Zweigen" aus. Ein Fall, der nur Ziffern sucht, haette genau diese
+        // Stelle uebersehen — und sie war die falsche.
+        const WORTZAHL = {
+            einem: 1,
+            zwei: 2,
+            drei: 3,
+            vier: 4,
+            fünf: 5,
+            sechs: 6,
+            sieben: 7,
+            acht: 8,
+            neun: 9,
+            zehn: 10,
+            elf: 11,
+            zwölf: 12,
+            dreizehn: 13,
+            vierzehn: 14,
+            fünfzehn: 15
+        };
+        const wortMuster = Object.keys(WORTZAHL).join('|');
+        const behauptungen = [];
+        for (const [datei, inhalt] of [
+            ['CLAUDE.md', claudeMdContent],
+            ['docs/bugfixes.md', bugfixesMdContent]
+        ]) {
+            inhalt.split('\n').forEach((zeile, i) => {
+                const muster = new RegExp(`(\\d+|${wortMuster})\\s+Zweige?n?\\b`, 'gi');
+                for (const m of zeile.matchAll(muster)) {
+                    if (!/OHNE_MODIFIKATOR|Modifikator|Negation/i.test(zeile)) continue;
+                    const roh = m[1].toLowerCase();
+                    behauptungen.push({
+                        ort: `${datei}:${i + 1}`,
+                        zahl: /^\d+$/.test(roh) ? parseInt(roh, 10) : WORTZAHL[roh],
+                        text: zeile.trim().slice(0, 120)
+                    });
+                }
+            });
+        }
+        // BASE-01/empty: ohne Kandidatenzeile misst der Fall nichts.
+        expect(behauptungen.length).toBeGreaterThanOrEqual(1);
+
+        const falsch = behauptungen
+            .filter(b => b.zahl !== zweige)
+            .map(b => `${b.ort} nennt ${b.zahl}, gemessen sind ${zweige}: ${b.text}`);
+        expect(falsch).toEqual([]);
+    });
+});

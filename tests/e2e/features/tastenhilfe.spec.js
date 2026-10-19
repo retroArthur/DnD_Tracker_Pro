@@ -2750,19 +2750,33 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
         }
         const ansichtenMitN = Object.entries(wirkungVonN).filter(([, w]) => w !== '(keine)');
         const ansichtenOhneZug = ansichtenMitN.filter(([, w]) => !/^Zug /.test(w));
+        // DIE FUENF ANSICHTEN WERDEN BENANNT UND NICHT GEZAEHLT, und das ist
+        // teuer erkauft. Hier stand `toBeGreaterThan(1)`, und die Sonde
+        // darueber suchte `.collapsible.open` — eine Klasse, die es im
+        // Buendel NULL Mal gibt (`toggleCollapse()` schaltet `open` an
+        // `#char-form`/`#enc-form`, und die tragen `.collapsible-content`;
+        // `data-action` sitzt am GESCHWISTER `.collapsible-header`). Party
+        // und Begegnung fielen damit als "(keine)" aus, der Fall sah drei
+        // Ansichten statt fuenf — und blieb gruen, weil 3 > 1 ist. Die
+        // Zusage in `CLAUDE.md` ("`n` wirkt in fuenf Ansichten") war in
+        // genau diesem Umfang unbelegt. Eine Untergrenze deckt eine blinde
+        // Sonde; eine benannte Menge nicht.
         expect(
-            ansichtenMitN.length,
-            'Vorbedingung: `n` muss in mehr als einer Ansicht etwas tun, sonst ist die ' +
-                'Forderung unten unbegruendet. Gemessen: ' +
+            ansichtenMitN.map(([a]) => a).sort(),
+            'Vorbedingung: `n` muss in genau diesen fuenf Ansichten etwas tun, sonst ist ' +
+                'die Forderung unten unbegruendet — und die Zusage in `CLAUDE.md` ' +
+                'ebenfalls. Gemessen: ' +
                 Object.entries(wirkungVonN)
                     .map(([a, w]) => `${a}: ${w}`)
                     .join(' | ')
-        ).toBeGreaterThan(1);
+        ).toEqual(['encounter', 'initiative', 'npcs', 'party', 'quests']);
         expect(
-            ansichtenOhneZug.length,
-            '`n` muss in mindestens zwei Ansichten etwas ANDERES tun als den Zugwechsel. ' +
-                `Gemessen: ${ansichtenOhneZug.map(([a, w]) => `${a}: ${w}`).join(' | ')}`
-        ).toBeGreaterThanOrEqual(2);
+            ansichtenOhneZug.map(([a]) => a).sort(),
+            '`n` muss in VIER Ansichten etwas ANDERES tun als den Zugwechsel: zwei ' +
+                'Anlegen-Fenster (NSC, Auftrag) und zwei aufklappende Formulare (Party, ' +
+                'Begegnung). Gemessen: ' +
+                `${ansichtenOhneZug.map(([a, w]) => `${a}: ${w}`).join(' | ')}`
+        ).toEqual(['encounter', 'npcs', 'party', 'quests']);
 
         const nZeilen = zeilenMit('N');
         expect(
@@ -2935,5 +2949,643 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                 'das erste Glied rund 40 Halte vom Seitenanfang entfernt, und bei ' +
                 'BODY-Fokus tut keine der vier Tasten etwas.'
         ).toMatch(/reihe|gruppe|glied/);
+    });
+});
+
+// ============================================================
+// (19) DIE HILFE NENNT DIE ANSICHTEN SO, WIE DIE APP SIE NENNT
+// ============================================================
+//
+// WARUM DAS EIN EIGENER FALL IST UND NICHT EINE SPITZFINDIGKEIT. Die neun
+// Navigationszeilen sind die einzigen der 43, die auf etwas ZEIGEN, das der
+// Nutzer gleichzeitig vor sich hat: einen Reiter. Stimmt der Name nicht,
+// sucht er nach einem Reiter, den es nicht gibt — und das ist genau der
+// Fehler, den eine Hilfe nicht machen darf, weil sie die Instanz ist, die
+// man befragt, wenn man etwas NICHT findet.
+//
+// Gemessen am gebauten Buendel: drei der neun Zeilen trugen einen Namen,
+// den die App nirgends fuehrt.
+//
+//     Taste   Ansicht      Reiter der App     Zeile der Hilfe
+//     1       dashboard    "🏠 Start"         "Dashboard"
+//     8       shops        "🏪 Shops"         "Läden"
+//     9       loot         "📦 Truhe"         "Beute"
+//
+// DIE ZUORDNUNG WIRD GEMESSEN, NICHT GELESEN: der Fall drueckt jede Ziffer
+// und schaut, welche Ansicht danach aktiv ist. Eine Liste im Fall waere eine
+// zweite Kopie der Liste im Quelltext und wuerde mit ihr auseinanderlaufen —
+// dieselbe Krankheit, die dieser Strang zu heilen versucht.
+
+test.describe('HILF — die Hilfe nennt die Ansichten der App', () => {
+    test('(19) jede Navigationszeile traegt den Namen ihres Reiters', async ({ page }) => {
+        test.setTimeout(240_000);
+        await ansichtOeffnen(page, 'dashboard');
+
+        const hilfe = await hilfeLesen(page);
+        const navAbschnitt = hilfe.abschnitte.find(s => /Navigation/.test(s.titel));
+        expect(navAbschnitt, 'Vorbedingung: die Hilfe hat einen Navigationsabschnitt').toBeTruthy();
+
+        /** Die Reiterbeschriftungen der App, aus dem Buendel. */
+        const reiter = await page.evaluate(() => {
+            /** @type {Record<string,string>} */
+            const r = {};
+            document.querySelectorAll('.nav-tab[data-view]').forEach(b => {
+                r[b.dataset.view] = (b.textContent || '').replace(/\s+/g, ' ').trim();
+            });
+            return r;
+        });
+        // BASE-01/empty: ohne gelesene Reiter misst der Fall nichts.
+        expect(
+            Object.keys(reiter).length,
+            'Vorbedingung: die Reiter sind im Buendel lesbar'
+        ).toBeGreaterThanOrEqual(20);
+
+        // DIE MESSUNG: welche Ansicht macht welche Ziffer auf.
+        /** @type {Record<string,string>} */
+        const zielAnsicht = {};
+        for (let d = 1; d <= 9; d++) {
+            await page.evaluate(ZURUECKSETZEN('dashboard'));
+            await page.waitForTimeout(160);
+            await page.keyboard.press(String(d));
+            await page.waitForTimeout(320);
+            zielAnsicht[String(d)] = await page.evaluate(() =>
+                (document.querySelector('.view.active')?.id || '').replace(/^view-/, '')
+            );
+        }
+        expect(
+            Object.values(zielAnsicht).filter(Boolean).length,
+            'Vorbedingung: alle neun Ziffern wechseln die Ansicht. Gemessen: ' +
+                JSON.stringify(zielAnsicht)
+        ).toBe(9);
+
+        // Und jetzt der Vergleich Zeile gegen Reiter.
+        const falsch = [];
+        for (let d = 1; d <= 9; d++) {
+            const taste = String(d);
+            const ansicht = zielAnsicht[taste];
+            const zeile = hilfe.reihen.find(
+                r => r.tasten.length === 1 && r.tasten[0] === taste && r.text
+            );
+            if (!zeile) {
+                falsch.push(`${taste}: keine Zeile`);
+                continue;
+            }
+            const reiterText = reiter[ansicht] || '';
+            // Der Vergleich laeuft auf dem BLOSSEN WORT: der Reiter traegt ein
+            // Symbol davor ("🏠 Start"), die Zeile nicht. Verlangt ist, dass
+            // die Beschriftung der Zeile im Reitertext VORKOMMT — nicht, dass
+            // sie ihm gleicht. Eine Zeile darf praeziser sein ("Start
+            // (Armaturenbrett)"), sie darf nur nicht etwas ANDERES nennen.
+            const nackt = s => s.replace(/[^\p{L}\p{N}]+/gu, '').toLowerCase();
+            if (!nackt(reiterText).includes(nackt(zeile.text))) {
+                falsch.push(
+                    `${taste} -> ${ansicht}: Reiter "${reiterText}", Hilfe "${zeile.text}"`
+                );
+            }
+        }
+        expect(
+            falsch,
+            'Diese Navigationszeilen nennen einen Namen, den die App nicht fuehrt. Links ' +
+                'steht, was der Nutzer in der Reiterleiste sieht, rechts, was die Hilfe ' +
+                'ihm sagt. Der Nutzer sucht dann nach einem Reiter, den es nicht gibt — ' +
+                'und die Hilfe ist genau die Instanz, die er befragt, WEIL er etwas nicht ' +
+                'findet.\n  ' +
+                falsch.join('\n  ')
+        ).toEqual([]);
+    });
+});
+
+// ============================================================
+// (20) DIE POS1/ENDE-ZEILE NENNT IHRE VORBEDINGUNG SELBST
+// ============================================================
+//
+// WAS (18)(d) OFFEN GELASSEN HAT. Jener Fall prueft den VERBUND der drei
+// E-2-Zeilen: irgendeine davon muss den Fokus nennen. Zwei tun es ("Fokus in
+// einer Reihe (z. B. Zauberplätze)"), die dritte nicht — und die dritte ist
+// die, die am meisten verspricht: "Erster bzw. letzter Punkt der Reihe",
+// `Pos1` `Ende`. Ein Nutzer liest eine Zeile, nicht einen Verbund.
+//
+// UND IN DER KAMPFANSICHT IST SIE TEUER, gemessen am gebauten Buendel,
+// 1440x900, gefuellte Kampagne mit sechs Kaempfern, BODY-Fokus:
+//
+//     Pos1        nichts            defaultPrevented false
+//     Ende        scrollY 0 -> 306  defaultPrevented false
+//     ↓           scrollY 0 -> 40   defaultPrevented false
+//     ← → ↑       nichts            defaultPrevented false
+//
+// (Die 306 px sind an einer frisch geladenen Seite gemessen. Der Fall unten
+// setzt vor jedem Anschlag mit `ZURUECKSETZEN` zurueck und meldet dort 736 px
+// — mehr, nicht weniger. Die Aussage haengt nicht an der Zahl, sondern am
+// Vorzeichen, und der Fall prueft `> 0` und nennt den Istwert.)
+//
+// Die Kampfansicht LAEUFT (scrollHeight 1206 bei innerHeight 900) — der Satz
+// "der Koerper dieser App laeuft nie" aus (18)(d) gilt fuer die
+// Beute-Ansicht und nicht hier. Wer in der Kampfansicht `Ende` drueckt, weil
+// die Hilfe "letzter Punkt der Reihe" sagt, rollt das Dokument und verliert
+// die Kampfzeile, auf die er schaut.
+//
+// KEINE KAMPFZEILE IST EINE REIHE. Gemessen traegt die Kampfansicht sechs
+// `.init-row`, und keine davon ist Glied einer Gruppe; Gruppen gibt es dort
+// nur INNERHALB der Zeile (sechs `.init-spell-slots` mit 42 Punkten, dazu
+// `.death-saves-dots` bei einem Sterbenden). Mit Fokus auf einem dieser
+// Punkte tut `Ende` genau das, was die Zeile sagt (gemessen: Glied 0 -> 6,
+// defaultPrevented true) — nur liegt dieser Punkt 40 Tabulatorhalte vom
+// Seitenanfang entfernt, und davon steht in der Zeile nichts.
+
+test.describe('HILF — die Gruppenzeilen gelten auch einzeln', () => {
+    test('(20) Pos1/Ende nennt den Fokus, und die Kampfansicht belegt warum', async ({ page }) => {
+        test.setTimeout(240_000);
+        await ansichtOeffnen(page, 'initiative');
+
+        // ---- Vorbedingung A: die Kampfansicht laeuft, und `Ende` rollt sie.
+        const rollLage = await page.evaluate(() => ({
+            scrollHeight: document.documentElement.scrollHeight,
+            innerHeight: window.innerHeight,
+            kampfzeilen: document.querySelectorAll('.init-row').length,
+            zeilenInGruppe: Array.from(document.querySelectorAll('.init-row')).filter(
+                r => r.getAttribute('tabindex') !== null || r.closest('[role="toolbar"]')
+            ).length,
+            gruppenInZeile: document.querySelectorAll('.init-row .init-spell-slots').length
+        }));
+        expect(
+            rollLage.kampfzeilen,
+            'Vorbedingung: die Kampfansicht fuehrt Kampfzeilen. Gemessen: ' +
+                JSON.stringify(rollLage)
+        ).toBeGreaterThanOrEqual(6);
+        expect(
+            rollLage.zeilenInGruppe,
+            'Vorbedingung des Befundes: KEINE Kampfzeile ist Glied einer Gruppe — nur ' +
+                `Punkte INNERHALB der Zeile sind es (${rollLage.gruppenInZeile} Reihen). ` +
+                'Wird eine Kampfzeile selbst zur Gruppe, ist der Befund hinfaellig und ' +
+                'dieser Fall gehoert neu geschrieben.'
+        ).toBe(0);
+        expect(
+            rollLage.scrollHeight,
+            'Vorbedingung des Befundes: die Kampfansicht ist LAENGER als das Fenster. ' +
+                `Gemessen ${rollLage.scrollHeight} px Inhalt in ${rollLage.innerHeight} px ` +
+                'Fenster. Nur darum kann `Ende` dort das Dokument rollen.'
+        ).toBeGreaterThan(rollLage.innerHeight);
+
+        /** @type {Record<string, {dp: boolean, scrollY: number}>} */
+        const bodyLage = {};
+        for (const taste of ['Home', 'End', 'ArrowDown']) {
+            await page.evaluate(ZURUECKSETZEN('initiative'));
+            await page.waitForTimeout(200);
+            await page.evaluate(() => {
+                window.__abnDp = null;
+                window.addEventListener(
+                    'keydown',
+                    e => {
+                        window.__abnDp = e.defaultPrevented;
+                    },
+                    { once: true }
+                );
+            });
+            await page.keyboard.press(taste);
+            await page.waitForTimeout(260);
+            bodyLage[taste] = await page.evaluate(() => ({
+                dp: window.__abnDp,
+                scrollY: Math.round(window.scrollY)
+            }));
+        }
+        expect(
+            bodyLage.End.scrollY,
+            'Vorbedingung des Befundes: `Ende` rollt in der Kampfansicht bei BODY-Fokus ' +
+                `das Dokument. Gemessen: ${JSON.stringify(bodyLage)}. Rollt es nicht, ` +
+                'kostet die unvollstaendige Zeile nichts und dieser Fall ist unbegruendet.'
+        ).toBeGreaterThan(0);
+        expect(
+            bodyLage.End.dp,
+            'und zwar als BROWSERVORGABE, nicht als App-Wirkung (defaultPrevented false)'
+        ).toBe(false);
+
+        // ---- Die Forderung: die Zeile selbst nennt den Fokus.
+        const hilfe = await hilfeLesen(page);
+        const posEndeZeilen = hilfe.reihen.filter(r => {
+            const t = hilfeTastenmenge([r]);
+            return t.has('POS1') || t.has('ENDE');
+        });
+        expect(
+            posEndeZeilen.length,
+            'Vorbedingung: die Hilfe fuehrt eine Zeile fuer Pos1/Ende'
+        ).toBeGreaterThanOrEqual(1);
+        const ohneVorbedingung = posEndeZeilen
+            .filter(r => !/fokus|liegt auf|steht auf|darin|angew/i.test(r.text))
+            .map(r => r.text);
+        expect(
+            ohneVorbedingung,
+            'Diese Zeile(n) fuer Pos1/Ende nennen ihre Vorbedingung nicht: ' +
+                `"${ohneVorbedingung.join('" | "')}". (18)(d) prueft nur den VERBUND der ` +
+                'drei E-2-Zeilen — ein Nutzer liest aber eine Zeile. Gemessen in der ' +
+                'Kampfansicht bei BODY-Fokus: `Ende` rollt das Dokument um ' +
+                `${bodyLage.End.scrollY} px (Inhalt ${rollLage.scrollHeight} px in ` +
+                `${rollLage.innerHeight} px), und keine der ${rollLage.kampfzeilen} ` +
+                'Kampfzeilen ist Glied einer Gruppe. Die Zeile verspricht damit in der ' +
+                'reichsten Ansicht der App etwas, das dort nur nach 40 Tabulatorhalten ' +
+                'auf einen Zauberplatz gilt.'
+        ).toEqual([]);
+    });
+});
+
+// ============================================================
+// (21) DIE LEERTASTEN-ZEILE NENNT ETWAS NACHPRUEFBARES
+// ============================================================
+//
+// DIE GEMESSENE WAHRHEITSTAFEL, gebautes Buendel, Kampfansicht, sechs
+// Kaempfer, je frischer Seitenaufbau, echte Anschlaege und echte Mausklicks:
+//
+//   Fokuslage                          nativ versorgt nurMaus Ring  Leertaste
+//   1 BODY (kein Fokus)                  -      -       -    false Zug weiter
+//   2 Tab auf `<button>`                 ja    nein    nein  true  bedient den Knopf
+//   3 Mausklick auf `<button>`           ja    nein    nein  FALSE bedient den Knopf
+//   4 Mausklick auf `div.init-value`     nein   ja      JA   false ZUG WEITER
+//   5 Tab auf `div.init-value`           nein   ja     nein  true  bedient das Element
+//
+// WAS DIE TAFEL UEBER DIE ZEILE "Nächster Zug (Fokus auf keinem
+// Bedienelement)" SAGT: Lage 4 widerlegt sie. Dort liegt der Fokus auf einem
+// Bedienelement (`div.init-value`, `tabindex="0"`, `data-action`) — und die
+// Leertaste wechselt trotzdem den Zug. Die Zeile nennt damit eine Bedingung,
+// die in einer von fuenf gemessenen Lagen falsch ist.
+//
+// UND WARUM DER FOKUSRING KEIN AUSWEG IST. Die naheliegende Reparatur
+// ("sichtbar angewaehlt") faellt an Lage 3: ein mit der MAUS geklickter
+// `<button>` traegt keinen `:focus-visible`-Ring und bedient sich trotzdem.
+// Der wirkliche Unterschied zwischen 4 und 5 ist der WEG des Fokus (Maus
+// gegen Tastatur, `KeyboardReach.nurMausfokus()`), und den kann ein Nutzer an
+// der Oberflaeche nicht ablesen — es gibt kein Merkmal, das ihn zeigt.
+//
+// DIE FOLGERUNG, und sie ist die eigentliche Aussage dieses Falls: eine
+// Zeile darf nicht auf einem Zustand fussen, den der Nutzer nicht sehen
+// kann. Sie darf auf dem fussen, was er GETAN hat — geklickt oder
+// tabuliert —, denn das weiss er immer. Verlangt ist darum eine Bedingung,
+// die eine HANDLUNG nennt, und verboten ist die Behauptung ueber den Ort des
+// Fokus, die Lage 4 widerlegt.
+
+test.describe('HILF — die Leertaste sagt etwas Nachpruefbares', () => {
+    test('(21) die Bedingung der Leertaste nennt eine Handlung, keinen Fokusort', async ({
+        page
+    }) => {
+        test.setTimeout(300_000);
+
+        /**
+         * Eine Fokuslage herstellen und die Leertaste druecken.
+         * @param {() => Promise<string>} herstellen
+         */
+        const messen = async herstellen => {
+            await ansichtOeffnen(page, 'initiative');
+            await page.evaluate(() => {
+                if (window.D?.initiative) window.D.initiative.currentTurn = 0;
+                if (typeof window.renderInit === 'function') window.renderInit();
+            });
+            await page.waitForTimeout(260);
+            const notiz = await herstellen();
+            const vor = await page.evaluate(() => {
+                window.__abnDp = null;
+                window.addEventListener(
+                    'keydown',
+                    e => {
+                        window.__abnDp = e.defaultPrevented;
+                    },
+                    { once: true }
+                );
+                const a = document.activeElement;
+                return {
+                    tag: a?.tagName || 'null',
+                    bedienelement: !!a?.matches?.(
+                        'a[href],button,input:not([type=hidden]),select,textarea,summary,' +
+                            'details,[tabindex]:not([tabindex="-1"])'
+                    ),
+                    nurMaus: !!window.KeyboardReach?.nurMausfokus?.(a),
+                    ring: (() => {
+                        try {
+                            return a && a !== document.body ? a.matches(':focus-visible') : false;
+                        } catch {
+                            return false;
+                        }
+                    })(),
+                    zug: window.D?.initiative?.currentTurn ?? null
+                };
+            });
+            await page.keyboard.press(' ');
+            await page.waitForTimeout(380);
+            const nach = await page.evaluate(() => window.D?.initiative?.currentTurn ?? null);
+            return { ...vor, notiz, zugNachher: nach, zugGewechselt: nach !== vor.zug };
+        };
+
+        /** @type {Record<string, any>} */
+        const lagen = {};
+        lagen['1 BODY'] = await messen(async () => {
+            await page.evaluate(() => document.activeElement?.blur?.());
+            return 'kein Fokus';
+        });
+        lagen['4 Mausklick auf nachgeruestetes'] = await messen(async () => {
+            const h = await page.evaluate(() => {
+                const n = Array.from(
+                    document.querySelectorAll('#view-initiative [data-action][tabindex="0"]')
+                ).filter(
+                    e =>
+                        !e.matches(
+                            'a[href],button,input:not([type=hidden]),select,textarea,summary,details'
+                        ) && e.getBoundingClientRect().width > 4
+                );
+                const b = n[0];
+                if (!b) return null;
+                const r = b.getBoundingClientRect();
+                return {
+                    x: r.x + r.width / 2,
+                    y: r.y + r.height / 2,
+                    t: b.tagName + '.' + String(b.className).slice(0, 24)
+                };
+            });
+            if (!h) return '(kein nachgeruestetes Element)';
+            await page.mouse.click(h.x, h.y);
+            await page.waitForTimeout(280);
+            await page.evaluate(() => {
+                if (window.D?.initiative) window.D.initiative.currentTurn = 0;
+            });
+            return h.t;
+        });
+        lagen['3 Mausklick auf nativen Knopf'] = await messen(async () => {
+            const h = await page.evaluate(() => {
+                const b = document.querySelector(
+                    '#view-initiative button[data-action="sort-initiative"]'
+                );
+                if (!b) return null;
+                const r = b.getBoundingClientRect();
+                return {
+                    x: r.x + r.width / 2,
+                    y: r.y + r.height / 2,
+                    t: (b.textContent || '').trim()
+                };
+            });
+            if (!h) return '(kein Knopf)';
+            await page.mouse.click(h.x, h.y);
+            await page.waitForTimeout(280);
+            return h.t;
+        });
+
+        const tafel = Object.entries(lagen)
+            .map(
+                ([k, v]) =>
+                    `${k}: fokus=${v.tag} (${v.notiz}) bedienelement=${v.bedienelement} ` +
+                    `nurMaus=${v.nurMaus} ring=${v.ring} Zug ${v.zug}->${v.zugNachher}`
+            )
+            .join('\n  ');
+
+        // ---- Vorbedingung: die Tafel muss den Widerspruch wirklich zeigen.
+        expect(
+            lagen['1 BODY'].zugGewechselt,
+            `Vorbedingung: ohne Fokus wechselt die Leertaste den Zug.\n  ${tafel}`
+        ).toBe(true);
+        expect(
+            {
+                bedienelement: lagen['4 Mausklick auf nachgeruestetes'].bedienelement,
+                zugGewechselt: lagen['4 Mausklick auf nachgeruestetes'].zugGewechselt
+            },
+            'DER BEFUND: nach einem Mausklick auf ein nachgeruestetes Bedienelement liegt ' +
+                'der Fokus auf einem Bedienelement UND die Leertaste wechselt den Zug. ' +
+                'Trifft das nicht zu, ist die Zeile "Fokus auf keinem Bedienelement" ' +
+                `richtig und dieser Fall unbegruendet.\n  ${tafel}`
+        ).toEqual({ bedienelement: true, zugGewechselt: true });
+        expect(
+            {
+                ring: lagen['3 Mausklick auf nativen Knopf'].ring,
+                zugGewechselt: lagen['3 Mausklick auf nativen Knopf'].zugGewechselt
+            },
+            'UND DER AUSWEG IST VERBAUT: ein mit der Maus geklickter `<button>` traegt ' +
+                'keinen Fokusring und bedient sich trotzdem. Eine Zeile, die auf den ' +
+                `sichtbaren Ring abhebt, waere hier falsch.\n  ${tafel}`
+        ).toEqual({ ring: false, zugGewechselt: false });
+
+        // ---- Die Forderung an die Zeile.
+        const hilfe = await hilfeLesen(page);
+        const leerZeilen = hilfe.reihen
+            .filter(r => hilfeTastenmenge([r]).has('LEERTASTE'))
+            .map(r => r.text);
+        expect(leerZeilen.length, 'Vorbedingung: die Hilfe fuehrt eine Leertasten-Zeile').toBe(1);
+        expect(
+            leerZeilen[0],
+            `Die Leertasten-Zeile lautet "${leerZeilen[0]}". Sie darf nicht behaupten, der ` +
+                'Fokus liege auf KEINEM Bedienelement — Lage 4 der Tafel widerlegt es: ' +
+                `dort liegt er auf einem, und der Zug wechselt trotzdem.\n  ${tafel}`
+        ).not.toMatch(/(kein|ohne)[a-zäöüß ]*bedienelement/i);
+        expect(
+            leerZeilen[0].toLowerCase(),
+            `Die Leertasten-Zeile lautet "${leerZeilen[0]}". Ihre Bedingung muss eine ` +
+                'HANDLUNG des Nutzers nennen (angeklickt, angewaehlt, mit Tab gesprungen) ' +
+                'und nicht einen Zustand, den er nicht sehen kann. Der wirkliche ' +
+                'Unterschied zwischen Lage 4 und Lage 5 ist der WEG des Fokus — Maus gegen ' +
+                `Tastatur —, und dafuer gibt es an der Oberflaeche kein Merkmal.\n  ${tafel}`
+        ).toMatch(/angeklickt|angewählt|angewaehlt|geklickt|tabuliert/);
+    });
+});
+
+// ============================================================
+// (22) DIE OFFENE HILFE HAT NAMEN — AUSWEG, TITEL, TASTENKAPPEN
+// ============================================================
+//
+// DREI BEFUNDE AN EINER FLAECHE, die Fall (15) nicht gesehen hat, weil er
+// Rollen und Paare zaehlt und keine NAMEN:
+//
+//   (a) DER ✕-KNOPF HAT KEINEN NAMEN. Gemessen ist er das EINZIGE
+//       fokussierbare Element im Dialog (1 von 1) — der erste Tabulatorhalt
+//       der offenen Hilfe heisst fuer ein Vorleseprogramm "✕", also je nach
+//       Programm "Multiplikationszeichen" oder gar nichts. Der eine Ausweg,
+//       den die Tastatur hat, ist damit unbenannt.
+//
+//   (b) DER TITEL IST KEINE UEBERSCHRIFT. `#shortcuts-overlay-titel` ist ein
+//       `<span>` ohne `role`; die sechs Abschnitte beginnen bei `aria-level`
+//       3. Der Baum hat damit sechs Ueberschriften der Ebene 3 und keine
+//       darueber — wer per Ueberschriftensprung navigiert, landet mitten im
+//       Inhalt und erfaehrt nie, wie die Flaeche heisst.
+//
+//   (c) SIEBEN TASTENKAPPEN HABEN KEINE TEXTFASSUNG: `←`, `→`, `↑`, `↓`,
+//       `/`, `?` und `.`. Gemessen liest der Zugaenglichkeitsbaum die Zeile
+//       als `definition: ← →` — ein Vorleseprogramm sagt dazu "Pfeil nach
+//       links" nicht.
+//
+// UND WARUM DIE NAHELIEGENDE REPARATUR VON (c) NICHTS TUT. Vier Fassungen am
+// laufenden Buendel eingesetzt und den Baum gelesen, BEVOR eine gewaehlt
+// wurde:
+//
+//     Ausgangsstand                       definition: ← →
+//     `aria-label` am `<kbd>`             definition: ← →        <-- WIRKUNGSLOS
+//     `.sr-only`-Span dazu                definition: ← → Pfeil nach links, …
+//     `aria-hidden` + `.sr-only`-Span     definition: Pfeil nach links, …
+//     `role="img"` + `aria-label`         img "Pfeil nach links": ←
+//
+// `<kbd>` ist `role="generic"`, und auf einer generischen Rolle ist Benennung
+// verboten — Chromium verwirft das `aria-label` lautlos. Das ist die Art
+// Reparatur, die richtig aussieht und nichts bewirkt; der Fall misst darum am
+// BAUM und nicht am Attribut.
+
+test.describe('HILF — die offene Hilfe hat Namen', () => {
+    test('(22) Ausweg, Titel und Tastenkappen sind benannt', async ({ page }) => {
+        test.setTimeout(180_000);
+        await ansichtOeffnen(page, 'initiative');
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(450);
+        expect(
+            await page.evaluate(() => !!document.querySelector('#shortcuts-overlay.show')),
+            'Vorbedingung: "?" oeffnet die Hilfe'
+        ).toBe(true);
+
+        const lage = await page.evaluate(() => {
+            const o = document.getElementById('shortcuts-overlay');
+            const halte = Array.from(
+                o.querySelectorAll(
+                    'a[href],button,input:not([type=hidden]),select,textarea,' +
+                        '[tabindex]:not([tabindex="-1"])'
+                )
+            );
+            const kappen = Array.from(o.querySelectorAll('kbd.shortcut-key'));
+            return {
+                halte: halte.length,
+                halteTexte: halte.map(h => (h.textContent || '').trim()),
+                titel: (() => {
+                    const t = document.getElementById('shortcuts-overlay-titel');
+                    return t ? { tag: t.tagName, role: t.getAttribute('role') } : null;
+                })(),
+                abschnitte: o.querySelectorAll('.shortcuts-section').length,
+                // Eine Kappe ohne Buchstaben und Ziffer ist eine SYMBOLKAPPE.
+                symbolkappen: kappen
+                    .map(k => (k.textContent || '').trim())
+                    .filter(t => t && !/[\p{L}\p{N}]/u.test(t))
+            };
+        });
+        expect(
+            lage.halte,
+            `Vorbedingung: die Hilfe hat Haltepunkte. Gemessen ${lage.halte} ` +
+                `(${lage.halteTexte.join(' | ')}).`
+        ).toBeGreaterThanOrEqual(1);
+        expect(
+            lage.symbolkappen.length,
+            'Vorbedingung: die Hilfe fuehrt Symbolkappen. Gemessen: ' +
+                JSON.stringify(lage.symbolkappen)
+        ).toBeGreaterThanOrEqual(4);
+
+        const schnappschuss = await page.locator('#shortcuts-overlay').ariaSnapshot();
+        const zeilen = schnappschuss.split('\n');
+
+        // ---- (a) der Ausweg hat einen Namen.
+        const knopfZeilen = zeilen.filter(z => /^\s*- button/.test(z));
+        expect(
+            knopfZeilen.length,
+            `Vorbedingung: der Baum fuehrt den ✕-Knopf. Gemessen: ${knopfZeilen.join(' | ')}`
+        ).toBeGreaterThanOrEqual(1);
+        const namenlos = knopfZeilen.filter(z => !/"[^"]*[\p{L}][^"]*"/u.test(z));
+        expect(
+            namenlos,
+            `Der Ausweg der Hilfe traegt keinen Namen aus Worten: ${namenlos.join(' | ')}. ` +
+                `Er ist gemessen der EINZIGE Haltepunkt im Dialog (${lage.halte} von ` +
+                `${lage.halte}), also der erste und letzte, auf dem die Tastatur landet. ` +
+                'Ein Vorleseprogramm sagt dort "✕" — je nach Programm ' +
+                '"Multiplikationszeichen" oder nichts.'
+        ).toEqual([]);
+
+        // ---- (b) der Titel ist eine Ueberschrift ueber den Abschnitten.
+        const ueberschriften = zeilen.filter(z => /^\s*- heading/.test(z));
+        expect(
+            ueberschriften.length,
+            `Der Baum fuehrt ${ueberschriften.length} Ueberschriften bei ` +
+                `${lage.abschnitte} Abschnitten. Der Titel der Flaeche muss selbst eine ` +
+                'sein, sonst gibt es keine Ebene ueber dem Inhalt und ein ' +
+                'Ueberschriftensprung landet mitten in der Liste. Gemessen war der Titel ' +
+                `ein ${lage.titel?.tag} ohne role (${JSON.stringify(lage.titel)}).\n` +
+                ueberschriften.join('\n')
+        ).toBe(lage.abschnitte + 1);
+        const ebenen = ueberschriften
+            .map(z => {
+                const m = z.match(/\[level=(\d+)\]/);
+                return m ? Number(m[1]) : null;
+            })
+            .filter(e => e !== null);
+        expect(
+            ebenen.length,
+            `Vorbedingung: der Baum nennt die Ebenen. Gemessen: ${ueberschriften.join(' | ')}`
+        ).toBeGreaterThanOrEqual(1);
+        expect(
+            Math.min(...ebenen),
+            `Die Ueberschriftenebenen der Hilfe sind ${JSON.stringify(ebenen)}. Die ` +
+                'oberste muss UEBER der Ebene der Abschnitte liegen — sonst stehen Titel ' +
+                'und Abschnitt auf derselben Stufe und die Flaeche hat keinen Kopf.'
+        ).toBeLessThan(3);
+
+        // ---- (c) jede Symbolkappe kommt als Wort im Baum an.
+        const ohneWort = lage.symbolkappen.filter(zeichen => {
+            // Die Zeile(n) des Baums, die dieses Zeichen fuehren, muessen
+            // daneben Buchstaben tragen — also eine Textfassung.
+            const treffer = zeilen.filter(z => z.includes(zeichen));
+            return !treffer.some(z => /[\p{L}]{3,}/u.test(z.split(':').slice(1).join(':')));
+        });
+        expect(
+            ohneWort,
+            'Diese Tastenkappen kommen im Zugaenglichkeitsbaum nur als Zeichen an und ' +
+                `nicht als Wort: ${JSON.stringify(ohneWort)}. Ein Vorleseprogramm liest ` +
+                '"←" nicht als "Pfeil nach links". VORSICHT BEI DER REPARATUR: ein ' +
+                '`aria-label` am `<kbd>` ist WIRKUNGSLOS (gemessen — `<kbd>` ist ' +
+                '`role="generic"`, dort ist Benennung verboten). Es braucht eine ' +
+                'Textfassung im Baum, z. B. `aria-hidden` auf der Kappe plus einen ' +
+                '`.sr-only`-Span daneben.\n\n' +
+                zeilen
+                    .filter(z => lage.symbolkappen.some(s => z.includes(s)))
+                    .join('\n')
+                    .slice(0, 900)
+        ).toEqual([]);
+    });
+});
+
+// ============================================================
+// (23) "DIESE HILFE" IST KEIN UMSCHALTER
+// ============================================================
+//
+// GEMESSEN: `?` bei OFFENER Hilfe laesst sie offen
+// (`class="shortcuts-overlay show"`, sichtbar) — die Schranke aus Befund 2
+// macht die App fuer App-Kuerzel taub, und `?` ist eines davon. Die Zeile
+// "Diese Hilfe — ?" liest sich daneben wie ein Umschalter, und das ist
+// dieselbe Fehlerart wie die drei Zeilen aus (18): sie verspricht etwas, das
+// die Taste nicht tut. Wer die Hilfe mit `?` wieder zumachen will, drueckt
+// sie zweimal und haelt dann die Tastatur fuer kaputt — der Ausweg steht in
+// der Fusszeile, aber niemand liest eine Fusszeile, wenn die Zeile selbst
+// eine Antwort zu geben scheint.
+
+test.describe('HILF — die Hilfezeile verspricht keinen Umschalter', () => {
+    test('(23) die `?`-Zeile sagt, dass die Taste oeffnet', async ({ page }) => {
+        test.setTimeout(120_000);
+        await ansichtOeffnen(page, 'initiative');
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(420);
+        const offen = await page.evaluate(
+            () => !!document.querySelector('#shortcuts-overlay.show')
+        );
+        expect(offen, 'Vorbedingung: "?" oeffnet die Hilfe').toBe(true);
+
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(420);
+        const nochOffen = await page.evaluate(() => ({
+            klassen: document.getElementById('shortcuts-overlay')?.className || '',
+            sichtbar: !!document
+                .getElementById('shortcuts-overlay')
+                ?.checkVisibility({ opacityProperty: true })
+        }));
+        expect(
+            nochOffen,
+            'Vorbedingung des Befundes: `?` schliesst die Hilfe NICHT. Schliesst es sie ' +
+                'doch, ist die Zeile als Umschalter richtig und dieser Fall unbegruendet.'
+        ).toEqual({ klassen: 'shortcuts-overlay show', sichtbar: true });
+
+        const hilfe = await hilfeLesen(page);
+        const fragezeichen = hilfe.reihen
+            .filter(r => hilfeTastenmenge([r]).has('?'))
+            .map(r => r.text);
+        expect(fragezeichen.length, 'Vorbedingung: die Hilfe fuehrt eine `?`-Zeile').toBe(1);
+        expect(
+            fragezeichen[0].toLowerCase(),
+            `Die \`?\`-Zeile lautet "${fragezeichen[0]}". Sie muss sagen, dass die Taste ` +
+                'OEFFNET — gemessen schliesst `?` die offene Hilfe nicht ' +
+                `(${JSON.stringify(nochOffen)}). Ohne das Wort liest sich die Zeile wie ` +
+                'ein Umschalter, und wer die Hilfe mit `?` wieder zumachen will, drueckt ' +
+                'zweimal und haelt die Tastatur fuer kaputt.'
+        ).toMatch(/öffn|oeffn|aufruf|anzeig/);
     });
 });
