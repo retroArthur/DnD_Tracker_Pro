@@ -3953,6 +3953,8 @@
              320x568      1027px     707px     0 / 7     dito
              740x360      1027px     287px     2 / 7     dito
              900x800      1027px     127px     4 / 7     die gefuehrte Luecke
+            1024x800      1027px       3px     7 / 7     Rest
+            1200+              —         0     7 / 7     passt (durch Stauchung)
 
            Weil `[data-layout="desktop"] .mobile-header { display: none }`
            gilt, war dort KEIN Traeger von `toggle-layout` mehr bedienbar: der
@@ -3974,40 +3976,59 @@
              740x360   Querlauf 0   7 / 7   Kopfzeile 197 -> 189px (kuerzer)
              900x800   Querlauf 0   7 / 7   Kopfzeile 156 -> 148px (kuerzer)
             1024x800   Querlauf 3 -> 0   7 / 7   Kopfzeile 156 -> 144px
-            1280/1440  unveraendert (102px, eine Reihe, kein Umbruch)
+            1200x800   Querlauf 0   7 / 7   Kopfzeile 126 -> 148px  <- Preis
 
            DER EINE PREIS, und er steht hier, weil er echt ist: bei genau
-           1200x800 waechst die Kopfzeile von 126 auf 148px. Dort passte die
-           Reihe vorher nur, weil Flexbox die Suche und den Titel gestaucht
-           hat; mit Umbruch bricht sie stattdessen. 22px gegen "kein Teil der
-           Kopfzeile liegt je ausserhalb des Fensters" — und bei 900 und 1024
-           wird sie sogar kuerzer, weil der Umbruch die Stauchung ersetzt.
+           1200x800 waechst die Kopfzeile um 22px. Dort passte die Reihe
+           vorher nur, weil Flexbox Titel und Suche gestaucht hat; mit Umbruch
+           bricht sie stattdessen. Bei 900 und 1024 wird sie dafuer kuerzer,
+           weil der Umbruch die Stauchung ersetzt.
 
-           NUR IM SCHREIBTISCH-PROFIL. Im Mobil-Profil ist `.header-actions`
-           ohnehin `display: none` (Regel weiter unten), und `.app-title` ist
-           dort versteckt — ein Umbruch haette nichts zu verteilen, koennte
-           aber die gemessene Hoehe des Mobil-Kopfes verschieben
-           (`breite-schrift.spec.js`). Die Schranke ist darum das
-           Layout-Attribut und KEINE vierte Mediengrenze (F-12): es bleiben
-           die drei erlaubten (600/900/1200), und der Umbruch greift
-           fensterbreitenunabhaengig genau dann, wenn er gebraucht wird.
+           WARUM `@media (max-width: 1200px)` UND NICHT UNBEDINGT — gemessen,
+           nicht aus Vorsicht. Ohne die Schranke brach die Reihe auch bei
+           1280x720 um, sobald eine breitere Schrift im Spiel ist
+           (`--font-ui: Verdana`, Faktor 1.1555): Kopfzeile 126 -> 148px,
+           `--view-frame-height` 219 -> 241px, und die Bestiar-Liste
+           (`height: calc(100vh - var(--view-frame-height))` mit
+           Nachladen nach Sichtbarkeit) zeigte 12 statt 13 Eintraege. Damit
+           haengt eine ERFASSTE Elementmenge an der Schriftmetrik, und genau
+           das verbietet der vierte Durchgang von
+           `tests/e2e/features/computed-style-diff.spec.js` ("Breitere
+           Schriftmetrik bewegt den Digest nicht") — zu Recht: ein Sollstand,
+           der so haengt, bewacht das Betriebssystem statt die App. Oberhalb
+           von 1200px passt die Reihe ohnehin (natuerliche Breite 1027px),
+           die Schranke nimmt also NICHTS weg, was der Befund braucht.
+           Gegengemessen bei 1280x720: mit und ohne breite Schrift Kopfzeile
+           102/126px und 13 Eintraege — Ziffer fuer Ziffer der Stand von
+           vorher.
+
+           KEINE VIERTE MEDIENGRENZE (F-12): 1200 ist eine der drei
+           erlaubten (600/900/1200), und die Ratsche in
+           `tests/unit/design-consistency.test.js` prueft die GRENZWERTE, nicht
+           die Zahl der Bloecke. Die zweite Schranke ist das Layout-Attribut:
+           im Mobil-Profil ist `.header-actions` ohnehin `display: none` und
+           `.app-title` versteckt — ein Umbruch haette dort nichts zu
+           verteilen, koennte aber die gemessene Hoehe des Mobil-Kopfes
+           verschieben (`breite-schrift.spec.js`).
 
            Bewacht von `tests/e2e/features/mobil-kopfmenue.spec.js`, Fall (9):
            nach dem Wechsel kein Querlauf UND jede Kopfzeilen-Aktion
            bedienbar — der Rueckweg ist eine der sieben.
            ============================================================ */
-        [data-layout="desktop"] .app-header-top {
-            flex-wrap: wrap;
-        }
+        @media (max-width: 1200px) {
+            [data-layout="desktop"] .app-header-top {
+                flex-wrap: wrap;
+            }
 
-        [data-layout="desktop"] .header-actions {
-            flex-wrap: wrap;
-            row-gap: 6px;
-        }
+            [data-layout="desktop"] .header-actions {
+                flex-wrap: wrap;
+                row-gap: 6px;
+            }
 
-        /* `margin-left: auto` (dmscreen.css) schiebt die Suche nach rechts; ohne
-           `min-width: 0` kann ihr Behaelter in der umgebrochenen Reihe nicht
-           unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile. */
-        [data-layout="desktop"] .global-search-container {
-            min-width: 0;
+            /* `margin-left: auto` (dmscreen.css) schiebt die Suche nach rechts; ohne
+               `min-width: 0` kann ihr Behaelter in der umgebrochenen Reihe nicht
+               unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile. */
+            [data-layout="desktop"] .global-search-container {
+                min-width: 0;
+            }
         }
