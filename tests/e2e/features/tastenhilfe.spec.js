@@ -129,24 +129,33 @@
  * nachgemessen) — und entsprechend kommt das Wort "shortcut" im ganzen
  * Sollstand NULL Mal vor.
  *
- * DIE ZAHL, DIE HIER FRUEHER STAND, WAR FALSCH BESCHRIFTET, und die
- * Richtigstellung der Richtigstellung ist selbst eine Lehre. Hier stand "0 von
- * 3.831 Blattschluesseln". Die Gegenpruefung hielt 3.831 fuer die Blattzahl und
- * 7.374 fuer "keine Groesse der Datei". Beides nachgezaehlt an der Datei, und
- * beide Zahlen sind echt — nur messen sie verschiedene Ebenen:
+ * DIE ZAHL, DIE HIER FRUEHER STAND, TRAF UNTER KEINER LESART ETWAS, und das
+ * ist nach drei Durchgaengen die vierte Fassung dieses Absatzes — die Lehre
+ * liegt genau darin. Zuerst stand hier "0 von 3.831 Blattschluesseln", dann
+ * eine Tabelle, die 3.831 als "Schluessel eine Ebene darunter" fuehrte, dann
+ * der Verzicht auf jede Zahl. Die Abnahme hat nachgezaehlt: **3.831 ist in
+ * dieser Datei keine Groesse.** Die vier Zaehlweisen, je mit ihrer Definition,
+ * gemessen an `tests/e2e/baselines/computed-style-baseline.json`:
  *
- *     3 Messlagen (standard, narrow, reducedMotion)
- *     24 Ansichten je Lage                      ->  72 Ansichtsknoten
- *     4 Eintraege je Ansicht                     -> 288 Eintraege
- *     Schluessel eine Ebene darunter             -> 3.831
- *     skalare Blaetter, voll rekursiv            -> 7.374
+ *     Ebene 1   Messlagen (standard, narrow, reducedMotion)         3
+ *     Ebene 2   Ansichtsknoten (24 Ansichten je Lage)              72
+ *     Ebene 3   Eintraege je Ansichtsknoten                       288
+ *               (elementCount, capped, keys, digests)
+ *     Ebene 4   ELEMENT-DIGESTE, also Schluessel der `digests`-
+ *               Abbildungen: 1235 standard + 1145 narrow
+ *               + 1235 reducedMotion                             3615
+ *     Schluessel mit SKALAREM Wert (3615 Digeste
+ *               + 72x elementCount/capped)                        3759
+ *     Alle dict-Schluessel rekursiv (3 + 72 + 288 + 3615)         3978
+ *     SKALARE BLAETTER voll rekursiv (3615 Digestwerte
+ *               + 3615 Eintraege der `keys`-Listen + 144)          7374
  *
- * "Blattschluessel" traf also keine von beiden: 3.831 sind Schluessel, aber
- * keine Blaetter (ihre Werte sind teils selbst verschachtelt), und 7.374 sind
- * die Blaetter. Die Aussage haelt fuer jede Zaehlweise — das Wort kommt NULL
- * Mal vor —, und darum steht hier jetzt die Aussage und nicht die Zahl: eine
- * Zahl ohne Waechter ist genau das, was dieser Strang zu reparieren versucht,
- * und drei Durchgaenge haben sie dreimal verschieden gelesen.
+ * "Blattschluessel" heisst also 3759, "Digeste" 3615, "Blaetter" 7374 — und
+ * 3.831 keines davon. Die Aussage haengt an keiner der Zahlen: das Wort
+ * "shortcut" kommt in der ganzen Datei NULL Mal vor, unter jeder Zaehlweise.
+ * Die Zahl steht hier trotzdem wieder, aber mit ihrer DEFINITION daneben —
+ * ohne die war sie nicht einmal widerlegbar, und drei Durchgaenge haben sie
+ * dreimal verschieden gelesen, bevor einer vier Zaehlweisen durchprobierte.
  *
  * Fall (9) haelt diese Lage fest, damit eine spaetere Verschiebung der Hilfe in
  * einen Ansichtsbehaelter nicht still durchlaeuft.
@@ -2168,9 +2177,9 @@ test.describe('HILF — die offene Hilfe ist ein Dialog', () => {
 //     - text: "📍 Navigation Dashboard 1 Party 2 NPCs 3 Orte 4 … Drücke Esc
 //              zum Schließen"
 //
-// Ein rund hundert Woerter langer Satz fuer 40 Zeilen, ohne Trennung
-// zwischen Handlung und Taste und ohne Ueberschrift, nach der man springen
-// koennte. Dazu: `#shortcuts-overlay` und `.shortcuts-modal` trugen je
+// Ein rund hundert Woerter langer Satz fuer die damals 41 Zeilen, ohne
+// Trennung zwischen Handlung und Taste und ohne Ueberschrift, nach der man
+// springen koennte. Dazu: `#shortcuts-overlay` und `.shortcuts-modal` trugen je
 // `role`, `aria-label`, `aria-labelledby` und `aria-modal` auf `null`; im
 // ganzen Dialog 0 Ueberschriften, 0 Rollen, 0 `aria-*`-Attribute, 0
 // `<kbd>`-Elemente und 0 Listen. 95 `DIV`, 104 `SPAN`, ein `BUTTON`.
@@ -2265,13 +2274,23 @@ test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
                 `verwiesene Knoten hat Text. Gemessen: "${baum.labelText}".`
         ).toMatch(/\S/);
 
+        // JE ABSCHNITT EINE UEBERSCHRIFT, PLUS EINE FUER DIE FLAECHE SELBST.
+        // Die `+ 1` ist seit ABN da und keine Nachsicht: der Titel
+        // (`#shortcuts-overlay-titel`) war ein blosses `<span>`, die sechs
+        // Abschnitte beginnen bei `aria-level` 3 — es gab sechs Ueberschriften
+        // einer Stufe und keine darueber, und ein Ueberschriftensprung landete
+        // mitten in der Liste. Er traegt jetzt `role="heading" aria-level="2"`.
+        // Die Zahl bleibt EXAKT: eine siebte Abschnittsueberschrift ohne
+        // Abschnitt faellt hier genauso auf wie ein Abschnitt ohne
+        // Ueberschrift. Fall (22) prueft dazu die EBENEN.
         expect(
             baum.ueberschriften.length,
             'Jeder Abschnitt der Hilfe ist eine Ueberschrift, nach der ein ' +
-                `Vorleseprogramm springen kann. Gemessen: ${baum.ueberschriften.length} ` +
-                `Ueberschriften bei ${baum.abschnitte} Abschnitten ` +
+                `Vorleseprogramm springen kann, und der Titel der Flaeche ist selbst ` +
+                `eine. Gemessen: ${baum.ueberschriften.length} Ueberschriften bei ` +
+                `${baum.abschnitte} Abschnitten, erwartet ${baum.abschnitte + 1} ` +
                 `(${baum.ueberschriften.join(' | ')}).`
-        ).toBe(baum.abschnitte);
+        ).toBe(baum.abschnitte + 1);
         expect(baum.abschnitte, 'die Hilfe hat sechs Abschnitte').toBeGreaterThanOrEqual(6);
 
         expect(
@@ -2316,7 +2335,8 @@ test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
         expect(
             zeilen.length,
             'Der Zugaenglichkeitsbaum der Hilfe hatte am Ausgangsstand DREI Knoten fuer ' +
-                `40 Zeilen. Gemessen sind es jetzt ${zeilen.length}. Unter 80 bedeutet, ` +
+                `die damals 41 Zeilen. Gemessen sind es jetzt ${zeilen.length}. Unter ` +
+                '80 bedeutet, ' +
                 'dass die Paare nicht ankommen.\n\n' +
                 zeilen.slice(0, 12).join('\n')
         ).toBeGreaterThanOrEqual(80);
@@ -2350,9 +2370,13 @@ test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
 //
 // WAS GEMESSEN WAR, mit `hasTouch`/`isMobile` am gebauten Buendel:
 //
-//   390x844  Flaeche 673 px, Inhalt 2119 px — 32 % sichtbar, 12 von 41 Zeilen
-//   360x740  Flaeche 590 px, Inhalt 2167 px — 27 % sichtbar, 10 von 41 Zeilen
-//   1440x900 Flaeche 718 px, Inhalt 1331 px — 54 % sichtbar, 23 von 41 Zeilen
+//   390x844  Flaeche 673 px, Inhalt 2119 px — 32 % sichtbar, 12 Reihen
+//   360x740  Flaeche 590 px, Inhalt 2167 px — 27 % sichtbar, 10 Reihen
+//   1440x900 Flaeche 718 px, Inhalt 1331 px — 54 % sichtbar, 23 Reihen
+//
+// (Die Prozentsaetze und die Reihenzahlen stammen von damals, als die Hilfe
+// 41 Reihen trug; heute sind es 43. Die tragende Groesse ist das Verhaeltnis
+// von Flaeche zu Inhalt, und das misst der Fall selbst.)
 //
 // Die Fusszeile lautete "Drücke Esc zum Schließen" und stand 2161 px (390 px
 // Breite) bzw. 2199 px (360 px) unter dem Anfang — beim Oeffnen also nicht
@@ -2363,7 +2387,7 @@ test.describe('HILF — die Hilfe fuer ein Vorleseprogramm', () => {
 //
 // WARUM DAS NICHT "NUR" KOSMETIK IST. Vier der sechs Abschnitte — Wuerfel,
 // Initiative, Tabulator & Gruppen, Soundboard — liegen auf dem Telefon
-// ausserhalb der Flaeche. Die Hilfe ist von 25 auf 41 Zeilen gewachsen, die
+// ausserhalb der Flaeche. Die Hilfe ist von 25 auf 43 Zeilen gewachsen, die
 // Flaeche nicht. Wer sie aufschlaegt, sieht die Navigation und ein Stueck
 // "Aktionen" und hat keinen Hinweis, dass es weitergeht — und keinen, wie er
 // wieder herauskommt.
@@ -2459,8 +2483,8 @@ test.describe('HILF — der Ausweg aus der Hilfe', () => {
         expect(
             mass.fussText,
             `${lage}: die Fusszeile lautet "${mass.fussText}". Sie muss sagen, dass die ` +
-                'Liste weitergeht — gemessen sind auf dem Telefon nur 10 von 41 Zeilen zu ' +
-                'sehen, und nichts sagte es.'
+                `Liste weitergeht — gemessen sind hier ${mass.sichtbar} von ${mass.zeilen} ` +
+                'Zeilen zu sehen, und nichts sagte es.'
         ).toMatch(/[Rr]oll|[Ss]croll|weiter/);
         expect(mass.fussText, `${lage}: die Fusszeile nennt Escape nicht`).toMatch(/Esc/);
         expect(
@@ -2529,7 +2553,7 @@ test.describe('HILF — der Ausweg aus der Hilfe', () => {
 
         // (b) UND AM SCHREIBTISCH. Dort ist das Tippziel nicht die Frage, die
         //     Sichtbarkeit der Fusszeile aber doch: gemessen sind auch bei
-        //     1440 px nur 23 von 41 Zeilen zu sehen (718 px Flaeche, 1331 px
+        //     1440 px nur 23 der damals 41 Zeilen zu sehen (718 px Flaeche,
         //     Inhalt), und die Fusszeile stand 1379 px tief.
         await ansichtOeffnen(page, 'initiative');
         await page.keyboard.press('Shift+/');
@@ -2731,7 +2755,17 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                         .map(e => e.id)
                         .sort()
                         .join(','),
-                    aufgeklappt: Array.from(document.querySelectorAll('.collapsible.open'))
+                    // `.collapsible-content.open` UND NICHT `.collapsible.open`.
+                    // Die Klasse `collapsible` gibt es im ganzen Baum nicht
+                    // (nachgezaehlt: `class="collapsible"` 0x in
+                    // assets/templates/, 0x im Buendel); `toggleCollapse(id)`
+                    // in systems/spellslots/navigation.js schaltet `open` an
+                    // `$(id)` — und das ist `#char-form` bzw. `#enc-form`, die
+                    // `.collapsible-content` tragen. Das `data-action` sitzt am
+                    // GESCHWISTER `.collapsible-header`; genau diese Trennung
+                    // hat die Vorrunde schon einmal gekostet. Die Sonde hat
+                    // damit zwei der fuenf zugesagten Ansichten nicht gemessen.
+                    aufgeklappt: Array.from(document.querySelectorAll('.collapsible-content.open'))
                         .map(e => e.id)
                         .sort()
                         .join(','),
@@ -2883,7 +2917,8 @@ test.describe('HILF — die Hilfe sagt, wann eine Taste gilt', () => {
                 'sechs Tasten in einer frischen Kampagne ihren Anschlag und geben keine ' +
                 'Rueckmeldung: kein Hinweis, kein Toast, keine Konsolenmeldung ' +
                 '(`soundboard-crud.js`: `if (!scene) { return; }`, Kommentar "still ' +
-                'ignorieren"). Sechs der 41 Hilfezeilen gehoerten damit Tasten, bei denen ' +
+                `ignorieren"). Sechs der ${hilfe.reihen.length} Hilfezeilen gehoeren damit ` +
+                'Tasten, bei denen ' +
                 'der Nutzer den Fehler bei sich sucht.'
         ).toMatch(/eingerichtet|angelegt|belegt|hinterlegt/);
 
@@ -3511,26 +3546,54 @@ test.describe('HILF — die offene Hilfe hat Namen', () => {
                 'und Abschnitt auf derselben Stufe und die Flaeche hat keinen Kopf.'
         ).toBeLessThan(3);
 
-        // ---- (c) jede Symbolkappe kommt als Wort im Baum an.
-        const ohneWort = lage.symbolkappen.filter(zeichen => {
-            // Die Zeile(n) des Baums, die dieses Zeichen fuehren, muessen
-            // daneben Buchstaben tragen — also eine Textfassung.
-            const treffer = zeilen.filter(z => z.includes(zeichen));
-            return !treffer.some(z => /[\p{L}]{3,}/u.test(z.split(':').slice(1).join(':')));
-        });
+        // ---- (c) jede Zeile mit einer Symbolkappe hat eine Textfassung.
+        //
+        // GEMESSEN WIRD DIE ZEILE, NICHT DAS ZEICHEN, und der Umweg hat einen
+        // Grund: die wirksame Fassung traegt `aria-hidden` auf der Kappe, das
+        // Zeichen VERSCHWINDET damit aus dem Baum. Ein Fall, der "die
+        // Baumzeilen mit diesem Zeichen muessen Buchstaben tragen" prueft,
+        // waere dann rot, obwohl die Reparatur greift (nachgewiesen: mit
+        // aria-hidden findet er null Zeilen, und `[].some()` ist falsch). Die
+        // Frage lautet richtig: traegt die DEFINITION der Zeile, in der die
+        // Kappe sitzt, einen Namen aus Worten? Darum wird je betroffene Zeile
+        // ein eigener Schnappschuss gelesen.
+        const kappenZeilen = await page.evaluate(() =>
+            Array.from(document.querySelectorAll('#shortcuts-overlay .shortcut-row'))
+                .map((r, i) => ({
+                    i,
+                    zeichen: Array.from(r.querySelectorAll('kbd.shortcut-key'))
+                        .map(k => (k.textContent || '').trim())
+                        .filter(t => t && !/[\p{L}\p{N}]/u.test(t)),
+                    text: (r.querySelector('dt span')?.textContent || '').trim()
+                }))
+                .filter(z => z.zeichen.length > 0)
+        );
+        expect(
+            kappenZeilen.length,
+            `Vorbedingung: es gibt Zeilen mit Symbolkappen. Gemessen: ${kappenZeilen.length}`
+        ).toBeGreaterThanOrEqual(3);
+
+        const reihen = page.locator('#shortcuts-overlay .shortcut-row');
+        const ohneWort = [];
+        for (const z of kappenZeilen) {
+            const schnapp = await reihen.nth(z.i).ariaSnapshot();
+            const definition = schnapp
+                .split('\n')
+                .filter(l => /- definition:/.test(l))
+                .join(' ');
+            if (!/[\p{L}]{3,}/u.test(definition.replace(/- definition:/g, ''))) {
+                ohneWort.push(`"${z.text}" (${z.zeichen.join(' ')}) -> ${definition.trim()}`);
+            }
+        }
         expect(
             ohneWort,
-            'Diese Tastenkappen kommen im Zugaenglichkeitsbaum nur als Zeichen an und ' +
-                `nicht als Wort: ${JSON.stringify(ohneWort)}. Ein Vorleseprogramm liest ` +
+            'Diese Zeilen nennen ihre Taste im Zugaenglichkeitsbaum nur als Zeichen und ' +
+                `nicht als Wort:\n  ${ohneWort.join('\n  ')}\nEin Vorleseprogramm liest ` +
                 '"←" nicht als "Pfeil nach links". VORSICHT BEI DER REPARATUR: ein ' +
                 '`aria-label` am `<kbd>` ist WIRKUNGSLOS (gemessen — `<kbd>` ist ' +
                 '`role="generic"`, dort ist Benennung verboten). Es braucht eine ' +
                 'Textfassung im Baum, z. B. `aria-hidden` auf der Kappe plus einen ' +
-                '`.sr-only`-Span daneben.\n\n' +
-                zeilen
-                    .filter(z => lage.symbolkappen.some(s => z.includes(s)))
-                    .join('\n')
-                    .slice(0, 900)
+                '`.sr-only`-Span daneben.'
         ).toEqual([]);
     });
 });

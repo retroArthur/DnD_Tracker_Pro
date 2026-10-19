@@ -638,10 +638,16 @@ describe('DOC — die Zahlen ueber die Tastenhilfe und ueber die Modifikatorschr
             });
         }
         // BASE-01/empty: ohne Kandidatenzeile misst der Fall nichts — und
-        // hier ist die Untergrenze KEINE 1. Gemessen sind es neun Stellen;
-        // faellt die Zahl der gefundenen auf eins, hat eine Umformulierung
-        // die Stellen aus dem Blickfeld geschoben, nicht behoben.
-        expect(behauptungen.length).toBeGreaterThanOrEqual(6);
+        // hier ist die Untergrenze DREI, eine je gelesener Datei. Gemessen
+        // waren es vor der Reparatur neun Stellen, danach drei: die sechs
+        // uebrigen waren HISTORISCHE Messungen und sind als solche
+        // umgeschrieben ("12 der damals 41 Zeilen"), weil eine Messung von
+        // damals nicht mitwachsen darf. Die drei verbliebenen sind die, die
+        // den HEUTIGEN Umfang behaupten — eine in `docs/bugfixes.md`, eine in
+        // `assets/styles/dmscreen.css`, eine im Kopf dieser Pruefdatei. Faellt
+        // die Zahl darunter, hat eine Umformulierung die letzte gegenwaertige
+        // Angabe aus dem Blickfeld geschoben, und der Fall bewacht nichts mehr.
+        expect(behauptungen.length).toBeGreaterThanOrEqual(3);
 
         const falsch = behauptungen
             .filter(b => b.zahl !== zeilen)

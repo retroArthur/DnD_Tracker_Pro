@@ -2507,7 +2507,7 @@
    breit (90 %), nach 2x24 px Polster bleiben 276 px, abzueglich 16 px
    Spaltenabstand 130 px je Spalte. Darin brechen Beschriftungen wie "HP des
    Kaempfers am Zug" um, und die Hilfe traegt seit HILF sechs Abschnitte
-   statt vier (40 Zeilen statt 25).
+   statt vier (43 Zeilen statt 25).
 
    DIE GRENZE IST 600 px UND NICHT FREI GEWAEHLT. Der erste Entwurf nahm
    680 px — die Stufe, die CLAUDE.md fuer die Editor-Werkzeugleisten nennt
@@ -2621,8 +2621,8 @@
    Stellen dieser Datei per Zeilennummer.
 
    WAS GEMESSEN WAR, mit hasTouch/isMobile am gebauten Buendel: bei 390 px
-   waren 12 von 41 Zeilen sichtbar (673 px Flaeche, 2119 px Inhalt), bei
-   360 px zehn. Die Fusszeile stand 2161 px unter dem Anfang und lautete
+   waren 12 der damals 41 Zeilen sichtbar (673 px Flaeche, 2119 px
+   Inhalt), bei 360 px zehn. Die Fusszeile stand 2161 px unter dem Anfang und lautete
    "Druecke Esc zum Schliessen" — unerreichbar, und auf einem Geraet ohne
    Escape-Taste ausserdem eine Anweisung ins Leere. Vier der sechs
    Abschnitte (Wuerfel, Initiative, Tabulator & Gruppen, Soundboard) lagen

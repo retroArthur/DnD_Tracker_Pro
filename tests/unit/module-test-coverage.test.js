@@ -259,7 +259,19 @@ const MODULE_TEST_EXCEPTIONS = [
     //    in ausfuehrbarem Code, liegt in der Natur eines Verhaltensfalls — er liest
     //    die Quelle nicht, er fuehrt sie aus. Die Liste darf nur schrumpfen; sie
     //    tut es hier.
-    'systems/spellslots/navigation.js',
+    // -- 2026-10-19, Abnahme ABN: 'systems/spellslots/navigation.js' ist hier
+    //    GESTRICHEN, und zwar nicht wegen einer Erwaehnung. Dieses Gate wurde
+    //    rot, weil ein KOMMENTAR in tastenhilfe.spec.js den Pfad woertlich
+    //    nannte — nach dem Kriterium dieses Falls gilt das Modul damit als
+    //    angefasst, obwohl kein Test es las. Zwei Wege standen offen: den Pfad
+    //    aus dem Kommentar nehmen (dann bewacht nichts das Modul) oder es
+    //    wirklich abdecken. Genommen ist der zweite:
+    //    tests/unit/navigation-collapse.test.js laedt das Modul in eine
+    //    vm-Sandbox mit jsdom und fuehrt toggleCollapse() gegen echtes Markup
+    //    (vier Laufzeitfaelle), plus zwei Faelle, die den Vertrag mit den
+    //    Vorlagen halten. Der Anlass war ein gemessener Fehler: eine Sonde
+    //    suchte `.collapsible.open`, eine Klasse, die der Baum nicht fuehrt.
+    //    Die Liste darf nur schrumpfen; sie tut es hier.
     'systems/spellslots/notes-templates.js',
     'systems/spellslots/pwa-install.js',
     'systems/spellslots/spell-slots-core.js',
