@@ -3933,3 +3933,81 @@
             flex: 1 1 auto;
             min-width: 0;
         }
+
+        /* ============================================================
+           DIE KOPFZEILE BRICHT UM, STATT AUS DEM FENSTER ZU RAGEN (FALLE)
+
+           DER BEFUND. `.app-header-top` war eine Flex-Reihe OHNE Umbruch, und
+           ihr inhaltsbasiertes Minimum liegt bei 1027px (Titel + Suche +
+           sieben Knoepfe + Zaehler + Speicheranzeige + Trenner). In jedem
+           schmaleren Fenster lag der rechte Teil der Reihe AUSSERHALB. Der
+           Eintrag "Layout wechseln" im Punkte-Menue fuehrt auf dem Telefon
+           genau dorthin. GEMESSEN am Buendel zu 279ad98, gefuellte Kampagne,
+           Urteil je Knopf aus `checkVisibility({opacityProperty:true})` UND
+           Rechteck UND `elementFromPoint` auf der Knopfmitte:
+
+             Fenster    Dokument   Querlauf   bedienbar   Lage
+             --------   --------   --------   ---------   -------------------
+             390x844      1027px     637px     0 / 7     Einbahnstrasse
+             360x740      1027px     667px     0 / 7     dito
+             320x568      1027px     707px     0 / 7     dito
+             740x360      1027px     287px     2 / 7     dito
+             900x800      1027px     127px     4 / 7     die gefuehrte Luecke
+
+           Weil `[data-layout="desktop"] .mobile-header { display: none }`
+           gilt, war dort KEIN Traeger von `toggle-layout` mehr bedienbar: der
+           Schalter in der Kopfzeile lag bei x=1009 in einem 390px-Fenster,
+           der Punkte-Knopf war ausgeblendet. Zwei Auswege gab es, beide
+           unbeschriftet — 637px waagerecht wischen oder neu laden.
+
+           DIE KORREKTUR IST DER UMBRUCH UND KEINE RETTUNGSLUKE. Ein zweiter,
+           immer sichtbarer Rueckweg-Knopf haette die Ursache stehengelassen:
+           die halbe Kopfzeile liegt weiterhin draussen, nur mit einer Tuer
+           daneben. Mit `flex-wrap: wrap` auf BEIDEN Ebenen (die Reihe selbst
+           und die Knopfgruppe darin — die Gruppe allein genuegt nicht, ihre
+           natuerliche Breite von ~700px passt in kein Telefon) messen
+           dieselben Lagen:
+
+             390x844   Querlauf 0   7 / 7   Kopfzeile 238 -> 316px
+             360x740   Querlauf 0   7 / 7
+             320x568   Querlauf 0   7 / 7   Kopfzeile 238 -> 425px
+             740x360   Querlauf 0   7 / 7   Kopfzeile 197 -> 189px (kuerzer)
+             900x800   Querlauf 0   7 / 7   Kopfzeile 156 -> 148px (kuerzer)
+            1024x800   Querlauf 3 -> 0   7 / 7   Kopfzeile 156 -> 144px
+            1280/1440  unveraendert (102px, eine Reihe, kein Umbruch)
+
+           DER EINE PREIS, und er steht hier, weil er echt ist: bei genau
+           1200x800 waechst die Kopfzeile von 126 auf 148px. Dort passte die
+           Reihe vorher nur, weil Flexbox die Suche und den Titel gestaucht
+           hat; mit Umbruch bricht sie stattdessen. 22px gegen "kein Teil der
+           Kopfzeile liegt je ausserhalb des Fensters" — und bei 900 und 1024
+           wird sie sogar kuerzer, weil der Umbruch die Stauchung ersetzt.
+
+           NUR IM SCHREIBTISCH-PROFIL. Im Mobil-Profil ist `.header-actions`
+           ohnehin `display: none` (Regel weiter unten), und `.app-title` ist
+           dort versteckt — ein Umbruch haette nichts zu verteilen, koennte
+           aber die gemessene Hoehe des Mobil-Kopfes verschieben
+           (`breite-schrift.spec.js`). Die Schranke ist darum das
+           Layout-Attribut und KEINE vierte Mediengrenze (F-12): es bleiben
+           die drei erlaubten (600/900/1200), und der Umbruch greift
+           fensterbreitenunabhaengig genau dann, wenn er gebraucht wird.
+
+           Bewacht von `tests/e2e/features/mobil-kopfmenue.spec.js`, Fall (9):
+           nach dem Wechsel kein Querlauf UND jede Kopfzeilen-Aktion
+           bedienbar — der Rueckweg ist eine der sieben.
+           ============================================================ */
+        [data-layout="desktop"] .app-header-top {
+            flex-wrap: wrap;
+        }
+
+        [data-layout="desktop"] .header-actions {
+            flex-wrap: wrap;
+            row-gap: 6px;
+        }
+
+        /* `margin-left: auto` (dmscreen.css) schiebt die Suche nach rechts; ohne
+           `min-width: 0` kann ihr Behaelter in der umgebrochenen Reihe nicht
+           unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile. */
+        [data-layout="desktop"] .global-search-container {
+            min-width: 0;
+        }

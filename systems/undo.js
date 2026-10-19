@@ -406,9 +406,9 @@ async function _loadForReload(onBeforeApply) {
 // erfasster Wahrheitswert): sonst setzte der spaete Commit die Baseline zurueck und der Tab
 // waere trotz stehendem Banner nicht mehr veraltet.
 async function _afterReloadApplied(beforeJSON, generationAtStart, foreignSaveSinceFn) {
-    const D = window.D;
+    // Das Nachziehen der Modulkopie `encounterRound` (und das `const D`, dessen
+    // einziger Leser es war) ist mit der Kopie entfallen — RUNDE, s. u.
     if (beforeJSON) _pushUndoSnapshot('Neu laden (anderer Tab)', beforeJSON);
-    encounterRound = (D.initiative && D.initiative.round) || 1;
     try {
         (window.renderAfterDataReplace || window.renderAll)();
     } catch (e) {
@@ -878,12 +878,48 @@ function goToNote(date) {
 // ============================================================
 // ENCOUNTER RESET / RUNDEN-SYSTEM
 // ============================================================
-let encounterRound = 1;
+/**
+ * DIE RUNDE STEHT IN `D.initiative.round` UND NUR DORT (RUNDE).
+ *
+ * WAS HIER FRUEHER STAND, und warum es weg ist: eine Modulglobale
+ * `let encounterRound = 1`, also ein ZWEITER Rundenzaehler neben
+ * `D.initiative.round`. `nextTurn()` (`features/initiative.js`) erhoehte beim
+ * Rundenumschlag nur `init.round`; dieser Zaehler hier wurde ausschliesslich
+ * beim App-Start (`core/init.js`) und beim Undo-Zurueckspielen
+ * (`_afterReloadApplied()`) nachgezogen. Jeder Umschlag ueber "▶ Naechster"
+ * liess ihn also stehen — und `nextEncounterRound()` SETZTE anschliessend
+ * `D.initiative.round = encounterRound`, schrieb damit eine 2 auf eine Runde,
+ * die schon 2 war, und meldete trotzdem "⚔️ Runde 2".
+ *
+ * GEMESSEN am Buendel zu 279ad98, Kampfansicht, sechs Kaempfer:
+ *
+ *   Handlung           Zug   Daten   Anzeige   Ereignis-Log
+ *   ----------------   ---   -----   -------   ------------
+ *   nach 6x `n`          0       2       "2"   —
+ *   nach Shift+N         0       2       "2"   "⚔️ Runde 2"
+ *   nach 2x Shift+N      0       3       "3"   "⚔️ Runde 3"
+ *
+ * Der erste Druck verbrauchte sich und aenderte nichts. Mit dem Finger auf dem
+ * Knopf identisch. DERSELBE veraltete Zaehler machte `prevTurn()`
+ * (`core/init.js`) zur Nicht-Umkehrung von `nextTurn()`: es senkte die Runde
+ * nur unter `if (encounterRound > 1)`, also aus einer durch `n` erreichten
+ * Runde 2 nicht, aus einer durch Shift+N erreichten Runde 3 schon.
+ *
+ * WARUM DER ZAEHLER NICHT "NACHGEZOGEN", SONDERN ENTFERNT WURDE. Ein dritter
+ * Nachzieh-Punkt in `nextTurn()` haette dieselbe Lage nur verschoben: die
+ * Runde wird an fuenf Stellen geschrieben (`nextTurn`, `prevTurn`,
+ * `nextEncounterRound`, `resetEncounter`, Import/Undo), und jede neue
+ * Schreibstelle muesste die Kopie kennen. Es gibt jetzt nur noch EINE Quelle;
+ * `renderInit()` und `updateEncounterDisplay()` lesen beide aus ihr.
+ *
+ * Bewacht von `tests/e2e/features/kampfrunde.spec.js`, Fall (5) namentlich:
+ * nach jeder der drei Handlungen muss die Anzeige `D.initiative.round` sein.
+ */
 function nextEncounterRound() {
     saveUndoState('Neue Runde');
-    encounterRound++;
     const D = window.D;
-    D.initiative.round = encounterRound;
+    const runde = (D.initiative.round || 1) + 1;
+    D.initiative.round = runde;
     // Runden-basierte Effekte verarbeiten
     D.initiative.combatants.forEach(c => {
         // Hier könnten automatische Effekte pro Runde verarbeitet werden
@@ -892,7 +928,7 @@ function nextEncounterRound() {
     const save = window.save;
     if (save) save();
     updateEncounterDisplay();
-    showToast(`⚔️ Runde ${encounterRound}`, 'success', { kategorie: 'kampf' });
+    showToast(`⚔️ Runde ${runde}`, 'success', { kategorie: 'kampf' });
 }
 function resetEncounter() {
     if (
@@ -901,7 +937,6 @@ function resetEncounter() {
         return;
     saveUndoState('Encounter Reset');
     const D = window.D;
-    encounterRound = 1;
     D.initiative.round = 1;
     D.initiative.currentTurn = 0;
     // Alle temporären Zustände entfernen
@@ -922,7 +957,10 @@ function resetEncounter() {
 function updateEncounterDisplay() {
     const roundEl = document.querySelector('.encounter-round-num');
     if (roundEl) {
-        roundEl.textContent = String(encounterRound);
+        // Aus der EINEN Quelle (RUNDE) — frueher aus der Modulkopie, und genau
+        // darum konnte diese Zeile eine andere Zahl schreiben als
+        // `renderInit()` zwei Zeilen davor.
+        roundEl.textContent = String(window.D?.initiative?.round || 1);
     }
 }
 // ============================================================

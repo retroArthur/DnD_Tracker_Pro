@@ -61,6 +61,61 @@ const TASTE_HP_RECHNER = 'h';
 const OHNE_MODIFIKATOR = e => !e.ctrlKey && !e.metaKey && !e.altKey;
 
 /**
+ * DER SCHLUESSEL IN EINER GESTALT — EINMAL, STATT JE ZWEIG GERATEN (CAPS).
+ *
+ * `e.key` traegt bei einem Buchstaben das ERZEUGTE ZEICHEN, nicht die Taste.
+ * Gross wird es aus ZWEI unabhaengigen Gruenden: gehaltenes Shift oder
+ * eingeschaltete Grossschreibtaste — und bei beidem zugleich wieder klein.
+ * Jeder Zweig hier verglich gegen den Kleinbuchstaben.
+ *
+ * WAS DAS GEKOSTET HAT. GEMESSEN am Buendel zu 279ad98 mit rohen
+ * Tastenereignissen auf Browserebene (CDP `Input.dispatchKeyEvent`, weil
+ * Playwright keine Grossschreibtaste emuliert), `defaultPrevented` am
+ * `window` in der Blasenphase, Kampfansicht, gefuellte Kampagne:
+ *
+ *   Strg+Z   key='Z' mods=2    verbraucht NEIN   kein Rueckgaengig
+ *   Strg+Y   key='Y' mods=2    NEIN
+ *   Strg+Shift+Z key='z' m=10  NEIN
+ *   Strg+S   key='S' mods=2    NEIN              nicht gespeichert
+ *   Strg+K / Strg+F            NEIN              keine Suche
+ *   R T L K N N P H (gross)    NEIN              acht Hilfe-Reihen
+ *   Strg+Shift+K key='k' m=10  JA                der einzige Ueberlebende
+ *
+ * Vierzehn von sechzehn Buchstaben-Reihen der eingebauten Hilfe sagten damit
+ * etwas Falsches, und die Taste wurde nicht einmal verbraucht.
+ *
+ * WARUM NORMALISIEREN UND NICHT JE ZWEIG EINE ZWEITE GESTALT PRUEFEN. Genau
+ * das war der Stand: der Redo-Zweig trug `(e.key === 'Z' && e.shiftKey)` als
+ * EINEN Sonderzweig, weil dort eine Shift-Lage aufgefallen war. Die Lehre
+ * gilt aber fuer jeden Buchstaben und fuer jede Ursache der Grossschreibung —
+ * eine Gestalt je Zweig zu pflegen ist dieselbe Fehlerquelle wie die elf
+ * unterschiedlich lueckenhaften Modifikator-Negationen, die `OHNE_MODIFIKATOR`
+ * darueber ersetzt hat.
+ *
+ * NUR EINZELZEICHEN. Benannte Tasten (`'Escape'`, `'ArrowDown'`, `'Delete'`)
+ * haben keine Gross-/Kleinschreibung und muessen ihre Gestalt behalten; sie
+ * sind laenger als ein Zeichen und laufen unveraendert durch. Zeichen ohne
+ * Buchstabenfall (`'/'`, `'?'`, `' '`, `'1'`) sind unter `toLowerCase()`
+ * identisch — das deutsche Tastaturbild, auf dem `/` Shift+7 IST, bleibt also
+ * unberuehrt.
+ *
+ * WAS DIESE NORMALISIERUNG MITBRINGT UND DESHALB ZUSAETZLICH GESCHRANKT WIRD.
+ * Ohne Shift-Schranke wuerde `Shift+R` nach der Normalisierung wuerfeln —
+ * eine NEUE Belegung, die in keiner Hilfe steht. Betroffen waren sechs Zweige
+ * (`Strg+S`, `t`, `r`, `l`, `k` und das abschliessende `n`); sie tragen
+ * seitdem `!e.shiftKey`, jeweils mit Verweis hierher. Damit bleibt die
+ * gemessene Belegungsmenge dieselbe wie vorher, und `Shift+N` landet nicht
+ * mehr im Zweig "Neues Element" (dort verbrauchte es gemessen den Druck und
+ * tat in der Kampfansicht nichts).
+ *
+ * Bewacht von `tests/e2e/features/grossschreibung.spec.js`, dessen Liste aus
+ * der Hilfe im Buendel GERECHNET wird.
+ * @param {KeyboardEvent} e
+ * @returns {string}
+ */
+const TASTE = e => (typeof e.key === 'string' && e.key.length === 1 ? e.key.toLowerCase() : e.key);
+
+/**
  * DIE EINE BLENDE, UNTER DIE DAS KUERZEL KEINEN DIALOG LEGEN DARF: die
  * Tastenhilfe (`?`).
  *
@@ -194,6 +249,11 @@ function initKeyboardShortcuts() {
         const isTyping =
             ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
             activeEl?.isContentEditable;
+
+        // Der Schluessel in EINER Gestalt — Begruendung und Messung an
+        // `TASTE` oben (CAPS). Jeder Zeichenvergleich unten laeuft darueber;
+        // benannte Tasten (`Escape`, `ArrowDown`, …) kommen unveraendert durch.
+        const taste = TASTE(e);
 
         // ============================================================
         // DIE GEKAPERTE LEERTASTE (TAST, Schritt 2)
@@ -452,40 +512,54 @@ function initKeyboardShortcuts() {
             }
         }
         // Strg+Z: Undo (immer aktiv)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        if ((e.ctrlKey || e.metaKey) && taste === 'z' && !e.shiftKey) {
             e.preventDefault();
             if (typeof window.undo === 'function') window.undo();
             return;
         }
         // Strg+Y oder Strg+Shift+Z: Redo (immer aktiv)
         //
-        // `e.key === 'Z'`, GROSS — und das ist eine Korrektur, kein Stil.
-        // Mit gedrueckter Umschalttaste liefert der Browser `'Z'`, niemals
-        // `'z'`; die zweite Haelfte der Bedingung war damit unerreichbar und
-        // `Strg+Shift+Z` tat nichts (gemessen: in der Belegungsmatrix ueber
-        // 80 Modifikatorkombinationen taucht es in keiner Belegtliste auf,
-        // weder `defaultPrevented` noch eine Spur in dreizehn Groessen —
-        // `Strg+Y` dagegen in beiden gepruefien Ansichten). Ein im Quelltext
-        // sichtbar gepflegtes Kuerzel, das nichts tut, ist derselbe tote
-        // Zweig wie `Entf` gegen `#view-network`.
+        // DIE ZWEITE HAELFTE WAR ZWEIMAL FALSCH, und die Geschichte gehoert
+        // hierher, weil sie der Grund fuer `TASTE()` ist.
         //
-        // Es ist jetzt belegt und steht darum in der Hilfe ("Wiederholen
+        // (1) Urzustand `e.key === 'z' && e.shiftKey`: mit gedrueckter
+        //     Umschalttaste liefert der Browser `'Z'`, niemals `'z'` — die
+        //     Haelfte war unerreichbar und `Strg+Shift+Z` tat nichts
+        //     (gemessen: in der Belegungsmatrix ueber 80
+        //     Modifikatorkombinationen taucht es in keiner Belegtliste auf,
+        //     weder `defaultPrevented` noch eine Spur in dreizehn Groessen —
+        //     `Strg+Y` dagegen in beiden gepruefien Ansichten).
+        // (2) Die Korrektur `e.key === 'Z' && e.shiftKey` hat die Lehre als
+        //     EINEN Sonderzweig eingebaut, statt den Schluessel zu
+        //     normalisieren. Mit eingeschalteter Grossschreibtaste liefert
+        //     derselbe Anschlag wieder `'z'` — ausgerechnet dieser eine Zweig
+        //     war damit erneut tot (gemessen: key='z' mods=10, nicht
+        //     verbraucht), und alle anderen auch.
+        //
+        // Jetzt steht die Gestalt an EINER Stelle (`TASTE`), und beide Lagen
+        // treffen denselben Zweig.
+        //
+        // Das Kuerzel ist belegt und steht darum in der Hilfe ("Wiederholen
         // (gleichwertig)") — anders waere Fall (3) in
         // `tests/e2e/features/tastenhilfe.spec.js` zu Recht rot.
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'Z' && e.shiftKey))) {
+        if ((e.ctrlKey || e.metaKey) && (taste === 'y' || (taste === 'z' && e.shiftKey))) {
             e.preventDefault();
             if (typeof window.redo === 'function') window.redo();
             return;
         }
         // Strg+S: Speichern (immer aktiv)
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS): vorher konnte
+        // `Strg+Shift+S` diesen Zweig nicht treffen, weil es `'S'` liefert.
+        // Ohne die Schranke waere es nach der Normalisierung eine NEUE
+        // Belegung, die in keiner Hilfe steht.
+        if ((e.ctrlKey || e.metaKey) && taste === 's' && !e.shiftKey) {
             e.preventDefault();
             saveImmediate();
             showToast('Gespeichert');
             return;
         }
         // Strg+K oder Strg+F: Globale Suche
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k') && !e.shiftKey) {
+        if ((e.ctrlKey || e.metaKey) && (taste === 'f' || taste === 'k') && !e.shiftKey) {
             e.preventDefault();
             $('global-search')?.focus();
             return;
@@ -493,13 +567,13 @@ function initKeyboardShortcuts() {
         // Strg+Shift+K: Command Palette (TECH-04)
         // WR-01: In Firefox öffnet Strg+Shift+K die Web-Konsole (nicht abfangbar) —
         // Strg+Punkt ist die browserneutrale Alternative.
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'K' || e.key === 'k')) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && taste === 'k') {
             e.preventDefault();
             if (typeof window.toggleCommandPalette === 'function') window.toggleCommandPalette();
             return;
         }
         // Strg+Punkt: Command Palette (Firefox-kompatible Alternative, WR-01)
-        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === '.') {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && taste === '.') {
             e.preventDefault();
             if (typeof window.toggleCommandPalette === 'function') window.toggleCommandPalette();
             return;
@@ -534,7 +608,7 @@ function initKeyboardShortcuts() {
         // das ERZEUGTE Zeichen, auf jedem Bild, das ein `?` hat.
         if (
             OHNE_MODIFIKATOR(e) &&
-            (e.key === '?' || (e.shiftKey && e.key === '/' && e.code === 'Slash'))
+            (taste === '?' || (e.shiftKey && taste === '/' && e.code === 'Slash'))
         ) {
             e.preventDefault();
             if (typeof window.showShortcutsOverlay === 'function') window.showShortcutsOverlay();
@@ -549,7 +623,7 @@ function initKeyboardShortcuts() {
         // am Zweig darueber). Ein Konflikt entsteht nicht: wo `Shift+/` ein
         // `?` erzeugt, meldet der Browser `e.key === '?'` und der Zweig
         // darueber hat den Druck schon verbraucht.
-        if (OHNE_MODIFIKATOR(e) && e.key === '/') {
+        if (OHNE_MODIFIKATOR(e) && taste === '/') {
             e.preventDefault();
             const panel = $('quick-ref-panel');
             if (panel && !panel.classList.contains('active')) {
@@ -560,7 +634,12 @@ function initKeyboardShortcuts() {
         }
         // T: Session Timer toggle
         // Gemessen fehlte hier `!e.altKey`: Alt+T startete die Sitzungsuhr.
-        if (e.key === 't' && OHNE_MODIFIKATOR(e)) {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS): die
+        // geschiftete Lage liefert einen GROSSEN Buchstaben und konnte
+        // diesen Zweig vorher nicht treffen. Ohne die Schranke waere sie
+        // nach der Normalisierung eine NEUE Belegung ohne Zeile in der
+        // Hilfe — Fall (3) in `tastenhilfe.spec.js` zu Recht rot.
+        if (taste === 't' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             if (typeof window.toggleSessionTimer === 'function') window.toggleSessionTimer();
             return;
@@ -612,7 +691,7 @@ function initKeyboardShortcuts() {
         // Shift+Leertaste ist dabei der teuerste der drei: im Browser ist
         // es der Seitenlauf nach OBEN.
         if (
-            e.key === ' ' &&
+            taste === ' ' &&
             OHNE_MODIFIKATOR(e) &&
             !e.shiftKey &&
             !beanspruchtLeertaste &&
@@ -636,7 +715,7 @@ function initKeyboardShortcuts() {
         // wechselten den Zug statt ein Fenster zu oeffnen. Das waren zwei
         // der vier Eintraege der alten Ausnahmeliste.
         if (
-            e.key === 'n' &&
+            taste === 'n' &&
             !e.shiftKey &&
             OHNE_MODIFIKATOR(e) &&
             document.querySelector('#view-initiative.active')
@@ -649,7 +728,7 @@ function initKeyboardShortcuts() {
         // Gemessen fehlten `!e.ctrlKey` und `!e.altKey`: Strg+Shift+N und
         // Alt+Shift+N begannen eine neue Kampfrunde.
         if (
-            e.key === 'N' &&
+            taste === 'n' &&
             e.shiftKey &&
             OHNE_MODIFIKATOR(e) &&
             document.querySelector('#view-initiative.active')
@@ -662,7 +741,7 @@ function initKeyboardShortcuts() {
         // Dieser Zweig hatte GAR KEINE Modifikatorschranke. Gemessen gingen
         // Strg+P (das Drucken des Browsers) und Alt+P den Zug rueckwaerts.
         if (
-            e.key === 'p' &&
+            taste === 'p' &&
             OHNE_MODIFIKATOR(e) &&
             !e.shiftKey &&
             document.querySelector('#view-initiative.active')
@@ -676,34 +755,55 @@ function initKeyboardShortcuts() {
         // steht an `oeffneHpRechnerAmZug()`. `preventDefault()` nur, wenn der
         // Rechner wirklich aufgeht — greift eine Schranke, bleibt die Taste
         // unverbraucht und die gemessene Belegung entspricht der Lage.
-        if (e.key === TASTE_HP_RECHNER && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
+        if (taste === TASTE_HP_RECHNER && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             if (oeffneHpRechnerAmZug()) e.preventDefault();
             return;
         }
         // R: Quick Roll d20
         // Gemessen fehlte `!e.altKey`: Alt+R wuerfelte.
-        if (e.key === 'r' && OHNE_MODIFIKATOR(e)) {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS): die
+        // geschiftete Lage liefert einen GROSSEN Buchstaben und konnte
+        // diesen Zweig vorher nicht treffen. Ohne die Schranke waere sie
+        // nach der Normalisierung eine NEUE Belegung ohne Zeile in der
+        // Hilfe — Fall (3) in `tastenhilfe.spec.js` zu Recht rot.
+        if (taste === 'r' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             quickRoll(20);
             return;
         }
         // L: Event Log toggle
         // Gemessen fehlte `!e.altKey`: Alt+L stellte das Ereignislog dauerhaft.
-        if (e.key === 'l' && OHNE_MODIFIKATOR(e)) {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS): die
+        // geschiftete Lage liefert einen GROSSEN Buchstaben und konnte
+        // diesen Zweig vorher nicht treffen. Ohne die Schranke waere sie
+        // nach der Normalisierung eine NEUE Belegung ohne Zeile in der
+        // Hilfe — Fall (3) in `tastenhilfe.spec.js` zu Recht rot.
+        if (taste === 'l' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
             return;
         }
         // K: Kampfprotokoll-Panel (U5). Bare 'k' war frei — Strg+K ist die globale
         // Suche und Strg+Shift+K die Kommandopalette, beide fangen weiter oben ab.
-        if (e.key === 'k' && OHNE_MODIFIKATOR(e)) {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS): die
+        // geschiftete Lage liefert einen GROSSEN Buchstaben und konnte
+        // diesen Zweig vorher nicht treffen. Ohne die Schranke waere sie
+        // nach der Normalisierung eine NEUE Belegung ohne Zeile in der
+        // Hilfe — Fall (3) in `tastenhilfe.spec.js` zu Recht rot.
+        if (taste === 'k' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             if (typeof window.toggleCombatLog === 'function') window.toggleCombatLog();
             return;
         }
         // N: Neues Element (kontextabhängig)
         // Gemessen fehlte `!e.altKey`: Alt+N oeffnete das Anlegen-Fenster.
-        if (e.key === 'n' && OHNE_MODIFIKATOR(e)) {
+        // `!e.shiftKey` ist mit `TASTE()` dazugekommen (CAPS), und hier ist es
+        // mehr als eine Vorsichtsmassnahme: GEMESSEN verbrauchte `Shift+N` bei
+        // eingeschalteter Grossschreibtaste (key='n', mods=8) genau DIESEN
+        // Zweig, fand in der Kampfansicht keine passende Ansicht und tat
+        // nichts — der Zweig fuer die neue Runde kam nie dran. Die Schranke
+        // laesst `Shift+N` dort ankommen, wo es hingehoert.
+        if (taste === 'n' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             const activeView = document.querySelector('.view.active')?.id;
             if (activeView === 'view-party') toggleCollapse('char-form');
