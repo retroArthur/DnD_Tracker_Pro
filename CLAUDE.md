@@ -343,10 +343,20 @@ function deleteEntity(id) {
 
 ### About/Impressum Modal
 
-- Info button (ℹ️) in header opens modal
+- Info button (ℹ️) in header opens modal; on the phone the ⋯ menu is the only path
 - Shows: App name, version, developer credits, GitHub link
 - MIT License notice
-- File: `assets/templates/modals-tools.html` → `#about-modal`
+- **The version comes from `APP_CONFIG.VERSION` at open time, never from the
+  template (VER).** It was hard-coded and read "Version 2.4.0" while
+  `core/config.js` and `package.json` both carried 2.6.1 — two minor versions
+  stale, at the one place a user looks the version up, and the path there exists
+  on the phone only since the ⋯ menu. The template text stays as a fallback and
+  is held against the same source by
+  `tests/unit/version-konsistenz.test.js` (template, `core/config.js`,
+  `package.json` must agree); a fallback alone would be the next drift, since it
+  would have to be carried by hand on every bump. The behaviour — open the dialog,
+  THEN read it — is measured in `tests/e2e/features/mobil-kopfmenue.spec.js` (8)
+- File: `assets/templates/modals-tools.html` → `#about-modal`, `#about-version`
 - Action: `show-about-modal` in `ui/actions/system-actions.js`
 
 ### ⋯ Menu in the Mobile Header (MKOPF)
@@ -394,9 +404,28 @@ one ⋯ button in `.mobile-header`.
 - Guard: `tests/e2e/features/mobil-kopfmenue.spec.js` — "every header action is
   reachable on the phone, visible, clickable, in at most two handles", with the
   action list read **from the bundle**, not from a literal.
-- **Still measured and open:** the 900px gap. There the layout is still `desktop`,
-  but three header buttons lie outside the window. The ⋯ menu does not fix it (it
-  only exists in the mobile layout) — see `docs/bugfixes.md`.
+- **The 900px gap is closed (FALLE), and not by the ⋯ menu.** It could not be:
+  the menu exists only in the mobile layout, and at 900px the layout is
+  `desktop`. The cause was `.app-header-top` being a flex row with no wrap while
+  its content-based minimum is 1027px — so in ANY narrower window the right part
+  of the row sat outside. Measured at 900x800: 127px of horizontal scroll, 4 of 7
+  header actions operable (`redo` at x=921, `show-shortcuts-overlay` at x=965,
+  `toggle-layout` at x=1009). The same defect made the ⋯ entry "Layout wechseln"
+  a one-way street on the phone: 390x844 gave 637px of scroll, 0 of 7 operable,
+  `.mobile-header` hidden and no carrier of `toggle-layout` reachable at all.
+  `flex-wrap: wrap` on the row AND on `.header-actions`, inside
+  `@media (max-width: 1200px)` and `[data-layout="desktop"]`, brings every
+  measured size to 0px scroll and 7 of 7 (390x844, 360x740, 320x700, 320x568,
+  740x360, 900x800, 1024x800, 1200x800). **Why the width bound and not
+  unconditional:** without it the row also wrapped at 1280x720 as soon as a wider
+  font is in play (`--font-ui: Verdana`, factor 1.1555) — header 126 → 148px,
+  `--view-frame-height` 219 → 241px, and the bestiary list showed 12 instead of
+  13 entries, i.e. a CAPTURED element set depending on font metrics, which the
+  fourth pass of `computed-style-diff.spec.js` rightly forbids. Above 1200px the
+  row fits anyway (1027px), so the bound takes nothing away. The one price is
+  measured and named in the CSS: at exactly 1200x800 the header grows 126 → 148px,
+  where it previously fit only by squeezing. Guard:
+  `tests/e2e/features/mobil-kopfmenue.spec.js` (9).
 
 ### Campaign Manager
 
@@ -479,7 +508,7 @@ one ⋯ button in `.mobile-header`.
 | `1-9`      | Switch to tab 1-9                              |
 | `Strg+Z`   | Undo                                           |
 | `Strg+Y`   | Redo                                           |
-| `Strg+Shift+Z` | Redo (equivalent). **Was a dead branch until HILF, measured:** the condition read `e.key === 'z' && e.shiftKey`, and with Shift held the browser delivers `'Z'` — the second half was unreachable, and the shortcut did nothing in a matrix over 80 modifier combinations. Fixed and added to the in-app help, which `tests/e2e/features/tastenhilfe.spec.js` (3) requires |
+| `Strg+Shift+Z` | Redo (equivalent). **Was a dead branch twice, and the second time is the reason the key shape is now normalized once.** First: the condition read `e.key === 'z' && e.shiftKey`, and with Shift held the browser delivers `'Z'` — the second half was unreachable and the shortcut did nothing in a matrix over 80 modifier combinations (HILF). The fix wrote `e.key === 'Z' && e.shiftKey`, i.e. it kept the lesson as ONE special branch. With **CapsLock** on, the same keystroke delivers `'z'` again, so exactly this branch was dead a second time (measured: `key='z'`, modifiers 10, `defaultPrevented` false), and so was every other letter branch. Both layers now meet the same branch through `TASTE(e)`; see the CapsLock paragraph under the table and `tests/e2e/features/grossschreibung.spec.js` (1) |
 | `Strg+S`   | Save                                           |
 | `Strg+K/F` | Focus global search                            |
 | `Strg+Shift+K`   | Command palette (`Strg+.` is the Firefox-safe alternative) |
@@ -490,8 +519,8 @@ one ⋯ button in `.mobile-header`.
 | `/`        | Open Quick Reference and focus search          |
 | `?`        | **Opens** the keyboard help — it is not a toggle. Measured (ABN): with the help open the keydown listener returns early for every app shortcut (`if (e.key !== 'Escape' && $(TASTENHILFE_ID)?.classList.contains('show')) return;`), so a second `?` leaves it open. The in-app help said "Diese Hilfe" and read like a toggle; it now says "Diese Hilfe öffnen". The way out is `Escape`, the ✕ or a tap beside the panel, and the sticky footer names all three. `tastenhilfe.spec.js` (23) |
 | `N`        | Next turn (Initiative) / New element (Party, NPCs, Quests, Encounter). Both meanings now have their own row in the in-app help; `tastenhilfe.spec.js` (18) measures that `n` acts in **exactly these five** views — `encounter`, `initiative`, `npcs`, `party`, `quests` — and demands the second row. **The five were only measured from ABN on** (`d615561`): the probe looked for `.collapsible.open`, a class the bundle does not contain (`toggleCollapse()` toggles `open` on `#char-form`/`#enc-form`, which carry `.collapsible-content`, while `data-action` sits on the sibling `.collapsible-header`), so party and encounter fell out as "(keine)" and the case saw three views. It stayed green because the assertion was `toBeGreaterThan(1)`; it now compares the named set, not its size. The former collision (`Strg+N`, `Alt+N` also changed the turn) is **gone** — `OHNE_MODIFIKATOR(e)` in `systems/spellslots/keyboard-shortcuts.js` guards all three of `ctrlKey`, `metaKey`, `altKey` |
-| `P`        | Previous turn (Initiative). The former collision is **gone**: the branch had no modifier guard at all, so `Strg+P` swallowed the browser's print and `Alt+P` moved the turn backwards. Both measure free since `OHNE_MODIFIKATOR(e)` |
-| `Shift+N`  | New round (Initiative)                         |
+| `P`        | Previous turn (Initiative) — **and since RUNDE it really is the inverse of `N`.** It used to lower the round only under `if (encounterRound > 1)`, reading the same stale module global as `Shift+N` above: measured, seven `n` then seven `p` left the turn back at 0 but the round at **2**, while the same control DID lower it when the round had been reached via `Shift+N` — one button, two behaviours. It now reads `D.initiative.round`. It still stops at round 1 (there is no round 0), and it deliberately does **not** rewind effect durations: `nextTurn()` *removes* expired effects, which a forward step alone cannot restore, so the way back is `Strg+Z` (reasoning at `prevTurn()` in `core/init.js`). `kampfrunde.spec.js` (2) rides both directions, (3) measures that both ways into round 2 end in the same state. The former modifier collision is also **gone**: the branch had no modifier guard at all, so `Strg+P` swallowed the browser's print and `Alt+P` moved the turn backwards. Both measure free since `OHNE_MODIFIKATOR(e)` |
+| `Shift+N`  | New round (Initiative). **Did nothing on the first press after `n` had rolled the round over, and reported success anyway (RUNDE, measured).** There were TWO round counters: `nextTurn()` raised `D.initiative.round`, while `nextEncounterRound()` counted a module global `encounterRound` (`systems/undo.js`) and then *assigned* it to `D.initiative.round`. The global was only re-synced at app start and on undo-replay, so after six `n` presses with six combatants the display read 2, data read 2, and `Shift+N` wrote 2 onto a round that was already 2 — with the event log saying "⚔️ Runde 2". Measured identically with the finger on the button at 390x844. The global is gone; `D.initiative.round` is the only source. `tests/e2e/features/kampfrunde.spec.js` (1) crosses the two paths, (4) does it with `.tap()`, (5) nails display == data after every one of the three actions |
 | `H`        | HP calculator for the combatant whose turn it is — does exactly what the ➗ button of the active row does (Initiative only, TAST E-4). Silently does nothing outside the initiative view, with no combatant on turn, on a lair-action entry, or while a dialog is open. Chosen by measurement, not from this table: of 68 candidate keys pressed at `BODY` focus, 17 were taken in the initiative view (`k l n p r t 1-9 / ?`) and 51 were free — that is the state *before* this shortcut; `h` itself is the 18th, and `tests/e2e/features/tastenhilfe.spec.js` (2) holds 18 as the floor. `h` matches the app's own wording (`title="HP ändern"`, "❤️ HP", "HP: \<name\>"). It deliberately leaves the focus free on close, so `Space` still changes the turn |
 | `Space`    | Next turn (Initiative) — **not** with any of `Strg`, `Alt`, `Meta` or `Shift` held (all four measured taken before HILF: `Strg+Space` is an input method, `Alt+Space` the window menu, `Shift+Space` the browser's page-up), and **not** while a focusable control has focus (TAST). Exception: a control made focusable at runtime by `ui/keyboard-reach.js` claims `Space` only on **keyboard** focus; after a mouse click on it, `Space` still changes the turn (TAST). **The in-app help no longer words this as a focus condition** (ABN): it said "Fokus auf keinem Bedienelement", and a measured truth table over five focus states falsifies that — after a mouse click on `div.init-value` the focus *is* on a control and the turn changes anyway. The visible focus ring is no substitute either: a mouse-clicked `<button>` carries no `:focus-visible` ring and still takes the key. The help now names what the user DID ("nichts angeklickt/angewählt" — the longer wording with "oder" needed three lines at 601 px and case (8) rightly forbids that), which is the one thing they can always check; `tastenhilfe.spec.js` (21) measures the table first and then demands that wording |
 | `Enter`/`Space` | Activate the focused `[data-action]` control — via the `keydown` branch in `ui/event-delegation.js`, exactly one synthetic click, no page scroll (TAST). Not intercepted: `INPUT` (except button/submit/reset), `TEXTAREA`, `SELECT`, `contentEditable`, `a[href]` on `Enter`, any modifier key, and `Space` on a runtime-retrofitted control holding mouse focus |
@@ -515,6 +544,28 @@ cross product of the eight single-key shortcuts (`r t l k n p h /`) with four
 modifier layers, plus both digit families over all ten digits. A hand-picked
 list of 46 missed sixteen taken combinations. Never hand-edit the help's markup to silence a case; the point
 of the red is that a user needs the row.
+
+**Every letter comparison goes through `TASTE(e)` — one shape, not one per
+branch (CAPS).** `e.key` carries the *produced character*, and a letter arrives
+uppercase for TWO independent reasons: Shift held, or CapsLock on — and
+lowercase again when both apply. Every branch compared against the lowercase
+letter. Measured against the built bundle with raw browser-level key events
+(CDP `Input.dispatchKeyEvent`, because Playwright emulates no CapsLock; its
+`press('Z')` always sets `shiftKey`), reading `defaultPrevented` at `window` in
+the bubble phase: with CapsLock on, **14 of the 16 letter rows of the in-app
+help did nothing**, and the key was not even consumed — `Strg+Z`, `Strg+Y`,
+`Strg+Shift+Z`, `Strg+S`, `Strg+K`, `Strg+F` and all eight bare-letter rows.
+`Strg+Shift+K` was the only survivor, because it already tested both cases by
+hand. The distributor now normalizes single characters once; named keys
+(`Escape`, `ArrowDown`, …) and characters without letter case (`/`, `?`,
+digits, Space) pass through untouched, so the German keyboard layout — where
+`/` IS Shift+7 — is unaffected. Six branches gained a `!e.shiftKey` guard with
+the normalization (`Strg+S`, `t`, `r`, `l`, `k` and the trailing `n`): without
+it `Shift+R` would have become a NEW binding with no row in the help. The
+taken-key set is therefore unchanged, which `tastenhilfe.spec.js` keeps
+measuring; `tests/e2e/features/grossschreibung.spec.js` measures the CapsLock
+layer and **computes its list from the help in the bundle**, so a new letter
+shortcut is covered without being typed anywhere.
 
 ## Conventions
 

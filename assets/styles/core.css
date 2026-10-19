@@ -3988,9 +3988,9 @@
            nicht aus Vorsicht. Ohne die Schranke brach die Reihe auch bei
            1280x720 um, sobald eine breitere Schrift im Spiel ist
            (`--font-ui: Verdana`, Faktor 1.1555): Kopfzeile 126 -> 148px,
-           `--view-frame-height` 219 -> 241px, und die Bestiar-Liste
-           (`height: calc(100vh - var(--view-frame-height))` mit
-           Nachladen nach Sichtbarkeit) zeigte 12 statt 13 Eintraege. Damit
+           `--view-frame-height` 219 -> 241px, und die Bestiar-Liste (die ihre
+           Hoehe gegen dieses Token rechnet und nach Sichtbarkeit nachlaedt)
+           zeigte 12 statt 13 Eintraege. Damit
            haengt eine ERFASSTE Elementmenge an der Schriftmetrik, und genau
            das verbietet der vierte Durchgang von
            `tests/e2e/features/computed-style-diff.spec.js` ("Breitere

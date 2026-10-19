@@ -361,12 +361,14 @@ test('(3) "◀ Zurueck" senkt die Runde unabhaengig davon, wie sie erreicht wurd
 // "⏭️ Neue Runde". Die zwei Wege (Taste und Knopf) laufen in dieselben
 // Funktionen, aber das ist eine Annahme ueber den Code — hier wird sie
 // gemessen. `hasTouch` ist gesetzt, getippt wird mit `.tap()`.
-test.describe('(4) mit dem Finger', () => {
+test.describe('mit dem Finger', () => {
     test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-    test('"⏭️ Neue Runde" erhoeht auch nach dem Umschlag — getippt, nicht gedrueckt', async ({
-        page
-    }) => {
+    // Die Fallnummer steht am `test`, nicht an der Gruppe: DOC-10 in
+    // `tests/unit/docs-consistency.test.js` sucht `test('(4)` und findet ein
+    // `test.describe('(4)` nicht — eine Nennung in der Kuerzeltabelle von
+    // CLAUDE.md waere dann lautlos unbelegt.
+    test('(4) mit dem Finger: "⏭️ Neue Runde" erhoeht auch nach dem Umschlag', async ({ page }) => {
         test.setTimeout(180000);
         await kampfLaden(page, { width: 390, height: 844 });
 

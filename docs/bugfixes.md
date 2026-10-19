@@ -953,6 +953,259 @@ wurden.
 - **Dateien:** `assets/templates/modals-editors.html`
 - **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (22), (23)
 
+## 2026-10-20 — Gegenprüfung des Tastatur-Strangs (RUNDE/VER/FALLE/CAPS)
+
+Fünf als „wichtig" eingestufte Befunde einer Gegenprüfung, alle fünf vor der
+Korrektur unter den genannten Bedingungen nachgestellt. Vier davon sind
+**vorbestehend** und nicht aus den Einheiten MKOPF/ABN — drei von ihnen wurden
+am Basisstand `28bcab2` mit derselben Probe Ziffer für Ziffer gleich
+wiedergefunden.
+
+### Zwei Rundenzähler: „⏭️ Neue Runde" tat nichts und meldete Erfolg
+
+- **Problem:** Nach einem Rundenumschlag über „▶ Nächster" tat der erste Druck
+  auf „⏭️ Neue Runde" (bzw. `Shift+N`) **nichts** — und das Ereignis-Log
+  meldete trotzdem einen Rundenwechsel. Gemessen am gebauten Bündel,
+  Kampfansicht, sechs Kämpfer, echte Tastendrücke bei BODY-Fokus:
+
+    | Handlung          | Zug | Daten | Anzeige | Ereignis-Log |
+    | ----------------- | --- | ----- | ------- | ------------ |
+    | start             | 0   | 1     | „1"     | —            |
+    | nach 6x `n`       | 0   | 2     | „2"     | —            |
+    | nach `Shift+N`    | 0   | 2     | „2"     | „⚔️ Runde 2" |
+    | nach 2x `Shift+N` | 0   | 3     | „3"     | „⚔️ Runde 3" |
+
+  Mit dem Finger auf dem Knopf (390x844, `hasTouch`, `.tap()`) identisch.
+  Dieselbe Ursache machte „◀ Zurück" zur Nicht-Umkehrung von „▶ Nächster":
+  sieben Drücke vor und sieben zurück ließen den Zug wieder auf 0, die Runde
+  aber auf **2**; aus einer über `Shift+N` erreichten Runde senkte dasselbe
+  Bedienelement sie dagegen — ein Knopf, zwei Verhalten.
+- **Ursache:** **Zwei getrennte Zähler.** `nextTurn()`
+  (`features/initiative.js`) erhöhte beim Umschlag `D.initiative.round`;
+  `nextEncounterRound()` rechnete auf einer Modulglobalen `encounterRound`
+  (`systems/undo.js`) und **setzte** anschließend
+  `D.initiative.round = encounterRound`. Die Globale wurde nur beim App-Start
+  (`core/init.js`) und beim Zurückspielen (`_afterReloadApplied()`)
+  nachgezogen, also nach einem Umschlag über `n` nie. `prevTurn()`
+  (`core/init.js`) prüfte `if (encounterRound > 1)` und las damit denselben
+  veralteten Wert.
+- **Fix:** Die Modulglobale ist **entfernt**, `D.initiative.round` ist die
+  einzige Quelle. `updateEncounterDisplay()` liest sie, `nextEncounterRound()`
+  rechnet auf ihr, `prevTurn()` prüft sie, und die zwei Nachzieh-Punkte sind
+  weggefallen, weil es nichts mehr nachzuziehen gibt.
+- **Nicht mitkorrigiert, mit Begründung:** `prevTurn()` rechnet die
+  Wirkungsdauern nicht zurück. `nextTurn()` **entfernt** abgelaufene Effekte;
+  was weg ist, ist aus dem Vorwärtsschritt allein nicht wiederherstellbar, und
+  eine halbe Umkehrung (Dauer um eins erhöhen) wäre schlimmer als keine — sie
+  brächte einen abgelaufenen Effekt nicht zurück und verfälschte einen
+  permanenten. Der Weg dafür ist `Strg+Z`; die Begründung steht an
+  `prevTurn()`.
+- **Regel:** Ein Zustand, den die Oberfläche anzeigt, hat **eine** Quelle. Eine
+  Modulkopie daneben ist nicht „schneller", sie ist eine zweite Wahrheit mit
+  eigener Nachzieh-Pflicht — und die wird genau an der Stelle vergessen, die
+  der Nutzer am häufigsten bedient. Zweite Lehre für den Wächterbau: der
+  bestehende Fall fuhr `nextEncounterRound` nur aus dem **frischen** Stand
+  (`expect(vorher.runde).toBe(1)` … `toBe(2)`), wo beide Zähler zufällig
+  übereinstimmen. Zwei Wege zum selben Zustand müssen **gekreuzt** gemessen
+  werden, nicht je einzeln.
+- **Dateien:** `systems/undo.js`, `core/init.js`
+- **Tests:** `tests/e2e/features/kampfrunde.spec.js` (1) bis (5)
+
+### Das Impressum nannte Version 2.4.0, die App war 2.6.1
+
+- **Problem:** Der Impressum-Dialog — der eine Ort, an dem ein Nutzer die
+  Version nachsieht — nannte zwei Nebenversionen zu alt. Gemessen:
+  `assets/templates/modals-tools.html` trug „Version 2.4.0",
+  `core/config.js` `VERSION: '2.6.1'`, `package.json` `"version": "2.6.1"`.
+  Besonders unglücklich, weil der Weg dorthin auf dem Telefon erst seit dem
+  ⋯-Menü existiert: das Erste, was man auf dem neuen Weg liest, war falsch.
+- **Ursache:** Die Zahl stand festgeschrieben in der Vorlage und las
+  `APP_CONFIG.VERSION` nicht.
+- **Fix:** `#about-version` trägt die Zahl, der Zweig `show-about-modal`
+  (`ui/actions/system-actions.js`) schreibt sie **beim Öffnen** aus
+  `APP_CONFIG.VERSION`. Der Text in der Vorlage ist gleichgezogen und bleibt
+  als Rückfall.
+- **Regel:** Ein Rückfallwert allein genügt nicht — er wäre die nächste Drift,
+  weil er bei jeder Anhebung von Hand mitzuziehen ist. Darum hält
+  `tests/unit/version-konsistenz.test.js` Vorlage, `core/config.js` und
+  `package.json` gegeneinander, und der E2E-Fall **bedient erst und liest
+  danach**: ein Test, der nur das Markup liest, sähe den Rückfall und nicht
+  das, was auf dem Schirm steht.
+- **Dateien:** `assets/templates/modals-tools.html`,
+  `ui/actions/system-actions.js`
+- **Tests:** `tests/unit/version-konsistenz.test.js`,
+  `tests/e2e/features/mobil-kopfmenue.spec.js` (8)
+
+### „Layout wechseln" war eine Einbahnstraße — und die 900px-Lücke dieselbe Ursache
+
+- **Problem:** Der Eintrag „Layout wechseln" im ⋯-Menü führte auf dem Telefon
+  in eine Lage ohne sichtbaren Rückweg. Gemessen, Urteil je Knopf aus
+  `checkVisibility({opacityProperty:true})` UND Rechteck UND
+  `elementFromPoint` auf der Knopfmitte:
+
+    | Fenster | Dokument | Querlauf | bedienbar |
+    | ------- | -------- | -------- | --------- |
+    | 390x844 | 1027px   | 637px    | 0 von 7   |
+    | 360x740 | 1027px   | 667px    | 0 von 7   |
+    | 320x568 | 1027px   | 707px    | 0 von 7   |
+    | 740x360 | 1027px   | 287px    | 2 von 7   |
+    | 900x800 | 1027px   | 127px    | 4 von 7   |
+
+  Danach war **kein** Träger von `toggle-layout` bedienbar: der Schalter der
+  Kopfzeile lag bei x=1009 in einem 390px-Fenster, und `.mobile-header` samt
+  ⋯-Knopf ist im Schreibtisch-Layout `display:none`. Zwei Auswege gab es, beide
+  unbeschriftet — 637px waagerecht wischen oder neu laden. Die 900px-Zeile ist
+  die bis dahin in `CLAUDE.md` als offen geführte Lücke; sie hat dieselbe
+  Ursache.
+- **Ursache:** `.app-header-top` war eine Flex-Reihe **ohne Umbruch**, und ihr
+  inhaltsbasiertes Minimum liegt bei 1027px. In jedem schmaleren Fenster lag
+  der rechte Teil der Reihe außerhalb.
+- **Fix:** `flex-wrap: wrap` auf der Reihe **und** auf `.header-actions` (die
+  Gruppe allein genügt nicht: ihre natürliche Breite von ~700px passt in kein
+  Telefon), dazu `min-width: 0` am Suchbehälter. Alle gemessenen Lagen danach:
+  0px Querlauf, 7 von 7 bedienbar. Keine Rettungsluke, sondern die Ursache —
+  ein zweiter, immer sichtbarer Rückweg-Knopf hätte die halbe Kopfzeile
+  weiterhin draußen liegen lassen, nur mit einer Tür daneben.
+- **Zweite Runde am selben Fix, und sie gehört hierher:** die erste,
+  **unbedingte** Fassung stellte einen Wächter zu Recht rot. Ohne
+  Breitenschranke brach die Reihe auch bei 1280x720 um, sobald eine breitere
+  Schrift im Spiel ist (`--font-ui: Verdana`, Faktor 1.1555 — die Nachstellung
+  des vierten Durchgangs von `tests/e2e/features/computed-style-diff.spec.js`):
+
+    | CSS                 | Schrift | Kopfzeile | `--view-frame-height` | Bestiar |
+    | ------------------- | ------- | --------- | --------------------- | ------- |
+    | vorher              | normal  | 102px     | 195px                 | 13      |
+    | vorher              | breit   | 126px     | 219px                 | 13      |
+    | unbedingt           | normal  | 102px     | 195px                 | 13      |
+    | unbedingt           | breit   | 148px     | 241px                 | **12**  |
+    | `@media max 1200px` | breit   | 126px     | 219px                 | 13      |
+
+  Die Bestiar-Liste rechnet `height: calc(100vh - var(--view-frame-height))`
+  und lädt nach Sichtbarkeit nach; 22px mehr Kopfzeile kosten einen Eintrag.
+  Damit hing eine **erfasste** Elementmenge an der Schriftmetrik — genau das,
+  was jener Durchgang verbietet. Die Regeln liegen jetzt in
+  `@media (max-width: 1200px)`; oberhalb passt die Reihe ohnehin (1027px), die
+  Schranke nimmt also nichts weg, was der Befund braucht. **Keine vierte
+  Mediengrenze:** 1200 ist eine der drei erlaubten, und `F-12` in
+  `tests/unit/design-consistency.test.js` prüft die Grenzwerte, nicht die Zahl
+  der Blöcke.
+- **Der eine Preis, benannt:** bei genau 1200x800 wächst die Kopfzeile von 126
+  auf 148px — dort passte die Reihe vorher nur durch Stauchung von Titel und
+  Suche. Bei 900 und 1024 wird sie dafür kürzer (156 → 148 bzw. 144).
+- **Regel:** Ein CSS-Block, der Zeilenanker verschieben würde, wird
+  **angehängt** und nicht eingefügt. Die erste Fassung saß bei `core.css:216`
+  und stellte sieben Fälle in `design-consistency.test.js` rot (R-06, R-19,
+  R-22, W4-R-04), weil 78 Zeilen jeden geführten Anker darunter verschoben; am
+  Dateiende sind es null. Dieselbe Rücksicht gilt für Quelldateien: die Hunk in
+  `systems/undo.js` oberhalb des dort geführten Ring-Ankers ist bewusst
+  **zeilenneutral** gehalten.
+- **Dateien:** `assets/styles/core.css`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (9)
+
+### Vierzehn von sechzehn Buchstaben-Kürzeln waren bei Großschreibung tot
+
+- **Problem:** Mit eingeschalteter Großschreibtaste tat keines der
+  Buchstaben-Kürzel der eingebauten Hilfe etwas — und die Taste wurde nicht
+  einmal verbraucht. Gemessen am gebauten Bündel mit rohen Tastenereignissen
+  auf Browserebene (CDP `Input.dispatchKeyEvent`; Playwright emuliert keine
+  Großschreibtaste, sein `press('Z')` setzt immer `shiftKey`),
+  `defaultPrevented` am `window` in der Blasenphase gelesen:
+
+    | Kürzel            | `e.key` | Modifikatoren | verbraucht         |
+    | ----------------- | ------- | ------------- | ------------------ |
+    | `Strg+Z`          | `Z`     | 2             | nein               |
+    | `Strg+Y`          | `Y`     | 2             | nein               |
+    | `Strg+Shift+Z`    | `z`     | 10            | nein               |
+    | `Strg+S`          | `S`     | 2             | nein               |
+    | `Strg+K`          | `K`     | 2             | nein               |
+    | `Strg+F`          | `F`     | 2             | nein               |
+    | `Strg+Shift+K`    | `k`     | 10            | **ja**             |
+    | `R T L K N N P H` | groß    | 0             | nein (acht Reihen) |
+
+  14 von 16 Hilfe-Reihen mit Buchstaben-Zieltaste sagten damit etwas Falsches.
+- **Ursache:** `e.key` trägt das **erzeugte Zeichen**, und ein Buchstabe kommt
+  aus **zwei** unabhängigen Gründen groß — gehaltenes Shift oder eingeschaltete
+  Großschreibtaste — und bei beidem zugleich wieder klein. Jeder Zweig verglich
+  gegen den Kleinbuchstaben. Der Redo-Zweig hatte die Lehre „mit Shift wird
+  `'Z'` geliefert" als **einen Sonderzweig** eingebaut, statt den Schlüssel zu
+  normalisieren; genau darum war ausgerechnet dieser Zweig unter
+  Großschreibung erneut tot.
+- **Fix:** `TASTE(e)` normalisiert Einzelzeichen **einmal**; alle 18
+  Zeichenvergleiche des Verteilers laufen darüber. Benannte Tasten (`Escape`,
+  `ArrowDown`, …) und Zeichen ohne Buchstabenfall (`/`, `?`, Ziffern,
+  Leertaste) sind unberührt — das deutsche Tastaturbild, auf dem `/` Shift+7
+  **ist**, bleibt wie es ist.
+- **Sechs Zweige haben dabei `!e.shiftKey` bekommen** (`Strg+S`, `t`, `r`, `l`,
+  `k` und das abschließende `n`), jeder mit Begründung daneben: ohne sie wäre
+  `Shift+R` nach der Normalisierung eine **neue** Belegung ohne Zeile in der
+  Hilfe. Beim `n`-Zweig ist es mehr als Vorsicht — gemessen verbrauchte
+  `Shift+N` unter Großschreibung genau diesen Zweig („Neues Element"), fand in
+  der Kampfansicht keine passende Ansicht und tat nichts, während der Zweig für
+  die neue Runde nie dran kam.
+- **Berichtigung einer Vorgabe, unter ihren eigenen Bedingungen gemessen:** die
+  Gegenprüfung nannte für `Shift+N` (`e.key` `n`, Modifikatoren 8)
+  `defaultPrevented` false. In der **Kampfansicht** ist es true und trotzdem
+  wirkungslos, aus dem Grund im Absatz darüber. Die Aussage („das Kürzel ist
+  tot") hält, die Begründung ist eine andere — und sie zeigte die fehlende
+  Schranke.
+- **Regel:** Eine Lehre über die **Gestalt** einer Eingabe wird an **einer**
+  Stelle umgesetzt, nicht je Zweig. Ein Sonderzweig sieht nach einer Korrektur
+  aus und ist eine zweite Vermutung über dasselbe Ereignis; er hält genau so
+  lange, bis eine dritte Ursache dieselbe Gestalt erzeugt. Zweite Lehre: der
+  bestehende Wächter drückt die Kleinbuchstaben-Form und seine gerechnete
+  Kreuzung kennt vier Modifikatorlagen — aber keine, in der ein Buchstabe groß
+  ist **ohne** dass `shiftKey` gesetzt wäre. Eine Lage, die ein Gerät schickt
+  und kein Testwerkzeug erzeugt, braucht rohe Ereignisse.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/grossschreibung.spec.js` (1), (2), (3)
+
+### Zwei Befunde am Wächter des ⋯-Menüs selbst
+
+- **Problem:** (a) Fall (6) prüfte den „Klick daneben" mit einer **festen
+  Koordinate** `page.mouse.click(180, 400)`, die genau sieben Menüeinträge
+  voraussetzte. Gemessen am offenen Menü bei 360x740: mit sieben Einträgen
+  reicht der Kasten von y=59 bis y=370 (196x311), also 30px Abstand; jeder
+  weitere Eintrag ist 43px hoch, mit acht reicht er bis y=413, und
+  `elementFromPoint(180,400)` antwortet mit
+  `BUTTON.mobile-header-menu-item [toggle-layout]`. Der „Klick daneben" traf
+  dann den Eintrag, das Layout sprang auf `desktop`, `.mobile-header` wurde
+  `display:none`, und der direkt folgende
+  `page.click('#mobile-header-menu-btn')` konnte nie mehr gelingen: 120s
+  Zeitablauf mit der Meldung „element is not visible" nach 224 Versuchen. Damit
+  war die Zusage „ein achter Kopfzeilen-Knopf steht automatisch mit in der
+  Prüfung" für diesen Fall falsch — er wird von (1)/(4)/(5) mitgeprüft, aber
+  die Datei ging rot, und zwar mit einer Meldung, die den Grund nicht nennt.
+  (b) Fall (2) hatte keine **Leermengen-Schranke**: mit einem blinden Leser
+  (`return []` als erste Zeile von `kopfAktionen()`) wurde `urteile` zu `{}`,
+  `nicht` zu `[]`, und `expect([]).toEqual([])` ist leer-wahr — der Fall
+  meldete in 2,6s grün. Gemessen: dieselbe Mutation stellt (1) dreimal und (5)
+  einmal rot, (2) nicht.
+- **Ursache:** (a) eine Koordinate ist eine **Annahme** über das Layout, die
+  nirgends geprüft wurde. (b) Fall (1) hat die Schranke seit seiner Geburt; in
+  (2) stand sie nicht — ausgerechnet in dem Fall, der die Nichtregression am
+  Schreibtisch tragen soll.
+- **Fix:** (a) Der Punkt wird **gesucht**, mit drei Bedingungen: außerhalb von
+  `.mobile-header-more` (derselbe Bereich, den `ui/mobile-header-menu.js` per
+  `closest()` prüft), auf einem Knoten ohne eigene Handlung (sonst messen wir
+  die Nebenwirkung statt das Schließen), und im Fenster; geurteilt per
+  `elementFromPoint`. Dazu zwei neue Zusicherungen: dass ein solcher Punkt
+  überhaupt existiert, und dass der Klick das Layout **nicht** gewechselt hat.
+  (b) Die Schranke ist nachgetragen, plus eine zweite eine Ebene tiefer (die
+  Zahl der Urteile muss der Zahl der Aktionen entsprechen).
+- **Belegt durch beide Mutationen, nach der Korrektur gefahren:** mit einem
+  achten `.header-action-btn` in `assets/templates/header.html` sind 21 von 21
+  Fällen grün (vorher: Fall (6) im Zeitablauf); mit dem blinden Leser ist
+  Fall (2) rot mit „Bei 1440x900 fuehrt die Kopfzeile keine
+  `.header-action-btn`" (vorher: grün in 2,6s).
+- **Regel:** Zwei Fehlerarten, eine Lehre: **eine Zusicherung, die über eine
+  leere Menge läuft, ist keine.** Jede Liste, aus der ein Fall seine Urteile
+  zieht, braucht eine Schranke auf ihre Länge — sonst ist der Fall mit einem
+  kaputten Leser grün. Und: eine feste Koordinate in einem Mausklick ist eine
+  unausgesprochene Annahme über das Layout; wird sie gebraucht, muss sie
+  **gemessen und mitgeprüft** werden.
+- **Dateien:** `tests/e2e/features/mobil-kopfmenue.spec.js`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (2), (6)
+
 ---
 
 ## Known Technical Debt
