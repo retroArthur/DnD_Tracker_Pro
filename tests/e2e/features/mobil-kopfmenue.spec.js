@@ -331,7 +331,31 @@ test('(2) am Schreibtisch bleiben alle Kopfzeilen-Knoepfe direkt bedienbar, ohne
         await page.setViewportSize({ width: b, height: h });
         await page.waitForTimeout(400);
         const aktionen = await kopfAktionen(page);
+
+        // DIE LEERMENGEN-SCHRANKE, und sie fehlte hier — Befund der
+        // Gegenpruefung. GEMESSEN mit einem blinden Leser (`kopfAktionen()` mit
+        // `return []` als erster Zeile): Fall (1) ging dreimal rot und Fall (5)
+        // einmal, Fall (2) aber meldete in 2,6s GRUEN, weil `urteile` zu `{}`
+        // und `nicht` zu `[]` wird und `expect([]).toEqual([])` leer-wahr ist.
+        // Genau dieser Fall soll die Nichtregression am Schreibtisch tragen —
+        // er darf nicht der eine sein, der nichts misst. Fall (1) hat die
+        // Schranke seit seiner Geburt; hier stand sie nicht.
+        expect(
+            aktionen.length,
+            `Bei ${b}x${h} fuehrt die Kopfzeile keine .header-action-btn — dann ` +
+                `prueft dieser Fall nichts und meldet trotzdem gruen`
+        ).toBeGreaterThan(0);
+
         const urteile = await page.evaluate(urteileImFenster, aktionen);
+        // Zweite Schranke derselben Art, eine Ebene tiefer: eine Liste von
+        // Aktionen, zu denen kein Urteil entsteht (z. B. weil der Selektor
+        // nichts trifft), waere ebenso leer-wahr.
+        expect(
+            Object.keys(urteile).length,
+            `Bei ${b}x${h} entstanden ${Object.keys(urteile).length} Urteile zu ` +
+                `${aktionen.length} Aktionen — jede Aktion braucht ihr eigenes`
+        ).toBe(aktionen.length);
+
         const nicht = Object.keys(urteile).filter(k => !urteile[k].bedienbar);
         expect(
             nicht,
@@ -762,14 +786,87 @@ test('(6) der Punkte-Knopf schaltet das Menue, und aria-expanded folgt jedem Sch
     );
 
     // Ein Klick DANEBEN schliesst ebenfalls — und raeumt `aria-expanded` mit.
+    //
+    // DAS "DANEBEN" WIRD GEMESSEN UND NICHT GETIPPT — Befund der
+    // Gegenpruefung. Hier stand `page.mouse.click(180, 400)`, eine feste
+    // Koordinate, und die setzte GENAU SIEBEN Eintraege voraus. GEMESSEN am
+    // offenen Menue bei 360x740: mit sieben Eintraegen reicht es von y=59 bis
+    // y=370 (Kasten 196x311) — 30px Abstand zu (180,400). Jeder weitere
+    // Eintrag ist 43px hoch, mit acht reicht es bis y=413, und
+    // `elementFromPoint(180,400)` antwortet dann mit
+    // `BUTTON.mobile-header-menu-item [toggle-layout]`. Der "Klick daneben"
+    // traf den Eintrag, das Layout sprang auf `desktop`, `.mobile-header`
+    // wurde `display:none` — und der direkt folgende
+    // `page.click('#mobile-header-menu-btn')` konnte nie mehr gelingen: 120s
+    // Zeitablauf mit einer Meldung, die das nicht sagt ("element is not
+    // visible", 224 Versuche).
+    //
+    // Das machte die Zusage dieser Datei fuer einen achten Kopfzeilen-Knopf
+    // falsch: er wird von (1)/(4)/(5) automatisch mitgeprueft, aber (6) ging
+    // rot, und niemand haette aus der Meldung gelesen, warum.
+    //
+    // DER PUNKT WIRD JETZT GESUCHT, mit drei Bedingungen: ausserhalb des
+    // Menue-Behaelters (`.mobile-header-more`, derselbe Bereich, den
+    // `ui/mobile-header-menu.js` per `closest()` prueft), auf einem Knoten
+    // OHNE eigene Handlung (sonst messen wir die Nebenwirkung statt das
+    // Schliessen), und im Fenster. Gesucht wird er per `elementFromPoint`, dem
+    // einzigen Urteil, das "wo landet dieser Klick wirklich" beantwortet.
     await page.click('#mobile-header-menu-btn');
     await page.waitForTimeout(250);
-    await page.mouse.click(180, 400);
+    const daneben = await page.evaluate(() => {
+        const menu = document.querySelector('.mobile-header-more');
+        const r = menu ? menu.getBoundingClientRect() : null;
+        const kandidaten = [];
+        for (let y = Math.round(window.innerHeight * 0.95); y > 40; y -= 20) {
+            for (const x of [8, 20, Math.round(window.innerWidth / 2), 40]) {
+                kandidaten.push([x, y]);
+            }
+        }
+        for (const [x, y] of kandidaten) {
+            const el = document.elementFromPoint(x, y);
+            if (!el) continue;
+            if (menu && (el === menu || menu.contains(el))) continue;
+            if (el.closest('.mobile-header-more')) continue;
+            if (
+                el.closest(
+                    '[data-action], button, a[href], input, select, textarea, [role="button"], [onclick]'
+                )
+            ) {
+                continue;
+            }
+            return {
+                x,
+                y,
+                traeger: el.tagName + '.' + String(el.className || '').split(' ')[0],
+                menueKasten: r
+                    ? `${Math.round(r.width)}x${Math.round(r.height)} bei ${Math.round(r.left)},${Math.round(r.top)}`
+                    : '(kein Menue)'
+            };
+        }
+        return null;
+    });
+    expect(
+        daneben,
+        'Kein Punkt im Fenster liegt ausserhalb des Punkte-Menues und auf einem ' +
+            'Knoten ohne eigene Handlung — dann ist "ein Klick daneben" in diesem ' +
+            'Fenster nicht messbar und dieser Schritt duerfte nicht stillhalten'
+    ).not.toBeNull();
+    await page.mouse.click(daneben.x, daneben.y);
     await page.waitForTimeout(250);
-    expect(await lese(), 'Ein Klick daneben schliesst das Menue nicht').toEqual({
+    expect(
+        await lese(),
+        `Ein Klick daneben schliesst das Menue nicht (geklickt auf ` +
+            `${daneben.x},${daneben.y} = ${daneben.traeger}; Menue ${daneben.menueKasten})`
+    ).toEqual({
         expanded: 'false',
         offen: false
     });
+    // Und das Layout hat der Klick NICHT angefasst — die Falle von vorher.
+    expect(
+        await page.evaluate(() => document.documentElement.getAttribute('data-layout')),
+        `Der Klick auf ${daneben.x},${daneben.y} (${daneben.traeger}) hat das Layout ` +
+            `gewechselt — dann traf er einen Eintrag und nicht "daneben"`
+    ).toBe('mobile');
 
     // EIN EINTRAG TUT, WAS ER VERSPRICHT, und schliesst das Menue dabei.
     await page.click('#mobile-header-menu-btn');
