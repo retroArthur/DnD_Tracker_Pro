@@ -25,6 +25,7 @@ Output:
 
 import os
 import re
+import shutil
 import sys
 import urllib.parse
 from pathlib import Path
@@ -249,6 +250,257 @@ def write_file(filepath, content):
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
 
+# Was der Kopierschritt als Schrift behandelt — Erlaubnisliste, keine
+# Verbotsliste (CLAUDE.md: 'validate input with whitelists'). Heute traegt
+# assets/fonts/ ausschliesslich woff2; die drei anderen Endungen stehen hier,
+# damit ein spaeterer Fallback-Schnitt nicht stumm liegen bleibt. Eine
+# Nicht-Schrift daneben (HERKUNFT.md) wird dadurch von selbst uebergangen.
+SCHRIFT_DATEIENDUNGEN = {'.woff2', '.woff', '.ttf', '.otf'}
+
+# Dateien, die mit den Schriften MITREISEN MUESSEN — keine Dokumentation,
+# sondern eine Bedingung der Lizenz. SIL OFL 1.1, Bedingung 2: jede Kopie der
+# Schriftsoftware fuehrt den Urhebervermerk UND den Lizenztext mit. Weitergegeben
+# wird nicht nur assets/fonts/, sondern auch dist/ (Job 'deploy') und ueber die
+# Precache-Liste in sw.js jede Installation beim Nutzer. Ohne diesen Schritt
+# truege die ausgelieferte Kopie die Schriften ohne ihre Lizenz.
+#
+# Abgrenzung zu HERKUNFT.md, die ABSICHTLICH im Quellbaum bleibt: die ist
+# Herkunfts- und Pruefdokumentation fuer Entwickler, wird von nichts verlinkt und
+# haette neben dem Buendel nur Ladezeit gekostet. OFL.txt ist das Gegenteil: sie
+# gehoert rechtlich neben die Dateien, auch wenn sie niemand anklickt.
+SCHRIFT_PFLICHTDATEIEN = {'OFL.txt'}
+
+def kopiere_schriftdateien(dist_dir):
+    """Legt assets/fonts/ neben das gebaute Bundle (SCHR).
+
+    WARUM HIER UND NICHT IN ci.yml. CR-08 oben schreibt die url()-Pfade aus
+    assets/styles/fonts.css auf './assets/fonts/' um — relativ zur erzeugten
+    HTML-Datei. Damit schuldet dieser Build die Dateien an genau dieser
+    Stelle; bisher kopierten sie zwei handgepflegte Schritte in ci.yml
+    ('build' und 'deploy'), und der dritte Job, der dist/ braucht ('e2e'),
+    hatte keinen. Ergebnis: zehn Schriften mit Status 'error' im CI, waehrend
+    jeder Arbeitsbaum durch alten Rueckstand in dist/ gruen lief. Das ist
+    dasselbe Muster, das CLAUDE.md fuer Modul-, Template- und CSS-Listen
+    verbietet (Gotcha 1, ARCH-01): eine Zusicherung, zwei Orte. Jetzt EIN Ort.
+
+    Keine Dateiliste: kopiert wird, was im Quellverzeichnis liegt — ein
+    Kopierschritt mit eigener Liste uebersieht die elfte Datei.
+
+    Datei fuer Datei statt copytree, damit NICHT der CR-09-Fall entsteht
+    (dist/assets/fonts/fonts/*, wenn das Ziel schon existiert).
+
+    HART, NICHT WEICH (B-06). Bis hierher meldete jeder Fehlschlag eine
+    Warnung und gab 0 zurueck — der Build schrieb dann ein Buendel mit zehn
+    unaufloesbaren url()-Pfaden und endete mit Exit 0 (nachgemessen). Vorher
+    liess 'cp -r assets/fonts dist/assets/' in ci.yml den Schritt hart
+    scheitern; der Umzug an EINEN Ort war richtig, das Weichmachen nicht. Auf
+    dem Deploy-Pfad stellte nichts mehr rot: die zehn SW-Precache-Pfade in
+    sw.js werden zu 404 und cache.addAll() scheitert beim Nutzer.
+
+    SCHRIFTEN UND IHRE LIZENZ, NICHT VERZEICHNISINHALT. Kopiert werden Dateien
+    mit einer Endung aus SCHRIFT_DATEIENDUNGEN sowie die Namen aus
+    SCHRIFT_PFLICHTDATEIEN (OFL.txt). assets/fonts/ fuehrt seit 2026-10-13 auch
+    HERKUNFT.md (Herkunft und Nachpruefung der sieben Dateien); die gehoert
+    nicht neben das Buendel — sie wird von nichts verlinkt und der Nutzer laedt
+    sie beim Deploy mit. Die Lizenz dagegen MUSS mit (OFL 1.1, Bedingung 2);
+    nachgemessen fehlte sie bis hierher in dist/assets/fonts/, waehrend die
+    sieben Schriften dort lagen.
+
+    UND ES RAEUMT AUF (Befund Runde 2). shutil.copy2() je Quelldatei legt dazu
+    und nimmt nie weg. Nach dem Austausch von zehn auf sieben Dateien lagen im
+    Arbeitsbaum 12 woff2 in dist/assets/fonts/ — fuenf Waisen mit genau den
+    Namen, die der Austausch abgeschafft hat (inter-400/500/600,
+    roboto-400/700) und mit dem falschen Subset, das der ganze Vorfall war.
+    pruefe_schriftverweise() unten prueft die GEGENRICHTUNG ('jeder Verweis
+    loest auf'); eine Waise wird von keinem Verweis genannt und bleibt darum
+    unsichtbar. dist/ ist gitignoriert, der CI-Job startet also sauber — aber
+    der Job 'deploy' veroeffentlicht dist/, und ein Arbeitsbaum laeuft damit
+    gruen, wo er es nicht sollte. Das ist derselbe Mechanismus wie oben, nur
+    von der anderen Seite: dort verdeckte alter Rueckstand einen FEHLENDEN
+    Kopierschritt, hier verdeckt er abgeschaffte Dateien.
+
+    Weggenommen werden NUR Schriften, nie etwas anderes und nie ein
+    Verzeichnis: ein 'rm -rf' auf dem Ziel waere der bequeme Weg und wuerde
+    beim naechsten Nachbarn im Verzeichnis Schaden anrichten.
+
+    @param dist_dir Zielverzeichnis des Builds (dist/).
+    @returns Anzahl kopierter Schriftdateien.
+    """
+    quelle = os.path.join(SOURCE_DIR, 'assets', 'fonts')
+    if not os.path.isdir(quelle):
+        print(f"[FEHLER] Schriftverzeichnis fehlt: {quelle}")
+        print("   Das Buendel verweist auf ./assets/fonts/*.woff2 (CR-08) und")
+        print("   schuldet damit die Dateien. Ohne Quellverzeichnis kein Build.")
+        sys.exit(1)
+    ziel = os.path.join(dist_dir, 'assets', 'fonts')
+    try:
+        os.makedirs(ziel, exist_ok=True)
+        gewollt = set()
+        anzahl = 0
+        pflicht = []
+        for name in sorted(os.listdir(quelle)):
+            pfad = os.path.join(quelle, name)
+            if not os.path.isfile(pfad):
+                continue
+            ist_schrift = os.path.splitext(name)[1].lower() in SCHRIFT_DATEIENDUNGEN
+            ist_pflicht = name in SCHRIFT_PFLICHTDATEIEN
+            if not ist_schrift and not ist_pflicht:
+                continue
+            shutil.copy2(pfad, os.path.join(ziel, name))
+            gewollt.add(name)
+            # Getrennt gezaehlt: `anzahl` ist die Zahl der SCHRIFTEN und wird
+            # von pruefe_schriftverweise() und den pytest-Faellen gelesen. Eine
+            # Lizenzdatei darf sie nicht aufblaehen.
+            if ist_schrift:
+                anzahl += 1
+            else:
+                pflicht.append(name)
+        # Waisen wegnehmen: was im Ziel eine Schrift ist, die Quelle aber nicht
+        # (mehr) kennt. Nur Dateien, nur Schriftendungen.
+        waisen = []
+        for name in sorted(os.listdir(ziel)):
+            if name in gewollt or not os.path.isfile(os.path.join(ziel, name)):
+                continue
+            if os.path.splitext(name)[1].lower() not in SCHRIFT_DATEIENDUNGEN:
+                continue
+            os.remove(os.path.join(ziel, name))
+            waisen.append(name)
+    except OSError as e:
+        # Wie beim sw.js-Kopierschritt: NUR Datei-/EA-Fehler abfangen. Alles
+        # andere muss den Build ebenso beenden — nur mit anderem Traceback.
+        print(f"[FEHLER] Schriftdateien konnten nicht kopiert werden: {e}")
+        sys.exit(1)
+    fehlende_pflicht = sorted(SCHRIFT_PFLICHTDATEIEN - set(pflicht))
+    if fehlende_pflicht:
+        print(f"[FEHLER] Pflichtdatei(en) fehlen in {quelle}: {', '.join(fehlende_pflicht)}")
+        print("   SIL OFL 1.1, Bedingung 2: jede Kopie der Schriftsoftware fuehrt den")
+        print("   Urhebervermerk UND den Lizenztext mit. dist/ wird veroeffentlicht und")
+        print("   sw.js spielt die Dateien beim Nutzer aus — ohne Lizenz ist das ein")
+        print("   Lizenzverstoss, kein Schoenheitsfehler. Datei anlegen oder, falls eine")
+        print("   Schrift ohne OFL dazukam, SCHRIFT_PFLICHTDATEIEN anpassen.")
+        sys.exit(1)
+    if anzahl == 0:
+        print(f"[FEHLER] Schriftverzeichnis {quelle} fuehrt keine Schriftdatei.")
+        print("   Siehe oben: das Buendel nennt Dateien, die niemand daneben legt.")
+        print(f"   Erwartete Endungen: {', '.join(sorted(SCHRIFT_DATEIENDUNGEN))}")
+        sys.exit(1)
+    log.success(f"{anzahl} Schriftdateien nach dist/assets/fonts/ kopiert")
+    if pflicht:
+        log.success(f"Lizenz mitkopiert: {', '.join(sorted(pflicht))}")
+    if waisen:
+        log.success(f"{len(waisen)} Waise(n) entfernt: {', '.join(waisen)}")
+    return anzahl
+
+# Jeder Schriftverweis, den die CSS-Umschreibung (CR-08) erzeugt. Gelesen wird
+# der UMGESCHRIEBENE CSS, nicht fonts.css: geprueft werden soll, was im Buendel
+# steht, nicht was im Quellbaum stand.
+SCHRIFT_URL_MUSTER = re.compile(r"""url\(\s*['"]?\./assets/fonts/([^'")]+)['"]?\s*\)""")
+
+def pruefe_schriftverweise(css_content, dist_dir):
+    """Jeder Schriftverweis IM BUENDEL muss neben dem Buendel aufloesen (B-06).
+
+    'Das Quellverzeichnis war da' ist die falsche Frage. build.py schreibt die
+    url()-Pfade auf './assets/fonts/' um und schuldet damit genau die Dateien,
+    die es nennt — nicht mehr und nicht weniger. Darum wird gegen den
+    erzeugten CSS geprueft und gegen das erzeugte Verzeichnis, nicht gegen
+    eine Liste.
+
+    @param css_content Der fertige, umgeschriebene CSS des Buendels.
+    @param dist_dir Zielverzeichnis des Builds (dist/).
+    @returns Sortierte Liste der geprueften Dateinamen.
+    """
+    namen = sorted(set(SCHRIFT_URL_MUSTER.findall(css_content)))
+    fehlend = [
+        n for n in namen if not os.path.isfile(os.path.join(dist_dir, 'assets', 'fonts', n))
+    ]
+    if fehlend:
+        print(f"[FEHLER] {len(fehlend)} Schriftverweis(e) des Buendels loesen nicht auf:")
+        for n in fehlend:
+            print(f"   assets/fonts/{n}")
+        print("\n[ABORTED] Build NICHT brauchbar! Der Nutzer bekaeme 404 je Datei.")
+        sys.exit(1)
+    log.success(f"{len(namen)} Schriftverweise loesen neben dem Buendel auf")
+    return namen
+
+def pruefe_keine_fremdschriften(css_content, quell_basis=None):
+    """Keine Schrift in der Quelle, die das Buendel nicht nennt (Befund 6).
+
+    DIE GEGENRICHTUNG ZU pruefe_schriftverweise(). Die Funktion darueber
+    fragt 'loest jede url() auf?' und sieht damit genau die Lage NICHT, die
+    hier gemeint ist: eine Schriftdatei, die im Quellverzeichnis liegt und die
+    KEINE url() nennt. Sie wird von kopiere_schriftdateien() mitgenommen (das
+    kopiert absichtlich das Verzeichnis und keine Liste — ein Kopierschritt
+    mit eigener Liste uebersieht die elfte Datei), landet in dist/ und wird
+    vom CI-Job 'deploy' veroeffentlicht.
+
+    NACHGESTELLT, nicht vermutet. Es wurde berichtet, ein Lauf von
+    tools/fetch-fonts.py liesse den Build hart scheitern. Gemessen am echten
+    Baum (die fuenf abgeschafften Namen zurueck, die sieben aktuellen
+    bleiben) trifft das nicht zu:
+
+        $ ls assets/fonts/*.woff2 | wc -l      -> 12
+        $ python build.py
+          [OK] 12 Schriftdateien nach dist/assets/fonts/ kopiert
+          [OK] 7 Schriftverweise loesen neben dem Buendel auf
+          BUILD_EXIT=0
+        $ ls dist/assets/fonts/*.woff2 | wc -l -> 12
+
+    Zwei Erfolgsmeldungen, Exit 0 — und fuenf veroeffentlichte Dateien mit
+    genau dem falschen Subset, das der ganze SCHR-Vorfall war. Die
+    Schutzwirkung lag ausschliesslich bei drei Test-/Werkzeugschichten
+    (pruefe-schriftdateien.js --check exit 1, jest 4 failed, pytest 3
+    failed); wer nur baut und deployt, faehrt an allen drei vorbei. Diese
+    Funktion schliesst das auf dem Build-Pfad selbst.
+
+    GEPRUEFT WIRD DIE QUELLE, nicht das Ziel. kopiere_schriftdateien() macht
+    die beiden Schriftmengen deckungsgleich (alles kopiert, Waisen entfernt);
+    eine Aussage ueber die Quelle ist damit auch eine ueber das Ziel, und die
+    Quelle ist der Ort, an dem der Entwickler handeln muss. Ihr Name gehoert
+    darum in die Meldung. Eine zweite Pruefung auf dem Ziel waere dieselbe
+    Zusicherung an zwei Orten (Gotcha 1, ARCH-01).
+
+    UND SIE STEHT VOR DEM ERSTEN SCHREIBEN, nicht am Ende neben
+    pruefe_schriftverweise(). Sie braucht nur den umgeschriebenen CSS, kein
+    dist/ — unten waere das Buendel schon geschrieben, und 'Build NICHT
+    geschrieben' waere eine halbe Luege. Nachgemessen: der Zeitstempel von
+    dist/dnd-tracker-bundled.html bleibt beim Abbruch unveraendert.
+
+    Gelesen wird der UMGESCHRIEBENE CSS und dasselbe SCHRIFT_URL_MUSTER wie
+    oben — eine Quelle fuer das Muster, nicht zwei. Nicht-Schriften
+    (HERKUNFT.md) fallen durch SCHRIFT_DATEIENDUNGEN heraus, genau wie beim
+    Kopierschritt.
+
+    @param css_content Der fertige, umgeschriebene CSS des Buendels.
+    @param quell_basis Wurzel, unter der assets/fonts/ liegt (Vorgabe:
+        SOURCE_DIR). Nur fuer die Tests ein Parameter.
+    @returns Sortierte Liste der nicht genannten Schriften (leer = in Ordnung).
+    """
+    basis = quell_basis if quell_basis is not None else SOURCE_DIR
+    quelle = os.path.join(basis, 'assets', 'fonts')
+    genannt = set(SCHRIFT_URL_MUSTER.findall(css_content))
+    vorhanden = []
+    if os.path.isdir(quelle):
+        for name in sorted(os.listdir(quelle)):
+            if not os.path.isfile(os.path.join(quelle, name)):
+                continue
+            if os.path.splitext(name)[1].lower() in SCHRIFT_DATEIENDUNGEN:
+                vorhanden.append(name)
+    fremd = [n for n in vorhanden if n not in genannt]
+    if fremd:
+        print(f"[FEHLER] {len(fremd)} Schriftdatei(en) in {quelle} nennt kein @font-face:")
+        for n in fremd:
+            print(f"   {n}")
+        print("   Sie werden mitkopiert und vom Job 'deploy' veroeffentlicht,")
+        print("   obwohl sie niemand anfordert. Genau so lagen von 2026-06-12")
+        print("   bis 2026-10-13 zehn Dateien mit dem FALSCHEN Subset im Baum.")
+        print("   Haeufigste Ursache: ein Lauf von tools/fetch-fonts.py, dessen")
+        print("   Namensliste nicht mehr zu assets/styles/fonts.css passt.")
+        print("   Entweder die Dateien loeschen oder in fonts.css einbinden.")
+        print("\n[ABORTED] Build NICHT geschrieben!")
+        sys.exit(1)
+    log.success(f"{len(vorhanden)} Quellschriften sind alle in fonts.css eingebunden")
+    return fremd
+
 def minify_js(js_code):
     """Sichere JS-Minifizierung: entfernt nur Leerzeilen.
     Kommentare werden NICHT entfernt, da regex-basierte Entfernung unsicher ist:
@@ -424,8 +676,24 @@ def build(minify=False, production=False, verbose=False):
     # umschreiben. Inline-<style> loest gegen die DOKUMENT-URL auf, nicht mehr
     # gegen assets/styles/ — '../fonts/' zeigte damit eine Ebene UEBER das
     # App-Verzeichnis (404 in jedem dist-Build). Ziel: ./assets/fonts/ relativ
-    # zur HTML-Datei (Deploy legt assets/fonts/ daneben, siehe ci.yml).
+    # zur HTML-Datei.
+    #
+    # WER DIE GEGENLEISTUNG SCHULDET: dieser Build selbst, unten in
+    # kopiere_schriftdateien() + pruefe_schriftverweise(), abgesichert durch
+    # tests/build/test_build_fonts.py. NICHT MEHR ci.yml — die beiden
+    # handgepflegten 'cp -r assets/fonts dist/assets/' in den Jobs 'build' und
+    # 'deploy' sind in 81299c5 entfallen. Dieser Verweis zeigte danach auf eine
+    # Zusicherung, die dort nicht mehr stand (B-09); und genau weil er auf
+    # ci.yml zeigte, blieb lange unentdeckt, dass der dritte Job, der dist/
+    # braucht ('e2e'), nie einen Kopierschritt hatte.
     css_content = css_content.replace("url('../fonts/", "url('./assets/fonts/")
+    # SOFORT, VOR dem ersten Schreiben: keine Schrift in der Quelle, die das
+    # Buendel nicht nennt (Befund 6). Die Gegenrichtung zu
+    # pruefe_schriftverweise() braucht nur den umgeschriebenen CSS und das
+    # Quellverzeichnis, kein dist/ — und dann gehoert sie HIERHIN und nicht
+    # ans Ende: ganz unten waere das Buendel schon geschrieben und die
+    # Abbruchmeldung eine halbe Luege.
+    pruefe_keine_fremdschriften(css_content)
     if minify:
         log.info("Minifiziere CSS...")
         css_content = minify_css(css_content)
@@ -650,6 +918,18 @@ if (document.readyState === 'loading') {{
 
     # Schreibe finale Datei
     write_file(output_file, html_template)
+
+    # Die Schriften NEBEN das Bundle. Erst nach dem erfolgreichen Schreiben:
+    # bricht eine der Validierungen oben ab (sys.exit(1)), wird weder das
+    # Bundle geschrieben noch etwas kopiert.
+    #
+    # Der Rueckgabewert wird bewusst NICHT geprueft: ein Fehlschlag beendet den
+    # Build selbst (B-06). Das Urteil darueber, ob genug kopiert wurde, faellt
+    # die Zeile danach — und zwar gegen die Verweise des erzeugten Buendels,
+    # nicht gegen eine Zahl.
+    dist_dir = os.path.dirname(output_file)
+    kopiere_schriftdateien(dist_dir)
+    pruefe_schriftverweise(css_content, dist_dir)
 
     # Statistiken
     final_size = len(html_template)

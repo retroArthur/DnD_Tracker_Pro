@@ -389,11 +389,11 @@
             color: var(--gold-text);
         }
         
-        :root {
-            --font-abadi: 'Abadi MT Condensed Light', 'Arial Narrow', sans-serif;
-            --font-roboto: 'Roboto', sans-serif;
-            --font-arial: Arial, Helvetica, sans-serif;
-        }
+        /* HIER STANDEN DREI SCHRIFT-TOKENS in einem eigenen :root-Block (fuer Abadi MT
+           Condensed Light, Roboto und Arial), entfernt am 2026-10-13 — je NULL Verbraucher
+           seit 1c3245b. Namen absichtlich nicht ausgeschrieben: der Entwicklungs-Build
+           behaelt Kommentare. Messung, Begruendung und Bewachung in BEIDEN Richtungen bei
+           F-05 in tests/unit/design-consistency.test.js. ZEILENZAHL BEWAHRT, siehe dort. */
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
         

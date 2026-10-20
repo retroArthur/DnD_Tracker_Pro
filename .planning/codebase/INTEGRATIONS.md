@@ -14,9 +14,11 @@ The application is deliberately offline-first with zero external API dependencie
 - Tool: `tools/fetch-fonts.py` (Python script)
 - Implementation Details:
   - Fetches font CSS from `https://fonts.googleapis.com/css2?family=*`
-  - Extracts WOFF2 URLs from CSS response
+  - Extracts the WOFF2 URL of the `/* latin */` block from the CSS response — **not** the first match: Google orders the blocks cyrillic-ext, cyrillic, greek-ext, greek, vietnamese, latin-ext, LATIN (Poppins: devanagari first)
   - Downloads binary font files to `assets/fonts/`
-  - Stores locally as: roboto-400.woff2, roboto-700.woff2, inter-400.woff2, inter-500.woff2, inter-600.woff2, poppins-400.woff2, poppins-500.woff2, poppins-600.woff2, source-sans-pro-400.woff2, source-sans-pro-600.woff2
+  - Stores locally as (as of 2026-10-14, **7** files): roboto-variable.woff2, inter-variable.woff2, poppins-400.woff2, poppins-500.woff2, poppins-600.woff2, source-sans-pro-400.woff2, source-sans-pro-600.woff2
+  - **No longer** (dropped 2026-10-13, `b0ada5b`): roboto-400, roboto-700, inter-400, inter-500, inter-600. Those ten files had carried the WRONG subset since birth (cyrillic resp. devanagari, no latin `A`); Roboto and Inter now come as ONE variable file each, fetched with `wght@100..900`. Provenance, byte counts and SHA-256 per file: `assets/fonts/HERKUNFT.md`
+  - Single source of truth is `assets/styles/fonts.css`. `tools/fetch-fonts.py` checks its plan against it before downloading (`pruefe_plan_gegen_fonts_css()`), and `build.py` aborts when `assets/fonts/` holds a font that no `@font-face` names (`pruefe_keine_fremdschriften()`)
 - Workflow: Build-time only, fonts bundled into dist/ for offline use
 - No runtime CDN dependency (D-07: offline fonts)
 - Run manually: `python tools/fetch-fonts.py`

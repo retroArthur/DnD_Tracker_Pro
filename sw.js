@@ -36,11 +36,8 @@ const CORE_ASSETS = [OFFLINE_HTML, './manifest.webmanifest'];
 const OPTIONAL_ASSETS = [
     './icons/icon-192.png',
     './icons/icon-512.png',
-    './assets/fonts/roboto-400.woff2',
-    './assets/fonts/roboto-700.woff2',
-    './assets/fonts/inter-400.woff2',
-    './assets/fonts/inter-500.woff2',
-    './assets/fonts/inter-600.woff2',
+    './assets/fonts/roboto-variable.woff2',
+    './assets/fonts/inter-variable.woff2',
     './assets/fonts/poppins-400.woff2',
     './assets/fonts/poppins-500.woff2',
     './assets/fonts/poppins-600.woff2',
