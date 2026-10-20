@@ -366,8 +366,25 @@
                sitzen sechs Felder (Entscheidung D-8). #7c7c7c erreicht 3,67.
                ANGEWENDET wird das Token erst in Welle 6. */
             --border-input: #7c7c7c;
+
+            /* Fokusring, WCAG 1.4.11 (3:1, kein Text). Welle 6, Schritt 3.
+
+               WARUM EIN EIGENES TOKEN UND NICHT --gold: der Ring ist die
+               einzige Tinte der App, die GLEICHZEITIG gegen die hellste
+               Seitenflaeche des Themes und gegen die dunkle, THEMENBLINDE
+               Modalflaeche halten muss. `.modal` traegt baumweit
+               `background: rgba(26, 26, 26, 0.95)` (gefuehrte Ausnahme
+               W2-C-01), und wegen `outline-offset: 2px` landet der Ring genau
+               darauf. --gold kann das in zwei der vier Themes nicht: gemessen
+               Light min 2,40 (auf --bg-hover), Sepia min 2,37 (auf der
+               Modalflaeche). Dark und Contrast halten mit 6,01 und 9,01.
+
+               DARK BLEIBT BEI --gold, als Verweis und nicht als Kopie: aendert
+               jemand das Gold dieses Themes, folgt der Ring, und W6-R-04
+               rechnet nach, ob er dabei unter 3:1 faellt. */
+            --focus-ring: var(--gold);
         }
-        
+
         /* Theme: Light */
         [data-theme="light"] {
             --bg-dark: #f5f5f5;
@@ -509,6 +526,37 @@
 
             /* Eingaberahmen: min3 3,71 (schlechteste Flaeche --bg-elevated). */
             --border-input: #767676;
+
+            /* Fokusring. Begruendung im Dark-Block; hier die Zahlen.
+
+               --gold (#b8860b) liest in Light 2,98 / 3,25 / 2,66 / 2,40 auf den
+               vier neutralen Flaechen und 5,12 auf der geschichteten
+               Modalflaeche #1e1e1e — min 2,40, FAELLT. #946c09 liest
+               4,36 / 4,76 / 3,89 / 3,51 und 3,50, min 3,50.
+
+               3,50 IST DIE DECKE, nicht eine Wahl. Wer gegen --bg-hover (#ddd)
+               UND gegen die Modalflaeche (#1e1e1e) gleichzeitig >= 3 halten
+               muss, kann das Minimum hoechstens dort hinschieben, wo beide
+               gleich gross sind; das sind gerechnete 3,503. Kein Farbwert
+               erreicht mehr — nachgesucht ueber das ganze Goldband in
+               Einerschritten. Der Puffer ueber der Schwelle ist also 17
+               Prozent und nicht mehr zu vergroessern, solange der Ring EIN
+               Wert je Theme ist.
+
+               DER GOLDCHARAKTER IST GEHALTEN, und zwar gemessen, nicht nach
+               Augenmass: Farbwinkel 42,73 Grad gegen 42,66 des --gold dieses
+               Themes, Saettigung 0,939 gegen 0,940. Es ist dasselbe Gold, nur
+               dunkler.
+
+               ABWEICHUNG VOM VORSCHLAG DES PLANS (#947020): der erreicht nur
+               3,36. Seine Suche hat die Lage --scrim-60 unter dem Modal
+               verloren — das Token steht in einem eigenen :root-Block, nicht
+               in den Theme-Bloecken, und ein Aufloeser, der nur dort sucht,
+               faellt still auf die Seitenflaeche zurueck. Damit kam die
+               Modalflaeche als #252525 statt #1e1e1e heraus und die Decke vier
+               Prozent zu niedrig. W6-R-04 rechnet die Flaeche geschichtet und
+               prueft alle drei Zutaten namentlich nach. */
+            --focus-ring: #946c09;
         }
         
         /* Theme: Sepia/Parchment */
@@ -648,6 +696,28 @@
 
             /* Eingaberahmen: min3 3,33 (schlechteste Flaeche --bg-dark). */
             --border-input: #8a7a5a;
+
+            /* Fokusring. Begruendung im Dark-Block; hier die Zahlen.
+
+               Sepia ist der Fall, der diese ganze Entscheidung ausgeloest hat:
+               --gold (#8b4513) haelt auf den vier neutralen Flaechen muehelos
+               (5,65 / 6,58 / 5,79 / 5,16) und FAELLT auf der Modalflaeche
+               #1e1d1d auf 2,37 — weil beide dunkel sind. Kein Test im Baum hat
+               das vor W6-R-04 gesehen: die Flaechenmenge von R-02 und R-04
+               fuehrt die vier neutralen Tokens und die Modalflaeche nicht.
+               Hier muss der Ring also HELLER werden, nicht dunkler wie in
+               Light. #b55819 liest 3,83 / 4,45 / 3,92 / 3,49 und 3,50,
+               min 3,49 — dieselbe Decke, dieselbe Begruendung wie dort.
+
+               DER CHARAKTER IST GEHALTEN: Farbwinkel 24,23 Grad gegen 25,00
+               des --gold dieses Themes (ein Sattelbraun, kein Gelbgold),
+               Saettigung 0,862 gegen 0,863.
+
+               ABWEICHUNG VOM VORSCHLAG DES PLANS (#907030): der erreicht 3,36,
+               verschiebt den Farbwinkel auf 40 Grad (also vom Braun ins Gelb)
+               und senkt die Saettigung auf 0,67. Grund der niedrigeren Decke
+               wie in Light: die verlorene Schleierlage. */
+            --focus-ring: #b55819;
         }
         
         /* Theme: High Contrast */
@@ -797,6 +867,13 @@
 
             /* Eingaberahmen: min3 4,73 (schlechteste Flaeche --bg-elevated). */
             --border-input: #8c8c8c;
+
+            /* Fokusring. Begruendung im Dark-Block. Contrast haelt mit seinem
+               eigenen Gold (#ffd700) ueberall klar: 14,97 / 13,46 / 11,34 /
+               9,01 auf den neutralen Flaechen, 12,54 auf der Modalflaeche —
+               min 9,01. Ein eigener Wert waere hier eine Verschlechterung,
+               also bleibt der Verweis. */
+            --focus-ring: var(--gold);
         }
         
 
@@ -1321,6 +1398,220 @@
             --scrim-70: color-mix(in srgb, #000 70%, transparent);
             --scrim-75: color-mix(in srgb, #000 75%, transparent);
             --scrim-85: color-mix(in srgb, #000 85%, transparent);
+
+            /* ------------------------------------------------------------
+               Design-Handoff v3, Welle 4, Schritt 1 — die Bewegungsleiter
+               ------------------------------------------------------------
+               WARUM HIER UND NICHT IN DEN THEME-BLOECKEN: dieselbe Begruendung
+               wie fuer den ganzen Aliasblock oben — eine Kopie in jedem Theme
+               waeren vier Stellen zum Auseinanderdriften. Bewegung ist
+               ueberdies themenblind: kein Theme laeuft schneller als ein
+               anderes. F-01 prueft beides (jeder Tokenverweis hat eine
+               Definition, und nichts wandert hinter den Alias).
+               ACHTUNG: hier darf kein Platzhalter in var-Klammern stehen. F-01
+               liest die Dateien MIT Kommentaren; aus einem erklaerenden
+               Platzhalter in var-Schreibweise liest seine Regex einen
+               Tokennamen heraus und meldet ihn als undefiniert. Beim ersten
+               Lauf dieses Blocks ist genau das passiert — Tokennamen im
+               Kommentar also ausschreiben oder die Klammern weglassen.
+
+               DIE DREI DAUERN SIND DER BESTAND, nicht ein Wunschbild. Paragraph
+               3.5 des Handoffs nennt 120ms fuer --dur-fast; gemessen fuehrt der
+               Baum an dieser Sprosse 150ms mit 82 Vorkommen gegen 8 bei 120ms.
+               150ms gewinnt, weil Arbeitsregel 1 "Refactoring im Bestand, kein
+               Redesign" heisst: damit aendern 21 von 275 Dauer-Segmenten ihr
+               Tempo (8 %) statt 91 (33 %). Dieselbe Entscheidung steht als
+               D-39 in der Befundlage.
+
+               --ease TRAEGT `ease`, also den Browser-Standard. Nicht aus
+               Bequemlichkeit: eine eigene Kurve wuerde die App in 134 Segmente
+               mit neuer Kurve und 141 beim Standard spalten — genau die
+               Zersplitterung, die diese Welle beendet. Der Token entsteht
+               trotzdem, damit die Kurve EINEN Namen hat und ein spaeterer
+               Wechsel eine Zeile ist statt 275.
+
+               DIE SIEBEN EIGENSCHAFTEN der Uebergangs-Listen sind abgezaehlt,
+               nicht geraten: background-color, border-color, color, opacity,
+               transform, box-shadow, filter. Das ist alles, was die 134
+               heutigen Sammelbewegungen tatsaechlich bewegen — gemessen, nicht
+               vermutet.
+               BEWUSST NICHT DABEI: outline-width und outline-offset. Heute
+               waechst der Fokusring an .btn und .rt-dice-btn ueber 200ms von 0
+               auf 2px, weil `all` ihn mittraegt. Ein Fokusring soll sofort da
+               sein. Entscheidend ist die Vorausschau: Welle 6 fuehrt
+               :focus-visible als Weltregel ein — stuende outline-* hier, wuerde
+               danach JEDES Element der App seinen Ring animieren.
+               EBENFALLS NICHT DABEI: font-weight. Zwei Stellen (.nav-tab.active
+               und .nav-group-btn.has-active, je 500 -> 600) lassen das Gewicht
+               kuenftig springen statt laufen. Eine Interpolation ueber eine
+               Stufe sieht niemand; der ENDWERT bleibt 600, der Stil-Sollstand
+               meldet hier also korrekt keinen Unterschied.
+               UND NICHT DABEI: text-shadow. Es traegt nur an zwei Stellen
+               (.dice-hero-result, .fdp-number) etwas und wird dort einzeln
+               angehaengt — in der Weltliste waere es 134-mal wirkungslos.
+
+               DIE ZWEI REVEAL-LISTEN tragen zusaetzlich `visibility` und sind
+               der einzige Grund, warum es sie ueberhaupt gibt. `visibility` ist
+               uebergangsfaehig, aber anders als alles andere: zwischen
+               `visible` und `hidden` liest JEDER Zwischenwert `visible`, der
+               Umschlag passiert erst am Ende der Dauer. Wer gleichzeitig
+               `opacity: 0` und `visibility: hidden` setzt, braucht das — sonst
+               springt die Sichtbarkeit im ERSTEN Bild auf `hidden`, waehrend
+               die Deckkraft unveraendert weiterlaeuft: die Ausblende findet
+               statt, nur sieht sie niemand. Im Browser gemessen am Panel: ohne
+               `visibility` ist es bei 60ms `hidden`, bei einer Deckkraft von
+               noch 0,89.
+               DIE DAUER MUSS PASSEN, sonst ist es derselbe Fehler, nur spaeter:
+               eine 200ms-Liste an einem 300ms-Element verliert die letzten
+               100ms genauso unsichtbar. Darum ZWEI Listen statt einer:
+                 --trans-reveal      laeuft auf --dur-slow (300ms) — das
+                                     Wuerfel-Panel (dice.css) und die rote
+                                     Wuerfelkugel (dice.css)
+                 --trans-reveal-std  laeuft auf --dur (200ms) — die
+                                     Schnellreferenz-Kugel (dashboard.css)
+               Alle drei werden vom selben Zustand versteckt: dem Mobil-Stapel
+               weiter unten in dieser Datei, der sechs Schweber auf einmal
+               ausblendet, sobald die Navigation aufgeht. Die anderen drei
+               (.qref-panel, .event-log, .kplog-panel) fuehren keinen Uebergang
+               und sind immer gesprungen. Gegen alles das steht W4-R-02 in
+               tests/unit/design-consistency.test.js: jede Ausblende, die eine
+               Bewegung fuehrt, muss `visibility` mindestens so lang tragen wie
+               `opacity`. */
+            --dur-fast: 150ms;
+            --dur: 200ms;
+            --dur-slow: 300ms;
+            --ease: ease;
+            --trans-std:
+                background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                color var(--dur) var(--ease), opacity var(--dur) var(--ease),
+                transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+                filter var(--dur) var(--ease);
+            --trans-fast:
+                background-color var(--dur-fast) var(--ease),
+                border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+                opacity var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease),
+                box-shadow var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
+            --trans-slow:
+                background-color var(--dur-slow) var(--ease),
+                border-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease),
+                opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease),
+                box-shadow var(--dur-slow) var(--ease), filter var(--dur-slow) var(--ease);
+            --trans-reveal: var(--trans-slow), visibility var(--dur-slow) var(--ease);
+            --trans-reveal-std: var(--trans-std), visibility var(--dur) var(--ease);
+
+            /* ------------------------------------------------------------
+               Welle 4, Schritt 1 — ZWEI vorgezogene Schriftgroessen (E3)
+               ------------------------------------------------------------
+               Diese beiden gehoeren der Schrift-Skala der Welle 5 (Paragraph
+               3.7: xs 11, sm 12, md 14, lg 16, xl 20). Vorgezogen sind NUR
+               diese zwei, nicht die Skala: der Chip- und der Marken-Vertrag
+               dieser Welle lesen --text-sm und --text-xs, und F-01 wuerde ohne
+               Definition rot — ein roter Lauf, der nach einem Fehler in der
+               eigenen Arbeit aussieht und keiner ist.
+               px, nicht rem: F-03 sichert zu, dass ausserhalb von fonts.css
+               kein rem steht, damit gleich gemeinte Groessen beim Zoomen nicht
+               auseinanderlaufen und die Browser-Grundgroesse des Nutzers
+               unangetastet bleibt.
+               Die FEHLENDEN Sprossen entstehen in Welle 5. Dass es drei
+               seien, stand hier falsch — gemessen fehlen SECHS (md, lg, xl,
+               2xl, 3xl, hero) und die drei --leading-*. Sie stehen jetzt im
+               Block darunter; der rote Nachweis der Welle 5 haengt nicht an
+               ihrer Abwesenheit, sondern an den Ratschen W5-R-05/W5-R-06
+               (tests/unit/design-consistency.test.js), die vor ihnen
+               entstanden sind. */
+            --text-xs: 11px;
+            --text-sm: 12px;
+
+            /* ------------------------------------------------------------
+               Welle 5, Schritt 2 — die SECHS fehlenden Sprossen der
+               Schrift-Skala und die drei Zeilenhoehen
+               ------------------------------------------------------------
+               DIE SKALA IST JETZT VOLLSTAENDIG: 11 / 12 / 14 / 16 / 20 / 26
+               / 34 px plus die begruendete Ausnahme 72 px. Die Rollen aus
+               Paragraph 3.7 des Handoffs:
+                 xs   11  Metazeile, Zaehler, Marke, Tabellenkopf
+                          — NICHTS darunter; das ist die Untergrenze fuer
+                            alles, was gelesen wird
+                 sm   12  Knoepfe, Nav-Reiter, Chips, Tabellenzellen
+                 md   14  Fliesstext, Eingaben, Listenzeilen — der heutige
+                          De-facto-Standard, gemessen 68 px-Deklarationen
+                          auf genau diesem Wert, haeufiger als jeder andere
+                 lg   16  Kartentitel, Modal-Titel, Statblock-Fliesstext
+                 xl   20  Ansichtstitel, Statblock-Name
+                 2xl  26  Dashboard-Kennzahl, Rundenzaehler, Timer-Karte
+                 3xl  34  Timer-Hero — heute 48 px (.timer-hero-time traegt
+                          3em bei einem Elternwert von 16 px). Der Zug ist
+                          also -14 px. Ebenso weit springt die Zahl des
+                          schwebenden Wuerfelpaneels (.fdp-number, auch 3em
+                          = 48 px), die hier bisher gar nicht genannt war.
+                 hero 72  NUR das Wuerfelergebnis. Eigene Sprosse und nicht
+                          in die Leiter gerechnet, weil .dice-hero-result
+                          5em traegt — gemessen 80 px, in dark-1440 und
+                          dark-375 gleich. Auf 34 px zu ziehen waere eine
+                          Umgestaltung, nicht ein Umbau.
+
+               DIESE ZWEI SPROSSEN SIND NOCH NICHT ENTSCHIEDEN. 72 gegen die
+               gemessenen 80 px ist selbst ein Sprung von -8 px, und 34 gegen
+               48 px einer von -14 px — beide ueber der 2-px-Schwelle, die
+               die Abnahme dieser Welle setzt. Der alte Wortlaut nannte die
+               80 px nur, um zu begruenden, warum hero nicht 34 ist, und las
+               sich unter der Ueberschrift "DIE SKALA IST JETZT
+               VOLLSTAENDIG" wie eine abgeschlossene Zuordnung. Sie ist
+               keine: offen ist, ob die beiden Spruenge namentlich
+               freigegeben werden oder ob hero auf 80 px gesetzt und eine
+               Sprosse 48 fuer .timer-hero-time und .fdp-number ergaenzt
+               wird. Das ist eine Gestaltungsentscheidung, keine Umbaufrage.
+               Die vollstaendige Stellenliste — 54 sichtbare Elemente in 26
+               Selektorgruppen springen beim Zug auf die Skala ueber 2 px,
+               davon 44 durch E-3/E-4 gedeckt und 10 nicht — steht im
+               Abschnitt W5-A der Aktenlage
+               (.planning/HANDOFF-V3-OFFENE-PUNKTE.md).
+
+               px, nicht rem — dieselbe Begruendung wie bei den zwei
+               vorgezogenen Sprossen oben: F-03 sichert zu, dass ausserhalb
+               von fonts.css kein rem steht, damit gleich gemeinte Groessen
+               beim Zoomen nicht auseinanderlaufen und die Browser-
+               Grundgroesse des Nutzers unangetastet bleibt.
+
+               WARUM IN DIESEM BLOCK UND NICHT IN DEN VIER THEME-BLOECKEN:
+               Schriftgroessen sind themenunabhaengig, und das ist gemessen,
+               nicht angenommen — 3700 Elemente, 0 Abweichung ueber dark,
+               light, sepia und contrast. In einem Theme-Block stehend
+               muesste jeder von vier Bloecken alle neun fuehren, und R-01
+               (Theme-Symmetrie) waere ab der ersten vergessenen Zeile rot.
+
+               DIE DREI ZEILENHOEHEN sind ANGELEGT, aber in dieser Welle
+               NICHT flaechig ausgerollt: nur Regelbloecke, die ohnehin ihre
+               Schriftgroesse aendern, bekommen gleich das passende Leading.
+               Grund: line-height kommt heute in 10 verschiedenen Werten vor
+               (1.5 20x, 1 13x, 1.4 13x, 1.6 9x, 1.2 5x, dazu 1.7, 1.65,
+               1.3 und zwei absolute in px), und der berechnete Zustand
+               zeigt 43 verschiedene Endwerte. Das ist ein eigener Befund in
+               der Groesse einer ganzen Welle und steht nicht in D-06; die
+               Ratschen W5-R-05/W5-R-06 nennen line-height ausdruecklich
+               nicht. Die Tokens anzulegen kostet drei Zeilen und nimmt der
+               spaeteren Arbeit nichts weg — sie flaechig auszurollen kostet
+               eine zweite Welle.
+               1.35 kommt im Bestand heute NICHT vor; die 13 Treffer bei 1.4
+               sind seine naechsten Nachbarn und werden sich beim Umstellen
+               um 0,05em verschieben. Das ist bei 14 px ein Bildpunkt und
+               damit innerhalb der 2-px-Schwelle der Abnahme.
+
+               BEIM ANLEGEN HAT DIESER BLOCK NOCH KEINEN LESER, und das ist
+               die Probe darauf, dass er an der richtigen Stelle steht: ein
+               Token ohne Leser darf NICHTS aendern. Nachgemessen mit
+               tools/typo-baseline.js gegen die Erhebung vor diesem Commit —
+               5 Laeufe, 22155 verglichene Schluessel, 0 Groessen-,
+               0 Gewichts- und 0 Zeilenhoehen-Abweichung. */
+            --text-md: 14px;
+            --text-lg: 16px;
+            --text-xl: 20px;
+            --text-2xl: 26px;
+            --text-3xl: 34px;
+            --text-hero: 72px;
+            --leading-tight: 1.2;
+            --leading-snug: 1.35;
+            --leading-normal: 1.5;
         }
 
         /* ============================================================
@@ -1510,7 +1801,7 @@
             border-bottom: none;
             background: var(--bg-card);
             transform: translateY(calc(100% - 56px));
-            transition: transform 0.3s ease;
+            transition: transform var(--dur-slow) ease;
         }
         
         [data-layout="mobile"] .app-header.nav-open {

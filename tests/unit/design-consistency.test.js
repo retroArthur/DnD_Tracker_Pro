@@ -1123,8 +1123,24 @@ describe('F-18 — Dubletten und !important (Ratsche)', () => {
     //    3  prefers-reduced-motion
     //    1  .shop-card.expanded .shop-body — schlaegt ein per JS gesetztes
     //       Inline-display
+    //
+    // Gesenkt am 2026-10-06 (Design-Handoff v3, Welle 5, Schritt 6): 105 ->
+    // 104. In `assets/styles/spells.css` stand das Editor-Fett zweizeilig —
+    // `font-weight: 700 !important;` und direkt darunter
+    // `font-weight: bold !important;`. Zwei Schreibweisen derselben
+    // Eigenschaft im selben Block; die zweite gewann, also galt `bold` (700).
+    // Die Gewichtsregel der Welle 5 kennt nur 400/500/600, und das
+    // Ausgabe-Fett (`.spell-desc strong/b` in party.css) steht schon auf
+    // `600 !important`. Die untere Zeile ist deshalb GELOESCHT und die obere
+    // auf `600 !important` gesetzt — Editor-Fett und Ausgabe-Fett sind damit
+    // dasselbe, und ein `!important` weniger. Die Senkung ist das
+    // Nebenergebnis der Gewichtsumstellung, nicht ihr Zweck (O-2).
+    // Gemessener Ausgangswert danach: 104, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien. Vorher 105 im Code und 111 im Rohtext — die sechs
+    // Differenzvorkommen stehen in Kommentaren, denn der Zaehler liest
+    // `cssCode`, also den kommentarfreien Text.
     const DUBLETTEN_MAX = 0;
-    const IMPORTANT_MAX = 105;
+    const IMPORTANT_MAX = 104;
 
     test('die Zahl echter Dubletten steigt nicht wieder', () => {
         const gruppen = new Map();
@@ -1182,7 +1198,38 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     // Regex ueber dieselben Dateien. Der erklaerende Kommentar im Markup nennt
     // den Attributnamen absichtlich nicht aus: die Regex zaehlt sein Vorkommen
     // auch dort, und die Senkung waere sonst um eins zu klein.
-    const INLINE_MAX = 254;
+    // Gesenkt am 2026-10-06 (Design-Handoff v3, Welle 5, Schritt 7): 254 ->
+    // 252. UND NICHT AUF 215, obwohl der Schritt 39 Inline-Schriftgroessen in
+    // Templates anfasst — diese Zahl zaehlt ATTRIBUTE, nicht Deklarationen.
+    // Von den 39 tragen gemessen nur ZWEI ausschliesslich eine Schriftgroesse
+    // (die beiden Beschriftungen "Typ" und "Ziel" des
+    // Verknuepfungsformulars); bei ihnen verschwindet mit der Deklaration das
+    // ganze Attribut. Die anderen 37 fuehren daneben `color` (29x),
+    // `margin-bottom` (10x), `display` (6x) und `text-align` (4x) und bleiben
+    // stehen. Dasselbe Missverstaendnis ist in dieser Datei schon einmal
+    // festgehalten (der Kommentar bei F-19 oben: "INLINE_MAX blieb beim
+    // Entfernen eines Stils darum zu Recht unveraendert"). Die Senkung ist das
+    // Nebenergebnis, nicht der Zweck (O-6). Dass die beiden Beschriftungen
+    // ihre Groesse danach nicht verlieren, ist gemessen und nicht gehofft:
+    // `.form-group label` (core.css, F-18-bewacht) setzt
+    // `font-size: var(--text-sm)` = 12 px, der Inline-Wert war 0,8em auf
+    // einem 16-px-Elternwert = 12,8 px — Delta -0,80 px.
+    // Gemessener Ausgangswert danach: 252, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien.
+    // Gesenkt am 2026-10-07 (Design-Handoff v3, Welle 6, Schritt 7): 252 ->
+    // 251. UND NUR UM EINS, obwohl der geloeschte Inline-Stil VIER
+    // Deklarationen trug — diese Zahl zaehlt ATTRIBUTE. Es ist das Attribut
+    // der Filterrueckmeldung der Zauberansicht, die zur Klasse
+    // `.filter-count` geworden ist (W6-R-09 Fall 1). ZWEI der vier
+    // Deklarationen waren LAYOUT (`white-space: nowrap`, `margin-left: auto`)
+    // und sind genau darum in die Klasse mitgegangen: ohne sie springt der
+    // Zaehler im Flex-Streifen nach links an die Schulfilter, am gebauten
+    // Buendel in vier Themes nachgemessen (W6-R-10 Fall 4). Die Senkung ist
+    // das Nebenergebnis, nicht der Zweck; der Zweck war, dass die zwei
+    // Zaehler dieser Ansicht zwei Namen bekommen (W6-E-3 = A).
+    // Gemessener Ausgangswert danach: 251, gezaehlt mit derselben Regex ueber
+    // dieselben Dateien.
+    const INLINE_MAX = 251;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
@@ -7204,14 +7251,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            zeilenbasierter grep sechs Literale verliert. */
         {
             datei: 'dice.css',
-            zeile: 755,
+            zeile: 745,
             pfad: '.floating-dice-panel',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
         },
         {
             datei: 'dmscreen.css',
-            zeile: 782,
+            zeile: 786,
             pfad: '.modal',
             lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
             grund: 'Glanzkante auf Glas, themenblind'
@@ -7224,14 +7271,14 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            als uebersehener Rest gilt. */
         {
             datei: 'dice.css',
-            zeile: 714,
+            zeile: 704,
             pfad: '@keyframes floatingPulse >> 0%, 100%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
         },
         {
             datei: 'dice.css',
-            zeile: 715,
+            zeile: 705,
             pfad: '@keyframes floatingPulse >> 50%',
             ganze: true,
             grund: 'Pulsanimation, animierter Spread'
@@ -7255,7 +7302,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
         {
             datei: 'dmscreen.css',
-            zeile: 1150,
+            zeile: 1146,
             pfad: '[data-sortable].drag-over',
             lage: '0 0 0 2px var(--gold)',
             grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
@@ -7273,7 +7320,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
            diesen Wert traegt. */
         {
             datei: 'dice.css',
-            zeile: 691,
+            zeile: 681,
             pfad: '.floating-dice-trigger',
             lage: '0 0 0 0 rgba(220, 38, 38, 0.4)',
             grund: 'Ruhelage der Pulsanimation, wortgleich mit dem 0-%-Bild'
@@ -7320,37 +7367,37 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'command-palette.css', zeile: 32, stufe: 3,
           pfad: '.cp-box',
           vorher: '0 16px 48px rgba(0, 0, 0, 0.6)' },
-        { datei: 'core.css', zeile: 271, stufe: 3,
+        { datei: 'core.css', zeile: 268, stufe: 3,
           pfad: '#quicknotes-modal .modal',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.6)' },
-        { datei: 'core.css', zeile: 515, stufe: 3,
+        { datei: 'core.css', zeile: 512, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 1122, stufe: 2,
+        { datei: 'core.css', zeile: 1163, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1658, stufe: 1,
+        { datei: 'core.css', zeile: 1699, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1737, stufe: 3,
+        { datei: 'core.css', zeile: 1778, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 784, stufe: 2,
+        { datei: 'dashboard.css', zeile: 774, stufe: 2,
           pfad: '.conflict-banner',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 902, stufe: 2,
+        { datei: 'dashboard.css', zeile: 892, stufe: 2,
           pfad: '.dash-char:hover',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dashboard.css', zeile: 1209, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1199, stufe: 2,
           pfad: '.qref-fab',
           vorher: '0 4px 12px rgba(0,0,0,0.4)' },
-        { datei: 'dashboard.css', zeile: 1216, stufe: 2,
+        { datei: 'dashboard.css', zeile: 1206, stufe: 2,
           pfad: '.qref-fab:hover',
           vorher: '0 6px 20px rgba(212,175,55,0.4)' },
-        { datei: 'dashboard.css', zeile: 1233, stufe: 3,
+        { datei: 'dashboard.css', zeile: 1223, stufe: 3,
           pfad: '.qref-panel',
           vorher: '0 8px 32px rgba(0,0,0,0.5)' },
-        { datei: 'dashboard.css', zeile: 2184, stufe: 3,
+        { datei: 'dashboard.css', zeile: 2180, stufe: 3,
           pfad: '.kplog-panel',
           vorher:
               'NEU in U5 — kein gemessener Ausgangswert, die Regel hat nie ein Literal ' +
@@ -7360,28 +7407,28 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dice.css', zeile: 79, stufe: 2,
           pfad: '.dice-die:hover',
           vorher: '0 4px 16px rgba(0,0,0,0.3)' },
-        { datei: 'dice.css', zeile: 691, stufe: 2,
+        { datei: 'dice.css', zeile: 681, stufe: 2,
           pfad: '.floating-dice-trigger',
           vorher: '0 4px 16px rgba(220, 38, 38, 0.4)' },
-        { datei: 'dice.css', zeile: 700, stufe: 3,
+        { datei: 'dice.css', zeile: 690, stufe: 3,
           pfad: '.floating-dice-trigger:hover',
           vorher: '0 6px 24px rgba(220, 38, 38, 0.5)' },
-        { datei: 'dice.css', zeile: 755, stufe: 3,
+        { datei: 'dice.css', zeile: 745, stufe: 3,
           pfad: '.floating-dice-panel',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.5)' },
-        { datei: 'dmscreen.css', zeile: 50, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 49, stufe: 3,
           pfad: '.global-search-results',
           vorher: '0 8px 24px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 263, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 262, stufe: 2,
           pfad: '.condition-tooltip',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
-        { datei: 'dmscreen.css', zeile: 782, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 786, stufe: 3,
           pfad: '.modal',
           vorher: '0 8px 32px rgba(0, 0, 0, 0.4)' },
-        { datei: 'dmscreen.css', zeile: 815, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 819, stufe: 3,
           pfad: '.dragging',
           vorher: '0 8px 24px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 872, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 876, stufe: 2,
           pfad: '.export-dropdown-content',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         { datei: 'dmscreen.css', zeile: 972, stufe: 1,
@@ -7390,61 +7437,61 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'dmscreen.css', zeile: 996, stufe: 2,
           pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
-        { datei: 'dmscreen.css', zeile: 1144, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1140, stufe: 2,
           pfad: '[data-sortable].dragging',
           vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 1150, stufe: 2,
+        { datei: 'dmscreen.css', zeile: 1146, stufe: 2,
           pfad: '[data-sortable].drag-over',
           vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
-        { datei: 'dmscreen.css', zeile: 2196, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2181, stufe: 3,
           pfad: '.dms-config-dropdown',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'dmscreen.css', zeile: 2449, stufe: 3,
+        { datei: 'dmscreen.css', zeile: 2434, stufe: 3,
           pfad: '.dmscreen-widget.dragging',
           vorher: '0 8px 32px rgba(0,0,0,0.3)' },
-        { datei: 'editors.css', zeile: 222, stufe: 3,
+        { datei: 'editors.css', zeile: 227, stufe: 3,
           pfad: '.editor-toolbar .tb-menu',
           vorher: '0 14px 34px rgba(0, 0, 0, 0.65)' },
-        { datei: 'editors.css', zeile: 367, stufe: 2,
+        { datei: 'editors.css', zeile: 372, stufe: 2,
           pfad: '.editor-block-handle',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
         { datei: 'encounters.css', zeile: 110, stufe: 3,
           pfad: '#calculator-modal .modal-content',
           vorher: '0 20px 60px rgba(0, 0, 0, 0.5)' },
-        { datei: 'encounters.css', zeile: 577, stufe: 1,
+        { datei: 'encounters.css', zeile: 576, stufe: 1,
           pfad: '#calc-budget-slider::-webkit-slider-thumb',
           vorher: '0 2px 4px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 587, stufe: 1,
+        { datei: 'encounters.css', zeile: 586, stufe: 1,
           pfad: '#calc-budget-slider::-moz-range-thumb',
           vorher: '0 2px 4px rgba(0,0,0,0.3)' },
-        { datei: 'encounters.css', zeile: 645, stufe: 2,
+        { datei: 'encounters.css', zeile: 644, stufe: 2,
           pfad: '.calc-favorites-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1385 -> 1388: die Begruendung am Hoehenbudget von
         // .enc-view.active (U6) ist 3 Zeilen weiter oben eingefuegt.
-        { datei: 'encounters.css', zeile: 1388, stufe: 2,
+        { datei: 'encounters.css', zeile: 1381, stufe: 2,
           pfad: '.enc-lang-dropdown',
           vorher: '0 4px 12px rgba(0,0,0,0.3)' },
         // Anker 1055 -> 1078: die Begruendung an .init-entry.lair .init-type
         // (Pruefung W3-E, Runde 1) ist 23 Zeilen weiter oben eingefuegt.
         // Anker 1133 -> 1216: die zwei Begruendungen an den Zustandsflaechen
         // der Kampfzeile (Q1, Runde 2) sind 83 Zeilen weiter oben eingefuegt.
-        { datei: 'initiative.css', zeile: 1216, stufe: 'drawer',
+        { datei: 'initiative.css', zeile: 1213, stufe: 'drawer',
           pfad: '.init-statblock-content',
           vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
-        { datei: 'loot.css', zeile: 313, stufe: 1,
+        { datei: 'loot.css', zeile: 306, stufe: 1,
           pfad: '.shop-cat-badge.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
-        { datei: 'loot.css', zeile: 353, stufe: 1,
+        { datei: 'loot.css', zeile: 346, stufe: 1,
           pfad: '.shop-sort-btn.active',
           vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
         // Anker 938 -> 944 und 1067 -> 1073: die Begruendungen am
         // Hoehenbudget von .npc-view.active und .loot-view.active (U6) sind
         // zusammen 6 Zeilen weiter oben eingefuegt.
-        { datei: 'npcs.css', zeile: 944, stufe: 3,
+        { datei: 'npcs.css', zeile: 924, stufe: 3,
           pfad: '.npc-popup',
           vorher: '0 8px 32px rgba(0,0,0,0.4)' },
-        { datei: 'npcs.css', zeile: 1073, stufe: 1,
+        { datei: 'npcs.css', zeile: 1053, stufe: 1,
           pfad: '.npc-list-tag.clickable:hover',
           vorher: '0 2px 8px rgba(0,0,0,0.3)' },
         { datei: 'party.css', zeile: 390, stufe: 1,
@@ -7471,22 +7518,22 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'party.css', zeile: 609, stufe: 2,
           pfad: '.event-log-entry',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'party.css', zeile: 1674, stufe: 2,
+        { datei: 'party.css', zeile: 1668, stufe: 2,
           pfad: '.cf-languages-block .cf-lang-dropdown',
           vorher: '0 4px 12px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 436, stufe: 2,
+        { datei: 'spells.css', zeile: 454, stufe: 2,
           pfad: '.floating-toolbar',
           vorher: '0 4px 20px rgba(0, 0, 0, 0.5)' },
-        { datei: 'spells.css', zeile: 525, stufe: 2,
+        { datei: 'spells.css', zeile: 575, stufe: 2,
           pfad: '.table-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'spells.css', zeile: 563, stufe: 2,
+        { datei: 'spells.css', zeile: 613, stufe: 2,
           pfad: '.link-context-toolbar',
           vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
-        { datei: 'tools.css', zeile: 1180, stufe: 3,
+        { datei: 'tools.css', zeile: 1165, stufe: 3,
           pfad: '.wiki-search-dropdown',
           vorher: '0 10px 30px rgba(0,0,0,0.4)' },
-        { datei: 'tools.css', zeile: 1359, stufe: 2,
+        { datei: 'tools.css', zeile: 1344, stufe: 2,
           pfad: '.wiki-link-suggester',
           vorher: '0 4px 20px rgba(0,0,0,0.4)' }
     ];
@@ -8130,11 +8177,11 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
        Theme-Abhaengigkeit entsteht erst durch die Tokenisierung.
        ------------------------------------------------------------------- */
     const GLUEH_STELLEN = [
-        { datei: 'core.css', zeile: 453, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold', farbe: '#d4af37' },
+        { datei: 'core.css', zeile: 450, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold', farbe: '#d4af37' },
         { datei: 'dashboard.css', zeile: 34, sel: '.dice-result.crit-effect', radius: 30, vorher: 0.5, rolle: '--green' },
         { datei: 'dashboard.css', zeile: 40, sel: '.dice-result.fail-effect', radius: 30, vorher: 0.5, rolle: '--red' },
-        { datei: 'dice.css', zeile: 700, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
-        { datei: 'dice.css', zeile: 818, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 691, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 809, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
         { datei: 'dmscreen.css', zeile: 1008, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dmscreen.css', zeile: 1019, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red', farbe: '#ef4444' },
         { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
@@ -8143,7 +8190,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
-        { datei: 'tools.css', zeile: 1026, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
+        { datei: 'tools.css', zeile: 1013, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
     ];
     const gluehSchluessel = e => `${e.datei} {${e.sel}}`;
 
@@ -8279,9 +8326,14 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'dice.css', sel: '.fdp-die.d20:hover', token: '--red', stufe: null },
         { datei: 'dmscreen.css', sel: '.btn-success:hover', token: '--green-dim', stufe: null },
         {
+            /* `--focus-ring` statt `--gold` seit Welle 6 Schritt 6: der
+               Fokusrahmen liest jetzt dieselbe Tinte wie der Ring 2 px
+               daneben. Vorher standen an einem Kennzeichen zwei Goldtoene
+               (in light #946c09 gegen #b8860b, gemessen an 219 von 219
+               fokussierten Feldern). Gefuehrt in W6-R-08 Teil 3. */
             datei: 'dmscreen.css',
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
-            token: '--gold',
+            token: '--focus-ring',
             stufe: null
         },
         {
@@ -8291,13 +8343,15 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             stufe: null
         },
         {
+            // `--focus-ring` seit Welle 6 Schritt 6 — Begruendung oben.
             datei: 'party.css',
             sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
-            token: '--gold',
+            token: '--focus-ring',
             stufe: null
         },
         { datei: 'spells.css', sel: '.color-swatch.active', token: '--gold', stufe: null },
-        { datei: 'welt.css', sel: '.wp-rich-editor:focus', token: '--gold', stufe: null }
+        // `--focus-ring` seit Welle 6 Schritt 6 — Begruendung oben.
+        { datei: 'welt.css', sel: '.wp-rich-editor:focus', token: '--focus-ring', stufe: null }
     ];
 
     /** Der Umriss, den der Contrast-Block einer Stufe gibt. Zeichengleich mit
@@ -9447,7 +9501,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'party.css',
-            zeile: 1217,
+            zeile: 1216,
             sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
             marke: '.cf-panel .cf-field input:focus',
             vorher: { dicke: 3, deckung: 0.15, farbe: '#d4af37' },
@@ -9457,7 +9511,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'welt.css',
-            zeile: 156,
+            zeile: 155,
             sel: '.wp-rich-editor:focus',
             marke: '.wp-rich-editor:focus',
             vorher: { dicke: 2, deckung: 0.15, farbe: null },
@@ -9477,7 +9531,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1150,
+            zeile: 1146,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
             vorher: { dicke: 2, deckung: 1.0, farbe: null },
@@ -9511,8 +9565,8 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         { datei: 'dashboard.css', zeile: 67, sel: '.dice-fail', marke: '.dice-fail', radius: 10, vorher: 0.5, rolle: '--red', farbe: null },
         { datei: 'dice.css', zeile: 31, sel: '.dice-hero-result.crit', marke: '.dice-hero-result.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
         { datei: 'dice.css', zeile: 36, sel: '.dice-hero-result.fail', marke: '.dice-hero-result.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' },
-        { datei: 'dice.css', zeile: 832, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
-        { datei: 'dice.css', zeile: 838, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
+        { datei: 'dice.css', zeile: 822, sel: '.fdp-number.crit', marke: '.fdp-number.crit', radius: 20, vorher: 0.5, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dice.css', zeile: 828, sel: '.fdp-number.fail', marke: '.fdp-number.fail', radius: 20, vorher: 0.5, rolle: '--red', farbe: '#ef4444' }
     ];
 
     /* -------------------------------------------------------------------
@@ -9536,7 +9590,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dmscreen.css',
-            zeile: 1324,
+            zeile: 1319,
             sel: '.dms-hp-text',
             marke: '.dms-hp-text',
             wert: '0 1px 2px rgba(0,0,0,0.5)',
@@ -9544,7 +9598,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         },
         {
             datei: 'dice.css',
-            zeile: 710,
+            zeile: 700,
             sel: '.floating-dice-trigger svg',
             marke: '.floating-dice-trigger svg',
             wert: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
@@ -11487,5 +11541,5992 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
             );
 
         expect(befunde.sort()).toEqual([]);
+    });
+});
+
+describe('W4-R-01 — keine Sammelbewegung: kein transition: all (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Bewegung ist in dieser App vollstaendig unbewacht. Keiner der Tests in
+       dieser Datei nennt `transition`, eine Dauer oder eine Kurve (gemessen:
+       `grep -n transition` trifft vier Stellen, alle vier sind Prosa in den
+       Schatten-Ratschen R-19/R-20). Der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) hasht zwoelf
+       Eigenschaften — color, backgroundColor, borderColor, borderRadius,
+       padding, margin, fontSize, fontWeight, boxShadow, opacity, display,
+       textAlign — und `transition` ist keine davon. Und
+       tools/css-usage-report.js zaehlt `transition: all` in einen Bericht,
+       ohne je etwas zuzusichern. Eine Umstellung der Bewegung erzeugt deshalb
+       NULL Pruefunterschied in allen 3549 Digests des Sollstands: ein
+       `--trans-std`, das versehentlich `color` auslaesst, faellt keiner
+       Automatik auf. Darum steht diese Ratsche VOR der Umstellung und wird rot
+       bewiesen — eine Ratsche, die danach entsteht, prueft nur noch, was
+       ohnehin dasteht.
+
+       AUSGANGSWERT: 134 Deklarationen in 10 Dateien (erhoben am 2026-10-02 an
+       33dab42, mit dieser Zaehlart). Verteilung: dashboard.css 23, dice.css 19,
+       core.css 16, encounters.css 15, tools.css 13, npcs.css 11, party.css 11,
+       initiative.css 10, dmscreen.css 8, loot.css 8. Diese Zahl darf nur
+       SINKEN, Ziel ist 0.
+
+       Warum kommentarfrei gelesen wird, obwohl es heute keinen Unterschied
+       macht: nachgemessen enthaelt KEIN Kommentar im Baum eine Zeichenfolge,
+       die diese Regex trifft (roh 134, kommentarfrei 134, Differenz 0) — die
+       Annahme, Welle-2-/Welle-3-Notizen nennten `transition: all` im
+       Prosatext, trifft nicht zu. Die Entfernung bleibt trotzdem Pflicht,
+       weil die folgenden Schritte an jede umgestellte Regel einen Kommentar
+       schreiben, der den alten Wert nennt: ohne Entfernung wuerde die Ratsche
+       genau die Erklaerung ihrer eigenen Erfuellung als Verstoss zaehlen. Das
+       ist die Falle, die in Welle 1 dreimal zugeschnappt ist (siehe die
+       Warnung ueber F-01).
+
+       Warum auch `transition-property` geprueft wird, obwohl es heute null
+       solche Deklarationen gibt: sonst geht die Luecke beim naechsten
+       Umschreiben auf. `transition-property: all` ist dieselbe Aussage in
+       zwei Zeilen. */
+
+    // ESCAPE-LUKE: braeuchte eine Regel wirklich die Sammelbewegung, gehoert
+    // sie hier hinein — als `datei.css:zeile`, mit Begruendung, sichtbar im
+    // Diff. Form wie EXEC_COMMAND_ALLOWLIST in
+    // tests/e2e/features/editor-floating.spec.js: bewusst LEER, nicht
+    // abwesend. Der Sinn von `all` ist ja gerade, dass niemand aufschreiben
+    // muss, was sich bewegt — und genau das ist der Befund.
+    const SAMMELBEWEGUNG_GEDULDET = [];
+
+    const SAMMELBEWEGUNG = /transition(?:-property)?\s*:\s*[^;}]*\ball\b/g;
+
+    /**
+     * Kommentare entfernen, ohne Zeilennummern zu verschieben: der Inhalt wird
+     * durch Leerzeichen ersetzt, die Zeilenumbrueche bleiben stehen. Das
+     * globale withoutComments() oben taugt zum Zaehlen, nicht zum Verorten —
+     * nach ihm zeigt jede Zeilenangabe hinter dem ersten Kommentar daneben,
+     * und eine Fehlermeldung mit falscher Zeile kostet mehr Zeit als keine.
+     */
+    function ohneKommentareZeilentreu(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    function sammelbewegungsStellen() {
+        const stellen = [];
+        cssFiles.forEach(f => {
+            const code = ohneKommentareZeilentreu(f.content);
+            for (const m of code.matchAll(SAMMELBEWEGUNG)) {
+                const zeile = code.slice(0, m.index).split('\n').length;
+                stellen.push({
+                    anker: `${f.name}:${zeile}`,
+                    deklaration: m[0].replace(/\s+/g, ' ').trim()
+                });
+            }
+        });
+        return stellen;
+    }
+
+    test('keine Regel unter assets/styles/ erklaert ihre Bewegung als `all`', () => {
+        const befunde = sammelbewegungsStellen()
+            .filter(s => !SAMMELBEWEGUNG_GEDULDET.includes(s.anker))
+            .map(
+                s =>
+                    `${s.anker} { ${s.deklaration} } — bewegt ALLES, auch was ` +
+                    `niemand bewegen wollte (Rahmenbreite, Fokusring, ` +
+                    `Schriftgewicht); gehoert auf eine benannte ` +
+                    `Uebergangs-Liste (var(--trans-std) / --trans-fast / --trans-slow)`
+            );
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    // Schranken der GEGENPROBE, benannt, weil die MUTATIONSPROBE unten
+    // dasselbe Urteil nachstellen muss: zwei Kopien derselben Zahl waeren zwei
+    // Zahlen, die auseinanderlaufen koennen.
+    const DATEI_SCHRANKE = 15;
+    const BEWEGUNGS_SCHRANKE = 200;
+
+    /**
+     * Zahl aller Bewegungsdeklarationen im Baum — mit einer EIGENEN, von
+     * SAMMELBEWEGUNG unabhaengigen Regex. Genau diese Unabhaengigkeit ist der
+     * Grund, warum die GEGENPROBE einen leeren Dateisatz bemerkt, eine
+     * beschaedigte Haupt-Regex aber nicht. Ist 236 am 2026-10-02.
+     */
+    function bewegungsDeklarationen() {
+        return cssFiles.reduce(
+            (n, f) => n + (withoutComments(f.content).match(/transition\s*:/g) || []).length,
+            0
+        );
+    }
+
+    test('GEGENPROBE: der Scan liest ueberhaupt Bewegungsdeklarationen', () => {
+        // Ohne sie waere ein LEERER DATEISATZ ein gruener Test — genau der
+        // Fehler, den F-01b gemacht hat (siehe den entfernten rgba()-Block
+        // oben): inhaltsleer gruen statt rot. Eine kaputte Haupt-Regex faengt
+        // sie NICHT; dafuer ist die SELBSTPROBE unten da.
+        expect(cssFiles.length).toBeGreaterThan(DATEI_SCHRANKE);
+        expect(bewegungsDeklarationen()).toBeGreaterThan(BEWEGUNGS_SCHRANKE);
+    });
+
+    /* ACHT PROBEN FUER DIE HAUPT-REGEX — feste Zeichenketten, kein Dateizugriff
+       Beide Richtungen, weil eine Regex in beide Richtungen kippen kann: die
+       ersten vier MUESSEN treffen (darunter `all` an zweiter Stelle einer
+       Kommaliste — im Baum gibt es das heute nicht, und genau darum bemerkt
+       niemand eine zu enge Zeichenklasse), die letzten vier duerfen NICHT
+       treffen (darunter `all` in der Wortmitte, der Grund fuer die
+       Wortgrenzen). */
+    const SAMMELBEWEGUNG_PROBEN = [
+        ['a{transition: all 0.2s ease}', 1],
+        ['a{transition-property: all}', 1],
+        ['a{transition:all .15s}', 1],
+        ['a{transition: opacity .2s ease, all .3s ease}', 1],
+        ['a{transition: opacity 0.2s ease}', 0],
+        ['a{transition: box-shadow .2s ease, color .2s ease}', 0],
+        ['a{font-family: Tallow}', 0],
+        ['a{transition: small-caps .2s}', 0]
+    ];
+
+    function selbstprobeBefunde(regex) {
+        return SAMMELBEWEGUNG_PROBEN.filter(p => (p[0].match(regex) || []).length !== p[1]).map(
+            p => `${p[0]} — erwartet ${p[1]} Treffer, erhalten ${(p[0].match(regex) || []).length}`
+        );
+    }
+
+    test('SELBSTPROBE: die Haupt-Regex trifft die Sammelbewegung — und nur sie', () => {
+        expect(selbstprobeBefunde(SAMMELBEWEGUNG)).toEqual([]);
+    });
+
+    /* SECHS BESCHAEDIGUNGEN DER HAUPT-REGEX
+       Die ersten drei stammen aus dem Pruefbefund zu W4-R-01, die anderen drei
+       sind naheliegende Nachbarn. Jede veraendert, was SAMMELBEWEGUNG trifft;
+       KEINE veraendert, was bewegungsDeklarationen() zaehlt. */
+    const BESCHAEDIGUNGEN = [
+        [
+            'Tippfehler im Schluesselwort (\\ball\\b -> \\bal\\b)',
+            /transition(?:-property)?\s*:\s*[^;}]*\bal\b/g
+        ],
+        [
+            'Wortgrenze verschoben (\\ball\\b -> \\balle\\b)',
+            /transition(?:-property)?\s*:\s*[^;}]*\balle\b/g
+        ],
+        ['Zeichenklasse verengt ([^;}] -> [^ ])', /transition(?:-property)?\s*:\s*[^ ]*\ball\b/g],
+        ['Eigenschaftsname vertippt (transitin)', /transitin(?:-property)?\s*:\s*[^;}]*\ball\b/g],
+        [
+            'Wortgrenzen ganz verloren (\\ball\\b -> all)',
+            /transition(?:-property)?\s*:\s*[^;}]*all/g
+        ],
+        ['-property-Zweig verloren', /transition\s*:\s*[^;}]*\ball\b/g]
+    ];
+
+    /**
+     * Welcher Waechter DIESES Blocks erkennt eine beschaedigte Haupt-Regex als
+     * beschaedigt? Nicht der Haupttest: eine Regex, die nichts mehr trifft,
+     * macht ihn GRUEN — und gruen ist das erklaerte Ziel dieser Ratsche. Heute
+     * steht er rot bei 134 und beweist damit selbst, dass die Regex traegt; ab
+     * Schritt 3 steht er gruen bei 0, und dann ist "Regex kaputt" von
+     * "Vertrag erfuellt" nicht mehr zu unterscheiden. Also muss ein anderer
+     * Waechter die Regex SELBST pruefen.
+     */
+    function erkennenBeschaedigung(regex) {
+        const erkannt = [];
+        // Waechter 1, GEGENPROBE: zaehlt mit eigener Regex und liest `regex`
+        // nie — deshalb faellt ihr keine Beschaedigung auf. Das ist der Befund.
+        if (cssFiles.length <= DATEI_SCHRANKE || bewegungsDeklarationen() <= BEWEGUNGS_SCHRANKE) {
+            erkannt.push('GEGENPROBE');
+        }
+        // Waechter 2, SELBSTPROBE: prueft die Regex selbst, an festen
+        // Zeichenketten. Sie ist die einzige, die eine Beschaedigung sieht.
+        if (selbstprobeBefunde(regex).length > 0) {
+            erkannt.push('SELBSTPROBE');
+        }
+        return erkannt;
+    }
+
+    test('MUTATIONSPROBE: eine beschaedigte Haupt-Regex faellt mindestens einem Waechter auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN.filter(
+            b => erkennenBeschaedigung(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(weniger Treffer = gruener Test), und die GEGENPROBE zaehlt mit ` +
+                `eigener Regex weiter ${bewegungsDeklarationen()} > ${BEWEGUNGS_SCHRANKE}`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in SAMMELBEWEGUNG_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set(sammelbewegungsStellen().map(s => s.anker));
+        expect(SAMMELBEWEGUNG_GEDULDET.filter(a => !vorhanden.has(a))).toEqual([]);
+    });
+});
+
+describe('W4-R-02 — Ausblenden mit visibility: keine unsichtbare Ausblende (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE NACHTRAEGLICH ENTSTEHT
+       Sie ist der Preis dafuer, dass W4-R-01 die Sammelbewegung nur ZAEHLT.
+       `visibility` ist uebergangsfaehig, aber auf eine Weise, die kein anderer
+       Wert hat: zwischen `visible` und `hidden` liest JEDER Zwischenwert
+       `visible`, der Umschlag passiert erst am Ende der Dauer. Ein
+       `transition: all 0.2s` hat das kostenlos mitgetragen — ein Element, das
+       gleichzeitig `opacity: 0` und `visibility: hidden` bekommt, blieb die
+       ganzen 200ms sichtbar und war am Ende weg. Eine BENANNTE
+       Eigenschaftsliste traegt es nicht mehr, es sei denn, `visibility` steht
+       darin. Dann springt die Sichtbarkeit im ERSTEN Bild auf `hidden`,
+       waehrend die Deckkraft unveraendert weiterlaeuft: die Ausblende findet
+       statt, nur sieht sie niemand.
+
+       GEMESSEN AN DEN ZWEI STELLEN, DIE DEN TEST AUSGELOEST HABEN (gefuellte
+       Kampagne, 390x844, data-layout=mobile, Abtastung beim Oeffnen der
+       Mobil-Navigation; `nav-open` schaltet toggleMobileNav() in
+       performance-extras.js (im utils/-Verzeichnis), Zeile 37, zur Laufzeit —
+       der Modulpfad steht hier bewusst OHNE sein Verzeichnis davor, genau wie
+       in css-deletion-audit.test.js:146, weil das Abdeckungs-Gate
+       (tests/unit/module-test-coverage.test.js) den woertlichen
+       loader.js-Pfad in einer Testdatei als "Modul ist angefasst" liest und
+       eine Erwaehnung in Prosa keine Abdeckung ist; versteckt wird in
+       variables.css ueber sechs Schweber auf einmal):
+         .qref-fab               VORHER  1ms 1,00/visible ... 201ms 0,02/visible
+                                 NACHHER 1ms 1,00/HIDDEN  ... 200ms 0,02/hidden
+         .floating-dice-trigger  VORHER  1ms 1,00/visible ... 300ms 0,01/visible
+                                 NACHHER 1ms 1,00/HIDDEN  ... 300ms 0,00/hidden
+       Dieselben Zahlen in der Linux-Nachstellung der CI-Schriftmetrik. Die
+       Gegenrichtung ist unauffaellig: von `hidden` nach `visible` schlaegt
+       `visibility` ohnehin sofort um.
+
+       WARUM ES KEIN BESTEHENDER WAECHTER SIEHT — alle vier Luecken gemessen:
+       W4-R-01 ist GRUEN, weil in den neuen Werten kein `all` mehr steht; der
+       Stil-Sollstand (tests/e2e/features/computed-style-diff.spec.js) hasht
+       zwoelf Eigenschaften, und weder `transition` noch `visibility` ist eine
+       davon; die sechs namentlich gefuehrten Posten des Schritts 4 nennen
+       dice.css:761, dice.css:26, dice.css:827, core.css:466, core.css:558 und
+       tools.css:581 — weder dashboard.css noch dice.css:694; und `visibility`
+       kommt im ganzen Baum nur sechsmal als Deklaration vor, also auch nicht
+       durch Zufall unter die Augen eines anderen Tests.
+
+       WAS SIE ZUSICHERT, in zwei Teilen:
+       (A) Jede Regel, die mit `opacity: 0` UND `visibility: hidden`
+           ausblendet, muss fuer jedes Subjekt ihrer Selektoren, das
+           ueberhaupt eine `transition` fuehrt, `visibility` in dieser
+           Eigenschaftsliste haben. Subjekte OHNE jede Bewegung sind kein
+           Befund: sie sind immer gesprungen und sollen es bleiben (drei der
+           sechs Schweber — .qref-panel, .event-log, .kplog-panel — schalten
+           ueber display und haben nie einen Uebergang gefuehrt).
+       (B) Die Dauer des visibility-Segments muss MINDESTENS so lang sein wie
+           die des opacity-Segments. Ohne (B) waere die Wahl zwischen den
+           Reveal-Tokens eine stille Falle: --trans-reveal laeuft 300ms,
+           --trans-reveal-std 200ms, und ein 300ms-Element mit der
+           200ms-Variante verliert seine letzten 100ms genauso unsichtbar wie
+           ganz ohne `visibility` — derselbe Fehler, nur spaeter. Genau diese
+           Formulierung steht auch im Tokenblock von variables.css.
+
+       WARUM NICHT "GENAU EINE REGEL FUEHRT var(--trans-reveal)": das war der
+       zuerst vorgesehene Wortlaut, und er haette den Befund FESTGESCHRIEBEN —
+       zum Zeitpunkt der Messung fuehrte genau eine Regel den Token, und genau
+       zwei weitere haetten ihn gebraucht. Eine Ratsche auf eine Stueckzahl ist
+       nur so gut wie die Zahl; diese hier prueft die Eigenschaft. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile|subjekt`, Wert = Begruendung.
+    // Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01 und EXEC_COMMAND_ALLOWLIST
+    // im Editor-Netz: bewusst LEER, nicht abwesend. Eine Ausblende, die
+    // absichtlich springen soll, braucht kein `visibility` im Uebergang —
+    // aber dann steht der Grund hier und im Diff.
+    const AUSBLENDE_GEDULDET = {};
+
+    /** Alle Bewegungs-Tokens, rekursiv aufgeloest. --trans-reveal zeigt auf
+     *  --trans-slow, das auf --dur-slow und --ease zeigt: ohne Auflaufen bis
+     *  zum Literal laesst sich keine Dauer vergleichen. */
+    function bewegungsTokens() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of withoutComments(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = { ...roh };
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Eine Dauer in Millisekunden. `0.2s` und `200ms` sind dieselbe Zahl, und
+     *  nur als Zahl sind sie vergleichbar. */
+    function dauerMs(txt) {
+        const m = /^([\d.]+)(ms|s)$/.exec((txt || '').trim());
+        if (!m) return null;
+        return Math.round(parseFloat(m[1]) * (m[2] === 's' ? 1000 : 1));
+    }
+
+    /** Die Segmente einer transition-Kurzschreibweise, Tokens aufgeloest:
+     *  [{ prop, dauer }]. Die Dauer ist der erste Zeitwert des Segments —
+     *  `opacity 0.2s 0.1s` hat Dauer 200, nicht Verzoegerung 100. */
+    function segmente(wert, tokens) {
+        const voll = wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+            tokens[name] !== undefined ? tokens[name] : ganz
+        );
+        return voll
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .map(s => {
+                const teile = s.split(/\s+/);
+                const zeit = teile
+                    .slice(1)
+                    .map(dauerMs)
+                    .filter(d => d !== null);
+                return { prop: teile[0], dauer: zeit.length ? zeit[0] : null };
+            });
+    }
+
+    /** Das Subjekt-Kompound eines Selektors: der letzte Teil, ueber alle vier
+     *  Kombinatoren getrennt. Gleiche Rechnung wie inlineSubjekt() im
+     *  R-23-Block; hier eigenstaendig, weil die dortige Fassung in dessen
+     *  describe eingeschlossen ist. */
+    const subjekt = sel =>
+        sel
+            .split(/\s*[\s>+~]\s*/)
+            .filter(Boolean)
+            .pop() || '';
+
+    /** Erste transition-Kurzschreibweise eines Rumpfs. Der Praefixschutz
+     *  verhindert, dass `-webkit-transition` oder `transition-duration`
+     *  mitgelesen wird. */
+    const TRANSITION_RE = /(?:^|[;{\s])transition\s*:\s*([^;}]+)/;
+
+    function alleRegelnFlach() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => out.push({ datei: f.name, ...r }))
+        );
+        return out;
+    }
+
+    /** Regeln, die ausblenden: opacity auf 0 UND visibility auf hidden im
+     *  SELBEN Rumpf. Beides zusammen ist die Absicht "weich verschwinden" —
+     *  `visibility: hidden` allein (.dms-config-drag-disabled) ist ein
+     *  Platzhalter ohne Bewegung und kein Befund. */
+    function ausblendeRegeln(regeln) {
+        return regeln.filter(
+            r =>
+                /(?:^|[;{\s])opacity\s*:\s*0\s*(?:;|$)/.test(r.rumpf) &&
+                /(?:^|[;{\s])visibility\s*:\s*hidden/.test(r.rumpf)
+        );
+    }
+
+    /** Alle Bewegungsdeklarationen, die GENAU dieses Subjekt treffen — also
+     *  die Grundregel, nicht eine Zustandsform davon. */
+    function bewegungenVon(regeln, sub) {
+        const out = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE.exec(r.rumpf);
+            if (!m) return;
+            const trifft = r.sel
+                .split(',')
+                .map(s => s.trim())
+                .some(s => subjekt(s) === sub);
+            if (trifft) {
+                out.push({
+                    anker: `${r.datei}:${r.zeile}`,
+                    wert: m[1].replace(/\s+/g, ' ').trim()
+                });
+            }
+        });
+        return out;
+    }
+
+    function ausblendeBefunde() {
+        const tokens = bewegungsTokens();
+        const regeln = alleRegelnFlach();
+        const befunde = [];
+        const gebraucht = new Set();
+        ausblendeRegeln(regeln).forEach(r => {
+            const subs = [
+                ...new Set(
+                    r.sel
+                        .split(',')
+                        .map(s => subjekt(s.trim()))
+                        .filter(Boolean)
+                )
+            ];
+            subs.forEach(sub => {
+                bewegungenVon(regeln, sub).forEach(b => {
+                    const segs = segmente(b.wert, tokens);
+                    const sammel = segs.find(s => s.prop === 'all');
+                    const sicht = sammel || segs.find(s => s.prop === 'visibility');
+                    const deck = sammel || segs.find(s => s.prop === 'opacity');
+                    if (!deck) return; // bewegt keine Deckkraft: nichts zu verbergen
+                    const schluessel = `${b.anker}|${sub}`;
+                    let meldung = null;
+                    if (!sicht) {
+                        meldung =
+                            `${b.anker} { ${sub} } bewegt opacity, aber nicht visibility — ` +
+                            `die Ausblende in ${r.datei}:${r.zeile} ist unsichtbar: die ` +
+                            `Sichtbarkeit springt im ersten Bild auf hidden, waehrend die ` +
+                            `Deckkraft noch ${deck.dauer}ms laeuft. Gehoert auf eine ` +
+                            `Reveal-Liste (var(--trans-reveal) / var(--trans-reveal-std))`;
+                    } else if (
+                        sicht.dauer !== null &&
+                        deck.dauer !== null &&
+                        sicht.dauer < deck.dauer
+                    ) {
+                        meldung =
+                            `${b.anker} { ${sub} } fuehrt visibility ${sicht.dauer}ms, aber ` +
+                            `opacity ${deck.dauer}ms — die letzten ` +
+                            `${deck.dauer - sicht.dauer}ms der Ausblende in ` +
+                            `${r.datei}:${r.zeile} sind unsichtbar. Falsches Reveal-Token`;
+                    }
+                    if (!meldung) return;
+                    if (AUSBLENDE_GEDULDET[schluessel]) {
+                        gebraucht.add(schluessel);
+                        return;
+                    }
+                    befunde.push(meldung);
+                });
+            });
+        });
+        return { befunde, gebraucht };
+    }
+
+    test('jede Ausblende mit Bewegung traegt visibility mindestens so lang wie opacity', () => {
+        expect(ausblendeBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // Schranken der GEGENPROBE, benannt, weil die MUTATIONSPROBE dasselbe
+    // Urteil nachstellt: zwei Kopien einer Zahl sind zwei Zahlen, die
+    // auseinanderlaufen koennen.
+    const AUSBLENDE_SCHRANKE = 3;
+    const BEWEGTE_SUBJEKTE_SCHRANKE = 3;
+
+    /** Wie viele Ausblende-Regeln und wie viele davon betroffene, BEWEGTE
+     *  Subjekte findet der Scan? Am 2026-10-02 sind es 3 Regeln
+     *  (dice.css .floating-dice-panel, party.css .char-adv-btns,
+     *  variables.css der Mobil-Stapel aus sechs Schwebern) und 4 bewegte
+     *  Subjekte. */
+    function erhebung() {
+        const regeln = alleRegelnFlach();
+        const aus = ausblendeRegeln(regeln);
+        const bewegt = new Set();
+        aus.forEach(r =>
+            r.sel
+                .split(',')
+                .map(s => subjekt(s.trim()))
+                .filter(Boolean)
+                .forEach(sub => {
+                    if (bewegungenVon(regeln, sub).length) bewegt.add(sub);
+                })
+        );
+        return { regeln: aus.length, bewegteSubjekte: bewegt.size };
+    }
+
+    test('GEGENPROBE: der Scan findet ueberhaupt Ausblenden und bewegte Subjekte', () => {
+        // Ohne sie waere ein leerer Dateisatz oder ein kaputter Regelzerleger
+        // ein GRUENER Test — inhaltsleer gruen statt rot, genau der Fehler, den
+        // F-01b gemacht hat.
+        const e = erhebung();
+        expect(e.regeln).toBeGreaterThanOrEqual(AUSBLENDE_SCHRANKE);
+        expect(e.bewegteSubjekte).toBeGreaterThanOrEqual(BEWEGTE_SUBJEKTE_SCHRANKE);
+    });
+
+    test('GEGENPROBE: niemand umgeht die Pruefung ueber die Langschreibweise', () => {
+        // Dieser Block liest nur `transition:`. `transition-property` waere
+        // dieselbe Aussage in zwei Zeilen und unsichtbar fuer ihn. Heute gibt
+        // es sie nicht; macht jemand sie auf, soll es hier auffallen und nicht
+        // in einem Browser.
+        const lang = [];
+        cssFiles.forEach(f =>
+            withoutComments(f.content)
+                .split('\n')
+                .forEach((z, i) => {
+                    if (/transition-(?:property|delay)\s*:/.test(z))
+                        lang.push(`${f.name}:${i + 1} ${z.trim()}`);
+                })
+        );
+        expect(lang.sort()).toEqual([]);
+    });
+
+    /* PROBEN FUER DIE SEGMENT-ZERLEGUNG — feste Zeichenketten gegen eine feste
+       Tokentabelle, kein Dateizugriff. Beide Richtungen, weil die Zerlegung in
+       beide Richtungen kippen kann: eine zu grobe Trennung liest
+       `0.2s ease, visibility` als EIN Segment, eine zu feine zerschneidet einen
+       Tokenverweis vor seiner Auflaesung. Die LETZTE Probe ist die einzige, die
+       ueberhaupt einen Tokenverweis enthaelt — ohne sie blieb "Tokens werden
+       nicht aufgeloest" von keinem Waechter bemerkt, und genau das hat die
+       MUTATIONSPROBE beim ersten Lauf gemeldet. Die Tabelle ist synthetisch
+       (Praefix --probe-), damit die Proben nicht mitwandern, wenn die
+       Bewegungsleiter in variables.css einmal andere Dauern traegt; dass die
+       ECHTEN Tokens bis zum Literal auflaufen, prueft die SELBSTPROBE darunter. */
+    const PROBE_TOKENS = { '--probe-trans': 'opacity 250ms ease, visibility 250ms ease' };
+    const SEGMENT_PROBEN = [
+        ['opacity 0.12s, visibility 0.12s', { opacity: 120, visibility: 120 }],
+        ['opacity 200ms, visibility 300ms', { opacity: 200, visibility: 300 }],
+        ['all 0.2s', { all: 200 }],
+        ['opacity 0.2s ease 0.1s', { opacity: 200 }],
+        ['background-color 0.2s ease, color 0.2s ease', { 'background-color': 200, color: 200 }],
+        ['var(--probe-trans)', { opacity: 250, visibility: 250 }]
+    ];
+
+    function segmentprobeBefunde(zerleger) {
+        const tokens = PROBE_TOKENS;
+        return SEGMENT_PROBEN.flatMap(([wert, soll]) => {
+            const ist = {};
+            zerleger(wert, tokens).forEach(s => {
+                if (ist[s.prop] === undefined) ist[s.prop] = s.dauer;
+            });
+            return Object.entries(soll)
+                .filter(([p, d]) => ist[p] !== d)
+                .map(([p, d]) => `"${wert}" — ${p}: erwartet ${d}, erhalten ${ist[p]}`);
+        });
+    }
+
+    test('SELBSTPROBE: die Segment-Zerlegung liest Eigenschaft und Dauer richtig', () => {
+        expect(segmentprobeBefunde(segmente)).toEqual([]);
+    });
+
+    test('SELBSTPROBE: die Tokens loesen bis zum Literal auf', () => {
+        const t = bewegungsTokens();
+        // Drei Stufen tief: --trans-reveal -> --trans-slow -> --dur-slow.
+        expect(t['--dur']).toBe('200ms');
+        expect(/var\(/.test(t['--trans-std'] || 'var(')).toBe(false);
+        const reveal = segmente('var(--trans-reveal)', t);
+        expect(reveal.find(s => s.prop === 'visibility')).toBeTruthy();
+        expect(reveal.find(s => s.prop === 'opacity').dauer).toBe(
+            reveal.find(s => s.prop === 'visibility').dauer
+        );
+    });
+
+    /* BESCHAEDIGUNGEN DER SEGMENT-ZERLEGUNG
+       Jede veraendert, was segmente() liest; keine veraendert, was erhebung()
+       zaehlt. Der Haupttest kann eine Beschaedigung NICHT bemerken: eine
+       Zerlegung, die nichts mehr findet, laesst `deck` leer und steigt vorzeitig
+       aus — gruen. Also muss die SELBSTPROBE sie fangen. */
+    const BESCHAEDIGUNGEN_SEG = [
+        [
+            'Tokens werden nicht aufgeloest',
+            wert =>
+                wert
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .map(s => {
+                        const teile = s.split(/\s+/);
+                        return { prop: teile[0], dauer: dauerMs(teile[1]) };
+                    })
+        ],
+        [
+            'Trennung an Leerzeichen statt am Komma',
+            (wert, tokens) =>
+                segmente(wert, tokens).length
+                    ? wert.split(/\s+/).map(s => ({ prop: s, dauer: null }))
+                    : []
+        ],
+        [
+            'Sekunden nicht in Millisekunden umgerechnet',
+            (wert, tokens) =>
+                segmente(wert, tokens).map(s => ({
+                    prop: s.prop,
+                    dauer: s.dauer === null ? null : s.dauer / 1000
+                }))
+        ],
+        ['nur das erste Segment gelesen', (wert, tokens) => segmente(wert, tokens).slice(0, 1)]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Segment-Zerlegung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_SEG.filter(
+            b => segmentprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(weniger gelesene Segmente = gruener Test), und die GEGENPROBE ` +
+                `zaehlt Regeln, nicht Segmente`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in AUSBLENDE_GEDULDET wird gebraucht', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes als
+        // das, was ihr Kommentar behauptet.
+        const { gebraucht } = ausblendeBefunde();
+        expect(Object.keys(AUSBLENDE_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
+
+describe('W4-R-03 — tragende Eigenschaften: eine benannte Liste darf nichts fallen lassen (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Diese Welle hat 134 `transition: all` durch benannte Listen mit sieben
+       Eigenschaften ersetzt. `all` trug alles kostenlos mit; eine benannte
+       Liste traegt nur, was sie nennt. W4-R-01 ZAEHLT nur das `all` und ist
+       genau dann gruen, wenn die Umstellung geschehen ist — ob dabei etwas
+       Tragendes verloren ging, sieht sie nicht. W4-R-02 faengt die EINE
+       Eigenschaft, deren Verlust unsichtbar ist (`visibility`). Niemand faengt
+       eine Eigenschaft, deren Verlust bloss falsch ist. Der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) kann es nicht: er hasht
+       zwoelf ENDWERTE, und ein Uebergang aendert keinen Endwert.
+
+       WARUM SIE ZWEIFACH EINGEGRENZT IST — gemessen, nicht gewaehlt. Die
+       breite Fassung dieser Frage ("jede Eigenschaft, die irgendeine LEBENDE
+       Zustandsform einer bewegten Regel aendert") liefert am 2026-10-02 ueber
+       den ganzen Baum 69 Befunde:
+         26  outline-width / -color / -offset — bewusst draussen (O-13): ein
+             Fokusring soll sofort da sein, und Welle 6 fuehrt
+             `:focus-visible` als Weltregel ein. Stuende `outline-*` in einer
+             Liste, animierte danach JEDES Element seinen Ring.
+          7  font-weight — bewusst draussen (O-14): 500 -> 600 ist eine
+             Interpolation ueber eine Stufe, die niemand sieht.
+         36  Reste aus HANDGESCHRIEBENEN, engen Listen, die es vor dieser
+             Welle schon gab und die nicht ihr Gegenstand sind.
+       Eine Ratsche mit einer Erlaubnisliste von 60 Eintraegen bewacht nichts.
+       Darum: (1) nur Regeln, die eine der BENANNTEN Listen DIESER Welle
+       fuehren (`var(--trans-…)`, 134 Verbraucher in 10 Dateien; die zwei
+       weiteren Vorkommen in variables.css sind die Tokendefinitionen selbst),
+       und (2) nur die zwei Mechanismen, in denen der Verlust zu sehen ist und
+       sonst niemand hinschaut: die Krit-Glut (`text-shadow`) und die
+       Zieh-Anzeige (`.drag-over` / `.dragging`).
+
+       AUSGANGSWERT: 3 Anker, 4 Eigenschaften, 6 Meldungen (erhoben am
+       2026-10-02 an 0b57ae1, mit dieser Zaehlart). Der Anker ist die ERSTE
+       ZEILE DER REGEL, nicht die der transition-Deklaration — so berichtet
+       regelnMitRumpf(), und eine Fehlermeldung mit einer Zeile, die man erst
+       umrechnen muss, kostet mehr als sie einbringt:
+         dice.css:21   .dice-hero-result  text-shadow       (Deklaration :26)
+         dice.css:822  .fdp-number        text-shadow       (Deklaration :827)
+         core.css:456  .nav-tab           border-left-width,
+                                          margin-left       (Deklaration :466)
+       Vier der sechs Meldungen stammen aus Teil 1 — `.crit` und `.fail`
+       melden je dieselbe fehlende Eigenschaft —, zwei aus Teil 2. Diese Zahl
+       darf nur SINKEN, Ziel ist 0.
+
+       ZUR LEBENDIGKEIT, gemessen und NICHT so, wie der Plan es annahm. Die
+       Modulpfade in diesem Kommentar stehen bewusst OHNE ihr Verzeichnis
+       davor, genau wie in css-deletion-audit.test.js:146 — das
+       Abdeckungs-Gate (tests/unit/module-test-coverage.test.js) liest den
+       woertlichen loader.js-Pfad in einer Testdatei als "Modul ist
+       angefasst", und eine Erwaehnung in Prosa ist keine Abdeckung. Beim
+       ersten Lauf dieses Blocks hat es genau darum vier Module aus seiner
+       Ausnahmeliste streichen wollen.
+       Die zwei Glut-Stellen sind lebend: `.crit`/`.fail` schaltet
+       dice-core.js (im features/dice/-Verzeichnis) per classList auf genau
+       diesen zwei Elementen (in displayDiceResult() und
+       updateFloatingResult()). Die dritte NICHT: der Plan begruendet
+       core.css:466 damit, dass "lazy-loading.js (im ui/-Verzeichnis), Zeile
+       71, `drag-over` live umschaltet" — aber Zeile 51 derselben Funktion
+       verlaesst sie vorher
+       (`if (container.querySelector('.nav-group')) return;`), und
+       assets/templates/header.html gruppiert die Reiter seit der gruppierten
+       Navigation. Die Zuhoerer werden also nie angehaengt, und
+       `.nav-tab.drag-over` ist im ausgelieferten Markup unerreichbar; der
+       Kommentar an der Regelgruppe selbst sagt das seit laengerem ("Legacy —
+       bei gruppierter Nav inaktiv"). Die Eigenschaften gehoeren trotzdem an
+       die Liste: die Regel steht im Baum, sie ist ueber einen ungruppierten
+       Reiterbau wieder erreichbar, und eine Ratsche, die nur bewacht, was
+       heute zufaellig ausgefuehrt wird, bewacht die falsche Menge. Was dieser
+       Befund NICHT hergibt, ist eine sichtbare Wirkung im Browser — sie ist
+       nur zu messen, indem man `.drag-over` von Hand setzt.
+
+       ZWEI BEFUNDE LIEGEN BEWUSST AUSSERHALB und stehen NICHT in der
+       Erlaubnisliste, sondern ausserhalb des Geltungsbereichs:
+         dmscreen.css:1134  [data-sortable]      `.drag-over` setzt
+                            `border-color`, die handgeschriebene Liste
+                            (transform/opacity/box-shadow) traegt es nicht
+         dmscreen.css:2265  .dms-config-item     `.drag-over` setzt
+                            `border-top`, `.dragging` setzt `opacity`, die
+                            Liste traegt nur `background`
+       Beide fuehren enge Listen von VOR dieser Welle. Sie hier zu reparieren
+       hiesse, den Geltungsbereich von Schritt 4 um zwei Stellen zu erweitern,
+       ohne dass ein Plan sie nennt. Stattdessen sind sie durch die Eingrenzung
+       (1) draussen — und an dem Tag, an dem jemand sie auf eine benannte Liste
+       stellt, wird diese Ratsche rot und verlangt, dass die Eigenschaften
+       mitkommen. Das ist der richtige Zeitpunkt, nicht dieser.
+
+       TEIL 3 BEWACHT DIE RICHTUNG, DIE W4-R-02 NICHT KANN. W4-R-02 fragt, ob
+       jede Ausblende `visibility` traegt. Niemand fragt, ob jeder Traeger
+       einer Reveal-Liste ueberhaupt ausblendet — und genau das war die Sorge
+       des Plans ("sonst wandert die Reveal-Liste unbemerkt weiter"). Der dort
+       vorgesehene Wortlaut "genau EINE Regel fuehrt var(--trans-reveal)" war
+       schon falsch, als er geschrieben wurde: es sind drei Verbraucher
+       (dice.css:694, dice.css:761, dashboard.css:1211), und alle drei
+       brauchen ihn. Eine Ratsche auf eine Stueckzahl ist nur so gut wie die
+       Zahl; diese prueft die Eigenschaft. Teil 3 ist heute GRUEN — sein roter
+       Nachweis liegt in der MUTATIONSPROBE weiter unten, die ihm eine
+       Reveal-Liste auf einer Regel ohne Ausblende vorlegt. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile|subjekt|eigenschaft`, Wert =
+    // Begruendung. Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01 und
+    // AUSBLENDE_GEDULDET in W4-R-02: bewusst LEER, nicht abwesend. Wer eine
+    // Eigenschaft absichtlich springen laesst, schreibt den Grund hierher —
+    // dann steht er im Diff.
+    const TRAGEND_GEDULDET = {};
+
+    /** Alle Bewegungs-Tokens, rekursiv bis zum Literal aufgeloest. Eigene
+     *  Fassung, weil die in W4-R-02 in dessen describe eingeschlossen ist;
+     *  dieselbe Rechnung, und die SELBSTPROBE unten prueft sie. */
+    function bewegungsTokens3() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of withoutComments(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = { ...roh };
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Auf oberster Ebene trennen — `var(--x, y)` und `rgba(…)` enthalten
+     *  Kommas, die keine Segmentgrenzen sind. */
+    function trenneOben(wert, zeichen) {
+        const out = [];
+        let tiefe = 0;
+        let buf = '';
+        for (const c of wert) {
+            if (c === '(') tiefe++;
+            else if (c === ')') tiefe--;
+            if (c === zeichen && tiefe === 0) {
+                out.push(buf);
+                buf = '';
+                continue;
+            }
+            buf += c;
+        }
+        if (buf.trim()) out.push(buf);
+        return out;
+    }
+
+    /** Die Eigenschaftsnamen einer transition-Kurzschreibweise, Tokens
+     *  aufgeloest. `var(--trans-std)` wird zu sieben Namen. */
+    function listenEigenschaften(wert, tokens) {
+        const voll = wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+            tokens[name] !== undefined ? tokens[name] : ganz
+        );
+        return trenneOben(voll, ',')
+            .map(s => s.trim().split(/\s+/)[0])
+            .filter(Boolean);
+    }
+
+    /** Kurzschreibweisen in die Langform, soweit fuer diesen Block gebraucht.
+     *  Ohne sie zaehlte `border-left: 2px solid var(--gold)` als die
+     *  Eigenschaft `border-left`, die in keiner Uebergangs-Liste der Welt
+     *  steht — und die Ratsche meldete einen Befund, den niemand beheben
+     *  kann. */
+    const KURZFORM = {
+        border: ['border-width', 'border-style', 'border-color'],
+        'border-left': ['border-left-width', 'border-left-style', 'border-left-color'],
+        'border-right': ['border-right-width', 'border-right-style', 'border-right-color'],
+        'border-top': ['border-top-width', 'border-top-style', 'border-top-color'],
+        'border-bottom': ['border-bottom-width', 'border-bottom-style', 'border-bottom-color'],
+        background: ['background-color', 'background-image', 'background-position'],
+        outline: ['outline-width', 'outline-style', 'outline-color']
+    };
+    const entfalte = prop => KURZFORM[prop] || [prop];
+
+    /** Eigenschaften, die nicht interpolieren oder deren Sprung Absicht ist.
+     *  Bewusst kurz und bewusst begruendet: `-style` kennt keine
+     *  Zwischenwerte, `z-index`/`cursor`/`display`/`pointer-events` auch
+     *  nicht, `background-image`/`-position` entstehen nur als Beiprodukt der
+     *  Entfaltung von `background` und werden an keiner der gefuehrten
+     *  Stellen wirklich geaendert. */
+    const SPRINGT = new Set([
+        'border-style',
+        'border-left-style',
+        'border-right-style',
+        'border-top-style',
+        'border-bottom-style',
+        'outline-style',
+        'z-index',
+        'cursor',
+        'display',
+        'pointer-events',
+        'position',
+        'background-image',
+        'background-position',
+        'user-select',
+        '-webkit-user-select',
+        'overflow',
+        'visibility',
+        'transition',
+        'animation',
+        'will-change',
+        'content'
+    ]);
+
+    /** Deckt die Eigenschaftsliste `liste` die Eigenschaft `p` ab? `all`
+     *  deckt alles; `border-color` deckt `border-top-color` und seine drei
+     *  Geschwister; `background` deckt `background-color`. Ohne diese
+     *  Verwandtschaften meldete die Ratsche `.nav-tab.drag-over`s
+     *  `border-left-color` als Befund, obwohl `--trans-std` es ueber
+     *  `border-color` sehr wohl bewegt. */
+    function gedeckt(liste, p) {
+        const vorhanden = new Set();
+        liste.forEach(lp => {
+            vorhanden.add(lp);
+            entfalte(lp).forEach(x => vorhanden.add(x));
+        });
+        if (vorhanden.has('all') || vorhanden.has(p)) return true;
+        if (/^border-(?:left|right|top|bottom)-color$/.test(p) && vorhanden.has('border-color'))
+            return true;
+        if (/^border-(?:left|right|top|bottom)-width$/.test(p) && vorhanden.has('border-width'))
+            return true;
+        if (/^margin-/.test(p) && vorhanden.has('margin')) return true;
+        if (/^padding-/.test(p) && vorhanden.has('padding')) return true;
+        if (p === 'background-color' && vorhanden.has('background')) return true;
+        return false;
+    }
+
+    /** Das Subjekt-Kompound eines Selektors: der letzte Teil ueber alle vier
+     *  Kombinatoren. Gleiche Rechnung wie im R-23- und im W4-R-02-Block; hier
+     *  eigenstaendig, weil beide dortigen Fassungen eingeschlossen sind. */
+    const subjekt3 = sel =>
+        sel
+            .split(/\s*[\s>+~]\s*/)
+            .filter(Boolean)
+            .pop() || '';
+
+    const TRANSITION_RE3 = /(?:^|[;{\s])transition\s*:\s*([^;}]+)/;
+
+    function alleRegeln3() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => out.push({ datei: f.name, ...r }))
+        );
+        return out;
+    }
+
+    /** Alle Deklarationen eines Rumpfs als [prop, wert]. */
+    function deklarationen(rumpf) {
+        return trenneOben(rumpf, ';')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .map(s => {
+                const i = s.indexOf(':');
+                return i < 0 ? null : [s.slice(0, i).trim(), s.slice(i + 1).trim()];
+            })
+            .filter(d => d && /^-?[a-zA-Z]/.test(d[0]) && !d[0].startsWith('--'));
+    }
+
+    /** Regeln, die eine BENANNTE Liste dieser Welle fuehren — das ist die
+     *  erste der zwei Eingrenzungen. Die Tokendefinitionen in variables.css
+     *  fallen heraus, weil sie keine `transition:`-Deklaration sind. */
+    function benannteTraeger(regeln) {
+        const tokens = bewegungsTokens3();
+        const out = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE3.exec(r.rumpf);
+            if (!m) return;
+            const wert = m[1].replace(/\s+/g, ' ').trim();
+            if (!/var\(\s*--trans-/.test(wert)) return;
+            out.push({
+                anker: `${r.datei}:${r.zeile}`,
+                sel: r.sel,
+                wert,
+                liste: listenEigenschaften(wert, tokens),
+                subs: [
+                    ...new Set(
+                        r.sel
+                            .split(',')
+                            .map(s => subjekt3(s.trim()))
+                            .filter(Boolean)
+                    )
+                ]
+            });
+        });
+        return out;
+    }
+
+    /**
+     * Der gemeinsame Kern von Teil 1 und Teil 2: welche Eigenschaft aendert
+     * eine Zustandsform, die die Grundregel nicht bewegt?
+     *
+     * `erkenneZustand(zusatz)` entscheidet, was als Zustandsform zaehlt — das
+     * ist die zweite Eingrenzung und der einzige Unterschied zwischen den zwei
+     * Teilen. `filterProp` schraenkt zusaetzlich auf die beobachtete
+     * Eigenschaft ein (Teil 1: nur `text-shadow`; Teil 2: alles, was die
+     * Zieh-Form setzt).
+     */
+    function verlorene(regeln, erkenneZustand, filterProp) {
+        const befunde = [];
+        const gebraucht = new Set();
+        benannteTraeger(regeln).forEach(t => {
+            t.subs.forEach(sub => {
+                if (sub.includes('::')) return;
+                regeln.forEach(z => {
+                    z.sel
+                        .split(',')
+                        .map(s => subjekt3(s.trim()))
+                        .filter(Boolean)
+                        .forEach(zs => {
+                            if (zs.includes('::') || !zs.startsWith(sub) || zs.length <= sub.length)
+                                return;
+                            const zusatz = zs.slice(sub.length);
+                            // Der Zusatz MUSS mit einem Kompound-Trenner
+                            // beginnen, sonst ist `.nav-tabs` eine
+                            // Zustandsform von `.nav-tab`.
+                            if (!/^[.:[]/.test(zusatz)) return;
+                            if (!erkenneZustand(zusatz)) return;
+                            deklarationen(z.rumpf).forEach(([prop, wert]) => {
+                                entfalte(prop).forEach(p => {
+                                    if (SPRINGT.has(p) || SPRINGT.has(prop)) return;
+                                    if (!filterProp(p, prop)) return;
+                                    if (gedeckt(t.liste, p)) return;
+                                    const schluessel = `${t.anker}|${sub}|${p}`;
+                                    if (TRAGEND_GEDULDET[schluessel]) {
+                                        gebraucht.add(schluessel);
+                                        return;
+                                    }
+                                    befunde.push(
+                                        `${t.anker} { ${sub} } fuehrt \`${t.wert}\` und bewegt ` +
+                                            `damit ${p} NICHT — aber ${z.datei}:${z.zeile} ` +
+                                            `(${zs}) aendert es (\`${prop}: ${wert}\`). Die ` +
+                                            `Eigenschaft springt, seit die Sammelbewegung weg ` +
+                                            `ist; sie gehoert an die Liste angehaengt`
+                                    );
+                                });
+                            });
+                        });
+                });
+            });
+        });
+        return { befunde: [...new Set(befunde)], gebraucht };
+    }
+
+    // ------------------------------------------------------------------
+    // TEIL 1 — die Krit-Glut
+    // ------------------------------------------------------------------
+    /* `text-shadow` steht ABSICHTLICH in keiner der Uebergangs-Listen: es
+       traegt im ganzen Baum nur an zwei Stellen etwas, in einer Weltliste
+       waere es 134-mal wirkungslos. Genau das sagt der Tokenblock in
+       variables.css. Dass es dafuer an diesen zwei Stellen EINZELN angehaengt
+       ist, sichert bis heute nichts — das ist diese Zusicherung. */
+    const glutBefunde = () =>
+        verlorene(
+            alleRegeln3(),
+            () => true,
+            p => p === 'text-shadow'
+        );
+
+    test('Teil 1: wo ein Zustand text-shadow setzt, fuehrt die benannte Liste text-shadow', () => {
+        expect(glutBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 2 — die Zieh-Anzeige
+    // ------------------------------------------------------------------
+    /* `drag-over` und `dragging` sind die zwei Haelften desselben Vorgangs
+       (Ziel und gezogenes Element) und die einzigen Zustandsklassen im Baum,
+       die es ohne laufendes Ziehen gar nicht geben KANN — sie werden
+       ausschliesslich von JS gesetzt: lazy-loading.js (im ui/-Verzeichnis,
+       Zeilen 63/71/76/81), dmscreen-config.js (im features/dmscreen/-
+       Verzeichnis), initiative-extras.js und performance-extras.js (im
+       features/- bzw. utils/-Verzeichnis). Darum braucht dieser Teil keine
+       Lebendigkeitsprobe: die Klasse selbst ist der Beweis. Die Pfade stehen
+       auch hier ohne Verzeichnis davor, s. den Kopfkommentar. */
+    const ZIEH_ZUSTAND = /\.(?:drag-over|dragging)\b/;
+    const ziehBefunde = () =>
+        verlorene(
+            alleRegeln3(),
+            z => ZIEH_ZUSTAND.test(z),
+            () => true
+        );
+
+    test('Teil 2: wo eine Zieh-Form Geometrie aendert, fuehrt die benannte Liste sie mit', () => {
+        expect(ziehBefunde().befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 3 — die Reveal-Listen wandern nicht weiter
+    // ------------------------------------------------------------------
+    /** Traeger einer Reveal-Liste, die fuer kein Subjekt ihrer Selektoren
+     *  eine Regel finden, die mit `opacity: 0` UND `visibility: hidden`
+     *  ausblendet. Als reine Funktion ueber eine Regelliste geschrieben, damit
+     *  die MUTATIONSPROBE ihr synthetische Regeln vorlegen kann. */
+    function revealBefunde(regeln) {
+        const befunde = [];
+        regeln.forEach(r => {
+            const m = TRANSITION_RE3.exec(r.rumpf);
+            if (!m) return;
+            const wert = m[1].replace(/\s+/g, ' ').trim();
+            if (!/var\(\s*--trans-reveal/.test(wert)) return;
+            const subs = [
+                ...new Set(
+                    r.sel
+                        .split(',')
+                        .map(s => subjekt3(s.trim()))
+                        .filter(Boolean)
+                )
+            ];
+            const blendetAus = subs.some(sub =>
+                regeln.some(
+                    z =>
+                        z.sel
+                            .split(',')
+                            .map(s => subjekt3(s.trim()))
+                            .includes(sub) &&
+                        /(?:^|[;{\s])opacity\s*:\s*0\s*(?:;|$)/.test(z.rumpf) &&
+                        /(?:^|[;{\s])visibility\s*:\s*hidden/.test(z.rumpf)
+                )
+            );
+            if (blendetAus) return;
+            befunde.push(
+                `${r.datei}:${r.zeile} (${r.sel}) fuehrt \`${wert}\`, blendet aber nirgends ` +
+                    `mit opacity: 0 + visibility: hidden aus — die Reveal-Liste traegt hier ` +
+                    `ein visibility-Segment, das nichts bewegt. Entweder gehoert die Regel auf ` +
+                    `var(--trans-std) / --trans-slow, oder die Ausblende fehlt`
+            );
+        });
+        return befunde;
+    }
+
+    test('Teil 3: jeder Traeger einer Reveal-Liste blendet wirklich aus', () => {
+        expect(revealBefunde(alleRegeln3()).sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // GEGENPROBEN — ein leerer Dateisatz darf kein gruener Test sein
+    // ------------------------------------------------------------------
+    // Schranken benannt, weil die MUTATIONSPROBEN dasselbe Urteil nachstellen.
+    const TRAEGER_SCHRANKE = 100; // 134 am 2026-10-02
+    const GLUT_SCHRANKE = 4; // 8 Regeln setzen text-shadow
+    const ZIEH_SCHRANKE = 4; // 6 Regeln fuehren .drag-over / .dragging
+    const REVEAL_SCHRANKE = 3; // 3 Verbraucher
+
+    function erhebung3() {
+        const regeln = alleRegeln3();
+        return {
+            traeger: benannteTraeger(regeln).length,
+            glut: regeln.filter(r => /(?:^|[;{\s])text-shadow\s*:/.test(r.rumpf)).length,
+            zieh: regeln.filter(r => ZIEH_ZUSTAND.test(r.sel)).length,
+            reveal: regeln.filter(r => {
+                const m = TRANSITION_RE3.exec(r.rumpf);
+                return m && /var\(\s*--trans-reveal/.test(m[1]);
+            }).length
+        };
+    }
+
+    test('GEGENPROBE: der Scan findet Traeger, Glut-Stellen, Zieh-Formen und Reveal-Traeger', () => {
+        const e = erhebung3();
+        expect(cssFiles.length).toBeGreaterThan(15);
+        expect(e.traeger).toBeGreaterThanOrEqual(TRAEGER_SCHRANKE);
+        expect(e.glut).toBeGreaterThanOrEqual(GLUT_SCHRANKE);
+        expect(e.zieh).toBeGreaterThanOrEqual(ZIEH_SCHRANKE);
+        expect(e.reveal).toBeGreaterThanOrEqual(REVEAL_SCHRANKE);
+    });
+
+    // ------------------------------------------------------------------
+    // SELBSTPROBEN — feste Zeichenketten, kein Dateizugriff
+    // ------------------------------------------------------------------
+    /* Beide Richtungen, weil die Deckungsrechnung in beide Richtungen kippen
+       kann: eine zu grosszuegige Fassung erklaert alles fuer gedeckt und macht
+       die Ratsche inhaltsleer gruen, eine zu strenge meldet Befunde, die
+       niemand beheben kann (`border-left` steht in keiner Liste der Welt). */
+    const DECKUNGS_PROBEN = [
+        [['all'], 'text-shadow', true],
+        [['border-color'], 'border-left-color', true],
+        [['border-color'], 'border-left-width', false],
+        [['border-width'], 'border-top-width', true],
+        [['background'], 'background-color', true],
+        [['background-color'], 'background-color', true],
+        [['margin'], 'margin-left', true],
+        [['border-left'], 'border-left-width', true],
+        [
+            [
+                'background-color',
+                'border-color',
+                'color',
+                'opacity',
+                'transform',
+                'box-shadow',
+                'filter'
+            ],
+            'text-shadow',
+            false
+        ],
+        [
+            [
+                'background-color',
+                'border-color',
+                'color',
+                'opacity',
+                'transform',
+                'box-shadow',
+                'filter'
+            ],
+            'margin-left',
+            false
+        ],
+        [['opacity'], 'opacity', true],
+        [['opacity'], 'transform', false]
+    ];
+
+    function deckungsprobeBefunde(fn) {
+        return DECKUNGS_PROBEN.filter(p => fn(p[0], p[1]) !== p[2]).map(
+            p => `[${p[0].join(',')}] deckt ${p[1]} — erwartet ${p[2]}, erhalten ${fn(p[0], p[1])}`
+        );
+    }
+
+    test('SELBSTPROBE: die Deckungsrechnung urteilt in beide Richtungen richtig', () => {
+        expect(deckungsprobeBefunde(gedeckt)).toEqual([]);
+    });
+
+    /* Die Tokens muessen bis zum Literal auflaufen, sonst liest die Ratsche
+       `var(--trans-std)` als EINE Eigenschaft namens `var(--trans-std)` und
+       erklaert nichts fuer gedeckt — sie waere dann rot an allen 134 Stellen
+       und zugleich blind fuer den echten Befund. */
+    test('SELBSTPROBE: var(--trans-std) loest zu seinen sieben Eigenschaften auf', () => {
+        const tokens = bewegungsTokens3();
+        expect(listenEigenschaften('var(--trans-std)', tokens).sort()).toEqual(
+            [
+                'background-color',
+                'border-color',
+                'box-shadow',
+                'color',
+                'filter',
+                'opacity',
+                'transform'
+            ].sort()
+        );
+        expect(listenEigenschaften('var(--trans-reveal)', tokens)).toContain('visibility');
+        expect(listenEigenschaften('var(--trans-slow), text-shadow 300ms ease', tokens)).toContain(
+            'text-shadow'
+        );
+    });
+
+    // ------------------------------------------------------------------
+    // MUTATIONSPROBEN
+    // ------------------------------------------------------------------
+    /* VIER BESCHAEDIGUNGEN DER DECKUNGSRECHNUNG. Welcher Waechter erkennt eine
+       beschaedigte Fassung als beschaedigt? Nicht die drei Haupttests: eine
+       Rechnung, die alles fuer gedeckt erklaert, macht sie GRUEN — und gruen
+       ist das erklaerte Ziel. Nicht die GEGENPROBE: sie zaehlt Regeln und
+       liest `gedeckt` nie. Nur die SELBSTPROBE. */
+    const BESCHAEDIGUNGEN_DECKUNG = [
+        ['erklaert alles fuer gedeckt', () => true],
+        ['erklaert nichts fuer gedeckt', () => false],
+        [
+            'Verwandtschaften verloren (nur noch Gleichheit)',
+            (liste, p) => liste.includes(p) || liste.includes('all')
+        ],
+        [
+            'Kurzform-Entfaltung verloren',
+            (liste, p) => {
+                const v = new Set(liste);
+                if (v.has('all') || v.has(p)) return true;
+                if (/^border-(?:left|right|top|bottom)-color$/.test(p) && v.has('border-color'))
+                    return true;
+                if (/^border-(?:left|right|top|bottom)-width$/.test(p) && v.has('border-width'))
+                    return true;
+                if (/^margin-/.test(p) && v.has('margin')) return true;
+                if (/^padding-/.test(p) && v.has('padding')) return true;
+                if (p === 'background-color' && v.has('background')) return true;
+                return false;
+            }
+        ]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Deckungsrechnung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_DECKUNG.filter(
+            b => deckungsprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; die drei Haupttests koennen es ` +
+                `nicht (mehr Deckung = gruener Test), und die GEGENPROBE zaehlt Regeln`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    /* DER ROTE NACHWEIS FUER TEIL 3. Er ist heute gruen — drei Verbraucher,
+       alle drei blenden aus. Ohne diese Probe waere nicht zu unterscheiden,
+       ob er urteilt oder nur nichts findet. Also bekommt er synthetische
+       Regeln vorgelegt: eine Reveal-Liste auf einer Regel ohne Ausblende MUSS
+       einen Befund erzeugen, eine mit Ausblende darf keinen. */
+    const REVEAL_PROBEN = [
+        [
+            'Reveal-Liste ohne jede Ausblende',
+            [{ datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' }],
+            1
+        ],
+        [
+            'Reveal-Liste mit Ausblende am gleichen Subjekt',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.x .a', rumpf: 'opacity: 0; visibility: hidden;' }
+            ],
+            0
+        ],
+        [
+            'Ausblende an einem ANDEREN Subjekt zaehlt nicht',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.b', rumpf: 'opacity: 0; visibility: hidden;' }
+            ],
+            1
+        ],
+        [
+            'nur opacity: 0, kein visibility: hidden — keine Ausblende',
+            [
+                { datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-reveal);' },
+                { datei: 'p.css', zeile: 5, sel: '.a', rumpf: 'opacity: 0;' }
+            ],
+            1
+        ],
+        [
+            'eine gewoehnliche Liste ist kein Reveal-Traeger',
+            [{ datei: 'p.css', zeile: 1, sel: '.a', rumpf: 'transition: var(--trans-std);' }],
+            0
+        ],
+        [
+            'auch --trans-reveal-std zaehlt als Reveal-Traeger',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 1,
+                    sel: '.a',
+                    rumpf: 'transition: var(--trans-reveal-std);'
+                }
+            ],
+            1
+        ]
+    ];
+
+    test('MUTATIONSPROBE: Teil 3 urteilt — synthetische Regeln, beide Richtungen', () => {
+        const falsch = REVEAL_PROBEN.filter(p => revealBefunde(p[1]).length !== p[2]).map(
+            p => `${p[0]} — erwartet ${p[2]} Befunde, erhalten ${revealBefunde(p[1]).length}`
+        );
+        expect(falsch.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in TRAGEND_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const gebraucht = new Set([...glutBefunde().gebraucht, ...ziehBefunde().gebraucht]);
+        expect(Object.keys(TRAGEND_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
+
+describe('W4-R-04 — Dauer-Literale: jede Zeit kommt aus der Token-Leiter (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Dieselbe Begruendung wie bei W4-R-01, nur eine Stufe feiner: `transition`
+       ist keine der zwoelf Eigenschaften, die der Stil-Sollstand
+       (tests/e2e/features/computed-style-diff.spec.js) hasht, und eine Dauer
+       erst gar nicht. Eine Umstellung von `0.12s` auf `var(--dur-fast)`
+       aendert KEINEN Endwert — sie aendert nur, wie lange der Weg dorthin
+       dauert. In allen 3549 Digests des Sollstands erzeugt dieser Schritt null
+       Unterschied, und kein anderer Test im Baum nennt eine Dauer. Die Ratsche
+       ist also die einzige Stelle, an der ueberhaupt etwas nachgewiesen werden
+       kann, und sie steht deshalb VOR der Umstellung.
+
+       AUSGANGSWERT: 141 Zeit-Literale in 102 `transition`-Deklarationen, dazu
+       EINES in einer `transition-duration` (die benannte Ausnahme unten),
+       verteilt auf 19 Dateien (erhoben am 2026-10-02 an a5976d1, mit dieser
+       Zaehlart): party.css 28, dmscreen.css 25, core.css 15 (14 + die
+       Ausnahme), initiative.css 14, spells.css 13, dashboard.css 9,
+       editors.css 6, tools.css 6, encounters.css 5, migration.css 4,
+       file-backup.css 3, loot.css 3, bestiary.css 2, npcs.css 2, pwa.css 2,
+       welt.css 2, command-palette.css 1, dice.css 1, variables.css 1. Diese
+       Zahl darf nur SINKEN, Ziel ist 0.
+
+       Die 134 Deklarationen, die W4-R-01 von `all` auf eine benannte Liste
+       gebracht hat, sind hier NICHT mehr enthalten: sie fuehren ihre Dauer
+       schon ueber var(--dur*). 275 Segmente hatte die Vermessung an 33dab42
+       gezaehlt, 134 davon sind erledigt, 141 bleiben — die Zahlen gehen genau
+       auf.
+
+       WAS TEIL 2 ZUSAETZLICH LEISTET, und warum Teil 1 allein zu wenig ist:
+       "keine Zeit als Literal" ist mit `var(--dauer-schnell)` erfuellt — einem
+       Token, das es nicht gibt. Der Uebergang fiele still auf 0s zurueck und
+       jede Bewegung spraenge, ohne dass irgendetwas rot wird (F-01 bewacht
+       `var(--x)` ohne Definition, aber nur fuer die Tokens, die in seiner
+       Liste stehen). Teil 2 prueft deshalb die HERKUNFT jeder Dauer: sie muss
+       aus einer der drei Sprossen kommen. Das schliesst zugleich die zweite
+       Luecke — eine vierte Sprosse (`--dur-xslow: 500ms`) waere nach Teil 1
+       in Ordnung und wuerde die Leiter wieder aufspalten, die dieser Schritt
+       gerade zusammenfuehrt.
+
+       WARUM NICHT "die Dauer IST 150, 200 oder 300 ms": weil `0.15s` diese
+       Pruefung bestehen wuerde. Gemessen sind 61 der 141 Segmente schon heute
+       bei 0.15s und 48 bei 0.2s — eine Pruefung auf den WERT waere zu 77 %
+       gruen, bevor ein Zeichen geaendert ist. Geprueft wird deshalb der
+       Tokenverweis, nicht die Zahl.
+
+       E1 (150 ms fuer --dur-fast) UND SEINE FOLGE, vorab gemessen: von den 141
+       Segmenten aendern genau 21 ihr Tempo — 3x 0.08s, 7x 0.1s, 8x 0.12s
+       (alle auf --dur-fast = 150 ms), 2x 0.25s (auf --dur = 200 ms) und 1x
+       0.5s (auf --dur-slow = 300 ms). Das ist die Zahl aus E1. Die 0.25s
+       liegen genau zwischen zwei Sprossen; sie gehen auf die SCHNELLERE, weil
+       200 ms der Hausstandard ist, den nach W4-R-01 bereits 112 weitere
+       Segmente fuehren.
+
+       UMFANG (O-02): `animation`-Dauern bleiben Literale und sind hier
+       ausdruecklich draussen — 18 Literale, davon sieben Lauf- und
+       Dauerschleifen von 400 ms bis 3 s, die auf einer Drei-Sprossen-Leiter
+       nicht abbildbar sind. Teil 3 macht diese Grenze sichtbar, statt sie
+       bloss zu behaupten: er zieht die Volkszaehlung aller Zeit-Literale des
+       Baums und laesst genau drei Toepfe zu.
+
+       HANDOFF-/PLAN-KORREKTUR, gemessen: der Schritttext nennt "die zwei
+       Literale im reduced-motion-Block (core.css:3368/3370)" als Ausnahmen
+       dieser Pruefung. Nur eines der beiden ist ueberhaupt ein Fall fuer sie:
+       :3370 ist `transition-duration: 0.01ms !important`, :3368 ist
+       `animation-duration: 0.01ms !important` und faellt schon unter die
+       Sammel-Ausnahme fuer `animation`. In der Erlaubnisliste steht deshalb
+       EIN Eintrag, nicht zwei — zwei waeren einer, der nie gebraucht wird, und
+       die Verwesungsprobe unten wuerde ihn melden.
+       DIESE ZWEI ANKER WAREN STILL FALSCH, und zwar nicht erst seit Welle 6:
+       sie standen auf :3325/:3327 und trafen am Vorzustand 186e4e7 eine
+       Leerzeile bzw. `width: 18px` in einer Avatar-Regel — 43 Zeilen zu hoch.
+       Die Verwesungsprobe unten prueft nur die SCHLUESSEL von
+       DAUER_GEDULDET, nicht die Anker in der Prosa; dieses Paar ist darum
+       nie aufgefallen. Nachgezogen mit den gemessenen Werten, nicht
+       gerechnet. */
+
+    // ESCAPE-LUKE: Schluessel `datei.css:zeile`, Wert = Begruendung. Form wie
+    // SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in W4-R-02 und
+    // TRAGEND_GEDULDET in W4-R-03. Hier bewusst NICHT leer: der
+    // reduced-motion-Block ist der eine Ort, an dem eine Dauer kein
+    // Gestaltungsmittel ist, sondern eine Abschaltung.
+    const DAUER_GEDULDET = {
+        'core.css:3370':
+            'Der Block @media (prefers-reduced-motion: reduce) (core.css:3366) schaltet ' +
+            'Bewegung ab, er gestaltet sie nicht. `0.01ms !important` ist die uebliche ' +
+            'Schreibweise fuer "praktisch sofort, aber nicht 0" (0 unterdrueckt ' +
+            'transitionend-Ereignisse). Eine Sprosse der Leiter waere hier falsch: sie ' +
+            'wuerde die Abschaltung an die Gestaltung koppeln.'
+    };
+
+    /** Die Leiter. GENAU drei Sprossen — eine vierte waere die Aufspaltung,
+     *  die dieser Schritt beendet. Die Werte stehen hier fuer die SELBSTPROBE;
+     *  geurteilt wird ueber die Tokennamen. */
+    const LEITER = { '--dur-fast': 150, '--dur': 200, '--dur-slow': 300 };
+
+    /** Ein Zeit-Literal. Zeichengleich mit der Regex, aus der die
+     *  AUSGANGSWERTE oben erhoben sind — eine zweite Zaehlart waere eine
+     *  zweite Zahl. Der Schutz davor schliesst `--dur-slow` (kein Ziffernteil)
+     *  und die Bruchteile in `cubic-bezier(0.4, 0, 0.2, 1)` (ohne Einheit)
+     *  aus. */
+    const ZEIT_LITERAL = /(?<![\w.-])(\d*\.?\d+)(ms|s)\b/g;
+
+    /** Kommentare entfernen, ohne Zeilennummern zu verschieben. Eigene
+     *  Fassung, weil die in W4-R-01 in dessen describe eingeschlossen ist; das
+     *  globale withoutComments() taugt zum Zaehlen, nicht zum Verorten. */
+    function ohneKommentareZeilentreu4(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    /** Deklarationen einer Datei, zeilentreu: {prop, wert, zeile}. Eigene
+     *  Zerlegung, weil regelnMitRumpf() den Rumpf als Ganzes liefert und eine
+     *  Fehlermeldung ohne die Zeile der DEKLARATION hier nichts wert waere.
+     *  Klammerzaehlend: ein Selektor (`.btn:hover`) und ein At-Regel-Kopf
+     *  (`@media (max-width: 600px)`) enden auf `{` und werden nie abgegeben —
+     *  sonst lieferte jeder Pseudoklassen-Selektor eine Schein-Deklaration.
+     *  Genau das prueft die SELBSTPROBE unten. */
+    function deklarationen(css) {
+        const code = ohneKommentareZeilentreu4(css);
+        const out = [];
+        let puffer = '';
+        let zeile = 1;
+        let pufferZeile = 1;
+        let tiefe = 0;
+        const abgeben = () => {
+            const t = puffer.trim();
+            const c = t.indexOf(':');
+            if (tiefe > 0 && c > 0) {
+                const prop = t.slice(0, c).trim();
+                if (/^(?:--|-)?[a-zA-Z][\w-]*$/.test(prop))
+                    out.push({ prop, wert: t.slice(c + 1).trim(), zeile: pufferZeile });
+            }
+            puffer = '';
+            pufferZeile = zeile;
+        };
+        for (let i = 0; i < code.length; i++) {
+            const ch = code[i];
+            if (ch === '\n') {
+                zeile++;
+                puffer += ch;
+                continue;
+            }
+            if (ch === '{') {
+                tiefe++;
+                puffer = '';
+                pufferZeile = zeile;
+                continue;
+            }
+            if (ch === '}') {
+                abgeben();
+                tiefe--;
+                puffer = '';
+                pufferZeile = zeile;
+                continue;
+            }
+            if (ch === ';') {
+                abgeben();
+                continue;
+            }
+            puffer += ch;
+            if (!puffer.trim()) pufferZeile = zeile;
+        }
+        return out;
+    }
+
+    function alleDeklarationen() {
+        const out = [];
+        cssFiles.forEach(f =>
+            deklarationen(f.content).forEach(d => out.push({ datei: f.name, ...d }))
+        );
+        return out;
+    }
+
+    const istUebergang = prop => /^(?:-webkit-)?transition/.test(prop);
+    const istAnimation = prop => /^(?:-webkit-)?animation/.test(prop);
+    const istUebergangsListe = prop => /^--trans/.test(prop);
+
+    // ------------------------------------------------------------------
+    // TEIL 1: keine Zeit als Literal
+    // ------------------------------------------------------------------
+    function literalBefunde(decls) {
+        const befunde = [];
+        const gebraucht = new Set();
+        decls.forEach(d => {
+            if (!istUebergang(d.prop) && !istUebergangsListe(d.prop)) return;
+            const lits = [...d.wert.matchAll(ZEIT_LITERAL)].map(m => m[0]);
+            if (!lits.length) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (DAUER_GEDULDET[anker]) {
+                gebraucht.add(anker);
+                return;
+            }
+            befunde.push(
+                `${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')} — Zeit als Literal ` +
+                    `(${lits.join(', ')}). Gehoert auf die Leiter: var(--dur-fast) 150ms, ` +
+                    `var(--dur) 200ms, var(--dur-slow) 300ms`
+            );
+        });
+        return { befunde, gebraucht };
+    }
+
+    test('in keiner transition und in keiner --trans-Liste steht eine Zeit als Literal', () => {
+        expect(literalBefunde(alleDeklarationen()).befunde.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 2: die Herkunft jeder Dauer
+    // ------------------------------------------------------------------
+    /** Alle Bewegungs-Tokens, rekursiv aufgeloest — AUSSER den drei Sprossen,
+     *  die stehen bleiben. Nur so ist nach der Aufloesung noch zu sehen, WOHER
+     *  eine Dauer kommt; ein bis zum Literal aufgelaufener Wert sieht
+     *  hinterher aus wie ein handgeschriebenes `0.2s`. */
+    function tokensOhneLeiter() {
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu4(f.content).matchAll(
+                /(--(?:trans|dur|ease)[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].replace(/\s+/g, ' ').trim();
+            }
+        });
+        const auf = {};
+        Object.keys(roh).forEach(n => {
+            if (LEITER[n] === undefined) auf[n] = roh[n];
+        });
+        for (let runde = 0; runde < 8; runde++) {
+            let geaendert = false;
+            Object.keys(auf).forEach(n => {
+                const neu = auf[n].replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                    auf[name] !== undefined && auf[name] !== ganz ? auf[name] : ganz
+                );
+                if (neu !== auf[n]) {
+                    auf[n] = neu;
+                    geaendert = true;
+                }
+            });
+            if (!geaendert) break;
+        }
+        return auf;
+    }
+
+    /** Trennung an Kommas der OBERSTEN Ebene. Ein naives split(',') zerlegt
+     *  `cubic-bezier(0.4, 0, 0.2, 1)` in vier Stuecke und erfindet drei
+     *  Segmente ohne Eigenschaft. Im Baum steht heute keine solche Kurve mehr
+     *  (O-04 hat die letzte aufgeloest) — die Zerlegung darf aber nicht davon
+     *  abhaengen, dass das so bleibt. */
+    function kommasObenTrennen(wert) {
+        const out = [];
+        let tiefe = 0;
+        let buf = '';
+        for (const ch of wert) {
+            if (ch === '(') tiefe++;
+            else if (ch === ')') tiefe--;
+            if (ch === ',' && tiefe === 0) {
+                out.push(buf);
+                buf = '';
+                continue;
+            }
+            buf += ch;
+        }
+        if (buf.trim()) out.push(buf);
+        return out.map(s => s.trim()).filter(Boolean);
+    }
+
+    /** Die Zeit-Scheiben eines Segments, in der Reihenfolge der
+     *  Kurzschreibweise: die erste ist die Dauer, eine zweite waere die
+     *  Verzoegerung. Eine Scheibe ist entweder ein Literal oder ein
+     *  Tokenverweis — alles andere (Eigenschaftsname, Kurve) faellt weg. */
+    function zeitScheiben(segment) {
+        return segment
+            .split(/\s+/)
+            .filter(Boolean)
+            .filter(
+                s => new RegExp(ZEIT_LITERAL.source).test(s) || /^var\(\s*--[\w-]+\s*\)$/.test(s)
+            );
+    }
+
+    function herkunftBefunde(decls) {
+        const tokens = tokensOhneLeiter();
+        const befunde = [];
+        decls.forEach(d => {
+            if (!istUebergang(d.prop)) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (DAUER_GEDULDET[anker]) return;
+            const voll = d.wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                tokens[name] !== undefined ? tokens[name] : ganz
+            );
+            const segs = kommasObenTrennen(voll);
+            let mitDauer = 0;
+            segs.forEach(seg => {
+                const scheiben = zeitScheiben(seg);
+                if (!scheiben.length) return;
+                mitDauer++;
+                const dauer = scheiben[0];
+                const m = /^var\(\s*(--[\w-]+)\s*\)$/.exec(dauer);
+                if (m && LEITER[m[1]] !== undefined) return;
+                befunde.push(
+                    `${anker} { ${seg.trim()} } — die Dauer kommt nicht aus der Leiter, ` +
+                        `sondern aus ${
+                            m ? `dem unbekannten Token ${m[1]}` : `dem Literal ${dauer}`
+                        }. Erlaubt sind var(--dur-fast), var(--dur), var(--dur-slow)`
+                );
+            });
+            if (!mitDauer)
+                befunde.push(
+                    `${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')} — fuehrt ueberhaupt ` +
+                        `keine Dauer. Ohne Dauer ist der Standard 0s: der Uebergang springt, ` +
+                        `und Teil 1 sieht das nicht (kein Literal ist auch keine Zeit)`
+                );
+        });
+        return befunde;
+    }
+
+    test('jede Dauer einer transition kommt aus einer der drei Sprossen', () => {
+        expect(herkunftBefunde(alleDeklarationen()).sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // TEIL 3: die Umfangsgrenze (O-02)
+    // ------------------------------------------------------------------
+    test('UMFANGSGRENZE: Zeit-Literale stehen nur in den drei Sprossen und in animation*', () => {
+        /* Diese Volkszaehlung ist die einzige Stelle, an der die
+           Sammel-Ausnahme fuer `animation` ueberhaupt sichtbar wird. Ohne sie
+           waere "wir lassen animation in Ruhe" eine Behauptung in Prosa — und
+           eine Luecke: eine Dauer, die aus einer transition in eine animation
+           umzieht, waere nach Teil 1 und Teil 2 in Ordnung. */
+        const fremd = [];
+        alleDeklarationen().forEach(d => {
+            if (!new RegExp(ZEIT_LITERAL.source).test(d.wert)) return;
+            const anker = `${d.datei}:${d.zeile}`;
+            if (LEITER[d.prop] !== undefined) return; // die drei Sprossen selbst
+            if (istAnimation(d.prop)) return; // O-02
+            if (DAUER_GEDULDET[anker]) return;
+            fremd.push(`${anker} ${d.prop}: ${d.wert.replace(/\s+/g, ' ')}`);
+        });
+        expect(fremd.sort()).toEqual([]);
+    });
+
+    // ------------------------------------------------------------------
+    // WAECHTER DER RATSCHE SELBST
+    // ------------------------------------------------------------------
+    // Schranken benannt, weil die GEGENPROBE sie gegen den inhaltsleer-gruenen
+    // Lauf haelt: zwei Kopien einer Zahl sind zwei Zahlen, die auseinander
+    // laufen koennen.
+    const UEBERGAENGE_SCHRANKE = 200; // Ist-Wert 237
+    const DAUER_SEGMENTE_SCHRANKE = 200; // Ist-Wert 275 (134 ueber Token, 141 als Literal)
+    const ANIMATION_LITERALE_SCHRANKE = 15; // Ist-Wert 18
+
+    function erhebung4() {
+        const decls = alleDeklarationen();
+        const tokens = tokensOhneLeiter();
+        let uebergaenge = 0;
+        let segmenteMitDauer = 0;
+        let animLiterale = 0;
+        decls.forEach(d => {
+            if (istAnimation(d.prop)) animLiterale += [...d.wert.matchAll(ZEIT_LITERAL)].length;
+            if (!istUebergang(d.prop)) return;
+            uebergaenge++;
+            const voll = d.wert.replace(/var\(\s*(--[\w-]+)\s*\)/g, (ganz, name) =>
+                tokens[name] !== undefined ? tokens[name] : ganz
+            );
+            kommasObenTrennen(voll).forEach(seg => {
+                if (zeitScheiben(seg).length) segmenteMitDauer++;
+            });
+        });
+        return { uebergaenge, segmenteMitDauer, animLiterale };
+    }
+
+    test('GEGENPROBE: der Scan findet Uebergaenge, Dauer-Segmente und animation-Literale', () => {
+        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Zerlegung ein
+        // GRUENER Lauf — inhaltsleer gruen statt rot, genau der Fehler, den
+        // F-01b gemacht hat.
+        const e = erhebung4();
+        expect(e.uebergaenge).toBeGreaterThanOrEqual(UEBERGAENGE_SCHRANKE);
+        expect(e.segmenteMitDauer).toBeGreaterThanOrEqual(DAUER_SEGMENTE_SCHRANKE);
+        expect(e.animLiterale).toBeGreaterThanOrEqual(ANIMATION_LITERALE_SCHRANKE);
+    });
+
+    /* PROBEN FUER DIE LITERAL-ERKENNUNG — feste Zeichenketten, kein
+       Dateizugriff. Beide Richtungen, weil die Erkennung in beide Richtungen
+       kippen kann: eine zu weite Regex zaehlt die Bruchteile einer Kurve als
+       Dauer, eine zu enge uebersieht `.5s` oder `200ms`. */
+    const LITERAL_PROBEN = [
+        ['transform 0.15s', ['0.15s']],
+        ['opacity 200ms', ['200ms']],
+        ['opacity .5s', ['.5s']],
+        ['background 0.2s ease 0.1s', ['0.2s', '0.1s']],
+        ['opacity var(--dur) var(--ease)', []],
+        ['var(--trans-std)', []],
+        ['transform var(--dur-slow) cubic-bezier(0.4, 0, 0.2, 1)', []],
+        ['max-height 0.3s, padding 0.3s', ['0.3s', '0.3s']],
+        ['transform 0.25s ease, opacity 0.25s ease', ['0.25s', '0.25s']],
+        ['none', []],
+        ['stroke-dashoffset 0.5s ease', ['0.5s']],
+        ['0.01ms !important', ['0.01ms']]
+    ];
+
+    function literalprobeBefunde(erkenner) {
+        return LITERAL_PROBEN.flatMap(([wert, soll]) => {
+            const ist = erkenner(wert);
+            return JSON.stringify(ist) === JSON.stringify(soll)
+                ? []
+                : [`"${wert}" — erwartet ${JSON.stringify(soll)}, erhalten ` + JSON.stringify(ist)];
+        });
+    }
+
+    const literalErkenner = wert => [...wert.matchAll(ZEIT_LITERAL)].map(m => m[0]);
+
+    test('SELBSTPROBE: die Literal-Erkennung urteilt in beide Richtungen richtig', () => {
+        expect(literalprobeBefunde(literalErkenner)).toEqual([]);
+    });
+
+    test('SELBSTPROBE: die Zerlegung erfindet aus Selektoren und At-Regeln keine Dauer', () => {
+        /* Der gefaehrlichste Fehler dieser Zerlegung ist nicht, etwas zu
+           uebersehen, sondern etwas zu ERFINDEN: ein Pseudoklassen-Selektor
+           und ein @media-Kopf tragen beide einen Doppelpunkt. Wuerden sie als
+           Deklaration gelesen, stuenden in der Volkszaehlung von Teil 3
+           Befunde, die es nicht gibt — und jemand wuerde CSS anfassen, um
+           einen Messfehler zu beheben. */
+        const synth = [
+            '.a:hover { color: red; }',
+            '@media (max-width: 600px) { .b { transition: opacity 0.2s; } }',
+            '.c { /* 0.3s im Kommentar */ transition: var(--trans-std); }',
+            '@keyframes probe { 0% { opacity: 0; } 100% { opacity: 1; } }'
+        ].join('\n');
+        const d = deklarationen(synth);
+        expect(d.filter(x => x.prop === 'a' || x.prop === 'max-width')).toEqual([]);
+        expect(d.filter(x => istUebergang(x.prop)).map(x => x.wert)).toEqual([
+            'opacity 0.2s',
+            'var(--trans-std)'
+        ]);
+        // Die Zeile der Deklaration, nicht die des Regelkopfs — und der
+        // Kommentar davor verschiebt sie nicht.
+        expect(d.find(x => x.wert === 'var(--trans-std)').zeile).toBe(3);
+    });
+
+    test('SELBSTPROBE: die drei Sprossen loesen auf 150/200/300 ms auf', () => {
+        /* Die Leiter steht in zwei Fassungen im Baum: als Token in
+           variables.css und als LEITER hier. Ohne diese Probe koennten beide
+           auseinander laufen, und Teil 2 wuerde Tokennamen anerkennen, hinter
+           denen etwas anderes steht als in seinem Kommentar. */
+        const roh = {};
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu4(f.content).matchAll(
+                /(--dur[\w-]*)\s*:\s*([^;}]+)/g
+            )) {
+                roh[m[1]] = m[2].trim();
+            }
+        });
+        expect(Object.keys(roh).sort()).toEqual(['--dur', '--dur-fast', '--dur-slow']);
+        const ms = txt => {
+            const m = /^([\d.]+)(ms|s)$/.exec(txt);
+            return m ? Math.round(parseFloat(m[1]) * (m[2] === 's' ? 1000 : 1)) : null;
+        };
+        Object.keys(LEITER).forEach(n => expect(ms(roh[n])).toBe(LEITER[n]));
+        // Und die Sprossen sind verschieden — eine Leiter mit zwei gleichen
+        // Sprossen waere keine.
+        expect([...new Set(Object.values(LEITER))].length).toBe(3);
+    });
+
+    /* BESCHAEDIGUNGEN DER LITERAL-ERKENNUNG
+       Jede veraendert, was erkannt wird; keine veraendert, was erhebung4()
+       zaehlt. Die Haupttests koennen eine Beschaedigung NICHT bemerken: eine
+       Erkennung, die nichts mehr findet, macht Teil 1 und Teil 3 gruen. Also
+       muss die SELBSTPROBE sie fangen. */
+    const BESCHAEDIGUNGEN_LIT = [
+        [
+            'nur Sekunden, keine Millisekunden',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d*\.?\d+)s\b/g)].map(m => m[0])
+        ],
+        [
+            'Ziffernteil ohne Bruchteil',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d+)(ms|s)\b/g)].map(m => m[0])
+        ],
+        [
+            'nur das erste Literal',
+            wert => [...wert.matchAll(ZEIT_LITERAL)].map(m => m[0]).slice(0, 1)
+        ],
+        [
+            'Einheit nicht verlangt',
+            wert => [...wert.matchAll(/(?<![\w.-])(\d*\.?\d+)/g)].map(m => m[0])
+        ]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Literal-Erkennung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_LIT.filter(
+            b => literalprobeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; die Haupttests koennen es nicht ` +
+                `(weniger erkannte Literale = gruener Test), und die GEGENPROBE zaehlt ` +
+                `Segmente, nicht Literale`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    /* BESCHAEDIGUNGEN DER HERKUNFTSRECHNUNG — synthetische Deklarationen,
+       beide Richtungen. Teil 2 ist die einzige Zusicherung, die einen
+       Tokenverweis von einem Literal unterscheidet; kippt sie, bleibt nur noch
+       Teil 1, und `var(--dauer-schnell)` waere wieder in Ordnung. */
+    const HERKUNFT_PROBEN = [
+        [
+            'Literal statt Sprosse',
+            [{ datei: 'p.css', zeile: 1, prop: 'transition', wert: 'opacity 0.2s' }],
+            1
+        ],
+        [
+            'unbekanntes Token',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 2,
+                    prop: 'transition',
+                    wert: 'opacity var(--dauer-schnell)'
+                }
+            ],
+            1
+        ],
+        [
+            'Sprosse — kein Befund',
+            [{ datei: 'p.css', zeile: 3, prop: 'transition', wert: 'opacity var(--dur)' }],
+            0
+        ],
+        [
+            'Liste aus der Leiter — kein Befund',
+            [{ datei: 'p.css', zeile: 4, prop: 'transition', wert: 'var(--trans-std)' }],
+            0
+        ],
+        ['ganz ohne Dauer', [{ datei: 'p.css', zeile: 5, prop: 'transition', wert: 'opacity' }], 1],
+        [
+            'zwei Segmente, eines falsch',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 6,
+                    prop: 'transition',
+                    wert: 'opacity var(--dur), color 0.2s'
+                }
+            ],
+            1
+        ],
+        [
+            'die Ausnahme wird geachtet',
+            [
+                {
+                    datei: 'core.css',
+                    zeile: 3370,
+                    prop: 'transition-duration',
+                    wert: '0.01ms !important'
+                }
+            ],
+            0
+        ],
+        [
+            'Verzoegerung ist keine Dauer',
+            [
+                {
+                    datei: 'p.css',
+                    zeile: 7,
+                    prop: 'transition',
+                    wert: 'opacity var(--dur) ease 0.1s'
+                }
+            ],
+            0
+        ]
+    ];
+
+    test('MUTATIONSPROBE: die Herkunftsrechnung urteilt — synthetische Deklarationen', () => {
+        const falsch = HERKUNFT_PROBEN.filter(p => herkunftBefunde(p[1]).length !== p[2]).map(
+            p => `${p[0]} — erwartet ${p[2]} Befunde, erhalten ${herkunftBefunde(p[1]).length}`
+        );
+        expect(falsch.sort()).toEqual([]);
+    });
+
+    test('jeder Eintrag in DAUER_GEDULDET trifft eine Stelle, die es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const { gebraucht } = literalBefunde(alleDeklarationen());
+        expect(Object.keys(DAUER_GEDULDET).filter(s => !gebraucht.has(s))).toEqual([]);
+    });
+});
+
+describe('W4-R-05 — tote Bewegung: jeder @keyframes-Name lebt, keiner doppelt (Ratsche)', () => {
+    /* WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT
+       Ein `@keyframes`-Block, den niemand aufruft, ist vollkommen lautlos: er
+       erzeugt keine Regel, keinen Stil, keine Meldung. Umgekehrt ist ein
+       `animation: xyz 1s` auf einen Namen, den es nicht gibt, genauso lautlos
+       — die Bewegung findet einfach nicht statt. Beide Richtungen sind heute
+       von nichts bewacht: DUBLETTEN_MAX = 0 (R-05) nimmt
+       @keyframes-Schritte ausdruecklich aus (`if
+       (/^(?:\d+%|from|to)$/.test(sel)) return;`), weshalb `spin` zweimal
+       dastehen kann, ohne als Dublette zu zaehlen; und der Stil-Sollstand
+       hasht Endwerte, die eine fehlende Animation gar nicht veraendert.
+
+       AUSGANGSWERT (erhoben am 2026-10-02 an 9e1d446): 18 Bloecke, 17 Namen,
+       15 davon ueber eine CSS-animation-Deklaration erreicht. Unverwendet
+       sind ZWEI Namen in DREI Bloecken: `spin` (dmscreen.css:914 UND
+       dmscreen.css:1094 — derselbe Rumpf, zweimal) und `timerPulse`
+       (tools.css:965). Kein verwendeter Name ist undefiniert. Ziel: 15
+       Bloecke, 15 Namen, 0 unverwendet, 0 doppelt.
+
+       WAS ALS VERWENDUNG ZAEHLT — und was ausdruecklich nicht:
+       (1) Der Name steht in einem `animation`- oder
+           `animation-name`-WERT in assets/styles/*.css. Das ist die
+           belastbare Quelle; 15 der 17 Namen haengen daran.
+       (2) Der Name steht in einem Quellmodul oder Template in einer
+           ANIMATIONS-ZUWEISUNG (`style.animation = '...'`,
+           `animationName = '...'`, `style="animation: ..."`). Heute aendert
+           (2) an keinem Urteil etwas — jeder der 15 lebenden Namen steht
+           schon in (1) —, aber ohne (2) waere eine kuenftige, nur aus JS
+           gesetzte Animation ein Fehlalarm, und ein Fehlalarm kostet genau
+           einmal Vertrauen.
+       (3) NICHT als Verwendung zaehlt die blosse ERWAEHNUNG des Namens
+           irgendwo im Baum. Das ist kein Feinschliff, sondern der Grund,
+           warum die erste Fassung dieser Erhebung `spin` als "verwendet"
+           gemeldet hat: das Wort kommt im ganzen Baum ausserhalb des CSS
+           GENAU EINMAL vor, naemlich in einem Kommentar in DIESER Datei
+           (Zeile 8992, der R-32-Block erklaert dort, welche Namen keine
+           Endposition setzen). Eine Ratsche, die sich durch ihren eigenen
+           Erklaertext gruen macht, bewacht nichts. Deshalb liest (2) nur die
+           ausgelieferten Verzeichnisse und ausdruecklich NICHT tests/.
+
+       WARUM BEIDE HAELFTEN IN EINER RATSCHE: `spin` ist beides zugleich —
+       unverwendet UND zweimal definiert. Zwei getrennte Ratschen wuerden
+       denselben Befund zweimal melden und nach dem Loeschen beide gruen
+       werden, ohne dass jemand sagen koennte, welche von ihnen die Aussage
+       haelt. Die Doppelprüfung ist zudem die Luecke, die DUBLETTEN_MAX
+       offenlaesst.
+
+       ACHTUNG FUER SPAETERE WELLEN: dies ist der erste Schritt der Welle 4,
+       der Zeilen ENTFERNT. Ab hier verschieben sich R-06-Anker in
+       dmscreen.css und tools.css; sie werden im Loesch-Commit mit
+       `node tools/sync-aktenlage-anker.js --write` nachgezogen und mit
+       `--check` belegt. */
+
+    // ESCAPE-LUKE: Schluessel = Name, Wert = Begruendung. Form wie
+    // SAMMELBEWEGUNG_GEDULDET in W4-R-01 und DAUER_GEDULDET in W4-R-04.
+    // Bewusst LEER, nicht abwesend: ein Bewegungsmuster, das niemand aufruft,
+    // hat keinen Grund dazubleiben — und wenn doch, steht er hier.
+    const TOTE_BEWEGUNG_GEDULDET = {};
+
+    // Verzeichnisse, die ausgeliefert werden. tests/ ist bewusst NICHT dabei
+    // (siehe (3) oben), tools/ und dist/ auch nicht: ein Werkzeug, das einen
+    // Namen in einem Bericht nennt, benutzt ihn nicht, und dist/ ist das
+    // Erzeugnis dieser Quellen.
+    const QUELLVERZEICHNISSE = [
+        'core',
+        'utils',
+        'systems',
+        'render',
+        'features',
+        'ui',
+        path.join('assets', 'templates')
+    ];
+    const QUELLDATEIEN = ['loader.js', 'sw.js'];
+
+    /** Kommentare entfernen, ohne Zeilennummern zu verschieben. */
+    function ohneKommentareZeilentreu5(css) {
+        return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    }
+
+    /** Alle @keyframes-Bloecke: {datei, zeile, name}. */
+    function keyframesBloecke() {
+        const out = [];
+        cssFiles.forEach(f => {
+            const code = ohneKommentareZeilentreu5(f.content);
+            for (const m of code.matchAll(/@(?:-webkit-)?keyframes\s+([\w-]+)/g)) {
+                out.push({
+                    datei: f.name,
+                    zeile: code.slice(0, m.index).split('\n').length,
+                    name: m[1]
+                });
+            }
+        });
+        return out;
+    }
+
+    /** Alle animation-Werte aus dem CSS (Kurz- und Langschreibweise). */
+    function animationsWerteCss() {
+        const out = [];
+        cssFiles.forEach(f => {
+            for (const m of ohneKommentareZeilentreu5(f.content).matchAll(
+                /(?:^|[;{\s])(?:-webkit-)?animation(?:-name)?\s*:\s*([^;}]+)/g
+            )) {
+                out.push(m[1].replace(/\s+/g, ' ').trim());
+            }
+        });
+        return out;
+    }
+
+    /** Animations-Zuweisungen in den ausgelieferten Quellen: der Text rechts
+     *  von `animation`/`animationName`/`animation-name` bis zum Ende der
+     *  Zuweisung. KEIN blosser Wortfund — siehe (3) im Kopfkommentar. */
+    function animationsZuweisungenQuellen() {
+        const dateien = [];
+        const sammle = dir => {
+            if (!fs.existsSync(dir)) return;
+            fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) sammle(p);
+                else if (/\.(js|html)$/.test(e.name)) dateien.push(p);
+            });
+        };
+        QUELLVERZEICHNISSE.forEach(d => sammle(path.join(REPO, d)));
+        QUELLDATEIEN.forEach(f => {
+            const p = path.join(REPO, f);
+            if (fs.existsSync(p)) dateien.push(p);
+        });
+        const out = [];
+        dateien.forEach(p => {
+            const txt = fs.readFileSync(p, 'utf8');
+            for (const m of txt.matchAll(/animation(?:Name|-name)?\s*[:=]\s*([^;}\n]{0,120})/g)) {
+                out.push({ datei: path.relative(REPO, p).replace(/\\/g, '/'), wert: m[1] });
+            }
+        });
+        return out;
+    }
+
+    /** Verwendet ein Wert diesen Namen? Ganzes Wort, damit `pulse` nicht in
+     *  `dms-live-pulse` trifft und umgekehrt. */
+    const nennt = (wert, name) =>
+        new RegExp(`(?:^|[^\\w-])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^\\w-]|$)`).test(
+            wert
+        );
+
+    function erhebung5() {
+        const bloecke = keyframesBloecke();
+        const namen = [...new Set(bloecke.map(b => b.name))];
+        const werteCss = animationsWerteCss();
+        const zuweisungen = animationsZuweisungenQuellen();
+        const quellen = {};
+        namen.forEach(n => {
+            const css = werteCss.filter(w => nennt(w, n)).length;
+            const js = zuweisungen.filter(z => nennt(z.wert, n));
+            quellen[n] = { css, js: js.length, jsDateien: [...new Set(js.map(z => z.datei))] };
+        });
+        const verwendet = namen.filter(n => quellen[n].css > 0 || quellen[n].js > 0);
+        // Die andere Richtung: ein animation-Wert, dessen Name nirgends
+        // definiert ist. Nur Werte mit genau einem auswertbaren Namen werden
+        // befragt — `none`, Dauern und Kurven sind keine Namen.
+        const SCHLUESSELWORTE = new Set([
+            'none',
+            'normal',
+            'reverse',
+            'alternate',
+            'alternate-reverse',
+            'forwards',
+            'backwards',
+            'both',
+            'running',
+            'paused',
+            'infinite',
+            'linear',
+            'ease',
+            'ease-in',
+            'ease-out',
+            'ease-in-out',
+            'step-start',
+            'step-end',
+            'initial',
+            'inherit',
+            'unset',
+            'revert'
+        ]);
+        const undefinierte = [];
+        werteCss.forEach(w => {
+            w.split(',').forEach(teil => {
+                teil.trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .forEach(tok => {
+                        if (/^[\d.]/.test(tok) || tok.includes('(') || tok.startsWith('var'))
+                            return;
+                        if (SCHLUESSELWORTE.has(tok.toLowerCase())) return;
+                        if (!/^[\w-]+$/.test(tok)) return;
+                        if (!namen.includes(tok)) undefinierte.push(`${tok} (in "${w}")`);
+                    });
+            });
+        });
+        return { bloecke, namen, verwendet, quellen, undefinierte: [...new Set(undefinierte)] };
+    }
+
+    test('jeder @keyframes-Name wird mindestens einmal verwendet', () => {
+        const e = erhebung5();
+        const tot = e.namen
+            .filter(n => !e.verwendet.includes(n))
+            .filter(n => !TOTE_BEWEGUNG_GEDULDET[n])
+            .map(n => {
+                const orte = e.bloecke
+                    .filter(b => b.name === n)
+                    .map(b => `${b.datei}:${b.zeile}`)
+                    .join(', ');
+                return (
+                    `@keyframes ${n} (${orte}) wird von keiner animation-Deklaration und ` +
+                    `von keiner Animations-Zuweisung in den Quellen erreicht — toter ` +
+                    `Bewegungscode`
+                );
+            });
+        expect(tot.sort()).toEqual([]);
+    });
+
+    test('kein @keyframes-Name ist zweimal definiert', () => {
+        const e = erhebung5();
+        const doppelt = e.namen
+            .filter(n => e.bloecke.filter(b => b.name === n).length > 1)
+            .map(n => {
+                const orte = e.bloecke.filter(b => b.name === n).map(b => `${b.datei}:${b.zeile}`);
+                return (
+                    `@keyframes ${n} ist ${orte.length}x definiert (${orte.join(', ')}) — ` +
+                    `der spaetere Block gewinnt, der fruehere ist unerreichbar. R-05 sieht ` +
+                    `das nicht: DUBLETTEN_MAX nimmt @keyframes-Schritte aus`
+                );
+            });
+        expect(doppelt.sort()).toEqual([]);
+    });
+
+    test('kein verwendeter Name ist undefiniert', () => {
+        /* Die andere Richtung, heute gruen: ein `animation: xyz 1s` auf einen
+           Namen ohne Block bewegt nichts und meldet nichts. Ihr roter Nachweis
+           liegt in der MUTATIONSPROBE unten. */
+        expect(erhebung5().undefinierte.sort()).toEqual([]);
+    });
+
+    // Schranken benannt, weil die GEGENPROBE sie gegen den inhaltsleer-gruenen
+    // Lauf haelt.
+    const BLOECKE_SCHRANKE = 12; // Ist-Wert 18, nach dem Loeschen 15
+    const CSS_VERWENDUNGEN_SCHRANKE = 12; // Ist-Wert 15
+
+    test('GEGENPROBE: der Scan findet Bloecke und echte CSS-Verwendungen', () => {
+        // Ohne sie waere ein leerer Dateisatz oder eine kaputte Regex ein
+        // GRUENER Lauf: keine Bloecke = keine toten Bloecke.
+        const e = erhebung5();
+        expect(e.bloecke.length).toBeGreaterThanOrEqual(BLOECKE_SCHRANKE);
+        expect(e.namen.filter(n => e.quellen[n].css > 0).length).toBeGreaterThanOrEqual(
+            CSS_VERWENDUNGEN_SCHRANKE
+        );
+    });
+
+    test('GEGENPROBE: tests/ ist keine Verwendungsquelle, die Quellen sind nicht leer', () => {
+        /* Die wichtigste Eigenschaft dieser Ratsche, und die am leichtesten zu
+           verlierende. DIESE Datei nennt `spin` in einem Kommentar (R-32-Block)
+           — die erste Fassung der Erhebung hat den Namen deshalb als
+           "verwendet" gemeldet und den toten Block gedeckt. Der erste Teil
+           haelt fest, dass tests/ nicht in den Quellen steht. Der zweite
+           haelt fest, dass Quelle (2) nicht INERT ist: wuerde sie nichts
+           finden, waere die Zusicherung "auch JS-Animationen zaehlen" eine
+           Behauptung, und ein kuenftiger Fehlalarm faende keinen Waechter.
+           Gemessen am 2026-10-02: 153 Quelldateien, 6 Zuweisungen
+           (`pulse 0.3s ease-out` und `none` in initiative-combat-widgets.js
+           und random-tables.js). */
+        expect(QUELLVERZEICHNISSE.some(d => /^tests/.test(d))).toBe(false);
+        expect(QUELLDATEIEN.some(d => /^tests/.test(d))).toBe(false);
+        const zuweisungen = animationsZuweisungenQuellen();
+        expect(zuweisungen.filter(z => z.datei.startsWith('tests/'))).toEqual([]);
+        expect(zuweisungen.length).toBeGreaterThanOrEqual(3);
+    });
+
+    /* PROBEN FUER DIE VERWENDUNGS-ERKENNUNG — feste Zeichenketten, kein
+       Dateizugriff. Beide Richtungen, weil sie in beide Richtungen kippen
+       kann: ein blosser Wortfund deckt toten Code (genau der Fehler der ersten
+       Fassung), eine zu enge Lesart erzeugt Fehlalarme fuer Namen, die nur in
+       der Kurzschreibweise an zweiter Stelle stehen. */
+    const NENNT_PROBEN = [
+        ['spin 1s linear infinite', 'spin', true],
+        ['1s linear infinite spin', 'spin', true],
+        ['dms-live-pulse 2s ease-in-out infinite', 'pulse', false],
+        ['pulse 2s infinite', 'dms-live-pulse', false],
+        ['fadeIn 0.3s ease', 'fadeIn', true],
+        ['fadeInStep 0.3s', 'fadeIn', false],
+        ['none', 'spin', false],
+        ['timerPulse', 'timerPulse', true],
+        ['a 1s, timerPulse 2s', 'timerPulse', true],
+        ['my-spin 1s', 'spin', false]
+    ];
+
+    function nenntProbeBefunde(f) {
+        return NENNT_PROBEN.filter(([w, n, soll]) => f(w, n) !== soll).map(
+            ([w, n, soll]) => `"${w}" / ${n}: erwartet ${soll}, erhalten ${f(w, n)}`
+        );
+    }
+
+    test('SELBSTPROBE: die Verwendungs-Erkennung urteilt in beide Richtungen', () => {
+        expect(nenntProbeBefunde(nennt)).toEqual([]);
+    });
+
+    const BESCHAEDIGUNGEN_NENNT = [
+        ['Teilwort erlaubt (kein Wortrand)', (w, n) => w.includes(n)],
+        ['nur das erste Wort des Wertes gelesen', (w, n) => w.split(/\s+/)[0] === n],
+        ['Bindestrich als Wortrand behandelt', (w, n) => new RegExp(`\\b${n}\\b`).test(w)]
+    ];
+
+    test('MUTATIONSPROBE: eine beschaedigte Verwendungs-Erkennung faellt der SELBSTPROBE auf', () => {
+        const unentdeckt = BESCHAEDIGUNGEN_NENNT.filter(
+            b => nenntProbeBefunde(b[1]).length === 0
+        ).map(
+            b =>
+                `${b[0]} — kein Waechter schlaegt an; der Haupttest kann es nicht ` +
+                `(eine zu weite Erkennung macht toten Code lebendig = gruener Test)`
+        );
+        expect(unentdeckt.sort()).toEqual([]);
+    });
+
+    test('MUTATIONSPROBE: die Gegenrichtung urteilt — synthetische animation-Werte', () => {
+        /* Der roten Nachweis fuer "kein verwendeter Name ist undefiniert":
+           dieselbe Rechnung, auf eine Namensliste und Werte angewandt, die hier
+           stehen. Ohne ihn waere der dritte Test eine Behauptung, die nie
+           geurteilt hat. */
+        const SCHLUESSELWORTE = new Set(['none', 'infinite', 'linear', 'ease', 'ease-in-out']);
+        const pruefe = (namen, werte) => {
+            const out = [];
+            werte.forEach(w =>
+                w.split(',').forEach(teil =>
+                    teil
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .forEach(tok => {
+                            if (/^[\d.]/.test(tok) || tok.includes('(')) return;
+                            if (SCHLUESSELWORTE.has(tok.toLowerCase())) return;
+                            if (!/^[\w-]+$/.test(tok)) return;
+                            if (!namen.includes(tok)) out.push(tok);
+                        })
+                )
+            );
+            return [...new Set(out)];
+        };
+        expect(pruefe(['spin'], ['spin 1s linear infinite'])).toEqual([]);
+        expect(pruefe(['spin'], ['sping 1s linear'])).toEqual(['sping']);
+        expect(pruefe([], ['none'])).toEqual([]);
+        expect(pruefe(['a'], ['a 1s, b 2s'])).toEqual(['b']);
+    });
+
+    test('jeder Eintrag in TOTE_BEWEGUNG_GEDULDET trifft einen Namen, den es gibt', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const namen = erhebung5().namen;
+        expect(Object.keys(TOTE_BEWEGUNG_GEDULDET).filter(n => !namen.includes(n))).toEqual([]);
+    });
+});
+
+
+// Welle 4, Schritt 7 — Konsolidierung der drei Bauformen
+// ==================================================================
+
+describe('W4-R-06 — drei Bauformen, drei Basisregeln: kein Mitglied bemisst sich selbst (Ratsche)', () => {
+    /*  WARUM DIESE RATSCHE VOR DEM CODE ENTSTEHT.
+     *
+     *  Die Zusammenfuehrung von Icon-Knopf, Chip und Marke ist die am
+     *  SCHLECHTESTEN abgesicherte Aenderung dieser Welle, und das ist
+     *  gemessen, nicht gefuehlt. Der Stil-Sollstand
+     *  (tests/e2e/features/computed-style-diff.spec.js) hasht zwoelf
+     *  Eigenschaften, und `width`/`height` sind dort AUSDRUECKLICH
+     *  ausgenommen ("haengen am Viewport und am Inhalt"). Die Icon-Knoepfe
+     *  bemessen sich aber genau darueber: .dice-reroll-btn 44, .dms-dice-btn
+     *  42, .btn-icon 36, .npc-section-btn 24, .qref-apply-btn 16. Eine
+     *  Groessenaenderung erzeugt dort also NUR dann einen Befund, wenn sich
+     *  Innenabstand, Rundung oder Schriftgroesse MIT aendern. Fuer .btn-icon
+     *  trafen vor dieser Welle alle drei schon den Sollwert — 36 -> 28 waere
+     *  fuer jede Automatik vollstaendig unsichtbar gewesen.
+     *  Hinzu kommt: .header-action-btn (7 Elemente) liegt AUSSERHALB der
+     *  view-Container, die der Sollstand abtastet, und .dms-live-badge wird
+     *  vom Sollstand uebersprungen, weil es eine Dauer-Animation traegt
+     *  (`if (cs.animationName && cs.animationName !== 'none') return;`).
+     *  Deckung dieser beiden: null.
+     *
+     *  AUSGANGSWERT, am 2026-10-03 gegen HEAD 29bb01d (Zweig design-welle-4)
+     *  erhoben, VOR jeder Zeile Umsetzung — alle sieben Zusicherungen ROT,
+     *  176 bezifferte Befunde, die sechs Proben an der Ratsche selbst gruen:
+     *
+     *    Teil 1   21 von 22 Icon-Knoepfen fehlen in der Selektorliste der
+     *             einzigen Regel, die heute 36 px fuehrt (.btn-icon). Es gibt
+     *             keine Basisgruppe — 10 verschiedene DEKLARIERTE Groessen:
+     *             16 · 20 (2x) · 24 (4x) · 28 · 32 (3x) · 34 (2x) · 36 (8x) ·
+     *             42 · 44, dazu 4 Rundungen: --radius-sm (8x), --radius-md
+     *             (10x), 50% (3x), keine (1x)
+     *    Teil 2   66 eigene Mass-Deklarationen in 24 Regeln
+     *    Teil 3   .chip ist keine Basis einer Familie (keine Regel mit 999px)
+     *    Teil 4   53 eigene Deklarationen an den 18 Chip-Bauformen
+     *             — 8 Innenabstaende, 8 Schriftgroessen, 2 Rundungen
+     *    Teil 5   .badge existiert im ganzen Baum nicht — 0 CSS-Regeln,
+     *             0 Klassen-Token im Markup, 0 im JS
+     *    Teil 6   33 eigene Deklarationen an den 8 Marken
+     *             — Schriftgroessen 7,70 / 10,40 / 11,20 / 11,90 px
+     *    Teil 6b  3 an #bestiary-count (Innenabstand, Rundung, Schriftgroesse)
+     *
+     *  GEGENGERECHNET mit einem zweiten, unabhaengigen Werkzeug — dem
+     *  klammerzaehlenden CSS-Leser der Vermessung statt der Regex dieser
+     *  Ratsche: IKON 69, CHIP 53, MARKE 33. CHIP und MARKE stimmen aufs
+     *  Stueck; die drei Mehrbefunde bei IKON sind die drei Deklarationen von
+     *  `.btn-icon` selbst, die diese Ratsche als Basis UEBERSPRINGT. Zwei
+     *  Rechnungen, die nichts voneinander wissen, nennen also dieselbe Menge.
+     *
+     *  WARUM `font-size` NICHT im Icon-Vertrag STEHT, aber im Chip- und
+     *  Markenvertrag. Die Icon-Knoepfe tragen Zeichen von 11 px bis 1,3em
+     *  Emoji; eine gemeinsame Schriftgroesse waere eine Umgestaltung der
+     *  Zeichen, nicht eine Zusammenfuehrung der Flaechen — und Arbeitsregel 1
+     *  heisst "Refactoring im Bestand, kein Redesign". Der Befund D-05 nennt
+     *  "3 Icon-Knopf-Hoehen", nicht Zeichengroessen; die Zeichengroessen sind
+     *  Gegenstand von D-06 und damit der Welle 5. Bei Chip und Marke ist die
+     *  Schriftgroesse dagegen Teil DES Befundes: 7,70 px an .dms-live-badge
+     *  ist in Paragraph 3.7 ausdruecklich als Fehler markiert (O-15).
+     *
+     *  WARUM NACHBAU VON F-02 UND NICHT NEU ERFUNDEN (O-12). F-02
+     *  ("eine Listenzeile, eine Karte", oben in dieser Datei) macht fuer die
+     *  Listenzeilen-Familie genau das, was hier fuer drei weitere Familien
+     *  gebraucht wird: Basisregel finden, Mitgliedschaft in deren
+     *  Selektorliste pruefen, eigene Deklaration im Mitglied verbieten. Sie
+     *  ist seit Monaten gruen. Die Form ist uebernommen, mit DREI benannten
+     *  Verfeinerungen:
+     *
+     *    (a) `regelnMitKlasse()` statt `ruleBodiesFor()`: letzteres verlangt
+     *        hinter dem Klassennamen ein `,` oder `{` und findet deshalb
+     *        `.shop-cat-badge.active` und `.section-toolbar-actions
+     *        .cart-badge` NICHT — ausgerechnet die zwei Regeln, die die Basis
+     *        ueberstimmen koennen. Zusaetzlich ankert es nur hinter `}` und
+     *        uebersieht damit die ERSTE Regel in einem @media-Block (genau der
+     *        Fall von `.dms-dice-btn`).
+     *    (b) DER ANKER IST EINE RUECKSCHAU, kein verbrauchtes Zeichen. Das ist
+     *        die wichtigste der drei, und sie ist beim Rotlauf dieser Ratsche
+     *        AUFGEFALLEN: `ruleBodiesFor()` ankert mit `(^|\})` und VERBRAUCHT
+     *        dabei die schliessende Klammer der Vorgaengerregel. Zwei
+     *        unmittelbar aufeinander folgende Regeln derselben Klasse kann es
+     *        deshalb nur ABWECHSELND finden — die zweite hat keinen Anker mehr.
+     *        Gemessen: mit verbrauchtem Anker fand Teil 2 64 Befunde, mit
+     *        Rueckschau 69; die fuenf fehlenden waren `.btn-icon` (dreimal,
+     *        als Basis uebersprungen und darum folgenlos) und
+     *        `.npc-detail-btn.small` (width und height) — die Regel steht
+     *        direkt hinter `.npc-detail-btn` und fiel genau in diese Luecke.
+     *        F-02 traegt dieselbe Luecke bis heute; sie ist dort folgenlos,
+     *        weil die fuenf Listenzeilen nicht aneinandergrenzen.
+     *    (c) GEGENSTANDS-Pruefung: eine Regel zaehlt nur dann als "Regel des
+     *        Mitglieds", wenn die Klasse im LETZTEN zusammengesetzten Teil des
+     *        Selektors steht. `.loot-tag-chip input` gestaltet das Kind, nicht
+     *        den Chip — ohne diese Unterscheidung verbietet die Ratsche
+     *        Kindregeln, die mit der Bauform nichts zu tun haben.
+     *
+     *  DIE MITGLIEDERLISTEN STEHEN AUSGESCHRIEBEN und sind mit `toBe(n)`
+     *  geschlossen. Ohne diesen Schluss ist die Ratsche durch WEGLASSEN
+     *  erfuellbar — und genau daran haette die Handoff-Liste mit 10 statt 18
+     *  Chip-Bauformen sechs Familien weiterdriften lassen.
+     */
+
+    // ---- Die drei Mitgliederlisten -------------------------------------
+    //
+    // IKON: 21 der 22 vermessenen quadratischen <button>-Icon-Knoepfe. Nicht
+    // dabei und bewusst draussen: .slot-pip (18px, Zauberplatz-Punkt, nicht
+    // bedienbar) und .dmg-chip (40px, Schadensart-Emoji, nicht bedienbar) —
+    // beide sind keine Knoepfe, .dmg-chip ist nach O-06 auch kein Chip.
+    //
+    // UND .qref-apply-btn, der einzige der 22, der aus einer MESSUNG
+    // herausfaellt statt aus einer Begriffsfrage: er steht innerhalb eines
+    // Textchips (<span class="qref-condition">Geblendet<button>+</button></span>),
+    // nicht in einer Knopfreihe. Mit 36x36 waechst der Chip von 29,19x96,61 auf
+    // 46x116,61 und der Zustandsbereich der Schnellreferenz von 135 auf 306 px
+    // — er verdoppelt sich. Nachgemessen an je einem Element jeder der 22
+    // Klassen: bei den anderen 21 ist der Elternteil eine Knopfreihe oder ein
+    // Raster und waechst hoechstens um 12 px. Seine 16 px bleiben als
+    // ausgewiesene Restschuld stehen, mit Begruendung an der Regel selbst.
+    const IKON = [
+        'btn-icon',
+        'bf-clear',
+        'calc-import-btn',
+        'dice-fav-add',
+        'dice-reroll-btn',
+        'dms-dice-btn',
+        'emoji-pick-btn',
+        'enc-detail-btn',
+        'header-action-btn',
+        'init-mob-dissolve-btn',
+        'init-statblock-close',
+        'loc-detail-btn',
+        'loot-detail-btn',
+        'lr-reset-btn',
+        'npc-detail-btn',
+        'npc-section-btn',
+        'rest-hd-btn',
+        'spell-tooltip-close',
+        'timer-card-btn',
+        'timer-quick-add',
+        'timer-quick-settings'
+    ];
+
+    // CHIP: .chip ist die Basis, die anderen 17 sind die Bauformen mit eigener
+    // Geometrie. .timer-preset-btn ist der SIEBZEHNTE und steht hier, obwohl
+    // der Plan 16 nennt: er teilt seine Regel mit .timer-preset-chip, und
+    // gemessen hat .timer-preset-chip NULL Verwendungen im Markup und im JS,
+    // .timer-preset-btn genau eine (im Zeitgeber-Modul, renderTimerPresets,
+    // Zeile 32 — sein Pfad steht hier ABSICHTLICH nicht aus: das
+    // Modul-zu-Test-Abdeckungs-Gate sucht Modulpfade in Testdateien und zaehlte
+    // die Erwaehnung in diesem Kommentar als Testabdeckung). Nur
+    // .timer-preset-chip aufzunehmen hiesse, die Geometrie am einzigen
+    // LEBENDEN Selektor stehen zu lassen.
+    // Draussen und begruendet: .dmg-chip und .spell-comp (O-06 — quadratisch,
+    // 40 bzw. 24 px, keine Pillen), .condition-tag (Zustandsmarker; vom Plan
+    // nicht aufgefuehrt, bleibt ausgewiesene Restschuld).
+    const CHIP = [
+        'chip',
+        'filter-chip',
+        'npc-filter-chip',
+        'loc-filter-chip',
+        'enc-filter-chip',
+        'loot-filter-chip',
+        'dice-chip',
+        'shop-cat-badge',
+        'filter-toggle',
+        'loc-npc-chip',
+        'cf-chip',
+        'ds-rate-chip',
+        'link-chip',
+        'loot-tag-chip',
+        'timer-preset-chip',
+        'timer-preset-btn',
+        'char-resistance-chip',
+        'dice-formula-chip'
+    ];
+
+    // MARKE: 8 Klassen. .badge ist die Basis und hat KEINE eigene Regel
+    // daneben (0 Vorkommen im Markup — reine CSS-Alias-Basis, dieselbe Bauart
+    // wie .list-item in F-02). .enc-stat-badge ist nach O-07 KEINE Marke (sie
+    // setzt nur font-size und color, keine Flaeche); .tag und .loc-item-tag
+    // sind nach O-07 dabei, obwohl der Handoff sie nicht nennt.
+    const MARKE = [
+        'section-toolbar-count',
+        'npc-badge',
+        'difficulty-badge',
+        'bestiary-badge',
+        'cart-badge',
+        'dms-live-badge',
+        'tag',
+        'loc-item-tag'
+    ];
+
+    // Form wie SAMMELBEWEGUNG_GEDULDET in W4-R-01, AUSBLENDE_GEDULDET in
+    // W4-R-02, TRAGEND_GEDULDET in W4-R-03 und TOTE_BEWEGUNG_GEDULDET in
+    // W4-R-05. Anders als jene vier NICHT leer, und das ist der ganze
+    // Unterschied: eine leere Liste macht die VERWESUNGSPROBE unten
+    // bedeutungslos, weil sie nichts zu pruefen hat. Mit dem einen Eintrag
+    // prueft sie wirklich — verschwindet die Hoehe am Zaehlerkreis, meldet sie
+    // den toten Eintrag. Wer eine WEITERE Ausnahme braucht, schreibt sie mit
+    // Begruendung hier hinein; eine Bauform, die ihre Geometrie wieder selbst
+    // setzt, ist der Anfang der naechsten Drift.
+    // Schluessel: `<selektor>||<eigenschaft>`.
+    const EIGENMASS_GEDULDET = {
+        // Der Zaehlerkreis an der Werkzeugleiste (loot.css). Er ist ein KREIS
+        // und kein Pillchen: `min-width: 18px` gibt ihm die Mindestbreite,
+        // `height: 18px` die passende Hoehe dazu — ohne sie wuerde er bei
+        // einstelliger Zahl zum Oval. Die Markenbasis traegt dieselben 18 px
+        // ueber line-height 16 + 1 + 1, der Wert weicht also nicht ab, er ist
+        // nur zweimal ausgesprochen. min-width steht aus demselben Grund
+        // ueberhaupt nicht in den beiden Mass-Regexen (Begruendung dort).
+        '.cart-badge||height': 'Zaehlerkreis: Hoehe gehoert zur Mindestbreite, nicht zur Bauform'
+    };
+
+    const normSel = s => s.replace(/\s+/g, ' ').trim();
+
+    /**
+     * Alle Regelbloecke, deren Selektorliste das EXAKTE Klassen-Token fuehrt.
+     * Nachbau von ruleBodiesFor() mit den zwei im Kopf begruendeten
+     * Verfeinerungen (Anker auch hinter `{`, exakte Token-Grenze rechts).
+     */
+    function regelnMitKlasse(cls) {
+        const bodies = [];
+        const re = new RegExp(
+            '(?:^|(?<=[{}]))([^{}]*\\.' +
+                cls.replace(/-/g, '[-]') +
+                '(?![-\\w])[^{}]*)\\{([^{}]*)\\}',
+            'g'
+        );
+        for (const m of cssCode.matchAll(re)) {
+            bodies.push({ selectors: normSel(m[1]), body: m[2] });
+        }
+        return bodies;
+    }
+
+    /** Ist `cls` der GEGENSTAND dieses Selektors (letzter zusammengesetzter Teil)? */
+    function istGegenstand(selektor, cls) {
+        const re = new RegExp('\\.' + cls.replace(/-/g, '[-]') + '(?![-\\w])');
+        return selektor
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+            .some(s => {
+                const letzter =
+                    s
+                        .split(/[\s>+~]+/)
+                        .filter(Boolean)
+                        .pop() || '';
+                return re.test(letzter);
+            });
+    }
+
+    /** Die Basisregel einer Familie: der Block, der `kennzeichen` fuehrt. */
+    function basisregel(basisKlasse, kennzeichen) {
+        return regelnMitKlasse(basisKlasse).find(r => kennzeichen.test(r.body));
+    }
+
+    /** Eigene Mass-Deklarationen eines Mitglieds, ausserhalb der Basis. */
+    function eigenmass(mitglieder, basis, verboten) {
+        const befunde = [];
+        mitglieder.forEach(cls => {
+            regelnMitKlasse(cls).forEach(r => {
+                if (basis && r.selectors === basis.selectors) return; // die Basis selbst
+                if (!istGegenstand(r.selectors, cls)) return; // gestaltet ein Kind
+                for (const m of r.body.matchAll(verboten)) {
+                    const schluessel = `${r.selectors}||${m[2]}`;
+                    if (EIGENMASS_GEDULDET[schluessel]) continue;
+                    befunde.push(schluessel);
+                }
+            });
+        });
+        return [...new Set(befunde)].sort();
+    }
+
+    // `min-width`/`min-height` stehen bewusst NICHT darin: der Zaehlerkreis
+    // (.cart-badge, min-width 18px) und der Leistenzaehler
+    // (.section-toolbar-count, min-width 28px) brauchen eine eigene
+    // Mindestbreite, und die ist keine Bauform-Aussage.
+    //
+    // `width|height|line-height` stehen in BEIDEN Listen, und in MASS_TEXTFORM
+    // sind sie nachgetragen: ohne sie war die Hoehe von Chip und Marke von
+    // NICHTS bewacht. Sie ist aber genau das, was deren Abnahmekriterium
+    // herstellt — die 26 px des Chips sind 18 + 3 + 3 + 2, die 18 px der Marke
+    // 16 + 1 + 1, beide aus line-height. Belegt per zeilenneutraler Mutation:
+    // mit der alten Fassung liessen `.loot-filter-chip { height: 40px;
+    // line-height: 34px }` und dasselbe an `.bestiary-badge` die GANZE Ratsche
+    // gruen — und die volle Jest-Suite dazu (75 Suiten, 1963 Tests). Der
+    // Stil-Sollstand (computed-style-diff.spec.js) faengt es auch nicht: er
+    // nimmt width/height ausdruecklich aus und kennt line-height nicht.
+    const PAD = 'padding(?:-(?:top|right|bottom|left))?';
+    const MASS_IKON = new RegExp('(^|;|\\s)(width|height|' + PAD + '|border-radius)\\s*:', 'g');
+    const MASS_TEXTFORM = new RegExp(
+        '(^|;|\\s)(width|height|line-height|' + PAD + '|border-radius|font-size|font-weight)\\s*:',
+        'g'
+    );
+
+    // ---- Teil 1 und 2: die Icon-Knoepfe --------------------------------
+
+    test('Teil 1: die 21 Icon-Knoepfe haengen an EINER Basisregel mit 36 px', () => {
+        // E2: 36 px, nicht die 28 aus Paragraph 3.7. Die Begruendung steht im
+        // eigenen Code — ueber .btn-icon in core.css steht woertlich "Flaeche
+        // >= 36px fuer Beruehrung", und dashboard.css erzwingt auf
+        // Beruehrungsgeraeten 44 px. 28 px wuerde beide Schranken
+        // unterschreiten.
+        const basis = basisregel('btn-icon', /width:\s*36px/);
+        expect(basis).toBeDefined();
+        expect(IKON.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        // Der Vertrag selbst: quadratisch, randlos, EINE Rundung.
+        expect(basis.body).toMatch(/height:\s*36px/);
+        expect(basis.body).toMatch(/padding:\s*0/);
+        expect(basis.body).toMatch(/border-radius:\s*var\(--radius-md\)/);
+    });
+
+    test('Teil 2: kein Icon-Knopf bemisst sich in einem eigenen Block', () => {
+        const basis = basisregel('btn-icon', /width:\s*36px/);
+        expect(eigenmass(IKON, basis, MASS_IKON)).toEqual([]);
+    });
+
+    // ---- Teil 3 und 4: die Chips ---------------------------------------
+
+    test('Teil 3: die 17 Chip-Bauformen haengen an .chip und sind Pillen', () => {
+        const basis = basisregel('chip', /border-radius:\s*999px/);
+        expect(basis).toBeDefined();
+        expect(CHIP.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        // E3: die Pillenform JETZT, mit den zwei aus Welle 5 vorgezogenen
+        // Schrift-Tokens. Ohne sie waere F-01 rot ("kein var(--x) ohne
+        // Definition") und Paragraph 3.7 gar nicht ausfuehrbar.
+        expect(basis.body).toMatch(/padding:\s*3px 10px/);
+        expect(basis.body).toMatch(/font-size:\s*var\(--text-sm\)/);
+        expect(basis.body).toMatch(/font-weight:\s*500/);
+        // 18 + 3 + 3 + 2 Rahmen = 26 px, die Hoehe aus Paragraph 3.7. Eine
+        // Zeilenhoehe statt min-height, weil die meisten Bauformen als
+        // Flexkind auf `block` blockifizieren — dort setzt min-height zwar die
+        // Hoehe, aber niemand zentriert den Text darin.
+        expect(basis.body).toMatch(/line-height:\s*18px/);
+    });
+
+    test('Teil 4: kein Chip setzt Innenabstand, Rundung oder Schrift neu', () => {
+        const basis = basisregel('chip', /border-radius:\s*999px/);
+        expect(eigenmass(CHIP, basis, MASS_TEXTFORM)).toEqual([]);
+    });
+
+    // ---- Teil 5 und 6: die Marken --------------------------------------
+
+    test('Teil 5: die 8 Marken haengen an .badge', () => {
+        const basis = basisregel('badge', /border-radius:\s*999px/);
+        expect(basis).toBeDefined();
+        expect(MARKE.filter(c => !basis.selectors.includes(`.${c}`))).toEqual([]);
+        expect(basis.body).toMatch(/padding:\s*1px 7px/);
+        expect(basis.body).toMatch(/font-size:\s*var\(--text-xs\)/);
+        expect(basis.body).toMatch(/font-weight:\s*600/);
+        expect(basis.body).toMatch(/line-height:\s*16px/); // 16 + 1 + 1 = 18 px
+    });
+
+    test('Teil 6: keine Marke setzt Innenabstand, Rundung oder Schrift neu', () => {
+        const basis = basisregel('badge', /border-radius:\s*999px/);
+        expect(eigenmass(MARKE, basis, MASS_TEXTFORM)).toEqual([]);
+    });
+
+    test('Teil 6b: die ID-Regel #bestiary-count bemisst sich nicht selbst', () => {
+        // Sie ist die EINZIGE ID-Regel in den drei Familien und mit (1,0,0)
+        // stark genug, die Basis zu ueberstimmen. Das Element traegt im Markup
+        // bereits .section-toolbar-count (assets/templates/view-bestiary.html),
+        // es braucht die ID-Regel also nur noch fuer seine Tinte.
+        const regeln = [
+            ...cssCode.matchAll(/(?:^|(?<=[{}]))([^{}]*#bestiary-count[^{}]*)\{([^{}]*)\}/g)
+        ];
+        expect(regeln.length).toBeGreaterThan(0);
+        const befunde = [];
+        regeln.forEach(m => {
+            for (const d of m[2].matchAll(MASS_TEXTFORM)) befunde.push(`${normSel(m[1])}||${d[2]}`);
+        });
+        expect([...new Set(befunde)]).toEqual([]);
+    });
+
+    // ---- Proben an der Ratsche selbst ----------------------------------
+
+    test('SELBSTPROBE: die drei Mitgliederlisten sind geschlossen', () => {
+        // Ohne diese drei Zahlen ist jede der sieben Zusicherungen oben durch
+        // WEGLASSEN erfuellbar: wer ein driftendes Mitglied aus der Liste
+        // streicht, macht die Ratsche gruen, ohne eine Zeile CSS zu aendern.
+        expect(IKON.length).toBe(21);
+        expect(CHIP.length).toBe(18); // 1 Basis + 17 Bauformen
+        expect(MARKE.length).toBe(8);
+        // Keine Klasse steht in zwei Familien.
+        const alle = [...IKON, ...CHIP, ...MARKE];
+        expect(alle.length).toBe(new Set(alle).size);
+    });
+
+    test('GEGENPROBE: jedes genannte Mitglied hat ueberhaupt eine CSS-Regel', () => {
+        // Ein Tippfehler in einer der drei Listen wuerde Teil 2/4/6 still
+        // gruen machen — es gibt dann nichts zu pruefen.
+        const ohne = [...IKON, ...CHIP, ...MARKE].filter(c => regelnMitKlasse(c).length === 0);
+        expect(ohne).toEqual([]);
+    });
+
+    test('GEGENPROBE: die Erhebung meldet einen Verstoss, den es wirklich gibt', () => {
+        // Dieselbe Rechnung wie in Teil 2, auf einer Klasse, die ihre Groesse
+        // garantiert selbst setzt: .slot-pip (18x18, dashboard.css). Sie ist
+        // bewusst KEIN Mitglied — findet die Erhebung sie trotzdem, rechnet
+        // sie richtig; findet sie sie nicht, waere jedes gruene Teil 2
+        // bedeutungslos.
+        expect(eigenmass(['slot-pip'], null, MASS_IKON).length).toBeGreaterThan(0);
+    });
+
+    test('GEGENPROBE: zwei aneinandergrenzende Regeln werden BEIDE gefunden', () => {
+        // Die Probe zur Verfeinerung (b). `.npc-detail-btn` und
+        // `.npc-detail-btn.small` stehen in npcs.css unmittelbar hintereinander
+        // — mit verbrauchtem Anker faellt die zweite durch jedes Raster.
+        const sel = regelnMitKlasse('npc-detail-btn').map(r => r.selectors);
+        expect(sel).toContain('.npc-detail-btn');
+        expect(sel.some(s => s.includes('.npc-detail-btn.small'))).toBe(true);
+    });
+
+    test('GEGENPROBE: die Gegenstands-Pruefung trennt Kind von Gegenstand', () => {
+        expect(istGegenstand('.loot-tag-chip', 'loot-tag-chip')).toBe(true);
+        expect(istGegenstand('.loot-tag-chip.hidden', 'loot-tag-chip')).toBe(true);
+        expect(istGegenstand('.section-toolbar-actions .cart-badge', 'cart-badge')).toBe(true);
+        expect(istGegenstand('.loot-tag-chip input', 'loot-tag-chip')).toBe(false);
+        expect(istGegenstand('.loot-tag-chip input:checked + span', 'loot-tag-chip')).toBe(false);
+        expect(istGegenstand('.a, .loot-tag-chip', 'loot-tag-chip')).toBe(true);
+    });
+
+    test('VERWESUNGSPROBE: jeder Eintrag in EIGENMASS_GEDULDET wird gebraucht', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set();
+        [...IKON, ...CHIP, ...MARKE].forEach(cls => {
+            regelnMitKlasse(cls).forEach(r => {
+                [MASS_IKON, MASS_TEXTFORM].forEach(re => {
+                    for (const m of r.body.matchAll(re)) vorhanden.add(`${r.selectors}||${m[2]}`);
+                });
+            });
+        });
+        expect(Object.keys(EIGENMASS_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5 — die zwei Schrift-Ratschen (W5-R-05, W5-R-06)
+   ===========================================================================
+
+   ZUR NUMMER. Der Handoff nennt sie "R-05" und "R-06". Beide Namen sind in
+   dieser Datei seit Welle 1 belegt (R-05 "die Kaskade entscheidet, nicht die
+   Regel", R-06 "jeder Zeilenanker der Aktenlage trifft seine Deklaration").
+   Die Welle 4 hat dasselbe Problem mit dem Wellen-Vorsatz geloest; das wird
+   hier fortgefuehrt. W5-R-05 und W5-R-06 sind also die Ratschen aus
+   Paragraph 3.7 des Handoffs, nicht Fortsetzungen der Welle-1-Ratschen.
+
+   WARUM SIE VOR DEM CODE ENTSTEHEN. Die Welle 5 stellt 853 font-size- und 95
+   font-weight-Deklarationen um. Keine bestehende Zusicherung urteilt ueber
+   eine Schriftgroesse: F-05 urteilt ueber die FAMILIE, F-03 ueber die EINHEIT
+   (und bleibt gruen, weil die Skala in px steht), F-06 ueber Radien. Der
+   Stil-Sollstand (tests/e2e/features/computed-style-diff.spec.js) hasht
+   `fontSize` und `fontWeight` mit, sieht also eine Bewegung — aber er sieht
+   sie als Hashwert, nicht als Bildpunkte, und er urteilt nicht darueber, OB
+   ein Wert auf der Skala liegt. Ohne die zwei Ratschen unten waere die
+   Umstellung am Tag nach ihrem Abschluss wieder aufweichbar, ohne dass
+   irgendetwas rot wird.
+
+   GEMESSENER AUSGANGSWERT, am 2026-10-05 gegen HEAD 7e4aa09 (Zweig
+   design-welle-4) erhoben, VOR jeder Zeile Umsetzung — unabhaengig von der
+   Vermessung mit einer eigenen Zaehlung nachgerechnet, beide Wege nennen
+   dieselben Zahlen:
+
+     font-size   853 Deklarationen in 18 Dateien
+                 = 603 em (28 verschiedene Werte; haeufigste: 0.85em 121x,
+                   0.9em 97x, 0.8em 91x, 0.75em 66x, 0.7em 39x)
+                 + 237 px (16 verschiedene Werte, 8 bis 32 px)
+                 + 6 var() (davon 2 bereits --text-sm/--text-xs aus Welle 4)
+                 + 7 inherit
+                 -> 844 liegen NICHT auf der Skala, 9 schon (2 Token, 7 inherit)
+     font-weight 360 Deklarationen
+                 = 600 221x, 700 83x, 500 38x, bold 10x, 400 6x,
+                   normal 1x, 300 1x
+                 -> 95 sind umzustellen (83 + 10 + 1 + 1), nicht 110
+     SVG-Attribut 3 Praesentationsattribute `font-size="7|8"` in
+                 features/dice-stats/dice-stats-render.js (194, 210, 213)
+
+   WARUM DIE SVG-ATTRIBUTE HIER MITGEFUEHRT WERDEN, obwohl sie in JS stehen
+   und nicht in CSS: sie erzeugen 21 der 53 in der Ruhelage sichtbaren
+   Elemente unter 11 px — 40 Prozent des Befundes D-06 — und sind weder
+   CSS-Deklaration noch Inline-Stil. Keine CSS-Suche sieht sie, kein
+   Inline-Stil-Zaehler, und der Stil-Sollstand erfasst den berechneten Wert
+   ohne Quellenangabe. Ohne diese dritte Kategorie waere die Zusage "keine
+   Schrift unter 11 px" nach dem naechsten Diagramm-Umbau wieder falsch, und
+   niemand erfuehre es.
+
+   WARUM DIE SCHRANKEN MIT DEM AUSGANGSWERT STARTEN UND NICHT MIT 0.
+   Die Zielwerte sind 0 — aber die Umstellung selbst ist Sache der Schritte 3
+   bis 8 derselben Welle. Eine Schranke von 0 im Vorlauf-Commit laesst die
+   Suite ueber mehrere Commits rot, und eine rote Suite ist in diesem Projekt
+   kein Arbeitszustand, sondern ein blockierendes Tor. Die Form ist deshalb
+   die der bestehenden Ratschen dieser Datei — F-18 (!important 105), F-19
+   (Inline 254), F-20: eine Zahl, die nur SINKEN darf, mit dem gemessenen
+   Ausgangswert als Schranke und dem Ziel daneben. Jeder folgende Schritt
+   senkt sie und nennt seinen eigenen gemessenen Ausgangswert.
+   DASS SIE WIRKLICH GREIFEN, ist mit der Schranke 0 belegt: der Commit
+   "test(W5): die zwei Schrift-Ratschen, rot bewiesen" steht genau dafuer in
+   der Historie, mit der bezifferten Ausgabe 839, 603, 3 und 95 in der
+   Nachricht. Wer die Schranken hier fuer wirkungslos haelt, setzt sie auf 0
+   und sieht dieselbe Ausgabe wieder.
+
+   WAS SIE AUSDRUECKLICH NICHT TUN.
+     - Sie urteilen nicht ueber `line-height`. 66 Deklarationen in 10 Werten
+       sind ein eigener Befund in der Groesse der Welle 3 und stehen nicht in
+       D-06; die Tokens --leading-tight/-snug/-normal entstehen in dieser
+       Welle, ihr flaechiger Einsatz nicht.
+     - Sie urteilen nicht ueber Inline-Typografie in Templates und JS. Das ist
+       Gegenstand eines eigenen Schrittes. F-19 zaehlt heute `style="`-
+       ATTRIBUTE, nicht Deklarationen, und bewegt sich beim Entfernen einer
+       Schriftgroesse nur um die zwei Attribute, die ausschliesslich eine
+       Schriftgroesse tragen (modals-tools.html).
+     - Sie messen nicht im Browser. Was nur der berechnete Zustand zeigt —
+       Elemente unter 11 px, em-Ketten, die Formularschrift des Browsers —
+       gehoert in die gemessene Stufe; `tools/typo-baseline.js` erhebt sie und
+       stellt zwei Erhebungen in Bildpunkten gegenueber.
+
+   WOHER DIE LISTEN KOMMEN (O-4 / ARCH-01). Die Skalentokens, die beiden
+   Ausnahmelisten und die Dateiausnahme standen im Vorlauf hier, weil
+   `tools/typo-map.js` damals noch nicht existierte; der Kommentar an der
+   Fundstelle sagte den Umzug an. Sie sind jetzt dorthin VERLEGT und werden
+   von hier IMPORTIERT — dieselbe Datei liest auch das Umstellungswerkzeug
+   `tools/sync-typo-tokens.js`. Es gibt also genau eine Liste je Gegenstand.
+   Zwei hand-synchrone Listen sind in diesem Projekt schon einmal
+   auseinandergelaufen (`build.py` trug eine Kopie der Modulliste aus
+   `loader.js`, ARCH-01), und `tests/unit/typo-map.test.js` sichert
+   ausdruecklich zu, dass hier keine zweite Aufzaehlung der Tokennamen
+   entsteht.
+   =========================================================================== */
+
+const TYPO_MAP = require('../../tools/typo-map.js');
+
+/** Kommentare zeilentreu leeren. Das globale `withoutComments()` loescht sie
+ *  ganz und verschiebt damit jede Zeilennummer — fuer einen Befund, der seine
+ *  Stelle nennen soll, unbrauchbar. Eigene Fassung, weil die gleichnamigen
+ *  Helfer in den Bloecken R-10, R-19 und W4-R-04 dort eingeschlossen sind. */
+function typoOhneKommentare(css) {
+    return css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+}
+
+/**
+ * Alle Deklarationen einer Datei MIT ihrem Selektor, ihrem At-Regel-Kontext
+ * und ihrer Zeile.
+ *
+ * Klammerzaehlend statt zeilenweise, aus zwei Gruenden, die beide in diesem
+ * Projekt schon einmal eine Zaehlung verfaelscht haben:
+ *   (1) Das abschliessende Semikolon der LETZTEN Deklaration eines Blocks ist
+ *       in CSS optional. Eine Zerlegung, die nur an `;` trennt, verliert
+ *       genau sie — und das ist die Schreibweise, in der ein Rueckfall an der
+ *       Ratsche vorbeikaeme.
+ *   (2) Ein Selektor (`.btn:hover`) und ein At-Regel-Kopf (`@media
+ *       (max-width: 600px)`) tragen ebenfalls einen Doppelpunkt. Wer nur auf
+ *       "name: wert" prueft, zaehlt sie als Deklarationen mit.
+ * Runde Klammern werden am Stueck uebersprungen, damit ein Semikolon in einer
+ * `url()` oder einem Verlauf keine Deklaration beendet.
+ *
+ * Der SELEKTOR wird mitgefuehrt, weil die Ausnahmelisten unten ihn als
+ * Schluessel brauchen: eine Zeilennummer verschiebt jeder Kommentar-Commit
+ * (die Lehre steht im Block R-06), ein Selektor nicht. Die Zeile wandert
+ * trotzdem mit — aber nur in die Fehlermeldung, nie in einen Schluessel.
+ */
+function typoDeklarationen(css) {
+    const code = typoOhneKommentare(css);
+    const out = [];
+    const stapel = [];
+    let puffer = '';
+    let pufferZeile = 1;
+    let zeile = 1;
+    const abgeben = () => {
+        const t = puffer.trim();
+        const c = t.indexOf(':');
+        if (stapel.length && c > 0) {
+            const prop = t.slice(0, c).trim();
+            if (/^(?:--)?[a-zA-Z][\w-]*$/.test(prop)) {
+                const at = stapel.filter(s => s.startsWith('@'));
+                out.push({
+                    prop: prop.toLowerCase(),
+                    wert: t
+                        .slice(c + 1)
+                        .trim()
+                        .replace(/\s+/g, ' '),
+                    selektoren: [...stapel].reverse().find(s => !s.startsWith('@')) || '(ohne)',
+                    at: at.length ? at.join(' & ') : null,
+                    zeile: pufferZeile
+                });
+            }
+        }
+        puffer = '';
+        pufferZeile = zeile;
+    };
+    for (let i = 0; i < code.length; i++) {
+        const ch = code[i];
+        if (ch === '\n') {
+            zeile++;
+            puffer += ch;
+            if (!puffer.trim()) pufferZeile = zeile;
+            continue;
+        }
+        if (ch === '(') {
+            let k = 1;
+            puffer += ch;
+            i++;
+            while (i < code.length && k > 0) {
+                if (code[i] === '(') k++;
+                else if (code[i] === ')') k--;
+                else if (code[i] === '\n') zeile++;
+                puffer += code[i];
+                i++;
+            }
+            i--;
+            continue;
+        }
+        if (ch === '{') {
+            stapel.push(puffer.trim().replace(/\s+/g, ' '));
+            puffer = '';
+            pufferZeile = zeile;
+            continue;
+        }
+        if (ch === '}') {
+            abgeben();
+            stapel.pop();
+            puffer = '';
+            pufferZeile = zeile;
+            continue;
+        }
+        if (ch === ';') {
+            abgeben();
+            continue;
+        }
+        puffer += ch;
+        if (!puffer.trim()) pufferZeile = zeile;
+    }
+    return out;
+}
+
+/**
+ * Der Geltungsbereich der beiden Ratschen: alle `assets/styles/*.css` ausser
+ * `variables.css` und `fonts.css`. Zeichengleich mit `declarationsOf()` weiter
+ * oben, und aus denselben Gruenden:
+ *   - `fonts.css` enthaelt ausschliesslich @font-face-Bloecke. Deren 10
+ *     `font-weight`-Zeilen (400 4x, 500 2x, 600 3x, 700 1x) BENENNEN eine
+ *     Schriftschnittdatei, sie gestalten nichts. Eine Gewichtsratsche, die sie
+ *     mitzaehlt, verlangte die Loeschung der 700er-Schriftdatei.
+ *   - `variables.css` ist der Ort, an dem die Skala DEFINIERT wird, und
+ *     traegt ausserdem die Deklarationen des Mobil-Profils, die bewusst
+ *     stehenbleiben (`--font-size-base/-small/-title`): unter 16 px loest ein
+ *     Telefon beim Antippen eines Eingabefeldes den Auto-Zoom aus, das
+ *     Entfernen waere eine Funktionsaenderung, kein Umbau. Die Datei
+ *     auszunehmen ist praeziser als vier Ausnahmen zu fuehren — und es ist die
+ *     Ausnahme, die `declarationsOf()` ohnehin schon macht.
+ */
+function typoGeltungsbereich() {
+    return cssFiles.filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css');
+}
+
+/** Alle Deklarationen einer Eigenschaft im Geltungsbereich, mit Datei. */
+function typoAlle(prop) {
+    const out = [];
+    typoGeltungsbereich().forEach(f =>
+        typoDeklarationen(f.content).forEach(d => {
+            if (d.prop === prop) out.push({ datei: f.name, ...d });
+        })
+    );
+    return out;
+}
+
+/** Schluessel einer Ausnahme: Datei, Selektor, Eigenschaft. KEINE Zeile. */
+function typoAnker(d) {
+    return `${d.datei}||${d.selektoren}||${d.prop}`;
+}
+
+/* ---------------------------------------------------------------------------
+   Der JS-Geltungsbereich und die Inline-Erhebung — HOCHGEZOGEN (Schritt 6)
+   ---------------------------------------------------------------------------
+   Die Dateiliste und `jsDateien()` standen bis zum 2026-10-06 INNERHALB des
+   W5-R-05-Blocks. Der Schritt 6 braucht dieselbe Menge fuer die
+   Inline-GEWICHTE und der Schritt 7 fuer die Inline-GROESSEN; eine zweite
+   Aufzaehlung derselben Verzeichnisse waere genau der Rueckfall, den O-4
+   verbietet (`build.py` trug einmal eine Kopie der Modulliste aus
+   `loader.js`, ARCH-01). Also EINE Liste, drei Leser. Die Tests im
+   W5-R-05-Block greifen unveraendert auf die Namen zu — sie liegen jetzt
+   eine Ebene hoeher im selben Modul.
+   --------------------------------------------------------------------------- */
+
+/** Die Quelldateien, in denen eine Inline-Typografie stehen kann.
+ *  Der Geltungsbereich geht ueber core/features/ui hinaus: 42 der umzubauenden
+ *  JS-Stellen liegen in systems/, utils/, render/ und loader.js (O-5). Eine
+ *  Ausnahmeliste, die fast die Haelfte des Befundes umfasst, bewacht nichts
+ *  mehr.
+ *  `features/shops/shop-export.js` ist namentlich ausgenommen: es erzeugt ein
+ *  eigenstaendiges Druckdokument mit pt-Einheiten und gehoert nicht zur
+ *  Bildschirm-Typografie. Die DATEI wird ausgenommen, nicht eine Zahl — sonst
+ *  sinkt die Schranke bei der naechsten Aenderung dort von selbst und niemand
+ *  merkt, dass eine Ausnahme stillschweigend gewachsen ist. Auch diese
+ *  Ausnahme steht in `tools/typo-map.js` (O-4): das Umstellungswerkzeug muss
+ *  dieselbe Datei auslassen wie die Ratsche. */
+const JS_VERZEICHNISSE = ['core', 'features', 'ui', 'systems', 'utils', 'render'];
+const JS_AUSGENOMMEN = TYPO_MAP.AUSGENOMMENE_DATEIEN;
+
+let jsCache = null;
+function jsDateien() {
+    if (jsCache) return jsCache;
+    const out = [];
+    const lauf = rel => {
+        const abs = path.join(REPO, rel);
+        if (!fs.existsSync(abs)) return;
+        for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
+            const kind = rel + '/' + e.name;
+            if (e.isDirectory()) lauf(kind);
+            else if (e.name.endsWith('.js') && !JS_AUSGENOMMEN.includes(kind))
+                out.push({
+                    name: kind,
+                    content: fs.readFileSync(path.join(REPO, kind), 'utf8')
+                });
+        }
+    };
+    JS_VERZEICHNISSE.forEach(lauf);
+    out.push({
+        name: 'loader.js',
+        content: fs.readFileSync(path.join(REPO, 'loader.js'), 'utf8')
+    });
+    jsCache = out;
+    return out;
+}
+
+/**
+ * Kommentare zeilentreu leeren — fuer JS und fuer HTML.
+ *
+ * WARUM DAS NOETIG IST UND NICHT WEGGELASSEN WERDEN DARF:
+ * `ui/editors/rich-text-insert.js:872` nennt im JSDoc woertlich
+ * `font-size: 1.3em` und erklaert daneben, warum die Stelle nicht angefasst
+ * wird. Eine Erhebung ohne diesen Schritt zaehlt den Erklaertext als Befund —
+ * gemessen 102 statt 98 Fundstellen — und verlangt damit die Aenderung eines
+ * Kommentars. Dieselbe Falle hat in dieser Datei schon einmal zugeschlagen;
+ * die Begruendung des globalen `withoutComments()` nennt sie.
+ *
+ * `//` wird NUR am Zeilenanfang gestrichen. Ein `//` mitten in der Zeile kann
+ * in einer Zeichenkette stehen (`'https://...'`); wer dort schneidet, loescht
+ * halbe Programmzeilen. Blockkommentare werden ueberall gestrichen; dass
+ * dadurch keine echte Deklaration verlorengeht, prueft die SELBSTPROBE im
+ * W5-R-08-Block mit einer zweiten Zaehlart gegen.
+ */
+function inlineOhneKommentare(text, html) {
+    let t = text.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    if (html) t = t.replace(/<!--[\s\S]*?-->/g, m => m.replace(/[^\n]/g, ' '));
+    return t
+        .split('\n')
+        .map(z => (z.trim().startsWith('//') ? '' : z))
+        .join('\n');
+}
+
+/**
+ * Jede Inline-Deklaration einer Eigenschaft in Templates und JS, mit
+ * `datei:zeile`, Wert und der Quellzeile zum Nachsehen.
+ *
+ * EINE Erhebung, zwei Leser: die Gewichtsschranke des Schrittes 6 (W5-R-06b)
+ * und die Groessenschranke des Schrittes 7 (W5-R-08). Sie zaehlt
+ * DEKLARATIONEN, nicht `style="`-Attribute — das ist der Unterschied, an dem
+ * sich F-19 (INLINE_MAX) und diese Schranke nicht widersprechen, sondern
+ * ergaenzen: ein Attribut mit drei Deklarationen ist dort eins und hier drei.
+ */
+function typoInline(prop) {
+    const out = [];
+    const quellen = [
+        ...tplFiles.map(f => ({
+            name: 'assets/templates/' + f.name,
+            content: f.content,
+            html: true
+        })),
+        ...jsDateien().map(f => ({ name: f.name, content: f.content, html: false }))
+    ];
+    /* `var(--text-sm)` MUSS als ein Stueck gelesen werden. Eine Zeichenklasse,
+       die `)` ausschliesst, liefert `var(--text-sm` — und damit einen Wert,
+       den die Erlaubnis nicht erkennt: die Schranke blieb rot, obwohl jede
+       Stelle ihr Token trug (nachgemessen am 2026-10-06, 124 falsche
+       Befunde). Darum steht die var()-Form als eigene Alternative VOR der
+       Zeichenklasse. */
+    const re = new RegExp(prop + '\\s*:\\s*(var\\([^)]*\\)|[^;"\'`)}]+)', 'g');
+    quellen.forEach(f => {
+        inlineOhneKommentare(f.content, f.html)
+            .split('\n')
+            .forEach((z, i) => {
+                for (const m of z.matchAll(re)) {
+                    out.push({
+                        anker: `${f.name}:${i + 1}`,
+                        datei: f.name,
+                        wert: m[1].trim(),
+                        quelle: z.trim().slice(0, 140)
+                    });
+                }
+            });
+    });
+    return out;
+}
+
+describe('W5-R-05 — jede Schriftgroesse kommt aus der Skala (Ratsche)', () => {
+    /** Die Skala. GENAU acht Sprossen (Handoff Paragraph 3.7), davon zwei von
+     *  Welle 4 vorgezogen. Geurteilt wird ueber die TOKENNAMEN, nicht ueber
+     *  ihre Werte — welche Zahl hinter einer Sprosse steht, entscheidet
+     *  `assets/styles/variables.css`, und F-01 wacht darueber, dass der Name
+     *  ueberhaupt definiert ist.
+     *
+     *  VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT. Der
+     *  Vorlauf hielt die Liste hier, weil das Umstellungswerkzeug noch nicht
+     *  existierte; es gab also nie zwei Listen. `typo-map.test.js` prueft,
+     *  dass hier keine zweite entsteht. */
+    const SKALA_TOKENS = TYPO_MAP.SKALA_TOKENS;
+
+    /** Was eine Schriftgroesse sein DARF: ein Skalentoken oder `inherit`.
+     *  `inherit` bleibt erlaubt, weil es gar keine Groesse FESTLEGT, sondern
+     *  eine ueberschreibende Regel zuruecknimmt — die sieben Fundstellen heben
+     *  Groessen auf, die ein Vorfahr gesetzt hat.
+     *  Aus derselben Quelle wie die Tokenliste: eine zweite Fassung dieses
+     *  Regex waere wieder ein Verzeichnis, das auseinanderlaufen kann. */
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
+
+    /** Ein Wert mit der Einheit `em`. Der Vorsatz schliesst `rem` aus: das ist
+     *  eine andere Einheit, F-03 urteilt darueber, und eine Schranke, die
+     *  beide zaehlt, meint etwas anderes als sie sagt. */
+    const EM_WERT = TYPO_MAP.emRegex();
+
+    /**
+     * Benannte Ausnahmen. Je Eintrag Datei, Selektor, gemessener Wert und
+     * Grund — eine Zeile, die man bestreiten kann. Der Schluessel traegt KEINE
+     * Zeilennummer (siehe typoAnker()).
+     *
+     * VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT. Der
+     * Grund ist derselbe wie bei der Tokenliste, nur dringender: eine
+     * Ausnahme, die das Umstellungswerkzeug NICHT kennt, waere die
+     * gefaehrlichere Haelfte des Drift-Problems — diese Ratsche wuerde sie
+     * dulden, das Werkzeug sie ueberschreiben.
+     *
+     * Dies ist der Ausgangsbestand des Vorlaufs: die fuenf Stellen, deren
+     * Verbleib bereits entschieden ist. Die Welle hat weitere zu begruenden —
+     * die Emoji- und Avatar-Groessen und die benannten Kleinst-Stellen; jede
+     * kommt mit dem Schritt hinzu, der sie beurteilt, und mit ihrer eigenen
+     * Begruendung. `node tools/sync-typo-tokens.js --report --kategorien`
+     * zaehlt diese Kandidatenmengen vollstaendig aus, damit der urteilende
+     * Schritt eine Liste vor sich hat und keine Suche — geduldet ist aber
+     * erst, was mit Begruendung in der Liste steht. Die Liste ist NICHT der
+     * Ort, an dem eine unbequeme Stelle verschwindet: die VERWESUNGSPROBE
+     * unten verlangt, dass jeder Eintrag auch wirklich eine Deklaration
+     * trifft.
+     *
+     * FOLGE FUER DIE ZIELQUOTE, die benannt werden MUSS: weil Ikonen,
+     * Avatar-Platzhalter und Browser-Formularschrift bewusst neben der Skala
+     * bleiben, gilt die Zusage ">= 95 % auf einem Skalenwert" fuer die
+     * TEXT-Deklarationen, nicht fuer alle sichtbaren Elemente. Auf der
+     * Elementmenge ist sie arithmetisch nicht erreichbar (Ausgangswert
+     * 63,36 %), und eine Zahl, die beim Aufschreiben schon nicht zu halten
+     * ist, wird beim ersten roten Lauf gesenkt statt erfuellt.
+     */
+    const FONT_SIZE_GEDULDET = TYPO_MAP.AUSNAHMEN;
+
+    /** SCHRANKE 1 — Deklarationen ausserhalb der Skala.
+     *  Gemessener Ausgangswert: 844 von 853 liegen nicht auf der Skala (9
+     *  liegen schon richtig: 2 Token aus Welle 4, 7 inherit); nach Abzug der
+     *  elf geduldeten Stellen bleiben 833 Befunde. ZIEL 0.
+     *  Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 839 auf 833: die sechs Ueberschriftenregeln
+     *  des Reichtext-Inhalts sind seit der Nachbesserung namentlich geduldet
+     *  (Begruendung in tools/typo-map.js, Abschnitt 7). Eine Schranke, die
+     *  nach einer Aenderung um sechs Stellen locker steht, bewacht sechs
+     *  Stellen weniger als sie behauptet.
+     *  GESENKT am 2026-10-06 von 833 auf 802 (Schritt 4): 22 Ikon- und
+     *  Avatar-Deklarationen mit Sprung ueber 2 px sind unter 20 Ankern
+     *  namentlich geduldet (E-3, Begruendung in tools/typo-map.js,
+     *  Abschnitt 7a; die geschlossene Menge bewacht W5-R-07), und 9
+     *  Textstellen tragen jetzt ihre Sprosse. 22 + 9 = 31, und das sind
+     *  GENAU die Deklarationen mit Sprung ueber 2 px.
+     *  UNVERAENDERT BEI 802 NACH DER PRUEFRUNDE 1 des Schrittes 4, und das
+     *  ist NACHGEMESSEN und nicht angenommen: `.floating-toolbar .kbd-hint`
+     *  ist von `var(--text-xs)` auf `8px` zurueckgenommen (die Hebung auf
+     *  die Untergrenze liess die fuenf Tastenhilfen ueberlappen, -2,80 /
+     *  -3,09 px, breite Linux-Naeherung -8,20 / -8,68). Die Stelle wandert
+     *  dabei von "auf einer Sprosse" nach "namentlich geduldet" — BEIDE
+     *  Mengen stehen ausserhalb der Befundmenge, die diese Schranke zaehlt.
+     *  Sie laeuft also nicht ueber die Schranke, und wer sie auf 803
+     *  anhuebe, liesse die Schranke um eine Stelle locker stehen. Gemessen
+     *  nach der Ruecknahme: ausserhalbDerSkala 802, geduldet 32, gesamt 853
+     *  (erhoben, indem die Schranke voruebergehend auf 0 gesetzt und die
+     *  gemeldete Zahl gelesen wurde). Zugesichert in
+     *  tests/e2e/features/tastenhilfen.spec.js; Schritt 8 entscheidet ueber
+     *  die Untergrenze gemeinsam mit der Layoutregel.
+     *  GESENKT am 2026-10-06 von 802 auf 801 (Schritt 5, Urteil VOR dem
+     *  mechanischen Lauf): `.editor-toolbar .tb-caret` ist namentlich
+     *  geduldet, weil sein Zwilling `.wiki-tree-item-toggle` es ist und
+     *  Schritt 4 beide aneinander gebunden hat (bewacht von W5-R-07f). Die
+     *  Stelle wandert von "offen" nach "namentlich geduldet" und verlaesst
+     *  damit die Befundmenge dieser Schranke — wer sie bei 802 liesse,
+     *  liesse sie um eine Stelle locker stehen. Gemessen nach dem Urteil:
+     *  ausserhalbDerSkala 801, geduldet 35, gesamt 853.
+     *  GESENKT am 2026-10-06 von 801 auf 0 — DAS ZIEL (Schritt 5, der
+     *  mechanische Lauf). Zum ersten Mal in dieser Welle ist die Schranke
+     *  nicht der gemessene Ausgangswert, sondern der Zielwert: nach dem Lauf
+     *  von `node tools/sync-typo-tokens.js` traegt JEDE Deklaration im
+     *  Geltungsbereich ein Skalentoken, `inherit` oder einen namentlich
+     *  geduldeten Wert. Sie kann ab hier nicht mehr sinken; sie faellt beim
+     *  ersten neuen px- oder em-Literal, und das ist ihr Zweck. */
+    const AUSSERHALB_MAX = 0;
+
+    /** SCHRANKE 2 — Schriftgroessen in `em`.
+     *  Gemessener Ausgangswert: 603 Deklarationen in 28 verschiedenen Werten.
+     *  Sie ist die eigentliche Ursache des Befundes: ein em-Wert
+     *  multipliziert sich mit dem Elternwert, und 225 der 948 em-Elemente
+     *  sitzen auf einem Elternwert ungleich 16 px — ihr sichtbarer Wert ist
+     *  ein Produkt, bis Faktor 0,574 (.cf-skill-row 0,82em ueber
+     *  .cf-skill-exp-label 0,7em = 9,18 px). ZIEL 0.
+     *  Eigene Schranke und nicht in Schranke 1 aufgegangen, weil sie etwas
+     *  anderes zusichert: Schranke 1 verlangt ein Token, Schranke 2 verbietet
+     *  die Einheit. Eine Stelle, die von `0.85em` auf `13px` wandert, erfuellt
+     *  Schranke 2 und verletzt Schranke 1 weiter — und das soll sie auch.
+     *  Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 603 auf 574 (Schritt 4): 21 geduldete
+     *  Ikon-Deklarationen tragen jetzt ihren GEMESSENEN Bildpunktwert
+     *  (56 / 48 / 40 / 28.8 / 22.4 / 17.6 px) statt eines em-Wertes, und 8
+     *  Textstellen ihre Sprosse. Die 21 sind genau die Bewegung, die
+     *  EM_ZIEL unten bei 6 haelt statt bei 27: eine geduldete Stelle zaehlt
+     *  hier mit, weil die EINHEIT verboten ist und nicht der Wert.
+     *  GESENKT am 2026-10-06 von 574 auf 6 — DER ZIELWERT (Schritt 5). Die
+     *  sechs sind die Ueberschriftenstufen h1 bis h6 des Reichtext-Inhalts,
+     *  deren Begruendung unter EM_ZIEL steht; sie sind der einzige Rest.
+     *  Auch diese Schranke kann ab hier nicht mehr sinken. */
+    const EM_MAX = 6;
+
+    /** WAS DER ZIELWERT VON SCHRANKE 2 WIRKLICH IST: 6, nicht 0.
+     *  Diese Schranke zaehlt em-Deklarationen OHNE Ruecksicht auf
+     *  FONT_SIZE_GEDULDET — mit Absicht, denn sie verbietet die EINHEIT und
+     *  nicht den Wert. Seit der Nachbesserung bleiben sechs Deklarationen
+     *  dauerhaft in `em`: die Ueberschriftenstufen h1 bis h6 des
+     *  Reichtext-Inhalts. Sie sind EIN Verhaeltnis zu ihrem Behaelter und
+     *  keine sechs Groessen, und der Behaelter traegt gemessen 13,6 / 14,4
+     *  oder 16 px — eine feste Sprosse kann nicht gleichzeitig ueber einem
+     *  13,6-px- und unter einem 16-px-Fliesstext liegen. Volle Begruendung in
+     *  tools/typo-map.js, Abschnitt 7. Der Zielwert steht hier, damit die
+     *  Schranke nicht 0 verspricht und dann beim ersten roten Lauf gesenkt
+     *  wird — eine Zahl, die beim Aufschreiben schon nicht zu halten ist,
+     *  bewacht nichts.
+     *  ER IST BEI 6 GEBLIEBEN UND NICHT AUF 27 GESTIEGEN, und das war eine
+     *  Entscheidung des Schrittes 4: die 21 geduldeten Ikon-Deklarationen
+     *  haetten in `em` stehenbleiben koennen (sie sitzen gemessen alle auf
+     *  einem 16-px-Elternwert, die Einheit schadet dort nichts). Sie tragen
+     *  jetzt ihren Bildpunktwert, weil ein Zielwert, den die eigene
+     *  Ausnahmeliste verbietet, nichts bewacht. Der Schritt 3 hat genau das
+     *  als Falle uebergeben. */
+    const EM_ZIEL = 6;
+
+    /** SCHRANKE 3 — SVG-Praesentationsattribute `font-size="<zahl>"` im JS.
+     *  Gemessener Ausgangswert: 3 Fundstellen in
+     *  features/dice-stats/dice-stats-render.js (Zeilen 194, 210, 213) mit den
+     *  Werten 8, 7 und 7 — zusammen 21 sichtbare Elemente unter 11 px, die
+     *  kleinste Schrift der ganzen App. ZIEL 0; duerfen die Beschriftungen auf
+     *  ihrem Wert bleiben, stehen sie namentlich in SVG_GEDULDET statt
+     *  unentdeckt im Quelltext. Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 3 auf 0 — DER ZIELWERT (Schritt 8), und
+     *  ERREICHT OHNE EINEN EINZIGEN EINTRAG IN `SVG_GEDULDET`. Die drei
+     *  Attribute sind nicht geduldet, sondern VERSCHWUNDEN: die
+     *  Beschriftungen tragen jetzt die Klassen `.ds-hist-face-label` und
+     *  `.ds-hist-axis-label` (assets/styles/tools.css), ihre WERTE sind
+     *  unveraendert (8 bzw. 7 Benutzereinheiten) und stehen namentlich in
+     *  `AUSNAHMEN` von tools/typo-map.js — also unter W5-R-05a, wo jede
+     *  andere Groesse auch geurteilt wird. Das ist der Unterschied zwischen
+     *  "geduldet, weil wir hinsehen konnten" und "geduldet in einer Kategorie,
+     *  in der nichts hinsieht": die Duldung ist dieselbe, der Ort ist ein
+     *  besserer. Warum die Werte bleiben, steht an beiden Deklarationen —
+     *  kurz: das SVG traegt eine viewBox, die Zahl ist eine Benutzereinheit,
+     *  und gemessen wirken die 8 Einheiten 11,34 px bei 1440 und 5,44 px bei
+     *  375 px. `SVG_GEDULDET` bleibt BEWUSST LEER, nicht abwesend (Muster der
+     *  EXEC_COMMAND_ALLOWLIST): kommt je ein neues Praesentationsattribut
+     *  dazu, faellt diese Schranke. */
+    const SVG_MAX = 0;
+
+    /** Benannte Ausnahmen der dritten Schranke, Schluessel `datei:zeile` —
+     *  hier AUSNAHMSWEISE mit Zeile, weil ein SVG-Attribut in einer
+     *  Zeichenkette keinen Selektor hat, an dem es haengen koennte. Bewusst
+     *  LEER, nicht abwesend (Muster der EXEC_COMMAND_ALLOWLIST): die
+     *  Entscheidung ueber die 21 Beschriftungen faellt in einem eigenen
+     *  Schritt, nicht im Vorlauf.
+     *  VERLEGT nach `tools/typo-map.js` (O-4) und von dort IMPORTIERT —
+     *  dieselbe Datei, aus der auch die Tokenliste und die
+     *  font-size-Ausnahmen kommen. */
+    const SVG_GEDULDET = TYPO_MAP.SVG_GEDULDET;
+
+    /* Die Quelldateien, in denen ein SVG-Praesentationsattribut stehen kann,
+       stehen in `JS_VERZEICHNISSE` / `jsDateien()` — HOCHGEZOGEN auf
+       Modulebene am 2026-10-06 (Schritt 6), weil die Inline-Schranken der
+       Schritte 6 und 7 dieselbe Dateimenge brauchen. Die Begruendung des
+       Geltungsbereichs (O-5) und der Dateiausnahme steht dort. */
+
+    /** Jede Fundstelle eines SVG-Praesentationsattributs, mit `datei:zeile`. */
+    function svgFundstellen() {
+        const out = [];
+        jsDateien().forEach(f => {
+            f.content.split('\n').forEach((z, i) => {
+                for (const m of z.matchAll(/font-size\s*=\s*["']([^"']*)["']/g)) {
+                    out.push({ anker: `${f.name}:${i + 1}`, wert: m[1] });
+                }
+            });
+        });
+        return out;
+    }
+
+    const alleGroessen = typoAlle('font-size');
+
+    // ---- Schranke 1: nur Tokens --------------------------------------
+
+    test('W5-R-05a: keine font-size ausserhalb der Skala', () => {
+        const befunde = [];
+        alleGroessen.forEach(d => {
+            const wert = d.wert.replace(/\s*!important$/, '').trim();
+            if (ERLAUBT.test(wert)) return;
+            if (FONT_SIZE_GEDULDET[typoAnker(d)]) return;
+            befunde.push(
+                `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }` +
+                    (d.at ? `  @ ${d.at}` : '')
+            );
+        });
+        if (befunde.length > AUSSERHALB_MAX) {
+            /* Nur im roten Fall. `toBeLessThanOrEqual` meldet "expected <= N"
+               und nennt die Lage nicht; eine Gegenueberstellung von Objekten
+               druckt Zahl UND Stellen, und genau das soll ein roter Lauf
+               leisten — der Nachweis einer Ratsche ist ihre bezifferte
+               Ausgabe, nicht die Behauptung, sie greife. */
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleGroessen.length,
+                geduldet: Object.keys(FONT_SIZE_GEDULDET).length,
+                schranke: AUSSERHALB_MAX,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: AUSSERHALB_MAX,
+                gesamt: alleGroessen.length,
+                geduldet: Object.keys(FONT_SIZE_GEDULDET).length,
+                schranke: AUSSERHALB_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(AUSSERHALB_MAX);
+    });
+
+    // ---- Schranke 2: keine em-Einheit --------------------------------
+
+    test('W5-R-05b: keine Schriftgroesse in em', () => {
+        const treffer = alleGroessen.filter(d => EM_WERT.test(d.wert));
+        if (treffer.length > EM_MAX) {
+            const werte = {};
+            treffer.forEach(d => {
+                const m = d.wert.match(/([\d.]+\s*em)/);
+                if (m) werte[m[1]] = (werte[m[1]] || 0) + 1;
+            });
+            expect({
+                em: treffer.length,
+                verschiedeneWerte: Object.keys(werte).length,
+                schranke: EM_MAX,
+                verteilung: werte,
+                befunde: treffer.map(
+                    d => `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }`
+                )
+            }).toEqual({
+                em: EM_MAX,
+                verschiedeneWerte: Object.keys(werte).length,
+                schranke: EM_MAX,
+                verteilung: werte,
+                befunde: []
+            });
+        }
+        expect(treffer.length).toBeLessThanOrEqual(EM_MAX);
+        // ... und der Zielwert ist erreichbar: 6 geduldete em-Regeln, nicht 0.
+        expect(EM_ZIEL).toBe(
+            Object.keys(FONT_SIZE_GEDULDET).filter(k => {
+                const d = alleGroessen.find(x => typoAnker(x) === k);
+                return d && EM_WERT.test(d.wert);
+            }).length
+        );
+    });
+
+    // ---- Schranke 3: SVG-Praesentationsattribute ---------------------
+
+    test('W5-R-05c: kein font-size-Attribut in einer SVG-Zeichenkette im JS', () => {
+        const befunde = svgFundstellen()
+            .filter(s => !SVG_GEDULDET[s.anker])
+            .map(s => `${s.anker}  font-size="${s.wert}"`);
+        if (befunde.length > SVG_MAX) {
+            expect({ svgAttribute: befunde.length, schranke: SVG_MAX, befunde }).toEqual({
+                svgAttribute: SVG_MAX,
+                schranke: SVG_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(SVG_MAX);
+    });
+
+    // ---- Proben an der Ratsche selbst --------------------------------
+
+    test('SELBSTPROBE: der Geltungsbereich ist die Menge aus declarationsOf()', () => {
+        // Ohne diese Zahlen ist jede Zusicherung oben durch WEGLASSEN
+        // erfuellbar: wer eine Datei aus dem Geltungsbereich nimmt, macht die
+        // Ratsche gruen, ohne eine Zeile CSS zu aendern.
+        const namen = typoGeltungsbereich().map(f => f.name);
+        expect(cssFiles.length).toBe(20);
+        expect(namen.length).toBe(18);
+        expect(namen).not.toContain('variables.css');
+        expect(namen).not.toContain('fonts.css');
+        // Gegenrechnung mit einer ZWEITEN, unabhaengigen Zaehlart: der
+        // Deklarations-Regex ueber derselben Dateimenge. Zwei Wege, die nichts
+        // voneinander wissen, muessen dieselbe Zahl nennen — sonst zaehlt
+        // einer von beiden etwas anderes, als er behauptet.
+        const perRegex = typoGeltungsbereich().reduce(
+            (n, f) =>
+                n + [...withoutComments(f.content).matchAll(/(^|[{;}])\s*font-size\s*:/g)].length,
+            0
+        );
+        expect(alleGroessen.length).toBe(perRegex);
+        expect(alleGroessen.length).toBeGreaterThan(500);
+    });
+
+    test('SELBSTPROBE: typoDeklarationen() zaehlt Deklarationen, nicht Vorkommen', () => {
+        const props = css => typoDeklarationen(css).map(d => d.prop);
+        const werte = css => typoDeklarationen(css).map(d => d.wert);
+        const sel = css => typoDeklarationen(css).map(d => d.selektoren);
+
+        // (a) der gewoehnliche Fall
+        expect(props('.a { font-size: 12px; }')).toEqual(['font-size']);
+        // (b) letzte Deklaration OHNE Semikolon — die Schreibweise, in der ein
+        //     Rueckfall an einer rein `;`-basierten Zerlegung vorbeikaeme
+        expect(props('.a { color: red; font-size: 13px }')).toEqual(['color', 'font-size']);
+        expect(werte('.a { color: red; font-size: 13px }')).toEqual(['red', '13px']);
+        // (c) ein Selektor mit Doppelpunkt ist KEINE Deklaration
+        expect(props('.a:hover { }')).toEqual([]);
+        expect(props('.a:hover { font-size: 1em }')).toEqual(['font-size']);
+        // (d) ein At-Regel-Kopf ist KEINE Deklaration, und der Selektor im
+        //     Innern wird richtig zugeordnet
+        expect(props('@media (max-width: 600px) { .a { font-size: 10px } }')).toEqual([
+            'font-size'
+        ]);
+        expect(sel('@media (max-width: 600px) { .a { font-size: 10px } }')).toEqual(['.a']);
+        expect(
+            typoDeklarationen('@media (max-width: 600px) { .a { font-size: 10px } }')[0].at
+        ).toBe('@media (max-width: 600px)');
+        // (e) ein Semikolon in einer url() beendet keine Deklaration
+        expect(props('.a { background: url("x;y.png"); font-size: 9px }')).toEqual([
+            'background',
+            'font-size'
+        ]);
+        // (f) Kommentare zaehlen nicht, und sie verschieben keine Zeile
+        const mitKommentar = '.a {\n/* font-size: 99px */\nfont-size: 14px;\n}';
+        expect(props(mitKommentar)).toEqual(['font-size']);
+        expect(typoDeklarationen(mitKommentar)[0].zeile).toBe(3);
+    });
+
+    test('GEGENPROBE: eine erfundene Fremdgroesse wird gefunden', () => {
+        // Ohne diese Probe koennte jede gruene Zusicherung oben auch daran
+        // liegen, dass die Erhebung nichts findet.
+        const d = typoDeklarationen('.erfunden { font-size: 13px }');
+        expect(d.length).toBe(1);
+        expect(ERLAUBT.test(d[0].wert)).toBe(false);
+        expect(ERLAUBT.test('var(--text-md)')).toBe(true);
+        expect(ERLAUBT.test('inherit')).toBe(true);
+        // ... und ein Token, das NICHT auf der Skala steht, ist nicht erlaubt
+        expect(ERLAUBT.test('var(--font-size-base)')).toBe(false);
+        expect(ERLAUBT.test('var(--text-huge)')).toBe(false);
+    });
+
+    test('GEGENPROBE: die em-Erhebung trennt die Einheit vom Wortbestandteil', () => {
+        expect(EM_WERT.test('0.85em')).toBe(true);
+        expect(EM_WERT.test('1.0em')).toBe(true);
+        expect(EM_WERT.test('calc(1em + 2px)')).toBe(true);
+        expect(EM_WERT.test('12px')).toBe(false);
+        expect(EM_WERT.test('var(--text-md)')).toBe(false);
+        expect(EM_WERT.test('inherit')).toBe(false);
+        // `rem` darf die em-Erhebung NICHT treffen: andere Einheit, anderer
+        // Befund, und F-03 urteilt darueber.
+        expect(EM_WERT.test('1.2rem')).toBe(false);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        // Eine Erlaubnisliste, die verwest, erlaubt irgendwann etwas anderes
+        // als das, was ihr Kommentar behauptet.
+        const vorhanden = new Set(alleGroessen.map(typoAnker));
+        expect(Object.keys(FONT_SIZE_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+        const svgAnker = new Set(svgFundstellen().map(s => s.anker));
+        expect(Object.keys(SVG_GEDULDET).filter(k => !svgAnker.has(k))).toEqual([]);
+    });
+
+    test('GEGENPROBE: shop-export.js ist namentlich ausgenommen, nicht wegdefiniert', () => {
+        // Die Datei traegt 17 der JS-Inline-Schriftgroessen und bleibt
+        // draussen, weil sie ein Druckdokument mit pt-Einheiten erzeugt. Dass
+        // die Ausnahme eine DATEI ist und keine Zahl, haelt sie sichtbar:
+        // waechst sie, waechst kein Zaehler still mit.
+        expect(JS_AUSGENOMMEN.length).toBe(1);
+        expect(fs.existsSync(path.join(REPO, JS_AUSGENOMMEN[0]))).toBe(true);
+        expect(jsDateien().map(f => f.name)).not.toContain('features/shops/shop-export.js');
+        // ... und die Erhebung sieht die uebrigen Dateien wirklich
+        expect(jsDateien().length).toBeGreaterThan(100);
+        expect(jsDateien().map(f => f.name)).toContain('features/dice-stats/dice-stats-render.js');
+        expect(jsDateien().map(f => f.name)).toContain('loader.js');
+    });
+});
+
+describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () => {
+    /** Die drei erlaubten Gewichte (Handoff Paragraph 3.3). Keine
+     *  Schluesselwoerter: `bold` und `normal` sind zwar gueltiges CSS, fuehren
+     *  dieselbe Eigenschaft aber in einer zweiten Schreibweise — und zwei
+     *  Schreibweisen derselben Sache laufen auseinander. Dasselbe Argument
+     *  steht hinter F-04 (keine Hex-Literale ausserhalb des Tokenblocks).
+     *
+     *  WARUM 700 WEGFAELLT UND NICHT BLEIBT: gemessen sind 500 und 600 unter
+     *  Segoe UI auf den Bildpunkt identisch, nur 700 weicht ab. Die Skala
+     *  400/500/600 ist damit keine Verarmung, sondern die Abschaffung einer
+     *  Unterscheidung, die vier Werte behaupten und drei einhalten. */
+    const ERLAUBT = /^(400|500|600)$/;
+
+    /** Benannte Ausnahmen, Schluessel wie bei W5-R-05 (Datei, Selektor,
+     *  Eigenschaft — KEINE Zeile). Bewusst LEER, nicht abwesend: fuer das
+     *  Gewicht ist nach heutigem Stand KEINE Ausnahme begruendet. Die zehn
+     *  `bold`, die eine `normal` und die eine `300` sitzen alle an sichtbarem
+     *  Text. Die 10 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
+     *  sondern liegen ausserhalb des Geltungsbereichs — sie benennen
+     *  Schriftdateien, sie gestalten nichts. */
+    const FONT_WEIGHT_GEDULDET = {};
+
+    /** SCHRANKE — Deklarationen ausserhalb von 400/500/600.
+     *  Gemessener Ausgangswert: 95 von 360 Deklarationen.
+     *    700     83x  party 18, bestiary 9, dashboard 9, core 6, encounters 6,
+     *                 initiative 7, welt 7, dice 4, dmscreen 4, npcs 3,
+     *                 tools 3, spells 1
+     *    bold    10x  core.css, dashboard.css (2x), dmscreen.css (2x),
+     *                 loot.css (3x), spells.css, tools.css
+     *    normal   1x  tools.css
+     *    300      1x  party.css (.cf-hp-divider)
+     *  Der Handoff rechnet 110; das ist um 15 zu hoch — er zaehlt die 10
+     *  @font-face-Gewichte aus fonts.css und die 6 schon richtigen 400 mit.
+     *  ZIEL 0. Diese Zahl darf nur SINKEN.
+     *  GESENKT am 2026-10-06 von 95 auf 0 — DER ZIELWERT (Schritt 6). Alle 95
+     *  sind umgestellt: 83x `700` -> `600`, 10x `bold` -> `600`, 1x `normal`
+     *  -> `400` und 1x `300` -> `400`. Die Schranke kann ab hier nicht mehr
+     *  sinken; sie faellt beim ersten neuen Fremdgewicht, und das ist ihr
+     *  Zweck. Was dabei WIRKLICH sichtbar wird, ist gemessen und nicht
+     *  behauptet: 500 und 600 rendern unter Segoe UI auf den Bildpunkt
+     *  identisch (578,50 px Textbreite, 8.940 dunkle Bildpunkte), 400 nicht
+     *  (562,03 px, 6.639). Die sichtbare Aenderung ist also 700 -> 600 und
+     *  NICHT 500 -> 600; die 83 + 10 Stellen sind der Eingriff, die beiden
+     *  Einzelfaelle daneben stehen in ihrem CSS begruendet. */
+    const AUSSERHALB_MAX = 0;
+
+    /** SCHRANKE 2 — Inline-Gewichte in Templates und JS.
+     *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
+     *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
+     *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
+     *                loader.js:344 (die Zusammenfassungszeile des Ladefehlers)
+     *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
+     *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
+     *  Modulpfade als Teilzeichenkette und zaehlt JEDEN Treffer als
+     *  Abdeckung, auch einen im Erklaertext; mit vollem Pfad verlangte es,
+     *  das Modul von seiner datierten Ausnahmeliste zu streichen — und haette
+     *  damit eine Testabdeckung behauptet, die es nicht gibt. Diese Schranke
+     *  liest den Dateitext, sie fuehrt keine Zeile des Moduls aus. Dieselbe
+     *  Loesung wie bei `dice-core.js:372` im W5-R-07-Block.
+     *    normal  1x  assets/templates/view-resources.html (der Klammerhinweis
+     *                neben "Zusammenfassung")
+     *  Die uebrigen 13 stehen schon auf 500 oder 600.
+     *  WARUM DIESE SCHRANKE HIER STEHT, obwohl das Ratschenfeld des Schrittes
+     *  nur die CSS-Seite nennt: das Feld `stellen` desselben Schrittes zaehlt
+     *  die Inline-Gewichte ausdruecklich mit ("+ 11 Inline-Gewichte
+     *  ausserhalb 400/500/600" — gemessen sind es 4, nicht 11; der Handoff
+     *  zaehlt die schon richtigen 500/600 und das `bold` in der
+     *  ausgenommenen shop-export.js mit). Ohne eine Schranke waeren die vier
+     *  geaenderten Stellen unbewacht: W5-R-06 sieht nur CSS-Dateien, F-19
+     *  zaehlt Attribute ohne Rucksicht auf ihren Inhalt, und der
+     *  Stil-Sollstand kennt keine Quellenangabe. Sie kaemen also still
+     *  zurueck. Derselbe Grund, aus dem O-7 die SVG-Attribute in R-05
+     *  aufnimmt.
+     *  ZIEL 0. Diese Zahl darf nur SINKEN. */
+    const INLINE_GEWICHT_MAX = 0;
+
+    const alleGewichte = typoAlle('font-weight');
+    const alleInlineGewichte = typoInline('font-weight');
+
+    function verteilung() {
+        const w = {};
+        alleGewichte.forEach(d => {
+            const v = d.wert.replace(/\s*!important$/, '').trim();
+            w[v] = (w[v] || 0) + 1;
+        });
+        return w;
+    }
+
+    test('W5-R-06: kein Schriftgewicht ausserhalb von 400/500/600', () => {
+        const befunde = [];
+        alleGewichte.forEach(d => {
+            const wert = d.wert.replace(/\s*!important$/, '').trim();
+            if (ERLAUBT.test(wert)) return;
+            if (FONT_WEIGHT_GEDULDET[typoAnker(d)]) return;
+            befunde.push(
+                `${d.datei}:${d.zeile}  ${d.selektoren} { font-weight: ${d.wert} }` +
+                    (d.at ? `  @ ${d.at}` : '')
+            );
+        });
+        if (befunde.length > AUSSERHALB_MAX) {
+            const v = verteilung();
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleGewichte.length,
+                schranke: AUSSERHALB_MAX,
+                verteilung: v,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: AUSSERHALB_MAX,
+                gesamt: alleGewichte.length,
+                schranke: AUSSERHALB_MAX,
+                verteilung: v,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(AUSSERHALB_MAX);
+    });
+
+    test('W5-R-06b: kein Inline-Gewicht ausserhalb von 400/500/600', () => {
+        const befunde = alleInlineGewichte
+            .filter(d => !ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()))
+            .map(d => `${d.anker}  font-weight: ${d.wert}   ${d.quelle}`);
+        if (befunde.length > INLINE_GEWICHT_MAX) {
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleInlineGewichte.length,
+                schranke: INLINE_GEWICHT_MAX,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: INLINE_GEWICHT_MAX,
+                gesamt: alleInlineGewichte.length,
+                schranke: INLINE_GEWICHT_MAX,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(INLINE_GEWICHT_MAX);
+    });
+
+    test('SELBSTPROBE: die Inline-Erhebung sieht Templates UND JS', () => {
+        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar:
+        // wer eine Dateimenge aus der Erhebung nimmt, macht sie gruen, ohne
+        // eine Zeile zu aendern.
+        const dateien = new Set(alleInlineGewichte.map(d => d.datei));
+        expect([...dateien].some(n => n.startsWith('assets/templates/'))).toBe(true);
+        expect([...dateien].some(n => n.startsWith('systems/'))).toBe(true);
+        expect(dateien.has('loader.js')).toBe(true);
+        expect(alleInlineGewichte.length).toBeGreaterThanOrEqual(15);
+        // Die Erlaubnisliste des Bereinigers ist KEINE Deklaration: in
+        // `utils/basic.js` und `utils/testable-utils.js` steht der
+        // Eigenschaftsname als Zeichenkette in einer Aufzaehlung
+        // (`'font-weight',`). Ohne Doppelpunkt dahinter faellt er durch die
+        // Erhebung — und das soll er, denn dort wird nichts gestaltet.
+        expect(alleInlineGewichte.map(d => d.datei)).not.toContain('utils/basic.js');
+        expect(alleInlineGewichte.map(d => d.datei)).not.toContain('utils/testable-utils.js');
+    });
+
+    test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
+        // Die 10 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
+        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der 700er-Datei
+        // — und sie WIRD sie mitzaehlen, sobald jemand den Geltungsbereich
+        // "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        const fonts = cssFiles.find(f => f.name === 'fonts.css');
+        expect(fonts).toBeTruthy();
+        const dort = typoDeklarationen(fonts.content).filter(d => d.prop === 'font-weight');
+        expect(dort.length).toBe(10);
+        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual(['700']);
+        expect(typoGeltungsbereich().map(f => f.name)).not.toContain('fonts.css');
+    });
+
+    test('SELBSTPROBE: zwei Zaehlarten nennen dieselbe Zahl', () => {
+        const perRegex = typoGeltungsbereich().reduce(
+            (n, f) =>
+                n +
+                [...withoutComments(f.content).matchAll(/(^|[{;}])\s*font-weight\s*:/g)].length,
+            0
+        );
+        expect(alleGewichte.length).toBe(perRegex);
+        expect(alleGewichte.length).toBeGreaterThan(200);
+    });
+
+    test('GEGENPROBE: Schluesselwoerter gelten nicht als erlaubt', () => {
+        expect(ERLAUBT.test('bold')).toBe(false);
+        expect(ERLAUBT.test('normal')).toBe(false);
+        expect(ERLAUBT.test('700')).toBe(false);
+        expect(ERLAUBT.test('300')).toBe(false);
+        expect(ERLAUBT.test('600')).toBe(true);
+        // `!important` wird abgeschnitten, nicht als Fremdwert gezaehlt: die
+        // Doppelzeile in spells.css traegt es, und die Gewichtsfrage ist von
+        // der !important-Frage unabhaengig — F-18 fuehrt dafuer die eigene
+        // Ratsche.
+        const d = typoDeklarationen('.a { font-weight: 600 !important }')[0];
+        expect(ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim())).toBe(true);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        const vorhanden = new Set(alleGewichte.map(typoAnker));
+        expect(Object.keys(FONT_WEIGHT_GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 7 — W5-R-08: die Inline-Typografie
+   ===========================================================================
+
+   WAS DIESER BLOCK BEWACHT UND WARUM IHN KEINE BESTEHENDE ZUSICHERUNG
+   ERSETZT. W5-R-05 urteilt ueber `assets/styles/*.css` und sieht keine Zeile
+   Markup. F-19 (INLINE_MAX) zaehlt `style="`-ATTRIBUTE und urteilt nicht
+   ueber ihren Inhalt: ein Attribut mit `font-size: 0.85em` und eines mit
+   `font-size: var(--text-sm)` sind fuer sie dieselbe Zahl. Der Stil-Sollstand
+   sieht den berechneten Wert, aber ohne Quellenangabe — er kann nicht sagen,
+   dass eine Groesse aus einem Inline-Stil kommt. Zwischen den drei
+   Zusicherungen liegt also eine Luecke von gemessen 137 Deklarationen, und
+   das ist mehr als ein Siebtel des ganzen Befundes D-06.
+
+   GEMESSENER AUSGANGSWERT, am 2026-10-06 gegen 476ce50 erhoben:
+
+     Templates   39 Deklarationen in 6 Dateien
+                 modals-tools 21, modals-editors 8, modals-entity 4,
+                 view-resources 3, view-tools 2, modals-shops 1
+     JS          98 Deklarationen in 30 Dateien
+                 entity-links 14, npc-popup 8, performance-extras 7,
+                 npc-dialogs 6, file-backup-ui 6, loader 5, ...
+     zusammen   137
+
+   Die Zahl 137 trifft die Vorhersage des Schrittes (39 + 98) auf den Punkt —
+   aber nur, WEIL die Erhebung Kommentare streicht. Ohne diesen Schritt zaehlt
+   sie 141: `rich-text-insert.js:872` nennt im JSDoc woertlich
+   `font-size: 1.3em`, und drei weitere Zeilen sind `.style.fontSize`-
+   Zuweisungen, die kein `font-size:` schreiben. Die Begruendung steht an
+   `inlineOhneKommentare()`.
+
+   WAS DIESER BLOCK AUSDRUECKLICH NICHT TUT.
+     - Er verlangt NICHT das Verschwinden der Inline-Deklaration, sondern ihr
+       Token. Eine Inline-Deklaration in eine Klasse zu verlegen aendert die
+       KASKADE: ein Inline-Stil schlaegt jede Regel, eine Hilfsklasse (0,1,0)
+       verliert gegen jede Komponentenregel mit einem zweiten Glied — und
+       `.form-group label` (0,1,1) ist genau so eine. Wer 137 Stellen so
+       verschiebt, aendert an einer unbekannten Zahl von ihnen, WELCHE Regel
+       gewinnt, und eine Typografie-Welle darf das nicht stillschweigend tun.
+       Mit dem Token aendert sich die Zahl und sonst nichts; der
+       Grundlinien-Diff misst genau diese eine Aenderung.
+     - Er urteilt NICHT ueber `element.style.fontSize = ...` in
+       `ui/editors/rich-text.js` (Zeilen 285, 289, 359). Das sind drei Stellen
+       der Schriftgroessen-AUSWAHL des Editors: der Nutzer waehlt eine Groesse,
+       das Programm setzt sie. Funktion, keine Gestaltung (Arbeitsregel 10).
+       Die GEGENPROBE unten sichert zu, dass die Erhebung sie nicht sieht.
+     - Er urteilt NICHT ueber `font-weight` (das tut W5-R-06b) und nicht ueber
+       die SVG-Praesentationsattribute (das tut W5-R-05c).
+   =========================================================================== */
+
+describe('W5-R-08 — jede Inline-Schriftgroesse kommt aus der Skala (Ratsche)', () => {
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
+    const GEDULDET = TYPO_MAP.INLINE_GEDULDET;
+    const AUSGENOMMEN = TYPO_MAP.INLINE_AUSGENOMMEN;
+
+    /** SCHRANKE — Inline-Schriftgroessen ausserhalb der Skala.
+     *  Gemessener Ausgangswert: 137 von 137 (keine einzige stand auf einer
+     *  Sprosse). Die Werte verteilen sich auf 17 Schreibweisen:
+     *    0.85em 33x, 0.8em 23x, 0.9em 17x, 0.75em 11x, 14px 4x, 11px 4x,
+     *    1.2em 5x, 2em 5x, 0.8rem 4x, 10px 5x, 1.1em 4x, 12px 3x, 0.7em 2x,
+     *    16px 3x, 0.95em 1x, 18px 1x, 48px 1x, 1.5em 1x, 3em 1x, 0.85rem 1x,
+     *    1.2rem 1x
+     *  ZIEL 0 — erreicht, sobald jede Deklaration ein `var(--text-*)` traegt,
+     *  namentlich geduldet oder in einer ausgenommenen Datei steht.
+     *  Diese Zahl darf nur SINKEN. */
+    const INLINE_AUSSERHALB_MAX = 0;
+
+    const alleInline = typoInline('font-size');
+
+    function offene() {
+        return alleInline.filter(d => {
+            if (AUSGENOMMEN.includes(d.datei)) return false;
+            if (GEDULDET[d.anker]) return false;
+            return !ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim());
+        });
+    }
+
+    test('W5-R-08: keine Inline-Schriftgroesse ausserhalb der Skala', () => {
+        const befunde = offene().map(d => `${d.anker}  [${d.wert}]  ${d.quelle}`);
+        if (befunde.length > INLINE_AUSSERHALB_MAX) {
+            const v = {};
+            offene().forEach(d => {
+                v[d.wert] = (v[d.wert] || 0) + 1;
+            });
+            expect({
+                ausserhalbDerSkala: befunde.length,
+                gesamt: alleInline.length,
+                schranke: INLINE_AUSSERHALB_MAX,
+                verteilung: v,
+                befunde
+            }).toEqual({
+                ausserhalbDerSkala: INLINE_AUSSERHALB_MAX,
+                gesamt: alleInline.length,
+                schranke: INLINE_AUSSERHALB_MAX,
+                verteilung: v,
+                befunde: []
+            });
+        }
+        expect(befunde.length).toBeLessThanOrEqual(INLINE_AUSSERHALB_MAX);
+    });
+
+    test('SELBSTPROBE: der Geltungsbereich ist beziffert, nicht angenommen', () => {
+        // Ohne diese Zahlen ist die Schranke oben durch WEGLASSEN erfuellbar:
+        // wer eine Dateimenge aus der Erhebung nimmt, macht sie gruen, ohne
+        // eine Zeile zu aendern.
+        //
+        // DIE DATEIZAHLEN STEHEN EXAKT, DIE DEKLARATIONSZAHLEN ALS UNTERGRENZE
+        // — und das ist Absicht. Eine Datei weniger im Geltungsbereich ist
+        // IMMER ein Fehler; eine Deklaration mehr kann eine neue, voellig
+        // regelgerechte Stelle mit `var(--text-*)` sein. Ein exakter
+        // Deklarationszaehler waere dann eine Stolperfalle, die nichts
+        // bewacht, was die Schranke oben nicht schon bewacht.
+        //
+        // GEMESSENER BESTAND nach Schritt 7 der Welle 5: 37 in Templates (von
+        // 39; zwei sind mit ihrem Attribut verschwunden) + 93 in JS (von 98;
+        // fuenf sind in npc-popup.js und sessions.js entfallen, weil dort die
+        // BASISREGEL entscheidet) = 130.
+        // NACHGEZOGEN in Welle 6, Schritt 7: Templates 37 -> 36. Die
+        // Filterrueckmeldung der Zauberansicht ist zur Klasse `.filter-count`
+        // geworden; ihr Attribut trug `font-size: var(--text-sm)` und ist mit
+        // dem Attribut verschwunden. Die DATEIZAHL bleibt 6:
+        // view-resources.html fuehrt gemessen noch zwei weitere
+        // Inline-Schriftgroessen ("Vorlagen:" und die Vorlagenwahl der
+        // Zauberkarte), die Datei faellt also nicht aus dem Geltungsbereich.
+        // Diese Untergrenzen duerfen SINKEN, wenn eine Stelle wirklich
+        // verschwindet — aber nur mit der gemessenen Zahl daneben, sonst ist
+        // die Schranke oben durch Weglassen erfuellbar.
+        const tpl = alleInline.filter(d => d.datei.startsWith('assets/templates/'));
+        const js = alleInline.filter(d => !d.datei.startsWith('assets/templates/'));
+        expect(tpl.length).toBeGreaterThanOrEqual(36);
+        expect(js.length).toBeGreaterThanOrEqual(93);
+        expect(alleInline.length).toBeGreaterThanOrEqual(129);
+        expect(new Set(tpl.map(d => d.datei)).size).toBe(6);
+        // 28 und nicht 30: die Vorhersage des Schrittes zaehlt `rich-text.js`
+        // (drei `.style.fontSize`-Zuweisungen, Funktion) und
+        // `rich-text-insert.js` (eine Nennung im JSDoc) mit. Beide tragen
+        // gemessen NULL Inline-Deklarationen; die zwei GEGENPROBEN unten
+        // halten genau das fest. Auch nach Schritt 7 sind es 28: keine Datei
+        // hat ALLE ihre Stellen verloren — `npc-popup.js` behaelt vier und
+        // `sessions.js` drei.
+        expect(new Set(js.map(d => d.datei)).size).toBe(28);
+    });
+
+    test('SELBSTPROBE: zwei Zaehlarten nennen dieselbe Zahl', () => {
+        // Eine zweite, unabhaengige Zaehlung ueber dieselbe Dateimenge: hier
+        // ohne Zeilenzerlegung, nur ein globaler Regex ueber den
+        // kommentarfreien Text. Zwei Wege, die nichts voneinander wissen.
+        const quellen = [
+            ...tplFiles.map(f => ({ t: f.content, h: true })),
+            ...jsDateien().map(f => ({ t: f.content, h: false }))
+        ];
+        const perRegex = quellen.reduce(
+            (n, q) =>
+                n + [...inlineOhneKommentare(q.t, q.h).matchAll(/font-size\s*:/g)].length,
+            0
+        );
+        expect(alleInline.length).toBe(perRegex);
+    });
+
+    test('GEGENPROBE: der Erklaertext im JSDoc zaehlt nicht mit', () => {
+        // `ui/editors/rich-text-insert.js:872` nennt `font-size: 1.3em` in
+        // einem Blockkommentar und erklaert daneben, warum die Stelle nicht
+        // angefasst wird. Ohne das Streichen der Kommentare verlangte diese
+        // Ratsche die Aenderung eines Kommentars — gemessen 141 statt 137.
+        expect(alleInline.map(d => d.anker)).not.toContain(
+            'ui/editors/rich-text-insert.js:872'
+        );
+        const roh = fs.readFileSync(
+            path.join(REPO, 'ui/editors/rich-text-insert.js'),
+            'utf8'
+        );
+        expect(roh).toContain('font-size: 1.3em');
+    });
+
+    test('GEGENPROBE: die Schriftwahl des Editors ist Funktion, nicht Gestaltung', () => {
+        // `element.style.fontSize = sizeValue` setzt um, was der Nutzer im
+        // Auswahlfeld gewaehlt hat; die dritte Stelle setzt es zurueck. Keine
+        // der drei schreibt `font-size:` und keine darf ein Token bekommen —
+        // ein Token waere hier eine feste Groesse an einer Stelle, deren Zweck
+        // die freie Wahl ist (Arbeitsregel 10).
+        const rt = fs.readFileSync(path.join(REPO, 'ui/editors/rich-text.js'), 'utf8');
+        expect([...rt.matchAll(/\.style\.fontSize\s*=/g)].length).toBe(3);
+        expect(alleInline.filter(d => d.datei === 'ui/editors/rich-text.js').length).toBe(0);
+    });
+
+    test('GEGENPROBE: die ausgenommenen Dateien sind namentlich ausgenommen', () => {
+        // Die Ausnahme ist eine DATEI und keine Zahl: waechst sie, waechst
+        // kein Zaehler still mit. `loader.js` bleibt im Geltungsbereich der
+        // GEWICHTS-Schranke und der SVG-Schranke — ausgenommen sind nur seine
+        // Schriftgroessen, und zwar weil Ladeanzeige und Fehlerschirm ohne
+        // wirkendes Stilblatt richtig aussehen muessen (Begruendung in
+        // tools/typo-map.js).
+        expect(AUSGENOMMEN).toEqual(['loader.js', 'features/shops/shop-export.js']);
+        AUSGENOMMEN.forEach(f => expect(fs.existsSync(path.join(REPO, f))).toBe(true));
+        // ... und die Erhebung SIEHT loader.js wirklich, sie laesst es nur im
+        // Urteil aus. Sonst waere die Ausnahme nicht nachpruefbar.
+        expect(alleInline.filter(d => d.datei === 'loader.js').length).toBe(5);
+        // shop-export.js traegt gemessen 17 Stellen und ist schon aus der
+        // Dateimenge heraus (AUSGENOMMENE_DATEIEN) — doppelt genannt, damit
+        // eine andere Bildung der Dateimenge die Ausnahme nicht verliert.
+        expect(alleInline.map(d => d.datei)).not.toContain('features/shops/shop-export.js');
+    });
+
+    test('GEGENPROBE: die Erlaubnis kommt aus der Tabelle und trifft wirklich', () => {
+        // `erlaubtRegex()` kommt aus tools/typo-map.js; hier steht keine
+        // zweite Aufzaehlung von Tokennamen (O-4 / ARCH-01, zugesichert in
+        // tests/unit/typo-map.test.js, "es gibt kein zweites Verzeichnis der
+        // Skalentokens" — die EINE Nennung unten ist dort namentlich
+        // verbucht). Ohne diese drei Zeilen koennte jede gruene Zusicherung
+        // oben auch daran liegen, dass die Erlaubnis ALLES durchlaesst.
+        expect(ERLAUBT.test('var(--text-sm)')).toBe(true);
+        expect(ERLAUBT.test('0.85em')).toBe(false);
+        expect(ERLAUBT.test('12px')).toBe(false);
+        expect(ERLAUBT.test('0.8rem')).toBe(false);
+    });
+
+    test('VERWESUNGSPROBE: jede geduldete Stelle trifft eine Deklaration', () => {
+        const vorhanden = new Set(alleInline.map(d => d.anker));
+        expect(Object.keys(GEDULDET).filter(k => !vorhanden.has(k))).toEqual([]);
+        // ... und jede Duldung nennt eine Zahl in Bildpunkten. Eine Ausnahme
+        // ohne Messwert ist eine Meinung.
+        Object.entries(GEDULDET).forEach(([k, grund]) => {
+            expect(typeof grund).toBe('string');
+            expect(grund).toMatch(/\d+(?:[.,]\d+)?\s*px/);
+            expect(k).toMatch(/:\d+$/);
+        });
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 8 — W5-R-10: die Zielquote
+   ===========================================================================
+
+   WORUEBER DIESE RATSCHE URTEILT, UND WORUEBER AUSDRUECKLICH NICHT. Der
+   Handoff verlangt "mindestens 95 Prozent aller Schriftgroessen auf einem
+   Skalenwert". Diese Zahl ist nur so viel wert wie ihre BEZUGSMENGE, und die
+   fehlte im Handoff — genau das haelt O-13 fest.
+
+   AUF DER ELEMENTMENGE IST 95 PROZENT ARITHMETISCH UNERREICHBAR. Mit der
+   Emoji-Ausnahme (E-3) bleiben Ikonen und Avatar-Platzhalter bewusst neben
+   der Skala; dazu kommen die Kleinst-Ausnahmen (E-4) und die Leser der
+   Mobilvergroesserung (E-2). Der gemessene Ausgangswert jener Rechnung war
+   63,36 Prozent SICHTBARER ELEMENTE auf einem Skalenwert (erhoben mit
+   `tools/typo-baseline.js`, Feld `skalaAnteilSichtbar`). Eine Zielzahl, die
+   man beim Aufschreiben schon nicht halten kann, wird beim ersten roten Lauf
+   gesenkt statt erfuellt — und bewacht ab dann nichts.
+
+   DIE BEZUGSMENGE IST DESHALB DIE TEXT-DEKLARATION, und sie ist hier
+   AUSGERECHNET und nicht behauptet: alle `font-size`-Deklarationen im
+   Geltungsbereich MINUS die namentlich geduldeten Stellen, die keinen
+   Lesetext tragen (Emoji-Ikonen, Avatar-Platzhalter, der Zauberplatz-Punkt,
+   die zwei Aufklapp-Pfeile und die zwei Histogramm-Beschriftungen in
+   Benutzereinheiten). Was in der Menge BLEIBT, sind die drei Duldungen, die
+   sehr wohl Text betreffen — die sechs Ueberschriftenstufen des
+   Reichtext-Inhalts, die vier Leser der Mobilvergroesserung und die
+   Tastenhilfe. Sie DRUECKEN die Quote, und das sollen sie: eine Quote, aus
+   der jede unbequeme Stelle herausdefiniert ist, ist eine Tautologie.
+
+   WAS DIE ZAHL AM ENDE DER WELLE 5 IST: 98,68 Prozent (820 von 831), bei
+   95,68 Prozent ueber ALLE 857 Deklarationen. Beide Zahlen stehen unten, weil
+   die zweite die erste nachpruefbar macht.
+   =========================================================================== */
+
+describe('W5-R-10 — die Zielquote auf der Textmenge (Ratsche)', () => {
+    /** Die Zielquote des Handoffs (Paragraph 3.7), bezogen auf die
+     *  TEXT-Deklarationen (O-13). Diese Zahl darf nur STEIGEN. */
+    const QUOTE_MIN = 95;
+
+    /** Die geduldeten Stellen OHNE Lesetext. Sie verlassen die Bezugsmenge.
+     *  17 werden vom Ikonenmuster aus `tools/typo-map.js` erkannt; die sieben
+     *  darunter nicht, und jede nennt ihren Grund, weil "kein Lesetext" bei
+     *  ihnen NICHT aus dem Namen folgt. */
+    const OHNE_LESETEXT = [
+        'dashboard.css||.slot-pip||font-size', // 18-px-Kreis ohne Textinhalt
+        'dice.css||.dice-roll-btn||font-size', // Knopf mit NUR einem Emoji (🎲)
+        'tools.css||.timer-ctrl-btn||font-size', // Knopf mit NUR einem Zeichen (▶️ / ↺)
+        'party.css||.wiki-tree-item-toggle||font-size', // Aufklapp-Pfeil ▶
+        'editors.css||.editor-toolbar .tb-caret||font-size', // Aufklapp-Pfeil ▾
+        'tools.css||.ds-hist-face-label||font-size', // SVG-Benutzereinheit
+        'tools.css||.ds-hist-axis-label||font-size' // SVG-Benutzereinheit
+    ];
+
+    const ERLAUBT = TYPO_MAP.erlaubtRegex();
+    const alle10 = typoAlle('font-size');
+
+    function nichtText() {
+        return new Set([
+            ...Object.keys(TYPO_MAP.AUSNAHMEN).filter(a =>
+                TYPO_MAP.istIkon(a.split('||')[1])
+            ),
+            ...OHNE_LESETEXT
+        ]);
+    }
+
+    function mengen() {
+        const nt = nichtText();
+        const text = alle10.filter(d => !nt.has(typoAnker(d)));
+        const aufSkala = text.filter(
+            d =>
+                ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()) ||
+                /^inherit$/.test(d.wert)
+        );
+        return { text, aufSkala };
+    }
+
+    test('W5-R-10: mindestens 95 Prozent der Text-Deklarationen liegen auf der Skala', () => {
+        const { text, aufSkala } = mengen();
+        const quote = Math.round((aufSkala.length / text.length) * 10000) / 100;
+        const daneben = text
+            .filter(d => !aufSkala.includes(d))
+            .map(d => `${d.datei}:${d.zeile}  ${d.selektoren} { font-size: ${d.wert} }`);
+        if (quote < QUOTE_MIN) {
+            expect({ quote, text: text.length, aufSkala: aufSkala.length, daneben }).toEqual({
+                quote: QUOTE_MIN,
+                text: text.length,
+                aufSkala: text.length,
+                daneben: []
+            });
+        }
+        expect(quote).toBeGreaterThanOrEqual(QUOTE_MIN);
+    });
+
+    test('SELBSTPROBE: die Bezugsmenge ist ausgerechnet und beziffert', () => {
+        // Ohne diese Zahlen ist die Quote oben durch VERKLEINERN der
+        // Bezugsmenge erfuellbar: wer eine unbequeme Stelle als "kein
+        // Lesetext" fuehrt, hebt die Quote ohne eine Zeile CSS.
+        const { text, aufSkala } = mengen();
+        expect(nichtText().size).toBe(24);
+        expect(alle10.length - text.length).toBe(26);
+        expect(text.length).toBeGreaterThanOrEqual(831);
+        expect(aufSkala.length).toBeGreaterThanOrEqual(820);
+        // Die Quote ueber ALLE Deklarationen daneben — sie ist die
+        // Gegenrechnung und liegt gemessen ebenfalls ueber 95 Prozent. Waere
+        // sie es nicht, waere die Textquote eine Rechnung, die ihre Aussage
+        // aus dem Ausschluss zieht.
+        const alleAufSkala = alle10.filter(
+            d =>
+                ERLAUBT.test(d.wert.replace(/\s*!important$/, '').trim()) ||
+                /^inherit$/.test(d.wert)
+        );
+        expect((alleAufSkala.length / alle10.length) * 100).toBeGreaterThanOrEqual(95);
+    });
+
+    test('GEGENPROBE: die drei TEXT-Duldungen bleiben in der Bezugsmenge', () => {
+        // Das ist der Kern von O-13. Sechs Ueberschriftenstufen (ein
+        // Verhaeltnis zu ihrem Behaelter), vier Leser der Mobilvergroesserung
+        // (unter 16 px loest ein Telefon den Auto-Zoom aus, E-2) und die
+        // Tastenhilfe (Hebung erzeugt Ueberlappung) sind geduldet, aber sie
+        // sind TEXT. Wer sie herausnimmt, bekommt 100 Prozent und hat nichts
+        // gemessen.
+        const nt = nichtText();
+        const drin = [
+            'spells.css||.floating-toolbar .kbd-hint||font-size',
+            'command-palette.css||.cp-result-label||font-size',
+            'file-backup.css||.backup-entry-name||font-size',
+            'pwa.css||.pwa-install-btn||font-size',
+            'pwa.css||.pwa-update-banner||font-size'
+        ];
+        drin.forEach(a => {
+            expect(TYPO_MAP.AUSNAHMEN[a]).toBeDefined();
+            expect(nt.has(a)).toBe(false);
+        });
+        // ... und die sechs Ueberschriftenstufen ebenfalls, ueber ihren
+        // GEBAUTEN Selektor statt ueber 230 abgeschriebene Zeichen.
+        // `ueberschriftAnker()` taugt dafuer nicht: sein Schluessel endet auf
+        // dem WERT (`1.3em !important`), weil er die Kettenliste bedient —
+        // die Ausnahmeliste endet auf der EIGENSCHAFT.
+        [1, 2, 3, 4, 5, 6].forEach(n => {
+            const a = TYPO_MAP.anker(
+                'party.css',
+                TYPO_MAP.REICHTEXT_BEHAELTER.map(b => `${b} h${n}`).join(', '),
+                'font-size'
+            );
+            expect(TYPO_MAP.AUSNAHMEN[a]).toBeDefined();
+            expect(nt.has(a)).toBe(false);
+        });
+        // Zusammen 11 geduldete TEXT-Stellen — genau die Differenz zwischen
+        // der Ausnahmeliste (35) und der Nicht-Text-Menge (24).
+        expect(Object.keys(TYPO_MAP.AUSNAHMEN).length - nt.size).toBe(11);
+    });
+
+    test('VERWESUNGSPROBE: jede Stelle der Nicht-Text-Menge gibt es wirklich', () => {
+        const vorhanden = new Set(Object.keys(TYPO_MAP.AUSNAHMEN));
+        expect(OHNE_LESETEXT.filter(a => !vorhanden.has(a))).toEqual([]);
+        const ankerImBaum = new Set(alle10.map(typoAnker));
+        expect(OHNE_LESETEXT.filter(a => !ankerImBaum.has(a))).toEqual([]);
+        // Und das Ikonenmuster trifft wirklich 17 — nicht 0, was die Menge
+        // still auf sieben schrumpfen liesse.
+        expect(
+            Object.keys(TYPO_MAP.AUSNAHMEN).filter(a => TYPO_MAP.istIkon(a.split('||')[1]))
+                .length
+        ).toBe(17);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 5, Schritt 4 — W5-R-07: die Urteilsstellen
+   ===========================================================================
+
+   WAS DIESER BLOCK BEWACHT. Schritt 4 beurteilt die Deklarationen, deren
+   Sprung auf die Skala GROESSER ALS 2 px ist — die Schwelle, die das
+   Abnahmekriterium des Handoffs nennt ("keine Aenderung > 2 px ausser
+   beabsichtigt"). Alles darunter ist mechanische Nachschlagearbeit und
+   gehoert dem Schritt 5. Hier entscheidet ein Mensch, und zwar je Stelle:
+   bleibt sie neben der Skala (Entscheidung E-3: Emoji-Ikonen und
+   Avatar-Platzhalter) oder kommt sie auf eine Sprosse (es ist Text)?
+
+   DIE GEFAHR, GEGEN DIE ER ANGELEGT IST, ist nicht die falsche Entscheidung —
+   die steht mit ihrer Begruendung in `tools/typo-map.js` und ist bestreitbar.
+   Sie ist das STILLE NACHRUTSCHEN: eine Ausnahmeliste, in die ein spaeterer
+   Schritt eine unbequeme Stelle schiebt, weil das billiger ist als sie zu
+   beurteilen. Jeder solche Eintrag senkt die Schranke W5-R-05a um eins und
+   sieht dabei wie Fortschritt aus. Darum ist die Liste hier GESCHLOSSEN
+   aufgezaehlt und wird mit der Datei abgeglichen — in BEIDEN Richtungen.
+
+   BAUART WIE `RUHE_AUSNAHME` IN R-04 (oben in dieser Datei): eine Ausnahme
+   gilt nur MIT ihrem gemessenen Wert. Dort ist es ein Kontrastverhaeltnis,
+   hier ein Bildpunktwert. Beides hat denselben Zweck — eine Ausnahme ohne
+   Zahl ist eine Meinung, eine Ausnahme mit Zahl ist eine Aussage, die
+   schlechter werden KANN und dann auffaellt.
+
+   WIE DIE ZAHLEN ERHOBEN SIND. Im Browser, auf gefuellter Kampagne
+   (`seedPopulatedSession`), bei 1440 und 375 px, dark — 24 Ansichten, die
+   zwoelf Aufklapp-Formulare, Wuerfelpaneel, Schnellreferenz, Charaktermodal,
+   Generatormodal, und fuer Wiki und Encounter mit eigens angelegten
+   Eintraegen, weil die Saat gemessen KEINE Wiki-Eintraege und KEINE Encounter
+   fuehrt. 30 der 31 Deklarationen sind damit unmittelbar gemessen.
+
+   DER ELTERNWERT IST UEBERALL 16 px — gemessen, nicht angenommen, und bei
+   BEIDEN Breiten. Das ist der Grund, warum die em-Werte der Ikonen durch
+   ihren Bildpunktwert ersetzt werden duerfen: die Umschreibung ist exakt
+   (Delta 0,00 px), und sie nimmt der Schranke 2 von W5-R-05 nicht ihren
+   Zielwert. Eine geduldete Stelle, die in `em` stehenbleibt, wird von jener
+   Schranke MITGEZAEHLT — sie verbietet die EINHEIT und nicht den Wert. Mit 21
+   geduldeten em-Deklarationen waere ihr Zielwert 27 statt 6 gewesen, und eine
+   Schranke, deren Ziel ihre eigene Ausnahme verbietet, verspricht etwas, das
+   sie nicht halten kann (uebergeben aus Schritt 3, dort als Falle benannt).
+
+   SIEBEN DER 21 SITZEN IN EINEM KASTEN MIT PIXELMASS (`.loc-item-icon` 44x44,
+   `.loc-detail-icon` und `.enc-detail-icon` 56x56, `.enc-item-icon` 40x40,
+   `.npc-item-avatar` 44x44, `.timer-ctrl-btn` 50x50, `.dice-roll-btn` 50x44).
+   Fuer sie ist px nicht nur Buchhaltung, sondern die richtige Einheit: ein
+   Zeichen, das mitwaechst, waehrend sein Kasten es nicht tut, laeuft ueber.
+
+   WAS DIESER BLOCK NICHT ENTSCHEIDET, und es muss hier stehen, damit es nicht
+   als entschieden gilt: E-3 nennt 66 von 853 Deklarationen, die neben der
+   Skala bleiben; die Kandidatenmenge nach Namensmuster ist gemessen 73.
+   Dieser Schritt hat die 22 IKONEN mit Sprung ueber 2 px beurteilt (die 23.
+   geduldete Zeile, die Tastenhilfe, ist nach Namensmuster keine Ikone und
+   zaehlt in dieser Rechnung nicht mit). Die uebrigen 54
+   Ikon-Deklarationen springen um 2 px oder weniger und sind NICHT beurteilt —
+   seine Ratsche begrenzt ihn ausdruecklich auf die eigenen Anker ("waechst um
+   genau diese Anker und keinen mehr"). Ob Schritt 5 sie mechanisch auf eine
+   Sprosse hebt (dann ist E-3 fuer sie nicht erfuellt, mit <= 2 px Wirkung)
+   oder ob sie ebenfalls geduldet werden, muss DORT entschieden und begruendet
+   werden. Diese Stelle sagt nur, dass es offen ist.
+
+   NACHTRAG DES SCHRITTES 5, und er beantwortet genau die zwei Fragen, die der
+   Absatz darueber offen gelassen hat.
+     (1) DIE 54 IKON-KANDIDATEN WERDEN MECHANISCH GEHOBEN, weil ihr Sprung
+         gegen den GEMESSENEN Wert innerhalb von 2 px bleibt; E-3 ist fuer sie
+         also nicht erfuellt, und die Wirkung ist
+         der Rahmen, den das Abnahmekriterium des Handoffs pauschal deckt. Der
+         Gegenweg — sie zu dulden — haette die Ausnahmeliste von 32 auf 86
+         Anker getrieben, und eine Ausnahmeliste, die den groesseren Teil des
+         Befundes umfasst, bewacht nichts mehr (dieselbe Lehre wie O-5). Er
+         waere ueberdies an W5-R-07e gescheitert, das sie namentlich NICHT
+         geduldet sehen will.
+         HIER STAND EINE FALSCHE MESSUNG, und sie ist der Befund der
+         Pruefrunde W5-D/1. Der Satz lautete: "Gemessen springt KEINE von
+         ihnen um mehr als 2 px (Spanne -2,00 .. +2,00 px, mehrere bei 0,00)".
+         Diese Spanne war gegen den ANGENOMMENEN Altwert gerechnet — em mal
+         einer 16-px-Wurzel, so wie `altPx()` es tut und wie es sich selbst
+         eine Annahme nennt. Nachgemessen im Browser ging Nummer 18 der Liste,
+         `party.css .rest-type-icon`, um +7,33 px und nicht um +2,00: ihr
+         Elternteil ist ein <button> ohne App-Deklaration, und dort gilt die
+         Browser-Vorgabe 13,3333 px. Die Stelle traegt jetzt eine
+         Sonderzuordnung auf --text-2xl (Sprung -0,67 px, Begruendung in
+         `tools/typo-map.js`), damit der Satz oben wieder stimmt — sie bleibt
+         also in der mechanischen Menge und nicht in der Ausnahmeliste, und
+         die 54 bleiben 54. Was den Satz heute traegt, ist eine eigene
+         Erhebung ueber 49 Zustaende (24 Ansichten mit geoeffneten
+         Aufklapp-Formularen plus 24 geoeffnete Modale, gefuellte Kampagne, am
+         VOR-Buendel): von 207 sichtbaren em-Regeln sitzen 28 auf einem
+         Elternwert ungleich 16 px, und ueber die 2-px-Abnahme ging GENAU
+         diese eine. Bewacht von tests/unit/typo-map.test.js, Block W5-W12.
+         WAS DAMIT NICHT GEMESSEN IST, und es gehoert hierher, damit es nicht
+         als gemessen gilt: 21 em-Stellen mit Faktor >= 1,2 liessen sich in
+         keinem der 49 Zustaende rendern (u.a. `.avatar-placeholder.avatar-lg`,
+         `.loot-detail-icon`, `.npc-popup-avatar-placeholder`,
+         `.rt-preview-icon`, `.generator-table-icon`). Fuer sie traegt die
+         16-px-Annahme weiterhin UNGEPRUEFT. Das ist eine offene Messschuld
+         und in der Aktenlage als solche gefuehrt.
+     (2) DIE LISTE WAECHST UM GENAU EINEN ANKER, `.tb-caret`, und das ist
+         keine Ikone, sondern eine ZUSICHERUNG, die sonst gebrochen waere:
+         `.wiki-tree-item-toggle` und `.tb-caret` sind dasselbe Zeichen in
+         derselben Rolle und muessen dieselbe Antwort bekommen (Schritt 4, an
+         drei Stellen aufgeschrieben). `.tb-caret` springt um +2,00 px und
+         liegt damit INNERHALB der mechanischen Menge, sein Zwilling um
+         +3,00 px und ausserhalb — der Lauf haette genau eines gehoben. Die
+         Hebung ist gemessen harmlos (Zahlen in `tools/typo-map.js`); sie
+         bleibt trotzdem aus, weil Schritt 8 fuer BEIDE entscheidet. Bewacht
+         von W5-R-07f.
+   =========================================================================== */
+
+describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
+    /**
+     * DIE GEDULDETEN: Emoji-Ikonen und Avatar-Platzhalter, die neben der
+     * Skala bleiben (E-3), plus das Aufklapp-Pfeilzeichen des Wiki-Baums und
+     * — als einzige Zeile mit Lesetext — die Tastenhilfe der schwebenden
+     * Werkzeugleiste.
+     * Eine Zeile je DEKLARATION, mit dem alten Wert, dem neuen Wert und dem
+     * GEMESSENEN Bildpunktwert. Zwei Selektoren stehen zweimal, weil sie
+     * neben ihrer Grundregel eine Media-Query-Fassung haben; ihr Anker ist
+     * zeilenfrei und deckt beide, und das ist Absicht — eine Ikone, die in
+     * der Grundregel neben der Skala steht und in der Mobilfassung darauf,
+     * waere an zwei Breiten nach zwei Maszstaeben bemessen.
+     *
+     * `.editor-toolbar .tb-caret` ist die 24. Zeile und die einzige, die
+     * SCHRITT 5 hinzugefuegt hat. Sie steht weder aus E-3 (kein Emoji) noch
+     * aus einer Nebenwirkung (die Hebung auf 11 px ist gemessen harmlos:
+     * Knopf +1,67 px, Hoehe 30 px und Leiste 43 px unveraendert, Spalt 7,00
+     * px, bei 1440 UND 375 px), sondern aus einer ZUSICHERUNG: sie traegt
+     * dasselbe Pfeilzeichen in derselben Rolle wie `.wiki-tree-item-toggle`,
+     * und Schritt 4 hat beide aneinander gebunden. +2,00 px liegen in der
+     * mechanischen Menge des Schrittes 5, die +3,00 px des Zwillings nicht —
+     * der Lauf haette genau eines gehoben. Bewacht von W5-R-07f.
+     *
+     * `.floating-toolbar .kbd-hint` steht hier NICHT aus E-3 — sie traegt
+     * Lesetext und gehoerte nach E-4 auf die Untergrenze. Sie steht hier aus
+     * einer MESSUNG: auf 11 px gehoben ueberlappen die fuenf Hilfen
+     * (-2,80 / -3,09 px; breite Linux-Naeherung -8,20 / -8,68), weil sie
+     * absolut unter ihren Knoepfen haengen und ihr Abstand der Abstand der
+     * Knoepfe ist. Die Zusicherung dazu steht in
+     * tests/e2e/features/tastenhilfen.spec.js; ueber die Untergrenze
+     * entscheidet Schritt 8 gemeinsam mit der Layoutregel. Sie liegt in
+     * dieser Liste, weil die Liste "nicht auf der Skala" bedeutet und nicht
+     * "ist eine Ikone" — W5-R-07e zaehlt die Ikon-Kandidaten eigens nach
+     * Namensmuster und wird davon nicht beruehrt.
+     */
+    const URTEIL_IKON = [
+        ['dmscreen.css', '.empty-state-icon', '3.5em', '56px', 56],
+        ['npcs.css', '.loc-empty-icon, .loc-empty-state .empty-state-icon', '3.5em', '56px', 56],
+        ['party.css', '.wiki-detail-empty .empty-state-icon', '3.5em', '56px', 56],
+        [
+            'core.css',
+            '.detail-empty-icon, .loc-detail-empty-icon, .npc-detail-empty-icon, ' +
+                '.loot-detail-empty-icon, .enc-detail-empty-icon, .bestiary-detail-empty-icon',
+            '3em',
+            '48px',
+            48
+        ],
+        ['encounters.css', '.enc-empty-icon', '3em', '48px', 48],
+        ['npcs.css', '.npc-empty-icon', '3em', '48px', 48],
+        ['tools.css', '.rt-empty-icon', '3em', '48px', 48],
+        ['tools.css', '.generator-empty-icon', '3em', '48px', 48],
+        ['party.css', '.cf-avatar-placeholder', '2.5em', '40px', 40],
+        ['core.css', '.char-modal-avatar-placeholder', '1.8em', '28.8px', 28.8],
+        ['core.css', '.loc-detail-icon', '1.8em', '28.8px', 28.8],
+        ['dashboard.css', '.dash-char-avatar', '1.8em', '28.8px', 28.8],
+        ['encounters.css', '.enc-detail-icon', '1.8em', '28.8px', 28.8],
+        ['encounters.css', '.enc-detail-icon', '1.4em', '22.4px', 22.4],
+        ['core.css', '.loc-item-icon', '1.4em', '22.4px', 22.4],
+        ['dashboard.css', '.qref-fab-icon', '1.4em', '22.4px', 22.4],
+        ['dice.css', '.dice-roll-btn', '1.4em', '22.4px', 22.4],
+        ['encounters.css', '.enc-item-icon', '1.4em', '22.4px', 22.4],
+        ['encounters.css', '.enc-item-icon', '1.1em', '17.6px', 17.6],
+        ['npcs.css', '.npc-item-avatar', '1.4em', '22.4px', 22.4],
+        ['tools.css', '.timer-ctrl-btn', '1.4em', '22.4px', 22.4],
+        ['party.css', '.wiki-tree-item-toggle', '8px', '8px', 8],
+        ['spells.css', '.floating-toolbar .kbd-hint', '8px', '8px', 8],
+        ['editors.css', '.editor-toolbar .tb-caret', '9px', '9px', 9]
+    ].map(([datei, sel, alt, neu, gemessen]) => ({ datei, sel, alt, neu, gemessen }));
+
+    /**
+     * DIE AUF DIE SKALA KOMMENDEN: Zahlen und Text. Je Zeile der alte Wert,
+     * der GEMESSENE Bildpunktwert und das Zieltoken. Alle acht folgen der
+     * Zuordnungstabelle in `tools/typo-map.js` — keine braucht eine
+     * Sonderzuordnung, und das ist der Beleg dafuer, dass die Tabelle fuer
+     * Text taugt und der Streit nur ueber die Ikonen ging.
+     *
+     * ES WAREN NEUN. `.floating-toolbar .kbd-hint` ist in Pruefrunde 1
+     * zurueckgenommen worden und steht jetzt in URTEIL_IKON — nicht weil die
+     * Zuordnung sie verfehlt haette (sie traf: 8 px -> `--text-xs`), sondern
+     * weil die Hebung gemessen Ueberlappung erzeugt. Die Begruendung steht
+     * dort und bei der Ausnahme in `tools/typo-map.js`.
+     *
+     * `gemessen: null` steht fuer die EINE Stelle, die kein Element hat; ihr
+     * Grund steht in OHNE_MESSUNG. Eine 0 waere dort eine Behauptung.
+     *
+     * DAS ZIEL STEHT ALS KURZNAME und wird mit `TYPO_MAP.token()` zum
+     * Tokennamen gemacht. Das ist kein Geschmack: W5-W4 in
+     * `tests/unit/typo-map.test.js` zaehlt, wie oft ein Skalentokenname in
+     * DIESER Datei vorkommt, und faellt bei jeder zweiten Aufzaehlung — der
+     * Kern von O-4 (eine Liste je Anlagenart; ARCH-01 hat die Lehre schon
+     * einmal bezahlt). Acht ausgeschriebene Tokennamen waeren genau so eine
+     * zweite Aufzaehlung. Ueber `token()` gibt es sie nicht, und ein
+     * umbenanntes Token faellt trotzdem auf: W5-R-07d prueft, dass das Ziel
+     * in `SKALA_TOKENS` steht.
+     */
+    const URTEIL_TEXT = [
+        ['dice.css', '.fdp-number', '3em', 48, '3xl'],
+        ['tools.css', '.timer-hero-time', '3em', 48, '3xl'],
+        ['dashboard.css', '.dice-result-main', '4em', null, 'hero'],
+        ['dice.css', '.dice-hero-result', '5em', 80, 'hero'],
+        ['loot.css', '.checkout-amount', '1.8em', 28.8, '2xl'],
+        ['dashboard.css', '.char-attr-box .attr-input', '1.4em', 22.4, 'xl'],
+        ['dmscreen.css', '.dms-dice-result', '1.4em', 22.4, 'xl'],
+        ['party.css', '.wiki-detail-title', '1.4em', 22.4, 'xl']
+    ].map(([datei, sel, alt, gemessen, kurz]) => ({
+        datei,
+        sel,
+        alt,
+        gemessen,
+        ziel: TYPO_MAP.token(kurz)
+    }));
+
+    /** Die EINE Stelle ohne Messung, mit ihrem Grund. Namentlich, damit sie
+     *  nicht als gemessen durchgeht und nicht stillschweigend wachsen kann. */
+    /**
+     * DIE EINE STELLE, DIE NICHT WEGEN IHRES SPRUNGS DABEI IST.
+     *
+     * Die Menge dieses Schrittes ist "Sprung ueber 2 px". `.enc-item-icon`
+     * hat neben seiner Grundregel (1.4em = 22,4 px, Sprung -2,40) eine
+     * Mobilfassung unter `@media (max-width: 600px)` mit 1.1em = 17,6 px;
+     * deren Sprung waere -1,60 px und gehoerte damit dem Schritt 5.
+     *
+     * Sie ist trotzdem hier, und zwar ZWANGSLAEUFIG: der Anker der
+     * Ausnahmeliste ist zeilenfrei (`datei||selektoren||prop`), also deckt
+     * ein Eintrag fuer `.enc-item-icon` BEIDE Deklarationen. Die Alternative
+     * waere gewesen, die Mobilfassung auf eine Sprosse zu heben, waehrend die
+     * Grundregel neben der Skala bleibt — dieselbe Ikone, an zwei Breiten
+     * nach zwei Maszstaeben bemessen. Gemessen schrumpft ihr Kasten dort von
+     * 40x40 auf 32x32 px; das Zeichen folgt dem Kasten, und das ist genau die
+     * Logik, nach der die Ikonen px tragen und keine Sprosse.
+     *
+     * Dasselbe gilt fuer `.enc-detail-icon`, nur faellt es dort nicht auf:
+     * dessen Media-Fassung (1.4em = 22,4 px, Sprung -2,40) ist ohnehin eine
+     * Urteilsstelle. Deshalb steht hier EINE Stelle und nicht zwei.
+     */
+    const MITGEZOGEN = {
+        'encounters.css||.enc-item-icon||1.1em':
+            '17,6 px gemessen, Sprung -1,60 px — unter der 2-px-Schwelle. Mitgezogen, ' +
+            'weil der zeilenfreie Anker der Ausnahmeliste die Grundregel (22,4 px) und ' +
+            'diese Mobilfassung gemeinsam fuehrt.'
+    };
+
+    const OHNE_MESSUNG = {
+        'dashboard.css||.dice-result-main||font-size':
+            '0 Elemente. `#dice-result` existiert im Markup nicht; die Regel wird nur ' +
+            // KURZFORM DES MODULPFADES, mit Absicht — sie sieht wie eine
+            // Umgehung aus und muss darum begruendet werden. Das
+            // Abdeckungs-Gate in tests/unit/module-test-coverage.test.js
+            // sucht einen Modulpfad als Teilzeichenkette in allen
+            // Testdateien und zaehlt JEDEN Treffer als Abdeckung, auch einen
+            // im Erklaertext. Dieser Fall LIEST dice-core.js nicht und
+            // urteilt nicht darueber; er nennt es als Grund, warum eine
+            // CSS-Regel kein Element hat. Mit vollem Pfad haette das Gate
+            // verlangt, das Modul von seiner datierten Ausnahmeliste zu
+            // streichen — und damit eine Abdeckung behauptet, die es nicht
+            // gibt. Es gibt genau EINE dice-core.js im Baum.
+            'vom Rueckfallpfad in dice-core.js:372 angesprochen, und der ' +
+            'findet seinen Behaelter nie (gemessen auf der Wuerfelansicht nach einem ' +
+            'Wurf: 0 Treffer fuer .dice-result-main, #dice-result nicht vorhanden). Der ' +
+            'tote Behaelter ist ein eigener Befund und in der Aktenlage gefuehrt; die ' +
+            'Zuordnung folgt hier der 16-px-Wurzel, die an allen 30 uebrigen ' +
+            'Urteilsstellen gemessen zutrifft.'
+    };
+
+    /** Der Ausgangsbestand der Ausnahmeliste, so wie Schritt 3 ihn uebergab:
+     *  fuenf Stellen des Vorlaufs und die sechs Ueberschriftenregeln des
+     *  Reichtext-Inhalts. Die sechs werden GEBAUT und nicht abgeschrieben —
+     *  ihr Selektor ist 230 Zeichen lang, und sechs abgeschriebene Fassungen
+     *  waeren sechs Gelegenheiten fuer einen Tippfehler. */
+    const VORLAUF = [
+        'dashboard.css||.slot-pip||font-size',
+        'command-palette.css||.cp-result-label||font-size',
+        'file-backup.css||.backup-entry-name||font-size',
+        'pwa.css||.pwa-install-btn||font-size',
+        'pwa.css||.pwa-update-banner||font-size',
+        ...[1, 2, 3, 4, 5, 6].map(n =>
+            TYPO_MAP.anker(
+                'party.css',
+                TYPO_MAP.REICHTEXT_BEHAELTER.map(b => `${b} h${n}`).join(', '),
+                'font-size'
+            )
+        )
+    ];
+
+    /** Die zwei Anker, die SCHRITT 8 der Ausnahmeliste hinzufuegt — und zwar
+     *  als ZUGANG, nicht als Umbuchung: vorher gab es an diesen Stellen keine
+     *  CSS-Deklaration, sondern zwei SVG-Praesentationsattribute in einer
+     *  Zeichenkette (`font-size="8"` und `="7"` in
+     *  features/dice-stats/dice-stats-render.js). Sie standen damit ausserhalb
+     *  JEDER Pruefung dieses Projekts; das ist der Befund, den O-7 eine eigene
+     *  Kategorie nennt. Als Klasse sind sie jetzt gewoehnliche Deklarationen
+     *  und werden hier geurteilt wie jede andere Groesse.
+     *  Sie stehen in einer EIGENEN Liste und nicht in URTEIL_IKON, weil sie
+     *  kein Ikon sind und weil ihr Urteil einen anderen Grund hat: nicht "kein
+     *  Lesetext", sondern "die Zahl ist eine Benutzereinheit in einer viewBox,
+     *  und ihre Lesbarkeit haengt an der Skalierung" — gemessen wirken die 8
+     *  Einheiten 11,34 px bei 1440 und 5,44 px bei 375 px Fensterbreite. Die
+     *  volle Begruendung steht an beiden Deklarationen und in
+     *  tools/typo-map.js. */
+    const URTEIL_SVG = [
+        ['tools.css', '.ds-hist-face-label', '8px'],
+        ['tools.css', '.ds-hist-axis-label', '7px']
+    ];
+
+    const ankerVon = e => TYPO_MAP.anker(e.datei, e.sel, 'font-size');
+    const alleGroessen07 = typoAlle('font-size');
+    /** Alle Deklarationen je Anker — ein Anker kann mehrere haben (Grundregel
+     *  und Media-Query-Fassung), und genau das muss die Probe sehen. */
+    const nachAnker = new Map();
+    alleGroessen07.forEach(d => {
+        const a = typoAnker(d);
+        if (!nachAnker.has(a)) nachAnker.set(a, []);
+        nachAnker.get(a).push(d);
+    });
+
+    test('W5-R-07a: die Ausnahmeliste ist GENAU Vorlauf plus beurteilte Anker', () => {
+        // Beide Richtungen, und die zweite ist die wichtigere: ein Eintrag,
+        // den niemand aufgezaehlt hat, ist eine Entscheidung ohne Urteil.
+        const soll = [
+            ...new Set([
+                ...VORLAUF,
+                ...URTEIL_IKON.map(ankerVon),
+                ...URTEIL_SVG.map(e => TYPO_MAP.anker(e[0], e[1], 'font-size'))
+            ])
+        ].sort();
+        const ist = Object.keys(TYPO_MAP.AUSNAHMEN).sort();
+        const fehlt = soll.filter(k => !ist.includes(k));
+        const zuviel = ist.filter(k => !soll.includes(k));
+        expect({ fehlt, zuviel, n: ist.length }).toEqual({
+            fehlt: [],
+            zuviel: [],
+            n: soll.length
+        });
+        // ... und die Mengengroessen sind die gemessenen: 11 aus dem Vorlauf,
+        // 22 Anker fuer 24 beurteilte Deklarationen (20/22 Ikonen und das
+        // Pfeilzeichen des Wiki-Baums, dazu die Tastenhilfe aus Pruefrunde 1
+        // und, aus Schritt 5, das zweite Pfeilzeichen `.tb-caret`).
+        expect(VORLAUF.length).toBe(11);
+        expect(new Set(URTEIL_IKON.map(ankerVon)).size).toBe(22);
+        expect(URTEIL_IKON.length).toBe(24);
+        // ... und die zwei Zugaenge des Schrittes 8. Sie sind getrennt
+        // gezaehlt, damit nachlesbar bleibt, WANN die Liste von 33 auf 35
+        // gewachsen ist und warum.
+        expect(URTEIL_SVG.length).toBe(2);
+        expect(ist.length).toBe(35);
+    });
+
+    test('W5-R-07g: die zwei SVG-Beschriftungen tragen ihren Wert und ihre Klasse', () => {
+        // Drei Dinge zugleich, weil sie nur zusammen etwas aussagen:
+        // (1) die Deklaration steht im CSS und traegt genau den Wert, den die
+        //     Ausnahme behauptet — eine Ausnahme mit falschem Wert duldet
+        //     etwas anderes als sie sagt;
+        // (2) im JS steht KEIN `font-size`-Attribut mehr (sonst waere die
+        //     Verlegung halb geblieben und zwei Quellen wuerden streiten);
+        // (3) das JS nennt die Klasse wirklich — eine CSS-Regel ohne Traeger
+        //     ist toter Code, und der Dead-CSS-Bericht findet sie nicht,
+        //     weil ihr Name nur als Zeichenkette im JS steht.
+        const js = fs.readFileSync(
+            path.join(REPO, 'features/dice-stats/dice-stats-render.js'),
+            'utf8'
+        );
+        expect([...js.matchAll(/font-size\s*=/g)].length).toBe(0);
+        URTEIL_SVG.forEach(([datei, sel, wert]) => {
+            const a = TYPO_MAP.anker(datei, sel, 'font-size');
+            const ds = nachAnker.get(a) || [];
+            expect(ds.map(d => d.wert)).toEqual([wert]);
+            expect(TYPO_MAP.AUSNAHMEN[a]).toMatch(/\d+(?:[.,]\d+)?\s*px/);
+            expect(js).toContain(sel.slice(1));
+        });
+        // Die Seitenbeschriftung ist GROESSER als die Achsenbeschriftung, und
+        // das ist Absicht (die Achse hat 26 Benutzereinheiten Platz fuer bis
+        // zu drei Stellen). Ohne diese Zeile koennten die zwei Werte
+        // vertauscht werden, ohne dass etwas rot wird.
+        expect(parseFloat(URTEIL_SVG[0][2])).toBeGreaterThan(parseFloat(URTEIL_SVG[1][2]));
+    });
+
+    test('W5-R-07b: jede geduldete Urteilsstelle traegt GENAU ihren gemessenen Wert', () => {
+        // Ohne diese Probe koennte `28.8px` spaeter zu `28px` werden: die
+        // Ausnahmeliste bliebe gleich lang, W5-R-05a bliebe gruen, und 0,8 px
+        // waeren lautlos verschwunden.
+        const befunde = [];
+        URTEIL_IKON.forEach(e => {
+            const a = ankerVon(e);
+            const dekls = (nachAnker.get(a) || []).map(d => d.wert.replace(/\s*!important$/, ''));
+            if (!dekls.includes(e.neu)) {
+                befunde.push(
+                    `${e.datei} {${e.sel}} — erwartet "${e.neu}" (gemessen ${e.gemessen} px), ` +
+                        `gefunden [${dekls.join(' | ')}]`
+                );
+            }
+        });
+        expect({ offen: befunde.length, befunde: befunde.sort() }).toEqual({
+            offen: 0,
+            befunde: []
+        });
+    });
+
+    test('W5-R-07c: jede Ausnahme nennt eine Zahl in Bildpunkten', () => {
+        // Bauart RUHE_AUSNAHME: eine Ausnahme ohne Zahl ist eine Meinung.
+        const ohneZahl = Object.entries(TYPO_MAP.AUSNAHMEN)
+            .filter(([, grund]) => !/\d+([.,]\d+)?\s*px/.test(grund))
+            .map(([k]) => k);
+        expect(ohneZahl.sort()).toEqual([]);
+        // ... und keine Begruendung ist ein Halbsatz
+        const zuKurz = Object.entries(TYPO_MAP.AUSNAHMEN)
+            .filter(([, grund]) => grund.length < 60)
+            .map(([k]) => k);
+        expect(zuKurz.sort()).toEqual([]);
+    });
+
+    test('W5-R-07d: jede Textstelle traegt ihr Zieltoken, kein em und kein Literal', () => {
+        const befunde = [];
+        URTEIL_TEXT.forEach(e => {
+            const a = ankerVon(e);
+            const dekls = (nachAnker.get(a) || []).map(d => d.wert.replace(/\s*!important$/, ''));
+            const erwartet = `var(${e.ziel})`;
+            if (dekls.length !== 1 || dekls[0] !== erwartet) {
+                befunde.push(
+                    `${e.datei} {${e.sel}} — erwartet "${erwartet}" (war ${e.alt}, gemessen ` +
+                        `${e.gemessen === null ? '0 Elemente' : e.gemessen + ' px'}), ` +
+                        `gefunden [${dekls.join(' | ')}]`
+                );
+            }
+            // ... und das Ziel ist eine Sprosse der Skala, kein erfundener Name
+            if (!TYPO_MAP.SKALA_TOKENS.includes(e.ziel)) {
+                befunde.push(`${e.datei} {${e.sel}} — ${e.ziel} ist keine Sprosse der Skala`);
+            }
+        });
+        expect({ offen: befunde.length, befunde: befunde.sort() }).toEqual({
+            offen: 0,
+            befunde: []
+        });
+        expect(URTEIL_TEXT.length).toBe(8);
+        // ... und keine Textstelle steht in der Ausnahmeliste
+        expect(URTEIL_TEXT.map(ankerVon).filter(a => TYPO_MAP.AUSNAHMEN[a])).toEqual([]);
+    });
+
+    test('W5-R-07e: die unbeurteilten Ikon-Kandidaten sind NICHT geduldet', () => {
+        // Die Gegenrichtung von W5-R-07a, auf der Kandidatenmenge: 54 der 73
+        // Ikon-Deklarationen springen um 2 px oder weniger und gehoeren
+        // diesem Schritt nicht. Wuerden sie hier mitgeduldet, waere E-3 fuer
+        // sie entschieden, ohne sie zu beurteilen.
+        const beurteilt = new Set(URTEIL_IKON.map(ankerVon));
+        const kandidaten = alleGroessen07.filter(d => TYPO_MAP.istIkon(d.selektoren));
+        const offen = kandidaten.filter(d => !beurteilt.has(typoAnker(d)));
+        const stillGeduldet = offen
+            .filter(d => TYPO_MAP.AUSNAHMEN[typoAnker(d)])
+            .map(d => `${d.datei}:${d.zeile} {${d.selektoren}}`);
+        expect(stillGeduldet.sort()).toEqual([]);
+        // Die Zahlen daneben, damit die Probe nicht durch WEGLASSEN gruen
+        // wird: waechst die Kandidatenmenge, faellt dieser Fall.
+        expect({ kandidaten: kandidaten.length, unbeurteilt: offen.length }).toEqual({
+            kandidaten: 73,
+            unbeurteilt: 54
+        });
+    });
+
+    /** DIE ZWEI PFEILZEICHEN. `.wiki-tree-item-toggle` (party.css, ▶) und
+     *  `.tb-caret` (editors.css, ▾) sind dasselbe Zeichen in derselben Rolle:
+     *  ein Aufklapp-Hinweis, kein Lesetext. Schritt 4 hat das erste geduldet
+     *  und ausdruecklich in die Akte geschrieben, dass beide DIESELBE Antwort
+     *  bekommen muessen und keines allein entschieden wird (party.css:883,
+     *  spells.css:467, tools/typo-map.js).
+     *  DIESE PROBE MACHT AUS DEM SATZ EINE PRUEFUNG. Vorher stand er als
+     *  Absichtserklaerung in drei Kommentaren, und der mechanische Lauf des
+     *  Schrittes 5 haette ihn gebrochen, ohne dass etwas rot geworden waere:
+     *  `.tb-caret` springt um genau +2,00 px (9 -> 11) und liegt damit in der
+     *  mechanischen Menge, sein Zwilling um +3,00 px (8 -> 11) und liegt
+     *  ausserhalb. Ein Kommentar, den kein Fall prueft, ist eine Behauptung.
+     *  ERLAUBT SIND GENAU ZWEI LAGEN: beide geduldet, oder beide auf einer
+     *  Sprosse. Die zweite ist die Lage, in die Schritt 8 sie bringen kann —
+     *  die Probe steht ihm also nicht im Weg, sie verbietet nur die
+     *  Aufspaltung. */
+    const PFEILPAAR = [
+        'party.css||.wiki-tree-item-toggle||font-size',
+        'editors.css||.editor-toolbar .tb-caret||font-size'
+    ];
+
+    test('W5-R-07f: die zwei Pfeilzeichen bekommen dieselbe Antwort', () => {
+        const lage = PFEILPAAR.map(a => {
+            const dekls = (nachAnker.get(a) || []).map(d =>
+                d.wert.replace(/\s*!important$/, '').trim()
+            );
+            /* Eine Verwesungsprobe im Kleinen: ohne Deklaration ist die Lage
+               weder "geduldet" noch "sprosse", sondern "fehlt". Sonst machte
+               ein umbenannter Selektor die Probe gruen, indem er aus beiden
+               Mengen fiele. */
+            const lg =
+                dekls.length === 0
+                    ? 'fehlt'
+                    : TYPO_MAP.AUSNAHMEN[a]
+                      ? 'geduldet'
+                      : dekls.every(w => /^var\(--text-[a-z0-9]+\)$/.test(w))
+                        ? 'sprosse'
+                        : 'offen';
+            return `${a}  ->  ${lg}  [${dekls.join(' | ') || 'keine Deklaration'}]`;
+        });
+        /* Die Lage BEIDER Stellen steht in der Behauptung, nicht nur die
+           Zahl der verschiedenen Lagen: jests Gegenueberstellung blendet
+           aus, was auf beiden Seiten gleich ist, und eine Meldung
+           "2 Lagen statt 1" sagt nicht, WELCHE Stelle ausserhalb steht. */
+        const lagen = [...new Set(lage.map(z => z.split('  ->  ')[1].split('  [')[0]))];
+        expect({ lagen, lage }).toEqual({ lagen: [lagen[0]], lage });
+        expect(['geduldet', 'sprosse']).toContain(lagen[0]);
+    });
+
+    test('VERWESUNGSPROBE: jede aufgezaehlte Stelle trifft eine Deklaration', () => {
+        // Ohne sie hoerte ein umbenannter Selektor lautlos auf zu urteilen.
+        const fehlt = [];
+        [...URTEIL_IKON, ...URTEIL_TEXT].forEach(e => {
+            if (!nachAnker.has(ankerVon(e))) fehlt.push(`${e.datei} {${e.sel}}`);
+        });
+        VORLAUF.forEach(a => {
+            if (!nachAnker.has(a)) fehlt.push(a);
+        });
+        expect([...new Set(fehlt)].sort()).toEqual([]);
+        // ... und die Begruendung der einen ungemessenen Stelle haengt an
+        // ihrem Anker, nicht an einer Zeilennummer
+        expect(Object.keys(OHNE_MESSUNG)).toEqual(['dashboard.css||.dice-result-main||font-size']);
+        expect(URTEIL_TEXT.filter(e => e.gemessen === null).map(ankerVon)).toEqual(
+            Object.keys(OHNE_MESSUNG)
+        );
+        expect(OHNE_MESSUNG[Object.keys(OHNE_MESSUNG)[0]].length).toBeGreaterThan(200);
+    });
+
+    test('GEGENPROBE: 29 der 32 springen ueber 2 px, die drei anderen sind benannt', () => {
+        // Der Grund, warum die Menge diese und keine andere ist. Gerechnet
+        // wird gegen den GEMESSENEN Wert, nicht gegen die 16-px-Annahme —
+        // dieselbe Rechnung, die in Runde 2 des Schrittes 3 fuenfzehn Stellen
+        // falsch zugeordnet hatte.
+        // DIE AUFTEILUNG, nachgerechnet: 29 springen ueber 2 px; eine steht
+        // in MITGEZOGEN (.enc-item-icon in der Mobilfassung, -1,60 px); eine
+        // wird auf die Untergrenze bezogen (.tb-caret 9 -> 11 px, genau
+        // +2,00 und damit NICHT ueber der Schwelle — sie ist aus einem
+        // anderen Grund dabei, siehe W5-R-07f); eine hat kein Element und
+        // traegt ihren Grund in OHNE_MESSUNG.
+        const skala = TYPO_MAP.skalaWerte();
+        const meine = new Map();
+        URTEIL_IKON.forEach(e => meine.set(`${e.datei}||${e.sel}||${e.alt}`, e.gemessen));
+        URTEIL_TEXT.forEach(e => meine.set(`${e.datei}||${e.sel}||${e.alt}`, e.gemessen));
+        // Jede aufgezaehlte Stelle springt wirklich um mehr als 2 px — ODER
+        // sie wird auf die Untergrenze gehoben (E-4: was unter 11 px liegt,
+        // soll nach oben, und --text-xs ist die unterste Sprosse) — ODER sie
+        // steht namentlich in MITGEZOGEN. Die dritte Moeglichkeit ist eine
+        // AUFZAEHLUNG und keine Nachsicht: waechst sie, faellt dieser Fall.
+        const zuKlein = [];
+        meine.forEach((gemessen, k) => {
+            if (gemessen === null) return;
+            if (MITGEZOGEN[k]) return;
+            const i = k.indexOf('||');
+            const j = k.lastIndexOf('||');
+            const ziel = TYPO_MAP.ZUORDNUNG[k.slice(j + 2)];
+            if (!ziel) return;
+            const neu = skala[ziel];
+            if (Math.abs(neu - gemessen) > 2) return;
+            if (gemessen < TYPO_MAP.KLEINST_GRENZE && neu === TYPO_MAP.KLEINST_GRENZE) return;
+            zuKlein.push(
+                `${k.slice(0, i)} {${k.slice(i + 2, j)}} — gemessen ${gemessen} -> ${neu} px, ` +
+                    `das sind ${Math.abs(neu - gemessen).toFixed(2)} px und gehoert Schritt 5`
+            );
+        });
+        expect(zuKlein.sort()).toEqual([]);
+        // ... und die Menge ist nicht leer
+        expect(meine.size).toBe(32);
+        // GENAU EINE mitgezogene Stelle, und sie ist eine der aufgezaehlten.
+        expect(Object.keys(MITGEZOGEN)).toEqual(['encounters.css||.enc-item-icon||1.1em']);
+        expect([...meine.keys()]).toContain('encounters.css||.enc-item-icon||1.1em');
+        expect(MITGEZOGEN['encounters.css||.enc-item-icon||1.1em'].length).toBeGreaterThan(100);
+        // GEGENPROBE ZUR NACHSICHT: ohne den Eintrag waere dieser Fall rot.
+        // Wer MITGEZOGEN leert, muss die Stelle aus der Liste nehmen.
+        expect(Math.abs(skala[TYPO_MAP.ZUORDNUNG['1.1em']] - 17.6)).toBeLessThanOrEqual(2);
+    });
+});
+
+/* ===========================================================================
+   W6-R-03 und W6-R-04 — der Fokusring im Stilbaum (Design-Handoff v3,
+   Welle 6, Schritt 1)
+   ===========================================================================
+
+   WARUM DIESE ZWEI RATSCHEN HIER UND NICHT IM BROWSER: ihre Schwestern
+   W6-R-01 und W6-R-02 (tests/e2e/features/fokusring.spec.js) messen am echten
+   Element, mit echten Tabulatorspruengen, und brauchen dafuer einen Browser,
+   eine gesaete Kampagne und rund zwei Minuten. Diese zwei hier lesen
+   Deklarationen und rechnen Zahlen; sie tragen in der CI den Teil der Aussage,
+   der ohne Browser pruefbar ist.
+
+   WAS SIE ZUSAMMEN ABDECKEN, und warum beides gebraucht wird:
+
+     W6-R-03  DIE REGEL IST EINE UND STEHT AM RICHTIGEN ORT. Eine Weltregel in
+              einer Modulstildatei ist eine Weltregel per Zufall der
+              @import-Reihenfolge. Eine ZWEITE Weltregel waere eine Dublette,
+              die F-18 nicht faengt — dort zaehlen gleiche Regelrumpfe, hier
+              waeren es zwei verschiedene auf demselben Selektor.
+     W6-R-04  DIE RINGFARBE HAELT IHRE SCHWELLE — auf allen fuenf Flaechen, in
+              allen vier Themes, und AUF DER MODALFLAECHE AUCH. Der letzte
+              Punkt ist der Grund, warum diese Ratsche existiert: `.modal`
+              traegt `background: rgba(26, 26, 26, 0.95)` als Literal, das KEIN
+              Theme-Block ueberschreibt (gefuehrte Ausnahme W2-C-01). Wegen
+              `outline-offset: 2px` landet der Ring genau darauf. In Sepia
+              liest der heutige Ring dort 2,37 — ein Durchfall, den vor dieser
+              Ratsche kein Test im Baum gesehen hat, weil die Flaechenmenge von
+              R-02 und R-04 die vier neutralen Tokens fuehrt und die
+              Modalflaeche nicht.
+
+   DER STIL-SOLLSTAND SIEHT VON ALLEM DEM NICHTS. Seine zwoelf gehashten
+   Eigenschaften (const PROPERTIES in computed-style-diff.spec.js) enthalten
+   `outline` nicht, in keiner Schreibweise — und der Abzug entsteht im
+   unfokussierten Ruhezustand, wo auch ein gehashtes boxShadow nichts sehen
+   wuerde. Fuer die einzige Verhaltensaenderung der Welle 6 gibt es dort null
+   Deckung.
+
+   AUSGANGSWERTE BEI DER GEBURT, beide ROT (gemessen am 2026-10-06,
+   HEAD e4ac3a7):
+
+     W6-R-03  Die unbedingte Regel existiert, steht aber in dmscreen.css
+              (Zeile 1117) und nicht in core.css. Teil 1 ist gruen (es ist
+              genau eine), Teil 2 faellt.
+     W6-R-04  `--focus-ring` existiert in keinem der vier Theme-Bloecke; alle
+              20 Zellen sind unaufloesbar, und keine der sieben setzenden
+              Fokusregeln nennt das Token. Gerechnet mit dem heutigen
+              `var(--gold)` an seiner Stelle waeren 2 der 4 Themes rot: Light
+              min 2,40 (auf --bg-hover), Sepia min 2,37 (auf der
+              Modalflaeche); Dark 6,01 und Contrast 9,01 halten.
+   =========================================================================== */
+
+/**
+ * Jede Regel einer Stildatei mit Zeile, Selektorliste, Rumpf und den
+ * umgebenden At-Regeln.
+ *
+ * Eigener Klammerlauf statt eines Regex ueber die ganze Datei: ein
+ * `:focus-visible` kann in einem @media- oder @supports-Block stehen, und nur
+ * ein Lauf mit Klammerzaehler weiss, ob er dort steht. Die Kommentare werden
+ * vorher durch Leerzeichen ERSETZT, nicht geloescht — sonst verrutschen die
+ * Zeilennummern, und ein Kommentar mit einer Klammer darin wuerde den Lauf
+ * aus dem Tritt bringen (der Erklaerblock an `.modal` enthaelt genau so eine).
+ *
+ * @param {string} src
+ * @returns {Array<{ line: number, selector: string, body: string, atrules: string[] }>}
+ */
+function w6Regeln(src) {
+    let ohne = '';
+    let i = 0;
+    while (i < src.length) {
+        if (src[i] === '/' && src[i + 1] === '*') {
+            const ende = src.indexOf('*/', i + 2);
+            const stop = ende === -1 ? src.length : ende + 2;
+            for (let k = i; k < stop; k++) ohne += src[k] === '\n' ? '\n' : ' ';
+            i = stop;
+        } else {
+            ohne += src[i];
+            i++;
+        }
+    }
+    const zeilen = ohne.split('\n');
+    /** Zeilennummer eines Zeichenindex, ohne den Text je neu zu schneiden. */
+    const zeileVon = (() => {
+        const grenzen = [];
+        let summe = 0;
+        zeilen.forEach(z => {
+            summe += z.length + 1;
+            grenzen.push(summe);
+        });
+        return idx => {
+            let lo = 0;
+            let hi = grenzen.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (grenzen[mid] <= idx) lo = mid + 1;
+                else hi = mid;
+            }
+            return lo + 1;
+        };
+    })();
+
+    /** @type {Array<{ line: number, selector: string, body: string, atrules: string[] }>} */
+    const regeln = [];
+    /** @type {Array<{ prelude: string, index: number, eintrag: any }>} */
+    const stapel = [];
+    let puffer = '';
+    for (let k = 0; k < ohne.length; k++) {
+        const c = ohne[k];
+        if (c === '{') {
+            const prelude = puffer.trim().replace(/\s+/g, ' ');
+            let eintrag = null;
+            if (!prelude.startsWith('@')) {
+                eintrag = {
+                    line: zeileVon(k),
+                    selector: prelude,
+                    body: '',
+                    atrules: stapel.map(s => s.prelude)
+                };
+                regeln.push(eintrag);
+            }
+            stapel.push({ prelude, index: k, eintrag });
+            puffer = '';
+            continue;
+        }
+        if (c === '}') {
+            const oben = stapel.pop();
+            if (oben && oben.eintrag) oben.eintrag.body = ohne.slice(oben.index + 1, k);
+            puffer = '';
+            continue;
+        }
+        if (c === ';') {
+            puffer = '';
+            continue;
+        }
+        puffer += c;
+    }
+    return regeln;
+}
+
+/**
+ * Traegt diese Selektorliste einen UNBEDINGTEN `:focus-visible`-Teil — also
+ * einen, der nichts weiter verlangt als "dieses Element hat Tastaturfokus"?
+ *
+ * `:focus-visible` ist unbedingt; `.btn:focus-visible`, `.x :focus-visible`
+ * und `:focus-visible:hover` sind es nicht. Entscheidend ist der ganze
+ * Komma-Teil, nicht nur sein Anfang: `.x, :focus-visible` traegt einen.
+ *
+ * @param {string} selector
+ */
+function w6IstWeltregel(selector) {
+    return selector
+        .split(',')
+        .map(s => s.trim())
+        .some(s => s === ':focus-visible');
+}
+
+/** Alle Regeln aller Stildateien, einmal geparst. */
+const W6_ALLE_REGELN = cssFiles.map(f => ({ datei: f.name, regeln: w6Regeln(f.content) }));
+
+describe('W6-R-03 — eine unbedingte :focus-visible-Weltregel, und sie steht in core.css (Ratsche)', () => {
+    const weltregeln = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => w6IstWeltregel(r.selector))
+            .map(r => ({ datei: f.datei, zeile: r.line, atrules: r.atrules, body: r.body }))
+    );
+
+    test('es gibt GENAU EINE, nicht zwei und nicht keine', () => {
+        // Keine waere der Rueckfall auf den Browser-Standardring, der auf
+        // dunklem Grund gemessen kaum zu sehen ist — die Begruendung, mit der
+        // `.btn:focus-visible` in core.css ueberhaupt entstand. Zwei waeren
+        // eine Dublette, die F-18 nicht sieht.
+        expect(weltregeln.map(w => `${w.datei}:${w.zeile}`)).toHaveLength(1);
+    });
+
+    test('und sie steht in core.css, nicht in einer Modulstildatei', () => {
+        // WARUM DER ORT ZAEHLT: eine Weltregel in dmscreen.css ist eine
+        // Weltregel durch Zufall der @import-Reihenfolge. Jede gleichrangige
+        // Regel, die VOR dmscreen.css steht, gewinnt dort gegen sie; in
+        // core.css (dritte Datei des Hubs) gewinnt sie gegen alle
+        // gleichrangigen.
+        //
+        // KASKADENNEUTRAL IST DER UMZUG TROTZDEM, und das ist nachgerechnet,
+        // nicht gehofft: alle 31 unterdrueckenden outline-Regeln haben
+        // Spezifitaet >= (0,2,0) und schlagen beide Orte. Die drei
+        // Gegenspieler mit genau (0,1,0) liegen in bestiary.css, welt.css und
+        // command-palette.css — alle drei NACH beiden Orten im Hub; sie
+        // gewinnen vorher wie nachher ueber die Reihenfolge.
+        expect(weltregeln[0] && weltregeln[0].datei).toBe('core.css');
+    });
+
+    test('sie steht auf der obersten Ebene, nicht in einem @media- oder @supports-Zweig', () => {
+        // Eine Weltregel in einem Medienzweig gilt nicht in der Welt.
+        expect(weltregeln[0] && weltregeln[0].atrules).toEqual([]);
+    });
+
+    test('sie setzt Breite, Stil und Abstand — ein Ring ohne Abstand sitzt auf dem Rahmen', () => {
+        const rumpf = (weltregeln[0] && weltregeln[0].body) || '';
+        expect(rumpf).toMatch(/outline\s*:\s*2px\s+solid\s+var\(\s*--focus-ring\s*\)/);
+        expect(rumpf).toMatch(/outline-offset\s*:\s*2px/);
+    });
+
+    test('GEGENPROBE: der Erkenner trennt unbedingt von bedingt, und der Lauf findet Regeln', () => {
+        // Ohne diesen Fall koennte w6IstWeltregel() alles oder nichts fuer eine
+        // Weltregel halten, und die vier Faelle darueber waeren gruen, ohne
+        // etwas zu bedeuten.
+        expect(w6IstWeltregel(':focus-visible')).toBe(true);
+        expect(w6IstWeltregel('.x, :focus-visible')).toBe(true);
+        expect(w6IstWeltregel('.btn:focus-visible')).toBe(false);
+        expect(w6IstWeltregel('.x :focus-visible')).toBe(false);
+        expect(w6IstWeltregel(':focus-visible:hover')).toBe(false);
+        expect(w6IstWeltregel('.btn:focus')).toBe(false);
+        // Und der Klammerlauf liest core.css wirklich: dort stehen mehr als
+        // 100 Regeln, und `.btn:focus-visible` ist eine davon — mit Rumpf.
+        const core = W6_ALLE_REGELN.find(f => f.datei === 'core.css');
+        expect(core.regeln.length).toBeGreaterThan(100);
+        const btn = core.regeln.find(r => r.selector === '.btn:focus-visible');
+        expect(btn).toBeTruthy();
+        expect(btn.body).toMatch(/outline/);
+        // Zeilennummern stimmen: die gefundene Zeile traegt den Selektor.
+        const coreZeilen = fs
+            .readFileSync(path.join(REPO, 'assets', 'styles', 'core.css'), 'utf8')
+            .split('\n');
+        expect(coreZeilen[btn.line - 1]).toContain('.btn:focus-visible');
+    });
+});
+
+describe('W6-R-04 — die Ringfarbe haelt 3:1 auf fuenf Flaechen in vier Themes (Ratsche)', () => {
+    /* -----------------------------------------------------------------------
+       DIE FUENFTE FLAECHE IST DER GANZE PUNKT. Vier neutrale Tokens plus die
+       aufgeloeste Modalflaeche = 20 Zellen. Ohne die fuenfte waere diese
+       Ratsche in Sepia gruen und wuerde damit etwas Falsches behaupten: der
+       Ring liest dort auf der Modalflaeche 2,37.
+
+       WIE DIE MODALFLAECHE ENTSTEHT, Lage fuer Lage und am Browser
+       nachgemessen (alle vier Themes, offenes NSC-Modal):
+
+         unten    die Seitenflaeche      var(--bg-dark)
+         darueber der Dunkelschleier     .modal-overlay { background: var(--scrim-60) }
+         darueber die Modalfuellung      .modal { background: rgba(26, 26, 26, 0.95) }
+
+       `--scrim-60` steht NICHT in den vier Theme-Bloecken, sondern in einem
+       eigenen :root-Block — palette(theme) fuehrt es deshalb nicht, und wer es
+       per resolve() sucht, bekommt null und LAESST DIE LAGE STILL FALLEN.
+       Genau dieser Fehler hat in der Vermessung dieser Welle die Modalflaeche
+       von Light als #252525 statt als #1e1e1e ausgerechnet und damit die
+       erreichbare Kontrastdecke um vier Prozent zu niedrig angesetzt (3,36
+       statt 3,50). Deshalb liest dieser Block das Token aus dem Dateitext und
+       prueft alle drei Zutaten namentlich nach: faellt eine weg oder aendert
+       sich, faellt die Ratsche, statt gegen eine Flaeche zu rechnen, die es
+       auf dem Schirm nicht gibt.
+       ----------------------------------------------------------------------- */
+
+    const W6_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-elevated', '--bg-hover'];
+    const W6_SCHWELLE = 3;
+
+    /** Die drei Zutaten der Modalflaeche, aus dem Dateitext gelesen. */
+    const w6ScrimTreffer = fs
+        .readFileSync(WCAG.VARIABLES_CSS, 'utf8')
+        .match(/^\s*--scrim-60:\s*([^;]+);/m);
+    const w6ScrimWert = w6ScrimTreffer ? w6ScrimTreffer[1].trim() : null;
+
+    const w6DmRegeln = W6_ALLE_REGELN.find(f => f.datei === 'dmscreen.css').regeln;
+    /** Erste Regel mit genau diesem Selektor auf oberster Ebene. */
+    const w6Fuellung = sel => {
+        const r = w6DmRegeln.find(x => x.selector === sel && x.atrules.length === 0);
+        if (!r) return null;
+        const m = r.body.match(/(?:^|;)\s*background\s*:\s*([^;]+)/);
+        return m ? m[1].trim() : null;
+    };
+    const w6ModalWert = w6Fuellung('.modal');
+    const w6OverlayWert = w6Fuellung('.modal-overlay');
+
+    /**
+     * Die aufgeloeste Modalflaeche eines Themes.
+     * @param {Record<string,string>} pal
+     * @returns {string|null} Hex
+     */
+    function w6Modalflaeche(pal) {
+        const seite = WCAG.resolve('var(--bg-dark)', pal);
+        if (!seite) return null;
+        const schleier = WCAG.resolveOver(w6ScrimWert, pal, seite);
+        if (!schleier) return null;
+        return WCAG.resolveOver(w6ModalWert, pal, schleier);
+    }
+
+    test('die drei Zutaten der Modalflaeche sind noch die gemessenen', () => {
+        // Aendert eine davon, ist die Rechnung der naechsten Faelle ueberholt
+        // — und das soll auffallen, nicht durchlaufen.
+        expect(w6ScrimWert).toBe('color-mix(in srgb, #000 60%, transparent)');
+        expect(w6ModalWert).toBe('rgba(26, 26, 26, 0.95)');
+        expect(w6OverlayWert).toBe('var(--scrim-60)');
+    });
+
+    test('die aufgeloeste Modalflaeche je Theme ist die am Browser nachgemessene', () => {
+        // Nachgemessen am gebauten Buendel mit offenem NSC-Modal, alle vier
+        // Themes. Stimmt die Rechnung hier nicht mit dem Schirm ueberein, ist
+        // jede Zahl der naechsten Faelle wertlos.
+        const pals = WCAG.palettes();
+        const gerechnet = {};
+        WCAG.THEMES.forEach(t => {
+            gerechnet[t] = w6Modalflaeche(pals[t]);
+        });
+        expect(gerechnet).toEqual({
+            dark: '#191919',
+            light: '#1e1e1e',
+            sepia: '#1e1d1d',
+            contrast: '#191919'
+        });
+    });
+
+    test('--focus-ring steht in allen vier Theme-Bloecken', () => {
+        // R-01 prueft Symmetrie ueber ALLE Tokens; hier steht das eine, um das
+        // es geht, noch einmal namentlich — ein fehlender Block faellt sonst
+        // erst in der Kontrastrechnung auf, und dort als "unaufloesbar" statt
+        // als "fehlt".
+        const pals = WCAG.palettes();
+        expect(WCAG.THEMES.filter(t => !pals[t]['--focus-ring'])).toEqual([]);
+    });
+
+    test('20 Zellen: der Ring haelt 3:1 auf jeder der fuenf Flaechen, in jedem Theme', () => {
+        const pals = WCAG.palettes();
+        /** @type {string[]} */
+        const befunde = [];
+        let zellen = 0;
+        WCAG.THEMES.forEach(theme => {
+            const pal = pals[theme];
+            const ring = WCAG.resolve(pal['--focus-ring'], pal);
+            if (!ring) {
+                befunde.push(
+                    `${theme}: --focus-ring ist nicht aufloesbar (${pal['--focus-ring']})`
+                );
+                zellen += 5;
+                return;
+            }
+            /** @type {Array<[string, string|null]>} */
+            const flaechen = W6_FLAECHEN.map(s => [s, WCAG.resolve(pal[s], pal)]);
+            flaechen.push(['.modal (geschichtet)', w6Modalflaeche(pal)]);
+            flaechen.forEach(([name, hex]) => {
+                zellen++;
+                if (!hex) {
+                    befunde.push(`${theme}: Flaeche ${name} ist nicht aufloesbar`);
+                    return;
+                }
+                const v = WCAG.ratio(ring, hex);
+                if (v < W6_SCHWELLE) {
+                    befunde.push(
+                        `${theme}: ${ring} auf ${name} (${hex}) = ${v.toFixed(2)} — unter ${W6_SCHWELLE}`
+                    );
+                }
+            });
+        });
+        expect(zellen).toBe(20);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('jede Regel, die einen Fokusring SETZT, nimmt --focus-ring und nicht --gold', () => {
+        /* WOGEGEN DAS STEHT: der Tokenwechsel in variables.css allein bewegt
+           nichts, solange die Regeln weiter var(--gold) lesen. Und es sind
+           nicht eine, sondern sieben: die Weltregel plus sechs
+           `:focus-visible`-Regeln mit hoeherer Spezifitaet, die sie
+           ueberstimmen. Gemessen am Vorzustand: von 640 sichtbaren Ringen in
+           Light trug JEDER rgb(184, 134, 11) — ein Wechsel nur an der
+           Weltregel haette den groesseren Teil davon unberuehrt gelassen, weil
+           Knoepfe ihren Ring aus core.css beziehen.
+
+           NICHT GEMEINT sind die zwei `:hover`-Konturen: sie sind
+           Zeigerueckmeldung auf var(--gold-dim), kein Fokuskennzeichen. Sie
+           stehen namentlich in W6_HOVER_KONTUREN und werden gezaehlt, damit
+           ihr Dazukommen oder Verschwinden auffaellt. */
+        const W6_HOVER_KONTUREN = ['.qref-row:hover', '.backup-entry:hover'];
+
+        /** @type {string[]} */
+        const befunde = [];
+        /** @type {string[]} */
+        const fokusregeln = [];
+        /** @type {string[]} */
+        const hoverkonturen = [];
+
+        W6_ALLE_REGELN.forEach(f => {
+            f.regeln.forEach(r => {
+                const decl = r.body.match(/(?:^|;)\s*outline\s*:\s*([^;]+)/);
+                if (!decl) return;
+                const wert = decl[1].trim();
+                if (/^(none|0)$/.test(wert)) return;
+                const ort = `${f.datei} {${r.selector}}`;
+                if (W6_HOVER_KONTUREN.includes(r.selector)) {
+                    hoverkonturen.push(ort);
+                    return;
+                }
+                fokusregeln.push(ort);
+                if (!/var\(\s*--focus-ring\s*\)/.test(wert)) {
+                    befunde.push(`${ort} setzt ${wert} statt var(--focus-ring)`);
+                }
+            });
+        });
+
+        expect(befunde.sort()).toEqual([]);
+        // Die Menge ist nicht leer und nicht geschrumpft: sieben setzende
+        // Fokusregeln, zwei Zeigerkonturen daneben.
+        expect(fokusregeln.length).toBe(7);
+        expect(hoverkonturen.sort()).toEqual([
+            'dashboard.css {.qref-row:hover}',
+            'file-backup.css {.backup-entry:hover}'
+        ]);
+    });
+});
+
+/* ===========================================================================
+   W6-R-05 und W6-R-06 — die Schutzzaeune um den Ring (Design-Handoff v3,
+   Welle 6, Schritte 4 und 5)
+   ===========================================================================
+
+   WAS DIESE ZWEI SIND UND WAS SIE NICHT SIND. Der Nachweis der Schritte 4 und
+   5 ist W6-R-01 am echten Element (tests/e2e/features/fokusring.spec.js) —
+   diese zwei hier sind der Zaun, der das Erreichte haelt. Das steht so im
+   Schrittplan und wird hier wiederholt, weil eine Ratsche, die sich fuer den
+   Nachweis haelt, spaeter als Beleg zitiert wird, den sie nicht tragen kann.
+
+   W6-R-05  JEDE UNTERDRUECKUNG BRAUCHT EINEN ERSATZ. Wer `outline: none`
+            schreibt, nimmt dem Element den Ring der Weltregel. Erlaubt ist
+            das nur mit einem von zwei Nachweisen: der Selektor schliesst den
+            Tastaturfokus aus (`:not(:focus-visible)` in JEDEM Komma-Teil),
+            oder der Rumpf setzt daneben ein eigenes Kennzeichen
+            (`box-shadow` oder `border-color`). Ein ruhender `border:` einer
+            Grundregel zaehlt NICHT — er ist der Normalzustand, kein
+            Fokuskennzeichen.
+   W6-R-06  DAS MITTEL IST EIN RING, KEIN SCHATTEN. `box-shadow:
+            var(--ring-gold)` darf nicht das EINZIGE Fokuskennzeichen einer
+            Regel sein. Zwei unabhaengige Gruende, beide gerechnet: (1) der
+            Schatten liest auf der Flaeche von `.cf-panel` nur 1,27 · 1,16 ·
+            1,24 · 14,97, weil `--ring-gold` in drei der vier Themes eine
+            15-Prozent-Mischung ist — ein `outline` mit `--focus-ring` liest
+            dort 9,24 · 4,37 · 3,82 · 14,97. (2) `box-shadow` laeuft in
+            party.css durch eine Uebergangszeit von `var(--dur)`; Welle 4 hat
+            `outline-width`/`-offset` AUSDRUECKLICH aus `--trans-std`
+            herausgenommen, damit der Fokusring sofort da ist, und nennt dort
+            Welle 6 namentlich (variables.css, W4-R-03). Ein Schattenring
+            faedelt sich ein.
+
+   WARUM W6-R-06 BEI DER GEBURT GRUEN IST, und warum sie trotzdem gebraucht
+   wird: die drei heutigen Stellen tragen alle einen Rahmenwechsel daneben und
+   sind damit erlaubt. Rot ist ihr ERKENNER — die Gegenprobe legt ihm die
+   woertliche Fassung vor, die der Handoff fuer die vier blinden Stellen
+   vorschlug (`box-shadow: var(--ring-gold)` als einziges Mittel), und
+   verlangt, dass er sie anzeigt. Ein Zaun wird nicht erst gebaut, wenn das
+   Vieh schon draussen ist.
+
+   AUSGANGSWERTE BEI DER GEBURT (gemessen am 2026-10-06, HEAD dcb8ec0):
+
+     W6-R-05  ROT. 31 unterdrueckende Deklarationen, 6 davon ohne jeden
+              Ersatz: bestiary.css {.bst-rich-editor},
+              command-palette.css {.cp-input},
+              dmscreen.css {#session-tags-input},
+              file-backup.css {.backup-entry-header:hover},
+              party.css {.cf-combat-value input:focus, .cf-combat-value
+              select:focus}, welt.css {.wp-rich-editor}. Sollstand nach
+              Schritt 4: genau eine Deklaration, und die traegt
+              `:not(:focus-visible)`.
+     W6-R-06  GRUEN, Erkenner rot bewiesen. Drei Fokusregeln nennen
+              `--ring-gold` (dmscreen.css, party.css, welt.css), alle drei mit
+              Rahmenwechsel daneben. `migration.css {.wizard-step.active}`
+              nennt das Token auch, ist aber keine Fokusregel und wird
+              namentlich ausgenommen — nicht weggefiltert.
+   =========================================================================== */
+
+/**
+ * Erkennt eine Deklaration, die den Fokusring UNTERDRUECKT — in allen vier
+ * Schreibweisen, die das im Baum tun koennten.
+ *
+ * `outline: none` ist die haeufige; `outline: 0`, `outline-style: none` und
+ * `outline-width: 0` tun dasselbe und wuerden an einem Erkenner, der nur die
+ * erste kennt, vorbeilaufen. Die Kurzform `outline: 0` setzt die Breite auf 0
+ * und den Stil auf `solid` — sichtbar ist davon nichts.
+ */
+const W6_SUPPRESS_RE =
+    /(?:^|;)\s*outline\s*:\s*(?:none|0(?:px)?)\s*(?=;|$)|(?:^|;)\s*outline-style\s*:\s*none\s*(?=;|$)|(?:^|;)\s*outline-width\s*:\s*0(?:px)?\s*(?=;|$)/;
+
+/**
+ * Schliesst diese Selektorliste den Tastaturfokus aus? Nur wenn JEDER
+ * Komma-Teil es tut — `.a:not(:focus-visible), .b` trifft `.b` auch im Fokus
+ * und schluckt dort den Ring.
+ *
+ * @param {string} selector
+ */
+function w6SchliesstFokusAus(selector) {
+    return selector
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .every(s => /:not\(\s*:focus-visible\s*\)/.test(s));
+}
+
+/**
+ * Setzt dieser Rumpf ein eigenes Fokuskennzeichen? `box-shadow` oder
+ * `border-color` — NICHT `border`. Begruendung im Kopf: ein
+ * `border: 1px solid var(--border)` einer Grundregel ist der Ruhezustand.
+ * Vier der sechs roten Stellen bei der Geburt waren genau das, und ein
+ * Erkenner, der `border` mitzaehlt, haette sie fuer gedeckt gehalten.
+ *
+ * @param {string} body
+ */
+function w6HatEigenesKennzeichen(body) {
+    return /(?:^|;)\s*box-shadow\s*:/.test(body) || /(?:^|;)\s*border-color\s*:/.test(body);
+}
+
+/**
+ * Traegt diese Selektorliste irgendwo einen Fokusteil?
+ * @param {string} selector
+ */
+function w6IstFokusselektor(selector) {
+    return /:focus(-visible|-within)?\b/.test(selector);
+}
+
+describe('W6-R-05 — jede Ringunterdrueckung hat einen Ersatz oder nimmt den Fokus aus (Ratsche)', () => {
+    /** Alle unterdrueckenden Deklarationen des Baums, mit Ort. */
+    const w6Unterdrueckt = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => W6_SUPPRESS_RE.test(r.body))
+            .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+    );
+
+    test('keine Unterdrueckung ohne Ersatz und ohne Fokusausschluss', () => {
+        /* DER NACHWEIS DES SCHRITTS 4 IST DAS NICHT — der ist W6-R-01 am
+           echten Element. Dieser Fall ist der Zaun: er verhindert, dass die
+           30 geloeschten Zeilen einzeln wieder einwandern. */
+        const befunde = w6Unterdrueckt
+            .filter(r => !w6SchliesstFokusAus(r.selector) && !w6HatEigenesKennzeichen(r.body))
+            .map(r => `${r.datei}:${r.zeile} {${r.selector}}`);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('das Inventar der Unterdrueckungen ist genau die eine benannte Stelle', () => {
+        /* BEZIFFERT GEFUEHRT, wie R-20 bis W5-R-07. Die eine verbleibende
+           Stelle ist KEIN Fokusunterdruecker, und das ist der Grund, warum sie
+           steht: `.backup-entry-header` ist ein div mit BEIDEN Klassen
+           `backup-entry backup-entry-header` (file-backup-ui.js), ohne
+           tabindex und ohne data-action — es ist kein Tastaturhalt. Die Zeile
+           nimmt den HOVER-Umriss von `.backup-entry:hover` fuer die Kopfzeile
+           zurueck, die man nicht anklickt; ohne sie bekaeme die Kopfzeile
+           einen goldenen Ring, und davor warnt der Kommentar an der Regel seit
+           Welle 5 ausdruecklich. Welle 6 hat ihren Selektor auf
+           `:hover:not(:focus-visible)` verengt: verhaltensneutral, weil das
+           div nicht fokussierbar ist, aber die Regel sagt jetzt, was sie
+           meint. Waechst diese Liste, steht die Begruendung daneben oder die
+           Ratsche faellt. */
+        expect(w6Unterdrueckt.map(r => `${r.datei} {${r.selector}}`).sort()).toEqual([
+            'file-backup.css {.backup-entry-header:hover:not(:focus-visible)}'
+        ]);
+    });
+
+    test('GEGENPROBE: der Erkenner sieht alle vier Schreibweisen und trennt sie vom Setzen', () => {
+        // Ohne diesen Fall koennten die zwei Faelle darueber gruen sein, weil
+        // W6_SUPPRESS_RE nichts findet.
+        expect(W6_SUPPRESS_RE.test(' outline: none;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 0;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 0px;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline-style: none;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline-width: 0;')).toBe(true);
+        expect(W6_SUPPRESS_RE.test(' outline: 2px solid var(--focus-ring);')).toBe(false);
+        expect(W6_SUPPRESS_RE.test(' outline-offset: 2px;')).toBe(false);
+        // `outline-color: none` ist kein gueltiger Wert und darf nicht als
+        // Unterdrueckung durchgehen, sonst waere jede Farbzeile ein Befund.
+        expect(W6_SUPPRESS_RE.test(' outline-color: none;')).toBe(false);
+
+        // Der Fokusausschluss gilt nur, wenn JEDER Komma-Teil ihn traegt.
+        expect(w6SchliesstFokusAus('.a:hover:not(:focus-visible)')).toBe(true);
+        expect(w6SchliesstFokusAus('.a:not(:focus-visible), .b:not(:focus-visible)')).toBe(true);
+        expect(w6SchliesstFokusAus('.a:not(:focus-visible), .b')).toBe(false);
+        expect(w6SchliesstFokusAus('.a:focus')).toBe(false);
+
+        // Und `border` allein ist kein Kennzeichen — das war der Unterschied
+        // zwischen 2 und 6 roten Stellen bei der Geburt.
+        expect(w6HatEigenesKennzeichen(' border: 1px solid var(--border); ')).toBe(false);
+        expect(w6HatEigenesKennzeichen(' border-color: var(--gold); ')).toBe(true);
+        expect(w6HatEigenesKennzeichen(' box-shadow: var(--ring-gold); ')).toBe(true);
+        expect(w6HatEigenesKennzeichen(' color: var(--text); ')).toBe(false);
+
+        // Der Lauf liest wirklich Regeln: die verbleibende Stelle hat eine
+        // Zeilennummer, und dort steht ihr Selektor.
+        expect(w6Unterdrueckt.length).toBeGreaterThan(0);
+        const fb = w6Unterdrueckt.find(r => r.datei === 'file-backup.css');
+        expect(fb).toBeTruthy();
+        const fbZeilen = fs
+            .readFileSync(path.join(REPO, 'assets', 'styles', 'file-backup.css'), 'utf8')
+            .split('\n');
+        expect(fbZeilen[fb.zeile - 1]).toContain('.backup-entry-header:hover');
+    });
+});
+
+describe('W6-R-06 — kein Fokuskennzeichen besteht allein aus box-shadow: var(--ring-gold) (Ratsche)', () => {
+    /**
+     * Regeln, die `--ring-gold` nennen, ohne Fokusregel zu sein. Namentlich
+     * gefuehrt statt weggefiltert: verschwindet eine oder kommt eine dazu,
+     * soll das auffallen.
+     */
+    const W6_RING_GOLD_OHNE_FOKUS = ['migration.css {.wizard-step.active}'];
+
+    const w6RingGold = W6_ALLE_REGELN.flatMap(f =>
+        f.regeln
+            .filter(r => /box-shadow\s*:[^;]*var\(\s*--ring-gold\s*\)/.test(r.body))
+            .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+    );
+
+    test('die Nennungen von --ring-gold sind die drei Fokusregeln plus die eine benannte Ausnahme', () => {
+        const fokus = w6RingGold.filter(r => w6IstFokusselektor(r.selector));
+        const ohne = w6RingGold
+            .filter(r => !w6IstFokusselektor(r.selector))
+            .map(r => `${r.datei} {${r.selector}}`);
+        expect(fokus.map(r => `${r.datei} {${r.selector}}`).sort()).toEqual([
+            'dmscreen.css {.form-group input:focus, .form-group select:focus, .form-group textarea:focus}',
+            'party.css {.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus}',
+            'welt.css {.wp-rich-editor:focus}'
+        ]);
+        expect(ohne.sort()).toEqual(W6_RING_GOLD_OHNE_FOKUS);
+    });
+
+    test('jede dieser drei traegt ein zweites Kennzeichen neben dem Schatten', () => {
+        /* WARUM NICHT "box-shadow verboten": die drei Stellen sind nicht
+           falsch — der Schatten ist dort eine Zugabe neben einem
+           Rahmenwechsel, und als Zugabe kostet er nichts. Falsch waere er als
+           EINZIGES Mittel, und genau das hatte der Handoff fuer die vier
+           blinden Stellen vorgeschlagen. */
+        const befunde = w6RingGold
+            .filter(r => w6IstFokusselektor(r.selector))
+            .filter(r => !/(?:^|;)\s*border(-color)?\s*:/.test(r.body))
+            .map(r => `${r.datei}:${r.zeile} {${r.selector}} — nur box-shadow`);
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('GEGENPROBE: der Erkenner zeigt die woertliche Handoff-Fassung an', () => {
+        /* DER ROTNACHWEIS DIESER RATSCHE. Die Faelle darueber sind bei der
+           Geburt gruen; rot ist der Erkenner, und zwar an genau der Fassung,
+           die der Handoff fuer `.cf-combat-value input:focus` vorschlug. Ohne
+           diesen Fall waere W6-R-06 von einer Ratsche, die nichts prueft,
+           nicht zu unterscheiden. */
+        const handoffFassung = {
+            selector: '.cf-combat-value input:focus, .cf-combat-value select:focus',
+            body: ' box-shadow: var(--ring-gold); '
+        };
+        // Der Erkenner haelt sie fuer eine Fokusregel ...
+        expect(w6IstFokusselektor(handoffFassung.selector)).toBe(true);
+        // ... findet den Schatten ...
+        expect(/box-shadow\s*:[^;]*var\(\s*--ring-gold\s*\)/.test(handoffFassung.body)).toBe(true);
+        // ... und findet KEIN zweites Kennzeichen daneben. Damit waere sie ein
+        // Befund des Falls darueber.
+        expect(/(?:^|;)\s*border(-color)?\s*:/.test(handoffFassung.body)).toBe(false);
+        // Gegenstueck: mit Rahmenwechsel daneben waere sie keiner.
+        expect(
+            /(?:^|;)\s*border(-color)?\s*:/.test(
+                ' border-color: var(--gold); box-shadow: var(--ring-gold); '
+            )
+        ).toBe(true);
+
+        // Und der Fokuserkenner trennt: `.wizard-step.active` ist keine.
+        expect(w6IstFokusselektor('.wizard-step.active')).toBe(false);
+        expect(w6IstFokusselektor('.x:focus-within')).toBe(true);
+        expect(w6IstFokusselektor('.x:focus-visible')).toBe(true);
+        expect(w6IstFokusselektor('.x:focus')).toBe(true);
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(w6RingGold.length).toBe(4);
+    });
+});
+
+/* ===========================================================================
+   W6-R-08 — der Eingaberahmen ist ANGEWENDET, und das Fokuskennzeichen hat
+   EINE Tinte (Design-Handoff v3, Welle 6, Schritt 6)
+   ===========================================================================
+
+   WAS DIESE RATSCHE IST UND WAS SIE NICHT IST. Der Nachweis am Element ist
+   W6-R-07 (tests/e2e/features/eingaberahmen.spec.js) — nur der Baum weiss,
+   welcher Selektor ein Feld erreicht und welcher einen Behaelter. Dieser Block
+   ist der browserfreie Zaun daneben und traegt in der CI genau die vier
+   Aussagen, die ohne Browser pruefbar sind.
+
+   WARUM ES SIE BRAUCHT, obwohl R-02 Teilformel 4 den Tokenwert schon prueft:
+   diese Teilformel ist seit Welle 1 GRUEN, und sie war es, solange im ganzen
+   Baum kein einziges Feld `var(--border-input)` las. Eine Ratsche, die eine
+   Farbe bewacht, die niemand benutzt, bewacht nichts. Teil 2 ist deshalb der
+   eigentliche Nachweis dieses Schrittes.
+
+   DAS ZENTRALE PROBLEM DES SCHRITTES, und warum es so und nicht anders
+   geloest ist — alles gerechnet mit dem Kontrastrechner dieses Testnetzes:
+
+   Punkt 3 hellt den RUHE-Rahmen auf (`--border` -> `--border-input`). Dadurch
+   bricht der Fokus-RAHMENWECHSEL ein, auf dem 223 von 297 Vertragsfeldern als
+   zweites Kennzeichen stehen: gemessen 5,41 -> 1,98 (dark), 2,03 -> 1,40
+   (light), 3,68 -> 1,69 (sepia), 5,32 -> 2,40 (contrast).
+
+   DREI WEGE STANDEN ZUR WAHL, alle drei durchgerechnet:
+
+     (i)  EIGENER FOKUSWERT GEGEN DEN NEUEN RUHEWERT, also eine Farbe mit
+          >= 3:1 gegen `--border-input`. Arithmetisch moeglich, aber nur an
+          EINEM Ende des Themes: in dark braucht sie L >= 0,7047 (etwa die
+          Helligkeit von #dadada), in light L <= 0,0271, in sepia L <= 0,0335,
+          in contrast L >= 0,8868. Die Gegenrichtung faellt jeweils an den
+          Fuellungen durch (gerechnet: 1,23 / 1,23 / 1,11 / 1,58). Das heisst:
+          ein cremefarbenes Gold in dark, ein fast schwarzes in light, in
+          ENTGEGENGESETZTER Richtung — und in keinem der vier Themes mehr die
+          Farbe des Rings, der 2 px daneben liegt. Der Weg loest den
+          Zahlenkonflikt und erzeugt dabei genau den Mangel, den Fall 4 von
+          W6-R-07 misst: zwei Tinten an einem Kennzeichen.
+     (ii) `--border-input` NUR DORT, WO KEIN FOKUSRAHMEN DANEBEN STEHT. Dann
+          behalten 223 von 264 Kandidatenfeldern den Rahmen, der gegen seine
+          Fuellung 1,31 bis 2,13 liest — Punkt 3 wuerde 41 Felder erreichen
+          statt 264. Der Ruhezustand ist der Zustand, in dem ein Feld fast
+          immer ist; ihn fuer ein redundantes Kennzeichen zu opfern, ist der
+          falsche Tausch.
+     (iii) WECHSEL DURCH DICKE STATT FARBE (1px -> 2px). Messbar, aber es
+          verschiebt bei jedem Fokus den Inhaltskasten um 1 px — an 223
+          Feldern, darunter 22 Langform-Editoren. Und die Geometrieaenderung,
+          die es liefern soll, liefert der Ring schon: `outline-width` 0 -> 2px
+          ausserhalb des Elements, ohne Umbruch.
+
+   GEWAEHLT IST (i) MIT DEM BESTEHENDEN TOKEN `--focus-ring`, und die Schwelle
+   liegt dort, wo WCAG 1.4.11 sie hinlegt: am RAUM, nicht an der ZEIT. Die
+   Norm vergleicht benachbarte Farben, nicht einen Zustand mit seinem eigenen
+   Vorzustand. Geprueft wird deshalb, dass der Fokusrahmen gegen die FUELLUNG
+   haelt — und `--focus-ring` tut das als einziges Gold im Baum in allen vier
+   Themes (3,89 light / 3,82 sepia / 7,29 dark / 11,34 contrast, gerechnet
+   ueber --bg-dark/--bg-card/--bg-elevated). `--gold` liest in light 2,66 und
+   `--cyan` in sepia 2,51: der Fokusrahmen war also in zwei von vier Themes
+   SCHON VORHER unter der Schwelle, und niemand hat es benannt.
+
+   WAS DEN ZUSTANDSWECHSEL DANACH TRAEGT, beziffert und nicht behauptet:
+     — der RING, `outline-width` 0 -> 2px, auf allen 5195 sichtbaren
+       Tastaturhalten vorhanden und mit >= 3:1 auf seiner Traegerflaeche
+       (W6-R-01/W6-R-02, Boden 3,44 gemessen);
+     — der SAETTIGUNGSSPRUNG des Rahmens von einem neutralen Grau zu einem
+       gesaettigten Gold: 0,000 -> 0,741 (dark), 0,000 -> 0,940 (light),
+       0,348 -> 0,863 (sepia), 0,000 -> 1,000 (contrast). Ein
+       Kontrastverhaeltnis sieht davon nichts — es ist eine reine
+       Helligkeitsrechnung.
+   Der Rahmen bleibt damit das zweite Kennzeichen (Entscheidung W6-E-1 = A),
+   aber er ist nicht mehr das tragende.
+
+   AUSGANGSWERTE BEI DER GEBURT (gemessen am 2026-10-06, HEAD a2b6784):
+
+     Teil 1  GRUEN. 12 Zellen, Minimum 3,33 (sepia auf --bg-dark). Steht hier
+             noch einmal in allen zwoelf Zellen, obwohl R-02 Teilformel 4
+             dasselbe Feld mit EINER Zahl deckt: faellt eine Zelle, soll der
+             Befund sagen, WELCHE.
+     Teil 2  ROT. `--border-input` hat 0 Verbraucher im Komponenten-CSS. Das
+             Token steht seit Welle 1 in vier Theme-Bloecken und wird von
+             keiner Regel gelesen.
+     Teil 3  ROT. 31 Regeln setzen in einem Fokuszustand eine Rahmenfarbe, und
+             KEINE davon liest `var(--focus-ring)`: 27 lesen `var(--gold)`,
+             4 lesen `var(--cyan)`.
+     Teil 4  ROT. Alle 52 Feldregeln der Stellenliste lesen `var(--border)`.
+             Die Liste ist am BAUM erzeugt, nicht am Namen (siehe ihren
+             Kommentar).
+     Gegenprobe  GRUEN. Sie prueft die drei Erkenner gegeneinander, nicht den
+             Baum — ein Zaun wird nicht erst gebaut, wenn das Vieh draussen
+             ist.
+   =========================================================================== */
+
+/**
+ * Die 52 Regeln, die den Ruherahmen eines Vertragsfeldes setzen — als
+ * SELEKTORTEXT, nicht als Zeilenanker.
+ *
+ * WARUM SELEKTOREN UND KEINE ZEILENANKER. Diese Welle hat in zwei Einheiten
+ * 178 Zeilenanker nachziehen muessen, weil geloeschte und eingefuegte Zeilen
+ * alles darunter verschieben. Ein Selektortext verschiebt sich nicht. Wird er
+ * umbenannt, meldet der Fall "Selektor nicht gefunden" — und das ist ein
+ * echtes Signal, kein Pflegeaufwand.
+ *
+ * WIE DIE LISTE ENTSTANDEN IST, und warum kein Namensfilter sie erzeugen kann:
+ * jede Regel mit einer Rahmenangabe (907 im Baum) wurde am gebauten Buendel
+ * gegen `querySelectorAll` gefahren, in 24 Ansichten, drei Formularen, 20
+ * Modalen und acht ueber ihre Funktion geoeffneten Dialogen; gezaehlt wurde,
+ * ob ein VERTRAGSFELD darunter ist. 39 Regeln haben dabei getroffen. Die
+ * uebrigen 13 erreichen Felder, die nur in Baumzustaenden entstehen, die kein
+ * Lauf stabil herstellt (Begegnungsrechner, Warenkorb, Zufallstabellen-
+ * Zeilen, Fraktionsruf, Angriffszeilen, die beiden Editorhuellen) — jede ist
+ * einzeln im Markup nachgewiesen.
+ *
+ * NICHT HIER: die 36 Behaelterregeln, die eingabenah heissen und kein Feld
+ * treffen (.editor-toolbar, .editor-shell, .dice-input-group, .cp-input-row,
+ * .session-tags-input-wrapper, .qref-search, die th/td-Gruppen ...). Fall 3
+ * von W6-R-07 bewacht, dass sie `var(--border)` behalten.
+ */
+const W6_FELDREGELN = [
+    '.aoe-damage-input input',
+    '.assign-spell-search-wrap input',
+    '.assign-spell-select',
+    '.bst-rich-editor',
+    '.calc-import-count',
+    '.calc-input',
+    '.cart-qty-input',
+    '.cf-attack-row input[type="text"], .cf-attack-row input[type="number"]',
+    '.cf-attr-card input[type="number"]',
+    '.cf-coin-item input',
+    '.cf-notes-panel .cf-notes-editor',
+    '.cf-notes-panel .cf-notes-toolbar select',
+    '.cf-panel .cf-field input, .cf-panel .cf-field select',
+    '.cf-slot-item input',
+    '.condition-ref-search input',
+    '.dialog-text-area',
+    '.dice-char-header select',
+    '.dice-combat-row input, .dice-combat-row select',
+    '.dice-formula',
+    '.dice-multi',
+    '.dms-dice-input',
+    '.dms-notes-input',
+    '.editor-select',
+    '.editor-toolbar .editor-select',
+    '.enc-filter-select',
+    '.enc-save-input',
+    '.enc-speed-item input',
+    '.fdp-input',
+    '.form-control, .form-select, .form-input',
+    '.form-group input, .form-group select, .form-group textarea',
+    '.fr-ruf-grund-input',
+    '.fr-ruf-set-input',
+    '.global-search-input',
+    '.init-mob-dmg-inputs input',
+    '.notes-search-input',
+    '.npc-filter-select',
+    '.qref-conv-input',
+    '.qref-conv-select',
+    '.qref-search input',
+    '.relations-form-row select, .relations-form-row input',
+    '.rest-hd-input',
+    '.rich-editor',
+    '.round-timer-row input',
+    '.rt-entry-row .rt-entry-range',
+    '.rt-field input',
+    '.section-toolbar-filters select',
+    '.si-qty-input',
+    '.spell-editor',
+    '.toolbar-search',
+    '.toolbar-select',
+    '.wp-rich-editor',
+    '.xp-dist-total-input'
+];
+
+/**
+ * Untergrenze fuer Teil 2. Gemessen sind 52 Regeln (W6_FELDREGELN) plus die
+ * eine Elementregel am Ende von core.css fuer die Felder ohne Autorenregel =
+ * 53 Verbraucher. Die Schranke liegt bei 48 und nicht bei 53, damit das
+ * Zusammenfassen zweier Regeln oder das Entfernen eines toten Selektors nicht
+ * als Rueckschritt gilt — der Handoff verlangt ">= 40", und darunter faellt
+ * die Aussage "angewendet" ohnehin.
+ */
+const W6_VERBRAUCHER_MIN = 48;
+
+/** Selektortexte vergleichbar machen: Mehrfachleerzeichen und Kommaluft weg. */
+function w6NormSel(sel) {
+    return String(sel)
+        .replace(/\s+/g, ' ')
+        .replace(/\s*,\s*/g, ', ')
+        .trim()
+        .toLowerCase();
+}
+
+/**
+ * Eine Rahmen-Deklaration in Kurz- oder Langform — `border-radius` gehoert
+ * NICHT dazu, und das ist der einzige Grund, warum dieser Ausdruck mit einem
+ * Doppelpunkt endet statt mit einem Bindestrich-Platzhalter.
+ */
+const RAHMEN_DECL_RE = /^border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/;
+
+/** Traegt dieser Rumpf eine Rahmen-Deklaration (Kurz- oder Langform)? */
+function w6HatRahmenDeklaration(body) {
+    return /(?:^|;)\s*border(-top|-right|-bottom|-left)?(-color|-width|-style)?\s*:/.test(
+        ' ' + body
+    );
+}
+
+/**
+ * Die erste echte Rahmen-Deklaration eines Rumpfes als Auszug fuer die
+ * Befundmeldung. NICHT `border-radius`: ein blosses /border[a-z-]*:/ greift
+ * sie zuerst, wenn sie oben im Rumpf steht, und dann meldet der Befund
+ * "border-radius: var(--radius-lg)" fuer eine Regel, deren Rahmenfarbe das
+ * Thema ist (gesehen am 2026-10-07 bei .global-search-input).
+ */
+function w6RahmenAuszug(body) {
+    const treffer = body
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => RAHMEN_DECL_RE.test(s));
+    return treffer.length ? treffer[0] : '?';
+}
+
+/** Nennt dieser Rumpf dieses Token in einer RAHMEN-Deklaration? */
+function w6RahmenNennt(body, token) {
+    return body
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => RAHMEN_DECL_RE.test(s))
+        .some(s => s.includes('var(' + token + ')'));
+}
+
+describe('W6-R-08 — --border-input ist angewendet und das Fokuskennzeichen hat eine Tinte (Ratsche)', () => {
+    const W6_FUELLUNGEN = ['--bg-dark', '--bg-card', '--bg-elevated'];
+    const W6_RAHMEN_SCHWELLE = 3;
+
+    test('Teil 1 — der Eingaberahmen haelt 3:1 auf allen drei Fuellungen in vier Themes', () => {
+        // Zwoelf Zellen, jede namentlich. Gemessener Boden am 2026-10-06:
+        // 3,33 (sepia auf --bg-dark). R-02 Teilformel 4 deckt dasselbe Feld
+        // mit EINER Zahl; hier soll ein Befund sagen, welche Zelle fiel.
+        const pals = WCAG.palettes();
+        /** @type {string[]} */
+        const befunde = [];
+        let kleinster = Infinity;
+        WCAG.THEMES.forEach(theme => {
+            const p = pals[theme];
+            const rahmen = WCAG.resolve('var(--border-input)', p);
+            if (!rahmen) {
+                befunde.push(theme + ': --border-input ist nicht aufloesbar');
+                return;
+            }
+            W6_FUELLUNGEN.forEach(f => {
+                const flaeche = WCAG.resolve('var(' + f + ')', p);
+                if (!flaeche) {
+                    befunde.push(theme + ': ' + f + ' ist nicht aufloesbar');
+                    return;
+                }
+                const v = WCAG.ratio(rahmen, flaeche);
+                if (v < kleinster) kleinster = v;
+                if (v < W6_RAHMEN_SCHWELLE) {
+                    befunde.push(
+                        theme + ' ' + rahmen + ' auf ' + f + ' ' + flaeche + ': ' +
+                            v.toFixed(2) + ' < ' + W6_RAHMEN_SCHWELLE
+                    );
+                }
+            });
+        });
+        /* MELDUNGEN STEHEN IM VERGLEICHSWERT, nicht in einem zweiten
+           expect-Argument: dieses Jest nimmt nur eines ("Expect takes at most
+           one argument"). Die Zahl gehoert trotzdem in den Befund, sonst sagt
+           ein roter Lauf nur "ungleich []". */
+        if (kleinster < 3.3) {
+            befunde.push(
+                'Boden ueber alle zwoelf Zellen auf ' + kleinster.toFixed(2) +
+                    ' gesunken (gemessen bei der Geburt: 3,33)'
+            );
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Teil 2 — --border-input hat Verbraucher im Komponenten-CSS', () => {
+        /* DER EIGENTLICHE NACHWEIS DES SCHRITTES. Gezaehlt werden Regeln
+           AUSSERHALB von variables.css, die das Token in einer
+           Rahmen-Deklaration lesen — die Definition selbst zaehlt nicht mit,
+           sonst waere der Fall schon vor dem Schritt gruen. */
+        const verbraucher = W6_ALLE_REGELN.filter(f => f.datei !== 'variables.css').flatMap(f =>
+            f.regeln
+                .filter(r => w6RahmenNennt(r.body, '--border-input'))
+                .map(r => f.datei + ':' + r.line + ' {' + r.selector + '}')
+        );
+        const lage =
+            'Verbraucher von --border-input im Komponenten-CSS: ' + verbraucher.length +
+            ' (verlangt >= ' + W6_VERBRAUCHER_MIN + '). Bei der Geburt dieser Ratsche: 0 — das ' +
+            'Token stand seit Welle 1 in vier Theme-Bloecken und wurde von keiner Regel gelesen.';
+        expect(verbraucher.length >= W6_VERBRAUCHER_MIN ? [] : [lage]).toEqual([]);
+    });
+
+    test('Teil 3 — jede Fokus-Rahmenfarbe ist var(--focus-ring)', () => {
+        /* EINE TINTE AN EINEM KENNZEICHEN. Ring und Rahmen liegen 2 px
+           voneinander entfernt am selben Element; zwei verschiedene Goldtoene
+           dort sind keine Gestaltung, sondern ein Versehen. Gemessen bei der
+           Geburt: 219 von 219 fokussierten Feldern in light und sepia zeigten
+           genau das (142x Ring #946c09 gegen Rahmen #b8860b in light, 142x
+           #b55819 gegen #8b4513 in sepia).
+
+           HOVER IST NICHT GEMEINT und wird nicht geprueft: `:hover` ist kein
+           Zustand, den WCAG 1.4.11 als identifizierend fuehrt, und drei
+           Hover-Regeln auf Feldern behalten darum ihr `var(--gold)` (zwei in
+           editors.css, eine in spells.css). Das ist benannte Restschuld, keine
+           Luecke im Erkenner — er trennt die beiden Zustaende ausdruecklich,
+           siehe Gegenprobe. */
+        const fokusRahmen = W6_ALLE_REGELN.flatMap(f =>
+            f.regeln
+                .filter(
+                    r =>
+                        w6IstFokusselektor(r.selector) &&
+                        /(?:^|;)\s*border(-top|-right|-bottom|-left)?-color\s*:/.test(' ' + r.body)
+                )
+                .map(r => ({ datei: f.datei, zeile: r.line, selector: r.selector, body: r.body }))
+        );
+
+        expect(
+            fokusRahmen.length >= 25
+                ? []
+                : [
+                      'nur ' + fokusRahmen.length + ' Fokusregeln mit Rahmenfarbe gefunden ' +
+                          '(erwartet >= 25) — der Lauf hat zu wenig gelesen'
+                  ]
+        ).toEqual([]);
+
+        const fremd = fokusRahmen
+            .filter(r => !w6RahmenNennt(r.body, '--focus-ring'))
+            .map(
+                r =>
+                    r.datei + ':' + r.zeile + ' {' + r.selector + '} -> ' +
+                    w6RahmenAuszug(r.body)
+            );
+        if (fremd.length) {
+            fremd.unshift(
+                fremd.length + ' von ' + fokusRahmen.length + ' Fokusregeln setzen eine andere ' +
+                    'Rahmenfarbe als var(--focus-ring). Bei der Geburt: 31 (27x var(--gold), ' +
+                    '4x var(--cyan)).'
+            );
+        }
+        expect(fremd).toEqual([]);
+    });
+
+    test('Teil 4 — alle 52 Feldregeln lesen var(--border-input)', () => {
+        /** @type {string[]} */
+        const fehlt = [];
+        /** @type {string[]} */
+        const falsch = [];
+        W6_FELDREGELN.forEach(sel => {
+            const treffer = W6_ALLE_REGELN.flatMap(f =>
+                f.regeln
+                    .filter(
+                        r =>
+                            w6NormSel(r.selector) === w6NormSel(sel) &&
+                            w6HatRahmenDeklaration(r.body)
+                    )
+                    .map(r => ({ datei: f.datei, zeile: r.line, body: r.body }))
+            );
+            if (!treffer.length) {
+                fehlt.push(sel);
+                return;
+            }
+            treffer.forEach(t => {
+                if (!w6RahmenNennt(t.body, '--border-input')) {
+                    falsch.push(
+                        t.datei + ':' + t.zeile + ' {' + sel + '} -> ' +
+                            w6RahmenAuszug(t.body)
+                    );
+                }
+            });
+        });
+
+        if (fehlt.length) {
+            fehlt.unshift(
+                fehlt.length + ' Selektoren der Stellenliste gibt es nicht mehr oder sie haben ' +
+                    'ihre Rahmenangabe verloren — umbenannt oder entfallen, beides will gesehen ' +
+                    'werden'
+            );
+        }
+        expect(fehlt).toEqual([]);
+        if (falsch.length) {
+            falsch.unshift(
+                falsch.length + ' von ' + W6_FELDREGELN.length + ' Feldregeln lesen nicht ' +
+                    'var(--border-input). Bei der Geburt: alle 52 lasen var(--border).'
+            );
+        }
+        expect(falsch).toEqual([]);
+    });
+
+    test('Gegenprobe: die drei Erkenner trennen, was sie trennen sollen', () => {
+        // Rahmen-Deklaration erkannt, andere Eigenschaften nicht.
+        expect(w6HatRahmenDeklaration(' border: 1px solid var(--border); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-color: var(--gold); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-bottom-color: var(--gold); ')).toBe(true);
+        expect(w6HatRahmenDeklaration(' border-radius: var(--radius-md); ')).toBe(false);
+        expect(w6HatRahmenDeklaration(' background: var(--border); ')).toBe(false);
+
+        // Token NUR in einer Rahmen-Deklaration zaehlt.
+        expect(w6RahmenNennt(' border: 1px solid var(--border-input); ', '--border-input')).toBe(
+            true
+        );
+        expect(w6RahmenNennt(' background: var(--border-input); ', '--border-input')).toBe(false);
+        expect(w6RahmenNennt(' border-radius: var(--border-input); ', '--border-input')).toBe(
+            false
+        );
+
+        // Fokus und Hover werden getrennt — die Grundlage der Restschuld in
+        // Teil 3. Waere das nicht so, muesste Teil 3 eine Ausnahmeliste
+        // fuehren, und eine Ausnahmeliste verdeckt genau das, was sie nennt.
+        expect(w6IstFokusselektor('.editor-select:hover')).toBe(false);
+        expect(w6IstFokusselektor('.editor-select:focus')).toBe(true);
+        expect(w6IstFokusselektor('.editor-select:hover, .editor-select:focus')).toBe(true);
+
+        // Selektornormalisierung: Kommaluft und Mehrfachleerzeichen egal,
+        // Reihenfolge NICHT — sonst wuerde eine umsortierte Liste unbemerkt
+        // durchlaufen.
+        expect(w6NormSel('.a  input,.b   select')).toBe(w6NormSel('.a input, .b select'));
+        expect(w6NormSel('.b select, .a input')).not.toBe(w6NormSel('.a input, .b select'));
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(W6_FELDREGELN.length).toBe(52);
+    });
+});
+
+describe('W6-R-09 — zwei Zaehler, zwei Namen (Ratsche)', () => {
+    /* WAS HIER BEWACHT WIRD, und warum es eine EIGENE Ratsche braucht
+       (Design-Handoff v3, Welle 6, Schritt 7, Entscheidung W6-E-3 = A)
+
+       In der Zauberansicht standen zwei Zaehler fuer dieselbe Menge, unter
+       zwei Namen, die sich widersprachen:
+
+         #spells-count  die Pille in der Werkzeugleiste, geschrieben
+                        ausschliesslich von setViewCount() (F-10). Sie stand
+                        im Normalbetrieb DAUERHAFT auf 0 — am gebauten
+                        Buendel nachgemessen: 2 Zauber in D.spells plus
+                        renderSpells() (genau der Pfad, den jede
+                        Zauber-CRUD geht) liess sie auf "0". Erst renderAll()
+                        zog sie nach, und das laeuft nur beim Import, beim
+                        Ruecknehmen und beim Wiederherstellen.
+         #spell-count   die Filterrueckmeldung unter den Filtermarken, die
+                        "Buch 2" bzw. gefiltert "Buch 1/2" meldete — korrekt,
+                        aber unter einer ID, die dem <view>-count-Schema der
+                        F-10-Ratsche zum Verwechseln aehnlich sieht, ohne
+                        eines zu sein (die Ansicht heisst `spells`, nicht
+                        `spell`).
+
+       WARUM 'spell' NICHT IN COUNTED_VIEWS KOMMT, obwohl der Handoff es
+       verlangt: rot nachgefahren, bevor diese Ratsche entstand. Mit 'spell'
+       ergaenzt wird F-10 Test 3 ("setViewCount() ist die einzige
+       Schreibstelle") rot mit genau EINEM Befund, dem Leser der
+       Filterrueckmeldung. Gruen wird er nur, wenn dieser Leser verschwindet —
+       dann ist die Rueckmeldung, die Paragraph 3.7 desselben Handoffs
+       ausdruecklich behalten will, ein leeres div. Die Ratschenverschaerfung
+       und das "Element bleibt" sind nicht zugleich erfuellbar. Entschieden
+       (W6-E-3 = A): die zwei Dinge bekommen zwei Namen, die Rueckmeldung
+       heisst `spells-filter-count` und faellt damit nachweislich aus dem
+       Schema — die Regex von F-10 Test 3 kann sie nicht treffen, weil ihre
+       Zeichenklasse keinen Bindestrich enthaelt. F-10 bleibt dreifach gruen,
+       und zwar ohne Ausnahmeliste.
+
+       DIE ZWEI LAYOUT-EIGENSCHAFTEN SIND DER EIGENTLICHE RISIKOPUNKT, nicht
+       die Farbe. Der Inline-Stil der Rueckmeldung trug vier Deklarationen,
+       und ZWEI davon sind Layout: `white-space: nowrap` (sonst bricht
+       "Buch 1/2" um) und `margin-left: auto` (das einzige, was den Zaehler im
+       Filterstreifen nach rechts schiebt — das Elternelement ist ein
+       `display: flex` ohne `justify-content`). Eine Klasse, die nur Schrift
+       und Farbe mitnimmt, laesst den Zaehler nach links an die Schulfilter
+       springen. Fall 2 prueft genau diese zwei namentlich; der sichtbare
+       Beleg dafuer steht in tests/e2e/features/zaehler.spec.js (W6-R-10
+       Fall 4, rechte Kante in vier Themes am gebauten Buendel gemessen).
+
+       AUSGANGSWERTE DES ROTLAUFS, gemessen am 2026-10-07 an HEAD 186e4e7:
+         Fall 1  1 Befund   Rueckmeldung heisst spell-count, traegt vier
+                            Inline-Deklarationen und keine Klasse
+         Fall 2  1 Befund   .filter-count existiert nirgends (0 Treffer in
+                            assets/, core/, features/, ui/, tests/)
+         Fall 3  2 Befunde  renderSpells() und renderQuests() rufen
+                            setViewCount() nicht
+         Fall 4  2 Befunde  die alte ID steht im Markup und im JS
+         Fall 5  1 Befund   .filter-bar fuehrt gap: 6px, Paragraph 3.7
+                            verlangt var(--space-sm) = 8px
+       Dazu F-19: INLINE_MAX 252 -> 251 (gezaehlt mit derselben Regex ueber
+       dieselben Dateien, siehe Kommentar dort).
+
+       KEIN MODULPFAD IM KLARTEXT. Die zwei JS-Dateien stehen auf der
+       Ausnahmeliste des Abdeckungs-Gates. Dieses Gate liest jede woertliche
+       Nennung eines loader.js-Pfades unter tests/ als "Modul ist abgedeckt"
+       und faellt dann ueber den nun ueberfluessigen Ausnahmeeintrag. Diese
+       Ratsche prueft Quelltext als Text und deckt die Module nicht ab —
+       darum sind die Pfade als Teilstuecke zusammengesetzt und nicht
+       ausgeschrieben. */
+
+    /** Die zwei Renderpfade, die den Werkzeugleisten-Zaehler schreiben
+     *  muessen. Als Pfadteile, nicht als Pfad — siehe Kommentarschluss oben. */
+    const W6D_RENDERER = [
+        { teile: ['features', 'spells', 'spell-manager.js'], fn: 'renderSpells', view: 'spells' },
+        { teile: ['features', 'quests', 'quests-render.js'], fn: 'renderQuests', view: 'quests' }
+    ];
+
+    /** Die ID der Filterrueckmeldung nach dem Schritt und die alte davor. */
+    const W6D_NEU = 'spells-filter-count';
+    const W6D_ALT = 'spell-count';
+    const W6D_KLASSE = 'filter-count';
+
+    /**
+     * Das oeffnende Tag mit einer bestimmten id aus einem Markup-Text.
+     * Rueckgabe: null, wenn es sie nicht gibt.
+     */
+    function w6dTagMitId(markup, id) {
+        const m = new RegExp('<[a-z]+[^>]*\\bid="' + id + '"[^>]*>').exec(markup);
+        return m ? m[0] : null;
+    }
+
+    /**
+     * Der Rumpf einer Funktionsdeklaration, ueber Klammertiefe geschnitten.
+     * Eine Regex bis zur ersten schliessenden Klammer wuerde beim ersten
+     * if-Block enden; die gesuchten Aufrufe liegen weiter unten.
+     */
+    function w6dFunktionsrumpf(code, name) {
+        const start = code.indexOf('function ' + name + '(');
+        if (start < 0) return null;
+        const auf = code.indexOf('{', start);
+        if (auf < 0) return null;
+        let tiefe = 1;
+        for (let i = auf + 1; i < code.length; i++) {
+            if (code[i] === '{') tiefe++;
+            else if (code[i] === '}') {
+                tiefe--;
+                if (!tiefe) return code.slice(auf + 1, i);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Der Rumpf der Regel mit genau diesem Selektor (normalisiert), ueber
+     * alle Stildateien. Nimmt die ERSTE; eine zweite waere eine Dublette und
+     * Gegenstand von R-06.
+     */
+    function w6dRegelrumpf(selektor) {
+        for (const f of cssFiles) {
+            for (const r of regelnMitRumpf(f.content)) {
+                if (r.sel.replace(/\s+/g, ' ').trim() === selektor) {
+                    return { datei: f.name, zeile: r.zeile, rumpf: r.rumpf };
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Nennt der Rumpf diese Eigenschaft mit diesem Wert? */
+    const w6dHatDekl = (rumpf, prop, wert) =>
+        new RegExp('(?:^|[;{\\s])' + prop + '\\s*:\\s*' + wert + '\\s*(?:;|$)').test(rumpf || '');
+
+    /**
+     * Alle Vorkommen der alten ID in einem Text — OHNE `assign-spell-count`,
+     * das ein anderes Element ist (die Verfuegbar-Pille der Zauberzuweisung
+     * in modals-entity.html) und bleibt.
+     */
+    function w6dAlteId(text) {
+        return [...text.matchAll(/[\w-]*spell-count/g)].map(m => m[0]).filter(t => t === W6D_ALT);
+    }
+
+    test('Fall 1 — die Filterrueckmeldung traegt eine Klasse und keinen Inline-Stil', () => {
+        const befunde = [];
+        let gefunden = 0;
+        tplFiles.forEach(f => {
+            const tag = w6dTagMitId(f.content, W6D_NEU);
+            if (!tag) return;
+            gefunden++;
+            if (!new RegExp('class="[^"]*\\b' + W6D_KLASSE + '\\b').test(tag)) {
+                befunde.push(
+                    f.name + ': #' + W6D_NEU + ' traegt die Klasse .' + W6D_KLASSE + ' nicht'
+                );
+            }
+            if (/\sstyle="/.test(tag)) {
+                befunde.push(f.name + ': #' + W6D_NEU + ' traegt noch einen Inline-Stil');
+            }
+        });
+        if (gefunden !== 1) {
+            befunde.push(
+                'Die Filterrueckmeldung #' +
+                    W6D_NEU +
+                    ' kommt ' +
+                    gefunden +
+                    '-mal im Markup vor (verlangt: genau 1). Bei der Geburt dieser Ratsche: 0 — ' +
+                    'sie hiess ' +
+                    W6D_ALT +
+                    ' und trug vier Inline-Deklarationen.'
+            );
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 2 — .filter-count traegt die zwei Layout-Eigenschaften mit', () => {
+        /* OHNE DIESE ZWEI SPRINGT DER ZAEHLER NACH LINKS. Das ist kein
+           Stilgeschmack: `margin-left: auto` ist das einzige Mittel, das ihn
+           im Flex-Streifen nach rechts schiebt, und `nowrap` haelt die Form
+           "Buch 1/2" in einer Zeile. Beide standen im geloeschten
+           Inline-Stil. */
+        const regel = w6dRegelrumpf('.' + W6D_KLASSE);
+        if (!regel) {
+            expect([
+                '.' +
+                    W6D_KLASSE +
+                    ' ist in keiner Stildatei definiert. Bei der Geburt dieser Ratsche: 0 Treffer ' +
+                    'im ganzen Baum.'
+            ]).toEqual([]);
+            return;
+        }
+        const befunde = [];
+        if (!w6dHatDekl(regel.rumpf, 'white-space', 'nowrap')) {
+            befunde.push(regel.datei + ':' + regel.zeile + ': white-space: nowrap fehlt');
+        }
+        if (!w6dHatDekl(regel.rumpf, 'margin-left', 'auto')) {
+            befunde.push(regel.datei + ':' + regel.zeile + ': margin-left: auto fehlt');
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 3 — renderSpells() und renderQuests() schreiben ueber setViewCount()', () => {
+        /* DER BEHOBENE FEHLER. Beide Renderpfade liefen bisher ohne jeden
+           Zaehlerschreibzugriff; die einzige Stelle, die 'spells' und
+           'quests' schrieb, lief nur aus renderAll(). */
+        const befunde = [];
+        W6D_RENDERER.forEach(r => {
+            const abs = path.join(REPO, ...r.teile);
+            const code = fs.readFileSync(abs, 'utf8');
+            const rumpf = w6dFunktionsrumpf(code, r.fn);
+            if (rumpf === null) {
+                befunde.push(r.teile[r.teile.length - 1] + ': ' + r.fn + '() nicht gefunden');
+                return;
+            }
+            if (!new RegExp('setViewCount\\(\\s*[\'"]' + r.view + '[\'"]').test(rumpf)) {
+                befunde.push(
+                    r.teile[r.teile.length - 1] +
+                        ': ' +
+                        r.fn +
+                        "() ruft setViewCount('" +
+                        r.view +
+                        "', …) nicht"
+                );
+            }
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 4 — die alte ID spell-count kommt nirgends mehr vor', () => {
+        /* ABGRENZUNG: `assign-spell-count` ist ein anderes Element (die
+           Verfuegbar-Pille der Zauberzuweisung) und bleibt. Ein naives
+           toContain() wuerde sie mitzaehlen und waere dauerhaft rot. */
+        const befunde = [];
+        tplFiles.forEach(f => {
+            w6dAlteId(f.content).forEach(() => befunde.push('Markup ' + f.name + ': ' + W6D_ALT));
+        });
+        sourceJs().forEach(f => {
+            w6dAlteId(f.content).forEach(() =>
+                befunde.push('JS ' + path.basename(f.name) + ': ' + W6D_ALT)
+            );
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    test('Fall 5 — .filter-bar fuehrt gap aus der Abstandsleiter', () => {
+        /* Paragraph 3.7 verlangt var(--space-sm) = 8px; die Regel stand auf
+           6px, also auf einem Wert, den die Leiter nicht kennt. Drei
+           Verwendungen im Markup, alle im Zauberfilter. Diese Pruefung
+           urteilt ueber den TOKEN, nicht ueber die Zahl: ein spaeteres
+           var(--space-xs) waere ein anderer, aber kein roher Wert — darum
+           nennt der Befund den gelesenen Wert mit. */
+        const regel = w6dRegelrumpf('.filter-bar');
+        const befunde = [];
+        if (!regel) {
+            befunde.push('.filter-bar ist in keiner Stildatei definiert');
+        } else {
+            const m = /(?:^|[;{\s])gap\s*:\s*([^;}]+)/.exec(regel.rumpf);
+            if (!m) {
+                befunde.push(regel.datei + ':' + regel.zeile + ': .filter-bar fuehrt kein gap');
+            } else if (!/var\(\s*--space-/.test(m[1])) {
+                befunde.push(
+                    regel.datei +
+                        ':' +
+                        regel.zeile +
+                        ': gap: ' +
+                        m[1].trim() +
+                        ' kommt nicht aus der Abstandsleiter (bei der Geburt: 6px)'
+                );
+            }
+        }
+        expect(befunde).toEqual([]);
+    });
+
+    test('Gegenprobe: die fuenf Erkenner sehen ihre Verletzung ueberhaupt', () => {
+        // Fall 1: Inline-Stil und fehlende Klasse am Tag.
+        const gut = '<div id="' + W6D_NEU + '" class="' + W6D_KLASSE + '"></div>';
+        const schlecht = '<div id="' + W6D_NEU + '" style="margin-left: auto;"></div>';
+        expect(w6dTagMitId(gut, W6D_NEU)).toContain(W6D_KLASSE);
+        expect(/\sstyle="/.test(String(w6dTagMitId(schlecht, W6D_NEU)))).toBe(true);
+        expect(w6dTagMitId('<div id="anderes"></div>', W6D_NEU)).toBe(null);
+
+        // Fall 2: Deklarationserkenner. Der Praefixschutz muss halten —
+        // `-webkit-margin-left` ist keine margin-left-Deklaration.
+        expect(w6dHatDekl(' white-space: nowrap; ', 'white-space', 'nowrap')).toBe(true);
+        expect(w6dHatDekl(' white-space: pre; ', 'white-space', 'nowrap')).toBe(false);
+        expect(w6dHatDekl(' margin-left: auto; ', 'margin-left', 'auto')).toBe(true);
+        expect(w6dHatDekl(' margin-left: 0; ', 'margin-left', 'auto')).toBe(false);
+        expect(w6dHatDekl(' -webkit-margin-left: auto; ', 'margin-left', 'auto')).toBe(false);
+
+        // Fall 3: Rumpfschnitt ueber Klammertiefe. Eine Regex bis zur ersten
+        // schliessenden Klammer haette den Aufruf verfehlt.
+        const probe = 'function a() {\n  if (x) { return; }\n  setViewCount("spells", 2);\n}\n';
+        expect(w6dFunktionsrumpf(probe, 'a')).toContain('setViewCount("spells"');
+        expect(w6dFunktionsrumpf(probe, 'b')).toBe(null);
+
+        // Fall 4: die Abgrenzung gegen assign-spell-count ist die ganze
+        // Pointe dieses Falles.
+        expect(w6dAlteId("$('spell-count')")).toEqual(['spell-count']);
+        expect(w6dAlteId("$('assign-spell-count')")).toEqual([]);
+        expect(w6dAlteId("$('spells-filter-count')")).toEqual([]);
+
+        // Und F-10 Test 3 kann den neuen Namen nicht treffen — der Grund,
+        // warum 'spell' nicht in COUNTED_VIEWS muss.
+        expect(/['"]([a-z]+)-count['"]/.test("$('spells-filter-count')")).toBe(false);
+        expect(/['"]([a-z]+)-count['"]/.test("$('spell-count')")).toBe(true);
+
+        // Der Lauf hat wirklich Regeln gelesen.
+        expect(w6dRegelrumpf('.filter-bar')).not.toBe(null);
     });
 });

@@ -28,7 +28,7 @@
                 <div class="form-group">
                     <label>Emoji</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" id="preset-emoji" placeholder="🔥" maxlength="2" style="width: 50px; text-align: center; font-size: 1.2em;">
+                        <input type="text" id="preset-emoji" placeholder="🔥" maxlength="2" style="width: 50px; text-align: center; font-size: var(--text-xl);">
                         <div class="emoji-picker-mini">
                             <button type="button" class="emoji-pick-btn" data-action="set-preset-emoji" data-value="⏱️">⏱️</button>
                             <button type="button" class="emoji-pick-btn" data-action="set-preset-emoji" data-value="🔥">🔥</button>
@@ -56,7 +56,7 @@
                 </div>
             </div>
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-                <label style="color: var(--text-dim); font-size: 0.85em;">Gespeicherte Vorlagen:</label>
+                <label style="color: var(--text-dim); font-size: var(--text-sm);">Gespeicherte Vorlagen:</label>
                 <div class="u-mt-sm" id="preset-list"></div>
             </div>
         </div>
@@ -77,7 +77,7 @@
                 <label>Würfelnotation</label>
                 <input type="text" id="dice-fav-notation" placeholder="z.B. 1d20+5">
             </div>
-            <div style="color: var(--text-dim); font-size: 0.8em; margin-bottom: 12px;">
+            <div style="color: var(--text-dim); font-size: var(--text-sm); margin-bottom: 12px;">
                 Beispiele: 2d6+3, 4d6kh3, 1d20+7, 8d6
             </div>
             <button class="btn btn-success" data-action="call" data-value="addDiceFavorite">Favorit speichern</button>
@@ -101,19 +101,19 @@
             <!-- Statistiken -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--gold);">📊 Datenbank-Statistiken</h4>
-                <div id="debug-stats" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 0.85em;"></div>
+                <div id="debug-stats" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: var(--text-sm);"></div>
             </div>
             
             <!-- System-Status -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--cyan);">⚙️ System-Status</h4>
-                <div id="debug-system-status" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.85em;"></div>
+                <div id="debug-system-status" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: var(--text-sm);"></div>
             </div>
             
             <!-- Validierung -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--cyan);">✅ Validierung & Tests</h4>
-                <div id="debug-validation" style="font-size: 0.85em; max-height: 200px; overflow-y: auto;"></div>
+                <div id="debug-validation" style="font-size: var(--text-sm); max-height: 200px; overflow-y: auto;"></div>
                 <div class="btn-group" style="margin-top: 8px; flex-wrap: wrap; gap: 6px;">
                     <button class="btn" data-action="call" data-value="runValidation">🔍 Datenbank prüfen</button>
                     <button class="btn" data-action="call" data-value="runFeatureTests">🧪 Feature-Tests</button>
@@ -126,7 +126,7 @@
             <!-- Neue Features testen -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--purple);">🆕 Neue Features (v2.17)</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.85em;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: var(--text-sm);">
                     <div>
                         <div class="form-hint">Quick Reference v2</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
@@ -172,7 +172,7 @@
             <!-- Console Log -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--purple);">📋 Debug-Log</h4>
-                <div id="debug-log" style="font-family: monospace; font-size: 0.75em; background: #000; color: #0f0; padding: 8px; border-radius: 4px; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
+                <div id="debug-log" style="font-family: monospace; font-size: var(--text-xs); background: #000; color: #0f0; padding: 8px; border-radius: 4px; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
                 <button class="btn btn-sm u-mt-sm" data-action="call" data-value="clearDebugLog">Log leeren</button>
             </div>
             
@@ -198,7 +198,7 @@
                 <button class="btn btn-sm" data-action="call" data-value="hideQuickNotesModal">✕</button>
             </div>
             <div class="form-group u-m-0">
-                <textarea id="quick-notes" placeholder="Schnelle Notizen während der Session..." style="min-height: 200px; width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 0.95em; line-height: 1.5; resize: vertical;"></textarea>
+                <textarea id="quick-notes" placeholder="Schnelle Notizen während der Session..." style="min-height: 200px; width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: var(--text-md); line-height: 1.5; resize: vertical;"></textarea>
             </div>
             <div class="btn-group u-mt-md">
                 <button class="btn btn-success" data-action="save-and-hide-quick-notes">💾 Speichern & Schließen</button>
@@ -367,7 +367,7 @@
                 <!-- Dynamisch generiert -->
             </div>
             <div class="form-group u-mt-md">
-                <label style="text-transform: uppercase; font-size: 0.8em; color: var(--text-dim); letter-spacing: 1px;">Eigener Zustand</label>
+                <label style="text-transform: uppercase; font-size: var(--text-sm); color: var(--text-dim); letter-spacing: 1px;">Eigener Zustand</label>
                 <div style="display: flex; gap: 8px;">
                     <input class="u-flex-1" type="text" id="custom-condition-name" placeholder="Name des Zustands">
                     <button class="btn" data-action="call" data-value="addCustomCondition">Hinzufügen</button>
@@ -386,12 +386,12 @@
             <input type="hidden" id="hp-calc-type">
             <input type="hidden" id="hp-calc-id">
             <div style="text-align: center; margin-bottom: 16px;">
-                <div style="font-size: 2em; color: var(--cyan);" id="hp-calc-current">0 / 0</div>
+                <div style="font-size: var(--text-3xl); color: var(--cyan);" id="hp-calc-current">0 / 0</div>
                 <div style="color: var(--text-dim);">Aktuelle HP</div>
             </div>
             <div class="form-group">
                 <label>Wert oder Würfelformel (z.B. 2d6+3)</label>
-                <input type="text" id="hp-calc-value" placeholder="10 oder 2d6+3" style="text-align: center; font-size: 1.2em;">
+                <input type="text" id="hp-calc-value" placeholder="10 oder 2d6+3" style="text-align: center; font-size: var(--text-xl);">
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px;">
                 <button class="btn hp-calc-btn damage" data-action="apply-hp-change" data-value="damage">💔 Schaden</button>
@@ -448,7 +448,7 @@
             <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px;">
                 <label style="display: flex; justify-content: space-between; align-items: center;">
                     <span>🗑️ Globale Tags verwalten</span>
-                    <span style="font-size: 0.75em; color: var(--text-dim);">Löschen entfernt Tag überall</span>
+                    <span style="font-size: var(--text-xs); color: var(--text-dim);">Löschen entfernt Tag überall</span>
                 </label>
                 <div id="global-tags-list" class="tags-container" style="min-height: 40px; background: var(--bg-dark); padding: 8px; border-radius: 6px;"></div>
             </div>
@@ -469,7 +469,7 @@
                 <label>Neue Verknüpfung hinzufügen</label>
                 <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: end;">
                     <div class="form-group u-m-0">
-                        <label style="font-size: 0.8em;">Typ</label>
+                        <label>Typ</label>
                         <select id="link-target-type" data-action="render-link-targets">
                             <option value="npcs">🎭 NPC</option>
                             <option value="locations">🏠 Ort</option>
@@ -482,7 +482,7 @@
                         </select>
                     </div>
                     <div class="form-group u-m-0">
-                        <label style="font-size: 0.8em;">Ziel</label>
+                        <label>Ziel</label>
                         <select id="link-target-id"></select>
                     </div>
                     <button class="btn" data-action="call" data-value="addEntityLink">🔗 Verknüpfen</button>
@@ -507,7 +507,7 @@
                 <label>Bild-URL</label>
                 <input type="text" id="avatar-url" placeholder="https://example.com/image.jpg" data-action="preview-avatar">
             </div>
-            <p style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 12px;">
+            <p style="font-size: var(--text-sm); color: var(--text-dim); margin-bottom: 12px;">
                 Tipp: Bilder von Imgur, Discord CDN, oder anderen Bild-Hostern verwenden.
             </p>
             <div class="btn-group">
@@ -550,12 +550,12 @@
             </div>
             <div class="modal-body" style="text-align: center; padding: 24px;">
                 <div style="font-size: 48px; margin-bottom: 16px;">🎲</div>
-                <p style="color: var(--gold); font-size: 18px; margin-bottom: 8px;">Version 2.4.0</p>
+                <p style="color: var(--gold); font-size: var(--text-xl); margin-bottom: 8px;">Version 2.4.0</p>
                 <p style="color: var(--text-dim); margin-bottom: 24px;">Ein vollwertiger D&D 5e Kampagnen-Manager</p>
 
                 <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 4px;">Entwickelt von</p>
-                    <p style="color: var(--text); font-size: 16px; font-weight: 600;">Arthur Siemens (DE)</p>
+                    <p style="color: var(--text-dim); font-size: var(--text-sm); margin-bottom: 4px;">Entwickelt von</p>
+                    <p style="color: var(--text); font-size: var(--text-lg); font-weight: 600;">Arthur Siemens (DE)</p>
                 </div>
 
                 <a href="https://github.com/retroArthur/DnD_Tracker_Pro" target="_blank" rel="noopener noreferrer"
@@ -566,7 +566,7 @@
                     GitHub Repository
                 </a>
 
-                <p style="color: var(--text-dim); font-size: 11px; margin-top: 20px;">
+                <p style="color: var(--text-dim); font-size: var(--text-xs); margin-top: 20px;">
                     Made with ❤️ for D&D 5e<br>
                     MIT License © 2024-2026
                 </p>

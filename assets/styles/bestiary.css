@@ -41,9 +41,6 @@
 /* Count badge */
 #bestiary-count {
     background: var(--bg-elevated);
-    padding: 2px 8px;
-    border-radius: var(--radius-md);
-    font-size: 0.8em;
     color: var(--text-dim);
 }
 
@@ -80,10 +77,6 @@
 
 /* Origin badge: SRD / Eigen */
 .bestiary-badge {
-    font-size: 0.65em;
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    font-weight: 700;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -100,7 +93,7 @@
 
 /* Monster name */
 .bestiary-name {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text);
     flex: 1;
     min-width: 0;
@@ -111,7 +104,7 @@
 
 /* CR display */
 .bestiary-cr {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     white-space: nowrap;
     flex-shrink: 0;
@@ -119,7 +112,7 @@
 
 /* Creature type */
 .bestiary-type {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     white-space: nowrap;
     flex-shrink: 0;
@@ -130,13 +123,13 @@
     background: none;
     border: none;
     color: var(--text-dim);
-    font-size: 1.1em;
+    font-size: var(--text-lg);
     cursor: pointer;
     padding: 4px;
     flex-shrink: 0;
     line-height: 1;
     border-radius: var(--radius-sm);
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
     /* Minimum tap zone: ~32x32px via padding */
     min-width: 28px;
     min-height: 28px;
@@ -180,8 +173,8 @@
 
 /* Monster name heading (above parchment) */
 .bestiary-detail-name {
-    font-size: 1.2em;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     color: var(--gold-text);
     margin-bottom: 8px;
 }
@@ -221,8 +214,8 @@
 
 /* Monster name inside parchment (classic 5e red) */
 .bestiary-statblock-name {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: var(--text-xl);
+    font-weight: 600;
     /* Schritt 11 (Welle 1): Das Pergament folgt keinem Theme — die
        Verlaufsenden --ra-parchment-from/-to sind in allen vier Themes
        dieselben. `var(--red)` tat es trotzdem und erreichte darauf
@@ -240,7 +233,7 @@
 
 /* Size/type/alignment subline */
 .bestiary-statblock-subline {
-    font-size: 12px;
+    font-size: var(--text-sm);
     font-style: italic;
     /* Die Kosmetik, die Welle 1 hier ausdruecklich offengelassen hat, ist
        erledigt (Welle 2, Schritt 7): das frueher hier stehende rgba-Literal
@@ -263,7 +256,7 @@
 
 /* AC / HP / Speed row */
 .bestiary-statblock-basics {
-    font-size: 13px;
+    font-size: var(--text-sm);
     line-height: 1.6;
     margin: 8px 0;
 }
@@ -279,7 +272,7 @@
     gap: 4px;
     text-align: center;
     margin: 8px 0;
-    font-size: 12px;
+    font-size: var(--text-sm);
 }
 
 .bestiary-attr-cell {
@@ -303,19 +296,19 @@
 }
 
 .bestiary-attr-label {
-    font-weight: 700;
-    font-size: 0.9em;
+    font-weight: 600;
+    font-size: var(--text-md);
     color: var(--parchment-ink);
 }
 
 .bestiary-attr-value {
-    font-size: 0.95em;
+    font-size: var(--text-md);
     color: var(--parchment-ink-dark);
 }
 
 /* Saves / Skills / Senses / Languages block */
 .bestiary-statblock-meta {
-    font-size: 12px;
+    font-size: var(--text-sm);
     line-height: 1.6;
     margin: 6px 0;
 }
@@ -330,8 +323,8 @@
 
 /* Section headings (Eigenschaften, Aktionen, etc.) */
 .bestiary-statblock-section-heading {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     /* Schritt 11 (Welle 1), dieselbe Rechnung wie bei
        .bestiary-statblock-name: `var(--red)` erreichte auf dem
        themenunabhaengigen Pergament hoechstens 3,92 (Text) und fiel mit
@@ -348,19 +341,19 @@
 
 /* Trait / Action items */
 .bestiary-statblock-trait {
-    font-size: 13px;
+    font-size: var(--text-sm);
     line-height: 1.65;
     margin: 6px 0;
 }
 
 .bestiary-statblock-trait-name {
-    font-weight: 700;
+    font-weight: 600;
     font-style: italic;
 }
 
 /* Attribution footer */
 .bestiary-attribution {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     margin-top: 16px;
     padding-top: 8px;
@@ -383,7 +376,7 @@
     color: var(--parchment-ink-link);
     cursor: pointer;
     text-decoration: underline dotted;
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
 }
 
 .bestiary-statblock .bestiary-dice:hover {
@@ -527,8 +520,8 @@
 
 /* Section headings inside the editor */
 .bst-section-title {
-    font-weight: 700;
-    font-size: 0.9em;
+    font-weight: 600;
+    font-size: var(--text-md);
     color: var(--gold);
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
@@ -543,7 +536,7 @@
 .bst-validation-error {
     display: block;
     color: var(--red);
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     margin-top: 4px;
 }
 
@@ -571,8 +564,8 @@
 }
 
 .bst-attr-col label {
-    font-size: 0.75em;
-    font-weight: 700;
+    font-size: var(--text-xs);
+    font-weight: 600;
     color: var(--text-dim);
     text-align: center;
 }
@@ -582,10 +575,25 @@
     max-width: 56px;
     text-align: center;
     padding: 4px;
+    /* FUELLUNG AUS DER APP, NICHT VOM BROWSER (Welle 6, Schritt 6).
+       Diese sechs Felder hatten bis Schritt 6 keine einzige Autorenregel fuer
+       ihr Aussehen; ihre Fuellung kam aus color-scheme, also in dark als
+       #3b3b3b. Der neue Eingaberahmen liest darauf nur 2,68 — SCHLECHTER als
+       die 3,04, die Chromiums eigenes Grau dort erreichte. Den Rahmen zu
+       setzen und die Fuellung dem Browser zu lassen, haette das Feld also
+       messbar verschlechtert. Mit var(--bg-card) liest er 4,17 / 4,54 / 3,88 /
+       5,62.
+       WARUM NICHT IN DER ELEMENTREGEL AM ENDE VON core.css: am Buendel
+       nachgemessen bekommen dort ALLE 228 Kaestchen die Fuellung mit
+       (appearance: auto laesst background durch), und das waere eine
+       sichtbare Aenderung an 228 Elementen, die dieser Schritt nicht gemessen
+       hat. Eine Typenliste mit :not() haette ausserdem die Spezifitaet (0,1,1)
+       und wuerde die Fuellung JEDER Klassenregel ueberschreiben. */
+    background: var(--bg-card);
 }
 
 .bst-attr-mod {
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
 }
 
@@ -601,12 +609,12 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     cursor: pointer;
 }
 
 .bst-save-item span {
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-dim);
     min-width: 28px;
 }
@@ -614,27 +622,28 @@
 .bst-save-val {
     width: 44px;
     padding: 3px 4px;
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-align: center;
+    /* Fuellung aus der App — Begruendung bei .bst-attr-input. */
+    background: var(--bg-card);
 }
 
 /* Rich-text editor fields (contenteditable) */
 .bst-rich-editor {
     min-height: 80px;
     padding: 8px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     line-height: 1.5;
-    outline: none;
     resize: vertical;
     overflow-y: auto;
 }
 
 .bst-rich-editor:focus {
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .bst-rich-editor[placeholder]:empty::before {

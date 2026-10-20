@@ -12,14 +12,14 @@
         }
         
         [data-layout="mobile"] .mobile-nav-toggle-text {
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 500;
             color: var(--gold);
         }
         
         [data-layout="mobile"] .mobile-nav-toggle-icon {
-            font-size: 18px;
-            transition: transform 0.3s ease;
+            font-size: var(--text-xl);
+            transition: transform var(--dur-slow) ease;
         }
         
         [data-layout="mobile"] .app-header.nav-open .mobile-nav-toggle-icon {
@@ -86,7 +86,7 @@
             background: none;
             border: none;
             color: var(--text);
-            font-size: 1.3em;
+            font-size: var(--text-xl);
             cursor: pointer;
             padding: 8px;
         }
@@ -98,7 +98,7 @@
             border-radius: var(--radius-md);
             padding: 6px 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         [data-layout="mobile"] .mobile-timer:active {
@@ -107,7 +107,7 @@
         
         [data-layout="mobile"] #mobile-timer-display {
             font-family: var(--font-mono);
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 600;
             color: var(--gold);
         }
@@ -225,12 +225,9 @@
             background: var(--bg-elevated);
             border: 1px solid var(--border);
             color: var(--text);
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-md);
             cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
+            font-size: var(--text-lg);
+            transition: var(--trans-std);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -253,7 +250,7 @@
             pointer-events: none;
             z-index: var(--z-modal);
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: opacity var(--dur) ease;
         }
         
         #quicknotes-modal.show {
@@ -270,7 +267,7 @@
             pointer-events: auto;
             box-shadow: var(--shadow-3);
             transform: translateY(-10px);
-            transition: transform 0.2s ease;
+            transition: transform var(--dur) ease;
         }
         
         #quicknotes-modal.show .modal {
@@ -312,11 +309,11 @@
         }
         
         .session-timer-icon {
-            font-size: 14px;
+            font-size: var(--text-md);
         }
         
         .session-timer-display {
-            font-size: 14px;
+            font-size: var(--text-md);
             font-weight: 600;
             color: var(--gold-text);
             min-width: 65px;
@@ -336,10 +333,10 @@
             border: none;
             color: var(--text-dim);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--text-sm);
             padding: 2px 4px;
             border-radius: var(--radius-sm);
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .session-timer-btn:hover {
@@ -350,13 +347,13 @@
         .session-content h3 {
             color: var(--gold-text);
             margin: 0 0 8px 0;
-            font-size: 1.1em;
+            font-size: var(--text-lg);
         }
         
         .session-content h4 {
             color: var(--cyan-text);
             margin: 12px 0 6px 0;
-            font-size: 0.95em;
+            font-size: var(--text-md);
         }
         
         .session-content p {
@@ -427,7 +424,7 @@
         
         .app-title {
             color: var(--gold-text);
-            font-size: 1.2em;
+            font-size: var(--text-xl);
         }
         
         .nav-tabs {
@@ -460,17 +457,17 @@
             padding: 8px 12px;
             cursor: pointer;
             border-radius: var(--radius-lg);
-            font-size: 12px;
+            font-size: var(--text-sm);
             font-weight: 500;
             white-space: nowrap;
-            transition: all 0.2s;
+            transition: var(--trans-std), border-left-width var(--dur) var(--ease), margin-left var(--dur) var(--ease); /* Geometrie des .drag-over-Balkens darunter — s. W4-R-03 */
             flex-shrink: 0;
         }
 
         .nav-tab:hover { background: var(--overlay-mid); color: var(--text); border-color: var(--border); }
         .nav-tab.active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         
-        /* Nav Tab Drag & Drop (Legacy — bei gruppierter Nav inaktiv) */
+        /* Nav Tab Drag & Drop (Legacy — ui/lazy-loading.js:51 verlaesst initNavDragDrop() vor dem Anhaengen, sobald eine .nav-group da ist, und header.html gruppiert: diese drei Regeln sind im ausgelieferten Markup unerreichbar) */
         .nav-tab[draggable="true"] { cursor: grab; }
         .nav-tab.dragging { opacity: 0.4; cursor: grabbing; }
         .nav-tab.drag-over {
@@ -491,10 +488,10 @@
             padding: 8px 12px;
             cursor: pointer;
             border-radius: var(--radius-lg);
-            font-size: 12px;
+            font-size: var(--text-sm);
             font-weight: 500;
             white-space: nowrap;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         .nav-group-btn:hover { background: var(--overlay-mid); color: var(--text); border-color: var(--border); }
         .nav-group-btn.has-active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
@@ -542,7 +539,7 @@
         
         .card-title {
             color: var(--gold-text);
-            font-size: 1em;
+            font-size: var(--text-md);
             font-weight: 600;
         }
         
@@ -554,8 +551,8 @@
             padding: 6px 12px;
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
+            font-size: var(--text-sm);
+            transition: var(--trans-std);
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -579,11 +576,11 @@
             background: var(--gold);
             color: var(--on-gold);
         }
-        .btn-sm { padding: 3px 8px; font-size: 11px; }
+        .btn-sm { padding: 3px 8px; font-size: var(--text-xs); }
 
         /* btn-xs: zweimal im Markup benutzt, nie definiert (F-13). Eine Stufe
            unter btn-sm. */
-        .btn-xs { padding: 2px 6px; font-size: 10px; }
+        .btn-xs { padding: 2px 6px; font-size: var(--text-xs); }
 
         /* btn-text: dreimal im Migrations-Assistenten benutzt, nie definiert
            (F-13). Reiner Text ohne Flaeche — fuer Nebenwege wie
@@ -633,9 +630,6 @@
 
         /* Nur-Icon: quadratisch, ohne Kontur, Flaeche >= 36px fuer Beruehrung */
         .btn-icon {
-            padding: 0;
-            width: 36px;
-            height: 36px;
             justify-content: center;
             background: transparent;
             border-color: transparent;
@@ -647,15 +641,71 @@
             color: var(--gold-text);
         }
 
-        .btn-sm.btn-icon {
-            width: 28px;
-            height: 28px;
+
+        /* ============================================================
+           DER FOKUSRING — WELTREGEL (Welle 6, Schritt 2)
+           ============================================================
+
+           HIERHER UMGEZOGEN aus dmscreen.css, wo sie seit ihrer Entstehung
+           stand. Sie gilt fuer den ganzen Baum; in einer Modulstildatei war sie
+           eine Weltregel durch Zufall der @import-Reihenfolge. core.css ist die
+           dritte Datei des Hubs, damit gewinnt sie hier gegen jede
+           gleichrangige Regel des ganzen Baums — in dmscreen.css (Platz 16)
+           gewann sie nur gegen die Dateien danach.
+
+           DER UMZUG IST KASKADENNEUTRAL, nachgerechnet und am Tabulatorlauf
+           gegengeprueft: alle 31 unterdrueckenden `outline`-Regeln haben
+           Spezifitaet >= (0,2,0) und schlagen (0,1,0) von beiden Orten aus. Die
+           drei unbedingten (0,1,0)-Gegenspieler stehen in bestiary.css,
+           welt.css und command-palette.css — im Hub NACH beiden Orten, sie
+           gewinnen vorher wie nachher ueber die Reihenfolge. `#session-tags-input`
+           ist (1,0,0) und gewinnt immer. Die sechs `:focus-visible`-Regeln mit
+           hoeherer Spezifitaet (eine hier darunter, vier in editors.css, eine
+           in tools.css) ueberstimmen sie weiterhin.
+
+           SIE HAT NIE EIN `border-radius` GETRAGEN. Der Handoff v3 fuehrt unter
+           Welle 6 Punkt 1 die Teilaufgabe "border-radius aus der globalen
+           :focus-visible-Regel streichen" und nennt als Begruendung einen
+           Formsprung an `.nav-tab` von 12 auf 4 Bildpunkte. Nachgesehen: die
+           Regel enthielt an ihrem alten Ort genau zwei Deklarationen, dieselben
+           zwei wie hier. Die Teilaufgabe hat keinen Gegenstand; der Anspruch
+           stammt aus einem v2-Patch, der nie eingebaut wurde, und der genannte
+           Formsprung an `.nav-tab` aus demselben. Wer ihn wieder aufgreift,
+           sucht ein `border-radius`, das es in dieser Regel nie gab.
+
+           WARUM `outline` UND NICHT `box-shadow`: Welle 4 hat `outline-width`
+           und `outline-offset` ausdruecklich aus den Uebergangslisten
+           herausgenommen ("ein Fokusring soll sofort da sein") und dabei auf
+           diese Welle vorausgeschaut. Ein Ring aus `box-shadow` faedelt sich
+           ueber var(--dur) ein und liest auf den Paneelflaechen ausserdem nur
+           1,16 bis 1,27.
+
+           DIE FARBE IST EIN EIGENES TOKEN, nicht --gold (Schritt 3). Grund und
+           Zahlen stehen je Theme in variables.css; kurz: der Ring ist die
+           einzige Tinte, die gleichzeitig gegen die hellste Seitenflaeche des
+           Themes und gegen die dunkle, themenblinde Modalflaeche halten muss,
+           und --gold kann das in Light (min 2,40) und Sepia (min 2,37) nicht.
+           In Dark und Contrast verweist das Token auf dasselbe Gold wie bisher,
+           dort aendert sich nichts.
+
+           DIESELBE FARBE AN ALLEN SIEBEN SETZENDEN REGELN. Ein Wechsel nur
+           hier waere unwirksam geblieben: sechs Regeln mit hoeherer
+           Spezifitaet (die naechste darunter, vier in editors.css, eine in
+           tools.css) ueberstimmen diese und trugen ihr Gold selbst. Gemessen
+           am Vorzustand: von 640 sichtbaren Ringen in Light trug JEDER
+           rgb(184, 134, 11), der groessere Teil davon aus den sechs. W6-R-04
+           zaehlt sie und verlangt das Token von jeder. */
+        :focus-visible {
+            outline: 2px solid var(--focus-ring);
+            outline-offset: 2px;
         }
 
         /* Der Fokusring war bisher der Browser-Standard und auf dunklem
-           Grund kaum zu sehen. */
+           Grund kaum zu sehen. Die Regel bleibt neben der Weltregel darueber
+           stehen: sie ist spezifischer und traegt damit den Ring aller Knoepfe
+           — gemessen der groesste Teil aller Tastaturhalte. */
         .btn:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
         .btn-danger { border-color: var(--red); color: var(--red-text); }
@@ -700,7 +750,7 @@
         .form-group label {
             /* F-18-BEWACHT: tools/check-f18-kaskade.js haelt die Stellung
                dieses Blocks gegen jede Regel gleicher Spezifitaet fest. */
-            font-size: 13px;
+            font-size: var(--text-sm);
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
@@ -712,11 +762,11 @@
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
+            font-size: var(--text-sm);
         }
         
         .form-group textarea { min-height: 60px; resize: vertical; }
@@ -749,7 +799,7 @@
         .form-label {
             display: block;
             margin-bottom: 4px;
-            font-size: 13px;
+            font-size: var(--text-sm);
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.03em;
@@ -784,11 +834,11 @@
         .form-input {
             width: 100%;
             background: var(--bg-dark);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 6px 10px;
             border-radius: var(--radius-sm);
-            font-size: 13px;
+            font-size: var(--text-sm);
         }
 
         textarea.form-control { min-height: 60px; resize: vertical; }
@@ -806,11 +856,11 @@
             background: transparent;
             border: none;
             color: var(--text-dim);
-            font-size: 22px;
+            font-size: var(--text-xl);
             line-height: 1;
             padding: 0 4px;
             cursor: pointer;
-            transition: color 0.15s;
+            transition: color var(--dur-fast);
         }
 
         .modal-close:hover { color: var(--gold); }
@@ -838,9 +888,6 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 3px 8px;
-            border-radius: var(--radius-lg);
-            font-size: 11px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
         }
@@ -858,7 +905,7 @@
         .color-pink { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); border-color: var(--pink); color: var(--pink-text); }
         
         .condition-tag {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             display: flex;
@@ -869,7 +916,7 @@
         
         .condition-tag .remove-condition {
             opacity: 0.6;
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .condition-tag:hover .remove-condition { opacity: 1; }
@@ -981,12 +1028,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: var(--text-2xl);
             color: var(--text-dim);
         }
         
-        .avatar-placeholder.avatar-sm { font-size: 1em; }
-        .avatar-placeholder.avatar-lg { font-size: 2em; }
+        .avatar-placeholder.avatar-sm { font-size: var(--text-md); }
+        .avatar-placeholder.avatar-lg { font-size: var(--text-3xl); }
         
         /* ============================================================
            TAGS SYSTEM
@@ -995,13 +1042,10 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            font-size: 0.7em;
-            padding: 2px 8px;
-            border-radius: var(--radius-md);
             background: var(--bg-elevated);
             color: var(--text-dim);
             margin: 2px;
-            transition: transform 0.15s, filter 0.15s;
+            transition: transform var(--dur-fast), filter var(--dur-fast);
         }
         
         .tag.clickable {
@@ -1023,13 +1067,10 @@
         .tag-cyan { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); color: var(--cyan-text); }
         
         .link-chip {
-            font-size: 0.75em;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
             background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent);
             color: var(--blue-text);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: var(--trans-fast);
         }
         .link-chip:hover {
             /* Welle 2, Nachtrag. Diese Zustandsregel wechselt NUR die Flaeche;
@@ -1102,7 +1143,7 @@
             color: var(--on-red);
             padding: 8px 16px;
             border-radius: var(--radius-lg);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             display: none;
             z-index: var(--z-panel);
             /* Design-Handoff v3, Welle 3, Schritt 2. Hier stand die EINZIGE
@@ -1164,7 +1205,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2em;
+            font-size: var(--text-xl);
             flex-shrink: 0;
         }
 
@@ -1182,7 +1223,7 @@
         .char-card-name {
             font-weight: 600;
             color: var(--gold-text);
-            font-size: 0.95em;
+            font-size: var(--text-md);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -1218,7 +1259,7 @@
 
         .char-card-name .drag-handle {
             color: var(--text-dim);
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             cursor: grab;
             opacity: 0.5;
         }
@@ -1228,7 +1269,7 @@
         }
 
         .char-card-meta {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             white-space: nowrap;
             overflow: hidden;
@@ -1241,8 +1282,8 @@
         }
 
         .char-card-hp-value {
-            font-weight: 700;
-            font-size: 0.9em;
+            font-weight: 600;
+            font-size: var(--text-md);
         }
 
         .char-card-hp-value.healthy { color: var(--green-text); }
@@ -1260,7 +1301,7 @@
 
         .char-card-hp-fill {
             height: 100%;
-            transition: width 0.3s;
+            transition: width var(--dur-slow);
         }
 
         .char-card-hp-fill.healthy { background: var(--green); }
@@ -1287,7 +1328,7 @@
             padding: 4px 8px;
             background: var(--bg-dark);
             border-radius: var(--radius-lg);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
         }
 
         .char-stat-pill-label {
@@ -1313,29 +1354,29 @@
             padding: 4px 2px;
             background: var(--bg-dark);
             border-radius: var(--radius-md);
-            font-size: 0.7em;
+            font-size: var(--text-xs);
         }
 
         .char-attr-pill-name {
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-xs);
             font-weight: 600;
         }
 
         .char-attr-pill-val {
             color: var(--text);
-            font-size: 1.1em;
-            font-weight: 700;
+            font-size: var(--text-sm);
+            font-weight: 600;
         }
 
         .char-attr-pill-mod {
             color: var(--gold-text);
-            font-size: 0.95em;
+            font-size: var(--text-xs);
         }
 
         /* Currency */
         .char-card-currency {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--gold);
         }
 
@@ -1366,9 +1407,9 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
             color: var(--text);
         }
 
@@ -1428,8 +1469,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8em;
-            font-weight: 700;
+            font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Avatar-Platzhalter (Anfangsbuchstabe) in einem Kasten mit Pixelmass — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
+            font-weight: 600;
             color: var(--gold-text);
         }
         
@@ -1439,18 +1480,18 @@
         
         .char-modal-title h2 {
             margin: 0;
-            font-size: 1.3em;
+            font-size: var(--text-xl);
             color: var(--gold);
         }
         
         .char-modal-subtitle {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             color: var(--cyan);
             margin-top: 2px;
         }
         
         .char-modal-meta {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -1485,18 +1526,18 @@
         }
         
         .char-vital-icon {
-            font-size: 14px;
+            font-size: var(--text-md);
             margin-bottom: 2px;
         }
         
         .char-vital-value {
-            font-size: 1.1em;
-            font-weight: 700;
+            font-size: var(--text-lg);
+            font-weight: 600;
             color: var(--cyan-text);
         }
         
         .char-vital-label {
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             text-transform: uppercase;
             margin-top: 2px;
@@ -1515,19 +1556,19 @@
         }
         
         .char-attr-name {
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             color: var(--gold-text);
             font-weight: 600;
         }
         
         .char-attr-value {
-            font-size: 1.1em;
-            font-weight: 700;
+            font-size: var(--text-lg);
+            font-weight: 600;
             color: var(--text);
         }
         
         .char-attr-mod {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--cyan-text);
         }
         
@@ -1550,7 +1591,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 4px 0;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             border-bottom: 1px solid var(--border);
         }
         
@@ -1606,7 +1647,7 @@
             padding: 8px 10px;
             background: var(--bg-elevated);
             cursor: pointer;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             font-weight: 500;
         }
         
@@ -1615,9 +1656,9 @@
         }
         
         .char-expand-icon {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
-            transition: transform 0.2s;
+            transition: transform var(--dur);
         }
         
         .char-inventory-box.expanded .char-expand-icon {
@@ -1628,7 +1669,7 @@
             max-height: 0;
             overflow: hidden;
             padding: 0 10px;
-            transition: max-height 0.3s, padding 0.3s;
+            transition: max-height var(--dur-slow), padding var(--dur-slow);
         }
         
         .char-inventory-box.expanded .char-inventory-content {
@@ -1642,8 +1683,8 @@
             padding: 3px 8px;
             margin: 2px;
             border-radius: var(--radius-sm);
-            font-size: 0.75em;
-            transition: transform 0.15s, box-shadow 0.15s;
+            font-size: var(--text-xs);
+            transition: transform var(--dur-fast), box-shadow var(--dur-fast);
             background: var(--bg-elevated); /* F-18: aus der Dublette uebernommen */
             color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
             cursor: pointer; /* F-18: aus der Dublette uebernommen */
@@ -1677,13 +1718,13 @@
         }
         
         .char-notes-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-bottom: 6px;
         }
         
         .char-notes-content {
-            font-size: 0.9em;
+            font-size: var(--text-md);
             line-height: 1.5;
         }
         
@@ -1752,13 +1793,13 @@
         }
         
         .spell-tooltip-name {
-            font-size: 1.1em;
-            font-weight: bold;
+            font-size: var(--text-lg);
+            font-weight: 600;
             color: var(--gold-text);
         }
         
         .spell-tooltip-level {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             background: var(--bg-dark);
             padding: 2px 8px;
@@ -1769,7 +1810,7 @@
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 4px 12px;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             margin-bottom: 8px;
         }
         
@@ -1782,7 +1823,7 @@
         }
         
         .spell-tooltip-desc {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text);
             background: var(--bg-dark);
             padding: 8px;
@@ -1799,7 +1840,7 @@
         }
         
         .spell-tooltip-comp {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             background: var(--bg-dark);
@@ -1807,7 +1848,7 @@
         }
         
         .spell-tooltip-classes {
-            font-size: 0.75em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             margin-top: 8px;
             font-style: italic;
@@ -1817,11 +1858,8 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-dim);
-            width: 20px;
-            height: 20px;
-            border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 12px;
+            font-size: var(--text-sm);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1866,24 +1904,23 @@
             width: 100%;
             padding: 8px 12px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         .assign-spell-search-wrap input:focus {
-            border-color: var(--gold);
-            outline: none;
+            border-color: var(--focus-ring);
         }
 
         .assign-spell-select {
             padding: 8px 12px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             min-width: 120px;
         }
 
@@ -1896,7 +1933,7 @@
         }
 
         .assign-spell-count-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
         }
 
@@ -1907,7 +1944,7 @@
             padding: 2px 8px;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             margin-left: 6px;
         }
 
@@ -1937,7 +1974,7 @@
             border: 1px solid transparent;
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: var(--trans-fast);
         }
 
         .assign-spell-item:hover {
@@ -1968,14 +2005,14 @@
         .assign-spell-name {
             font-weight: 600;
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .assign-spell-meta {
-            font-size: 0.7em;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             white-space: nowrap;
             overflow: hidden;
@@ -1986,7 +2023,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65em;
+            font-size: var(--text-xs);
             font-weight: 600;
             padding: 3px 6px;
             border-radius: var(--radius-sm);
@@ -2099,7 +2136,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
         }
         
         .quest-reward-item-tag .remove-btn {
@@ -2108,7 +2145,7 @@
             color: var(--red);
             cursor: pointer;
             padding: 0 2px;
-            font-size: 1em;
+            font-size: var(--text-md);
         }
         
         .quest-reward-item-tag .remove-btn:hover {
@@ -2121,7 +2158,7 @@
             align-items: center;
             padding: 10px 12px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background var(--dur);
         }
         
         .quest-header:hover { background: var(--bg-hover); }
@@ -2162,7 +2199,7 @@
         .quest-item.completed .quest-title { text-decoration: line-through; }
         
         .quest-type-badge {
-            font-size: 10px;
+            font-size: var(--text-xs);
             padding: 2px 6px;
             border-radius: var(--radius-sm);
         }
@@ -2193,10 +2230,35 @@
            ============================================================ */
         .filter-bar {
             display: flex;
-            gap: 6px;
+            /* 6px -> var(--space-sm) = 8px (Welle 6, Schritt 7). Paragraph 3.7
+               verlangt die Abstandsleiter; 6px stand auf keiner Sprosse. Drei
+               Verwendungen im Markup, alle im Zauberfilter (Typ, Stufe,
+               Schule) — die vier anderen Listenansichten fuehren eigene
+               Klassen (.npc-/.loc-/.enc-/.loot-filter-chips) und sind nicht
+               betroffen. Bewacht von W6-R-09 Fall 5, und zwar am TOKEN, nicht
+               an der Zahl. */
+            gap: var(--space-sm);
             flex-wrap: wrap;
         }
-        
+
+        /* Die Filterrueckmeldung unter den Filtermarken (#spells-filter-count).
+           SIE WAR EIN INLINE-STIL mit vier Deklarationen, und zwei davon sind
+           LAYOUT: ohne `white-space: nowrap` bricht die Form "n/N" um, ohne
+           `margin-left: auto` springt der Zaehler im Flex-Streifen 342,3 px
+           nach links an die Schulfilter (am gebauten Buendel gemessen, in vier
+           Themes). Das Elternelement .spell-filter-bar fuehrt kein
+           justify-content — `auto` ist dort das einzige Mittel. Beide
+           Eigenschaften sind namentlich bewacht: W6-R-09 Fall 2 am Quelltext,
+           W6-R-10 Fall 4 an der gemessenen rechten Kante. Wer hier aufraeumt
+           und die zwei fuer Kosmetik haelt, verschiebt den Zaehler sichtbar. */
+        .filter-count {
+            font-size: var(--text-sm);
+            color: var(--text-dim);
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+
         .spell-filter-bar {
             display: flex;
             flex-wrap: wrap;
@@ -2216,7 +2278,7 @@
         }
         
         .spell-filter-label {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             font-weight: 500;
             white-space: nowrap;
@@ -2260,20 +2322,20 @@
         .u-pad-sm { padding: var(--space-sm); }
         .u-flex-1 { flex: 1; }
         .u-w-full { width: 100%; }
-        .u-text-sm { font-size: 0.85em; }
+        .u-text-sm { font-size: var(--text-sm); }
         .u-rule-bottom { border-bottom: 1px solid var(--border); }
 
         /* Zwei benannte statt generischer Klassen: sie beschreiben eine
            Rolle, nicht eine Eigenschaft. */
         .form-hint {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-bottom: var(--space-xs);
         }
 
         .meta-text {
             color: var(--text-dim);
-            font-size: 11px;
+            font-size: var(--text-xs);
         }
 
         /* Modalbreiten: drei Stufen statt dreier Inline-Werte. */
@@ -2296,7 +2358,7 @@
            Vereinheitlicht wird also das AUSSEHEN, nicht die Bedienform.
            ------------------------------------------------------------ */
         .toolbar-filter-label {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             white-space: nowrap;
         }
@@ -2304,16 +2366,15 @@
         .toolbar-select {
             padding: 6px 10px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             border-radius: var(--radius-md);
             color: var(--text);
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             cursor: pointer;
         }
 
         .toolbar-select:focus {
-            border-color: var(--gold);
-            outline: none;
+            border-color: var(--focus-ring);
         }
 
         /* Boolescher Filter ("Nur Eigene", "Favoriten", "Aktive").
@@ -2325,14 +2386,11 @@
             display: flex;
             align-items: center;
             gap: 4px;
-            padding: 5px 10px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.82em;
             color: var(--text-dim);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
             white-space: nowrap;
             user-select: none;
         }
@@ -2363,13 +2421,10 @@
            (und deshalb auch per Tastatur erreichbar). */
 
         .filter-chip {
-            padding: 4px 10px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 11px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
         
         .filter-chip:hover { border-color: var(--gold); }
@@ -2382,15 +2437,14 @@
             padding: 6px 10px;
             padding-right: 28px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             border-radius: var(--radius-md);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
         
         .toolbar-search:focus {
-            outline: none;
-            border-color: var(--gold);
+            border-color: var(--focus-ring);
         }
         
         .toolbar-search::placeholder {
@@ -2420,9 +2474,9 @@
             color: var(--text-dim);
             cursor: pointer;
             padding: 2px 6px;
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity var(--dur);
         }
         
         .search-wrapper:hover .search-clear-btn,
@@ -2732,13 +2786,10 @@
         }
 
         .loc-filter-chip {
-            padding: 5px 12px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .loc-filter-chip:hover {
@@ -2758,9 +2809,9 @@
             border: none;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: var(--text-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         /* Die Tinte MUSS hier mitwechseln (R-03): --green-dim ist eine ANDERE
@@ -2973,7 +3024,7 @@
             border: 2px solid transparent; /* Slot fuer den Auswahl-Rahmen */
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .list-item:hover,
@@ -3014,7 +3065,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4em;
+            font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 44x44-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             flex-shrink: 0;
         }
 
@@ -3032,31 +3083,29 @@
             flex-wrap: wrap;
         }
 
-        .loc-item-tag {
-            font-size: 0.65em;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-            /* HIER STEHT ABSICHTLICH KEINE TINTE (Schritt 13, Welle 1,
-               Entscheidung D-7). Diese Regel hat auch keine Flaeche: beides
-               setzt features/locations/locations-render.js zur Laufzeit als
-               Inline-Stil, aus einem vom Nutzer gespeicherten Farbwert: die
-               Flaeche aus der Rolle, die Tinte aus dem zugehoerigen
-               on-Token, mit var(--text) als Rueckfallwert. (Die Tokennamen
-               stehen hier bewusst OHNE var()-Schreibweise — F-01 Test 1
-               liest cssAll samt Kommentaren, und ein Platzhalter in
-               var()-Form wird dort als undefiniertes Token gemeldet.)
-               Gegen einen Inline-Stil gewinnt eine
-               Klassenregel nie; das frueher hier stehende
-               `color: var(--bg-dark)` war deshalb toter Code und sah dabei
-               aus wie die gueltige Tinte (es erreichte auf den acht
-               Akzentflaechen 2,51-9,89, schlechtester Fall --cyan in
-               Sepia). Wer hier wieder eine Farbe eintraegt, aendert nichts
-               an der Darstellung — die Stelle ist im JS. R-09 in
-               tests/unit/design-consistency.test.js meldet es. */
-        }
+        /* .loc-item-tag HAT HIER KEINE EIGENE REGEL MEHR (Welle 4, Schritt 7):
+           ihre Geometrie kommt aus der Marken-Basisgruppe am Ende dieser Datei.
+           Der Block bleibt als Kommentar stehen, weil seine Aussage weiter gilt
+           und weil R-09 auf sie verweist.
+
+           HIER STAND ABSICHTLICH KEINE TINTE (Schritt 13, Welle 1,
+           Entscheidung D-7). Die Regel hatte auch keine Flaeche: beides setzt
+           features/locations/locations-render.js zur Laufzeit als Inline-Stil,
+           aus einem vom Nutzer gespeicherten Farbwert: die Flaeche aus der
+           Rolle, die Tinte aus dem zugehoerigen on-Token, mit --text als
+           Rueckfallwert. (Die Tokennamen stehen hier bewusst OHNE
+           var()-Schreibweise — F-01 Test 1 liest cssAll samt Kommentaren, und
+           ein Platzhalter in var()-Form wird dort als undefiniertes Token
+           gemeldet.) Gegen einen Inline-Stil gewinnt eine Klassenregel nie; das
+           frueher hier stehende `color` auf --bg-dark war deshalb toter Code
+           und sah dabei aus wie die gueltige Tinte (es erreichte auf den acht
+           Akzentflaechen 2,51-9,89, schlechtester Fall --cyan in Sepia). Wer
+           hier wieder eine Farbe eintraegt, aendert nichts an der Darstellung —
+           die Stelle ist im JS. R-09 in
+           tests/unit/design-consistency.test.js meldet es. */
 
         .loc-item-meta {
-            font-size: 0.8em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -3072,7 +3121,7 @@
             height: 22px;
             border-radius: 50%;
             background: var(--bg-dark);
-            font-size: 0.6em;
+            font-size: var(--text-xs);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3087,7 +3136,7 @@
         .loc-mini-avatar.more {
             background: var(--cyan);
             color: var(--on-cyan);
-            font-weight: 700;
+            font-weight: 600;
         }
 
         /* Detail Sidebar */
@@ -3131,7 +3180,7 @@
             padding: var(--space-xl);
             text-align: center;
             color: var(--text-dim);
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         /* ------------------------------------------------------------
@@ -3171,7 +3220,7 @@
         .loot-detail-empty-icon,
         .enc-detail-empty-icon,
         .bestiary-detail-empty-icon {
-            font-size: 3em;
+            font-size: 48px; /* war 3em; gemessen 48,00 px auf 16-px-Eltern, Delta 0,00. Fuenf der sechs Mitglieder tragen ein Emoji, .detail-empty-icon hat kein Markup — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             margin-bottom: var(--space-md);
             opacity: 0.3;
         }
@@ -3182,7 +3231,7 @@
         .loot-detail-empty-text,
         .enc-detail-empty-text,
         .bestiary-detail-empty-text {
-            font-size: 0.9em;
+            font-size: var(--text-md);
         }
 
         /* Detail Content */
@@ -3208,7 +3257,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8em;
+            font-size: 28.8px; /* war 1.8em; gemessen 28,80 px auf 16-px-Eltern, Delta 0,00. Emoji in einem 56x56-px-Kasten: das Zeichen folgt dem Kasten, nicht der Textskala — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
             flex-shrink: 0;
         }
 
@@ -3218,14 +3267,14 @@
         }
 
         .loc-detail-name {
-            font-size: 1.2em;
-            font-weight: 700;
+            font-size: var(--text-xl);
+            font-weight: 600;
             color: var(--gold-text);
             word-break: break-word;
         }
 
         .loc-detail-region {
-            font-size: 0.85em;
+            font-size: var(--text-sm);
             color: var(--text-dim);
             margin-top: 2px;
         }
@@ -3237,14 +3286,11 @@
         }
 
         .loc-detail-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-md);
             border: 1px solid var(--border);
             background: var(--bg-elevated);
             cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.2s;
+            font-size: var(--text-md);
+            transition: var(--trans-std);
         }
 
         .loc-detail-btn:hover {
@@ -3291,13 +3337,10 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 4px 10px;
             background: var(--bg-dark);
-            border-radius: var(--radius-lg);
-            font-size: 0.85em;
             color: var(--text);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: var(--trans-std);
         }
 
         .loc-npc-chip:hover {
@@ -3328,3 +3371,389 @@
             }
         }
 
+
+        /* ============================================================
+           BAUFORM 1 — ICON-KNOPF: EINE GROESSE, EINE RUNDUNG
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung E2)
+           ============================================================
+           WARUM 36 px UND NICHT DIE 28 AUS PARAGRAPH 3.7. Die Begruendung
+           steht im eigenen Code: ueber .btn-icon oben in dieser Datei stand
+           bis zu dieser Welle woertlich "Flaeche >= 36px fuer Beruehrung", und
+           dashboard.css erzwingt mit `.touch-device .btn` auf
+           Beruehrungsgeraeten 44 px. 28 px wuerde beide Schranken
+           unterschreiten — die eigene Regel und die der Mobil-Runde.
+
+           WAS VORHER STAND, gemessen: ZEHN verschiedene deklarierte Groessen
+           unter 22 quadratischen Icon-Knoepfen —
+             16 (.qref-apply-btn) · 20 (.lr-reset-btn, .spell-tooltip-close) ·
+             24 (.bf-clear, .init-mob-dissolve-btn, .npc-section-btn,
+                 .rest-hd-btn) · 28 (.timer-card-btn) · 32 (.calc-import-btn,
+             .dice-fav-add, .emoji-pick-btn) · 34 (.init-statblock-close,
+             .loc-detail-btn) · 36 (sieben) · 42 (.dms-dice-btn) ·
+             44 (.dice-reroll-btn)
+           und VIER Rundungen: --radius-sm (8x), --radius-md (10x), 50% (3x),
+           keine (1x, .btn-icon erbte die --radius-sm von .btn).
+           14 der 21 Mitglieder aendern damit ihre Groesse, 11 ihre Rundung.
+
+           EINER DER 22 IST KEIN MITGLIED, und das ist gemessen, nicht
+           entschieden: .qref-apply-btn steht INNERHALB eines Textchips, nicht
+           in einer Knopfreihe. Auf 36 px gebracht wuechse der Chip von
+           29,19x96,61 auf 46x116,61 und der Zustandsbereich der
+           Schnellreferenz von 135 auf 306 px. Begruendung und Messwerte stehen
+           an der Regel selbst (dashboard.css). Bei allen anderen 21 ist der
+           Elternteil eine Knopfreihe oder ein Raster und waechst hoechstens um
+           12 px — nachgemessen an je einem Element jeder Klasse.
+
+           WAS NICHT IM VERTRAG STEHT, und warum nicht:
+           · `font-size` — die Knoepfe tragen Zeichen von 11 px bis 1,3em
+             Emoji. Eine gemeinsame Zeichengroesse waere eine Umgestaltung der
+             Zeichen, nicht eine Zusammenfuehrung der Flaechen; Befund D-05
+             nennt "3 Icon-Knopf-Hoehen", die Zeichengroessen sind D-06 und
+             damit Gegenstand der Welle 5.
+           · `display`/`align-items`/`justify-content` — fast alle diese
+             Knoepfe sind Flexkinder, und ein Flexkind blockifiziert
+             `inline-block` zu `block` und `inline-flex` zu `flex`. Ein
+             gemeinsames `display` wuerde also den BERECHNETEN Wert von 13
+             Knoepfen von `block` auf `flex` aendern — eine Aenderung an einer
+             der zwoelf Eigenschaften des Stil-Sollstands, die dieser Schritt
+             nicht zu verantworten hat. Die Zentrierung bleibt dort, wo sie
+             heute steht.
+
+           `padding: 0` gehoert dagegen hinein: in einer festen 36x36-Flaeche
+           schiebt der 6px-12px-Innenabstand von .btn das Zeichen aus der
+           Mitte und laesst nur 12 px Inhaltsbreite uebrig.
+
+           WARUM DIESER BLOCK AM ENDE VON core.css STEHT: er muss NACH .btn
+           stehen (sonst gewinnt dessen Innenabstand und dessen --radius-sm)
+           und nach jeder Mitgliedsregel dieser Datei, weil alle dieselbe
+           Spezifitaet (0,1,0) haben und bei Gleichstand die SPAETERE Regel
+           gewinnt. Die Dateien nach core.css im @import-Hub koennen die Basis
+           weiter ueberstimmen — genau darum darf kein Mitglied seine Groesse
+           wieder selbst setzen. W4-R-06 Teil 1 und 2 halten das fest.
+
+           GESTRICHEN, weil tot: `.btn-sm.btn-icon { 28px }` stand bis hierher
+           in dieser Datei. Gemessen tragen NULL Elemente im Markup und im JS
+           beide Klassen zugleich — die Regel hat nie etwas bemessen.
+           ============================================================ */
+        .btn-icon,
+        .bf-clear,
+        .calc-import-btn,
+        .dice-fav-add,
+        .dice-reroll-btn,
+        .dms-dice-btn,
+        .emoji-pick-btn,
+        .enc-detail-btn,
+        .header-action-btn,
+        .init-mob-dissolve-btn,
+        .init-statblock-close,
+        .loc-detail-btn,
+        .loot-detail-btn,
+        .lr-reset-btn,
+        .npc-detail-btn,
+        .npc-section-btn,
+        .rest-hd-btn,
+        .spell-tooltip-close,
+        .timer-card-btn,
+        .timer-quick-add,
+        .timer-quick-settings {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: var(--radius-md);
+        }
+
+        /* ============================================================
+           BAUFORM 2 — CHIP: EINE PILLE, EINE SCHRIFT
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung E3)
+           ============================================================
+           WAS VORHER STAND, am gebauten Buendel gemessen (befuellte Kampagne,
+           1440px, vier Themes): 136 gerenderte Chips in 12 Klassen mit ACHT
+           verschiedenen Hoehen, ACHT Schriftgroessen, ZWEI Rundungen und DREI
+           Gewichten. KEIN einziger Chip lag auf dem Sollwert aus Paragraph 3.7.
+
+           DER VERTRAG: Hoehe 26 px, Innenabstand 3px 10px, --text-sm/500,
+           Rundung 999px. Die 999 sind die Pillen-Schreibweise, die dieser Baum
+           schon an sieben Stellen fuehrt (tools.css, welt.css) — kein neues
+           Mittel, nur ein weiterer Ort.
+
+           WARUM `line-height: 18px` UND NICHT `height: 26px` ODER
+           `min-height: 26px`. Die Hoehe muss von innen kommen, nicht von aussen:
+           18 + 3 + 3 + 2 (Rahmen) = 26. Eine feste Hoehe schneidet den Inhalt
+           ab, sobald jemand ein zweizeiliges Etikett einsetzt; ein min-height
+           dagegen zentriert nichts — und die meisten dieser Chips sind
+           Flexkinder, die ihr `inline-block` auf `block` blockifizieren. Dort
+           saesse der Text bei min-height oben statt in der Mitte. Mit der
+           Zeilenhoehe traegt der Zeilenkasten selbst die Mitte, gleich ob das
+           Element `block` oder `flex` rechnet.
+           Chips OHNE Rahmen (.link-chip, .loc-npc-chip) kommen damit auf 24
+           statt 26 px. Das ist bewusst: die zwei Bildpunkte sind der Rahmen,
+           den sie nicht haben, und ein Ausgleich dafuer waere eine zweite
+           Sonderregel — genau das, was diese Gruppe beendet.
+
+           WARUM DIE SCHRIFT-TOKENS HIER SCHON STEHEN: --text-sm und --text-xs
+           sind die EINZIGEN zwei Sprossen, die Welle 4 aus der Skala der Welle 5
+           vorzieht (E3). Ohne sie waere F-01 rot ("kein Token ohne Definition,
+           Fallback oder Laufzeitquelle") und Paragraph 3.7 gar nicht
+           ausfuehrbar. Die drei fehlenden Sprossen und die --leading-*
+           entstehen in Welle 5.
+           (Der Tokenname ist hier bewusst nicht als var()-Aufruf geschrieben:
+           F-01 liest den Quelltext MIT Kommentaren und zaehlte einen
+           Platzhalter in dieser Erklaerung als undefiniertes Token — der Test
+           warnt in seinem eigenen Kopf genau davor.)
+
+           NICHT DABEI, und jedesmal gemessen statt entschieden:
+           · .dmg-chip (40x40 quadratisch, Radius 8, 1,3em Emoji) und
+             .spell-comp (24x24, ohne Innenabstand, ohne cursor) sind nach O-06
+             keine Chips. Auf den Chipvertrag gebracht verlore .dmg-chip 14 px
+             Hoehe und 8,8 px Schriftgroesse — das Emoji waere unlesbar.
+           · .condition-tag ist ein Zustandsmarker und steht in keiner
+             Planliste; er bleibt ausgewiesene Restschuld.
+
+           .timer-preset-btn IST DABEI, obwohl der Plan nur .timer-preset-chip
+           nennt: beide teilen EINE Regel, und gemessen hat .timer-preset-chip
+           NULL Verwendungen im Markup und im JS, .timer-preset-btn genau eine.
+           Nur den toten Namen aufzunehmen hiesse, die Geometrie am einzigen
+           lebenden Selektor stehen zu lassen.
+
+           Die Gruppe steht am Ende von core.css, aus demselben Grund wie die
+           Icon-Knopf-Gruppe darueber. W4-R-06 Teil 3 und 4 halten sie fest.
+           ============================================================ */
+        .chip,
+        .filter-chip,
+        .npc-filter-chip,
+        .loc-filter-chip,
+        .enc-filter-chip,
+        .loot-filter-chip,
+        .dice-chip,
+        .shop-cat-badge,
+        .filter-toggle,
+        .loc-npc-chip,
+        .cf-chip,
+        .ds-rate-chip,
+        .link-chip,
+        .loot-tag-chip,
+        .timer-preset-chip,
+        .timer-preset-btn,
+        .char-resistance-chip,
+        .dice-formula-chip {
+            line-height: 18px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: var(--text-sm);
+            font-weight: 500;
+        }
+
+        /* ============================================================
+           BAUFORM 3 — MARKE: EINE PILLE, EINE LESBARE SCHRIFT
+           (Design-Handoff v3, Welle 4, Schritt 7, Entscheidung O-15)
+           ============================================================
+           WAS VORHER STAND, am gebauten Buendel gemessen: 35 gerenderte Marken
+           mit VIER Hoehen, VIER Schriftgroessen (7,70 / 10,40 / 11,20 /
+           11,90 px), DREI Gewichten und DREI Rundungen.
+
+           DIE 7,70 px SIND DER EIGENTLICHE BEFUND. .dms-live-badge trug
+           `font-size: 0.55em` auf einem Elternteil mit 14 px — Paragraph 3.7
+           markiert das ausdruecklich als Fehler. Es ist zugleich die Stelle mit
+           der schlechtesten Absicherung im ganzen Schritt: der Stil-Sollstand
+           ueberspringt jedes Element mit laufender Animation
+           (`if (cs.animationName && cs.animationName !== 'none') return;`), und
+           diese Marke traegt `dms-live-pulse 2s`. Keine Automatik bestaetigt
+           ihre Korrektur; sie ist von Hand nachgemessen (O-15).
+
+           DER VERTRAG: Hoehe 18 px, Innenabstand 1px 7px, --text-xs/600,
+           Rundung 999px. Die Hoehe kommt wieder von innen —
+           16 + 1 + 1 = 18 —, aus demselben Grund wie beim Chip.
+
+           KEINE TINTE IN DIESER GRUPPE, und das ist Absicht: Paragraph 3.7
+           nennt fuer .badge auch Flaeche und Textfarbe, aber die acht Mitglieder
+           tragen ihre Tinte aus den Wellen 1 und 2 (Rollenfarben, color-mix,
+           --on-<rolle>). Eine gemeinsame Flaeche hier wuerde acht Farbbefunde
+           erzeugen, die dieser Schritt nicht verantwortet — sein
+           Abnahmekriterium verlangt ausdruecklich, dass color, background-color
+           und border-color RUHIG bleiben.
+
+           .badge selbst hat im Markup NULL Vorkommen und daneben keine eigene
+           Regel. Das ist dieselbe Bauart wie .list-item (F-02): eine reine
+           CSS-Basis, auf die die Templates spaeter nachziehen koennen.
+
+           .enc-stat-badge IST KEINE MARKE (O-07): die Regel setzt nur
+           font-size und color, keinen Innenabstand und keine Flaeche. Sie
+           aufzunehmen legte eine Pille um Text, der heute keine hat — eine neue
+           Form, keine Zusammenfuehrung. Dafuer sind .tag und .loc-item-tag
+           dabei, die der Handoff nicht nennt: sie fuehren die Bauart wirklich
+           und waeren sonst die einzigen Marken, die weiterdriften.
+
+           DIE ID-REGEL #bestiary-count ist mitbehandelt, aber NICHT in der
+           Selektorliste: das Element traegt im Markup bereits
+           .section-toolbar-count. Ihre (1,0,0) haetten die Basis sonst
+           ueberstimmt; sie behaelt nur noch ihre Tinte.
+
+           Die Gruppe steht am Ende von core.css, aus demselben Grund wie die
+           zwei Gruppen darueber. W4-R-06 Teil 5, 6 und 6b halten sie fest.
+           ============================================================ */
+        .badge,
+        .section-toolbar-count,
+        .npc-badge,
+        .difficulty-badge,
+        .bestiary-badge,
+        .cart-badge,
+        .dms-live-badge,
+        .tag,
+        .loc-item-tag {
+            line-height: 16px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+
+        /* ------------------------------------------------------------------
+           DIE SCHRIFTGROESSE DER BEDIENELEMENTE — eine App-Angabe statt der
+           Browser-Vorgabe (Design-Handoff v3, Welle 5, Schritt 8, O-10)
+           ------------------------------------------------------------------
+           Formular-Bedienelemente ERBEN die Schriftgroesse nicht. Ohne eigene
+           Angabe nehmen sie `font: -webkit-small-control`, und das sind in
+           Chromium 13,3333 px — eine Zahl, die die App nirgends nennt und die
+           vom System abhaengt. Gemessen auf gefuellter Kampagne standen so 254
+           Bedienelemente in 18 Signaturen auf diesem Wert: 187 blanke
+           `input` (Kennungsfelder und Kaestchen), 18 `.cf-skill-exp-check`,
+           8 `.qa-btn`, je 6 `.bst-attr-input`, `.dice-attr`, `.dice-attr.save`
+           und `.mobile-search-btn`, 5 `.npc-detail-btn`, 3 blanke `select`
+           und 1 `.roster-add` — dazu die Kinder darunter, deren Endwert ein
+           Produkt aus dieser Browser-Vorgabe war (die zwoelf `small` in den
+           Wuerfelknoepfen sind der gemessene Fall, siehe dice.css). Ein
+           Werkzeug, das
+           Deklarationen ERSETZT, findet dort nichts zu ersetzen und meldet
+           Erfolg; darum ist das ein eigener Schritt und kein Fall fuer den
+           mechanischen Lauf.
+
+           WARUM 12 px UND NICHT 14. Die App sagt selbst, was ein Formularfeld
+           traegt: `.form-group input, .form-group select, .form-group textarea`
+           steht auf `var(--text-sm)` (12 px; der F-18-bewachte Block weiter
+           oben). 14 px laegen naeher an 13,3333 (+0,67 gegen -1,33), waeren
+           aber eine ZWEITE Antwort auf dieselbe Frage. Der Sprung bleibt mit
+           -1,33 px innerhalb der 2-px-Zusage der Welle.
+
+           WARUM ELEMENTSELEKTOREN UND NICHT EINE KLASSE. Die Spezifitaet
+           (0,0,1) ist die kleinste, die es gibt: JEDE bestehende Klassenregel
+           gewinnt weiter, auch die Chip- und Markenbasen der Welle 4. Die
+           Regel wirkt ausschliesslich dort, wo die App bisher NICHTS gesagt
+           hat — und genau das ist ihr Zweck.
+
+           WARUM SIE AM ENDE DER DATEI STEHT UND NICHT BEI `body`. Dorthin
+           gehoerte sie der Sache nach, und der erste Versuch hat sie dorthin
+           gesetzt: 41 eingefuegte Zeilen haben JEDEN Zeilenanker oberhalb
+           verschoben und vier Ratschen rot gemacht (R-06, R-19 und drei Faelle
+           von W4-R-04). Die Stellung ist fuer diese Eigenschaft gemessen
+           folgenlos — sie ist die EINZIGE Regel im ganzen Stilblatt, die
+           `font-size` mit einem reinen Elementselektor setzt (nachgezaehlt
+           ueber alle 20 Dateien: 0 weitere), also gibt es keine Regel gleicher
+           Spezifitaet, gegen die ihre Reihenfolge entscheiden koennte.
+
+           WAS SIE NICHT TUT: sie setzt KEINE `font-family`. Bedienelemente
+           benutzen weiter die Schrift des Systems; das zu aendern waere eine
+           sichtbare Umstellung aller Knoepfe und Felder und gehoert nicht in
+           eine Groessen-Welle. F-05 laesst ohnehin genau EINE
+           `font-family: var(--font-ui)`-Deklaration zu (die in `body`). Die
+           Familienfrage steht als Folgearbeit in der Aktenlage.
+           ------------------------------------------------------------------ */
+        button, input, select, textarea {
+            font-size: var(--text-sm);
+        }
+
+        /* ------------------------------------------------------------------
+           EINGABERAHMEN FUER DIE FELDER OHNE AUTORENREGEL
+           (Design-Handoff v3, Welle 6, Schritt 6)
+
+           17 Vertragsfelder standen auf Chromiums Vorgabe statt auf einer
+           Regel der App, am gebauten Buendel gezaehlt: 6 .bst-attr-input,
+           6 .bst-save-val, #effect-name, #effect-duration, #effect-color,
+           #char-languages, #filter-session-arc. Sie zeigten
+           `2px inset rgb(133, 133, 133)` (input, textarea) bzw.
+           `1px solid rgb(133, 133, 133)` (select) — zwei Schreibweisen, und
+           eine Pruefung, die nur `inset` sucht, uebersieht die drei selects.
+
+           WARUM EIN ELEMENTSELEKTOR UND KEINE 5 NEUEN KLASSENREGELN. Die
+           Spezifitaet (0,0,1) ist die kleinste, die es gibt: alle 52
+           Feldregeln dieses Schrittes gewinnen weiter, und die vier absichtlich
+           rahmenlosen Gruppen behalten ihr `border: none`
+           (.cf-combat-value input ist (0,1,1), .char-attr-box .attr-input
+           (0,2,0), #session-tags-input (1,0,0), .editor-shell .rich-editor
+           (0,2,0) — alle vier schlagen (0,0,1); party.css und editors.css laden
+           ausserdem hinter core.css). Am Buendel nachgemessen: von den
+           Nicht-Vertragstypen aendert sich NICHTS an checkbox (eine
+           Autorenregel gewinnt, an allen 7 583 besuchten Stellen) und nichts
+           an radio, submit, button, reset und image (im ganzen Baum nicht
+           vorhanden). Die `input[type="file"]` (465 Stellen) und die
+           hidden-Felder (1 050) bekommen den Rahmen formal mit, sehen ihn aber
+           nicht: beide stehen auf `display: none` (.io-file-input in
+           dmscreen.css, hidden per Browser-Vorgabe). Und die Regel traegt
+           sich fort — ein kuenftiges Feld ohne eigene Regel bekommt den
+           Eingaberahmen von selbst, statt W6-R-07 Fall 2 rot zu machen.
+
+           EINER FEHLTE IN DIESER AUFZAEHLUNG, UND ER STEHT AUF DEM SCHIRM:
+           `range`. Die Regel gab beiden Schiebereglern der App einen
+           1-px-Rahmen, und bei `box-sizing: border-box` ist das auf einer
+           8 px bzw. 4 px hohen Schiene kein Detail — gemessen clientHeight
+           8 -> 6 (#calc-budget-slider, die Farbverlaufsleiste des
+           Begegnungsrechners) und 4 -> 2 (.sb-volume-slider, die
+           Lautstaerkeschiene jeder Soundboard-Spur, also die HAELFTE ihrer
+           Hoehe). Dagegen steht die Ausnahmeregel am Ende dieser Datei —
+           die Regel hier bleibt unangetastet, weil ihre (0,0,1) ihr Vertrag
+           ist.
+
+           WAS SIE NICHT TUT: sie setzt keine Fuellung, keinen Radius, kein
+           Padding. Die 17 Felder bleiben darin Fremdkoerper (ihre Fuellung
+           kommt aus `color-scheme`, also vom Browser, nicht vom Theme). Das
+           ist benannte Restschuld und keine Nachlaessigkeit: der ganze
+           Eingabevertrag auf 17 Feldern waere eine sichtbare Umgestaltung in
+           vier Themes, die dieser Schritt nicht gemessen hat.
+           ------------------------------------------------------------------ */
+        input, select, textarea {
+            border: 1px solid var(--border-input);
+        }
+
+        /* ------------------------------------------------------------------
+           DIE EINE AUSNAHME DER ELEMENTREGEL: SCHIEBEREGLER
+           (Design-Handoff v3, Welle 6, Schritt 6 — Nachtrag aus der Pruefung)
+
+           `input[type="range"]` ist kein Vertragsfeld. Die Elementregel
+           darueber nimmt es trotzdem mit, weil sie `input` ohne Typfilter
+           nennt. A/B am gebauten Buendel, gefuellte Kampagne, 24 Ansichten +
+           3 Formulare + 6 Modale + Begegnungsrechner + Soundboard mit einer
+           Spur, 19 820 besuchte Feldstellen: GENAU ZWEI sichtbare
+           Nicht-Vertragselemente aenderten ihren Rahmen, und beide sind
+           Schieberegler — #calc-budget-slider (clientHeight 8 -> 6) und
+           .sb-volume-slider (4 -> 2). Beide Regeln (encounters.css,
+           tools.css) haben keine eigene Rahmenangabe, die Elementregel griff
+           dort also ungehindert.
+
+           WARUM HIER UND NICHT ZWEIMAL `border: none` AN DEN ZWEI REGLERN.
+           Der Mangel entsteht in der Regel darueber, also gehoert die
+           Ausnahme daneben — und sie traegt sich fort: ein kuenftiger dritter
+           Regler ist von selbst gedeckt, statt den Befund zurueckzubringen.
+           Eine Zeile statt zwei an zwei Orten.
+
+           WARUM NICHT `input:not([type="range"])` AN DER ELEMENTREGEL. Das
+           hebt deren Spezifitaet von (0,0,1) auf (0,1,1) — und genau die
+           (0,0,1) ist ihr Vertrag: JEDE Klassenregel soll weiter gewinnen.
+           Mit (0,1,1) schluege sie die Feldregeln dieses Schrittes, die mit
+           einer einzigen Klasse arbeiten (.toolbar-search, .calc-input,
+           .dice-formula, .global-search-input ...), und ueberschriebe deren
+           Rahmen. Diese Regel hier laesst die Elementregel unangetastet und
+           wirkt nur auf range.
+
+           SPEZIFITAET (0,1,1): schlaegt die Elementregel (0,0,1) und die
+           Klassenregel .sb-volume-slider (0,1,0), verliert gegen
+           #calc-budget-slider (1,0,0). Ein Regler, der wirklich einen Rahmen
+           tragen soll, bekommt ihn also weiter — ueber eine ID oder zwei
+           Klassen. Heute will das keiner: nachgezaehlt 0 Regeln im ganzen
+           Stilbaum, die einem range einen Rahmen geben.
+
+           BEWACHT von Fall 5 in W6-R-07 — generisch, nicht an den zwei
+           heutigen Reglern: kein `input[type="range"]` traegt einen Rahmen,
+           und seine Innenhoehe bleibt seine Aussenhoehe.
+           ------------------------------------------------------------------ */
+        input[type="range"] {
+            border: none;
+        }

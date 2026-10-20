@@ -132,7 +132,7 @@ function renderInit() {
             const { ac, entityType, entityId } = getInitCombatantDetails(cb);
             const effects = renderCombatantEffects(cb);
             const rollInfo = cb.lastRoll
-                ? `<span style="font-size: 10px; color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>`
+                ? `<span style="font-size: var(--text-xs); color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>`
                 : '';
             // Name clickable if entity found
             const nameClickHandler =
@@ -154,7 +154,7 @@ function renderInit() {
                     <div class="init-type">Lair Action</div>
                 </div>
                 <div class="init-right">
-                    <span style="color: var(--text-dim); font-size: 0.8rem; margin-right: 8px;">Am Rundenende</span>
+                    <span style="color: var(--text-dim); font-size: var(--text-sm); margin-right: 8px;">Am Rundenende</span>
                     <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
                 </div>
             </div>`;

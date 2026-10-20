@@ -8,6 +8,14 @@ function renderQuests() {
     const renderDashboard = window.renderDashboard;
     const c = $('quests-list');
     if (!c) return;
+    /* DER WERKZEUGLEISTEN-ZAEHLER, aus dem Pfad geschrieben, den die
+       Auftragsverwaltung tatsaechlich geht. Vorher schrieb ihn nur
+       updateIOCounts() aus renderAll(); gemessen stand er im Normalbetrieb
+       dauerhaft auf "0". Er steht VOR der fruehen Rueckkehr des Leerzustands
+       weiter unten — sonst bliebe er nach dem Loeschen des letzten Auftrags
+       auf der alten Zahl stehen, also genau umgekehrt falsch (Welle 6,
+       Schritt 7; bewacht von W6-R-09 Fall 3 und W6-R-10 Fall 2). */
+    setViewCount('quests', (D.quests || []).length);
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');
@@ -81,7 +89,7 @@ function renderQuestItem(q) {
         <div class="quest-header" data-action="toggle-quest" data-id="${q.id}">
             <div class="quest-title-row">
                 <span class="drag-handle" title="Zum Sortieren ziehen">⋮⋮</span>
-                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 12px; ${q.tracked ? 'background: var(--gold); color: var(--on-gold);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${q.id}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}">📌</button>
+                <button class="btn btn-sm" style="padding: 2px 6px; font-size: var(--text-sm); ${q.tracked ? 'background: var(--gold); color: var(--on-gold);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${q.id}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}">📌</button>
                 <span class="quest-title">${esc(q.title)}</span>
                 <span class="quest-type-badge ${q.type || 'quest'}">${typeLabel}</span>
                 ${giverDisplay ? renderEntityLink('npcs', q.giverId, giverDisplay, { icon: '👤', fallbackColor: 'var(--cyan)' }) : ''}
@@ -96,12 +104,12 @@ function renderQuestItem(q) {
             <div style="margin-bottom:10px;">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(q.description)) || ''}</div>
             ${entityTags}
             ${entityLinks}
-            <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:0.9em; margin-bottom:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:var(--text-md); margin-bottom:10px;">
                 <div><span style="color:var(--text-dim);">📍 Ort:</span> ${renderEntityLink('locations', q.locationId, locationDisplay || '—')}</div>
                 <div><span style="color:var(--text-dim);">🎯 Ziel:</span> ${renderEntityLink('locations', q.targetId, targetDisplay || '—')}</div>
                 <div><span style="color:var(--text-dim);">💰 Belohnung:</span> <span style="color:var(--gold);">${esc(rewardDisplay)}</span></div>
             </div>
-            ${q.epilog ? `<div class="quest-epilog"><div style="font-size:0.8em; color:var(--purple); margin-bottom:4px;">Epilog / Nachwirkungen:</div><div style="font-size:0.9em;">${sanitizeHTML(q.epilog)}</div></div>` : ''}
+            ${q.epilog ? `<div class="quest-epilog"><div style="font-size:var(--text-sm); color:var(--purple); margin-bottom:4px;">Epilog / Nachwirkungen:</div><div style="font-size:var(--text-md);">${sanitizeHTML(q.epilog)}</div></div>` : ''}
             <div class="btn-group">
                 <button class="btn btn-sm" data-action="show-entity-links-modal" data-type="quests" data-id="${q.id}" title="Verknüpfungen">🔗</button>
                 <button class="btn btn-sm" data-action="show-tags-modal" data-type="quests" data-id="${q.id}" title="Tags">🏷️</button>

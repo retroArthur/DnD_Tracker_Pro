@@ -65,14 +65,14 @@
             border-radius: 0;
             color: var(--text);
             cursor: pointer;
-            font-size: 13px;
-            transition: background 0.15s, color 0.15s;
+            font-size: var(--text-sm);
+            transition: background var(--dur-fast), color var(--dur-fast);
         }
 
         /* B/I/U/S als Typografie, nicht als Icon */
         .editor-toolbar .editor-btn-type {
             font-family: var(--font-serif);
-            font-size: 14px;
+            font-size: var(--text-md);
         }
 
         /* Text-Buttons (Marker, Bausteine): breiter, mit Label */
@@ -82,7 +82,7 @@
             gap: 7px;
             width: auto;
             padding: 0 9px;
-            font-size: 12px;
+            font-size: var(--text-sm);
         }
 
         .editor-toolbar .editor-btn:hover {
@@ -90,8 +90,13 @@
             background: color-mix(in srgb, var(--gold) min(14%, var(--tint-max)), transparent);
         }
 
+        /* Die vier Fokusringe dieser Datei sind spezifischer als die Weltregel
+           in core.css und tragen ihre Farbe darum selbst. Sie nehmen deshalb
+           dasselbe Token: --gold laege in Light und Sepia unter 3:1 (Zahlen je
+           Theme in variables.css). W6-R-04 verlangt das Token von jeder
+           setzenden Fokusregel des Baums. */
         .editor-toolbar .editor-btn:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -108,7 +113,7 @@
         }
 
         .editor-toolbar .tb-caret {
-            font-size: 9px;
+            font-size: 9px; /* UNVERAENDERT bei 9px; gemessen 9,00 px an vier Elementen. Aufklapp-Pfeil (▾), kein Lesetext — dasselbe Zeichen in derselben Rolle wie .wiki-tree-item-toggle (party.css, 8px, ▶). Die Hebung auf 11 px waere gemessen HARMLOS (Knopf +1,67 px, Hoehe 30 px und Leiste 43 px unveraendert, Spalt zur Beschriftung 7,00 px, Zeichen bleibt im Knopf; 1440 UND 375 px) — anders als bei der Tastenhilfe gibt es hier keine Nebenwirkung. Geduldet wird sie TROTZDEM, weil Schritt 4 beide Pfeilzeichen aneinander gebunden hat: UEBER DIE UNTERGRENZE VON 11 px ENTSCHEIDET SCHRITT 8 fuer BEIDE. Der mechanische Lauf des Schrittes 5 haette nur dieses eine gehoben (+2,00 px liegt in seiner Menge, die +3,00 px des Zwillings nicht). Namentlich in tools/typo-map.js, zugesichert in W5-R-07f. */
             opacity: 0.7;
         }
 
@@ -116,15 +121,15 @@
         .editor-toolbar .editor-select {
             height: 30px;
             background: var(--bg-card);
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-input);
             color: var(--text);
             padding: 0 6px;
             border-radius: 0;
-            font-size: 12px;
+            font-size: var(--text-sm);
             min-width: 70px;
             max-width: 120px;
             cursor: pointer;
-            transition: border-color 0.2s;
+            transition: border-color var(--dur);
             flex-shrink: 0;
         }
 
@@ -133,8 +138,8 @@
         }
 
         .editor-toolbar .editor-select:focus-visible {
-            border-color: var(--gold);
-            outline: 2px solid var(--gold);
+            border-color: var(--focus-ring);
+            outline: 2px solid var(--focus-ring);
             outline-offset: 2px;
         }
 
@@ -154,7 +159,7 @@
             border-radius: var(--radius-sm);
             border: 2px solid transparent;
             cursor: pointer;
-            transition: transform 0.15s, border-color 0.15s;
+            transition: transform var(--dur-fast), border-color var(--dur-fast);
             flex-shrink: 0;
         }
 
@@ -235,7 +240,7 @@
 
         .editor-toolbar .tb-menu-head {
             padding: 6px 10px 4px;
-            font-size: 10px;
+            font-size: var(--text-xs);
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--text-dim);
@@ -251,7 +256,7 @@
             border: none;
             border-radius: 0;
             color: var(--text);
-            font-size: 13px;
+            font-size: var(--text-sm);
             text-align: left;
             cursor: pointer;
         }
@@ -262,7 +267,7 @@
         }
 
         .editor-toolbar .tb-menu-item:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: -2px;
         }
 
@@ -298,7 +303,7 @@
         }
 
         .editor-shell-head .esh-title {
-            font-size: 12px;
+            font-size: var(--text-sm);
             font-weight: 600;
             letter-spacing: 0.04em;
             text-transform: uppercase;
@@ -307,7 +312,7 @@
 
         .editor-shell-head .esh-state {
             margin-left: auto;
-            font-size: 11px;
+            font-size: var(--text-xs);
             color: var(--text-dim);
             white-space: nowrap;
         }
@@ -333,7 +338,7 @@
             padding: 8px 12px;
             border-top: 1px solid var(--border);
             background: var(--bg-elevated);
-            font-size: 11px;
+            font-size: var(--text-xs);
             color: var(--text-dim);
         }
 
@@ -374,7 +379,7 @@
 
         .editor-block-handle .ebh-label {
             padding: 0 8px 0 4px;
-            font-size: 10px;
+            font-size: var(--text-xs);
             letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--gold-text);
@@ -386,7 +391,7 @@
             background: transparent;
             border: none;
             color: var(--text-dim);
-            font-size: 11px;
+            font-size: var(--text-xs);
             white-space: nowrap;
             cursor: pointer;
         }
@@ -402,7 +407,7 @@
         }
 
         .editor-block-handle button:focus-visible {
-            outline: 2px solid var(--gold);
+            outline: 2px solid var(--focus-ring);
             outline-offset: -2px;
         }
 
@@ -447,7 +452,7 @@
             display: grid;
             place-items: center;
             color: var(--text-dim);
-            font-size: 14px;
+            font-size: var(--text-md);
         }
 
         /* Bausteine tragen einen 3x15-Farbstreifen als Marke */
@@ -470,12 +475,12 @@
 
             .editor-toolbar .editor-btn {
                 padding: 8px 10px;
-                font-size: 14px;
+                font-size: var(--text-md);
                 min-width: 40px;
             }
 
             .editor-toolbar .editor-select {
-                font-size: 12px;
+                font-size: var(--text-sm);
                 padding: 6px 4px;
             }
 
@@ -536,7 +541,7 @@
     margin-bottom: 12px;
     margin-top: 0;
     flex-wrap: nowrap;
-    font-size: 14px;
+    font-size: var(--text-md);
     width: 100%;
     max-width: 2210px;
     height: 74px;
@@ -561,19 +566,15 @@
 }
 
 .section-toolbar-title {
-    font-size: 1em;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--gold-text);
     white-space: nowrap;
 }
 
 .section-toolbar-count {
-    font-size: 0.85em;
     color: var(--cyan-text);
-    padding: 3px 10px;
     background: var(--bg-dark);
-    border-radius: var(--radius-lg);
-    font-weight: 600;
     min-width: 28px;
     text-align: center;
 }
@@ -617,12 +618,12 @@
 .section-toolbar-filters select {
     padding: 7px 12px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     color: var(--text);
     border-radius: var(--radius-md);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color var(--dur);
 }
 
 .section-toolbar-filters select:hover {
@@ -630,8 +631,7 @@
 }
 
 .section-toolbar-filters select:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 /* Der frueher hier stehende .filter-checkbox-Block ist entfallen: boolesche
@@ -674,10 +674,6 @@
     right: -6px;
     background: var(--red);
     color: var(--on-red);
-    font-size: 0.7em;
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    font-weight: 600;
 }
 
 /* Import/Export Button Group */
@@ -749,10 +745,25 @@
         gap: 8px;
     }
     
+    /* --text-sm UND NICHT --text-md, und das ist keine Nachlaessigkeit.
+       Die Sprosse steht hier aus einer Layoutmessung, nicht aus einer
+       Schriftentscheidung: `.section-toolbar` traegt in diesem Block 14px, die
+       alte Angabe `0.9em` ergab also 12,6px. Mit --text-md (14px) wird die
+       Titelgruppe 10,4px breiter, und bei 375px unter der breiteren
+       Linux-Schriftmetrik reicht die Reserve dann nicht mehr: Titelgruppe +
+       Luecke + primaere Aktion belegen bei `encounter` 333,04 statt 322,64 von
+       331px und bei `kalender` 342,59 statt 324,37 — aus EINER Zeile werden
+       ZWEI, die Leiste waechst um 29px, und bei `encounter` gehen diese 29px
+       1:1 aus der scrollenden Listenspalte (.enc-master 305,2 -> 276,2px),
+       weil die Ansicht hoehenbegrenzt ist. Das ist derselbe Betrag, den der
+       C1-Kommentar unten als Gewinn der Welle 4 verbucht, nur rueckwaerts.
+       Begruendung und Rechenweg: tools/typo-map.js, SONDERZUORDNUNG
+       `editors.css||.section-toolbar-title||0.9em` (Grund `kette`).
+       Bewacht von tests/e2e/features/breite-schrift.spec.js, Fall (5). */
     .section-toolbar-title {
-        font-size: 0.9em;
+        font-size: var(--text-sm);
     }
-    
+
     .section-toolbar-filters {
         width: 100%;
         justify-content: flex-start;
@@ -825,7 +836,7 @@
         .cf-notes-editor .editor-block-statblock {
             border: 1px solid var(--border);
             padding: 12px 16px;
-            font-size: 14px;
+            font-size: var(--text-md);
         }
 
         .rich-editor .editor-block-table,

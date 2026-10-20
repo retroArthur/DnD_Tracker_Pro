@@ -445,7 +445,7 @@ function renderShops() {
                             </div>
 
                             <div class="shop-sort-controls">
-                                <label style="color: var(--text-dim); font-size: 0.9em; margin-right: 8px;">Sortierung:</label>
+                                <label style="color: var(--text-dim); font-size: var(--text-md); margin-right: 8px;">Sortierung:</label>
                                 <button class="shop-sort-btn ${shopSortMode === 'name' ? 'active' : ''}"
                                         data-action="set-shop-sort" data-value="name" title="Nach Name sortieren">
                                     📝 Name

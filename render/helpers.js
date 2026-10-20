@@ -433,7 +433,7 @@ function renderEmptyState(config) {
                 <button class="btn btn-success"
                     data-action="${buttonAction}"
                     ${buttonValue ? `data-value="${buttonValue}"` : ''}
-                    style="font-size: 1.1em; padding: 12px 24px;">
+                    style="font-size: var(--text-lg); padding: 12px 24px;">
                     ${buttonText}
                 </button>
             `

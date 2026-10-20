@@ -1046,4 +1046,263 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
             }
         });
     }
+
+    /* ====================================================================
+       (5) C1/W5-D — DIE ZEILENBELEGUNG DER WERKZEUGLEISTE BEI 375 px.
+       ====================================================================
+       WARUM DIESER FALL NEBEN (4) STEHT UND IHN NICHT ERSETZT. Fall (4) fragt,
+       ob die Leiste ROLLT und ob ein Bedienelement ABGEKLEMMT ist — ein Zustand,
+       der erst eintritt, wenn schon etwas kaputt ist. Er fragt bei 320, 320, 320
+       und 360 px. Bei 375 px fragt niemand, und genau dort ist die Leiste
+       knapp: identisch zu dem Fall, den der C1-Kommentar in editors.css:752
+       als Gewinn der Welle 4 verbucht ("die Leiste faellt von 328 auf 296px, und
+       die 32px gehen 1:1 in die Listenspalte"), nur in der Gegenrichtung.
+
+       DER BEFUND DER RUNDE W5-D/1, gemessen am gebauten Buendel, GEFUELLTE
+       Kampagne (`seedPopulatedSession`), 375x812, VOR gegen NACH der
+       Schriftumstellung des Schrittes 5:
+
+         encounter  Titelgruppe + Luecke + primaere Aktion  322,64 -> 333,04 px
+                    von 331 px Zeilenbreite, also aus EINER Zeile werden ZWEI;
+                    Leiste 158 -> 187 px (+29), und `.enc-master` 305,2 ->
+                    276,2 px (-29), weil `#view-encounter` hoehenbegrenzt ist.
+         kalender   324,37 -> 342,59 px belegt; Leiste 146 -> 175 px (+29).
+         npcs       321,99 -> 328,44 px belegt — 2,56 px Reserve, also dicht am
+                    selben Kippen.
+
+       DIESER FALL MISST MIT DER SAAT DIESER DATEI und nicht mit
+       `seedPopulatedSession`; seine Zahlen liegen daneben, weil Zaehlwert und
+       Filterchips anders ausfallen. Mit der Saat dieser Datei, dreimal
+       gemessen:
+
+                        vor der Welle   im Befundstand   nach der Korrektur
+         encounter          +6,72            -3,69             +11,17
+         kalender           +6,63           -11,59             +14,44
+         npcs               +7,37            +0,92             +10,14
+         die uebrigen 5   +47,91..131,52   +39,94..124,53   +51,33..134,50
+
+       Die Korrektur steht damit BESSER da als der Stand vor der Welle: 12 px
+       (--text-sm) sind 0,6 px unter den 12,6 px, die `0.9em` dort ergaben.
+
+       Ursache war `.section-toolbar-title` im Block `@media (max-width: 600px)`
+       (editors.css:745): `0.9em` -> `var(--text-md)`. Der Elternwert ist dort
+       gemessen 14 px und nicht 16, die Schrift ging also 12,6 -> 14 px (+1,40),
+       und die Titelgruppe wurde 10,4 px breiter.
+
+       WARUM DIE VORHANDENEN ZUSICHERUNGEN DAS NICHT GESEHEN HABEN: waagerechter
+       Ueberlauf und Seitenueberlauf blieben in allen vier Kombinationen 0 — es
+       wird nichts abgeschnitten, der Umbruch ist gueltiges Flex-Verhalten. Nur
+       die ZEILENBELEGUNG aendert sich, und die hat bisher nichts gemessen.
+
+       WAS DIESER FALL ZUSICHERT: Titelgruppe und primaere Aktion teilen bei
+       375 px eine Zeile, mit beziffertem Abstand zur Kante. Das ist die Reserve
+       und nicht der Zustand — dieselbe Lehre wie bei (1).
+       -------------------------------------------------------------------- */
+
+    /** Die Ansichten, deren Leiste bei 375 px gemessen Titelgruppe UND primaere
+     *  Aktion in einer Zeile fuehrt. `shops` und `dmscreen` fehlen bewusst: dort
+     *  traegt die Aktionsgruppe gemessen 295,56 bzw. 282,73 px und liegt schon
+     *  VOR jeder Schriftaenderung in einer eigenen Zeile — eine Zusicherung
+     *  darauf waere von Anfang an rot. `wiki` und `party` fehlen, weil ihre
+     *  Leiste keine Aktionsgruppe hat. */
+    const ZEILENANSICHTEN = [
+        'encounter',
+        'kalender',
+        'npcs',
+        'locations',
+        'quests',
+        'loot',
+        'spells',
+        'bestiary'
+    ];
+
+    /** Mindestabstand der belegten Breite zur Zeilenbreite, in Bildpunkten.
+     *  Mit der Saat dieser Datei gemessen (Tabelle im Kopfkommentar): nach der
+     *  Korrektur ist der kleinste Abstand 10,14 px (npcs), vor der Welle waren
+     *  es 6,63 px (kalender), im Befundstand -11,59 px (kalender).
+     *  DIE SCHRANKE STEHT AUF 4 px, und die Wahl gehoert begruendet: sie liegt
+     *  UNTER dem Stand vor der Welle (6,63 px) und ueber dem Befundstand. So
+     *  meldet sie das Kippen, ohne die Welle 5 zurueckzudrehen — eine Schranke
+     *  auf dem heutigen Bestwert waere eine Ratsche auf einer Zahl, die von der
+     *  Textlaenge der Saat abhaengt und beim naechsten Knopfnamen faellt. */
+    const MIN_ZEILEN_RESERVE = 4;
+
+    /**
+     * Zeilenbelegung einer Werkzeugleiste: welche Gruppen liegen in derselben
+     * Flex-Zeile, und wieviel Platz bleibt in der Zeile von Titelgruppe und
+     * primaerer Aktion?
+     *
+     * GRUPPIERT WIRD UEBER DIE SENKRECHTE UEBERLAPPUNG und nicht ueber den
+     * Oberrand: in einer Flex-Zeile sind die Gruppen unterschiedlich hoch und
+     * mittig ausgerichtet, ihre Oberraender unterscheiden sich um bis zu 13 px.
+     * Eine Gruppierung nach `top` meldete vier Zeilen, wo drei sind — beim
+     * ersten Messversuch genau so passiert.
+     */
+    function messeLeistenZeile(name) {
+        const r2 = n => Math.round(n * 100) / 100;
+        const view = document.getElementById('view-' + name);
+        if (!view) return { da: false, grund: 'Ansicht #view-' + name + ' fehlt' };
+        const tb = view.querySelector('.section-toolbar');
+        if (!tb) return { da: false, grund: name + ': keine .section-toolbar' };
+        const tbr = tb.getBoundingClientRect();
+        const cs = getComputedStyle(tb);
+        const luecke = parseFloat(cs.columnGap || cs.gap || '0') || 0;
+        const zeileBreite = r2(
+            tbr.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+        );
+
+        const gruppen = Array.from(tb.children)
+            .filter(c => c.nodeType === 1 && c.getBoundingClientRect().height > 0)
+            .map(c => {
+                const r = c.getBoundingClientRect();
+                return {
+                    kl: c.className.split(/\s+/)[0],
+                    b: r2(r.width),
+                    oben: r2(r.top - tbr.top),
+                    unten: r2(r.bottom - tbr.top)
+                };
+            });
+
+        const zeilen = [];
+        gruppen.forEach(g => {
+            const z = zeilen.find(x => g.oben < x.unten - 1 && g.unten > x.oben + 1);
+            if (z) {
+                z.gruppen.push(g.kl);
+                z.belegt = r2(z.belegt + luecke + g.b);
+                z.oben = Math.min(z.oben, g.oben);
+                z.unten = Math.max(z.unten, g.unten);
+            } else {
+                zeilen.push({ oben: g.oben, unten: g.unten, gruppen: [g.kl], belegt: g.b });
+            }
+        });
+
+        const ident = gruppen.find(g => g.kl === 'section-toolbar-identity');
+        const aktion = gruppen.find(g => g.kl === 'section-toolbar-actions');
+        const paarZeile = zeilen.find(
+            z =>
+                z.gruppen.includes('section-toolbar-identity') &&
+                z.gruppen.includes('section-toolbar-actions')
+        );
+        const titel = tb.querySelector('.section-toolbar-title');
+        const master = view.querySelector(
+            '.enc-master, .loc-master, .npc-master, .loot-master, .bestiary-master'
+        );
+
+        return {
+            da: true,
+            layout: window.innerWidth <= 768 ? 'mobile' : 'desktop',
+            gruppenZahl: gruppen.length,
+            zeilen: zeilen.length,
+            aufbau: zeilen.map(z => z.gruppen.join('+') + '=' + z.belegt).join(' | '),
+            identDa: !!ident,
+            aktionDa: !!aktion,
+            identB: ident ? ident.b : null,
+            aktionB: aktion ? aktion.b : null,
+            luecke: r2(luecke),
+            zeileBreite,
+            // Belegung des Paares, EINSCHLIESSLICH der Luecke zwischen beiden —
+            // sie ist Teil des Platzbedarfs und der Grund, warum encounter bei
+            // 325,04 px Gruppenbreite an einer 329-px-Zeile scheitert.
+            paarBelegt: ident && aktion ? r2(ident.b + luecke + aktion.b) : null,
+            reserve: ident && aktion ? r2(zeileBreite - (ident.b + luecke + aktion.b)) : null,
+            einZeilig: !!paarZeile,
+            leisteHoehe: r2(tbr.height),
+            fsTitel: titel ? r2(parseFloat(getComputedStyle(titel).fontSize)) : null,
+            fsTitelEltern:
+                titel && titel.parentElement
+                    ? r2(parseFloat(getComputedStyle(titel.parentElement).fontSize))
+                    : null,
+            masterHoehe: master ? r2(master.getBoundingClientRect().height) : null,
+            ueberhangX: r2(view.scrollWidth - view.clientWidth),
+            seiteUeberhangX: r2(
+                document.documentElement.scrollWidth - document.documentElement.clientWidth
+            )
+        };
+    }
+
+    test('(5) Titelgruppe und primaere Aktion teilen bei 375x812 eine Zeile', async ({ page }) => {
+        await page.setViewportSize({ width: 375, height: 812 });
+        await appLaden(page, true);
+
+        const schrift = await messeSchriftbreite(page, PROBETEXT);
+
+        // VORBEDINGUNG A — wie bei (1): die Probenschrift ist nicht schmaler
+        // als die Windows-Erstwahl, sonst waere der Fall leichter als der Alltag.
+        expect(
+            schrift.ist,
+            `die Probenschrift ist SCHMALER als 'Segoe UI' (${schrift.ist} gegen ${schrift.segoe}px)`
+        ).toBeGreaterThanOrEqual(schrift.segoe - 0.5);
+
+        /* ALLE ACHT ANSICHTEN WERDEN GEMESSEN, BEVOR GEURTEILT WIRD. Ein
+           `expect` in der Schleife bricht beim ersten Fehlschlag ab und
+           verschweigt die uebrigen sieben — im roten Lauf des Befundes W5-D/1
+           haette das `encounter` gemeldet und `kalender` nie erreicht. Ein
+           roter Lauf soll die ganze Lage nennen. */
+        const messungen = [];
+        for (const name of ZEILENANSICHTEN) {
+            await reiterWechseln(page, name);
+            const m = await page.evaluate(messeLeistenZeile, name);
+            console.log(`[C1-Zeile] 375x812 ${name} · ${JSON.stringify(m)}`);
+            messungen.push({ name, m });
+        }
+
+        // VORBEDINGUNG B — jede Leiste ist da, im Mobil-Profil, und fuehrt
+        // beide Gruppen. Ohne sie waere der Fall durch WEGLASSEN gruen.
+        expect(
+            messungen.filter(({ m }) => !m.da).map(({ name, m }) => `${name}: ${m.grund}`)
+        ).toEqual([]);
+        expect(
+            messungen.filter(({ m }) => m.layout !== 'mobile').map(({ name }) => name),
+            'der Fall braucht das Mobil-Profil'
+        ).toEqual([]);
+        expect(
+            messungen
+                .filter(({ m }) => !m.identDa || !m.aktionDa)
+                .map(({ name, m }) => `${name}: identity=${m.identDa} actions=${m.aktionDa}`)
+        ).toEqual([]);
+
+        /* ZUSICHERUNG 1 — DIE RESERVE. Sie steht vor dem Zustand, aus
+           demselben Grund wie bei (1): 0,92 px Reserve, die npcs im
+           Befundstand hatte, sind heute gruen und morgen der naechste
+           Umbruch. */
+        const zuKnapp = messungen
+            .filter(({ m }) => m.reserve === null || m.reserve < MIN_ZEILEN_RESERVE)
+            .map(
+                ({ name, m }) =>
+                    `${name}: Titelgruppe ${m.identB}px + Luecke ${m.luecke}px + Aktion ` +
+                    `${m.aktionB}px = ${m.paarBelegt}px in einer ${m.zeileBreite}px breiten ` +
+                    `Zeile — ${m.reserve}px Abstand, verlangt ${MIN_ZEILEN_RESERVE}px ` +
+                    `(Titel ${m.fsTitel}px auf einem Elternwert von ${m.fsTitelEltern}px)`
+            );
+        expect(zuKnapp).toEqual([]);
+
+        /* ZUSICHERUNG 2 — und darum liegen beide wirklich in EINER Zeile.
+           Die schwaechere der zwei: sie wird erst rot, wenn der Umbruch schon
+           da ist. Die Zahl, die sie traegt, ist die Leistenhoehe — 158 -> 187
+           px bei encounter, und die 29 px gehen 1:1 aus der Listenspalte. */
+        const umgebrochen = messungen
+            .filter(({ m }) => !m.einZeilig)
+            .map(
+                ({ name, m }) =>
+                    `${name}: Titelgruppe und primaere Aktion in verschiedenen Zeilen ` +
+                    `(${m.zeilen} Zeilen: ${m.aufbau}); Leiste ${m.leisteHoehe}px, ` +
+                    `Listenspalte ${m.masterHoehe}px`
+            );
+        expect(umgebrochen).toEqual([]);
+
+        // ZUSICHERUNG 3 — und die Zeile traegt keinen Querstand nach aussen.
+        expect(
+            messungen
+                .filter(({ m }) => m.ueberhangX !== 0 || m.seiteUeberhangX !== 0)
+                .map(({ name, m }) => `${name}: ${m.ueberhangX}px / Seite ${m.seiteUeberhangX}px`)
+        ).toEqual([]);
+
+        // Die Zusammenfassung in EINER Zeile, damit ein CI-Protokoll die
+        // knappste Stelle ohne Suche nennt.
+        const knappste = messungen.reduce((a, b) => (a.m.reserve <= b.m.reserve ? a : b));
+        console.log(
+            `[C1-Zeile] knappste Stelle: ${knappste.name} mit ${knappste.m.reserve}px Reserve ` +
+                `(Schranke ${MIN_ZEILEN_RESERVE}px)`
+        );
+    });
 });

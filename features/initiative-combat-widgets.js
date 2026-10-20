@@ -34,7 +34,7 @@ function renderEffectConditionsGrid() {
             const hasEffect = currentEffects.some(
                 e => e.name.toLowerCase() === cond.name.toLowerCase()
             );
-            return `<button class="btn ${hasEffect ? 'btn-success' : ''}" data-action="add-effect-from-grid" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 8px 10px; font-size: 0.9em;">
+            return `<button class="btn ${hasEffect ? 'btn-success' : ''}" data-action="add-effect-from-grid" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 8px 10px; font-size: var(--text-md);">
             <span>${cond.icon}</span>
             <span style="flex: 1; text-align: left;">${cond.name}</span>
             ${hasEffect ? '✓' : ''}
@@ -345,7 +345,7 @@ function showConcentrationModal(cbId) {
             <h3 style="margin: 0 0 16px 0; color: var(--purple);">🔮 Konzentration setzen</h3>
             <p style="margin: 0 0 12px 0; color: var(--text-dim);">Für: <strong>${esc(cb.name)}</strong></p>
             <div style="margin-bottom: 16px;">
-                <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: var(--text-dim);">Zauber:</label>
+                <label style="display: block; margin-bottom: 6px; font-size: var(--text-md); color: var(--text-dim);">Zauber:</label>
                 ${
                     spellOptions
                         ? `

@@ -148,7 +148,7 @@ function applyMarkdownFormat(editor, textNode, match) {
             case 'code':
                 htmlElement = document.createElement('code');
                 htmlElement.style.cssText =
-                    'background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;';
+                    'background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: var(--text-md);';
                 break;
             default:
                 return;

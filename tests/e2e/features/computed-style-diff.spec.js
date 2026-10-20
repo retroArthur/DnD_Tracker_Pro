@@ -386,7 +386,69 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Die Umstellung von `padding` ist dabei nachgemessen ein Nulleingriff: kein einziger der 1213
 // Schluessel aendert sich durch sie allein.
 
-// Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
+// -----------------------------------------------------------------------------------
+// NEUERHEBUNG VOM 2026-10-07 -- Design-Handoff v3, Welle 6, Schritt 6 (--border-input)
+// -----------------------------------------------------------------------------------
+// Gemessen, nicht geschaetzt: der Sollstand hat sich an GENAU 96 von 3615 Digests bewegt
+// (2,66 Prozent), 32 je Durchgang, und alle drei Durchgaenge nennen DIESELBEN 32
+// Schluessel. Kein Schluessel ist hinzugekommen, keiner verschwunden.
+//
+//   Durchgang        geaendert  nur vorher  nur nachher
+//   ---------------  ---------  ----------  -----------
+//   standard                32           0            0
+//   narrow                  32           0            0
+//   reducedMotion           32           0            0
+//
+// Die 32 sind restlos Vertragseingaben, und ihre einzige geaenderte Eigenschaft ist
+// `borderColor`: 15x `input.toolbar-search`, 5x `select.toolbar-select`,
+// 4x `select.form-select`, 2x `input.form-input`, je 1x `input.dice-formula`,
+// `input.dice-multi`, `input.dms-dice-input`, `textarea.dms-notes-input`,
+// `input.fr-ruf-grund-input`, `input.fr-ruf-set-input`. Vorher stand bei allen 32
+// derselbe Wert `rgb(58, 58, 58)` (= `--border`), nachher bei allen 32 derselbe Wert
+// `rgb(124, 124, 124)` (= `--border-input`). Die anderen elf gehashten Eigenschaften
+// streuen ueber die 32 Schluessel unveraendert (color 1 Wert, backgroundColor 3,
+// padding 8, ...) -- es hat sich also nichts mitbewegt.
+//
+// WAS DER SOLLSTAND VON DIESEM SCHRITT NICHT SIEHT, und das ist der groessere Teil:
+// `.form-group input` (184 Felder) und `.form-group select` kommen in keinem seiner
+// Schluessel vor, weil er die Ansichten im RUHEZUSTAND bemustert und diese Felder in
+// zugeklappten Formularen und geschlossenen Modalen liegen. Von 297 Vertragsfeldern
+// deckt er 32. Den Rest deckt W6-R-07 (tests/e2e/features/eingaberahmen.spec.js) am
+// Element, in vier Themes, mit aufgeklappten Formularen und sechs geoeffneten Modalen.
+// Den Fokusring sieht er ueberhaupt nicht: `outline` ist in keiner Schreibweise unter
+// den zwoelf gehashten Eigenschaften.
+//
+// NEUERHEBUNG VOM 2026-10-07 -- Design-Handoff v3, Welle 6, Schritt 7 (die zwei Zaehler)
+// --------------------------------------------------------------------------------------
+// Die kleinste Neuerhebung der Reihe, und sie ist vollstaendig beziffert: NULL bewegte
+// Digests, NULL Abgaenge, GENAU EIN Zugang -- und in allen drei Durchgaengen derselbe.
+//
+//   Durchgang        geaendert  nur vorher  nur nachher
+//   ---------------  ---------  ----------  -----------
+//   standard                 0           0            1
+//   narrow                   0           0            1
+//   reducedMotion            0           0            1
+//
+// Der Zugang ist `spells/div.filter-count#0`. Er entsteht NICHT, weil sich ein Stil
+// geaendert haette, sondern weil die Erfassung nur Elemente MIT Klasse nimmt
+// (`el.classList.length > 0`): die Filterrueckmeldung der Zauberansicht trug ihre vier
+// Deklarationen bisher als Inline-Stil und hatte keine Klasse, fiel also durch. Sie
+// heisst jetzt `#spells-filter-count` und traegt `.filter-count` -- damit ist sie
+// erstmals im Sollstand. Dass sich dabei kein berechneter Wert bewegt, ist am gebauten
+// Buendel nachgemessen: fontSize 12px, color rgb(136, 136, 136), whiteSpace nowrap --
+// vor und nach dem Umbau dieselben Werte. Die Klasse ist dieselbe Angabe, nur an einem
+// Ort, an dem eine Medienabfrage sie erreichen kann.
+//
+// DAS `gap` DER FILTERLEISTE IST IM SOLLSTAND UNSICHTBAR und darum hier benannt:
+// derselbe Schritt hebt `.filter-bar { gap }` von 6px auf var(--space-sm) = 8px.
+// `gap` ist keine der zwoelf gehashten Eigenschaften. Gemessene Folge am Buendel: die
+// drei Marken-Reihen der Zauberansicht werden zusammen 46,0 px breiter (23 Spalte x
+// 2 px), der auto-Rest links von der Rueckmeldung sinkt von 342,3 auf 296,3 px. Ihre
+// rechte Kante bleibt bei 0,0 px Abstand zum Innenrand -- gedeckt von W6-R-10 Fall 4,
+// nicht von diesem Abzug.
+//
+// Globale Ausnahmen (alle drei Durchgaenge). WIEDER LEER nach dieser Neuerhebung --
+// dieselbe Regel wie nach M3b: die Liste traegt eine Welle, nicht den Dauerzustand.
 /** @type {string[]} */
 const EXPECTED_DEVIATION_KEYS = [];
 
@@ -918,6 +980,19 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
      * Freigabe wie eine Ausnahmeliste, die nichts mehr ausnimmt.
      */
     test('Breitere Schriftmetrik bewegt den Digest nicht', async ({ page, context }) => {
+        /* EIGENE ZEITSCHRANKE, und zwar aus der Bauart dieses Falls heraus.
+           Die drei Durchgaenge ueber ihm erheben je EINEN Vollabzug; dieser erhebt ZWEI
+           (schmale und breite Metrik, beide Seiten selbst) — der Kopfkommentar beziffert
+           das mit "rund 30 s". Die globale Schranke in playwright.config.js steht aber
+           ebenfalls bei 30 s. Der Fall lag damit seit seiner Geburt am 2026-10-02 auf
+           seinem eigenen Budget und fiel auf einer belasteten Maschine in den Zeitablauf:
+           allein gemessen 25,1 s, in drei von fuenf Vollaeufen rot, auch auf einem
+           unbelasteten Rechner reproduziert (Lauf vom 2026-10-06, 603 bestanden / 1 rot).
+           90 s sind das Dreifache der gemessenen Einzellaufzeit — kein Freibrief, sondern
+           der Abstand, den die uebrigen drei Faelle gegenueber ihrem Abzug auch haben.
+           NICHT die globale Schranke anheben: die uebrigen Faelle sollen weiter bei 30 s
+           auffallen, wenn sie langsam werden. */
+        test.setTimeout(90 * 1000);
         await seedPopulatedSession(page);
         await loadApp(page);
         const schmalBefunde = [];

@@ -143,7 +143,7 @@ function renderCurrentLinks() {
     const esc = window.esc;
     // LINK_ICONS aus core/constants.js
     container.innerHTML = `
-        <label style="font-size: 0.85em; color: var(--text-dim);">Aktuelle Verknüpfungen</label>
+        <label style="font-size: var(--text-sm); color: var(--text-dim);">Aktuelle Verknüpfungen</label>
         <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
             ${entity.links
                 .map((link, i) => {
@@ -292,17 +292,17 @@ function showEntityPreviewModal(type, id, entity) {
         const statusRolle = statusColors[status] || statusColors.offen;
         content = `
             <div style="margin-bottom: 12px;">
-                <span style="background: var(--${statusRolle}); color: var(--on-${statusRolle}); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: 600;">${status.toUpperCase()}</span>
+                <span style="background: var(--${statusRolle}); color: var(--on-${statusRolle}); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm); font-weight: 600;">${status.toUpperCase()}</span>
             </div>
             ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
-            ${entity.reward ? `<div style="color: var(--gold); font-size: 0.9em;">💰 ${esc(entity.reward)}</div>` : ''}
+            ${entity.reward ? `<div style="color: var(--gold); font-size: var(--text-md);">💰 ${esc(entity.reward)}</div>` : ''}
         `;
     } else if (type === 'npcs') {
         const location = EntityLookup.location(entity.locationId);
         content = `
             ${entity.role ? `<div style="color: var(--text-dim); margin-bottom: 8px;">${esc(entity.role)}</div>` : ''}
             ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
-            ${location ? `<div style="font-size: 0.85em; color: var(--cyan);">📍 ${esc(location.name)}</div>` : ''}
+            ${location ? `<div style="font-size: var(--text-sm); color: var(--cyan);">📍 ${esc(location.name)}</div>` : ''}
         `;
     } else if (type === 'locations') {
         content = entity.description
@@ -326,13 +326,13 @@ function showEntityPreviewModal(type, id, entity) {
            2,93, die Schul-Pille 4,02. Jetzt 4,97-7,43 bzw. 5,05-6,94. */
         content = `
             <div style="margin-bottom: 8px;">
-                <span style="background: var(--blue); color: var(--on-blue); padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">${levelText}</span>
-                ${entity.school ? `<span style="background: var(--purple); color: var(--on-purple); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 4px;">${esc(entity.school)}</span>` : ''}
+                <span style="background: var(--blue); color: var(--on-blue); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm);">${levelText}</span>
+                ${entity.school ? `<span style="background: var(--purple); color: var(--on-purple); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm); margin-left: 4px;">${esc(entity.school)}</span>` : ''}
             </div>
-            ${entity.castingTime ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Zeitaufwand:</span> ${esc(entity.castingTime)}</div>` : ''}
-            ${entity.range ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Reichweite:</span> ${esc(entity.range)}</div>` : ''}
-            ${entity.duration ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Dauer:</span> ${esc(entity.duration)}</div>` : ''}
-            ${entity.description ? `<div style="color: var(--text); margin-top: 10px; font-size: 0.9em;">${sanitizeHTML(entity.description.substring(0, 200))}${entity.description.length > 200 ? '...' : ''}</div>` : ''}
+            ${entity.castingTime ? `<div style="font-size: var(--text-sm);"><span style="color: var(--text-dim);">Zeitaufwand:</span> ${esc(entity.castingTime)}</div>` : ''}
+            ${entity.range ? `<div style="font-size: var(--text-sm);"><span style="color: var(--text-dim);">Reichweite:</span> ${esc(entity.range)}</div>` : ''}
+            ${entity.duration ? `<div style="font-size: var(--text-sm);"><span style="color: var(--text-dim);">Dauer:</span> ${esc(entity.duration)}</div>` : ''}
+            ${entity.description ? `<div style="color: var(--text); margin-top: 10px; font-size: var(--text-md);">${sanitizeHTML(entity.description.substring(0, 200))}${entity.description.length > 200 ? '...' : ''}</div>` : ''}
         `;
     } else if (type === 'loot') {
         const rarityColors = {
@@ -346,14 +346,14 @@ function showEntityPreviewModal(type, id, entity) {
         const rarityColor = rarityColors[entity.rarity] || 'var(--text)';
         content = `
             ${entity.rarity ? `<div style="color: ${rarityColor}; font-weight: 600; margin-bottom: 8px;">${esc(entity.rarity.charAt(0).toUpperCase() + entity.rarity.slice(1))}</div>` : ''}
-            ${entity.value ? `<div style="color: var(--gold); font-size: 0.9em;">💰 ${esc(entity.value)}</div>` : ''}
-            ${entity.weight ? `<div style="font-size: 0.85em; color: var(--text-dim);">⚖️ ${esc(entity.weight)}</div>` : ''}
+            ${entity.value ? `<div style="color: var(--gold); font-size: var(--text-md);">💰 ${esc(entity.value)}</div>` : ''}
+            ${entity.weight ? `<div style="font-size: var(--text-sm); color: var(--text-dim);">⚖️ ${esc(entity.weight)}</div>` : ''}
             ${entity.description ? `<div style="color: var(--text); margin-top: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
         `;
     } else if (type === 'wiki') {
         const parent = entity.parentId ? EntityLookup.wiki(entity.parentId) : null;
         content = `
-            ${parent ? `<div style="font-size: 0.85em; color: var(--cyan); margin-bottom: 8px;">📁 ${esc(parent.name)}</div>` : ''}
+            ${parent ? `<div style="font-size: var(--text-sm); color: var(--cyan); margin-bottom: 8px;">📁 ${esc(parent.name)}</div>` : ''}
             ${entity.content ? `<div style="color: var(--text); max-height: 300px; overflow-y: auto;">${sanitizeHTML(entity.content.substring(0, 500))}${entity.content.length > 500 ? '...' : ''}</div>` : '<div style="color: var(--text-dim);">Kein Inhalt</div>'}
         `;
     }
@@ -391,7 +391,7 @@ function showEntityPreviewModal(type, id, entity) {
     const contentEl = $('entity-preview-content');
     const gotoBtn = $('entity-preview-goto');
     if (titleEl) {
-        titleEl.innerHTML = `${LINK_ICONS[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: 0.8em;">(${ENTITY_TYPE_NAMES[type] || type})</span>`;
+        titleEl.innerHTML = `${LINK_ICONS[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: var(--text-sm);">(${ENTITY_TYPE_NAMES[type] || type})</span>`;
     }
     if (contentEl) {
         contentEl.innerHTML =

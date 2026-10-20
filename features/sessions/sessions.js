@@ -35,7 +35,7 @@ function renderStoryArcList() {
     const arcs = getStoryArcs();
     if (arcs.length === 0) {
         container.innerHTML =
-            '<div style="color: var(--text-dim); font-size: 0.9em;">Keine Arcs vorhanden</div>';
+            '<div style="color: var(--text-dim); font-size: var(--text-md);">Keine Arcs vorhanden</div>';
         return;
     }
     container.innerHTML = arcs
@@ -44,7 +44,7 @@ function renderStoryArcList() {
         <div class="story-arc-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 4px; margin-bottom: 4px;">
             <span style="width: 16px; height: 16px; background: ${a.color || 'var(--gold)'}; border-radius: 3px;"></span>
             <span style="flex: 1; color: var(--text);">${esc(a.name)}</span>
-            <span style="color: var(--text-dim); font-size: 0.8em;">${countSessionsInArc(a.id)} Sessions</span>
+            <span style="color: var(--text-dim); font-size: var(--text-sm);">${countSessionsInArc(a.id)} Sessions</span>
             <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${a.id}" title="Löschen">🗑️</button>
         </div>
     `
@@ -109,7 +109,7 @@ function renderSessionTagFilters() {
     const allTags = getAllSessionTags();
     if (allTags.length === 0) {
         container.innerHTML =
-            '<span style="color: var(--text-dim); font-size: 0.8em;">Keine Tags</span>';
+            '<span style="color: var(--text-dim); font-size: var(--text-sm);">Keine Tags</span>';
         return;
     }
     container.innerHTML = allTags
@@ -293,7 +293,7 @@ function renderSessions() {
 }
 function renderSessionCard(n) {
     const tagsHtml = (n.tags || [])
-        .map(t => `<span class="session-tag" style="font-size: 0.75em;">${esc(t)}</span>`)
+        .map(t => `<span class="session-tag">${esc(t)}</span>`)
         .join('');
     return `
         <div class="session-card">

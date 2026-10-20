@@ -134,12 +134,12 @@ function addTriggerField() {
         'background: var(--bg-dark); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);';
     div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="color: var(--yellow); font-weight: 600; font-size: 0.85em;">🔔 Trigger</span>
+            <span style="color: var(--yellow); font-weight: 600; font-size: var(--text-sm);">🔔 Trigger</span>
             <button type="button" class="btn btn-sm btn-danger" data-action="remove-field-stop" data-value=".npc-trigger-field">✕</button>
         </div>
         <div class="form-grid" style="margin: 0;">
-            <div class="form-group" style="margin: 0;"><label style="font-size: 0.85em;">Bedingung</label><input type="text" class="trigger-cond" placeholder="z.B. Wenn vertraut, Nach Quest X"></div>
-            <div class="form-group" style="margin: 0;"><label style="font-size: 0.85em;">Enthüllung</label><input type="text" class="trigger-reveal" placeholder="Was wird enthüllt?"></div>
+            <div class="form-group" style="margin: 0;"><label style="font-size: var(--text-sm);">Bedingung</label><input type="text" class="trigger-cond" placeholder="z.B. Wenn vertraut, Nach Quest X"></div>
+            <div class="form-group" style="margin: 0;"><label style="font-size: var(--text-sm);">Enthüllung</label><input type="text" class="trigger-reveal" placeholder="Was wird enthüllt?"></div>
         </div>`;
     c.appendChild(div);
 }

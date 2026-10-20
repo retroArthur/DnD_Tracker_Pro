@@ -19,11 +19,11 @@
 }
 
 .dice-hero-result {
-    font-size: 5em;
-    font-weight: 700;
+    font-size: var(--text-hero); /* war 5em = 80,00 px gemessen -> 72 px, -8,00. Die groesste Zahl der App; --text-hero ist genau fuer sie da (Handoff Paragraph 7) */
+    font-weight: 600;
     color: var(--gold-text);
     line-height: 1;
-    transition: all 0.3s;
+    transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */
 }
 
 .dice-hero-result.crit {
@@ -37,14 +37,14 @@
 }
 
 .dice-hero-formula {
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     color: var(--text-dim);
     margin-top: 8px;
     font-family: var(--font-mono);
 }
 
 .dice-hero-breakdown {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     margin-top: 8px;
 }
@@ -65,10 +65,10 @@
     border-radius: var(--radius-md);
     background: var(--bg-elevated);
     cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     color: var(--text);
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -141,11 +141,11 @@
     width: 50px;
     padding: 8px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
-    font-size: 1em;
+    font-size: var(--text-lg);
 }
 
 .dice-multi-x {
@@ -205,16 +205,15 @@
     min-width: 0;
     padding: 10px 12px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 1em;
+    font-size: var(--text-lg);
     font-family: var(--font-mono);
 }
 
 .dice-formula:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .dice-roll-btn {
@@ -224,8 +223,8 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1.4em;
-    transition: all 0.2s;
+    font-size: 22.4px; /* war 1.4em; gemessen 22,40 px auf 16-px-Eltern, Delta 0,00. Der Knopf traegt NUR ein Emoji (🎲) in einem 50x44-px-Kasten — bleibt neben der Skala (E-3), Grund in tools/typo-map.js */
+    transition: var(--trans-std);
 }
 
 .dice-roll-btn:hover {
@@ -234,15 +233,12 @@
 }
 
 .dice-reroll-btn {
-    width: 44px;
-    height: 44px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     color: var(--text);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-reroll-btn:hover {
@@ -262,12 +258,9 @@
 .dice-chip {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 8px 16px;
-    font-size: 0.9em;
     color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-chip:hover {
@@ -313,8 +306,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1.3em;
-    transition: all 0.2s;
+    font-size: var(--text-xl);
+    transition: var(--trans-std);
 }
 
 .dmg-chip:hover {
@@ -349,7 +342,7 @@
 }
 
 .dice-combat-label {
-    font-size: 0.9em;
+    font-size: var(--text-md);
     color: var(--text-dim);
     min-width: 30px;
 }
@@ -359,7 +352,7 @@
     width: 60px;
     padding: 8px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
@@ -398,8 +391,8 @@
     border-radius: var(--radius-md);
     padding: 8px 12px;
     cursor: pointer;
-    font-size: 0.85em;
-    transition: all 0.2s;
+    font-size: var(--text-sm);
+    transition: var(--trans-std);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -416,9 +409,9 @@
 
 .dice-fav-item .fav-del {
     color: var(--text-dim);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     opacity: 0.5;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     cursor: pointer;
 }
 
@@ -428,15 +421,12 @@
 }
 
 .dice-fav-add {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
     border: 1px dashed var(--border);
     background: transparent;
     color: var(--text-dim);
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -490,10 +480,10 @@
     background: transparent;
     border: none;
     color: var(--text-dim);
-    font-size: 1em;
+    font-size: var(--text-md);
     padding: 2px 6px;
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color var(--dur-fast);
 }
 
 .dice-history-clear:hover {
@@ -529,10 +519,10 @@
     min-width: 0;
     padding: 8px 12px;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .dice-char-grid {
@@ -550,7 +540,7 @@
 .dice-char-col-title {
     font-weight: 600;
     color: var(--gold-text);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -570,7 +560,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .dice-attr:hover {
@@ -581,14 +571,14 @@
 
 .dice-attr span {
     font-weight: 600;
-    font-size: 0.8em;
+    font-size: var(--text-sm);
     color: var(--text);
 }
 
 .dice-attr small {
     color: var(--cyan-text);
-    font-weight: 700;
-    margin-top: 2px;
+    font-weight: 600;
+    margin-top: 2px; font-size: var(--text-xs); /* 11px, NEU am 2026-10-06 (Welle 5, Schritt 8). Vorher trug diese Stelle KEINE Groesse: `small` hat in jedem Browser `font-size: smaller`, also 0,8333 mal den Elternwert, und der Elternwert war die Browser-Vorgabe des Knopfes (13,3333 px) — gemessen 11,11 px. Die neue Regel `button, input, select, textarea` in core.css legt den Knopf auf 12 px, und damit faellt `smaller` auf 10,00 px: die Formularregel haette hier 12 Elemente UNTER die Untergrenze geschoben (6 Attributknoepfe plus 6 Rettungswurf-Knoepfe). Deshalb steht hier jetzt eine Zahl statt eines Verhaeltnisses — gemessen 11,11 -> 11,00 px, Delta -0,11. Genau diese Sorte Kind nennt O-10 beim Namen ("40 em-Kinder, deren Endwert heute ein Produkt aus einer Browser-Vorgabe ist"). Bewacht von W5-R-09 in tests/e2e/features/schriftuntergrenze.spec.js. */
 }
 
 .dice-attr.save {
@@ -639,12 +629,12 @@
     padding: 8px 12px;
     background: var(--bg-elevated);
     border-radius: var(--radius-md);
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     margin-bottom: 4px; /* F-18: aus der Dublette uebernommen */
     align-items: center; /* F-18: aus der Dublette uebernommen */
     gap: 8px; /* F-18: aus der Dublette uebernommen */
     cursor: pointer; /* F-18: aus der Dublette uebernommen */
-    transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
+    transition: var(--trans-std); /* F-18: aus der Dublette uebernommen */
 }
 
 .dice-history-result {
@@ -691,7 +681,7 @@
     box-shadow:
         var(--shadow-2),
         0 0 0 0 rgba(220, 38, 38, 0.4);
-    transition: all 0.3s ease;
+    transition: var(--trans-reveal); /* Reveal statt --trans-slow, s. W4-R-02 */
     animation: floatingPulse 3s ease-in-out infinite;
 }
 
@@ -758,7 +748,7 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px) scale(0.9);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: var(--trans-reveal);
     pointer-events: none;
 }
 
@@ -787,7 +777,7 @@
        .fdp-die in dieser Datei schon fuehren. */
     color: var(--gold-text);
     font-weight: 600;
-    font-size: 1em;
+    font-size: var(--text-md);
 }
 
 .fdp-close {
@@ -795,10 +785,10 @@
     border: none;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: var(--text-xl);
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-close:hover {
@@ -820,11 +810,11 @@
 }
 
 .fdp-number {
-    font-size: 3em;
-    font-weight: 700;
+    font-size: var(--text-3xl); /* war 3em = 48,00 px gemessen (16-px-Eltern) -> 34 px, -14,00. Die Wurfzahl ist Text, kein Ikon. --text-3xl und nicht --text-hero: das schwebende Paneel bleibt dem Wuerfel-Hero (72 px) untergeordnet */
+    font-weight: 600;
     color: var(--gold-text);
     line-height: 1;
-    transition: all 0.3s;
+    transition: var(--trans-slow), text-shadow var(--dur-slow) var(--ease); /* text-shadow einzeln, nicht in der Weltliste — s. W4-R-03 */
 }
 
 .fdp-number.crit {
@@ -839,14 +829,14 @@
 }
 
 .fdp-formula {
-    font-size: 0.85em;
+    font-size: var(--text-sm);
     color: var(--text-dim);
     margin-top: 4px;
     font-family: var(--font-mono);
 }
 
 .fdp-breakdown {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     margin-top: 2px;
     opacity: 0.7;
@@ -868,8 +858,8 @@
     color: var(--gold-text);
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.9em;
-    transition: all 0.2s;
+    font-size: var(--text-md);
+    transition: var(--trans-std);
 }
 
 .fdp-die:hover {
@@ -966,8 +956,8 @@
     border-radius: var(--radius-md);
     color: var(--text);
     cursor: pointer;
-    font-size: 0.8em;
-    transition: all 0.2s;
+    font-size: var(--text-sm);
+    transition: var(--trans-std);
 }
 
 .fdp-quick:hover {
@@ -1003,16 +993,15 @@
     flex: 1;
     padding: 8px 12px;
     background: var(--bg-dark);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-input);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
     font-family: var(--font-mono);
 }
 
 .fdp-input:focus {
-    outline: none;
-    border-color: var(--gold);
+    border-color: var(--focus-ring);
 }
 
 .fdp-input::placeholder {
@@ -1026,8 +1015,8 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 1em;
-    transition: all 0.2s;
+    font-size: var(--text-md);
+    transition: var(--trans-std);
 }
 
 .fdp-roll-btn:hover {
@@ -1045,7 +1034,7 @@
 }
 
 .fdp-history-label {
-    font-size: 0.75em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
     white-space: nowrap;
 }
@@ -1071,7 +1060,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     min-width: 40px;
-    transition: all 0.2s;
+    transition: var(--trans-std);
 }
 
 .fdp-history-item:hover {
@@ -1081,11 +1070,11 @@
 .fdp-history-result {
     font-weight: 600;
     color: var(--gold-text);
-    font-size: 0.9em;
+    font-size: var(--text-md);
 }
 
 .fdp-history-notation {
-    font-size: 0.65em;
+    font-size: var(--text-xs);
     color: var(--text-dim);
 }
 

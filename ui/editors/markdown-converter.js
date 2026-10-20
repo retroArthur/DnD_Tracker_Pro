@@ -232,7 +232,7 @@ function markdownToHtml(markdown) {
     // Code (`text`)
     html = html.replace(
         /`(.+?)`/g,
-        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>'
+        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: var(--text-md);">$1</code>'
     );
 
     // Links ([text](url))
@@ -295,7 +295,7 @@ function renderMarkdownInContent(html) {
     // Code: `text`
     result = result.replace(
         /`([^`]+)`/g,
-        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>'
+        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: var(--text-md);">$1</code>'
     );
 
     // Headings: ## text (only at line start)

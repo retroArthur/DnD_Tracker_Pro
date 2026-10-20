@@ -59,7 +59,7 @@ function renderTagsModal() {
                           i
                       ) => `<span class="tag tag-${t.color || 'blue'}" style="display: inline-flex; align-items: center; gap: 4px;">
             ${esc(t.name)}
-            <span style="cursor:pointer; color: var(--red); font-weight: bold;" data-action="delete-global-tag" data-value="${i}" title="Tag überall löschen">✕</span>
+            <span style="cursor:pointer; color: var(--red); font-weight: 600;" data-action="delete-global-tag" data-value="${i}" title="Tag überall löschen">✕</span>
         </span>`
                   )
                   .join('')
@@ -230,10 +230,10 @@ function showEntitiesWithTag(tagName) {
                 .map(
                     r => `
             <div class="search-result-item" data-action="tag-search-navigate" data-type="${r.type}" data-id="${r.id}" style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);">
-                <span style="font-size: 1.2em;">${r.icon}</span>
+                <span style="font-size: var(--text-xl);">${r.icon}</span>
                 <div>
                     <div style="font-weight: 500;">${esc(r.name)}</div>
-                    <div style="font-size: 0.8em; color: var(--text-dim);">${r.label}</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-dim);">${r.label}</div>
                 </div>
             </div>
         `

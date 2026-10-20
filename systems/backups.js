@@ -730,7 +730,7 @@ async function showBackupsModal() {
                 return `<div class="backup-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 8px;">
                 <div>
                     <div style="font-weight: 500;">${timeStr}</div>
-                    <div style="font-size: 0.85em; color: var(--text-dim);">Backup #${i + 1} (${sizeMB} MB)</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-dim);">Backup #${i + 1} (${sizeMB} MB)</div>
                 </div>
                 <button class="btn btn-sm" data-action="restore-backup" data-id="${b.timestamp}">Wiederherstellen</button>
             </div>`;
@@ -750,7 +750,7 @@ async function showBackupsModal() {
                     <button class="btn btn-sm" data-action="hide-modal" data-value="backups-modal">✕</button>
                 </div>
                 <div id="backups-list"></div>
-                <div style="margin-top: 12px; font-size: 0.85em; color: var(--text-dim);">
+                <div style="margin-top: 12px; font-size: var(--text-sm); color: var(--text-dim);">
                     Backups werden alle 5 Minuten erstellt (max. ${MAX_BACKUPS}).
                 </div>
             </div>
