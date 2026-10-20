@@ -260,7 +260,76 @@ function messeBudget(sel) {
         letzterOben: lr ? Math.round(lr.top) : null,
         letzterUnten: lr ? Math.round(lr.bottom) : null,
         letzterImFenster: imFenster,
-        letzterKlickbar: !!(getroffen && (letzter === getroffen || letzter.contains(getroffen)))
+        letzterKlickbar: !!(getroffen && (letzter === getroffen || letzter.contains(getroffen))),
+        // ZEITWEISE DIAGNOSE (CI-Befund PR #4, nur auf Linux): der Treffpunkt
+        // liegt 4 px UEBER der Unterkante des Eintrags, nicht in seiner Mitte.
+        // Bei gebrochenen Zeilenhoehen aus anderen Schriftmetriken kann er in
+        // eine Fuge fallen — oder etwas deckt den Eintrag wirklich. Diese
+        // Felder sagen, welches von beidem, und verschwinden danach wieder.
+        diagPunkt: lr ? px + ',' + py : null,
+        diagKasten: lr
+            ? lr.left.toFixed(2) +
+              ',' +
+              lr.top.toFixed(2) +
+              ' ' +
+              lr.width.toFixed(2) +
+              'x' +
+              lr.height.toFixed(2) +
+              ' unten=' +
+              lr.bottom.toFixed(2)
+            : null,
+        diagDecker: (() => {
+            if (!getroffen) return 'nichts getroffen';
+            if (letzter && (letzter === getroffen || letzter.contains(getroffen))) return null;
+            const kl = (getroffen.className || '').toString().trim().split(/\s+/).slice(0, 3);
+            const cs = getComputedStyle(getroffen);
+            const gr = getroffen.getBoundingClientRect();
+            return (
+                getroffen.tagName.toLowerCase() +
+                (kl[0] ? '.' + kl.join('.') : '') +
+                ' z=' +
+                cs.zIndex +
+                ' pe=' +
+                cs.pointerEvents +
+                ' pos=' +
+                cs.position +
+                ' kasten=' +
+                gr.top.toFixed(2) +
+                '..' +
+                gr.bottom.toFixed(2) +
+                ' istGeschwister=' +
+                (letzter && getroffen.parentElement === letzter.parentElement)
+            );
+        })(),
+        diagNachbarn: (() => {
+            if (!letzter) return null;
+            const v = letzter.previousElementSibling;
+            const n = letzter.nextElementSibling;
+            const r = e =>
+                e
+                    ? e.getBoundingClientRect().top.toFixed(2) +
+                      '..' +
+                      e.getBoundingClientRect().bottom.toFixed(2)
+                    : '-';
+            return 'vorher ' + r(v) + ' | nachher ' + r(n);
+        })(),
+        diagSchale: (() => {
+            const sch = letzter ? letzter.parentElement : null;
+            if (!sch) return null;
+            const r = sch.getBoundingClientRect();
+            const cs = getComputedStyle(sch);
+            return (
+                r.top.toFixed(2) +
+                '..' +
+                r.bottom.toFixed(2) +
+                ' overflow=' +
+                cs.overflowY +
+                ' scrollTop=' +
+                Math.round(sch.scrollTop) +
+                ' scrollHoehe=' +
+                sch.scrollHeight
+            );
+        })()
     };
 }
 
@@ -1283,7 +1352,15 @@ function befundeAus(marke, m, letzterPruefen = true, erwartet = ANZAHL) {
         befunde.push(
             `${marke}: letzter Eintrag ${m.letzterOben}..${m.letzterUnten}px` +
                 `${m.letzterImFenster ? '' : ' AUSSERHALB'}` +
-                `${m.letzterKlickbar ? '' : ' NICHT-KLICKBAR'}`
+                `${m.letzterKlickbar ? '' : ' NICHT-KLICKBAR'}` +
+                `${
+                    m.letzterKlickbar
+                        ? ''
+                        : `\n      Punkt ${m.diagPunkt} | Kasten ${m.diagKasten}` +
+                          `\n      Decker: ${m.diagDecker}` +
+                          `\n      Nachbarn: ${m.diagNachbarn}` +
+                          `\n      Schale: ${m.diagSchale}`
+                }`
         );
     }
     return befunde;
