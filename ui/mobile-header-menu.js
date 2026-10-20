@@ -280,7 +280,12 @@ function initMobileHeaderMenu() {
 // `openMobileHeaderMenu` und `buildMobileHeaderMenu` standen hier ebenfalls und
 // wurden von keinem anderen Modul, keiner Vorlage und keinem Test gelesen — sie
 // laufen ausschliesslich modulintern (aus `toggleMobileHeaderMenu()` bzw. aus
-// `openMobileHeaderMenu()`) und weiteten nur die generierte Globals-Liste.
+// `openMobileHeaderMenu()`).
+// NACHGEMESSEN, gegen die naheliegende Annahme: das Entfernen verkleinert
+// `eslint.generated-globals.js` NICHT. Der Generator listet
+// Top-Level-`function`-Deklarationen ohnehin, und beide Namen sind solche —
+// ein Neulauf nach dem Entfernen schreibt dieselben 1663 Namen. Der Grund fuer
+// das Entfernen ist allein die Export-Audit-Regel, nicht die Globals-Liste.
 window.isMobileHeaderMenuOpen = isMobileHeaderMenuOpen;
 window.closeMobileHeaderMenu = closeMobileHeaderMenu;
 window.toggleMobileHeaderMenu = toggleMobileHeaderMenu;
