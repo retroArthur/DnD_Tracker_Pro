@@ -588,10 +588,12 @@ const EntityActions = {
     'delete-timeline-event': ctx => {
         if (typeof window.deleteTimelineEvent === 'function') window.deleteTimelineEvent(ctx.id);
     },
-    'close-timeline-modal': () => {
-        var modal = document.getElementById('tl-event-modal');
-        if (modal) modal.remove();
-    },
+    // KEIN eigenes 'close-timeline-modal' mehr (U4): der Ereignis-Dialog folgt
+    // jetzt dem Hausmuster 4cb9a5b und benutzt den gemeinsamen Handler
+    // 'close-modal-overlay' (ui/actions/ui-actions.js). Der Sonderweg war
+    // funktionsgleich, aber eine zweite Stelle, die wissen musste, wie die
+    // Schale heisst — genau die Art Doppelwissen, die den Vertragsbruch
+    // ueberhaupt erst unbemerkt liess.
     'confirm-auto-event': ctx => {
         // Auto-Vorschlag übernehmen: Eintrag mit aktuellem Datum anlegen
         var d = window.D;

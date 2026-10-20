@@ -164,6 +164,17 @@ function isCovered(relModulePath) {
 // RARITY_COLORS. Vorher beurteilte R-16 die TABELLE, aber keine der Stellen,
 // die sie brauchen — der reparierte 1,12-Fall liess sich rueckstandsfrei
 // zurueckdrehen, ohne dass ein Test etwas gemerkt haette.
+//
+// 2026-09-30, Pruefrunde U3 Runde 1: NOCH EIN EINTRAG GESTRICHEN, die Liste
+// schrumpft von 75 auf 74. `ui/layout-profiles.js` wird seither vom KERNBELEG U3
+// in tests/unit/design-consistency.test.js Teil (4) GELESEN: der Rumpf von
+// setLayout() wird aus der Datei geschnitten und darauf geprueft, dass er die
+// Versatzkette der angehefteten Ebenen neu rechnet. Vorher tat er das nicht, und
+// der Rueckweg aus dem Mobil-Layout brachte die CSS-Rueckfallwerte
+// 0px/75px/145px zurueck — das Umzugs-Hinweisband deckte die Kopfzeile wieder um
+// 61px zu. Zusaetzlich fuehrt tests/e2e/features/sticky-stapel.spec.js den
+// Layout-Schalter per Klick durch beide Richtungen. Auch diese Zusicherung fuehrt
+// den Modulpfad in AUSFUEHRBAREM Code, nicht nur im Erklaertext.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
@@ -201,7 +212,15 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/render-spells.js',
     'features/rest-manager.js',
     'features/session-prep/session-prep-crud.js',
-    'features/session-prep/session-prep-render.js',
+    // 2026-10-01, U4: 'features/session-prep/session-prep-render.js'
+    // GESTRICHEN, die Liste schrumpft um eins. Der sechste Fall der
+    // U4-Beschreibung in tests/unit/design-consistency.test.js liest das Modul
+    // und beurteilt es namentlich: es ist die eine gefuehrte Abweichung von
+    // "jede Modal-Schale traegt eine Karte mit der Klasse modal" (seine Karte
+    // heisst `modal-content modal-large`). Der Pfad steht dort in
+    // AUSFUEHRBAREM Code, nicht im Erklaertext — dieselbe Unterscheidung, die
+    // der Eintrag vom 2026-09-28 fuer bestiary-render.js/locations-render.js
+    // festhaelt.
     'features/sessions/sessions.js',
     'features/shops/links.js',
     // -- 2026-09-30, Welle 3 Schritt 8: 'features/shops/shop-export.js' ist hier
@@ -239,7 +258,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'ui/actions/wiki-actions.js',
     'ui/dom-builder.js',
     'ui/editors/rich-text-toolbars.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'ui/layout-profiles.js',
     'ui/lazy-loading.js',
     'ui/safe-render.js',
     'ui/virtual-scroll.js',

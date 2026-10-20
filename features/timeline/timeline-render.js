@@ -197,6 +197,20 @@ function _getDismissedVorschlaege() {
 /**
  * Zeigt das Modal zum Anlegen eines neuen Timeline-Eintrags.
  * Erstellt das Modal dynamisch (transient, kein festes HTML-Skelett).
+ *
+ * STRUKTUR NACH DEM HAUSMUSTER 4cb9a5b (NPC-Generator, 18.06.2026):
+ * aeussere Schale `modal-overlay` OHNE Inline-Stil, innere Karte `modal`,
+ * sichtbar gemacht ueber window.showModal() (setzt `show`), Schliessknoepfe
+ * auf dem gemeinsamen Handler `close-modal-overlay`, Backdrop-Klick schliesst.
+ * Bis zum 2026-10-01 stand hier `modal-overlay active` + `modal-box` — zwei
+ * Namen, die dieses Repository nie gekannt hat: `.modal-overlay` traegt
+ * display:none (dmscreen.css), nur `.modal-overlay.show` macht display:flex
+ * (dashboard.css), und `.modal-box` hatte null CSS-Regeln. Der Dialog hing
+ * damit seit d05ce45 mit einem Rechteck von 0x0 am DOM, ohne Konsolenmeldung.
+ * Die zusaetzliche Klasse `modal-transient` markiert die Schale als per JS
+ * eingehaengt: daran erkennen Escape (keyboard-shortcuts.js) und der
+ * Ansichtswechsel (navigation.js), dass der Knoten zu ENTFERNEN ist und nicht
+ * bloss zu verstecken.
  */
 function showTimelineModal() {
     var existingModal = document.getElementById('tl-event-modal');
@@ -213,11 +227,11 @@ function showTimelineModal() {
     }).join('');
 
     var modalHtml = [
-        '<div class="modal-overlay active" id="tl-event-modal">',
-        '  <div class="modal-box">',
+        '<div class="modal-overlay modal-transient" id="tl-event-modal">',
+        '  <div class="modal">',
         '    <div class="modal-header">',
         '      <h3>📅 Neues Ereignis</h3>',
-        '      <button class="modal-close" data-action="close-timeline-modal">×</button>',
+        '      <button class="modal-close" data-action="close-modal-overlay">×</button>',
         '    </div>',
         '    <div class="modal-body">',
         '      <div class="tl-form-row">',
@@ -255,13 +269,24 @@ function showTimelineModal() {
         '    </div>',
         '    <div class="modal-footer">',
         '      <button class="btn btn-primary" data-action="save-timeline-event">Speichern</button>',
-        '      <button class="btn" data-action="close-timeline-modal">Abbrechen</button>',
+        '      <button class="btn" data-action="close-modal-overlay">Abbrechen</button>',
         '    </div>',
         '  </div>',
         '</div>'
     ].join('\n');
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Modal via showModal anzeigen (setzt .show → display:flex, opacity:1)
+    if (typeof window.showModal === 'function') window.showModal('tl-event-modal');
+
+    // Modal overlay schließen bei Klick außerhalb (Backdrop-Klick)
+    var modal = document.getElementById('tl-event-modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.remove();
+        });
+    }
 
     // Autofokus Titel
     setTimeout(function() {

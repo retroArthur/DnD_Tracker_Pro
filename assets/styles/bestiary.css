@@ -8,10 +8,21 @@
    VIEW CONTAINER
    ============================================================ */
 
+/* Hoehenbudget aus der gemessenen Kette, nicht aus einer Zahl (U6) —
+   Begruendung und Messwerte stehen an `.loc-view.active` in core.css.
+
+   Hier stand bis Runde 1, die beiden Mobil-/Schmalfassungen weiter unten
+   setzten `height: auto` und seien "davon unberuehrt". Woertlich war das
+   richtig, als Gesamtaussage irreleitend: unberuehrt ja, harmlos nein. Sie
+   gaben das Budget wieder auf, die SEITE scrollte, und die Werkzeugleiste der
+   Ansicht fuhr dabei vollstaendig aus dem Fenster (gemessen 900x700
+   Seitenueberhang 697px, Leiste bei -474..-400, Suchfeld "nichts"). Beide
+   Fassungen fuehren jetzt dieselbe Zeile wie diese hier und verlegen nur die
+   Scrollkante an das Raster. */
 .bestiary-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--view-frame-height, 134px));
     overflow: hidden;
 }
 
@@ -383,9 +394,26 @@
    MOBILE: single-column layout at [data-layout="mobile"]
    ============================================================ */
 
+/* DIE SCROLLKANTE LIEGT AM RASTER, NICHT AN DER SEITE (U6, Runde 1).
+   Hier stand `overflow: visible`, und die Schale gab weiter unten ihr
+   Hoehenbudget auf (`height: auto`) — damit scrollte die SEITE, und die
+   Werkzeugleiste der Ansicht fuhr dabei vollstaendig aus dem Fenster. Gemessen
+   am Buendel zu c14a968, Bestiar mit gewaehltem Monster, per Mausrad bis zum
+   Anschlag: 768x800 Seitenueberhang 650px, Leiste bei -529..-455,
+   `elementFromPoint` auf das Suchfeld antwortete mit "nichts"; 390x844
+   Ueberhang 766px, Leiste bei -549..-475. Jetzt behaelt die Schale ihr Budget
+   und das Raster scrollt selbst: Ueberhang 0, Leiste an ihrem Platz.
+   `grid-template-rows: auto` statt des geerbten `minmax(0, 1fr)` (core.css) ist
+   dabei tragend — mit der 1fr-Zeile bekaeme der Master nur den Rest, den der
+   646px hohe Statblock in der implizit zweiten Zeile uebriglaesst (gemessen
+   32px). Das GEWOLLTE Verhalten der Schmalfassung bleibt: das Detail steht
+   unter der Liste, nicht neben ihr (siehe den Kommentar an der
+   Detail-Panel-Regel in core.css). Beleg:
+   tests/e2e/features/hoehenbudget.spec.js, "Bestiar schmal". */
 [data-layout="mobile"] .bestiary-layout {
     grid-template-columns: 1fr;
-    overflow: visible;
+    grid-template-rows: auto;
+    overflow-y: auto;
 }
 
 [data-layout="mobile"] .bestiary-detail {
@@ -407,10 +435,10 @@
     gap: 6px;
 }
 
-[data-layout="mobile"] .bestiary-view.active {
-    height: auto;
-    overflow: visible;
-}
+/* Die frueher hier stehende Ruecknahme des Hoehenbudgets (`height: auto;
+   overflow: visible`) ist entfallen — Begruendung und Messwerte an
+   `[data-layout="mobile"] .bestiary-layout` weiter oben. Die Schale fuehrt in
+   BEIDEN Layouts dieselbe Zeile wie ihre vier Geschwister. */
 
 /* Mobile: hide list when monster is selected */
 [data-layout="mobile"] .bestiary-master.monster-selected {
@@ -437,9 +465,20 @@
         overflow-y: visible;
     }
 
-    .bestiary-view.active {
-        height: auto;
-        overflow: visible;
+    /* Dieselbe Umstellung wie im Mobil-Layout — Begruendung und Messwerte an
+       `[data-layout="mobile"] .bestiary-layout` weiter oben. Beide Fassungen
+       brauchen die Regel: `[data-layout="mobile"]` gilt auch in einem BREITEN
+       Fenster, wenn der DM das Mobil-Layout von Hand waehlt, und diese
+       Medienabfrage auch bei Desktop-Layout in einem schmalen Fenster.
+       Gemessen am Buendel zu c14a968, Bestiar mit gewaehltem Monster, per
+       Mausrad bis zum Anschlag: 900x700 Seitenueberhang 697px, Leiste bei
+       -474..-400, Suchfeld "nichts"; 900x900 Ueberhang 497px, Leiste bei
+       -274..-200. Gegenprobe 901x700 (einen Bildpunkt oberhalb): Ueberhang 0,
+       Leiste 229..303, Suchfeld INPUT.toolbar-search — dort galt die Regel nie
+       und dort war nie etwas kaputt. */
+    .bestiary-layout {
+        grid-template-rows: auto;
+        overflow-y: auto;
     }
 }
 

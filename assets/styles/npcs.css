@@ -2,10 +2,12 @@
    NPC MASTER-DETAIL LAYOUT (wie Orte)
    ============================================================ */
 
+/* Hoehenbudget aus der gemessenen Kette, nicht aus einer Zahl (U6) —
+   Begruendung und Messwerte stehen an `.loc-view.active` in core.css. */
 .npc-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--view-frame-height, 134px));
     overflow: hidden;
 }
 
@@ -423,14 +425,18 @@
    LOOT VIEW - Master-Detail Layout
    ============================================ */
 
-/* `calc(100vh - 120px)` wie die vier Geschwister — hier stand `- 60px`, also
-   60px zu viel: die Schale stand 660 statt 600px hoch und ragte 119 statt 59px
-   unter den Fensterrand, was ihre Werkzeugleiste beim Blaettern hinter die
-   Kopfzeile schob. Der letzte Listeneintrag blieb dabei erreichbar. */
+/* Dasselbe Hoehenbudget wie die vier Geschwister — hier stand erst `- 60px`,
+   also 60px zu viel: die Schale stand 660 statt 600px hoch und ragte 119 statt
+   59px unter den Fensterrand, was ihre Werkzeugleiste beim Blaettern hinter die
+   Kopfzeile schob. Der letzte Listeneintrag blieb dabei erreichbar. Die
+   Gleichstellung auf `- 120px` hat den Unterschied beseitigt, nicht den Fehler:
+   auch 120px waren zu wenig (die Umrahmung ist 134px hoch). Seit U6 kommt das
+   Budget aus `--view-frame-height`, gemessen — Begruendung an `.loc-view.active`
+   in core.css. */
 .loot-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--view-frame-height, 134px));
     overflow: hidden;
 }
 

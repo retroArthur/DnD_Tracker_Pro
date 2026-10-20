@@ -8,7 +8,8 @@ import {
     selectOption,
     generateTestName,
     performUndo,
-    performRedo
+    performRedo,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -378,8 +379,11 @@ test.describe('Komplette Workflows', () => {
             await openCollapseForm(page, 'char-form');
             await page.click('[data-action="call"][data-value="saveCharacter"]');
 
-            // Fehlermeldung sollte erscheinen
-            await expect(page.locator('#toast')).toBeVisible();
+            // Fehlermeldung sollte erscheinen — im Ereignis-Log statt im
+            // abgeschalteten Alt-Knoten #toast (U5). Strenger als vorher: der Typ
+            // wird genannt, nicht nur "irgendetwas ist sichtbar".
+            const meldung = await waitForLogEntry(page, { typ: 'error' });
+            await expect(meldung).toBeVisible();
         });
 
         test('Lösch-Bestätigung verhindert versehentliches Löschen', async ({ page }) => {

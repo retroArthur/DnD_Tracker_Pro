@@ -31,6 +31,10 @@
                 <!-- Backup-Warnindikator (versteckt; Welle 2 aktiviert Sichtbarkeit) -->
                 <div class="backup-warning-indicator" style="display:none" aria-hidden="true"></div>
                 <div class="header-divider"></div>
+                <!-- Kampfprotokoll (U5): der SICHTBARE Einstieg. Bis hierher war der
+                     Dauermodus des Ereignis-Logs nur über System ▾ → Debug → drei Klicks
+                     tief in einem Dialog erreichbar — deshalb hat ihn niemand gefunden. -->
+                <button class="header-action-btn" id="kampflog-toggle" data-action="toggle-combat-log" title="Kampfprotokoll (K)" aria-label="Kampfprotokoll öffnen" aria-expanded="false" aria-controls="kampflog-panel">📜</button>
                 <button class="header-action-btn" data-action="undo" title="Rückgängig (Strg+Z)" aria-label="Letzte Aktion rückgängig machen">↩️</button>
                 <button class="header-action-btn" data-action="redo" title="Wiederholen (Strg+Y)" aria-label="Letzte Aktion wiederholen">↪️</button>
                 <button class="header-action-btn" data-action="show-shortcuts-overlay" title="Tastenkürzel (?)" aria-label="Tastenkürzel anzeigen">⌨️</button>

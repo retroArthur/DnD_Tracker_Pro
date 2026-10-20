@@ -247,7 +247,7 @@ function endCombat() {
         renderInit();
         window.renderParty();
         window.save();
-        showToast('⏹️ Kampf beendet - HP synchronisiert');
+        showToast('⏹️ Kampf beendet - HP synchronisiert', 'success', { kategorie: 'kampf' });
     }
 }
 // ============================================================
@@ -367,7 +367,9 @@ function applyXpDistribution() {
     }, []);
     // T-06-09-03: Guard 0-selected — warn toast, NO pushUndo, NO mutation
     if (!selectedChars.length) {
-        showToast('Keine Spieler ausgewählt — XP nicht verteilt', 'warning');
+        showToast('Keine Spieler ausgewählt — XP nicht verteilt', 'warning', {
+            kategorie: 'kampf'
+        });
         return;
     }
     // T-06-14: pushUndo BEFORE mutation so XP distribution is undoable
@@ -389,10 +391,10 @@ function applyXpDistribution() {
     // German toast with summary
     var msg = '+' + share + ' XP je Charakter';
     if (remainder > 0) msg += ' (Rest: ' + remainder + ' XP)';
-    showToast(msg, 'success');
+    showToast(msg, 'success', { kategorie: 'kampf' });
     // Show individual level-up hints after brief delay
     levelUpHints.forEach(function(hint, i) {
-        setTimeout(function() { showToast('⬆️ ' + hint, 'info'); }, 500 + i * 400);
+        setTimeout(function() { showToast('⬆️ ' + hint, 'info', { kategorie: 'kampf' }); }, 500 + i * 400);
     });
 }
 window.finishCombatXp = finishCombatXp;
@@ -461,7 +463,9 @@ function addPartyToInit() {
             effects: []
         });
     });
-    showToast('Party zur Initiative hinzugefügt - klicke "🎲 Alle würfeln"');
+    showToast('Party zur Initiative hinzugefügt - klicke "🎲 Alle würfeln"', 'success', {
+        kategorie: 'kampf'
+    });
     renderInit();
     window.save();
 }
@@ -528,7 +532,7 @@ function sortInit() {
     D.initiative.currentTurn = 0;
     renderInit();
     window.save();
-    showToast('⬇️ Initiative sortiert');
+    showToast('⬇️ Initiative sortiert', 'success', { kategorie: 'kampf' });
 }
 function nextTurn() {
     const D = window.D;
@@ -594,7 +598,7 @@ function clearBattlefield() {
         delete D.initiative.battlefield;
         window.save();
         renderInit();
-        showToast('Battlefield-Bedingungen entfernt');
+        showToast('Battlefield-Bedingungen entfernt', 'success', { kategorie: 'kampf' });
     }
 }
 // ============================================================

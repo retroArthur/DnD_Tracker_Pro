@@ -19,6 +19,13 @@ function switchView(name) {
     const _npcgModal = document.getElementById('npc-generator-modal');
     if (_npcgModal) _npcgModal.remove();
 
+    // Cleanup: JEDE per JS eingehaengte Modal-Schale beim View-Wechsel
+    // entfernen (U4). Die Einzelabfrage darueber bleibt, weil der
+    // NPC-Generator die Markierung `modal-transient` nicht traegt — sie ihm
+    // nachzutragen waere eine Aenderung an einem Modul, das nicht zu dieser
+    // Korrektur gehoert. Beides raeumt denselben Zustand auf.
+    document.querySelectorAll('.modal-overlay.modal-transient').forEach(m => m.remove());
+
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');

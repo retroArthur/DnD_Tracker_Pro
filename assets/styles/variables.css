@@ -1221,8 +1221,27 @@
                ausserhalb dieser Leiter: sie stapeln Elemente INNERHALB einer
                Komponente uebereinander und haben mit der globalen Reihenfolge
                nichts zu tun. Sie in die Leiter zu ziehen wuerde ihre
-               Reihenfolge zerstoeren. */
-            --z-sticky: 100; /* Kopfzeile, angeheftete Leisten */
+               Reihenfolge zerstoeren.
+
+               DREI ANGEHEFTETE EBENEN, absichtlich abgestuft — nicht wieder
+               zusammenlegen. Kopfzeile ueber Runden-Leiste ueber
+               Aktionsleiste. Diese Ordnung stand seit dem Initialcommit auf
+               100/99/98 und war im Quelltext woertlich kommentiert
+               ("Unter dem Header"); F-19 hat alle drei auf --z-sticky
+               gezogen. Bei Gleichstand entscheidet die Dokumentreihenfolge,
+               und die ist die exakte Umkehrung der Absicht: gescrollt auf der
+               Initiative lag die Aktionsleiste oben und das Nav-Menue der
+               Kopfzeile unten — 23 von 25 Menueeintraegen unerreichbar
+               (gemessen 1440x800 am Buendel zu 1dffc9e). Zusaetzlich ist
+               .app-header selbst ein Stapelkontext (sticky + z-index), womit
+               die 300 des Nav-Menues nach aussen auf den Wert der Kopfzeile
+               gedeckelt sind — die Kopfzeile MUSS also die oberste der drei
+               sein, sonst hilft dem Menue seine eigene Sprosse nichts.
+               Zurueck geht es nicht per nackter Zahl: design-consistency
+               verbietet z-index groesser 20 als Literal. Also zwei Sprossen. */
+            --z-sticky-3: 98; /* Aktionsleiste — unter der Runden-Leiste */
+            --z-sticky-2: 99; /* Runden-Leiste — unter der Kopfzeile */
+            --z-sticky: 100; /* Kopfzeile — oberste angeheftete Ebene */
             --z-dropdown: 300; /* an ein Bedienelement gebundene Menues */
             --z-panel: 600; /* Seitenpanels, Hinweisbaender */
             --z-modal: 1000; /* Overlays, die den Rest blockieren */
@@ -1419,7 +1438,29 @@
             --nav-position: bottom;
             --content-padding: 10px;
             --card-min-width: 100%;
-            --grid-columns: 1fr;
+            /* C1 — `minmax(0, 1fr)` statt `1fr`. Dieselbe Begruendung wie bei den
+               sieben Master-Detail-Schalen (core.css, Q1) und bei `.dash`
+               (dashboard.css, Q1), jetzt fuer die sieben einspaltigen Raster, die
+               dieses Token lesen (variables.css weiter unten: Party, NSCs, Orte,
+               Begegnungen, Zauber, Auftraege, Truhe): `1fr` ist die Kurzform von
+               `minmax(auto, 1fr)`, und das `auto` als Minimum ist die
+               min-content-Breite des Inhalts. Die eine Spalte kann damit BREITER
+               werden als das Raster, das sie ausfuellen soll.
+               GEMESSEN am gebauten Buendel, gefuellte Kampagne, 320x700: das
+               Party-Raster ist 300px breit, seine Spalte loeste unter der
+               Linux-Schriftmetrik (nachgestellt mit Verdana, Faktor 1.155 am
+               Knopftext) auf 304.88px auf — die min-content-Breite der
+               Charakterkarte. Unter 'Segoe UI' waren es 285.02px, also 14.98px
+               Luft; genau diese 15px hat Linux nicht. Der CI-Lauf 36966941474
+               meldete daraus `party: 10px, 5 Elemente ausserhalb
+               (div#char-1.char-card | ...)`, waehrend dieselbe Probe unter
+               Windows gruen lief.
+               Diese Zeile ist die STRUKTURELLE Haelfte der Korrektur: sie macht
+               es unmoeglich, dass eine einspaltige Mobil-Spalte ihr Raster
+               sprengt, egal wie breit die Schrift laeuft. Die inhaltliche
+               Haelfte steht an `.char-card-name` (core.css) — ohne sie wuerde
+               der Ueberlauf nur von der Seite in die Karte wandern. */
+            --grid-columns: minmax(0, 1fr);
             --font-size-base: 16px;
             --font-size-small: 14px;
             --font-size-title: 1.2em;
@@ -1432,6 +1473,26 @@
         /* Mobile Layout Overrides */
         [data-layout="mobile"] body {
             font-size: var(--font-size-base);
+            /* M2b — DIE EINZIGE Reservierung fuer die feste Leiste am unteren
+               Fensterrand. `.app-header` faehrt dort auf
+               `translateY(calc(100% - 56px))` ein; sichtbar bleibt genau die
+               56px hohe Umschalter-Zeile, die 70px lassen 14px Luft darueber.
+               Bis 2026-10 hielt zusaetzlich `.main-content { margin-bottom:
+               70px }` denselben Platz frei — 140px fuer einen 56px-Streifen.
+               Die Hoehenbudget-Kette zaehlt beides mit (setzeRahmenHoehe()
+               liest body-Innenabstand UND .main-content-Raender), das Ergebnis
+               stimmte also; dem Inhalt gingen die 70px aber doppelt verloren.
+               GEMESSEN in allen vier Listen-Ansichten x zwei Telefonfenstern x
+               vier Themes: 94px totes Feld zwischen Schalenunterkante und
+               Leistenoberkante, und die Listenspalte — der Bereich, der
+               wirklich scrollt — war bei 360x740 nur 54px (Truhe), 88px
+               (Begegnungen), 126px (NSCs) bzw. 201px (Orte) hoch, bei
+               Eintragshoehen von 70-74px.
+               WARUM DIESE BLEIBT und nicht die andere: die Leiste ist
+               `position: fixed` zum Fenster und liegt ueber dem GANZEN
+               Dokument, nicht nur ueber `.main-content`. Der body-Innenabstand
+               ist die Reservierung, die alles abdeckt; der Rand an
+               `.main-content` deckte nur diesen einen Behaelter. */
             padding-bottom: 70px;
         }
         
@@ -1465,10 +1526,261 @@
             grid-template-columns: repeat(4, 1fr);
             padding: 8px;
             gap: 6px;
-            max-height: 300px;
+            /* M1 — GEMESSEN, nicht verdrahtet. Hier stand `max-height: 300px` bei
+               einem Rasterinhalt von 444px: die unterste Reihe (Soundboard,
+               Statistiken, Session-Prep, Daten) lag dauerhaft hinter dem
+               `overflow`, erreichbar waren 7 von 24 Reitern bei 390x844. Das
+               Token kommt aus setzeMobilLeistenDeckel() und ist genau
+               "Fensterhoehe minus die festen Kopfbloecke minus die
+               Umschalter-Zeile minus Luft" — bei 390x844 sind das 623px, und das
+               Raster passt ohne Scrollen hinein. Die Begruendung, warum nicht
+               stattdessen die 56px-Tippflaeche schrumpft, steht dort.
+               Der Rueckfall 300px ist der alte Wert, damit ein ausgefallener Lauf
+               nicht schlechter dasteht als der Stand vorher. */
+            max-height: var(--mobile-nav-max-height, 300px);
             overflow-y: auto;
+            /* Scrollt die Leiste bis an ihr Ende, soll sich die Seite dahinter
+               NICHT mitbewegen — der Daumen bleibt in der Leiste, bis er sie
+               verlaesst. Nur im Querformat ueberhaupt erreichbar, weil das Raster
+               sonst ohne Scrollen hineinpasst. */
+            overscroll-behavior: contain;
         }
-        
+
+        /* ============================================================
+           M1 — DIE SCHWEBEELEMENTE RAEUMEN DIE AUSGEFAHRENE LEISTE.
+           ============================================================
+           Zweite Ursache der unerreichbaren Reiter, unabhaengig vom Deckel
+           darueber. Vier bodenverankerte Flaechen lagen auf der ausgefahrenen
+           Leiste; gemessen am Buendel zu cecfefe bei 390x844, je Reiter der
+           Verdecker, den `elementFromPoint` zurueckgab:
+
+             #event-log              z=4000, Deckung 71420 px² — Orte, Kalender,
+                                     Reise, Quests, Initiative, Begegnung, Bestiar
+             #floating-dice-trigger  z=2000, Deckung  2304 px² — Notizen
+             .qref-fab               z= 600, Deckung  2500 px² — DM Screen, Daten
+             .kplog-panel            z= 600, sobald es offen stand
+
+           Die `.qref-fab` liegt auf DERSELBEN Ebene wie die Leiste (--z-panel)
+           und gewinnt allein, weil sie spaeter im Dokument steht. Eine hoehere
+           Ebene fuer die Leiste waere die falsche Antwort: das Ereignis-Log liegt
+           mit --z-toast bewusst ueber allem, und daran soll sich nichts aendern.
+
+           WARUM VERSTECKEN UND NICHT AUSWEICHEN. Ausweichen hiesse: oberhalb der
+           Leiste anordnen. Auf einem Telefon nimmt die offene Leiste 439 von 844
+           Bildpunkten (390x844) bzw. 292 von 360 im Querformat; oberhalb bleibt
+           nach Band und Mobil-Kopf kein Platz, in den ein 320-400px hohes Panel
+           ehrlich passt. Nachgerechnet: bei 740x360 waere der Rest -17px. Ein
+           zusammengequetschtes Panel, das halb auf der Navigation liegt, ist
+           schlechter als eines, das zwei Sekunden wartet.
+
+           WAS DER NUTZER DAFUER NICHT VERLIERT. Die Leiste schliesst sich beim
+           ersten Reiterklick von selbst (switchView() nimmt `nav-open` zurueck) —
+           der verborgene Zustand dauert genau die Navigationsgeste. Beide Panels
+           kommen mit ihrem Inhalt zurueck: der Dauermodus des Ereignis-Logs haelt
+           bis zu 50 Eintraege, das Kampfprotokoll seine Liste. Verloren geht
+           allein eine FLUECHTIGE Meldung, die in genau dieser Sekunde erscheint
+           und verblasst — fuer den Fall gibt es den Dauermodus (Taste L und der
+           Knopf im Mobil-Kopf), und das ist der bessere Tausch.
+
+           Die Auswahl laeuft ueber `:has()` am Wurzelelement, weil die vier
+           Flaechen Geschwister der Leiste sind und nicht in ihr liegen. `:has()`
+           ist im Browserboden des Projekts ohnehin verlangt (sechs Regeln davor).
+           ============================================================ */
+        /* Und der Weg IN die Leiste bleibt frei. Das Kampfprotokoll ist im
+           Mobil-Layout oben verankert und rechnet seine Hoehe gegen den unteren
+           Fensterrand (`calc(100vh - --sticky-top-round - 28px)`, dashboard.css).
+           Der untere Fensterrand gehoert dort aber der eingeklappten Leiste: von
+           ihr bleibt immer die Umschalter-Zeile stehen. Gemessen bei 740x360
+           antwortete `elementFromPoint` auf deren Mitte mit `div.kplog-text` — der
+           Umschalter war nicht klickbar, und damit waren ALLE 24 Ansichten
+           unerreichbar. Die Regel oben hilft hier nicht: sie haengt an
+           `.nav-open`, und dieser Zustand liess sich gar nicht erst herstellen.
+           Der Reststreifen wird gemessen (Glied 5), nicht verdrahtet; die Liste im
+           Panel scrollt ohnehin selbst (`.kplog-liste { overflow-y: auto }`), der
+           knappere Deckel kostet also keinen Inhalt. Bei 390x844 greift er nicht
+           (700px gegen rund 270px Isthoehe) — nur dort, wo er muss. */
+        [data-layout="mobile"] .kplog-panel {
+            max-height: calc(
+                100vh - var(--sticky-top-round, 60px) - 28px - var(--mobile-nav-rest, 56px)
+            );
+        }
+
+        /* ============================================================
+           Q2 — DER UMSCHALTER-STREIFEN GEHOERT DEM UMSCHALTER.
+           ============================================================
+           Die Regel darunter verbirgt die Schweber, solange die Leiste
+           AUSGEFAHREN ist. Der EINGEKLAPPTE Zustand ist davon nicht erfasst —
+           und das ist der Zustand, in dem der Spielleiter die App die meiste
+           Zeit sieht. Von der Leiste bleibt dann die Umschalter-Zeile stehen:
+           56px am unteren Fensterrand (`translateY(calc(100% - 56px))` oben).
+
+           GEMESSEN am Buendel zu 93a765e, Mobil-Layout, Leiste eingeklappt,
+           gefuellte Kampagne. In allen vier Themes gleich — es ist Geometrie,
+           keine Farbe. Breiter Filter ueber JEDES sichtbare `position:
+           fixed`-Element ausserhalb der Leiste, nicht eine Namensliste; er fand
+           in sechs Fenstern genau einen Taeter:
+
+             390x844 / 360x740 / 320x740 / 320x700 / 320x568
+                                      .qref-fab   2250px² Deckung
+             740x360                  .qref-fab   1750px² Deckung
+
+           Die MITTE der Zeile blieb dabei frei (`elementFromPoint` antwortete
+           dort mit `div.mobile-nav-toggle`), die Navigation funktionierte also.
+           Ein Daumen aber, der die RECHTE Seite des Streifens trifft — bei
+           Rechtshaendern die naheliegende Stelle —, oeffnete die
+           Schnellreferenz statt der Navigation. Genau deshalb tastet die Probe
+           (`mobil-navigation.spec.js`, Zusicherung 9/10) ein Raster ueber die
+           ganze Streifenbreite ab und nicht nur die Mitte: eine Probe, die nur
+           die Mitte kennt, waere gegen diesen Fehler ab Geburt gruen.
+
+           WARUM AUSWEICHEN UND NICHT VERSTECKEN. Beim ausgefahrenen Zustand war
+           Verstecken richtig: er dauert genau die Navigationsgeste. Hier waere
+           es die Loeschung der Schnellreferenz vom Telefon, denn der
+           eingeklappte Zustand ist der Normalzustand. Die Leiste schmaler zu
+           machen ist ebenfalls keine Option: 56px IST die Daumengroesse
+           (Zusicherung 4 verlangt mindestens 44px).
+
+           WARUM DAS TOKEN UND KEINE ZAHL. `--mobile-nav-rest` kommt aus
+           setzeMobilLeistenDeckel() (Glied 5) und ist die GEMESSENE Hoehe der
+           Umschalter-Zeile; `.kplog-panel` darueber liest es schon. Eine
+           verdrahtete 70 wuerde still wieder ueberlappen, sobald die Zeile
+           waechst — groessere Schrift, mehr Polster, ein Theme mit anderer
+           Zeilenhoehe. Der Rueckfall 56px ist nicht geraten, sondern genau die
+           Zahl aus der `translateY`-Formel daneben: er deckt den Fall, dass die
+           Messkette noch nicht gelaufen ist, und liegt mit 56 gegen gemessene
+           55 auf der sicheren Seite.
+
+           WARUM AUCH DAS PANEL MITGEHT. Kugel und Panel sind ein Paar: das
+           Panel sitzt 10px ueber der Oberkante der Kugel (bei <=600px Breite
+           `bottom: 70px` gegen `bottom: 10px` + 50px Hoehe). NUR die Kugel zu
+           heben legt sie auf ihr eigenes Panel — nachgemessen mit genau dieser
+           halben Korrektur: 46px Ueberschnitt (2300px²) bei 360x740 und
+           320x568, 36px (1800px²) bei 740x360. Also wandert das Paar gemeinsam,
+           und `max-height` gibt denselben Betrag wieder ab. Die 120px dort sind
+           "70px unten + 50px Luft oben"; weil der Abzug mitwaechst, bleibt die
+           50px-Decke des Panels unberuehrt: gemessen liegt seine Oberkante
+           vorher wie nachher nie hoeher als 50px unter dem Fensterrand
+           (320x568: 60 -> 50, 740x360: 40 -> 50, 360x740 inhaltsgebunden:
+           232 -> 176).
+
+           EINE Geometrie statt zweier Breitenzweige: die Basisregeln in
+           dashboard.css unterscheiden <=600px (10/70) von darueber (20/80). Im
+           Mobil-Layout zaehlt nicht der Abstand zum Fensterrand, sondern der
+           zum Streifen — und der ist auf jeder Telefonbreite derselbe. Die
+           Spezifitaet 0-2-0 dieser beiden Regeln schlaegt beide Basiszweige
+           (0-1-0) unabhaengig von der Reihenfolge der Dateien.
+
+           NUR IM MOBIL-LAYOUT. `[data-layout="mobile"]` ist eine Profilwahl des
+           Nutzers und an keine Media Query gebunden; auf dem Desktop bleiben
+           alle sechs Schweber damit unberuehrt (nachgemessen bei 1280x800,
+           1024x768, 880x700 und 560x700 — identische Kaesten vorher/nachher,
+           einschliesslich der 560px, wo die 600px-Media-Query greift, das
+           Desktop-Layout aber keine Bodenleiste hat).
+           ============================================================ */
+        [data-layout="mobile"] .qref-fab {
+            bottom: calc(var(--mobile-nav-rest, 56px) + 10px);
+        }
+
+        [data-layout="mobile"] .qref-panel {
+            bottom: calc(var(--mobile-nav-rest, 56px) + 70px);
+            max-height: calc(100vh - 120px - var(--mobile-nav-rest, 56px));
+        }
+
+        /* ============================================================
+           Q2 NACHTRAG — DAS EREIGNIS-LOG GEHOERT ZUM SELBEN STAPEL.
+           ============================================================
+           DIE REGEL DARUEBER HAT DEN FEHLER VERSCHOBEN, NICHT BESEITIGT. Sie
+           hebt die Kugel vom Umschalter-Streifen weg — und setzt sie damit in
+           das Band des Ereignis-Logs, das 80px ueber dem Fensterrand steht
+           (party.css, `@media (max-width: 900px)`), mit `--z-toast` (4000) ueber
+           allem und `pointer-events: auto` an jedem Eintrag. Gemessen am Buendel
+           zu 8ebf6f5 gegen dasselbe Buendel ohne die zwei Regeln darueber,
+           gefuellte Kampagne, Leiste eingeklappt, senkrechtes Abtasten der
+           Kugelmitte plus ein echter `mouse.click` auf dieselbe Stelle:
+
+             Fenster    Kugel vorher          Kugel nachher
+             --------   -------------------   -----------------------------
+             320x700    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+             360x740    frei 50/50, Klick ja  frei 14/50, Klick NEIN
+             390x844    frei 50/50, Klick ja  frei 50/50, aber null Reserve
+                                              (Kugelmitte x=355 genau auf der
+                                              rechten Logkante 35+320)
+
+           DIE FAMILIE, NICHT DIE KUGEL. Derselbe Messlauf am Wuerfel-Knopf unten
+           links: frei 10/48, Klick tot — VOR und NACH der Regel darueber gleich.
+           Das Log lag dort schon immer drauf (`bottom: 80px` gegen einen Knopf,
+           der von 70 bis 118 reicht). Die Zusicherung 9/10 konnte das nicht
+           sehen, weil beides UEBER dem Streifen liegt. Also wandert nicht noch
+           ein einzelner Schweber, sondern das Log selbst — es ist das Element,
+           das auf allen anderen liegt.
+
+           DERSELBE ABSTAND, NUR ZU EINER ANDEREN KANTE. 80px behaelt das Log;
+           sie zaehlen jetzt ab dem Streifen statt ab dem Fensterrand. Das ist
+           genau die Umrechnung, die die Regel darueber fuer die Kugel macht, und
+           sie reicht fuer beide Knoepfe: Oberkante der Kugel liegt bei
+           Streifen+60, die des Wuerfel-Knopfes bei 118 — die Unterkante des Logs
+           bei Streifen+80 (gemessen 136) bleibt ueber beiden. Nachgemessen in
+           sechs Fenstern und vier Themes: Kugel 50/50 und Wuerfel-Knopf 48/48
+           frei, beide Klicks kommen an.
+
+           WARUM AUCH EIN DECKEL, und warum als `min()`. Nur hochschieben hat
+           einen gemessenen Preis: bei 320x568 reichte das Log danach bis 32px
+           unter den Fensterrand und machte SECHS der sieben Knoepfe der
+           Mobil-Kopfzeile unerreichbar; bei 740x360 hing es 176px oben aus dem
+           Fenster (vorher 120px). Das waere der Tausch von zwei Knoepfen unten
+           gegen sieben oben — und genau der Fall, den setzeMobilKopfHoehe()
+           in `ui/editors/rich-text-insert.js` schon einmal benannt hat ("die
+           Mobil-Kopfzeile traegt Suche, Rueckgaengig, Schnellnotizen, Theme,
+           Layout UND den einzigen Mobil-Weg zum Kampfprotokoll"). Der Deckel ist
+           deshalb genau der Platz zwischen Kopfzeile und neuem Sitz, und `min()`
+           sorgt dafuer, dass er nur KLEMMT und nie waechst: 300/400px sind die
+           Werte aus party.css, der Deckel kann sie nur unterschreiten. Gemessen
+           greift er in genau zwei der sechs Fenster (320x568: 400 -> 368,
+           740x360: 400 -> 160) und laesst die vier anderen auf ihren 400px.
+           Bei 740x360 raeumt er zugleich zwei vorbestehende Fehler ab: das Log
+           haengt nicht mehr aus dem Fenster, und `div.mobile-timer` in der
+           Kopfzeile ist wieder anklickbar (vorher antwortete dort
+           `div.event-log-time`).
+
+           WARUM KEIN ZWEITES TOKEN AUS DEM MESSLAUF. Beide Zahlen, die der
+           Deckel braucht, liegen schon als gemessene Tokens bereit:
+           --mobile-nav-rest (Streifen) und --mobile-header-height (Kopfzeile).
+           Die beiden --mobile-log-*-Eigenschaften hier sind KEINE Glieder der
+           Messkette, sondern reine Rechenzwischenschritte dieser zwei Regeln —
+           sie halten die 80 an einer Stelle und machen den Deckel an der
+           `.persistent`-Regel lesbar, die auf demselben Element sitzt.
+
+           WARUM NICHT STATTDESSEN DIE KUGEL UEBER DAS LOG STAPELN. Das Log liegt
+           mit --z-toast bewusst ueber allem (nachzulesen im M1-Abschnitt weiter
+           oben: "daran soll sich nichts aendern"), und es wuerde den Wuerfel-Knopf
+           ohnehin nicht freiraeumen. Und waagerecht ausweichen geht nicht: bei
+           320px Breite ist das Log 288px breit und laesst rechts 16px — die
+           Kugel braucht 50.
+           ============================================================ */
+        [data-layout="mobile"] .event-log {
+            --mobile-log-bottom: calc(var(--mobile-nav-rest, 56px) + 80px);
+            --mobile-log-space: calc(
+                100vh - var(--mobile-log-bottom) - var(--mobile-header-height, 64px)
+            );
+            bottom: var(--mobile-log-bottom);
+            max-height: min(300px, var(--mobile-log-space));
+        }
+
+        [data-layout="mobile"] .event-log.persistent {
+            max-height: min(400px, var(--mobile-log-space));
+        }
+
+        [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-trigger,
+        [data-layout="mobile"]:has(.app-header.nav-open) .floating-dice-panel,
+        [data-layout="mobile"]:has(.app-header.nav-open) .qref-fab,
+        [data-layout="mobile"]:has(.app-header.nav-open) .qref-panel,
+        [data-layout="mobile"]:has(.app-header.nav-open) .event-log,
+        [data-layout="mobile"]:has(.app-header.nav-open) .kplog-panel {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
         [data-layout="mobile"] .nav-tab {
             flex-direction: column;
             padding: 12px 8px;
@@ -1480,6 +1792,54 @@
             justify-content: center;
             display: flex;
             align-items: center;
+            /* ============================================================
+               M1 — DIE WAAGERECHTE ACHSE. Dieselbe Strenge wie beim Deckel
+               darueber, eine Vierteldrehung weiter.
+               ============================================================
+               `.nav-tabs` steht auf `repeat(4, 1fr)`. Ein `1fr` ist
+               `minmax(auto, 1fr)`, und `auto` loest als Mindestbreite die
+               MIN-INHALT-Breite des Rasterkindes auf. Solange die
+               Beschriftung aus core.css `white-space: nowrap` erbt, ist das
+               die volle Textbreite — die Spalten konnten gar nicht schrumpfen.
+               Gemessen am Buendel zu 4df04c1: `scrollWidth` 408px bei JEDER
+               Telefonbreite. Bei 320px lag die vierte Spalte (x 308..400)
+               damit ganz ausserhalb der Scheibe; `elementFromPoint` antwortete
+               auf ihrer Mitte (x=354) mit `null`, und Fraktionen, Quests,
+               Wiki, Shops, DM Screen und Daten waren unerreichbar — 18 von 24.
+               Bei 360px und 390px war die rechte Spalte angeschnitten
+               (Ueberhang 48px bzw. 18px).
+
+               `min-width: 0` nimmt der Spalte diese Mindestbreite. Allein
+               genuegt es NICHT: die Beschriftung behaelt dann `nowrap` und
+               quillt ueber den Knopfrand auf den Nachbarn (gemessen bei 320px:
+               dmscreen +1px, soundboard +4px, sessionprep +6px). Deshalb
+               bricht der Text hier um. `overflow-wrap: anywhere` ist die
+               funktionale Zusage — es ist die einzige der drei Angaben, die
+               auch die Min-Inhalt-Breite senkt, und bricht notfalls mitten im
+               Wort. `hyphens: auto` ist nur die Form: mit `lang="de"` am
+               Wurzelelement wird aus „Soundboar|d" ein „Sound-|board". Faellt
+               die Silbentrennung aus, bleibt der Umbruch trotzdem richtig.
+
+               WAS NICHT GEWAEHLT WURDE. Eine Ellipse (`text-overflow`) haette
+               die Beschriftung abgeschnitten — am Tisch muss „wo ist das
+               Soundboard" durch Hinsehen beantwortbar sein, und „Soundb…" ist
+               kein Hinsehen. Drei Spalten unter 360px waeren 568px hohes
+               Raster bei 368px Sichtfeld gewesen, also mehr Wischen statt
+               weniger. Eine kleinere Schrift oder Tippflaeche kam aus dem
+               Grund nicht in Frage, der schon beim Deckel galt: unter 44px
+               trifft ein Daumen nicht mehr zuverlaessig.
+
+               GEMESSEN danach, in allen vier Themes auf den Bildpunkt gleich:
+               `scrollWidth` == `clientWidth` bei 320/360/390/700/740, 24/24
+               erreichbar, kein Textueberlauf, kleinste Tippflaeche 72x56px bei
+               320px Breite (vorher 86x56 — aber sechs Reiter ausserhalb des
+               Fensters). Zwei Beschriftungen laufen dort auf zwei Zeilen und
+               machen ihren Reiter 64px hoch. */
+            min-width: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+            line-height: 1.15;
         }
         
         [data-layout="mobile"] .nav-tab.active {
@@ -1494,8 +1854,21 @@
         
         [data-layout="mobile"] .main-content {
             padding: var(--content-padding);
-            padding-top: 60px;
-            margin-bottom: 70px;
+            /* M2c — Platzhaltung fuer die feste Mobil-Kopfzeile, GEMESSEN statt
+               verdrahtet. Hier standen 60px gegen eine 64px hohe Kopfzeile: 4px
+               zu wenig. Das fiel nicht auf, solange die Kopfzeile ueber dem
+               Umzugs-Band lag statt ueber dem Inhalt — seit das Band unter sie
+               ausweicht (migration.css), ist die Oberkante des Inhalts genau
+               diese Zahl. Die Kopfzeile hat keine gesetzte Hoehe (Innenabstand
+               um eine Knopfreihe), deshalb kommt sie aus setzeMobilKopfHoehe();
+               die Begruendung steht dort. Der Rueckfall 64px ist die gemessene
+               Isthoehe bei 320-700px Breite. */
+            padding-top: var(--mobile-header-height, 64px);
+            /* M2b — HIER STAND `margin-bottom: 70px`, die zweite Reservierung
+               fuer dieselbe feste Leiste. Sie ist entfallen; die Begruendung,
+               warum der body-Innenabstand die bleibende ist, steht an
+               `[data-layout="mobile"] body` weiter oben. Nichts tritt an diese
+               Stelle: der Platz IST schon reserviert. */
         }
         
         [data-layout="mobile"] .party-grid,

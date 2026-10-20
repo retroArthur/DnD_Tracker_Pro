@@ -106,8 +106,15 @@ async function importiereUeberschreibend(page, payload) {
         mimeType: 'application/json',
         buffer: Buffer.from(JSON.stringify(payload))
     });
+    // U5: auf das Kampfprotokoll warten statt auf den abgeschalteten Alt-Knoten
+    // #toast. Strenger als vorher: der Ringpuffer verliert die Meldung nicht, waehrend
+    // der geteilte #toast-Knoten von jeder spaeteren Meldung ueberschrieben wurde —
+    // genau daran haengt die Seed-Begruendung im Kopf dieser Datei.
     await page.waitForFunction(
-        () => document.querySelector('#toast')?.textContent?.includes('Import OK'),
+        () =>
+            (typeof window.getCombatLog === 'function' ? window.getCombatLog() : []).some(e =>
+                String(e.text).includes('Import OK')
+            ),
         { timeout: 15000 }
     );
 }

@@ -922,11 +922,14 @@
    1920x1080 und 1280x720 auf dem Pixel gleich, der letzte von 24 Eintraegen
    bleibt erreichbar (bei 1280x720 weiter 621..695px, nachgemessen in
    ansichts-schalen.spec.js). Tragend sind die beiden Zeilen in core.css
-   (`grid-template-rows`, `height: 100%`) — fehlen BEIDE, liegt er bei 805px. */
+   (`grid-template-rows`, `height: 100%`) — fehlen BEIDE, liegt er bei 805px.
+
+   Das Hoehenbudget kommt aus `--view-frame-height`, gemessen (U6) — Begruendung
+   und Messwerte an `.loc-view.active` in core.css. */
 .enc-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 120px);
+    height: calc(100vh - var(--view-frame-height, 134px));
     overflow: hidden;
 }
 

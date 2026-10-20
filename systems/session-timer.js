@@ -16,6 +16,63 @@ function formatSessionTime(totalSeconds) {
     const seconds = totalSeconds % 60;
     return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
 }
+/**
+ * Schreibt die Sitzungszeit in die Mobil-Kopfzeile und haelt die SEKUNDEN
+ * dabei in einem eigenen Element (C1).
+ *
+ * WARUM GETRENNT. Die Mobil-Kopfzeile fuehrt sieben Bedienelemente in einer
+ * nicht umbrechenden, fest sitzenden Leiste. Bei 320px Fensterbreite stehen
+ * 304px Inhaltsbreite zur Verfuegung, die sechs Symbolknoepfe nehmen 219.6px,
+ * und fuer den Zaehler bleiben mit 8px Zwischenraum 52.4px. "00:00:00" ist in
+ * `var(--font-mono)` bei 14px 61.6px breit (Consolas, Windows) bzw. 67.2px
+ * (Courier New als Nachstellung von DejaVu Sans Mono, Linux) — plus Rahmen und
+ * Innenabstand 87.6 bzw. 93.2px. Die Leiste war damit auf JEDER Telefonbreite
+ * ueberbucht; unter der Linux-Metrik schob der 5.6px breitere Zaehler die Mitte
+ * des rechten Knopfes von x=319 auf x=325 aus einem 320px-Fenster, und
+ * `elementFromPoint` antwortete dort mit `nichts` (CI-Lauf 36966941474,
+ * 8 Faelle = 2 Fenster x 4 Themes).
+ * Ohne die Sekunden sind es fuenf Zeichen statt acht. Fuer einen SITZUNGS-
+ * zaehler ist das kein Verlust: am Tisch liest der Spielleiter "wie lange
+ * spielen wir schon", und das steht in Stunden und Minuten. Die vollstaendige
+ * Zeit bleibt in der Desktop-Kopfzeile (#session-timer-display) unveraendert
+ * stehen, und ausgeblendet wird erst unterhalb von 600px (core.css).
+ *
+ * WARUM DIESE FUNKTION NICHTS ANLEGT. Die Anzeige laeuft im Sekundentakt. Ein
+ * `textContent` am Elternteil wuerde das Sekunden-Element bei jedem Tick
+ * loeschen, `innerHTML` waere eine Zeichenkettenmontage im Sekundentakt an
+ * einer Stelle, die keine braucht — und beide Wege muessten Knoten erzeugen.
+ * Die Struktur steht deshalb im Markup
+ * (`assets/templates/modals-tools.html`), und diese Funktion schreibt nur
+ * Werte: den Textknoten davor und das Sekunden-Element. Das hat zwei
+ * Nebenwirkungen, die beide erwuenscht sind — kein `createElement`/
+ * `createTextNode` im Sekundentakt, und kein Bruch in Umgebungen mit
+ * schlankerem DOM (die Mehrfach-Tab-Probe
+ * tests/unit/unload-persistence.test.js laedt dieses Modul gegen ein
+ * Attrappen-`document`, dessen `querySelector` immer `null` liefert; dort
+ * greift der Rueckfall).
+ *
+ * DER RUECKFALL schreibt die Vollform. Fehlt das Sekunden-Element, ist die
+ * sichtbare Zeit einen Tick spaeter wieder vollstaendig statt leer — eine
+ * sichtbare, harmlose Abweichung statt einer stillen leeren Anzeige.
+ *
+ * @param {HTMLElement} ziel #mobile-timer-display
+ * @param {string} zeit Vollform "HH:MM:SS" aus formatSessionTime()
+ */
+function schreibeMobilZeit(ziel, zeit) {
+    const sekKnoten = ziel.querySelector && ziel.querySelector('.mobile-timer-seconds');
+    if (!sekKnoten) {
+        ziel.textContent = zeit;
+        return;
+    }
+    const schnitt = zeit.lastIndexOf(':');
+    const kopf = schnitt < 0 ? zeit : zeit.slice(0, schnitt);
+    // nodeType 3 = Textknoten. Die Konstante `Node.TEXT_NODE` steht nicht in
+    // jeder Umgebung zur Verfuegung, in der dieses Modul geladen wird.
+    if (ziel.firstChild && ziel.firstChild.nodeType === 3) {
+        ziel.firstChild.nodeValue = kopf;
+    }
+    sekKnoten.textContent = schnitt < 0 ? '' : zeit.slice(schnitt);
+}
 function updateSessionTimerDisplay() {
     const timeStr = formatSessionTime(sessionTimerSeconds);
     // Desktop Display
@@ -23,7 +80,7 @@ function updateSessionTimerDisplay() {
     if (display) display.textContent = timeStr;
     // Mobile Display
     const mobileDisplay = $('mobile-timer-display');
-    if (mobileDisplay) mobileDisplay.textContent = timeStr;
+    if (mobileDisplay) schreibeMobilZeit(mobileDisplay, timeStr);
 }
 function toggleSessionTimer() {
     const timer = $('session-timer');

@@ -425,17 +425,17 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1195` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1200` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `bestiary.css:532` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:545` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `core.css:1443` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1448` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
-| `initiative.css:595` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:735` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
-| `initiative.css:752` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:756` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `initiative.css:733` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:873` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
+| `initiative.css:890` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:894` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
+| `party.css:2091` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2362` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:684` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -500,12 +500,12 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `dmscreen.css:1163` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
-| `initiative.css:175` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:207` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:235` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:236` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1263` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1264` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:274` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:306` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:334` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:335` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
+| `initiative.css:1401` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1402` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
@@ -538,10 +538,10 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:661` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `core.css:583` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `dice.css:788` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `core.css:708` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `party.css:2693` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2694` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -572,15 +572,15 @@ sie als unerreichbar abschreibt.
 
 ```
 bestiary.css
-  142  .bestiary-fav.active
+  153  .bestiary-fav.active
 core.css
    17  [data-layout="mobile"] .mobile-nav-toggle-text
-   75  [data-layout="mobile"] #mobile-timer-display
-   79  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
-   83  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1091  .char-card-currency
- 1867  .quest-reward-item-tag .remove-btn:hover
- 1860  .quest-reward-item-tag .remove-btn
+  112  [data-layout="mobile"] #mobile-timer-display
+  116  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
+  120  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
+ 1339  .char-card-currency
+ 2115  .quest-reward-item-tag .remove-btn:hover
+ 2108  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -600,10 +600,10 @@ dashboard.css
   502  .enc-save-box.active .enc-save-label
   706  .icon-btn.danger:hover
   707  .icon-btn.success:hover
- 1140  .dash-timer-time
- 1479  .qref-chip.danger
+ 1175  .dash-timer-time
+ 1514  .qref-chip.danger
 dice.css
-  349  .dice-fav-item:hover .fav-del
+  427  .dice-fav-item:hover .fav-del
 dmscreen.css
    86  .dice-fav-btn .fav-name
   274  .condition-tooltip-title
@@ -627,34 +627,34 @@ encounters.css
   509  .calc-preview-xp
   514  .calc-preview-change
   680  .calc-fav-item.save
- 1188  .enc-speed-line
+ 1191  .enc-speed-line
 file-backup.css
   243  .backup-entry-restore
 initiative.css
    72  .bf-xp
   111  .init-entry.lair .init-name
-  237  .init-hp-value.critical
-  307  .death-saves-label
- 1156  .la-label
- 1197  .lr-label
- 1265  .init-mob-alive.critical
+  336  .init-hp-value.critical
+  406  .death-saves-label
+ 1294  .la-label
+ 1335  .lr-label
+ 1403  .init-mob-alive.critical
 loot.css
   297  .shop-cat-badge.item
   475  .si-tag-v
   640  .cart-shop-name
   707  .cart-item-total
 npcs.css
-  236  .npc-detail-location
-  904  .npc-name
-  985  .npc-popup-name
- 1018  .npc-popup-section-title
+  238  .npc-detail-location
+  910  .npc-name
+  991  .npc-popup-name
+ 1024  .npc-popup-section-title
 party.css
  1982  .party-stat-card.critical .party-stat-value
- 2249  .rest-heal-preview
- 2255  .rest-hd-restore
- 2631  .cf-attack-remove:hover
- 2780  .char-skill-item.proficient .char-skill-item-name
- 2803  .char-skill-item.expertise .char-skill-item-name
+ 2266  .rest-heal-preview
+ 2272  .rest-hd-restore
+ 2648  .cf-attack-remove:hover
+ 2797  .char-skill-item.proficient .char-skill-item-name
+ 2820  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css
@@ -3846,5 +3846,1055 @@ Sollstandsdatei entsteht maschinell aus `JSON.stringify` und steht nicht in
 Ablichtungsdatei wird an **genau einem** Block beanstandet (die kompakt geschriebene
 `VIEWS`-Liste) — wörtlich derselbe Block, an dem auch `welle-1-screens.spec.js` und
 `welle-2-screens.spec.js` beanstandet werden. Sie bleibt stilgleich mit ihren Geschwistern.
+
+---
+
+## U6-R2-01 — Drei Restbeobachtungen aus der Höhenbudget-Korrektur, Runde 2
+
+**Status: FESTGEHALTEN, nicht angefasst.** Aufgenommen am 2026-10-01, nach den beiden
+Korrekturen `fix(UAT): die Bandhoehe wird nachgemessen, nicht geglaubt` und
+`fix(UAT): die umbrechende Werkzeugleiste behaelt ihr Suchfeld`.
+
+Alle drei sind **vorbestehend** und keine Folge dieser Runde. Sie stehen hier, weil die Runde
+sie gemessen hat und weil (3) die Form eines neuen Fehlerbildes hat, auch wenn die Ursache alt
+ist. Gemessen am gebauten Bündel mit dem Abnahme-Saatgut (24 Einträge je Liste), Skript
+`r4-rest.mjs`.
+
+### (1) Die Stapelregel für zwei gleichzeitige Bänder ist tot
+
+> **ERLEDIGT in M3a (2026-10-01): die Regel ist gestrichen.** Die unten offen gelassene
+> Entscheidung fiel auf *entfernen*, aus drei gemessenen Gründen — siehe Abschnitt
+> „M3 — Tote Regel, Wächter-Ausnahmen und die Messmatrix“ am Ende dieser Akte.
+
+`.migration-hint-banner ~ .divergence-banner { top: 48px }` (`assets/styles/migration.css`)
+soll das zweite feste Band unter das erste schieben. Der Geschwisterwähler trifft nie:
+`showDivergenceBanner()` hängt sein Band als `document.body.firstChild` ein, also **vor** dem
+Hinweisband — es ist kein nachfolgendes Geschwister. Gemessen bei 390x844 mit beiden Bändern:
+Hinweisband `0..157`, Divergenzband `0..40`, also vollständig übereinander.
+
+Folgenlos im Betrieb: `startMigrationFileSide()` verzweigt entweder/oder, und
+`startMigrationFlow()` entfernt den Hinweis im selben synchronen Block. Die beiden Bänder
+koexistieren nicht. Glied 1 rechnet ohnehin `max(bottom)` über beide und wäre auch im
+gestapelten Fall richtig; der Seitenüberhang blieb in der Messung 0.
+
+**Zu entscheiden bleibt:** die tote Regel entfernen (sie behauptet eine Ordnung, die es nicht
+gibt) oder die Einfügereihenfolge umdrehen und die 48px durch
+`var(--migration-hint-height)` ersetzen.
+
+### (2) Das Layoutprofil wird nur beim Start gewählt, nicht beim Verkleinern
+
+`loadLayout()` (`ui/layout-profiles.js`) wählt bei `innerWidth <= 768` selbst `mobile`; ein
+`resize` ändert daran nichts. Zieht der DM ein Desktop-Fenster auf Telefonbreite, bleibt
+`data-layout="desktop"`, und damit bleibt die Desktop-Kopfzeile stehen — bei 390px Breite ist
+sie **234px** hoch (`157..391`), weil ihre Zeilen umbrechen.
+
+Gemessen 1440x800 -> 390x844: Umrahmung 195 -> **411px**, Schalenhöhe 605 -> 433px von 844.
+Der Seitenüberhang bleibt 0, die Werkzeugleiste bleibt frei (das ist die Korrektur dieser
+Runde) — die Ansicht wird nur schmal und hoch zugleich bedient, statt in das Mobil-Layout zu
+wechseln, das für diese Breite gebaut ist. Dasselbe Fenster **vor** dem Laden gesetzt wählt
+`mobile` und kommt auf 250px Umrahmung.
+
+**Zu entscheiden bleibt:** soll das Profil dem Fenster folgen, oder ist die einmalige Wahl
+gewollt (sie überlebt einen Wechsel von Hand, was ein Argument dafür ist)?
+
+### (3) Sehr kurze Fenster lassen von der Schale fast nichts übrig
+
+Weil die Umrahmung jetzt **gemessen** statt verdrahtet ist, kann sie im Grenzfall fast die
+ganze Fensterhöhe aufbrauchen. Gemessen bei 390x420 (Desktop-Layout nach Punkt 2, Band steht):
+Umrahmung 411px von 420 Fensterhöhe, **Schalenhöhe 9px**. Der Seitenüberhang ist 0 — die
+Zusicherung von U6 hält —, aber die Liste ist unbenutzbar.
+
+Die verdrahteten 120px gaben dort 300px Schalenhöhe, dafür lag die Werkzeugleiste hinter der
+Kopfzeile: es ist ein Tausch, kein Rückschritt, und 420px Fensterhöhe ist ein Randfall. Nicht
+von einem Test gedeckt — die Fälle in `tests/e2e/features/hoehenbudget.spec.js` messen bei 700
+bis 900px Höhe.
+
+**Zu entscheiden bleibt:** eine `min-height`-Untergrenze an den fünf Schalen (dann scrollt die
+Seite im Grenzfall wieder, und der Anheft-Versatz muss es tragen), oder Punkt 2 lösen und den
+Grenzfall damit auflösen.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/hoehenbudget.spec.js   # 23 Faelle
+npx playwright test tests/e2e/features/sticky-stapel.spec.js tests/e2e/features/ansichts-schalen.spec.js
+```
+
+---
+
+## U6-R3-01 — Abnahme der Höhenbudget-Korrektur: der Kurzfenster-Befund, auseinandergerechnet
+
+**Status: BEANTWORTET, nichts geändert.** Aufgenommen am 2026-10-01 bei der Abnahme der Runde 2.
+Der Prüfbefund lautete: *„Kurze Fenster, vor allem Telefon im Querformat: die gemessene
+Umrahmung frisst die Schale auf — 0 anklickbare Einträge, Suchfeld nicht treffbar."* Er ist in
+zwei Hälften zu teilen; nur eine davon ist überhaupt ein Befund, und die gehört nicht dieser
+Runde.
+
+Alle Zahlen am gebauten Bündel gemessen, Saatgut mit 24 Einträgen je Liste, A/B im SELBEN
+Bündel: der Vorher-Zustand wird durch eine Stilregel nachgestellt, die genau die eine geänderte
+Zeile zurückdreht (`height: calc(100vh - 120px)` an den fünf Schalen). Skripte unter
+`<scratch>/uat-budget/abnahme/` (`menschlich.mjs`, `regress2.mjs`, `kurz-innen.mjs`,
+`mobil-360.mjs`, `mobil-probe.mjs`).
+
+### (1) „0 anklickbare Einträge" — richtig gemessen, aber vorbestehend
+
+Bei Breiten **bis 900px** zusammen mit **etwa 390px Fensterhöhe** (844x390 und 900x390, beides
+Desktop-Layout, einspaltiger Zweig `@media (max-width: 900px)`) erreicht ein Mausrad **0 von 24**
+Einträgen — **mit dem gemessenen Budget und mit der zurückgedrehten 120px gleichermaßen**, über
+dieselbe Radfolge (Ruhe, Seite blättern, fünf Etappen über der Master-Spalte).
+
+Die Ursache ist nicht das Budget: die umgebrochene Werkzeugleiste der Ansicht ist bei diesen
+Breiten **157px** hoch und damit so hoch wie die ganze Schale (157px bei 844x390). Die
+Master-Spalte landet dadurch unter der `overflow: hidden`-Kante der Schale — vorher mit 113px
+Höhe unterhalb des Fensterrands, nachher mit 32px direkt an der Kante. In beiden Fällen bleibt
+nichts zu klicken.
+
+**Methodenhinweis, der hier den Unterschied macht:** `scrollIntoViewIfNeeded()` eines
+Testwerkzeugs scrollt eine Schale mit `overflow: hidden` **programmatisch** und meldet dann
+„Klick erfolgreich". Ein Mausrad kann das nicht. Wer in diesem Randfall mit
+`scrollIntoViewIfNeeded` prüft, misst eine Erreichbarkeit, die es am Tisch nicht gibt. Gemessen
+wurde deshalb ausschließlich mit `mouse.wheel`.
+
+### (2) „Suchfeld nicht treffbar" — reproduziert nicht
+
+In allen acht gemessenen Kurzfenstern (844x390, 740x360, 667x375, 900x390, 1024x600, 1280x400,
+1366x500, 390x844), in beiden Varianten, antwortet `elementFromPoint` auf der Mitte des
+Suchfelds mit dem Suchfeld: **frei**. Ebenso in 128 von 128 Zuständen der Desktop-Matrix (vier
+Ansichten x vier Breiten x zwei Höhen x mit/ohne Band x gescrollt/oben) und in 24 von 24
+Mobil-Zuständen. Die Hälfte des Befunds ist gegenstandslos.
+
+### (3) Was dieser Runde wirklich zuzurechnen ist: der Fluchtweg der Seite ist weg
+
+Vor der Korrektur hatte die Seite in kurzen Fenstern einen Überhang (113px bei 844x390, 151px
+im Mobil-Layout), und der Nutzer konnte die Seite blättern, um an die gequetschte Liste zu
+kommen. Jetzt ist der Überhang 0 — das IST die Korrektur — und damit auch dieser Weg. Der Preis,
+beziffert:
+
+| Fenster | vorher erreichbar | jetzt erreichbar |
+| ------- | ----------------- | ---------------- |
+| 1920x1080 | 13 von 24 | 12 von 24 |
+| 1440x800 | 13 von 24 | 12 von 24 |
+| 1024x600 | 10 von 24 | 9 von 24 |
+| 1280x400 | 5 von 24 | 2 von 24 |
+| 900x390 / 844x390 | 0 von 24 | 0 von 24 |
+
+(Vereinigungsmenge über dieselbe feste Radfolge; ab 600px Fensterhöhe ist der Unterschied genau
+ein Eintrag.)
+
+**Mobil, 360px Breite, mit stehendem Umzugs-Band** ist der sichtbarste Fall: die Umrahmung ist
+dort 346px von 740px Fensterhöhe (Band allein 157px), die Schale also 394 statt 620px. Die
+Werkzeugleiste nimmt davon 256 bis 328px, die Listenspalte behält **126px (NSCs), 54px (Truhe),
+201px (Orte)** statt vorher 352/280/427px. In zwei der vier Ansichten liegt die geometrische
+Mitte des letzten Eintrags danach hinter der Filterzeile der Werkzeugleiste; anklickbar bleibt
+er über seinen unteren Rand. **Ohne Band sind alle 24 Mobil-Zustände sauber** (Umrahmung 210px,
+Überhang 0, Suchfeld frei, letzter Eintrag getroffen).
+
+### (4) Nebenbefund derselben Messung: die Reiter-Leiste im Mobil-Layout ist unerreichbar
+
+`.app-header` ist im Mobil-Layout `position: fixed` und **357px hoch**, sichtbar bleibt davon
+nur ein 56px-Streifen am unteren Fensterrand. Das Reiter-Raster liegt damit **127 bis 301px
+unter** der Fensterkante und ist mit einem Klick nicht erreichbar — gemessen bei 390x844,
+700x800 und 360x740, **auf den Pixel gleich in beiden Varianten** (Reiter 915..971 bei 844px
+Fensterhöhe). Vorbestehend, vom Höhenbudget unabhängig; ein Ansichtswechsel im Mobil-Layout
+gelingt in diesen Fenstern nur über die Kommandopalette oder die Tastatur.
+
+> **RICHTIGSTELLUNG (M1, 2026-10-01).** Der letzte Satz ist falsch, und zwar der zweite Teil.
+> Die Leiste **fährt per Klick aus**: `.mobile-nav-toggle` ist 56px hoch, sitzt am unteren
+> Fensterrand und `elementFromPoint` traf ihn in allen gemessenen Fenstern selbst; ein Klick
+> setzt `.nav-open` und die Leiste fährt auf `translateY(0)`. Gemessen wurde oben nur der
+> **eingeklappte** Zustand. Die ausgefahrene Leiste war sehr wohl erreichbar — nur nicht
+> vollständig: von 24 Reitern antworteten **7 (390x844), 10 (360x740), 16 (700x800)**. Die
+> wirklichen Ursachen und ihre Behebung stehen unter „M1" am Ende dieser Akte.
+
+**Zu entscheiden bleibt** (zusammen mit U6-R2-01 Punkt 3, es ist dieselbe Entscheidung): eine
+Untergrenze an den fünf Schalen — dann scrollt die Seite im Grenzfall wieder und die
+Werkzeugleiste kann dort wieder unter die Kopfzeile rutschen —, oder die Werkzeugleiste bei
+kleinen Breiten niedriger bauen, was den Randfall an der Wurzel auflöst und auch Punkt (1)
+mitnimmt.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/hoehenbudget.spec.js   # 23 Faelle
+UAT_SCREENS=1 npx playwright test tests/e2e/features/uat-funde-screens.spec.js   # 28 Bilder
+```
+
+---
+
+## M1 — Alle 24 Ansichten auf dem Telefon erreichbar (2026-10-01, erledigt)
+
+Behebt den Nebenbefund (4) oben, nachdem dessen Diagnose richtiggestellt war.
+
+### Der Ausgangsstand, beziffert
+
+Gebautes Bündel zu `cecfefe`, Mobil-Layout per `setLayout('mobile')`, Umschalter geklickt,
+`elementFromPoint` auf der Reitermitte:
+
+| Fenster | Reiter | im Sichtfeld | anklickbar | Leiste | Raster Sicht/Inhalt |
+| --- | --- | --- | --- | --- | --- |
+| 390x844 | 24 | 16 | **7** | 357px | 300px / 444px |
+| 360x740 | 24 | 16 | **10** | 357px | 300px / 444px |
+| 700x800 | 24 | 16 | **16** | 357px | 300px / 444px |
+
+### Zwei unabhängige Ursachen
+
+**A — der Deckel.** `[data-layout="mobile"] .nav-tabs` trug `max-height: 300px` bei 444px
+Rasterinhalt. Die unterste Reihe (Soundboard, Statistiken, Session-Prep, Daten) lag dauerhaft
+hinter dem `overflow`. Die 300 hatten keinen Bezug zum Fenster: bei 390x844 lagen unter dem
+Umzugs-Band 623px frei.
+
+**B — Überdeckung.** Vier bodenverankerte Flächen lagen auf der ausgefahrenen Leiste; je Reiter
+der Verdecker, den `elementFromPoint` zurückgab (390x844, Deckungsfläche in Bildpunkten²):
+
+| Element | z-index | Deckung | betroffene Reiter |
+| --- | --- | --- | --- |
+| `#event-log` | `--z-toast` 4000 | 71420 | Orte, Kalender, Reise, Quests, Initiative, Begegnung, Bestiar |
+| `#floating-dice-trigger` | `--z-floating` 2000 | 2304 | Notizen |
+| `.qref-fab` | `--z-panel` 600 | 2500 | DM Screen, Daten |
+| `.kplog-panel` | `--z-panel` 600 | — | sobald es offen stand |
+
+Die `.qref-fab` liegt auf **derselben** Ebene wie die Leiste und gewann allein durch die
+Dokumentreihenfolge. Wie viele Reiter das Ereignis-Log traf, hing daran, wie viele Meldungen
+gerade darin standen — die Erreichbarkeit war nicht einmal stabil.
+
+**Und der Weg in die Leiste.** Das Kampfprotokoll rechnete seine Höhe gegen den unteren
+Fensterrand, der im Mobil-Layout der eingeklappten Leiste gehört. Bei 740x360 antwortete
+`elementFromPoint` auf der Mitte der Umschalter-Zeile mit `div.kplog-text`: der Umschalter war
+nicht klickbar, und damit waren **alle** 24 Ansichten unerreichbar — ein Zustand, den keine
+Messung an der ausgefahrenen Leiste je bemerkt hätte.
+
+### Die Entscheidung
+
+Die **56px Tippfläche bleiben**. Der andere Weg, 24 Reiter in 300px zu bringen, wäre eine
+kleinere Tippfläche gewesen; der Nutzer ist Spielleiter am Tisch und bedient die App mit dem
+Daumen, unter 44px trifft er nicht mehr zuverlässig. Auch die Desktop-Gruppierung (6 Gruppen
+statt 24 Reitern) ist nicht übernommen: sie macht aus einem Tipp zwei und versteckt den
+Ansichtsnamen hinter einem Gruppennamen — am Tisch muss „wo ist das Soundboard" durch Hinsehen
+beantwortbar sein, nicht durch Erinnern. Falsch war der Deckel, nicht die Reitergröße.
+
+Statt der Zahl steht jetzt eine **Messung**: `setzeMobilLeistenDeckel()` in der Anheft-Kette
+(`ui/editors/rich-text-insert.js`) veröffentlicht zwei weitere Tokens auf `<html>` —
+`--mobile-nav-max-height` (Glied 4: Fensterhöhe minus die tiefste Unterkante der festen
+Kopfblöcke minus die Umschalter-Zeile minus 8px Luft) und `--mobile-nav-rest` (Glied 5: die Höhe
+des Streifens, den die eingeklappte Leiste immer belegt). Die vier Schwebeelemente verbergen
+sich, solange `.nav-open` steht; ausweichen war nicht möglich, oberhalb der offenen Leiste wäre
+bei 740x360 ein Rest von **-17px** geblieben.
+
+### Die gemessene Wirkung
+
+Gebautes Bündel, voller Zustand (Dauermodus-Log mit fünf Meldungen, Kampfprotokoll offen), in
+allen vier Themes auf den Bildpunkt gleich:
+
+| Fenster | Deckel | Leiste | Raster Sicht/Inhalt | anklickbar (vorher) | kleinster Reiter |
+| --- | --- | --- | --- | --- | --- |
+| 390x844 | 623px | 501px | 444 / 444 | **24/24** (7) | 56px |
+| 360x740 | 540px | 501px | 444 / 444 | **24/24** (10) | 56px |
+| 700x800 | 672px | 501px | 444 / 444 | **24/24** (16) | 56px |
+| 740x360 | 232px | 289px | 232 / 444 | **24/24** nach zwei echten Radrunden | 56px |
+
+Null Überlapper in allen 16 Zuständen, Umschalter-Zeile in allen 16 frei, alle vier
+Schwebeelemente nach dem Einfahren wieder sichtbar.
+
+### Die Zusicherung
+
+`tests/e2e/features/mobil-navigation.spec.js`, 13 Fälle, alle fünf Zusicherungen vorher rot:
+alle 24 im echten Mausrad-Durchlauf erreichbar · kein sichtbares Schwebeelement über der Leiste ·
+bei 360x740 und 390x844 passt der Rasterinhalt ohne Scrollen hinein · Tippfläche ≥ 44px · im
+Querformat 740x360 muss gescrollt werden und das Rad erreicht trotzdem alle 24. Gescrollt wird
+nur per `page.mouse.wheel`, geklickt nur auf gemessenen Koordinaten.
+
+### Offen geblieben
+
+- `.event-log-entry` trägt `pointer-events: auto`, obwohl an einem **flüchtigen** Eintrag nichts
+  zu klicken ist (nur der Dauermodus hat Knöpfe). Dadurch schluckt das Ereignis-Log Klicks auf
+  alles, was unter ihm liegt — auch im Desktop-Layout, wo es mittig auf `bottom: 20px` sitzt.
+  M1 brauchte die Korrektur nicht, weil das Log im Mobil-Layout ohnehin verborgen wird; der
+  Befund steht aber und ist zwei Zeilen wert.
+- `.qref-fab` sitzt im Mobil-Layout auf `bottom: 10px` (unter 600px Breite) bzw. `20px` und
+  überlappt damit den 56px-Streifen der **eingeklappten** Leiste — bei 390x844 liegt sie über dem
+  ▲-Zeichen der Umschalter-Zeile. Der Umschalter bleibt an seiner Mitte klickbar (x=195 gegen
+  330..380), es ist ein kosmetischer Befund, aber derselbe Fehler wie der behobene am
+  Kampfprotokoll.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 21 Faelle
+```
+
+---
+
+## M1 Runde 2 — die waagerechte Achse (2026-10-01, erledigt)
+
+Runde 1 hat die Leiste nur **senkrecht** vermessen. Die Prüfung der Einheit hat die zweite Achse
+gefunden; sie ist echt, und sie trifft genau die Breite, die CLAUDE.md als Mobil-Prüfbreite nennt.
+
+### Der Befund, nachgemessen
+
+`.nav-tabs` steht auf `repeat(4, 1fr)`. Ein `1fr` ist `minmax(auto, 1fr)`, und `auto` löst als
+Mindestbreite die **Min-Inhalt-Breite** des Rasterkindes auf. Solange die Beschriftung aus
+`core.css` `white-space: nowrap` erbt, ist das die volle Textbreite — die vier Spalten konnten
+gar nicht unter **408px** gehen, bei jeder Fensterbreite.
+
+| Fenster | Rasterbreite / Fenster | Überhang | erreichbar |
+| --- | --- | --- | --- |
+| 320x568, 320x740 | 408px / 320px | 88px | **18/24** |
+| 360x740 | 408px / 360px | 48px | 24/24 (rechte Spalte angeschnitten) |
+| 390x844 | 408px / 390px | 18px | 24/24 (rechte Spalte angeschnitten) |
+
+Bei 320px lag die vierte Spalte (x 308..400) **ganz** außerhalb der Scheibe. `elementFromPoint`
+antwortete auf ihrer Mitte (x=354) mit `null` — nicht weil etwas darüberlag, sondern weil der
+Punkt das Fenster verlassen hatte. Unerreichbar waren Fraktionen, Quests, Wiki, Shops, DM Screen
+und Daten. Ein senkrechtes Mausrad half nicht (`scrollLeft` blieb 0); nur ein **waagerechtes**
+Rad erreichte sie, und dann verließ die erste Spalte das Fenster. Es waren nie alle 24
+gleichzeitig da, und nichts in der Leiste deutete auf diese Geste hin.
+
+Die Ursache ist vorbestehend (`grid-template-columns` ist im Diff der Runde 1 unveränderte
+Kontextzeile). Die **Zusicherung** der Runde 1 war aber „alle 24 Ansichten erreichbar", und ihr
+Netz prüfte ausschließlich 360px und 390px — es konnte diesen Fall nie melden.
+
+### Die Entscheidung
+
+Vier Angaben an `[data-layout="mobile"] .nav-tab`: `min-width: 0` (nimmt der Spalte die
+Mindestbreite), `white-space: normal` (hebt das geerbte `nowrap` auf), `overflow-wrap: anywhere`
+(die funktionale Zusage — die einzige der drei, die auch die Min-Inhalt-Breite senkt) und
+`hyphens: auto` (nur die Form: mit `lang="de"` wird aus „Soundboar|d" ein „Sound-|board").
+
+`min-width: 0` **allein** wäre die halbe Lösung gewesen: die Spalten schrumpfen (408 → 320, 24/24
+erreichbar), aber die Beschriftung behält `nowrap` und quillt über den Knopfrand auf den Nachbarn
+— bei 320px gemessen `dmscreen` +1px, `soundboard` +4px, `sessionprep` +6px. Dagegen steht jetzt
+Zusicherung 7.
+
+Nicht gewählt: eine Ellipse (schneidet die Beschriftung ab — am Tisch muss „wo ist das
+Soundboard" durch Hinsehen beantwortbar sein, und „Soundb…" ist kein Hinsehen); drei Spalten
+unter 360px (568px hohes Raster bei 368px Sichtfeld, also mehr Wischen statt weniger, gemessen
+18/24 ohne Rad bei 320x568); eine kleinere Schrift oder Tippfläche (unter 44px trifft ein Daumen
+nicht mehr zuverlässig — derselbe Grund wie beim Deckel in Runde 1).
+
+### Die gemessene Wirkung
+
+Gebautes Bündel, vier Themes auf den Bildpunkt gleich, beide Zustände:
+
+| Fenster | Raster waagerecht Inhalt/Sichtfeld | erreichbar (vorher) | kleinster Reiter |
+| --- | --- | --- | --- |
+| 320x568 | 320 / 320 (vorher 408) | **24/24** (18) | 72x56 |
+| 320x740 | 320 / 320 (vorher 408) | **24/24** (18) | 72x56 |
+| 360x740 | 360 / 360 (vorher 408) | **24/24** (24) | 82x56 |
+| 390x844 | 390 / 390 (vorher 408) | **24/24** (24) | 89x56 |
+| 700x800 | 700 / 700 | **24/24** | 167x56 |
+| 740x360 | 740 / 740 | **24/24** nach Rad | 177x56 |
+
+Kein Textüberlauf in keinem Fall. Bei 320px laufen zwei Beschriftungen auf zwei Zeilen und machen
+ihren Reiter 64px hoch. Das Desktop-Layout ist unberührt; der Stil-Sollstand erfasst ohnehin nur
+Elemente innerhalb der `#view-*`-Behälter, die Leiste liegt im Kopf.
+
+### Richtiggestellt: der Kopf der Probe
+
+Die Prüfung hat außerdem gemeldet, die Ausgangszahlen im Kopf von `mobil-navigation.spec.js`
+(11/13/16) seien „nicht reproduzierbar" und die Wirklichkeit sei 7/10/14. **Das stimmt nur zur
+Hälfte.** Nachgemessen am selbst gebauten `cecfefe`-Bündel sind *beide* Reihen echt — der
+Unterschied ist **eine einzige flüchtige Meldung**:
+
+| Zustand | Einträge im Ereignis-Log | 390x844 | 360x740 | 700x800 |
+| --- | --- | --- | --- | --- |
+| schlicht | 2 (Sicherungserinnerung, „Layout: Mobil") | 11 | 13 | 16 |
+| schlicht + `setTheme()` | 3 (zusätzlich „Theme: Dunkel") | 7 | 10 | 14 |
+| voll (Dauermodus mit 5, Kampfprotokoll offen) | 5 | 6 | 0 | 8 |
+
+Jeder Eintrag macht das Log rund 70px höher (153px bei zwei, 223px bei drei Einträgen) und
+verdeckt damit eine weitere Reiterreihe. `setLayout('mobile')` schreibt dabei **selbst** eine
+Meldung: die Messung störte ihren eigenen Gegenstand. Bei 360x740 im vollen Zustand lag das
+Kampfprotokoll auf der Umschalter-Zeile, die Leiste ließ sich gar nicht ausfahren — daher die 0.
+
+Der echte Fehler im Kopf war deshalb nicht die Zahlenreihe, sondern ihre **Beschriftung**: dort
+stand als Bedingung der volle Zustand, die Zahlen waren aber die des schlichten. Die Spalte „im
+Feld 16" war ebenfalls falsch, gemessen sind es 20. Der Kopf führt jetzt alle drei Zustände mit
+ihrer Bedingung statt einer Reihe ohne. Die Tabelle der Runde 1 weiter oben (7/10/16) bleibt, wie
+sie ist: sie nennt den Stand, gegen den Runde 1 gearbeitet hat.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js   # 21 Faelle
+```
+
+---
+
+## M2 — Das Layoutprofil folgt dem Fenster, und der Platz wird einmal reserviert (2026-10-01, erledigt)
+
+Drei vorbestehende Befunde der Vorrunden, alle gemessen statt geraten. Zwei davon standen
+weiter oben in dieser Akte schon mit Zahlen: **U6-R4-01 Punkt (2)** („Das Layoutprofil wird nur
+beim Start gewählt") und der Absatz **„Mobil, 360px Breite, mit stehendem Umzugs-Band"** unter
+U6-R4-01 Punkt (3). Beide sind hiermit entschieden und behoben.
+
+### (a) Das Profil folgt dem Fenster — aber nie gegen die Wahl des Nutzers
+
+`loadLayout()` erkannte die Breite genau einmal beim Start. Gemessen am Bündel zu `f58699b`,
+Fenster **nach** dem Laden gezogen, in allen vier Themes auf den Bildpunkt gleich:
+
+| Messgröße | 1440x800 | 390x844 vorher | 390x844 nachher |
+| --- | --- | --- | --- |
+| `data-layout` | desktop | **desktop** | mobile |
+| Höhe der Kopfzeile | 102px | **234px** | 501px (56 sichtbar) |
+| Oberkante der Kopfzeile | 61px | 157px | 788px |
+| Mobil-Kopfzeile | 0px | **0px** | 64px |
+| sichtbare Reiter von 24 | 1 | **1** | 24 |
+| Seitenüberhang | 74px | 658px | 528px |
+
+234 von 844 Bildpunkten sind 28% des Fensters, und 23 der 24 Reiter steckten in zugeklappten
+Gruppenmenüs. Der umgekehrte Weg stimmt jetzt ebenso (390x844 nach 1440x800 ergibt `desktop`), und
+der Verlauf über vier Wechsel lautet mobile/desktop/mobile/desktop statt viermal desktop.
+
+**Die Entscheidung mit ihrer Begründung.** Das Profil folgt dem Fenster, weil der Gegenfall ein
+Fehler am Spieltisch ist; es folgt aber **nur**, solange `D.settings.layout` leer ist. Was der
+Nutzer per Schalter gewählt hat, bleibt stehen (zwei Wächterfälle, beide Richtungen). Und der
+automatische Wechsel schreibt selbst **nichts** nach `D.settings.layout` — täte er es, würde die
+erste Verkleinerung das Profil für immer festschreiben und die Zusicherung sich selbst aufheben
+(gemessen: nach vier Wechseln steht dort viermal `null`). Kein `save()`, kein Toast: ein
+Fensterwechsel ist keine Anweisung, und M1 hat gemessen, dass gerade das Ereignis-Log die
+Navigationsleiste zudeckt. **Ein** Beobachter, nicht zwei: die Profilwahl läuft im bestehenden
+entprellten `resize`-Beobachter von `core/init.js`, und zwar **vor** `updateStickyOffsets()`,
+weil dessen Mobil-/Desktop-Zweig an `data-layout` verzweigt.
+
+### (b) Der Platz der unteren festen Leiste war doppelt reserviert
+
+`body { padding-bottom: 70px }` **und** `.main-content { margin-bottom: 70px }` hielten denselben
+Platz frei — 140px für einen 56px hohen sichtbaren Streifen. Die Höhenbudget-Kette zählt beides
+mit, das Ergebnis stimmte also; dem Inhalt gingen die 70px doppelt verloren. Der Rand an
+`.main-content` ist entfallen: der body-Innenabstand ist die Reservierung, die das **ganze**
+Dokument abdeckt, und die Leiste ist `position: fixed` zum Fenster.
+
+### (c) Das Hinweisband war auf Telefonbreite das teuerste Element der Seite
+
+| Breite | 320 | 360 | 390 | 480 | 500 | 600 |
+| --- | --- | --- | --- | --- | --- | --- |
+| vorher | 136 | 136 | **157** | 101 | 80 | 61 |
+| nachher | 94 | 94 | **117** | 61 | 61 | 61 |
+
+157px bei 390px Breite sind 19% des Fensters für einen Satz. Vier Fassungen wurden gegeneinander
+gemessen; die Klammer auf zwei Zeilen (`-webkit-line-clamp`) bringt nichts, was der kurze Text
+nicht schon bringt, und bleibt deshalb weg. Zwei Fassungen desselben Hinweises stehen jetzt im
+Markup, eine Regel an der 600px-Grenze schaltet — der lange Satz bleibt auf dem Desktop Zeichen
+für Zeichen derselbe. Was übrig bleibt, sind zwei Tippreihen zu 44px, und die darf nichts
+schrumpfen (Daumen, wie bei M1).
+
+**Die Kürzung allein wäre eine Verschlechterung gewesen.** Mobil-Kopfzeile und Band sind beide
+`position: fixed; top: 0` auf `--z-panel` (600), und die Kopfzeile gewann, weil sie später im
+Dokument steht. Gemessen bei 390x844 mit `elementsFromPoint` auf der Mitte von „Zum App-Umzug"
+(Kasten 237,28,137x44): obenauf lag der klassenlose Flex-Behälter der Mobil-Kopfzeile
+(266,10,116x43) — der Knopf war **nicht anklickbar**. Bei 320/360px brach er in die zweite
+Bandreihe aus und war frei; dieser Zufall **kippte** durch die Kürzung, weil die zweite Reihe auf
+`y 41..85` stieg und damit selbst unter die 64px hohe Kopfzeile geriet (dann war auch der
+Schließknopf verdeckt). Das Band weicht deshalb im Mobil-Layout unter die Kopfzeile aus, nicht
+umgekehrt: die Mobil-Kopfzeile trägt Suche, Rückgängig, Schnellnotizen, Theme, Layout **und** den
+einzigen Mobil-Einstieg ins Kampfprotokoll (U5). Die Höhe kommt aus `setzeMobilKopfHoehe()`
+(Glied 6 der Messkette, `--mobile-header-height`), weil die Kopfzeile keine gesetzte Höhe hat; an
+derselben Zahl hing die Platzhaltung `.main-content { padding-top }`, die auf verdrahteten 60px
+gegen eine 64px hohe Kopfzeile stand.
+
+Die tote Geschwisterregel `.migration-hint-banner ~ .divergence-banner { top: 48px }` aus
+U6-R4-01 Punkt (1) blieb davon **unberührt** und damit offen: sie regelt einen Zustand, der im
+Betrieb nicht eintritt; die neue Ausweichregel gilt für beide Bänder einzeln. **M3a hat sie
+gestrichen** — und dabei gemessen, dass sie, zum Treffen gebracht, genau diese Ausweichregel
+geschlagen hätte (gleiche Spezifität (0,2,0), aber später in der Datei).
+
+### Gemessene Wirkung
+
+Mobil-Layout mit stehendem Band, 24 Einträge je Liste, in allen vier Themes gleich:
+
+| Messgröße | 360x740 | 390x844 |
+| --- | --- | --- |
+| Reservierung für die Leiste | 140 auf **70px** | 140 auf **70px** |
+| totes Feld unter der Schale | 94 auf **24px** | 94 auf **24px** |
+| Umrahmung (`--view-frame-height`) | 346 auf **238px** | 367 auf **261px** |
+| Schalenhöhe | 394 auf **502px** | 477 auf **583px** |
+| Listenspalte NSCs | 126 auf **234px** | 209 auf **315px** |
+| Listenspalte Truhe | 54 auf **162px** | 137 auf **243px** |
+| Listenspalte Begegnungen | 88 auf **200px** | 171 auf **281px** |
+| Listenspalte Orte | 201 auf **313px** | 284 auf **394px** |
+
+Die Zahlen 126/54/201 sind dieselben, die weiter oben unter U6-R4-01 Punkt (3) stehen — sie sind
+die Höhe der **Listenspalte** (`.npc-master` und Geschwister), nicht die der Schale. Eine
+Listenspalte von 54px zeigt bei 74px Eintragshöhe **keinen ganzen Eintrag**; in fünf von acht
+gemessenen Zuständen passte kein zweiter hinein. Seitenüberhang bleibt 0, und der letzte von 24
+Einträgen ist in allen acht Zuständen per Mausrad erreichbar und unverdeckt (vorher war er in der
+Truhe bei 360x740 von `BUTTON.io-btn` verdeckt). Band: beginnt bei 64px (Unterkante der
+Mobil-Kopfzeile), endet genau dort, wo der Inhalt anfängt; beide Knöpfe frei.
+
+### Die Zusicherung
+
+`tests/e2e/features/layoutprofil.spec.js`, 28 Fälle, davon **25 vorher rot**. Die drei grünen sind
+absichtlich grün und im Kopf als Wächter benannt: die ausdrückliche Wahl überlebt den
+Fensterwechsel (beide Richtungen) und im breiten Fenster steht der vollständige Hinweis.
+Gescrollt wird nur per `page.mouse.wheel`, und der Radpunkt kommt aus der sichtbaren Mitte der
+**Listenspalte**, nicht der Liste: aus der Liste gerechnet lag er bei 54px Spalte und 2049px Liste
+weit unter dem Scrollbereich, `.npc-master.scrollTop` blieb 0 von 1927 — eine Unerreichbarkeit vom
+Messpunkt, nicht von der App.
+
+### Drei bestehende Proben nachgetragen (Verhaltensänderungen, keine Anpassungen zum Grünwerden)
+
+- `tests/e2e/app.spec.js` „App funktioniert auf Mobile-Größe" prüft auf einem 375px-Fenster jetzt
+  das Mobil-Profil samt Mobil-Kopfzeile und Umschalter statt `.app-title` — die Desktop-Kopfzeile
+  **ist** dort ausgeblendet, und das ist der erwünschte Zustand.
+- `tests/e2e/features/sticky-stapel.spec.js` Fall A erwartete nach dem Großziehen `mobile`. Jetzt
+  steht dort `desktop`, und die Versatzkette muss schon **ohne** jeden Schalterklick vollständig
+  besetzt sein — die Zusicherung wird stärker. Der leere Mobil-Zustand der drei Glieder und der
+  Rückweg per Schalter bleiben beide geprüft.
+- `tests/e2e/features/hoehenbudget.spec.js`: der Fall 1440x800 nach 500x800 verlangte als
+  **Vorbedingung** einen Bandumbruch bei 500px. Den gibt es dort nicht mehr (61px Einzeiler). Die
+  Vorbedingung steht jetzt auf `false`, und 1440x800 nach 360x740 kommt als vierter Fall hinzu
+  (gemessen 61 auf 94px), damit sie nicht an einem einzigen Fenster hängt.
+
+### Offen geblieben
+
+- **Die Listenspalte des Bestiars folgt der Schale nicht.** M2b/M2c geben der Schale bei 375x812
+  108px zurück (466 auf 574px), und die Liste **schrumpft** dabei: Sichtfeld 400 auf 122px,
+  gerenderte Zeilen 13 auf 8. Ursache ist nicht die Schale, sondern `VirtualScroll.create()`
+  (`ui/virtual-scroll.js`): es nimmt `container.clientHeight`, sonst `parent.clientHeight - padY`,
+  sonst den festen Rückfall **400**. In der Schmalfassung ist `.bestiary-master`
+  inhaltsgetrieben (`grid-template-rows: auto`, `overflow-y: visible`), die Messung hängt also an
+  der vorigen Messung — ein Fixpunkt ohne Bezug zum verfügbaren Platz. Die 400px vorher waren
+  genau dieser Rückfall, keine Messung; mit der größeren Schale greift der zweite Zweig und
+  liefert 122px, wo rund 228px frei sind. **Gemessen, dass keine Funktion verlorengeht:** die Liste
+  scrollt in allen sechs Zuständen (drei Telefonfenster, vorher und nachher) bis an ihr Ende, das
+  letzte Monster liegt im Fenster und ist anklickbar. Der Wert ist auch nachher nicht einheitlich
+  (400px bei 360x740, 122 bei 375x812, 127 bei 390x844) — er war nie eine Eigenschaft des
+  Entwurfs. Eine saubere Behebung heißt, der geteilten Maschinerie eine echte Platzrechnung zu
+  geben; das ist eine Einheit für sich. Sieben Schlüssel der achten Bestiar-Zeile sind dafür im
+  schmalen Durchgang von `computed-style-diff.spec.js` benannt ausgenommen (28 auf 35 schmal,
+  42 auf **49** gesamt).
+- `.event-log-entry { pointer-events: auto }` im **flüchtigen** Modus (aus M1) — unverändert
+  offen, zwei Zeilen wert.
+- `.qref-fab` überlappt den 56px-Streifen der eingeklappten Leiste (aus M1) — unverändert offen.
+- Das Umzugs-Band und `.mobile-header` überlappen sich **nicht** mehr (siehe (c)); der dort
+  genannte Grund, warum im Querformat rechnerisch kein Platz für ein Panel neben der offenen
+  Leiste bleibt, ist damit um die Bandhöhe entspannt, aber nicht aufgehoben.
+- `npm run check` bleibt rot, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  (vorbestehend) nicht prettier-konform ist. Unverändert gegenüber `cecfefe`.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/layoutprofil.spec.js   # 28 Faelle
+```
+
+---
+## M2 Runde 2 — das Querformat gehört noch zum Telefon (2026-10-01, erledigt)
+
+Ein Rückschlag der eigenen Korrektur M2a, vom Prüfbefund gemessen und von mir unabhängig
+nachgemessen. M2a ließ das Layoutprofil dem Fenster folgen — und öffnete damit eine Richtung,
+die vorher unerreichbar war, weil das Profil nur beim Laden gewählt wurde: **das Drehen ins
+Querformat verlässt das Mobil-Profil.**
+
+### Der Befund, nachgemessen
+
+Eigene Messung (Playwright/Chromium, eigenes Bündel, je frisch geladen, 900 ms nach dem Drehen),
+am Bündel zu `960b32b`:
+
+| Gerät | hoch → quer | Kopf quer | Mobil-Kopf | Überhang X |
+| ------- | ----------------- | ------------ | ---------- | ---------- |
+| 390x844 | mobile → DESKTOP | 152px @ 61px | 0px | **184px** |
+| 393x852 | mobile → DESKTOP | 152px @ 61px | 0px | **176px** |
+| 430x932 | mobile → DESKTOP | 152px @ 61px | 0px | **96px** |
+| 360x740 | mobile → mobile | — | 64px | 0px |
+
+Mit dem 61px hohen Umzugs-Band sind das **213 von 390 Bildpunkten** feste Kopf-Möblierung (55 %
+des Fensters), **ein** sichtbarer Reiter von 24 — und eine Seite, die seitwärts scrollt.
+Zurückdrehen heilte; der zweite Ausweg war der Layout-Schalter, der die Wahl dann aber dauerhaft
+festschreibt. 740x360 blieb mobil: **dieselbe Geste, zwei Ergebnisse.**
+
+Ursache: `layoutAusFenster()` entschied allein an `window.innerWidth <= 768`. Die gängige
+Telefonklasse ist im Querformat 740..956 Bildpunkte **breit**.
+
+### Die Entscheidung
+
+Die Regel bekommt eine zweite, von der ersten unabhängige Bedingung: **kurze Seite ≤ 480 UND lange
+Seite ≤ 1000** ist ein gedrehtes Telefon (`LAYOUT_QUER_KURZE_SEITE`, `LAYOUT_QUER_LANGE_SEITE` in
+`ui/layout-profiles.js`). Die Klasse selbst gibt die Zahlen her: im Hochformat 320..448 breit, im
+Querformat 568..956.
+
+**Zustandslos, keine Hysterese.** Dieselbe Funktion trägt `loadLayout()` beim Start und
+`autoLayoutNachFenster()` am Fensterbeobachter. Eine Hysterese („das Mobil-Profil erst oberhalb von
+1000px verlassen") hätte die beiden auseinanderlaufen lassen: ein direkt im Querformat geöffnetes
+Telefon bekäme Desktop, ein gedrehtes Mobil — das Ergebnis hinge daran, wie der Spielleiter das
+Gerät in der Hand hielt, als er die App öffnete. Jeder Querformat-Fall ist deshalb **doppelt**
+geprüft, gezogen und direkt geladen.
+
+**Die Schranke auf der langen Seite ist der Teil, der wehtut.** Der naheliegende Griff
+`innerWidth <= 768 || innerHeight <= 500` ist falsch: er zieht jedes flache Desktop-Fenster mit.
+Gemessen bleiben **1440x450, 1280x400, 1024x768 und 901x700** Desktop, auf beiden Wegen — vier
+Wächter, die vor der Korrektur schon hielten und die eine Übertreibung sofort melden.
+
+### Gemessene Wirkung
+
+Alle vier Geräte, hoch → quer → zurück: durchgehend `mobile`, Mobil-Kopfzeile 64px,
+Seitenüberhang X = 0, `--view-frame-height` im Querformat 205px (gemessen, nicht verdrahtet).
+`D.settings.layout` bleibt in jedem Schritt leer — der automatische Wechsel schreibt nichts fest.
+In allen vier Themes auf den Bildpunkt gleich.
+
+### Die Zusicherung
+
+`tests/e2e/features/layoutprofil.spec.js`, neuer Block **(a2)**, 19 neue Fälle — davon
+**10 rot vor der Korrektur** (vier Themes beim Drehen, drei Gerätepaare, drei direkt im Querformat
+geladen) und 9 Wächter, die vorher wie nachher halten. Die Datei steht bei **48/48**.
+
+### Mitgemessen, nicht mitbehoben — der offene Punkt
+
+Weil die Korrektur das gedrehte Telefon neu ins Mobil-Profil führt, gehört die Frage dazu, ob das
+Mobil-Profil bei **390px Fensterhöhe** trägt. Für Kopf und Fuß ja, für die Listenspalte **nein**:
+
+| erreicht über | Rahmen | Schale | Werkzeugleiste | Liste | letzter von 24 |
+| ----------------------- | ------ | ------ | -------------- | ----- | -------------- |
+| Drehen (neue Regel) | 205px | 185px | 158px | 15px | nicht erreichbar |
+| Layout-Schalter (alt) | 205px | 185px | 158px | 15px | nicht erreichbar |
+
+**Auf den Bildpunkt gleich — vorbestehend, nicht von dieser Korrektur gemacht.** Es ist die
+Rechnung selbst: 390px Fenster minus 205px gemessener Möblierung (61 Band + 64 Mobil-Kopf + 56
+Streifen + Innenabstand) lassen 185px Schale, und `.section-toolbar` allein braucht 158px davon
+(zwei Zeilen Suchfeld/Filter, `min-height: 74px`, `flex: 0 1 auto`). Weil die Schale
+`overflow: hidden` führt, scrollt auch die **Seite** nicht (Überhang 0).
+
+**Warum trotzdem mobil.** Im Desktop-Profil ist dieselbe Schale noch kleiner (Rahmen 239px, Schale
+151px) **und** es kommen 184px Seitenüberhang sowie eine 152px hohe Kopfzeile mit einem sichtbaren
+Reiter von 24 dazu. Mobil ist der strikt bessere der zwei Zustände — nur nicht gut.
+
+**Warum nicht hier behoben.** Die Abhilfe heißt, die Schale in kurzen Fenstern nicht zu kappen
+(`height: auto`, die Seite scrollt). Diese Zeile führen **fünf Geschwisterschalen** gemeinsam
+(`.loc-view`, `.npc-view`, `.loot-view`, `.enc-view`, `.bestiary-view`), bewacht von
+`tests/unit/schalen-aktenlage.test.js`, das genau auf ihrer Gleichheit besteht. Das ist eine
+Messung über fünf Ansichten und vier Themes und gehört nicht in dieselbe Runde wie die Profilwahl.
+Der Fall „im Querformat trägt die Möblierung, die Liste bleibt eng" hält die **158px** als Schranke
+nach oben fest, damit es nicht schlechter wird, ohne aufzufallen.
+
+Aus demselben Grund steht 844x390 **nicht** in der `FENSTER`-Liste des Blocks (b): dessen
+Zusicherung lautet „Platz für zwei Einträge", und die hält dort nicht — aus Gründen, die nicht an
+der Reservierung des Leistenplatzes liegen.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/layoutprofil.spec.js   # 48 Faelle
+```
+
+---
+
+## M3 — Tote Regel, Wächter-Ausnahmen und die Messmatrix (2026-10-01, erledigt)
+
+Drei benannte Restposten aus den Runden davor. Alle drei waren Schulden am **Nachweisnetz**, nicht
+am Produkt: eine Regel, die eine Ordnung behauptete, die es nicht gibt; eine Ausnahmeliste, die
+über mehrere Wellen hinweg etwas ausnahm; und eine Messmatrix, die die wichtigste Korrektur der
+Runde gefunden hat und danach im Scratchpad liegen blieb.
+
+### (a) Die Stapelregel der zwei Kopfbänder ist gestrichen
+
+Schließt **U6-R4-01 Punkt (1)** (die Unterüberschrift „(1) Die Stapelregel für zwei
+gleichzeitige Bänder ist tot“ unter `## U6-R2-01` weiter oben — dieselbe Stelle, zwei Namen
+in dieser Akte) und den dortigen Nachtrag „bleibt davon unberührt und damit offen".
+Die Entscheidung, die dort offen gelassen war („entfernen **oder** die Einfügereihenfolge umdrehen
+und die 48px durch `var(--migration-hint-height)` ersetzen"), fiel auf **entfernen** — aus drei
+gemessenen Gründen, nicht aus Geschmack. Gemessen am Bündel zu `b256750`, dark, 1440x800 und
+390x800, die CSSOM nach dem Wähler und die Bänder nach ihrem berechneten `top` gefragt:
+
+| Zustand | Index Divergenz / Hinweis | Wähler trifft | Divergenz `top` |
+| --- | --- | --- | --- |
+| Zweig „noch nicht umgezogen" (nur Hinweis) | −1 / 0 | 0 | (kein Band) |
+| Zweig „bereits umgezogen" (nur Divergenz) | 0 / −1 | 0 | 0px |
+| gestapelt, Hinweis zuerst → dann Divergenz | 0 / 1 | **0** | 0px |
+| gestapelt, Divergenz zuerst → dann Hinweis | 1 / 0 | 1 | **48px** |
+
+1. **Der Zustand tritt im Betrieb nicht ein.** Der `file://`-Einstieg verzweigt entweder/oder
+   (Zeile 1 und 2). Die einzige Stelle, an der beide Bänder gleichzeitig hängen, liegt synchron
+   innerhalb des Umzugs-Starts (Divergenz anlegen, dann Hinweis entfernen) — dazwischen rechnet der
+   Browser kein Layout.
+2. **Die Dokumentreihenfolge schlägt den Wähler.** Beide Bänder hängen per
+   `insertBefore(.., body.firstChild)` ein; das **später** eingehängte steht damit **vor** dem
+   früheren. In der Reihenfolge, die der Code erzeugen würde, liegt das Divergenzband auf Index 0
+   und der Hinweis auf Index 1 — `~` verlangt das Gegenteil und trifft 0 Elemente (Zeile 3).
+3. **Die 48px wären in jeder gemessenen Lage falsch.** Das Hinweisband ist bei 1440 Breite **61px**
+   hoch, bei 390 Breite **117px** — nie 48. In der einzigen Reihenfolge, in der der Wähler trifft
+   (Zeile 4), setzte er das Divergenzband also 13px (1440) bzw. 69px (390) **in** das Hinweisband
+   hinein. Auf Telefonbreite schlimmer: die Regel gewinnt gegen
+   `[data-layout="mobile"] .divergence-banner { top: var(--mobile-header-height) }` — gleiche
+   Spezifität (0,2,0), aber später in der Datei — und zieht das Band aus dem Ausweichplatz **zurück
+   unter die Mobil-Kopfzeile**, genau der Fehler, den M2c behoben hat.
+
+Und ein brauchbares gestapeltes Layout gäbe es auch mit richtiger Zahl nicht:
+`body.has-migration-hint` und `body.has-divergence-banner` setzen **beide** `padding-top` auf
+`body`, die spätere gewinnt — gemessen 40px Innenabstand für 101px Band. Die eine Regel hat nie ein
+Layout hergestellt, das sie hätte retten können.
+
+### (b) Der Stil-Sollstand ist regulär neu erhoben, die Ausnahmeliste ist leer
+
+`EXPECTED_DEVIATION_KEYS` (14) und `EXPECTED_DEVIATION_KEYS_NARROW` (35) in
+`tests/e2e/features/computed-style-diff.spec.js` trugen zusammen **49** Schlüssel: Bestiar-
+Listenzeilen, die durch die Höhenbudget-Korrektur (U6) und die beiden Platzgewinne aus M2 aus der
+Erfassung gefallen waren. Die Datei verlangt selbst, dass ein Eintrag nur für die Dauer genau der
+Welle stehen bleibt, die die Änderung herbeiführt. Statt sie weiterzuschleppen: Sollstand neu
+erhoben (`UPDATE_STYLE_BASELINE=1`), **schlüsselweise** verglichen, Listen geleert.
+
+| Durchgang | Zugänge | Abgänge | Digest-Änderungen | Elementzahl Bestiar |
+| --- | --- | --- | --- | --- |
+| standard | 0 | 14 | 0 | 129 → 115 |
+| narrow | 0 | 35 | 0 | 115 → 80 |
+| reducedMotion | 0 | 14 | 0 | 129 → 115 |
+
+63 Meldungen an **49** verschiedenen Schlüsseln (standard und reducedMotion nennen dieselben 14).
+Die Abgänge sind in jedem Durchgang dieselben sieben Signaturen (`button.bestiary-fav`,
+`div.bestiary-list-item`, `span.bestiary-badge.srd`, `span.bestiary-cr`, `span.bestiary-name`,
+`span.bestiary-type`, `span.sr-only`) für die Zeilen `#13`/`#14` bzw. `#8` bis `#12`. Gegenprobe:
+**0** Abgänge außerhalb der Bestiar-Ansicht; die 9 ohne `bestiary` im Klassennamen sind
+`span.sr-only#8` bis `#14` aus genau denselben Zeilen. **Kein** Abgang darüber hinaus, **kein**
+Zugang, und **null** Digest-Änderungen an gemeinsamen Schlüsseln — an keinem weiterhin erfassten
+Element hat sich ein berechneter Wert bewegt. Das war die Behauptung der beiden Listen; sie ist
+jetzt geprüft statt geglaubt.
+
+**Weg der Erhebung**, damit es nachvollziehbar bleibt: die Schreibsperre verhindert richtigerweise,
+dass ein roter Lauf seinen eigenen Befund festschreibt. Der Sollstand wurde deshalb mit den **noch**
+gefüllten Listen und gesetztem Schalter geschrieben, danach die leere Fassung wiederhergestellt und
+der Lauf wiederholt — grün, ohne eine einzige Ausnahme. Die Mechanik
+(`isExpectedDeviation()` mit dem `durchgang`-Parameter) bleibt stehen; die Listen sind **absichtlich
+leer, nicht abwesend**.
+
+### (c) Die Messmatrix läuft in der Suite
+
+`tests/e2e/features/hoehenbudget.spec.js` prüfte bis M3 **alles** bei 1440x800. Die Matrix, mit der
+die Korrektur gefunden wurde (rund 2 Minuten), lag nur als Messskript im Scratchpad. Jetzt stehen
+**80 der 160** Zustände in der Suite, als 8 Fälle zu je 10 Zuständen (5 Ansichten × oben/gescrollt).
+Alle 80 befundfrei: Seitenüberhang 0px, Suchfeld `frei`, App-Titel und globale Suche `frei`, letzter
+Eintrag gescrollt erreichbar.
+
+> **Berichtigung (Runde 1).** Hier stand „64 der 128 Zustände … 4 Ansichten" und daneben die
+> Behauptung, alle anderen Achsen blieben vollständig — „alle vier Ansichten (vier unabhängige
+> `calc(100vh - var(--view-frame-height, ..))`-Deklarationen in drei Stilblättern)". Gezählt sind es
+> **fünf** Deklarationen in **vier** Stilblättern (`bestiary.css:25`, `core.css:2276`,
+> `encounters.css:932`, `npcs.css:10`, `npcs.css:439`). Die fünfte Schale (Bestiar) lief nicht mit,
+> und die Auslassung war als Vollständigkeit ausgewiesen — der schlimmere der beiden Fehler, denn
+> eine so ausgewiesene Lücke sucht niemand. Die 128 stammen aus dem Messskript, das ebenfalls nur
+> vier Ansichten fuhr; mit der fünften sind es 160. Behoben wurde die **Lücke**, nicht nur die Zahl:
+> die Matrix fährt jetzt alle fünf, und `tests/unit/schalen-aktenlage.test.js` hält den Zensus der
+> Stilblätter maschinell gegen den Kommentar der Matrix — eine sechste Schale macht beides rot.
+> Vorher gemessen (eigenes Skript, dieselben 16 Bestiar-Zustände): Überhang 0px, Suchfeld, App-Titel
+> und globale Suche `frei`, Kopfzeile deckt die Leiste 0px in **allen 16**; gescrollt steht der
+> letzte gerenderte Eintrag in allen 16 im Fenster und ist anklickbar. Es gab also keine verdeckte
+> Regression, nur eine ungedeckte Deklaration.
+
+Die fünfte Schale fährt in zwei Punkten anders, und das steht in `MATRIX_ANSICHTEN` statt in einer
+Ausnahmeliste: das Bestiar bringt seine Liste selbst mit (SRD) und rendert sie hinter einer
+VirtualScroll-Hülle, weshalb `#bestiary-list` genau **ein** Kind führt (gemessen in allen 16
+Zuständen) und `messeBudget()` einen eigenen Einträge-Wähler bekommt — ohne ihn würde die vierte
+Zusicherung die Hülle messen und wäre immer grün. Und die Zahl der gerenderten Einträge hängt an
+genau der Schalenhöhe, die geprüft wird (gemessen **7 bis 18**), weshalb dort „mindestens einer"
+statt der festen 24 gilt.
+
+| Fenster | mit Band (61px) | ohne Band |
+| --- | --- | --- |
+| 1280x900 | Rahmen 195px | Rahmen 134px |
+| 1280x700 | Rahmen 195px | Rahmen 134px |
+| 900x900 | Rahmen 233px | Rahmen 172px |
+| 900x700 | Rahmen 233px | Rahmen 172px |
+
+**Was weggelassen ist, und warum** — nicht still, sondern im Testkommentar: die Breiten **1920 und
+1440**. 1920/1440/1280 lagen am Bündel zu `fef3afb` in allen 96 ihrer Zustände auf demselben Wert
+(14px Überhang ohne Band, 75px mit Band); 900 war der Ausreißer (52 / 113) und der schlimmste Fall.
+1440 prüfen die fünf Fälle oben in derselben Datei ohnehin in beiden Bandzuständen, und 1920 ist der
+dritte Messpunkt desselben Plateaus für ein Viertel der Laufzeit. Das Budget hängt per Konstruktion
+an einer **Messung** und nicht an einer Breakpoint-Grenze; eine dritte Probe auf derselben Fläche
+kann nichts Neues zeigen. (Die 96 sind die Zustandszahl jener Messung, die vier Ansichten fuhr.)
+Alle anderen Achsen bleiben vollständig: beide Fensterhöhen, beide Bandzustände, beide
+Scrollzustände, alle **fünf** Ansichten (fünf unabhängige
+`calc(100vh - var(--view-frame-height, ..))`-Deklarationen in vier Stilblättern).
+
+**Die Gegenprobe ist der rote Nachweis.** Eine Probe, die seit ihrer Geburt grün ist, beweist
+nichts. Der letzte Fall des Abschnitts zwingt `--view-frame-height` auf die alte verdrahtete 120px
+zurück und fährt die schlimmste Ecke der Matrix (kleinste Breite × kleinste Höhe ihrer eigenen
+Achsen, mit Band, gescrollt — die Zahlen kommen aus `MATRIX_BREITEN`/`MATRIX_HOEHEN`, nicht
+verdrahtet). Gemessen bei 900x700:
+
+| | Rahmen | Überhang | Suchfeld | Kopfzeile deckt Leiste | Befunde |
+| --- | --- | --- | --- | --- | --- |
+| gemessenes Budget | 233px | 0px | frei | 0px | 0 |
+| verdrahtete 120px | 120px | **113px** | **verdeckt von `BUTTON.nav-group-btn`** | 103px | 2 |
+
+Die 113px und die Verdeckung durch `BUTTON.nav-group-btn` sind Zeichen für Zeichen die Zahlen, die
+der Kopfkommentar der Datei als historischen Befund bei 900 Breite nennt. Der Zwang läuft per
+Stilblatt mit `!important`, nicht per Inline-Stil: `setzeRahmenHoehe()` schreibt bei jedem Lauf der
+Kette einen neuen Inline-Wert, ein Inline-Zwang wäre beim nächsten `resize` weg. Die
+`!important`-Ratsche bleibt unberührt — die zählt die Quelldateien unter `assets/styles/`.
+
+### Ein Befund an der Matrix selbst, im ersten Lauf gemessen
+
+Ungescrollt meldete die vierte Zusicherung (letzter Eintrag erreichbar) in allen 8 Fällen je 4
+Befunde — „1280x900 MIT Band oben locations: letzter Eintrag 2148..2222px AUSSERHALB
+NICHT-KLICKBAR", einen je Ansicht, 32 insgesamt. **Das ist richtig so:** am Listenanfang liegt der
+24. Eintrag legitim unter der Falz. Sie dort zu verlangen hieße zu verlangen, dass die ganze Liste
+in die Schale passt, und das verspricht das Höhenbudget nicht; versprochen ist, dass die Liste
+**selbst** scrollt und ihr Ende erreichbar **bleibt**. Die Zusicherung gilt deshalb nur im
+gescrollten Zustand, mit der Begründung an `befundeAus()` statt nur im Commit. Die drei anderen
+Zusicherungen gelten in beiden Zuständen und waren im selben Lauf in beiden grün. (Die Zahlen sind
+die des ersten Laufs mit vier Ansichten. Das in Runde 1 nachgezogene Bestiar verhält sich gleich:
+ungescrollt liegt sein letzter gerenderter Eintrag in **12 von 16** Zuständen unter der Falz,
+gescrollt steht er in allen 16 im Fenster.)
+
+### Gemessene Wirkung
+
+Die Streichung aus (a) ist **nachweislich verhaltensneutral**. Zwei Bündel gebaut (vor und nach der
+Streichung) und dieselbe Messung zweimal gefahren: **6 Fenstergrößen × 4 Themes × beide
+Bandzweige = 48 Zustände**, je Zustand Bandhöhe, berechnetes `top` beider Bänder,
+`body { padding-top }`, `--view-frame-height`, `--sticky-top-header`, Seitenüberhang, Schalenhöhe und
+die Trefferzahl des Geschwisterwählers. **Zeilenweise identisch in allen 48 Zuständen**, Wähler
+überall 0. Das ist genau das, was die Streichung einer Regel bewirken darf, die nie getroffen hat.
+
+| | 1440x800 | 1280x900 | 900x700 | 390x844 | 360x740 | 740x360 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Layout | desktop | desktop | desktop | mobile | mobile | mobile |
+| Hinweisband (Höhe @ `top`) | 61 @ 0 | 61 @ 0 | 61 @ 0 | 117 @ 64 | 94 @ 64 | 61 @ 64 |
+| Divergenzband (Höhe @ `top`) | 40 @ 0 | 40 @ 0 | 40 @ 0 | 40 @ 64 | 40 @ 64 | 40 @ 64 |
+| Rahmen mit Hinweis | 195px | 195px | 233px | 261px | 238px | 205px |
+| Rahmen mit Divergenz | 174px | 174px | 212px | 184px | 184px | 184px |
+| Wähler trifft | 0 | 0 | 0 | 0 | 0 | 0 |
+
+In allen vier Themes auf den Bildpunkt gleich (die Tabelle zeigt `dark`; die anderen drei Spalten
+der Messung sind zeilengleich). Die beiden `top`-Werte 0 und 64 sind die Aussage: im Desktop sitzt
+das Band am Fensterrand, im Mobil-Layout weicht es unter die 64px hohe Mobil-Kopfzeile aus (M2c) —
+und zwar in **beiden** Zweigen gleich, also auch das Divergenzband, das die gestrichene Regel bei
+Treffer auf 48px gezogen hätte.
+
+Diese Probe steht auf der Startansicht und misst **Bandgeometrie**, nicht das Höhenbudget der
+Schalen; das messen die 80 Zustände aus (c). (b) und (c) fassen keinen Produktionscode an.
+
+### Die Zusicherungen
+
+- `tests/e2e/features/baender-stapel.spec.js` — **4 neue Fälle**, davon **1 vorher rot**. Die drei
+  grünen sind absichtlich grün: sie halten die Unerreichbarkeit fest (beide Produktionszweige, der
+  erzwungene Stapel samt Dokumentreihenfolge), und ohne sie wäre der vierte eine bloße
+  Quelltextprüfung. Der vierte fragt `document.styleSheets` des gebauten Bündels, nicht
+  `migration.css` per `grep` — die App läuft gegen das Bündel, in dem alle 20 Stilblätter
+  zusammenlaufen. Die Kommaliste jedes Wählers wird dabei einzeln geprüft, sonst meldete die
+  M2c-Gruppe `[data-layout="mobile"] .migration-hint-banner, [data-layout="mobile"]
+  .divergence-banner` einen Stapelzustand, den sie nicht beschreibt (erst gemessen: 2 Regeln, davon
+  1 falsch positiv).
+- `tests/e2e/features/hoehenbudget.spec.js` — **9 neue Fälle** (8 Matrix-Fälle à 10 Zustände + die
+  Gegenprobe), 25 → **33 Fälle**, Laufzeit 24,5s → **46,9s** (43,3s mit vier Ansichten; die fünfte
+  kostet rund 3,6s).
+- `tests/unit/schalen-aktenlage.test.js` — **2 neue Fälle** (Runde 1), 2 → **4**: die Deckung der
+  Messmatrix über alle fünf Schalen und der Zensus der Stilblätter gegen den Kommentar der Matrix.
+- `tests/e2e/features/computed-style-diff.spec.js` — keine neuen Fälle, aber die drei bestehenden
+  bewachen wieder 49 Schlüssel mehr.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/baender-stapel.spec.js        # 4 Faelle
+npx playwright test tests/e2e/features/hoehenbudget.spec.js          # 33 Faelle
+npx playwright test tests/e2e/features/computed-style-diff.spec.js   # 3 Faelle, seriell
+```
+
+### Offen geblieben
+
+- **Die Listenspalte des Bestiars folgt der Schale nicht** — unverändert offen aus M2, und durch (b)
+  jetzt auch im Stil-Sollstand sichtbar: die Elementzahl der Bestiar-Ansicht sinkt 129 → 115
+  (breit) und 115 → 80 (schmal), weil die Platzrechnung der geteilten Scroll-Maschinerie
+  (`container.clientHeight`, sonst `parent.clientHeight - padY`, sonst fester Rückfall 400) bei
+  **größerer** Schale **weniger** Zeilen rendert. Der Sollstand bildet diesen Istzustand ab, er
+  rechtfertigt ihn nicht. Eigene Einheit.
+- **`.event-log-entry { pointer-events: auto }`** gilt auch im flüchtigen Modus — unverändert offen
+  aus M1, zwei Zeilen wert. Ändert Desktop-Verhalten, deshalb weiter außerhalb des gemessenen
+  Netzes.
+- **`.qref-fab` überlappt den 56px-Streifen der eingeklappten Leiste** — unverändert offen aus M1.
+  Saubere Behebung: `--mobile-nav-rest` auch von ihrem `bottom` abziehen.
+- **Sehr kurze Fenster** (U6-R4-01 Punkt 3) — unverändert offen; M2 entspannt den Fall, hebt ihn
+  nicht auf. Die Matrix aus (c) deckt ihn **nicht** ab: ihre kleinste Fensterhöhe ist 700px. Das ist
+  Absicht und keine Lücke — ein Fall, dessen Zusicherung noch nicht entschieden ist, kann nicht
+  bewacht werden.
+- **`npm run check` bleibt rot**, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  vorbestehend nicht prettier-konform ist. Unverändert. Die drei in dieser Runde angefassten
+  Testdateien sind einzeln prettier-konform; `assets/styles/migration.css` war es schon vorher
+  nicht und bleibt unformatiert, damit die Streichung nicht in einer Umformatierung der ganzen Datei
+  verschwindet.
+
+---
+
+## M-Abnahme — die Mobil-Runde nachgefahren (2026-10-01)
+
+Abnahme der drei Einheiten M1/M2/M3. **Kein Befund am Produkt** — alle Tore stehen, und jede der
+vier Behauptungen aus M1/M2 hält der eigenen Nachmessung stand. Was diese Runde beiträgt, ist
+Nachweisnetz: eine fehlende Gegenprobe und das Bildmaterial für das menschliche Urteil.
+
+### Die Tore, gegen die Basiswerte aufgerechnet
+
+Die Basiswerte des Auftrags stammen von `cecfefe` — also von **vor** M1/M2/M3. Jede Abweichung ist
+deshalb auseinandergerechnet statt als Fehler gemeldet:
+
+| Tor | Basiswert (cecfefe) | gemessen (HEAD) | Differenz |
+| --- | --- | --- | --- |
+| Jest | 1908 in 75 Suiten | **1910 in 75 Suiten** | +2 aus M3 (`schalen-aktenlage.test.js` 2 → 4) |
+| Playwright | 444 / 19 übersprungen / 0 | **528 / 23 / 0** | +84 bestanden, +4 übersprungen — siehe unten |
+| pytest | 30 | **30** | — (`python -m pytest tests/build/`; ohne Pfad sammelt pytest nichts) |
+| Lint | exit 0, exakt 363 Warnungen | **exit 0, 363** | — |
+| Builds | beide exit 0 | **beide exit 0** | — |
+| typecheck / :strict | exit 0 | **beide exit 0** | — |
+| `check-f18-kaskade --check` | OK | **OK, 126 Abhängigkeiten, 8509 Elemente** | — |
+| `sync-aktenlage-anker --check` | 0 Abweichungen, 123 Anker | **0 / 123** | — |
+
+Die 84 zusätzlich bestandenen Playwright-Fälle: `layoutprofil.spec.js` **48** (neu, M2),
+`mobil-navigation.spec.js` **21** (20 neu aus M1 + **1 aus dieser Runde**), `baender-stapel.spec.js`
+**4** (neu, M3), `hoehenbudget.spec.js` 23 → **33** (+10 aus M3). Die 4 zusätzlich übersprungenen
+sind `mobil-screens.spec.js` aus dieser Runde — dieselbe Bauart wie die vier vorhandenen
+Ablichtungs-Dateien, die zusammen mit 2 PWA-Fällen und 1 Service-Worker-Fall die bisherigen 19
+ausmachen.
+
+**Ratschen.** Dubletten **0**, `!important` **105** (kommentarfrei gezählt wie die Ratsche; roh 108,
+die Differenz sind drei Erwähnungen in Kommentaren), Inline-Stile **256**. Keine gestiegen. Als
+nackte Zahl kommt `z-index` nur mit **2** und **10** vor, beide unter der Schranke 20.
+
+**Eine erklärungsbedürftige Abweichung vom Auftragstext.** Der Auftrag nennt „42 benannte Ausnahmen
+in `EXPECTED_DEVIATION_KEYS` (14 breit + 28 schmal)". An HEAD sind **beide Listen leer**. Das ist
+kein Verlust, sondern `ab16e43`: der Stil-Sollstand wurde regulär neu erhoben und schlüsselweise
+verglichen — 0 Zugänge, 63 Abgänge an 49 Schlüsseln, **0 Digest-Änderungen** in allen drei
+Durchgängen, alle Abgänge in der Bestiar-Ansicht. Die Ausnahmen mussten danach nicht mehr geführt
+werden. Der Auftragstext beschreibt den Stand von `cecfefe`.
+
+### Was ich selbst gefahren bin, mit eigenen Skripten und echten Klicks
+
+Alle Messungen: gebautes Bündel per `file://`, Umzugs-Band **nicht** unterdrückt, Klicks mit der
+Maus auf gemessene Koordinaten, Scrollen nur per Mausrad. Kein `scrollTop`, kein `scrollIntoView`.
+
+**(a) Alle 24 Ansichten, und jede führt wirklich in ihre Ansicht.** Geprüft wird nicht nur
+`elementFromPoint`, sondern nach jedem Klick `section.view.active` gegen `view-<name>`.
+
+| Zustand | 360x740 | 390x844 | 740x360 | 320x700 |
+| --- | --- | --- | --- | --- |
+| schlicht, vier Themes | **24/24**, 0 Radrunden | **24/24**, 0 | **24/24**, max 2 | — |
+| voll (Dauer-Log mit 8 Einträgen, Kampfprotokoll offen, Würfel-Schweber, Schnellreferenz) | **24/24**, 0 | **24/24**, 0 | **24/24**, max 2 | **24/24**, 0 |
+
+Der volle Zustand ist die Zeile, auf die es ankommt: dort meldete M1 vorher **6 von 24** (390x844)
+und **0 von 24** (360x740, das Kampfprotokoll lag auf der Umschalter-Zeile). 16 Zustände, alle
+24/24.
+
+**(b) Die Messung misst wirklich etwas.** Gegenprobe mit dem erzwungenen Deckel von vor M1
+(`--mobile-nav-max-height: 300px`): Sichtfeld 444px → **300px**, Rasterinhalt unverändert 444px,
+sofort erreichbar 24 → **20**. Diese Gegenprobe steht jetzt fest in `mobil-navigation.spec.js`
+(siehe unten).
+
+**(c) Das Desktop-Layout ist unverändert** — die fünf Funde der Vorrunde einzeln nachgefahren, bei
+1440x900, 1280x800 und 1000x800 in allen vier Themes (**12 Zustände, 0 rot**):
+
+| Fund | gemessen |
+| --- | --- |
+| F1 Ereignis-Dialog | Karte 500x438px sichtbar, Klassen `modal-overlay modal-transient show`, 6 Felder, **0** ragen über die Karte |
+| F2 Listen | 24/24 gerendert in Orten, NSCs, Truhe, Begegnungen; der **letzte** Eintrag nach 60 Radstößen in allen 12 Zuständen erreichbar |
+| F3 Initiative mit Menü | gescrollt (scrollY 582/682/770), **6** Menüs, **23/23** Einträge erreichbar, kein Verdecker |
+| F4 Kampfprotokoll | 6 echte Klicks ohne `force`, 0 Klickfehler, flüchtiges Log nach 3000 ms **leer**, Panel sichtbar, **6 Angriffszeilen**, der zweite wörtlich nachlesbar |
+| F5 Werkzeugleiste frei | Seitenüberhang **0** in allen 12 Zuständen, Suchfeld in Orten/NSCs/Truhe **klickbar** |
+
+F4 zusätzlich bei 390x844 nachgefahren: ebenfalls 6 Angriffszeilen, zweiter lesbar.
+
+**(d) Das Layoutprofil folgt dem Fenster** (M2a), ohne Eingriff nachgemessen: frisch geladen
+`desktop` bei 1440x900 und 1000x800, `mobile` bei 740x360, 390x844, 360x740 und 320x700; beim
+Verkleinern **und** Vergrößern folgt es in beide Richtungen; `D.settings.layout` bleibt dabei
+durchweg `null` — der automatische Wechsel schreibt nichts. Nach ausdrücklichem `setLayout('desktop')`
+bleibt das Profil `desktop`, auch bei 390x844 und 360x740, und `D.settings.layout` steht auf
+`desktop`. Beides wie behauptet.
+
+### Was neu dazugekommen ist
+
+- **`tests/e2e/features/mobil-navigation.spec.js`** — **1 neuer Fall**, 20 → **21**: die permanente
+  Gegenprobe zum Deckel. Sie stellt den Zustand vor M1 wirklich her (Zwang auf
+  `--mobile-nav-max-height` per Stilblatt mit `!important`, nicht per Inline-Stil — die Kette
+  schreibt den Inline-Wert bei jedem Lauf neu) und besteht aus einer Vorbedingung und dem Befund.
+  Ohne Vorbedingung wäre sie eine Probe, die einen vorbestehenden Fehler als Erfolg verbucht.
+  Der rote Nachweis steht in `1937a88`: ohne den Zwang ist der „verdrahtete" Durchgang mit dem
+  gemessenen identisch (444px / 24-von-24), der Lauf fällt an `Expected: 300 / Received: 444`.
+- **`tests/e2e/features/mobil-screens.spec.js`** — **4 neue, standardmäßig übersprungene Fälle**.
+  Mit `MOBIL_SCREENS=1`: 3 Zustände (ausgefahrene Leiste, Ortsliste ganz unten, laufende Initiative)
+  x 2 Fenster x 4 Themes = **24 Bilder** nach `tests/e2e/__screens__/mobil/`, keines 0 Byte. Sie
+  prüft **nichts am Aussehen** — sie fällt durch, wenn ein Zustand sich nicht herstellen lässt.
+  Der erste Lauf war genau daran rot (4 von 6 bei dark); Ursache war die Hülle, nicht die
+  Anwendung.
+
+### Befehle
+
+```bash
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/mobil-navigation.spec.js       # 21 Faelle
+MOBIL_SCREENS=1 npx playwright test tests/e2e/features/mobil-screens.spec.js   # 4 Faelle, 24 Bilder
+python -m pytest tests/build/                                          # 30 Faelle
+```
+
+### Offen geblieben
+
+- **NEU UND SCHWER: die Start-Ansicht scrollt auf dem Telefon seitwärts.** Gefunden in dieser
+  Abnahme, **nicht** von M1/M2/M3 verursacht (`assets/styles/dashboard.css` wurde in keiner der
+  drei Einheiten angefasst) und von keiner Zusicherung gedeckt — die waagerechte Achse ist bisher
+  nur an der Navigationsleiste gemessen (M1 Runde 2), nicht am Seiteninhalt.
+
+  **Ursache, isoliert:** `.dash { display: grid }` (dashboard.css:823) gibt **keine**
+  `grid-template-columns` an. Die einzige implizite Spalte wird dadurch `auto` dimensioniert, also
+  auf ihre **max-content**-Breite — und die ist durch `.dash-party-grid { max-width: 720px }` mit
+  `repeat(auto-fill, minmax(160px, 1fr))` konstant **710px**, unabhängig vom Fenster. Der
+  Rasterbehälter ist 340px breit, seine Inhalte sind 710px breit.
+
+  | Fenster | Seitenüberhang X | `.dash`-Spalte | `.dash-party` | Karten je Reihe |
+  | --- | --- | --- | --- | --- |
+  | 320x700 | **416px** | 710px | 710px | 4 (angeschnitten) |
+  | 360x740 | **376px** | 710px | 710px | 4 (angeschnitten) |
+  | 390x844 | **346px** | 710px | 710px | 4 (angeschnitten) |
+  | 740x360 | 0px | 710px | 710px | 4 |
+
+  **Gegenprobe, die die Ursache belegt:** mit erzwungenem
+  `.dash { grid-template-columns: minmax(0, 1fr) }` fällt der Überhang in allen drei
+  Telefonfenstern auf **0**, die Spalte auf 268/308/338px, und die Partykarten brechen auf **eine je
+  Reihe** um.
+
+  **Hier NICHT behoben**, weil es eine Abnahmerunde ist: die Korrektur ändert die Dashboard-Lage in
+  allen vier Themes und braucht eine eigene Messmatrix plus die Entscheidung, ob eine Karte je Reihe
+  bei 320-390px gewollt ist oder `minmax(140px, 1fr)` mit zwei je Reihe. Eigene Einheit — aber die
+  dringendste: die Start-Ansicht ist das Erste, was der Spielleiter auf dem Telefon sieht.
+- **`.qref-fab` liegt auf dem 56px-Streifen der eingeklappten Leiste** — unverändert offen aus M1,
+  jetzt beziffert: gemessen **2250 px² Deckung** bei 360x740, 390x844 und 320x700, **1750 px²** bei
+  740x360. Die **Mitte** der Umschalter-Zeile bleibt in allen vier Fenstern frei, die Navigation
+  funktioniert also — aber ein Daumen, der die rechte Seite des Streifens trifft, öffnet die
+  Schnellreferenz statt der Leiste. Saubere Behebung bleibt: `--mobile-nav-rest` auch von ihrem
+  `bottom` abziehen.
+- **`.event-log-entry { pointer-events: auto }`** gilt auch im flüchtigen Modus — unverändert offen
+  aus M1. In dieser Runde zusätzlich am Desktop gesehen: beim Radeln über die Initiative antwortete
+  `elementFromPoint` an einzelnen Rollständen mit `div.event-log-time` (1100x800 und 1000x800).
+  Folgenlos, weil das Ziel einen Rollstand später frei liegt — aber derselbe Befund, eine
+  Vierteldrehung weiter.
+- **Kein `scroll-margin-top` im ganzen Stilbaum**, bei zwölf `scrollIntoView`-Aufrufen im Quellbaum
+  und drei angehefteten Leisten darüber. Gemessen: nach `scrollIntoViewIfNeeded()` auf die Mob-Zeile
+  der Initiative antwortet `elementFromPoint` auf der Mitte des Angriffsknopfs ab **1100px Breite
+  abwärts** mit `span.qa-name` (der Aktionsleiste), bei 1440 und 1280 nicht. Ein Mausrad-Durchlauf
+  erreicht den Knopf an jeder Breite (Rollstand 0 / 60 / 240 / 240 / 180) — der Knopf ist also
+  **nicht unerreichbar**, er landet nur dort, wo eine Leiste klebt. **Nicht zu Ende untersucht:**
+  der eine Aufruf mit `block: 'start'` (das Sitzungsformular) ließ sich nicht messen, weil das
+  Formular im Ruhezustand 0px hoch ist. Eigene Einheit, kein Rückschritt dieser Runde.
+- **Die Listenspalte des Bestiars folgt der Schale nicht** — unverändert offen aus M2/M3.
+- **Sehr kurze Fenster** (U6-R4-01 Punkt 3) — unverändert offen.
+- **`npm run check` bleibt rot**, weil `prettier --check` über den ganzen Baum läuft und der Baum
+  vorbestehend nicht prettier-konform ist. Die beiden in dieser Runde angefassten Testdateien sind
+  einzeln prettier-konform (`npx prettier --check` je Datei).
+- **Der Verlaufsstreifen der Würfelansicht hat keine Anordnung** — gefunden in C2 (2026-10-02) von
+  der Sonde, die ungestaltete Formularelemente aufspürt. `.dice-history-bar`,
+  `.dice-history-label` und `.dice-history-scroll` stehen einmal im Markup
+  (`assets/templates/view-tools.html:233`) und haben im ganzen Stilbaum **keine einzige Regel**;
+  die drei Kinder stehen deshalb untereinander statt nebeneinander, obwohl die Schwesterleiste
+  `.dice-favorites-bar` direkt darüber eine vollständige Karte ist (dice.css:374). Der vierte
+  Teil, `.dice-history-clear`, ist in C2 behoben — er stand als **graues Systemblech** da
+  (rgb(107,107,107) Fläche, rgb(255,255,255) Rahmen, 13.3333px aus `font:
+  -webkit-small-control`) und war damit plattformabhängig; er trägt jetzt die Gestalt von
+  `.search-clear-btn`. **Bewusst zurückhaltend**, weil die Anordnung des Streifens ein eigener,
+  älterer Befund ist: ein runder 32px-Knopf wie `.dice-fav-add` wäre ein neuer Blickfang an einer
+  Stelle ohne Anordnung gewesen. Saubere Behebung: `.dice-history-bar` an den Selektorblock von
+  `.dice-favorites-bar` hängen (keine Dublette, F-18), `.dice-history-scroll` an den von
+  `.dice-fav-list` plus `flex-wrap: nowrap; overflow-x: auto` — der Streifen ist laut
+  Markup-Kommentar als waagerechter Rollstreifen gedacht.
 
 ---

@@ -10,7 +10,7 @@ function quickRoll(sides) {
     let msg = `🎲 d${sides}: ${result}`;
     if (isCrit) msg = '🎉 Kritisch! d20: 20';
     if (isFail) msg = '💀 Patzer! d20: 1';
-    showToast(msg);
+    showToast(msg, 'success', { kategorie: 'kampf' });
     // Zur Würfelhistorie hinzufügen
     const D = window.D;
     D.diceHistory = D.diceHistory || [];

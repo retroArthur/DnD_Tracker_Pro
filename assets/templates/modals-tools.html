@@ -218,6 +218,31 @@
         </div>
     </div>
 
+    <!-- Kampfprotokoll-Panel (U5) — NICHT modal.
+         Das Ereignis-Log darüber ist die flüchtige Anzeige (2000 ms, Deckel 5);
+         dieses Panel ist das Gedächtnis dahinter (200 Einträge, überlebt den
+         Neustart). Baumuster: .qref-panel, keine Blende, --z-panel — es bleibt
+         offen, während weitergewürfelt wird. -->
+    <div class="kplog-panel" id="kampflog-panel" role="region" aria-label="Kampfprotokoll">
+        <div class="kplog-header">
+            <div class="kplog-title">
+                <span class="kplog-title-icon">📜</span>
+                <span>Kampfprotokoll</span>
+                <span class="kplog-kbd-hint">K</span>
+            </div>
+            <div class="kplog-header-actions">
+                <button class="kplog-btn kplog-btn-del" data-action="clear-combat-log" title="Protokoll leeren">Leeren</button>
+                <button class="kplog-btn" data-action="toggle-combat-log" title="Schließen">✕</button>
+            </div>
+        </div>
+        <div class="kplog-tabs">
+            <button class="kplog-tab active" data-action="kplog-tab" data-value="alles">Alles</button>
+            <button class="kplog-tab" data-action="kplog-tab" data-value="kampf">⚔️ Kampf</button>
+        </div>
+        <div class="kplog-anzahl"><span id="kampflog-anzahl">0</span> Einträge</div>
+        <div class="kplog-liste" id="kampflog-liste"></div>
+    </div>
+
     <!-- Floating Dice Trigger (immer sichtbar) -->
     <button class="floating-dice-trigger" id="floating-dice-trigger" data-action="toggle-floating-dice" title="Würfel">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
@@ -260,14 +285,36 @@
 
     <!-- Mobile Header (nur im Mobile-Modus sichtbar) -->
     <div class="mobile-header">
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <!-- C1 — die beiden Knopfgruppen trugen hier einen Inline-Stil
+             (display flex, gap 8px, align-items center). Jetzt eine Klasse,
+             weil der Zwischenraum auf Telefonbreiten enger werden muss
+             (core.css, @media max-width: 600px) und ein Inline-Stil von keiner
+             Medienabfrage erreicht wird. Nebenwirkung in der guenstigen
+             Richtung: zwei Inline-Stile weniger (F-19-Ratsche 256 -> 254).
+             Der Attributname steht hier ABSICHTLICH nicht ausgeschrieben: die
+             Ratsche zaehlt sein Vorkommen im Markup, auch in einem Kommentar —
+             sonst waere die gemessene Senkung um eins zu klein. -->
+        <div class="mobile-header-group">
             <button class="mobile-search-btn" data-action="call" data-value="showMobileQuickNotes" title="Schnellnotizen">📝</button>
             <button class="mobile-search-btn" data-action="undo" title="Rückgängig">↩️</button>
+            <!-- Einstieg zum Kampfprotokoll. Im Mobil-Layout ist .header-actions
+                 display:none (core.css) und damit auch #kampflog-toggle; uebrig blieb
+                 die Taste K, die ein Touchgeraet nicht hat. Ohne diesen Knopf gab es
+                 bei 680/560/420/360 px NULL sichtbare Wege zum Panel — genau der
+                 Befund, aus dem U5 entstand. -->
+            <button class="mobile-search-btn" id="kampflog-toggle-mobil" data-action="toggle-combat-log" title="Kampfprotokoll" aria-label="Kampfprotokoll öffnen" aria-expanded="false" aria-controls="kampflog-panel">📜</button>
         </div>
         <div class="mobile-timer" data-action="call" data-value="toggleSessionTimer" title="Session Timer">
-            <span id="mobile-timer-display">00:00:00</span>
+            <!-- C1 — die Sekunden stehen in einem EIGENEN Element, damit CSS sie
+                 auf Telefonbreiten ausblenden kann (core.css, @media max-width:
+                 600px). Der Grund steht dort; hier nur die Mechanik: die Anzeige
+                 wird von updateSessionTimerDisplay() (systems/session-timer.js)
+                 im Sekundentakt beschrieben, und zwar als ZWEI Knoten statt als
+                 ein textContent — sonst waere dieses Element beim ersten Tick
+                 ueberschrieben. -->
+            <span id="mobile-timer-display">00:00<span class="mobile-timer-seconds">:00</span></span>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div class="mobile-header-group">
             <button class="mobile-search-btn" data-action="call" data-value="showMobileSearch">🔍</button>
             <button class="mobile-search-btn" data-action="toggle-layout" id="mobile-layout-btn">📱</button>
             <button class="mobile-search-btn" data-action="show-modal" data-value="theme-modal">🎨</button>

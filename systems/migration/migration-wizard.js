@@ -845,10 +845,16 @@ function showMigrationHintBanner() {
     banner.id = 'migration-hint-banner';
     banner.className = 'migration-hint-banner';
     banner.setAttribute('role', 'banner');
+    // Zwei Fassungen desselben Hinweises (M2c): eine kurze fuer Telefonbreite,
+    // die lange fuer alles darueber. Welche sichtbar ist, entscheidet EINE Regel
+    // in migration.css an der 600px-Grenze — der lange Satz bleibt auf dem
+    // Desktop Zeichen fuer Zeichen derselbe wie bisher. Begruendung und die
+    // gemessenen Bandhoehen stehen dort.
     banner.innerHTML = `
         <span class="migration-hint-text">
-            Die D&amp;D Tracker App ist jetzt als installierbare Web-App verf&#252;gbar &#8212;
-            Daten k&#246;nnen verlustfrei umgezogen werden.
+            <span class="migration-hint-kurz">Jetzt als Web-App installierbar.</span>
+            <span class="migration-hint-lang">Die D&amp;D Tracker App ist jetzt als installierbare Web-App verf&#252;gbar &#8212;
+            Daten k&#246;nnen verlustfrei umgezogen werden.</span>
         </span>
         <button class="btn btn-text migration-hint-link" data-action="start-migration-flow">Zum App-Umzug</button>
         <button class="btn btn-icon migration-hint-close" aria-label="Hinweis schlie&#223;en" data-action="close-migration-hint">&#x2715;</button>
@@ -862,10 +868,36 @@ function showMigrationHintBanner() {
         banner.offsetHeight + 'px'
     );
     document.body.classList.add('has-migration-hint');
+    _updateStickyChainAfterBanner();
 
     // Sitzungs-Flag setzen
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('migration-hint-shown', '1');
+    }
+}
+
+/**
+ * Setzt die Versatzkette der angehefteten Ebenen neu (U3, Glied 1).
+ *
+ * Das Hinweisband ist `position: fixed; top: 0` auf --z-panel (600) und liegt
+ * damit UEBER der Kopfzeile (--z-sticky, 100). `body.has-migration-hint`
+ * schiebt ungescrollt den ganzen Seiteninhalt darunter — gescrollt faehrt die
+ * Kopfzeile aber auf ihren Anheft-Versatz und verschwand dort unter dem Band
+ * (gemessen 61px; App-Titel und globale Suche antworteten auf
+ * elementFromPoint mit SPAN.migration-hint-text). Die Kopfzeile heftet deshalb
+ * auf --sticky-top-header an, und dieses Glied ist die Hoehe des Hinweisbands.
+ *
+ * Aufgerufen an JEDER Stelle, an der ein Band erscheint oder verschwindet —
+ * auch am Divergenz-Banner, obwohl updateStickyOffsets() dessen Hoehe
+ * absichtlich NICHT mitmisst (Begruendung dort): der Wechsel vom Hinweis- zum
+ * Divergenz-Banner muss das Glied auf 0 zuruecknehmen.
+ * core/init.js ruft updateStickyOffsets() VOR initMigrationWizardIfNeeded()
+ * auf (und diese ist async, die Reihenfolge waere ohnehin nicht zugesichert) —
+ * ein einmaliger Aufruf beim Start kann die Baender also nicht sehen.
+ */
+function _updateStickyChainAfterBanner() {
+    if (typeof window.updateStickyOffsets === 'function') {
+        window.updateStickyOffsets();
     }
 }
 
@@ -893,6 +925,17 @@ function showDivergenceBanner(dateStr) {
     `;
 
     document.body.insertBefore(banner, document.body.firstChild);
+    // Gegenrechnung am Seiteninhalt (U6). Bis 2026-10 fehlte sie — das Banner ist
+    // `position: fixed; top: 0` auf --z-panel und deckte die Kopfzeile deshalb
+    // auch UNGESCROLLT zu, wo ein Anheft-Versatz nichts ausrichtet. Die Hoehe
+    // wird GEMESSEN wie beim Hinweisband, statt die 40px aus dem CSS anzunehmen:
+    // der Text kann bei schmalen Fenstern umbrechen.
+    document.documentElement.style.setProperty(
+        '--divergence-banner-height',
+        banner.offsetHeight + 'px'
+    );
+    document.body.classList.add('has-divergence-banner');
+    _updateStickyChainAfterBanner();
 
     // Checkpoint-Fix (Weg B): startMigrationFlow() loest den Audio-Download NICHT
     // mehr automatisch aus (Chrome gated den zweiten automatischen Download einer
@@ -992,6 +1035,16 @@ function startMigrationFlow() {
     // Hinweis-Banner ausblenden (Umzug wurde gestartet)
     const hintBanner = document.getElementById('migration-hint-banner');
     if (hintBanner) hintBanner.remove();
+    // Die Klasse muss MIT dem Band gehen. Blieb sie stehen, hielt
+    // `body.has-migration-hint { padding-top }` weiter die 61px des
+    // verschwundenen Hinweises frei, waehrend das Divergenz-Banner nur 40px hoch
+    // ist — 21px Luft ueber der Kopfzeile und, seit das Hoehenbudget der
+    // Listen-Schalen daran haengt (U6), 21px Seitenueberhang.
+    document.body.classList.remove('has-migration-hint');
+    // Das Divergenz-Banner ist niedriger als der Hinweis: die Kette muss NACH
+    // dem Entfernen noch einmal laufen, sonst behaelt die Kopfzeile den
+    // Versatz des gerade verschwundenen Bands.
+    _updateStickyChainAfterBanner();
 }
 
 /**
@@ -1087,11 +1140,16 @@ function initMigrationActions() {
         const banner = document.getElementById('migration-hint-banner');
         if (banner) banner.remove();
         document.body.classList.remove('has-migration-hint');
+        _updateStickyChainAfterBanner();
     });
     EventDelegation.registerAction('dismiss-divergence-banner', function() {
         StorageAPI.setJSON('migration-divergence-dismissed', { dismissed: true });
         const banner = document.getElementById('migration-divergence-banner');
         if (banner) banner.remove();
+        // Klasse mit dem Band zuruecknehmen — sonst bleibt die Gegenrechnung am
+        // Seiteninhalt stehen (siehe showDivergenceBanner()).
+        document.body.classList.remove('has-divergence-banner');
+        _updateStickyChainAfterBanner();
     });
     // Checkpoint-Fix (Weg B): expliziter Button im Divergenz-Banner statt
     // automatischem zweitem Download — ein echter Klick liefert die eigene

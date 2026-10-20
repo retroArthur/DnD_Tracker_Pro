@@ -7,7 +7,8 @@ import {
     selectOption,
     generateTestName,
     performUndo,
-    seedCleanSession
+    seedCleanSession,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -84,14 +85,16 @@ test.describe('NPCs - CRUD Operationen', () => {
 
             await fillField(page, 'npc-role', 'Wirt');
             await page.click('[data-action="call"][data-value="saveNPC"]');
-            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf
-            // die konkrete Bedingung ersetzt (#toast.error — showToast(msg,'error',...) aus
-            // utils/validation.js setzt className `toast error`) — diese Race wurde in 08-02 gefixt
-            // (Onboarding-/Backup-Toast stach zuvor die Validierungsfehler-Meldung).
-            await page.waitForSelector('#toast.error', { timeout: 3000 });
-
-            const toast = page.locator('#toast');
-            await expect(toast).toBeVisible();
+            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch eine
+            // Wartefunktion auf die konkrete Bedingung ersetzt.
+            // U5: die Bedingung heisst jetzt `.event-log-entry.error` statt
+            // `#toast.error`. Damit ist die in 08-02 behandelte Race strukturell
+            // weg und nicht nur behandelt: der Alt-Knoten #toast war EIN geteiltes
+            // Element, das ein frueher Onboarding-/Backup-Hinweis ueberschrieb —
+            // das Ereignis-Log haengt je Meldung einen EIGENEN Knoten ein, hier
+            // kann nichts mehr stechen. Der Seed bleibt, er haelt das Log ruhig.
+            const meldung = await waitForLogEntry(page, { typ: 'error' });
+            await expect(meldung).toBeVisible();
         });
 
         test('NPC mit Trigger erstellen', async ({ page }) => {

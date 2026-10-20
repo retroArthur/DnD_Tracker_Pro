@@ -54,16 +54,136 @@
  * geloescht, ein bis dahin verborgenes Element wurde sichtbar, also erschien ein NEUER Schluessel,
  * den der alte, einseitige Vergleich stillschweigend uebergangen haette.
  *
- * Alle drei Durchgaenge benutzen `seedPopulatedSession()` statt des leeren Seeds (CR-04, Mangel 4)
+ * Alle vier Durchgaenge benutzen `seedPopulatedSession()` statt des leeren Seeds (CR-04, Mangel 4)
  * — ohne befuellte Daten werden die Entitaets-Markups, auf die geloeschte CSS-Regeln wirken, nie
  * gerendert. Zwei der betroffenen Markups (Shop-Artikelbereich, Fraktions-Ruf-Historie) entstehen
  * zusaetzlich erst im aufgeklappten Shop bzw. bei ausgewaehlter Fraktion — `VIEW_STATE_SETUP`
  * stellt diesen Zustand vor der Erfassung her.
  *
- * Drei Tests = drei Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — alle drei
- * schreiben (bei gesetzter Schreibsperre bzw. immer, im Fall des lokalen Vollabzugs) in dieselbe
- * Datei, und `fullyParallel: true` in playwright.config.js wuerde sie sonst nebenlaeufig ausfuehren
- * und die Datei gegenseitig ueberschreiben.
+ * Vier Tests = vier Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — die
+ * ersten drei schreiben (bei gesetzter Schreibsperre bzw. immer, im Fall des lokalen Vollabzugs)
+ * in dieselbe Datei, und `fullyParallel: true` in playwright.config.js wuerde sie sonst
+ * nebenlaeufig ausfuehren und die Datei gegenseitig ueberschreiben. Der vierte Durchgang schreibt
+ * nichts (siehe dort).
+ *
+ * ===================================================================================
+ * DER SOLLSTAND IST PLATTFORMGEBUNDEN GEWESEN — die Entscheidung von C2 (2026-10-02)
+ * ===================================================================================
+ *
+ * DER BEFUND. CI-Lauf 36966941474 (`ubuntu-latest`) meldete im Durchgang "Standard" 24
+ * abweichende Digests, waehrend dieselbe Suite unter Windows gruen lief: 12x
+ * `div.section-toolbar-actions#0` (npcs, locations, quests, encounter, loot, spells, links,
+ * dmscreen, bestiary, sessionprep, kalender, fraktionen), 7x `button.dmscreen-widget-hide`,
+ * 4x `reise/select.form-select`, 1x `dicestats/span.ds-rate-total`. (Die Meldung nennt 26 —
+ * `toEqual` zaehlt die beiden Array-Klammerzeilen mit.) Weil `mode: 'serial'` gilt, sind die
+ * Durchgaenge "Schmales Layout" und "Emulierte reduzierte Bewegung" dabei UEBERSPRUNGEN worden;
+ * fuer die beiden gibt es bis heute keine Linux-Messung.
+ *
+ * WARUM DAS JETZT ZUM ERSTEN MAL AUFTAUCHTE, und warum es NICHT der Zweig verursacht hat, auf
+ * dem es auffiel: dieser Waechter liegt seit dem 2026-09-09 im Baum (Plan 15-06) und ist bis zum
+ * 2026-10-02 NIE UNTER CI GELAUFEN. `.github/workflows/ci.yml` startet `npx playwright test` nur
+ * bei einem `push` auf `main`/`master` und bei einem `pull_request` GEGEN diese Zweige; seit dem
+ * 2026-09-09 sind 531 Commits auf `main` gelandet, ohne dass dieser Lauf dabei angefahren wurde
+ * (letzter gruener CI-Lauf auf `main`: 2026-08-06, also noch vor der Entstehung dieser Datei).
+ * Der versionierte Sollstand wurde jedes Mal auf dem Windows-Rechner des Entwicklers erhoben —
+ * am 2026-09-11 angelegt, am 2026-09-29, 2026-09-30 und 2026-10-02 neu erhoben, immer mit
+ * `UPDATE_STYLE_BASELINE=1` von Hand, denn der Workflow setzt diesen Schalter nirgends. Ein
+ * bildpunktgenauer Stil-Sollstand, der auf einem Betriebssystem aufgenommen wurde, kann ein
+ * anderes nicht bewerten — der erste Lauf, der ihn auf ein anderes System hielt, war der, der ihn
+ * zerbrach.
+ *
+ * ZWEI URSACHEN, nicht eine. Nachgemessen ueber alle 1213 erfassten Schluessel aller 24
+ * Ansichten, Windows-Istzustand gegen die hier nachgestellte breitere Schriftmetrik (siehe
+ * BREITE_SCHRIFT):
+ *
+ *   (A) 20 der 24 Schluessel bewegten sich, und in ALLEN 20 war die einzige geaenderte
+ *       Eigenschaft `margin`. Keine Farbe, kein Rahmen, kein Schatten, keine Schriftgroesse.
+ *       Alle drei betroffenen Elementarten tragen `margin-left: auto` (editors.css:646,
+ *       dmscreen.css:2424, tools.css:1821), und Chromium loest ein `auto` in
+ *       `getComputedStyle().margin` zum BENUTZTEN Wert in Bildpunkten auf: der uebrige Platz der
+ *       Flexzeile. Der Digest dieser 20 Elemente war eine Textbreitenmessung mit Hashfunktion
+ *       davor. Mitbetroffen und nur deshalb nie aufgefallen: fuenf zentrierte Blockschalen
+ *       (`div.dash`, `div.dice-roller`, `div.timer-hub`, `div.sb-root`, `div.ds-root`) mit
+ *       `margin: 0 auto`, deren benutzter Wert an der FENSTERBREITE haengt — sie waren stabil,
+ *       weil jeder oertliche Lauf dasselbe Fenster hatte. Insgesamt 29 der 1213 Schluessel
+ *       trugen einen aufgeloesten auto-Rand.
+ *
+ *   (B) die restlichen 4 (`reise/select.form-select#0..#3`) bewegten sich unter breiterer Schrift
+ *       NICHT — sie sind eine zweite, von der Schrift unabhaengige Plattformabhaengigkeit.
+ *       `.form-select` hatte im ganzen Quellbaum keine CSS-Regel; die erfassten Werte waren reine
+ *       UA-Formularthemenwerte eines ungestalteten `<select>` (rgb(59,59,59) Flaeche,
+ *       rgb(133,133,133) Rahmen, 13.3333px aus `font: -webkit-small-control`, also der
+ *       SYSTEMSCHRIFT). Chromium gestaltet Formularelemente plattformabhaengig; unter Linux sind
+ *       diese Werte andere.
+ *
+ * DIE ENTSCHEIDUNG, und warum keiner der drei naheliegenden Wege. Der Waechter erfasst ab jetzt
+ * nur noch Werte, die die APP ERKLAERT HAT — den BERECHNETEN Wert, nicht den vom Browser aus einer
+ * Messung abgeleiteten BENUTZTEN:
+ *
+ *   gegen (A): `margin` und `padding` kommen aus `element.computedStyleMap()` statt aus
+ *              `getComputedStyle()`. Ein deklariertes `auto` bleibt dort `auto` (nachgemessen:
+ *              `.section-toolbar-actions` liefert gcs `0px 0px 0px 167.297px`, Map
+ *              `auto 0px 0px 0px`), ein Prozentwert bleibt ein Prozentwert. Siehe
+ *              `berechneteKante()`.
+ *   gegen (B): die sieben ungestalteten Formularelemente der App haben eine CSS-Regel bekommen
+ *              (`.form-select`/`.form-input` in core.css, `.dice-history-clear` in dice.css), und
+ *              `assertKeineUaBedienelemente()` haelt die Luecke zu, indem es jedes erfasste
+ *              Formularelement gegen den reinen UA-Fingerabdruck einer klassenlosen Sonde haelt.
+ *
+ *   WEG (a) des Auftrags — die metrikabhaengigen Eigenschaften herausnehmen — waere viel zu
+ *   grob: `fontSize`, `fontWeight` und `padding` sind in dieser App durchweg in px/em deklariert
+ *   und bewegen sich unter breiterer Schrift nachgemessen um keinen Bildpunkt (0 von 1213). Sie
+ *   zu streichen haette den Waechter fuer 836 Schluessel mit abweichender Schriftgroesse, 256 mit
+ *   abweichendem Schriftgewicht und 518 mit abweichendem Innenabstand blind gemacht, um ein
+ *   Problem zu loesen, das nur `margin` hatte. Der genaue Schnitt ist nicht "Metrik ja/nein",
+ *   sondern "berechnet statt benutzt".
+ *   WEG (b) — ein Sollstand je Plattform — verdoppelte den Vertrag und loeste nichts: der
+ *   Linux-Sollstand muesste in CI erhoben werden, also von genau dem Lauf, den er bewerten soll.
+ *   WEG (c) — der Waechter laeuft nur dort, wo sein Sollstand herkommt — nimmt ihn aus der
+ *   blockierenden Suite heraus und waere damit die laute Fassung einer stillen Freigabe.
+ *
+ * WAS DER WAECHTER DANACH NOCH FAENGT. Alle zwoelf Eigenschaften bleiben in der Liste. Drei
+ * Mutationen am gebauten Buendel belegen das, jede einzeln gemessen im Durchgang "Standard"
+ * (C2, 2026-10-02):
+ *
+ *   (A) `--gold` von #d4af37 auf #d4af38 — eine Stufe im Blaukanal, mit dem Auge nicht zu sehen:
+ *       175 Befunde. Farbaenderungen schlagen unveraendert an.
+ *   (B) `box-shadow: 0 0 4px rgba(0,0,0,0.5)` an `.section-toolbar-actions`, also an GENAU dem
+ *       Element, dessen auto-Rand nicht mehr bewacht wird: 13 Befunde, einer je Ansicht mit
+ *       dieser Leiste. Das Element steht weiter unter Beobachtung; herausgefallen ist nur die
+ *       eine aussagelose Eigenschaft.
+ *   (C) `margin-top: 2px` an derselben Stelle: 13 Befunde. Eine DEKLARIERTE Randaenderung schlaegt
+ *       weiter an — aus `margin: 0` wird `margin: 8px`, aus `margin-left: 12px` wird `auto`,
+ *       beides ist ein anderer berechneter Wert.
+ *
+ * Die beiden beidseitigen Schluesselmengen-Vergleiche (Art 2 und 3) sind unberuehrt, und der
+ * vierte Durchgang faengt ab jetzt zusaetzlich jede KUENFTIGE metrikabhaengige Eigenschaft, die
+ * jemand in PROPERTIES aufnimmt, bevor sie in CI auffaellt.
+ *
+ * WAS ER NICHT MEHR FAENGT. Eine Aenderung, die AUSSCHLIESSLICH den benutzten Wert eines
+ * auto-Randes verschiebt, ohne eine Deklaration anzufassen — also eine Verschiebung des uebrigen
+ * Platzes in einer Flexzeile oder eine andere Zentrierungsbreite. Das ist Absicht und keine
+ * Luecke: ein auto-Rand ist keine Gestaltungsaussage, sondern ein Rechenergebnis, und genau diese
+ * Groesse haben die zustaendigen Proben als EIGENE Aufgabe — layoutprofil.spec.js (Hoehenbudget),
+ * quer-ueberhang.spec.js (Ueberlauf) und breite-schrift.spec.js (Reserve unter breiterer
+ * Schrift) messen Geometrie mit Zahlen, die man lesen kann, statt mit einem Hash. Die Kopfzeile
+ * dieser Datei schliesst `width`/`height` aus demselben Grund schon seit Plan 15-06 aus; ein
+ * aufgeloester auto-Rand IST eine Breite, er stand nur unter einem anderen Namen in der Liste.
+ *
+ * DAS RESTRISIKO AN URSACHE (B), beziffert statt beschwiegen. Welche Eigenschaft der vier
+ * Auswahlfelder sich unter Linux bewegt hat, steht im CI-Protokoll nicht — die Digestform kann
+ * keinen Wert nennen, und nachstellen laesst sich ein Formularthema nicht. Nach der neuen Regel
+ * sind 6 der 12 erfassten Werte von der App erklaert (color, backgroundColor, borderColor,
+ * borderRadius, padding, fontSize — gemessen gegen die klassenlose Sonde: 13.3333px -> 13px,
+ * rgb(59,59,59) -> rgb(13,13,13), rgb(133,133,133) -> rgb(58,58,58), 0px -> 4px, 0px -> 6px 10px).
+ * Die anderen 6 tragen weiter den UA-Wert, aber jeder von ihnen ist entweder der CSS-ANFANGSWERT
+ * (`margin: 0px`, `fontWeight: 400`, `boxShadow: none`, `opacity: 1`) oder eine Konstante aus
+ * Blinks `html.css` (`display: inline-block` am Auswahlfeld und am Zahlenfeld, `textAlign: center`
+ * am Knopf) — keiner davon kommt aus `LayoutTheme`, also aus dem plattformabhaengigen Teil. Die
+ * fuenf wahrscheinlichen Kandidaten sind damit erledigt; bleibt der Befund in CI bestehen, nennt
+ * der lokale Vollabzug die Eigenschaft und die Abhilfe ist eine weitere Deklaration. Vier
+ * Anfangswerte vorsorglich hinzuschreiben waere Rauschen an einer Regel, die vier weitere
+ * Formulare teilt.
  */
 
 import { test, expect } from '@playwright/test';
@@ -106,6 +226,28 @@ const PROPERTIES = [
 // Abbruch nicht als "keine Abweichung" erscheint.
 const MAX_ELEMENTS_PER_VIEW = 300;
 
+// Die fuenf Eigenschaften, die das UA-Stilblatt an einem Formularelement SELBST setzt und die es
+// daher NICHT erbt. Sie bilden den Fingerabdruck, mit dem sich ein Formularelement erkennen
+// laesst, das keine einzige App-Regel abbekommen hat — siehe `uaFingerabdruck()` in
+// `captureViewInBrowser()` und die Begruendung im Kopfkommentar (Befund 2).
+const UA_PROBE_PROPERTIES = ['backgroundColor', 'borderColor', 'borderRadius', 'padding', 'fontSize'];
+
+// Nachstellung einer breiter laufenden Schriftmetrik, WOERTLICH dieselbe wie in
+// tests/e2e/features/breite-schrift.spec.js (C1). Die App bestimmt ihre Schriften an genau zwei
+// Stellen (assets/styles/variables.css), und BEIDE Ketten haben einen Gewinner, den es nur unter
+// Windows gibt ('Segoe UI' bzw. Consolas — JetBrains Mono und Fira Code sind auf beiden
+// Plattformen nicht installiert, nachgemessen). Unter Linux greift die fontconfig-Standardschrift
+// bzw. DejaVu Sans Mono, und die laufen rund 14.5 % (UI) bzw. 9.5 % (Mono) breiter. Verdana liegt
+// mit Faktor 1.1554 einen Prozentpunkt UEBER der Linux-UI-Schrift (am CI-Befund kalibriert:
+// ~1.145), Courier New mit 0.600em Vorschub knapp unter DejaVu Sans Mono (0.602em).
+const BREITE_SCHRIFT =
+    ':root { --font-ui: Verdana, sans-serif !important; ' +
+    '--font-mono: "Courier New", monospace !important; }';
+
+// Bezugstext der Vorbedingung des vierten Durchgangs — ein echter Knopftext der Werkzeugleiste.
+// Eine Buchstabenreihe waere kuerzer und damit unempfindlicher.
+const PROBETEXT = '+ Neuer Charakter';
+
 // Ansicht → Zustandsherstellung VOR der Erfassung (Plan 15-13, CR-04 Mangel 4). Zwei der vier von
 // Plan 15-12 wiederhergestellten Markups entstehen erst im aufgeklappten Shop bzw. bei
 // ausgewaehlter Fraktion — ohne diesen Schritt bleiben Artikelbereich und Fraktions-Detailbereich
@@ -143,14 +285,127 @@ const MIN_ELEMENTS_ABOVE_EMPTY = {
 // Erwartungsliste absichtlicher Abweichungen (D-24) — nach der Neuerhebung des Sollstands in
 // Plan 15-13 LEER. Ein Eintrag gehoert hierhin AUSSCHLIESSLICH fuer die Dauer genau der Welle,
 // die eine berechnete Stiländerung absichtlich herbeifuehrt — mit Nennung des Plans, aus dem er
-// stammt (z. B. "15-16: Farbtoken-Umstellung, siehe D-27"). Eine Ausnahmeliste, die nichts mehr
-// ausnimmt, ist eine stille Freigabe: sie wuerde ab dem naechsten Lauf echte Befunde an genau
-// diesen Schluesseln verschlucken. Jeder Eintrag ist ein Teilstring, der gegen den
+// stammt (z. B. "15-16: Farbtoken-Umstellung, siehe D-27"). Ein Eintrag, der ueber diese Welle
+// hinaus stehen bleibt, ist eine stille Freigabe: er verschluckt ab dem naechsten Lauf echte
+// Befunde an genau diesem Schluessel. Jeder Eintrag ist ein Teilstring, der gegen den
 // Element-Schluessel geprueft wird.
+//
+// BEIDE LISTEN SIND SEIT M3b (2026-10-01) WIEDER LEER — und zwar absichtlich leer, nicht
+// abwesend. Vor M3b trugen sie zusammen 49 Schluessel (14 global + 35 nur schmal): Bestiar-
+// Listenzeilen, die durch die Hoehenbudget-Korrektur (U6) und die beiden Platzgewinne aus M2
+// aus der Erfassung gefallen waren. Sie standen dort ueber mehrere Wellen hinweg und waren damit
+// genau das, was der Absatz oben verbietet. Statt sie weiterzuschleppen ist der Sollstand
+// REGULAER NEU ERHOBEN (`UPDATE_STYLE_BASELINE=1`) und schluesselweise gegen den vorigen
+// verglichen — Zu- und Abgaenge einzeln benannt, nicht gezaehlt:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl Bestiar
+//   --------------  --------  --------  ------------------  -------------------
+//   standard               0        14                   0          129 -> 115
+//   narrow                 0        35                   0          115 ->  80
+//   reducedMotion          0        14                   0          129 -> 115
+//
+//   63 Meldungen an 49 verschiedenen Schluesseln (standard und reducedMotion nennen dieselben
+//   14). ALLE 63 liegen in der Bestiar-Ansicht; 54 tragen `bestiary` im Klassennamen, die
+//   restlichen 9 sind `span.sr-only#8` bis `#14` aus genau denselben Listenzeilen. KEIN Abgang
+//   darueber hinaus, KEIN Zugang, und an keinem weiterhin erfassten Element hat sich ein
+//   berechneter Wert bewegt (0 Digest-Aenderungen in allen drei Durchgaengen). Das war die
+//   Behauptung der beiden Ausnahmelisten, und sie haelt — geprueft, nicht geglaubt.
+//
+// Dass die Elementzahl der Bestiar-Ansicht dabei SINKT, ist kein Stilverlust, sondern der
+// ungeloeste Befund hinter der geteilten Scroll-Maschinerie (`virtual-scroll.js` im `ui/`-
+// Verzeichnis — der vollstaendige Pfad steht hier ABSICHTLICH nicht: das Abdeckungs-Gate in
+// tests/unit/module-test-coverage.test.js zaehlt jede woertliche Pfadnennung in einer Testdatei
+// als Abdeckung, und diese Erwaehnung ist keine): deren Platzrechnung nimmt
+// `container.clientHeight`, sonst `parent.clientHeight - padY`, sonst den festen Rueckfall 400 —
+// ein Fixpunkt ohne Bezug zum verfuegbaren Platz, der bei GROESSERER Schale WENIGER Zeilen
+// rendert. Gemessen und offen; eine
+// eigene Einheit. Der Sollstand hier bildet den Istzustand ab, er rechtfertigt ihn nicht.
+//
+// Die Mechanik (`isExpectedDeviation()` mit dem `durchgang`-Parameter) bleibt stehen, damit die
+// naechste Welle, die berechnete Stile absichtlich aendert, sie wieder benutzen kann — eine leere
+// Liste ist der Normalzustand, keine fehlende Einrichtung.
+
+// ZWEITE REGULAERE NEUERHEBUNG, C1 (2026-10-02). Dieselbe Mechanik wie bei M3b, derselbe
+// schluesselweise Vergleich gegen den vorigen Sollstand:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl
+//   --------------  --------  --------  ------------------  -----------
+//   standard               0         0                   0  unveraendert
+//   narrow                 0         0                  14  unveraendert
+//   reducedMotion          0         0                   0  unveraendert
+//
+// Die 14 liegen alle im schmalen Durchgang und sind 13x `div.section-toolbar-actions#0` (npcs,
+// locations, quests, encounter, loot, shops, spells, links, dmscreen, bestiary, sessionprep,
+// kalender, fraktionen) plus `npcs/button.btn.btn-secondary.npcg-trigger-btn#0`. In ALLEN 14 ist
+// die einzige bewegte Eigenschaft `margin` — nachgemessen am gebauten Buendel bei 375x812 im
+// Mobil-Profil, mit und ohne die Aenderung:
+//
+//   npcs       actions  margin 0px                    -> 0px 0px 0px 31.6719px
+//              trigger  margin 0px 0px 0px 128.734px  -> 0px
+//   locations  actions  margin 0px                    -> 0px 0px 0px 126.656px
+//   loot       actions  margin 0px                    -> 0px 0px 0px 153.797px
+//   fraktionen actions  margin 0px                    -> 0px 0px 0px 28.6406px
+//
+// URSACHE UND WARUM DAS KEIN GESTALTBEFUND IST: `.section-toolbar-actions` traegt
+// `margin-left: auto` (editors.css). Chromium loest ein `auto` in `getComputedStyle().margin`
+// zum BENUTZTEN Wert in Bildpunkten auf, und der benutzte Wert eines auto-Rands in einer
+// Flexzeile IST der uebrige Platz der Zeile. Bis zu dieser Runde stand die Gruppe im 600px-Block
+// auf `width: 100%`, hatte also keinen uebrigen Platz (margin 0px) und schob ihn an den
+// auto-Rand des Knopfes DARIN weiter (128.734px). Jetzt steht sie auf `width: auto` und nimmt
+// ihn selbst. Es hat sich keine Farbe, kein Rahmen, kein Schatten, kein Innenabstand und keine
+// Schriftgroesse bewegt — nur die Stelle, an der derselbe uebrige Platz verbucht wird. Die
+// Aenderung selbst ist gewollt: sie gibt der Listenspalte der Truhe 32px zurueck (siehe
+// tests/e2e/features/breite-schrift.spec.js).
+// Dass ein auto-Rand in diesem Sollstand ueberhaupt als Gestaltwert gefuehrt wird, war hier noch
+// ein offener Befund. Er ist mit C2 GESCHLOSSEN: `margin` und `padding` kommen jetzt aus
+// `element.computedStyleMap()`, ein deklariertes `auto` bleibt `auto`, und diese 14 Meldungen
+// koennen in dieser Form nicht wiederkehren. Begruendung im Kopfkommentar, Abschnitt
+// "DER SOLLSTAND IST PLATTFORMGEBUNDEN GEWESEN".
+
+// DRITTE REGULAERE NEUERHEBUNG, C2 (2026-10-02) — die Umstellung auf den berechneten Wert und die
+// sieben neuen CSS-Regeln aendern Digests, also wurde der Sollstand erhoben und schluesselweise
+// gegen den vorigen verglichen:
+//
+//   Durchgang       Zugaenge  Abgaenge  Digest-Aenderungen  Elementzahl
+//   --------------  --------  --------  ------------------  -----------
+//   standard               0         0                  36  unveraendert
+//   narrow                 0         0                  36  unveraendert
+//   reducedMotion          0         0                  36  unveraendert
+//
+// Alle drei Durchgaenge nennen DIESELBEN 36 Schluessel, und die 36 gehen restlos in zwei Gruppen
+// auf, die sich nicht ueberschneiden:
+//   29  die Elemente mit einem deklarierten auto-Rand — 13x `div.section-toolbar-actions#0`,
+//       7x `button.dmscreen-widget-hide`, `span.ds-rate-total`, `button.npcg-trigger-btn`,
+//       `button.encounter-reset-btn` und die fuenf zentrierten Blockschalen `div.dash`,
+//       `div.dash-party-grid`, `div.dice-roller`, `div.timer-hub`, `div.sb-root`, `div.ds-root`.
+//       Bei ihnen steht statt einer Bildpunktzahl jetzt `auto` im gehashten Wert.
+//   7   die Formularelemente, die mit dieser Runde erstmals eine CSS-Regel haben:
+//       4x `reise/select.form-select`, 2x `reise/input.form-input`,
+//       `dice/button.dice-history-clear`.
+// KEIN weiterer Schluessel hat sich bewegt, keine Ansicht hat ein Element gewonnen oder verloren.
+// Die Umstellung von `padding` ist dabei nachgemessen ein Nulleingriff: kein einziger der 1213
+// Schluessel aendert sich durch sie allein.
+
+// Globale Ausnahmen (alle drei Durchgaenge). LEER seit M3b — Begruendung im Absatz darueber.
+/** @type {string[]} */
 const EXPECTED_DEVIATION_KEYS = [];
 
-function isExpectedDeviation(elementKey) {
-    return EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag));
+// Ausnahmen NUR fuer den schmalen Durchgang (375x812). Ebenfalls leer seit M3b. Die Trennung
+// bleibt bestehen: eine nur schmal gebrauchte Ausnahme in der globalen Liste blendete sie auch
+// in den beiden breiten Durchgaengen aus, wo dieselben Schluessel weiter bewacht gehoeren.
+/** @type {string[]} */
+const EXPECTED_DEVIATION_KEYS_NARROW = [];
+
+/**
+ * @param {string} elementKey Element-Schluessel OHNE Ansichtspraefix
+ * @param {string} [durchgang] 'standard' | 'narrow' | 'reducedMotion'
+ */
+function isExpectedDeviation(elementKey, durchgang) {
+    if (EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag))) return true;
+    return (
+        durchgang === 'narrow' &&
+        EXPECTED_DEVIATION_KEYS_NARROW.some(frag => elementKey.includes(frag))
+    );
 }
 
 // Versionierter Sollstand (Kurzform/Digest, Checkpoint-Entscheidung C) — NICHT unter dem per
@@ -202,11 +457,105 @@ const currentFullCapture = {};
  * aktiven Ansicht die feste Eigenschaftsliste. Laeuft im Browser-Kontext
  * (page.evaluate) — reine Funktion ihrer Argumente, kein Zugriff auf
  * Modul-Scope, damit sie serialisierbar bleibt.
- * @param {{viewId: string, properties: string[], maxElements: number}} args
+ * @param {{viewId: string, properties: string[], maxElements: number, uaProbeProperties: string[]}} args
  */
-function captureViewInBrowser({ viewId, properties, maxElements }) {
+function captureViewInBrowser({ viewId, properties, maxElements, uaProbeProperties }) {
+    /**
+     * Reiner UA-Fingerabdruck dieser Plattform und dieses Themas: je Formularelementart ein
+     * klassenloses Sondenelement, verkettet ueber `uaProbeProperties`. Die Sonden haengen am
+     * `body` und nicht in der Ansicht — sie sollen keine Beobachter der App ausloesen, und keine
+     * der fuenf Eigenschaften wird geerbt (das UA-Stilblatt setzt sie am Formularelement selbst,
+     * `font: -webkit-small-control` schlaegt dabei auch die geerbte Schriftgroesse).
+     * SELBSTKALIBRIEREND: kein Zahlenwert steht im Quelltext, der Vergleich holt sich den
+     * Istzustand der laufenden Plattform. Ein Sollstand mit festen Werten waere genau der Fehler,
+     * den dieser Befund beschreibt.
+     */
+    function uaFingerabdruck() {
+        const huelle = document.createElement('div');
+        huelle.setAttribute('aria-hidden', 'true');
+        huelle.style.cssText =
+            'position:absolute;left:-9999px;top:0;width:0;height:0;overflow:hidden';
+        const arten = {};
+        arten.select = document.createElement('select');
+        arten.textarea = document.createElement('textarea');
+        arten.button = document.createElement('button');
+        ['text', 'number', 'search', 'date', 'color', 'checkbox', 'radio', 'range'].forEach(t => {
+            const el = document.createElement('input');
+            el.type = t;
+            arten[`input-${t}`] = el;
+        });
+        Object.keys(arten).forEach(a => huelle.appendChild(arten[a]));
+        document.body.appendChild(huelle);
+        const fp = {};
+        Object.keys(arten).forEach(a => {
+            const cs = getComputedStyle(arten[a]);
+            fp[a] = uaProbeProperties.map(p => cs[p]).join('␟');
+        });
+        huelle.remove();
+        return fp;
+    }
+
+    /** Elementart im Sinne des Fingerabdrucks — `<input>` traegt sie im type-Attribut. */
+    function artDesElements(el) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'input') return `input-${(el.getAttribute('type') || 'text').toLowerCase()}`;
+        return tag;
+    }
+
+    /** Die vier Kantenwerte in der Kurzform, die auch `getComputedStyle().margin` liefert. */
+    function kurzform(vals) {
+        const [t, r, b, l] = vals;
+        if (t === r && r === b && b === l) return t;
+        if (t === b && r === l) return `${t} ${r}`;
+        if (r === l) return `${t} ${r} ${b}`;
+        return `${t} ${r} ${b} ${l}`;
+    }
+
+    /**
+     * Die BERECHNETE Vierer-Kante (`margin` oder `padding`) statt der benutzten.
+     *
+     * `getComputedStyle().margin` liefert in Chromium den BENUTZTEN Wert: ein deklariertes
+     * `margin-left: auto` kommt als Bildpunktzahl zurueck, und die ist der uebrige Platz der
+     * Flexzeile bzw. der Zentrierungsabstand — also eine Breitenmessung, kein Gestaltwert.
+     * `element.computedStyleMap()` liefert dagegen den BERECHNETEN Wert und erhaelt `auto` als
+     * `CSSKeywordValue` (nachgemessen an .section-toolbar-actions: gcs `0px 0px 0px 167.297px`,
+     * Map `auto 0px 0px 0px`). Prozentwerte bleiben dabei Prozentwerte, statt gegen die aktuelle
+     * Behaelterbreite aufgeloest zu werden — derselbe Gewinn.
+     *
+     * `padding` kann kein `auto` tragen und die App benutzt dort heute keinen Prozentwert; die
+     * Umstellung ist dort nachgemessen ein Nulleingriff (0 von 1213 Schluesseln aendern sich).
+     * Sie steht trotzdem hier, weil die REGEL "berechneter, nicht benutzter Wert" gilt und eine
+     * nur halb angewandte Regel die naechste Hand einlaedt, den Fehler auf der anderen Haelfte
+     * wieder einzubauen.
+     *
+     * Rueckfall auf `getComputedStyle`, falls die CSS Typed OM fehlt oder eine Kante nicht
+     * liefert — dann misst der Durchgang wie vorher, statt auszufallen.
+     */
+    function berechneteKante(el, praefix, rueckfall) {
+        if (typeof el.computedStyleMap !== 'function') return rueckfall;
+        let map;
+        try {
+            map = el.computedStyleMap();
+        } catch {
+            return rueckfall;
+        }
+        const vals = ['top', 'right', 'bottom', 'left'].map(seite => {
+            try {
+                const v = map.get(`${praefix}-${seite}`);
+                return v === null || v === undefined ? null : String(v);
+            } catch {
+                return null;
+            }
+        });
+        if (vals.some(v => v === null)) return rueckfall;
+        return kurzform(vals);
+    }
+
     const container = document.getElementById(`view-${viewId}`);
-    if (!container) return { found: false, capped: false, elementCount: 0, elements: {} };
+    if (!container) return { found: false, capped: false, elementCount: 0, elements: {}, uaOnly: [] };
+
+    const fingerabdruck = uaFingerabdruck();
+    const uaOnly = [];
 
     const all = Array.from(container.querySelectorAll('*')).filter(el => el.classList && el.classList.length > 0);
     const visible = all.filter(el => {
@@ -233,6 +582,22 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
         const key = `${signature}#${idx}`;
 
         const cs = getComputedStyle(el);
+
+        // Stimmen alle fuenf UA-gesetzten Eigenschaften mit der Sonde derselben Elementart
+        // ueberein, hat dieses Formularelement keine einzige App-Regel abbekommen: sein
+        // erfasster Stil ist das Formularthema der Plattform, nicht die Gestalt dieser App.
+        // Steht VOR der Animationsschranke, damit ein animiertes ungestaltetes Bedienelement
+        // nicht durchfaellt.
+        const art = artDesElements(el);
+        if (
+            fingerabdruck[art] !== undefined &&
+            uaProbeProperties.map(p => cs[p]).join('␟') === fingerabdruck[art]
+        ) {
+            uaOnly.push(
+                `${key} (${art}): ` + uaProbeProperties.map(p => `${p}=${cs[p]}`).join(' ')
+            );
+        }
+
         // Laufend animierte Elemente NICHT in den Vergleich aufnehmen (Signatur-Index bleibt
         // trotzdem stabil, s.o.): eine CSS-`animation` mit `infinite` (z.B. `.dms-live-badge`,
         // `animation: dms-live-pulse 2s ease-in-out infinite`) liefert je nach Erfassungszeitpunkt
@@ -245,10 +610,15 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
         properties.forEach(p => {
             record[p] = cs[p];
         });
+        // Die zwei Kantenwerte UEBERSCHREIBEN: berechneter statt benutzter Wert, Begruendung an
+        // berechneteKante(). Die Reihenfolge innerhalb von PROPERTIES bleibt davon unberuehrt —
+        // digestElement() verkettet nach dieser Liste, nicht nach Einfuegereihenfolge.
+        record.margin = berechneteKante(el, 'margin', cs.margin);
+        record.padding = berechneteKante(el, 'padding', cs.padding);
         elements[key] = record;
     });
 
-    return { found: true, capped, elementCount: visible.length, elements };
+    return { found: true, capped, elementCount: visible.length, elements, uaOnly };
 }
 
 // Digestlaenge in Hex-Zeichen (64 Bit) — der volle SHA-256 (64 Hex-Zeichen) waere fuer eine
@@ -304,10 +674,17 @@ function toDigestPass(rawPass) {
  * Codepfad, den ein echter Klick am Ende ausloest (Rendering + `.active`
  * class), nur ohne den Dropdown-Umweg. Nach dem Ansichtswechsel wird — falls
  * registriert — die Zustandsherstellung aus `VIEW_STATE_SETUP` ausgefuehrt.
+ *
+ * `uaBefunde` wird MITGEFUELLT, nicht zurueckgegeben: die Fundliste ungestalteter Formular-
+ * elemente gehoert nicht in den Digestvergleich (sie ist kein Stilwert), muss aber in jedem
+ * Durchgang erhoben und NACH der Digest-Zusicherung geprueft werden. Die Reihenfolge ist
+ * Absicht — bei zwei gleichzeitigen Befunden soll die Abweichung zuerst stehen.
+ *
  * @param {import('@playwright/test').Page} page
+ * @param {string[]} [uaBefunde] Sammelliste fuer ungestaltete Formularelemente
  * @returns {Promise<object>}
  */
-async function runPass(page) {
+async function runPass(page, uaBefunde) {
     const result = {};
     for (const viewId of VIEWS) {
         await page.evaluate(v => {
@@ -334,7 +711,8 @@ async function runPass(page) {
         const captured = await page.evaluate(captureViewInBrowser, {
             viewId,
             properties: PROPERTIES,
-            maxElements: MAX_ELEMENTS_PER_VIEW
+            maxElements: MAX_ELEMENTS_PER_VIEW,
+            uaProbeProperties: UA_PROBE_PROPERTIES
         });
         console.log(
             `[computed-style-diff] ${viewId}: ${captured.elementCount} Elemente erfasst` +
@@ -350,6 +728,9 @@ async function runPass(page) {
                     `stillschweigend auf einen Leerzustand zurueckgefallen`
             ).toBeGreaterThan(MIN_ELEMENTS_ABOVE_EMPTY[viewId]);
         }
+        if (uaBefunde && captured.uaOnly) {
+            captured.uaOnly.forEach(e => uaBefunde.push(`${viewId}/${e}`));
+        }
         result[viewId] = captured;
     }
     return result;
@@ -364,11 +745,18 @@ async function runPass(page) {
  * nennen); ein Schluessel, der im Vorlauf vorhanden war und jetzt nicht mehr erfasst wird (Element
  * verschwunden); und ein Schluessel, der im Vorlauf fehlte und jetzt erfasst wird (Element neu
  * erschienen). Alle drei unterliegen derselben Erwartungsliste.
+ *
+ * `durchgang` benennt den Durchgang ('standard' | 'narrow' | 'reducedMotion') und entscheidet, ob
+ * die NUR fuer den schmalen Durchgang geltenden Ausnahmen greifen (siehe
+ * EXPECTED_DEVIATION_KEYS_NARROW). Ohne diesen Parameter waere jede Ausnahme global, und eine
+ * Ausnahme, die nur in einem Durchgang gebraucht wird, blendete die beiden anderen mit aus.
+ *
  * @param {object|null} previousDigestPass
  * @param {object} currentDigestPass
+ * @param {string} durchgang
  * @returns {string[]}
  */
-function diffPass(previousDigestPass, currentDigestPass) {
+function diffPass(previousDigestPass, currentDigestPass, durchgang) {
     if (!previousDigestPass) return [];
     const unexpected = [];
     for (const viewId of Object.keys(currentDigestPass)) {
@@ -382,13 +770,13 @@ function diffPass(previousDigestPass, currentDigestPass) {
             if (prevDigest === undefined) continue; // Art 3, separat unten behandelt
             if (prevDigest !== currView.digests[key]) {
                 const entry = `${viewId}/${key}: Digest geaendert (Werte im lokalen Vollabzug ${FULL_CAPTURE_PATH_REL})`;
-                if (!isExpectedDeviation(key)) unexpected.push(entry);
+                if (!isExpectedDeviation(key, durchgang)) unexpected.push(entry);
             }
         }
 
         // Art 2: Schluessel im Vorlauf vorhanden, jetzt nicht mehr erfasst (Element verschwunden)
         for (const key of prevView.keys) {
-            if (!(key in currView.digests) && !isExpectedDeviation(key)) {
+            if (!(key in currView.digests) && !isExpectedDeviation(key, durchgang)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf vorhanden, jetzt nicht mehr erfasst`);
             }
         }
@@ -397,7 +785,7 @@ function diffPass(previousDigestPass, currentDigestPass) {
         // die Richtung, in der die schwerste Regression dieser Phase gewirkt hat
         // (.init-mob-dmg-inputs.hidden geloescht -> Element wurde sichtbar).
         for (const key of currView.keys) {
-            if (!(key in prevView.digests) && !isExpectedDeviation(key)) {
+            if (!(key in prevView.digests) && !isExpectedDeviation(key, durchgang)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf nicht vorhanden, jetzt neu erfasst`);
             }
         }
@@ -405,12 +793,32 @@ function diffPass(previousDigestPass, currentDigestPass) {
     return unexpected;
 }
 
+/**
+ * Zusicherung zum zweiten Befund (siehe Kopfkommentar): kein erfasstes Formularelement darf
+ * seinen Stil vollstaendig vom UA-Stilblatt beziehen. Steht in jedem Durchgang NACH der
+ * Digest-Zusicherung.
+ * @param {string[]} uaBefunde
+ * @param {string} durchgang
+ */
+function assertKeineUaBedienelemente(uaBefunde, durchgang) {
+    expect(
+        uaBefunde,
+        `Ungestaltete Formularelemente (${durchgang}) — alle fuenf UA-gesetzten Eigenschaften ` +
+            `stimmen mit einer klassenlosen Sonde derselben Elementart ueberein, die App hat ` +
+            `diesen Elementen also keine einzige Regel gegeben. Ihr erfasster Stil ist das ` +
+            `Formularthema der Plattform und wandert mit ihr; der Sollstand bewacht hier nicht ` +
+            `die App, sondern den Browserbau. Abhilfe ist eine CSS-Regel, keine Ausnahme:\n` +
+            uaBefunde.join('\n')
+    ).toEqual([]);
+}
+
 test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
     test('Standard', async ({ page }) => {
         await seedPopulatedSession(page);
         await loadApp(page);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         // Lokaler Vollabzug: VOR der Zusicherung geschrieben (auch bei einem roten Lauf verfuegbar
@@ -418,10 +826,11 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         currentFullCapture.standard = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.standard : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.standard : null, digestPass, 'standard');
         currentBaseline.standard = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (Standard):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'Standard');
 
         // Schreibsperre (CR-04, Mangel 2): schreibt NUR wenn noch kein Sollstand existiert oder
         // der Schalter gesetzt ist — UND erst NACH der Zusicherung, damit ein gefundener Befund
@@ -441,16 +850,18 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         });
         await page.waitForTimeout(200);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         currentFullCapture.narrow = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.narrow : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.narrow : null, digestPass, 'narrow');
         currentBaseline.narrow = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (schmales Layout):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'schmales Layout');
 
         if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
             saveBaseline(currentBaseline);
@@ -462,19 +873,131 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await loadApp(page);
 
-        const passResult = await runPass(page);
+        const uaBefunde = [];
+        const passResult = await runPass(page, uaBefunde);
         const digestPass = toDigestPass(passResult);
 
         currentFullCapture.reducedMotion = passResult;
         saveFullCapture(currentFullCapture);
 
-        const unexpected = diffPass(previousBaseline ? previousBaseline.reducedMotion : null, digestPass);
+        const unexpected = diffPass(previousBaseline ? previousBaseline.reducedMotion : null, digestPass, 'reducedMotion');
         currentBaseline.reducedMotion = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (reduzierte Bewegung):\n${unexpected.join('\n')}`).toEqual([]);
+        assertKeineUaBedienelemente(uaBefunde, 'reduzierte Bewegung');
 
         if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
             saveBaseline(currentBaseline);
         }
+    });
+
+    /**
+     * VIERTER DURCHGANG — die Schranke, die diesem Waechter gefehlt hat (C2, 2026-10-02).
+     *
+     * Er vergleicht NICHT gegen den eingecheckten Sollstand, sondern DIESELBE Fassung gegen sich
+     * selbst unter einer breiter laufenden Schriftmetrik. Damit prueft er die Eigenschaft, die
+     * der versionierte Sollstand stillschweigend voraussetzt und die am 2026-10-02 zum ersten Mal
+     * gebrochen war: dass ein erfasster Wert von der Schriftmetrik der Plattform UNABHAENGIG ist.
+     * Jede Eigenschaft, deren Endwert Chromium aus einer Messung ableitet, faellt hier auf —
+     * oertlich, auf dem Entwicklerrechner, in 30 Sekunden, statt erst in CI auf einem anderen
+     * Betriebssystem.
+     *
+     * ZWEI SEITEN, nicht eine: der Durchgang erhebt beide Abzuege selbst, in zwei Seiten
+     * desselben Kontexts. Er haengt damit an keinem Sollstand und an keinem vorigen Fall —
+     * auch ein `--grep`-Lauf nur dieses Falles und ein Lauf mit `UPDATE_STYLE_BASELINE=1` sagen
+     * dasselbe. Der Preis sind zwei zusaetzliche Abzuege (rund 30 s).
+     *
+     * WAS ER AUF EINEM LINUX-RUNNER MISST. Dort ist Verdana nicht installiert und
+     * `Verdana, sans-serif` faellt auf dieselbe Standardschrift wie `'Segoe UI', system-ui,
+     * sans-serif`; dasselbe gilt fuer Courier New gegen DejaVu Sans Mono. Beide Seiten messen dann
+     * dieselbe Metrik und der Fall kann dort NICHTS finden. Das ist kein Mangel, sondern die
+     * Arbeitsteilung: der Fall ist die Schranke fuer den Entwicklerrechner, auf dem die beiden
+     * Windows-Erstwahlen greifen und auf dem der Sollstand erhoben wird. Damit das nicht
+     * stillschweigend passiert, misst die Vorbedingung beide Breiten und SAGT ins Protokoll,
+     * welcher der beiden Faelle vorliegt — ein stiller Uebersprung waere hier dieselbe stille
+     * Freigabe wie eine Ausnahmeliste, die nichts mehr ausnimmt.
+     */
+    test('Breitere Schriftmetrik bewegt den Digest nicht', async ({ page, context }) => {
+        await seedPopulatedSession(page);
+        await loadApp(page);
+        const schmalBefunde = [];
+        const schmal = toDigestPass(await runPass(page, schmalBefunde));
+
+        const breiteSeite = await context.newPage();
+        // Als ERSTES Kopfkind, also vor den App-Stilen: die App setzt ihre Messtokens beim Start
+        // und soll dabei schon die endgueltige Schrift sehen. Dass die Deklaration trotz der
+        // frueheren Stellung gewinnt, leistet das `!important` (keine Ratschenverletzung — die
+        // Ratsche in tests/unit/design-consistency.test.js zaehlt die Quellen unter
+        // assets/styles/, nicht das Stilblatt eines Testlaufs).
+        await breiteSeite.addInitScript(quelltext => {
+            const einfuegen = () => {
+                if (!document.head) return false;
+                const s = document.createElement('style');
+                s.id = 'breite-schrift-probe';
+                s.textContent = quelltext;
+                document.head.insertBefore(s, document.head.firstChild);
+                return true;
+            };
+            if (!einfuegen()) {
+                const mo = new MutationObserver(() => {
+                    if (einfuegen()) mo.disconnect();
+                });
+                mo.observe(document, { childList: true, subtree: true });
+            }
+        }, BREITE_SCHRIFT);
+        await seedPopulatedSession(breiteSeite);
+        await loadApp(breiteSeite);
+
+        // Vorbedingung: ist die Nachstellung angekommen — oder KANN sie auf dieser Plattform
+        // nichts aendern? Beides wird benannt, keines verschwiegen.
+        const breiten = await breiteSeite.evaluate(t => {
+            const messe = familie => {
+                const span = document.createElement('span');
+                span.style.cssText =
+                    'position:absolute;left:-9999px;white-space:pre;font-size:14px;font-family:' +
+                    familie;
+                span.textContent = t;
+                document.body.appendChild(span);
+                const b = span.getBoundingClientRect().width;
+                span.remove();
+                return Math.round(b * 100) / 100;
+            };
+            return { ist: messe('var(--font-ui)'), segoe: messe('"Segoe UI"') };
+        }, PROBETEXT);
+        const faktor = breiten.segoe > 0 ? Math.round((breiten.ist / breiten.segoe) * 10000) / 10000 : 0;
+        if (faktor > 1.02) {
+            console.log(
+                `[computed-style-diff] breite Schrift ANGEKOMMEN: "${PROBETEXT}" ` +
+                    `${breiten.segoe}px -> ${breiten.ist}px (Faktor ${faktor})`
+            );
+        } else {
+            console.log(
+                `[computed-style-diff] breite Schrift AUF DIESER PLATTFORM NICHT NACHSTELLBAR: ` +
+                    `"${PROBETEXT}" misst unter var(--font-ui) ${breiten.ist}px und unter ` +
+                    `"Segoe UI" ${breiten.segoe}px (Faktor ${faktor}) — beide Ketten fallen auf ` +
+                    `dieselbe Schrift. Dieser Fall vergleicht dann zwei gleiche Metriken und kann ` +
+                    `nichts finden; er ist die Schranke fuer den Entwicklerrechner, nicht fuer ` +
+                    `den Runner.`
+            );
+        }
+
+        const breitBefunde = [];
+        const breit = toDigestPass(await runPass(breiteSeite, breitBefunde));
+        await breiteSeite.close();
+
+        // Kein Sollstand im Spiel, also auch keine Erwartungsliste eines Durchgangs: der
+        // Vergleich laeuft unter dem eigenen Namen 'breiteSchrift', und die nur fuer das schmale
+        // Layout geltenden Ausnahmen greifen hier ausdruecklich nicht.
+        const unexpected = diffPass(schmal, breit, 'breiteSchrift');
+        expect(
+            unexpected,
+            `Erfasste Werte haengen an der Schriftmetrik (Faktor ${faktor}). Jeder dieser ` +
+                `Schluessel liefert auf einem Betriebssystem mit anderen Standardschriften einen ` +
+                `anderen Digest — der versionierte Sollstand bewacht dort das Betriebssystem ` +
+                `statt die App. Abhilfe ist, den BERECHNETEN statt den BENUTZTEN Wert zu erfassen ` +
+                `(siehe berechneteKante() in captureViewInBrowser), nicht eine Ausnahme:\n` +
+                unexpected.join('\n')
+        ).toEqual([]);
+        assertKeineUaBedienelemente(breitBefunde, 'breite Schrift');
     });
 });

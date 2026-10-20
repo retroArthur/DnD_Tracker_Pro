@@ -247,9 +247,23 @@ test.describe('Responsiveness', () => {
 
     test('App funktioniert auf Mobile-Größe', async ({ page }) => {
         await page.setViewportSize({ width: 375, height: 667 });
-        await page.waitForTimeout(500);
+        // 700ms statt 500: der Fensterbeobachter in core/init.js ist mit 200ms
+        // entprellt (M2a).
+        await page.waitForTimeout(700);
 
-        // App sollte noch nutzbar sein
-        await expect(page.locator('.app-title')).toBeVisible();
+        /* GEAENDERT MIT M2a, und zwar weil sich das VERHALTEN geaendert hat, nicht
+           damit der Fall gruen wird. Hier stand `.app-title` als Nachweis "App
+           noch nutzbar". Diese Zusage galt nur, solange ein auf 375px verkleinertes
+           Fenster im Desktop-Profil blieb: seit das Profil dem Fenster folgt, ist
+           die Desktop-Kopfzeile dort ausgeblendet
+           (`[data-layout="mobile"] .app-header-top { display: none }`) — und das
+           ist der ERWUENSCHTE Zustand, nicht der Fehler. Gemessen hatte die
+           Desktop-Kopfzeile bei 390x844 eine Hoehe von 234px am oberen Fensterrand,
+           bei einem sichtbaren Reiter von 24.
+           An die Stelle tritt die staerkere Aussage: das Mobil-Profil greift, und
+           die Bedienwege, die es dafuer mitbringt, sind da. */
+        expect(await page.evaluate(() => document.documentElement.dataset.layout)).toBe('mobile');
+        await expect(page.locator('.mobile-header')).toBeVisible();
+        await expect(page.locator('.mobile-nav-toggle')).toBeVisible();
     });
 });

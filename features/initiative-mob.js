@@ -259,15 +259,32 @@ function applyMobDamage(cbId, damage) {
 // ROLLMOBATTACK — Sammel-Angriff (INIT-03, D-13/D-14)
 // N-fach-Modus: alive Angriffe, Schaden wird auto-summiert
 // DMG-Mob-Regel: O(1) Treffer via calcMobHits(), Schaden auto-summiert
-// Ergebnis via showToast() (UI-SPEC: keine Inline-Anzeige)
+// Ergebnis via showToast() — nicht IN DER ZEILE (04-UI-SPEC.md:467)
 // DoS-Schutz: alive und count sind auf max. 100 geclampt (BESTIARY_MAX_QUANTITY)
+//
+// WORTLAUT DER SPEC, IN U5 NACHGELESEN, weil die fruehere Kurzfassung
+// ("UI-SPEC: keine Inline-Anzeige") mehr verbot als die Spec:
+//   "Attack result display: Shown via showToast() / event-log entry (existing
+//    notification system), not inline in the row — keeps the row compact."
+//   (.planning/.../04-initiative-erweiterungen/04-UI-SPEC.md:467, gleichlautend
+//    in 04-04-PLAN.md:90)
+// Die Schranke gilt der MOB-ZEILE und ihrer Kompaktheit — und sie NENNT den
+// Ereignis-Log ausdruecklich als den vorgesehenen Kanal. Das
+// Kampfprotokoll-Panel (U5) haengt an genau diesem Kanal: showToast() schreibt
+// weiter dorthin, der Ringpuffer liest mit. Ein Panel am Fensterrand ist keine
+// Anzeige "in the row"; an der Zeile aendert sich keine Zeile Anzeigelogik.
+// Eine weitere Begruendung gibt es im Planungsverzeichnis nicht — `grep` ueber
+// .planning nach "Inline-Anzeige" ist leer, die zitierte Zeile ist die Quelle.
 // ============================================================
 
 /**
  * Fuehrt einen Mob-Sammel-Angriff durch.
  * N-fach: alive separate Wuerfe, Schaden = alive_treffer * Waffenschaden.
  * DMG-Regel: calcMobHits() (O(1)), Schaden = hits * Waffenschaden.
- * Zeigt Ergebnis via showToast() — UI-SPEC verbietet Inline-Anzeige.
+ * Zeigt das Ergebnis via showToast(), nicht in der Mob-Zeile — siehe den
+ * zitierten Wortlaut im Blockkommentar darueber. Das Kampfprotokoll (U5) liest
+ * denselben Kanal mit, damit ein Sammelangriff nach drei weiteren Wuerfen noch
+ * nachlesbar ist; deshalb traegt der Aufruf `{ kategorie: 'kampf' }`.
  *
  * @param {number|string} cbId - Kombattant-ID
  */
@@ -283,7 +300,7 @@ function rollMobAttack(cbId) {
 
     var alive = getMobAlive(cb);
     if (alive <= 0) {
-        showToast('Mob besiegt — keine Angriffe moeglich', 'warning');
+        showToast('Mob besiegt — keine Angriffe moeglich', 'warning', { kategorie: 'kampf' });
         return;
     }
 
@@ -335,7 +352,8 @@ function rollMobAttack(cbId) {
         var rollsStr = hitRolls.slice(0, 10).join(', ') + (hitRolls.length > 10 ? ', ...' : '');
         showToast(
             mobName + ': ' + alive + ' Angriffe — Schaden je: ' + rollsStr + ' | Gesamtschaden: ' + totalDamage,
-            'info'
+            'info',
+            { kategorie: 'kampf' }
         );
     } else {
         // DMG-Mob-Regel-Modus: calcMobHits() bestimmt Treffer
@@ -366,7 +384,8 @@ function rollMobAttack(cbId) {
         }
         showToast(
             mobName + ': ' + hits + ' Treffer (von ' + alive + ' lebend, RK ' + targetAC + ', +' + attackBonus + ') | Schaden: ' + totalDmg,
-            'info'
+            'info',
+            { kategorie: 'kampf' }
         );
     }
 }
@@ -434,7 +453,7 @@ function dissolveMob(cbId) {
 
     if (typeof window.renderInit === 'function') window.renderInit();
     if (typeof window.save === 'function') window.save();
-    showToast('Mob aufgehoben');
+    showToast('Mob aufgehoben', 'success', { kategorie: 'kampf' });
 }
 
 // ============================================================

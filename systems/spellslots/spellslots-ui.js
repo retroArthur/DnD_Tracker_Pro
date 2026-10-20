@@ -54,7 +54,7 @@ function restoreAllSpellSlots(charId) {
     }
     renderParty();
     save();
-    showToast('Zauberslots wiederhergestellt');
+    showToast('Zauberslots wiederhergestellt', 'success', { kategorie: 'kampf' });
 }
 function renderSpellSlotPips(charId) {
     const slots = getSpellSlots(charId);

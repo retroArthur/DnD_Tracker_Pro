@@ -2028,6 +2028,23 @@
 .party-leveling-options {
     display: flex;
     gap: 4px;
+    /* C1 — die zwei Wahlknoepfe brechen um, statt die Karte zu sprengen.
+       Beide tragen `white-space: nowrap` (unten, damit "🎯 Meilenstein" nicht
+       mitten im Wort bricht), die Reihe selbst hatte keinen Umbruch: ihre
+       Mindestbreite war damit die SUMME beider Knoepfe und nicht verhandelbar.
+       Gemessen am gebauten Buendel, 320x700, gefuellte Kampagne: nachdem die
+       Charakterkarten nicht mehr hinausragen (siehe `--grid-columns` und
+       `.char-card-name`), war DIESE Reihe der letzte Ueberhang der
+       Party-Ansicht — 189px breit bis x=326 in einem 320px-Fenster, also 6px
+       ueber den Rand. Der CI-Lauf nennt sie nicht; sie taucht erst unter einer
+       Metrik auf, die noch breiter laeuft als die des Runners. Genau deshalb
+       steht sie hier: sie ist die naechste Stelle, die gekippt waere.
+       `justify-content: center` haelt die umgebrochene zweite Zeile unter der
+       ersten mittig — die Umschaltung sitzt in einer mittig gesetzten Karte
+       (`.party-leveling-toggle`, `align-items: center`), eine linksbuendige
+       zweite Zeile waere dort die einzige Kante im Kasten. */
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .party-leveling-option {
@@ -2279,8 +2296,8 @@
     border-radius: var(--radius-md);
     margin-bottom: 12px;
     position: sticky;
-    top: 145px;
-    z-index: var(--z-sticky);
+    top: var(--sticky-top-actions, 145px); /* Glied 3: Band + Kopfzeile + Runden-Leiste + Abstand (updateStickyOffsets) */
+    z-index: var(--z-sticky-3); /* unter der Runden-Leiste — siehe variables.css */
 }
 
 [data-layout="mobile"] #quick-actions-bar {

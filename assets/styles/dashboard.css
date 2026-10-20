@@ -822,6 +822,41 @@
 
 .dash {
     display: grid;
+    /* Q1 — DIE EINE SPALTE, AUSDRUECKLICH UND BEI NULL ABGEFANGEN.
+       Hier stand nur `display: grid` ohne `grid-template-columns`. Die einzige
+       Spalte war damit implizit, also `grid-auto-columns: auto` — und das
+       automatische Minimum einer `auto`-Spalte ist die min-content-Breite ihres
+       Inhalts, nicht null. Gemessen am gebauten Buendel mit GEFUELLTER Kampagne
+       loeste sie zu 710px auf, waehrend `.dash` selbst 300/340/370px breit war:
+       Seitenueberhang 416px bei 320x700, 376px bei 360x740, 346px bei 390x844,
+       in allen vier Themes auf den Bildpunkt gleich. Auf einer LEEREN Kampagne
+       war der Ueberhang 0 — ohne Inhalt gibt es keine min-content-Breite, der
+       die Spalte folgen koennte. Genau deshalb faehrt die Probe zu dieser Regel
+       (tests/e2e/features/quer-ueberhang.spec.js) mit Daten.
+
+       WOHER DIE 710px KOMMEN, denn die Zahl sieht nach nichts aus:
+       `.dash-party-grid` weiter unten traegt `max-width: 720px`. Das ist eine
+       DEFINITE Maximalbreite, und `repeat(auto-fill, minmax(160px, 1fr))`
+       rechnet seine Wiederholungen dagegen, solange die eigene Breite unbestimmt
+       ist (so bei der min-content-Messung des Elternteils): floor((720+12) /
+       (160+12)) = 4 Spalten. 4x160 + 3x12 Abstand + 2x16 Innenabstand + 2x1
+       Rahmen = 710. Hat `.dash-party` dagegen eine bestimmte Breite, rechnet
+       dasselbe `auto-fill` gegen diese und liefert EINE Spalte — die Schranke
+       hier ist also alles, was fehlte. Das `max-width: 720px` bleibt deshalb
+       unangetastet; es ist nicht die Ursache, sondern nur ihr Zahlenlieferant.
+
+       `minmax(0, 1fr)`, nicht `1fr`: `1fr` ist `minmax(auto, 1fr)` und traegt
+       dasselbe `auto`-Minimum wie die implizite Spalte, aendert also nichts.
+       Dieselbe Bauart in der anderen Achse steht als
+       `grid-template-rows: minmax(0, 1fr)` an der Master-Detail-Regel in
+       core.css; die Begruendung dort gilt hier sinngleich.
+
+       AM DESKTOP AENDERT DIE ZEILE NICHTS: bei 1440x900 und 1280x800 ist die
+       Geometrie aller 24 Ansichten vorher/nachher auf den Bildpunkt gleich
+       (nachgemessen fuer jedes Element mit Klasse). Die `auto`-Spalte wurde dort
+       ohnehin auf die Containerbreite gestreckt, weil 710px kleiner sind als der
+       freie Platz. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
     max-width: 1200px;
     margin: 0 auto;
@@ -2108,6 +2143,246 @@
 
 .qref-section.search-hidden {
     display: none;
+}
+
+/* ============================================================
+   KAMPFPROTOKOLL-PANEL (U5)
+
+   WARUM HIER UND NICHT IN EINER EIGENEN DATEI: das Baumuster dieses Panels
+   ist `.qref-panel` direkt darueber — dieselbe Konstruktion (fest
+   positioniert, eigene Flaeche, KEINE Blende, --z-panel), dieselben
+   Bestandteile (Kopfzeile, Kuerzelhinweis, Filterreiter, Liste). Die beiden
+   Panels nebeneinander zu lesen ist der Punkt; eine 21. Datei im @import-Hub
+   haette sie auseinandergezogen und ausserdem drei Zahlenbehauptungen in
+   CLAUDE.md ueberholt (DOC-02/03/04 in tests/unit/docs-consistency.test.js
+   zaehlen `assets/styles/*.css` gegen den dortigen Strukturblock).
+
+   ANKER IST OBEN RECHTS, nicht unten rechts wie bei der Schnellreferenz:
+   beide Panels duerfen gleichzeitig offen stehen, und `.qref-panel` haengt an
+   bottom: 80px. Zwei Fenster, die sich gegenseitig verdecken, waeren
+   schlechter als eines, das man findet.
+
+   DIE OBERKANTE KOMMT AUS DER VERSATZKETTE (U3), nicht aus einer festen Zahl.
+   `--sticky-top-round` ist genau "Hoehe des Umzugs-Bands + Hoehe der
+   Kopfzeile", von updateStickyOffsets() zur Laufzeit GEMESSEN. Mit der festen
+   92px aus dem ersten Wurf schnitt das Panel der Kopfzeile ~8px ab, sobald das
+   Umzugs-Hinweisband stand (`body.has-migration-hint` schiebt alles nach
+   unten) — im Browser gesehen, nicht vermutet. Der Rueckfallwert 75px ist
+   derselbe wie bei der Runden-Leiste (dmscreen.css), die 12px sind der
+   Abstand darunter.
+   ============================================================ */
+
+.kplog-panel {
+    position: fixed;
+    top: calc(var(--sticky-top-round, 75px) + 12px);
+    right: 20px;
+    width: 380px;
+    max-height: calc(100vh - var(--sticky-top-round, 75px) - 44px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+    z-index: var(--z-panel);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.kplog-panel.active {
+    display: flex;
+}
+
+.kplog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+}
+
+.kplog-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--gold-text);
+}
+
+.kplog-title-icon {
+    font-size: 1.2em;
+}
+
+/* Der Kuerzelhinweis AM PANEL, nicht in einem Hilfe-Dialog — Muster
+   .qref-kbd-hint oben. Er ist der Grund, warum das Kuerzel auffindbar ist,
+   ohne es zu suchen: genau das fehlte dem Dauermodus des Ereignis-Logs. */
+.kplog-kbd-hint {
+    padding: 2px 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.7em;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin-left: 4px;
+}
+
+.kplog-header-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.kplog-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 4px 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.kplog-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--gold);
+}
+
+/* Ruhekennung des Loeschknopfs als Linie in --red-text, nicht in --red:
+   --red ist eine Flaechenrolle. Dieselbe Entscheidung wie bei .qref-btn-del
+   oben und .backup-entry-restore in file-backup.css. NACH .kplog-btn notiert,
+   damit die Kaskade bei gleicher Spezifitaet (0-1-0) hier entscheidet, der
+   Hover (0-2-0) aber weiter gewinnt — der Zustandsmelder kommt zurueck. */
+.kplog-btn-del {
+    border-color: var(--red-text);
+}
+
+.kplog-tabs {
+    display: flex;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+}
+
+.kplog-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9em;
+    font-family: inherit;
+}
+
+.kplog-tab:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+
+.kplog-tab.active {
+    color: var(--gold-text);
+    border-bottom-color: var(--gold);
+}
+
+.kplog-anzahl {
+    font-size: 0.85em;
+    color: var(--text-dim);
+    padding: 6px 16px 0;
+}
+
+.kplog-liste {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kplog-leer {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    text-align: center;
+    padding: 24px 8px;
+    line-height: 1.5;
+}
+
+.kplog-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font-size: 0.88em;
+    color: var(--text);
+}
+
+.kplog-entry.error {
+    border-left-color: var(--red);
+}
+
+.kplog-entry.warning {
+    border-left-color: var(--yellow);
+}
+
+.kplog-entry.info {
+    border-left-color: var(--cyan);
+}
+
+.kplog-icon {
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.kplog-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.kplog-text {
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.kplog-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+}
+
+.kplog-zeit {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    color: var(--text-dim);
+}
+
+.kplog-marke {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--gold-text);
+}
+
+/* Schmale Fenster: das Panel nimmt die Breite, laesst aber den Rand frei.
+   900px ist dieselbe Schwelle wie in der Werkzeugleisten-Leiter
+   (editors.css) und in core.css — kein neuer Knick im Layout. */
+@media (max-width: 900px) {
+    .kplog-panel {
+        top: calc(var(--sticky-top-round, 60px) + 8px);
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-height: calc(100vh - var(--sticky-top-round, 60px) - 28px);
+    }
 }
 
 /* ============================================================

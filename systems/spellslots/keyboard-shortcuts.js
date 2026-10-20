@@ -59,7 +59,16 @@ function initKeyboardShortcuts() {
             // 3. Offenes Modal schließen
             const openModal = document.querySelector('.modal-overlay.show');
             if (openModal) {
-                openModal.classList.remove('show');
+                // Die ~19 Modale aus den Templates gehören dauerhaft zum DOM —
+                // bei ihnen ist das Abnehmen der Klasse `show` der Weg. Eine
+                // per JS eingehängte Schale (Markierung `modal-transient`)
+                // muss dagegen ENTFERNT werden: sonst bleibt der Knoten samt
+                // seiner Feld-IDs liegen, unsichtbar aber nicht weg (U4).
+                if (openModal.classList.contains('modal-transient')) {
+                    openModal.remove();
+                } else {
+                    openModal.classList.remove('show');
+                }
                 return;
             }
         }
@@ -198,6 +207,13 @@ function initKeyboardShortcuts() {
         if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
+            return;
+        }
+        // K: Kampfprotokoll-Panel (U5). Bare 'k' war frei — Strg+K ist die globale
+        // Suche und Strg+Shift+K die Kommandopalette, beide fangen weiter oben ab.
+        if (e.key === 'k' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            if (typeof window.toggleCombatLog === 'function') window.toggleCombatLog();
             return;
         }
         // N: Neues Element (kontextabhängig)

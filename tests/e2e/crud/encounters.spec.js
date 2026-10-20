@@ -7,7 +7,8 @@ import {
     selectOption,
     generateTestName,
     performUndo,
-    seedCleanSession
+    seedCleanSession,
+    waitForLogEntry
 } from '../helpers/test-utils.js';
 
 /**
@@ -129,9 +130,13 @@ test.describe('Encounters - CRUD Operationen', () => {
             await page.click('[data-action="call"][data-value="saveEncounter"]');
             await page.waitForTimeout(300);
 
-            // Toast sollte Fehler zeigen
-            const toast = page.locator('#toast');
-            await expect(toast).toBeVisible();
+            // Ereignis-Log muss einen FEHLER-Eintrag zeigen. U5 hat den Alt-Knoten
+            // #toast abgeschaltet (er zeigte jede Meldung ein zweites Mal und war
+            // EIN geteilter Knoten, den die naechste Meldung ueberschrieb). Die
+            // Zusicherung ist dabei strenger geworden: sie nennt jetzt den Typ,
+            // statt nur "irgendetwas ist sichtbar" zu verlangen.
+            const meldung = await waitForLogEntry(page, { typ: 'error' });
+            await expect(meldung).toBeVisible();
         });
     });
 

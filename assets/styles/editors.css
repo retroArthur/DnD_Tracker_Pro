@@ -702,8 +702,25 @@
 @media (max-width: 900px) {
     .section-toolbar {
         flex-wrap: wrap;
+        /* Eine Leiste, die umbrechen DARF, kann keine feste Hoehe haben: die
+           verdrahtete `height: 74px` oben blieb beim Umbruch stehen, und das
+           Suchfeld (`order: 3`, `flex: 1 1 100%`) ragte darunter heraus — 55px
+           bei Orte/NSCs/Begegnungen, 52px beim Bestiar. Dort liegt es hinter dem
+           Inhalt, der unter der Leiste beginnt: gemessen bei 390/540/600px
+           antwortete elementFromPoint fuer Begegnungen mit SPAN.card-title und
+           fuer das Bestiar mit DIV.bestiary-list-item, und ein echter Mausklick
+           kam nicht an (Wert blieb leer, aktives Element BODY). Orte und NSCs
+           tippten nur, weil ihr Feld zufaellig auf Leerraum fiel.
+           `min-height` statt `height` haelt den ungebrochenen Fall unveraendert
+           (ueber 900px gilt `flex-wrap: nowrap`, gemessen weiter 74px).
+           Die Truhe fuehrt dieselben zwei Zeilen seit laengerem lokal
+           (`.loot-view .section-toolbar`, loot.css) — gegen ueberlaufende
+           Filter-Chips, aus demselben Grund; sie war die einzige heile der
+           fuenf. */
+        height: auto;
+        min-height: 74px;
     }
-    
+
     .section-toolbar-identity {
         width: auto;
     }
@@ -741,11 +758,48 @@
         justify-content: flex-start;
     }
     
+    /* C1 — DIE PRIMAERE AKTION TEILT DIE ZEILE MIT DEM TITEL.
+       Hier stand `width: 100%; justify-content: flex-end`. Das zwang die Gruppe
+       auf eine EIGENE Zeile der umbrechenden Leiste, obwohl sie dort meist nur
+       einen Knopf traegt: gemessen am gebauten Buendel bei 360x740 (Truhe,
+       gefuellte Kampagne) lag der Titel in einer 24px hohen Zeile mit 218px
+       ungenutztem Rest und "+ Item" (76px breit) in einer 45px hohen darunter —
+       zusammen 77px Leistenhoehe fuer 172px Inhalt. Mit `width: auto` sitzen
+       beide in einer 45px hohen Zeile: die Leiste faellt von 328 auf 296px, und
+       die 32px gehen 1:1 in die Listenspalte (162 -> 194px bei verlangten
+       148px). Das ist der halbe Fehlbetrag des CI-Befunds, und er war reiner
+       Leerraum.
+       `justify-content: flex-end` ist ENTFALLEN, nicht vergessen: bei
+       `width: auto` hat die Gruppe keinen freien Platz zu verteilen, die Regel
+       waere toter Code. Rechts steht sie weiterhin — durch `margin-left: auto`
+       aus dem 900px-Block darueber, und zwar auch dann, wenn sie bei vielen
+       Aktionsknoepfen doch in eine eigene Zeile umbricht. Genau das ist der
+       Rueckfall auf das alte Bild, und er ist intrinsisch: er tritt ein, wenn
+       Titel und Aktionen zusammen nicht in eine Zeile passen, und nur dann. */
     .section-toolbar-actions {
-        width: 100%;
-        justify-content: flex-end;
+        width: auto;
+        /* DIE ZWEI ZEILEN, DIE `width: auto` BRAUCHT — und ohne die es einen
+           neuen Fehler erzeugt hat. `width: 100%` war nicht nur eine
+           Platzverschwendung, es war auch eine SCHRANKE: die Gruppe konnte nie
+           breiter werden als ihre Zeile. Mit `width: auto` nimmt sie ihre
+           max-content-Breite, und `flex-shrink: 0` (Grundregel weiter oben)
+           verbietet ihr, nachzugeben. Gemessen am gebauten Buendel, DM-Schirm
+           bei 320x700 unter Verdana: die Gruppe traegt dort drei Knoepfe
+           ("📋 Profile", "⚙️ Widgets", "🔄") und wurde 282.73px breit in einer
+           276px schmalen Zeile — 2px Seitenueberhang, ein Fehler, den es vor
+           `width: auto` nicht gab und der lokal unsichtbar blieb, weil er die
+           breitere Schriftmetrik braucht.
+           `max-width: 100%` gibt die Schranke zurueck, ohne die Verschwendung:
+           die Gruppe hugt ihren Inhalt, aber nie ueber die Zeile hinaus.
+           `flex-wrap: wrap` ist das Gegenstueck dazu — gedeckelt und
+           unumbrechbar waere sie innen zu eng; so bricht die Knopfreihe um,
+           statt zu klemmen. Beides zusammen gemessen: DM-Schirm 2px -> 0px,
+           und die Zahlen der Truhe (Leiste 296/293px, Spalte 194/197px) auf
+           den Bildpunkt unveraendert. */
+        max-width: 100%;
+        flex-wrap: wrap;
     }
-    
+
     .section-toolbar-filters select {
         flex: 1;
         min-width: 0;

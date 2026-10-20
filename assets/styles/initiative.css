@@ -147,7 +147,106 @@
             border-radius: var(--radius-md);
             padding: 8px 12px;
         }
-        
+
+        /* ============================================================
+           Q1 — DIE KAMPFZEILE BRICHT AUF DEM TELEFON UM
+           ============================================================
+           Die sechste Spalte der Desktop-Vorlage oben ist `auto` und traegt
+           `.init-right`: Trefferpunktanzeige plus sechs Knoepfe in einer
+           `flex-wrap: nowrap`-Reihe. Das automatische Minimum einer
+           `auto`-Spalte ist die min-content-Breite ihres Inhalts, und die ist
+           bei dieser Knopfreihe 379px — gemessen am gebauten Buendel mit
+           GEFUELLTER Kampagne (10 Kaempfern). Die Zeile selbst war 300px breit.
+           Seitenueberhang: 244px bei 320x700, 204px bei 360x740, 174px bei
+           390x844, in allen vier Themes auf den Bildpunkt gleich. Auf einer
+           LEEREN Kampagne gibt es keine Zeile und damit keinen Fehler — die
+           Probe (tests/e2e/features/quer-ueberhang.spec.js) faehrt deshalb mit
+           Daten.
+
+           WARUM UMBRECHEN UND NICHT SCHRUMPFEN. Hier hilft kein
+           `minmax(0, 1fr)` wie bei den beiden Raster-Faellen dieser Runde: die
+           sechs Knoepfe sind Tippflaechen von mindestens 44px (M1), und 379px
+           auf 140px zu pressen hiesse, sie unter die Fingergroesse zu druecken.
+           Was auf dem Telefon fehlt, ist Breite — also bekommt die Knopfreihe
+           eine eigene Zeile und darf darin umbrechen. Die erste Zeile behaelt
+           Griff, Initiative, Ruestungsklasse und Namen; `minmax(0, 1fr)` an der
+           Namensspalte, weil `1fr` (= `minmax(auto, 1fr)`) sonst dasselbe
+           min-content-Minimum traegt wie die Spalte, die hier gerade behoben
+           wird.
+
+           WARUM AUCH DIE ZAUBERSLOTS. Sie sind das fuenfte Kind jeder Zeile
+           (`.init-spell-slots` oder, bei Nichtzauberern, der leere Platzhalter
+           `.init-spell-slots-placeholder` — features/initiative.js). Ohne
+           eigene Zeilenanweisung fiele sie bei vier Spalten in die 30px breite
+           Griffspalte der zweiten Zeile. `.init-spell-slots` bringt seinen
+           `flex-wrap: wrap` schon mit.
+
+           WARUM AM LAYOUTPROFIL UND NICHT AN EINER MEDIA QUERY. Das
+           Mobil-Layout dieser App haengt an `[data-layout="mobile"]`, nicht an
+           einer Fensterbreite — ein gedrehtes Telefon (740x360) ist mobil,
+           obwohl es breiter ist als die 900px-Grenze. Die drei erlaubten
+           CSS-Grenzen (600/900/1200) bleiben davon unberuehrt. Bei 740x360 ragt
+           die Zeile auch ohne Korrektur nicht hinaus; der Umbruch dort ist
+           Folge derselben Regel und von der Probe mitgedeckt. */
+        [data-layout="mobile"] .init-entry {
+            grid-template-columns: 30px 50px 40px minmax(0, 1fr);
+        }
+
+        [data-layout="mobile"] .init-entry > .init-spell-slots,
+        [data-layout="mobile"] .init-entry > .init-spell-slots-placeholder {
+            grid-column: 1 / -1;
+        }
+
+        [data-layout="mobile"] .init-entry > .init-right {
+            grid-column: 1 / -1;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        /* ============================================================
+           Q1, RUNDE 2 — DIE ZUSTANDSFLAECHEN IN DER NAMENSSPALTE
+           ============================================================
+           Die Regel darueber hat die Namensspalte auf `minmax(0, 1fr)`
+           festgelegt — bei 320px sind das 128px. Damit ist der Ueberhang der
+           ZEILE weg, und sichtbar geworden ist, was INNERHALB dieser Spalte
+           nicht schrumpfen kann. `.init-info` ist ein Block mit `min-width: 0`;
+           drei seiner Kinder sind nowrap-Flexreihen, die nur in bestimmten
+           Kampfzustaenden ueberhaupt im Markup stehen und deshalb von einer
+           Saat aus gleich gesunden Kaempfern nie erzeugt wurden:
+
+             `.death-saves`                  braucht 277px (features/initiative.js:183,
+                                             nur SPIELER bei 0 Trefferpunkten)
+             `.concentration-check-banner`   braucht 221px (nur bei
+                                             `concentration.pendingCheck`)
+
+           Gemessen am gebauten Buendel, je EIN Kaempfer in dem Zustand, sonst
+           leere Kampagne — Ueberhang des Dokuments bei 320x700 / 390x844:
+             Todesrettung 1/2     127px / 57px, letzter Punkt bei x=431..447
+             pendingCheck 22       71px /  1px, Wuerfelknopf bei x=336..391
+           Beide Male lagen die Bedienelemente in BEIDEN Fenstern an derselben
+           x-Stelle, also unabhaengig von der Fensterbreite ausserhalb.
+
+           WARUM UMBRECHEN UND NICHT SCHRUMPFEN. Dieselbe Begruendung wie bei
+           `.init-right` oben: die sechs Todeswurf-Punkte sind 16px-Tippziele
+           und der Knopf fuer den KON-Rettungswurf ist eine 44px-Tippflaeche
+           (M1). 277px auf 128px zu pressen hiesse, sie unter die Fingergroesse
+           zu druecken. Was auf dem Telefon fehlt, ist Breite — also darf die
+           Reihe umbrechen. Jedes einzelne Kind passt danach in die 128px: die
+           breiteste Gruppe (Beschriftung + drei Punkte) ist 92px breit.
+
+           WARUM IM MOBIL-ZWEIG. Auf dem Desktop traegt die Namensspalte rund
+           600px; dort gibt es nichts zu beheben, und ein Umbruch wuerde nie
+           ausgeloest. Die Enge ist eine Eigenschaft DIESES Profils, also steht
+           die Antwort darauf hier — wie bei `.init-right`. Die Marke
+           `.concentration-badge` ist der dritte Fall und steht NICHT hier,
+           sondern an ihrer Grundregel weiter unten: sie lief nicht an fehlender
+           Umbruchfreiheit auf, sondern daran, dass sie ihren Behaelter
+           ueberhaupt nicht kannte — und das ist kein Mobil-Sonderfall. */
+        [data-layout="mobile"] .init-entry > .init-info > .death-saves,
+        [data-layout="mobile"] .init-entry > .init-info > .concentration-check-banner {
+            flex-wrap: wrap;
+        }
+
         .init-entry.active {
             border-color: var(--gold);
             background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent) 0%, var(--bg-card) 100%);
@@ -381,6 +480,45 @@
             align-items: center;
             gap: 6px;
             padding: 4px 10px;
+            /* Q1, RUNDE 2 — DIE MARKE KANNTE IHREN BEHAELTER NICHT.
+               `inline-flex` ohne `max-width` nimmt die Breite seines Inhalts,
+               ohne nach dem Elternmasz zu fragen. In `.init-info` sind das auf
+               dem Telefon 128px (die `minmax(0, 1fr)`-Namensspalte); die Marke
+               wurde so breit, wie der Zaubername es verlangte, und lief
+               hinaus. Gemessen am gebauten Buendel bei 320x700, ein Kaempfer
+               mit aktiver Konzentration, echte deutsche Konzentrationszauber:
+                 "Segnen" (6)               0px
+                 "Dunkelheit" (10)          0px
+                 "Verlangsamen" (12)        1px
+                 "Unsichtbarkeit" (14)      3px
+                 "Spinnenklettern" (15)    11px
+                 "Person bezaubern" (16)   22px
+                 "Schild des Glaubens" (19) 33px — Marke 184px, x=169..353,
+                 und der ✕-Knopf zum Abbrechen bei x=320..342, damit
+                 VOLLSTAENDIG rechts des 320px-Fensterrands.
+
+               `max-width: 100%` bindet die Marke an ihren Behaelter. Danach
+               greift die Ellipse, die `.conc-spell` weiter unten schon
+               mitbringt: der Name kuerzt sich ab, statt die Marke
+               hinauszuschieben. ABKUERZEN IST HIER ZULAESSIG, weil der volle
+               Name im `title` der Marke steht
+               (features/initiative-combat-widgets.js:294) — anders als bei den
+               Tippzielen der Todesrettung, wo nur Umbrechen bleibt.
+
+               KEIN `min-width: 0` an `.conc-spell` noetig: das automatische
+               Mindestmasz eines Flex-Kindes gilt nur bei `overflow: visible`,
+               und `.conc-spell` traegt `overflow: hidden` (fuer die Ellipse).
+               Sein Minimum ist damit schon 0, und die feste Obergrenze von
+               120px dort ist jetzt nur noch ein Deckel nach OBEN.
+
+               WARUM NICHT IM MOBIL-ZWEIG. Dass ein `inline-flex` seinen
+               Behaelter nicht ueberragen soll, ist keine Eigenschaft des
+               Telefons. Auf dem Desktop traegt die Namensspalte 941px (1440x900)
+               bzw. 781px (1280x800), die Marke 184px — `max-width: 100%` ist
+               dort ohne jede Wirkung, nachgemessen vorher UND nachher: Marke
+               x=175..359 b=184, Name x=207..316 b=109, ✕-Knopf x=326..348, in
+               beiden Fenstern auf den Bildpunkt gleich. */
+            max-width: 100%;
             /* Welle 2 Schritt 7. Beide Verlaufsenden trugen fremdes Violett
                (147,51,234 und 168,85,247); das zweite traf zufaellig
                --know-religion, das Wissensgebiet "Religion" — nach dem Zweck

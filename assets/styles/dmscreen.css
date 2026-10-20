@@ -429,8 +429,8 @@
             flex-wrap: wrap;
             align-items: center;
             position: sticky;
-            top: 75px;
-            z-index: var(--z-sticky);
+            top: var(--sticky-top-round, 75px); /* Glied 2: Band + Kopfzeile (updateStickyOffsets) */
+            z-index: var(--z-sticky-2); /* unter der Kopfzeile — siehe variables.css */
         }
 
         [data-layout="mobile"] .encounter-controls {
