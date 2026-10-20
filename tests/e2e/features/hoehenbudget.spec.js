@@ -228,10 +228,30 @@ function messeBudget(sel) {
     // Meldung nichts sagte. Die leere Liste ist ein BEFUND, kein Absturz: sie
     // faellt ueber `anzahl` auf, und die Geometrie meldet sich als unbekannt.
     const lr = letzter ? letzter.getBoundingClientRect() : null;
-    const imFenster = !!lr && lr.top < window.innerHeight && lr.bottom > 0 && lr.height > 0;
-    const px = lr ? Math.round(lr.left + Math.min(lr.width, window.innerWidth - lr.left) / 2) : 0;
-    const py = lr ? Math.round(Math.min(lr.bottom, window.innerHeight - 1)) - 4 : 0;
+    // DER SICHTBARE STREIFEN, nicht der Elementkasten: der naechste rollbare
+    // Vorfahr KLIPPT den Eintrag, und ein Punkt jenseits seiner Kante trifft den
+    // ersten unbeschnittenen Vorfahren statt den Eintrag.
+    const klipperVon = el => {
+        let e = el ? el.parentElement : null;
+        while (e && e !== document.documentElement) {
+            const o = getComputedStyle(e).overflowY;
+            if (o === 'auto' || o === 'scroll' || o === 'hidden') return e;
+            e = e.parentElement;
+        }
+        return null;
+    };
+    const klipper = klipperVon(letzter);
+    const kr = klipper ? klipper.getBoundingClientRect() : null;
+    const sOben = lr ? Math.max(lr.top, kr ? kr.top : -1e9, 0) : 0;
+    const sUnten = lr ? Math.min(lr.bottom, kr ? kr.bottom : 1e9, window.innerHeight) : 0;
+    const sLinks = lr ? Math.max(lr.left, kr ? kr.left : -1e9, 0) : 0;
+    const sRechts = lr ? Math.min(lr.right, kr ? kr.right : 1e9, window.innerWidth) : 0;
+    const imFenster = !!lr && sUnten - sOben >= 2 && sRechts - sLinks >= 2;
+    const px = Math.round((sLinks + sRechts) / 2);
+    const py = Math.round((sOben + sUnten) / 2);
     const getroffen = imFenster ? document.elementFromPoint(px, py) : null;
+    // Wie weit der Eintrag unter die Klippkante seines Rollbehaelters ragt.
+    const ueberhangUnten = lr && kr ? Math.max(0, Math.round(lr.bottom - kr.bottom)) : 0;
     const ue = (a, b) =>
         a && b ? Math.max(0, Math.round(Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))) : 0;
     return {
@@ -261,75 +281,12 @@ function messeBudget(sel) {
         letzterUnten: lr ? Math.round(lr.bottom) : null,
         letzterImFenster: imFenster,
         letzterKlickbar: !!(getroffen && (letzter === getroffen || letzter.contains(getroffen))),
-        // ZEITWEISE DIAGNOSE (CI-Befund PR #4, nur auf Linux): der Treffpunkt
-        // liegt 4 px UEBER der Unterkante des Eintrags, nicht in seiner Mitte.
-        // Bei gebrochenen Zeilenhoehen aus anderen Schriftmetriken kann er in
-        // eine Fuge fallen — oder etwas deckt den Eintrag wirklich. Diese
-        // Felder sagen, welches von beidem, und verschwinden danach wieder.
-        diagPunkt: lr ? px + ',' + py : null,
-        diagKasten: lr
-            ? lr.left.toFixed(2) +
-              ',' +
-              lr.top.toFixed(2) +
-              ' ' +
-              lr.width.toFixed(2) +
-              'x' +
-              lr.height.toFixed(2) +
-              ' unten=' +
-              lr.bottom.toFixed(2)
-            : null,
-        diagDecker: (() => {
-            if (!getroffen) return 'nichts getroffen';
-            if (letzter && (letzter === getroffen || letzter.contains(getroffen))) return null;
-            const kl = (getroffen.className || '').toString().trim().split(/\s+/).slice(0, 3);
-            const cs = getComputedStyle(getroffen);
-            const gr = getroffen.getBoundingClientRect();
-            return (
-                getroffen.tagName.toLowerCase() +
-                (kl[0] ? '.' + kl.join('.') : '') +
-                ' z=' +
-                cs.zIndex +
-                ' pe=' +
-                cs.pointerEvents +
-                ' pos=' +
-                cs.position +
-                ' kasten=' +
-                gr.top.toFixed(2) +
-                '..' +
-                gr.bottom.toFixed(2) +
-                ' istGeschwister=' +
-                (letzter && getroffen.parentElement === letzter.parentElement)
-            );
-        })(),
-        diagNachbarn: (() => {
-            if (!letzter) return null;
-            const v = letzter.previousElementSibling;
-            const n = letzter.nextElementSibling;
-            const r = e =>
-                e
-                    ? e.getBoundingClientRect().top.toFixed(2) +
-                      '..' +
-                      e.getBoundingClientRect().bottom.toFixed(2)
-                    : '-';
-            return 'vorher ' + r(v) + ' | nachher ' + r(n);
-        })(),
-        diagSchale: (() => {
-            const sch = letzter ? letzter.parentElement : null;
-            if (!sch) return null;
-            const r = sch.getBoundingClientRect();
-            const cs = getComputedStyle(sch);
-            return (
-                r.top.toFixed(2) +
-                '..' +
-                r.bottom.toFixed(2) +
-                ' overflow=' +
-                cs.overflowY +
-                ' scrollTop=' +
-                Math.round(sch.scrollTop) +
-                ' scrollHoehe=' +
-                sch.scrollHeight
-            );
-        })()
+        letzterUeberhang: ueberhangUnten,
+        letzterKlipper: klipper
+            ? klipper.tagName.toLowerCase() + '.' + String(klipper.className).split(' ')[0]
+            : '(keiner)',
+        letzterStreifen: lr ? `${Math.round(sOben)}..${Math.round(sUnten)}` : null,
+        letzterHoehe: lr ? Math.round(lr.height) : null
     };
 }
 
@@ -1251,6 +1208,48 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
    Und weil eine Probe, die nie rot war, nichts beweist: der letzte Fall dieses
    Abschnitts zwingt das Token auf die alte verdrahtete 120px zurueck und
    verlangt, dass die Matrix genau dann Befunde meldet. */
+/*
+ * WIE WEIT DER LETZTE EINTRAG UNTER DIE KLIPPKANTE SEINES ROLLBEHAELTERS RAGEN
+ * DARF. Vier der fuenf Schalen: 0px. Das Bestiar: 4px, und zwar aus einer
+ * gemessenen Ursache, nicht aus Nachsicht.
+ *
+ * `features/bestiary/bestiary-render.js` meldet dem Rollwerk eine Zeilenhoehe
+ * von 52px (der Wert von `.bestiary-list-item { min-height }`), gerendert wird
+ * aber 56px (12px Polster oben und unten + 32px Inhalt; gemessen in beiden
+ * Buendeln). Das Rollwerk setzt den Fuss der sichtbaren Huelle auf
+ * `startIdx * 52`, fuellt sie aber mit `Zeilen * 56` — ihr Fuss waechst damit
+ * ueber den Platzhalter `Zeilen_gesamt * 52` hinaus, und am Listenende bleibt
+ * genau die Differenz der beiden Zahlen unter der Klippkante liegen: 56 - 52.
+ *
+ * GEMESSEN, und zwar an beiden Buendeln ueber elf Fensterhoehen (900x880 bis
+ * 900x956, gescrollt, Bestiar):
+ *
+ *   900x912, dieser Baum:   Eintrag 539..595, Klippkante 591  -> 4px
+ *   900x912, Stand uat:     Eintrag 536,4..592,4, Kante 588,4 -> 4px
+ *   900x900, CI (Linux):    Eintrag 527..583, Klippkante 579  -> 4px
+ *   900x900, dieser Baum:   8 statt 9 Zeilen                  -> 0px
+ *
+ * Die 4px sind also WEDER neu noch linuxeigen: sie stehen vor den Design-Wellen
+ * genauso da. Was die Wellen geaendert haben, sind die halben Bildpunkte — mit
+ * `em`-Groessen lagen alle Kaesten auf x,39, mit den Token-Groessen auf ganzen
+ * Zahlen. Deshalb fiel der alte Messpunkt (Unterkante minus 4px, gerundet)
+ * vorher 0,4px INNERHALB der Kante und faellt jetzt genau darauf.
+ *
+ * Die Ursache ist ein ausgewiesener, bewusst verschobener Befund des
+ * Rollwerk-Moduls — die Platzrechnung steht samt Messung im Kopf von
+ * computed-style-diff.spec.js ("Gemessen und offen; eine eigene Einheit").
+ * Dieses Dach behebt sie nicht, es BEZIFFERT sie: waechst der Modellfehler
+ * (etwa weil eine Zeile 60px hoch wird), bricht das Dach und nennt die Stelle.
+ *
+ * KEINE VERWESUNGSPROBE: das Dach kann nicht verlangen, dass der Ueberhang
+ * tatsaechlich auftritt. Er betraegt in allen 40 lokal gemessenen gescrollten
+ * Zustaenden 0px und tritt nur bei bestimmten Ausrichtungen auf (912 lokal, 900
+ * auf CI). Eine Probe, die ihn fordert, waere auf der einen Plattform rot und
+ * auf der anderen gruen. Faellt der Modellfehler, faellt dieses Dach mit ihm —
+ * der Zeiger darauf steht in der eigenen Einheit, nicht hier.
+ */
+const UEBERHANG_DACH_BESTIAR = 4;
+
 const MATRIX_BREITEN = [1280, 900];
 const MATRIX_HOEHEN = [900, 700];
 
@@ -1272,14 +1271,16 @@ const MATRIX_ANSICHTEN = [
         suchSel,
         listenSel,
         postenSel: null,
-        erwartet: ANZAHL
+        erwartet: ANZAHL,
+        ueberhangDach: 0
     })),
     {
         reiter: 'bestiary',
         suchSel: '#bestiary-search',
         listenSel: '#bestiary-list',
         postenSel: '#bestiary-list .bestiary-list-item',
-        erwartet: null
+        erwartet: null,
+        ueberhangDach: UEBERHANG_DACH_BESTIAR
     }
 ];
 
@@ -1328,10 +1329,32 @@ async function zustandHerstellen(page, reiter, listenSel, gescrollt) {
  * @param {string} marke
  * @param {any} m Ergebnis von messeBudget()
  * @param {boolean} [letzterPruefen] Erreichbarkeit des letzten Eintrags mitpruefen
+ * `ueberhangDach` ist die FUENFTE Zusicherung, neu in dieser Runde: wie weit der
+ * letzte Eintrag unter die Klippkante seines Rollbehaelters ragen darf. Sie
+ * gehoert zur vierten und gilt mit ihr nur im gescrollten Zustand — ungescrollt
+ * liegt der letzte Eintrag legitim weit unter der Kante (lokal 320 bis 1654px
+ * ueber die 40 Zustaende gemessen), und das waere kein Befund, sondern der
+ * Normalzustand einer Liste an ihrem Anfang. Begruendung der einen Ausnahme an
+ * UEBERHANG_DACH_BESTIAR.
+ *
+ * DER MESSPUNKT DER VIERTEN ZUSICHERUNG IST DIE MITTE DES SICHTBAREN STREIFENS,
+ * nicht die Unterkante des Elements. Vorher sass er auf `Unterkante - 4px` des
+ * ELEMENTKASTENS — ein Punkt, der bei einem geklippten Eintrag ausserhalb des
+ * Rollbehaelters liegen kann. `elementFromPoint` liefert dort den ersten
+ * unbeschnittenen Vorfahren, und die Probe meldete "NICHT-KLICKBAR" fuer einen
+ * Eintrag, der auf 52 seiner 56px sehr wohl antwortet (CI, 900x900: Treffer
+ * DIV.bestiary-master statt DIV.bestiary-list-item). Derselbe Messfehler ist in
+ * dieser Runde schon zweimal gemacht worden und steht in
+ * mobil-kopfmenue.spec.js, Fall (19), mit derselben Begruendung. Die Unterkante
+ * ist damit nicht ungeprueft: sie ist jetzt ihre EIGENE, bezifferte Zusicherung
+ * (`ueberhangDach`) statt ein Nebeneffekt der Trefferprobe — das Paar aus beiden
+ * sagt mehr als der alte Randpunkt allein.
+ *
  * @param {number|null} [erwartet] Soll-Zahl der Eintraege, null = mindestens einer
+ * @param {number} [ueberhangDach] erlaubter Ueberhang unter die Klippkante in px
  * @returns {string[]}
  */
-function befundeAus(marke, m, letzterPruefen = true, erwartet = ANZAHL) {
+function befundeAus(marke, m, letzterPruefen = true, erwartet = ANZAHL, ueberhangDach = 0) {
     const befunde = [];
     if (erwartet === null) {
         if (m.anzahl < 1) befunde.push(`${marke}: kein Eintrag gerendert`);
@@ -1348,19 +1371,20 @@ function befundeAus(marke, m, letzterPruefen = true, erwartet = ANZAHL) {
     }
     if (m.appTitel !== 'frei') befunde.push(`${marke}: App-Titel ${m.appTitel}`);
     if (m.globaleSuche !== 'frei') befunde.push(`${marke}: globale Suche ${m.globaleSuche}`);
+    if (letzterPruefen && m.letzterUeberhang > ueberhangDach) {
+        befunde.push(
+            `${marke}: letzter Eintrag ragt ${m.letzterUeberhang}px unter die Klippkante von ` +
+                `${m.letzterKlipper} (Dach ${ueberhangDach}px) — erreichbar bleibt nur der ` +
+                `Streifen ${m.letzterStreifen} von ${m.letzterOben}..${m.letzterUnten}`
+        );
+    }
     if (letzterPruefen && (!m.letzterImFenster || !m.letzterKlickbar)) {
         befunde.push(
-            `${marke}: letzter Eintrag ${m.letzterOben}..${m.letzterUnten}px` +
+            `${marke}: letzter Eintrag ${m.letzterOben}..${m.letzterUnten}px ` +
+                `(Streifen ${m.letzterStreifen} in ${m.letzterKlipper}, ` +
+                `Ueberhang ${m.letzterUeberhang}px)` +
                 `${m.letzterImFenster ? '' : ' AUSSERHALB'}` +
-                `${m.letzterKlickbar ? '' : ' NICHT-KLICKBAR'}` +
-                `${
-                    m.letzterKlickbar
-                        ? ''
-                        : `\n      Punkt ${m.diagPunkt} | Kasten ${m.diagKasten}` +
-                          `\n      Decker: ${m.diagDecker}` +
-                          `\n      Nachbarn: ${m.diagNachbarn}` +
-                          `\n      Schale: ${m.diagSchale}`
-                }`
+                `${m.letzterKlickbar ? '' : ' NICHT-KLICKBAR'}`
         );
     }
     return befunde;
@@ -1412,9 +1436,13 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
                                 `${marke} | Ueberhang ${m.ueberhang}px | Rahmen ${m.rahmen} | ` +
                                     `Band ${m.bandHoehe}px | KopfDecktLeiste ${m.kopfDecktLeiste}px | ` +
                                     `Suchfeld ${m.suchfeld} | letzter(${m.anzahl}) ` +
-                                    `${m.letzterOben}..${m.letzterUnten}`
+                                    `${m.letzterOben}..${m.letzterUnten} | Streifen ` +
+                                    `${m.letzterStreifen} in ${m.letzterKlipper} | Ueberhang ` +
+                                    `${m.letzterUeberhang}px`
                             );
-                            befunde.push(...befundeAus(marke, m, gescrollt, a.erwartet));
+                            befunde.push(
+                                ...befundeAus(marke, m, gescrollt, a.erwartet, a.ueberhangDach)
+                            );
                         }
                     }
                     console.log(`[M3c]\n${protokoll.join('\n')}`);
@@ -1456,7 +1484,7 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
         await zustandHerstellen(page, a.reiter, a.listenSel, true);
         const gemessen = await page.evaluate(messeBudget, sel);
         expect(
-            befundeAus('gemessenes Budget', gemessen, true, a.erwartet),
+            befundeAus('gemessenes Budget', gemessen, true, a.erwartet, a.ueberhangDach),
             'die Matrix muss mit dem gemessenen Budget befundfrei sein, sonst misst diese ' +
                 'Gegenprobe nur einen vorbestehenden Fehler'
         ).toEqual([]);
@@ -1467,7 +1495,13 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
         await page.waitForTimeout(300);
         await zustandHerstellen(page, a.reiter, a.listenSel, true);
         const verdrahtet = await page.evaluate(messeBudget, sel);
-        const befunde = befundeAus('verdrahtete 120px', verdrahtet, true, a.erwartet);
+        const befunde = befundeAus(
+            'verdrahtete 120px',
+            verdrahtet,
+            true,
+            a.erwartet,
+            a.ueberhangDach
+        );
         console.log(
             `[M3c] Gegenprobe ${breite}x${hoehe} mit Band, gescrollt — gemessen: Rahmen ` +
                 `${gemessen.rahmen}, ` +
@@ -1491,6 +1525,72 @@ test.describe('Die Messmatrix des Hoehenbudgets (M3c)', () => {
         expect(
             befunde.length,
             'die Matrix-Zusicherungen muessen den verdrahteten Zustand melden — sie melden nichts'
+        ).toBeGreaterThan(0);
+    });
+
+    test('Gegenprobe: ein groesserer Modellfehler bricht das Ueberhang-Dach', async ({ page }) => {
+        // Das Dach steht auf 4px und kommt aus 56 minus 52 — der Differenz
+        // zwischen gerenderter und gemeldeter Zeilenhoehe des Bestiars. Ohne
+        // diese Gegenprobe waere es eine Zahl, von der niemand weiss, ob sie
+        // ueberhaupt etwas abfaengt: LOKAL ist der Ueberhang in allen 40
+        // Matrix-Zustaenden 0px, die fuenfte Zusicherung also stumm. Sie wird
+        // erst auf CI laut, wo bei 900x900 eine Zeile mehr rendert.
+        //
+        // Gefahren wird deshalb nicht das Symptom, sondern die URSACHE: die
+        // Zeilenhoehe steigt per Stilblatt, waehrend das Rollwerk weiter mit
+        // seinen 52px rechnet (`VirtualScroll.create(..., 52)` in
+        // features/bestiary/bestiary-render.js). Der Modellfehler je Zeile
+        // waechst damit von 4px auf ein Vielfaches, und das Dach MUSS brechen.
+        //
+        // `!important` und ein eigener Waehler, kein Inline-Stil: die Zeilen
+        // entstehen beim Rendern neu, ein Inline-Wert waere beim ersten Rollen
+        // weg. Es faellt nicht in die !important-Ratsche — die zaehlt die
+        // Quelldateien unter assets/styles/.
+        test.setTimeout(90000);
+        const a = MATRIX_ANSICHTEN[MATRIX_ANSICHTEN.length - 1];
+        expect(a.reiter, 'die Gegenprobe gilt der fuenften Schale').toBe('bestiary');
+        const sel = [a.suchSel, a.listenSel, a.postenSel];
+        await page.setViewportSize({ width: 900, height: 900 });
+        await appLaden(page);
+
+        await zustandHerstellen(page, a.reiter, a.listenSel, true);
+        const gemessen = await page.evaluate(messeBudget, sel);
+        expect(
+            befundeAus('gemessenes Dach', gemessen, true, a.erwartet, a.ueberhangDach),
+            'das Bestiar muss mit dem gemessenen Dach befundfrei sein, sonst misst diese ' +
+                'Gegenprobe nur einen vorbestehenden Fehler'
+        ).toEqual([]);
+
+        await page.addStyleTag({
+            content: '#bestiary-list .bestiary-list-item { min-height: 96px !important; }'
+        });
+        await page.waitForTimeout(300);
+        await zustandHerstellen(page, a.reiter, a.listenSel, true);
+        const gedehnt = await page.evaluate(messeBudget, sel);
+        const befunde = befundeAus('gedehnte Zeilen', gedehnt, true, a.erwartet, a.ueberhangDach);
+        console.log(
+            `[M3c] Gegenprobe Ueberhang-Dach 900x900, gescrollt — gemessen: Zeilenhoehe ` +
+                `${gemessen.letzterHoehe}px, Ueberhang ${gemessen.letzterUeberhang}px | ` +
+                `gedehnt: Zeilenhoehe ${gedehnt.letzterHoehe}px, Ueberhang ` +
+                `${gedehnt.letzterUeberhang}px, Streifen ${gedehnt.letzterStreifen}, ` +
+                `Befunde ${befunde.length}`
+        );
+
+        // Erst der Beweis, dass die Dehnung ueberhaupt gegriffen hat.
+        expect(
+            gedehnt.letzterHoehe,
+            `die Zeilen muessen auf 96px zu dehnen sein (gemessen ${gedehnt.letzterHoehe}px)`
+        ).toBeGreaterThan(gemessen.letzterHoehe);
+        // Und dann: das Dach sieht es.
+        expect(
+            gedehnt.letzterUeberhang,
+            `mit gedehnten Zeilen muss der letzte Eintrag unter die Klippkante ragen ` +
+                `(gemessen ${gedehnt.letzterUeberhang}px, Dach ${a.ueberhangDach}px)`
+        ).toBeGreaterThan(a.ueberhangDach);
+        expect(
+            befunde.filter(b => b.includes('Klippkante')).length,
+            `die fuenfte Zusicherung muss den gedehnten Zustand melden — gemeldet wurde ` +
+                `${JSON.stringify(befunde)}`
         ).toBeGreaterThan(0);
     });
 });
