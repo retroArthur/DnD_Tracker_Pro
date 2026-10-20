@@ -718,3 +718,185 @@ export const testData = {
         cha: 5
     })
 };
+// ============================================================
+// PERSISTENZ: AUF DIE TATSACHE WARTEN, NICHT AUF EINE DAUER
+// ============================================================
+/**
+ * Was `scanPersistenz()` sucht. Reine Daten — die Probe wird an die Seite
+ * uebergeben, darf also keine Funktion enthalten.
+ *
+ * @typedef {object} Persistenzprobe
+ * @property {string} liste Name der Liste im gespeicherten Kampagnenstand, z. B.
+ *   'characters', 'wiki', 'npcs'. Ein Speicherwert gilt nur dann als
+ *   Kampagnenstand, wenn dort ein Array liegt.
+ * @property {Record<string, unknown>} [wo] Felder, die den gesuchten Eintrag
+ *   identifizieren. Ein erwarteter String vergleicht per `includes()` (die Specs
+ *   pruefen Namen so), jeder andere Wert per `===`.
+ * @property {Array<string|number>} [pfad] Pfad INNERHALB des gefundenen Eintrags
+ *   zu dem Wert, auf den gewartet wird (z. B. ['spellSlots', 1, 'current']).
+ * @property {unknown} [wert] Erwarteter Wert am Ende von `pfad`, per `===`
+ *   verglichen. Zahlen also exakt — ein Teilstring-Vergleich wuerde die 1 in
+ *   einer 10 finden und zu fruehe gruene Faelle erzeugen.
+ */
+
+/**
+ * Laeuft IM BROWSER und wird von `waitForPersistedEntry()` (als Wartebedingung)
+ * UND von `readPersistedEntryReport()` (als Lagebericht) benutzt — deshalb EINE
+ * Funktion mit Schalter statt zwei Abschriften derselben Schleife.
+ *
+ * Playwright serialisiert diese Funktion zu Quelltext: sie darf nichts aus dem
+ * Modul-Scope greifen und keine Hilfsfunktion dieses Moduls aufrufen.
+ *
+ * Gesucht wird ueber ALLE Speicherschluessel, nicht ueber einen hier
+ * nachgerechneten: der Kampagnenschluessel entsteht in der App an genau einer
+ * Stelle (`getActiveCampaignKey()` in core/data.js), und eine zweite Abschrift
+ * im Test waere die Drift. Faellt der Zustand unter einen ANDEREN Schluessel als
+ * den nach dem Neustart aktiven, zeigen `treffer` und `aktiverSchluessel` das,
+ * statt es raten zu lassen.
+ *
+ * @param {{probe: Persistenzprobe, nurBeiTreffer: boolean}} auftrag
+ * @returns {false | {treffer: string[], kandidaten: string[], aktiverSchluessel: string|null, imArbeitsspeicher: boolean}}
+ */
+function scanPersistenz(auftrag) {
+    const probe = auftrag.probe;
+    /** Erfuellt EIN Eintrag die Probe? */
+    const passtEintrag = eintrag => {
+        if (!eintrag || typeof eintrag !== 'object') return false;
+        const wo = probe.wo || {};
+        for (const feld of Object.keys(wo)) {
+            const erwartet = wo[feld];
+            const ist = eintrag[feld];
+            if (typeof erwartet === 'string') {
+                if (!String(ist === null || ist === undefined ? '' : ist).includes(erwartet)) {
+                    return false;
+                }
+            } else if (ist !== erwartet) {
+                return false;
+            }
+        }
+        if (!probe.pfad) return true;
+        let wert = eintrag;
+        for (const stufe of probe.pfad) {
+            if (wert === null || typeof wert !== 'object') return false;
+            wert = wert[stufe];
+        }
+        return wert === probe.wert;
+    };
+    /** Erfuellt EIN Kampagnenstand die Probe? */
+    const passtStand = stand => {
+        if (!stand || typeof stand !== 'object') return false;
+        const liste = stand[probe.liste];
+        return Array.isArray(liste) && liste.some(passtEintrag);
+    };
+
+    const treffer = [];
+    const kandidaten = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const schluessel = localStorage.key(i);
+        if (!schluessel) continue;
+        const rohwert = localStorage.getItem(schluessel);
+        // Nur ein Objekt kann ein Kampagnenstand sein; die Backup-Liste und die
+        // Zeitstempel-Begleiter fallen hier billig heraus, ohne JSON.parse.
+        if (!rohwert || rohwert.charAt(0) !== '{') continue;
+        let stand = null;
+        try {
+            stand = JSON.parse(rohwert);
+        } catch (e) {
+            continue;
+        }
+        if (!stand || typeof stand !== 'object' || !Array.isArray(stand[probe.liste])) continue;
+        kandidaten.push(schluessel);
+        if (passtStand(stand)) treffer.push(schluessel);
+    }
+
+    if (auftrag.nurBeiTreffer && treffer.length === 0) return false;
+    return {
+        treffer,
+        kandidaten,
+        aktiverSchluessel:
+            typeof window.getActiveCampaignKey === 'function'
+                ? window.getActiveCampaignKey()
+                : null,
+        // Trennt "die Bedienung hat D nie geaendert" von "D ist geaendert, aber
+        // nichts davon ist geschrieben".
+        imArbeitsspeicher: passtStand(window.D)
+    };
+}
+
+/**
+ * Wartet darauf, dass ein Zustand WIRKLICH im Speicher steht — nicht auf eine
+ * Dauer. Vor jedem `page.reload()`, dessen Fall die Persistenz prueft, steht
+ * dieser Aufruf statt eines `waitForTimeout()`.
+ *
+ * Warum: `save()` ist entprellt (300 ms, systems/spellslots/persistence.js), und
+ * eine feste Dauer danach ist eine Wette auf die Last des Laeufers. Am
+ * 20.10.2026 hat genau diese Wette auf dem Linux-Laeufer verloren
+ * (kampfprotokoll.spec.js, Fall "das Protokoll ueberlebt einen Neustart der
+ * App": im einen Lauf gruen, im naechsten dreimal von drei rot).
+ *
+ * Damit trennt der Aufruf zwei Dinge, die eine Dauer vermischt:
+ *   - schlaegt DIESES Warten zu, war vor dem Neuladen nichts geschrieben — und
+ *     die Fehlermeldung sagt, ob der Zustand wenigstens in `window.D` stand;
+ *   - faellt danach die Zusicherung des Falles, ist das Laden nach dem Neustart
+ *     kaputt, kein Wettlauf.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {Persistenzprobe} probe
+ * @param {{timeout?: number, name?: string}} [optionen] `name` erscheint in der
+ *   Fehlermeldung und im Protokoll; `timeout` ist das eigene Zeitdach (15000 ms).
+ * @returns {Promise<{treffer: string[], kandidaten: string[], aktiverSchluessel: string|null, imArbeitsspeicher: boolean}>}
+ */
+export async function waitForPersistedEntry(page, probe, optionen = {}) {
+    const timeout = optionen.timeout || 15000;
+    const name = optionen.name || probe.liste + '-Eintrag';
+    try {
+        const griff = await page.waitForFunction(
+            scanPersistenz,
+            { probe, nurBeiTreffer: true },
+            // Kein requestAnimationFrame-Takt: jede Runde liest und parst den
+            // gesamten Speicher.
+            { timeout, polling: 100 }
+        );
+        return await griff.jsonValue();
+    } catch (fehler) {
+        let lage = null;
+        try {
+            lage = await page.evaluate(scanPersistenz, { probe, nurBeiTreffer: false });
+        } catch (e) {
+            // Seite geschlossen oder navigiert — dann bleibt nur der Urfehler.
+        }
+        const urfehler = fehler instanceof Error ? fehler.message : String(fehler);
+        if (!lage) {
+            throw new Error('[Persistenz] ' + name + ': kein Lagebericht moeglich — ' + urfehler);
+        }
+        throw new Error(
+            '[Persistenz] ' +
+                name +
+                ' stand nach ' +
+                timeout +
+                'ms unter KEINEM Speicherschluessel. ' +
+                'Probe: ' +
+                JSON.stringify(probe) +
+                ' · im Arbeitsspeicher (window.D): ' +
+                lage.imArbeitsspeicher +
+                ' · Kampagnenschluessel im Speicher: ' +
+                JSON.stringify(lage.kandidaten) +
+                ' · aktiver Schluessel: ' +
+                lage.aktiverSchluessel +
+                '\n' +
+                (lage.imArbeitsspeicher
+                    ? 'D traegt den Zustand, der Speicher nicht — der Save hat nicht stattgefunden.'
+                    : 'Schon D traegt den Zustand nicht — die Bedienung davor hat nicht gewirkt, es ist kein Wettlauf.')
+        );
+    }
+}
+
+/**
+ * Derselbe Lagebericht ohne Warten — fuer die Protokollzeile NACH dem Neustart.
+ * @param {import('@playwright/test').Page} page
+ * @param {Persistenzprobe} probe
+ * @returns {Promise<{treffer: string[], kandidaten: string[], aktiverSchluessel: string|null, imArbeitsspeicher: boolean}>}
+ */
+export async function readPersistedEntryReport(page, probe) {
+    return await page.evaluate(scanPersistenz, { probe, nurBeiTreffer: false });
+}

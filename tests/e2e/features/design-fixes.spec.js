@@ -20,7 +20,13 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { loadApp, navigateToTab, waitForAppReady } from '../helpers/test-utils.js';
+import {
+    loadApp,
+    navigateToTab,
+    waitForAppReady,
+    waitForPersistedEntry,
+    readPersistedEntryReport
+} from '../helpers/test-utils.js';
 
 const PROBE_ID = 'design-fixes-probe';
 
@@ -220,11 +226,48 @@ test.describe('FIX-02: Zauberplatz-Pips einer Charakterkarte (kompakte Anzeige)'
         });
 
         await page.locator('.spell-slots-compact .slot-pip[data-value="1"]').first().click();
-        await page.waitForTimeout(500);
+
+        // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass der
+        // gesenkte Stand im Speicher steht. Vorher stand hier
+        // `waitForTimeout(500)` gegen einen um 300ms entprellten save()
+        // (systems/spellslots/persistence.js) — 200ms Luft, und damit dieselbe
+        // Wette, die am 20.10.2026 auf dem Linux-Laeufer verloren hat
+        // (kampfprotokoll.spec.js, Fall "das Protokoll ueberlebt einen Neustart
+        // der App").
+        //
+        // Der Wert wird per `===` verglichen, nicht als Teilstring: eine 1 ist
+        // Teilstring einer 10, ein Teilstring-Vergleich wuerde den Fall also zu
+        // frueh gruen stellen.
+        const probe = {
+            liste: 'characters',
+            wo: { id: CHAR_ID },
+            pfad: ['spellSlots', 1, 'current'],
+            wert: 1
+        };
+        const vorReload = await waitForPersistedEntry(page, probe, {
+            name: 'gesenkter Zauberplatz-Stand (Grad 1 → 1)'
+        });
 
         await page.reload();
         await waitForAppReady(page);
         await page.waitForTimeout(500);
+
+        const nachReload = await readPersistedEntryReport(page, probe);
+        console.log(
+            `[FIX-02] vor reload geschrieben unter: ${JSON.stringify(vorReload.treffer)} · ` +
+                `nach reload im Speicher: ${JSON.stringify(nachReload.treffer)} · ` +
+                `in window.D: ${nachReload.imArbeitsspeicher} · ` +
+                `Kampagnenschluessel: ${JSON.stringify(nachReload.kandidaten)} · ` +
+                `aktiver Schluessel: ${nachReload.aktiverSchluessel}`
+        );
+
+        // Der Stand war vor dem Neustart nachweislich geschrieben (sonst haette
+        // das Warten oben zugeschlagen). Faellt die Zusicherung jetzt, ist es
+        // kein Wettlauf, sondern das Laden nach dem Neustart.
+        expect(
+            vorReload.treffer.length,
+            'der gesenkte Stand stand vor dem Neustart unter keinem Kampagnenschluessel'
+        ).toBeGreaterThan(0);
 
         const current = await page.evaluate(id => {
             // @ts-ignore
