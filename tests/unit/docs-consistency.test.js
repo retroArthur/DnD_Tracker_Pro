@@ -474,6 +474,28 @@ describe('DOC — die Kuerzeltabelle in CLAUDE.md faellt nicht hinter die Gruppe
 // in beiden Faellen rot, in beiden Faellen absichtlich.
 const BUGFIX_TOTE_PFADE_PIN = 8;
 
+/*
+ * DIE ACHT BEIM NAMEN, nicht nur ihre Zahl.
+ *
+ * Der Pin darueber hielt nur die Anzahl fest. Zwei Folgen: ein Tausch (eine
+ * Altlast repariert, dafuer ein neuer falscher Pfad) bliebe gruen, und der
+ * Fehlschlag nannte die Pfade NICHT — `toMatchObject({ anzahl })` vergleicht
+ * genau einen Schluessel und zeigt auch nur den, obwohl der Kommentar an der
+ * Zusicherung das Gegenteil versprach. Die Liste steht deshalb jetzt hier und
+ * wird als Liste verglichen; die Zahl bleibt als eigene Zusicherung daneben,
+ * damit der Pin oben nicht zur Attrappe wird.
+ */
+const BUGFIX_TOTE_PFADE = [
+    'features/dice/initiative-extras.js',
+    'features/dice/maps.js',
+    'features/dice/performance-extras.js',
+    'features/dice/session-timer.js',
+    'features/dice/timers.js',
+    'features/shops/sessions.js',
+    'features/shops/wiki.js',
+    'ui/actions/editor-actions.js'
+];
+
 describe('DOC — docs/bugfixes.md verwest nicht', () => {
     test('DOC-11: die Zahl toter Pfadangaben im Bugfix-Katalog == Pin (exakt)', () => {
         const alle = [
@@ -484,10 +506,34 @@ describe('DOC — docs/bugfixes.md verwest nicht', () => {
         // BASE-01/empty: ein leerer Katalog ist kein sauberer Katalog.
         expect(pfade.length).toBeGreaterThanOrEqual(50);
 
-        const tote = pfade.filter(p => !fs.existsSync(path.join(REPO, p)));
-        // Die toten Pfade stehen im verglichenen Objekt, damit der
-        // Fehlschlag sie nennt statt nur eine Zahl zu zeigen.
-        expect({ anzahl: tote.length, tote }).toMatchObject({ anzahl: BUGFIX_TOTE_PFADE_PIN });
+        // BAU-AUSGABEN SIND KEINE QUELLPFADE. `dist/` entsteht erst durch
+        // `python build.py`, und im CI-Job laeuft Jest DAVOR
+        // (.github/workflows/ci.yml, Job `test`: `npm run test:coverage` steht
+        // vor `python build.py`). Dieselbe Angabe ist dort also tot und im
+        // Arbeitsbaum lebendig. Gemessen am 21.10.2026: 117 Pfadangaben,
+        // lokal 8 tot, auf dem Laeufer 10 — die Differenz sind genau
+        // `dist/dnd-tracker-optimized.html` und `dist/sw.js`, beide mit der
+        // Tastatur-Kette in den Katalog gekommen. Ein Pin, der davon abhaengt,
+        // ob vorher gebaut wurde, misst den Build und nicht den Katalog.
+        //
+        // Die Angaben werden damit nicht ungeprueft: sie wandern in eine
+        // eigene Zusicherung, die greift, SOBALD es ein `dist/` gibt — nur
+        // dann ist die Frage ueberhaupt beantwortbar. Lokal und in jedem Lauf
+        // nach einem Build faellt ein Tippfehler darin weiter auf.
+        const istBauAusgabe = pf => pf.startsWith('dist/');
+        const quellPfade = pfade.filter(pf => !istBauAusgabe(pf));
+        const bauPfade = pfade.filter(istBauAusgabe);
+
+        const tote = quellPfade.filter(pf => !fs.existsSync(path.join(REPO, pf))).sort();
+        // Als LISTE verglichen, damit der Fehlschlag die Pfade nennt und ein
+        // Tausch nicht durchrutscht. Begruendung an BUGFIX_TOTE_PFADE.
+        expect(tote).toEqual(BUGFIX_TOTE_PFADE);
+        expect(tote).toHaveLength(BUGFIX_TOTE_PFADE_PIN);
+
+        if (fs.existsSync(path.join(REPO, 'dist'))) {
+            const toteBau = bauPfade.filter(pf => !fs.existsSync(path.join(REPO, pf))).sort();
+            expect(toteBau).toEqual([]);
+        }
     });
 
     test('DOC-12: jede Zahlangabe ueber execCommand-Aufrufe nennt die im Quellbaum gemessene Zahl', () => {
