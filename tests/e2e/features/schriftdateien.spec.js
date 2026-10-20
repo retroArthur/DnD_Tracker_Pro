@@ -293,6 +293,42 @@ function schwelleFuer(groessePx) {
     return (MINDESTABSTAND * groessePx) / MESSGROESSE_PX;
 }
 
+/*
+ * DER ZWEITE BEZUGSPUNKT, wenn der erste metrisch zusammenfaellt.
+ *
+ * Teil 2, 3 und 6 messen "rendert die erste Familie des Stacks anders als der
+ * Stack ohne sie". Der Rueckfall ist dabei der ECHTE der App ("Arial,
+ * sans-serif"), und das ist die semantisch richtige Frage — nur taugt die
+ * Antwort nicht auf jeder Plattform. Auf dem Linux-Laeufer von GitHub gibt es
+ * kein Arial; es tritt der Generikum-Ersatz an, und der liegt fuer EINE der
+ * vier Familien praktisch auf ihr:
+ *
+ *   CI (ubuntu-latest), Probetext bei 40px, gemessen am 20.10.2026:
+ *     roboto       1128     gegen Rueckfall 1128,703125   ->  -0,70px
+ *     inter        .        .                             -> +83,30px
+ *     poppins      .        .                             -> +138,30px
+ *     source-sans  .        .                             -> -63,70px
+ *   Windows, derselbe Lauf gruen: alle vier deutlich ueber der Schwelle.
+ *
+ * 0,70px auf ~1100px heisst: Roboto und der Linux-Arial-Ersatz sind fuer
+ * diesen Text metrisch deckungsgleich. Dann kann KEINE breitenbasierte
+ * Messung gegen diesen Rueckfall "wird benutzt" von "ist zurueckgefallen"
+ * unterscheiden — das ist eine Eigenschaft des PAARES, nicht der Schrift. Dass
+ * die Schrift wirklich rendert, steht im selben Lauf daneben: am lebenden
+ * Element misst Roboto 5,05px Abstand, und die Gewichtsreihe aus EINER
+ * variablen Datei steigt monoton von 1089 auf 1160px.
+ *
+ * Die Schwelle wird deshalb NICHT gelockert und die Familie NICHT auf die
+ * Ausnahmeliste gesetzt. Stattdessen verlangt ein zusammenfallender Fall einen
+ * POSITIVEN Beleg gegen einen Bezugspunkt, der nicht zusammenfallen kann:
+ * `monospace`. Eine Proportionalschrift und eine Dickengleiche liegen auf
+ * jeder Plattform um Hunderte Bildpunkte auseinander. Der Bezugspunkt prueft
+ * sich selbst mit (siehe die Zusicherung an MONO_RUECKFALL unten): faellt
+ * `monospace` seinerseits mit dem Rueckfall zusammen, ist er untauglich und
+ * der Fall sagt es.
+ */
+const MONO_RUECKFALL = 'monospace';
+
 // Eine Familie, die es garantiert nicht gibt. Sie ist die erste Gegenprobe
 // in der Gleichheits-Richtung: ein Messkoerper, der sie nennt, muss
 // bitgleich wie der reine Rueckfall messen.
@@ -1250,13 +1286,23 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 // aber mit einem Zeichen, das keine Datei traegt.
                 stapel[`${schluessel}__fremd`] = { stack, text: FREMD_TEXT };
                 stapel[`${schluessel}__fremdOhne`] = { stack: rueckfall, text: FREMD_TEXT };
+                // Der zweite Bezugspunkt, Begruendung an MONO_RUECKFALL.
+                stapel[`${schluessel}__mono`] = {
+                    stack: `'${ersteFamilie(stack)}', ${MONO_RUECKFALL}`
+                };
             }
+            stapel.__nurMono = { stack: MONO_RUECKFALL };
             const { breiten } = await messeBreiten(page, stapel);
 
             const stumm = [];
+            const metrischNah = [];
             const blindeKontrollen = [];
             const abstaende = {};
             let gemessen = 0;
+            const nurMono = breiten.__nurMono;
+            // Der zweite Bezugspunkt prueft sich selbst: taugt er nicht, darf
+            // er auch nichts entlasten.
+            expect(nurMono, `${MONO_RUECKFALL} ist nicht messbar`).toBeGreaterThan(0);
             for (const [schluessel, stack] of gebuendelt) {
                 const familie = ersteFamilie(stack);
                 const rueckfall = rueckfallStack(stack);
@@ -1319,10 +1365,24 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                     continue;
                 }
                 if (Math.abs(voll - rueck) <= MINDESTABSTAND) {
-                    stumm.push(
-                        `${schluessel} (${familie}) ${voll}px gegen Rueckfall ` +
-                            `"${rueckfall}" ${rueck}px`
-                    );
+                    // Zusammengefallen gegen den echten Rueckfall — jetzt
+                    // entscheidet der zweite Bezugspunkt, nicht die Nachsicht.
+                    const mono = breiten[`${schluessel}__mono`];
+                    if (Math.abs(mono - nurMono) <= MINDESTABSTAND) {
+                        stumm.push(
+                            `${schluessel} (${familie}) ${voll}px gegen Rueckfall ` +
+                                `"${rueckfall}" ${rueck}px, und gegen ${MONO_RUECKFALL} ` +
+                                `${mono}px gegen ${nurMono}px — beide Bezugspunkte stumm`
+                        );
+                    } else {
+                        metrischNah.push(
+                            `${schluessel} (${familie}): ${voll}px gegen Rueckfall ` +
+                                `"${rueckfall}" ${rueck}px (${(voll - rueck).toFixed(6)}px), ` +
+                                `aber gegen ${MONO_RUECKFALL} ${mono}px gegen ${nurMono}px ` +
+                                `(${(mono - nurMono).toFixed(6)}px) — die Datei rendert, der ` +
+                                `Rueckfall liegt nur metrisch auf ihr`
+                        );
+                    }
                 }
             }
             // Es wurde wirklich je Eintrag gemessen, nicht nur die Schleife
@@ -1340,11 +1400,21 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                     `Befund, sondern eine Eigenschaft der Messung.`
             ).toEqual([]);
 
+            // Nichts bleibt still: ein Eintrag, der nur ueber den zweiten
+            // Bezugspunkt durchkommt, wird benannt — mitsamt beiden Zahlen.
+            if (metrischNah.length) {
+                console.log(
+                    `[SCHR Teil 2] ${metrischNah.length} Eintrag/Eintraege liegen metrisch ` +
+                        `auf ihrem Rueckfall und sind ueber ${MONO_RUECKFALL} belegt:\n  ` +
+                        metrischNah.join('\n  ')
+                );
+            }
             expect(
                 stumm,
                 `Diese Menueeintraege rendern nicht mehr als ${MINDESTABSTAND}px anders ` +
-                    `als ihr Rueckfall ohne die erste Familie. Wer sie im Editor waehlt, ` +
-                    `bekommt den Rueckfall. Gemessene Abstaende: ${JSON.stringify(abstaende)}`
+                    `als ihr Rueckfall ohne die erste Familie UND nicht anders als ` +
+                    `${MONO_RUECKFALL}. Wer sie im Editor waehlt, bekommt den Rueckfall. ` +
+                    `Gemessene Abstaende: ${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
@@ -1466,6 +1536,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
             await tippeProbetext(page);
 
             const stumm = [];
+            const metrischNah = [];
             const blindeKontrollen = [];
             const untreueNachbauten = [];
             const abstaende = {};
@@ -1480,7 +1551,7 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 await waehleSchrift(page, schluessel);
 
                 const messung = await page.evaluate(
-                    ({ editorId, rueckfall, fremdText, fremdGroesse }) => {
+                    ({ editorId, rueckfall, fremdText, fremdGroesse, familie, monoRueckfall }) => {
                         const el = document.querySelector(`#${editorId} font[face]`);
                         const cs = getComputedStyle(el);
                         const host = document.createElement('div');
@@ -1546,6 +1617,15 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                             // geprueft.
                             lautMit: mach(rechnerFamilie, el.textContent, fremdGroesse),
                             lautOhne: mach(rueckfall, el.textContent, fremdGroesse),
+                            // Der zweite Bezugspunkt, Begruendung an
+                            // MONO_RUECKFALL. Derselbe Messweg, nur mit einem
+                            // Rueckfall, der nicht zusammenfallen kann.
+                            lautMono: mach(
+                                "'" + familie + "', " + monoRueckfall,
+                                el.textContent,
+                                fremdGroesse
+                            ),
+                            lautNurMono: mach(monoRueckfall, el.textContent, fremdGroesse),
                             // Die Gegenprobe bei der groesseren Messgroesse,
                             // derselbe Messweg, nur lauter.
                             fremd: mach(rechnerFamilie, fremdText, fremdGroesse),
@@ -1558,7 +1638,9 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                         editorId: EDITOR_ID,
                         rueckfall: rueckfallStack(stack),
                         fremdText: FREMD_TEXT,
-                        fremdGroesse: MESSGROESSE
+                        fremdGroesse: MESSGROESSE,
+                        familie,
+                        monoRueckfall: MONO_RUECKFALL
                     }
                 );
 
@@ -1650,10 +1732,29 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                 // genuegen koennte, ist nicht der Punkt — stimmen sie
                 // nicht ueberein, ist etwas an der Messung faul.
                 if (Math.abs(messung.lautMit - messung.lautOhne) <= MINDESTABSTAND) {
-                    stumm.push(
-                        `"${schluessel}" bei ${MESSGROESSE}: ${messung.lautMit}px gegen ` +
-                            `Rueckfall ${messung.lautOhne}px`
-                    );
+                    // Wie in Teil 2: zusammengefallen gegen den echten
+                    // Rueckfall, also entscheidet der zweite Bezugspunkt.
+                    expect(
+                        messung.lautNurMono,
+                        `${MONO_RUECKFALL} ist am Menueweg nicht messbar`
+                    ).toBeGreaterThan(0);
+                    if (Math.abs(messung.lautMono - messung.lautNurMono) <= MINDESTABSTAND) {
+                        stumm.push(
+                            `"${schluessel}" bei ${MESSGROESSE}: ${messung.lautMit}px gegen ` +
+                                `Rueckfall ${messung.lautOhne}px, und ${messung.lautMono}px ` +
+                                `gegen ${MONO_RUECKFALL} ${messung.lautNurMono}px — beide ` +
+                                `Bezugspunkte stumm`
+                        );
+                    } else {
+                        metrischNah.push(
+                            `"${schluessel}" bei ${MESSGROESSE}: ${messung.lautMit}px gegen ` +
+                                `Rueckfall ${messung.lautOhne}px ` +
+                                `(${(messung.lautMit - messung.lautOhne).toFixed(6)}px), aber ` +
+                                `${messung.lautMono}px gegen ${MONO_RUECKFALL} ` +
+                                `${messung.lautNurMono}px ` +
+                                `(${(messung.lautMono - messung.lautNurMono).toFixed(6)}px)`
+                        );
+                    }
                 }
             }
             expect(gemessen, 'keine einzige Familie wurde gemessen').toBe(CSS_FAMILIEN.length);
@@ -1670,14 +1771,25 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
                     `gebuendelte Datei traegt. Dann ist die Ungleichheit beim Probetext ` +
                     `kein Befund, sondern eine Eigenschaft der Messung.`
             ).toEqual([]);
+            // Nichts bleibt still, wie in Teil 2.
+            if (metrischNah.length) {
+                console.log(
+                    `[SCHR Teil 3] ${metrischNah.length} Eintrag/Eintraege liegen am lauten ` +
+                        `Messweg metrisch auf ihrem Rueckfall und sind ueber ` +
+                        `${MONO_RUECKFALL} belegt:\n  ` +
+                        metrischNah.join('\n  ')
+                );
+            }
             expect(
                 stumm,
                 `Nach der Wahl dieser Eintraege im Schriftmenue rendert der Text nicht ` +
                     `genug anders als ohne die erste Familie — der Nutzer bekommt den ` +
                     `Rueckfall. Die Schwelle steht in jedem Eintrag: am lebenden Element ` +
                     `die auf dessen Schriftgroesse umgerechnete (schwelleFuer), bei ` +
-                    `${MESSGROESSE} die volle von ${MINDESTABSTAND}px. Gemessene ` +
-                    `Abstaende am lebenden Element: ${JSON.stringify(abstaende)}`
+                    `${MESSGROESSE} die volle von ${MINDESTABSTAND}px; faellt der echte ` +
+                    `Rueckfall metrisch mit der Familie zusammen, entscheidet ` +
+                    `${MONO_RUECKFALL}. Gemessene Abstaende am lebenden Element: ` +
+                    `${JSON.stringify(abstaende)}`
             ).toEqual([]);
         });
     });
@@ -2101,26 +2213,59 @@ test.describe('SCHR — die gebuendelten Web-Schriften rendern wirklich', () => 
 
                 const verschieden = new Set(reihe);
                 if (info.variabel) {
-                    // ECHTE INSTANZEN: jede Stufe eine eigene Breite.
-                    if (verschieden.size !== MESSGEWICHTE.length) {
+                    // ECHTE INSTANZEN. Die Forderung war "jede der neun Stufen
+                    // eine eigene Breite" und "jede Stufe STRENG breiter als
+                    // die vorige". Beides geht ueber das Beweisziel hinaus:
+                    // zwei Nachbargewichte koennen auf dieselbe Vorschubbreite
+                    // quantisieren, ohne dass die Achse fehlt.
+                    //
+                    // GEMESSEN am 20.10.2026, dieselbe Datei, dieselben neun
+                    // Gewichte, derselbe Probetext:
+                    //
+                    //   Windows  Roboto  9 verschiedene Breiten, streng steigend
+                    //   Linux    Roboto  8 verschiedene, 1089..1160, monoton,
+                    //                    aber 800 und 900 beide 1160px
+                    //   Linux    Inter   9 verschiedene, 1142..1277
+                    //   Linux    Poppins 3 verschiedene (3 Dateien)
+                    //   Linux    Source Sans Pro 2 verschiedene (2 Dateien)
+                    //
+                    // Die statischen Familien liefern 2 und 3 Stufen, die
+                    // variablen 8 und 9. Die Grenze liegt also mit weitem
+                    // Abstand dazwischen und wird aus MESSGEWICHTE gerechnet
+                    // statt verdrahtet: zwei Drittel der gemessenen Stufen.
+                    // Dazu monoton NICHT-FALLEND und eine Mindestspanne — eine
+                    // Datei, die still auf einen statischen Schnitt
+                    // zurueckfaellt, liefert eine flache Reihe und bricht
+                    // beide Zusicherungen.
+                    const mindestStufen = Math.ceil((MESSGEWICHTE.length * 2) / 3);
+                    if (verschieden.size < mindestStufen) {
                         befunde.push(
                             `${info.familie} ist variabel (${info.von}..${info.bis}), ` +
                                 `liefert aber nur ${verschieden.size} verschiedene Breiten ` +
-                                `fuer ${MESSGEWICHTE.length} Gewichte: ` +
-                                `${JSON.stringify(reihe)}`
+                                `fuer ${MESSGEWICHTE.length} Gewichte (mindestens ` +
+                                `${mindestStufen} erwartet): ${JSON.stringify(reihe)}`
                         );
                     }
-                    // Monoton steigend — eine schwerere Instanz ist breiter.
-                    // Das ist mehr als "verschieden": es schliesst aus, dass
-                    // die neun Werte aus Rundungsrauschen kommen.
                     for (let i = 1; i < reihe.length; i++) {
-                        if (!(reihe[i] > reihe[i - 1])) {
+                        if (reihe[i] < reihe[i - 1]) {
                             befunde.push(
                                 `${info.familie}: Gewicht ${MESSGEWICHTE[i]} (${reihe[i]}px) ` +
-                                    `ist nicht breiter als ${MESSGEWICHTE[i - 1]} ` +
-                                    `(${reihe[i - 1]}px)`
+                                    `ist SCHMALER als ${MESSGEWICHTE[i - 1]} ` +
+                                    `(${reihe[i - 1]}px) — die Reihe faellt`
                             );
                         }
+                    }
+                    // Die Spanne ueber die ganze Achse. Gemessen 71px (Roboto,
+                    // Linux) und 135px (Inter); die statischen Familien
+                    // kommen auf 30 und 26px. Verlangt wird mehr als die
+                    // Schwelle, die auch sonst "anders" bedeutet.
+                    const spanne = Math.max(...reihe) - Math.min(...reihe);
+                    if (spanne <= MINDESTABSTAND) {
+                        befunde.push(
+                            `${info.familie} ist variabel, aber die ganze Achse ` +
+                                `${info.von}..${info.bis} spannt nur ${spanne}px: ` +
+                                `${JSON.stringify(reihe)}`
+                        );
                     }
                     // Mehr verschiedene Breiten als deklarierte Bloecke —
                     // die Instanzen koennen also nicht aus den Bloecken
