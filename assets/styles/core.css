@@ -176,7 +176,7 @@
            Zaehler oder einem Knopf den Platz nimmt. */
         @media (max-width: 600px) {
             [data-layout="mobile"] .mobile-header {
-                padding: 10px 8px;
+                padding: 10px 4px; /* MKOPF, Begruendung am Dateiende */
             }
 
             [data-layout="mobile"] .mobile-search-btn {
@@ -186,14 +186,14 @@
             /* Enger, nicht kleiner: 4px toter Raum zwischen zwei 36.6px breiten
                Tippflaechen statt 8px. Die Flaechen selbst bleiben unberuehrt. */
             [data-layout="mobile"] .mobile-header-group {
-                gap: 4px;
+                gap: 3px; /* MKOPF: 4 -> 3, Begruendung am Dateiende */
             }
 
             /* Der Kasten des Zaehlers bleibt (er ist tippbar und muss danach
                aussehen), nur sein waagerechter Innenabstand gibt nach. Die
                senkrechten 6px bleiben: sie tragen die Hoehe der Tippflaeche. */
             [data-layout="mobile"] .mobile-timer {
-                padding: 6px 6px;
+                padding: 6px 4px; /* MKOPF: 6 -> 4 waagerecht, senkrecht unberuehrt */
             }
 
             /* Auf Telefonbreiten zeigt der Sitzungszaehler Stunden und Minuten.
@@ -3757,3 +3757,308 @@
         input[type="range"] {
             border: none;
         }
+
+        /* ==================================================================
+           MKOPF — DAS PUNKTE-MENUE IM MOBIL-KOPF
+           ------------------------------------------------------------------
+           WARUM ES DAS GIBT. `[data-layout="mobile"] .header-actions
+           { display: none }` (weiter oben in dieser Datei) blendet die ganze
+           Knopfreihe der Kopfzeile aus, und das Layoutprofil folgt seit der
+           Mobil-Runde dem Fenster. Gemessen am Buendel zu 28bcab2, alle sieben
+           `.header-action-btn`, Urteil aus `checkVisibility` UND Rechteck UND
+           `elementFromPoint` auf der Knopfmitte:
+
+             1440 / 1200 px             7 von 7 bedienbar
+              900 px                    4 von 7  (redo x=921,
+                                        show-shortcuts-overlay x=965,
+                                        toggle-layout x=1009 liegen
+                                        AUSSERHALB des Fensters)
+              680 / 390 / 360 / 320 px  0 von 7
+
+           Der Mobil-Kopf faengt drei der sieben Aktionen schon auf (undo,
+           toggle-combat-log, toggle-layout). VIER hatten keinen eigenen Weg:
+           show-about-modal, toggle-quick-notes, redo, show-shortcuts-overlay.
+           Das Menue traegt ALLE sieben und nicht nur die vier, damit es EINEN
+           auffindbaren Ort gibt. Bewacht von
+           `tests/e2e/features/mobil-kopfmenue.spec.js`.
+
+           ------------------------------------------------------------------
+           DIE RECHNUNG, und warum DREI tote Zwischenraeume nachgeben mussten.
+           Ein achter Knopf kostet seine Breite PLUS einen Zwischenraum. Der
+           Platz dafuer war nicht da — gemessen am Buendel bei 320px unter der
+           breiten Probenschrift (Verdana + Courier New, der Linux-Ersatz aus
+           `breite-schrift.spec.js`):
+
+             Zustand                                  Bedarf    Luft
+             --------------------------------------   ------   ------
+             sieben Elemente (Istzustand, 304px)      275.7     28.3
+             + achter Knopf, 26px                     305.7     -1.7   UMBRUCH
+             + Kopf-Innenabstand 8 -> 4px (312px)     305.7      6.3   zu knapp
+             + Gruppen-Zwischenraum 4 -> 3px          300.7     11.3   zu knapp
+             + Zaehler-Innenabstand 6 -> 4px waagr.   296.7     15.3   OK
+
+           `breite-schrift.spec.js` verlangt mindestens 12px Luft
+           (MIN_KOPF_LUFT, "genug, um eine schleichende Erosion anzuschlagen,
+           bevor der erste Knopf wieder hinausfaellt"). Erst alle drei Schritte
+           zusammen kommen darueber — darum stehen oben drei geaenderte Werte
+           und nicht einer.
+
+           KEINER DER DREI NIMMT TIPPFLAECHE. Die 16px Kopf-Innenabstand sind
+           toter Raum am Fensterrand; die Zwischenraeume sind toter Raum
+           zwischen zwei Flaechen (derselbe Hebel, mit dem C1 von 8 auf 4 ging:
+           "Enger, nicht kleiner"); und beim Zaehler gibt nur der WAAGERECHTE
+           Innenabstand nach — die senkrechten 6px bleiben, und sie sind es,
+           die seine Hoehe tragen. Gemessen nach dem Schritt: Knoepfe 35.5x43,
+           Layout-Knopf 26.3x43, Punkte-Knopf 26x43, Zaehler 52x39. Die 43px
+           Tippflaeche, die der C1-Block zusagt, sind unberuehrt.
+
+           WARUM DER PUNKTE-KNOPF 26px BREIT IST UND NICHT 35.5px wie seine
+           Nachbarn. Gemessen passt er nicht: 35.5 + 3 Zwischenraum sind
+           38.5px, und das sind bei 15.3px Luft 23px zu viel. 26px ist dafuer
+           kein beliebiger Wert — es ist die Breite des schmalsten vorhandenen
+           Nachbarn (`#mobile-layout-btn`, 26.3px) und liegt ueber dem Boden
+           von 24px, den `MIN_KOPF_FLAECHE` setzt. Die Breite steht als FESTE
+           Zahl und nicht als Glyphenbreite, weil eine Glyphenbreite je
+           Betriebssystem anders ausfaellt und bei 15.3px Restluft genau der
+           Unterschied zwischen einer Zeile und zwei waere.
+
+           KEINE VIERTE MEDIENGRENZE. Alle drei Werte stehen im BESTEHENDEN
+           `@media (max-width: 600px)`-Block weiter oben; F-12
+           (`tests/unit/design-consistency.test.js`) laesst genau 600, 900 und
+           1200 zu.
+
+           WARUM DIESER BLOCK AM DATEIENDE STEHT. `design-consistency.test.js`
+           fuehrt Befunde als `core.css:<zeile>` und prueft, dass der Anker
+           seine Deklaration trifft (R-06, R-19, R-21; gefuehrt sind unter
+           anderem 139, 456, 466, 524, 558, 758, 840, 857). Ein Einschub oben
+           verschiebt jede Nummer darunter. Die drei geaenderten Werte sind
+           deshalb wertgleich eingesetzt — gleiche Zeilenzahl, nur ein anderer
+           Wert — und die Begruendung steht hier.
+           ================================================================== */
+        [data-layout="mobile"] .mobile-header-more {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Die feste Breite ist Absicht, siehe oben. `min-height` und nicht
+           `height`: die 43px sind ein BODEN, kein Deckel — waechst die
+           Symbolschrift der Nachbarn, waechst die Reihe mit und dieser Knopf
+           bleibt mittig statt kuerzer zu werden. */
+        [data-layout="mobile"] .mobile-header-more-btn {
+            width: 26px;
+            min-height: 43px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Haengt an SEINEM Knopf, nicht an der Leiste — dieselbe Bauart wie
+           `.editor-toolbar .tb-menu`: Knopf und Menue stehen zusammen in einem
+           `position: relative`-Anker. Als Portal am `body` fiele es aus dem
+           `closest()`-Bereich, mit dem `ui/mobile-header-menu.js` einen Klick
+           daneben erkennt. `right: 0`, weil der Knopf rechts aussen sitzt —
+           links verankert liefe das Menue aus dem Fenster. */
+        [data-layout="mobile"] .mobile-header-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 6px;
+            min-width: 196px;
+            padding: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold);
+            z-index: var(--z-dropdown);
+            /* KEIN `box-shadow`, anders als bei `.editor-toolbar .tb-menu`.
+               Der Goldrahmen auf `--bg-card` trennt die Blase in allen vier
+               Themes sichtbar; ein Schatten daneben waere Kosmetik, und er
+               kostete das Eintragen dieser Stelle in DREI Ratschen mit
+               gefuehrten Zahlentabellen — gemessen sechs rote Faelle in R-19
+               (Ort->Stufe), R-20 (Gluehlagen und Rahmennachbarn) und R-21
+               (Ringlagen), alle nur deshalb, weil der Bestand von 72 auf 73
+               box-shadow-Deklarationen gestiegen waere. Eine gefuehrte
+               Zahlentabelle nicht fuer Kosmetik aufweiten; dieselbe Linie, die
+               Variante 2a fuer die Sanitizer-Erlaubnisliste gezogen hat. */
+            /* GEMESSEN NOETIG, nicht vorsorglich: sieben Eintraege a 43px plus
+               Innenabstand sind 310px hoch. Im Hochformat (320x568) passt das;
+               im QUERFORMAT (568x320) nicht — dort stuenden die Eintraege 6
+               und 7 unter dem Fensterrand, und bei `position: fixed` scrollt
+               dorthin nichts. 78px sind die 64px der Leiste, die 6px Abstand
+               darueber und 8px Luft nach unten. */
+            max-height: calc(100vh - 78px);
+            overflow-y: auto;
+        }
+
+        [data-layout="mobile"] .mobile-header-menu[hidden] {
+            display: none;
+        }
+
+        /* Die Eintraege tragen dieselbe Tippflaechenhoehe wie die Leiste: ein
+           Menue, das man auf dem Telefon nicht treffen kann, loest den Befund
+           nicht, der es ausgeloest hat. */
+        [data-layout="mobile"] .mobile-header-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 43px;
+            padding: 8px 10px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: var(--text-sm);
+            text-align: left;
+            cursor: pointer;
+        }
+
+        [data-layout="mobile"] .mobile-header-menu-item:hover {
+            background: color-mix(in srgb, var(--gold) min(18%, var(--tint-max)), transparent);
+        }
+
+        [data-layout="mobile"] .mobile-header-menu-item:focus-visible {
+            outline: 2px solid var(--focus-ring);
+            outline-offset: -2px;
+        }
+
+        /* Feste Spalte fuer das Symbol, damit die Beschriftungen auf einer
+           Senkrechten beginnen. Die Symbole kommen aus der Kopfzeile und sind
+           unterschiedlich breit (gemessen 17 bis 27px). */
+        [data-layout="mobile"] .mobile-header-menu-icon {
+            flex: 0 0 22px;
+            text-align: center;
+            font-size: var(--text-lg);
+        }
+
+        [data-layout="mobile"] .mobile-header-menu-label {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        /* ============================================================
+           DIE KOPFZEILE BRICHT UM, STATT AUS DEM FENSTER ZU RAGEN (FALLE)
+
+           DER BEFUND. `.app-header-top` war eine Flex-Reihe OHNE Umbruch, und
+           ihr inhaltsbasiertes Minimum liegt bei 1027px (Titel + Suche +
+           sieben Knoepfe + Zaehler + Speicheranzeige + Trenner). In jedem
+           schmaleren Fenster lag der rechte Teil der Reihe AUSSERHALB. Der
+           Eintrag "Layout wechseln" im Punkte-Menue fuehrt auf dem Telefon
+           genau dorthin. GEMESSEN am Buendel zu 279ad98, gefuellte Kampagne,
+           Urteil je Knopf aus `checkVisibility({opacityProperty:true})` UND
+           Rechteck UND `elementFromPoint` auf der Knopfmitte:
+
+             Fenster    Dokument   Querlauf   bedienbar   Lage
+             --------   --------   --------   ---------   -------------------
+             390x844      1027px     637px     0 / 7     Einbahnstrasse
+             360x740      1027px     667px     0 / 7     dito
+             320x568      1027px     707px     0 / 7     dito
+             740x360      1027px     287px     2 / 7     dito
+             900x800      1027px     127px     4 / 7     die gefuehrte Luecke
+            1024x800      1027px       3px     7 / 7     Rest
+            1200+              —         0     7 / 7     passt (durch Stauchung)
+
+           Weil `[data-layout="desktop"] .mobile-header { display: none }`
+           gilt, war dort KEIN Traeger von `toggle-layout` mehr bedienbar: der
+           Schalter in der Kopfzeile lag bei x=1009 in einem 390px-Fenster,
+           der Punkte-Knopf war ausgeblendet. Zwei Auswege gab es, beide
+           unbeschriftet — 637px waagerecht wischen oder neu laden.
+
+           DIE KORREKTUR IST DER UMBRUCH UND KEINE RETTUNGSLUKE. Ein zweiter,
+           immer sichtbarer Rueckweg-Knopf haette die Ursache stehengelassen:
+           die halbe Kopfzeile liegt weiterhin draussen, nur mit einer Tuer
+           daneben. Mit `flex-wrap: wrap` auf BEIDEN Ebenen (die Reihe selbst
+           und die Knopfgruppe darin — die Gruppe allein genuegt nicht, ihre
+           natuerliche Breite von ~700px passt in kein Telefon) messen
+           dieselben Lagen:
+
+             390x844   Querlauf 0   7 / 7   Kopfzeile 238 -> 316px
+             360x740   Querlauf 0   7 / 7
+             320x568   Querlauf 0   7 / 7   Kopfzeile 238 -> 425px
+             740x360   Querlauf 0   7 / 7   Kopfzeile 197 -> 189px (kuerzer)
+             900x800   Querlauf 0   7 / 7   Kopfzeile 156 -> 148px (kuerzer)
+            1024x800   Querlauf 3 -> 0   7 / 7   Kopfzeile 156 -> 144px
+            1200x800   Querlauf 0   7 / 7   Kopfzeile 126 -> 148px  <- Preis
+
+           DER EINE PREIS, und er steht hier, weil er echt ist: bei genau
+           1200x800 waechst die Kopfzeile um 22px. Dort passte die Reihe
+           vorher nur, weil Flexbox Titel und Suche gestaucht hat; mit Umbruch
+           bricht sie stattdessen. Bei 900 und 1024 wird sie dafuer kuerzer,
+           weil der Umbruch die Stauchung ersetzt.
+
+           WARUM `@media (max-width: 1200px)` UND NICHT UNBEDINGT — gemessen,
+           nicht aus Vorsicht. Ohne die Schranke brach die Reihe auch bei
+           1280x720 um, sobald eine breitere Schrift im Spiel ist
+           (`--font-ui: Verdana`, Faktor 1.1555): Kopfzeile 126 -> 148px,
+           `--view-frame-height` 219 -> 241px, und die Bestiar-Liste (die ihre
+           Hoehe gegen dieses Token rechnet und nach Sichtbarkeit nachlaedt)
+           zeigte 12 statt 13 Eintraege. Damit
+           haengt eine ERFASSTE Elementmenge an der Schriftmetrik, und genau
+           das verbietet der vierte Durchgang von
+           `tests/e2e/features/computed-style-diff.spec.js` ("Breitere
+           Schriftmetrik bewegt den Digest nicht") — zu Recht: ein Sollstand,
+           der so haengt, bewacht das Betriebssystem statt die App. Oberhalb
+           von 1200px passt die Reihe ohnehin (natuerliche Breite 1027px),
+           die Schranke nimmt also NICHTS weg, was der Befund braucht.
+           Gegengemessen bei 1280x720: mit und ohne breite Schrift Kopfzeile
+           102/126px und 13 Eintraege — Ziffer fuer Ziffer der Stand von
+           vorher.
+
+           KEINE VIERTE MEDIENGRENZE (F-12): 1200 ist eine der drei
+           erlaubten (600/900/1200), und die Ratsche in
+           `tests/unit/design-consistency.test.js` prueft die GRENZWERTE, nicht
+           die Zahl der Bloecke. Die zweite Schranke ist das Layout-Attribut:
+           im Mobil-Profil ist `.header-actions` ohnehin `display: none` und
+           `.app-title` versteckt — ein Umbruch haette dort nichts zu
+           verteilen, koennte aber die gemessene Hoehe des Mobil-Kopfes
+           verschieben (`breite-schrift.spec.js`).
+
+           Bewacht von `tests/e2e/features/mobil-kopfmenue.spec.js`, Fall (9):
+           nach dem Wechsel kein Querlauf UND jede Kopfzeilen-Aktion
+           bedienbar — der Rueckweg ist eine der sieben.
+           ============================================================ */
+        @media (max-width: 1200px) {
+            [data-layout="desktop"] .app-header-top {
+                flex-wrap: wrap;
+            }
+
+            [data-layout="desktop"] .header-actions {
+                flex-wrap: wrap;
+                row-gap: 6px;
+            }
+
+            /* `margin-left: auto` (dmscreen.css) schiebt die Suche nach rechts; ohne
+               `min-width: 0` kann ihr Behaelter in der umgebrochenen Reihe nicht
+               unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile. */
+            [data-layout="desktop"] .global-search-container {
+                min-width: 0;
+            }
+        }
+
+/* ============================================================
+   DAS EREIGNISLOG TRITT BEISEITE, WENN DAS PUNKTE-MENUE OFFEN STEHT (MKOPF, B1)
+   ============================================================
+   WARUM AM DATEIENDE. Die Zeilennummern dieser Datei sind Aktenlage:
+   tests/unit/design-consistency.test.js fuehrt Befunde als
+   `core.css:<zeile>` und prueft, dass der Anker seine Deklaration trifft
+   (R-06, R-19, R-21). Ein Einschub oben verschiebt jede Nummer darunter.
+
+   WAS ES BEHEBT, gemessen am gebauten Buendel: `.event-log` liegt auf
+   `z-index: 4000` und traegt in der dauerhaften Betriebsart (`L`)
+   `pointer-events: auto`. Seine Eintraege nahmen damit den Tipp, der dem
+   Menue galt (`--z-dropdown` = 300):
+
+       390x844   1 von 7 Eintraegen verdeckt
+       480x320   5 von 7
+       320x480   6 von 7
+
+   DIESELBE ABHILFE WIE BEI DER TASTENHILFE (dmscreen.css:2680,
+   `body.tastenhilfe-offen .event-log`). Keine Ausnahme in der z-Leiter —
+   die Hausregel fuer diese Gefahrenklasse heisst "verstecken, nicht
+   ausweichen" (variables.css, M1).
+
+   `display: none` und nicht `pointer-events: none`: ein Log, das man sieht
+   und nicht treffen kann, ist die schlechtere Auskunft. Der Preis steht in
+   `ui/mobile-header-menu.js` bei der Marke.
+   ============================================================ */
+body.kopfmenue-offen .event-log {
+    display: none;
+}

@@ -247,7 +247,28 @@ const SystemActions = {
     'set-preset-emoji': ctx => setPresetEmoji(ctx.value),
 
     // System
-    'show-about-modal': () => showModal('about-modal'),
+    //
+    // DIE VERSION KOMMT AUS `APP_CONFIG.VERSION`, nicht aus der Vorlage (VER).
+    // Sie stand in `assets/templates/modals-tools.html` festgeschrieben und
+    // war GEMESSEN "2.4.0", waehrend `core/config.js` und `package.json` beide
+    // 2.6.1 fuehrten — zwei Nebenversionen zu alt, an dem einen Ort der App,
+    // an dem ein Nutzer die Version nachsieht. Auf dem Telefon fuehrt erst das
+    // Punkte-Menue ueberhaupt dorthin (MKOPF); das Erste, was man auf dem
+    // neuen Weg liest, war falsch.
+    //
+    // BEIM OEFFNEN UND NICHT EINMAL BEIM START: das Markup der Dialoge haengt
+    // beim Laden aus den Vorlagen ein, ein einmaliges Setzen haette also eine
+    // Reihenfolgeabhaengigkeit (welcher Knoten existiert wann). Hier ist der
+    // Zeitpunkt eindeutig. Der Text in der Vorlage bleibt als Rueckfall
+    // stehen und wird von `tests/unit/version-konsistenz.test.js` gegen
+    // dieselbe Quelle gehalten — ein Rueckfall allein waere die naechste
+    // Drift, er muesste bei jeder Anhebung von Hand mitgezogen werden.
+    'show-about-modal': () => {
+        const el = $('about-version');
+        const v = window.APP_CONFIG && window.APP_CONFIG.VERSION;
+        if (el && v) el.textContent = `Version ${v}`;
+        showModal('about-modal');
+    },
     'reload-page': () => location.reload(),
 
     // Debug/Test

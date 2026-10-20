@@ -608,51 +608,183 @@
 
     <!-- Tastenkürzel-Overlay -->
     <div class="shortcuts-overlay" id="shortcuts-overlay" data-action="backdrop-close" data-value="hideShortcutsOverlay">
-        <div class="shortcuts-modal" data-stop-propagation="true">
+        <div class="shortcuts-modal" data-stop-propagation="true" role="dialog" aria-modal="true" aria-labelledby="shortcuts-overlay-titel">
             <div class="shortcuts-title">
-                <span>⌨️ Tastenkürzel</span>
-                <button class="btn btn-sm" data-action="call" data-value="hideShortcutsOverlay">✕</button>
+                <!--
+                    role="heading" aria-level="2" AM TITEL: er war ein blosses
+                    `<span>`, und die sechs Abschnitte beginnen bei Ebene 3 —
+                    der Zugaenglichkeitsbaum fuehrte damit sechs Ueberschriften
+                    und keine darueber. Wer per Ueberschriftensprung navigiert,
+                    landete mitten in der Liste und erfuhr nie, wie die Flaeche
+                    heisst. Ebene 2 und nicht 1: dies ist ein Dialog ueber einer
+                    Seite, nicht die Seite.
+
+                    aria-label AM ✕: er ist gemessen der EINZIGE Haltepunkt im
+                    Dialog (1 von 1), also der erste und letzte, auf dem die
+                    Tastatur landet — und hiess fuer ein Vorleseprogramm nur
+                    "✕". Beides bewacht von tastenhilfe.spec.js (22).
+                -->
+                <span id="shortcuts-overlay-titel" role="heading" aria-level="2">⌨️ Tastenkürzel</span>
+                <button class="btn btn-sm" data-action="call" data-value="hideShortcutsOverlay" aria-label="Tastenkürzel schließen" title="Schließen (Esc)">✕</button>
             </div>
+            <!--
+                WAS HIER DAZUKOMMEN DARF UND WAS NICHT — bewacht von
+                tests/e2e/features/tastenhilfe.spec.js (HILF). Der Waechter
+                misst am gebauten Buendel, welche Tasten in der App etwas tun,
+                und vergleicht die Menge mit DIESEM Block. Beide Richtungen:
+                eine belegte Taste, die hier fehlt, macht ihn rot (Fall 3);
+                eine Zeile fuer eine Taste, die nichts tut, ebenso (Fall 5).
+                Jede Zeile nennt mindestens eine .shortcut-key (Fall 1).
+                KEINE Inline-Stile — der projektweite Zaehler steht auf 251,
+                und der eine erlaubte liegt in der Fusszeile unten (Fall 9).
+            -->
             <div class="shortcuts-grid">
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">📍 Navigation</div>
-                    <div class="shortcut-row"><span>Dashboard</span><div class="shortcut-keys"><span class="shortcut-key">1</span></div></div>
-                    <div class="shortcut-row"><span>Party</span><div class="shortcut-keys"><span class="shortcut-key">2</span></div></div>
-                    <div class="shortcut-row"><span>NPCs</span><div class="shortcut-keys"><span class="shortcut-key">3</span></div></div>
-                    <div class="shortcut-row"><span>Orte</span><div class="shortcut-keys"><span class="shortcut-key">4</span></div></div>
-                    <div class="shortcut-row"><span>Quests</span><div class="shortcut-keys"><span class="shortcut-key">5</span></div></div>
-                    <div class="shortcut-row"><span>Encounter</span><div class="shortcut-keys"><span class="shortcut-key">6</span></div></div>
-                    <div class="shortcut-row"><span>Initiative</span><div class="shortcut-keys"><span class="shortcut-key">7</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">📍 Navigation</div>
+                    <dl class="shortcuts-section-list">
+                    <!--
+                        DIE NEUN NAMEN SIND DIE DER REITER UND NICHT DIE DER
+                        ANSICHTS-IDs. Drei hiessen hier anders als in der App:
+                        "Dashboard" (Reiter: 🏠 Start), "Läden" (🏪 Shops),
+                        "Beute" (📦 Truhe). Ein Nutzer, der in der Hilfe einen
+                        Namen liest, sucht ihn in der Reiterleiste — stimmt er
+                        nicht, sucht er einen Reiter, den es nicht gibt.
+                        tastenhilfe.spec.js (19) misst die Zuordnung, indem es
+                        jede Ziffer DRUECKT und die aktive Ansicht liest, und
+                        haelt die Beschriftung gegen den Reitertext.
+                    -->
+                    <div class="shortcut-row"><dt><span>Start</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">1</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Party</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">2</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>NPCs</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">3</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Orte</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">4</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Quests</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">5</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Encounter</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">6</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Initiative</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">7</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Shops</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">8</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Truhe</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">9</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">⚡ Aktionen</div>
-                    <div class="shortcut-row"><span>Rückgängig</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Z</span></div></div>
-                    <div class="shortcut-row"><span>Wiederholen</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Y</span></div></div>
-                    <div class="shortcut-row"><span>Speichern</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">S</span></div></div>
-                    <div class="shortcut-row"><span>Suche</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Würfeln (d20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
-                    <div class="shortcut-row"><span>Timer Start/Stop</span><div class="shortcut-keys"><span class="shortcut-key">T</span></div></div>
-                    <div class="shortcut-row"><span>Event Log</span><div class="shortcut-keys"><span class="shortcut-key">L</span></div></div>
-                    <div class="shortcut-row"><span>Kampfprotokoll</span><div class="shortcut-keys"><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Quick Reference</span><div class="shortcut-keys"><span class="shortcut-key">/</span></div></div>
-                    <div class="shortcut-row"><span>Diese Hilfe</span><div class="shortcut-keys"><span class="shortcut-key">?</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⚡ Aktionen</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Rückgängig</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Z</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Wiederholen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Y</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Wiederholen (gleichwertig)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">Z</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Speichern</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">S</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Suche</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Suche (gleichwertig)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">F</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Befehlspalette</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Befehlspalette (gleichwertig)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Strg</kbd><kbd class="shortcut-key" aria-hidden="true">.</kbd><span class="sr-only">Punkt</span></dd></div>
+                    <div class="shortcut-row"><dt><span>Würfeln (W20)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">R</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Timer Start/Stop</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">T</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Event Log</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">L</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Kampfprotokoll</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">K</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Quick Reference</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key" aria-hidden="true">/</kbd><span class="sr-only">Schrägstrich</span></dd></div>
+                    <div class="shortcut-row"><dt><span>Neues Element (Party, NPCs, Quests, Encounter)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">N</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Diese Hilfe öffnen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key" aria-hidden="true">?</kbd><span class="sr-only">Fragezeichen</span></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">🎲 Würfel</div>
-                    <div class="shortcut-row"><span>W20</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">2</span></div></div>
-                    <div class="shortcut-row"><span>W12</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">1</span></div></div>
-                    <div class="shortcut-row"><span>W6</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">6</span></div></div>
-                    <div class="shortcut-row"><span>W4</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">4</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">🎲 Würfel</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>W20</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">2</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W12</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">1</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W8</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">8</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W6</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">6</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>W4</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">4</kbd></dd></div>
+                    </dl>
                 </div>
                 <div class="shortcuts-section">
-                    <div class="shortcuts-section-title">⚔️ Initiative</div>
-                    <div class="shortcut-row"><span>Nächster</span><div class="shortcut-keys"><span class="shortcut-key">N</span></div></div>
-                    <div class="shortcut-row"><span>Vorheriger</span><div class="shortcut-keys"><span class="shortcut-key">P</span></div></div>
-                    <div class="shortcut-row"><span>Neue Runde</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">N</span></div></div>
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⚔️ Initiative</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Nächster Zug (im Kampf)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">N</kbd></dd></div>
+                    <!--
+                        DIE BEDINGUNG DER LEERTASTE NENNT EINE HANDLUNG, KEINEN
+                        FOKUSORT. Hier stand "(Fokus auf keinem Bedienelement)",
+                        und eine gemessene Wahrheitstafel widerlegt das:
+
+                          BODY, kein Fokus         -> Zug weiter
+                          Tab auf `<button>`       -> bedient den Knopf
+                          Mausklick `<button>`     -> bedient den Knopf
+                          Mausklick div.init-value -> ZUG WEITER (Fokus liegt
+                                                      auf einem Bedienelement!)
+                          Tab auf div.init-value   -> bedient das Element
+
+                        Der Ausweg "sichtbar angewaehlt" ist ebenfalls verbaut:
+                        ein mit der MAUS geklickter `<button>` traegt keinen
+                        :focus-visible-Ring und bedient sich trotzdem. Der
+                        wirkliche Unterschied ist der WEG des Fokus (Maus gegen
+                        Tastatur, KeyboardReach.nurMausfokus()) — daran ist an
+                        der Oberflaeche nichts zu sehen. Was der Nutzer dagegen
+                        immer weiss, ist, was er GETAN hat. Die Zeile ist damit
+                        in allen fuenf Lagen wahr und in zwei bewusst
+                        zurueckhaltend (Lage 4 wechselt den Zug, ohne dass die
+                        Zeile es verspricht) — eine Hilfe darf schweigen, sie
+                        darf nicht luegen. tastenhilfe.spec.js (21).
+                    -->
+                    <div class="shortcut-row"><dt><span>Nächster Zug (nichts angeklickt/angewählt)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Leertaste</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Vorheriger Zug</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">P</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Neue Runde</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">N</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>HP des Kämpfers am Zug</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">H</kbd></dd></div>
+                    </dl>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">⌨️ Tabulator &amp; Gruppen</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Nächstes Bedienelement (im Dialog bleibt er darin)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Tab</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Vorheriges Bedienelement</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">Tab</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Dialog oder Overlay schließen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Esc</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Auf eine solche Reihe kommen</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Tab</kbd></dd></div>
+                    <!--
+                        DIE DREI GRUPPENZEILEN — und warum die dritte ihre
+                        Vorbedingung JETZT SELBST nennt. Sie lautete "Erster
+                        bzw. letzter Punkt der Reihe" und sagte nichts ueber den
+                        Fokus; (18)(d) prueft nur den VERBUND der drei Zeilen,
+                        ein Nutzer liest aber eine Zeile. Gemessen in der
+                        Kampfansicht bei BODY-Fokus rollt `Ende` das Dokument
+                        (Inhalt 1206 px in 900 px Fenster), und KEINE der sechs
+                        Kampfzeilen ist Glied einer Gruppe — Gruppen gibt es
+                        dort nur INNERHALB der Zeile (sechs .init-spell-slots,
+                        42 Punkte). Wer der Zeile folgt, verliert die Zeile, auf
+                        die er schaut. tastenhilfe.spec.js (20).
+
+                        DIE PFEILKAPPEN TRAGEN aria-hidden PLUS EINEN
+                        .sr-only-SPAN, und das ist die einzige Fassung, die
+                        wirkt. Am laufenden Buendel gemessen: `aria-label` am
+                        `<kbd>` aendert den Baum NICHT (`<kbd>` ist
+                        role="generic", dort ist Benennung verboten), der Span
+                        allein ergibt "← → Pfeil nach links, …", aria-hidden
+                        plus Span ergibt genau "Pfeil nach links, Pfeil nach
+                        rechts". Das aria-hidden sitzt auf der KAPPE und nicht
+                        auf dem `<dd>`: der sichtbare Text bleibt die Kappe, und
+                        `.shortcut-key`-textContent bleibt unberuehrt — die
+                        Leser dieser Hilfe (tastenhilfe.spec.js,
+                        tastatur-kuerzel.spec.js) ziehen daraus die Tastenmenge.
+                    -->
+                    <div class="shortcut-row"><dt><span>Fokus in einer Reihe (z. B. Zauberplätze): weiter</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key" aria-hidden="true">←</kbd><kbd class="shortcut-key" aria-hidden="true">→</kbd><span class="sr-only">Pfeil nach links, Pfeil nach rechts</span></dd></div>
+                    <div class="shortcut-row"><dt><span>Reihe steht untereinander (z. B. Truhe)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key" aria-hidden="true">↑</kbd><kbd class="shortcut-key" aria-hidden="true">↓</kbd><span class="sr-only">Pfeil nach oben, Pfeil nach unten</span></dd></div>
+                    <div class="shortcut-row"><dt><span>Erster/letzter Punkt (Fokus in der Reihe)</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Pos1</kbd><kbd class="shortcut-key">Ende</kbd></dd></div>
+                    </dl>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title" role="heading" aria-level="3">🔊 Soundboard (Szene muss eingerichtet sein)</div>
+                    <dl class="shortcuts-section-list">
+                    <div class="shortcut-row"><dt><span>Szene auf Schnellplatz 1-5</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">1-5</kbd></dd></div>
+                    <div class="shortcut-row"><dt><span>Stumm ein/aus</span></dt><dd class="shortcut-keys"><kbd class="shortcut-key">Alt</kbd><kbd class="shortcut-key">Shift</kbd><kbd class="shortcut-key">0</kbd></dd></div>
+                    </dl>
                 </div>
             </div>
-            <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
-                Drücke <span class="shortcut-key">Esc</span> zum Schließen
+            <!--
+                DIE FUSSZEILE IST DER EINZIGE AUSWEG, DER AUF DEM TELEFON SICHTBAR
+                IST — darum klebt sie (`.shortcuts-footer`, position: sticky) und
+                nennt alle drei Wege. Gemessen stand sie vorher 2161 px unter dem
+                Anfang und sagte "Drücke Esc", auf einem Gerät ohne Escape-Taste.
+                DER INLINE-STIL BLEIBT: der projektweite Zähler steht auf 251
+                (tests/unit/design-consistency.test.js), und dies ist der eine
+                erlaubte in der Hilfe (Fall 9). Das Kleben kommt aus der Klasse.
+            -->
+            <div class="shortcuts-footer" style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: var(--text-sm);">
+                Rollen zeigt mehr · Schließen mit <kbd class="shortcut-key">Esc</kbd>, mit ✕ oben rechts oder mit einem Tipp neben dieses Fenster
             </div>
         </div>
     </div>
