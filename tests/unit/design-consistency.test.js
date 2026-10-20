@@ -526,7 +526,10 @@ describe('F-08 — Werkzeugleisten-Kontrakt', () => {
 /**
  * Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css, ohne
  * fonts.css). fonts.css bleibt aussen vor, weil dort ausschliesslich
- * @font-face-Bloecke stehen (inter-500, poppins-500 etc.) — eine spaetere
+ * @font-face-Bloecke stehen (seit dem Dateiaustausch vom 2026-10-13: zwei
+ * Gewichtsbereiche `100 900` fuer die variablen Roboto/Inter und fuenf
+ * Einzelgewichte fuer die statischen Poppins/Source Sans Pro — das frueher
+ * hier genannte `inter-500` gibt es nicht mehr) — eine spaetere
  * font-weight-Ratsche (D-42, zurueckgestellt bis TYPO-07 ausgefuehrt wird)
  * wuerde sonst @font-face-Deklarationen mitzaehlen. Vorarbeit, keine
  * Freigabe: die Ratsche selbst wird hier NICHT geschrieben.
@@ -577,6 +580,193 @@ describe('F-05 — zwei Schrift-Quellen plus eine bewusste dritte', () => {
         );
         const uiDecls = (scope.match(/font-family:\s*var\(--font-ui\)/g) || []).length;
         expect(uiDecls).toBe(1);
+    });
+
+    /* ----------------------------------------------------------------------
+       F-05b — die Gegenrichtung: jedes Schrift-Token hat einen Verbraucher
+       ----------------------------------------------------------------------
+       F-05 prueft bisher nur EINE Richtung — dass jede font-family-Deklaration
+       aus einem der drei Tokens kommt. Die Gegenrichtung fehlte, und genau
+       darin sassen drei Deklarationen, die seit ihrer Geburt niemand liest:
+
+           core.css :root { --font-abadi / --font-roboto / --font-arial }
+
+       Gemessen am Stand c1e1b84 ueber CSS-Code + Templates + Quell-JS +
+       tools/ + loader.js + sw.js + build.py: je NULL Verbraucher, in jeder
+       der drei Formen. --font-roboto zeigte dabei auf eine der zehn
+       gebuendelten woff2, deren Zeichensatz Einheit 1 als falsch geholtes
+       Subset nachgewiesen hat — der Eindruck, die App benutze Roboto
+       irgendwo, war allein diese tote Zeile.
+
+       WARUM HIER UND NICHT IN schriftdateien.test.js: die Frage ist keine
+       ueber Schriftdateien, sondern die fehlende Gegenrichtung von F-05. Die
+       Helfer (cssFiles/cssCode/withoutComments/tplFiles/sourceJs) stehen hier
+       schon, und der erste Test dieses Blocks und dieser hier urteilen damit
+       ueber dieselbe Tokenmenge. Lagen sie in zwei Dateien mit zwei Scans,
+       waere die Differenz genau der Bereich, in dem ein Fehler unbemerkt
+       bleibt — dieselbe Begruendung, mit der F-01 und R-01 sich ihre
+       Deklarations-Regex teilen.
+
+       WAS ALS VERBRAUCH ZAEHLT: die drei syntaktischen Formen, in denen ein
+       Token wirklich GELESEN wird — var() mit und ohne Fallback,
+       getPropertyValue und setProperty. Eine blosse Nennung des Namens zaehlt
+       NICHT. Das ist nicht theoretisch: die drei toten Tokens haben je genau
+       einen Treffer unter tests/ — Zeile 76 des Blockkommentars in
+       tests/e2e/features/schriftdateien.spec.js, die ihr Totsein BESCHREIBT.
+       Wer tests/ mitzaehlte und nur auf den Namen suchte, haette alle drei
+       als benutzt gemeldet und diese Ratsche leerlaufen lassen. Darum:
+       tests/ ist nicht im Scan, und gesucht wird die Form, nicht der Name.
+
+       KOMMENTARE WERDEN GESTRICHEN, auch in JS. Der Stripper ist absichtlich
+       grob (er kennt keine Zeichenketten): verschluckt er zuviel, verliert
+       ein Token seinen Verbraucher und dieser Test geht ROT — laut und
+       behebbar. Die andere Richtung waere still. Dass das noetig ist, ist
+       gemessen: systems/session-timer.js:27 schreibt die var()-Form in einem
+       Kommentar, dice.css:111/165/180 tun dasselbe. Ohne Stripper zaehlte das
+       als Verbrauch.
+
+       UNTERSCHIED ZU F-01, bewusst umgekehrt: F-01 liest `cssAll`, also CSS
+       MIT Kommentaren, und geht an einem var()-Platzhalter in einem Kommentar
+       rot (die Warnung dort erklaert es). Dieser Test hier streicht Kommentare
+       auf BEIDEN Seiten — Definitionen wie Verbrauch. Beides ist richtig fuer
+       die jeweilige Frage: F-01 soll auch einen auskommentierten var()-Aufruf
+       finden, der beim Wiedereinschalten ins Leere zeigen wuerde; hier waere
+       derselbe Kommentar ein Alibi-Verbraucher und wuerde ein totes Token
+       gruen stellen. */
+
+    /** Die sechs Namen, die es geben DARF. Gemessen: neun Deklarationen
+     *  (--font-size-* steht je zweimal, in zwei Breakpoint-Bloecken), alle in
+     *  variables.css — ausser den drei geloeschten, die in core.css standen.
+     *  Die Liste ist festgenagelt, damit ein wieder eingeschlepptes Token
+     *  auch dann auffaellt, wenn jemand ihm einen einzigen Alibi-Verbraucher
+     *  mitgibt: dann greift die Liste, nicht die Verbrauchszaehlung. */
+    const SCHRIFT_TOKENS = [
+        '--font-mono',
+        '--font-serif',
+        '--font-size-base',
+        '--font-size-small',
+        '--font-size-title',
+        '--font-ui'
+    ];
+
+    /** CSS- UND JS-Kommentare weg. Grob mit Absicht — siehe Kopfkommentar. */
+    function ohneKommentare(code) {
+        return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+    }
+
+    /**
+     * Bilanz aus zwei Textmengen: wo Tokens DEFINIERT werden und wo sie
+     * GELESEN werden. Beide Mengen sind Parameter, damit die Gegenprobe unten
+     * denselben Erkenner mit erfundenem Text fuettern kann.
+     */
+    function schriftBilanz(defQuellen, verbrauchQuellen) {
+        const definiert = new Set();
+        defQuellen.forEach(code => {
+            for (const m of withoutComments(code).matchAll(/(--font-[\w-]+)\s*:/g)) {
+                definiert.add(m[1]);
+            }
+        });
+        const text = verbrauchQuellen.map(c => ohneKommentare(c)).join('\n');
+        const benutzt = new Set();
+        const form =
+            /var\(\s*(--font-[\w-]+)\s*[,)]|(?:getPropertyValue|setProperty)\(\s*['"](--font-[\w-]+)['"]/g;
+        for (const m of text.matchAll(form)) benutzt.add(m[1] || m[2]);
+        return {
+            definiert: [...definiert].sort(),
+            benutzt: [...benutzt].sort(),
+            tot: [...definiert].filter(t => !benutzt.has(t)).sort()
+        };
+    }
+
+    /** Dieselbe Bilanz, aber ueber den echten Baum. */
+    function schriftBilanzEcht() {
+        const extra = ['loader.js', 'sw.js', 'build.py']
+            .map(n => path.join(REPO, n))
+            .filter(p => fs.existsSync(p))
+            .map(p => fs.readFileSync(p, 'utf8'));
+        return schriftBilanz(
+            [...cssFiles.map(f => f.content), ...tplFiles.map(f => f.content)],
+            [
+                cssCode,
+                ...tplFiles.map(f => f.content),
+                ...sourceJs().map(f => f.content),
+                ...readAll('tools', '.js').map(f => f.content),
+                ...extra
+            ]
+        );
+    }
+
+    test('die Schrift-Tokens sind genau diese sechs', () => {
+        expect(schriftBilanzEcht().definiert).toEqual([...SCHRIFT_TOKENS].sort());
+    });
+
+    test('jedes definierte Schrift-Token hat mindestens einen Verbraucher', () => {
+        const { definiert, benutzt, tot } = schriftBilanzEcht();
+        // Leerlaufsperre A — bricht der Definitionsscan, waere `tot` leer und
+        // dieser Test gruen, ohne etwas geprueft zu haben (Fall 7 unten).
+        // Absichtlich eine UNTERE Grenze und kein toBe: die exakte Menge
+        // nagelt der Test darueber fest. Stuende hier toBe, scheiterte bei
+        // einem wieder eingeschleppten Token diese Zeile mit "9 statt 6" statt
+        // die Zeile, die den NAMEN des toten Tokens nennt.
+        expect(definiert.length).toBeGreaterThanOrEqual(SCHRIFT_TOKENS.length);
+        // Leerlaufsperre B — bricht der Verbrauchsscan, meldet er alles tot
+        // (Fall 6 unten); diese Zeile sagt dasselbe direkt.
+        expect(benutzt.length).toBeGreaterThanOrEqual(SCHRIFT_TOKENS.length);
+        expect(tot).toEqual([]);
+    });
+
+    test('Gegenprobe: der Erkenner trennt echten Verbrauch von blosser Nennung', () => {
+        const def = ':root { --font-echt: Arial; --font-tot: Arial; --font-prosa: Arial; }';
+        const ALLE = ['--font-echt', '--font-prosa', '--font-tot'];
+
+        // Fall 1 — ein benutztes Token, zwei unbenutzte.
+        const a = schriftBilanz([def], ['.x { font-family: var(--font-echt); }']);
+        expect(a.definiert).toEqual(ALLE);
+        expect(a.tot).toEqual(['--font-prosa', '--font-tot']);
+
+        // Fall 2 — var() mit Fallback zaehlt.
+        expect(schriftBilanz([def], ['.x { font-size: var(--font-tot, 14px); }']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 3 — die beiden JS-Formen zaehlen.
+        expect(schriftBilanz([def], ["s.getPropertyValue('--font-tot')"]).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+        expect(schriftBilanz([def], ['e.style.setProperty("--font-tot", x)']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 4 — DER KERN: eine Nennung in Prosa rettet kein Token. Genau
+        // diese Form steht in tests/e2e/features/schriftdateien.spec.js:76.
+        const prosa = ' * `--font-prosa`/`--font-tot` in core.css haben je 0 Verweise';
+        expect(schriftBilanz([def], [prosa]).tot).toEqual(ALLE);
+
+        // Fall 5 — auch die VOLLE var()-Form rettet nicht, wenn sie in einem
+        // Kommentar steht. Belegt an systems/session-timer.js:27 (Zeilen-
+        // kommentar) und dice.css:111/165/180 (Blockkommentar), die genau so
+        // schreiben. Beide Kommentararten einzeln geprueft.
+        expect(schriftBilanz([def], ['    // var(--font-tot) bei 14px 61.6px breit']).tot).toEqual(
+            ALLE
+        );
+        expect(schriftBilanz([def], ['/* in var(--font-tot) bei 1em 130px */']).tot).toEqual(ALLE);
+        // und als Gegenstueck: dieselbe Form OHNE Kommentar zaehlt sehr wohl.
+        expect(schriftBilanz([def], ['font-family: var(--font-tot);']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 6 — ein leerer Verbrauchsscan meldet ALLES tot, niemals nichts.
+        // Das ist die strukturelle Antwort auf den Leerlauf: ein kaputtes
+        // Messwerkzeug stellt diese Ratsche rot, nicht gruen.
+        expect(schriftBilanz([def], []).tot).toEqual(ALLE);
+
+        // Fall 7 — ein Definitionsscan ohne Treffer meldet NICHTS tot. Genau
+        // dagegen steht Leerlaufsperre A im Test darueber.
+        expect(schriftBilanz([], ['var(--font-echt)']).tot).toEqual([]);
     });
 });
 
@@ -14975,7 +15165,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Eigenschaft — KEINE Zeile). Bewusst LEER, nicht abwesend: fuer das
      *  Gewicht ist nach heutigem Stand KEINE Ausnahme begruendet. Die zehn
      *  `bold`, die eine `normal` und die eine `300` sitzen alle an sichtbarem
-     *  Text. Die 10 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
+     *  Text. Die 7 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
      *  sondern liegen ausserhalb des Geltungsbereichs — sie benennen
      *  Schriftdateien, sie gestalten nichts. */
     const FONT_WEIGHT_GEDULDET = {};
@@ -15115,15 +15305,29 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     });
 
     test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
-        // Die 10 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
-        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der 700er-Datei
-        // — und sie WIRD sie mitzaehlen, sobald jemand den Geltungsbereich
-        // "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        // Die 7 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
+        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der zwei
+        // variablen Dateien — und sie WIRD sie mitzaehlen, sobald jemand den
+        // Geltungsbereich "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        //
+        // NACHGEZOGEN NACH DEM DATEIAUSTAUSCH (SCHR, b0ada5b). Bis dahin
+        // standen hier 10 Deklarationen mit einer `700`; seit Roboto und Inter
+        // als je EINE variable Datei kommen, sind es 7 mit zwei `100 900`. Der
+        // Fall war seit b0ada5b die einzige rote Stelle der Jest-Suite und
+        // keinem der SCHR-Auftraege zugewiesen. Die beiden `100 900` sind
+        // genau die Gewichtsbereiche, die `tests/unit/schriftdateien.test.js`
+        // Teil 8 gegen die fvar-Achsen der Dateien prueft; dass sie NICHT in
+        // `ERLAUBT` stehen, ist derselbe Satz wie zuvor fuer die `700` — eine
+        // @font-face-Gewichtsangabe gestaltet nichts und gehoert nicht in die
+        // Gestaltungsskala. `ERLAUBT` bleibt darum unberuehrt.
         const fonts = cssFiles.find(f => f.name === 'fonts.css');
         expect(fonts).toBeTruthy();
         const dort = typoDeklarationen(fonts.content).filter(d => d.prop === 'font-weight');
-        expect(dort.length).toBe(10);
-        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual(['700']);
+        expect(dort.length).toBe(7);
+        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual([
+            '100 900',
+            '100 900'
+        ]);
         expect(typoGeltungsbereich().map(f => f.name)).not.toContain('fonts.css');
     });
 
