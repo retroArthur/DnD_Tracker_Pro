@@ -277,6 +277,59 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
         });
     }
 
+    /**
+     * Liest die Ergebniszahl erst, wenn ihr Farbuebergang ZUR RUHE gekommen ist.
+     *
+     * NACHGEMESSEN, nicht vermutet: `.dice-hero-result` traegt
+     * `transition: var(--trans-slow)` (dice.css), und `--dur-slow` steht auf
+     * 300ms. Ein Lesezugriff unmittelbar nach dem Klassenwechsel liefert
+     * deshalb den ALTEN Wert. Mit einer Sonde auf beiden Zweigen gemessen,
+     * Thema `dark`, Klasse jeweils korrekt gesetzt:
+     *
+     *   nach displayDiceResult(20, isCrit=true)   Klasse "crit", Farbe
+     *                                             rgb(212,175,55) = --gold-text
+     *   dieselbe Stelle 1200ms spaeter            Farbe rgb(74,222,128) = --green-text
+     *   nach displayDiceResult(1, isFail=true)    Klasse "fail", Farbe noch
+     *                                             rgb(74,222,128) = die VORIGE
+     *
+     * Die drei Faelle verglichen vorher exakte Farbzeichenketten gegen einen
+     * LAUFENDEN Uebergang. Dass sie gruen waren, hing an wenigen Millisekunden
+     * Fortschritt: derselbe Fall ist auf main gruen und auf dem Schriften-Zweig
+     * dreimal von drei rot, ohne dass sich eine App-Zeile unterscheidet (JS der
+     * beiden Buendel byte-identisch, die crit-Regel woertlich gleich; die 3KB
+     * mehr CSS und die erstmals echt geladenen Schriftdateien verschieben nur
+     * den Startzeitpunkt). Ein Fall, der so besteht, besteht aus Zufall.
+     *
+     * Gewartet wird auf RUHE, nicht auf das erwuenschte Ergebnis: der Helfer
+     * pollt, bis zwei aufeinanderfolgende Messungen denselben Wert liefern, und
+     * sichert NICHTS ueber die Farbe zu. Die Zusicherungen der Faelle bleiben
+     * damit unverkuerzt — haette er auf "Farbe ungleich vorher" gewartet, waere
+     * die darauffolgende Zusicherung tautologisch geworden.
+     *
+     * @param {import('@playwright/test').Page} page
+     */
+    async function readHeroResultStyleInRuhe(page) {
+        let vorher = null;
+        await expect
+            .poll(
+                async () => {
+                    const jetzt = (await readHeroResultStyle(page)).color;
+                    const ruht = jetzt !== null && jetzt === vorher;
+                    vorher = jetzt;
+                    return ruht;
+                },
+                {
+                    timeout: 5000,
+                    intervals: [60, 60, 60, 100, 150, 250, 400],
+                    message:
+                        'die Farbe der Ergebniszahl kommt nicht zur Ruhe — der Uebergang ' +
+                        'laeuft laenger als 5s oder endet nie'
+                }
+            )
+            .toBe(true);
+        return readHeroResultStyle(page);
+    }
+
     test('Nach einem gewoehnlichen Wurf behaelt die Ergebniszahl ihre Formatierungsklasse', async ({ page }) => {
         await displayResult(page, {
             result: 15,
@@ -298,7 +351,7 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
             isCrit: false,
             isFail: false
         });
-        const normalStyle = await readHeroResultStyle(page);
+        const normalStyle = await readHeroResultStyleInRuhe(page);
 
         await displayResult(page, {
             result: 20,
@@ -307,7 +360,7 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
             isCrit: true,
             isFail: false
         });
-        const critStyle = await readHeroResultStyle(page);
+        const critStyle = await readHeroResultStyleInRuhe(page);
 
         expect(critStyle.color).not.toBe(normalStyle.color);
         expect(critStyle.fontSize).toBeGreaterThan(40);
@@ -325,7 +378,7 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
             isCrit: false,
             isFail: false
         });
-        const normalStyle = await readHeroResultStyle(page);
+        const normalStyle = await readHeroResultStyleInRuhe(page);
 
         await displayResult(page, {
             result: 20,
@@ -334,7 +387,7 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
             isCrit: true,
             isFail: false
         });
-        const critStyle = await readHeroResultStyle(page);
+        const critStyle = await readHeroResultStyleInRuhe(page);
 
         await displayResult(page, {
             result: 1,
@@ -343,7 +396,7 @@ test.describe('FIX-03: Wuerfelergebnis der Hauptansicht behaelt Formatierung', (
             isCrit: false,
             isFail: true
         });
-        const failStyle = await readHeroResultStyle(page);
+        const failStyle = await readHeroResultStyleInRuhe(page);
 
         expect(failStyle.color).not.toBe(normalStyle.color);
         expect(failStyle.color).not.toBe(critStyle.color);
