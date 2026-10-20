@@ -1208,6 +1208,9 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
    Und weil eine Probe, die nie rot war, nichts beweist: der letzte Fall dieses
    Abschnitts zwingt das Token auf die alte verdrahtete 120px zurueck und
    verlangt, dass die Matrix genau dann Befunde meldet. */
+const MATRIX_BREITEN = [1280, 900];
+const MATRIX_HOEHEN = [900, 700];
+
 /*
  * WIE WEIT DER LETZTE EINTRAG UNTER DIE KLIPPKANTE SEINES ROLLBEHAELTERS RAGEN
  * DARF. Vier der fuenf Schalen: 0px. Das Bestiar: 4px, und zwar aus einer
@@ -1249,9 +1252,6 @@ test.describe('Das Divergenz-Band auf der scrollenden Buehne (U3/U6)', () => {
  * der Zeiger darauf steht in der eigenen Einheit, nicht hier.
  */
 const UEBERHANG_DACH_BESTIAR = 4;
-
-const MATRIX_BREITEN = [1280, 900];
-const MATRIX_HOEHEN = [900, 700];
 
 /**
  * Die fuenf Schalen, wie die Matrix sie faehrt: Reiter, Suchfeld, Liste,
