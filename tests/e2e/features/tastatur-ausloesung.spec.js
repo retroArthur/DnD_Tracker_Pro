@@ -100,7 +100,9 @@
  * DIE ERWARTETEN WIRKUNGEN SIND AUS DEN FUNKTIONEN ABGELESEN, nicht geraten:
  *   - `prevTurn()` (core/init.js) zieht `currentTurn` um eins ab und springt
  *     bei Unterschreitung auf den LETZTEN Kaempfer; die Runde sinkt nur bei
- *     `encounterRound > 1`, hier also nicht. Aus Zug 0 wird Zug 5.
+ *     `D.initiative.round > 1`, hier also nicht. Aus Zug 0 wird Zug 5.
+ *     (Bis RUNDE las die Schranke eine Modulkopie `encounterRound`, die
+ *     `nextTurn()` nie anfasste — derselbe Fall, andere Quelle.)
  *   - `nextEncounterRound()` (systems/undo.js) erhoeht die Runde und laesst
  *     den Zug stehen: Runde 1 -> 2, Zug 0 -> 0.
  *   - `addPartyToInit()` (features/initiative.js) haengt jeden Charakter an,
@@ -495,7 +497,11 @@ test.describe('Die Leertaste bedient den Knopf unter dem Fokus', () => {
         expect(k.synthetisch, 'der keydown-Zweig loest genau einmal aus').toBe(1);
         // prevTurn() aus Zug 0: springt auf den letzten der sechs Kaempfer.
         expect(nachher.zug, 'prevTurn() muss auf den letzten Kaempfer springen').toBe(5);
-        // Die Runde bleibt: prevTurn() senkt sie nur bei encounterRound > 1.
+        // Die Runde bleibt: prevTurn() senkt sie nur bei D.initiative.round > 1,
+        // und hier steht sie auf 1. Seit RUNDE liest die Schranke diese EINE
+        // Quelle statt einer Modulkopie; aus Runde 1 ist das Ergebnis dasselbe,
+        // aus einer durch `n` erreichten Runde war es es NICHT — das messen
+        // `tests/e2e/features/kampfrunde.spec.js` (2) und (3).
         expect(nachher.runde).toBe(1);
         // Die Leertaste darf die Seite nicht wegrollen.
         expect(nachher.scrollY).toBe(vorher.scrollY);
