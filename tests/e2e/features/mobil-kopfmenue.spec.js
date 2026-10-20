@@ -1129,3 +1129,199 @@ for (const { b, h } of [...TELEFON, { b: 740, h: 360 }]) {
         ).toEqual([]);
     });
 }
+
+// ===========================================================================
+// (19) DAS MENUE SELBST TRAEGT ALLE SIEBEN — die Aussage, die Fall (1) nicht traegt
+// ===========================================================================
+//
+// NACHGESTELLT (Abnahme MKOPF, B2), nicht vermutet: Fall (1) ist mit einem
+// VOLLSTAENDIG GELOESCHTEN Menue an allen drei Telefonbreiten GRUEN. Er fragt
+// "direkt bedienbar ODER ueber irgendeinen Oeffner" — und der vorhandene
+// Mobil-Layout-Schalter IST so ein Oeffner: ein Klick darauf liefert seit
+// FALLE `desktop`, 0 px Querlauf und 7/7 bedienbar. Die Hauptaussage dieses
+// Pakets haengt damit an einem Weg, der das Menue nicht braucht.
+//
+// Dieser Fall nennt das Menue beim Namen: mit offenem Menue muss JEDE
+// Kopfzeilen-Aktion als Eintrag darin stehen, sichtbar und treffbar. Er ist
+// nicht umgehbar, weil er kein "irgendwie erreichbar" kennt.
+//
+// DIE MITTE DES SICHTBAREN STREIFENS, nicht die des Elements: das Menue ist
+// geklippt und rollbar (`max-height`/`overflow-y`). Ein Eintrag unter der
+// Rollkante ist kein Fehler, sondern zu rollen — misst man die Elementmitte,
+// meldet die Sonde ausserhalb des Menues und erfindet Befunde. Dieser Fehler
+// ist in dieser Runde zweimal gemacht worden, von der Abnahme und von mir.
+// ===========================================================================
+for (const { b, h } of [...TELEFON, ...QUERFORMAT]) {
+    test(`(19) ${b}x${h}: das Punkte-Menue selbst fuehrt jede Kopfzeilen-Aktion`, async ({
+        page
+    }) => {
+        test.setTimeout(120000);
+        await seedPopulatedSession(page);
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await loadApp(page);
+        await page.setViewportSize({ width: b, height: h });
+        await page.waitForTimeout(600);
+
+        const soll = await kopfAktionen(page);
+        expect(soll.length, 'Die Kopfzeile fuehrt keine .header-action-btn').toBeGreaterThan(0);
+
+        const ist = await page.evaluate(() => {
+            const knopf = document.getElementById('mobile-header-menu-btn');
+            const menu = document.getElementById('mobile-header-menu');
+            if (!knopf || !menu) return { fehlt: true, eintraege: [] };
+            knopf.click();
+            const mr = menu.getBoundingClientRect();
+            const eintraege = [...menu.querySelectorAll('[data-action]')].map(el => {
+                const r = el.getBoundingClientRect();
+                const o = Math.max(r.top, mr.top, 0);
+                const u = Math.min(r.bottom, mr.bottom, window.innerHeight);
+                const li = Math.max(r.left, mr.left, 0);
+                const re = Math.min(r.right, mr.right, window.innerWidth);
+                const sichtbar = u - o >= 2 && re - li >= 2;
+                let eigen = null;
+                if (sichtbar) {
+                    const oben = document.elementFromPoint(
+                        Math.round((li + re) / 2),
+                        Math.round((o + u) / 2)
+                    );
+                    eigen = !!(oben && (oben === el || el.contains(oben) || oben.contains(el)));
+                }
+                return {
+                    schluessel:
+                        el.getAttribute('data-action') +
+                        (el.getAttribute('data-value') ? ':' + el.getAttribute('data-value') : ''),
+                    sichtbar,
+                    eigen
+                };
+            });
+            return { fehlt: false, eintraege };
+        });
+
+        expect(ist.fehlt, 'Punkte-Knopf oder Menuebehaelter fehlt im Dokument').toBe(false);
+
+        const sollSchluessel = soll.map(a => a.aktion + (a.wert ? ':' + a.wert : '')).sort();
+        const istSchluessel = ist.eintraege.map(e => e.schluessel).sort();
+        expect(
+            istSchluessel,
+            `Das Menue fuehrt ${istSchluessel.length} Eintraege, die Kopfzeile ` +
+                `${sollSchluessel.length} Aktionen. Fehlt: ` +
+                `${JSON.stringify(sollSchluessel.filter(k => !istSchluessel.includes(k)))}`
+        ).toEqual(sollSchluessel);
+
+        // Treffbar: jeder Eintrag, der im sichtbaren Streifen liegt, nimmt den
+        // Tipp auch selbst. Wer unter der Rollkante liegt, wird gerollt.
+        const verdeckt = ist.eintraege.filter(e => e.sichtbar && e.eigen === false);
+        expect(
+            verdeckt.map(e => e.schluessel),
+            `${verdeckt.length} sichtbare Menue-Eintraege nehmen den Tipp nicht selbst — ` +
+                'etwas liegt darueber.'
+        ).toEqual([]);
+    });
+}
+
+// ===========================================================================
+// (20) DAS EREIGNISLOG IM DAUERMODUS SCHLUCKT KEINEN TIPP MEHR (B1)
+// ===========================================================================
+//
+// NACHGESTELLT (Abnahme MKOPF, B1). `.event-log` liegt auf `z-index: 4000`
+// und traegt in der dauerhaften Betriebsart (`L`, in der Tastenhilfe als
+// "Event Log — L" beworben) `pointer-events: auto`; seine Eintraege nahmen den
+// Tipp, der dem Menue galt (`--z-dropdown` = 300). Gemessen am gebauten
+// Buendel, acht Hinweise erzeugt, Mitte des sichtbaren Streifens:
+//
+//     390x844   1 von 7 verdeckt   toggle-layout -> button.event-log-btn
+//     480x320   5 von 7 verdeckt
+//     320x480   6 von 7 verdeckt   (bis zu 50 Eintraege sind moeglich)
+//
+// KEINER DER ACHT WAECHTERGROESSEN DRUECKTE `L` — darum sah es kein Fall,
+// obwohl der Baum die Gefahrenklasse katalogisiert hat
+// (`assets/styles/variables.css`, M1: "#event-log z=4000, Deckung 71420 px²",
+// Heilmittel "verstecken, nicht ausweichen").
+//
+// Abhilfe: `openMobileHeaderMenu()` setzt `kopfmenue-offen` auf <body>, und
+// das Dateiende von `assets/styles/core.css` blendet das Log dafuer aus —
+// derselbe Weg, den die Tastenhilfe schon geht (`dmscreen.css:2680`,
+// `body.tastenhilfe-offen .event-log`). Keine Ausnahme in der z-Leiter.
+//
+// Die zwei Hochkant-Querformat-Masze sind ABSICHTLICH dabei: dort war der
+// Schaden am groessten (6 von 7), weil das Log nach oben waechst.
+// ===========================================================================
+for (const { b, h } of [
+    { b: 390, h: 844 },
+    { b: 480, h: 320 },
+    { b: 320, h: 480 }
+]) {
+    test(`(20) ${b}x${h}: das Log im Dauermodus verdeckt keinen Menue-Eintrag`, async ({
+        page
+    }) => {
+        test.setTimeout(120000);
+        await seedPopulatedSession(page);
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await loadApp(page);
+        await page.setViewportSize({ width: b, height: h });
+        await page.waitForTimeout(600);
+
+        // Dauermodus mit einem ECHTEN Tastendruck, nicht per Klassenschalter.
+        await page.keyboard.press('l');
+        await page.waitForTimeout(300);
+        await page.evaluate(() => {
+            for (let i = 1; i <= 8; i++) window.showToast?.(`Probe ${i}`, 'info');
+        });
+        await page.waitForTimeout(500);
+
+        const lage = await page.evaluate(() => {
+            const log = document.querySelector('.event-log');
+            const knopf = document.getElementById('mobile-header-menu-btn');
+            const menu = document.getElementById('mobile-header-menu');
+            if (!log || !knopf || !menu) return { fehlt: true };
+            const dauer = log.classList.contains('persistent');
+            knopf.click();
+            const mr = menu.getBoundingClientRect();
+            const verdeckt = [...menu.querySelectorAll('[data-action]')]
+                .map(el => {
+                    const r = el.getBoundingClientRect();
+                    const o = Math.max(r.top, mr.top, 0);
+                    const u = Math.min(r.bottom, mr.bottom, window.innerHeight);
+                    const li = Math.max(r.left, mr.left, 0);
+                    const re = Math.min(r.right, mr.right, window.innerWidth);
+                    if (u - o < 2 || re - li < 2) return null;
+                    const oben = document.elementFromPoint(
+                        Math.round((li + re) / 2),
+                        Math.round((o + u) / 2)
+                    );
+                    if (oben && (oben === el || el.contains(oben) || oben.contains(el)))
+                        return null;
+                    return (
+                        el.getAttribute('data-action') +
+                        ' -> ' +
+                        (oben
+                            ? oben.tagName.toLowerCase() +
+                              '.' +
+                              (oben.className || '').toString().split(/\s+/)[0]
+                            : 'nichts')
+                    );
+                })
+                .filter(Boolean);
+            return {
+                fehlt: false,
+                dauer,
+                logSichtbar: getComputedStyle(log).display !== 'none',
+                marke: document.body.classList.contains('kopfmenue-offen'),
+                verdeckt
+            };
+        });
+
+        expect(lage.fehlt, 'Log, Punkte-Knopf oder Menue fehlt').toBe(false);
+        // Gegenprobe gegen Leerlauf: ohne Dauermodus traegt das Log kein
+        // `pointer-events: auto` und der Fall pruefte eine Lage, die es nicht
+        // gibt.
+        expect(lage.dauer, '`l` hat den Dauermodus nicht eingeschaltet').toBe(true);
+        expect(lage.marke, 'Die Marke `kopfmenue-offen` steht nicht auf <body>').toBe(true);
+        expect(lage.logSichtbar, 'Das Log tritt bei offenem Menue nicht beiseite').toBe(false);
+        expect(
+            lage.verdeckt,
+            `${lage.verdeckt.length} sichtbare Menue-Eintraege werden vom Ereignislog ` +
+                'oder etwas anderem verdeckt.'
+        ).toEqual([]);
+    });
+}

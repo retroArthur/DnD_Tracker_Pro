@@ -176,6 +176,34 @@ function openMobileHeaderMenu() {
     buildMobileHeaderMenu();
     menu.hidden = false;
     knopf.setAttribute('aria-expanded', 'true');
+    // DAS EREIGNISLOG TRITT BEISEITE, solange das Menue offen steht.
+    //
+    // NACHGESTELLT (Abnahme MKOPF, B1), nicht vermutet. `.event-log` liegt auf
+    // `z-index: 4000`; in der dauerhaften Betriebsart (`L`, in der Tastenhilfe
+    // als "Event Log — L" beworben) traegt es `pointer-events: auto`, und seine
+    // Eintraege nehmen den Tipp. Das Menue liegt auf `--z-dropdown` = 300.
+    // Gemessen am gebauten Buendel, `L` gedrueckt, acht Hinweise erzeugt,
+    // Mitte jedes Eintrags per `elementFromPoint`:
+    //
+    //     390x844   1 von 7 verdeckt   toggle-layout -> button.event-log-btn
+    //     480x320   5 von 7 verdeckt
+    //     320x480   6 von 7 verdeckt   (bis zu 50 Eintraege sind moeglich)
+    //
+    // Ein voll sichtbarer Eintrag tat also nichts, und kein Fall sah es: keine
+    // der acht Waechtergroessen drueckt `L`.
+    //
+    // VERSTECKEN, NICHT AUSWEICHEN — das ist die Hausregel fuer diese
+    // Gefahrenklasse (`assets/styles/variables.css`, M1: "#event-log z=4000,
+    // Deckung 71420 px²"). Und es ist genau der Weg, den die Tastenhilfe schon
+    // geht: `showShortcutsOverlay()` setzt `tastenhilfe-offen` auf <body>, und
+    // `assets/styles/dmscreen.css:2680` blendet das Log dafuer aus. Eine
+    // Ausnahme in der z-Leiter haette die Leiter entwertet.
+    //
+    // DER PREIS, und er gehoert hierhin: ein Hinweis, der waehrend des offenen
+    // Menues ablaeuft, ist danach weg. Dafuer gibt es die dauerhafte
+    // Betriebsart — und die ist gerade der Fall, in dem der Fehler am
+    // schwersten war.
+    document.body.classList.add('kopfmenue-offen');
     // Der Halt soll sitzen, BEVOR der erste Tabulatordruck kommt. Der
     // Beobachter in KeyboardGroup laeuft erst im naechsten Bild.
     if (window.KeyboardGroup && typeof window.KeyboardGroup.aktualisieren === 'function') {
@@ -197,6 +225,10 @@ function closeMobileHeaderMenu(opt) {
     const war = !menu.hidden;
     menu.hidden = true;
     knopf.setAttribute('aria-expanded', 'false');
+    // Gegenstueck zur Marke aus `openMobileHeaderMenu()`. Bedingungslos
+    // zuruecknehmen, nicht nur wenn `war` — sonst bleibt das Log nach einem
+    // Schliessen ohne vorheriges Oeffnen dauerhaft weg.
+    document.body.classList.remove('kopfmenue-offen');
     // DIE EINTRAEGE BLEIBEN STEHEN, obwohl sie beim naechsten Oeffnen neu
     // entstehen. Sie zu leeren waere eine Mutation am Dokument bei jedem
     // Schliessen und damit ein Gruppendurchlauf mehr; und ein Menue mit null

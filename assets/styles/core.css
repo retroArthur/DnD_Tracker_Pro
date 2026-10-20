@@ -4032,3 +4032,33 @@
                 min-width: 0;
             }
         }
+
+/* ============================================================
+   DAS EREIGNISLOG TRITT BEISEITE, WENN DAS PUNKTE-MENUE OFFEN STEHT (MKOPF, B1)
+   ============================================================
+   WARUM AM DATEIENDE. Die Zeilennummern dieser Datei sind Aktenlage:
+   tests/unit/design-consistency.test.js fuehrt Befunde als
+   `core.css:<zeile>` und prueft, dass der Anker seine Deklaration trifft
+   (R-06, R-19, R-21). Ein Einschub oben verschiebt jede Nummer darunter.
+
+   WAS ES BEHEBT, gemessen am gebauten Buendel: `.event-log` liegt auf
+   `z-index: 4000` und traegt in der dauerhaften Betriebsart (`L`)
+   `pointer-events: auto`. Seine Eintraege nahmen damit den Tipp, der dem
+   Menue galt (`--z-dropdown` = 300):
+
+       390x844   1 von 7 Eintraegen verdeckt
+       480x320   5 von 7
+       320x480   6 von 7
+
+   DIESELBE ABHILFE WIE BEI DER TASTENHILFE (dmscreen.css:2680,
+   `body.tastenhilfe-offen .event-log`). Keine Ausnahme in der z-Leiter —
+   die Hausregel fuer diese Gefahrenklasse heisst "verstecken, nicht
+   ausweichen" (variables.css, M1).
+
+   `display: none` und nicht `pointer-events: none`: ein Log, das man sieht
+   und nicht treffen kann, ist die schlechtere Auskunft. Der Preis steht in
+   `ui/mobile-header-menu.js` bei der Marke.
+   ============================================================ */
+body.kopfmenue-offen .event-log {
+    display: none;
+}
