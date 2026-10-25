@@ -105,4 +105,21 @@ describe('Jest sammelt nur den eigenen Baum', () => {
         const verschluckt = alle.filter(p => re && re.test(p)).map(p => path.relative(REPO, p));
         expect(verschluckt).toEqual([]);
     });
+
+    // DER PUNKT IST EIN PUNKT. Im Quelltext von jest.config.cjs muss das Muster
+    // `'/\\.claude/'` lauten: `'/\.claude/'` ist in einem JavaScript-String eine
+    // wirkungslose Maskierung und ergibt `/.claude/` — ein Regex, dessen `.`
+    // auf JEDES Zeichen passt. Genau so stand die Zeile beim ersten Schreiben
+    // da, und die beiden Teile darueber waren damit gruen: die Worktrees werden
+    // ignoriert, und keine echte Testdatei liegt in einem Ordner wie
+    // `xclaude/`. Dieser Teil nennt solche Doppelgaenger beim Namen.
+    test('das Muster trifft nur .claude und keinen Doppelgaenger', () => {
+        const re = ignorierMuster();
+        expect(re).not.toBeNull();
+        const doppelgaenger = ['xclaude', '-claude', 'claude', '.claudex'].map(ordner =>
+            path.join(REPO, 'tests', ordner, 'a.test.js')
+        );
+        const faelschlich = doppelgaenger.filter(p => re.test(p)).map(p => path.relative(REPO, p));
+        expect(faelschlich).toEqual([]);
+    });
 });
