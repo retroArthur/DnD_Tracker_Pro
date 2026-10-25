@@ -88,7 +88,13 @@ module.exports = {
   // Ignore Patterns
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/dist/'
+    '/dist/',
+    // Verschachtelte git-Worktrees der Desktop-App (.claude/.claude/worktrees/<name>/
+    // oder .claude/worktrees/<name>/). Ohne diese Zeile sammelt Jest deren komplette,
+    // meist aeltere Testkopie mit: gemessen 163 statt 85 Testdateien, und zwei
+    // Fehlschlaege, die nur aus der fremden Kopie kamen. Unverankert wie die zwei
+    // Zeilen darueber. Begruendung und Waechter: tests/unit/jest-sammelbereich.test.js
+    '/\\.claude/'
   ],
   
   // Transform Ignore
