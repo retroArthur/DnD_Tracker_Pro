@@ -496,7 +496,8 @@ for (const { b, h } of [...TELEFON, ...QUERFORMAT]) {
                         (p.getAttribute('data-value') ? '/' + p.getAttribute('data-value') : ''),
                     u: urteil(p),
                     hoehe: Math.round(p.getBoundingClientRect().height * 10) / 10,
-                    breite: Math.round(p.getBoundingClientRect().width * 10) / 10
+                    breite: Math.round(p.getBoundingClientRect().width * 10) / 10,
+                    minHoehe: parseFloat(getComputedStyle(p).minHeight) || 0
                 }))
             };
         });
@@ -539,6 +540,27 @@ for (const { b, h } of [...TELEFON, ...QUERFORMAT]) {
             flach,
             `Bei ${b}x${h} sind ${flach.length} Tippflaechen niedriger als 43px: ` +
                 JSON.stringify(flach)
+        ).toEqual([]);
+        // UND DIE 43px SIND DEKLARIERT, NICHT GEERBT. Die Zusicherung darueber
+        // misst die Hoehe — und die kam bei sechs der sieben Knoepfe nicht aus
+        // einer Regel, sondern aus der Zeilenbox ihres Symbols (`padding: 8px`
+        // plus `line-height: normal` der Emoji-Schrift bei 20px). Auf Windows
+        // (Segoe UI Emoji) ergibt das 43px, auf dem Linux-Laeufer von GitHub
+        // 40px: gemessen am 25.10.2026 in PR #6, alle sechs bei allen sechs
+        // Fenstergroessen 40 x 33px. Lokal war der Fall gruen und konnte es
+        // nicht anders sein, denn die Emoji-Schrift laesst sich hier nicht
+        // tauschen — `--font-ui` erreicht die Knoepfe gar nicht (sie rendern in
+        // Arial). Eine Messung der HOEHE kann eine solche Abhaengigkeit lokal
+        // nicht sehen; eine Pruefung der DEKLARATION kann es. Der Punkte-Knopf
+        // trug sein `min-height: 43px` von Anfang an; genau so.
+        const undeklariert = m.posten.filter(
+            p => p.a !== 'call/toggleSessionTimer' && p.minHoehe < 43
+        );
+        expect(
+            undeklariert,
+            `Bei ${b}x${h} haengen ${undeklariert.length} Tippflaechen an der Zeilenbox ` +
+                'ihres Symbols statt an einer deklarierten Mindesthoehe von 43px: ' +
+                JSON.stringify(undeklariert)
         ).toEqual([]);
     });
 }

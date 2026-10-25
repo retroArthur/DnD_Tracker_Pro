@@ -1324,4 +1324,81 @@ test.describe('C1 — das Layout haelt unter breiter Schrift', () => {
                 `(Schranke ${MIN_ZEILEN_RESERVE}px)`
         );
     });
+
+    /* (6) DIE TASTENHILFE BRICHT AUCH UNTER BREITER SCHRIFT HOECHSTENS ZWEIZEILIG.
+
+       Der Fall (8) in tastenhilfe.spec.js verlangt das bei 601px — der
+       unteren Kante der zwei Spalten, wo jede Spalte 237px breit ist — und
+       misst mit der Schrift, die gerade da ist. Auf Windows ist das Segoe UI,
+       und zwei Wortlaute waren genau darauf zugeschnitten: "Erster/letzter
+       Punkt (Fokus in der Reihe)" und "Szene auf Schnellplatz 1-5". Beide
+       tragen die BREITESTEN Tastengruppen der Hilfe (`Pos1 / Ende` 93px,
+       `Alt Shift 1..5` 128px von 213px Zeilenbreite), der Beschriftung bleibt
+       also wenig.
+
+       Auf dem Linux-Laeufer von GitHub brachen beide dreizeilig um —
+       gemessen am 25.10.2026 in PR #6, dem ersten Linux-Lauf dieser Kette.
+       Lokal war (8) gruen, weil er nur Segoe UI kennt. Verdana stellt die
+       Linux-Lage nach (DejaVu Sans stammt von Bitstream Vera ab, das auf
+       Verdanas Masse gebaut ist): mit Verdana brechen lokal GENAU DIESELBEN
+       ZWEI Zeilen dreizeilig, 66px statt 48px, bei derselben Spaltenbreite.
+
+       Geladen wird breit und dann verkleinert, wie (8) es tut: das
+       Layout-Profil folgt der Fenstergroesse, und (8) misst einen Zustand, den
+       ein Nutzer durch Verkleinern erreicht. */
+    test('(6) die Tastenhilfe bricht bei 601px auch unter breiter Schrift hoechstens zweizeilig', async ({
+        page
+    }) => {
+        test.setTimeout(90000);
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await appLaden(page, true);
+
+        const schrift = await messeSchriftbreite(page, PROBETEXT);
+        // VORBEDINGUNG A — wie bei (1) und (5): die Probenschrift ist nicht
+        // schmaler als die Windows-Erstwahl, sonst waere der Fall leichter als
+        // der Alltag.
+        expect(
+            schrift.ist,
+            `die Probenschrift ist SCHMALER als 'Segoe UI' (${schrift.ist} gegen ${schrift.segoe}px)`
+        ).toBeGreaterThanOrEqual(schrift.segoe - 0.5);
+
+        await page.setViewportSize({ width: 601, height: 900 });
+        await page.waitForTimeout(300);
+        await page.keyboard.press('Shift+/');
+        await page.waitForTimeout(400);
+
+        const lage = await page.evaluate(() => {
+            const g = document.querySelector('.shortcuts-grid');
+            const reihen = Array.from(document.querySelectorAll('.shortcut-row'));
+            const zh = reihen[0] ? parseFloat(getComputedStyle(reihen[0]).lineHeight) || 18 : 18;
+            return {
+                offen: !!document.querySelector('#shortcuts-overlay.show'),
+                spaltenRoh: g ? getComputedStyle(g).gridTemplateColumns : '(kein Raster)',
+                reihen: reihen.length,
+                dreiZeilig: reihen
+                    .map(r => ({
+                        z: Math.round((r.getBoundingClientRect().height - 12) / zh),
+                        t: (r.querySelector('span')?.textContent || '').trim()
+                    }))
+                    .filter(x => x.z >= 3)
+                    .map(x => `${x.t} (${x.z} Zeilen)`)
+            };
+        });
+
+        // VORBEDINGUNG B — die Hilfe ist wirklich offen und fuehrt Zeilen. Sonst
+        // waere `dreiZeilig` trivial leer.
+        expect(lage.offen, 'die Tastenhilfe hat sich mit Shift+/ nicht geoeffnet').toBe(true);
+        expect(lage.reihen, 'die Tastenhilfe fuehrt keine Zeilen').toBeGreaterThan(0);
+
+        console.log(
+            `[C1-Hilfe] 601px, breite Schrift: Spalten ${lage.spaltenRoh}, ` +
+                `${lage.reihen} Zeilen, dreizeilig: ${lage.dreiZeilig.length}`
+        );
+        expect(
+            lage.dreiZeilig,
+            `Bei 601px und breiter Schrift brauchen ${lage.dreiZeilig.length} Beschriftungen ` +
+                `drei Zeilen: ${lage.dreiZeilig.join(' | ')}. Spalten ${lage.spaltenRoh}. ` +
+                'Auf einem System ohne Segoe UI sieht die Hilfe genau so aus.'
+        ).toEqual([]);
+    });
 });
