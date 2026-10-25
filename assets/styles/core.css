@@ -4062,3 +4062,26 @@
 body.kopfmenue-offen .event-log {
     display: none;
 }
+
+/* ============================================================
+   DIE TIPPHOEHE DER MOBIL-KOPF-KNOEPFE IST DEKLARIERT, NICHT GEERBT
+
+   Der C1-Block weiter oben sagt zu, "die Hoehe der Tippflaeche (43px)
+   bleibt unberuehrt". Fuer sechs der sieben Knoepfe stand diese Hoehe
+   aber in keiner Regel: sie ergab sich aus `padding: 8px` und
+   `line-height: normal` der EMOJI-Schrift bei `--text-xl` (20px).
+
+       Windows, Segoe UI Emoji      43px
+       Linux-Laeufer von GitHub     40px   gemessen in PR #6, alle sechs
+                                           bei allen sechs Fenstergroessen
+
+   `--font-ui` erreicht diese Knoepfe gar nicht (sie rendern in Arial), die
+   Breitschrift-Sonde konnte die Abhaengigkeit also nie sehen. Der
+   Punkte-Knopf daneben trug sein `min-height: 43px` von Anfang an (die 43px
+   sind ein BODEN, kein Deckel); dieselbe Zeile hier. Auf Windows aendert sie
+   nichts, dort sind es schon 43px. Der Zaehler bleibt aussen vor wie in der
+   Schranke von mobil-kopfmenue.spec.js (4): er ist flacher und kein Knopf.
+   ============================================================ */
+[data-layout="mobile"] .mobile-search-btn {
+    min-height: 43px;
+}
