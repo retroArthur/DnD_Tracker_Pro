@@ -129,7 +129,7 @@
         
         .shortcuts-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr)); /* minmax statt 1fr: HILF, Begruendung am Media-Query am Dateiende */
             gap: 16px;
         }
         
@@ -2488,4 +2488,202 @@
 .dms-quick-label {
     font-size: var(--text-sm);
     font-weight: 500;
+}
+
+/* ============================================================
+   TASTENKUERZEL-HILFE AUF DEM TELEFON (HILF)
+   ============================================================
+   WARUM DIESE REGEL HIER UNTEN STEHT UND NICHT BEIM UEBRIGEN
+   .shortcuts-*-BLOCK (Zeile ~106-170). Die Zeilennummern dieser Datei
+   sind Aktenlage: tests/unit/design-consistency.test.js fuehrt Schatten-,
+   Ring- und Farbstellen als `dmscreen.css:<zeile>` und prueft, dass der
+   Anker seine Deklaration trifft (R-06, R-19, R-21). Ein Einschub oben
+   verschiebt jede Nummer darunter — gemessen fuenf rote Faelle beim ersten
+   Versuch. Am Dateiende verschiebt er nichts. Die Kaskade bleibt richtig:
+   eine Media-Query NACH der Grundregel ist genau die Reihenfolge, die sie
+   braucht.
+
+   EINE SPALTE AUF DEM TELEFON. Gemessen bei 360 px: der Dialog ist 324 px
+   breit (90 %), nach 2x24 px Polster bleiben 276 px, abzueglich 16 px
+   Spaltenabstand 130 px je Spalte. Darin brechen Beschriftungen wie "HP des
+   Kaempfers am Zug" um, und die Hilfe traegt seit HILF sechs Abschnitte
+   statt vier (43 Zeilen statt 25).
+
+   DIE GRENZE IST 600 px UND NICHT FREI GEWAEHLT. Der erste Entwurf nahm
+   680 px — die Stufe, die CLAUDE.md fuer die Editor-Werkzeugleisten nennt
+   (900/680). Falsch: jene Leiter laeuft nicht ueber CSS-Grenzen, und F-12
+   laesst im CSS GENAU 600, 900 und 1200 zu (bzw. 601/901/1201). 680 war
+   dort eine fuenfte, fremde Grenze und hat den Fall rot gestellt. 600
+   traegt dasselbe: ueber 600 px stehen zwei Spalten mit hoechstens
+   zweizeiligen Beschriftungen, und die beiden gemessenen Engstellen
+   (390 und 360 px) liegen darunter.
+
+   DIE SPALTEN SIND IN DIESEM BAND NICHT ALLE 267 px BREIT, und hier
+   stand dazu eine falsche Zahl ("zwei Spalten von 267 px" fuer
+   601-900 px). Nachgemessen: 601 px -> 237,4 px, 650 px -> 259,5 px, ab
+   700 px -> 267 px, weil der Dialog dort seine Hoechstbreite von 600 px
+   erreicht. Die 267 gelten also NICHT fuer das ganze Band. Die tragende
+   Aussage (hoechstens zweizeilig, nichts abgeschnitten, kein Querlauf)
+   haelt bei 601, 650, 700, 800, 900 und 1440 px — und wird seit der
+   Gegenpruefung auch gefahren: Fall (8) misst 601, 700 und 1440 px, mit
+   der Spaltenbreite je Stufe als eigener Zusicherung.
+
+   `minmax(0, 1fr)` an der Grundregel oben, NICHT `1fr`: `1fr` loest zu
+   `minmax(auto, 1fr)` auf, und `auto` ist der Mindestinhalt. Bei 351 px
+   Dialogbreite hat das die zwei Spalten gemessen in 120 px und 165 px
+   geteilt. Bei 1440 px aendert es nichts (dort stehen beide schon auf
+   267 px).
+
+   Bewacht von Fall (8) in tests/e2e/features/tastenhilfe.spec.js.
+   ============================================================ */
+@media (max-width: 600px) {
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   DIE TASTENHILFE ALS BESCHREIBUNGSLISTE (HILF)
+   ============================================================
+   WARUM DIESE REGELN HIER UNTEN STEHEN: dieselbe Aktenlage wie beim
+   Media-Query darueber. tests/unit/design-consistency.test.js fuehrt
+   Schatten-, Ring- und Farbstellen als `dmscreen.css:<zeile>` und prueft,
+   dass der Anker seine Deklaration trifft. Ein Einschub oben verschiebt
+   jede Nummer darunter; am Dateiende verschiebt er nichts.
+
+   WOZU SIE DA SIND. Jede Hilfezeile ist seit HILF ein Begriff-/
+   Definitionspaar (`<dt>` Handlung, `<dd>` Taste) in einer `<dl>` je
+   Abschnitt — gemessen wuchs der Zugaenglichkeitsbaum der Hilfe damit von
+   DREI Knoten auf 98, und das Vorleseprogramm nennt Handlung und Taste
+   getrennt statt die ganze Hilfe als einen Satz. Die drei Vorgabewerte des
+   Browsers muessen dafuer zurueckgenommen werden, sonst bezahlt die
+   Gestalt fuer die Semantik:
+
+     · `<dl>` bringt `margin: 1em 0` mit. In einem Abschnitt von 12 px
+       Polster sind das 16 px oben und unten je Abschnitt.
+     · `<dd>` bringt `margin-inline-start: 40px` mit. Die Tastenmarken
+       stehen rechts in einer Reihe mit `justify-content: space-between`;
+       40 px Einzug schoben sie bei 360 px Breite aus der Spalte.
+     · `<dt>` ist ein Blockelement und bringt als Flex-Kind `min-width:
+       auto` mit — das haelt die Beschriftung auf ihrem laengsten Wort
+       fest und verbreitert bei 237 px Spalte die Zeile, statt sie
+       umzubrechen.
+
+   `min-width: 0` STEHT DARUM NUR AUF DEM BEGRIFF UND NICHT AUF DER
+   DEFINITION, und das ist der Unterschied zwischen einem lauten und
+   einem stillen Fehler. Der erste Entwurf gab beiden Elementen
+   `min-width: 0`. Isoliert nachgemessen bei 601 px (Spalte 237,4 px),
+   mit einer langen Beschriftung auf einer DREIGLIEDRIGEN Marke
+   (`Alt` `Shift` `1-5`):
+
+     min-width auf dt UND dd   Querlauf 9 px   dreizeilig: keine
+     min-width nur auf dt      Querlauf 0      dreizeilig: die Zeile
+
+   Auf der Definition erlaubt es der TASTENREIHE, unter ihren Inhalt zu
+   schrumpfen; die Marken haengen dann rechts aus dem Dialog heraus. Ein
+   Querlauf in einem Dialog ist auf dem Telefon praktisch unauffindbar,
+   und kein Fall sah ihn: Fall (8) fuhr damals nur 390, 360 und 1440 px,
+   und dort tritt er nicht auf. Ohne sie bricht statt dessen die
+   BESCHRIFTUNG auf drei Zeilen um — und das meldet Fall (8) laut. Ein
+   Fehler, der einen Waechter ausloest, ist dem vorzuziehen, der sich
+   versteckt.
+
+   Nachgemessen mit den heutigen Beschriftungen bei 360, 390, 601, 650,
+   700, 800, 900 und 1440 px: kein Querlauf, keine dreizeilige
+   Beschriftung, nichts abgeschnitten — dasselbe Bild wie am
+   Ausgangsstand 52c0a5b. Fall (8) faehrt seit diesem Befund auch 601,
+   700 und 1440 px.
+
+   `display: contents` WAERE DER KUERZERE WEG UND IST FALSCH: es nimmt dem
+   Element seine Box, und `<dd>` traegt hier die Klasse `.shortcut-keys`
+   mit `display: flex; gap: 4px` — die Marken verloeren damit ihren
+   Abstand. Zuruecknehmen, was der Browser vorgibt, ist billiger als die
+   Box aufzugeben.
+   ============================================================ */
+.shortcuts-section-list {
+    margin: 0;
+}
+
+.shortcut-row dt,
+.shortcut-row dd {
+    margin: 0;
+}
+
+.shortcut-row dt {
+    min-width: 0;
+}
+
+/* ============================================================
+   DER AUSWEG AUS DER TASTENHILFE (HILF)
+   ============================================================
+   Auch diese Regeln stehen am DATEIENDE, aus derselben Aktenlage wie die
+   zwei Abschnitte darueber: tests/unit/design-consistency.test.js ankert
+   Stellen dieser Datei per Zeilennummer.
+
+   WAS GEMESSEN WAR, mit hasTouch/isMobile am gebauten Buendel: bei 390 px
+   waren 12 der damals 41 Zeilen sichtbar (673 px Flaeche, 2119 px
+   Inhalt), bei 360 px zehn. Die Fusszeile stand 2161 px unter dem Anfang und lautete
+   "Druecke Esc zum Schliessen" — unerreichbar, und auf einem Geraet ohne
+   Escape-Taste ausserdem eine Anweisung ins Leere. Vier der sechs
+   Abschnitte (Wuerfel, Initiative, Tabulator & Gruppen, Soundboard) lagen
+   ausserhalb der Flaeche, ohne Hinweis, dass es weitergeht.
+
+   `position: sticky` AM FUSS DES LAUFBEREICHS. `.shortcuts-modal` ist der
+   Laufbereich (`max-height: 80vh; overflow-y: auto`), die Fusszeile ist
+   sein letztes Kind — sie klebt damit an seiner unteren Kante und ist beim
+   Oeffnen wie beim Rollen sichtbar. Der undurchsichtige Hintergrund
+   (`var(--bg-card)`, dieselbe Farbe wie die Flaeche) ist dabei nicht
+   Kosmetik: ohne ihn liefen die Zeilen darunter durch den Text.
+   `margin-inline: -24px` und `padding-inline: 24px` heben das Polster der
+   Flaeche auf, damit der Streifen die ganze Breite deckt; `bottom: -24px`
+   zieht ihn auf die untere Polsterkante, sonst bliebe darunter ein
+   24 px hoher Spalt, durch den Zeilen sichtbar waeren.
+
+   DAS ZIEL MUSS TREFFBAR SEIN. Der ✕-Knopf war 36x36 px auf dem Telefon
+   und 27x23 am Schreibtisch. 44 px ist die Schranke, die dieses Projekt an
+   den Reitern der Navigationsleiste gesichert hat (core.css, M1); dort
+   steht auch die Begruendung, wo sie NICHT gilt — bei sieben Knoepfen in
+   304 px Kopfzeile ist der Platz nicht da. Hier steht EIN Knopf in einer
+   eigenen Zeile. 32 px am Schreibtisch deckt die 24-px-Schranke von
+   WCAG 2.5.8 mit Rand.
+
+   DAS EREIGNISLOG TRITT BEISEITE, SOLANGE DIE HILFE OFFEN IST. Gemessen
+   verdeckte EIN Hinweis bei 390 px drei der zwoelf sichtbaren Zeilen. Das
+   Log liegt mit `--z-toast` (4000) ueber der Hilfe (`--z-floating`, 2000),
+   und das ist in variables.css eine ausdrueckliche Entscheidung
+   ("Meldungen liegen ueber allem"). Die Ebenenleiter ist darum NICHT der
+   Ort der Reparatur — eine Ausnahme fuer eine Blende haette die Leiter
+   entwertet. Statt dessen setzt `showShortcutsOverlay()` die Marke
+   `tastenhilfe-offen` auf `<body>` und nimmt sie beim Schliessen zurueck.
+   DAS KOSTET ETWAS, und es soll hier stehen: ein Hinweis, der waehrend der
+   offenen Hilfe ablaeuft, ist danach weg. Dafuer gibt es die dauerhafte
+   Betriebsart des Logs (`L`), und die steht in der Hilfe. Ein Hinweis
+   ueber einer modalen Hilfe ist ohnehin nichts, worauf der Nutzer gerade
+   handeln kann.
+
+   Bewacht von den Faellen (16) und (17) in
+   tests/e2e/features/tastenhilfe.spec.js.
+   ============================================================ */
+.shortcuts-footer {
+    position: sticky;
+    bottom: -24px;
+    margin-inline: -24px;
+    padding: 8px 24px 24px;
+    background: var(--bg-card);
+}
+
+.shortcuts-title .btn {
+    min-width: 32px;
+    min-height: 32px;
+}
+
+body.tastenhilfe-offen .event-log {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .shortcuts-title .btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
 }

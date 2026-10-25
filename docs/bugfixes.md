@@ -364,7 +364,7 @@
 | `saveUndoState()` fehlt bei Delete/Edit                                        | Bei jeder Lösch-/Bearbeitungsfunktion prüfen                                                                  |
 | CSS-Klassen im HTML ohne Definition                                            | HTML + CSS immer zusammen implementieren                                                                      |
 | Selbstbezüge in hierarchischen Daten                                           | Filter auf `parentId !== id` prüfen                                                                           |
-| `document.execCommand()` deprecated (21 Call-Sites in ui/editors/rich-text.js) | Neue Editor-Funktionen mit Selection/Range API implementieren; vollständige Ablösung in eigener Phase geplant |
+| `document.execCommand()` deprecated (abgelöst, Phase 9 — 0 Aufrufe im Quellbaum, Stand 2026-10-14) | Neue Editor-Funktionen über die Selection/Range-Helfer in `ui/editors/rich-text.js`; `execCommand` nicht wiederbeleben (`DOC-12` hält die Zahl) |
 | Dropdowns nur bei Init gefüllt                                                 | Beim Öffnen des Formulars Selects neu populieren                                                              |
 | Kategorie-übergreifende Parent-Refs                                            | Prüfen ob Parent in gleicher Kategorie ist, sonst als Root behandeln                                          |
 | `setInterval` ohne Cleanup                                                     | Immer prüfen ob Interval existiert und clearInterval vor neuem Start                                          |
@@ -732,16 +732,577 @@
 
 ---
 
+## 2026-10-14 — Tastatur-Strang (TASV/E-2, HILF)
+
+Vier Fehler aus den Vorbereitungsansichten und der Tastenhilfe. Drei davon
+hat erst eine Messung in **Menschentempo** oder erst die **volle** Suite
+sichtbar gemacht — das ist die gemeinsame Lehre dieses Blocks.
+
+### Virtuelles Scrollen löschte den fokussierten Knoten (Tabulator-Endlosschleife)
+
+- **Problem:** Im Bestiarium war alles, was in der Dokumentreihenfolge **hinter** der virtuellen Liste steht, mit der Tastatur unerreichbar: die sechs `button.bestiary-fav`, `div.qref-fab`, `button#floating-dice-trigger` und die zwei Knöpfe des Umzugs-Hinweises. Gemessen am gebauten Bündel (gefüllte Kampagne, 1440 px, echte Tastendrücke): in 400 Sprüngen 34 `BODY`-Halte, 329 Halte auf frisch erzeugten Knoten, 860 entfernte Knoten. Zum Vergleich über drei Ansichten mit derselben globalen Schale und je 20 Zeilen: NSC erreicht die Schnell-Referenz in 37 Anschlägen, die Initiative in 196, das Bestiarium in 220 **nicht**.
+- **Ursache:** `render()` ersetzte bei **jedem** `scroll`-Ereignis `visibleContainer.innerHTML` — auch wenn `startIdx`/`endIdx` unverändert blieben. Der eben fokussierte Knoten war danach `isConnected === false`, `document.activeElement` fiel auf `BODY`, und der nächste Tabulator setzte **innerhalb** der frisch gebauten Zeilen wieder auf statt dahinter.
+- **Fix:** Zwei Teile in `ui/virtual-scroll.js`. (1) Kein Neuzeichnen bei unverändertem Fenster — das war der häufigste Fokusverlust und zugleich Arbeit ohne Wirkung. (2) Verschiebt sich das Fenster wirklich, wird der **absolute Zeilenindex** plus die Stelle des fokussierten Elements **innerhalb** der Zeile gemerkt (nicht der Knoten — er ist genau das, was verloren geht) und der Fokus an den frischen Knoten derselben Zeile zurückgegeben. Steht die Zeile nicht mehr im Fenster, bleibt es beim Verlust: dann ist der Spielleiter über sie hinausgerollt, und ihm den Fokus nachzuziehen wäre ein Griff in die Bedienung.
+- **Zwei Fallen in der Reparatur selbst:** `div.focus()` auf einem `div` **ohne** `tabindex` ist ein Nichts — kein Fehler, keine Wirkung; die Fokussierbarkeit entsteht erst in der Nachrüstung (`ui/keyboard-reach.js`), einen Bildwechsel später. Darum wird `KeyboardGroup.aktualisieren()` in **derselben** Aufgabe angestoßen. Und `focus()` **muss** hier `preventScroll: true` tragen, sonst rollt es sein Ziel in den sichtbaren Bereich, das erzeugt ein `scroll`, das denselben Lauscher erneut weckt — Rückkopplung.
+- **Regel (Messdisziplin):** **Eine Messung in Maschinengeschwindigkeit unterschätzt diesen Fehler.** Mit 0 ms Pause zwischen den Tastendrücken waren 17 Stellen unerreichbar, ab 30 ms deterministisch 27; Menschentempo liegt bei 250–600 ms, der Spielleiter trifft also immer den schlechten Fall. Wer Tastaturwege prüft, misst mit Pause. Und: wer in einer Liste `innerHTML` ersetzt, verliert den Fokus — die Reparatur gehört an die Ursache (das Neuzeichnen), nicht in die Tastaturmechanik.
+- **Datei:** `ui/virtual-scroll.js`
+- **Tests:** `tests/e2e/features/tastatur-reichweite.spec.js`
+
+### Fokusrückgabe ohne `preventScroll` ließ die Liste zurückspringen
+
+- **Problem:** Im Bestiarium: Fokus auf der ersten Monsterzeile, 300 px mit dem Rad gerollt — danach stand `scrollTop` wieder auf 0 statt auf 300. Die Liste sprang unter der Hand des Spielleiters zurück und machte genau die Bewegung zunichte, aus der das Neuzeichnen entstanden war.
+- **Ursache:** `_holeFokusZurueck()` rief `ziel.focus()` ohne `preventScroll`. Der Standardwert rollt das Ziel in den sichtbaren Bereich — eine **Fokusrückgabe ist aber keine Navigation** und darf die Ansicht nicht bewegen.
+- **Warum im Kampfpaket unsichtbar:** `renderInit()` rollt nichts, und `.init-spell-slots` liegt in keinem rollbaren Behälter. Der Fehler entstand nicht mit den Vorbereitungsansichten, er wurde dort nur erstmals sichtbar.
+- **Fix:** `ziel.focus({ preventScroll: true })` in `_holeFokusZurueck()`. Der Gegensatz dazu steht bewusst daneben: in `_tasten()` **ist** die Bewegung gewollt, weil der Spielleiter selbst fährt und sein Ziel sehen will. Darum steht `preventScroll` an der einen Stelle und nicht an der anderen.
+- **Regel:** `focus()` zur Wiederherstellung immer mit `preventScroll: true`; `focus()` als Folge einer Benutzerfahrt ohne. Wer beides gleich behandelt, hat entweder einen Sprung oder ein unsichtbares Ziel.
+- **Datei:** `ui/keyboard-group.js`
+- **Tests:** `tests/e2e/features/tastatur-gruppen.spec.js`
+
+### `aria-expanded` folgte dem Zustand nicht (Auftragsköpfe)
+
+- **Problem:** Ein Klick auf einen Auftragskopf klappte die Karte auf, `aria-expanded` blieb aber auf `"false"`. Das Vorleseprogramm hörte „eingeklappt", während der Auftrag offen stand. Gemessen mit je einem echten Klick und 1,5 s Nachbeobachtung: `toggle-quest` „false" → „false" bei offener Karte (falsch), `toggle-shop` „false" → „true" (richtig). **Genau eine** der vier Aufklapp-Familien war betroffen, nicht drei — die beiden Einzelstellen (`toggle-collapse`, `toggle-wiki-category`) tragen gar kein `aria-expanded`.
+- **Ursache:** `toggleQuest()` in `features/quests/quests-render.js` schaltet **nur eine Klasse** um (`element?.classList.toggle('expanded')`) — keine `childList`-Änderung, kein `save()`. Der `MutationObserver` von `KeyboardGroup` horchte ausdrücklich nur auf `childList`, der Post-Save-Haken feuerte nicht, die Regelfunktion lief nie.
+- **Gegen den Ausgangsstand war das eine Verschlechterung:** vorher trug der Kopf gar kein `aria-expanded`, das Hilfsmittel schwieg. Eine Falschaussage ist schlechter als Schweigen.
+- **Fix:** Am allgemeinen Ort, nicht in `toggleQuest()`: der Beobachter horcht zusätzlich auf `attributeFilter: ['class']`. In `toggleQuest()` wäre es eine Zusicherung an einer von vier Familien gewesen, und die nächste Funktion, die nur eine Klasse umschaltet, wäre wieder stumm. Dass der Beobachter sich damit nicht selbst weckt, ist nachgemessen: **im Code** von `ui/keyboard-group.js` kommt weder `classList` noch `className` vor. Der naheliegende Beleg reproduziert dabei NICHT — `grep -nE "classList|className" ui/keyboard-group.js` liefert **zwei** Zeilen, und zwar zwei Kommentare, von denen der eine genau diesen Befehl zitiert. Es ist dieselbe Selbstfalle, die diese Akte für ihre Zahlangaben schon kennt (Zahlen in Worten, damit `DOC-12` nicht auf der Fehlerbeschreibung selbst anschlägt). Reproduzierbar ist der Beleg erst ohne die Kommentarzeilen: `grep -nE "classList|className" ui/keyboard-group.js | grep -vE "^[0-9]+: *(//|\*)"` ist leer.
+- **Regel:** **Ein Zustandswechsel, der nur eine Klasse umschaltet, ist für einen `childList`-Beobachter unsichtbar.** Wer ARIA aus einer Klasse ableitet, muss auf `attributeFilter: ['class']` horchen. Zweite Lehre, aus dem Nebenbefund: `toggleCollapse()` in `systems/spellslots/navigation.js` entging demselben Fehler nur **beiläufig**, weil es sein Pfeil-Icon per `textContent` umschreibt und damit zufällig eine `childList`-Änderung erzeugt. Eine Abhängigkeit von einem Icon ist keine Zusicherung.
+- **Dritte Lehre, über den Wächter:** die vorhandenen Fälle lasen den Zustand **einmal**, direkt nach dem Öffnen der Ansicht, und prüften eine Anzahl gegen ein Soll. Damit belegen sie die **Anwesenheit** des Attributs, nie seine **Richtigkeit** — ein tautologischer Wächter. Ein Fall über ein Zustandsattribut muss **zuerst bedienen und danach lesen**, und vorher prüfen, dass die Bedienung den Zustand überhaupt geändert hat.
+- **Datei:** `ui/keyboard-group.js`
+- **Tests:** `tests/e2e/features/tastatur-gruppen.spec.js` (18g, 18g-T)
+
+### Die Tastenhilfe gab den Fokus frei, statt ihn ihrem Öffner zurückzugeben
+
+- **Problem:** Nach dem Nachziehen der Tastenhilfe (Fokus fällt beim Öffnen in den Dialog) lag der Fokus beim Schließen mit Escape auf `BODY` statt auf dem geklickten ⌨️-Knopf. Nachgewiesen von der **vollen** Playwright-Suite, von genau dem Fall, der dafür gebaut ist: `tastatur-ausloesung.spec.js` (g2) klickt den Knopf, drückt Escape und sichert zu, dass der geklickte Knopf den Fokus **behält** — „ohne diese Zusicherung misst der Fall nichts".
+- **Ursache:** Eine halb richtige Begründung. Ein Öffner wurde absichtlich nicht gemerkt, weil ein **vorgetäuschter** Öffner die Leertaste verbraucht (derselbe Fehler, den `tastatur-kuerzel.spec.js` (j) für den HP-Rechner festhält). Richtig ist nur die Hälfte davon: einen Öffner **erfinden** ist falsch, einen vorhandenen **wiederherstellen** ist richtig — und `ui/modal-focus.js` tut für die 36 Schalen genau Letzteres.
+- **Fix:** Beim Öffnen wird das fokussierte Bedienelement gemerkt, **sofern es eines gibt**. Bei `?` liegt der Fokus auf `BODY`, der Öffner ist `null`, und der Fokus wird beim Schließen freigegeben — die Leertaste gehört wieder dem Zugwechsel. Beim Klick auf den ⌨️-Knopf gibt es einen, und er bekommt den Fokus zurück. Keine `WeakMap` nötig: es gibt eine Tastenhilfe, sie schachtelt nicht, und `showShortcutsOverlay()` ist ihr einziger Öffner im Baum.
+- **Regel:** Eine Fokusübergabe in einen Dialog braucht **immer** den Rückweg, und zwei Zusicherungen aus **zwei Richtungen**: eine, dass der Fokus hineingeht, eine, dass er zurückkommt. Eine Umsetzung, die nur eines kann, ist dann in genau einem der beiden Fälle rot. Und: eine Teilsuite hätte diesen Regress nicht gefunden — er lag in einer anderen Datei als die Änderung.
+- **Datei:** `systems/undo.js` (dort steht `showShortcutsOverlay()`)
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (7, 7b), `tests/e2e/features/tastatur-ausloesung.spec.js` (g2)
+
+### Zwei überholte Zahlen in diesem Katalog und eine im Prüfstand
+
+- **Problem:** Dieser Katalog führte an drei Stellen einundzwanzig Call-Sites von `document.execCommand` in `ui/editors/rich-text.js` (Zahl hier in Worten, sonst schlägt `DOC-12` auf der Fehlerbeschreibung selbst an) und „641 data-action-Attribute". Beide Zahlen stammen aus der Zeit vor den Ablösungen bzw. vor den Vorlagenteilungen; gemessen am 2026-10-14 sind es **0 Aufrufe** von `execCommand` im ganzen Quellbaum und **865** `data-action`-Vorkommen in `assets/templates/` (dazu 489 in den JS-Modulen, zusammen 1354). Dazu nannte ein Kommentar in `tests/build/test_build_deduplication.py` achtzehn Gruppenarten (auch diese Zahl in Worten), wo 23 Ansichtsgruppen angemeldet sind. **Nachtrag der Gegenprüfung:** „Gruppenart" hieß an dieser Stelle zweierlei. `ANSICHTSGRUPPEN.length` ist 23 (seit MKOPF; davor 22, siehe den Eintrag zum Punkte-Menue des Mobil-Kopfs), zur Laufzeit führt `KeyboardGroup` aber 25 Gruppenarten — die zwei überzähligen sind die Grundarten `zauberplaetze` und `todeswuerfe` aus dem Literal `GRUPPEN_ARTEN` in `ui/keyboard-group.js`, und dessen eigenes Protokoll nennt ebenfalls die Gesamtzahl. Der Wächter nagelte bis dahin nur die 22 fest und wäre bei einer korrekten Gesamtangabe rot geworden; er führt jetzt beide Wörter mit je eigener Sollzahl.
+- **Ursache:** Keine Ratsche über den beiden Akten. `CLAUDE.md` wurde im ganzen Baum nur von `tests/unit/docs-consistency.test.js` als Daten gelesen — und dort nur für die CSS- und die Vorlagenzahl; dieser Katalog von keiner Datei. Zahlen in Prosa verwesen lautlos.
+- **Fix:** Die Zahlen korrigiert und drei neue Wächter gezogen: `DOC-11` nagelt die Zahl toter Pfadangaben in diesem Katalog fest (88 Angaben, 8 tot), `DOC-12` hält jede Zahlangabe über `execCommand`-Aufrufe gegen einen Lauf über `core/ utils/ systems/ features/ ui/ render/`, und ein Fall in `tests/unit/keyboard-group-views.test.js` hält jede Zahlangabe über „Gruppenarten" gegen `ANSICHTSGRUPPEN.length`.
+- **Regel:** Eine Zahl in einer Akte ist eine Zusicherung ohne Wächter. Wer eine hinschreibt, zieht entweder den Wächter mit oder schreibt dazu, wann und wie gemessen wurde. Die `*-BERICHT.md` sind davon ausgenommen: sie sind datierte Abnahmeprotokolle, und ein nachträglich korrigiertes Protokoll wäre eine Fälschung.
+- **Dateien:** `docs/bugfixes.md`, `tests/build/test_build_deduplication.py`, `tests/unit/docs-consistency.test.js`, `tests/unit/keyboard-group-views.test.js`
+- **Tests:** `tests/unit/docs-consistency.test.js` (DOC-08 bis DOC-12), `tests/unit/keyboard-group-views.test.js`
+
+### Die Tastenhilfe sicherte eine Fokusfalle zu, die in ihr selbst nicht griff
+
+- **Problem:** Die Hilfe druckt die Zeile „Nächstes Bedienelement (im Dialog bleibt er darin)". Gemessen am gebauten Bündel (1440x900, echte Tastendrücke) verließen **44 von 45** Tabulatorsprüngen die **offene** Hilfe, 35 davon landeten auf einem Ziel, das die Blende verdeckt (`document.elementFromPoint` über der Mitte liefert `DIV.shortcuts-overlay`), während die Hilfe sichtbar offen blieb. Shift+Tab: 10 von 10 draußen. Von 109 sichtbaren Haltepunkten der Seite lag genau **einer** in der Hilfe. Kontrollmessung im selben Lauf: `about-modal`, eine gewöhnliche Schale, hielt 20 von 20.
+- **Ursache:** `ui/modal-focus.js` sucht die Schale über `.modal-overlay.show` plus `#quicknotes-modal`. Die Hilfe trägt `.shortcuts-overlay` und fiel aus beiden — `oberstesModal()` gab `null`, die Falle zog sich zurück (nachgemessen: `ModalFocus.statistik().offen === null` bei offener Hilfe). Der Kommentar dort begründete das ausdrücklich, aber mit einer Messung aus einer **anderen** Lage: Hilfe **über** einem offenen Dialog, wo sie damals keinen eigenen Haltepunkt hatte. Seit der Fokusübergabe in `systems/undo.js` liegt der Fokus beim Öffnen in der Hilfe, und die Begründung trägt nicht mehr.
+- **Fix:** `offeneTastenhilfe()` als eigener Griff **neben** `oberstesModal()`, und `_tab()` fragt ihn zuerst. Nicht **in** `oberstesModal()` hinein: jene Frage („welche Schale ist offen") wird außerhalb der Datei als genau das gelesen — der Escape-Zweig in `systems/spellslots/keyboard-shortcuts.js` schließt damit über `hideModal(m.id)`, und die vierte Schranke des HP-Kürzels verweigert damit einen Dialog über einem Dialog.
+- **Regel:** Eine gemessene Begründung gilt **für die gemessene Lage**. Wer einen Selektor mit „nachgemessen, hat keine Wirkung" auslässt, schreibt dazu, in **welcher** Lage gemessen wurde — sonst überlebt die Begründung die Änderung, die sie ungültig macht. Und: eine Zusage, die eine Hilfe über ihr eigenes Verhalten druckt, braucht einen Fall. Eine falsche Hilfe ist schlimmer als eine fehlende.
+- **Dateien:** `ui/modal-focus.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (13)
+
+### Die offene Tastenhilfe war eine lebende Tastaturfläche
+
+- **Problem:** Von 44 Proben bei offener Hilfe änderten **30** den Zustand **hinter** der Blende, und die Hilfe blieb in allen 44 Fällen offen. `2` wechselte die Ansicht, `9` nach Beute, `N` den Zug (0 → 1), `P` rückwärts (0 → 5), `Shift+N` die Runde (1 → 2), `R` und `Alt+Ziffer` würfelten, `T` startete die Sitzungsuhr, `L` stellte das Ereignislog dauerhaft, `Strg+Z/Y/S` schrieben je einen Protokolleintrag. **Fünf** Tasten zogen den Fokus in ein Eingabefeld **unter** der Blende (`Strg+K`/`Strg+F` → globale Suche, `Strg+Shift+K`/`Strg+.` → Befehlspalette, `/` → Schnellreferenz); ein dort getipptes Wort stand nach dem Schließen im Suchfeld.
+- **Ursache:** Kein Zweig des `keydown`-Lauschers fragte nach der offenen Hilfe. Die Hilfe ist genau die Fläche, die man aufschlägt, wenn man **nicht** weiß, was eine Taste tut — sie lädt zum Ausprobieren ein, und am Spieltisch rückte jede Probe Zug und Runde des laufenden Kampfes, ohne dass der Spielleiter es sah (die Blende deckt mit 85 % Schwarz).
+- **Fix:** Eine Schranke **vor** dem Soundboard-Block: solange die Hilfe offen ist, ist die App für App-Kürzel taub. Sie kehrt **ohne** `preventDefault()` zurück — Bild-ab, Pfeile und Leertaste lassen den Lauf der Hilfe weiterlaufen, und das ist notwendig: ihr Inhalt ist länger als ihre Fläche (gemessen 2119 px in 673 px bei 390 px Breite). `Escape` läuft in seinen eigenen Zweig.
+- **Regel:** Eine modale Fläche, die Tasten **erklärt**, darf sie nicht gleichzeitig **ausführen**. Die Schranke gehört vor jeden Zweig, der bewusst vor dem Tipp-Guard steht — die Soundboard-Kürzel stehen dort und hätten eine spätere Schranke umgangen.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (14)
+
+### Zwanzig Modifikator-Kollisionen, von denen vier bekannt waren
+
+- **Problem:** Die Kürzeltabelle führte vier Modifikator-Kollisionen als abgeschlossenen Befund. Gemessen mit einer **gerechneten** Kreuzung aus den acht Einzeltasten-Kürzeln (`r t l k n p h /`) und vier Modifikatorlagen, 80 Kombinationen je Ansicht, waren es **zwanzig**: `Strg+/` und `Alt+/` (Schnellreferenz auf, Fokus ins Suchfeld), `Alt+R`, `Alt+T`, `Alt+L`, `Alt+P`, `Strg+P`, `Strg+N`, `Alt+N`, `Strg+Shift+N`, `Alt+Shift+N`, `Strg+Shift+?`, `Alt+Shift+?`, `Strg+Shift+/`, `Alt+Shift+/`, `Alt+Shift+6`, `Alt+Shift+8`, `Strg+Leertaste`, `Alt+Leertaste`, `Shift+Leertaste`. Vier davon nehmen dem Browser etwas weg: `Strg+P` ist das Drucken, `Strg+Leertaste` die Eingabemethode, `Alt+Leertaste` das Fenstermenü, `Shift+Leertaste` der Seitenlauf nach oben.
+- **Ursache:** Die Negationen (`!e.ctrlKey`, `!e.metaKey`, `!e.altKey`) sind je Zweig von Hand gewachsen und waren an zwölf Zweigen unterschiedlich lückenhaft; der `p`-Zweig hatte gar keine. Und die **Messmenge** des Wächters war handverlesen (46 Kandidaten) — sie ließ genau die Lagen aus, in denen eine fehlende Schranke entsteht.
+- **Fix:** Ein Prädikat `OHNE_MODIFIKATOR(e)` an allen zwölf Zweigen, dazu einzeln begründete `!e.shiftKey` an der Leertaste, am Würfelzweig, bei `/` und bei `p`. `e.shiftKey` steht **nicht** im Prädikat: bei Buchstaben ändert Shift die Taste selbst, und der `?`-Zweig braucht sie. Die Messmenge ist jetzt zum großen Teil gerechnet; die Ausnahmeliste des Wächters ist **leer**.
+- **Regel:** Wer eine Kollision auf eine Entschuldigungsliste schreibt, hat sie nicht gemessen, sondern gezählt. Eine **gerechnete** Kreuzung über die Achsen, an denen der Fehler entsteht, findet, was eine getippte Auswahl übersieht — hier sechzehn weitere Fälle. Zweite Lehre: eine Entschuldigungsliste braucht **drei** Proben, nicht zwei — Eintrag ohne Grund, Eintrag **und** Hilfe, und Eintrag **ohne Belegung**. Die dritte fehlte, und genau sie hätte die vier alten Einträge nach ihrer Behebung gemeldet.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (3), (4), (6), (10)
+
+### `Strg+Shift+Z` war ein toter Zweig — der Browser liefert `'Z'`
+
+- **Problem:** Die Bedingung lautete `e.key === 'y' || (e.key === 'z' && e.shiftKey)`. Mit gedrückter Umschalttaste liefert der Browser `e.key === 'Z'`, niemals `'z'` — die zweite Hälfte war unerreichbar. In einer Matrix über 80 Modifikatorkombinationen in zwei Ansichten taucht `Strg+Shift+Z` in keiner Belegtliste auf, weder über `defaultPrevented` noch über eine Wirkungsspur aus dreizehn Größen; `Strg+Y` dagegen in beiden.
+- **Ursache:** Ein `e.key`-Vergleich, der die Groß-/Kleinschreibung der Umschalttaste nicht berücksichtigt. Dieselbe Art toter Zweig wie `Entf` gegen `#view-network`, nur unauffälliger: das Kürzel stand nicht in der Hilfe, also fiel niemand darauf herein.
+- **Fix:** `e.key === 'Z' && e.shiftKey`, und das Kürzel in die Hilfe nachgetragen („Wiederholen (gleichwertig)") — sonst wäre der Mengenvergleich zu Recht rot.
+- **Regel:** Ein `e.key`-Vergleich auf einen Buchstaben **mit** `e.shiftKey` muss den Großbuchstaben prüfen. Und: ein Kürzel, dessen Belegung nie gemessen wurde, ist eine Behauptung — die Belegungsmatrix findet den toten Zweig, die Kürzeltabelle nicht.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (3), (5)
+
+### Für ein Vorleseprogramm war die ganze Tastenhilfe ein Textknoten
+
+- **Problem:** Der Zugänglichkeitsbaum der offenen Hilfe bestand aus **drei** Knoten: ein Text, ein Knopf, und ein rund hundert Wörter langer Satz für die damals 41 Zeilen — ohne Trennung zwischen Handlung und Taste und ohne Überschrift, nach der man springen könnte. `#shortcuts-overlay` und `.shortcuts-modal` trugen `role`, `aria-label`, `aria-labelledby` und `aria-modal` je auf `null`; im Dialog null Überschriften, null Rollen, null `aria-*`-Attribute, null `<kbd>`, null Listen.
+- **Ursache:** Reines `div`/`span`-Markup. Die Hilfe ist dabei das Werkzeug dessen, der die Maus nicht benutzt — inhaltlich war sie nahezu vollständig und für den Vorleseprogramm-Nutzer trotzdem unbenutzbar: ohne `role="dialog"`/`aria-modal` kündigt nichts an, dass sich überhaupt etwas geöffnet hat.
+- **Fix:** Vier Fassungen am laufenden Bündel eingesetzt und die Knoten gezählt, **bevor** eine gewählt wurde: Ausgangsstand 3, mit `dialog`/`heading`/`<kbd>` 15, zusätzlich mit `role="listitem"` 57, mit `<dl>`/`<dt>`/`<dd>` 98. Genommen ist die vierte, und der Unterschied zur dritten ist genau der Befund: `listitem` macht aus einer Zeile **einen** Knoten („Dashboard 1"), `<dt>`/`<dd>` machen **zwei** („Begriff Dashboard", „Definition 1"). Das `<span>` bleibt **innerhalb** des `<dt>`: zwei Leser der Wächterdatei greifen die Beschriftung über `row.querySelector('span')`, und ein blinder Leser macht jeden Mengenvergleich grün.
+- **Regel:** Eine Auszeichnung für Hilfsmittel wird am **Zugänglichkeitsbaum** gemessen, nicht an den Attributen: ein `<dt>` unter `display: none` trägt alle Attribute und erscheint in keinem Baum. Und wer Markup umbaut, prüft zuerst, welche **Leser** (Tests, Generatoren) daran hängen.
+- **Dateien:** `assets/templates/modals-editors.html`, `assets/styles/dmscreen.css`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (15)
+
+### Der Ausweg aus der Hilfe lag 2161 px tiefer, und das Ereignislog legte sich darüber
+
+- **Problem:** Mit `hasTouch`/`isMobile` gemessen: bei 390 px waren **12 der damals 41** Zeilen sichtbar (673 px Fläche, 2119 px Inhalt), bei 360 px zehn, bei 1440 px 23. Die Fußzeile lautete „Drücke Esc zum Schließen" und stand 2161 px bzw. 2199 px unter dem Anfang — beim Öffnen nicht sichtbar. Ein Telefon hat keine Escape-Taste; der wirkliche Ausweg stand nirgends, und der ✕-Knopf war **36x36 px** im Berührungsarm (27x23 am Schreibtisch). Dazu verdeckte **ein** Hinweis bei 390 px drei der zwölf sichtbaren Zeilen.
+- **Ursache:** Zwei getrennte Sachen. Die Fußzeile war ein gewöhnliches letztes Kind eines Laufbereichs. Und das Ereignislog liegt mit `--z-toast` über der Hilfe (`--z-floating`) — das ist in `assets/styles/variables.css` eine ausdrückliche Entscheidung („Meldungen liegen über allem").
+- **Fix:** Die Fußzeile klebt (`position: sticky`) am Fuß des Laufbereichs und nennt alle drei Wege samt dem Hinweis, dass die Liste weitergeht; der ✕-Knopf ist 44 px unter 601 px und 32 px darüber. Das Log tritt beiseite, solange die Hilfe offen ist — über eine Marke am `<body>`, **nicht** über die Ebenenleiter: eine Ausnahme für eine Blende hätte die Leiter entwertet. Der Preis steht im Kommentar: ein Hinweis, der währenddessen abläuft, ist danach weg; dafür gibt es die dauerhafte Betriebsart des Logs, und die steht in der Hilfe.
+- **Regel:** Eine modale Fläche, die länger ist als ihr Platz, braucht ihren Ausweg **sichtbar** — und zwar den Ausweg des Geräts, nicht den der Tastatur. Und: eine gezählte Ebenenleiter ist nicht der Ort, an dem man einen Überdeckungsfehler repariert; die obere Schicht tritt beiseite.
+- **Dateien:** `assets/templates/modals-editors.html`, `assets/styles/dmscreen.css`, `systems/undo.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (16), (17)
+
+### Ein `min-width: 0` auf der Tastenreihe machte aus einem lauten Fehler einen stillen
+
+- **Problem:** Beim Umbau der Hilfe zur Beschreibungsliste bekamen `<dt>` **und** `<dd>` ein `min-width: 0`. Isoliert nachgemessen bei 601 px (Spalte 237,4 px), mit einer langen Beschriftung auf einer **dreigliedrigen** Marke: `min-width` auf beiden → Querlauf 9 px, keine dreizeilige Zeile; `min-width` nur auf `dt` → Querlauf 0, die Zeile dreizeilig. Der Ausgangsstand hatte an allen gemessenen Breiten Querlauf 0.
+- **Ursache:** Auf der Definition erlaubt `min-width: 0` der **Tastenreihe**, unter ihren Inhalt zu schrumpfen; die Marken hängen dann rechts aus dem Dialog. Ein Querlauf **in** einem Dialog ist auf dem Telefon praktisch unauffindbar — und kein Fall sah ihn: der zuständige Fall fuhr nur 390, 360 und 1440 px, und dort tritt er nicht auf. Die Begründung für das `min-width` war außerdem falsch: das früher dort stehende `<span>` war ebenso ein Flex-Kind mit `min-width: auto` und brach korrekt um.
+- **Fix:** `min-width: 0` nur auf dem Begriff. Eine zu lange Beschriftung bricht dann auf drei Zeilen um, und **das** meldet der Fall laut. Der Fall fährt seit diesem Befund auch 601, 700 und 1440 px, mit der Spaltenbreite je Stufe als eigener Zusicherung.
+- **Regel:** Zwischen zwei Fehlerbildern ist das **auffällige** zu wählen. Ein Fehler, der einen Wächter auslöst, ist dem vorzuziehen, der sich versteckt — und eine Zusicherung, die nur an drei Breiten fährt, deckt kein Band. Zweite Lehre: eine Breitenangabe in einem Kommentar („zwei Spalten von 267 px für 601-900 px") ist eine Zusicherung ohne Wächter; gemessen sind es bei 601 px 237,4 px.
+- **Dateien:** `assets/styles/dmscreen.css`, `tests/e2e/features/tastenhilfe.spec.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (8)
+
+
+### Auf dem Telefon war KEINE der sieben Kopfzeilen-Aktionen bedienbar (MKOPF)
+
+- **Problem:** Gemessen am Bündel zu `28bcab2`, gefüllte Kampagne, Urteil je Knopf aus `checkVisibility({opacityProperty:true})` **und** Rechteck **und** `elementFromPoint` auf der Knopfmitte: bei 1440 und 1200 px waren alle sieben `.header-action-btn` bedienbar, bei **900 px vier von sieben** (`redo` x=921, `show-shortcuts-overlay` x=965, `toggle-layout` x=1009 liegen außerhalb des Fensters), bei **680, 390, 360 und 320 px null von sieben**. Vier Aktionen hatten auf dem Telefon überhaupt keinen Weg: `show-about-modal`, `toggle-quick-notes`, `redo` und `show-shortcuts-overlay`. Für `redo` und `show-about-modal` gibt es im ganzen Vorlagenbaum keinen zweiten Knopf; die Tastenhilfe hat einen, aber er liegt gemessen **drei** Griffe tief im Debug-Dialog.
+- **Ursache:** Zwei Sachen, die zusammen trafen. `[data-layout="mobile"] .header-actions { display: none }` (`assets/styles/core.css`) blendet die **ganze** Knopfreihe aus und nicht einzelne Knöpfe; und das Layoutprofil folgt seit der Mobil-Runde dem Fenster (`autoLayoutNachFenster()`), die Regel greift also auch an einem schmal gezogenen Desktop-Fenster. Der Mobil-Kopf fing drei der Aktionen auf (`undo`, `toggle-combat-log`, `toggle-layout`) — niemandem fiel auf, dass die anderen vier damit weg waren. Die 900-px-Lücke hat eine dritte, unabhängige Ursache: dort ist das Layout noch `desktop`, aber `.header-actions` ist breiter als das Fenster.
+- **Fix:** Ein ⋯-Knopf im Mobil-Kopf, **alle sieben** Kopfzeilen-Aktionen dahinter. Die Einträge werden bei jedem Öffnen **aus** `.header-actions .header-action-btn` gebaut (`ui/mobile-header-menu.js`) — es gibt weiter nur **eine** Liste der Kopfzeilen-Aktionen (`header.html`), und ein achter Kopfzeilen-Knopf steht ohne weiteres Zutun im Menü. Das Menü ist eine `KeyboardGroup` (E-2): ein Tabulatorhalt, Pfeiltasten darin, `Pos1`/`Ende`, kein Umlauf; `Escape` schließt und gibt den Fokus an den ⋯-Knopf zurück.
+- **Der Platz, und wie er bezahlt ist:** der achte Knopf kostet 26 px plus einen Zwischenraum, und die gemessenen 28,3 px Luft bei 320 px (unter der breiten Probenschrift) hätten das nicht getragen — `breite-schrift.spec.js` verlangt mindestens 12. Finanziert ist er aus **drei toten Zwischenräumen** im **bestehenden** `@media (max-width: 600px)`-Block: Kopf-Innenabstand 8 → 4 px, Gruppen-Zwischenraum 4 → 3 px, **waagerechter** Zähler-Innenabstand 6 → 4 px. Gemessen danach: 15,3 px Luft, einzeilig, Leiste 64 px, kleinste Tippfläche 26x39 gegen den Boden 24x36. Keine Tippfläche ist kleiner geworden, die 43-px-Tipphöhe ist unberührt, und es gibt keine vierte Mediengrenze (F-12).
+- **Regel:** Eine `display: none`-Regel auf einem **Behälter** ist kein Layoutschritt, sondern eine Löschung von Bedienwegen — und zwar von allen darin, auch von denen, die später dazukommen. Wer eine Knopfreihe ausblendet, schuldet einen zweiten Weg für **jede** Aktion darin, und der Wächter dafür muss die Liste der Aktionen aus der Quelle lesen, nicht aus einem Literal. Zweite Lehre, teuer: „sichtbar" ist nicht „erreichbar". Die drei Knöpfe bei 900 px sind nach `checkVisibility()` sichtbar und haben eine Fläche — sie liegen nur rechts des Fensterrands, und ein Klick dorthin ist kein Weg. Dritte Lehre: `e.stopPropagation()` in der **Fangphase** am `document` (`ui/event-delegation.js`) macht jeden Lauscher an einem **tieferen** Knoten unerreichbar. Ein Menü, das sich nach der Handlung selbst schließen soll, braucht seinen Lauscher deshalb ebenfalls am `document` — nachgewiesen mit einer Probe am Menüknoten, die bei einem echten Klick nicht ein einziges Mal anschlug, während die Aktion lief.
+- **Dateien:** `ui/mobile-header-menu.js` (neu), `assets/templates/modals-tools.html`, `assets/styles/core.css` (drei Werte im 600-px-Block, neuer Block am Dateiende), `ui/actions/ui-actions.js`, `systems/spellslots/keyboard-shortcuts.js`, `ui/keyboard-group-views.js`, `loader.js`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (1)-(6), 13 Fälle
+- **Vermessen und offen — die 900-px-Lücke:** dort ist `data-layout` noch `desktop`, und `redo`, `show-shortcuts-overlay` und `toggle-layout` liegen bei x=921/965/1009 außerhalb eines 900-px-Fensters. Das ⋯-Menü behebt das **nicht**: es erscheint nur im Mobil-Layout, und im Desktop-Layout bei 900 px gibt es es nicht. Bewusst nicht in diesem Paket, mit Begründung: die Behebung heißt, der Kopfzeile bei 900 px eine eigene Media-Query-Leiter zu geben (`.header-actions` umbrechen oder selbst ein ⋯-Menü erhalten) — das ist ein Schritt an der **Desktop**-Kopfzeile, und der Auftrag dieses Pakets war ausdrücklich „auf dem Schreibtisch ändert sich nichts". Gemessen ist die Lücke genau zwischen 768 px (ab dort gilt das Mobil-Profil, und dort greift das ⋯-Menü) und der Breite, bei der `.header-actions` wieder ins Fenster passt; am Bündel liegt der rechte Rand des letzten Knopfes bei 900 px auf x=1027, es fehlen also 127 px. Ein Wächter dafür ist Fall (1) dieser Datei **nicht** — er fährt nur die drei Telefonbreiten; Fall (2) belegt 1440 und 1200 px als heil.
+
+---
+
+## 2026-10-19 — Abnahme des Tastatur-Strangs (ABN)
+
+Die Abnahme der Tastenhilfe hat FEHLSCHLAG geurteilt. Ihre zwei
+blockierenden Befunde sind in `28bcab2` behoben; dieser Block führt die
+**Restbefunde** — drei falsche Zeilen, eine Sonde, die nichts gemessen hat,
+vier überholte Zahlen und vier Befunde an der Zugänglichkeit der Hilfe. Die
+gemeinsame Lehre steht am Ende: **eine Zusicherung in Prosa ist keine
+Zusicherung.** Es sind zwölf Einzelbefunde (drei Zeilen, eine Sonde, drei
+Zahlen, eine Zusage, vier Befunde an der Zugänglichkeit), und **vier** davon
+sind Zahlen oder Zusagen, die einmal gemessen und dann nie wieder geprüft
+wurden.
+
+### Drei Zeilen der Tastenhilfe sagten etwas, das nicht gilt
+
+- **Problem:** (a) **Drei der neun Navigationszeilen** nannten einen Reiter, den die App nicht führt: „Dashboard" (Reiter: 🏠 Start), „Läden" (🏪 Shops), „Beute" (📦 Truhe). (b) Die Zeile **„Erster bzw. letzter Punkt der Reihe"** (`Pos1`/`Ende`) nannte ihre Vorbedingung nicht. Gemessen in der Kampfansicht bei BODY-Fokus, gefüllte Kampagne, sechs Kämpfer: `Ende` **rollt dort das Dokument** (736 px, Inhalt 1206 px in 900 px Fenster, `defaultPrevented` false), und **keine** der sechs `.init-row` ist Glied einer Gruppe — Gruppen gibt es dort nur **innerhalb** der Zeile (sechs `.init-spell-slots` mit 42 Punkten). Mit Fokus auf einem dieser Punkte tut `Ende` genau das, was die Zeile sagt (Glied 0 → 6, `defaultPrevented` true) — nur liegt der erste Punkt **40 Tabulatorhalte** vom Seitenanfang entfernt. (c) Die Zeile **„Nächster Zug (Fokus auf keinem Bedienelement)"** nannte eine Bedingung, die eine gemessene Wahrheitstafel widerlegt.
+- **Ursache:** Dreimal dieselbe Krankheit in drei Gestalten. (a) Die Zeilen wurden nach den **Ansichts-IDs** benannt (`dashboard`, `shops`, `loot`) und nicht nach dem, was in der Reiterleiste steht. (b) `tests/e2e/features/tastenhilfe.spec.js` (18)(d) prüft den **Verbund** der drei E-2-Zeilen — irgendeine muss den Fokus nennen. Zwei tun es, die dritte nicht, und ein Nutzer liest eine Zeile. (c) Die Bedingung beschrieb einen **Zustand**, den der Nutzer nicht sehen kann. Fünf Fokuslagen, je frischer Seitenaufbau, echte Anschläge und echte Mausklicks:
+
+    | Fokuslage                      | nativ | versorgt | nurMaus | Ring      | Leertaste           |
+    | ------------------------------ | ----- | -------- | ------- | --------- | ------------------- |
+    | BODY, kein Fokus               | –     | –        | –       | false     | **Zug weiter**      |
+    | Tab auf `<button>`             | ja    | nein     | nein    | true      | bedient den Knopf   |
+    | Mausklick auf `<button>`       | ja    | nein     | nein    | **false** | bedient den Knopf   |
+    | Mausklick auf `div.init-value` | nein  | **ja**   | **ja**  | false     | **Zug weiter**      |
+    | Tab auf `div.init-value`       | nein  | ja       | nein    | true      | bedient das Element |
+
+    Lage 4 widerlegt die Zeile: der Fokus liegt auf einem Bedienelement (`tabindex="0"`, `data-action`) und der Zug wechselt trotzdem. Und Lage 3 verbaut den naheliegenden Ausweg „sichtbar angewählt": ein mit der **Maus** geklickter `<button>` trägt keinen `:focus-visible`-Ring und bedient sich doch. Der wirkliche Unterschied zwischen Lage 4 und 5 ist der **Weg** des Fokus (`KeyboardReach.nurMausfokus()`), und dafür gibt es an der Oberfläche kein Merkmal.
+
+- **Fix:** (a) Die neun Zeilen tragen die Reiternamen; **Start**, **Shops**, **Truhe**. (b) „Erster/letzter Punkt (Fokus in der Reihe)". (c) „Nächster Zug (nichts angeklickt/angewählt)" — die Bedingung nennt eine **Handlung**, und die weiß der Nutzer immer. Sie ist in allen fünf Lagen wahr und in Lage 4 bewusst zurückhaltend: dort wechselt der Zug, ohne dass die Zeile es verspricht. **Keine der drei Zeilen ist herausgenommen**, und das ist kein Nachlass, sondern eine Schranke: `1`, `8`, `9`, `Leertaste`, `Pos1` und `Ende` sind alle gemessen belegt, und Fall (3) verlangt für jede belegte Taste eine Zeile. Eine Zeile zu löschen hätte den Wächter rot gestellt. **Beide neuen Beschriftungen sind auf Länge gemessen:** die ersten Fassungen (47 und 46 Zeichen) brauchten bei 601 px **drei** Zeilen, und Fall (8) verbietet das zu Recht (Spalte 237,4 px). Fünf Kandidaten je Zeile am laufenden Bündel durchprobiert — 42 und 41 Zeichen passen in zwei Zeilen, 44 und 46 nicht.
+- **Regel:** Eine Hilfe darf **schweigen**, sie darf nicht **lügen** — eine zurückhaltende Bedingung ist richtig, eine falsche nie. Und: eine Bedingung gehört an die **Handlung** des Nutzers, nicht an einen Zustand der Maschine. Wer „der Fokus liegt auf …" schreibt, schreibt eine Zusage über etwas, das der Nutzer nicht prüfen kann; „nichts angeklickt oder angewählt" kann er prüfen. Dritte Lehre: eine Prüfung über den **Verbund** mehrerer Zeilen ist keine Prüfung der einzelnen Zeile.
+- **Dateien:** `assets/templates/modals-editors.html`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (19), (20), (21)
+
+### Zwei Zusagen hielten nur auf Windows: Tipphöhe und Umbruch hingen an Schriftmetriken
+
+- **Problem:** Der erste Linux-Lauf der Tastatur-Kette (PR #6) meldete zwei Befunde, die lokal grün waren und es nicht anders sein konnten. (a) Sechs Knöpfe des Mobil-Kopfs maßen 40 × 33 px statt der zugesagten 43 px Tipphöhe. (b) Zwei Beschriftungen der Tastenhilfe brachen bei 601 px dreizeilig um, wo Fall (8) höchstens zweizeilig zulässt.
+- **Ursache:** Beide Zusagen waren **emergent**, nicht deklariert. (a) Die Höhe der `.mobile-search-btn` ergab sich aus `padding: 8px` und `line-height: normal` der **Emoji**-Schrift bei 20 px: Segoe UI Emoji liefert 43 px, die Linux-Emoji-Schrift 40 px. `--font-ui` erreicht diese Knöpfe gar nicht (sie rendern in Arial), die Breitschrift-Sonde konnte die Abhängigkeit also nie sehen. (b) Die zwei Wortlaute waren gegen Segoe-UI-Maße zugeschnitten und tragen die breitesten Tastengruppen der Hilfe (`Pos1 / Ende`, `Alt Shift 1-5`). Jeder Wächter maß mit der Schrift, die gerade da war — auf Windows also nie mit einer anderen.
+- **Fix:** (a) `min-height: 43px` an `.mobile-search-btn`, wie der Punkte-Knopf es von Anfang an trug. (b) „Erster/letzter (Fokus darin)“ und „Schnellplatz-Szene 1-5“, beide in Segoe UI **und** unter der vollen Probenschrift zweizeilig gemessen. „Fokus“ und „darin“ erfüllen Fall (20); „Schnellplatz“ bleibt erhalten, weil die Abschnittsüberschrift es nicht nennt. Zwei Messfallen auf dem Weg dorthin: der Umbruch ist **nicht linear** in der Zeichenzahl („Erster/letzter (Fokus in der Reihe)“ ist kürzer als das Original und bricht unter Verdana trotzdem dreizeilig), und die **Tasten** zählen mit — sie stehen in `--font-mono`, und mit Courier New wird die Gruppe `Pos1 / Ende` breiter (97,6 statt 92,8 px). Eine erste Wahl, „Erster/letzter Punkt (Fokus darin)“, war nur gegen `--font-ui` gemessen und brach unter der vollen Probe wieder dreizeilig; der neue Fall (6) hat sie gefangen, bevor sie auf den Läufer ging.
+- **Regel:** Eine Zusage, die an einer Schriftmetrik hängt, ist keine. **Deklarieren statt erben** — und wo das nicht geht, mit der breiten Probenschrift messen, die das Projekt schon führt. Die Probe stellt die Linux-Lage verlässlich nach, aber nur VOLLSTÄNDIG: Verdana für die Beschriftung (DejaVu Sans stammt von Bitstream Vera ab, das auf Verdanas Maße gebaut ist) **und** Courier New für die Tasten (so breit wie DejaVu Sans Mono). Lokal brachen damit genau dieselben zwei Zeilen um wie auf dem Läufer.
+- **Dateien:** `assets/styles/core.css`, `assets/templates/modals-editors.html`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (4) prüft jetzt die **Deklaration**, nicht nur die Höhe; `tests/e2e/features/breite-schrift.spec.js` (6) fährt die Hilfe bei 601 px unter breiter Schrift.
+
+### Eine Vorbedingungs-Sonde des Wächters maß zwei Ansichten nicht
+
+- **Problem:** Fall (18) misst, in welchen Ansichten `n` etwas tut, und verlangt danach eine zweite Zeile für die zweite Bedeutung. Die Sonde suchte `.collapsible.open` — eine Klasse, die der Baum **null Mal** führt (nachgezählt: `class="collapsible"` 0× in `assets/templates/`, 0× im Bündel; `collapsible-content` 5×). Party und Begegnung fielen damit als „(keine)" aus; gemessen wurden drei Ansichten statt fünf. Der Fall blieb **grün**, weil die Zusicherung `toBeGreaterThan(1)` lautete und 3 > 1 ist. Die Zusage in `CLAUDE.md` („`n` wirkt in fünf Ansichten") war in genau diesem Umfang unbelegt.
+- **Ursache:** `toggleCollapse(id)` in `systems/spellslots/navigation.js` schaltet `open` an `$(id)` — und das ist `#char-form` bzw. `#enc-form`, die `.collapsible-content` tragen. Das `data-action="toggle-collapse"` sitzt am **Geschwister** `.collapsible-header`. Genau diese Trennung hat die Vorrunde schon einmal gekostet; die Lehre war festgehalten und die Sonde trotzdem falsch. Dazu die eigentliche Ursache: eine **Untergrenze** (`> 1`) deckt eine blinde Sonde, eine **benannte Menge** nicht.
+- **Fix:** `.collapsible-content.open`, und die Zusicherung nennt die fünf Ansichten (`encounter`, `initiative`, `npcs`, `party`, `quests`) statt sie zu zählen; die zweite nennt die vier mit anderer Bedeutung (`encounter`, `npcs`, `party`, `quests`). Gemessen danach: `party → char-form`, `encounter → enc-form`, `npcs → npc-modal`, `quests → quest-modal`, `initiative → Zug 0 → 1`, `loot → (keine)`.
+- **Regel:** Eine Vorbedingungs-Sonde braucht **ihre eigene** Leerlaufschranke. Ein Selektor, der nichts findet, sieht in einer Zählung wie ein gültiges „nichts passiert" aus — und eine Untergrenze darüber macht beides unterscheidbar unmöglich. Wer eine Menge messen will, vergleicht die **Menge**, nicht ihre Größe.
+- **Dateien:** `tests/e2e/features/tastenhilfe.spec.js`, `CLAUDE.md`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (18)
+
+### Vier überholte Zahlen, davon zwei aus dem Auftrag selbst
+
+- **Problem:** (a) Der Kopf von `tests/e2e/features/tastenhilfe.spec.js` nannte **3.831** als „Schlüssel eine Ebene darunter" im Stil-Sollstand. Nachgezählt an `tests/e2e/baselines/computed-style-baseline.json`: Ebene 1 = 3 Messlagen, Ebene 2 = 72 Ansichtsknoten, Ebene 3 = 288 Einträge, Ebene 4 = **3615** Element-Digeste (1235 `standard` + 1145 `narrow` + 1235 `reducedMotion`); alle `dict`-Schlüssel rekursiv = 3978; Schlüssel mit skalarem Wert = 3759; skalare Blätter voll rekursiv = 7374. **3.831 trifft unter keiner Lesart etwas.** (b) „an allen **elf** Zweigen" — gemessen sind es **zwölf** Verwendungen von `OHNE_MODIFIKATOR(e)` in `systems/spellslots/keyboard-shortcuts.js`. (c) „**40**/**41** Zeilen" in `assets/styles/dmscreen.css` und im Kopf des Wächters — die Hilfe trägt **43 Zeilen statt 25**, und zwar seit `78690ff`. (d) Die Zusage, der **Formatierungsabstand** sei durch diese Arbeit unverändert.
+- **Ursache:** Dieselbe wie bei den zwei Zahlen des Eintrags darüber, nur eine Runde später: keine Ratsche über den Zahlen. (a) ist zusätzlich lehrreich, weil sie **dreimal verschieden gelesen** wurde (3.831 / 7.374 / „Blattschlüssel") — eine Zahl ohne Definition daneben ist nicht prüfbar, auch nicht von Hand. (c) war schon beim Hinschreiben um eins daneben: `dmscreen.css` sagte „40", die Hilfe hatte 41 (`.shortcut-row` je Stand: `3eafd49` 40, `1284227` 41, `78690ff` 43). (d) hat eine eigene Ursache, siehe unten.
+- **Fix:** (a) Die Zahl steht mit ihrer **Definition** daneben, und zwar alle vier Lesarten. (b) zwölf. (c) 43, und die **historischen** Angaben sind als solche gekennzeichnet („12 der damals 41 Zeilen") statt mitzuwachsen — eine Messung von damals bleibt die Messung von damals. Eine Fehlermeldung, die bisher „10 von 41" als Literal trug, nennt jetzt die Werte der laufenden Messung. Dazu **zwei neue Ratschen**: `DOC-13` hält jede Angabe über die Zeilenzahl der Hilfe gegen die gemessenen `.shortcut-row`, `DOC-14` jede Angabe über die Zweige mit `OHNE_MODIFIKATOR` gegen den Quellbaum.
+- **Regel:** Eine Zahl in einer Akte braucht entweder eine Ratsche oder ihre **Definition** daneben — „3.831 Blattschlüssel" hatte keines von beidem und war darum nicht einmal widerlegbar, bevor jemand vier Zählweisen durchprobierte. Zweite Lehre, neu: **historische** Messwerte und **gegenwärtige** Größen müssen sprachlich unterscheidbar sein, sonst zwingt die nächste Ratsche dazu, Geschichte zu fälschen. Dritte Lehre: `DOC-14` musste **Zahlwörter** lesen, weil „an allen elf Zweigen" ausgeschrieben dastand, und `DOC-13` musste Markdown-Auszeichnung streichen, weil „\*\*12 von 41\*\* Zeilen" die Form mitten entzweischneidet.
+- **Dateien:** `tests/e2e/features/tastenhilfe.spec.js`, `assets/styles/dmscreen.css`, `docs/bugfixes.md`, `tests/unit/docs-consistency.test.js`
+- **Tests:** `tests/unit/docs-consistency.test.js` (DOC-13), (DOC-14)
+
+### Die Zusage „der Formatierungsabstand ist unverändert" — nachgemessen, und wo sie wirklich steht
+
+- **Problem:** Eine Zusage dieses Strangs lautete, `prettier --check` melde „vor und nach dieser Änderung dieselben 104 Zeilen". Die Abnahme hat sie für den **Strang** widerlegt. Nachgemessen in je einem eigenen Worktree des jeweiligen Commits, `npx prettier --write` auf die Datei, geänderte Zeilen aus `diff -u` (Quellseite `-` / Zielseite `+`):
+
+    | Commit                        | `CLAUDE.md` | `docs/bugfixes.md` |
+    | ----------------------------- | ----------- | ------------------ |
+    | `52caf1d` (vor HILF)          | 50 / 50     | 0 / 1              |
+    | `32f1d28` (Eltern der Zusage) | 52 / 52     | 0 / 1              |
+    | `b5cd457` (die Zusage)        | 52 / 52     | 0 / 1              |
+    | `28bcab2` (Ende HILF)         | **53 / 53** | **22 / 23**        |
+    | `f52c72e` (nach MKOPF)        | **58 / 58** | 22 / 23            |
+    | dieser Stand (ABN)            | 58 / 58     | 22 / 23            |
+
+- **Ursache:** Zwei Sachen, und beide gehören in diese Akte. Erstens: die Zusage ist **für ihren eigenen Commit wahr** — 52 vorher, 52 nachher, und „104" ist die Summe beider Diff-Seiten. Falsch wird sie erst als Aussage über den Strang: über HILF wuchs der Abstand von `CLAUDE.md` von 50 auf 53 und der dieses Katalogs von 1 auf 23 Zielzeilen, nach MKOPF steht `CLAUDE.md` bei 58. **Dieser Block hier bewegt beide nicht** — nachgemessen 58 / 58 und 22 / 23, dieselben Werte wie vorher: die eigenen Zeilen sind formatgerecht geschrieben (Tabellenspalten ausgerichtet, Leerzeile nach einem eingerückten Absatz), die fremden sind unberührt. Zweitens, und das ist der eigentliche Befund: **die Zusage steht in einer Commit-Botschaft** (`b5cd457`), nicht in einer Akte. Eine Commit-Botschaft ist nicht korrigierbar, und ein Leser, der sie findet, hat keinen Weg zu erfahren, dass sie inzwischen zu eng gefasst ist.
+- **Fix:** Die gemessene Lage steht hier. Beide Dateien bleiben **unformatiert** — `npm run format` schreibt 135+ Dateien samt `CLAUDE.md` und dem Stil-Sollstand, und `npx prettier --write` auf eine Bestandsdatei nimmt fremde Zeilen mit. Der Abstand ist damit bekannt und bezifferbar statt behauptet.
+- **Regel:** Eine Zahl über den **Zustand des Baums** gehört in eine Akte, nicht in eine Commit-Botschaft. Eine Botschaft beschreibt eine Änderung und ist danach unveränderlich; eine Zusage, die über ihren Commit hinausreicht, ist dort nicht reparierbar. Und: „vor und nach **dieser Änderung** unverändert" ist keine Aussage über den Strang — wer sie so liest, addiert zwölf einzeln harmlose Commits zu einem Abstand von 23 Zeilen.
+- **Dateien:** `docs/bugfixes.md`
+- **Tests:** keiner. Ausdrücklich: ein Fall, der `prettier --write` fährt, wäre ein Fall, der den Baum verändert — und `npm run format` ist in diesem Projekt als destruktiv gefuehrt. Die Zahlen sind datiert und von Hand nachfahrbar (Worktree des Commits, `--write`, `diff -u`).
+
+### Vier Befunde an der Zugänglichkeit der offenen Hilfe
+
+- **Problem:** (a) Der **✕-Knopf hatte keinen Namen** — und er ist gemessen das **einzige** fokussierbare Element im Dialog (1 von 1), also der erste und letzte Halt, auf dem die Tastatur dort landet. Der Baum führte ihn als `button "✕"`; ein Vorleseprogramm sagt dazu „Multiplikationszeichen" oder nichts. (b) **Sieben Tastenkappen ohne Textfassung:** `←`, `→`, `↑`, `↓`, `/`, `?` und `.`. Der Baum las die Zeile als `definition: ← →`. (c) Der **Titel war keine Überschrift** (`<span>` ohne `role`), und die sechs Abschnitte beginnen bei `aria-level` 3 — sechs Überschriften einer Stufe und keine darüber. (d) Die Zeile **„Diese Hilfe — ?"** las sich als Umschalter; gemessen bleibt die Hilfe nach dem zweiten `?` offen (`class="shortcuts-overlay show"`, sichtbar), weil die Schranke aus Befund 2 die App für App-Kürzel taub macht.
+- **Ursache:** (a) und (c) sind Reste des Umbaus, der Rollen und Paare nachgetragen hat (Fall 15 zählt Rollen und Paare, keine **Namen**). (d) ist dieselbe Fehlerart wie die drei Zeilen oben: eine Zeile, die mehr verspricht als die Taste tut. (b) hat eine eigene, lehrreiche Ursache: die naheliegende Reparatur **wirkt nicht**. Vier Fassungen am laufenden Bündel eingesetzt und den Baum gelesen, **bevor** eine gewählt wurde:
+
+    | Fassung                         | Baum                                  |
+    | ------------------------------- | ------------------------------------- |
+    | Ausgangsstand                   | `definition: ← →`                     |
+    | `aria-label` am `<kbd>`         | `definition: ← →` — **wirkungslos**   |
+    | `.sr-only`-Span dazu            | `definition: ← → Pfeil nach links, …` |
+    | `aria-hidden` + `.sr-only`-Span | `definition: Pfeil nach links, …`     |
+    | `role="img"` + `aria-label`     | `img "Pfeil nach links": ←`           |
+
+    `<kbd>` ist `role="generic"`, und auf einer generischen Rolle ist Benennung verboten — Chromium verwirft das `aria-label` lautlos.
+
+- **Fix:** (a) `aria-label="Tastenkürzel schließen"` plus `title`. (b) `aria-hidden="true"` auf der Symbolkappe und ein `.sr-only`-Span mit der Textfassung **daneben**, nicht darin: der sichtbare Text bleibt die Kappe, und `.shortcut-key`-`textContent` bleibt unberührt — aus ihm ziehen `tastenhilfe.spec.js` und `tastatur-kuerzel.spec.js` die Tastenmenge. `role="img"` wäre ebenfalls gegangen, sagt einem Vorleseprogramm aber „Grafik", und das ist eine Taste nicht. (c) `role="heading" aria-level="2"` am Titel — Ebene 2 und nicht 1, weil dies ein Dialog über einer Seite ist und nicht die Seite; Fall (15) verlangt daneben jetzt `Abschnitte + 1` Überschriften statt `Abschnitte`, und zwar **exakt**: eine siebte Abschnittsüberschrift ohne Abschnitt fällt damit genauso auf wie ein Abschnitt ohne Überschrift. (d) „Diese Hilfe öffnen".
+- **Regel:** Ein Zugänglichkeitsbefund wird am **Baum** gemessen und nicht am Attribut. Ein `aria-label` auf einer generischen Rolle ist die Art Reparatur, die richtig aussieht, durch jeden Attributtest kommt und nichts bewirkt — vier Fassungen vorab zu messen kostete einen Lauf und hat die falsche verhindert. Zweite Lehre: wer einen sichtbaren Text vor einem Vorleseprogramm verbirgt, muss den Ersatz **neben** den verborgenen Knoten legen, nicht hinein; sonst wandert der Ersatz in jede Textauswertung, die den Knoten liest.
+- **Dateien:** `assets/templates/modals-editors.html`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (22), (23)
+
+## 2026-10-20 — Gegenprüfung des Tastatur-Strangs (RUNDE/VER/FALLE/CAPS)
+
+Fünf als „wichtig" eingestufte Befunde einer Gegenprüfung, alle fünf vor der
+Korrektur unter den genannten Bedingungen nachgestellt. Vier davon sind
+**vorbestehend** und nicht aus den Einheiten MKOPF/ABN — drei von ihnen wurden
+am Basisstand `28bcab2` mit derselben Probe Ziffer für Ziffer gleich
+wiedergefunden.
+
+### Zwei Rundenzähler: „⏭️ Neue Runde" tat nichts und meldete Erfolg
+
+- **Problem:** Nach einem Rundenumschlag über „▶ Nächster" tat der erste Druck
+  auf „⏭️ Neue Runde" (bzw. `Shift+N`) **nichts** — und das Ereignis-Log
+  meldete trotzdem einen Rundenwechsel. Gemessen am gebauten Bündel,
+  Kampfansicht, sechs Kämpfer, echte Tastendrücke bei BODY-Fokus:
+
+    | Handlung          | Zug | Daten | Anzeige | Ereignis-Log |
+    | ----------------- | --- | ----- | ------- | ------------ |
+    | start             | 0   | 1     | „1"     | —            |
+    | nach 6x `n`       | 0   | 2     | „2"     | —            |
+    | nach `Shift+N`    | 0   | 2     | „2"     | „⚔️ Runde 2" |
+    | nach 2x `Shift+N` | 0   | 3     | „3"     | „⚔️ Runde 3" |
+
+  Mit dem Finger auf dem Knopf (390x844, `hasTouch`, `.tap()`) identisch.
+  Dieselbe Ursache machte „◀ Zurück" zur Nicht-Umkehrung von „▶ Nächster":
+  sieben Drücke vor und sieben zurück ließen den Zug wieder auf 0, die Runde
+  aber auf **2**; aus einer über `Shift+N` erreichten Runde senkte dasselbe
+  Bedienelement sie dagegen — ein Knopf, zwei Verhalten.
+- **Ursache:** **Zwei getrennte Zähler.** `nextTurn()`
+  (`features/initiative.js`) erhöhte beim Umschlag `D.initiative.round`;
+  `nextEncounterRound()` rechnete auf einer Modulglobalen `encounterRound`
+  (`systems/undo.js`) und **setzte** anschließend
+  `D.initiative.round = encounterRound`. Die Globale wurde nur beim App-Start
+  (`core/init.js`) und beim Zurückspielen (`_afterReloadApplied()`)
+  nachgezogen, also nach einem Umschlag über `n` nie. `prevTurn()`
+  (`core/init.js`) prüfte `if (encounterRound > 1)` und las damit denselben
+  veralteten Wert.
+- **Fix:** Die Modulglobale ist **entfernt**, `D.initiative.round` ist die
+  einzige Quelle. `updateEncounterDisplay()` liest sie, `nextEncounterRound()`
+  rechnet auf ihr, `prevTurn()` prüft sie, und die zwei Nachzieh-Punkte sind
+  weggefallen, weil es nichts mehr nachzuziehen gibt.
+- **Nicht mitkorrigiert, mit Begründung:** `prevTurn()` rechnet die
+  Wirkungsdauern nicht zurück. `nextTurn()` **entfernt** abgelaufene Effekte;
+  was weg ist, ist aus dem Vorwärtsschritt allein nicht wiederherstellbar, und
+  eine halbe Umkehrung (Dauer um eins erhöhen) wäre schlimmer als keine — sie
+  brächte einen abgelaufenen Effekt nicht zurück und verfälschte einen
+  permanenten. Der Weg dafür ist `Strg+Z`; die Begründung steht an
+  `prevTurn()`.
+- **Regel:** Ein Zustand, den die Oberfläche anzeigt, hat **eine** Quelle. Eine
+  Modulkopie daneben ist nicht „schneller", sie ist eine zweite Wahrheit mit
+  eigener Nachzieh-Pflicht — und die wird genau an der Stelle vergessen, die
+  der Nutzer am häufigsten bedient. Zweite Lehre für den Wächterbau: der
+  bestehende Fall fuhr `nextEncounterRound` nur aus dem **frischen** Stand
+  (`expect(vorher.runde).toBe(1)` … `toBe(2)`), wo beide Zähler zufällig
+  übereinstimmen. Zwei Wege zum selben Zustand müssen **gekreuzt** gemessen
+  werden, nicht je einzeln.
+- **Dateien:** `systems/undo.js`, `core/init.js`
+- **Tests:** `tests/e2e/features/kampfrunde.spec.js` (1) bis (5)
+
+### Das Impressum nannte Version 2.4.0, die App war 2.6.1
+
+- **Problem:** Der Impressum-Dialog — der eine Ort, an dem ein Nutzer die
+  Version nachsieht — nannte zwei Nebenversionen zu alt. Gemessen:
+  `assets/templates/modals-tools.html` trug „Version 2.4.0",
+  `core/config.js` `VERSION: '2.6.1'`, `package.json` `"version": "2.6.1"`.
+  Besonders unglücklich, weil der Weg dorthin auf dem Telefon erst seit dem
+  ⋯-Menü existiert: das Erste, was man auf dem neuen Weg liest, war falsch.
+- **Ursache:** Die Zahl stand festgeschrieben in der Vorlage und las
+  `APP_CONFIG.VERSION` nicht.
+- **Fix:** `#about-version` trägt die Zahl, der Zweig `show-about-modal`
+  (`ui/actions/system-actions.js`) schreibt sie **beim Öffnen** aus
+  `APP_CONFIG.VERSION`. Der Text in der Vorlage ist gleichgezogen und bleibt
+  als Rückfall.
+- **Regel:** Ein Rückfallwert allein genügt nicht — er wäre die nächste Drift,
+  weil er bei jeder Anhebung von Hand mitzuziehen ist. Darum hält
+  `tests/unit/version-konsistenz.test.js` Vorlage, `core/config.js` und
+  `package.json` gegeneinander, und der E2E-Fall **bedient erst und liest
+  danach**: ein Test, der nur das Markup liest, sähe den Rückfall und nicht
+  das, was auf dem Schirm steht.
+- **Dateien:** `assets/templates/modals-tools.html`,
+  `ui/actions/system-actions.js`
+- **Tests:** `tests/unit/version-konsistenz.test.js`,
+  `tests/e2e/features/mobil-kopfmenue.spec.js` (8)
+
+### „Layout wechseln" war eine Einbahnstraße — und die 900px-Lücke dieselbe Ursache
+
+- **Problem:** Der Eintrag „Layout wechseln" im ⋯-Menü führte auf dem Telefon
+  in eine Lage ohne sichtbaren Rückweg. Gemessen, Urteil je Knopf aus
+  `checkVisibility({opacityProperty:true})` UND Rechteck UND
+  `elementFromPoint` auf der Knopfmitte:
+
+    | Fenster | Dokument | Querlauf | bedienbar |
+    | ------- | -------- | -------- | --------- |
+    | 390x844 | 1027px   | 637px    | 0 von 7   |
+    | 360x740 | 1027px   | 667px    | 0 von 7   |
+    | 320x568 | 1027px   | 707px    | 0 von 7   |
+    | 740x360 | 1027px   | 287px    | 2 von 7   |
+    | 900x800 | 1027px   | 127px    | 4 von 7   |
+
+  Danach war **kein** Träger von `toggle-layout` bedienbar: der Schalter der
+  Kopfzeile lag bei x=1009 in einem 390px-Fenster, und `.mobile-header` samt
+  ⋯-Knopf ist im Schreibtisch-Layout `display:none`. Zwei Auswege gab es, beide
+  unbeschriftet — 637px waagerecht wischen oder neu laden. Die 900px-Zeile ist
+  die bis dahin in `CLAUDE.md` als offen geführte Lücke; sie hat dieselbe
+  Ursache.
+- **Ursache:** `.app-header-top` war eine Flex-Reihe **ohne Umbruch**, und ihr
+  inhaltsbasiertes Minimum liegt bei 1027px. In jedem schmaleren Fenster lag
+  der rechte Teil der Reihe außerhalb.
+- **Fix:** `flex-wrap: wrap` auf der Reihe **und** auf `.header-actions` (die
+  Gruppe allein genügt nicht: ihre natürliche Breite von ~700px passt in kein
+  Telefon), dazu `min-width: 0` am Suchbehälter. Alle gemessenen Lagen danach:
+  0px Querlauf, 7 von 7 bedienbar. Keine Rettungsluke, sondern die Ursache —
+  ein zweiter, immer sichtbarer Rückweg-Knopf hätte die halbe Kopfzeile
+  weiterhin draußen liegen lassen, nur mit einer Tür daneben.
+- **Zweite Runde am selben Fix, und sie gehört hierher:** die erste,
+  **unbedingte** Fassung stellte einen Wächter zu Recht rot. Ohne
+  Breitenschranke brach die Reihe auch bei 1280x720 um, sobald eine breitere
+  Schrift im Spiel ist (`--font-ui: Verdana`, Faktor 1.1555 — die Nachstellung
+  des vierten Durchgangs von `tests/e2e/features/computed-style-diff.spec.js`):
+
+    | CSS                 | Schrift | Kopfzeile | `--view-frame-height` | Bestiar |
+    | ------------------- | ------- | --------- | --------------------- | ------- |
+    | vorher              | normal  | 102px     | 195px                 | 13      |
+    | vorher              | breit   | 126px     | 219px                 | 13      |
+    | unbedingt           | normal  | 102px     | 195px                 | 13      |
+    | unbedingt           | breit   | 148px     | 241px                 | **12**  |
+    | `@media max 1200px` | breit   | 126px     | 219px                 | 13      |
+
+  Die Bestiar-Liste rechnet `height: calc(100vh - var(--view-frame-height))`
+  und lädt nach Sichtbarkeit nach; 22px mehr Kopfzeile kosten einen Eintrag.
+  Damit hing eine **erfasste** Elementmenge an der Schriftmetrik — genau das,
+  was jener Durchgang verbietet. Die Regeln liegen jetzt in
+  `@media (max-width: 1200px)`; oberhalb passt die Reihe ohnehin (1027px), die
+  Schranke nimmt also nichts weg, was der Befund braucht. **Keine vierte
+  Mediengrenze:** 1200 ist eine der drei erlaubten, und `F-12` in
+  `tests/unit/design-consistency.test.js` prüft die Grenzwerte, nicht die Zahl
+  der Blöcke.
+- **Der eine Preis, benannt:** bei genau 1200x800 wächst die Kopfzeile von 126
+  auf 148px — dort passte die Reihe vorher nur durch Stauchung von Titel und
+  Suche. Bei 900 und 1024 wird sie dafür kürzer (156 → 148 bzw. 144).
+- **Regel:** Ein CSS-Block, der Zeilenanker verschieben würde, wird
+  **angehängt** und nicht eingefügt. Die erste Fassung saß bei `core.css:216`
+  und stellte sieben Fälle in `design-consistency.test.js` rot (R-06, R-19,
+  R-22, W4-R-04), weil 78 Zeilen jeden geführten Anker darunter verschoben; am
+  Dateiende sind es null. Dieselbe Rücksicht gilt für Quelldateien: die Hunk in
+  `systems/undo.js` oberhalb des dort geführten Ring-Ankers ist bewusst
+  **zeilenneutral** gehalten.
+- **Dateien:** `assets/styles/core.css`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (9)
+
+### Vierzehn von sechzehn Buchstaben-Kürzeln waren bei Großschreibung tot
+
+- **Problem:** Mit eingeschalteter Großschreibtaste tat keines der
+  Buchstaben-Kürzel der eingebauten Hilfe etwas — und die Taste wurde nicht
+  einmal verbraucht. Gemessen am gebauten Bündel mit rohen Tastenereignissen
+  auf Browserebene (CDP `Input.dispatchKeyEvent`; Playwright emuliert keine
+  Großschreibtaste, sein `press('Z')` setzt immer `shiftKey`),
+  `defaultPrevented` am `window` in der Blasenphase gelesen:
+
+    | Kürzel            | `e.key` | Modifikatoren | verbraucht         |
+    | ----------------- | ------- | ------------- | ------------------ |
+    | `Strg+Z`          | `Z`     | 2             | nein               |
+    | `Strg+Y`          | `Y`     | 2             | nein               |
+    | `Strg+Shift+Z`    | `z`     | 10            | nein               |
+    | `Strg+S`          | `S`     | 2             | nein               |
+    | `Strg+K`          | `K`     | 2             | nein               |
+    | `Strg+F`          | `F`     | 2             | nein               |
+    | `Strg+Shift+K`    | `k`     | 10            | **ja**             |
+    | `R T L K N N P H` | groß    | 0             | nein (acht Reihen) |
+
+  14 von 16 Hilfe-Reihen mit Buchstaben-Zieltaste sagten damit etwas Falsches.
+- **Ursache:** `e.key` trägt das **erzeugte Zeichen**, und ein Buchstabe kommt
+  aus **zwei** unabhängigen Gründen groß — gehaltenes Shift oder eingeschaltete
+  Großschreibtaste — und bei beidem zugleich wieder klein. Jeder Zweig verglich
+  gegen den Kleinbuchstaben. Der Redo-Zweig hatte die Lehre „mit Shift wird
+  `'Z'` geliefert" als **einen Sonderzweig** eingebaut, statt den Schlüssel zu
+  normalisieren; genau darum war ausgerechnet dieser Zweig unter
+  Großschreibung erneut tot.
+- **Fix:** `TASTE(e)` normalisiert Einzelzeichen **einmal**; alle 18
+  Zeichenvergleiche des Verteilers laufen darüber. Benannte Tasten (`Escape`,
+  `ArrowDown`, …) und Zeichen ohne Buchstabenfall (`/`, `?`, Ziffern,
+  Leertaste) sind unberührt — das deutsche Tastaturbild, auf dem `/` Shift+7
+  **ist**, bleibt wie es ist.
+- **Sechs Zweige haben dabei `!e.shiftKey` bekommen** (`Strg+S`, `t`, `r`, `l`,
+  `k` und das abschließende `n`), jeder mit Begründung daneben: ohne sie wäre
+  `Shift+R` nach der Normalisierung eine **neue** Belegung ohne Zeile in der
+  Hilfe. Beim `n`-Zweig ist es mehr als Vorsicht — gemessen verbrauchte
+  `Shift+N` unter Großschreibung genau diesen Zweig („Neues Element"), fand in
+  der Kampfansicht keine passende Ansicht und tat nichts, während der Zweig für
+  die neue Runde nie dran kam.
+- **Berichtigung einer Vorgabe, unter ihren eigenen Bedingungen gemessen:** die
+  Gegenprüfung nannte für `Shift+N` (`e.key` `n`, Modifikatoren 8)
+  `defaultPrevented` false. In der **Kampfansicht** ist es true und trotzdem
+  wirkungslos, aus dem Grund im Absatz darüber. Die Aussage („das Kürzel ist
+  tot") hält, die Begründung ist eine andere — und sie zeigte die fehlende
+  Schranke.
+- **Regel:** Eine Lehre über die **Gestalt** einer Eingabe wird an **einer**
+  Stelle umgesetzt, nicht je Zweig. Ein Sonderzweig sieht nach einer Korrektur
+  aus und ist eine zweite Vermutung über dasselbe Ereignis; er hält genau so
+  lange, bis eine dritte Ursache dieselbe Gestalt erzeugt. Zweite Lehre: der
+  bestehende Wächter drückt die Kleinbuchstaben-Form und seine gerechnete
+  Kreuzung kennt vier Modifikatorlagen — aber keine, in der ein Buchstabe groß
+  ist **ohne** dass `shiftKey` gesetzt wäre. Eine Lage, die ein Gerät schickt
+  und kein Testwerkzeug erzeugt, braucht rohe Ereignisse.
+- **Dateien:** `systems/spellslots/keyboard-shortcuts.js`
+- **Tests:** `tests/e2e/features/grossschreibung.spec.js` (1), (2), (3)
+
+### Zwei Befunde am Wächter des ⋯-Menüs selbst
+
+- **Problem:** (a) Fall (6) prüfte den „Klick daneben" mit einer **festen
+  Koordinate** `page.mouse.click(180, 400)`, die genau sieben Menüeinträge
+  voraussetzte. Gemessen am offenen Menü bei 360x740: mit sieben Einträgen
+  reicht der Kasten von y=59 bis y=370 (196x311), also 30px Abstand; jeder
+  weitere Eintrag ist 43px hoch, mit acht reicht er bis y=413, und
+  `elementFromPoint(180,400)` antwortet mit
+  `BUTTON.mobile-header-menu-item [toggle-layout]`. Der „Klick daneben" traf
+  dann den Eintrag, das Layout sprang auf `desktop`, `.mobile-header` wurde
+  `display:none`, und der direkt folgende
+  `page.click('#mobile-header-menu-btn')` konnte nie mehr gelingen: 120s
+  Zeitablauf mit der Meldung „element is not visible" nach 224 Versuchen. Damit
+  war die Zusage „ein achter Kopfzeilen-Knopf steht automatisch mit in der
+  Prüfung" für diesen Fall falsch — er wird von (1)/(4)/(5) mitgeprüft, aber
+  die Datei ging rot, und zwar mit einer Meldung, die den Grund nicht nennt.
+  (b) Fall (2) hatte keine **Leermengen-Schranke**: mit einem blinden Leser
+  (`return []` als erste Zeile von `kopfAktionen()`) wurde `urteile` zu `{}`,
+  `nicht` zu `[]`, und `expect([]).toEqual([])` ist leer-wahr — der Fall
+  meldete in 2,6s grün. Gemessen: dieselbe Mutation stellt (1) dreimal und (5)
+  einmal rot, (2) nicht.
+- **Ursache:** (a) eine Koordinate ist eine **Annahme** über das Layout, die
+  nirgends geprüft wurde. (b) Fall (1) hat die Schranke seit seiner Geburt; in
+  (2) stand sie nicht — ausgerechnet in dem Fall, der die Nichtregression am
+  Schreibtisch tragen soll.
+- **Fix:** (a) Der Punkt wird **gesucht**, mit drei Bedingungen: außerhalb von
+  `.mobile-header-more` (derselbe Bereich, den `ui/mobile-header-menu.js` per
+  `closest()` prüft), auf einem Knoten ohne eigene Handlung (sonst messen wir
+  die Nebenwirkung statt das Schließen), und im Fenster; geurteilt per
+  `elementFromPoint`. Dazu zwei neue Zusicherungen: dass ein solcher Punkt
+  überhaupt existiert, und dass der Klick das Layout **nicht** gewechselt hat.
+  (b) Die Schranke ist nachgetragen, plus eine zweite eine Ebene tiefer (die
+  Zahl der Urteile muss der Zahl der Aktionen entsprechen).
+- **Belegt durch beide Mutationen, nach der Korrektur gefahren:** mit einem
+  achten `.header-action-btn` in `assets/templates/header.html` sind 21 von 21
+  Fällen grün (vorher: Fall (6) im Zeitablauf); mit dem blinden Leser ist
+  Fall (2) rot mit „Bei 1440x900 fuehrt die Kopfzeile keine
+  `.header-action-btn`" (vorher: grün in 2,6s).
+- **Regel:** Zwei Fehlerarten, eine Lehre: **eine Zusicherung, die über eine
+  leere Menge läuft, ist keine.** Jede Liste, aus der ein Fall seine Urteile
+  zieht, braucht eine Schranke auf ihre Länge — sonst ist der Fall mit einem
+  kaputten Leser grün. Und: eine feste Koordinate in einem Mausklick ist eine
+  unausgesprochene Annahme über das Layout; wird sie gebraucht, muss sie
+  **gemessen und mitgeprüft** werden.
+- **Dateien:** `tests/e2e/features/mobil-kopfmenue.spec.js`
+- **Tests:** `tests/e2e/features/mobil-kopfmenue.spec.js` (2), (6)
+
+### Drei kleine Befunde derselben Runde, mitgenommen
+
+- **Problem:** (a) Die Hilfezeile zu `N` nannte „Neues Element (Party, NSC,
+  Aufträge, Begegnung)" — drei von vier Namen stehen auf **keinem** Reiter
+  (gemessen: `👥 Party`, `🎭 NPCs`, `📜 Quests`, `👹 Encounter`), und dieselbe
+  Hilfe nannte dieselbe Ansicht in ihrem Navigationsabschnitt anders. Genau die
+  Begründung, mit der ABN drei Zeilen darüber „Dashboard"→„Start",
+  „Läden"→„Shops" und „Beute"→„Truhe" umgeschrieben hat.
+  (b) Zwei **Zeilenanker** zeigten daneben: `ui/actions/ui-actions.js:237` (in
+  `modal-fokus.spec.js`) traf nach dem MKOPF-Einschub eine Leerzeile — die
+  gemeinte Zeile ist 249 —, und `loader.js:344` (in
+  `design-consistency.test.js`) war schon bei der Niederschrift 33 Zeilen
+  schief und ist jetzt 39; die `font-weight`-Zeile steht auf 383.
+  (c) `window.openMobileHeaderMenu` und `window.buildMobileHeaderMenu` wurden
+  von keinem anderen Modul, keiner Vorlage und keinem Test gelesen — beide
+  laufen ausschließlich modulintern. Das verstößt gegen die Export-Audit-Regel
+  in `CLAUDE.md`.
+- **Fix:** (a) Die Zeile nennt die gemessenen Reiterbeschriftungen. **Dazu eine
+  Ratsche**, weil die Fehlerart in dieser Akte zum zweiten Mal vorkommt: Fall
+  (18) in `tastenhilfe.spec.js` liest die `.nav-tab`-Beschriftungen aus dem
+  Bündel und verlangt, dass jeder ansichtsnamenartige Name in der Klammer einer
+  `N`-Zeile dort vorkommt. (b) Beide Anker nachgezogen. (c) Beide Exporte
+  entfernt, die drei mit Verbraucher (`isMobileHeaderMenuOpen`,
+  `closeMobileHeaderMenu`, `toggleMobileHeaderMenu`) stehen namentlich mit ihrem
+  Verbraucher im Kommentar daneben.
+- **Berichtigung zu (c), nachgemessen:** die Meldung sagte zusätzlich, die zwei
+  Exporte weiteten „die generierte Globals-Liste (2 der 10 neuen Zeilen in
+  `eslint.generated-globals.js`) für nichts auf". Das trifft **nicht** zu:
+  `tools/generate-eslint-globals.js` listet Top-Level-`function`-Deklarationen
+  ohnehin, und beide Namen sind solche. Ein Neulauf des Generators nach dem
+  Entfernen der zwei `window.`-Zeilen ändert die Datei **nicht**
+  (`git diff --stat` leer, beide Namen stehen weiter auf Zeile 434 und 996). Der
+  Hauptbefund (Exporte ohne Verbraucher) hält, die Nebenbegründung nicht.
+- **Regel:** Ein Zeilenanker in einem Kommentar ist eine Aussage über den
+  **heutigen** Code und verwest lautlos; wer ihn setzt, prüft ihn beim nächsten
+  Einschub mit. Und: eine Beschriftung in einer Hilfe ist nur dann eine Hilfe,
+  wenn der Nutzer den genannten Namen an der Oberfläche **findet** — eine
+  Ratsche, die die Oberfläche liest, ist dafür billiger als drei Korrekturrunden.
+- **Dateien:** `assets/templates/modals-editors.html`,
+  `ui/mobile-header-menu.js`, `tests/e2e/features/modal-fokus.spec.js`,
+  `tests/unit/design-consistency.test.js`
+- **Tests:** `tests/e2e/features/tastenhilfe.spec.js` (18)
+
+### Nicht behoben, mit Begründung: zwei kleine Befunde bleiben offen
+
+- **Wirkungsdauern bei „◀ Zurück" (`features/initiative.js`):** dreimal vor und
+  dreimal zurück kostet drei Runden Segen. `nextTurn()` **entfernt** abgelaufene
+  Effekte; eine Umkehrung, die nur die Dauer erhöht, brächte einen abgelaufenen
+  Effekt nicht zurück und verfälschte einen permanenten. Der vorhandene Weg ist
+  `Strg+Z` — `prevTurn()` schreibt den Punkt selbst (`pushUndo`). Die
+  Begründung steht am Code.
+- **`DOC-11` braucht einen Produktionsbau (`tests/unit/docs-consistency.test.js`):**
+  in einem frischen Baum ohne `dist/` zählt die Ratsche 10 statt 8 tote Pfade,
+  weil `dist/dnd-tracker-optimized.html` und `dist/sw.js` in diesem Katalog
+  genannt sind und `dist/` in `.gitignore` steht. Im CI-Job `test` läuft Jest
+  **vor** `python build.py`, und `--production` läuft dort nie. Der Befund ist
+  vorbestehend und macht die gemeldete Jest-Torzahl an einen Nebenzustand des
+  Arbeitsverzeichnisses gebunden. Nicht hier behoben, weil die Korrektur
+  entweder den Pin senkt (dann meldet die Ratsche eine Reparatur als Verstoß)
+  oder die CI-Reihenfolge ändert — beides gehört in eine eigene Runde mit
+  eigenem Rotbeweis.
+- **Die Tastenkürzel in vier Namen des ⋯-Menüs (`ui/mobile-header-menu.js`):**
+  „Rückgängig (Strg+Z)" in einem Menü, das es nur im Mobil-Layout gibt. Die
+  ausgeschriebenen `aria-label` liegen in `header.html` bereit. Nicht hier
+  geändert, weil der Wächter dieselben Namen über `aria-label || title` liest
+  (Fall (5) vergleicht Menü gegen Kopfzeile) und ein Wechsel der Quelle den
+  Vergleich mitverschiebt — das braucht einen eigenen Rotbeweis, nicht einen
+  Einzeiler am Rand dieser Runde.
+- **Der Stil-Sollstand kann die Kopfzeile nicht sehen
+  (`tests/e2e/baselines/computed-style-baseline.json`):** der Erfassungsbereich
+  ist `#view-<id>`, und `.header-actions`, `.mobile-header`, `.mobile-timer` und
+  `.mobile-header-group` liegen außerhalb jedes Ansichtsbehälters. „0 geänderte
+  Digests" ist dort also keine Entwarnung für die Kopfzeile, sondern Abwesenheit
+  von Deckung; sie hängt allein an `breite-schrift.spec.js` und
+  `mobil-kopfmenue.spec.js`. **Steht jetzt hier, damit der nächste Durchgang die
+  0/0/0 nicht als Beleg liest.** Die Datei selbst ist gesperrt und wurde nicht
+  angefasst.
+
+---
+
 ## Known Technical Debt
 
-### ui/editors/rich-text.js: document.execCommand() (21 Call-Sites)
+### ui/editors/rich-text.js: document.execCommand() — ERLEDIGT (Phase 9)
 
-- **Status:** Bekanntes Tech Debt - nicht kritisch
-- **Details:** Rich-Text-Editor nutzt deprecated execCommand API für bold, italic, underline, insertHTML etc. an 21 Stellen in `ui/editors/rich-text.js`.
-- **Bereits gefixt:** insertUnorderedList wurde durch manuelle DOM-Manipulation ersetzt
-- **Risiko:** Gering - API ist deprecated aber funktioniert in allen aktuellen Browsern
-- **Aufwand:** Hoch - Komplett-Ersatz durch Selection/Range API wäre umfangreich
-- **Empfehlung:** Ablösung in eigener Phase; bei neuen Editor-Funktionen Selection/Range API bevorzugen
+- **Status:** Abgelöst, kein Tech Debt mehr. Dieser Eintrag stand bis 2026-10-14 mit einer Zahl aus der Zeit davor hier und ist der Anlass für `DOC-12`.
+- **Details:** Der Eintrag nannte einundzwanzig Call-Sites in `ui/editors/rich-text.js` (Zahl in Worten, damit der Wächter nicht die eigene Fehlerbeschreibung anschlägt). Gemessen am 2026-10-14 enthält der Quellbaum **0 Aufrufe** von `document.execCommand` — gezählt über `core/ utils/ systems/ features/ ui/ render/` auf `/\.execCommand\s*\(/`, also auf den Aufruf und nicht auf die Nennung. Die beiden verbliebenen Nennungen in `utils/basic.js` sind Kommentare, die erklären, warum `<font face|size>` in der Sanitizer-Erlaubnisliste steht.
+- **Ersatz:** `wrapRangeWithElement()`/`closestEditorAncestor()`, `clearInlineFormattingAtSelection()`, `applyFontFamilyToSelection()`/`applyFontSizeToSelection()`, `insertHtmlAtSelection()`/`insertTextAtSelection()`/`insertLineBreakAtSelection()`.
+- **Regel:** Für neue Editor-Funktionalität diese Helfer verwenden statt `execCommand` wiederzubeleben. `DOC-12` in `tests/unit/docs-consistency.test.js` hält jede Zahlangabe darüber gegen den Quellbaum.
 
 ### testable-utils.js: Duplizierte Utility-Funktionen
 
@@ -753,6 +1314,6 @@
 ### Inline Event-Handler (onchange, oninput)
 
 - **Status:** Abgeschlossen (Phase 1, Juni 2026) - Migration vollständig
-- **Details:** Inline Handler vollständig auf data-action-Delegation migriert; 641 data-action-Attribute, 0 inline Handler verbleibend
+- **Details:** Inline Handler vollständig auf data-action-Delegation migriert. Die hier geführte Zahl 641 stammt aus der Zeit der einen `assets/body.html`; gemessen am 2026-10-14 sind es **865** `data-action`-Vorkommen in `assets/templates/*.html` und 489 in den JS-Modulen (zusammen 1354), und **0** verbleibende Inline-Handler in den Vorlagen (`grep -roEh " on(click|change|input|submit|keyup|keydown|blur|focus)=" assets/templates/*.html | wc -l` = 0)
 - **Betroffene Dateien:** shops-core.js, npc-dialogs.js, encounters-render.js, render-spells.js, render-loot.js — alle migriert
 - **Risiko:** Keines mehr

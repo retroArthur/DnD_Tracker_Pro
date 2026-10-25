@@ -293,7 +293,50 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # 'features/combat-log/combat-log-render.js' neu registriert (Kampfprotokoll —
         # Ringpuffer und Panel). Der Kern steht VOR dem Fenster (das Fenster liest
         # getCombatLog()), beide nach utils/performance-extras.js und vor den ui/-Modulen.
-        assert len(modules) == 139, f"Erwartet 139 Module, gefunden {len(modules)}"
+        # Tastatur-Strang, Einheit T-C (Schritt 4): 'ui/keyboard-reach.js' neu registriert
+        # (Kehrschleife — setzt tabindex/role zur Laufzeit auf die nicht-nativen
+        # Bedienelemente der fuenf Kampfansichten). Steht NACH ui/event-delegation.js:
+        # sie macht Elemente erreichbar, die der keydown-Zweig dort bedient.
+        # Tastatur-Strang, Einheit T-D (Schritte 7+8): 'ui/modal-focus.js' neu
+        # registriert (Modalfokus — Einstieg, Fokusfalle, Rueckweg zum Oeffner).
+        # NACHGETRAGEN IN RUNDE 1: das Modul kam mit f55df5f in loader.js, diese
+        # Zahl blieb bei 140 stehen, und die Ratsche war seit f55df5f rot (an
+        # b5f8526 nachgeprueft: 29 bestanden, 1 Fehlschlag, bei loader.js und
+        # tests/build/ unberuehrt von meinen Commits). Die jest-Gates wurden
+        # damals gepflegt, dieses Python-Gate nicht — wer ein Modul registriert,
+        # muss BEIDE anfassen.
+        # Nutzerentscheidung E-2 (TASV): 'ui/keyboard-group.js' neu registriert
+        # (Gruppenmechanik — ein Tabulatorhalt je Gruppe, darin Pfeiltasten plus
+        # Pos1/Ende). Steht NACH ui/keyboard-reach.js: es verteilt die Halte
+        # anders, die dort entstehen, und braucht deren Verzeichnis der
+        # versorgten Elemente (daran haengt nurMausfokus). Dieses zweite Gate
+        # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
+        # Absatz darueber einklagt.
+        # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
+        # (die Anmeldung der Ansichtsgruppen — 23 Ansichtsgruppen: 21 fuer die
+        # Vorbereitungsansichten, dazu die Party-Zauberplaetze und das
+        # Punkte-Menue des Mobil-Kopfs (MKOPF, nachgetragen am 2026-10-15).
+        # Die Zahl stand
+        # hier auf 18 und blieb stehen, als Runde 3 vier Arten nachtrug
+        # (Zauberkarten, Wiki-Eintraege, Ladenartikel, Ladenkategorien).
+        # Seit HILF haelt ein Fall in tests/unit/keyboard-group-views.test.js
+        # jede Zahlangabe darueber im Baum gegen ANSICHTSGRUPPEN.length.)
+        # Steht NACH
+        # ui/keyboard-group.js: ihr Selbstaufruf ruft
+        # KeyboardGroup.registriere() und findet das Modul sonst nicht.
+        # Beide Register sind auch diesmal mitgepflegt (142 -> 143, und
+        # eslint.generated-globals.js neu erzeugt).
+        # MKOPF: 'ui/mobile-header-menu.js' neu registriert (das Punkte-Menue des
+        # Mobil-Kopfs — es baut seine Eintraege bei jedem Oeffnen AUS
+        # .header-actions .header-action-btn und schaltet sie auf). Steht NACH
+        # ui/keyboard-group-views.js: es stoesst beim Oeffnen
+        # KeyboardGroup.aktualisieren() an, damit der Halt sitzt, bevor der erste
+        # Tabulatordruck kommt. Dieses Gate hat gemeldet und ist mitgepflegt
+        # (143 -> 144) — es ist genau die Pflicht, die der Absatz oben einklagt,
+        # und diesmal war das Python-Gate das, das sie eingetrieben hat (jest
+        # blieb gruen, weil der Waechter tests/e2e/features/mobil-kopfmenue.spec.js
+        # den Modulpfad nennt).
+        assert len(modules) == 144, f"Erwartet 144 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

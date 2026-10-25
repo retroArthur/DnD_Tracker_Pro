@@ -6901,6 +6901,15 @@ describe('R-18 — verfeinernde Regel toent, Tinte ist geerbt (Ratsche)', () => 
     const ERWARTETE_PAARE = [
         'core.css .char-action-btn.primary -> .char-action-btn',
         'core.css .link-chip:hover -> .link-chip',
+        // MKOPF: die Eintraege des Punkte-Menues im Mobil-Kopf. Die
+        // Zeigerueckmeldung toent 18% Gold; die Tinte bleibt die geerbte
+        // `var(--text)` der Grundregel. Absichtlich KEINE eigene Tinte wie bei
+        // `.editor-toolbar .tb-menu-item:hover` (das `var(--gold-text)` setzt
+        // und darum unter R-04 faellt, nicht hier): auf einer
+        // 18-Prozent-Toenung bleibt die Lesefarbe die bessere Wahl — und
+        // diese Ratsche rechnet nach, dass sie 4,5 haelt, statt es zu
+        // behaupten.
+        'core.css [data-layout="mobile"] .mobile-header-menu-item:hover -> [data-layout="mobile"] .mobile-header-menu-item',
         'dashboard.css .dice-formula-chip:hover -> .dice-formula-chip',
         'dice.css .dice-attr.save:hover -> .dice-attr span',
         'dice.css .dice-attr.save:hover -> .dice-attr.save small',
@@ -7926,7 +7935,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
                    systems/entity-links.js:430                   (heute :437)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
                    ui/actions/entity-actions.js:362              (heute :373)
-                   systems/undo.js:778                           (war :756, dann :766)
+                   systems/undo.js:873                           (war :756, :766, :778, :821, dann :864)
            6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
            3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
            3   `transition = 'box-shadow …'` — keine Schattenwerte, kein Fall
@@ -10292,7 +10301,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'systems/undo.js',
-            zeile: 778,
+            zeile: 873,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.session-card',
@@ -15198,7 +15207,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
      *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
      *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
-     *                loader.js:344 (die Zusammenfassungszeile des Ladefehlers)
+     *                loader.js:383 (die Zusammenfassungszeile des Ladefehlers)
      *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
      *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
      *  Modulpfade als Teilzeichenkette und zaehlt JEDEN Treffer als
@@ -16218,9 +16227,23 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
         expect(stillGeduldet.sort()).toEqual([]);
         // Die Zahlen daneben, damit die Probe nicht durch WEGLASSEN gruen
         // wird: waechst die Kandidatenmenge, faellt dieser Fall.
+        //
+        // 73 -> 74 UND 54 -> 55 DURCH MKOPF — der Fall IST gefallen, und zu
+        // Recht. Dazugekommen ist
+        // `core.css [data-layout="mobile"] .mobile-header-menu-icon`, das
+        // Symbol eines Eintrags im Punkte-Menue des Mobil-Kopfs. In die
+        // Kandidatenmenge kommt es, weil `istIkon()` nach dem Namensmuster
+        // `-icon` sucht; "unbeurteilt" ist es, weil `URTEIL_IKON` es nicht von
+        // Hand fuehrt — und das soll so bleiben: es traegt von Anfang an
+        // `font-size: var(--text-lg)`, also eine SPROSSE, und E-3 urteilt
+        // ueber den SPRUNG einer em-Deklaration auf die naechste Sprosse. Wo
+        // kein Sprung ist, ist nichts zu beurteilen. Geduldet ist es nicht
+        // (das prueft `stillGeduldet` eine Zeile darueber), und dass der
+        // Zugang genau diese eine Stelle mit genau diesem Wert ist, bewacht
+        // `tests/unit/typo-map.test.js` im Block W5-W7.
         expect({ kandidaten: kandidaten.length, unbeurteilt: offen.length }).toEqual({
-            kandidaten: 73,
-            unbeurteilt: 54
+            kandidaten: 74,
+            unbeurteilt: 55
         });
     });
 
@@ -16739,7 +16762,16 @@ describe('W6-R-04 — die Ringfarbe haelt 3:1 auf fuenf Flaechen in vier Themes 
         expect(befunde.sort()).toEqual([]);
         // Die Menge ist nicht leer und nicht geschrumpft: sieben setzende
         // Fokusregeln, zwei Zeigerkonturen daneben.
-        expect(fokusregeln.length).toBe(7);
+        //
+        // 7 -> 8 DURCH MKOPF. Die achte ist
+        // `core.css [data-layout="mobile"] .mobile-header-menu-item:focus-visible`
+        // — die Eintraege des Punkte-Menues im Mobil-Kopf. Sie liegen in einer
+        // Blase mit Goldrahmen; ohne eigene Regel saesse der Ring der
+        // Weltregel AUSSERHALB des Eintrags und damit halb unter dem Rand der
+        // Blase, darum `outline-offset: -2px`. Sie nimmt `var(--focus-ring)`
+        // und nicht `var(--gold)`, die Zusicherung dieses Falles gilt also
+        // auch fuer sie — die Zahl waechst, der Satz bleibt.
+        expect(fokusregeln.length).toBe(8);
         expect(hoverkonturen.sort()).toEqual([
             'dashboard.css {.qref-row:hover}',
             'file-backup.css {.backup-entry:hover}'

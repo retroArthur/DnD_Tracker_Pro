@@ -6,9 +6,32 @@ on:
   pull_request:
     branches: [main, master]
 
+# DER LAEUFER IST FESTGENAGELT: ubuntu-24.04, nicht ubuntu-latest.
+#
+# `ubuntu-latest` ist ein wandernder Name. Zwischen den Laeufen von PR #5 und
+# PR #6 (Oktober 2026) hat GitHub ihn von Ubuntu 24.04 auf 26.04 umgehaengt —
+# gemessen an den Joblogs, nicht vermutet: der gruene e2e-Lauf von #5 meldet
+# "Ubuntu 24.04.5 LTS / Image: ubuntu-24.04", der rote von #6 "Ubuntu 26.04.1
+# LTS / Image: ubuntu-26.04". Auf 26.04 bricht
+# `npx playwright install --with-deps chromium` nach 15 Sekunden ab:
+# "Playwright does not support chromium on ubuntu26.04-x64" — die gesperrte
+# Version 1.57.0 (package-lock.json) kennt die Plattform nicht.
+#
+# FESTNAGELN STATT PLAYWRIGHT ANHEBEN: ein neuer Chromium verschiebt Rendering
+# und Schriftmetriken, und daran haengen der Stil-Sollstand
+# (tests/e2e/features/computed-style-diff.spec.js) und die Linux-Messungen der
+# Schrift- und Breitschrift-Proben, die alle auf 24.04 entstanden sind. Ein
+# Werkzeug-Upgrade ist eine eigene Einheit, keine Nebenwirkung eines
+# Laeufer-Wechsels.
+#
+# ALLE SECHS JOBS, nicht nur die zwei mit Chromium (`e2e`, `smoke-test`): sonst
+# entsteht der Build in `test` auf einem anderen Betriebssystem, als `e2e` ihn
+# prueft, und jeder Job koennte unabhaengig vom anderen wandern. Entnageln erst,
+# wenn Playwright auf eine Version gehoben ist, die 26.04 kennt — dann mit
+# neuem Sollstand und neu gemessenen Linux-Proben.
 jobs:
   lint-and-typecheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       # D-09: node-version 20 -> 22 aus zwei getrennten Gruenden. (1) Node 20 ist
@@ -29,7 +52,7 @@ jobs:
       - run: npm run lint
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -53,7 +76,7 @@ jobs:
   # dem Merge ist eine GitHub-Branch-Protection-Einstellung (Repo-Settings),
   # die dieses ci.yml nicht setzen kann.
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint-and-typecheck, test]
     steps:
       - uses: actions/checkout@v7
@@ -78,7 +101,7 @@ jobs:
           retention-days: 7
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint-and-typecheck, test, e2e]
     steps:
       - uses: actions/checkout@v7
@@ -117,7 +140,7 @@ jobs:
           retention-days: 7
 
   smoke-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build]
     steps:
       - uses: actions/checkout@v7
@@ -145,7 +168,7 @@ jobs:
           SMOKE_BASE_URL: http://localhost:8000/dnd-tracker-optimized.html
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [smoke-test]
     # WR-07: Nur bei Push auf main deployen — sonst würde ein Same-Repo-PR
     # nach grünem Smoke ungemergten Code auf GitHub Pages veröffentlichen

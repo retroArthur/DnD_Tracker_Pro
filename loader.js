@@ -164,6 +164,45 @@ const MODULES = [
     'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+    // Die Kehrschleife NACH dem Verteiler: sie macht Elemente erreichbar,
+    // die der keydown-Zweig dort bedient. Umgekehrt gaebe es einen Moment,
+    // in dem ein Element fokussierbar ist und die Leertaste darauf nichts
+    // tut bzw. ein Einzeltasten-Kuerzel ausloest — der Fehler aus T-A.
+    'ui/keyboard-reach.js',
+    // Die Gruppenmechanik NACH der Kehrschleife: sie verteilt die Halte
+    // anders, die dort entstehen, und sie braucht deren Verzeichnis der
+    // versorgten Elemente — daran haengt nurMausfokus. Sie stoesst die
+    // Kehrschleife in ihrem eigenen Durchlauf ausdruecklich selbst an, damit
+    // die Reihenfolge nicht an der Reihenfolge zweier rAF-Rueckrufe haengt;
+    // diese Zeile haelt die Abhaengigkeit lesbar.
+    'ui/keyboard-group.js',
+    // Die Anmeldung der Ansichtsgruppen NACH der Mechanik: ihr Selbstaufruf
+    // ruft KeyboardGroup.registriere() und findet das Modul sonst nicht.
+    // Davor geladen bliebe sie still, und die Nachruestung liefe ohne
+    // Gruppen weiter — mit der gemessenen Tabulatorflut, aber ohne Fehler.
+    'ui/keyboard-group-views.js',
+    // Das Punkte-Menue des Mobil-Kopfs NACH der Anmeldung der Gruppen: es
+    // stoesst beim Oeffnen KeyboardGroup.aktualisieren() an, damit der Halt
+    // sitzt, bevor der erste Tabulatordruck kommt. Davor geladen fehlte der
+    // Anstoss nicht dauerhaft — der Beobachter dort holt es im naechsten Bild
+    // nach —, aber die Reihenfolge haelt die Abhaengigkeit lesbar.
+    'ui/mobile-header-menu.js',
+    // Die Fokusfalle NACH der Kehrschleife: sie zaehlt die Haltepunkte eines
+    // offenen Dialogs, und die entstehen zum Teil erst dort (von der
+    // Kehrschleife nachgeruestete Tabulatorhalte). Zur Laufzeit ist die
+    // Reihenfolge folgenlos — beide haengen ihre Lauscher selbst ein und
+    // lesen das DOM erst beim Tastendruck —, aber sie haelt die
+    // Abhaengigkeit lesbar.
+    //
+    // KEINE ANFUEHRUNGSZEICHEN UND KEINE HOCHKOMMAS IN DIESEM BLOCK — auch
+    // nicht in einem Kommentar. Mehrere Waechtertests lesen das
+    // MODULES-Array rein textuell und nehmen JEDE so eingefasste
+    // Zeichenkette als Modulpfad (tests/unit/console-hygiene.test.js:54 und
+    // vier weitere Gates mit demselben Muster). Ein Attributbeispiel mit
+    // Anfuehrungszeichen liess hier fuenf Gates scheitern: sie meldeten eine
+    // Moduldatei, die nicht auf der Platte liegt, und gemeint war die Null
+    // aus dem Attributwert.
+    'ui/modal-focus.js',
     'ui/editors/rich-text.js',
     'ui/editors/editor-toolbar-build.js',
     'ui/editors/rich-text-insert.js',

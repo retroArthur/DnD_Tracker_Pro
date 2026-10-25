@@ -310,7 +310,14 @@ const SVG_GEDULDET = {};
  * bewacht nichts — sie verlaengert nur die Liste (Lehre O-5).
  */
 const INLINE_GEDULDET = {
-    'assets/templates/modals-tools.html:552':
+    // MKOPF: 552 -> 589. Die Stelle selbst ist unberuehrt; das Punkte-Menue
+    // des Mobil-Kopfs hat 37 Zeilen VOR ihr eingefuegt (`.mobile-header` steht
+    // in derselben Datei auf Zeile 287ff.). Genau diese Verschiebung faengt
+    // die VERWESUNGSPROBE in W5-R-08 ab — sie ist rot geworden und hat den
+    // Anker benannt, statt ihn stillschweigend auf eine Leerzeile zeigen zu
+    // lassen. Die vier Anker in `modal-fokus.spec.js` (12, 180, 194, 291)
+    // liegen VOR dem Einschub und sind unverschoben.
+    'assets/templates/modals-tools.html:589':
         '48px. Das 🎲 des Impressumsfensters, einziger Inhalt seines Kastens, kein ' +
         'Lesetext (E-3). Die Skala hat zwischen 34 und 72 px keine Sprosse: der Weg ' +
         'auf --text-3xl waere -14,00 px, der auf --text-hero +24,00 px. Beide ' +

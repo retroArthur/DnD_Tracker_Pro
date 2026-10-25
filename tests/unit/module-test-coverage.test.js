@@ -212,7 +212,10 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/party/party-crud.js',
     'features/party/party-details.js',
     'features/quests/quests-crud.js',
-    'features/quests/quests-render.js',
+    // 'features/quests/quests-render.js' — gestrichen in E-2/Einheit 2:
+    // tests/unit/keyboard-group-views.test.js liest die Datei und sichert
+    // zu, dass der Behaelter der zwei Statusmarken sein
+    // data-tastgruppe-Attribut behaelt. Die Liste darf nur schrumpfen.
     'features/quick-actions.js',
     'features/reise/reise-crud.js',
     'features/reise/reise-default-tables.js',
@@ -245,8 +248,30 @@ const MODULE_TEST_EXCEPTIONS = [
     'systems/conditions.js',
     'systems/hp-calculator.js',
     'systems/markdown-import-export.js',
-    'systems/spellslots/keyboard-shortcuts.js',
-    'systems/spellslots/navigation.js',
+    // -- 2026-10-07, Tastatur-Strang T-A: 'systems/spellslots/keyboard-shortcuts.js'
+    //    ist hier GESTRICHEN. tests/e2e/features/tastatur-ausloesung.spec.js prueft
+    //    genau die isTyping-Schranke dieses Moduls und seine Leertasten-, Ziffern-
+    //    und Einzeltasten-Zweige: elf Faelle treiben sie mit echten Tastendruecken
+    //    am gebauten Buendel durch und urteilen ueber die Wirkung (Zug, Runde,
+    //    Kaempfer, Ansicht) UND ueber das ausgeloeste click-Ereignis. Das ist keine
+    //    Erwaehnung zur Gate-Beruhigung: ohne dieses Modul waere kein einziger der
+    //    elf Faelle erklaerbar. Dass der Pfad dabei im Erklaertext steht und nicht
+    //    in ausfuehrbarem Code, liegt in der Natur eines Verhaltensfalls — er liest
+    //    die Quelle nicht, er fuehrt sie aus. Die Liste darf nur schrumpfen; sie
+    //    tut es hier.
+    // -- 2026-10-19, Abnahme ABN: 'systems/spellslots/navigation.js' ist hier
+    //    GESTRICHEN, und zwar nicht wegen einer Erwaehnung. Dieses Gate wurde
+    //    rot, weil ein KOMMENTAR in tastenhilfe.spec.js den Pfad woertlich
+    //    nannte — nach dem Kriterium dieses Falls gilt das Modul damit als
+    //    angefasst, obwohl kein Test es las. Zwei Wege standen offen: den Pfad
+    //    aus dem Kommentar nehmen (dann bewacht nichts das Modul) oder es
+    //    wirklich abdecken. Genommen ist der zweite:
+    //    tests/unit/navigation-collapse.test.js laedt das Modul in eine
+    //    vm-Sandbox mit jsdom und fuehrt toggleCollapse() gegen echtes Markup
+    //    (vier Laufzeitfaelle), plus zwei Faelle, die den Vertrag mit den
+    //    Vorlagen halten. Der Anlass war ein gemessener Fehler: eine Sonde
+    //    suchte `.collapsible.open`, eine Klasse, die der Baum nicht fuehrt.
+    //    Die Liste darf nur schrumpfen; sie tut es hier.
     'systems/spellslots/notes-templates.js',
     'systems/spellslots/pwa-install.js',
     'systems/spellslots/spell-slots-core.js',
