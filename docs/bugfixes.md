@@ -1324,6 +1324,16 @@ wiedergefunden.
 - **Dateien:** `assets/styles/dmscreen.css`, `assets/styles/core.css` (nur Kommentar)
 - **Tests:** `tests/e2e/features/globale-suche-lupe.spec.js` (Lupe im Feld, Klick fokussiert, Trefferliste am Feld; 1925/1440/1200/900 px), `tests/unit/css-kommentare.test.js` (kein verwaistes Kommentarende außer den zwei gezählten; Mutation in beide Richtungen rot).
 
+### Eine Leiste, deren Ausweg an der Fensterbreite hängt, passt in kein schmales Modal — das Wiki-Formular (UAT-Runde 7)
+
+- **Problem:** Im Wiki-Formular waren Schriftart- und Größenfeld rechts in der Editor-Leiste gequetscht und abgeschnitten, das Formular rollte quer. Das Größenfeld trug ein fremdes Symbol in sich.
+- **Ursache, zwei Teile:** (1) Die volle Leiste braucht 788 px, das Modal (`.wiki-form-modal`, `max-width: 700px`) lässt ihr 656 px. Der eingebaute Ausweg — die Schriftgruppe wandert ins ⋯-Menü — hängt an der **Fensterbreite** (≤ 900 px) und greift in einem 700-px-Modal auf dem Desktop nie. Das `overflow-y: auto` des Modals machte den Überhang zum waagerechten Rollbalken (772 in 698). (2) `.form-group select { width: 100% }` aus `assets/styles/core.css` sickert in die Leisten-Auswahlfelder: jedes löst auf seine 120 px Höchstbreite auf, während die Gruppe auf 142 px schrumpft. Das Größenfeld lag 100 px außerhalb der eigenen Gruppe unter dem „Rahmen"-Knopf — dessen Symbol war das fremde Zeichen im Feld.
+- **Fix:** (1) `max-width: 880px` statt 700, zeilengleich in `assets/styles/party.css`. (2) `.editor-toolbar [data-tb='fonts'] .editor-select { width: auto }` am Ende von `assets/styles/editors.css`. **Jede allein reicht nicht** — gemessen: mit (1) allein verschwindet der Querlauf, aber das Größenfeld bleibt unter dem Rahmen-Knopf. Sichtbar: das Wiki-Formular ist auf dem Desktop 180 px breiter; die Schriftfelder in den übrigen Leisten sind schmaler (die Breite ist keine gehashte Eigenschaft, der Stil-Sollstand bewegt sich nicht).
+- **Regel:** Wer eine Leiste in einen Behälter fester Höchstbreite setzt, misst sie dort — der Ausweg der Leiste kennt nur das Fenster. Und eine breite Form-Regel (`.form-group select`) sickert in jedes eingebettete Steuerelement; eingebettete Felder setzen ihre Breite selbst.
+- **Offen, ausgewiesen:** Unter 806 px läuft die Leiste weiter über (die ≤ 900-px-Stufe vergrößert die Knöpfe, die ≤ 600-px-Stufe reicht nicht), in der Sitzungsleiste genauso; bei ≤ 600 px verschwindet der Wiki-Link-Knopf mit seiner Gruppe, und das ⋯-Menü trägt ihn nicht nach. Allgemeiner Leistenbefund, eigener Vorgang.
+- **Dateien:** `assets/styles/party.css`, `assets/styles/editors.css`
+- **Tests:** `tests/e2e/features/wiki.spec.js` — „Formular-Werkzeugleiste passt ins Modal": kein Querlauf in Modal und Leiste, kein Bedienelement rechts außerhalb, beide Schriftfelder in der Mitte und an der rechten Kante selbst treffbar (1925 bis 900 px).
+
 ---
 
 ## Known Technical Debt
