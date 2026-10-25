@@ -744,7 +744,7 @@ const GENERIKA_FRIST = 15000;
 // fuehrt alle vier gebuendelten Menueeintraege als
 // "'<Familie>', Arial, sans-serif", `rueckfallStack()` liefert fuer
 // Teil 2 und Teil 3 also "Arial, sans-serif", und
-// `.github/workflows/ci.yml` laeuft sechsmal auf `ubuntu-latest`, wo
+// `.github/workflows/ci.yml` laeuft sechsmal auf `ubuntu-24.04`, wo
 // Arial fehlt — dort rendert `sans-serif`.
 //
 // Tritt der dokumentierte Lastzustand bei `sans-serif` ein und bei
