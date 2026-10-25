@@ -1293,6 +1293,16 @@ wiedergefunden.
   0/0/0 nicht als Beleg liest.** Die Datei selbst ist gesperrt und wurde nicht
   angefasst.
 
+### Ein Knopf mit unregistrierter Aktion schweigt — „Abbrechen" der Session-Prep (UAT-Runde 7)
+
+- **Problem:** „Abbrechen" im Fuß der Session-Prep-Maske tat nichts; das × im Kopf ebenso. Nur Esc schloss die Maske.
+- **Ursache:** Beide Knöpfe trugen `data-action="close-modal"`. Der Name ist **nirgends** registriert, und `EventDelegation` führt nur registrierte Aktionen aus — eine unbekannte verwirft sie wortlos: kein `preventDefault`, kein Log, kein Fehler. Gemessen am Bündel: der echte Klick kommt an (`isTrusted`, nächstes `[data-action]` = `close-modal`), die Maske bleibt `modal-overlay show`, null Konsolenfehler. Esc schloss sie, weil die Tastatur einen anderen Weg geht (`ModalFocus.oberstesModal()` → `window.hideModal()`).
+- **Fix:** `hide-modal` statt `close-modal` an beiden Knöpfen — die Hausaktion für Schließknöpfe. Sie schließt wie Esc und gibt den Fokus an den Öffner zurück (gemessen). Bewusst **kein** registrierter Alias `close-modal`: ein zweiter Name für denselben Handler wäre doppeltes Wissen. Bewusst **nicht** `close-modal-overlay`: das entfernt den Knoten, aber ohne Fokusrückgabe — der Fokus fiele auf `BODY`.
+- **Regel:** Eine `data-action` ohne Registereintrag ist ein stummer Knopf, und kein Tor meldet ihn. Schließknöpfe nehmen `hide-modal` mit der Modal-ID als `data-value`.
+- **Offen, ausgewiesen:** Dieselbe Klasse steht im Ersatz-Renderer `ui/safe-render.js` (`add-enc-to-init`, `edit-enc`, `delete-enc` — null Registereinträge im Quellbaum; ob der Pfad je gerendert wird, ist ungeprüft). Ein globaler Wächter über alle Aktionsnamen bräuchte eine Ausnahmeliste, weil mehrere Namen eigene Lauscher haben. Und das × der Maske liegt weiterhin außerhalb des Fensters, weil die Karte keine Fläche und keine Höhenschranke hat — gesondert geführt in `tests/unit/design-consistency.test.js` (`KARTE_GEFUEHRT`).
+- **Dateien:** `features/session-prep/session-prep-render.js`
+- **Tests:** `tests/e2e/features/session-prep.spec.js` — „Abbrechen schliesst die Maske wie Escape und gibt den Fokus zurueck": jede Aktion der Maske ist registriert, ein echter Klick schließt, der Fokus kehrt zurück, nichts wird gespeichert.
+
 ---
 
 ## Known Technical Debt

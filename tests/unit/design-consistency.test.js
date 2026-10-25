@@ -1618,11 +1618,11 @@ describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
         // Rahmen 0px none, padding 0px, max-height none, overflow-y visible —
         // die Karte ist 1210px hoch, beginnt bei y=-155 und ragt 155px unter
         // den Fensterrand; das Formular liegt ohne Flaeche auf der
-        // weichgezeichneten Seite. Dazu zeigt ihr Schliessknopf auf
-        // data-action="close-modal", und dieser Schluessel ist in KEINEM
-        // ui/actions/*.js registriert — das x schliesst nichts (nachgeklickt).
-        // Das ist ein eigener Vorgang mit eigenem roten Nachweis; hier steht
-        // es, damit es nicht verloren geht. Diese Liste darf nur KUERZER werden.
+        // weichgezeichneten Seite. Ihr Schliessknopf zeigte zudem auf
+        // data-action="close-modal", einen in KEINEM ui/actions/*.js registrierten
+        // Schluessel — behoben in UAT-Runde 7 (jetzt hide-modal, roter Nachweis in
+        // session-prep.spec.js). Die KARTE bleibt hier gefuehrt, bis sie Flaeche
+        // und eine Hoehenschranke hat. Diese Liste darf nur KUERZER werden.
         // Der Pfad steht bewusst in AUSFUEHRBAREM Code und nicht nur im
         // Erklaertext: nur so ist das Modul im Sinne von
         // tests/unit/module-test-coverage.test.js wirklich beurteilt (dieselbe
