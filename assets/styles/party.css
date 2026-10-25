@@ -1052,7 +1052,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            max-width: 700px;
+            max-width: 880px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;

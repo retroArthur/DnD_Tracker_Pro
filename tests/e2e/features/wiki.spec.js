@@ -429,4 +429,111 @@ test.describe('Wiki System', () => {
             expect(codeCount).toBe(0);
         });
     });
+
+    // ============================================================
+    // FORMULAR-WERKZEUGLEISTE PASST INS MODAL (UAT-Runde 7)
+    // ============================================================
+    //
+    // DER BEFUND. "Im Wiki, unter dem Text-Editor sind die Elemente gequetscht."
+    // Gemessen am Buendel bei 1440x900: die volle Leiste des Wiki-Formulars
+    // braucht 788px, das Modal laesst ihr 656px (`.wiki-form-modal`,
+    // max-width 700px, assets/styles/party.css). Das Modal rollt quer
+    // (scrollWidth 772 in 698), Schriftart- und Groessenfeld liegen rechts
+    // abgeschnitten, das Groessenfeld 100px ausserhalb der eigenen Gruppe UNTER
+    // dem Rahmen-Knopf — dessen Symbol war das "Cursorzeichen" in "16p" aus der
+    // Meldung. Zwei Ursachen, beide noetig:
+    //   1. Der eingebaute Ausweg (Schriftgruppe ins Punkte-Menue) haengt an der
+    //      FENSTERbreite (<=900px) und greift im 700px-Modal auf dem Desktop nie.
+    //   2. `.form-group select { width: 100% }` (core.css) sickert in die
+    //      Leisten-Auswahlfelder: 242px Felder in einer 142px-Gruppe.
+    //
+    // UNTER 806px bleibt ein bekannter, allgemeiner Rest (die <=900px-Stufe
+    // vergroessert die Knoepfe, die <=600px-Stufe reicht nicht; trifft die
+    // Sitzungsleiste genauso). Deshalb faehrt dieser Fall nur bis 900px.
+    test.describe('Formular-Werkzeugleiste passt ins Modal (UAT-Runde 7)', () => {
+        for (const breite of [1925, 1440, 1200, 901, 900]) {
+            test(`${breite}px: kein Querlauf, Bedienelemente ganz im Bild, Schriftfelder treffbar`, async ({
+                page
+            }) => {
+                await page.setViewportSize({ width: breite, height: 900 });
+                await page.waitForTimeout(200);
+                await page.click('[data-action="call"][data-value="showWikiForm"]');
+                await page.waitForSelector('[data-toolbar-for="wiki-content"]', {
+                    state: 'visible'
+                });
+                await page.waitForTimeout(150);
+
+                const m = await page.evaluate(() => {
+                    const modal = document.querySelector('.wiki-form-modal');
+                    const leiste = document.querySelector('[data-toolbar-for="wiki-content"]');
+                    if (!modal || !leiste) return null;
+                    const lr = leiste.getBoundingClientRect();
+                    const cs = getComputedStyle(leiste);
+                    const innenRechts =
+                        lr.right -
+                        (parseFloat(cs.borderRightWidth) || 0) -
+                        (parseFloat(cs.paddingRight) || 0);
+                    const name = el =>
+                        (el.title || el.getAttribute('aria-label') || el.textContent || el.tagName)
+                            .trim()
+                            .slice(0, 24);
+                    const sichtbar = el => el.getBoundingClientRect().width > 0;
+                    const draussen = [...leiste.querySelectorAll('.editor-btn, .editor-select')]
+                        .filter(el => !el.closest('.tb-menu') && sichtbar(el))
+                        .filter(el => el.getBoundingClientRect().right > innenRechts + 0.5)
+                        .map(
+                            el =>
+                                `${name(el)} rechts ${Math.round(el.getBoundingClientRect().right)}`
+                        );
+                    const schriftfelder = [
+                        ...leiste.querySelectorAll(':scope > [data-tb="fonts"] .editor-select')
+                    ].filter(sichtbar);
+                    const verdeckt = [];
+                    for (const f of schriftfelder) {
+                        const r = f.getBoundingClientRect();
+                        const mitte = r.top + r.height / 2;
+                        for (const x of [r.left + r.width / 2, r.right - 3]) {
+                            const e = document.elementFromPoint(x, mitte);
+                            if (!(e === f || f.contains(e))) {
+                                verdeckt.push(
+                                    `${name(f)} bei x=${Math.round(x)}: ` +
+                                        (e
+                                            ? `${e.tagName}.${String(e.className).split(' ')[0]}`
+                                            : 'nichts')
+                                );
+                            }
+                        }
+                    }
+                    return {
+                        modal: { scrollW: modal.scrollWidth, clientW: modal.clientWidth },
+                        leiste: { scrollW: leiste.scrollWidth, clientW: leiste.clientWidth },
+                        innenRechts: Math.round(innenRechts),
+                        draussen,
+                        schriftfelder: schriftfelder.length,
+                        verdeckt
+                    };
+                });
+
+                expect(m, 'Wiki-Formular oder seine Leiste nicht gefunden').not.toBeNull();
+                expect(
+                    m.modal.scrollW,
+                    `das Modal laeuft quer: scrollWidth ${m.modal.scrollW} > clientWidth ${m.modal.clientW}`
+                ).toBeLessThanOrEqual(m.modal.clientW);
+                expect(
+                    m.leiste.scrollW,
+                    `die Leiste laeuft quer: scrollWidth ${m.leiste.scrollW} > clientWidth ${m.leiste.clientW}`
+                ).toBeLessThanOrEqual(m.leiste.clientW);
+                expect(
+                    m.draussen,
+                    `Bedienelemente liegen rechts ausserhalb der Leiste (Innenkante ${m.innenRechts})`
+                ).toEqual([]);
+                // Gegenprobe gegen Leerlauf: ueber 900px stehen die Schriftfelder
+                // IN der Leiste; bei 900px wandern sie planmaessig ins Punkte-Menue.
+                if (breite > 900) {
+                    expect(m.schriftfelder, 'keine Schriftfelder in der Leiste').toBeGreaterThan(0);
+                }
+                expect(m.verdeckt, 'Schriftfelder sind nicht selbst treffbar').toEqual([]);
+            });
+        }
+    });
 });

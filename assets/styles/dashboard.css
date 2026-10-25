@@ -2400,3 +2400,27 @@
     margin-bottom: 12px;
 }
 
+/* ============================================================
+   SCHNELLREFERENZ: DIE REITERZEILE SCHRUMPFT NICHT (UAT-Runde 7)
+
+   `.qref-tabs` traegt weiter oben `overflow-x: auto`. Ist eine Achse nicht
+   visible, wird die andere auto: die Zeile ist ein Scroll-Container, und fuer
+   ein solches Flex-Element loest `min-height: auto` auf 0 auf. Die Flex-Spalte
+   `.qref-panel` (mit max-height) verteilte den Mangel beim Aufklappen von
+   Abschnitten dann anteilig auch auf die Reiter. Gemessen bei 1280x600, nur
+   "Aktionen" offen: 47 auf 36px, keine Beschriftung mehr treffbar, eigene
+   senkrechte Rollleiste.
+
+   Schrumpfen und rollen soll nur `.qref-content`. Gemessen mit dieser Regel:
+   47px in jeder Groesse und jedem Zustand (1925x1000 bis 280x640, Telefon quer,
+   breite Probenschrift); die Aussenmasse der Tafel bleiben gleich, nur der
+   Inhalt gibt die Hoehe ab.
+
+   Eigener Selektor statt eines zweiten `.qref-tabs`-Blocks: den zaehlte die
+   Dubletten-Ratsche F-18 (design-consistency.test.js) als Dublette. Am
+   Dateiende, damit sich keine Zeilenanker verschieben. `overflow-x: auto`
+   bleibt als Rueckfall fuer sehr breite Schriften stehen.
+   ============================================================ */
+.qref-panel > .qref-tabs {
+    flex-shrink: 0;
+}

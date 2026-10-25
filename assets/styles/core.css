@@ -4025,9 +4025,9 @@
                 row-gap: 6px;
             }
 
-            /* `margin-left: auto` (dmscreen.css) schiebt die Suche nach rechts; ohne
-               `min-width: 0` kann ihr Behaelter in der umgebrochenen Reihe nicht
-               unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile. */
+            /* Ohne `min-width: 0` kann der Suchbehaelter in der umgebrochenen Reihe
+               nicht unter sein inhaltsbasiertes Minimum und erzwingt eine eigene Zeile.
+               (Sein `margin-left: auto` in dmscreen.css ist tot, siehe dort am Ende.) */
             [data-layout="desktop"] .global-search-container {
                 min-width: 0;
             }

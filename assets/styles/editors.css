@@ -893,3 +893,27 @@
             display: inline-block;
             border-radius: var(--radius-sm);
         }
+
+/* ============================================================
+   DIE SCHRIFTFELDER DER LEISTE TRAGEN IHRE EIGENBREITE (UAT-Runde 7)
+
+   `.editor-toolbar .editor-select` setzt weiter oben min-width 70px und
+   max-width 120px, aber keine Breite. Sitzt die Editor-Schale in einer
+   `.form-group`, sickert deren `select { width: 100% }` (core.css) hinein: jedes
+   Feld loest auf seine 120px auf, waehrend seine Gruppe auf 142px schrumpft.
+   Gemessen im Wiki-Formular bei 1440x900: das Groessenfeld lag 100px ausserhalb
+   der eigenen Gruppe UNTER dem Rahmen-Knopf, dessen Symbol in der Meldung als
+   "Cursorzeichen" im Feld erschien.
+
+   Selektor mit Spezifitaet 0,3,0 schlaegt `.form-group select` (0,1,1) und
+   `[data-layout="mobile"] .form-group select` (0,2,1). Die Felder im
+   Punkte-Menue sitzen in `[data-tb='more']` und behalten ihre eigene Breite.
+   Die Breite ist keine der gehashten Eigenschaften des Stil-Sollstands.
+
+   Zusammen mit der breiteren `.wiki-form-modal` (party.css). Jede der zwei
+   Aenderungen allein reicht nicht: ohne diese hier liegt das Groessenfeld auch
+   im breiten Modal unter dem Rahmen-Knopf (gemessen).
+   ============================================================ */
+.editor-toolbar [data-tb='fonts'] .editor-select {
+    width: auto;
+}

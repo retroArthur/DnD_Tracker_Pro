@@ -1293,6 +1293,47 @@ wiedergefunden.
   0/0/0 nicht als Beleg liest.** Die Datei selbst ist gesperrt und wurde nicht
   angefasst.
 
+### Ein Knopf mit unregistrierter Aktion schweigt — „Abbrechen" der Session-Prep (UAT-Runde 7)
+
+- **Problem:** „Abbrechen" im Fuß der Session-Prep-Maske tat nichts; das × im Kopf ebenso. Nur Esc schloss die Maske.
+- **Ursache:** Beide Knöpfe trugen `data-action="close-modal"`. Der Name ist **nirgends** registriert, und `EventDelegation` führt nur registrierte Aktionen aus — eine unbekannte verwirft sie wortlos: kein `preventDefault`, kein Log, kein Fehler. Gemessen am Bündel: der echte Klick kommt an (`isTrusted`, nächstes `[data-action]` = `close-modal`), die Maske bleibt `modal-overlay show`, null Konsolenfehler. Esc schloss sie, weil die Tastatur einen anderen Weg geht (`ModalFocus.oberstesModal()` → `window.hideModal()`).
+- **Fix:** `hide-modal` statt `close-modal` an beiden Knöpfen — die Hausaktion für Schließknöpfe. Sie schließt wie Esc und gibt den Fokus an den Öffner zurück (gemessen). Bewusst **kein** registrierter Alias `close-modal`: ein zweiter Name für denselben Handler wäre doppeltes Wissen. Bewusst **nicht** `close-modal-overlay`: das entfernt den Knoten, aber ohne Fokusrückgabe — der Fokus fiele auf `BODY`.
+- **Regel:** Eine `data-action` ohne Registereintrag ist ein stummer Knopf, und kein Tor meldet ihn. Schließknöpfe nehmen `hide-modal` mit der Modal-ID als `data-value`.
+- **Offen, ausgewiesen:** Dieselbe Klasse steht im Ersatz-Renderer `ui/safe-render.js` (`add-enc-to-init`, `edit-enc`, `delete-enc` — null Registereinträge im Quellbaum; ob der Pfad je gerendert wird, ist ungeprüft). Ein globaler Wächter über alle Aktionsnamen bräuchte eine Ausnahmeliste, weil mehrere Namen eigene Lauscher haben. Und das × der Maske liegt weiterhin außerhalb des Fensters, weil die Karte keine Fläche und keine Höhenschranke hat — gesondert geführt in `tests/unit/design-consistency.test.js` (`KARTE_GEFUEHRT`).
+- **Dateien:** `features/session-prep/session-prep-render.js`
+- **Tests:** `tests/e2e/features/session-prep.spec.js` — „Abbrechen schliesst die Maske wie Escape und gibt den Fokus zurueck": jede Aktion der Maske ist registriert, ein echter Klick schließt, der Fokus kehrt zurück, nichts wird gespeichert.
+
+### Ein Scroll-Container in einer Flex-Spalte verliert seine Mindesthöhe — die Reiter der Schnellreferenz (UAT-Runde 7)
+
+- **Problem:** Klappte man in der Schnellreferenz Abschnitte auf, wurden die Reiter oben (Kampf, Regeln, Welt, Eigene) unten abgeschnitten, und die Reiterzeile bekam eine eigene Rollleiste. Bei 1280×600 genügte schon „Aktionen" allein: 47 → 36 px, keine Beschriftung mehr treffbar.
+- **Ursache:** `.qref-tabs` trägt `overflow-x: auto`. Ist eine Achse nicht `visible`, wird die andere `auto` — die Zeile ist ein Scroll-Container, und für ein solches Flex-Element löst `min-height: auto` auf 0 auf. Die Flex-Spalte `.qref-panel` (mit `max-height`) verteilte den Mangel dann anteilig auf alles, was schrumpfen darf, also auch auf die Reiter. Die Rechnung stimmt aufs Zehntel: 192 px Überhang × 46/(46+795) = 10,5 px, gemessen 47 → 36,48.
+- **Fix:** `.qref-panel > .qref-tabs { flex-shrink: 0 }`, angehängt ans Ende von `assets/styles/dashboard.css`. Schrumpfen und rollen soll nur `.qref-content`. Gemessen: 47 px in jeder Größe und jedem Zustand; die Außenmaße der Tafel bleiben gleich. Eigener Selektor statt eines zweiten `.qref-tabs`-Blocks — den hätte die Dubletten-Ratsche F-18 gezählt.
+- **Regel:** Ein Flex-Element mit `overflow` ungleich `visible` hat keine inhaltsbasierte Mindesthöhe mehr. Was in einer begrenzten Flex-Spalte nicht schrumpfen darf (Reiter, Köpfe, Suchzeilen), bekommt `flex-shrink: 0` ausdrücklich.
+- **Offen, ausgewiesen:** Auf dem Telefon quer (740×360) ist die Tafel auf 184 px begrenzt; mit der festen Reiterzeile bleiben dem Inhalt rund 31 px. Vorher waren die Reiter dort ganz unbrauchbar (0 von 4 treffbar) — die Begrenzung der Tafel selbst ist ein eigener Befund.
+- **Dateien:** `assets/styles/dashboard.css`
+- **Tests:** `tests/e2e/features/schnellreferenz-reiter.spec.js` — Bezugswert bei 1440×900 zugeklappt, dann (1) 1280×600 nur „Aktionen", (2) 390×844 alle Abschnitte.
+
+### Ein verwaistes Kommentarende tötet die Regel dahinter — die Lupe der globalen Suche (UAT-Runde 7)
+
+- **Problem:** Die Lupe der globalen Suche saß links über der Ecke des Start-Reiters, das Suchfeld zeigte seinen Platz für sie leer. Nach dem Tippen spannte sich die Trefferliste über die volle Kopfbreite statt unter dem Feld zu hängen.
+- **Ursache:** `.global-search-icon` und `.global-search-results` sind absolut positioniert und brauchen `.global-search-container` als Bezugsrahmen. Dessen Regel `position: relative` stand am Kopf von `assets/styles/dmscreen.css` — tot seit der CSS-Aufteilung (`900271a`, 2026-03-18): dem Banner „GLOBAL SEARCH" fehlte das öffnende Kommentarzeichen, das auf der anderen Seite des Schnitts geblieben war. Der Parser las Bannertext und Selektor als **einen** ungültigen Selektor und verwarf die ganze Regel. Bezugsrahmen wurde die sticky `.app-header`. Keine Regression der letzten Runden: der Fehler war sieben Monate lang im Bündel, und kein Tor sah ihn.
+- **Fix:** `.global-search-container { position: relative }` neu am Dateiende, dazu `pointer-events: none` an der Lupe (ein Klick auf sie fokussiert das Feld). **Nicht** den toten Kopf durch ein nachgetragenes Zeichen repariert: das weckte auch die zwei Ränder der toten Regel auf, und `margin-left: auto` schöbe das Suchfeld quer durch die Kopfzeile (gemessen bei 1925 px von x = 344 auf x = 1018). Der Kommentar in `assets/styles/core.css`, der diesen toten Rand als Begründung nannte, ist zeilengleich richtiggestellt.
+- **Zweimal beinahe derselbe Fehler:** Die Diagnose schlug einen Erklärtext vor, der wörtlich ein Kommentarende enthielt — er hätte die Korrektur auf dieselbe Weise getötet; die Gegenprüfung hat es gemessen. Und die erste Fassung des neuen Wächters übersprang Zeichenketten; ihre eigene Mutation (ein vorzeitig geschlossener Kommentar, dessen Rest ein Anführungszeichen enthält) blieb damit grün. Jetzt zählt er Kommentarenden ohne Ausnahme.
+- **Regel:** In Kommentar-Fließtext nie ein Kommentarende schreiben (`* /` oder maskiert). Kommentarbanner nie über eine Dateigrenze hinweg zerschneiden.
+- **Offen, ausgewiesen:** Dieselbe Waise steht in `assets/styles/tools.css` am „RANDOM TABLES"-Banner; `.rt-empty` ist dadurch tot. Eine Reparatur ändert berechnete Stile in einer Ansicht und damit den Stil-Sollstand — eigener Vorgang. Beide Waisen sind im Wächter gezählt geführt.
+- **Dateien:** `assets/styles/dmscreen.css`, `assets/styles/core.css` (nur Kommentar)
+- **Tests:** `tests/e2e/features/globale-suche-lupe.spec.js` (Lupe im Feld, Klick fokussiert, Trefferliste am Feld; 1925/1440/1200/900 px), `tests/unit/css-kommentare.test.js` (kein verwaistes Kommentarende außer den zwei gezählten; Mutation in beide Richtungen rot).
+
+### Eine Leiste, deren Ausweg an der Fensterbreite hängt, passt in kein schmales Modal — das Wiki-Formular (UAT-Runde 7)
+
+- **Problem:** Im Wiki-Formular waren Schriftart- und Größenfeld rechts in der Editor-Leiste gequetscht und abgeschnitten, das Formular rollte quer. Das Größenfeld trug ein fremdes Symbol in sich.
+- **Ursache, zwei Teile:** (1) Die volle Leiste braucht 788 px, das Modal (`.wiki-form-modal`, `max-width: 700px`) lässt ihr 656 px. Der eingebaute Ausweg — die Schriftgruppe wandert ins ⋯-Menü — hängt an der **Fensterbreite** (≤ 900 px) und greift in einem 700-px-Modal auf dem Desktop nie. Das `overflow-y: auto` des Modals machte den Überhang zum waagerechten Rollbalken (772 in 698). (2) `.form-group select { width: 100% }` aus `assets/styles/core.css` sickert in die Leisten-Auswahlfelder: jedes löst auf seine 120 px Höchstbreite auf, während die Gruppe auf 142 px schrumpft. Das Größenfeld lag 100 px außerhalb der eigenen Gruppe unter dem „Rahmen"-Knopf — dessen Symbol war das fremde Zeichen im Feld.
+- **Fix:** (1) `max-width: 880px` statt 700, zeilengleich in `assets/styles/party.css`. (2) `.editor-toolbar [data-tb='fonts'] .editor-select { width: auto }` am Ende von `assets/styles/editors.css`. **Jede allein reicht nicht** — gemessen: mit (1) allein verschwindet der Querlauf, aber das Größenfeld bleibt unter dem Rahmen-Knopf. Sichtbar: das Wiki-Formular ist auf dem Desktop 180 px breiter; die Schriftfelder in den übrigen Leisten sind schmaler (die Breite ist keine gehashte Eigenschaft, der Stil-Sollstand bewegt sich nicht).
+- **Regel:** Wer eine Leiste in einen Behälter fester Höchstbreite setzt, misst sie dort — der Ausweg der Leiste kennt nur das Fenster. Und eine breite Form-Regel (`.form-group select`) sickert in jedes eingebettete Steuerelement; eingebettete Felder setzen ihre Breite selbst.
+- **Offen, ausgewiesen:** Unter 806 px läuft die Leiste weiter über (die ≤ 900-px-Stufe vergrößert die Knöpfe, die ≤ 600-px-Stufe reicht nicht), in der Sitzungsleiste genauso; bei ≤ 600 px verschwindet der Wiki-Link-Knopf mit seiner Gruppe, und das ⋯-Menü trägt ihn nicht nach. Allgemeiner Leistenbefund, eigener Vorgang.
+- **Dateien:** `assets/styles/party.css`, `assets/styles/editors.css`
+- **Tests:** `tests/e2e/features/wiki.spec.js` — „Formular-Werkzeugleiste passt ins Modal": kein Querlauf in Modal und Leiste, kein Bedienelement rechts außerhalb, beide Schriftfelder in der Mitte und an der rechten Kante selbst treffbar (1925 bis 900 px).
+
 ---
 
 ## Known Technical Debt
