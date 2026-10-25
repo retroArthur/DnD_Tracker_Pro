@@ -104,4 +104,59 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
         const hasSave = await page.evaluate(() => typeof window.saveSessionPrep === 'function');
         expect(hasSave).toBe(true);
     });
+
+    // ABBRECHEN SCHLIESST DIE MASKE (UAT-Runde 7). Beide Schliessknoepfe — das
+    // x im Kopf und "Abbrechen" im Fuss — trugen `data-action="close-modal"`,
+    // einen Namen, den kein ui/actions/*.js registriert. EventDelegation fuehrt
+    // nur registrierte Aktionen aus und verwirft unbekannte WORTLOS: kein
+    // preventDefault, kein Log, kein Fehler. Gemessen am Buendel: der echte
+    // Klick kommt an (isTrusted, closest [data-action] = 'close-modal'), die
+    // Maske bleibt "modal-overlay show". Nur Escape schloss sie, weil die
+    // Tastatur ueber ModalFocus.oberstesModal() und window.hideModal() geht.
+    //
+    // (a) prueft ALLE Aktionen der Maske gegen das Register und deckt damit auch
+    // das x im Kopf, das heute ausserhalb des Fensters liegt (eigener, bekannter
+    // Befund an der Karte, design-consistency.test.js) und nicht echt klickbar
+    // ist. Kein globaler Waechter ueber alle data-action-Namen: 24 weitere
+    // Namen (dms-*, wizard-*, pwa-*, ...) haben eigene Lauscher und wuerden ihn
+    // ohne Ausnahmeliste rot stellen.
+    test('Abbrechen schliesst die Maske wie Escape und gibt den Fokus zurueck', async ({
+        page
+    }) => {
+        await page.goto(APP_URL);
+        await page.waitForFunction(
+            () => document.documentElement.dataset.appReady === 'true',
+            null,
+            {
+                timeout: 15000
+            }
+        );
+        await page.evaluate(() => window.switchView('sessionprep'));
+        const vorher = await page.evaluate(() => (window.D.sessionPreps || []).length);
+
+        await page.click('[data-action="show-session-prep-modal"]');
+        const maske = page.locator('#session-prep-modal');
+        await expect(maske).toHaveClass(/\bshow\b/);
+
+        // (a) Jede Aktion in der Maske ist registriert.
+        const unregistriert = await page.evaluate(() =>
+            [...document.querySelectorAll('#session-prep-modal [data-action]')]
+                .map(el => el.dataset.action)
+                .filter(a => !EventDelegation.hasAction(a))
+        );
+        expect(unregistriert).toEqual([]);
+
+        // (b) Ein ECHTER Klick auf "Abbrechen" schliesst die Maske.
+        await maske.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+        await expect(maske).not.toHaveClass(/\bshow\b/);
+        await expect(maske).toBeHidden();
+
+        // (c) Der Fokus kehrt auf den Oeffner zurueck, wie bei Escape.
+        expect(await page.evaluate(() => document.activeElement?.dataset?.action)).toBe(
+            'show-session-prep-modal'
+        );
+
+        // (d) Abbrechen speichert nichts.
+        expect(await page.evaluate(() => (window.D.sessionPreps || []).length)).toBe(vorher);
+    });
 });
