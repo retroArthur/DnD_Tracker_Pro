@@ -1303,6 +1303,16 @@ wiedergefunden.
 - **Dateien:** `features/session-prep/session-prep-render.js`
 - **Tests:** `tests/e2e/features/session-prep.spec.js` — „Abbrechen schliesst die Maske wie Escape und gibt den Fokus zurueck": jede Aktion der Maske ist registriert, ein echter Klick schließt, der Fokus kehrt zurück, nichts wird gespeichert.
 
+### Ein Scroll-Container in einer Flex-Spalte verliert seine Mindesthöhe — die Reiter der Schnellreferenz (UAT-Runde 7)
+
+- **Problem:** Klappte man in der Schnellreferenz Abschnitte auf, wurden die Reiter oben (Kampf, Regeln, Welt, Eigene) unten abgeschnitten, und die Reiterzeile bekam eine eigene Rollleiste. Bei 1280×600 genügte schon „Aktionen" allein: 47 → 36 px, keine Beschriftung mehr treffbar.
+- **Ursache:** `.qref-tabs` trägt `overflow-x: auto`. Ist eine Achse nicht `visible`, wird die andere `auto` — die Zeile ist ein Scroll-Container, und für ein solches Flex-Element löst `min-height: auto` auf 0 auf. Die Flex-Spalte `.qref-panel` (mit `max-height`) verteilte den Mangel dann anteilig auf alles, was schrumpfen darf, also auch auf die Reiter. Die Rechnung stimmt aufs Zehntel: 192 px Überhang × 46/(46+795) = 10,5 px, gemessen 47 → 36,48.
+- **Fix:** `.qref-panel > .qref-tabs { flex-shrink: 0 }`, angehängt ans Ende von `assets/styles/dashboard.css`. Schrumpfen und rollen soll nur `.qref-content`. Gemessen: 47 px in jeder Größe und jedem Zustand; die Außenmaße der Tafel bleiben gleich. Eigener Selektor statt eines zweiten `.qref-tabs`-Blocks — den hätte die Dubletten-Ratsche F-18 gezählt.
+- **Regel:** Ein Flex-Element mit `overflow` ungleich `visible` hat keine inhaltsbasierte Mindesthöhe mehr. Was in einer begrenzten Flex-Spalte nicht schrumpfen darf (Reiter, Köpfe, Suchzeilen), bekommt `flex-shrink: 0` ausdrücklich.
+- **Offen, ausgewiesen:** Auf dem Telefon quer (740×360) ist die Tafel auf 184 px begrenzt; mit der festen Reiterzeile bleiben dem Inhalt rund 31 px. Vorher waren die Reiter dort ganz unbrauchbar (0 von 4 treffbar) — die Begrenzung der Tafel selbst ist ein eigener Befund.
+- **Dateien:** `assets/styles/dashboard.css`
+- **Tests:** `tests/e2e/features/schnellreferenz-reiter.spec.js` — Bezugswert bei 1440×900 zugeklappt, dann (1) 1280×600 nur „Aktionen", (2) 390×844 alle Abschnitte.
+
 ---
 
 ## Known Technical Debt
