@@ -1313,6 +1313,17 @@ wiedergefunden.
 - **Dateien:** `assets/styles/dashboard.css`
 - **Tests:** `tests/e2e/features/schnellreferenz-reiter.spec.js` — Bezugswert bei 1440×900 zugeklappt, dann (1) 1280×600 nur „Aktionen", (2) 390×844 alle Abschnitte.
 
+### Ein verwaistes Kommentarende tötet die Regel dahinter — die Lupe der globalen Suche (UAT-Runde 7)
+
+- **Problem:** Die Lupe der globalen Suche saß links über der Ecke des Start-Reiters, das Suchfeld zeigte seinen Platz für sie leer. Nach dem Tippen spannte sich die Trefferliste über die volle Kopfbreite statt unter dem Feld zu hängen.
+- **Ursache:** `.global-search-icon` und `.global-search-results` sind absolut positioniert und brauchen `.global-search-container` als Bezugsrahmen. Dessen Regel `position: relative` stand am Kopf von `assets/styles/dmscreen.css` — tot seit der CSS-Aufteilung (`900271a`, 2026-03-18): dem Banner „GLOBAL SEARCH" fehlte das öffnende Kommentarzeichen, das auf der anderen Seite des Schnitts geblieben war. Der Parser las Bannertext und Selektor als **einen** ungültigen Selektor und verwarf die ganze Regel. Bezugsrahmen wurde die sticky `.app-header`. Keine Regression der letzten Runden: der Fehler war sieben Monate lang im Bündel, und kein Tor sah ihn.
+- **Fix:** `.global-search-container { position: relative }` neu am Dateiende, dazu `pointer-events: none` an der Lupe (ein Klick auf sie fokussiert das Feld). **Nicht** den toten Kopf durch ein nachgetragenes Zeichen repariert: das weckte auch die zwei Ränder der toten Regel auf, und `margin-left: auto` schöbe das Suchfeld quer durch die Kopfzeile (gemessen bei 1925 px von x = 344 auf x = 1018). Der Kommentar in `assets/styles/core.css`, der diesen toten Rand als Begründung nannte, ist zeilengleich richtiggestellt.
+- **Zweimal beinahe derselbe Fehler:** Die Diagnose schlug einen Erklärtext vor, der wörtlich ein Kommentarende enthielt — er hätte die Korrektur auf dieselbe Weise getötet; die Gegenprüfung hat es gemessen. Und die erste Fassung des neuen Wächters übersprang Zeichenketten; ihre eigene Mutation (ein vorzeitig geschlossener Kommentar, dessen Rest ein Anführungszeichen enthält) blieb damit grün. Jetzt zählt er Kommentarenden ohne Ausnahme.
+- **Regel:** In Kommentar-Fließtext nie ein Kommentarende schreiben (`* /` oder maskiert). Kommentarbanner nie über eine Dateigrenze hinweg zerschneiden.
+- **Offen, ausgewiesen:** Dieselbe Waise steht in `assets/styles/tools.css` am „RANDOM TABLES"-Banner; `.rt-empty` ist dadurch tot. Eine Reparatur ändert berechnete Stile in einer Ansicht und damit den Stil-Sollstand — eigener Vorgang. Beide Waisen sind im Wächter gezählt geführt.
+- **Dateien:** `assets/styles/dmscreen.css`, `assets/styles/core.css` (nur Kommentar)
+- **Tests:** `tests/e2e/features/globale-suche-lupe.spec.js` (Lupe im Feld, Klick fokussiert, Trefferliste am Feld; 1925/1440/1200/900 px), `tests/unit/css-kommentare.test.js` (kein verwaistes Kommentarende außer den zwei gezählten; Mutation in beide Richtungen rot).
+
 ---
 
 ## Known Technical Debt

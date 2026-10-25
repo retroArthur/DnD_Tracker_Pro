@@ -2687,3 +2687,38 @@ body.tastenhilfe-offen .event-log {
         min-height: 44px;
     }
 }
+
+/* ============================================================
+   DIE LUPE GEHOERT INS SUCHFELD: Bezugsrahmen der globalen Suche
+   (UAT-Runde 7)
+
+   Die Regel fuer `.global-search-container` am Kopf dieser Datei ist seit der
+   CSS-Aufteilung (900271a, 2026-03-18) TOT. Ihrem Banner "GLOBAL SEARCH"
+   fehlt das oeffnende Kommentarzeichen; der Parser liest Bannertext und
+   Selektor als EINEN ungueltigen Selektor und verwirft die ganze Regel. Der
+   Behaelter blieb `static`, und die zwei absolut positionierten Kinder
+   richteten sich nach der sticky `.app-header`:
+
+       .global-search-icon     bei x=10 ueber der Ecke des Start-Reiters
+       .global-search-results  ueber die volle Kopfbreite statt unter dem Feld
+
+   NUR `position: relative`. Die zwei Raender der toten Regel
+   (`margin-left: auto`, `margin-right: 16px`) bleiben bewusst tot: sie
+   schoeben das Suchfeld quer durch die Kopfzeile (gemessen bei 1925px von
+   x=344 auf x=1018), und das ganze seither gemessene Kopflayout beruht auf
+   ihrem Fehlen. Den toten Kopf NICHT durch ein nachgetragenes Kommentarzeichen
+   "reparieren": genau das weckte die Raender auf.
+
+   `pointer-events: none` an der Lupe: ein Klick auf sie landet im Feld statt
+   auf BODY. Eigener Selektor statt eines zweiten `.global-search-icon`-Blocks,
+   den die Dubletten-Ratsche F-18 als Dublette zaehlen wuerde.
+
+   Waechter fuer die Fehlerklasse: tests/unit/css-kommentare.test.js.
+   ============================================================ */
+.global-search-container {
+    position: relative;
+}
+
+.global-search-container .global-search-icon {
+    pointer-events: none;
+}
