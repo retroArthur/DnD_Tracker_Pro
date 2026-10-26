@@ -850,6 +850,7 @@ export default {
     "importEncounterMonsters": 'readonly',
     "importFullExport": 'readonly',
     "init": 'readonly',
+    "initBonusAusVorlage": 'readonly',
     "initCommandPalette": 'readonly',
     "initConflictDetection": 'readonly',
     "initContextToolbars": 'readonly',
@@ -1037,6 +1038,7 @@ export default {
     "readIndexedDbBackups": 'readonly',
     "readLocalBackups": 'readonly',
     "recalculateEncounter": 'readonly',
+    "rechnerGruppenMonster": 'readonly',
     "recomputeNextIds": 'readonly',
     "reconnectFileBackup": 'readonly',
     "redo": 'readonly',
@@ -1663,5 +1665,6 @@ export default {
     "writeLocalBackup": 'readonly',
     "xpDistSelectAll": 'readonly',
     "xpDistSelectNone": 'readonly',
+    "xpFuerCR": 'readonly',
     "zeileAktuell": 'readonly'
 };
