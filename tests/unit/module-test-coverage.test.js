@@ -293,10 +293,9 @@ const MODULE_TEST_EXCEPTIONS = [
     'ui/editors/rich-text-toolbars.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'ui/lazy-loading.js',
     // 2026-10-26: 'ui/safe-render.js' GESTRICHEN, die Liste schrumpft um eins.
-    // tests/e2e/features/ersatz-renderer.spec.js liest das Modul in
-    // AUSFUEHRBAREM Code (const QUELLE) und prueft jedes woertliche
-    // data-action darin gegen das Register im Buendel; dazu ruft es
-    // renderEncounterListFast() auf und klickt die drei Knoepfe echt.
+    // Erst deckte ein Verhaltensfall das Modul ab (#9); noch am selben Tag
+    // wurde es als toter Code geloescht — kein Aufrufer seit dem ersten
+    // Commit — und steht damit auch nicht mehr in loader.js MODULES.
     'ui/virtual-scroll.js',
     'utils/crud-helpers.js',
     'utils/filter-engine.js',

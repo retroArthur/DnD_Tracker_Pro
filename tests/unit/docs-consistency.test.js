@@ -472,10 +472,17 @@ describe('DOC — die Kuerzeltabelle in CLAUDE.md faellt nicht hinter die Gruppe
 // repariert: der Pin haelt fest, dass die Zahl sich nicht nach oben bewegt.
 // Ein neuer Eintrag mit falschem Pfad hebt sie, eine Reparatur senkt sie —
 // in beiden Faellen rot, in beiden Faellen absichtlich.
-const BUGFIX_TOTE_PFADE_PIN = 8;
+//
+// 2026-10-26: 8 -> 10, ABSICHTLICH. Der Ersatz-Renderer `ui/safe-render.js`
+// ist geloescht (tot seit dem ersten Commit, kein Aufrufer), mit ihm seine
+// einzige Testdatei `tests/e2e/features/ersatz-renderer.spec.js`. Die
+// Katalogeintraege, die beide nennen, beschreiben Geschehenes und bleiben
+// wahr — der Pfad ist tot, weil die Datei mit Absicht fehlt, nicht durch
+// einen Tippfehler. Keine Altlast zum Reparieren.
+const BUGFIX_TOTE_PFADE_PIN = 10;
 
 /*
- * DIE ACHT BEIM NAMEN, nicht nur ihre Zahl.
+ * DIE ZEHN BEIM NAMEN, nicht nur ihre Zahl.
  *
  * Der Pin darueber hielt nur die Anzahl fest. Zwei Folgen: ein Tausch (eine
  * Altlast repariert, dafuer ein neuer falscher Pfad) bliebe gruen, und der
@@ -493,7 +500,9 @@ const BUGFIX_TOTE_PFADE = [
     'features/dice/timers.js',
     'features/shops/sessions.js',
     'features/shops/wiki.js',
-    'ui/actions/editor-actions.js'
+    'tests/e2e/features/ersatz-renderer.spec.js',
+    'ui/actions/editor-actions.js',
+    'ui/safe-render.js'
 ];
 
 describe('DOC — docs/bugfixes.md verwest nicht', () => {

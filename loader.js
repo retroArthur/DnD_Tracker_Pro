@@ -161,7 +161,6 @@ const MODULES = [
 
     // UI
     'ui/dom-builder.js',
-    'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
     // Die Kehrschleife NACH dem Verteiler: sie macht Elemente erreichbar,

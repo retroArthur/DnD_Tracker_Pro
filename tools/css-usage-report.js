@@ -220,7 +220,8 @@ const CLASS_NAME_ASSIGN_STMT_RE = /\.className\s*\+?=(?!=)/g;
 
 // CR-01b/CR-01c (Plan 15-09): Objektschluessel className/containerClass, mit
 // Wortgrenze davor — ohne sie wuerde ein Schluessel wie `classNames` oder
-// `containerClasses` mitgelesen (ui/safe-render.js:360-Muster:
+// `containerClasses` mitgelesen (Muster aus ui/safe-render.js, das am
+// 2026-10-26 als toter Code geloescht wurde — seither ohne realen Fund im Baum:
 // `containerClass: bedingung ? 'a' : 'b',`).
 const CLASS_KEY_ASSIGN_RE = /\b(?:className|containerClass)\s*:/g;
 

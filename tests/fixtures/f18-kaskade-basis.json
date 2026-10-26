@@ -1,7 +1,7 @@
 {
   "_hinweis": "Eingefrorener Stand der Reihenfolge-Abhaengigkeiten gleicher Spezifitaet an den F-18-Verschiebungen. Erzeugt von tools/check-f18-kaskade.js --write. Jede neue, entfallene oder GEDREHTE Zeile ist eine Entscheidung und muss begruendet werden — eine Drehung ist die F-18-Fehlerklasse.",
-  "erhoben": "2026-10-06",
-  "anzahl": 117,
+  "erhoben": "2026-10-26",
+  "anzahl": 115,
   "abhaengigkeiten": [
     {
       "id": "(top) >> @media (max-width: 600px) || .modal || .bst-editor-modal || border-radius || border-radius",
@@ -80,18 +80,6 @@
       "gewinner": "dmscreen.css .modal { width }",
       "verlierer": "initiative.css .aoe-modal { width }",
       "spezifitaet": "0,1,0"
-    },
-    {
-      "id": "(top) || .btn-icon:hover || .btn-danger:hover || background || background",
-      "gewinner": "dmscreen.css .btn-danger:hover { background }",
-      "verlierer": "core.css .btn-icon:hover { background }",
-      "spezifitaet": "0,2,0"
-    },
-    {
-      "id": "(top) || .btn-icon:hover || .btn-danger:hover || color || color",
-      "gewinner": "dmscreen.css .btn-danger:hover { color }",
-      "verlierer": "core.css .btn-icon:hover { color }",
-      "spezifitaet": "0,2,0"
     },
     {
       "id": "(top) || .btn:hover || .backup-entry-restore:hover || background || background",
