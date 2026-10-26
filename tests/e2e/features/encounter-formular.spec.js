@@ -70,6 +70,18 @@ async function scrolleBis(page, sel, touch, max) {
                     touchPoints: [{ x, y }]
                 });
             }
+            // Der Finger haelt an, bevor er loslaesst: dann entsteht kein
+            // Schwung. Mit Schwung lief die Schale in einer langsamen
+            // Auslaufphase weiter, in der der ganzzahlige Scrollstand ueber
+            // 300 ms stillstand — der Tap danach hielt nur den Auslauf an
+            // (gemessen: touchstart/touchend ohne click, Stand 2459 statt am
+            // Ende des Wegs).
+            await page.waitForTimeout(150);
+            await cdp.send('Input.dispatchTouchEvent', {
+                type: 'touchMove',
+                touchPoints: [{ x, y: ende }]
+            });
+            await page.waitForTimeout(150);
             await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
         } else {
             await page.mouse.move(Math.round(width / 2), Math.round(height * 0.6));
@@ -84,17 +96,31 @@ async function scrolleBis(page, sel, touch, max) {
  * Wartet, bis die Schale nicht mehr nachlaeuft. Ein Tap WAEHREND des Auslaufs
  * einer Wischgeste haelt nur das Scrollen an und loest keinen Klick aus — bei
  * echten Nutzern genauso (gemessen: pointerdown/touchstart ohne click).
+ *
+ * "Ruhe" heisst: 300 ms lang kein neuer Scrollstand, ueber Animationsframes
+ * im Browser gemessen. Die erste Fassung verglich zwei Lesungen im Abstand
+ * von 80 ms von aussen; unter Last (parallele Builds und Suiten) lagen beide
+ * im selben haengenden Frame, und der Tap fiel doch in den Auslauf.
  */
 async function aufRuhe(page) {
-    let vorher = -1;
-    for (let i = 0; i < 40; i++) {
-        await page.waitForTimeout(80);
-        const jetzt = await page.evaluate(
-            () => document.getElementById('view-encounter').scrollTop
-        );
-        if (jetzt === vorher) return;
-        vorher = jetzt;
-    }
+    await page.evaluate(
+        () =>
+            new Promise(fertig => {
+                const schale = document.getElementById('view-encounter');
+                let stand = schale.scrollTop;
+                let seit = performance.now();
+                const spaetestens = seit + 5000;
+                const pruefe = jetzt => {
+                    if (schale.scrollTop !== stand) {
+                        stand = schale.scrollTop;
+                        seit = jetzt;
+                    }
+                    if (jetzt - seit >= 300 || jetzt > spaetestens) fertig();
+                    else requestAnimationFrame(pruefe);
+                };
+                requestAnimationFrame(pruefe);
+            })
+    );
 }
 
 async function appLaden(page, encounters = []) {
