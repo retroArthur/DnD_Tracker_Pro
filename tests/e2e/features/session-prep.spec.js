@@ -117,9 +117,9 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     // (a) prueft ALLE Aktionen der Maske gegen das Register und deckt damit auch
     // das x im Kopf, das heute ausserhalb des Fensters liegt (eigener, bekannter
     // Befund an der Karte, design-consistency.test.js) und nicht echt klickbar
-    // ist. Kein globaler Waechter ueber alle data-action-Namen: 24 weitere
-    // Namen (dms-*, wizard-*, pwa-*, ...) haben eigene Lauscher und wuerden ihn
-    // ohne Ausnahmeliste rot stellen.
+    // ist. Kein globaler Waechter ueber alle data-action-Namen: 21 weitere
+    // Namen (dms-*, wizard-*, pwa-*, qref-search) haben eigene Lauscher und
+    // wuerden ihn ohne Ausnahmeliste rot stellen (Zensus 2026-10-26).
     test('Abbrechen schliesst die Maske wie Escape und gibt den Fokus zurueck', async ({
         page
     }) => {
