@@ -110,7 +110,10 @@ function editEnc(id) {
     const e = EntityLookup.encounter(id);
     if (!e) return;
     // Das Formular steht in der Anlegekarte, und die tritt im Vollbild-Detail
-    // (bis 900px) zurueck — also erst zurueck in die Ansicht.
+    // (bis 900px) zurueck — also erst zurueck in die Ansicht. Der ✏️-Knopf,
+    // der den Fokus hielt, ist danach ausgeblendet: der Fokus geht unten ins
+    // Namensfeld.
+    const ausVollbild = !!$('view-encounter')?.classList.contains('detail-open');
     if (typeof window.closeEncounterDetail === 'function') window.closeEncounterDetail();
     const idInput = $('edit-enc-id');
     if (idInput) idInput.value = String(id);
@@ -216,6 +219,7 @@ function editEnc(id) {
     const icon = $('enc-form-icon');
     if (form) form.classList.add('open');
     if (icon) icon.textContent = '▲';
+    if (ausVollbild) $('enc-name')?.focus({ preventScroll: true });
 }
 function cancelEncEdit() {
     clearFormFields({

@@ -156,6 +156,10 @@ function renderEncounters() {
     listContainer.innerHTML = encounters.map(enc => renderEncounterItem(enc)).join('');
     // Auto-select first if none selected
     if (!selectedEncounterId || !encounters.find(e => e.id === selectedEncounterId)) {
+        // Die gezeigte Auswahl ist weg (Rueckgaengig, Wiederholen, Import):
+        // im Vollbild stuende sonst still ein anderer Encounter. Zurueck zur
+        // Liste, wie nach 🗑️.
+        if (selectedEncounterId) closeEncounterDetail(true);
         selectEncounter(encounters[0].id, false);
     } else {
         showEncounterDetail(selectedEncounterId);
@@ -292,28 +296,49 @@ function selectEncounter(id, scroll = true) {
 function openEncounterDetail(id) {
     selectEncounter(id);
     if (!window.matchMedia(ENC_DETAIL_VOLLBILD).matches) return;
+    // Ohne Encounter gibt es kein Detail und kein "← Liste" — dann bleibt
+    // die Liste stehen.
+    if (!EntityLookup.encounter(id)) return;
     const view = $('view-encounter');
-    if (!view) return;
+    const panel = $('enc-detail-panel');
+    if (!view || !panel) return;
     view.classList.add('detail-open');
     view.scrollTop = 0;
-    const zurueck = $('enc-detail-panel')?.querySelector('.enc-detail-back');
+    // Der Scrollstand des vorigen Statblocks gilt nicht fuer diesen.
+    panel.scrollTop = 0;
+    const zurueck = panel.querySelector('.enc-detail-back');
     if (zurueck) zurueck.focus({ preventScroll: true });
 }
 /**
  * Zurueck aus dem Vollbild-Detail zur Liste. `fokus` nur, wenn ein Nutzer
- * zurueckkehrt ("← Liste", Loeschen): dann liegt der Fokus wieder auf dem
- * gewaehlten Eintrag. Beim Bearbeiten und Leeren bleibt er, wo er ist.
+ * zurueckkehrt ("← Liste", Loeschen, ein verschwundener Encounter): dann
+ * liegt der Fokus wieder auf dem gewaehlten Eintrag, bei leerer Liste auf
+ * "+ Neuer Encounter". Beim Bearbeiten und Leeren bleibt er, wo er ist.
  */
 function closeEncounterDetail(fokus = false) {
     const view = $('view-encounter');
     if (!view || !view.classList.contains('detail-open')) return;
     view.classList.remove('detail-open');
     if (!fokus) return;
-    const item = document.querySelector(`.enc-item[data-id="${selectedEncounterId}"]`);
-    if (item) {
-        item.focus({ preventScroll: true });
-        item.scrollIntoView({ block: 'nearest' });
-    }
+    // Erst nach zwei Frames: renderEncounters ersetzt die Eintraege per
+    // innerHTML, und die Tastaturgruppe ruestet ihren tabindex erst im
+    // naechsten Frame nach — ein sofortiges focus() fiel auf BODY (gemessen
+    // nach 🗑️). Bis dahin steht auch die neue Auswahl fest.
+    requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+            const item = document.querySelector(`.enc-item[data-id="${selectedEncounterId}"]`);
+            if (item) {
+                if (!item.hasAttribute('tabindex')) item.tabIndex = -1;
+                item.focus({ preventScroll: true });
+                item.scrollIntoView({ block: 'nearest' });
+                return;
+            }
+            const neu = document.querySelector(
+                '#view-encounter .section-toolbar [data-action="show-enc-form"]'
+            );
+            if (neu) neu.focus({ preventScroll: true });
+        })
+    );
 }
 function showEncounterDetail(id) {
     const panel = $('enc-detail-panel');
@@ -597,6 +622,6 @@ window.toggleEncounterCard = toggleEncounterCard;
 window.showEncForm = showEncForm;
 // Verbraucher: ui/actions/entity-actions.js (select-encounter,
 // close-encounter-detail), features/encounters/encounters-crud.js (editEnc,
-// deleteEnc), systems/spellslots/keyboard-shortcuts.js (Taste N).
+// deleteEnc), systems/entity-links.js (navigateToEntity).
 window.openEncounterDetail = openEncounterDetail;
 window.closeEncounterDetail = closeEncounterDetail;

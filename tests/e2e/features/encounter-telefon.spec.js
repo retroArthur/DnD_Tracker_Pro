@@ -141,9 +141,13 @@ for (const g of SCHMAL) {
             await expect(page.locator(`.enc-item[data-id="${WOLF.id}"]`)).toHaveClass(
                 /\bselected\b/
             );
-            expect(
-                await page.evaluate(() => document.activeElement?.closest('.enc-item')?.dataset.id)
-            ).toBe(String(WOLF.id));
+            // Der Fokus folgt zwei Frames spaeter (closeEncounterDetail wartet,
+            // bis die Tastaturgruppe ihren tabindex gesetzt hat).
+            await expect
+                .poll(() =>
+                    page.evaluate(() => document.activeElement?.closest('.enc-item')?.dataset.id)
+                )
+                .toBe(String(WOLF.id));
         });
     });
 }
@@ -239,10 +243,19 @@ test.describe('Encounter-Detail: jeder Weg aus dem Vollbild fuehrt an den richti
             await page.keyboard.press('Control+Shift+K');
             await expect(page.locator('.cp-overlay')).toBeVisible();
             await page.locator('.cp-input').fill('Neuer Encounter');
+            // Enter fuehrt den OBERSTEN Treffer aus, und die Suche ist um 80 ms
+            // entprellt (command-palette.js). Erst wenn er "Neuer Encounter"
+            // heisst, ist die Liste gefiltert — vorher fuehrte Enter einen
+            // anderen Eintrag aus (gemessen: Formular blieb zu).
+            await expect(page.locator('#cp-results-list .cp-result').first()).toContainText(
+                'Neuer Encounter'
+            );
             await page.keyboard.press('Enter');
+            await expect(page.locator('.cp-overlay')).toBeHidden();
 
             await expect(page.locator('#enc-form')).toHaveClass(/\bopen\b/);
-            expect(await treffbar(page, '#enc-name'), 'Namensfeld unsichtbar').toBe(true);
+            await expect(page.locator('#enc-name')).toBeVisible();
+            expect(await treffbar(page, '#enc-name'), 'Namensfeld verdeckt').toBe(true);
         });
 
         test('(9) Rueckgaengig/Wiederholen laesst kein fremdes Vollbild stehen', async ({

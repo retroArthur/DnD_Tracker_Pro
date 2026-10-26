@@ -1686,25 +1686,63 @@
    encounters-render.js); dann treten Werkzeugleiste, Anlegekarte und Liste
    zurueck und das Detail fuellt das Raster. "← Liste" nimmt die Klasse
    wieder ab. Ueber 900px ist die Klasse wirkungslos und der Knopf
-   ausgeblendet — der Desktop bleibt, wie er war. */
+   ausgeblendet — der Desktop bleibt, wie er war.
+
+   `:not(:has(#enc-form.open))`: solange das Formular offen ist, gilt das
+   Vollbild NICHT — gleich, auf welchem Weg es aufging (Taste N,
+   Befehlspalette "Neuer Encounter", Kopf der Anlegekarte). Sonst klappte
+   jeder dieser Wege ein Formular hinter dem Vollbild auf (Pruefbefund,
+   gemessen an der Palette). Geht das Formular zu, kehrt das Detail zurueck.
+   ✏️ verlaesst das Vollbild ausdruecklich (editEnc).
+
+   Die Hoehe traegt `.enc-detail` selbst: `height: 100%` und
+   `overflow-y: auto` aus der gemeinsamen Detail-Regel in core.css machen es
+   zum Scrollbereich des Statblocks. Unten 80px Auslauf fuer den festen
+   W20-Knopf und den 📖-Knopf (derselbe Wert wie `.loc-list` und das
+   Formular); "← Liste" klebt oben, damit ein langer Statblock den Rueckweg
+   nicht mitnimmt; ⚔️ ✏️ 🗑️ bekommen die 43px der uebrigen Tippflaechen. */
 .enc-detail-back {
     display: none;
 }
 
 @media (max-width: 900px) {
-    .enc-view.detail-open > .section-toolbar,
-    .enc-view.detail-open > .card,
-    .enc-view.detail-open .enc-master {
+    .enc-view.detail-open:not(:has(#enc-form.open)) > .section-toolbar,
+    .enc-view.detail-open:not(:has(#enc-form.open)) > .card,
+    .enc-view.detail-open:not(:has(#enc-form.open)) .enc-master {
         display: none;
     }
 
-    .enc-view.detail-open .enc-detail {
+    .enc-view.detail-open:not(:has(#enc-form.open)) .enc-detail {
         display: flex;
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
     }
 
+    .enc-view.detail-open .enc-detail-content {
+        padding-bottom: 80px;
+    }
+
+    .enc-view.detail-open .enc-detail-actions {
+        gap: 10px;
+    }
+
+    .enc-view.detail-open .enc-detail-btn {
+        min-width: 43px;
+        min-height: 43px;
+    }
+
+    /* Eine breite Tabelle im Statblock wischt fuer sich, statt Kopf und
+       Knoepfe seitwaerts mitzunehmen (320px: 354 in 298, gemessen). */
+    .enc-view.detail-open .enc-text table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
     .enc-detail-back {
+        position: sticky;
+        top: 0;
+        z-index: 1;
         display: inline-flex;
         align-items: center;
         gap: 6px;

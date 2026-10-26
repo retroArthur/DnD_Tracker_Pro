@@ -7929,10 +7929,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
 
            6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
                4x `0 0 20px var(--gold)`   Sprungmarken:
-                   features/encounters/encounters-render.js:520  (heute :570)
+                   features/encounters/encounters-render.js:520  (heute :595)
                    features/locations/locations-render.js:360    (heute :368)
                    features/npcs/npc-render.js:382               (heute :390)
-                   systems/entity-links.js:430                   (heute :437)
+                   systems/entity-links.js:430                   (heute :443)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
                    ui/actions/entity-actions.js:362              (heute :373)
                    systems/undo.js:873                           (war :756, :766, :778, :821, dann :864)
@@ -10269,7 +10269,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
     const JS_MARKEN = [
         {
             datei: 'features/encounters/encounters-render.js',
-            zeile: 570,
+            zeile: 595,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
@@ -10287,7 +10287,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'systems/entity-links.js',
-            zeile: 437,
+            zeile: 443,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },

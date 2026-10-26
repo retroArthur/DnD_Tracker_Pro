@@ -2930,9 +2930,9 @@
            .enc-detail fehlten die vier Sticky-Deklarationen — sein Detail
            scrollte mit der Liste weg. Werte aus dem Bestand (.loc-detail).
 
-           Das MOBILE Verhalten bleibt bewusst getrennt: Orte, NPCs, Truhe und
-           Encounter blenden das Detail unter 900px aus, das Bestiar zeigt es
-           stattdessen unter der Liste. Das ist gewollt und keine Abweichung. */
+           Bis 900px: Orte, NPCs und Truhe blenden das Detail aus (ihre Aktionen
+           sind dort unerreichbar, offen); Encounter zeigt es nach einem Tap im
+           Vollbild (encounters.css, `.detail-open`), das Bestiar unter der Liste. */
         .detail-panel,
         .loc-detail,
         .npc-detail,
@@ -2952,9 +2952,9 @@
                ueber `grid-template-rows: minmax(0, 1fr)` an das Raster gebunden
                ist (siehe oben), waere er um die Hoehe der Werkzeugleiste zu gross
                — das Detail ragte unter die `overflow: hidden`-Kante des Rasters,
-               bei Begegnungen um 184px. Unter 900px setzen die vier
-               Master-Detail-Ansichten das Detail ohnehin auf `display: none` und
-               das Bestiar auf `height: auto`; dort wirkt diese Zeile nicht. */
+               bei Begegnungen um 184px. Bis 900px blenden Orte, NPCs und Truhe das
+               Detail aus, das Bestiar setzt `height: auto`; das Encounter-Vollbild
+               (`.detail-open`) traegt genau diese Zeile als Scrollhoehe. */
             height: 100%;
             align-self: start;
         }
