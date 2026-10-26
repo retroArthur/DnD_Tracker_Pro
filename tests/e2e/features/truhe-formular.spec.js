@@ -570,3 +570,56 @@ test.describe('(6) Telefon 390x844', () => {
         weich(await fehler.alle(), 'Telefon: kein Fehler').toEqual([]);
     });
 });
+
+// ===========================================================================
+// (7) BEARBEITEN -> ABBRECHEN -> LOESCHEN -> "+ ITEM HINZUFUEGEN" DER LEEREN TRUHE
+// ===========================================================================
+//
+// Der zweite "+ Item"-Knopf sitzt in der LEEREN Truhe (`renderLootList()`),
+// und auf ihn wird man genau dann gestossen, wenn man den letzten Gegenstand
+// geloescht hat — oft nachdem man ihn sich in ✏️ angesehen hat. Fall (4)
+// faehrt den Knopf nur mit frisch geladener, leerer Truhe, wo das Formular
+// noch nie gefuellt war: dort ist er auch mit `show-modal` gruen. Fall (5)
+// faehrt nur den Knopf der Werkzeugleiste.
+//
+// GEGENPROBE (gemessen, Buendel mit beiden Funktionen, nur der Knopf der
+// leeren Truhe zurueck auf `show-modal`): das Formular zeigte "Item
+// bearbeiten" mit ID 1 und "Heiltrank"; Speichern als "Fackel" suchte ID 1,
+// fand sie nicht mehr und tat NICHTS — keine Meldung, `D.loot` leer, Liste
+// und Speicher leer. Der Gegenstand ging ohne jedes Zeichen verloren. Darum
+// ist die Zusage zum leeren Formular hier weich: ein roter Lauf soll den
+// Verlust danach auch nennen.
+test('(7) nach Bearbeiten, Abbrechen und Loeschen legt "+ Item hinzufuegen" der leeren Truhe an', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await truheLaden(page, [HEILTRANK]);
+
+    await page.locator('#loot-list .loot-item').first().click();
+    await page.locator('#loot-detail-panel [data-action="edit-loot"]').click();
+    await expect(page.locator('#loot-modal')).toHaveClass(/\bshow\b/);
+    await page.locator('#loot-modal .btn-group [data-action="hide-modal"]').click();
+    await expect(page.locator('#loot-modal')).not.toHaveClass(/\bshow\b/);
+
+    // `removeLoot()` fragt mit dem nativen `confirm()`.
+    page.once('dialog', d => d.accept());
+    await page.locator('#loot-detail-panel [data-action="delete-loot"]').click();
+    await expect(page.locator('#loot-list .loot-add-btn')).toBeVisible();
+    expect(await daten(page), 'Vorbedingung: die Truhe ist leer').toBe('');
+
+    await page.locator('#loot-list .loot-add-btn').click();
+    await expect(page.locator('#loot-modal')).toHaveClass(/\bshow\b/);
+    weich(
+        await formular(page),
+        '"+ Item hinzufuegen" der leeren Truhe muss nach abgebrochenem Bearbeiten leer und ' +
+            'im Anlege-Zustand sein — sonst sucht Speichern die geloeschte ID'
+    ).toEqual(LEER);
+    await page.locator('#loot-name').fill('Fackel');
+    await page.locator('#loot-save-btn').click();
+    await expect(page.locator('#loot-modal')).not.toHaveClass(/\bshow\b/);
+
+    await ueberall(page, 'Fackel x1', 'Anlegen aus der leeren Truhe nach dem Loeschen');
+
+    weich(await fehler.alle(), 'Kein Schritt darf einen Fehler hinterlassen').toEqual([]);
+});
