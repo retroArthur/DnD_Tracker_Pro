@@ -730,13 +730,14 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
             showToast('Ungültiger Schwierigkeitsgrad: ' + targetDifficultyLevel);
             return;
     }
-    // XP pro einzelnes Monster (vom ersten Typ)
-    const cr = calculatorMonsters[0].cr;
-    const monsterXP = CR_TO_XP[cr];
-    if (!monsterXP) {
-        showToast('Ungültige CR: ' + cr);
+    // XP pro einzelnes Monster — vom ersten Typ MIT CR (RECHNER): ein Eintrag
+    // ohne CR zaehlt 0 XP, an ihm laesst sich keine Anzahl bemessen.
+    const ziel = calculatorMonsters.find(m => xpFuerCR(m.cr) > 0);
+    if (!ziel) {
+        showToast('Kein Monster mit CR — die Anzahl lässt sich nicht bemessen', 'warning');
         return;
     }
+    const monsterXP = xpFuerCR(ziel.cr);
     // Iterativ die beste Anzahl finden (berücksichtigt Multiplier-Sprünge)
     let bestCount = 1;
     let bestDiff = Infinity;
@@ -759,7 +760,7 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
         // Stoppe wenn wir deutlich über dem Ziel sind
         if (adjustedXP > targetXP * 1.5) break;
     }
-    calculatorMonsters[0].count = bestCount;
+    ziel.count = bestCount;
     renderCalculator();
     recalculateEncounter();
     showToast(
@@ -880,14 +881,9 @@ function addCalculatorToInitiative() {
     // Add each monster to initiative
     let addedCount = 0;
     calculatorMonsters.forEach(monster => {
-        // Vorlage (RECHNER): aus "📥 Aus Encounters" importiert -> GENAU dieser
-        // Encounter, per ID. Von Hand nach CR gewaehlt -> wie bisher der erste
-        // gespeicherte Encounter mit diesem CR, falls es einen gibt.
-        const ausEncounter = monster.encounterId != null;
-        const encounters = Array.isArray(D.encounters) ? D.encounters : [];
-        const template = ausEncounter
-            ? encounters.find(e => e.id === parseEntityId(monster.encounterId)) || null
-            : encounters.find(e => e.cr === monster.cr || e.CR === monster.cr) || null;
+        // Vorlage (RECHNER): bekannte Quelle -> GENAU dieser Encounter; sonst
+        // die Schaetzung nach CR wie bisher. Regel in rechnerVorlage().
+        const { vorlage: template, bekannt } = rechnerVorlage(monster);
         const baseHP = template?.hp || template?.HP || getDefaultHPForCR(monster.cr);
         const initBonus = initBonusAusVorlage(template);
         for (let i = 0; i < monster.count; i++) {
@@ -905,13 +901,13 @@ function addCalculatorToInitiative() {
                 currentHp: hp,
                 ac: template?.ac || template?.AC || 10,
                 // 'enemy' wie addEncToInit(): nur fuer diesen Typ sucht die
-                // Initiative den Eintrag (Namenslink, RK). Von Hand gewaehlte
-                // Monster haben keinen Eintrag und bleiben 'monster' (RECHNER).
-                type: ausEncounter ? 'enemy' : 'monster',
+                // Initiative den Eintrag (Namenslink, RK). Ohne bekannte Quelle
+                // gibt es keinen Eintrag — 'monster', wie von Hand (RECHNER).
+                type: bekannt ? 'enemy' : 'monster',
                 cr: monster.cr,
                 xp: xpFuerCR(monster.cr),
                 // "Skelett #2" findet ueber den Namen nichts — die ID schon.
-                ...(ausEncounter ? { encounterId: monster.encounterId } : {}),
+                ...(bekannt ? { encounterId: template.id } : {}),
                 effects: []
             });
             addedCount++;
@@ -960,6 +956,29 @@ function initBonusAusVorlage(vorlage) {
     if (init) return init;
     const ges = parseInt(vorlage.dex, 10);
     return Number.isFinite(ges) ? Math.floor((ges - 10) / 2) : 0;
+}
+// Vorlage eines Rechner-Monsters fuer "⚔️ Zur Initiative" (RECHNER). Die Quelle
+// ist bekannt ueber die gespeicherte encounterId, sonst ueber den Namen eines
+// Kreatur-Encounters — exakt, ohne Gross-/Kleinschreibung, erster Treffer, wie
+// findByName(). Der Name traegt Gruppen ("💾 Speichern") und ⭐-Vorlagen von
+// vor RECHNER, die keine ID kennen: der Import setzte schon immer
+// `name: encounter.name`. Ohne bekannte Quelle (von Hand gewaehlt, Quelle
+// geloescht) bleibt es die Schaetzung: der erste gespeicherte Encounter mit
+// diesem CR. Gruppen sind keine Vorlage — sie haben weder RK noch TP.
+function rechnerVorlage(monster) {
+    const kreaturen = (Array.isArray(window.D.encounters) ? window.D.encounters : []).filter(
+        e => e && !rechnerGruppenMonster(e)
+    );
+    const id = parseEntityId(monster.encounterId);
+    const name = typeof monster.name === 'string' ? monster.name.toLowerCase() : '';
+    const quelle =
+        (id !== null && kreaturen.find(e => e.id === id)) ||
+        (name && kreaturen.find(e => String(e.name || '').toLowerCase() === name));
+    if (quelle) return { vorlage: quelle, bekannt: true };
+    const schaetzung = monster.cr
+        ? kreaturen.find(e => e.cr === monster.cr || e.CR === monster.cr) || null
+        : null;
+    return { vorlage: schaetzung, bekannt: false };
 }
 // "💾 Speichern" legt eine GRUPPE ab (monsters[], ohne eigenen CR, RK, TP) —
 // keine Kreatur. Liefert ihre Monster oder null (RECHNER).
@@ -1029,7 +1048,7 @@ function renderCalculator() {
                 (m, i) => `
             <div class="calc-list-item">
                 <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
-                <span class="calc-list-xp">CR ${m.cr || '–'} (${xpFuerCR(m.cr)} XP)</span>
+                <span class="calc-list-xp">CR ${esc(m.cr) || '–'} (${xpFuerCR(m.cr)} XP)</span>
                 <button class="calc-list-remove" data-action="calc-remove-monster" data-value="${i}">✕</button>
             </div>
         `
@@ -1241,15 +1260,17 @@ function showEncounterImport() {
                                   0
                               )
                             : xpFuerCR(cr);
+                        // Gruppe: die Summe heisst Basis-XP — ihr Name traegt die
+                        // angepassten XP (mit Multiplikator), s. saveAsEncounter().
                         const art = gruppe
-                            ? `Gruppe - ${gruppe.length} Monster-Typ(en)`
-                            : `CR ${cr || '–'}`;
+                            ? `Gruppe - ${gruppe.length} Monster-Typ(en) - ${xp} Basis-XP`
+                            : `CR ${esc(cr) || '–'} - ${xp} XP`;
                         const type = enc.creatureType || enc.type || '';
                         return `
                         <div class="calc-import-card">
                             <div class="calc-import-info">
                                 <div class="calc-import-name">${esc(enc.name)}</div>
-                                <div class="calc-import-meta">${type ? type + ' - ' : ''}${art} - ${xp} XP</div>
+                                <div class="calc-import-meta">${type ? esc(type) + ' - ' : ''}${art}</div>
                             </div>
                             <div class="calc-import-actions">
                                 <input type="number" class="calc-import-count" id="import-count-${enc.id}" min="1" value="1" title="Anzahl">

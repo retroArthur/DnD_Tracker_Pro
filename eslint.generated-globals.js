@@ -1039,6 +1039,7 @@ export default {
     "readLocalBackups": 'readonly',
     "recalculateEncounter": 'readonly',
     "rechnerGruppenMonster": 'readonly',
+    "rechnerVorlage": 'readonly',
     "recomputeNextIds": 'readonly',
     "reconnectFileBackup": 'readonly',
     "redo": 'readonly',

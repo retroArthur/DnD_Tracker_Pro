@@ -192,7 +192,7 @@ function renderInit() {
             <div class="init-ac" title="Rüstungsklasse"><span class="init-ac-icon">🛡️</span>${ac}</div>
             <div class="init-info">
                 <div class="init-name" ${nameClickHandler}>${esc(cb.name)}</div>
-                <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${cb.cr}` : ''}</div>
+                <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${esc(cb.cr)}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
                 ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
                 ${!dead && !cb.mob ? renderConcentration(cb) : ''}
