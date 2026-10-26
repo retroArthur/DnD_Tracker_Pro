@@ -56,7 +56,7 @@ function toggleBestiaryFavorite(id, source) {
 
 // ============================================================
 // ZUR INITIATIVE — Mengen-Dialog, Auto-Init, HP-Variation (D-14/D-15/D-16/D-17)
-// Math exakt wie addCalculatorToInitiative() (encounter-calculator.js Zeilen 888-910)
+// Math exakt wie addCalculatorToInitiative() in encounter-calculator.js
 // DoS-Schutz: Menge auf max. 100 begrenzt (T-03-10)
 // ============================================================
 var BESTIARY_MAX_QUANTITY = 100;
@@ -91,7 +91,7 @@ function addBestiaryToInitiative(id, source) {
     if (!D.initiative) D.initiative = { combatants: [], currentTurn: 0, round: 1 };
     if (!D.initiative.combatants) D.initiative.combatants = [];
 
-    // DEX-Modifier (analog encounter-calculator.js Zeile 887)
+    // DEX-Modifier (wie der GES-Zweig von initBonusAusVorlage() in encounter-calculator.js)
     var dexMod = Math.floor(((monster.dex || 10) - 10) / 2);
 
     // LA/LR-Felder: runtime-only, keine Migration (INIT-02)
@@ -125,7 +125,7 @@ function addBestiaryToInitiative(id, source) {
             // Auto-Initiative-Wurf (D-15): 1d20 + DEX-Modifier
             var initRoll = Math.floor(Math.random() * 20) + 1 + dexMod;
 
-            // HP-Variation +-10% (D-15) — exakt wie encounter-calculator.js Zeilen 892-893
+            // HP-Variation +-10% (D-15) — exakt wie addCalculatorToInitiative() in encounter-calculator.js
             var hpVariation = Math.round((monster.hp || 1) * (0.9 + Math.random() * 0.2));
             var hp = Math.max(1, hpVariation);
 
@@ -166,7 +166,7 @@ function addBestiaryToInitiative(id, source) {
         }
     }
 
-    // Nach Initiative-Wert sortieren (absteigend) — analog encounter-calculator.js Zeile 929
+    // Nach Initiative-Wert sortieren (absteigend) — analog addCalculatorToInitiative()
     D.initiative.combatants.sort(function(a, b) { return b.initiative - a.initiative; });
 
     if (typeof window.save === 'function') window.save();
