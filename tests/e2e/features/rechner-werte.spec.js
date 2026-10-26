@@ -63,6 +63,32 @@
  * Die Faelle (1), (3), (4) und (5) legen r = 0,5 und rechnen exakt; Fall (2)
  * faehrt beide Raender und haelt damit fest, dass die Streuung nicht
  * stillschweigend wegfaellt.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * GEGENPRUEFUNG, RUNDE 1 — WAS DER ERSTE FIX OFFEN LIESS (Faelle 6 bis 11)
+ *
+ * Der erste Fix kannte die Quelle eines Monsters NUR ueber die encounterId,
+ * die er selbst einfuehrte. Alles, was vor ihm gespeichert wurde, traegt keine:
+ *   (6) eine Gruppe aus "💾 Speichern" — vorher abgelehnt, danach still mit den
+ *       Werten des Goblins uebernommen (gemessen: RK 15, TP 7, 'monster', kein
+ *       Link). Aus einer lauten Ablehnung war ein stilles falsches Ergebnis
+ *       geworden.
+ *   (7) eine ⭐-Vorlage (loadMonsterFavorite(), der dritte Weg in die Liste)
+ *       — fremde Werte wie vor dem Fix.
+ * Beide tragen aber den Namen des Encounters, aus dem sie importiert wurden.
+ * Die Regel heisst darum: Quelle per ID, sonst per exaktem Namen eines
+ * Kreatur-Encounters (wie findByName: ohne Gross-/Kleinschreibung); erst wenn
+ * keine Quelle bekannt ist, die Schaetzung nach CR wie in Fall (4). Daraus
+ * folgen zwei benannte Faelle: (8) ein von Hand gewaehltes Monster, das genau
+ * so heisst wie ein gespeicherter Encounter, ist dieser Encounter; (9) ist die
+ * Quelle seit dem Import geloescht, ist es eine Schaetzung wie von Hand — Typ
+ * 'monster' ohne verwaiste encounterId, nicht 'Gegner' ohne Eintrag.
+ *   (10) Dialog, Monsterliste und Initiativzeile setzten `cr` und
+ *       `creatureType` ungeescaped ins HTML; ein `<img onerror>` lief.
+ *   (11) Ein Eintrag ohne CR an erster Stelle machte "Anpassen" zur Meldung
+ *       "Ungültige CR: " (leer, mit Erfolgshaken) — vor dem Fix unerreichbar.
+ * Dazu Fall (5): die Gruppenkarte nennt ihre Summe "Basis-XP", denn der Name
+ * der Gruppe traegt die angepassten XP (mit Multiplikator).
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
@@ -173,12 +199,46 @@ const SEED = {
 };
 
 /**
+ * Der SEED mit weiteren Encountern oder Vorlagen — die Faelle (1) bis (5)
+ * sehen ihn unveraendert.
+ * @param {{encounters?: any[], monsterFavorites?: any[]}} zusatz
+ */
+function seedMit(zusatz) {
+    return {
+        ...SEED,
+        ...zusatz,
+        encounters: [...SEED.encounters, ...(zusatz.encounters || [])],
+        _nextId: { ...SEED._nextId, encounters: 10 }
+    };
+}
+
+/**
+ * So legte saveAsEncounter() VOR dem Fix eine Gruppe ab: je Monster Name, CR
+ * und Anzahl, KEINE encounterId. Der Name ist der des importierten Encounters
+ * (importEncounterMonsters() setzte `name: encounter.name`).
+ */
+const ALT_GRUPPE = {
+    id: 4,
+    name: 'Encounter (Medium) - 150 XP',
+    monsters: [{ name: ENC.skelett.name, cr: '1/4', hp: 0, initiative: 0, count: 2 }],
+    description: 'Automatisch erstellt via CR Calculator'
+};
+
+/** Eine ⭐-Vorlage von vor dem Fix: saveMonsterFavorite() kopiert die Liste. */
+const ALT_VORLAGE = {
+    id: 900,
+    name: 'Alt-Vorlage (Rechner-Strang)',
+    monsters: [{ cr: '1/4', count: 1, name: ENC.skelett.name }]
+};
+
+/**
  * Laedt breit, saet die Kampagne, umhuellt Math.random und oeffnet den
  * Rechner ueber seinen Knopf in der Encounter-Ansicht.
  * @param {import('@playwright/test').Page} page
  * @param {{width: number, height: number}} [kleiner] Erst NACH dem Laden verkleinern
+ * @param {object} [seed]
  */
-async function rechnerOeffnen(page, kleiner) {
+async function rechnerOeffnen(page, kleiner, seed = SEED) {
     await page.setViewportSize(BREIT);
     await page.addInitScript(s => {
         try {
@@ -189,7 +249,7 @@ async function rechnerOeffnen(page, kleiner) {
         const echt = Math.random.bind(Math);
         Math.random = () =>
             typeof window.__rechnerZufall === 'number' ? window.__rechnerZufall : echt();
-    }, SEED);
+    }, seed);
     await page.goto(APP_URL);
     await waitForAppReady(page);
     await page.waitForTimeout(400);
@@ -488,8 +548,11 @@ test.describe('Encounter-Rechner → Initiative: die Werte des gewaehlten Encoun
             .locator('xpath=ancestor::div[contains(@class,"calc-import-card")]')
             .locator('.calc-import-meta')
             .textContent();
-        // Zwei Skelette zu je 50 XP — nicht "CR 0 - 10 XP", nicht "0 XP".
-        expect.soft(meta, 'Dialog-Angabe fuer die Gruppe').toMatch(/(^|\D)100 XP\b/);
+        // Zwei Skelette zu je 50 XP — nicht "CR 0 - 10 XP", nicht "0 XP". Und als
+        // BASIS-XP benannt: der Name der Gruppe ("Encounter (Medium) - 150 XP")
+        // traegt die angepassten XP, zwei bloss "XP" genannte Zahlen auf einer
+        // Karte widersprachen sich (Gegenpruefung, Runde 1).
+        expect.soft(meta, 'Dialog-Angabe fuer die Gruppe').toMatch(/(^|\D)100 Basis-XP\b/);
         await page.locator('[data-action="calc-back-to-calculator"]').first().click();
         await importieren(page, gruppe.id, 1);
 
@@ -507,5 +570,173 @@ test.describe('Encounter-Rechner → Initiative: die Werte des gewaehlten Encoun
                 tp: ENC.skelett.hp
             });
         }
+    });
+
+    test('(6) eine Gruppe von VOR dem Fix (ohne encounterId) traegt die Werte ihres Encounters', async ({
+        page
+    }) => {
+        // Jede Gruppe, die heute in Nutzerdaten liegt, ist so gespeichert. Der
+        // Goblin steht vor dem Skelett — eine Suche nach CR faende ihn.
+        await rechnerOeffnen(page, undefined, seedMit({ encounters: [ALT_GRUPPE] }));
+        await importieren(page, ALT_GRUPPE.id, 1);
+        const stand = await zurInitiative(page, 0.5, 2);
+        for (const nr of [1, 2]) {
+            pruefeKaempfer(stand, `${ENC.skelett.name} #${nr}`, ENC.skelett, {
+                init: 11 + ENC.skelett.bonus,
+                tp: ENC.skelett.hp
+            });
+        }
+    });
+
+    test('(7) eine ⭐-Vorlage von VOR dem Fix traegt die Werte ihres Encounters', async ({
+        page
+    }) => {
+        await rechnerOeffnen(page, undefined, seedMit({ monsterFavorites: [ALT_VORLAGE] }));
+        await page.locator('[data-action="calc-toggle-favorites"]').click();
+        await page
+            .locator(`[data-action="calc-load-favorite"][data-value="${ALT_VORLAGE.id}"]`)
+            .click();
+        await expect(page.locator('#calc-monster-list')).toContainText(`1× ${ENC.skelett.name}`);
+        const stand = await zurInitiative(page, 0.5, 1);
+        pruefeKaempfer(stand, ENC.skelett.name, ENC.skelett, {
+            init: 11 + ENC.skelett.bonus,
+            tp: ENC.skelett.hp
+        });
+    });
+
+    test('(8) von Hand gewaehlt, aber genau so benannt wie ein gespeicherter Encounter: dieser Encounter', async ({
+        page
+    }) => {
+        // Folge der Namensregel, benannt: wer "Skelett (Rechner-Strang)" tippt,
+        // bekommt das gespeicherte Skelett — nicht den Goblin, der zuerst kommt.
+        // Gross-/Kleinschreibung zaehlt nicht, wie bei findByName().
+        await rechnerOeffnen(page);
+        await page.fill('#calc-monster-cr', '1/4');
+        await page.fill('#calc-monster-count', '1');
+        await page.fill('#calc-monster-name', ENC.skelett.name.toUpperCase());
+        await page.locator('[data-action="calc-add-monster"]').click();
+        const stand = await zurInitiative(page, 0.5, 1);
+        const d = stand.daten[0];
+        const z = stand.zeilen[0];
+        expect({
+            type: d.type,
+            ac: d.ac,
+            maxHp: d.maxHp,
+            initBonus: d.initBonus,
+            link: z.link,
+            linkId: z.linkId
+        }).toEqual({
+            type: 'enemy',
+            ac: ENC.skelett.ac,
+            maxHp: ENC.skelett.hp,
+            initBonus: ENC.skelett.bonus,
+            link: 'navigate-entity-stop',
+            linkId: String(ENC.skelett.id)
+        });
+    });
+
+    test('(9) Quelle nach dem Import geloescht: eine Schaetzung wie von Hand, ohne verwaiste ID', async ({
+        page
+    }) => {
+        // Vorher: Typ 'enemy' ("Gegner") mit einer encounterId, die auf nichts
+        // zeigt, RK 10, TP nach CR-Tabelle, Bonus 0. Jetzt dieselbe Regel wie
+        // Fall (4): erster gespeicherter Encounter mit diesem CR, Typ 'monster'.
+        await rechnerOeffnen(page);
+        await importieren(page, ENC.skelett.id, 1);
+        await page.evaluate(id => {
+            window.D.encounters = window.D.encounters.filter(e => e.id !== id);
+        }, ENC.skelett.id);
+        const stand = await zurInitiative(page, 0.5, 1);
+        const d = await page.evaluate(() => window.D.initiative.combatants[0]);
+        const z = stand.zeilen[0];
+        expect({
+            type: d.type,
+            encounterId: d.encounterId,
+            ac: d.ac,
+            maxHp: d.maxHp,
+            initBonus: d.initBonus,
+            initiative: d.initiative,
+            link: z.link,
+            typ: z.typ.split(' ')[0]
+        }).toEqual({
+            type: 'monster',
+            encounterId: undefined,
+            ac: ENC.goblin.ac,
+            maxHp: ENC.goblin.hp,
+            initBonus: ENC.goblin.bonus,
+            initiative: 11 + ENC.goblin.bonus,
+            link: null,
+            typ: 'Monster'
+        });
+    });
+
+    test('(10) CR und Kreaturtyp landen als Text im HTML, nicht als Markup', async ({ page }) => {
+        const GIFT = {
+            id: 5,
+            name: 'Gift (Rechner-Strang)',
+            cr: '<img src=x onerror="window.__xssCr=1">',
+            creatureType: '<img src=x onerror="window.__xssTyp=1">',
+            ac: 11,
+            hp: 5,
+            init: 0,
+            dex: 10
+        };
+        await rechnerOeffnen(page, undefined, seedMit({ encounters: [GIFT] }));
+
+        await page.locator('[data-action="calc-show-encounter-import"]').click();
+        const karte = page.locator('.calc-import-card', { hasText: GIFT.name });
+        await expect.soft(karte.locator('img'), 'Markup in der Dialogkarte').toHaveCount(0);
+        await expect.soft(karte.locator('.calc-import-meta')).toContainText('<img src=x');
+        await page
+            .locator(`[data-action="calc-import-encounter"][data-value="${GIFT.id}"]`)
+            .click();
+
+        const liste = page.locator('#calc-monster-list');
+        await expect(liste).toContainText(GIFT.name);
+        await expect.soft(liste.locator('img'), 'Markup in der Monsterliste').toHaveCount(0);
+        await expect.soft(liste).toContainText('CR <img src=x');
+
+        const stand = await zurInitiative(page, 0.5, 1);
+        expect.soft(stand.zeilen[0].typ).toContain('CR <img src=x');
+        await expect
+            .soft(page.locator('#init-list .init-type img'), 'Markup in der Initiativzeile')
+            .toHaveCount(0);
+
+        // Ein fehlgeschlagenes Bild meldet seinen Fehler asynchron.
+        await page.waitForTimeout(500);
+        const gelaufen = await page.evaluate(() => ({
+            cr: window.__xssCr || null,
+            typ: window.__xssTyp || null
+        }));
+        expect(gelaufen, 'onerror darf nicht laufen').toEqual({ cr: null, typ: null });
+    });
+
+    test('(11) "Anpassen" bemisst das erste Monster MIT CR, wenn das erste keinen hat', async ({
+        page
+    }) => {
+        await rechnerOeffnen(page);
+        await page.fill('#calc-party-level', '1');
+        await page.fill('#calc-party-count', '4');
+        await page.locator('[data-action="calc-add-party-level"]').click();
+        await importieren(page, ENC.ohneCr.id, 1);
+        await importieren(page, ENC.goblin.id, 1);
+
+        // Ziel Medium (Standard des Reglers): 4 x Stufe 1 = 200 XP. Goblins zu
+        // 50 XP: 1 -> 50, 2 -> 100 x 1,5 = 150, 3 -> 150 x 2 = 300; am naechsten
+        // liegt 2. (Der Multiplikator zaehlt hier wie bisher nur diesen Typ.)
+        await page.locator('[data-action="calc-apply-budget"]').click();
+
+        // Die Meldung zuerst: sie sagt im roten Lauf, WARUM nichts angepasst wurde.
+        const meldung = page.locator('.event-log-message', {
+            hasText: /Angepasst für|Ungültige CR|keinen CR/
+        });
+        await expect(meldung).not.toHaveCount(0);
+        const texte = (await meldung.allTextContents()).map(t => t.trim());
+        expect(texte.join(' | ')).not.toContain('Ungültige CR');
+        expect(texte).toContain('Angepasst für Medium');
+
+        const liste = page.locator('#calc-monster-list');
+        await expect(liste).toContainText(`2× ${ENC.goblin.name}`);
+        await expect(liste).toContainText(`1× ${ENC.ohneCr.name}`);
     });
 });
