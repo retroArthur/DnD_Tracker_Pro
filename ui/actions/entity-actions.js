@@ -394,8 +394,14 @@ const EntityActions = {
         addEncToInit(ctx.id);
     },
     'load-monster-template': ctx => loadMonsterTemplate(ctx.value),
+    // Der Tap des Nutzers — bis 900px oeffnet er das Detail im Vollbild.
+    // Automatische Auswahlen rufen selectEncounter direkt und kommen hier
+    // nicht vorbei.
     'select-encounter': ctx => {
-        if (typeof selectEncounter === 'function') selectEncounter(ctx.id);
+        if (typeof openEncounterDetail === 'function') openEncounterDetail(ctx.id);
+    },
+    'close-encounter-detail': () => {
+        if (typeof closeEncounterDetail === 'function') closeEncounterDetail(true);
     },
     'set-enc-filter': ctx => {
         if (typeof setEncFilter === 'function') setEncFilter(ctx.value || 'all');

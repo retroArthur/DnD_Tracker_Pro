@@ -1672,3 +1672,51 @@
     overflow-y: auto;
     padding-bottom: 80px;
 }
+
+/* ============================================================
+   DAS DETAIL ALS VOLLBILD BIS 900PX (Encounter am Telefon)
+   ============================================================
+   Bis 900px blendet die Regel weiter oben `.enc-detail` aus. Statblock und
+   ⚔️ ✏️ 🗑️ stehen aber NUR dort — am Telefon war ein gespeicherter
+   Encounter weder zu sehen noch in die Initiative zu bringen, zu bearbeiten
+   oder zu loeschen (gemessen bei 390x844, 360x740, 320x700, 900x800).
+
+   Entscheidung des Nutzers (2026-10-26): Vollbild mit Zurueck. Ein Tap auf
+   einen Eintrag setzt `.detail-open` an die Ansicht (openEncounterDetail,
+   encounters-render.js); dann treten Werkzeugleiste, Anlegekarte und Liste
+   zurueck und das Detail fuellt das Raster. "← Liste" nimmt die Klasse
+   wieder ab. Ueber 900px ist die Klasse wirkungslos und der Knopf
+   ausgeblendet — der Desktop bleibt, wie er war. */
+.enc-detail-back {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .enc-view.detail-open > .section-toolbar,
+    .enc-view.detail-open > .card,
+    .enc-view.detail-open .enc-master {
+        display: none;
+    }
+
+    .enc-view.detail-open .enc-detail {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+    }
+
+    .enc-detail-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 43px;
+        margin-bottom: 12px;
+        padding: 0 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-dark);
+        color: var(--text);
+        font: inherit;
+        font-size: var(--text-md);
+        cursor: pointer;
+    }
+}

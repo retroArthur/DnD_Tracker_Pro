@@ -88,8 +88,14 @@ async function bedienen(page, touch, sel) {
     // Erst die Zusicherung, dann die Geste: rot soll "nicht sichtbar" heissen,
     // nicht "Zeitueberschreitung beim Tippen".
     await expect(ziel, `${sel} ist nicht sichtbar`).toBeVisible({ timeout: 2000 });
-    if (touch) await ziel.tap();
-    else await ziel.click();
+    if (touch) {
+        // Zwei Taps binnen ~300 ms wertet der Browser als Doppeltipp, der
+        // zweite loest dann KEINEN click aus — gemessen: touchstart/touchend
+        // ohne click, mit 500 ms Pause dagegen click. Ein Mensch tippt nicht
+        // so schnell auf einen Knopf, den er eben erst zu sehen bekam.
+        await page.waitForTimeout(400);
+        await ziel.tap();
+    } else await ziel.click();
 }
 
 for (const g of SCHMAL) {

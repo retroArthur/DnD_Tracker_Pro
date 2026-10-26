@@ -109,6 +109,9 @@ function saveEncounter() {
 function editEnc(id) {
     const e = EntityLookup.encounter(id);
     if (!e) return;
+    // Das Formular steht in der Anlegekarte, und die tritt im Vollbild-Detail
+    // (bis 900px) zurueck — also erst zurueck in die Ansicht.
+    if (typeof window.closeEncounterDetail === 'function') window.closeEncounterDetail();
     const idInput = $('edit-enc-id');
     if (idInput) idInput.value = String(id);
     $('enc-name').value = e.name;
@@ -295,6 +298,10 @@ function deleteEnc(id) {
         undoLabel: 'Gegner gelöscht',
         onSuccess: () => {
             renderEncounters();
+            // Das Vollbild-Detail (bis 900px) zeigte den geloeschten Encounter;
+            // zurueck zur Liste, Fokus auf den nun gewaehlten Eintrag.
+            if (typeof window.closeEncounterDetail === 'function')
+                window.closeEncounterDetail(true);
             showToast('✅ Gegner gelöscht', 'success');
         }
     });

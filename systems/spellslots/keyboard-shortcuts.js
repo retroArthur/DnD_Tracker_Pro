@@ -809,7 +809,13 @@ function initKeyboardShortcuts() {
             if (activeView === 'view-party') toggleCollapse('char-form');
             else if (activeView === 'view-npcs') showModal('npc-modal');
             else if (activeView === 'view-quests') showModal('quest-modal');
-            else if (activeView === 'view-encounter') toggleCollapse('enc-form');
+            else if (activeView === 'view-encounter') {
+                // Im Vollbild-Detail (bis 900px) ist die Anlegekarte verborgen;
+                // ohne das Schliessen klappte N ein unsichtbares Formular auf.
+                if (typeof window.closeEncounterDetail === 'function')
+                    window.closeEncounterDetail();
+                toggleCollapse('enc-form');
+            }
             return;
         }
         // IN-02: Der frühere zweite '?'-Block (showKeyboardHelp) war unerreichbar —
