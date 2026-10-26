@@ -195,7 +195,13 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/dmscreen/dmscreen-widgets-base.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-combat.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-reference.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'features/encounter-calculator.js',
+    // -- 2026-10-26, RECHNER: 'features/encounter-calculator.js' ist hier
+    //    GESTRICHEN. tests/e2e/features/rechner-werte.spec.js faehrt den Weg
+    //    "📥 Aus Encounters" -> "+" -> "⚔️ Zur Initiative" am gebauten Buendel
+    //    mit echten Klicks und urteilt ueber RK, TP, Initiative, Typ und
+    //    Namenslink jedes Kaempfers. Ohne dieses Modul waere keiner der Faelle
+    //    erklaerbar — ein Verhaltensfall, keine Erwaehnung zur Gate-Beruhigung.
+    //    Die Liste darf nur schrumpfen; sie tut es hier.
     'features/encounters/encounters-crud.js',
     'features/encounters/monster-templates.js',
     'features/fraktionen/fraktionen-crud.js',
