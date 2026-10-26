@@ -89,10 +89,12 @@ async function bedienen(page, touch, sel) {
     // nicht "Zeitueberschreitung beim Tippen".
     await expect(ziel, `${sel} ist nicht sichtbar`).toBeVisible({ timeout: 2000 });
     if (touch) {
-        // Zwei Taps binnen ~300 ms wertet der Browser als Doppeltipp, der
-        // zweite loest dann KEINEN click aus — gemessen: touchstart/touchend
-        // ohne click, mit 500 ms Pause dagegen click. Ein Mensch tippt nicht
-        // so schnell auf einen Knopf, den er eben erst zu sehen bekam.
+        // Zwei Taps binnen 300 ms: der zweite loest KEINEN click aus — die App
+        // selbst verwirft ihn (systems/avatars.js, initTouchOptimizations:
+        // preventDefault auf touchend an einem Knopf binnen 300 ms nach dem
+        // vorigen). Gemessen: touchstart/touchend ohne click, mit 500 ms Pause
+        // dagegen click. Ein Mensch tippt nicht so schnell auf einen Knopf, den
+        // er eben erst zu sehen bekam.
         await page.waitForTimeout(400);
         await ziel.tap();
     } else await ziel.click();
@@ -117,6 +119,12 @@ for (const g of SCHMAL) {
             await expect(page.locator('#view-encounter > .card')).toBeHidden();
             for (const sel of [ZURUECK, KAMPF, BEARBEITEN, LOESCHEN]) {
                 expect(await treffbar(page, sel), `${sel} nicht treffbar`).toBe(true);
+                // Tippflaeche wie die uebrigen Bedienelemente am Telefon.
+                const box = await page.locator(sel).boundingBox();
+                expect(
+                    Math.min(box.width, box.height),
+                    `${sel} kleiner als 43px`
+                ).toBeGreaterThanOrEqual(43);
             }
         });
 
@@ -173,6 +181,9 @@ test.describe('Encounter-Detail 390x844: die Knoepfe tun, was sie sagen', () => 
         await expect(page.locator('#enc-name')).toHaveValue(WOLF.name);
         expect(await treffbar(page, '#enc-name'), 'Namensfeld nicht treffbar').toBe(true);
         await expect(page.locator(DETAIL)).toBeHidden();
+        // Der ✏️-Knopf ist jetzt ausgeblendet; der Fokus darf nicht mit ihm
+        // verschwinden.
+        expect(await page.evaluate(() => document.activeElement?.id)).toBe('enc-name');
     });
 
     test('(5) 🗑️ loescht nach Bestaetigung genau diesen Encounter und kehrt zur Liste zurueck', async ({
@@ -194,6 +205,13 @@ test.describe('Encounter-Detail 390x844: die Knoepfe tun, was sie sagen', () => 
         expect(dialoge[0]).toContain(WOLF.name);
         await expect(page.locator('#view-encounter .enc-master')).toBeVisible();
         await expect(page.locator(DETAIL)).toBeHidden();
+        // Fokus auf dem nun gewaehlten Eintrag, wie closeEncounterDetail(true)
+        // es verspricht — nicht auf BODY.
+        await expect
+            .poll(() =>
+                page.evaluate(() => document.activeElement?.closest('.enc-item')?.dataset.id)
+            )
+            .toBe(String(ORK.id));
     });
 
     test('(6) eine automatische Auswahl (Suche) oeffnet das Detail nicht', async ({ page }) => {
@@ -202,6 +220,147 @@ test.describe('Encounter-Detail 390x844: die Knoepfe tun, was sie sagen', () => 
         await expect(page.locator(`.enc-item[data-id="${ORK.id}"]`)).toHaveClass(/\bselected\b/);
         await expect(page.locator(DETAIL)).toBeHidden();
         await expect(page.locator('#view-encounter .enc-master')).toBeVisible();
+    });
+});
+
+/* PRUEFBEFUNDE (Gegenpruefung 2026-10-26). Jeder Fall war am ersten Stand
+   dieser Aenderung rot und ist unabhaengig nachgemessen worden. */
+test.describe('Encounter-Detail: jeder Weg aus dem Vollbild fuehrt an den richtigen Ort', () => {
+    test.describe('900x800 (Maus und Tastatur)', () => {
+        test.use({ viewport: { width: 900, height: 800 } });
+
+        test('(8) Befehlspalette "Neuer Encounter" bei offenem Detail zeigt das Formular', async ({
+            page
+        }) => {
+            await appLaden(page);
+            await page.locator(`.enc-item[data-id="${WOLF.id}"]`).click();
+            await expect(page.locator(DETAIL)).toBeVisible();
+
+            await page.keyboard.press('Control+Shift+K');
+            await expect(page.locator('.cp-overlay')).toBeVisible();
+            await page.locator('.cp-input').fill('Neuer Encounter');
+            await page.keyboard.press('Enter');
+
+            await expect(page.locator('#enc-form')).toHaveClass(/\bopen\b/);
+            expect(await treffbar(page, '#enc-name'), 'Namensfeld unsichtbar').toBe(true);
+        });
+
+        test('(9) Rueckgaengig/Wiederholen laesst kein fremdes Vollbild stehen', async ({
+            page
+        }) => {
+            await appLaden(page);
+            page.on('dialog', d => d.accept());
+            await page.locator(`.enc-item[data-id="${WOLF.id}"]`).click();
+            await page.locator(LOESCHEN).click();
+            await expect(page.locator('#view-encounter .enc-master')).toBeVisible();
+
+            await page.keyboard.press('Control+z');
+            await expect(page.locator(`.enc-item[data-id="${WOLF.id}"]`)).toBeVisible();
+            await page.locator(`.enc-item[data-id="${WOLF.id}"]`).click();
+            await expect(page.locator(`${DETAIL} .enc-detail-name`)).toHaveText(WOLF.name);
+
+            // Wiederholen loescht den GEZEIGTEN Encounter erneut.
+            await page.keyboard.press('Control+y');
+            await expect
+                .poll(() => page.evaluate(() => window.D.encounters.map(e => e.id)))
+                .not.toContain(WOLF.id);
+            await expect(page.locator('#view-encounter .enc-master')).toBeVisible();
+            await expect(page.locator(DETAIL)).toBeHidden();
+        });
+    });
+
+    test.describe('390x844 (Touch)', () => {
+        test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+        test('(10) eine Verknuepfung auf einen anderen Encounter zeigt DIESEN im Vollbild', async ({
+            page
+        }) => {
+            await appLaden(page);
+            await bedienen(page, true, `.enc-item[data-id="${WOLF.id}"]`);
+            await expect(page.locator(`${DETAIL} .enc-detail-name`)).toHaveText(WOLF.name);
+
+            // "Zum Tab wechseln" in der Verknuepfungsvorschau ruft
+            // navigateToEntity (systems/entity-links.js) — hier direkt, weil
+            // der Weg dorthin (Initiative, Namenslink, Vorschau) nicht Gegenstand
+            // dieses Falls ist.
+            await page.evaluate(id => window.navigateToEntity('encounters', id), ORK.id);
+            await expect(page.locator(`${DETAIL} .enc-detail-name`)).toHaveText(ORK.name);
+            await expect(page.locator(`.enc-item[data-id="${ORK.id}"]`)).toHaveClass(
+                /\bselected\b/
+            );
+        });
+
+        test('(11) ein langer Statblock laesst sich bis zum Ende wischen, "← Liste" bleibt in Reichweite', async ({
+            page
+        }) => {
+            const lang = Array.from(
+                { length: 30 },
+                (_, i) =>
+                    `<p><strong>Angriff ${i + 1}.</strong> Nahkampf-Waffenangriff: +4 zum Treffen, Reichweite 1,5 m, ein Ziel.</p>`
+            ).join('');
+            await seedCleanSession(page);
+            await page.goto(APP_URL);
+            await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+            await page.evaluate(
+                ([wolf, aktionen]) => {
+                    window.D.encounters.push({ ...wolf, actions: aktionen });
+                    window.switchView('encounter');
+                    window.renderEncounters();
+                },
+                [WOLF, lang]
+            );
+            await bedienen(page, true, `.enc-item[data-id="${WOLF.id}"]`);
+
+            const LETZTES = `${DETAIL} .enc-detail-content > :last-child p:last-child`;
+            const cdp = await page.context().newCDPSession(page);
+            let gesten = 0;
+            for (; gesten < 16 && !(await treffbar(page, LETZTES)); gesten++) {
+                await cdp.send('Input.dispatchTouchEvent', {
+                    type: 'touchStart',
+                    touchPoints: [{ x: 195, y: 650 }]
+                });
+                for (let y = 630; y >= 330; y -= 20) {
+                    await cdp.send('Input.dispatchTouchEvent', {
+                        type: 'touchMove',
+                        touchPoints: [{ x: 195, y }]
+                    });
+                }
+                // Anhalten vor dem Loslassen: kein Schwung, kein Auslauf.
+                await page.waitForTimeout(150);
+                await cdp.send('Input.dispatchTouchEvent', {
+                    type: 'touchMove',
+                    touchPoints: [{ x: 195, y: 330 }]
+                });
+                await page.waitForTimeout(150);
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+                await page.waitForTimeout(150);
+            }
+            expect(
+                await treffbar(page, LETZTES),
+                `letzte Statblockzeile nach ${gesten} Wischgesten nicht treffbar (verdeckt oder ausser Reichweite)`
+            ).toBe(true);
+            expect(
+                await treffbar(page, ZURUECK),
+                '"← Liste" ist mit dem Statblock weggerollt'
+            ).toBe(true);
+        });
+    });
+});
+
+test.describe('Encounter-Detail 901x800: knapp ueber der Grenze bleibt alles nebeneinander', () => {
+    test.use({ viewport: { width: 901, height: 800 } });
+
+    test('(12) ein Klick oeffnet kein Vollbild — JS-Grenze und CSS-Grenze stimmen ueberein', async ({
+        page
+    }) => {
+        await appLaden(page);
+        await page.locator(`.enc-item[data-id="${WOLF.id}"]`).click();
+        await expect(page.locator(`${DETAIL} .enc-detail-name`)).toHaveText(WOLF.name);
+        await expect(page.locator('#view-encounter .enc-master')).toBeVisible();
+        await expect(page.locator(ZURUECK)).toBeHidden();
+        expect(await page.locator('#view-encounter').getAttribute('class')).not.toMatch(
+            /detail-open/
+        );
     });
 });
 
