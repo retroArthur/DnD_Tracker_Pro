@@ -1642,3 +1642,33 @@
     text-align: center;
 }
 
+
+/* ============================================================
+   DAS EINGEBETTETE FORMULAR SCROLLT DIE SCHALE (Encounter-Formular)
+   ============================================================
+   `.enc-view.active` traegt oben `overflow: hidden`. Fuer die LISTE ist das
+   gleichgueltig (der Kommentar dort und ansichts-schalen.spec.js messen es).
+   Die Encounter-Ansicht ist aber die einzige Master-Detail-Schale mit einem
+   EINGEBETTETEN Formular (Orte, NSCs, Truhe und Bestiar bearbeiten in
+   Modals): aufgeklappt ist #enc-form 1669px hoch (1440x900) bzw. 3003px
+   (390x844), die Schale 705px bzw. 583px. Mausrad und Wischen scrollen eine
+   `overflow: hidden`-Schale nicht — seit 7712470 lag "Speichern" ausser
+   Reichweite, Anlegen und Bearbeiten waren fuer Maus und Finger tot.
+
+   Darum scrollt die Schale genau dann, wenn das Formular offen ist. `:has()`
+   haengt hier an einem KLASSENwechsel (`open` per toggleCollapse,
+   showEncForm, editEnc); den wertet Chromium beim Umschalten neu aus —
+   anders als `:has(input:checked)`, vor dem core.css warnt (gemessen in
+   encounter-formular.spec.js (2): hidden, auto, hidden). Die Querachse bleibt
+   geklemmt wie bisher. Geschlossen gilt wieder die Regel oben.
+
+   Die 80px unten sind der Platz fuer den festen W20-Knopf unten links
+   (#floating-dice-trigger, 56px + 20px Abstand): ohne sie endet der
+   Scrollweg mit "Speichern" GENAU unter ihm (1440x900: Knopf 824..880,
+   "Speichern" 827..855 — elementFromPoint traf den W20). Derselbe Wert wie
+   der Auslauf der Ortsliste (`.loc-list`, core.css). */
+.enc-view.active:has(#enc-form.open) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 80px;
+}
