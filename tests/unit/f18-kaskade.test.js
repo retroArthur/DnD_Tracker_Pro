@@ -78,9 +78,12 @@
  * `className: 'btn-icon btn-danger'` in renderNPCCard (dom-builder.js im
  * ui/-Verzeichnis — bewusst ohne den Pfad am Stueck, den die Abdeckungs-
  * Ratsche in module-test-coverage.test.js sonst als Test zaehlte), ist
- * ebenfalls ohne Aufrufer (renderNPCListOptimized, 0 Aufrufe gemessen) und
- * wird vom Inventar ohnehin nicht gelesen — es kennt `class="..."`, keine
- * `className:`-Objektschluessel. Eine Luecke des Werkzeugs, hier folgenlos.
+ * nur transitiv tot: gerufen allein von renderNPCListOptimized, das selbst
+ * keinen Aufrufer hat (0 Aufrufe gemessen). Gelesen wird sie vom Inventar
+ * ohnehin nicht — es kennt `class="..."`, `.className = '...'` und
+ * classList-Aufrufe, keine `className:`-Objektschluessel. Eine Luecke des
+ * Werkzeugs, hier folgenlos; wer diesen DOM-Baukasten wiederbelebt, macht
+ * seine Klassen fuer den F-18-Waechter unsichtbar.
  */
 
 const fs = require('fs');

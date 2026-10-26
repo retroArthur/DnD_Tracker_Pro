@@ -476,7 +476,7 @@ describe('DOC — die Kuerzeltabelle in CLAUDE.md faellt nicht hinter die Gruppe
 // 2026-10-26: 8 -> 10, ABSICHTLICH. Der Ersatz-Renderer `ui/safe-render.js`
 // ist geloescht (tot seit dem ersten Commit, kein Aufrufer), mit ihm seine
 // einzige Testdatei `tests/e2e/features/ersatz-renderer.spec.js`. Die
-// Katalogeintraege, die beide nennen, beschreiben Geschehenes und bleiben
+// Katalogeintraege, die sie nennen, beschreiben Geschehenes und bleiben
 // wahr — der Pfad ist tot, weil die Datei mit Absicht fehlt, nicht durch
 // einen Tippfehler. Keine Altlast zum Reparieren.
 const BUGFIX_TOTE_PFADE_PIN = 10;
