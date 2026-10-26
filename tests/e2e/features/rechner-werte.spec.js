@@ -681,7 +681,14 @@ test.describe('Encounter-Rechner → Initiative: die Werte des gewaehlten Encoun
             init: 0,
             dex: 10
         };
-        await rechnerOeffnen(page, undefined, seedMit({ encounters: [GIFT] }));
+        await rechnerOeffnen(page);
+        // Erst JETZT in die Daten, nachdem die Encounter-Liste gezeichnet ist: sie
+        // setzt `cr` ebenfalls ungeescaped ein (renderEncounters(), gemessen, im
+        // Katalog als offen gefuehrt) und loeste den Merker unten aus, bevor der
+        // Rechner irgendetwas tat. Dieser Fall misst den Weg des Rechners.
+        await page.evaluate(g => {
+            window.D.encounters.push(g);
+        }, GIFT);
 
         await page.locator('[data-action="calc-show-encounter-import"]').click();
         const karte = page.locator('.calc-import-card', { hasText: GIFT.name });
