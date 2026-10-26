@@ -45,23 +45,28 @@
  * vor dem Neuladen nicht im Speicher, danach wieder in D. Bis dahin steht er
  * nur im Arbeitsspeicher des Tabs.
  *
- * AUF DEM TELEFON (390x844) brechen Anlegen und Mengen-Merge genauso. ✏️ ist
- * dort gar nicht erreichbar: unter 900 px setzt `assets/styles/npcs.css`
- * `.loot-detail` auf `display: none`, und die Listenzeile hat keinen eigenen
- * Bearbeiten-Knopf. Das ist ein eigener Befund (kein Fall hier).
+ * AUF DEM TELEFON (390x844) brechen Anlegen und Mengen-Merge genauso. ✏️ und
+ * 🗑️ sind dort gar nicht erreichbar: bis einschliesslich 900 px
+ * (`max-width: 900px`) setzt `assets/styles/npcs.css` `.loot-detail` auf
+ * `display: none`, und die Listenzeile hat keinen eigenen Knopf — es gibt
+ * dort weder Bearbeiten noch Loeschen. Das ist ein eigener Befund (kein Fall
+ * hier).
  *
  * ───────────────────────────────────────────────────────────────────────────
- * WARUM FALL (5) NEBEN DEN ANDEREN STEHT
+ * WARUM DIE FAELLE (5) UND (7) NEBEN DEN ANDEREN STEHEN
  *
  * Die "+ Item"-Knoepfe oeffneten das Formular ueber das allgemeine
- * `show-modal` — ohne Leeren. Solange ✏️ warf, wurde `#edit-loot-id` nie
- * gesetzt und das fiel nicht auf. Wirkt ✏️ wieder, laesst "Bearbeiten ->
- * Abbrechen -> + Item" die ID des bearbeiteten Gegenstands im Formular
- * stehen, und das naechste "Anlegen" UEBERSCHREIBT ihn. Fall (5) haelt das
- * fest. Gegenprobe mit den zwei Funktionen zurueck, aber "+ Item" noch auf
- * `show-modal`: (1) bis (4) und (6) gruen, (5) rot — das Formular zeigte
- * "Item bearbeiten" mit ID 1, und Speichern als "Fackel" machte aus dem
- * Heiltrank `1:Fackel x2`, in D und im Speicher.
+ * `show-modal` — ohne Leeren. Das war schon vor 3e44317 so, als ✏️ noch
+ * ging; die Falle bestand also damals. Seit 3e44317 war sie verdeckt, weil
+ * ✏️ warf und `#edit-loot-id` nie gesetzt wurde. Wirkt ✏️ wieder, laesst
+ * "Bearbeiten -> Abbrechen -> + Item" die ID des bearbeiteten Gegenstands im
+ * Formular stehen, und das naechste "Anlegen" UEBERSCHREIBT ihn. Fall (5)
+ * haelt das fuer den Knopf der Werkzeugleiste fest, Fall (7) fuer den der
+ * leeren Truhe (dort geht der Gegenstand still verloren, siehe am Fall).
+ * Gegenprobe mit den zwei Funktionen zurueck, aber beiden "+ Item"-Knoepfen
+ * noch auf `show-modal`: (5) und (7) rot, die uebrigen gruen — das Formular
+ * zeigte "Item bearbeiten" mit ID 1, und Speichern als "Fackel" machte aus
+ * dem Heiltrank `1:Fackel x2`, in D und im Speicher.
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
