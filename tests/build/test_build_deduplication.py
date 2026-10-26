@@ -336,7 +336,11 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # und diesmal war das Python-Gate das, das sie eingetrieben hat (jest
         # blieb gruen, weil der Waechter tests/e2e/features/mobil-kopfmenue.spec.js
         # den Modulpfad nennt).
-        assert len(modules) == 144, f"Erwartet 144 Module, gefunden {len(modules)}"
+        # 2026-10-26: 'ui/safe-render.js' GELOESCHT (144 -> 143). Der
+        # Ersatz-Renderer hatte seit dem ersten Commit keinen Aufrufer; nichts
+        # darin wurde ausserhalb der Datei benutzt. eslint.generated-globals.js
+        # ist neu erzeugt.
+        assert len(modules) == 143, f"Erwartet 143 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
@@ -555,7 +559,8 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         """
         D-06: check_duplicate_functions muss bei doppelten Top-Level-class-
         Deklarationen in zwei Quellmodulen SystemExit ausloesen (real existierender
-        Fall im Bestandscode: VirtualList, DOMVirtualList, SafeRender, BatchUpdater).
+        Fall im Bestandscode: VirtualList, DOMVirtualList; SafeRender und
+        BatchUpdater sind mit ui/safe-render.js am 2026-10-26 geloescht).
         """
         file_a = tmp_path / 'module-a.js'
         file_a.write_text("class DuplicateClass {\n    constructor() {}\n}\n", encoding='utf-8')

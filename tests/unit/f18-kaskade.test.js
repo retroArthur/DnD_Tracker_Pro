@@ -66,6 +66,24 @@
  * ersetzt nur die Zeichengrenzen des WERTES; ein nachgestellter Kommentar
  * liegt dahinter und bleibt stehen (belegt an einem Kunstfall mit und ohne
  * abschliessendes Semikolon).
+ *
+ * NEUERHEBUNG AM 2026-10-26, 117 -> 115 ABHAENGIGKEITEN: 0 GEDREHT, 0 NEU,
+ * 2 ENTFALLEN. Geloescht wurde ui/safe-render.js (toter Ersatz-Renderer,
+ * kein Aufrufer seit dem ersten Commit). Seine Karten trugen die einzigen
+ * Knoepfe mit `class="btn-icon btn-danger"`, die das Element-Inventar sieht —
+ * ohne ein solches Element streiten `.btn-icon:hover` (core.css) und
+ * `.btn-danger:hover` (dmscreen.css) um `background` und `color` an keinem
+ * Element mehr, beide Zeilen entfallen. Nachgeprueft, dass auch kein LEBENDES
+ * Element die beiden Klassen traegt: die einzige weitere Fundstelle,
+ * `className: 'btn-icon btn-danger'` in renderNPCCard (dom-builder.js im
+ * ui/-Verzeichnis — bewusst ohne den Pfad am Stueck, den die Abdeckungs-
+ * Ratsche in module-test-coverage.test.js sonst als Test zaehlte), ist
+ * nur transitiv tot: gerufen allein von renderNPCListOptimized, das selbst
+ * keinen Aufrufer hat (0 Aufrufe gemessen). Gelesen wird sie vom Inventar
+ * ohnehin nicht — es kennt `class="..."`, `.className = '...'` und
+ * classList-Aufrufe, keine `className:`-Objektschluessel. Eine Luecke des
+ * Werkzeugs, hier folgenlos; wer diesen DOM-Baukasten wiederbelebt, macht
+ * seine Klassen fuer den F-18-Waechter unsichtbar.
  */
 
 const fs = require('fs');
