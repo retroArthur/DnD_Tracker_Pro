@@ -393,9 +393,9 @@ function renderEncounterListFast(container, encounters, options = {}) {
                     <span>Init: ${enc.init >= 0 ? '+' : ''}${enc.init}</span>
                 </div>
                 <div class="enc-actions" data-stop-propagation="true">
-                    <button class="btn-icon" data-action="add-enc-to-init" data-id="${enc.id}" title="Zur Initiative">⚔️</button>
-                    <button class="btn-icon" data-action="edit-enc" data-id="${enc.id}">✏️</button>
-                    <button class="btn-icon btn-danger" data-action="delete-enc" data-id="${enc.id}">🗑️</button>
+                    <button class="btn-icon" data-action="load-encounter" data-id="${enc.id}" title="Zur Initiative">⚔️</button>
+                    <button class="btn-icon" data-action="edit-encounter" data-id="${enc.id}">✏️</button>
+                    <button class="btn-icon btn-danger" data-action="delete-encounter" data-id="${enc.id}">🗑️</button>
                 </div>
             </div>
         `;

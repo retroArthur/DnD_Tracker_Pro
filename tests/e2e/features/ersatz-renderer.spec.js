@@ -1,16 +1,15 @@
 /**
  * E2E Tests — Aktionen des Ersatz-Renderers (ui/safe-render.js)
  *
- * DER BEFUND. renderEncounterListFast() rendert pro Encounter drei Knoepfe mit
+ * DER BEFUND. renderEncounterListFast() renderte pro Encounter drei Knoepfe mit
  * den Aktionsnamen `add-enc-to-init`, `edit-enc` und `delete-enc`. Keiner der
- * drei ist registriert, und EventDelegation verwirft unbekannte Aktionen
+ * drei war registriert, und EventDelegation verwirft unbekannte Aktionen
  * WORTLOS (dieselbe Klasse wie "Abbrechen" der Session-Prep-Maske,
  * session-prep.spec.js). Gemessen am Buendel: ein echter Klick auf jeden der
- * drei Knoepfe ruft nichts auf — keine Initiative, kein Formular, kein
- * Bestaetigungsdialog. Die echte Encounter-Liste
- * (features/encounters/encounters-render.js) nutzt `load-encounter`,
- * `edit-encounter` und `delete-encounter`; mit diesen Namen wirken die Knoepfe
- * wie dort.
+ * drei Knoepfe rief nichts auf — keine Initiative, kein Formular, kein
+ * Bestaetigungsdialog. Seither tragen sie die Namen der echten Encounter-Liste
+ * (features/encounters/encounters-render.js): `load-encounter`,
+ * `edit-encounter` und `delete-encounter`; damit wirken die Knoepfe wie dort.
  *
  * DER PFAD IST HEUTE TOT. Weder renderEncounterListFast noch
  * renderNPCListFast hat einen Aufrufer — seit dem ersten Commit nicht. Gemessen
