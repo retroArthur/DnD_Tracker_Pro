@@ -67,7 +67,7 @@ function renderLootList() {
                 ${
                     !search && currentLootFilter === 'all'
                         ? `
-                    <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal" style="margin-top: 12px;">
+                    <button class="loot-add-btn" data-action="show-loot-modal" style="margin-top: 12px;">
                         + Item hinzufügen
                     </button>
                 `
@@ -250,8 +250,63 @@ function setLootFilter(f) {
     currentLootFilter = f;
     renderLootList();
 }
+// Das Formular der Truhe zuruecksetzen und die Tag-Anzeige fuehren (TRUHE).
+// Beide Funktionen gingen mit 3e44317 verloren — die Aufrufe darunter
+// blieben als `window.clearLootForm()`/`window.updateLootSelectedTags()`
+// stehen und warfen: ✏️ oeffnete nichts, und saveLoot() brach nach dem
+// Schreiben in D ab, vor renderLootList() und save(). Modul-intern, ohne
+// window-Export: kein anderes Modul und kein Handler ruft sie
+// (Export-Audit-Regel). Waechter: tests/e2e/features/truhe-formular.spec.js.
+
+/**
+ * Setzt das Formular in den Anlege-Zustand: keine ID, Text- und Zahlenfelder
+ * auf den Wert aus dem Template (Menge 1), Auswahlfelder auf ihre erste
+ * Option, Beschreibung leer, kein Tag angekreuzt.
+ * Die Vorgaben stehen im Template (`#loot-modal` in
+ * assets/templates/modals-entity.html), nicht hier. `#edit-loot-id` ist die
+ * Ausnahme: bei `type="hidden"` schreibt `.value` auch das value-Attribut,
+ * `defaultValue` truege nach einem Bearbeiten die alte ID.
+ */
+function clearLootForm() {
+    const editIdInput = $('edit-loot-id');
+    if (editIdInput) editIdInput.value = '';
+    const ids = ['loot-name', 'loot-qty', 'loot-wt', 'loot-val', 'loot-special', 'loot-property'];
+    ids.forEach(id => {
+        const input = $(id);
+        if (input) input.value = input.defaultValue;
+    });
+    ['loot-cat', 'loot-rarity', 'loot-origin'].forEach(id => {
+        const select = $(id);
+        if (select) select.selectedIndex = 0;
+    });
+    const descDiv = $('loot-desc');
+    if (descDiv) descDiv.innerHTML = '';
+    document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
+        cb.checked = false;
+    });
+    updateLootSelectedTags();
+}
+/**
+ * Zeigt unter dem Tag-Raster die angekreuzten Tags. Leer greift die
+ * CSS-Vorgabe `.loot-selected-tags:empty::before` ("Keine Tags ausgewählt").
+ */
+function updateLootSelectedTags() {
+    const container = $('loot-selected-tags');
+    if (!container) return;
+    const labels = [];
+    document.querySelectorAll('#loot-tag-grid .loot-tag-chip input:checked').forEach(cb => {
+        labels.push(`<span class="loot-tag">${esc(LOOT_TAG_LABELS[cb.value] || cb.value)}</span>`);
+    });
+    container.innerHTML = labels.join(' ');
+}
+// Die Anzeige folgt jedem Ankreuzen. Ein Lauscher fuer das ganze Dokument,
+// weil die Kaestchen im Template stehen und `change` nur das Kaestchen selbst
+// trifft; frueher legte initLootTagSystem() je Kaestchen einen an.
+document.addEventListener('change', e => {
+    if (e.target instanceof Element && e.target.closest('#loot-tag-grid')) updateLootSelectedTags();
+});
 function showLootModal(id = null) {
-    window.clearLootForm();
+    clearLootForm();
     const modal = $('loot-modal');
     const title = modal?.querySelector('.modal-title');
     if (id) {
@@ -284,7 +339,7 @@ function showLootModal(id = null) {
         document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
             cb.checked = (item.tags || []).includes(cb.value);
         });
-        window.updateLootSelectedTags();
+        updateLootSelectedTags();
         const saveBtn = $('loot-save-btn');
         if (saveBtn) saveBtn.textContent = '💾 Speichern';
     } else {
@@ -364,7 +419,7 @@ function saveLoot() {
         }
     }
     hideModal('loot-modal');
-    window.clearLootForm();
+    clearLootForm();
     renderLootList();
     if (selectedLootId) showLootDetail(selectedLootId);
     window.save();

@@ -58,7 +58,10 @@
  * gesetzt und das fiel nicht auf. Wirkt ✏️ wieder, laesst "Bearbeiten ->
  * Abbrechen -> + Item" die ID des bearbeiteten Gegenstands im Formular
  * stehen, und das naechste "Anlegen" UEBERSCHREIBT ihn. Fall (5) haelt das
- * fest.
+ * fest. Gegenprobe mit den zwei Funktionen zurueck, aber "+ Item" noch auf
+ * `show-modal`: (1) bis (4) und (6) gruen, (5) rot — das Formular zeigte
+ * "Item bearbeiten" mit ID 1, und Speichern als "Fackel" machte aus dem
+ * Heiltrank `1:Fackel x2`, in D und im Speicher.
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
