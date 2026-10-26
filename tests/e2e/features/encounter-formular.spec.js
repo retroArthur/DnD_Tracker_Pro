@@ -75,9 +75,26 @@ async function scrolleBis(page, sel, touch, max) {
             await page.mouse.move(Math.round(width / 2), Math.round(height * 0.6));
             await page.mouse.wheel(0, 400);
         }
-        await page.waitForTimeout(120);
+        await aufRuhe(page);
     }
     return -1;
+}
+
+/**
+ * Wartet, bis die Schale nicht mehr nachlaeuft. Ein Tap WAEHREND des Auslaufs
+ * einer Wischgeste haelt nur das Scrollen an und loest keinen Klick aus — bei
+ * echten Nutzern genauso (gemessen: pointerdown/touchstart ohne click).
+ */
+async function aufRuhe(page) {
+    let vorher = -1;
+    for (let i = 0; i < 40; i++) {
+        await page.waitForTimeout(80);
+        const jetzt = await page.evaluate(
+            () => document.getElementById('view-encounter').scrollTop
+        );
+        if (jetzt === vorher) return;
+        vorher = jetzt;
+    }
 }
 
 async function appLaden(page, encounters = []) {

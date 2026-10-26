@@ -1347,6 +1347,16 @@ wiedergefunden.
 - **Dateien:** `assets/styles/party.css`, `assets/styles/editors.css`
 - **Tests:** `tests/e2e/features/wiki.spec.js` — „Formular-Werkzeugleiste passt ins Modal": kein Querlauf in Modal und Leiste, kein Bedienelement rechts außerhalb, beide Schriftfelder in der Mitte und an der rechten Kante selbst treffbar (1925 bis 900 px).
 
+### Eine `overflow: hidden`-Schale mit eingebettetem Formular — das Encounter-Formular war mit Maus und Finger nicht abschließbar
+
+- **Problem:** Im Encounter-Formular („+ Neuer Encounter" oder ✏️ im Detail) kam man mit Mausrad oder Wischen nicht an „Speichern". Das galt bei jeder Fenstergröße, am Desktop wie am Telefon. Anlegen und Bearbeiten gingen nur über die Tastatur (119-mal Tab bei 1440×900).
+- **Ursache:** `7712470` (2026-09-30) setzte `.enc-view.active` von `overflow-y: auto` auf `overflow: hidden`, um die Bauart der vier Geschwister-Schalen anzugleichen. Für die **Liste** ist das gleichgültig (gemessen in `tests/e2e/features/ansichts-schalen.spec.js`). Die Encounter-Ansicht ist aber die einzige Master-Detail-Schale mit einem **eingebetteten** Formular; Orte, NSCs, Truhe und Bestiar bearbeiten in Modals. Aufgeklappt ist `#enc-form` 1669 px hoch (1440×900) bzw. 3003 px (390×844), die Schale nur 705 bzw. 583 px. Eine `overflow: hidden`-Schale scrollt per Mausrad und Wischen nicht; „Speichern" lag bei y = 1791 bzw. y = 3111. Die zwei anderen eingebetteten Formulare (Gruppe, Session-Notizen) scrollen, gemessen.
+- **Fix:** `.enc-view.active:has(#enc-form.open) { overflow-x: hidden; overflow-y: auto; padding-bottom: 80px }` am Ende von `assets/styles/encounters.css`. Die Schale scrollt also genau dann, wenn das Formular offen ist; geschlossen gilt wieder `overflow: hidden`, die gemessene Bauart der Liste bleibt. `:has()` hängt hier an einem Klassenwechsel (`open`), und den wertet Chromium beim Umschalten neu aus (gemessen: hidden, auto, hidden). Das unterscheidet ihn von `:has(input:checked)`, vor dem `assets/styles/core.css` warnt. Die 80 px unten sind nötig: Ohne sie endet der Scrollweg mit „Speichern" genau unter dem festen W20-Knopf unten links (1440×900: Knopf 824 bis 880 px, „Speichern" 827 bis 855 px).
+- **Regel:** Eine Höhenklammer mit `overflow: hidden` an einer Ansicht ist nur dann „geometrisch wirkungslos", wenn **jeder** Zustand der Ansicht hineinpasst. Ein aufklappbares Formular ist ein eigener Zustand und muss mitgemessen werden, und zwar mit echten Gesten. `locator.click()` scrollt das Ziel selbst ins Bild, auch in einer `hidden`-Schale, und hätte den Fehler nie gezeigt.
+- **Messfalle:** Ein Tap während des Auslaufs einer Wischgeste hält nur das Scrollen an und löst keinen Klick aus (gemessen: `pointerdown`/`touchstart` ohne `click`). Der Test wartet deshalb auf Ruhe, bevor er tippt; echte Nutzer tun dasselbe.
+- **Dateien:** `assets/styles/encounters.css`
+- **Tests:** `tests/e2e/features/encounter-formular.spec.js` — Anlegen bei 1440×900, 1280×720 und 390×844 mit echtem Mausrad bzw. Touch-Wischen bis „Speichern" treffbar, dann Klick bzw. Tap legt den Encounter an. Offen scrollt die Schale, geschlossen nicht. Bearbeiten über ✏️ mit Mausrad bis „Speichern", die Änderung kommt an. Gegen das alte CSS 7 von 7 rot.
+
 ---
 
 ## Known Technical Debt
