@@ -358,15 +358,26 @@ test.describe('Komplette Workflows', () => {
             }, monsterName);
             expect(monsterExists).toBe(true);
 
-            // Zum Initiative-Tracker wechseln
-            await navigateToTab(page, 'initiative');
+            // Monster zum Tracker hinzufügen — über den Kampfknopf im Detail-Panel
+            // des eben angelegten (automatisch ausgewählten) Encounters. Früher
+            // suchte dieser Schritt im Initiative-Tab einen Knopf `add-enc-to-init`
+            // hinter einem isVisible()-Guard. Den gab es nie (nur im ungenutzten
+            // Ersatz-Renderer, und dort unregistriert) — der Schritt lief still leer.
+            const kampfBtn = page.locator('[data-action="load-encounter"]').first();
+            await expect(kampfBtn).toBeVisible();
+            await kampfBtn.click();
 
-            // Monster zum Tracker hinzufügen (falls Button vorhanden)
-            const addEncBtn = page.locator('[data-action="add-enc-to-init"]').first();
-            if (await addEncBtn.isVisible()) {
-                await addEncBtn.click();
-                await page.waitForTimeout(300);
-            }
+            // Zum Initiative-Tracker wechseln: der Gegner steht dort
+            await navigateToTab(page, 'initiative');
+            await expect
+                .poll(() =>
+                    page.evaluate(
+                        name => D.initiative.combatants.some(c => c.name === name),
+                        monsterName
+                    )
+                )
+                .toBe(true);
+            await expect(page.locator('#init-list')).toContainText(monsterName);
         });
     });
 
