@@ -641,8 +641,10 @@ const EntityLookup = {
 /**
  * Get comprehensive entity details for combat/display
  * Centralizes entity lookup pattern used across combat and rendering
+ * encounterId (optional): Kaempfer aus dem Encounter-Rechner tragen die ID ihres
+ * Encounters (RECHNER) — "Skelett #2" findet ueber den Namen nichts, die ID schon.
  */
-function getEntityForCombat(entityType, entityName) {
+function getEntityForCombat(entityType, entityName, encounterId) {
     let entity = null;
     let ac = '?';
     let type = null;
@@ -655,8 +657,13 @@ function getEntityForCombat(entityType, entityName) {
             id = entity.id;
         }
     } else if (entityType === 'enemy') {
-        // Check encounters first, then NPCs
-        entity = EntityLookup.findByName('encounters', entityName);
+        // Check encounters first, then NPCs. Die ID direkt in D.encounters, nicht
+        // ueber den EntityLookup-Cache: renderInit() laesst ihn bei leerer
+        // Initiative eingeschaltet, dann hielte er ein ersetztes Objekt fest.
+        const encId = parseEntityId(encounterId);
+        entity =
+            (encId !== null && (window.D.encounters || []).find(e => e.id === encId)) ||
+            EntityLookup.findByName('encounters', entityName);
         if (entity) {
             ac = entity.ac || entity.armorClass || 10;
             type = 'encounters';

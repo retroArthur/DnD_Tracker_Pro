@@ -29,22 +29,8 @@ function applyDamage(combatant, damage) {
  * @returns { ac, entityType, entityId }
  */
 function getInitCombatantDetails(combatant) {
-    // Kaempfer aus dem Encounter-Rechner tragen die ID ihres Encounters (RECHNER):
-    // "Skelett #2" findet ueber den Namen nichts, die ID schon. Direkt gesucht,
-    // nicht ueber den EntityLookup-Cache — der bleibt nach einem renderInit()
-    // ohne Kaempfer eingeschaltet und haelt dann ein ersetztes Objekt fest.
-    const encId = combatant.type === 'enemy' ? parseEntityId(combatant.encounterId) : null;
-    const vorlage =
-        encId !== null ? (window.D.encounters || []).find(e => e.id === encId) || null : null;
-    if (vorlage) {
-        return {
-            ac: vorlage.ac || vorlage.armorClass || 10,
-            entityType: 'encounters',
-            entityId: vorlage.id
-        };
-    }
     // Use centralized lookup function
-    const result = getEntityForCombat(combatant.type, combatant.name);
+    const result = getEntityForCombat(combatant.type, combatant.name, combatant.encounterId);
     // Fallback to combatant.ac if no entity found
     const ac = result.ac !== '?' ? result.ac : combatant.ac || 10;
     return {
