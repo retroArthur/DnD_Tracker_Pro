@@ -93,7 +93,7 @@
                     <label>Fraktion (WELT-05)</label>
                     <select id="npc-faction">
                         <option value="">— Keine Fraktion —</option>
-                        <!-- Optionen werden dynamisch durch populateSelects() / editNPC() befüllt -->
+                        <!-- Optionen fuellt fillNPCFactionSelect() (npc-crud.js) beim Anlegen und Bearbeiten — populateSelects() fasst sie nicht an -->
                     </select>
                 </div>
                 <div class="form-group"><label>Quests (Komma-getrennt)</label><input type="text" id="npc-quests" placeholder="z.B. Drachenjagd, Schatz finden"></div>
@@ -122,8 +122,8 @@
             
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;">
                 <div id="npc-markdown-actions" style="display: none;">
-                    <button class="btn btn-sm" data-action="call" data-value="exportNPCAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
-                    <button class="btn btn-sm" data-action="call" data-value="importNPCMarkdown" title="Markdown importieren">📥 Import</button>
+                    <button class="btn btn-sm" data-action="export-markdown" data-type="npcs" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="import-markdown" data-type="npcs" title="Markdown importieren">📥 Import</button>
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-success" data-action="call" data-value="saveNPC" type="button">💾 Speichern</button>
@@ -324,8 +324,8 @@
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <div id="quest-markdown-actions" style="display: none;">
-                    <button class="btn btn-sm" data-action="call" data-value="exportQuestAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
-                    <button class="btn btn-sm" data-action="call" data-value="importQuestMarkdown" title="Markdown importieren">📥 Import</button>
+                    <button class="btn btn-sm" data-action="export-markdown" data-type="quests" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="import-markdown" data-type="quests" title="Markdown importieren">📥 Import</button>
                 </div>
                 <button class="btn btn-success" data-action="call" data-value="saveQuest">Speichern</button>
             </div>
@@ -477,8 +477,8 @@
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <div id="spell-markdown-actions" style="display: none;">
-                    <button class="btn btn-sm" data-action="call" data-value="exportSpellAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
-                    <button class="btn btn-sm" data-action="call" data-value="importSpellMarkdown" title="Markdown importieren">📥 Import</button>
+                    <button class="btn btn-sm" data-action="export-markdown" data-type="spells" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="import-markdown" data-type="spells" title="Markdown importieren">📥 Import</button>
                 </div>
                 <button class="btn btn-success" data-action="call" data-value="saveSpell">Speichern</button>
             </div>

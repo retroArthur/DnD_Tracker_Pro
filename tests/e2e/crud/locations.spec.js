@@ -238,7 +238,7 @@ test.describe('Locations - CRUD Operationen', () => {
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('LinkedNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await page.click('[data-action="call"][data-value="saveNPC"]');

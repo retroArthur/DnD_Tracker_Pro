@@ -807,7 +807,7 @@ function initKeyboardShortcuts() {
             e.preventDefault();
             const activeView = document.querySelector('.view.active')?.id;
             if (activeView === 'view-party') toggleCollapse('char-form');
-            else if (activeView === 'view-npcs') showModal('npc-modal');
+            else if (activeView === 'view-npcs') showNewNPCModal();
             else if (activeView === 'view-quests') showModal('quest-modal');
             else if (activeView === 'view-encounter') toggleCollapse('enc-form');
             return;

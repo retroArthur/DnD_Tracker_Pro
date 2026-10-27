@@ -304,43 +304,28 @@ const SystemActions = {
     // Loot Distribution
     'show-loot-distribution': () => showLootDistributionModal(),
 
-    // Markdown Export/Import
-    exportSpellAsMarkdown: () => {
-        const editId = $('edit-spell-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('spells', editId.value);
-        }
+    // Markdown Export/Import im Fuss der Formulare von NPC, Quest und Zauber.
+    // data-type nennt den Typ (npcs|quests|spells), die ID steht im offenen
+    // Formular. Bis 2026-10-27 liefen die Knoepfe ueber die Aktion `call` auf
+    // sechs camelCase-Schluessel dieses Objekts — `call` sucht an window und
+    // fand sie nie (MARKDOWN, docs/bugfixes.md).
+    'export-markdown': ctx => {
+        const id = markdownFormularId(ctx.type);
+        if (id) exportEntityAsMarkdown(ctx.type, id);
     },
-    importSpellMarkdown: () => {
-        const editId = $('edit-spell-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('spells', editId.value);
-        }
+    'import-markdown': ctx => {
+        const id = markdownFormularId(ctx.type);
+        if (id) showMarkdownImportModal(ctx.type, id);
     },
-    exportNPCAsMarkdown: () => {
-        const editId = $('edit-npc-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('npcs', editId.value);
-        }
+    // Die Import-Schale baut systems/markdown-import-export.js zur Laufzeit.
+    // <input type="file"> feuert bei EINER Auswahl 'input' UND 'change', und
+    // EventDelegation dispatcht beide — ohne die Schranke wird jede Datei
+    // zweimal gelesen (dieselbe Falle wie 'soundboard-file-change' unten).
+    'markdown-import-file': ctx => {
+        if (ctx.event && ctx.event.type !== 'change') return;
+        readMarkdownImportFile(ctx.target);
     },
-    importNPCMarkdown: () => {
-        const editId = $('edit-npc-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('npcs', editId.value);
-        }
-    },
-    exportQuestAsMarkdown: () => {
-        const editId = $('edit-quest-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('quests', editId.value);
-        }
-    },
-    importQuestMarkdown: () => {
-        const editId = $('edit-quest-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('quests', editId.value);
-        }
-    },
+    'markdown-import-confirm': () => confirmMarkdownImport(),
 
     // Migrated inline handlers
     'convert-units-metric': () => convertUnitsMetric(),

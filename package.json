@@ -21,7 +21,7 @@
         "tsc:check": "tsc --noEmit",
         "typecheck": "tsc --noEmit",
         "typecheck:strict": "tsc -p tsconfig.strict.json",
-        "lint": "eslint . --max-warnings 358",
+        "lint": "eslint . --max-warnings 357",
         "lint:fix": "eslint . --fix",
         "globals:generate": "node tools/generate-eslint-globals.js",
         "css-usage:report": "node tools/css-usage-report.js",

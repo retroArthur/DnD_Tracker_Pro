@@ -99,6 +99,34 @@ function generiereNPC(volk, geschlecht) {
 // ============================================================
 var _npcgAktuell = null; // Vorschau-State (KEIN Eintrag in D.npcs)
 
+// Die Voelker des Generators: Schluessel seiner Namenstabellen -> Anzeigename.
+// Der Anzeigename ist zugleich der Wert der festen Option im NPC-Formular
+// (#npc-race); gespeichert wird DER (saveGeneratedNPC). Vorher stand der
+// Schluessel ('zwerg') im NPC, fuer den das Formular keine Option hat — ✏️ → 💾
+// loeschte danach das Volk.
+var NPCG_VOELKER = [
+    ['mensch', 'Mensch'],
+    ['elf', 'Elf'],
+    ['zwerg', 'Zwerg'],
+    ['halbling', 'Halbling'],
+    ['halbork', 'Halbork'],
+    ['tiefling', 'Tiefling'],
+    ['gnom', 'Gnom']
+];
+
+/**
+ * Anzeigename eines Generator-Volks ('zwerg' -> 'Zwerg'). Ein unbekannter
+ * Schluessel bleibt, wie er ist.
+ * @param {string} volk
+ * @returns {string}
+ */
+function _npcgVolkName(volk) {
+    var paar = NPCG_VOELKER.find(function (p) {
+        return p[0] === volk;
+    });
+    return paar ? paar[1] : volk || '';
+}
+
 // ============================================================
 // MODAL: showNPCGeneratorModal
 // ============================================================
@@ -146,15 +174,7 @@ function showNPCGeneratorModal() {
     var geschlecht = 'maennlich';
     _npcgAktuell = generiereNPC(volk, geschlecht);
 
-    var volkOptionen = [
-        ['mensch', 'Mensch'],
-        ['elf', 'Elf'],
-        ['zwerg', 'Zwerg'],
-        ['halbling', 'Halbling'],
-        ['halbork', 'Halbork'],
-        ['tiefling', 'Tiefling'],
-        ['gnom', 'Gnom']
-    ].map(function(pair) {
+    var volkOptionen = NPCG_VOELKER.map(function(pair) {
         return '<option value="' + pair[0] + '"' + (pair[0] === volk ? ' selected' : '') + '>' + pair[1] + '</option>';
     }).join('');
 
@@ -270,7 +290,7 @@ function saveGeneratedNPC() {
         id: id,
         name: npc.name,
         role: npc.beruf || '',
-        race: npc.volk || '',
+        race: _npcgVolkName(npc.volk),
         description: beschreibung,
         locationId: null,
         chapter: '',

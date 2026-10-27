@@ -186,7 +186,7 @@ test.describe('NPCs - CRUD Operationen', () => {
 
     test('NPC mit Minimaldaten erstellen', async ({ page }) => {
         const npcName = generateTestName('MinNPC');
-        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        await page.click('[data-action="show-new-npc-modal"]');
         await fillField(page, 'npc-name', npcName);
         await page.click('[data-action="call"][data-value="saveNPC"]');
         // Assert against global D, not just DOM:
