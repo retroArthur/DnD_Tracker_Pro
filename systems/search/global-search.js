@@ -67,7 +67,8 @@ function performGlobalSearch() {
     // 'change' beim Verlassen des Feldes (Tab auf den ersten Treffer) ruft
     // diese Funktion entprellt ein zweites Mal — das innerHTML unten ersetzte
     // dann den fokussierten Treffer, der Fokus fiel auf BODY, und Enter tat
-    // fuer keinen Typ etwas. Eine geschlossene Liste zeichnet immer neu.
+    // fuer keinen Typ etwas. Eine geschlossene Liste zeichnet immer neu, das
+    // Betreten des Feldes und ein Speichern ebenso (initGlobalSearchListener).
     if (results.classList.contains('visible') && results.dataset.begriff === query) return;
     const matches = [];
     // Search Characters (fuzzy)
@@ -281,7 +282,30 @@ document.addEventListener('click', function (e) {
 function initGlobalSearchListener() {
     const input = $('global-search');
     if (input) {
-        input.addEventListener('focus', performGlobalSearch);
+        // Wer ins Feld zurueckkehrt (Klick, Strg+K, Shift+Tab), sieht die
+        // Liste mit den Daten von JETZT — der gemerkte Begriff gilt hier
+        // nicht. Die Sperre in performGlobalSearch() ist fuer das 'change'
+        // beim Verlassen des Feldes da; beim Betreten hat das Feld den Fokus,
+        // ein Neuzeichnen nimmt keinem Treffer etwas weg.
+        input.addEventListener('focus', () => {
+            const results = $('global-search-results');
+            if (results) delete results.dataset.begriff;
+            performGlobalSearch();
+        });
+    }
+    // Daten gespeichert (auch Strg+Z/Strg+Y, die im Feld wirken): eine offene
+    // Liste zeichnet sofort neu, solange der Fokus NICHT auf einem Treffer
+    // steht. Sonst zeigte sie Geloeschtes, bis jemand das Feld neu betritt.
+    // Unter einem fokussierten Treffer bleibt sie stehen — Neuzeichnen waere
+    // dort der Wettlauf von vorn; das naechste Betreten zeichnet (oben).
+    if (typeof window.registerPostSaveHook === 'function') {
+        window.registerPostSaveHook(() => {
+            const results = $('global-search-results');
+            if (!results || !results.classList.contains('visible')) return;
+            if (results.contains(document.activeElement)) return;
+            delete results.dataset.begriff;
+            performGlobalSearch();
+        });
     }
 }
 // ============================================================
