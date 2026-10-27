@@ -103,7 +103,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="npc-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'npcs');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
         }
     },
     {
@@ -266,7 +266,7 @@ test.describe('Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben
         await gotoBundleFresh(page);
         await ensureMarkdownShortcutsEnabled(page);
         await openTabInGroup(page, 'npcs');
-        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        await page.click('[data-action="show-new-npc-modal"]');
         const editor = page.locator('#npc-desc');
         await expect(editor).toBeVisible();
         await editor.click();

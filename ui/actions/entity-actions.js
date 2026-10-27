@@ -226,6 +226,7 @@ const EntityActions = {
     },
 
     // NPC actions
+    'show-new-npc-modal': () => showNewNPCModal(),
     'edit-npc': ctx => editNPC(ctx.id),
     'delete-npc': ctx => deleteNPC(ctx.id),
     'toggle-npc-card': ctx => toggleNPCCard(ctx.id),

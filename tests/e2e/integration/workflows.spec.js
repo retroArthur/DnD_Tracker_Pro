@@ -58,7 +58,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('Questgeber');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
 
@@ -212,7 +212,7 @@ test.describe('Komplette Workflows', () => {
 
             // NPC
             await navigateToTab(page, 'npcs');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', searchTerm + '_NPC');
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -298,7 +298,7 @@ test.describe('Komplette Workflows', () => {
             // Dann NPC mit diesem Ort erstellen
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('LinkNPC');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
 
