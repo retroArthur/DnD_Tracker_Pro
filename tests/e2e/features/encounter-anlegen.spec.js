@@ -492,6 +492,19 @@ async function tasteN(page) {
     await page.keyboard.press('n');
 }
 
+/** Echter Klick auf einen Navigationsreiter — die Reiter liegen in Gruppen,
+ *  deren Klappmenue erst aufgehen muss (wie in `notiz-anlegen.spec.js`).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {string} ansicht */
+async function reiter(page, ansicht) {
+    const tab = page.locator(`.nav-tab[data-view="${ansicht}"]`);
+    if (!(await tab.isVisible())) {
+        await page.locator('.nav-group', { has: tab }).locator('.nav-group-btn').click();
+    }
+    await tab.click();
+    await expect(page.locator(`#view-${ansicht}`)).toBeVisible();
+}
+
 /** Befehlspalette → "Neuer Encounter" → Enter.
  *  @param {import('@playwright/test').Page} page */
 async function palette(page) {
@@ -1138,6 +1151,48 @@ test('(10) R2 (Waechter): ein Entwurf ueberlebt Escape und Zuklappen, Taste n, P
     await expect(page.locator('#enc-form')).toHaveClass(/\bopen\b/);
     weich(await formular(page), 'Zuklappen → Kopfzeile').toEqual(entwurf);
 
+    // DIE SCHNELL-VORLAGE IST AUCH EIN ANLEGE-WEG (R1) — und R2 nimmt sie
+    // nicht aus: geleert wird nur ein Bearbeiten-REST, die Ausnahmen sind
+    // allein "+ Neuer Encounter" und der Knopf der leeren Liste. Die Vorlage
+    // setzt ihre eigenen Felder (Name, Werte, Texte); was sie nicht setzt,
+    // bleibt vom Entwurf stehen. Gemessen am ersten Fix-Stand (Gutachten):
+    // die Vorlage leerte auch den Entwurf — Fertigkeiten, Resistenz und
+    // Rettungswurf waren weg. R7 ("erbt nichts vom zuvor BEARBEITETEN") haelt
+    // (12) mit gesetzter ID.
+    await page.locator('#enc-save-con').check();
+    await page.locator('#enc-skills').click();
+    await page.keyboard.type('Heimlichkeit +9');
+    await page.locator('#enc-form .char-section-title').first().click();
+    const vorVorlage = await formular(page);
+    expect(
+        {
+            id: vorVorlage.id,
+            res: vorVorlage.resistenzen,
+            rwKon: vorVorlage.rettungswuerfe[2].startsWith('con:true'),
+            fertigkeiten: /Heimlichkeit \+9/.test(String(vorVorlage.fertigkeiten))
+        },
+        'Vorbedingung: der Entwurf traegt Resistenz, Rettungswurf und Fertigkeiten'
+    ).toEqual({ id: '', res: ['Feuer'], rwKon: true, fertigkeiten: true });
+    await vorlage(page, 'Goblin').click();
+    await expect(page.locator('#enc-name'), 'Vorbedingung: die Vorlage ist geladen').toHaveValue(
+        'Goblin'
+    );
+    const nachVorlage = await formular(page);
+    /** Die Felder, die die Vorlage NICHT setzt.
+     *  @param {Awaited<ReturnType<typeof formular>>} f */
+    const nichtVonDerVorlage = f => ({
+        id: f.id,
+        resistenzen: f.resistenzen,
+        immunitaeten: f.immunitaeten,
+        zustandsimmunitaeten: f.zustandsimmunitaeten,
+        rettungswuerfe: f.rettungswuerfe,
+        fertigkeiten: f.fertigkeiten
+    });
+    weich(
+        nichtVonDerVorlage(nachVorlage),
+        'Entwurf → Schnell-Vorlage: was die Vorlage nicht setzt, bleibt vom Entwurf stehen (R2)'
+    ).toEqual(nichtVonDerVorlage(vorVorlage));
+
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });
 
@@ -1344,6 +1399,72 @@ test('(13) R1 (Kontrolle): ✏️ → Kopfzeile zu → 🗑️ des letzten → "
     await page.reload();
     await waitForAppReady(page);
     weich(await namenInD(page), 'nach dem Neuladen: Namen in D').toEqual(['Neu']);
+
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (14) R1 — ✏️ LIEGT IN EINER ANDEREN ANSICHT, BEFEHLSPALETTE "NEUER ENCOUNTER"
+// ===========================================================================
+//
+// Wie charakter-anlegen (11): das Klappformular bleibt ueber einen
+// Ansichtswechsel unsichtbar aufgeklappt, und die Palette erreicht es von
+// ueberall. Gemessen am ersten Fix-Stand (Gutachten, 1440x900): ✏️ Goblinboss
+// → Reiter Party → Palette "Neuer Encounter" zeigte ID 1 mit allen Werten des
+// Goblinboss; "Neu" → 💾 UEBERSCHRIEB ihn (Undo-Kopf "Gegner bearbeitet").
+// Ein liegengelassenes ✏️ ist ein Rest (R1), keine laufende Eingabe (R3);
+// ein liegengelassener Entwurf ohne ID bleibt (R2).
+test('(14) R1: ✏️ → Reiter Party → Befehlspalette "Neuer Encounter" zeigt ein leeres Formular, 💾 legt NEU an; ein Entwurf bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await encounterLaden(page, [GOBLINBOSS, SCHATTENWOLF]);
+    const goblinboss = await encInD(page, 1);
+
+    await bearbeiten(page, 1);
+    await reiter(page, 'party');
+    await expect(
+        page.locator('#enc-form'),
+        'Vorbedingung: das ✏️ liegt aufgeklappt in der Encounter-Ansicht'
+    ).toHaveClass(/\bopen\b/);
+    await palette(page);
+    await expect(
+        page.locator('#view-encounter'),
+        'die Palette wechselt in die Encounter-Ansicht'
+    ).toBeVisible();
+    weich(
+        await formular(page),
+        'Befehlspalette aus einer anderen Ansicht nach liegengelassenem ✏️: leer, ohne ID'
+    ).toEqual(LEER);
+
+    await expect(page.locator('#enc-form'), 'Vorbedingung: das Formular ist offen').toHaveClass(
+        /\bopen\b/
+    );
+    await page.locator('#enc-name').fill('Neu');
+    await speichern(page, 'Palette aus anderer Ansicht → 💾');
+    await bestand(page, 'nach 💾', ['Goblinboss', 'Schattenwolf', 'Neu'], goblinboss);
+    weich(await undoKopf(page), 'Undo: das Anlegen, kein Bearbeiten').toBe('Gegner erstellt');
+
+    // R2 in derselben Lage: ein Entwurf ohne ID ueberlebt die Palette.
+    await kopfzeile(page).click();
+    await expect(page.locator('#enc-form'), 'Vorbedingung: die Kopfzeile klappt auf').toHaveClass(
+        /\bopen\b/
+    );
+    await page.locator('#enc-name').fill('Entwurf');
+    await page.locator('#enc-hp').fill('42');
+    const entwurf = await formular(page);
+    expect(
+        { offen: entwurf.offen, id: entwurf.id, name: entwurf.name, tp: entwurf.tp },
+        'Vorbedingung: der offene Entwurf'
+    ).toEqual({ offen: true, id: '', name: 'Entwurf', tp: '42' });
+    await reiter(page, 'party');
+    await palette(page);
+    await expect(page.locator('#view-encounter')).toBeVisible();
+    weich(
+        await formular(page),
+        'Befehlspalette aus einer anderen Ansicht bei liegengelassenem Entwurf'
+    ).toEqual(entwurf);
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });

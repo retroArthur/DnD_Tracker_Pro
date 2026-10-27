@@ -425,6 +425,19 @@ async function palette(page, text) {
     await expect(page.locator('.cp-overlay')).toBeHidden();
 }
 
+/** Echter Klick auf einen Navigationsreiter — die Reiter liegen in Gruppen,
+ *  deren Klappmenue erst aufgehen muss (wie in `notiz-anlegen.spec.js`).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {string} ansicht */
+async function reiter(page, ansicht) {
+    const tab = page.locator(`.nav-tab[data-view="${ansicht}"]`);
+    if (!(await tab.isVisible())) {
+        await page.locator('.nav-group', { has: tab }).locator('.nav-group-btn').click();
+    }
+    await tab.click();
+    await expect(page.locator(`#view-${ansicht}`)).toBeVisible();
+}
+
 /** Vorbereitung, nicht die gemessene Handlung: den Fokus aus einem Feld
  *  nehmen, damit eine Taste auf der Seite landet (isTyping-Schranke,
  *  `keyboard-shortcuts.js:249-251` — auch eine Checkbox ist ein INPUT).
@@ -1238,6 +1251,85 @@ test('(10) (Kontrolle): ✏️ → 💾 → Kopfzeile → "Neu" → 💾 legt ne
     weich(await charInD(page, 1), 'D: Aria wie nach dem ersten 💾').toEqual(aria);
     weich(await allesImSpeicher(page), 'localStorage').toEqual(['Aria:Anna', 'Bran:', 'Neu:']);
     weich(await charImSpeicher(page, 1), 'localStorage: Aria').toEqual(aria);
+
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (11) R1 — ✏️ LIEGT IN EINER ANDEREN ANSICHT, BEFEHLSPALETTE "NEUER CHARAKTER"
+// ===========================================================================
+//
+// Ein Klappformular bleibt ueber einen Ansichtswechsel aufgeklappt — UNSICHTBAR,
+// denn die Ansicht ist weg. Die Palette erreicht es von ueberall; sie wechselt
+// erst danach in die Party-Ansicht. Gemessen am ersten Fix-Stand (Gutachten,
+// 1440x900): ✏️ Aria → Reiter Quests → Palette "Neuer Charakter" zeigte das
+// Formular mit ID 1 und allen Werten von Aria unter dem Kopf "+ Charakter
+// hinzufügen"; "Neu" → 💾 UEBERSCHRIEB Aria ("Charakter aktualisiert"). R3
+// schuetzt die LAUFENDE Eingabe — eine, die der Nutzer in einer anderen
+// Ansicht liegengelassen hat, ist ein Rest wie ein per ✕ geschlossenes
+// Modal, und den raeumt jeder Anlege-Weg weg (R1). Danach dieselbe Lage mit
+// einem ENTWURF ohne ID: der bleibt (R2), denn er ist Arbeit des Nutzers.
+test('(11) R1: ✏️ → Reiter Quests → Befehlspalette "Neuer Charakter" zeigt ein leeres Formular, 💾 legt NEU an; ein Entwurf bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page, [ARIA, BRAN]);
+    const aria = await charInD(page, 1);
+
+    await bearbeiten(page, 1);
+    await reiter(page, 'quests');
+    await expect(
+        formularKarte(page),
+        'Vorbedingung: das ✏️ liegt aufgeklappt in der Party-Ansicht'
+    ).toHaveClass(/\bopen\b/);
+    await palette(page, 'Neuer Charakter');
+    await expect(
+        page.locator('#view-party'),
+        'die Palette wechselt in die Party-Ansicht'
+    ).toBeVisible();
+    weich(
+        await formular(page),
+        'Befehlspalette aus einer anderen Ansicht nach liegengelassenem ✏️: leer und im Anlege-Zustand'
+    ).toEqual(LEER);
+
+    await expect(formularKarte(page), 'Vorbedingung: das Formular ist offen').toHaveClass(
+        /\bopen\b/
+    );
+    await page.locator('#char-name').fill('Neu');
+    const stand = await meldungsStand(page);
+    await speichern(page, '"Neu"');
+    weich(await allesInD(page), 'D: Aria und Bran bleiben, "Neu" kommt dazu').toEqual([
+        'Aria:Anna',
+        'Bran:',
+        'Neu:'
+    ]);
+    weich(await charInD(page, 1), 'D: Aria feldgleich').toEqual(aria);
+    weich(await allesImSpeicher(page), 'localStorage').toEqual(['Aria:Anna', 'Bran:', 'Neu:']);
+    weich(await charImSpeicher(page, 1), 'localStorage: Aria feldgleich').toEqual(aria);
+    weich(
+        await meldungenSeit(page, stand),
+        'keine Meldung "Charakter aktualisiert" — es wurde nichts bearbeitet'
+    ).not.toContain('success: Charakter aktualisiert');
+
+    // R2 in derselben Lage: ein Entwurf ohne ID, in der anderen Ansicht
+    // liegengelassen, ueberlebt die Palette.
+    await kopfzeile(page).click();
+    await expect(formularKarte(page), 'die Kopfzeile oeffnet').toHaveClass(/\bopen\b/);
+    await page.locator('#char-name').fill('Entwurf');
+    await page.locator('#char-level').fill('3');
+    const entwurf = await formular(page);
+    expect(
+        { offen: entwurf.offen, id: entwurf.id, name: entwurf.name, stufe: entwurf.stufe },
+        'Vorbedingung: der offene Entwurf'
+    ).toEqual({ offen: true, id: '', name: 'Entwurf', stufe: '3' });
+    await reiter(page, 'quests');
+    await palette(page, 'Neuer Charakter');
+    await expect(page.locator('#view-party')).toBeVisible();
+    weich(
+        await formular(page),
+        'Befehlspalette aus einer anderen Ansicht bei liegengelassenem Entwurf'
+    ).toEqual(entwurf);
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });

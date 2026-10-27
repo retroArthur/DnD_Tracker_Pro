@@ -892,3 +892,119 @@ test('(9) (Kontrolle): ✏️ → 💾 → ✕ → ⚙️ → 💾 legt eine neu
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });
+
+// ===========================================================================
+// (10)(11) DER ZWEITE TAB LOESCHT, DER INDEX BLEIBT IN DER LISTE
+// ===========================================================================
+//
+// Fall (5) misst den zweiten Tab nur dort, wo der Index HINTER das Ende
+// faellt. Liegt er danach noch in der Liste, zeigt er auf eine ANDERE
+// Vorlage — gemessen am ersten Fix-Stand (Gutachten): 💾 ueberschrieb sie
+// mit "Vorlage aktualisiert", ohne Undo. Zwei Lagen, beide im Kern von R4
+// und vom Schlusssatz von R8 ("Speichern ueberschreibt nie eine Vorlage,
+// die niemand bearbeitet hat"), je ein Fall, damit jede fuer sich rot wird:
+//   (10) drueben 🗑️ der BEARBEITETEN selbst (✏️ Segen, Index 1; danach steht
+//        Licht auf Index 1). Segen gibt es nicht mehr → als NEU anlegen, mit
+//        Warnung; Licht bleibt feldgleich.
+//   (11) drueben 🗑️ einer DAVOR (✏️ Segen, Index 1; drueben 🗑️ Fackel →
+//        Segen auf Index 0, Licht auf Index 1). Segen gibt es noch → Segen
+//        wird geaendert, Licht bleibt feldgleich, keine Warnung.
+
+/** Die Warnung "… als neue Vorlage gespeichert" unter den Meldungen.
+ *  @param {string[]} meldungen */
+function warntNeu(meldungen) {
+    return meldungen.some(
+        m => m.startsWith('warning: ') && /neue[rn]?\s+(Timer-)?Vorlage/i.test(m)
+    );
+}
+
+/** Ein zweiter Tab derselben App in der Timer-Ansicht, ohne Saat.
+ *  @param {import('@playwright/test').Page} page */
+async function zweiterTab(page) {
+    const zweiter = await page.context().newPage();
+    const fehlerZwei = fehlerFangen(zweiter);
+    zweiter.on('dialog', d => d.accept());
+    await zweiter.goto(APP_URL);
+    await waitForAppReady(zweiter);
+    await timerAnsicht(zweiter);
+    return { zweiter, fehlerZwei };
+}
+
+test('(10) R4: ✏️ Segen, ein zweiter Tab loescht Segen — 💾 legt Segen neu an und ueberschreibt Licht nicht', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    const { zweiter, fehlerZwei } = await zweiterTab(page);
+
+    await zahnrad(page);
+    expect(await formular(page), 'Vorbedingung: das frische Formular nach ⚙️').toEqual(LEER);
+    await bearbeiten(page, 'Segen');
+    await page.locator('#preset-name').fill('Segen II');
+    await zahnrad(zweiter);
+    await loeschen(zweiter, 'Segen');
+    expect(await imSpeicher(page), 'Vorbedingung: der zweite Tab hat Segen geloescht').toEqual([
+        FACKEL,
+        LICHT
+    ]);
+    await expect(page.locator(MODAL), 'Vorbedingung: hier ist ✏️ Segen noch offen').toHaveClass(
+        /\bshow\b/
+    );
+
+    const meldungen = await speichern(page);
+    const erwartet = [FACKEL, LICHT, { ...SEGEN, name: 'Segen II' }];
+    weich(
+        await imSpeicher(page),
+        'Licht bleibt feldgleich, die Eingabe ist als neue Vorlage gespeichert'
+    ).toEqual(erwartet);
+    weich(aktualisiert(meldungen), 'keine Meldung "aktualisiert"').toEqual([]);
+    weich(
+        warntNeu(meldungen),
+        `die Warnung sagt, dass neu angelegt wurde — gemeldet: ${JSON.stringify(meldungen)}`
+    ).toBe(true);
+
+    await neuLaden(page);
+    weich(await imSpeicher(page), 'Speicher nach dem Neuladen').toEqual(erwartet);
+
+    weich(await fehlerZwei.alle(), 'zweiter Tab: kein Fehler').toEqual([]);
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+test('(11) R8: ✏️ Segen, ein zweiter Tab loescht Fackel davor — 💾 aendert Segen, Licht bleibt feldgleich', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    const { zweiter, fehlerZwei } = await zweiterTab(page);
+
+    await zahnrad(page);
+    await bearbeiten(page, 'Segen');
+    await page.locator('#preset-minutes').fill('2');
+    await zahnrad(zweiter);
+    await loeschen(zweiter, 'Fackel');
+    expect(await imSpeicher(page), 'Vorbedingung: der zweite Tab hat Fackel geloescht').toEqual([
+        SEGEN,
+        LICHT
+    ]);
+
+    const meldungen = await speichern(page);
+    const erwartet = [{ ...SEGEN, minutes: 2 }, LICHT];
+    weich(
+        await imSpeicher(page),
+        'Segen ist geaendert, Licht (nachgerueckt auf den alten Index) bleibt feldgleich'
+    ).toEqual(erwartet);
+    weich(meldungen, 'die Meldung des Bearbeitens').toContain('success: Vorlage aktualisiert');
+    weich(warntNeu(meldungen), 'keine Warnung — Segen gibt es noch').toBe(false);
+
+    await neuLaden(page);
+    weich(await imSpeicher(page), 'Speicher nach dem Neuladen').toEqual(erwartet);
+    weich(await leiste(page), 'die Schnellleiste nach dem Neuladen').toEqual([
+        '✨ Segen',
+        '⏱️ Licht'
+    ]);
+
+    weich(await fehlerZwei.alle(), 'zweiter Tab: kein Fehler').toEqual([]);
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});

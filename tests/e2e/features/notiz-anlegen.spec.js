@@ -608,6 +608,12 @@ test('(1) R1: ✏️ S1 → Kopf zu → Kopf auf → 💾 legt eine NEUE Notiz a
     ).toEqual(S1);
 
     await bearbeiten(page, 1);
+    // Ein angefangener, noch nicht mit Enter uebernommener Tag gehoert zur
+    // Bearbeitung von S1 wie jedes Feld. Gemessen am ersten Fix-Stand
+    // (Gutachten, Rest-Sonde ueber alle acht Formulare): er stand nach dem
+    // Abbruch im neuen Formular, und ein Enter dort machte ihn zum Tag der
+    // NEUEN Notiz — das einzige der acht Formulare mit einem solchen Rest.
+    await page.locator('#session-tags-input').fill('halbfertig');
     await zuklappen(page);
     await aufklappen(page);
     const f = await formular(page);
@@ -615,6 +621,10 @@ test('(1) R1: ✏️ S1 → Kopf zu → Kopf auf → 💾 legt eine NEUE Notiz a
         { id: f.id, reste: resteVon(f, S1) },
         'der Kopf nach abgebrochenem Bearbeiten: keine Bearbeiten-ID, kein Wert von S1'
     ).toEqual({ id: '', reste: [] });
+    weich(
+        await page.locator('#session-tags-input').inputValue(),
+        'der angefangene Tag der abgebrochenen Bearbeitung steht nicht im neuen Formular'
+    ).toBe('');
 
     await eintippen(page, { name: 'Neue Sitzung', datum: '2026-03-01', text: 'Neuer Text' });
     await ruhig(page, 'vor 💾');
@@ -1213,6 +1223,51 @@ test('(10) (Kontrolle): ✏️ → Abbrechen → Kopf und ✏️ → 💾 → Ko
         'Ohne Arc',
         'Wegwerf'
     ]);
+
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (11) R6: DER DATUMSVORSCHLAG FOLGT DEM TAG, EIN GETIPPTES DATUM BLEIBT
+// ===========================================================================
+//
+// Der Wechsel auf "Notizen" schlaegt das heutige Datum vor, wenn das Formular
+// keins hat und keine Notiz bearbeitet. Die App laeuft am Tablet als PWA oft
+// ueber mehrere Spieltage, ohne neu zu laden. Gemessen am ersten Fix-Stand
+// (Gutachten, Uhr der Seite auf 2026-10-20, dann 2026-10-23): der Vorschlag
+// vom 20. blieb stehen — ein automatisch eingesetztes Datum war von einem
+// getippten nicht zu unterscheiden; vor dem Fix setzte jeder Wechsel heute
+// ein. Die Regel: ein VORSCHLAG wird erneuert, ein getipptes Entwurfsdatum
+// und das Datum einer bearbeiteten Notiz (Fall (9)) bleiben.
+test('(11) R6: der Datumsvorschlag wird nach einem Tageswechsel erneuert, ein getipptes Datum bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await page.clock.install({ time: new Date('2026-10-20T10:00:00Z') });
+    await notizenLaden(page);
+    expect(
+        await page.locator('#session-date').inputValue(),
+        'Vorbedingung: der Wechsel auf "Notizen" schlaegt den 20. vor'
+    ).toBe('2026-10-20');
+
+    await reiter(page, 'wiki');
+    await page.clock.setSystemTime(new Date('2026-10-23T10:00:00Z'));
+    await reiter(page, 'notes');
+    weich(
+        await page.locator('#session-date').inputValue(),
+        'drei Tage spaeter, Reiter Wiki → Notizen: der Vorschlag ist der neue Tag'
+    ).toBe('2026-10-23');
+
+    await aufklappen(page);
+    await page.locator('#session-date').fill('2026-03-01');
+    await reiter(page, 'wiki');
+    await page.clock.setSystemTime(new Date('2026-10-24T10:00:00Z'));
+    await reiter(page, 'notes');
+    weich(
+        await page.locator('#session-date').inputValue(),
+        'ein getipptes Datum bleibt ueber einen Tageswechsel stehen'
+    ).toBe('2026-03-01');
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });
