@@ -59,12 +59,29 @@ function renderLinks() {
         )
         .join('');
 }
+/**
+ * Blendet die Link-Karte ein bzw. aus — der Weg BEIDER Anlege-Knoepfe
+ * ("+ Link" und "+ Link hinzufügen" der leeren Liste). Ist die Karte
+ * sichtbar, blendet derselbe Klick sie aus (Umschalter, wie ein
+ * Klappformular: Ausblenden ist ein Abbruch und leert nie).
+ *
+ * Beim EINblenden wird ein Bearbeiten-Rest verworfen (ABBRUCH, Vertrag R1):
+ * vorher leerte die Karte hier nie. Gemessen trug sie nach ✏️ → "+ Link"
+ * (aus) → "+ Link" (ein) — ebenso nach Escape oder einem Ansichtswechsel,
+ * die die Karte gar nicht schliessen — die ID und alle Werte des bearbeiteten
+ * Links unter dem Kopf "Link hinzufügen"; "Speichern" UEBERSCHRIEB ihn
+ * ("Link aktualisiert", in D, im Speicher und nach dem Neuladen), und nach
+ * einem 🗑️ dazwischen war die Eingabe still weg. Geleert wird NUR bei
+ * gesetzter #edit-link-id: ein nie gespeicherter Entwurf ueberlebt
+ * Ausblenden, Escape und Ansichtswechsel weiter (R2).
+ */
 function toggleLinkForm() {
     const form = $('link-form-card');
-    if (form) {
-        const htmlForm = form;
-        htmlForm.style.display = htmlForm.style.display === 'none' ? 'block' : 'none';
-    }
+    if (!form) return;
+    const einblenden = form.style.display === 'none';
+    // cancelLinkEdit() blendet selbst aus — darum VOR dem Setzen unten.
+    if (einblenden && $('edit-link-id')?.value) cancelLinkEdit();
+    form.style.display = einblenden ? 'block' : 'none';
 }
 function saveLink() {
     const D = window.D;
@@ -74,13 +91,26 @@ function saveLink() {
     const urlInput = $('link-url');
     const catInput = $('link-cat');
     const descInput = $('link-desc');
-    const editId = editIdInput?.value || '';
+    let editId = editIdInput?.value || '';
     const title = titleInput?.value.trim() || '';
     const url = urlInput?.value.trim() || '';
     if (!title || !url) {
         showToast('⚠️ Titel und URL erforderlich', 'error');
         return;
     }
+    // Zeigt die ID auf einen Link, den es nicht mehr gibt (geloescht, oder per
+    // Strg+Z zurueckgenommen, waehrend die Karte offen war — die Karte deckt
+    // die Liste nicht ab, 🗑️ bleibt erreichbar), wird als NEUER Link
+    // gespeichert — die Eingaben bleiben erhalten. Vorher fand der
+    // Bearbeiten-Zweig nichts (kein Else-Zweig), schloss die Karte und
+    // speicherte trotzdem: gemessen war die Eingabe still weg, ohne jede
+    // Meldung, mit einem leeren Undo-Eintrag "Link bearbeitet". Geprueft VOR
+    // pushUndo, wie in saveNPC(). Gesucht wird direkt in D.links, NICHT ueber
+    // EntityLookup.link(): dessen Zwischenspeicher ist nach dem Laden
+    // eingeschaltet und haelt einen eben geloeschten Link noch fest.
+    const idx = editId ? D.links.findIndex(l => l.id === parseEntityId(editId)) : -1;
+    const verwaist = Boolean(editId) && idx === -1;
+    if (verwaist) editId = '';
     const linkData = {
         title,
         url,
@@ -89,15 +119,19 @@ function saveLink() {
     };
     pushUndo(editId ? 'Link bearbeitet' : 'Link erstellt');
     if (editId) {
-        const idx = D.links.findIndex(l => l.id === parseInt(editId));
-        if (idx > -1) {
-            D.links[idx] = { ...D.links[idx], ...linkData };
-            showToast('Link aktualisiert');
-        }
+        D.links[idx] = { ...D.links[idx], ...linkData };
+        showToast('Link aktualisiert');
     } else {
         linkData.id = nextId('links');
         D.links.push(linkData);
-        showToast('Link hinzugefügt');
+        if (verwaist) {
+            showToast(
+                'Der bearbeitete Link existiert nicht mehr — als neuer Link gespeichert',
+                'warning'
+            );
+        } else {
+            showToast('Link hinzugefügt');
+        }
     }
     cancelLinkEdit();
     renderLinks();

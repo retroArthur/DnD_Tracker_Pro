@@ -333,6 +333,7 @@ const EntityActions = {
     'remove-relation-modal': ctx => removeRelation(ctx.id, parseInt(ctx.value)),
 
     // Location actions
+    'show-new-location-modal': () => showNewLocationModal(),
     'edit-location': ctx => editLocation(ctx.id),
     'delete-location': ctx => deleteLocation(ctx.id),
     'toggle-location': ctx => toggleLocation(ctx.id),
@@ -342,6 +343,7 @@ const EntityActions = {
     'delete-filter': ctx => deleteFilter(ctx.id),
 
     // Quest actions
+    'show-new-quest-modal': () => showNewQuestModal(),
     'edit-quest': ctx => editQuest(ctx.id),
     'delete-quest': ctx => deleteQuest(ctx.id),
     'toggle-quest-status': ctx => toggleQuestStatus(ctx.id),
@@ -440,6 +442,7 @@ const EntityActions = {
     },
 
     // Spell actions
+    'show-new-spell-modal': () => showNewSpellModal(),
     'edit-spell': ctx => editSpell(ctx.id),
     'delete-spell': ctx => deleteSpell(ctx.id),
     'show-spell-tooltip': ctx => showSpellTooltip(ctx.id, ctx.event),

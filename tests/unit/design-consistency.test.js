@@ -7934,7 +7934,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
                    features/npcs/npc-render.js:382               (heute :390)
                    systems/entity-links.js:430                   (heute :443)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
-                   ui/actions/entity-actions.js:362              (heute :374)
+                   ui/actions/entity-actions.js:362              (heute :376)
                    systems/undo.js:873                           (war :756, :766, :778, :821, dann :864)
            6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
            3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
@@ -10293,7 +10293,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'ui/actions/entity-actions.js',
-            zeile: 374,
+            zeile: 376,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.quest-item',

@@ -175,7 +175,18 @@ function saveCharacter() {
     const D = window.D;
     const renderParty = window.renderParty;
     const idInput = $('edit-char-id');
-    const id = idInput.value;
+    let id = idInput.value;
+    // Zeigt die ID auf einen Charakter, den es nicht mehr gibt (geloescht,
+    // oder per Strg+Z bzw. ↩️ zurueckgenommen, waehrend das Formular offen
+    // war), wird als NEUER Charakter gespeichert — die Eingaben bleiben
+    // erhalten. Vorher legte saveCharacter() den Undo-Eintrag "Charakter
+    // bearbeitet" an, BEVOR es die ID suchte, fand nichts, schrieb nichts und
+    // meldete trotzdem "Charakter aktualisiert" (gemessen: "Neu A (Wirt)"
+    // endgueltig verloren, am Telefon ebenso). Geprueft VOR pushUndo, wie in
+    // saveNPC().
+    const idx = id ? D.characters.findIndex(c => c.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     const languageSelect = $('char-languages');
     const selectedLanguages = Array.from(languageSelect.selectedOptions).map(o => o.value);
     // Collect spell slots (including slot 0 for cantrips)
@@ -300,22 +311,19 @@ function saveCharacter() {
     }
     pushUndo(id ? 'Charakter bearbeitet' : 'Charakter erstellt');
     if (id) {
-        const idx = D.characters.findIndex(c => c.id === parseEntityId(id));
-        if (idx > -1) {
-            // Preserve current slot values when editing
-            const existing = D.characters[idx];
-            if (existing.spellSlots) {
-                for (let i = 0; i <= 9; i++) {
-                    if (
-                        existing.spellSlots[i] &&
-                        ch.spellSlots[i].max === existing.spellSlots[i].max
-                    ) {
-                        ch.spellSlots[i].current = existing.spellSlots[i].current;
-                    }
+        // Preserve current slot values when editing
+        const existing = D.characters[idx];
+        if (existing.spellSlots) {
+            for (let i = 0; i <= 9; i++) {
+                if (
+                    existing.spellSlots[i] &&
+                    ch.spellSlots[i].max === existing.spellSlots[i].max
+                ) {
+                    ch.spellSlots[i].current = existing.spellSlots[i].current;
                 }
             }
-            D.characters[idx] = { ...D.characters[idx], ...ch };
         }
+        D.characters[idx] = { ...D.characters[idx], ...ch };
     } else {
         ch.id = nextId('characters');
         ch.spells = [];
@@ -325,7 +333,14 @@ function saveCharacter() {
     cancelCharEdit();
     renderParty();
     save();
-    showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
+    if (verwaist) {
+        showToast(
+            'Der bearbeitete Charakter existiert nicht mehr — als neuer Charakter gespeichert',
+            'warning'
+        );
+    } else {
+        showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
+    }
 }
 /**
  * Oeffnet das Bearbeitungsformular fuer einen Charakter
@@ -467,7 +482,12 @@ function cancelCharEdit() {
             'char-gm',
             'char-em',
             'char-sm',
-            'char-km'
+            'char-km',
+            // Die Stufe stand nur unter `defaults` — clearFormFields() wendet
+            // die aber nur auf GELISTETE Felder an. Gemessen trug der naechste
+            // neue Charakter nach "Abbrechen" (und nach 💾) Stufe 5 und
+            // Uebungsbonus 3 des zuletzt bearbeiteten.
+            'char-level'
         ],
         selectFields: [
             'char-class',
@@ -496,8 +516,14 @@ function cancelCharEdit() {
         },
         customHandlers: () => {
             updateSpeedDisplay();
+            updateProficiencyBonus();
             clearCharLanguages();
-            clearChipSelection('.cf-chip');
+            // clearChipSelection() haengt selbst ' .cf-chip' an: der Aufruf mit
+            // '.cf-chip' suchte '.cf-chip .cf-chip' und traf nichts — die
+            // Resistenz- und Immunitaets-Chips blieben angehakt und wanderten
+            // in den naechsten neuen Charakter (gemessen: Feuer, Gift).
+            clearChipSelection('#char-resistances');
+            clearChipSelection('#char-immunities');
             resetAttributes(['str', 'dex', 'con', 'int', 'wis', 'cha'], 'char', 10, updateAttrMod);
             clearSpellSlots('char-slot', 9);
             // Clear skill checkboxes (D-03)

@@ -306,8 +306,8 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
  * Renders compact spell slot pips
  */
 function renderCompactSpellSlots(ch) {
-    // Kanonische Datenform (features/party/party-crud.js:186, wie
-    // systems/spellslots/spellslots-ui.js sie liest): ch.spellSlots[level] =
+    // Kanonische Datenform (saveCharacter() in features/party/party-crud.js,
+    // wie systems/spellslots/spellslots-ui.js sie liest): ch.spellSlots[level] =
     // { max, current }. Die initialisierende Hilfsfunktion aus
     // spellslots-ui.js wird hier bewusst NICHT aufgerufen — sie
     // initialisiert/mutiert das Datenobjekt, und eine Renderfunktion darf den

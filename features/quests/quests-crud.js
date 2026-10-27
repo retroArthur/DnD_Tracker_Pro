@@ -11,7 +11,17 @@ function saveQuest() {
     const renderQuests = window.renderQuests;
     const validateAndShowErrors = window.validateAndShowErrors;
     const idInput = $('edit-quest-id');
-    const id = idInput?.value || '';
+    let id = idInput?.value || '';
+    // Zeigt die ID auf eine Quest, die es nicht mehr gibt (geloescht, oder per
+    // Strg+Z zurueckgenommen, waehrend das Formular offen war), wird als NEUE
+    // Quest gespeichert — die Eingaben bleiben erhalten. Vorher fand der
+    // Bearbeiten-Zweig nichts, schrieb nichts und schloss trotzdem, ohne jede
+    // Meldung und mit einem leeren Undo-Eintrag "Quest bearbeitet" (gemessen:
+    // Eingabe still weg, und der leere Eintrag leerte den Wiederholen-Stapel).
+    // Geprueft VOR pushUndo, wie in saveNPC().
+    const idx = id ? D.quests.findIndex(x => x.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     // Collect reward items
     const rewardItemsEl = $('quest-reward-items-list');
     const rewardItems = [];
@@ -49,8 +59,7 @@ function saveQuest() {
     if (!validateAndShowErrors(q, 'quest')) return;
     pushUndo(id ? 'Quest bearbeitet' : 'Quest erstellt');
     if (id) {
-        const idx = D.quests.findIndex(x => x.id === parseEntityId(id));
-        if (idx > -1) D.quests[idx] = { ...D.quests[idx], ...q };
+        D.quests[idx] = { ...D.quests[idx], ...q };
     } else {
         q.id = nextId('quests');
         D.quests.push(q);
@@ -59,6 +68,14 @@ function saveQuest() {
     clearQuestForm();
     renderQuests();
     save();
+    // Nur die Warnung: eine Erfolgsmeldung hatte saveQuest() nie, und eine
+    // neue gehoert nicht in diese Behebung.
+    if (verwaist) {
+        showToast(
+            'Die bearbeitete Quest existiert nicht mehr — als neue Quest gespeichert',
+            'warning'
+        );
+    }
 }
 /**
  * Opens the edit modal for a quest
@@ -88,13 +105,18 @@ function editQuest(id) {
         });
     }
     // Set dropdowns (with timeout so they are filled)
+    // Auch die LEERE Auswahl ausdruecklich setzen: populateQuestSelects() haelt
+    // beim Neubefuellen den bisherigen Wert. Vorher setzte dieser Block nur
+    // wahre Werte — gemessen trug ✏️ Botengang (ohne Geber, Ort, Ziel) nach
+    // abgebrochenem ✏️ Drachenjagd deren Geber 1, Ort 1, Ziel 2, und 💾 schrieb
+    // sie in Botengang; ebenso die Auswahl eines Anlege-Entwurfs.
     setTimeout(() => {
         const giverSelect = $('quest-giver');
         const locationSelect = $('quest-location');
         const targetSelect = $('quest-target');
-        if (q.giverId && giverSelect) giverSelect.value = String(q.giverId);
-        if (q.locationId && locationSelect) locationSelect.value = String(q.locationId);
-        if (q.targetId && targetSelect) targetSelect.value = String(q.targetId);
+        if (giverSelect) giverSelect.value = q.giverId ? String(q.giverId) : '';
+        if (locationSelect) locationSelect.value = q.locationId ? String(q.locationId) : '';
+        if (targetSelect) targetSelect.value = q.targetId ? String(q.targetId) : '';
     }, 10);
 
     // Show markdown export/import buttons when editing
@@ -103,6 +125,28 @@ function editQuest(id) {
         markdownActions.style.display = 'block';
     }
 
+    showModal('quest-modal');
+}
+/**
+ * Oeffnet das Quest-Formular zum Anlegen — der Weg aller vier Anlegen-Knoepfe
+ * ("+ Quest", Knopf der leeren Liste, Taste n, Befehlspalette "Neue Quest").
+ * Vorher oeffneten sie per showModal('quest-modal') das Formular mit dem, was
+ * ein abgebrochenes Bearbeiten (✕ oder Escape) darin liess, samt
+ * #edit-quest-id: gemessen UEBERSCHRIEB das naechste "Anlegen" die zuletzt
+ * bearbeitete Quest (Geber, Ort, Ziel, Gold, Items blieben stehen, nur der
+ * Titel wechselte) — in D, im Speicher und nach dem Neuladen, ohne Meldung.
+ * Geleert wird NUR bei einem solchen Rest; ein echter Anlegen-Entwurf
+ * ueberlebt ein versehentliches Escape weiter. clearQuestForm() blendet auch
+ * die Markdown-Knoepfe aus, die sonst den alten Eintrag exportierten.
+ *
+ * Ist das Formular OFFEN, ist #edit-quest-id kein Rest, sondern die laufende
+ * Bearbeitung — dann tut der Weg nichts (wie showNewNPCModal()). Gemessen
+ * erreichen Taste n (Fokus auf BODY nach einem Klick auf eine Beschriftung)
+ * und die Befehlspalette diesen Weg bei offenem ✏️.
+ */
+function showNewQuestModal() {
+    if ($('quest-modal')?.classList.contains('show')) return;
+    if ($('edit-quest-id')?.value) clearQuestForm();
     showModal('quest-modal');
 }
 /**
@@ -228,3 +272,5 @@ window.editQuest = editQuest;
 window.deleteQuest = deleteQuest;
 window.populateQuestSelects = populateQuestSelects;
 window.addQuestRewardItem = addQuestRewardItem;
+// Verbraucher: features/command-palette/action-registry.js ("Neue Quest").
+window.showNewQuestModal = showNewQuestModal;

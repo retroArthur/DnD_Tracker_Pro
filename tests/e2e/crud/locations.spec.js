@@ -27,7 +27,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const locName = generateTestName('MinLoc');
 
             // Modal öffnen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
 
             // Name ausfüllen
@@ -44,7 +44,7 @@ test.describe('Locations - CRUD Operationen', () => {
         test('Ort mit Beschreibung erstellen', async ({ page }) => {
             const locName = generateTestName('DescLoc');
 
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'loc-name', locName);
@@ -69,7 +69,7 @@ test.describe('Locations - CRUD Operationen', () => {
         });
 
         test('Ort ohne Namen zeigt Fehlermeldung', async ({ page }) => {
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
 
             // Nur Beschreibung, kein Name
@@ -92,7 +92,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const locName = generateTestName('ListLoc');
 
             // Ort erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -107,13 +107,13 @@ test.describe('Locations - CRUD Operationen', () => {
             const loc2 = generateTestName('SearchLoc_Stadt');
 
             // Zwei Orte erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', loc1);
             await page.click('[data-action="call"][data-value="saveLocation"]');
             await page.waitForTimeout(500);
 
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', loc2);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -132,7 +132,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const locName = generateTestName('DetailLoc');
 
             // Ort erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -154,7 +154,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const newName = generateTestName('EditedLoc');
 
             // Ort erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -183,7 +183,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const locName = generateTestName('DeleteLoc');
 
             // Ort erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -207,7 +207,7 @@ test.describe('Locations - CRUD Operationen', () => {
             const locName = generateTestName('UndoLoc');
 
             // Ort erstellen
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -248,7 +248,7 @@ test.describe('Locations - CRUD Operationen', () => {
             await navigateToTab(page, 'locations');
             const locName = generateTestName('NPCLoc');
 
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
 
