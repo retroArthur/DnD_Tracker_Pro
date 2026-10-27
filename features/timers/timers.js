@@ -71,6 +71,18 @@ function setPresetEmoji(emoji) {
     const input = $('preset-emoji');
     if (input) input.value = emoji;
 }
+/**
+ * Liest einen Vorlagen-INDEX ("0", "2" oder 0) — keine Entity-ID. Darum nicht
+ * parseEntityId(): die Katalogregel von ABBRUCH lautet "Ein Index ist keine
+ * ID", und ein gemeinsamer Leser laedt den naechsten Leser ein, beides zu
+ * verwechseln. Nur ganze Zahlen ab 0, sonst null.
+ * @param {unknown} wert
+ * @returns {number|null}
+ */
+function leseVorlagenIndex(wert) {
+    const text = String(wert ?? '').trim();
+    return /^\d+$/.test(text) ? Number(text) : null;
+}
 function saveTimerPreset() {
     const editIndexInput = $('edit-preset-index');
     const nameInput = $('preset-name');
@@ -103,18 +115,43 @@ function saveTimerPreset() {
     }
     const presets = getTimerPresets();
     const presetData = { name, emoji, hours, minutes, seconds };
-    // Der Bearbeiten-Zustand ist ein Array-INDEX, keine ID. Liegt er ausserhalb
-    // der Liste (ein zweiter Tab hat die Vorlage geloescht, waehrend das
-    // Formular hier offen war — Vorlagen liegen nicht in D und haben kein
-    // Undo), wird als NEUE Vorlage angelegt, mit Warnung (Vertrag R4).
-    // Vorher schrieb `presets[parseInt(editIndex)] = …` blind: ein Index gleich
-    // der Laenge hing zufaellig richtig an, meldete aber "Vorlage
+    // Der Bearbeiten-Zustand ist ein Array-INDEX, keine ID — und Vorlagen
+    // liegen nicht in D, haben kein Undo und werden von einem zweiten Tab
+    // derselben App mitgeschrieben (getTimerPresets() liest jedes Mal frisch).
+    // Darum zaehlt nicht der Index allein, sondern die Vorlage, die ✏️ geladen
+    // hat (`data-vorlage`, editTimerPreset()):
+    //   - steht sie noch auf dem Index → dort bearbeiten;
+    //   - ist sie nach vorn gerueckt (drueben wurde eine DAVOR geloescht) →
+    //     dort bearbeiten; gesucht wird abwaerts ab dem Index, so trifft es
+    //     bei gleichen Vorlagen die naechstgelegene;
+    //   - gibt es sie nicht mehr → als NEUE Vorlage anlegen, mit Warnung
+    //     (Vertrag R4). Das gilt auch, wenn drueben jemand GENAU sie
+    //     geaendert hat — die fremde Aenderung bleibt stehen.
+    // Vorher schrieb `presets[parseInt(editIndex)] = …` blind: ein Index
+    // gleich der Laenge hing zufaellig richtig an, meldete aber "Vorlage
     // aktualisiert"; ein Index dahinter riss ein Loch (`[Fackel, null, neu]`).
-    const index = editIndex === '' ? null : parseEntityId(editIndex);
-    const bearbeiten = index !== null && index >= 0 && index < presets.length;
+    // Der erste Fix-Stand pruefte nur "Index in der Liste" — gemessen
+    // ueberschrieb 💾 nach 🗑️ der bearbeiteten (oder einer davor) im zweiten
+    // Tab die NACHGERUECKTE Vorlage, mit "Vorlage aktualisiert".
+    const index = leseVorlagenIndex(editIndex);
+    const geladen = editIndexInput.dataset.vorlage || '';
+    const istGeladen = i => !geladen || JSON.stringify(presets[i]) === geladen;
+    let ziel = -1;
+    if (index !== null) {
+        if (index < presets.length && istGeladen(index)) ziel = index;
+        else if (geladen) {
+            for (let i = Math.min(index, presets.length) - 1; i >= 0; i--) {
+                if (istGeladen(i)) {
+                    ziel = i;
+                    break;
+                }
+            }
+        }
+    }
+    const bearbeiten = ziel !== -1;
     const verwaist = editIndex !== '' && !bearbeiten;
     if (bearbeiten) {
-        presets[index] = presetData;
+        presets[ziel] = presetData;
         showToast('Vorlage aktualisiert');
     } else {
         presets.push(presetData);
@@ -136,7 +173,11 @@ function editTimerPreset(index) {
     const presets = getTimerPresets();
     const p = presets[index];
     if (!p) return;
-    $('edit-preset-index').value = String(index);
+    const indexInput = $('edit-preset-index');
+    indexInput.value = String(index);
+    // Was geladen wurde — saveTimerPreset() erkennt daran, ob der Index noch
+    // auf DIESE Vorlage zeigt (ein zweiter Tab kann loeschen, siehe dort).
+    indexInput.dataset.vorlage = JSON.stringify(p);
     $('preset-name').value = p.name || '';
     $('preset-emoji').value = p.emoji || '';
     $('preset-hours').value = String(p.hours || 0);
@@ -188,6 +229,8 @@ function clearPresetForm() {
             'preset-seconds': '0'
         },
         customHandlers: () => {
+            const indexInput = $('edit-preset-index');
+            if (indexInput) delete indexInput.dataset.vorlage;
             const saveBtn = $('preset-save-btn');
             const cancelBtn = $('preset-cancel-btn');
             if (saveBtn) saveBtn.textContent = 'Vorlage hinzufügen';
@@ -209,8 +252,8 @@ function deleteTimerPreset(index) {
     // selbst geloescht → Formular leer; eine davor → der Index rueckt um eins
     // nach; eine dahinter → nichts zu tun.
     const editIndexInput = $('edit-preset-index');
-    const bearbeitet = editIndexInput?.value ? parseEntityId(editIndexInput.value) : null;
-    const geloescht = parseEntityId(index);
+    const bearbeitet = leseVorlagenIndex(editIndexInput?.value);
+    const geloescht = leseVorlagenIndex(index);
     if (bearbeitet !== null && geloescht !== null) {
         if (bearbeitet === geloescht) clearPresetForm();
         else if (bearbeitet > geloescht) editIndexInput.value = String(bearbeitet - 1);

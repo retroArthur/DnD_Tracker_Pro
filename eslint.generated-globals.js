@@ -955,6 +955,7 @@ export default {
     "lazyLoadObserver": 'readonly',
     "lazyObserver": 'writable',
     "leereKampfprotokollNachLoeschung": 'readonly',
+    "leseVorlagenIndex": 'readonly',
     "listSoundBlobs": 'readonly',
     "load": 'readonly',
     "loadFromIndexedDBFallback": 'readonly',
