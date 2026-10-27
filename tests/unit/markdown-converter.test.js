@@ -341,3 +341,88 @@ describe('Übereinstimmung: renderMarkdownInContent() und markdownToHtml() verha
         expect(markdownToHtml(input)).toBe(renderMarkdownInContent(input));
     });
 });
+
+// ============================================================
+// MARKDOWN (2026-10-27): Zeilenumbrueche und Unterstreichung ueberstehen die
+// Rundreise htmlToMarkdown() -> markdownToHtml(), und eine zweite aendert nichts
+// ============================================================
+// Gemessen am Buendel (tests/e2e/features/markdown-austausch.spec.js (17)):
+// Enter im Editor schreibt <br>. htmlToMarkdown() schrieb ihn als "\n", und
+// markdownToHtml() liess ein einzelnes "\n" als Leerraum stehen; Fett/Kursiv
+// lasen textContent und verschluckten <br> ganz ("einszwei"); <u> fiel weg.
+// Hier dieselben Regeln am echten Modul, mit dem DOM der jsdom-Umgebung.
+describe('MARKDOWN: Rundreise htmlToMarkdown() -> markdownToHtml() (echtes Modul)', () => {
+    function loadMitDom() {
+        const context = {
+            window: {
+                // Nur die Normalisierung des HTML-Parsers, wie sie sanitizeHTML()
+                // ueber DOMParser mitbringt — die Erlaubnisliste misst hier nichts.
+                sanitizeHTML: html => {
+                    const huelle = document.createElement('div');
+                    huelle.innerHTML = html;
+                    return huelle.innerHTML;
+                }
+            },
+            document,
+            Node,
+            console
+        };
+        vm.createContext(context);
+        vm.runInContext(fs.readFileSync(MARKDOWN_CONVERTER_PATH, 'utf8'), context, {
+            filename: MARKDOWN_CONVERTER_PATH
+        });
+        return context;
+    }
+    const { htmlToMarkdown, markdownToHtml } = loadMitDom();
+    const rundreise = html => markdownToHtml(htmlToMarkdown(html).trim());
+
+    test.each([
+        ['Zeile eins<br>Zeile zwei', 'Zeile eins\nZeile zwei'],
+        ['Absatz eins<br><br>Absatz zwei', 'Absatz eins\n\nAbsatz zwei'],
+        ['vor <u>unter</u> nach', 'vor <u>unter</u> nach'],
+        ['<b>eins<br>zwei</b>', '**eins**\n**zwei**'],
+        ['<b>fett <i>und kursiv</i></b>', '**fett *und kursiv***'],
+        ['<b><u>beides</u></b>', '**<u>beides</u>**'],
+        ['a<b> b </b>c', 'a **b** c'],
+        ['Text<h2>Titel</h2>mehr', 'Text\n\n## Titel\n\nmehr'],
+        ['<h2>Titel</h2><br>mehr', '## Titel\n\n\nmehr'],
+        ['<ul><li>a</li><li>b</li></ul>Text', '- a\n- b\n\nText'],
+        ['<ul><li>eins<br>zwei</li></ul>', '- eins zwei'],
+        [
+            '<div class="read-aloud">Zeile <b>eins</b><br>Zeile zwei</div>',
+            ':::read-aloud\nZeile **eins**\nZeile zwei\n:::'
+        ]
+    ])('%s -> Markdown %j', (html, markdown) => {
+        expect(htmlToMarkdown(html).trim()).toBe(markdown);
+    });
+
+    test.each([
+        'Zeile eins<br>Zeile zwei',
+        'Absatz eins<br><br>Absatz zwei',
+        'vor <u>unter</u> nach',
+        '<b>fett <i>und kursiv</i></b>',
+        '<h2>Titel</h2>mehr',
+        '<h2>Titel</h2><br>mehr',
+        'Text<br><br><h2>Titel</h2>',
+        '<ul><li>a</li><li>b</li></ul>Text',
+        '<ul><li>a</li><li>b</li></ul><br>Text',
+        '<div class="read-aloud">Zeile <b>eins</b><br>Zeile zwei</div>danach'
+    ])('%s kommt Zeichen fuer Zeichen zurueck', html => {
+        expect(rundreise(html)).toBe(html);
+    });
+
+    test('Fett ueber zwei Zeilen wird je Zeile gesetzt, und dabei bleibt es', () => {
+        const einmal = rundreise('<b>eins<br>zwei</b>');
+        expect(einmal).toBe('<b>eins</b><br><b>zwei</b>');
+        expect(rundreise(einmal)).toBe(einmal);
+    });
+
+    test('ein einzelnes "\n" ist ein <br>, an Bloecken ist es die Blockgrenze', () => {
+        expect(markdownToHtml('a\nb')).toBe('a<br>b');
+        expect(markdownToHtml('## X\nText')).toBe('<h2>X</h2>Text');
+        expect(markdownToHtml('Text\n- a\n- b')).toBe('Text<ul><li>a</li><li>b</li></ul>');
+        expect(markdownToHtml('> a\n> b')).toBe(
+            '<blockquote>a</blockquote><br><blockquote>b</blockquote>'
+        );
+    });
+});

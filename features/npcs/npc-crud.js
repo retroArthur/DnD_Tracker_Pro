@@ -229,9 +229,11 @@ function editNPC(id) {
     $('npc-relations').value = (n.relationships || []).join(', ');
     $('npc-desc').innerHTML = sanitizeHTML(n.description) || '';
     // Location, Filter und Fraktion nach kleiner Verzögerung setzen (damit Optionen geladen sind)
+    // Leere Werte AUSDRUECKLICH setzen: populateSelects() haelt seit MARKDOWN
+    // die Auswahl, sonst bliebe die des zuletzt bearbeiteten NPC stehen.
     setTimeout(() => {
-        if (n.locationId) $('npc-location').value = String(n.locationId);
-        if (n.filterId) $('npc-filter').value = String(n.filterId);
+        $('npc-location').value = n.locationId ? String(n.locationId) : '';
+        $('npc-filter').value = n.filterId ? String(n.filterId) : '';
         // factionId (WELT-05): defensiv — Select existiert nur wenn Fraktionen-Feature geladen
         if (n.factionId) {
             const fSel = $('npc-faction');
