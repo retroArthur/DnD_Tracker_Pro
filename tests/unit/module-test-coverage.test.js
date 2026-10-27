@@ -211,8 +211,14 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/locations/locations-crud.js',
     'features/loot-distribution.js',
     'features/npc-generator/npc-default-tables.js',
-    'features/npc-generator/npc-generator.js',
-    'features/npcs/npc-crud.js',
+    // -- 2026-10-27, NPC: 'features/npc-generator/npc-generator.js' und
+    //    'features/npcs/npc-crud.js' sind hier GESTRICHEN.
+    //    tests/e2e/features/npc-formular.spec.js faehrt am gebauten Buendel
+    //    mit echten Klicks ✏️ → 💾, die vier Anlegen-Wege, das Entfernen von
+    //    Dialogen und Triggern und den 🎲-Generator bis "Als NPC speichern",
+    //    und urteilt ueber jedes Feld des NPC in D, im Speicher und nach dem
+    //    Neuladen. Ohne saveNPC()/editNPC() bzw. saveGeneratedNPC() waere
+    //    keiner der Faelle erklaerbar. Die Liste darf nur schrumpfen.
     'features/npcs/npc-interactions.js',
     'features/npcs/npc-popup.js',
     'features/party/party-crud.js',
