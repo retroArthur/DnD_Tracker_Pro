@@ -390,6 +390,7 @@ if (end - start > MAX_RANGE_SIZE) {
 
 **Performance Improvements:**
 - Initiative render: 150ms → <50ms (66% faster) with 10 combatants
+    - _Berichtigt (RUECKSPRUNG, 2026-10-27):_ Dieser Gewinn war nie gemessen. `renderInit()` ruft `EntityLookup.get()` gar nicht auf, der Cache konnte hier nichts sparen. Der Cache ist entfernt, siehe Phase 4 und `docs/bugfixes.md`.
 - Spell filtering: 250ms → <100ms (60% faster) with 500 spells
 - Backup operations: 30-50% faster with structuredClone
 - AoE updates: Smooth with debouncing (no more lag)
