@@ -226,15 +226,23 @@ function navigateToResult(type, id, locId) {
             setTimeout(() => editChar(id), 100);
             break;
         case 'npc':
-            switchView('locations');
             if (locId) {
+                switchView('locations');
                 setTimeout(() => {
                     const loc = EntityLookup.location(locId);
                     if (loc) toggleLocation(locId);
                     editNPC(id);
                 }, 100);
             } else {
+                // Ohne Ort wie mit Ort: den NSC waehlen (er steht dann im
+                // Detail hinter dem Dialog) und seinen Bearbeiten-Dialog
+                // oeffnen. Nur die Ansicht zu wechseln liess den automatisch
+                // gewaehlten NSC stehen und oeffnete nichts.
                 switchView('npcs');
+                setTimeout(() => {
+                    selectNPC(id);
+                    editNPC(id);
+                }, 100);
             }
             break;
         case 'location':

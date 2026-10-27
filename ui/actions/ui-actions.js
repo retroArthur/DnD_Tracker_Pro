@@ -28,13 +28,13 @@ const UIActions = {
         navigateToEntityInPlace(ctx.type, ctx.id);
     },
     'navigate-result': ctx => {
-        const locId = ctx.target.dataset.loc || null;
-        navigateToResult(ctx.type, ctx.id, locId === '' ? null : locId);
+        // data-loc traegt "null" als TEXT fuer "kein Ort" — darum wie data-id parsen
+        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
     },
     'mobile-search-navigate': ctx => {
         hideModal('mobile-search-modal');
-        const locId = ctx.target.dataset.loc || null;
-        navigateToResult(ctx.type, ctx.id, locId === '' ? null : locId);
+        // Derselbe Ort-Wert wie bei navigate-result: "null" ist kein Ort
+        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
     },
     'tag-search-navigate': ctx => {
         hideModal('tag-search-modal');
