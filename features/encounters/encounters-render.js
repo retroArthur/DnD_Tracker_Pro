@@ -290,8 +290,8 @@ function selectEncounter(id, scroll = true) {
  * Auswahl, das Detail steht daneben. Bis 900px ist das Detail ausgeblendet —
  * dort oeffnet es bildschirmfuellend, Liste, Werkzeugleiste und Anlegekarte
  * treten zurueck (`.enc-view.detail-open`, encounters.css). Automatische
- * Auswahlen (renderEncounters, Suche, Filter) rufen selectEncounter allein
- * und oeffnen nichts.
+ * Auswahlen (renderEncounters, Listensuche, Filter) rufen selectEncounter
+ * allein und oeffnen nichts; ein Treffer der Kopfsuche zaehlt als Tap.
  */
 function openEncounterDetail(id) {
     selectEncounter(id);
@@ -622,6 +622,10 @@ window.toggleEncounterCard = toggleEncounterCard;
 window.showEncForm = showEncForm;
 // Verbraucher: ui/actions/entity-actions.js (select-encounter,
 // close-encounter-detail), features/encounters/encounters-crud.js (editEnc,
-// deleteEnc), systems/entity-links.js (navigateToEntity).
+// deleteEnc), systems/entity-links.js (navigateToEntity),
+// systems/search/global-search.js (navigateToResult).
+// toggleEncounter() hat genau einen Verbraucher, navigateToResult(); der ruft
+// sie ohne window-Export (Export-Audit-Regel). ESLint meldet die Funktion
+// trotzdem als unbenutzt — es prueft je Datei. Kein toter Code.
 window.openEncounterDetail = openEncounterDetail;
 window.closeEncounterDetail = closeEncounterDetail;

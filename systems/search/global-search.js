@@ -242,6 +242,16 @@ function navigateToResult(type, id, locId) {
             switchView('spells');
             setTimeout(() => editSpell(id), 100);
             break;
+        case 'encounter':
+            // Wie der Ortszweig: toggleEncounter() setzt den Typfilter auf
+            // "Alle" (sonst stuende das Ziel nicht in der Liste, und die
+            // Auswahl spraenge beim naechsten Zeichnen zurueck), waehlt,
+            // scrollt und zeigt den Goldschein. openEncounterDetail() oeffnet
+            // bis 900 px das Vollbild — dort ist das Detail sonst ausgeblendet.
+            switchView('encounter');
+            toggleEncounter(id);
+            openEncounterDetail(id);
+            break;
     }
 }
 // Close search on click outside
