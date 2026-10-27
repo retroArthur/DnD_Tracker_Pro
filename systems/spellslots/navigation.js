@@ -45,15 +45,25 @@ function switchView(name) {
         }
     }
     // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
-    // Das Datum wird nur VORGESCHLAGEN, wenn das Notizformular keins hat und
-    // keine Notiz bearbeitet (ABBRUCH, Vertrag R6). Vorher setzte jeder
-    // Wechsel auf "Notizen" heute ein — gemessen auch bei offenem ✏️: S1 vom
-    // 2026-01-10 wurde nach Wiki → Notizen → 💾 mit dem heutigen Datum
-    // gespeichert. Ein getipptes Entwurfsdatum bleibt aus demselben Grund.
+    // Das Datum wird nur VORGESCHLAGEN, wenn keine Notiz bearbeitet wird und
+    // das Feld leer ist oder noch den eigenen Vorschlag traegt (ABBRUCH,
+    // Vertrag R6). Vorher setzte jeder Wechsel auf "Notizen" heute ein —
+    // gemessen auch bei offenem ✏️: S1 vom 2026-01-10 wurde nach Wiki →
+    // Notizen → 💾 mit dem heutigen Datum gespeichert. Ein getipptes
+    // Entwurfsdatum bleibt aus demselben Grund. Der Vorschlag ist in
+    // `data-vorschlag` vermerkt, damit er einem Tageswechsel folgt: der erste
+    // Fix-Stand schlug nur fuer ein LEERES Feld vor, und in einem Tab, der
+    // ueber Tage offen bleibt (PWA am Tablet), stand dann der Vorschlag vom
+    // ersten Tag (gemessen: 20. → 23., das Feld blieb beim 20.).
     if (name === 'notes') {
         const sessionDate = $('session-date');
-        if (sessionDate && !sessionDate.value && !$('edit-session-id')?.value) {
-            sessionDate.value = new Date().toISOString().split('T')[0];
+        if (sessionDate && !$('edit-session-id')?.value) {
+            const vorschlag = sessionDate.dataset.vorschlag;
+            if (!sessionDate.value || sessionDate.value === vorschlag) {
+                const heute = new Date().toISOString().split('T')[0];
+                sessionDate.value = heute;
+                sessionDate.dataset.vorschlag = heute;
+            }
         }
     }
     // NEW: Use tab registry to render content
@@ -147,7 +157,8 @@ const KLAPPFORMULAR_BEARBEITEN = {
 };
 /**
  * Verwirft den Bearbeiten-Rest eines Klappformulars (ID gesetzt → dessen
- * Leeren-Funktion). Nur fuer toggleCollapse() beim Aufklappen.
+ * Leeren-Funktion). Fuer toggleCollapse() beim Aufklappen und fuer
+ * showNewCollapsibleForm() bei einem Formular in einer anderen Ansicht.
  * @param {string} id
  */
 function verwirfBearbeitenRest(id) {
@@ -191,11 +202,30 @@ function toggleCollapse(id) {
  * nichts (Vertrag R3, wie showNewNPCModal()); ist es zu, klappt
  * toggleCollapse() es auf und verwirft dabei einen Bearbeiten-Rest.
  * Die Kopfzeile bleibt ein Umschalter.
+ *
+ * "Offen" heisst SICHTBAR offen. Ein Klappformular bleibt ueber einen
+ * Ansichtswechsel aufgeklappt, und die Palette erreicht es von ueberall — sie
+ * ruft diese Funktion VOR switchView(). Gemessen: ✏️ Aria → Reiter Quests →
+ * Palette "Neuer Charakter" zeigte ID 1 mit allen Werten von Aria, und "Neu"
+ * → 💾 UEBERSCHRIEB Aria (ebenso ✏️ Goblinboss → Reiter Party → "Neuer
+ * Encounter", Undo "Gegner bearbeitet"). Ein ✏️, das in einer anderen Ansicht
+ * liegt, ist darum ein Rest wie ein per ✕ geschlossenes Modal (R1): es wird
+ * verworfen, und das Formular steht danach offen und leer. Ein Entwurf ohne
+ * ID bleibt auch dort stehen (R2) — er ist Arbeit des Nutzers.
  * @param {string} id
  */
 function showNewCollapsibleForm(id) {
     const el = $(id);
-    if (!el || el.classList.contains('open')) return;
+    if (!el) return;
+    if (el.classList.contains('open')) {
+        // Ohne umgebende Ansicht (Einzeltest) gilt das Formular als sichtbar.
+        const ansicht = el.closest('.view');
+        if (!ansicht || ansicht.classList.contains('active')) return;
+        verwirfBearbeitenRest(id);
+        // Die Leeren-Funktionen klappen selbst zu; ist es noch offen, war es
+        // ein Entwurf (oder ist schon leer) — nichts weiter zu tun.
+        if (el.classList.contains('open')) return;
+    }
     toggleCollapse(id);
 }
 // #quicknotes-modal geht NICHT durch showModal/hideModal — es traegt

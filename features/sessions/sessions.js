@@ -15,13 +15,17 @@ function getStoryArcs() {
 // Baut die Arc-Auswahl des Notizformulars und den Arc-Filter neu und HAELT
 // dabei die Auswahl, solange es ihre Option noch gibt (ABBRUCH, Vertrag R6;
 // Muster neuBefuellen in populateSelects(), navigation.js). Aufgerufen beim
-// Aufklappen des Formulars (toggleCollapse), von addStoryArc() und
-// deleteStoryArc(). Vorher stand die Auswahl danach auf '' — gemessen nach
-// ✏️ S1 → ⚙️ → Arc anlegen bzw. einen ANDEREN Arc loeschen, ebenso fuer einen
-// Entwurf beim Zu-/Aufklappen; 💾 schrieb arcId null. Den Arc-Filter haelt
-// dieselbe Regel: er fiel sonst auf "Alle", obwohl die Liste gefiltert blieb
-// (laut Quelltext — addStoryArc() und editSession() zeichnen sie nicht neu).
-// Ein geloeschter Arc faellt weiter auf '' zurueck: seine Option ist weg.
+// Aufklappen des Formulars (toggleCollapse), von addStoryArc(),
+// deleteStoryArc(), saveSession(), editSession() und initSessionsEnhanced().
+// editSession() ruft es VOR dem Setzen des Arcs: der Select traegt dazwischen
+// kurz die Auswahl der vorigen Eingabe, und editSession() setzt den Wert der
+// Notiz danach ausdruecklich. Vorher stand die Auswahl nach einem Neubau auf
+// '' — gemessen nach ✏️ S1 → ⚙️ → Arc anlegen bzw. einen ANDEREN Arc
+// loeschen, ebenso fuer einen Entwurf beim Zu-/Aufklappen; 💾 schrieb arcId
+// null. Den Arc-Filter haelt dieselbe Regel: er fiel sonst auf "Alle", obwohl
+// die Liste gefiltert blieb (laut Quelltext — addStoryArc() und
+// editSession() zeichnen sie nicht neu). Ein geloeschter Arc faellt weiter
+// auf '' zurueck: seine Option ist weg.
 function renderStoryArcSelects() {
     const arcOptionen = getStoryArcs()
         .map(a => `<option value="${a.id}">${esc(a.name)}</option>`)
@@ -479,6 +483,11 @@ function cancelSessionEdit() {
     if (textInput) textInput.innerHTML = '';
     currentSessionTags = [];
     renderCurrentSessionTags();
+    // Auch ein angefangener, nicht mit Enter uebernommener Tag gehoert zur
+    // verworfenen Eingabe. Vorher stand er im naechsten Formular, und ein
+    // Enter dort machte ihn zum Tag der NEUEN Notiz (gemessen, ABBRUCH).
+    const tagInput = $('session-tags-input');
+    if (tagInput) tagInput.value = '';
     const formTitle = $('session-form-title');
     if (formTitle) formTitle.textContent = '+ Neue Session-Notiz';
     // Formular einklappen

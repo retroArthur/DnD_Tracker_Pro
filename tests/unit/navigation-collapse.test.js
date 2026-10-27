@@ -27,12 +27,17 @@
  *       und das Formular steht danach OFFEN (die Leeren-Funktionen klappen
  *       selbst zu); Zuklappen und ein Entwurf ohne ID leeren nie.
  *       `showNewCollapsibleForm()` (Taste n, Befehlspalette) tut bei offenem
- *       Formular nichts. Und jede aufgeschobene Referenz der Tabelle
- *       `KLAPPFORMULAR_BEARBEITEN` nennt eine Funktion, die ein geladenes
- *       Modul deklariert — eine Umbenennung waere sonst ein stilles No-op.
- *   (4) DATUM DER NOTIZ (ABBRUCH, R6) — `switchView('notes')` schlaegt heute
- *       nur fuer ein leeres Datum ohne Bearbeiten vor; das Datum einer
- *       bearbeiteten Notiz und ein getipptes Entwurfsdatum bleiben.
+ *       Formular in der aktiven Ansicht nichts; liegt ein offenes ✏️ in einer
+ *       anderen Ansicht (die Palette ruft VOR dem Ansichtswechsel), wird es
+ *       verworfen wie beim Aufklappen. Und jede aufgeschobene Referenz der
+ *       Tabelle `KLAPPFORMULAR_BEARBEITEN` nennt eine Funktion, die ein
+ *       geladenes Modul deklariert — eine Umbenennung waere sonst ein stilles
+ *       No-op.
+ *   (4) DATUM DER NOTIZ (ABBRUCH, R6) — `switchView('notes')` schlaegt das
+ *       heutige Datum nur ohne Bearbeiten vor, und nur fuer ein leeres Feld
+ *       oder den eigenen, vermerkten Vorschlag eines frueheren Tages; das
+ *       Datum einer bearbeiteten Notiz und ein getipptes Entwurfsdatum
+ *       bleiben.
  *
  * `systems/spellslots/navigation.js` stand bis hierher auf der Ausnahmeliste
  * des Abdeckungs-Gates (`tests/unit/module-test-coverage.test.js`). Mit dieser
@@ -283,6 +288,54 @@ describe('showNewCollapsibleForm() — Taste n und Befehlspalette (R3)', () => {
         const { context } = ladeModul();
         expect(() => context.showNewCollapsibleForm('gibt-es-nicht')).not.toThrow();
     });
+
+    /** Legt das Klappformular in eine Ansicht, wie die Vorlagen es fuehren
+     *  (`#view-party`, `#view-encounter`), aktiv oder nicht. */
+    function inAnsicht(aktiv) {
+        const karte = document.querySelector('.card');
+        const ansicht = document.createElement('div');
+        ansicht.className = aktiv ? 'view active' : 'view';
+        karte.replaceWith(ansicht);
+        ansicht.appendChild(karte);
+    }
+
+    test.each(KLAPPFORMULARE)(
+        '%s: offen in einer NICHT aktiven Ansicht mit gesetzter %s — der Rest wird verworfen, das Formular steht offen',
+        (id, idFeld, leerenName) => {
+            // DER BEFUND: die Palette ruft das VOR switchView(); ✏️ Aria →
+            // Reiter Quests → "Neuer Charakter" liess das ✏️ stehen, und 💾
+            // ueberschrieb Aria.
+            const { inhalt, ikon } = baueKlappformular(id, idFeld, '1', true);
+            inAnsicht(false);
+            const leeren = leerenDoppel(id, idFeld);
+            const { context } = ladeModul({ [leerenName]: leeren });
+
+            context.showNewCollapsibleForm(id);
+
+            expect(leeren).toHaveBeenCalledTimes(1);
+            expect(inhalt.classList.contains('open')).toBe(true);
+            expect(ikon.textContent).toBe('▲');
+            expect(document.getElementById(idFeld).value).toBe('');
+            expect(document.getElementById('formular-name').value).toBe('');
+        }
+    );
+
+    test.each([
+        ['ein offenes ✏️ in der AKTIVEN Ansicht', '1', true],
+        ['ein offener Entwurf in einer nicht aktiven Ansicht', '', false]
+    ])('%s bleibt offen und unveraendert', (_was, idWert, aktiv) => {
+        const { inhalt } = baueKlappformular('char-form', 'edit-char-id', idWert, true);
+        inAnsicht(aktiv);
+        const leeren = leerenDoppel('char-form', 'edit-char-id');
+        const { context } = ladeModul({ cancelCharEdit: leeren });
+
+        context.showNewCollapsibleForm('char-form');
+
+        expect(leeren).not.toHaveBeenCalled();
+        expect(inhalt.classList.contains('open')).toBe(true);
+        expect(document.getElementById('edit-char-id').value).toBe(idWert);
+        expect(document.getElementById('formular-name').value).toBe('Aria');
+    });
 });
 
 describe("switchView('notes') — das Datum der Notiz (ABBRUCH, R6)", () => {
@@ -322,6 +375,31 @@ describe("switchView('notes') — das Datum der Notiz (ABBRUCH, R6)", () => {
         const datum = baueNotizformular('', '');
         ladeModul().context.switchView('wiki');
         expect(datum.value).toBe('');
+    });
+
+    test('der eigene Vorschlag eines frueheren Tages wird erneuert und vermerkt', () => {
+        // DER BEFUND (Gutachten): ein Tab, der ueber Tage offen bleibt, hielt
+        // den Vorschlag vom ersten Tag — er war von einem getippten Datum
+        // nicht zu unterscheiden.
+        const datum = baueNotizformular('', '2026-10-20');
+        datum.dataset.vorschlag = '2026-10-20';
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe(heute());
+        expect(datum.dataset.vorschlag).toBe(heute());
+    });
+
+    test('ein getipptes Datum neben einem alten Vorschlag bleibt stehen', () => {
+        const datum = baueNotizformular('', '2026-03-01');
+        datum.dataset.vorschlag = '2026-10-20';
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe('2026-03-01');
+    });
+
+    test('das Datum einer bearbeiteten Notiz bleibt, auch wenn es dem alten Vorschlag gleicht', () => {
+        const datum = baueNotizformular('1', '2026-10-20');
+        datum.dataset.vorschlag = '2026-10-20';
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe('2026-10-20');
     });
 });
 
