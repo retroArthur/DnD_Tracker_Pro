@@ -29,7 +29,16 @@ function saveEncounter() {
     const renderEncounters = window.renderEncounters;
     const sortInit = window.sortInit;
     const idInput = $('edit-enc-id');
-    const id = idInput?.value || '';
+    let id = idInput?.value || '';
+    // Zeigt die ID auf einen Encounter, den es nicht mehr gibt (geloescht,
+    // oder per Strg+Z bzw. ↩️ zurueckgenommen, waehrend das Formular offen
+    // war), wird als NEUER Encounter gespeichert — die Eingaben bleiben
+    // erhalten. Vorher fand der Bearbeiten-Zweig nichts und save() schrieb den
+    // unveraenderten Stand, ganz ohne Meldung (gemessen: "Neu" bzw. "Neu A"
+    // still verloren). Geprueft VOR pushUndo, wie in saveNPC().
+    const idx = id ? D.encounters.findIndex(x => x.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     const selectedLanguages =
         typeof getEncSelectedLanguages === 'function' ? getEncSelectedLanguages() : [];
     // Collect saving throws (checkbox + custom value)
@@ -87,9 +96,14 @@ function saveEncounter() {
         showToast('⚠️ Name erforderlich', 'error');
         return;
     }
+    // Vorher legte saveEncounter() GAR keinen Undo-Eintrag an: ein
+    // Ueberschreiben war nicht rueckholbar ("Nichts zum Rückgängigmachen"),
+    // und Strg+Z nach dem Anlegen nahm die VORIGE Aktion zurueck — gemessen
+    // aus einem Schnappschuss ohne den neuen Encounter, der still mit
+    // verschwand (Vertrag R5). Die Beschriftung folgt "Gegner gelöscht".
+    pushUndo(id ? 'Gegner bearbeitet' : 'Gegner erstellt');
     if (id) {
-        const idx = D.encounters.findIndex(x => x.id === parseEntityId(id));
-        if (idx > -1) D.encounters[idx] = { ...D.encounters[idx], ...e };
+        D.encounters[idx] = { ...D.encounters[idx], ...e };
     } else {
         e.id = nextId('encounters');
         D.encounters.push(e);
@@ -102,6 +116,14 @@ function saveEncounter() {
     if (icon) icon.textContent = '▼';
     renderEncounters();
     save();
+    // Nur die Warnung: eine Erfolgsmeldung hatte saveEncounter() nie, und eine
+    // neue gehoert nicht in diese Behebung.
+    if (verwaist) {
+        showToast(
+            'Der bearbeitete Encounter existiert nicht mehr — als neuer Encounter gespeichert',
+            'warning'
+        );
+    }
 }
 /**
  * Opens the edit form for an encounter/enemy
@@ -221,7 +243,12 @@ function editEnc(id) {
     if (icon) icon.textContent = '▲';
     if (ausVollbild) $('enc-name')?.focus({ preventScroll: true });
 }
-function cancelEncEdit() {
+/**
+ * Leert JEDES Feld des Encounter-Formulars samt #edit-enc-id, ohne es
+ * zuzuklappen — fuer die Schnell-Vorlagen, die IM Formular liegen
+ * (loadMonsterTemplate()). cancelEncEdit() = dies + Zuklappen.
+ */
+function clearEncFormFields() {
     clearFormFields({
         textFields: [
             'edit-enc-id',
@@ -283,7 +310,9 @@ function cancelEncEdit() {
                 });
         }
     });
-
+}
+function cancelEncEdit() {
+    clearEncFormFields();
     // Collapse form
     const form = $('enc-form');
     const icon = $('enc-form-icon');
@@ -389,6 +418,8 @@ window.toggleEncSaveBox = toggleEncSaveBox;
 window.saveEncounter = saveEncounter;
 window.editEnc = editEnc;
 window.cancelEncEdit = cancelEncEdit;
+// Verbraucher: features/encounters/monster-templates.js (loadMonsterTemplate).
+window.clearEncFormFields = clearEncFormFields;
 window.deleteEnc = deleteEnc;
 window.addEncToInit = addEncToInit;
 window.toggleEncLangDropdown = toggleEncLangDropdown;

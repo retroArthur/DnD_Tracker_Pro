@@ -42,6 +42,13 @@ function loadMonsterTemplate(key) {
     const templates = getMonsterTemplates();
     const t = templates[key];
     if (!t) return;
+    // Eine Vorlage fuellt immer einen NEUEN Encounter (Vertrag R7): erst alles
+    // leeren, auch #edit-enc-id, aber NICHT zuklappen — die Knoepfe liegen im
+    // Formular. Vorher blieb die ID stehen, und nach ✏️ Goblinboss → "🗡️
+    // Goblin" → 💾 WAR der Goblinboss der Goblin; der erbte dazu Resistenzen,
+    // Immunitaeten, Zustandsimmunitaeten, Rettungswuerfe, Sprachen und
+    // Fertigkeiten, die die Vorlage nicht setzt (gemessen).
+    if (typeof window.clearEncFormFields === 'function') window.clearEncFormFields();
     // SRD-Statblocks haben kein init-/perception-Feld -> aus Attributen ableiten.
     const _dexMod = Math.floor((Number(t.dex) - 10) / 2);
     const _wisMod = Math.floor((Number(t.wis) - 10) / 2);

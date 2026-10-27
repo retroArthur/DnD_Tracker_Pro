@@ -116,11 +116,50 @@ function hideModal(id) {
     if (modal) modal.classList.remove('show');
     if (modal && window.ModalFocus) window.ModalFocus.kehreZurueck(modal);
 }
+// Klappformulare, in denen ✏️ einen Eintrag zum Bearbeiten laedt (ABBRUCH,
+// Vertrag R1). Gemessen war JEDER Anlege-Weg dieser Formulare derselbe reine
+// Umschalter toggleCollapse(): nach ✏️ → Kopfzeile zu → wieder auf trug das
+// Formular die Bearbeiten-ID samt allen Werten, und "Neu" → 💾 UEBERSCHRIEB
+// den bearbeiteten Eintrag (Charakter und Encounter, in D, im Speicher und
+// nach dem Neuladen; beim Encounter ohne Meldung und ohne Undo). Zuklappen
+// eines Bearbeitens ist darum ein Abbruch: beim naechsten AUFklappen wird
+// der Rest verworfen. Ein Anlege-Entwurf (keine ID) bleibt stehen (R2).
+//
+// `leeren` ist eine AUFGESCHOBENE Referenz wie in TAB_RENDER_REGISTRY
+// (MAINT-02): der Bezeichner steht im Quelltext (Grep, ESLint, und
+// tests/unit/navigation-collapse.test.js prueft, dass es ihn gibt), aufgeloest
+// wird erst beim Klick — dieses Modul laeuft im Lader VOR den Feature-Modulen.
+// Ein neues Klappformular mit Bearbeiten-ID gehoert hier mit hinein.
+const KLAPPFORMULAR_BEARBEITEN = {
+    'char-form': { bearbeitenId: 'edit-char-id', leeren: () => cancelCharEdit },
+    'enc-form': { bearbeitenId: 'edit-enc-id', leeren: () => cancelEncEdit }
+};
+/**
+ * Verwirft den Bearbeiten-Rest eines Klappformulars (ID gesetzt → dessen
+ * Leeren-Funktion). Nur fuer toggleCollapse() beim Aufklappen.
+ * @param {string} id
+ */
+function verwirfBearbeitenRest(id) {
+    const eintrag = KLAPPFORMULAR_BEARBEITEN[id];
+    if (!eintrag || !$(eintrag.bearbeitenId)?.value) return;
+    let leeren = null;
+    try {
+        leeren = eintrag.leeren();
+    } catch {
+        // Modul nicht geladen (Einzeltest) — dann gibt es nichts zu leeren.
+    }
+    if (typeof leeren === 'function') leeren();
+}
 function toggleCollapse(id) {
     const el = $(id);
     const icon = $(id + '-icon');
     if (el) {
-        el.classList.toggle('open');
+        // Die Richtung VOR dem Leeren festhalten: cancelCharEdit() und
+        // cancelEncEdit() klappen selbst zu. Am Ende steht das Formular
+        // offen und leer, nicht wieder zu.
+        const aufklappen = !el.classList.contains('open');
+        if (aufklappen) verwirfBearbeitenRest(id);
+        el.classList.toggle('open', aufklappen);
         if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼';
         // Story-Arc Dropdown aktualisieren wenn Session-Formular geöffnet wird
         if (
@@ -131,6 +170,21 @@ function toggleCollapse(id) {
             window.renderStoryArcSelects();
         }
     }
+}
+/**
+ * Klappt ein Formular zum Anlegen auf — der Weg der Taste n und der
+ * Befehlspalette ("Neuer Charakter", "Neuer Encounter"). Vorher riefen beide
+ * toggleCollapse() und klappten ein OFFENES Formular zu, mitten in der
+ * Eingabe (gemessen an ✏️ wie am Entwurf). Ist es offen, tun sie jetzt
+ * nichts (Vertrag R3, wie showNewNPCModal()); ist es zu, klappt
+ * toggleCollapse() es auf und verwirft dabei einen Bearbeiten-Rest.
+ * Die Kopfzeile bleibt ein Umschalter.
+ * @param {string} id
+ */
+function showNewCollapsibleForm(id) {
+    const el = $(id);
+    if (!el || el.classList.contains('open')) return;
+    toggleCollapse(id);
 }
 // #quicknotes-modal geht NICHT durch showModal/hideModal — es traegt
 // `.modal-backdrop` und schaltet `style.display` selbst. Darum bekommt es

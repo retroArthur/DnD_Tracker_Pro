@@ -23,7 +23,10 @@ const ACTION_REGISTRY = [
         label: 'Neuer Charakter',
         keywords: ['charakter', 'char', 'spieler', 'party', 'held', 'erstellen'],
         action: () => {
-            if (typeof window.toggleCollapse === 'function') window.toggleCollapse('char-form');
+            // Nicht toggleCollapse(): das klappte ein offenes Formular zu (R3).
+            if (typeof window.showNewCollapsibleForm === 'function') {
+                window.showNewCollapsibleForm('char-form');
+            }
             if (typeof window.switchView === 'function') window.switchView('party');
         }
     },
@@ -44,7 +47,10 @@ const ACTION_REGISTRY = [
         label: 'Neuer Encounter',
         keywords: ['encounter', 'begegnung', 'kampf', 'monster', 'erstellen'],
         action: () => {
-            if (typeof window.toggleCollapse === 'function') window.toggleCollapse('enc-form');
+            // Nicht toggleCollapse(): das klappte ein offenes Formular zu (R3).
+            if (typeof window.showNewCollapsibleForm === 'function') {
+                window.showNewCollapsibleForm('enc-form');
+            }
             if (typeof window.switchView === 'function') window.switchView('encounter');
         }
     },

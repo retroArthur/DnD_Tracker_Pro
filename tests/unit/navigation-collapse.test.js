@@ -22,6 +22,14 @@
  *       Umkehrung, die die Sonde haette rot gemacht: die blosse Klasse
  *       `collapsible` kommt in den Vorlagen NICHT vor, ein Selektor
  *       `.collapsible…` kann also nie treffen.
+ *   (3) BEARBEITEN-REST (ABBRUCH) — beim AUFklappen eines Klappformulars mit
+ *       gesetzter Bearbeiten-ID wird zuerst dessen Leeren-Funktion gerufen,
+ *       und das Formular steht danach OFFEN (die Leeren-Funktionen klappen
+ *       selbst zu); Zuklappen und ein Entwurf ohne ID leeren nie.
+ *       `showNewCollapsibleForm()` (Taste n, Befehlspalette) tut bei offenem
+ *       Formular nichts. Und jede aufgeschobene Referenz der Tabelle
+ *       `KLAPPFORMULAR_BEARBEITEN` nennt eine Funktion, die ein geladenes
+ *       Modul deklariert — eine Umbenennung waere sonst ein stilles No-op.
  *
  * `systems/spellslots/navigation.js` stand bis hierher auf der Ausnahmeliste
  * des Abdeckungs-Gates (`tests/unit/module-test-coverage.test.js`). Mit dieser
@@ -44,15 +52,18 @@ const SOURCE = fs.readFileSync(MODULE_PATH, 'utf8');
  * Laedt das Modul in eine Sandbox, deren `document` das jsdom dieses Tests
  * ist. Die Abhaengigkeiten, die `toggleCollapse()` wirklich braucht, sind
  * genau zwei: `$` und `document`. `window.renderStoryArcSelects` wird nur
- * fuer `session-form` gerufen und bleibt darum ein Doppel.
+ * fuer `session-form` gerufen und bleibt darum ein Doppel. `globale` legt
+ * weitere Bezeichner in die Sandbox — die Leeren-Funktionen der Klappformulare
+ * (`cancelCharEdit`, `cancelEncEdit`), die im Lader aus Feature-Modulen kommen.
  */
-function ladeModul() {
+function ladeModul(globale = {}) {
     const renderStoryArcSelects = jest.fn();
     const context = {
         document,
         $: id => document.getElementById(id),
         window: { renderStoryArcSelects },
-        console
+        console,
+        ...globale
     };
     vm.createContext(context);
     vm.runInContext(SOURCE, context);
@@ -130,6 +141,202 @@ describe('toggleCollapse() — Laufzeit', () => {
         b.context.toggleCollapse('session-form');
         expect(b.renderStoryArcSelects).toHaveBeenCalledTimes(1);
     });
+});
+
+/**
+ * Ein Klappformular mit Bearbeiten-ID-Feld und einem Namensfeld darin, wie
+ * die Vorlagen es fuehren (`view-party.html`, `view-encounters.html`).
+ */
+function baueKlappformular(id, idFeld, idWert, offen = false) {
+    const teile = baueAufklappfeld(id);
+    teile.inhalt.innerHTML = `
+        <input type="hidden" id="${idFeld}" value="${idWert}">
+        <input type="text" id="formular-name" value="Aria">`;
+    if (offen) {
+        teile.inhalt.classList.add('open');
+        teile.ikon.textContent = '▲';
+    }
+    return teile;
+}
+
+/** Ein Doppel der Leeren-Funktion, das tut, was cancelCharEdit() und
+ *  cancelEncEdit() tun: leeren UND zuklappen. */
+function leerenDoppel(id, idFeld) {
+    return jest.fn(() => {
+        document.getElementById(idFeld).value = '';
+        document.getElementById('formular-name').value = '';
+        document.getElementById(id).classList.remove('open');
+        document.getElementById(`${id}-icon`).textContent = '▼';
+    });
+}
+
+const KLAPPFORMULARE = [
+    ['char-form', 'edit-char-id', 'cancelCharEdit'],
+    ['enc-form', 'edit-enc-id', 'cancelEncEdit']
+];
+
+describe('toggleCollapse() — Bearbeiten-Rest beim Aufklappen (ABBRUCH)', () => {
+    test.each(KLAPPFORMULARE)(
+        '%s: Aufklappen mit gesetzter %s leert ueber %s und steht danach OFFEN',
+        (id, idFeld, leerenName) => {
+            const { inhalt, ikon } = baueKlappformular(id, idFeld, '1');
+            const leeren = leerenDoppel(id, idFeld);
+            const { context } = ladeModul({ [leerenName]: leeren });
+
+            context.toggleCollapse(id);
+
+            expect(leeren).toHaveBeenCalledTimes(1);
+            // Die Leeren-Funktion klappt selbst zu — am Ende muss es trotzdem
+            // offen sein, sonst braeuchte der Nutzer einen zweiten Klick.
+            expect(inhalt.classList.contains('open')).toBe(true);
+            expect(ikon.textContent).toBe('▲');
+            expect(document.getElementById(idFeld).value).toBe('');
+            expect(document.getElementById('formular-name').value).toBe('');
+        }
+    );
+
+    test.each(KLAPPFORMULARE)(
+        '%s: ein Entwurf ohne %s bleibt beim Aufklappen stehen (R2)',
+        (id, idFeld, leerenName) => {
+            const { inhalt } = baueKlappformular(id, idFeld, '');
+            const leeren = leerenDoppel(id, idFeld);
+            const { context } = ladeModul({ [leerenName]: leeren });
+
+            context.toggleCollapse(id);
+
+            expect(leeren).not.toHaveBeenCalled();
+            expect(inhalt.classList.contains('open')).toBe(true);
+            expect(document.getElementById('formular-name').value).toBe('Aria');
+        }
+    );
+
+    test.each(KLAPPFORMULARE)(
+        '%s: Zuklappen leert nie, auch nicht mit gesetzter %s',
+        (id, idFeld, leerenName) => {
+            const { inhalt, ikon } = baueKlappformular(id, idFeld, '1', true);
+            const leeren = leerenDoppel(id, idFeld);
+            const { context } = ladeModul({ [leerenName]: leeren });
+
+            context.toggleCollapse(id);
+
+            expect(leeren).not.toHaveBeenCalled();
+            expect(inhalt.classList.contains('open')).toBe(false);
+            expect(ikon.textContent).toBe('▼');
+            expect(document.getElementById(idFeld).value).toBe('1');
+        }
+    );
+
+    test('ohne geladenes Feature-Modul wirft die aufgeschobene Referenz nicht durch', () => {
+        // Im Einzeltest (und wuerde ein Modul fehlen) ist `cancelCharEdit`
+        // kein Bezeichner: die Referenz wirft einen ReferenceError, der
+        // gefangen wird — das Formular klappt trotzdem auf.
+        const { inhalt } = baueKlappformular('char-form', 'edit-char-id', '1');
+        const { context } = ladeModul();
+
+        expect(() => context.toggleCollapse('char-form')).not.toThrow();
+        expect(inhalt.classList.contains('open')).toBe(true);
+    });
+});
+
+describe('showNewCollapsibleForm() — Taste n und Befehlspalette (R3)', () => {
+    test.each(KLAPPFORMULARE)(
+        '%s: zu → klappt auf und verwirft dabei den Bearbeiten-Rest',
+        (id, idFeld, leerenName) => {
+            const { inhalt } = baueKlappformular(id, idFeld, '1');
+            const leeren = leerenDoppel(id, idFeld);
+            const { context } = ladeModul({ [leerenName]: leeren });
+
+            context.showNewCollapsibleForm(id);
+
+            expect(leeren).toHaveBeenCalledTimes(1);
+            expect(inhalt.classList.contains('open')).toBe(true);
+            expect(document.getElementById(idFeld).value).toBe('');
+        }
+    );
+
+    test.each([
+        ['ein offenes ✏️', '1'],
+        ['ein offener Entwurf', '']
+    ])('%s bleibt offen und unveraendert', (_was, idWert) => {
+        // DER SATZ VON R3: vorher riefen Taste n und Palette toggleCollapse()
+        // und klappten das offene Formular mitten in der Eingabe zu.
+        const { inhalt, ikon } = baueKlappformular('char-form', 'edit-char-id', idWert, true);
+        const leeren = leerenDoppel('char-form', 'edit-char-id');
+        const { context } = ladeModul({ cancelCharEdit: leeren });
+
+        context.showNewCollapsibleForm('char-form');
+
+        expect(leeren).not.toHaveBeenCalled();
+        expect(inhalt.classList.contains('open')).toBe(true);
+        expect(ikon.textContent).toBe('▲');
+        expect(document.getElementById('edit-char-id').value).toBe(idWert);
+        expect(document.getElementById('formular-name').value).toBe('Aria');
+    });
+
+    test('eine unbekannte ID wirft nicht', () => {
+        baueAufklappfeld('char-form');
+        const { context } = ladeModul();
+        expect(() => context.showNewCollapsibleForm('gibt-es-nicht')).not.toThrow();
+    });
+});
+
+describe('KLAPPFORMULAR_BEARBEITEN — Vertrag mit Quelltext und Vorlagen (MAINT-02)', () => {
+    // Top-Level-`const` liegt nicht am Globalobjekt der Sandbox, ist aber fuer
+    // ein weiteres Skript im selben Kontext sichtbar. Fehlt die Tabelle, soll
+    // der erste Fall rot werden und nicht die ganze Datei beim Sammeln werfen.
+    const { context } = ladeModul();
+    let tabelle = [];
+    try {
+        tabelle = vm.runInContext(
+            `Object.entries(KLAPPFORMULAR_BEARBEITEN).map(([formular, e]) => ({
+                formular,
+                bearbeitenId: e.bearbeitenId,
+                leeren: String(e.leeren)
+            }))`,
+            context
+        );
+    } catch {
+        // siehe oben
+    }
+
+    const loader = fs.readFileSync(path.join(REPO_ROOT, 'loader.js'), 'utf8');
+    const moduldateien = [
+        ...(loader.match(/const MODULES = \[([\s\S]*?)\n\];/) || ['', ''])[1].matchAll(
+            /'([^']+\.js)'/g
+        )
+    ].map(m => m[1]);
+    const vorlagen = fs
+        .readdirSync(TEMPLATES_DIR)
+        .filter(f => f.endsWith('.html'))
+        .map(f => fs.readFileSync(path.join(TEMPLATES_DIR, f), 'utf8'));
+
+    test('die Tabelle nennt mindestens Charakter- und Encounter-Formular', () => {
+        expect(tabelle.map(e => e.formular)).toEqual(
+            expect.arrayContaining(['char-form', 'enc-form'])
+        );
+        expect(moduldateien.length).toBeGreaterThan(0);
+    });
+
+    test.each(tabelle.map(e => [e.formular, e]))(
+        '%s: die Leeren-Funktion ist deklariert, das ID-Feld steht im Formular',
+        (formular, e) => {
+            const name = (e.leeren.match(/=>\s*([A-Za-z_$][\w$]*)/) || [])[1];
+            expect(name).toBeTruthy();
+            const deklariert = moduldateien.filter(rel => {
+                const voll = path.join(REPO_ROOT, rel);
+                return (
+                    fs.existsSync(voll) &&
+                    new RegExp(`^function ${name}\\(`, 'm').test(fs.readFileSync(voll, 'utf8'))
+                );
+            });
+            expect(deklariert.length).toBeGreaterThan(0);
+
+            // Das ID-Feld steht in derselben Vorlage wie das Klappformular.
+            const vorlage = vorlagen.find(v => v.includes(`<div id="${formular}"`));
+            expect(vorlage).toBeDefined();
+            expect(vorlage).toContain(`id="${e.bearbeitenId}"`);
+        }
+    );
 });
 
 describe('toggleCollapse() — Vertrag mit den Vorlagen', () => {

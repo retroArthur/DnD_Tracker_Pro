@@ -806,10 +806,10 @@ function initKeyboardShortcuts() {
         if (taste === 'n' && OHNE_MODIFIKATOR(e) && !e.shiftKey) {
             e.preventDefault();
             const activeView = document.querySelector('.view.active')?.id;
-            if (activeView === 'view-party') toggleCollapse('char-form');
+            if (activeView === 'view-party') showNewCollapsibleForm('char-form');
             else if (activeView === 'view-npcs') showNewNPCModal();
             else if (activeView === 'view-quests') showNewQuestModal();
-            else if (activeView === 'view-encounter') toggleCollapse('enc-form');
+            else if (activeView === 'view-encounter') showNewCollapsibleForm('enc-form');
             return;
         }
         // IN-02: Der frühere zweite '?'-Block (showKeyboardHelp) war unerreichbar —
