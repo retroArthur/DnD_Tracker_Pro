@@ -681,6 +681,10 @@ function cycleRelationStatus(npcId, index) {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
+// toggleNPC() hat im Produktionscode genau einen Verbraucher,
+// navigateToResult() in systems/search/global-search.js (NSC ohne Ort); der
+// ruft sie ohne window-Export (Export-Audit-Regel). ESLint meldet die Funktion
+// trotzdem als unbenutzt — es prueft je Datei. Kein toter Code.
 window.selectedNpcId = selectedNpcId;
 window.renderNPCList = renderNPCList;
 window.selectNPC = selectNPC;

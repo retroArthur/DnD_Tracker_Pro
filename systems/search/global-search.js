@@ -234,13 +234,14 @@ function navigateToResult(type, id, locId) {
                     editNPC(id);
                 }, 100);
             } else {
-                // Ohne Ort wie mit Ort: den NSC waehlen (er steht dann im
-                // Detail hinter dem Dialog) und seinen Bearbeiten-Dialog
-                // oeffnen. Nur die Ansicht zu wechseln liess den automatisch
-                // gewaehlten NSC stehen und oeffnete nichts.
+                // Ohne Ort wie mit Ort: toggleNPC() ist das Gegenstueck zu
+                // toggleLocation() — NSC-Filter auf "Alle" (sonst stuende das
+                // Ziel nicht in der Liste, und nach der naechsten Rundreise
+                // waere ein fremder NSC gewaehlt), waehlen, mittig scrollen,
+                // Goldschein. Dann derselbe Bearbeiten-Dialog wie mit Ort.
                 switchView('npcs');
                 setTimeout(() => {
-                    selectNPC(id);
+                    toggleNPC(id);
                     editNPC(id);
                 }, 100);
             }
