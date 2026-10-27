@@ -88,6 +88,33 @@
  *            ''); wird ROT, sobald populateSelects die Auswahl haelt, ohne
  *            dass editNPC()/editLocation() leere Werte selbst setzen.
  *
+ * ───────────────────────────────────────────────────────────────────────────
+ * NACHBESSERUNG NACH DER PRUEFUNG — vier Fehler im ersten Fix, rot am Stand
+ * 2771a09, und vier Schutzstellen, die kein Fall hielt
+ *
+ *   (17)     Rundreise mit typischem Editorinhalt. Enter im Editor schreibt
+ *            `<br>` (gemessen, Fall tippt es mit echten Tasten); der Export
+ *            machte daraus ein weiches "\n", und der Import liess es als
+ *            Leerraum stehen — "Zeile eins Zeile zwei" in EINER Zeile.
+ *            Schlimmer: Fett, Kursiv, Durchgestrichen lasen `textContent`,
+ *            und das verschluckt `<br>` ganz — `<b>eins<br>zwei</b>` kam als
+ *            "einszwei" zurueck. `<u>` (Werkzeug jeder Leiste) fiel weg.
+ *   (18)     Zauber mit einer Ueberschrift "Notizen" in der Beschreibung und
+ *            leerer Notiz: der Import hielt sie fuer den eigenen
+ *            Notiz-Abschnitt, leerte die Beschreibung und schob ihren Rest
+ *            ins Notizfeld.
+ *   (19)     Eine fremde Datei mit "# <Name>" und einer Label-Zeile, die der
+ *            Export auch schreibt ("**Rolle:** Spion"), verlor beides still.
+ *   (20)     Wird das Dateifeld nach einer Wahl wieder leer, blieben Vorschau
+ *            und "Importieren" stehen — und uebernahmen die vorige Datei.
+ *   (21)-(24) WAECHTER, am Stand 2771a09 gruen: Windows-Zeilenenden und BOM
+ *            (21), der Platzhalter "-- NPC wählen --" im Quest-Kopf (22), die
+ *            Wache "Formular offen und derselbe Eintrag" (23) und der
+ *            Lesezaehler gegen einen ueberholten FileReader (24). Jeder ist
+ *            gegen einen Rueckbau seiner Stelle gemessen ROT (Commit-Text).
+ *            (13) aendert dazu die Notiz in der Datei vor dem Re-Import —
+ *            vorher kam die unveraenderte Notiz auch ohne den Notizpfad an.
+ *
  * NICHT HIER: ✏️ -> ✕ -> "+ NPC/Quest/Zauber/Ort" laesst die ID des zuvor
  * bearbeiteten Eintrags im Formular stehen (eigener Befund, eigener PR).
  * Telefonbreite ist nicht gemessen.
@@ -147,6 +174,23 @@ const MARA = {
     dialogs: []
 };
 
+/** Typischer Editorinhalt fuer (17): Zeilenumbrueche, Unterstreichung, Fett
+ *  ueber zwei Zeilen, Kursiv in Fett. */
+const HILDA = {
+    id: 3,
+    name: 'Hilda',
+    race: 'Mensch',
+    role: 'Spaeherin',
+    description:
+        'Zeile eins<br>Zeile <u>zwei</u><br><b>fett eins<br>fett zwei</b><br><b>fett <i>und kursiv</i></b>',
+    chapter: '',
+    quests: [],
+    info: [],
+    relationships: [],
+    triggers: [],
+    dialogs: []
+};
+
 /** giverName/locationName so, wie saveQuest() sie schreibt: der Text der
  *  gewaehlten Option ("Name (Rolle)" beim NPC). */
 const DIE_MINE = {
@@ -187,6 +231,26 @@ const FEUERBALL = {
     material: 'Fledermausdung'
 };
 
+/** (18): eine Ueberschrift "Notizen" IN der Beschreibung, keine Notiz. */
+const SCHILD = {
+    id: 2,
+    name: 'Schild',
+    type: 'spell',
+    level: 1,
+    school: 'Bannmagie',
+    spellClasses: ['Magier'],
+    description: '<h2>Notizen</h2>Gehoert zur Beschreibung',
+    note: '',
+    time: '1 Reaktion',
+    range: 'Selbst',
+    duration: '1 Runde',
+    ritual: false,
+    v: true,
+    g: true,
+    m: false,
+    material: ''
+};
+
 function seed() {
     return {
         _version: '99.0.0',
@@ -201,7 +265,7 @@ function seed() {
         shops: [],
         campaign: {},
         characters: [],
-        npcs: [GRIMBOLD, MARA],
+        npcs: [GRIMBOLD, MARA, HILDA],
         locations: [
             { id: 1, name: 'Bergdorf', description: '', filterId: 1 },
             { id: 2, name: 'Hafen', description: '' }
@@ -209,7 +273,7 @@ function seed() {
         factions: [{ id: 1, name: 'Gilde', symbol: '' }],
         quests: [DIE_MINE],
         loot: [],
-        spells: [FEUERBALL],
+        spells: [FEUERBALL, SCHILD],
         wiki: [],
         links: [],
         filters: [{ id: 1, name: 'Kapitel 1' }],
@@ -223,11 +287,11 @@ function seed() {
         quickRefCustom: [],
         _nextId: {
             characters: 1,
-            npcs: 3,
+            npcs: 4,
             locations: 3,
             quests: 2,
             encounters: 1,
-            spells: 2,
+            spells: 3,
             loot: 1,
             items: 1,
             wiki: 1,
@@ -841,7 +905,15 @@ test('(13) Export, wieder importiert und gespeichert, ergibt dieselbe Beschreibu
         const t = TYPEN[typ];
         await oeffne(page, typ);
         const datei = await exportieren(page, typ);
-        await importieren(page, typ, datei.inhalt, datei.name);
+        // Zauber: die Notiz wird in der Datei GEAENDERT — kaeme die alte an,
+        // haette der Notizpfad nichts getan (das Feld traegt sie ohnehin).
+        const inhalt =
+            typ === 'spells'
+                ? datei.inhalt.replace('\n\nVorsicht\n', '\n\nGANZ **NEU**\n')
+                : datei.inhalt;
+        if (typ === 'spells')
+            expect(inhalt, 'die Notiz ist in der Datei ersetzt').not.toBe(datei.inhalt);
+        await importieren(page, typ, inhalt, datei.name);
         const editor = await page.locator(t.editor).innerHTML();
         weich(editor, `${typ}: kein Export-Kopf im Editor`).not.toContain('<h1>');
         weich(editor, `${typ}: kein Export-Kopf im Editor`).not.toContain('Typ:');
@@ -851,8 +923,11 @@ test('(13) Export, wieder importiert und gespeichert, ergibt dieselbe Beschreibu
         weich(await ausD(page, t.liste, 1, 'description'), `${typ}: Rundreise`).toBe(t.alt);
     }
     // Zauber: "## Notizen" des eigenen Exports geht ins Notizfeld zurueck,
-    // nicht in die Beschreibung.
-    weich(await ausD(page, 'spells', 1, 'note'), 'spells: Notiz bleibt Notiz').toBe(FEUERBALL.note);
+    // nicht in die Beschreibung — und zwar die Notiz AUS DER DATEI.
+    weich(
+        await ausD(page, 'spells', 1, 'note'),
+        'spells: die Notiz der Datei landet in der Notiz'
+    ).toBe('GANZ <b>NEU</b>');
 
     // Fremde Dateien: ein "# " oben ist dort Inhalt, kein Kopf.
     await oeffne(page, 'npcs');
@@ -1006,5 +1081,338 @@ test('(16) ✏️ -> ✕ -> ✏️ an einem anderen Eintrag zeigt dessen leere A
         await page.locator('#loc-filter').inputValue(),
         'Hafen traegt keinen Filter von Bergdorf'
     ).toBe('');
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (17) RUNDREISE MIT TYPISCHEM EDITORINHALT — Zeilenumbruch, Unterstreichung,
+//      Fett ueber zwei Zeilen
+// ===========================================================================
+test('(17) Enter, Unterstreichung und Fett ueber zwei Zeilen ueberstehen Export -> Import -> Speichern', async ({
+    page
+}) => {
+    test.setTimeout(90000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+
+    // a) Mit echten Tasten getippt: Enter schreibt im Editor <br>.
+    await oeffne(page, 'npcs', 1);
+    await page.locator('#npc-desc').click();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.type('Zeile eins');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Zeile zwei');
+    expect(await page.locator('#npc-desc').innerHTML(), 'Enter schreibt <br>').toBe(
+        'Zeile eins<br>Zeile zwei'
+    );
+    await page.locator(TYPEN.npcs.speichern).click();
+    await expect(page.locator('#npc-modal')).not.toHaveClass(/\bshow\b/);
+    expect(await ausD(page, 'npcs', 1, 'description')).toBe('Zeile eins<br>Zeile zwei');
+
+    await oeffne(page, 'npcs', 1);
+    const getippt = await exportieren(page, 'npcs');
+    weich(getippt.inhalt, 'der Zeilenumbruch steht in der Datei').toContain(
+        '\n\nZeile eins\nZeile zwei\n'
+    );
+    await importieren(page, 'npcs', getippt.inhalt, getippt.name);
+    await page.locator(TYPEN.npcs.speichern).click();
+    await expect(page.locator('#npc-modal')).not.toHaveClass(/\bshow\b/);
+    weich(
+        await ausD(page, 'npcs', 1, 'description'),
+        'getippt: die Rundreise behaelt den Zeilenumbruch'
+    ).toBe('Zeile eins<br>Zeile zwei');
+
+    // b) Formatierung ueber Zeilen: Markdown kennt keine Betonung, die eine
+    //    Zeile ueberspannt — der Export setzt sie JE ZEILE (dokumentierte
+    //    Normalisierung), und kein Wort klebt an ein anderes.
+    await oeffne(page, 'npcs', 3);
+    const datei = await exportieren(page, 'npcs');
+    weich(datei.inhalt, 'Hilda: Inhalt der Datei').toBe(
+        '# Hilda\n\n**Typ:** NPC\n**Rasse:** Mensch\n**Rolle:** Spaeherin\n\n' +
+            'Zeile eins\nZeile <u>zwei</u>\n**fett eins**\n**fett zwei**\n**fett *und kursiv***\n'
+    );
+    await importieren(page, 'npcs', datei.inhalt, datei.name);
+    await page.locator(TYPEN.npcs.speichern).click();
+    await expect(page.locator('#npc-modal')).not.toHaveClass(/\bshow\b/);
+    weich(await ausD(page, 'npcs', 3, 'description'), 'Hilda: Rundreise').toBe(
+        'Zeile eins<br>Zeile <u>zwei</u><br><b>fett eins</b><br><b>fett zwei</b><br><b>fett <i>und kursiv</i></b>'
+    );
+
+    // c) Eine zweite Rundreise aendert nichts mehr.
+    await oeffne(page, 'npcs', 3);
+    const zweite = await exportieren(page, 'npcs');
+    weich(zweite.inhalt, 'Hilda: die zweite Rundreise schreibt dieselbe Datei').toBe(datei.inhalt);
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (18) EINE UEBERSCHRIFT "NOTIZEN" IN DER BESCHREIBUNG IST KEINE NOTIZ
+// ===========================================================================
+test('(18) Zauber: eine Ueberschrift "Notizen" in der Beschreibung bleibt Beschreibung', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'spells', 2);
+    const datei = await exportieren(page, 'spells');
+    // Der Export schreibt den Notiz-Abschnitt IMMER, auch leer — sein letzter
+    // "## Notizen" ist eindeutig der eigene.
+    weich(datei.inhalt, 'Schild: Inhalt der Datei').toBe(
+        '# Schild\n\n**Typ:** Zauber\n**Stufe:** 1\n**Schule:** Bannmagie\n**Klassen:** Magier\n\n' +
+            '## Notizen\n\nGehoert zur Beschreibung\n\n## Notizen\n'
+    );
+    await importieren(page, 'spells', datei.inhalt, datei.name);
+    weich(await page.locator('#spell-note').innerHTML(), 'das Notizfeld bleibt leer').toBe('');
+    weich(
+        await page.locator('#spell-desc').innerHTML(),
+        'die Beschreibung behaelt ihren Text'
+    ).toContain('Gehoert zur Beschreibung');
+    await page.locator(TYPEN.spells.speichern).click();
+    await expect(page.locator('#spell-modal')).not.toHaveClass(/\bshow\b/);
+    weich(await ausD(page, 'spells', 2, 'note'), 'D: Notiz').toBe('');
+    weich(
+        await ausD(page, 'spells', 2, 'description'),
+        'D: Beschreibung, Zeichen fuer Zeichen'
+    ).toBe(SCHILD.description);
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (19) FREMDE DATEI MIT DEM NAMEN DES EINTRAGS UND EINER LABEL-ZEILE
+// ===========================================================================
+test('(19) eine fremde Datei mit "# <Name>" und "**Rolle:** ..." behaelt beides', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'npcs', 1);
+    await importieren(page, 'npcs', '# Grimbold\n\n**Rolle:** Spion\n\nGeheimer Text', 'fremd.md');
+    const editor = await page.locator('#npc-desc').innerHTML();
+    // Der eigene Kopf beginnt IMMER mit "**Typ:** NPC" — diese Datei nicht.
+    weich(editor, 'der Titel bleibt Inhalt').toContain('<h1>Grimbold</h1>');
+    weich(editor, 'die Label-Zeile bleibt Inhalt').toContain('<b>Rolle:</b> Spion');
+    weich(editor, 'der Text bleibt Inhalt').toContain('Geheimer Text');
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (20) EIN WIEDER GELEERTES DATEIFELD SETZT DIE SCHALE ZURUECK
+// ===========================================================================
+test('(20) wird das Dateifeld nach einer Wahl wieder leer, gibt es nichts zu importieren', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'npcs', 1);
+    await schaleOeffnen(page, 'npcs');
+    await page.locator('#markdown-import-file').setInputFiles({
+        name: 'a.md',
+        mimeType: 'text/markdown',
+        buffer: Buffer.from('**AAA**', 'utf8')
+    });
+    await expect(page.locator('#markdown-import-preview-content')).toContainText('AAA');
+    // So verwerfen Browser die Auswahl, wenn der Dateidialog abgebrochen wird.
+    await page.locator('#markdown-import-file').setInputFiles([]);
+    await expect(page.locator('#markdown-import-file')).toHaveValue('');
+    await weich(page.locator('#markdown-import-preview'), 'keine Vorschau ohne Datei').toBeHidden();
+    await weich(
+        page.locator('#markdown-import-confirm'),
+        '"Importieren" ist ohne Datei aus'
+    ).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#markdown-import-modal')).toBeHidden();
+    weich(await page.locator('#npc-desc').innerHTML(), 'das Formular bleibt unberuehrt').toBe(
+        GRIMBOLD.description
+    );
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (21) WAECHTER: WINDOWS-ZEILENENDEN UND BOM
+// ===========================================================================
+test('(21) der eigene Export mit Windows-Zeilenenden und BOM verliert seinen Kopf trotzdem', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'npcs', 1);
+    const datei = await exportieren(page, 'npcs');
+    // So kommt die Datei zurueck, wenn ein Windows-Editor sie gespeichert hat.
+    const windows = '﻿' + datei.inhalt.replace(/\n/g, '\r\n');
+    await importieren(page, 'npcs', windows, datei.name);
+    weich(await page.locator('#npc-desc').innerHTML(), 'nur die Beschreibung, ohne Kopf').toBe(
+        GRIMBOLD.description
+    );
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (22) WAECHTER: DER PLATZHALTER DER AUSWAHL IST KEIN AUFTRAGGEBER
+// ===========================================================================
+test('(22) eine Quest ohne Auftraggeber und Ort exportiert keinen Platzhaltertext', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'quests', 1);
+    // editQuest() setzt die Auswahl 10 ms verzoegert.
+    await expect(page.locator('#quest-giver')).toHaveValue('1');
+    await page.locator('#quest-giver').selectOption('');
+    await page.locator('#quest-location').selectOption('');
+    await page.locator(TYPEN.quests.speichern).click();
+    await expect(page.locator('#quest-modal')).not.toHaveClass(/\bshow\b/);
+    // So speichert saveQuest() "nichts gewaehlt": den Text der Platzhalter-Option.
+    expect(await ausD(page, 'quests', 1, 'giverName')).toBe('-- NPC wählen --');
+    expect(await ausD(page, 'quests', 1, 'giverId')).toBe(null);
+
+    await oeffne(page, 'quests', 1);
+    const datei = await exportieren(page, 'quests');
+    weich(datei.inhalt, 'kein Auftraggeber, kein Ort, kein Platzhalter').toBe(
+        '# Die Mine\n\n**Status:** Abgeschlossen\n\nFinde die *Mine*\n'
+    );
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (23) WAECHTER: "IMPORTIEREN" SCHREIBT NUR IN DAS FORMULAR, AUS DEM ES KAM
+// ===========================================================================
+test('(23) traegt das Formular einen anderen Eintrag oder ist es zu, ueberschreibt "Importieren" nichts', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await oeffne(page, 'npcs', 1);
+    const meldungen = () => page.locator('.event-log-message').allTextContents();
+
+    // Ueber die Oberflaeche ist keiner der zwei Zustaende heute erreichbar
+    // (die Schale liegt obenauf, Escape schliesst nur sie — Fall 11). Sie
+    // werden darum HERGESTELLT; gemessen wird der echte Klick auf "Importieren".
+    /** @type {Array<[string, () => void]>} */
+    const zustaende = [
+        [
+            'anderer Eintrag',
+            () => {
+                /** @type {HTMLInputElement} */ (document.getElementById('edit-npc-id')).value =
+                    '2';
+            }
+        ],
+        ['Formular zu', () => /** @type {any} */ (window).hideModal('npc-modal')]
+    ];
+    for (const [was, herstellen] of zustaende) {
+        await schaleOeffnen(page, 'npcs');
+        await page.locator('#markdown-import-file').setInputFiles({
+            name: 'neu.md',
+            mimeType: 'text/markdown',
+            buffer: Buffer.from(NEU_MD, 'utf8')
+        });
+        await expect(page.locator('#markdown-import-confirm')).toBeEnabled();
+        await page.evaluate(herstellen);
+        await page.locator('#markdown-import-confirm').click();
+        await expect(page.locator('#markdown-import-modal')).toBeHidden();
+        weich(
+            await page.locator('#npc-desc').innerHTML(),
+            `${was}: das Editorfeld bleibt alt`
+        ).toBe(GRIMBOLD.description);
+        weich(
+            (await meldungen()).some(m => m.includes('Import verworfen')),
+            `${was}: die App sagt, dass verworfen wurde`
+        ).toBe(true);
+        // Zurueck in den Ausgangszustand fuer den naechsten Durchgang.
+        if (was === 'anderer Eintrag') {
+            await page.evaluate(() => {
+                /** @type {HTMLInputElement} */ (document.getElementById('edit-npc-id')).value =
+                    '1';
+            });
+        }
+    }
+    weich(await ausD(page, 'npcs', 1, 'description'), 'D bleibt alt').toBe(GRIMBOLD.description);
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (24) WAECHTER: EIN UEBERHOLTER FILEREADER VERFAELLT
+// ===========================================================================
+test('(24) ein Lesevorgang, der erst nach einer neueren Wahl fertig wird, aendert nichts', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    // Der Spion haelt das Ende des Lesens fuer "langsam.md" zurueck, bis der
+    // Fall es freigibt — so wird die Reihenfolge zweier Lesevorgaenge, die im
+    // Browser vom Zufall abhaengt, festgelegt. Er aendert keine Logik.
+    await page.evaluate(() => {
+        const w = /** @type {any} */ (window);
+        w.__zurueckgehalten = [];
+        const echt = FileReader.prototype.readAsText;
+        FileReader.prototype.readAsText = function (datei, ...rest) {
+            if (datei && /** @type {File} */ (datei).name === 'langsam.md') {
+                const leser = this;
+                const fertig = leser.onload;
+                leser.onload = ereignis => {
+                    w.__zurueckgehalten.push(() => fertig?.call(leser, ereignis));
+                };
+            }
+            return echt.call(this, datei, ...rest);
+        };
+    });
+    const freigeben = () =>
+        page.evaluate(() => {
+            /** @type {any} */ (window).__zurueckgehalten.splice(0).forEach(f => f());
+        });
+    const zurueckgehalten = () =>
+        page.evaluate(() => /** @type {any} */ (window).__zurueckgehalten.length);
+    const langsam = {
+        name: 'langsam.md',
+        mimeType: 'text/markdown',
+        buffer: Buffer.from('**alt**', 'utf8')
+    };
+
+    await oeffne(page, 'npcs', 1);
+
+    // a) langsam gewaehlt, dann schnell — das langsame Ende kommt zuletzt.
+    await schaleOeffnen(page, 'npcs');
+    await page.locator('#markdown-import-file').setInputFiles(langsam);
+    await expect.poll(zurueckgehalten).toBe(1);
+    await page.locator('#markdown-import-file').setInputFiles({
+        name: 'schnell.md',
+        mimeType: 'text/markdown',
+        buffer: Buffer.from('**neu**', 'utf8')
+    });
+    await expect(page.locator('#markdown-import-preview-content')).toContainText('neu');
+    await freigeben();
+    weich(
+        await page.locator('#markdown-import-preview-content').innerHTML(),
+        'a) die Vorschau zeigt die neuere Wahl'
+    ).toBe('<b>neu</b>');
+    await page.locator('#markdown-import-confirm').click();
+    await expect(page.locator('#markdown-import-modal')).toBeHidden();
+    weich(await page.locator('#npc-desc').innerHTML(), 'a) uebernommen ist die neuere Wahl').toBe(
+        '<b>neu</b>'
+    );
+
+    // b) langsam gewaehlt, Schale abgebrochen und neu geoeffnet — das langsame
+    //    Ende fuellt die frische Schale nicht.
+    await schaleOeffnen(page, 'npcs');
+    await page.locator('#markdown-import-file').setInputFiles(langsam);
+    await expect.poll(zurueckgehalten).toBe(1);
+    await page.locator('#markdown-import-modal .modal-footer [data-action="hide-modal"]').click();
+    await expect(page.locator('#markdown-import-modal')).toBeHidden();
+    await schaleOeffnen(page, 'npcs');
+    await freigeben();
+    await weich(
+        page.locator('#markdown-import-preview'),
+        'b) die frische Schale zeigt keine alte Vorschau'
+    ).toBeHidden();
+    await weich(
+        page.locator('#markdown-import-confirm'),
+        'b) "Importieren" bleibt aus'
+    ).toBeDisabled();
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
 });
