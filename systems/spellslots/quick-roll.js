@@ -16,6 +16,14 @@ function quickRoll(sides) {
     D.diceHistory = D.diceHistory || [];
     D.diceHistory.unshift({ dice: `d${sides}`, result, timestamp: Date.now() });
     if (D.diceHistory.length > 50) D.diceHistory = D.diceHistory.slice(0, 50);
+    // D.diceHistory oben liest keine Ansicht. In Verlauf und Statistik kommt der
+    // Wurf erst hier (07-CONTEXT D-04: "ALLE Würfe ... Quick-Rolls (R)").
+    // Ohne Schadensart: der Chip des Wuerfel-Tabs gilt nicht fuer R/Alt+Ziffer.
+    // typeof: die Multi-Tab-Werkbank der Unit-Tests laedt dieses Modul ohne
+    // das Wuerfelmodul.
+    if (typeof addToDiceHistory === 'function') {
+        addToDiceHistory(`1d${sides}`, result, [result], { ohneSchadensart: true });
+    }
 }
 // (D-07) Speicher-Konflikt auflösen. Es gibt (noch) keinen externen UI-Dialog —
 // bei abweichendem Inhalt wird der neuere IDB-Stand bevorzugt (kein stiller Verlust).

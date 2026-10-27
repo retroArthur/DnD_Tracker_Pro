@@ -73,7 +73,14 @@ declare function rollSavingThrow(): void;
 declare function rollGroupPerception(): void;
 declare function createConfetti(container: Element): void;
 declare function toggleDamageType(chip: HTMLElement): void;
-declare function addToDiceHistory(notation: string, result: string | number, rolls: (number | string)[]): void;
+/**
+ * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
+ * @param optionen - `{ ohneSchadensart: true }` fuer Wuerfe von ausserhalb des
+ *   Wuerfel-Tabs: der dort gewaehlte Schadensart-Chip beschriftet nur dessen Wuerfe.
+ */
+declare function addToDiceHistory(notation: string, result: string | number, rolls: (number | string)[], optionen?: {
+    ohneSchadensart?: boolean;
+}): void;
 declare function addToFormulaHistory(formula: string): void;
 declare function renderFormulaHistory(): void;
 declare function renderDiceHistory(): void;

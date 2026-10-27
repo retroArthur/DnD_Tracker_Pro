@@ -131,17 +131,30 @@ function renderDMSDiceWidget() {
 }
 /**
  * DM Screen Würfelwurf
+ * @returns Summe, oder null, wenn die Formel ungueltig ist (dann kein Wurf)
  */
 function dmsRollDice(formula) {
     let result = 0;
     let rolls = [];
+    // Ungueltige Formel: KEIN Wurf (WUERFEL). Vorher lehnte parseDiceNotation()
+    // per alert() ab, und der "Wurf" ging trotzdem mit Summe 0 und ohne
+    // Einzelwuerfe in Verlauf und Statistik ({abc, 0, []}). Die Pruefung ist
+    // DIESELBE Grammatik wie in parseDiceNotation() (features/dice/dice-core.js)
+    // — lockerer darf sie nie werden, sonst geht der alert() wieder auf.
+    const notation = String(formula || '').trim();
+    if (!/^(\d+)?d(\d+)(k[hl](\d+))?([+-]\d+)?$/i.test(notation)) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('Ungültige Würfelformel (z. B. 2d6+3, 4d6kh3)', 'error');
+        }
+        return null;
+    }
+    formula = notation;
     // Use parseDiceNotation if available (returns object with total, rolls)
     if (typeof window.parseDiceNotation === 'function') {
         const parsed = window.parseDiceNotation(formula);
-        if (parsed) {
-            result = parsed.total;
-            rolls = parsed.rolls;
-        }
+        if (!parsed) return null;
+        result = parsed.total;
+        rolls = parsed.rolls;
     } else {
         // Fallback: simple dice roll
         const match = formula.match(/(\d+)?d(\d+)/i);

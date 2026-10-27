@@ -436,8 +436,19 @@ function toggleDamageType(chip) {
         selectedDamageType = null;
     }
 }
-function addToDiceHistory(notation, result, rolls) {
-    const dmgType = selectedDamageType ? ` (${selectedDamageType})` : '';
+/**
+ * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
+ * @param notation - Wuerfelnotation in d-Schreibweise (z.B. '1d20+4')
+ * @param result - Summe
+ * @param rolls - Einzelwuerfe
+ * @param optionen - `{ ohneSchadensart: true }` fuer Wuerfe von AUSSERHALB des
+ *   Wuerfel-Tabs (Schnellreferenz, Bestiar, Statblock, Schnellwurf): der dort
+ *   gewaehlte Schadensart-Chip beschriftet nur die Wuerfe des Wuerfel-Tabs —
+ *   sonst hiesse Fallschaden "1d6 (Feuer)" (WUERFEL).
+ */
+function addToDiceHistory(notation, result, rolls, optionen) {
+    const dmgType =
+        selectedDamageType && !optionen?.ohneSchadensart ? ` (${selectedDamageType})` : '';
     diceHistory.unshift({ notation: notation + dmgType, result, rolls, time: new Date() });
     if (diceHistory.length > 30) diceHistory.pop();
     renderDiceHistory();
