@@ -208,7 +208,7 @@ function renderInit() {
 
     // All lookups now use cache
     const html = combatants.map(cb => {
-        const char = EntityLookup.findByName('characters', cb.name); // Cached!
+        const char = EntityLookup.findByName('characters', cb.name); // nie gecacht, s. Berichtigung
         // ...
     }).join('');
 
@@ -217,6 +217,7 @@ function renderInit() {
 }
 ```
 - **Result:** 50-70% faster rendering (150ms → <50ms with 10 combatants)
+- **Berichtigt (RUECKSPRUNG, 2026-10-27):** Dieses Muster ist zurückgenommen. `findByName()` las nie aus dem Cache — der frühere Kommentar „Cached!“ an diesem Aufruf im Beispiel stimmte nie —, und der genannte Gewinn ist nirgends gemessen. Der Cache selbst hielt ersetzte Objekte fest: Er blieb nach jedem Laden ohne Kampf eingeschaltet (`renderInit()` kehrte bei 0 Kämpfern vor `clearCache()` zurück), und das zweite ✏️ von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe lud nach einem 💾 den alten Stand, den das nächste 💾 zurückschrieb. `EntityLookup.get()` liest seither immer aus `D`; `enableCache()`/`clearCache()` gibt es nicht mehr. Gemessen mit 20 Helden zu je 30 Zaubern, 500 Zaubern, 100 NPCs und 20 Kämpfern: `renderInit()`, `renderNPCList()`, `renderDMScreen()` unverändert, `renderParty()` im schlechtesten Fall (alle Helden teilen die 30 letzten Zauber) Median 1,5 → 2,0 ms. Vertrag RUECKSPRUNG, `docs/bugfixes.md`.
 
 **Problem: Slow Deep Cloning in Backups**
 - **What was wrong:** `JSON.parse(JSON.stringify(obj))` used for deep cloning (slow, loses Date objects)
@@ -425,7 +426,7 @@ if (end - start > MAX_RANGE_SIZE) {
    - Always sanitize user content with `sanitizeHTML()` or `esc()`
    - Validate foreign key references before persisting
    - Use `parseEntityId()` for all ID comparisons
-   - Enable/clear EntityLookup cache in render functions
+   - ~~Enable/clear EntityLookup cache in render functions~~ — zurückgenommen (RUECKSPRUNG): `EntityLookup` hat keinen Cache mehr, siehe Phase 4
 
 3. **After Writing Code:**
    - Write unit tests (Jest) for new functions
