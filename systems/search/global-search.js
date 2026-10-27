@@ -63,6 +63,13 @@ function performGlobalSearch() {
         results.classList.remove('visible');
         return;
     }
+    // Die offene Liste zeigt schon diesen Begriff: nicht neu zeichnen. Das
+    // 'change' beim Verlassen des Feldes (Tab auf den ersten Treffer) ruft
+    // diese Funktion entprellt ein zweites Mal — das innerHTML unten ersetzte
+    // dann den fokussierten Treffer, der Fokus fiel auf BODY, und Enter tat
+    // fuer keinen Typ etwas. Eine geschlossene Liste zeichnet immer neu, das
+    // Betreten des Feldes und ein Speichern ebenso (initGlobalSearchListener).
+    if (results.classList.contains('visible') && results.dataset.begriff === query) return;
     const matches = [];
     // Search Characters (fuzzy)
     D.characters.forEach(c => {
@@ -185,6 +192,7 @@ function performGlobalSearch() {
             })
             .join('');
     }
+    results.dataset.begriff = query;
     results.classList.add('visible');
 }
 function getTypeIcon(type) {
@@ -219,15 +227,24 @@ function navigateToResult(type, id, locId) {
             setTimeout(() => editChar(id), 100);
             break;
         case 'npc':
-            switchView('locations');
             if (locId) {
+                switchView('locations');
                 setTimeout(() => {
                     const loc = EntityLookup.location(locId);
                     if (loc) toggleLocation(locId);
                     editNPC(id);
                 }, 100);
             } else {
+                // Ohne Ort wie mit Ort: toggleNPC() ist das Gegenstueck zu
+                // toggleLocation() — NSC-Filter auf "Alle" (sonst stuende das
+                // Ziel nicht in der Liste, und nach der naechsten Rundreise
+                // waere ein fremder NSC gewaehlt), waehlen, mittig scrollen,
+                // Goldschein. Dann derselbe Bearbeiten-Dialog wie mit Ort.
                 switchView('npcs');
+                setTimeout(() => {
+                    toggleNPC(id);
+                    editNPC(id);
+                }, 100);
             }
             break;
         case 'location':
@@ -242,6 +259,16 @@ function navigateToResult(type, id, locId) {
             switchView('spells');
             setTimeout(() => editSpell(id), 100);
             break;
+        case 'encounter':
+            // Wie der Ortszweig: toggleEncounter() setzt den Typfilter auf
+            // "Alle" (sonst stuende das Ziel nicht in der Liste, und die
+            // Auswahl spraenge beim naechsten Zeichnen zurueck), waehlt,
+            // scrollt und zeigt den Goldschein. openEncounterDetail() oeffnet
+            // bis 900 px das Vollbild — dort ist das Detail sonst ausgeblendet.
+            switchView('encounter');
+            toggleEncounter(id);
+            openEncounterDetail(id);
+            break;
     }
 }
 // Close search on click outside
@@ -255,7 +282,30 @@ document.addEventListener('click', function (e) {
 function initGlobalSearchListener() {
     const input = $('global-search');
     if (input) {
-        input.addEventListener('focus', performGlobalSearch);
+        // Wer ins Feld zurueckkehrt (Klick, Strg+K, Shift+Tab), sieht die
+        // Liste mit den Daten von JETZT — der gemerkte Begriff gilt hier
+        // nicht. Die Sperre in performGlobalSearch() ist fuer das 'change'
+        // beim Verlassen des Feldes da; beim Betreten hat das Feld den Fokus,
+        // ein Neuzeichnen nimmt keinem Treffer etwas weg.
+        input.addEventListener('focus', () => {
+            const results = $('global-search-results');
+            if (results) delete results.dataset.begriff;
+            performGlobalSearch();
+        });
+    }
+    // Daten gespeichert (auch Strg+Z/Strg+Y, die im Feld wirken): eine offene
+    // Liste zeichnet sofort neu, solange der Fokus NICHT auf einem Treffer
+    // steht. Sonst zeigte sie Geloeschtes, bis jemand das Feld neu betritt.
+    // Unter einem fokussierten Treffer bleibt sie stehen — Neuzeichnen waere
+    // dort der Wettlauf von vorn; das naechste Betreten zeichnet (oben).
+    if (typeof window.registerPostSaveHook === 'function') {
+        window.registerPostSaveHook(() => {
+            const results = $('global-search-results');
+            if (!results || !results.classList.contains('visible')) return;
+            if (results.contains(document.activeElement)) return;
+            delete results.dataset.begriff;
+            performGlobalSearch();
+        });
     }
 }
 // ============================================================
