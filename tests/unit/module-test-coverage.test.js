@@ -208,16 +208,24 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
     'features/initiative-statblock.js',
-    'features/locations/locations-crud.js',
+    // -- 2026-10-27, MARKDOWN: 'features/locations/locations-crud.js' GESTRICHEN,
+    //    siehe den Eintrag 'systems/markdown-import-export.js' unten.
     'features/loot-distribution.js',
     'features/npc-generator/npc-default-tables.js',
-    'features/npc-generator/npc-generator.js',
-    'features/npcs/npc-crud.js',
+    // -- 2026-10-27, NPC: 'features/npc-generator/npc-generator.js' und
+    //    'features/npcs/npc-crud.js' sind hier GESTRICHEN.
+    //    tests/e2e/features/npc-formular.spec.js faehrt am gebauten Buendel
+    //    mit echten Klicks ✏️ → 💾, die vier Anlegen-Wege, das Entfernen von
+    //    Dialogen und Triggern und den 🎲-Generator bis "Als NPC speichern",
+    //    und urteilt ueber jedes Feld des NPC in D, im Speicher und nach dem
+    //    Neuladen. Ohne saveNPC()/editNPC() bzw. saveGeneratedNPC() waere
+    //    keiner der Faelle erklaerbar. Die Liste darf nur schrumpfen.
+    // -- 2026-10-27, MARKDOWN: 'features/npcs/npc-crud.js' GESTRICHEN, s. unten.
     'features/npcs/npc-interactions.js',
     'features/npcs/npc-popup.js',
     'features/party/party-crud.js',
     'features/party/party-details.js',
-    'features/quests/quests-crud.js',
+    // -- 2026-10-27, MARKDOWN: 'features/quests/quests-crud.js' GESTRICHEN, s. unten.
     // 'features/quests/quests-render.js' — gestrichen in E-2/Einheit 2:
     // tests/unit/keyboard-group-views.test.js liest die Datei und sichert
     // zu, dass der Behaelter der zwei Statusmarken sein
@@ -247,13 +255,24 @@ const MODULE_TEST_EXCEPTIONS = [
     //    ueber sourceJs() wirklich einliest. Keine Erwaehnung zur
     //    Gate-Beruhigung. Die Liste darf nur schrumpfen — sie tut es hier.
     'features/soundboard/soundboard-render.js',
-    'features/spells/spell-manager.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    // -- 2026-10-27, MARKDOWN: 'features/spells/spell-manager.js' GESTRICHEN, s. unten.
     'features/timeline/timeline-crud.js',
     'features/timeline/timeline-render.js',
     'features/timers/timers.js',
     'systems/conditions.js',
     'systems/hp-calculator.js',
-    'systems/markdown-import-export.js',
+    // -- 2026-10-27, MARKDOWN: 'systems/markdown-import-export.js' ist hier
+    //    GESTRICHEN, und mit ihm vier weitere Eintraege (oben markiert): die
+    //    Liste schrumpft um fuenf. tests/e2e/features/markdown-austausch.spec.js
+    //    faehrt am gebauten Buendel mit echten Klicks "📄 Export" und
+    //    "📥 Import" in den Formularen von NPC, Quest und Zauber, die
+    //    Import-Schale, Speichern, Strg+Z und das Neuladen — und ✏️/Speichern
+    //    an Orten, deren Filter populateSelects() verlor. Jeder der fuenf Pfade
+    //    gehoert zu einem Modul, ohne das ein Fall nicht erklaerbar waere:
+    //    das Markdown-Modul selbst, editNPC()/saveNPC(), editQuest()/saveQuest(),
+    //    editSpell()/saveSpell() und editLocation()/saveLocation(). Keine
+    //    Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen; sie tut
+    //    es hier.
     // -- 2026-10-07, Tastatur-Strang T-A: 'systems/spellslots/keyboard-shortcuts.js'
     //    ist hier GESTRICHEN. tests/e2e/features/tastatur-ausloesung.spec.js prueft
     //    genau die isTyping-Schranke dieses Moduls und seine Leertasten-, Ziffern-

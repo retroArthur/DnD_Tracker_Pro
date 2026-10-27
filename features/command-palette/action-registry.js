@@ -16,7 +16,7 @@ const ACTION_REGISTRY = [
         id: 'new-npc',
         label: 'Neuer NPC',
         keywords: ['npc', 'gegenspieler', 'person', 'erstellen', 'hinzufuegen'],
-        action: () => { window.showModal('npc-modal'); }
+        action: () => { window.showNewNPCModal(); }
     },
     {
         id: 'new-char',

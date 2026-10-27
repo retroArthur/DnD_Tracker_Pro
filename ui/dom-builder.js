@@ -369,8 +369,8 @@ function renderNPCListOptimized(container, npcs, options = {}) {
                       titleEmpty: 'Keine NPCs',
                       descEmpty: 'Erstelle Nicht-Spieler-Charaktere für deine Welt.',
                       buttonText: '➕ NPC erstellen',
-                      buttonAction: 'show-modal',
-                      buttonValue: 'npc-modal'
+                      // Derselbe Anlegen-Weg wie "+ NPC" — leert Bearbeiten-Reste.
+                      buttonAction: 'show-new-npc-modal'
                   })
                 : '<p>Keine NPCs vorhanden</p>';
         return;

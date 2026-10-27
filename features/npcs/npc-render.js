@@ -118,7 +118,7 @@ function renderNPCList() {
                 ${
                     !search && currentNpcFilter === 'all'
                         ? `
-                    <button class="npc-add-btn" data-action="show-modal" data-value="npc-modal" style="margin-top: 12px;">
+                    <button class="npc-add-btn" data-action="show-new-npc-modal" style="margin-top: 12px;">
                         + NPC erstellen
                     </button>
                 `

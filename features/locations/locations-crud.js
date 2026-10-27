@@ -56,9 +56,10 @@ function editLocation(id) {
     $('loc-name').value = loc.name;
     $('loc-desc').innerHTML = sanitizeHTML(loc.description) || '';
     populateSelects();
-    if (loc.filterId) {
-        $('loc-filter').value = String(loc.filterId);
-    }
+    // Auch '' setzen: populateSelects() haelt seit MARKDOWN die Auswahl — und
+    // genau deshalb ueberlebt der Filter jetzt showModal(), das ihn frueher
+    // wegwischte (Speichern machte null daraus).
+    $('loc-filter').value = loc.filterId ? String(loc.filterId) : '';
     showModal('location-modal');
 }
 /**
