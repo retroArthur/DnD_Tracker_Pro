@@ -180,7 +180,20 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/bestiary/bestiary-actions.js',
     'features/bestiary/bestiary-crud.js',
     'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'features/command-palette/command-palette.js',
+    // -- 2026-10-27, ABBRUCH: 'features/command-palette/command-palette.js' ist
+    //    hier GESTRICHEN, und mit ihm acht weitere Eintraege (unten markiert):
+    //    die Liste schrumpft um neun. Die Waechter des Vertrags ABBRUCH
+    //    (Commit 0be4cc6, tests/e2e/features/*-anlegen.spec.js) fahren am
+    //    gebauten Buendel mit echten Klicks und Tasten Bearbeiten -> Abbrechen
+    //    -> Anlegen -> Speichern und urteilen ueber D, Speicher und Neuladen:
+    //    charakter-anlegen ueber saveCharacter()/cancelCharEdit() samt
+    //    clearFormFields() und deleteWithConfirm(), encounter-anlegen ueber
+    //    saveEncounter(), die Befehlspalette und die Schnell-Vorlagen,
+    //    notiz-anlegen ueber saveSession(), link-anlegen ueber saveLink(),
+    //    timer-vorlage-anlegen ueber saveTimerPreset() samt clearFormFields().
+    //    Ohne diese Module waere keiner der Faelle erklaerbar — keine
+    //    Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen; sie
+    //    tut es hier.
     // GESTRICHEN am 2026-10-05 (Welle 5, Schritt 1): W5-R-05c in
     // tests/unit/design-consistency.test.js liest jede .js-Datei unter
     // features/ und urteilt ueber die drei SVG-Praesentationsattribute
@@ -210,8 +223,8 @@ const MODULE_TEST_EXCEPTIONS = [
     //    Namenslink jedes Kaempfers. Ohne dieses Modul waere keiner der Faelle
     //    erklaerbar — ein Verhaltensfall, keine Erwaehnung zur Gate-Beruhigung.
     //    Die Liste darf nur schrumpfen; sie tut es hier.
-    'features/encounters/encounters-crud.js',
-    'features/encounters/monster-templates.js',
+    // -- 2026-10-27, ABBRUCH: 'features/encounters/encounters-crud.js' und
+    //    'features/encounters/monster-templates.js' GESTRICHEN, s. oben.
     'features/fraktionen/fraktionen-crud.js',
     'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
@@ -231,7 +244,7 @@ const MODULE_TEST_EXCEPTIONS = [
     // -- 2026-10-27, MARKDOWN: 'features/npcs/npc-crud.js' GESTRICHEN, s. unten.
     'features/npcs/npc-interactions.js',
     'features/npcs/npc-popup.js',
-    'features/party/party-crud.js',
+    // -- 2026-10-27, ABBRUCH: 'features/party/party-crud.js' GESTRICHEN, s. oben.
     'features/party/party-details.js',
     // -- 2026-10-27, MARKDOWN: 'features/quests/quests-crud.js' GESTRICHEN, s. unten.
     // 'features/quests/quests-render.js' — gestrichen in E-2/Einheit 2:
@@ -254,8 +267,8 @@ const MODULE_TEST_EXCEPTIONS = [
     // AUSFUEHRBAREM Code, nicht im Erklaertext — dieselbe Unterscheidung, die
     // der Eintrag vom 2026-09-28 fuer bestiary-render.js/locations-render.js
     // festhaelt.
-    'features/sessions/sessions.js',
-    'features/shops/links.js',
+    // -- 2026-10-27, ABBRUCH: 'features/sessions/sessions.js' und
+    //    'features/shops/links.js' GESTRICHEN, s. oben.
     // -- 2026-09-30, Welle 3 Schritt 8: 'features/shops/shop-export.js' ist hier
     //    GESTRICHEN. R-19 Teil (5) in design-consistency.test.js fuehrt seine
     //    beiden Schattenzeilen (:292 und :486) als benannte JS_AUSNAHMEN und
@@ -266,7 +279,7 @@ const MODULE_TEST_EXCEPTIONS = [
     // -- 2026-10-27, MARKDOWN: 'features/spells/spell-manager.js' GESTRICHEN, s. unten.
     'features/timeline/timeline-crud.js',
     'features/timeline/timeline-render.js',
-    'features/timers/timers.js',
+    // -- 2026-10-27, ABBRUCH: 'features/timers/timers.js' GESTRICHEN, s. oben.
     'systems/conditions.js',
     'systems/hp-calculator.js',
     // -- 2026-10-27, MARKDOWN: 'systems/markdown-import-export.js' ist hier
@@ -330,9 +343,9 @@ const MODULE_TEST_EXCEPTIONS = [
     // wurde es als toter Code geloescht — kein Aufrufer seit dem ersten
     // Commit — und steht damit auch nicht mehr in loader.js MODULES.
     'ui/virtual-scroll.js',
-    'utils/crud-helpers.js',
+    // -- 2026-10-27, ABBRUCH: 'utils/crud-helpers.js' GESTRICHEN, s. oben.
     'utils/filter-engine.js',
-    'utils/form-helpers.js',
+    // -- 2026-10-27, ABBRUCH: 'utils/form-helpers.js' GESTRICHEN, s. oben.
     'utils/game-rules.js',
     'utils/performance-extras.js',
     'utils/performance.js'
