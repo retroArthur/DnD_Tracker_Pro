@@ -63,6 +63,12 @@ function performGlobalSearch() {
         results.classList.remove('visible');
         return;
     }
+    // Die offene Liste zeigt schon diesen Begriff: nicht neu zeichnen. Das
+    // 'change' beim Verlassen des Feldes (Tab auf den ersten Treffer) ruft
+    // diese Funktion entprellt ein zweites Mal — das innerHTML unten ersetzte
+    // dann den fokussierten Treffer, der Fokus fiel auf BODY, und Enter tat
+    // fuer keinen Typ etwas. Eine geschlossene Liste zeichnet immer neu.
+    if (results.classList.contains('visible') && results.dataset.begriff === query) return;
     const matches = [];
     // Search Characters (fuzzy)
     D.characters.forEach(c => {
@@ -185,6 +191,7 @@ function performGlobalSearch() {
             })
             .join('');
     }
+    results.dataset.begriff = query;
     results.classList.add('visible');
 }
 function getTypeIcon(type) {
