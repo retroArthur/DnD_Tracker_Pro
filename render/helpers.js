@@ -465,7 +465,9 @@ function filterBySearch(items, inputId, fields) {
     // und ein durch <b> geteiltes Wort wird nicht gefunden. Ersetzt wird durch
     // die LEERE Zeichenkette, nicht durch ein Leerzeichen — so bleibt ein an
     // einer Formatierungsgrenze geteiltes Wort zusammenhaengend suchbar.
-    // Gleiches Muster wie sessions.js:191.
+    // Gleiches Muster wie die Suche in renderSessions()
+    // (features/sessions/sessions.js) — ueber den Funktionsnamen benannt: die
+    // Zeilennummer, die hier stand, ist schon einmal gewandert.
     return items.filter(item =>
         fields(item).some(
             v =>
