@@ -153,8 +153,6 @@ function renderBestiaryList() {
         return;
     }
 
-    EntityLookup.enableCache();
-
     // Combine SRD + custom
     var srdMonsters = getSRDMonsters().map(function(m) {
         return Object.assign({}, m, { source: 'srd' });
@@ -199,14 +197,11 @@ function renderBestiaryList() {
     // Empty state
     if (!filtered.length) {
         container.innerHTML = '<div class="bestiary-empty-results">Keine Monster gefunden</div>';
-        EntityLookup.clearCache();
         return;
     }
 
     // VirtualScroll.create — auto-activates above 50 items (rowHeight 52)
     VirtualScroll.create(container, filtered, renderBestiaryListItem, 52);
-
-    EntityLookup.clearCache();
 }
 
 // ============================================================

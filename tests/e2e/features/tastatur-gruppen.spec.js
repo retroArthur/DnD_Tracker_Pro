@@ -655,7 +655,7 @@ test('(11) Leertaste auf einem Glied loest GENAU EINEN Klick aus und schaltet de
 // (12)-(13) DAS NEUZEICHNEN
 // ============================================================
 //
-// `toggleInitSlot()` (features/initiative.js:227) ruft `renderInit()` und
+// `toggleInitSlot()` (features/initiative.js:223) ruft `renderInit()` und
 // ersetzt damit die ganze Kampfliste. Gemessen am Ist-Zustand: nach der
 // Leertaste ist der fokussierte Knoten NICHT mehr im Baum
 // (`document.contains(...) === false`) und `activeElement` ist `BODY`.

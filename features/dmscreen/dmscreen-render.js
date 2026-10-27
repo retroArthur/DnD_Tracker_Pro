@@ -207,8 +207,6 @@ function renderDMScreen() {
         }
         return;
     }
-    // Enable EntityLookup cache for performance during widget rendering
-    EntityLookup.enableCache();
     const allWidgets = D.dmScreenLayout.widgets.filter(w => w.visible);
     const widgetDefs = getDMScreenWidgets();
     // Separate compact (Quick Bar) and regular (Grid) widgets
@@ -302,8 +300,6 @@ function renderDMScreen() {
     }
     // Update config dropdown
     renderDMSConfigList();
-    // Clear EntityLookup cache after render to prevent stale data
-    EntityLookup.clearCache();
 }
 // ============================================================
 // WIDGET DEFINITIONS (lazy-loaded to avoid reference issues)

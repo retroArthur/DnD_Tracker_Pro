@@ -109,8 +109,6 @@ function renderInit() {
         }
         return;
     }
-    // Enable EntityLookup cache for performance during render cycle
-    EntityLookup.enableCache();
     const D = window.D;
     const init = D.initiative;
     // Encounter-Rundenzahl aktualisieren
@@ -209,8 +207,6 @@ function renderInit() {
     if (typeof window.renderQuickActionsBar === 'function' && activeCb && !activeCb.mob) {
         window.renderQuickActionsBar();
     }
-    // Clear EntityLookup cache after render to prevent stale data
-    EntityLookup.clearCache();
 }
 function toggleInitSlot(charId, level, index) {
     const char = EntityLookup.character(charId);

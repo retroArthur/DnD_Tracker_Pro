@@ -161,7 +161,7 @@ const KeyboardGroup = {
      * wo man war" — und weil jede Renderfunktion, die `innerHTML` ersetzt,
      * die Glieder gegen FRISCHE Knoten austauscht. Ohne Gedaechtnis faellt
      * der Spielleiter nach jeder einzelnen Bedienung an den Anfang der
-     * Reihe zurueck: `toggleInitSlot()` (features/initiative.js:227) ruft
+     * Reihe zurueck: `toggleInitSlot()` (features/initiative.js:223) ruft
      * `renderInit()`, und damit ist die ganze Kampfliste neu.
      *
      * EIN `Map` MIT ZEICHENKETTEN, KEIN `WeakMap` AUF KNOTEN: der Knoten

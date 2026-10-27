@@ -50,8 +50,6 @@ function renderLocations() {
     const listContainer = $('locations-list');
     const filterContainer = $('location-filters');
     if (!listContainer) return;
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     // Update counter
     setViewCount('locations', D.locations?.length || 0);
     // Render filter chips
@@ -119,7 +117,6 @@ function renderLocations() {
             </div>
         `;
         clearLocationDetail();
-        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -131,8 +128,6 @@ function renderLocations() {
         // Re-render detail for current selection
         showLocationDetail(selectedLocationId);
     }
-    // Clear EntityLookup cache
-    EntityLookup.clearCache();
 }
 function renderLocationItem(loc, stripHtml) {
     const D = window.D;

@@ -53,8 +53,6 @@ function renderNPCList() {
     const listContainer = $('npc-list');
     const filterContainer = $('npc-filters');
     if (!listContainer) return;
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     // Update counter
     setViewCount('npcs', D.npcs?.length || 0);
     // Render filter chips (by location)
@@ -127,7 +125,6 @@ function renderNPCList() {
             </div>
         `;
         clearNPCDetail();
-        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -138,8 +135,6 @@ function renderNPCList() {
     } else {
         showNPCDetail(selectedNpcId);
     }
-    // Clear EntityLookup cache
-    EntityLookup.clearCache();
 }
 function renderNPCItem(npc) {
     const location = EntityLookup.location(npc.locationId);

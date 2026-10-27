@@ -531,36 +531,21 @@ function populateFilterDropdown(selectId, items, config = {}) {
     return true;
 }
 /**
- * Zentrales Entity-Lookup-System mit optionalem Caching
- * Vermeidet redundante Array.find()-Aufrufe
+ * Zentrales Entity-Lookup-System: ein Ort fuer "Eintrag zu Sammlung und ID",
+ * statt ueberall eigener Array.find()-Aufrufe. Ohne Zwischenspeicher — jeder
+ * Leser sieht, was im Moment des Aufrufs in D steht (siehe get()). Den
+ * Schalter enableCache()/clearCache() samt seinen 23 Aufrufzeilen in acht
+ * Darstellungsfunktionen gibt es seit RUECKSPRUNG nicht mehr.
  */
 const EntityLookup = {
-    /** Cache für Entity-Lookups */
-    _cache: new Map(),
-    /** Ob Caching aktiviert ist */
-    _cacheEnabled: false,
-    /**
-     * Setzt nur noch den Schalter; get() liest seit RUECKSPRUNG nicht mehr
-     * aus der Ablage (siehe dort).
-     */
-    enableCache() {
-        this._cacheEnabled = true;
-    },
-    /**
-     * Setzt den Schalter zurueck und leert die Ablage; get() liest seit
-     * RUECKSPRUNG nicht mehr aus ihr (siehe dort).
-     */
-    clearCache() {
-        this._cache.clear();
-        this._cacheEnabled = false;
-    },
     /**
      * Holt eine Entity aus der entsprechenden Collection — immer das Objekt,
      * das im Moment des Aufrufs in D steht (Vertrag RUECKSPRUNG, R1,
      * docs/bugfixes.md). Nichts wird gemerkt, weder ein Treffer noch null.
      *
-     * Bis RUECKSPRUNG legte get() bei eingeschaltetem enableCache() jeden
-     * Treffer als Objektreferenz ab, und kein Schreiben machte das ungueltig.
+     * Bis RUECKSPRUNG legte get() bei eingeschaltetem Zwischenspeicher
+     * (enableCache(), inzwischen entfernt) jeden Treffer als Objektreferenz
+     * ab, und kein Schreiben machte das ungueltig.
      * Die Speicherpfade von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe
      * ERSETZEN den Eintrag in D (`{ ...alt, ...neu }`), und eingeschaltet
      * blieb die Ablage nach jedem Laden ohne Kampf (renderInit() kehrt bei 0
@@ -669,9 +654,10 @@ function getEntityForCombat(entityType, entityName, encounterId) {
             id = entity.id;
         }
     } else if (entityType === 'enemy') {
-        // Check encounters first, then NPCs. Die ID direkt in D.encounters, nicht
-        // ueber den EntityLookup-Cache: renderInit() laesst ihn bei leerer
-        // Initiative eingeschaltet, dann hielte er ein ersetztes Objekt fest.
+        // Check encounters first, then NPCs. Die ID direkt in D.encounters — so
+        // geschrieben, als EntityLookup noch einen Zwischenspeicher hatte, der ein
+        // ersetztes Objekt festhielt; seit RUECKSPRUNG liest EntityLookup.encounter()
+        // ebenso frisch, beide Wege sind gleichwertig.
         const encId = parseEntityId(encounterId);
         entity =
             (encId !== null && (window.D.encounters || []).find(e => e.id === encId)) ||

@@ -73,8 +73,6 @@ function renderEncounters() {
     const listContainer = $('encounter-list');
     const filterContainer = $('encounter-filters');
     if (!listContainer) return;
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     // Update counter
     setViewCount('encounter', D.encounters?.length || 0);
     // Render filter chips (by creature type)
@@ -149,7 +147,6 @@ function renderEncounters() {
             </div>
         `;
         clearEncounterDetail();
-        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -164,8 +161,6 @@ function renderEncounters() {
     } else {
         showEncounterDetail(selectedEncounterId);
     }
-    // Clear EntityLookup cache
-    EntityLookup.clearCache();
 }
 // Helper to parse CR values like "1/4", "1/2" etc.
 function parseCR(cr) {
