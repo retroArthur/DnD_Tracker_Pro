@@ -67,6 +67,28 @@
  * Grund ("view-dashboard", "Fokus: BODY", "view-locations").
  *
  * ───────────────────────────────────────────────────────────────────────────
+ * ZWEI FEHLER IM ERSTEN FIX — gefunden in der Gegenpruefung von ca14f4d
+ *
+ *   (5b), (5c)     Der neue Zweig "NSC ohne Ort" rief `selectNPC()` und liess
+ *                  den NSC-Filter stehen. Mit Filter "Ort 0": gewaehlt war
+ *                  keiner, der Filter blieb "101", kein Goldschein, das Ziel
+ *                  fehlte in der Liste, und nach der Rundreise war ein fremder
+ *                  NSC gewaehlt — genau der Zustand, den (4a/4b) fuer
+ *                  Encounter verbieten.
+ *   (8a)           Die Sperre gegen das Neuzeichnen galt auch fuer den
+ *                  focus-Lauscher und ueberlebte jede Datenaenderung: nach
+ *                  Strg+Z unter einem fokussierten Treffer zeigte die Liste den
+ *                  zurueckgenommenen Encounter weiter, auch nach einem Klick
+ *                  ins Feld. Am Stand VOR dem ersten Fix zeichnete dieser Klick
+ *                  frisch.
+ *   (8b)           Strg+Z im Feld bei offener Liste: der Encounter blieb
+ *                  stehen. Nur das; Tab und Enter erreichten den Treffer.
+ * (9) war am Stand ca14f4d gruen und ist der Waechter des ZWEITEN
+ * Weiterleiters (`mobile-search-navigate`), den sonst kein Fall faehrt:
+ * gemessen mit diesem Weiterleiter im alten Zustand ("null" als Text)
+ * "view-locations" statt "view-npcs", gewaehlt ein fremder NSC.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
  * DIE VORBEDINGUNG, OHNE DIE DIESE DATEI NICHTS MISST
  *
  * Das Ziel darf NICHT die automatische Vorauswahl sein und nicht ohne
@@ -97,6 +119,13 @@ const KUNSTWORT = 'Qorx';
 
 /** Das Ziel: ans Listenende sortiert, nicht vorausgewaehlt, ein Riese. */
 const ZIEL = { id: 9001, name: 'Goblinhinterhalt Qorx', begriff: 'Goblinhinterhalt' };
+
+/** Qorxine — der NSC ohne Ort aus der Saat, Fall (5) und seine Nachbarn. */
+const NSC_OHNE_ORT = 7002;
+
+/** Telefon: Mobil-Layout, die Kopfsuche ist ausgeblendet, es gibt nur die
+ *  mobile Suche hinter dem 🔍 der Kopfleiste. */
+const TELEFON = { width: 390, height: 844 };
 
 /** Laenger als die Entprellung der Suche (150 ms) samt Zeichnen — so lange
  *  muss der Fokus nach Tab halten, sonst ist der Wettlauf (2) zurueck. */
@@ -316,6 +345,45 @@ function treffer(page, typ, id) {
     );
 }
 
+/** Das Wort der Faelle (8a/8b) — es trifft genau die zwei Encounter aus
+ *  `undoBarAnlegen()`, sonst nichts in der Saat. */
+const UNDO_WORT = 'Zyrrh';
+
+/**
+ * Legt zwei Encounter an, die `UNDO_WORT` tragen: 9201 vor, 9200 NACH einem
+ * Undo-Punkt — ein Strg+Z nimmt genau 9200 zurueck. Das ist Vorbereitung,
+ * nicht die gemessene Handlung; gemessen werden die Tasten danach.
+ * @param {import('@playwright/test').Page} page
+ */
+async function undoBarAnlegen(page) {
+    await page.evaluate(() => {
+        const w = /** @type {any} */ (window);
+        w.D.encounters.push({
+            id: 9201,
+            name: 'Zyrrh Wacht',
+            cr: '2',
+            creatureType: 'Humanoid',
+            ac: 12,
+            hp: 20
+        });
+        w.saveUndoState('Zyrrh Falle angelegt');
+        w.D.encounters.push({
+            id: 9200,
+            name: 'Zyrrh Falle',
+            cr: '3',
+            creatureType: 'Drache',
+            ac: 10,
+            hp: 10
+        });
+        w.saveImmediate();
+    });
+}
+
+/** Steht 9200 noch in den Daten? @param {import('@playwright/test').Page} page */
+function hat9200(page) {
+    return page.evaluate(() => /** @type {any} */ (window).D.encounters.some(e => e.id === 9200));
+}
+
 /**
  * Wartet, bis die Liste den GANZEN Begriff zeigt: die Markierung im Treffer
  * traegt ihn erst nach dem letzten entprellten Zeichnen. Ohne das koennte
@@ -408,6 +476,28 @@ function encLage(page) {
                 ?.value
         };
     }, ZIEL.begriff);
+}
+
+/**
+ * Der Zustand der NSC-Ansicht: Filter, gewaehlte Eintraege, und ob das
+ * Detail Qorxine zeigt.
+ * @param {import('@playwright/test').Page} page
+ */
+function nscLage(page) {
+    return page.evaluate(() => {
+        const chip = /** @type {HTMLElement|null} */ (
+            document.querySelector('#npc-filters .npc-filter-chip.active')
+        );
+        return {
+            filter: chip ? chip.dataset.value || chip.dataset.id || '' : '(keiner)',
+            gewaehlt: Array.from(document.querySelectorAll('#npc-list .npc-item.selected')).map(
+                e => /** @type {HTMLElement} */ (e).dataset.id
+            ),
+            detailZeigtZiel: (
+                document.getElementById('npc-detail-panel')?.textContent || ''
+            ).includes('Qorxine')
+        };
+    });
 }
 
 /**
@@ -662,7 +752,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         await expect
             .poll(async () => (await encLage(page)).ansicht, { timeout: 3000 })
             .toBe('view-encounter');
-        weich(page.locator('#view-encounter'), 'das Vollbild ist offen').toHaveClass(
+        await weich(page.locator('#view-encounter'), 'das Vollbild ist offen').toHaveClass(
             /\bdetail-open\b/
         );
         weich(
@@ -709,7 +799,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         ]);
         weich(z.detailZeigtZiel, 'das Detail zeigt das Ziel').toBe(true);
         if (vollbild) {
-            weich(page.locator('#view-encounter'), 'das Vollbild ist offen').toHaveClass(
+            await weich(page.locator('#view-encounter'), 'das Vollbild ist offen').toHaveClass(
                 /\bdetail-open\b/
             );
         }
@@ -723,7 +813,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         ]);
         weich(z.detailZeigtZiel, 'nach der Rundreise zeigt das Detail weiter das Ziel').toBe(true);
         if (vollbild) {
-            weich(
+            await weich(
                 page.locator('#view-encounter'),
                 'nach der Rundreise ist das Vollbild weiter offen'
             ).toHaveClass(/\bdetail-open\b/);
@@ -762,6 +852,87 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             feld: ''
         };
         weich(await abwarten(page, '', soll)).toEqual(soll);
+        weich(await fehler.alle()).toEqual([]);
+    });
+
+    /**
+     * Der NSC-Filter "Ort 0" blendet das Ziel (ein NSC ohne Ort) aus — das
+     * Gegenstueck zu (4a/4b). Danach steht der Filter auf "Alle", das Ziel in
+     * der Liste, gewaehlt und mit Goldschein; nach dem Schliessen des Dialogs
+     * steht es im Bild, und nach einer Rundreise ueber die Reiter ist es immer
+     * noch gewaehlt. Bis 900 px blendet `npcs.css` das Detail aus — dort zaehlt
+     * nur die Liste.
+     * @param {import('@playwright/test').Page} page
+     * @param {boolean} schmal
+     */
+    async function nscFilterFall(page, schmal) {
+        const ziel = `#npc-list .npc-item[data-id="${NSC_OHNE_ORT}"]`;
+        await zurAnsicht(page, 'npcs');
+        await page.locator('#npc-filters .npc-filter-chip[data-id="101"]').click();
+        await expect(page.locator('#npc-filters .npc-filter-chip.active')).toHaveAttribute(
+            'data-id',
+            '101'
+        );
+        await expect(
+            page.locator(ziel),
+            'Vorbedingung: der Filter blendet das Ziel aus'
+        ).toHaveCount(0);
+        await zurAnsicht(page, 'dashboard');
+
+        await tippen(page, 'Qorxine');
+        await (await trefferAbwarten(page, 'npc', NSC_OHNE_ORT, 'Qorxine')).click();
+        const soll = {
+            ...ZUSAGE.npc({ typ: 'npc', id: String(NSC_OHNE_ORT), loc: 'null', name: '' }),
+            sucheOffen: false,
+            feld: ''
+        };
+        weich(await abwarten(page, '', soll)).toEqual(soll);
+        weich((await nscLage(page)).filter, 'der NSC-Filter steht auf "Alle"').toBe('all');
+        // Der Goldschein zeigt zwei Sekunden lang, wohin gesprungen wurde.
+        await weich
+            .poll(
+                () =>
+                    page.evaluate(sel => document.querySelector(sel)?.style.boxShadow || '', ziel),
+                { timeout: 2000, intervals: [50] }
+            )
+            .not.toBe('');
+
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#npc-modal'), 'Escape schliesst den Dialog').not.toHaveClass(
+            /\bshow\b/
+        );
+        await weich.poll(() => imBild(page, ziel), { timeout: 3000 }).toBe('ja');
+        if (!schmal) {
+            weich((await nscLage(page)).detailZeigtZiel, 'das Detail zeigt das Ziel').toBe(true);
+        }
+
+        // Rundreise ueber die Reiter, mit echten Klicks.
+        await zurAnsicht(page, 'dashboard');
+        await zurAnsicht(page, 'npcs');
+        const n = await nscLage(page);
+        weich(n.gewaehlt, 'nach der Rundreise ist das Ziel weiter gewaehlt').toEqual([
+            String(NSC_OHNE_ORT)
+        ]);
+        if (!schmal) {
+            weich(n.detailZeigtZiel, 'nach der Rundreise zeigt das Detail weiter das Ziel').toBe(
+                true
+            );
+        }
+    }
+
+    test('(5b) NSC ohne Ort bei aktivem NSC-Filter "Ort 0" — 1440', async ({ page }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page);
+        await nscFilterFall(page, false);
+        weich(await fehler.alle()).toEqual([]);
+    });
+
+    test('(5c) NSC ohne Ort bei aktivem NSC-Filter "Ort 0" — 900x800, ohne Detailspalte', async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page, GRENZE);
+        await nscFilterFall(page, true);
         weich(await fehler.alle()).toEqual([]);
     });
 
@@ -862,5 +1033,109 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         await expect(page.locator('#global-search-results')).toHaveClass(/\bvisible\b/);
         await trefferAbwarten(page, 'quest', 6001, KUNSTWORT);
         weich(await fehler.alle()).toEqual([]);
+    });
+
+    test('(8a) Strg+Z unter einem fokussierten Treffer, dann zurueck ins Feld: die Liste zeigt die Daten von jetzt', async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page);
+        await undoBarAnlegen(page);
+        await page.keyboard.press('Control+k');
+        await expect(
+            page.locator('#global-search'),
+            'Strg+K fokussiert die Kopfsuche'
+        ).toBeFocused();
+        await page.keyboard.type(UNDO_WORT, { delay: 20 });
+        await trefferAbwarten(page, 'encounter', 9200, UNDO_WORT);
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(WETTLAUF_MS);
+        expect(await fokus(page), 'Vorbedingung: Tab steht auf einem Treffer').toMatch(
+            /search-result-item\[encounter:/
+        );
+
+        await page.keyboard.press('Control+z');
+        await expect
+            .poll(() => hat9200(page), { message: 'Vorbedingung: Strg+Z nimmt 9200 zurueck' })
+            .toBe(false);
+
+        // Zurueck ins Feld, mit der Maus — wie vor dem ersten Fix zeichnet das neu.
+        await page.locator('#global-search').click();
+        await weich(
+            treffer(page, 'encounter', 9200),
+            'der zurueckgenommene Encounter steht nicht mehr in der Liste'
+        ).toHaveCount(0);
+        await weich(treffer(page, 'encounter', 9201), 'der gebliebene steht darin').toBeVisible();
+        weich(await fehler.alle()).toEqual([]);
+    });
+
+    test('(8b) Strg+Z im Feld bei offener Liste: die Liste wird sofort frisch, und Tab haelt danach den Treffer', async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page);
+        await undoBarAnlegen(page);
+        await page.keyboard.press('Control+k');
+        await page.keyboard.type(UNDO_WORT, { delay: 20 });
+        await trefferAbwarten(page, 'encounter', 9200, UNDO_WORT);
+
+        await page.keyboard.press('Control+z');
+        await expect
+            .poll(() => hat9200(page), { message: 'Vorbedingung: Strg+Z nimmt 9200 zurueck' })
+            .toBe(false);
+        await expect(
+            page.locator('#global-search'),
+            'Vorbedingung: der Fokus bleibt im Feld'
+        ).toBeFocused();
+        await weich(
+            treffer(page, 'encounter', 9200),
+            'die offene Liste zeigt den zurueckgenommenen Encounter nicht mehr'
+        ).toHaveCount(0);
+
+        // Dann wie (2): Tab, warten, Enter — der gebliebene Treffer.
+        await page.keyboard.press('Tab');
+        await page.waitForTimeout(WETTLAUF_MS);
+        const wo = await fokus(page);
+        weich(wo, `Tab steht ${WETTLAUF_MS} ms spaeter noch auf dem Treffer`).toMatch(
+            /\[encounter:9201\]$/
+        );
+        if (wo.endsWith('[encounter:9201]')) await page.keyboard.press('Enter');
+        await weich
+            .poll(async () => (await encLage(page)).gewaehlt, { timeout: 3000 })
+            .toEqual(['9201']);
+        weich(await fehler.alle()).toEqual([]);
+    });
+
+    test('(9) Telefon 390x844, mobile Suche: ein NSC ohne Ort oeffnet in der NSC-Ansicht', async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page, TELEFON);
+        await page.locator('.mobile-header button[data-value="showMobileSearch"]').click();
+        const feld = page.locator('#mobile-search-input');
+        await expect(feld, 'die mobile Suche ist offen').toBeVisible();
+        await feld.pressSequentially('Qorxine', { delay: 20 });
+        const t = page.locator(
+            `#mobile-search-results [data-action="mobile-search-navigate"][data-type="npc"][data-id="${NSC_OHNE_ORT}"]`
+        );
+        await expect(t, 'Treffer Qorxine in der mobilen Suche').toBeVisible();
+        // Vorbedingung: auch hier traegt der Treffer "keinen Ort" als Text "null".
+        expect(['', 'null']).toContain((await t.getAttribute('data-loc')) || '');
+        await t.click();
+        const soll = ZUSAGE.npc({ typ: 'npc', id: String(NSC_OHNE_ORT), loc: 'null', name: '' });
+        weich(await abwarten(page, '', soll)).toEqual(soll);
+        await weich(
+            page.locator('#mobile-search-modal'),
+            'die mobile Suche ist zu'
+        ).not.toHaveClass(/\bshow\b/);
+        // Vorbestehend, nicht Teil dieses Falls: `$()` meldet im DEBUG_MODE das
+        // Dialogfenster der mobilen Suche, das erst beim ersten Oeffnen angelegt
+        // wird ("Element not found"), gemessen schon an 429ad8f. Genau diese
+        // eine Meldung bleibt draussen, jede andere zaehlt.
+        weich(
+            (await fehler.alle()).filter(
+                f => !f.includes('Element not found: #mobile-search-modal')
+            )
+        ).toEqual([]);
     });
 });
