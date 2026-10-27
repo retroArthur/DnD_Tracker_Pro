@@ -168,7 +168,6 @@ export default {
     "PERSIST_SETTLE_CAP_MS": 'readonly',
     "PerformanceManager": 'readonly',
     "QREF_CONDITIONS": 'readonly',
-    "QREF_MAX_WUERFEL": 'readonly',
     "QUICK_ACTIONS": 'readonly',
     "RARITIES": 'readonly',
     "RARITY_COLORS": 'readonly',

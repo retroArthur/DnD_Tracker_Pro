@@ -150,15 +150,15 @@ function applyQrefCondition(conditionKey) {
     if (renderInit) renderInit();
     if (save) save();
 }
-// CLAUDE.md Regel 7: Schleifen ueber Nutzereingaben begrenzen. Ein eigener
-// Bestiar-Text wie "99999W6" waere sonst eine Schleife ueber 99.999 Wuerfe.
-const QREF_MAX_WUERFEL = 100;
 /**
  * Wuerfelt eine Formel aus der Schnellreferenz, dem Bestiar oder dem
  * Statblock-Panel der Initiative — alle drei laufen hier durch.
  * @param diceFormula - Wuerfelformel (z.B. '3d6', '1d20+4', '1W6+2')
  */
 function rollQrefDice(diceFormula) {
+    // CLAUDE.md Regel 7: Schleifen ueber Nutzereingaben begrenzen. Ein eigener
+    // Bestiar-Text wie "99999W6" waere sonst eine Schleife ueber 99.999 Wuerfe.
+    const MAX_WUERFEL = 100;
     if (!diceFormula) return;
     // Deutsche Statbloecke schreiben W statt d (core/srd-monsters.js, alle
     // Formeln). parseDiceNotation() kennt nur d, und die Statistik zaehlt nur
@@ -174,16 +174,22 @@ function rollQrefDice(diceFormula) {
     // Ungueltiges per alert(), und ein Klick in einen Statblock darf die Seite
     // nicht blockieren. Kein "kh/kl" — das schreibt kein Statblock.
     const teile = notation.match(/^(\d*)d(\d+)([+-]\d+)?$/);
-    if (!teile) {
+    // "0W6" und "1W0" beschreiben keinen Wurf, eigene Bestiar-Texte machen sie
+    // aber klickbar — und parseDiceNotation() wuerfelte daraus einen W6 bzw.
+    // eine feste 1 (`parseInt(...) || 1`, `random() * 0 + 1`).
+    const anzahl = teile ? parseInt(teile[1] || '1', 10) : 0;
+    if (!teile || anzahl < 1 || parseInt(teile[2], 10) < 1) {
         showToast('Ungültige Würfelformel', 'error');
         return;
     }
-    if (parseInt(teile[1] || '1', 10) > QREF_MAX_WUERFEL) {
-        showToast(`Zu viele Würfel (höchstens ${QREF_MAX_WUERFEL})`, 'error');
+    if (anzahl > MAX_WUERFEL) {
+        showToast(`Zu viele Würfel (höchstens ${MAX_WUERFEL})`, 'error');
         return;
     }
     // Derselbe Parser wie Wuerfel-Tab, DM-Screen und Charakter-Modal — der
     // eigene Mini-Parser verlor den Modifikator ("+4" ergab 11 statt 15).
+    // `!parsed` ist unerreichbar, solange die Pruefung oben strenger ist; wird
+    // parseDiceNotation() strenger, haelt die Zeile den Scheineintrag ab.
     const parsed = parseDiceNotation(notation);
     if (!parsed) return;
     const mod = parsed.modifier ? (parsed.modifier > 0 ? '+' : '') + parsed.modifier : '';

@@ -152,11 +152,14 @@ function dmsRollDice(formula) {
     // Use parseDiceNotation if available (returns object with total, rolls)
     if (typeof window.parseDiceNotation === 'function') {
         const parsed = window.parseDiceNotation(formula);
+        // Unerreichbar, solange die Pruefung oben dieselbe Grammatik hat; wird
+        // parseDiceNotation() strenger, haelt die Zeile den Scheineintrag ab.
         if (!parsed) return null;
         result = parsed.total;
         rolls = parsed.rolls;
     } else {
-        // Fallback: simple dice roll
+        // Fallback ohne Wuerfelmodul (nur Unit-Werkbaenke): ein einfacher Wurf.
+        // Nach der Pruefung oben trifft `match` immer — `if (match)` ist Vorsicht.
         const match = formula.match(/(\d+)?d(\d+)/i);
         if (match) {
             const count = parseInt(match[1]) || 1;
