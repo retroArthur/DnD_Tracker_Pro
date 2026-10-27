@@ -1523,6 +1523,7 @@ export default {
     "showTagsModal": 'readonly',
     "showThemeModal": 'readonly',
     "showTimelineModal": 'readonly',
+    "showTimerPresetModal": 'readonly',
     "showToast": 'readonly',
     "showWikiForm": 'readonly',
     "showWikiLinkSuggester": 'readonly',

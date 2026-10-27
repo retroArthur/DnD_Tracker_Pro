@@ -103,12 +103,29 @@ function saveTimerPreset() {
     }
     const presets = getTimerPresets();
     const presetData = { name, emoji, hours, minutes, seconds };
-    if (editIndex !== '') {
-        presets[parseInt(editIndex)] = presetData;
+    // Der Bearbeiten-Zustand ist ein Array-INDEX, keine ID. Liegt er ausserhalb
+    // der Liste (ein zweiter Tab hat die Vorlage geloescht, waehrend das
+    // Formular hier offen war — Vorlagen liegen nicht in D und haben kein
+    // Undo), wird als NEUE Vorlage angelegt, mit Warnung (Vertrag R4).
+    // Vorher schrieb `presets[parseInt(editIndex)] = …` blind: ein Index gleich
+    // der Laenge hing zufaellig richtig an, meldete aber "Vorlage
+    // aktualisiert"; ein Index dahinter riss ein Loch (`[Fackel, null, neu]`).
+    const index = editIndex === '' ? null : parseEntityId(editIndex);
+    const bearbeiten = index !== null && index >= 0 && index < presets.length;
+    const verwaist = editIndex !== '' && !bearbeiten;
+    if (bearbeiten) {
+        presets[index] = presetData;
         showToast('Vorlage aktualisiert');
     } else {
         presets.push(presetData);
-        showToast('Vorlage hinzugefügt');
+        if (verwaist) {
+            showToast(
+                'Die bearbeitete Vorlage existiert nicht mehr — als neue Vorlage gespeichert',
+                'warning'
+            );
+        } else {
+            showToast('Vorlage hinzugefügt');
+        }
     }
     saveTimerPresets(presets);
     clearPresetForm();
@@ -133,9 +150,38 @@ function editTimerPreset(index) {
 function cancelPresetEdit() {
     clearPresetForm();
 }
+/**
+ * Oeffnet den Vorlagen-Dialog — der EINZIGE Anlege-Weg der Timer-Vorlagen
+ * (⚙️ in der Timer-Ansicht; keine Taste n, keine Befehlspalette). Das
+ * Formular oben im Dialog ist zugleich Anlege- und Bearbeiten-Formular.
+ * Vorher oeffnete ⚙️ per showModal('timer-preset-modal') und zeichnete nur
+ * die Liste neu: nach ✏️ → ✕ oder Escape trug das Formular beim naechsten ⚙️
+ * noch den Bearbeiten-Index samt Werten, und "Vorlage speichern" UEBERSCHRIEB
+ * die zuletzt bearbeitete Vorlage (gemessen: Fackel wurde zu "Schild",
+ * Meldung "Vorlage aktualisiert", nach dem Neuladen ebenso). Geleert wird NUR
+ * bei einem solchen Rest; ein Anlege-Entwurf ueberlebt ✕ und Escape weiter
+ * (Vertrag R2). Ist der Dialog OFFEN, ist der Index die laufende Bearbeitung
+ * — dann tut der Weg nichts (wie showNewNPCModal()).
+ */
+function showTimerPresetModal() {
+    if ($('timer-preset-modal')?.classList.contains('show')) return;
+    if ($('edit-preset-index')?.value) clearPresetForm();
+    showModal('timer-preset-modal');
+}
 function clearPresetForm() {
+    // Die Zeitfelder stehen in textFields, damit ihre defaults greifen:
+    // clearFormFields() wendet defaults nur auf aufgefuehrte Felder an. Vorher
+    // standen sie nur in defaults und wurden nie zurueckgesetzt — nach ✏️ →
+    // "Abbrechen" erbte die naechste neue Vorlage die Zeit der bearbeiteten.
     clearFormFields({
-        textFields: ['edit-preset-index', 'preset-name', 'preset-emoji'],
+        textFields: [
+            'edit-preset-index',
+            'preset-name',
+            'preset-emoji',
+            'preset-hours',
+            'preset-minutes',
+            'preset-seconds'
+        ],
         defaults: {
             'preset-hours': '0',
             'preset-minutes': '10',
@@ -155,6 +201,20 @@ function deleteTimerPreset(index) {
     if (!confirm(`Timer-Vorlage "${presetName}" löschen?`)) return;
     presets.splice(index, 1);
     saveTimerPresets(presets);
+    // Den Bearbeiten-Index nachfuehren (Vertrag R8) — erst NACH der
+    // bestaetigten Rueckfrage: wer ablehnt, hat nichts geloescht. ✏️ und 🗑️
+    // liegen im selben Dialog; vorher blieb der Index stehen und zeigte nach
+    // dem splice auf den Nachfolger (gemessen: ✏️ Fackel → 🗑️ Fackel → 💾
+    // ueberschrieb Segen, die niemand bearbeitet hatte). Die bearbeitete
+    // selbst geloescht → Formular leer; eine davor → der Index rueckt um eins
+    // nach; eine dahinter → nichts zu tun.
+    const editIndexInput = $('edit-preset-index');
+    const bearbeitet = editIndexInput?.value ? parseEntityId(editIndexInput.value) : null;
+    const geloescht = parseEntityId(index);
+    if (bearbeitet !== null && geloescht !== null) {
+        if (bearbeitet === geloescht) clearPresetForm();
+        else if (bearbeitet > geloescht) editIndexInput.value = String(bearbeitet - 1);
+    }
     renderPresetList();
     renderTimerPresets();
     showToast('Timer-Vorlage gelöscht', 'info');
@@ -401,6 +461,8 @@ window.setPresetEmoji = setPresetEmoji;
 window.saveTimerPreset = saveTimerPreset;
 window.editTimerPreset = editTimerPreset;
 window.cancelPresetEdit = cancelPresetEdit;
+// Verbraucher: Aktion 'show-timer-preset-modal' in ui/actions/system-actions.js (⚙️).
+window.showTimerPresetModal = showTimerPresetModal;
 window.deleteTimerPreset = deleteTimerPreset;
 window.addPresetTimer = addPresetTimer;
 window.quickTimer = quickTimer;

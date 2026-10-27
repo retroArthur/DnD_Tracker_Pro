@@ -55,6 +55,8 @@ const SystemActions = {
     'delete-timer': ctx => deleteTimer(ctx.id),
     'focus-timer': ctx => focusTimer(ctx.id),
     'quick-timer': ctx => quickTimer(parseInt(ctx.value)),
+    // ⚙️: leert einen Bearbeiten-Rest, bevor der Dialog aufgeht (ABBRUCH).
+    'show-timer-preset-modal': () => showTimerPresetModal(),
     'edit-timer-preset': ctx => editTimerPreset(ctx.id),
     'delete-timer-preset': ctx => deleteTimerPreset(ctx.id),
     'add-preset-timer': ctx => {
