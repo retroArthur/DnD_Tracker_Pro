@@ -212,7 +212,11 @@ interface CombatEntityResult {
  * Get comprehensive entity details for combat/display
  * Centralizes entity lookup pattern used across combat and rendering
  */
-declare function getEntityForCombat(entityType: string, entityName: string): CombatEntityResult;
+declare function getEntityForCombat(
+    entityType: string,
+    entityName: string,
+    encounterId?: number | string | null
+): CombatEntityResult;
 /**
  * Entity Type Icon/Label Config
  */
