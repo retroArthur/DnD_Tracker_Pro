@@ -17,7 +17,8 @@
 
 /**
  * Die drei Formulare: wo ID, Name, Beschreibung und (nur beim Zauber) die
- * Notiz stehen.
+ * Notiz stehen. `kopf` ist die ERSTE Label-Zeile, die buildEntityMarkdown()
+ * fuer den Typ immer schreibt — ohne sie ist ein "# Name" oben fremder Inhalt.
  */
 const MARKDOWN_FORMULARE = {
     npcs: {
@@ -25,21 +26,24 @@ const MARKDOWN_FORMULARE = {
         id: 'edit-npc-id',
         name: 'npc-name',
         editor: 'npc-desc',
-        notiz: null
+        notiz: null,
+        kopf: /^\*\*Typ:\*\* NPC$/
     },
     quests: {
         modal: 'quest-modal',
         id: 'edit-quest-id',
         name: 'quest-title',
         editor: 'quest-desc',
-        notiz: null
+        notiz: null,
+        kopf: /^\*\*Status:\*\* (?:Abgeschlossen|Offen)$/
     },
     spells: {
         modal: 'spell-modal',
         id: 'edit-spell-id',
         name: 'spell-name',
         editor: 'spell-desc',
-        notiz: 'spell-note'
+        notiz: 'spell-note',
+        kopf: /^\*\*Typ:\*\* Zauber$/
     }
 };
 
@@ -122,7 +126,10 @@ function buildEntityMarkdown(entityType, entity) {
     const beschreibung = htmlToMarkdown(entity.description || '').trim();
     if (beschreibung) markdown += beschreibung + '\n\n';
     const notiz = htmlToMarkdown(entity.note || '').trim();
-    if (notiz) markdown += '## Notizen\n\n' + notiz + '\n\n';
+    // Beim Zauber steht der Notiz-Abschnitt IMMER, auch leer: sein "## Notizen"
+    // ist dann der LETZTE der Datei, und eine gleichnamige Ueberschrift in der
+    // Beschreibung bleibt beim Re-Import Beschreibung (splitMarkdownImport()).
+    if (notiz || entityType === 'spells') markdown += '## Notizen\n\n' + notiz + '\n\n';
     // Genau EIN Zeilenumbruch am Ende — htmlToMarkdown haengt an Bloecke selbst
     // Leerzeilen an, frueher blieben bis zu sechs stehen.
     return markdown.replace(/\s+$/, '') + '\n';
@@ -250,14 +257,23 @@ function showMarkdownImportModal(entityType, entityId) {
     const zustand = markdownImportZustand;
     zustand.entityType = entityType;
     zustand.entityId = String(entityId);
+    /** @type {HTMLInputElement} */ (document.getElementById('markdown-import-file')).value = '';
+    resetMarkdownImportSelection();
+    showModal('markdown-import-modal');
+}
+
+/**
+ * "Nichts gewaehlt": Vorschau verborgen und leer, "Importieren" aus. Ein
+ * FileReader, der danach noch fertig wird, verfaellt (Lesezaehler).
+ */
+function resetMarkdownImportSelection() {
+    const zustand = markdownImportZustand;
     zustand.markdown = '';
     zustand.lesung++;
-    /** @type {HTMLInputElement} */ (document.getElementById('markdown-import-file')).value = '';
     document.getElementById('markdown-import-preview').hidden = true;
     document.getElementById('markdown-import-preview-content').innerHTML = '';
     /** @type {HTMLButtonElement} */ (document.getElementById('markdown-import-confirm')).disabled =
         true;
-    showModal('markdown-import-modal');
 }
 
 /**
@@ -266,7 +282,13 @@ function showMarkdownImportModal(entityType, entityId) {
  */
 function readMarkdownImportFile(input) {
     const datei = input && input.files ? input.files[0] : null;
-    if (!datei) return; // Dateidialog abgebrochen
+    if (!datei) {
+        // Die Auswahl ist wieder leer (Browser verwerfen sie, wenn der
+        // Dateidialog abgebrochen wird) — dann gibt es nichts zu importieren.
+        // Frueher blieben Vorschau und "Importieren" der vorigen Datei stehen.
+        resetMarkdownImportSelection();
+        return;
+    }
     const zustand = markdownImportZustand;
     const lesung = ++zustand.lesung;
     const leser = new FileReader();
@@ -296,10 +318,13 @@ function readMarkdownImportFile(input) {
 /**
  * Trennt den eigenen Export-Kopf ab, damit Export -> Import eine Rundreise
  * ist. Als eigener Kopf gilt NUR: erste Zeile "# <Name des Eintrags>", eine
- * Leerzeile, dann eine oder mehr Zeilen "**Label:** Wert" mit Labels, die der
- * Export schreibt. Eine fremde Datei mit "# " oben bleibt unangetastet.
- * Steht im Formular ein Notizfeld (Zauber), geht ein "## Notizen"-Abschnitt
- * des eigenen Exports dorthin zurueck; sonst bleibt er in der Beschreibung.
+ * Leerzeile, dann Zeilen "**Label:** Wert" mit Labels, die der Export
+ * schreibt — und die erste davon ist die, mit der der Export des Typs IMMER
+ * beginnt (`kopf`). Eine fremde Datei mit "# " oben bleibt unangetastet, auch
+ * "# Grimbold" mit "**Rolle:** Spion" darunter.
+ * Steht im Formular ein Notizfeld (Zauber), geht der LETZTE "## Notizen"-
+ * Abschnitt des eigenen Exports dorthin zurueck — der Export schreibt ihn
+ * beim Zauber immer, also ist er der eigene; sonst bleibt er Beschreibung.
  * @param {string} entityType - npcs | quests | spells
  * @param {string} entityId
  * @param {string} markdown
@@ -322,14 +347,19 @@ function splitMarkdownImport(entityType, entityId, markdown) {
             .filter(Boolean)
             .map(n => String(n).trim());
         const labels = [...kopf[2].matchAll(/\*\*([^*\n]+):\*\*/g)].map(m => m[1]);
-        if (namen.includes(kopf[1].trim()) && labels.every(l => MARKDOWN_KOPF_LABELS.has(l))) {
+        if (
+            namen.includes(kopf[1].trim()) &&
+            formular.kopf.test(kopf[2].split('\n')[0].trim()) &&
+            labels.every(l => MARKDOWN_KOPF_LABELS.has(l))
+        ) {
             text = text.slice(kopf[0].length).replace(/^\n+/, '');
-            const marke = '## Notizen\n';
-            let stelle = text.lastIndexOf('\n' + marke);
-            stelle = stelle === -1 ? (text.startsWith(marke) ? 0 : -1) : stelle + 1;
-            if (formular.notiz && stelle !== -1) {
-                notiz = text.slice(stelle + marke.length).trim();
-                text = text.slice(0, stelle);
+            // Die LETZTE Zeile "## Notizen" — auch ohne Zeilenumbruch am
+            // Dateiende, den manche Editoren beim Speichern wegnehmen.
+            const marken = [...text.matchAll(/^## Notizen[ \t]*$/gm)];
+            const marke = marken[marken.length - 1];
+            if (formular.notiz && marke && marke.index !== undefined) {
+                notiz = text.slice(marke.index + marke[0].length).trim();
+                text = text.slice(0, marke.index);
             }
         }
     }

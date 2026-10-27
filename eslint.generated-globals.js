@@ -1250,6 +1250,7 @@ export default {
     "resetEditorShell": 'readonly',
     "resetEncounter": 'readonly',
     "resetLR": 'readonly',
+    "resetMarkdownImportSelection": 'readonly',
     "resetNavOrder": 'readonly',
     "resetSessionTimer": 'readonly',
     "resetTimer": 'readonly',
