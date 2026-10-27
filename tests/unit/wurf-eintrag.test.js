@@ -158,6 +158,37 @@ describe('WUERFEL — rollQrefDice() traegt ein und rechnet richtig', () => {
         // Die Statistik bekam nie einen Zusatz — daran aendert sich nichts.
         expect(ctx.statsIdbPut.mock.calls.map(c => c[0].notation)).toEqual(['1d6', '1d6', '1d20']);
     });
+
+    // W14/W15 aus der Nachpruefung: "0W6" und "1W0" passieren die Grammatik,
+    // und parseDiceNotation() macht aus der Anzahl 0 per `parseInt(...) || 1`
+    // EINEN Wuerfel, aus 0 Seiten `Math.random() * 0 + 1`, also immer 1.
+    // Gemessen an einer eigenen Bestiar-Kreatur: "0W6" stand als "0d6" mit 4
+    // im Verlauf, "1W0" als 1. Klickbar sind beide, weil renderClickableDice()
+    // jede Ziffernfolge vor W/d annimmt. Am alten Parser endeten beide in
+    // "Ungültige Würfelformel" — die neue Randsemantik kam mit dem Fix.
+    test.each(['0W6', '00W6', '0d6+2', '1W0', '2W00', '0W0'])(
+        'W14: "%s" beschreibt keinen Wurf — Fehlermeldung, kein Eintrag, KEIN alert()',
+        formel => {
+            const ctx = sandbox([WUERFEL_KERN, SCHNELLREFERENZ]);
+            ctx.rollQrefDice(formel);
+            expect(ctx.alert).not.toHaveBeenCalled();
+            expect(verlauf(ctx)).toEqual([]);
+            expect(ctx.statsIdbPut).not.toHaveBeenCalled();
+            expect(meldungen(ctx, 'info')).toEqual([]);
+            expect(meldungen(ctx, 'error')).toEqual(['Ungültige Würfelformel']);
+        }
+    );
+
+    test('W15: eine 0 IN der Zahl ist keine Null — "10W6" sind zehn Wuerfel, "1W10" ein W10', () => {
+        const ctx = sandbox([WUERFEL_KERN, SCHNELLREFERENZ]);
+        ctx.rollQrefDice('10W6');
+        ctx.rollQrefDice('1W10');
+        expect(verlauf(ctx)).toEqual([
+            { notation: '1d10', result: 6, rolls: [6] },
+            { notation: '10d6', result: 40, rolls: Array(10).fill(4) }
+        ]);
+        expect(meldungen(ctx, 'error')).toEqual([]);
+    });
 });
 
 describe('WUERFEL — Laeufe ohne Wuerfelmodul (Unit-Werkbaenke) werfen nicht', () => {

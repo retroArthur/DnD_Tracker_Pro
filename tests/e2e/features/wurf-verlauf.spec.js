@@ -65,6 +65,18 @@
  *   (9)  Schnellreferenz-Wurf fehlt (A); nach einem halben Fix stuende er
  *        als "1d6 (Feuer)" da (E).
  *   (10) alert() und {abc, 0, []} im Verlauf: (D).
+ *   (11) nachgetragen in der Nachpruefung, rot am ERSTEN Fix-Stand 0917cdf:
+ *        "0W6" stand als "0d6" mit 4 im Verlauf, "1W0" als 1 — die
+ *        Vorpruefung liess Anzahl 0 und Seiten 0 durch, und
+ *        parseDiceNotation() macht daraus `parseInt(...) || 1`. Am Ausgangs-
+ *        stand 429ad8f ist (11) ebenfalls rot, dort weil kein W-Wurf durchging.
+ *        Obergrenze und Aufschluesselung waren in (11) und (3) schon gruen;
+ *        sie stehen hier, damit nicht allein der Unit-Test sie haelt.
+ *
+ * Nur im Unit-Test (tests/unit/wurf-eintrag.test.js W4) steht die strenge
+ * Vorpruefung gegen Anhaengsel wie "1d6+2abc": am Bildschirm erreicht sie
+ * kein Weg. `renderClickableDice()` schneidet nur `\d+[dWw]\d+([+-]\d+)?`
+ * und isolierte `+N` heraus, die Schnellreferenz traegt feste `data-dice`.
  *
  * Bewusst NICHT zugesichert: die Mini-Historie des schwebenden Wuerfel-Panels.
  * Sie zeigt nur die Wuerfe aus dem Panel selbst (auch aus dem Wuerfel-Tab
@@ -132,8 +144,52 @@ const GOBLIN_KAEMPFER = {
     statblockRef: { source: 'srd', id: 'goblin' }
 };
 
-/** @param {object[]} combatants */
-function seed(combatants) {
+/**
+ * Eine EIGENE Bestiar-Kreatur mit Grenzformeln im Aktionstext. Eigene Texte
+ * schreibt der Spielleiter selbst, und `renderClickableDice()` macht jede
+ * Ziffernfolge vor W/d klickbar (`\d+[dWw]\d+`) — auch "0W6" und "1W0", die
+ * keinen Wurf beschreiben, und "101W6" ueber der Obergrenze.
+ */
+const GRENZLING = {
+    id: 1,
+    name: 'Grenzling',
+    source: 'custom',
+    size: 'Mittelgroß',
+    creatureType: 'Humanoid',
+    alignment: '',
+    cr: '1/4',
+    xp: 50,
+    ac: 12,
+    acInfo: '',
+    hp: 9,
+    hpFormula: '2W8',
+    speed: { walk: '9 m', fly: '', swim: '', climb: '', burrow: '' },
+    str: 10,
+    dex: 14,
+    con: 10,
+    int: 10,
+    wis: 10,
+    cha: 10,
+    savingThrows: {},
+    skills: {},
+    damageResistances: [],
+    damageImmunities: [],
+    conditionImmunities: [],
+    senses: [],
+    languages: [],
+    traits: '',
+    actions: '<p>Null: 0W6. Leer: 1W0. Viel: 101W6. Grenze: 100W6+1. Minus: 2W6-1.</p>',
+    reactions: '',
+    legendaryActions: '',
+    legendaryActionsPerRound: 0,
+    avatar: ''
+};
+
+/**
+ * @param {object[]} combatants
+ * @param {object[]} [bestiary] eigene Kreaturen
+ */
+function seed(combatants, bestiary = []) {
     return {
         _version: '99.0.0',
         settings: {
@@ -158,6 +214,7 @@ function seed(combatants) {
         tags: [],
         sessionNotes: [],
         encounters: [],
+        bestiary,
         initiative: { combatants, currentTurn: 0, round: 1 },
         mindmap: { nodes: [], connections: [] },
         calendar: {},
@@ -225,8 +282,9 @@ function fehlerFangen(page) {
  * Math.random. Liefert die Dialog- und die Fehlerfalle.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} [combatants]
+ * @param {object[]} [bestiary] eigene Kreaturen
  */
-async function laden(page, combatants = []) {
+async function laden(page, combatants = [], bestiary = []) {
     /** @type {string[]} */
     const dialoge = [];
     // Jeder Dialog ist ein Befund: parseDiceNotation() meldet Ungueltiges per
@@ -251,7 +309,7 @@ async function laden(page, combatants = []) {
             Math.random = () =>
                 typeof window.__wurfZufall === 'number' ? window.__wurfZufall : echt();
         },
-        [SPEICHER, seed(combatants)]
+        [SPEICHER, seed(combatants, bestiary)]
     );
     await page.goto(APP_URL);
     await waitForAppReady(page);
@@ -383,6 +441,26 @@ function pruefeWurf(m, soll, was, quelle) {
 }
 
 /**
+ * Das Urteil fuer eine Formel, die KEIN Wurf ist: genau die genannte
+ * Fehlermeldung und keine Wurfmeldung, nichts in Verlauf und Statistik, kein
+ * Dialog, kein Fehler.
+ * @param {Awaited<ReturnType<typeof gemessen>>} m
+ * @param {string} fehlermeldung
+ * @param {string} was
+ * @param {string} quelle
+ */
+function pruefeKeinWurf(m, fehlermeldung, was, quelle) {
+    weich(m.meldungen, `${was}: genau diese Fehlermeldung, kein Wurf (${quelle})`).toEqual([
+        `error: ${fehlermeldung}`
+    ]);
+    weich(m.verlauf, `${was}: kein Verlaufseintrag`).toBe(0);
+    weich(m.zeilen, `${was}: keine Zeile im Wuerfel-Tab`).toBe(0);
+    weich(m.statistik, `${was}: kein Datensatz in der Statistik`).toBe(0);
+    weich(m.dialoge, `${was}: kein Dialog (alert)`).toEqual([]);
+    weich(m.fehler, `${was}: kein Fehler`).toEqual([]);
+}
+
+/**
  * Schnellreferenz ueber den 📖-Knopf oeffnen, Reiter "Regeln", Abschnitt
  * "Fallschaden" aufklappen — alles mit echten Klicks.
  * @param {import('@playwright/test').Page} page
@@ -418,6 +496,24 @@ async function goblinImBestiar(page) {
     await goblin.click();
     await expect(
         page.locator('#bestiary-detail-panel .bestiary-dice[data-value="1W6+2"]').first()
+    ).toBeVisible();
+}
+
+/**
+ * Bestiar oeffnen, "Nur Eigene" anhaken und den GRENZLING waehlen — der
+ * Haken filtert die SRD-Liste weg, die virtuelle Liste zeichnet ihn sicher.
+ * @param {import('@playwright/test').Page} page
+ */
+async function grenzlingImBestiar(page) {
+    await page.evaluate(() => window.switchView('bestiary'));
+    await page.locator('#bestiary-filter-custom').check();
+    const kreatur = page.locator(
+        '#bestiary-list .bestiary-list-item[data-id="1"][data-source="custom"]'
+    );
+    await expect(kreatur).toBeVisible();
+    await kreatur.click();
+    await expect(
+        page.locator('#bestiary-detail-panel .bestiary-dice[data-value="2W6-1"]').first()
     ).toBeVisible();
 }
 
@@ -501,10 +597,12 @@ test.describe('Wurfverlauf: jeder Wurf der App steht im Verlauf und in der Stati
                 .click()
         );
         // URSACHE (B), eigene Zusage: der alte Parser warf "+4" weg — "= 11".
+        // Mit der Aufschluesselung "(11+4)": die Summe allein haelt nicht fest,
+        // dass die Klammer den Bonus nennt (Gegenstueck mit Minus in (11)).
         weich(
             m.meldungen,
             `Die Meldung muss den Trefferbonus einrechnen: 11 + 4 = 15 (${QUELLE.schnellreferenz})`
-        ).toContainEqual(expect.stringContaining('1d20+4 = 15'));
+        ).toContainEqual(expect.stringContaining('1d20+4 = 15 (11+4)'));
         // URSACHE (A), eigene Zusage: Verlauf und Statistik.
         pruefeWurf(
             m,
@@ -752,5 +850,63 @@ test.describe('Wurfverlauf: jeder Wurf der App steht im Verlauf und in der Stati
             '"abc": keine Scheinsumme in der Ergebnisanzeige'
         ).not.toContain('abc');
         weich(m.fehler, '"abc": kein Fehler').toEqual([]);
+    });
+
+    // =======================================================================
+    // (11) EIGENE KREATUR — Grenzformeln aus dem Text des Spielleiters
+    // =======================================================================
+    test('(11) Eigene Kreatur: "0W6" und "1W0" sind keine Wuerfe, "101W6" liegt ueber der Grenze, "100W6+1" und "2W6-1" werden gewuerfelt', async ({
+        page
+    }) => {
+        const s = await laden(page, [], [GRENZLING]);
+        await grenzlingImBestiar(page);
+        /** @param {string} wert */
+        const formel = wert =>
+            page.locator(`#bestiary-detail-panel .bestiary-dice[data-value="${wert}"]`).first();
+
+        // parseDiceNotation() macht aus der Anzahl 0 EINEN Wuerfel und aus 0
+        // Seiten immer eine 1 (`parseInt(...) || 1`). Ohne eigene Pruefung in
+        // rollQrefDice() stand "0W6" als "0d6" mit 4 im Verlauf, "1W0" als 1.
+        for (const f of ['0W6', '1W0']) {
+            pruefeKeinWurf(
+                await gemessen(page, s, () => formel(f).click()),
+                'Ungültige Würfelformel',
+                `"${f}"`,
+                QUELLE.schnellreferenz
+            );
+        }
+
+        // Die Obergrenze (CLAUDE.md Regel 7) am Bildschirm, nicht nur im vm.
+        pruefeKeinWurf(
+            await gemessen(page, s, () => formel('101W6').click()),
+            'Zu viele Würfel (höchstens 100)',
+            '"101W6"',
+            QUELLE.schnellreferenz
+        );
+
+        // Genau an der Grenze wird gewuerfelt. Ueber zehn Wuerfeln nennt die
+        // Meldung keine Einzelwuerfe mehr.
+        const grenze = await gemessen(page, s, () => formel('100W6+1').click());
+        weich(grenze.meldungen, '"100W6+1": die Meldung nennt nur die Summe').toEqual([
+            'info: 🎲 100W6+1 = 401'
+        ]);
+        pruefeWurf(
+            grenze,
+            { notation: '100d6+1', summe: 401, wuerfe: Array(100).fill(4), d20: false },
+            '"100W6+1"',
+            QUELLE.schnellreferenz
+        );
+
+        // Ein negativer Modifikator steht in der Aufschluesselung mit Vorzeichen.
+        const minus = await gemessen(page, s, () => formel('2W6-1').click());
+        weich(minus.meldungen, '"2W6-1": Summe und Aufschluesselung mit Abzug').toEqual([
+            'info: 🎲 2W6-1 = 7 (4+4-1)'
+        ]);
+        pruefeWurf(
+            minus,
+            { notation: '2d6-1', summe: 7, wuerfe: [4, 4], d20: false },
+            '"2W6-1"',
+            QUELLE.schnellreferenz
+        );
     });
 });
