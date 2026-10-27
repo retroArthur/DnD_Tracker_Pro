@@ -31,13 +31,13 @@ const ACTION_REGISTRY = [
         id: 'new-quest',
         label: 'Neue Quest',
         keywords: ['quest', 'aufgabe', 'auftrag', 'mission', 'erstellen'],
-        action: () => { window.showModal('quest-modal'); }
+        action: () => { window.showNewQuestModal(); }
     },
     {
         id: 'new-location',
         label: 'Neuer Ort',
         keywords: ['ort', 'location', 'platz', 'region', 'erstellen'],
-        action: () => { window.showModal('location-modal'); }
+        action: () => { window.showNewLocationModal(); }
     },
     {
         id: 'new-encounter',

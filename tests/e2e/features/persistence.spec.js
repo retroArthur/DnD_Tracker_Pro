@@ -141,7 +141,7 @@ test.describe('Datenpersistenz', () => {
             // Ort erstellen
             await navigateToTab(page, 'locations');
             const locName = generateTestName('MultiLoc');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');

@@ -110,7 +110,7 @@ function renderLocations() {
                 ${
                     !search && currentLocFilter === 'all'
                         ? `
-                    <button class="loc-add-btn" data-action="show-modal" data-value="location-modal" style="margin-top: 12px;">
+                    <button class="loc-add-btn" data-action="show-new-location-modal" style="margin-top: 12px;">
                         + Ort erstellen
                     </button>
                 `

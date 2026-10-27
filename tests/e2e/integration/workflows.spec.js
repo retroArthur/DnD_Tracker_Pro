@@ -80,7 +80,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'locations');
             const locName = generateTestName('Dorf');
 
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -96,7 +96,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'quests');
             const questTitle = generateTestName('Hauptquest');
 
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
 
@@ -289,7 +289,7 @@ test.describe('Komplette Workflows', () => {
             // Erst Ort erstellen
             await navigateToTab(page, 'locations');
             const locName = generateTestName('LinkLoc');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -472,7 +472,7 @@ test.describe('Komplette Workflows', () => {
 
             await navigateToTab(page, 'quests');
             const questTitle = generateTestName('SessionQuest');
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await fillField(page, 'quest-reward-gold', '100');

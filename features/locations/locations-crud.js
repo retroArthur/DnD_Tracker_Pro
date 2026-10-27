@@ -11,7 +11,17 @@ function saveLocation() {
     const renderLocations = window.renderLocations;
     const populateSelects = window.populateSelects;
     const idInput = $('edit-loc-id');
-    const id = idInput?.value || '';
+    let id = idInput?.value || '';
+    // Zeigt die ID auf einen Ort, den es nicht mehr gibt (geloescht, oder per
+    // Strg+Z zurueckgenommen, waehrend das Formular offen war), wird als NEUER
+    // Ort gespeichert — die Eingaben bleiben erhalten. Vorher fand der
+    // Bearbeiten-Zweig nichts (kein Else-Zweig), schloss, leerte und
+    // speicherte trotzdem: gemessen war die Eingabe still weg, ohne jede
+    // Meldung, mit einem leeren Undo-Eintrag "Ort bearbeitet". Geprueft VOR
+    // pushUndo, wie in saveNPC().
+    const idx = id ? D.locations.findIndex(l => l.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     const loc = {
         name: $('loc-name').value.trim(),
         description: sanitizeHTML($('loc-desc').innerHTML),
@@ -23,8 +33,7 @@ function saveLocation() {
     }
     pushUndo(id ? 'Ort bearbeitet' : 'Ort erstellt');
     if (id) {
-        const idx = D.locations.findIndex(l => l.id === parseEntityId(id));
-        if (idx > -1) D.locations[idx] = { ...D.locations[idx], ...loc };
+        D.locations[idx] = { ...D.locations[idx], ...loc };
     } else {
         loc.id = nextId('locations');
         D.locations.push(loc);
@@ -33,6 +42,14 @@ function saveLocation() {
     clearLocationForm();
     renderLocations();
     save();
+    // Nur die Warnung: eine Erfolgsmeldung hatte saveLocation() nie, und eine
+    // neue gehoert nicht in diese Behebung.
+    if (verwaist) {
+        showToast(
+            'Der bearbeitete Ort existiert nicht mehr — als neuer Ort gespeichert',
+            'warning'
+        );
+    }
 }
 /**
  * Clears the location form
@@ -60,6 +77,26 @@ function editLocation(id) {
     // genau deshalb ueberlebt der Filter jetzt showModal(), das ihn frueher
     // wegwischte (Speichern machte null daraus).
     $('loc-filter').value = loc.filterId ? String(loc.filterId) : '';
+    showModal('location-modal');
+}
+/**
+ * Oeffnet das Orte-Formular zum Anlegen — der Weg aller drei Anlegen-Knoepfe
+ * ("+ Neuer Ort", "+ Ort erstellen" der leeren Liste, Befehlspalette "Neuer
+ * Ort"). Vorher oeffneten sie per showModal('location-modal') das Formular
+ * mit dem, was ein abgebrochenes Bearbeiten (✕ oder Escape) darin liess, samt
+ * #edit-loc-id: gemessen UEBERSCHRIEB das naechste "Anlegen" den zuletzt
+ * bearbeiteten Ort (Filter, Beschreibung, Tags blieben haengen) — in D, im
+ * Speicher und nach dem Neuladen, ohne Meldung. Geleert wird NUR bei einem
+ * solchen Rest; ein echter Anlegen-Entwurf ueberlebt ein versehentliches
+ * Escape weiter.
+ *
+ * Ist das Formular OFFEN, ist #edit-loc-id kein Rest, sondern die laufende
+ * Bearbeitung — dann tut der Weg nichts (wie showNewNPCModal()). Gemessen
+ * oeffnet die Befehlspalette auch mit dem Fokus im Namensfeld eines offenen ✏️.
+ */
+function showNewLocationModal() {
+    if ($('location-modal')?.classList.contains('show')) return;
+    if ($('edit-loc-id')?.value) clearLocationForm();
     showModal('location-modal');
 }
 /**
@@ -150,6 +187,8 @@ function addTriggerField() {
 window.saveLocation = saveLocation;
 window.editLocation = editLocation;
 window.deleteLocation = deleteLocation;
+// Verbraucher: features/command-palette/action-registry.js ("Neuer Ort").
+window.showNewLocationModal = showNewLocationModal;
 window.addFilter = addFilter;
 window.deleteFilter = deleteFilter;
 window.filterAssignSpells = filterAssignSpells;

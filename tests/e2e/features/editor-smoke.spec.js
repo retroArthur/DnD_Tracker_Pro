@@ -112,7 +112,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="loc-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'locations');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
         }
     },
     {
@@ -121,7 +121,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="quest-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'quests');
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
         }
     },
     {

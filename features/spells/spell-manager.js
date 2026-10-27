@@ -154,8 +154,7 @@ function renderSpells() {
             titleEmpty: 'Keine Zauber',
             descEmpty: 'Füge Zauber hinzu oder lade SRD-Zauber.',
             buttonText: '➕ Zauber erstellen',
-            buttonAction: 'show-modal',
-            buttonValue: 'spell-modal',
+            buttonAction: 'show-new-spell-modal',
             isFiltered
         });
         return;
@@ -394,7 +393,18 @@ function saveSpell() {
     const materialInput = $('spell-material');
     const descEl = $('spell-desc');
     const noteEl = $('spell-note');
-    const id = editIdInput?.value || '';
+    let id = editIdInput?.value || '';
+    // Zeigt die ID auf einen Zauber, den es nicht mehr gibt (geloescht, oder
+    // per Strg+Z zurueckgenommen, waehrend das Formular offen war), wird als
+    // NEUER Zauber gespeichert — die Eingaben bleiben erhalten. Vorher fiel
+    // `if (idx > -1)` still durch, das Formular schloss trotzdem: gemessen war
+    // die Eingabe weg, ohne Meldung, mit einem leeren Undo-Eintrag "Zauber
+    // bearbeitet", der obendrein den Wiederholen-Stapel leerte (Strg+Y holte
+    // den zurueckgenommenen Zauber nicht mehr). Geprueft VOR pushUndo, wie in
+    // saveNPC().
+    const idx = id ? D.spells.findIndex(x => x.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     const rangeSelect = rangeSelectInput?.value || '';
     const rangeCustom = rangeCustomInput?.value.trim() || '';
     let range = '';
@@ -434,8 +444,7 @@ function saveSpell() {
     }
     pushUndo(id ? 'Zauber bearbeitet' : 'Zauber erstellt');
     if (id) {
-        const idx = D.spells.findIndex(x => x.id === parseEntityId(id));
-        if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s };
+        D.spells[idx] = { ...D.spells[idx], ...s };
     } else {
         s.id = nextId('spells');
         D.spells.push(s);
@@ -444,6 +453,14 @@ function saveSpell() {
     clearSpellForm();
     renderSpells();
     save();
+    // Nur die Warnung: eine Erfolgsmeldung hatte saveSpell() nie, und eine
+    // neue gehoert nicht in diese Behebung.
+    if (verwaist) {
+        showToast(
+            'Der bearbeitete Zauber existiert nicht mehr — als neuer Zauber gespeichert',
+            'warning'
+        );
+    }
 }
 function editSpell(id) {
     const s = EntityLookup.spell(id);
@@ -533,6 +550,28 @@ function editSpell(id) {
 
     showModal('spell-modal');
 }
+/**
+ * Oeffnet das Zauber-Formular zum Anlegen — der Weg beider Anlegen-Knoepfe
+ * ("+ Zauber" in der Werkzeugleiste, "➕ Zauber erstellen" der leeren Liste;
+ * eine Taste n oder einen Paletten-Eintrag gibt es fuer Zauber nicht).
+ * Vorher oeffneten beide per showModal('spell-modal') das Formular mit dem,
+ * was ein abgebrochenes Bearbeiten (✕ oder Escape) darin liess, samt
+ * #edit-spell-id: gemessen UEBERSCHRIEB das naechste "Anlegen" den zuletzt
+ * bearbeiteten Zauber — auch beim Nutzer, der jedes sichtbare Feld neu
+ * setzte, denn die ID ist unsichtbar. Geleert wird NUR bei einem solchen
+ * Rest; ein echter Anlegen-Entwurf ueberlebt ein versehentliches Escape
+ * weiter. NICHT in showModal(): editSpell() oeffnet ueber denselben Weg,
+ * NACHDEM es die ID gesetzt hat, und leerte sich sonst selbst.
+ *
+ * Ist das Formular OFFEN, tut der Weg nichts — dieselbe Schranke wie
+ * showNewNPCModal(), damit ein spaeterer Weg (Taste, Palette) keine laufende
+ * Bearbeitung verwirft.
+ */
+function showNewSpellModal() {
+    if ($('spell-modal')?.classList.contains('show')) return;
+    if ($('edit-spell-id')?.value) clearSpellForm();
+    showModal('spell-modal');
+}
 function deleteSpell(id) {
     const D = window.D;
     const spell = EntityLookup.spell(id);
@@ -617,3 +656,6 @@ window.toggleMaterialField = toggleMaterialField;
 window.saveSpell = saveSpell;
 window.editSpell = editSpell;
 window.deleteSpell = deleteSpell;
+// Verbraucher: ui/actions/entity-actions.js ('show-new-spell-modal', beide
+// Anlegen-Knoepfe) — wie editSpell/deleteSpell daneben.
+window.showNewSpellModal = showNewSpellModal;

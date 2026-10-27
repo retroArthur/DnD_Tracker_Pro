@@ -38,8 +38,7 @@ function renderQuests() {
             titleEmpty: 'Keine Quests',
             descEmpty: 'Erstelle Aufträge und Missionen für deine Abenteurer.',
             buttonText: '➕ Quest erstellen',
-            buttonAction: 'show-modal',
-            buttonValue: 'quest-modal',
+            buttonAction: 'show-new-quest-modal',
             isFiltered: !!(search || activeOnly)
         });
         EntityLookup.clearCache();
