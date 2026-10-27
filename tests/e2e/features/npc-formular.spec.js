@@ -71,7 +71,8 @@
  * nicht — das naechste 💾 schreibt das Formular darueber), das fehlende Undo
  * fuer den ✓-Haken, "[object Object]" bei Tags im Detail. Eigene Vorgaenge.
  * Am Telefon gibt es kein ✏️ (das NPC-Detail ist bis 900 px ausgeblendet),
- * darum keine Telefon-Faelle.
+ * darum keine Bearbeiten-Faelle dort — den Anlegen-Weg gibt es aber, Fall
+ * (20) faehrt ihn mit dem Finger.
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
@@ -80,6 +81,8 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
 
 /** Breit — das NPC-Detail mit ✏️ und 🗑️ steht erst ueber 900 px. */
 const BREIT = { width: 1440, height: 900 };
+/** Das Telefon — dort gibt es nur den Anlegen-Weg, Fall (20). */
+const TELEFON = { width: 390, height: 844 };
 
 /** Der Speicherschluessel der Standardkampagne. */
 const SPEICHER = 'dnd-tracker-v4';
@@ -183,6 +186,25 @@ const KESSA = {
     relations: []
 };
 
+/** Ein Volk mit umgebenden Leerzeichen, wie ein Import es mitbringen kann —
+ *  dieselbe feste Option wie 'Mensch', nur anders geschrieben. */
+const LIRA = {
+    id: 4,
+    name: 'Lira',
+    role: 'Bardin',
+    race: ' Mensch ',
+    description: '',
+    locationId: null,
+    chapter: '',
+    filterId: null,
+    quests: [],
+    info: [],
+    relationships: [],
+    triggers: [],
+    dialogs: [],
+    relations: []
+};
+
 /** @param {object[]} npcs */
 function seed(npcs) {
     return {
@@ -247,7 +269,7 @@ function seed(npcs) {
         quickRefCustom: [],
         _nextId: {
             characters: 2,
-            npcs: 4,
+            npcs: Math.max(3, ...npcs.map(n => n.id)) + 1,
             locations: 3,
             quests: 2,
             encounters: 1,
@@ -298,8 +320,11 @@ function fehlerFangen(page) {
  * was die App gespeichert hat, statt die Saat neu zu schreiben.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} npcs
+ * @param {{ width: number, height: number }} [kleiner] Erst NACH dem Laden
+ *  verkleinern — `waitForAppReady()` wartet auf `.app-title`, und die ist im
+ *  Mobil-Layout versteckt (wie in `kampfrunde.spec.js`).
  */
-async function npcsLaden(page, npcs) {
+async function npcsLaden(page, npcs, kleiner) {
     await page.setViewportSize(BREIT);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -338,6 +363,12 @@ async function npcsLaden(page, npcs) {
         .catch(() => {});
     await page.evaluate(() => window.switchView('npcs'));
     await expect(page.locator('#view-npcs')).toBeVisible();
+    if (kleiner) {
+        // Das Layout-Profil folgt der Fenstergroesse — dieselbe Wartezeit
+        // wie in `truhe-formular.spec.js` und `kampfrunde.spec.js`.
+        await page.setViewportSize(kleiner);
+        await page.waitForTimeout(450);
+    }
 }
 
 /** WEICHE Zusicherungen fuer die Ergebnisse eines Bedienwegs: ein roter Lauf
@@ -838,12 +869,17 @@ test('(9) alle Dialoge per ✕ entfernen und speichern: der NPC hat keine Dialog
 // Setzen still ins Leere, und 💾 schrieb ''. Die Schreibweise legt der Fix
 // fest: 'mensch' wird die feste Option 'Mensch' (dieselbe Anzeige wie jeder
 // von Hand angelegte Mensch), 'Zentaur' bleibt 'Zentaur'.
+//
+// ' Mensch ' (Leerzeichen aussen, Import) ist ebenfalls die feste Option —
+// gemeldet von der Gegenpruefung, gemessen an 1b6c5c6: der Vergleich lief
+// ohne trim, das Formular bekam eine ZWEITE Option ' Mensch ' neben 'Mensch'
+// (19 statt 18), zwei gleich aussehende Eintraege.
 test('(10) ✏️ → 💾 eines NPC mit Volk ohne passende Option: das Volk wird nicht leer', async ({
     page
 }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
-    await npcsLaden(page, [VOLO, MANSHOON, KESSA]);
+    await npcsLaden(page, [VOLO, MANSHOON, KESSA, LIRA]);
 
     await bearbeiten(page, 2);
     weich((await formular(page)).volk, 'Formular: Volk von Manshoon').toBe('Mensch');
@@ -856,6 +892,21 @@ test('(10) ✏️ → 💾 eines NPC mit Volk ohne passende Option: das Volk wir
     weich((await formular(page)).volk, 'Formular: Volk von Kessa').toBe('Zentaur');
     await speichern(page);
     weich((await npcInD(page, 3))?.race, 'Kessa: Volk nach 💾').toBe('Zentaur');
+
+    await bearbeiten(page, 4);
+    weich((await formular(page)).volk, 'Formular: Volk von Lira').toBe('Mensch');
+    weich(
+        await page
+            .locator('#npc-race option')
+            .evaluateAll(os =>
+                os
+                    .map(o => /** @type {HTMLOptionElement} */ (o).textContent?.trim())
+                    .filter(t => t === 'Mensch')
+            ),
+        'Lira: genau EINE Option, die "Mensch" zeigt'
+    ).toEqual(['Mensch']);
+    await speichern(page);
+    weich((await npcInD(page, 4))?.race, 'Lira: Volk nach 💾').toBe('Mensch');
 
     // Die Zusatzoption gilt nur fuer den NPC, der sie mitbrachte.
     await plusNPC(page).click();
@@ -1150,6 +1201,13 @@ test('(17) ✏️ aus dem NPC-Popup eines Ortes: Titel und Zustand wie aus dem D
 // hinterliess (#edit-npc-id gesetzt). Ein echter Entwurf bleibt stehen, wie
 // vor dem Fix — gemessen: "Entwurf" mit einem Dialog, Escape, "+ NPC", beides
 // noch da.
+//
+// DIE FRAKTION DES ENTWURFS gehoert dazu. showNewNPCModal() baut die
+// Fraktionsoptionen bei jedem Oeffnen neu (fillNPCFactionSelect() setzt
+// innerHTML) und muss die gewaehlte danach wieder setzen. Bis zur
+// Gegenpruefung prueft dieser Fall sie nicht: gemessen blieb er gruen, als
+// genau diese Zeile herausgenommen war. Vor dem Fix gab es beim Anlegen
+// keine Fraktion zu waehlen — dort ist DIESE Zusage rot, der Rest gruen.
 test('(18) Waechter: ein Anlegen-Entwurf ueberlebt Escape und erneutes "+ NPC"', async ({
     page
 }) => {
@@ -1161,18 +1219,206 @@ test('(18) Waechter: ein Anlegen-Entwurf ueberlebt Escape und erneutes "+ NPC"',
     await page.locator('#npc-name').fill('Entwurf');
     await page.locator('#npc-modal [data-action="call"][data-value="addDialogField"]').click();
     await page.locator('#npc-dialogs-container .npc-dialog-field .dialog-title').fill('Gruss');
+    // Ohne die Option gibt es nichts zu waehlen — siehe Fall (11).
+    if (await page.locator('#npc-faction option[value="1"]').count()) {
+        await page.locator('#npc-faction').selectOption('1');
+    }
     await page.keyboard.press('Escape');
     await expect(page.locator('#npc-modal')).not.toHaveClass(/\bshow\b/);
 
     await plusNPC(page).click();
     await expect(page.locator('#npc-modal')).toHaveClass(/\bshow\b/);
     const f = await formular(page);
-    weich({ id: f.id, name: f.name, dialoge: f.dialoge, titel: f.titel }, 'der Entwurf').toEqual({
+    weich(
+        { id: f.id, name: f.name, dialoge: f.dialoge, fraktion: f.fraktion, titel: f.titel },
+        'der Entwurf'
+    ).toEqual({
         id: '',
         name: 'Entwurf',
         dialoge: ['Gruss'],
+        fraktion: '1',
         titel: 'NPC hinzufügen'
     });
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (19) "NEU" BEI OFFENEM BEARBEITEN-FORMULAR VERWIRFT NICHTS
+// ===========================================================================
+//
+// Gemeldet von der Gegenpruefung, gemessen an 1b6c5c6: der neue Anlegen-Weg
+// leerte das Formular, sobald #edit-npc-id gesetzt war — auch WAEHREND es
+// zum Bearbeiten offen ist. Ein offenes Formular ist aber kein Rest eines
+// abgebrochenen Bearbeitens, sondern die laufende Arbeit. Den Fokus auf BODY
+// bringt schon ein ✕ an einem Dialog (der Knopf verschwindet mit seinem
+// Feld) oder ein Klick auf eine Ueberschrift; nach "+ Dialog hinzufügen"
+// liegt er auf dem Knopf. In allen drei Lagen erreicht die Taste n den
+// Anlegen-Zweig, und alle Eingaben waren weg (ID '', Name '', 0 Dialoge,
+// Titel "NPC hinzufügen") — das folgende 💾 speicherte nichts. Ebenso die
+// Befehlspalette "Neuer NPC".
+//
+// Vor dem Fix (429ad8f) blieben die Eingaben zwar stehen, aber der Weg
+// rief showModal() → populateSelects(), und das setzte Ort und Filter still
+// auf leer: 💾 schrieb locationId und filterId null. Darum vergleicht der
+// Fall das GANZE Formular, nicht nur ID und Namen.
+test('(19) Taste n und Befehlspalette bei offenem ✏️: das Formular bleibt, wie es ist', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await npcsLaden(page, [VOLO]);
+
+    await bearbeiten(page, 1);
+    await page.locator('#npc-role').fill('Weltreisender');
+    await page
+        .locator('#npc-dialogs-container .npc-dialog-field')
+        .first()
+        .locator('.dialog-text')
+        .click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' Willkommen!');
+    await page
+        .locator('#npc-dialogs-container .npc-dialog-field')
+        .last()
+        .locator('[data-action="remove-field-stop"]')
+        .click();
+    const vorher = await formular(page);
+    // Ohne den Titel: den prueft Fall (2), und vor dem Fix hielte er diesen
+    // Fall auf, bevor er den Verlust von Ort und Filter zeigen kann.
+    expect(
+        { id: vorher.id, ort: vorher.ort, filter: vorher.filter, dialoge: vorher.dialoge },
+        'Vorbedingung: das Bearbeiten-Formular mit Ort, Filter und zwei Dialogen'
+    ).toEqual({
+        id: '1',
+        ort: '1',
+        filter: '1',
+        dialoge: ['Begrüßung', 'Geheimnis']
+    });
+
+    // (a) ✕ hat den Fokus auf BODY fallen lassen.
+    expect(
+        await page.evaluate(() => document.activeElement?.tagName),
+        'Vorbedingung: nach ✕ an einem Dialog liegt der Fokus auf BODY'
+    ).toBe('BODY');
+    await page.keyboard.press('n');
+    weich(await formular(page), 'Taste n, Fokus auf BODY nach ✕').toEqual(vorher);
+
+    // (b) Klick auf eine Ueberschrift des Formulars.
+    await page.locator('#npc-modal .char-section-title').first().click();
+    await page.keyboard.press('n');
+    weich(await formular(page), 'Taste n nach Klick auf eine Ueberschrift').toEqual(vorher);
+
+    // (c) "+ Dialog hinzufügen" — der Fokus liegt danach auf dem Knopf.
+    await page.locator('#npc-modal [data-action="call"][data-value="addDialogField"]').click();
+    const mitNeuemDialog = { ...vorher, dialoge: [...vorher.dialoge, ''] };
+    weich(await formular(page), 'nach "+ Dialog hinzufügen"').toEqual(mitNeuemDialog);
+    await page.keyboard.press('n');
+    weich(await formular(page), 'Taste n, Fokus auf "+ Dialog hinzufügen"').toEqual(mitNeuemDialog);
+
+    // (d) Befehlspalette "Neuer NPC" — eine ausdrueckliche Handlung, aber
+    // ohne Rueckfrage darf sie die laufende Bearbeitung ebenso wenig wegwerfen.
+    await page.keyboard.press('Control+Shift+K');
+    await expect(page.locator('.cp-overlay')).toBeVisible();
+    await expect(page.locator('.cp-input')).toBeFocused();
+    await page.keyboard.type('Neuer NPC');
+    await expect(page.locator('#cp-results-list .cp-result').first()).toContainText('Neuer NPC');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.cp-overlay')).toBeHidden();
+    weich(await formular(page), 'Befehlspalette "Neuer NPC"').toEqual(mitNeuemDialog);
+
+    // Ohne die ID gaebe es nichts mehr zu speichern — dann ist der Rest
+    // bedeutungslos, und die weichen Zusagen oben nennen den Grund.
+    expect((await formular(page)).id, 'die Bearbeitung muss noch offen sein').toBe('1');
+    await speichern(page);
+    const volo = await npcInD(page, 1);
+    weich(
+        {
+            name: volo?.name,
+            role: volo?.role,
+            locationId: volo?.locationId,
+            filterId: volo?.filterId,
+            factionId: volo?.factionId,
+            dialoge: (volo?.dialogs || []).map(d => `${d.title}:${d.used}`),
+            text: volo?.dialogs?.[0]?.text
+        },
+        'D: die Eingaben sind gespeichert, Ort und Filter stehen noch'
+    ).toEqual({
+        name: 'Volo Geddarm',
+        role: 'Weltreisender',
+        locationId: 1,
+        filterId: 1,
+        factionId: 1,
+        dialoge: ['Begrüßung:true', 'Geheimnis:true'],
+        text: 'Ah, Abenteurer! Willkommen!'
+    });
+
+    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (20) AM TELEFON: "+ NPC" MIT DEM FINGER, MIT FRAKTION
+// ===========================================================================
+//
+// Am Telefon gibt es kein ✏️ (das NPC-Detail ist bis 900 px ausgeblendet,
+// gemessen bei 390 px: weder ✏️ noch der Orts-Chip sichtbar) — aber den
+// Anlegen-Weg. Vor dem Fix bot er dort wie am Schreibtisch nur
+// "— Keine Fraktion —" an (gemessen von der Gegenpruefung am Buendel zu
+// 429ad8f). Getippt wird mit `.tap()`.
+//
+// DER ABSTAND ZWISCHEN ZWEI TIPPERN IST NOETIG, nicht Geduld:
+// `initTouchOptimizations()` (`systems/avatars.js`) ruft `preventDefault()`
+// auf jedem `touchend` an einem Knopf, der weniger als 300 ms nach dem
+// vorigen kommt (Doppeltipp-Zoom-Sperre) — dann entsteht KEIN `click`. Siehe
+// Fall (6) in `truhe-formular.spec.js`.
+test.describe('(20) Telefon 390x844', () => {
+    test.use({ viewport: TELEFON, hasTouch: true, isMobile: true });
+
+    /** Tippt nach mehr als 300 ms Abstand zum vorigen Tipper.
+     *  @param {import('@playwright/test').Locator} ziel */
+    async function tippen(ziel) {
+        await ziel.page().waitForTimeout(350);
+        await ziel.tap();
+    }
+
+    test('(20) "+ NPC" per Finger: leer, Fraktionen waehlbar, 💾 legt an', async ({ page }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await npcsLaden(page, [VOLO], TELEFON);
+        await expect(page.locator('html'), 'Vorbedingung: Mobil-Layout').toHaveAttribute(
+            'data-layout',
+            'mobile'
+        );
+        await expect(
+            page.locator('#npc-detail-panel [data-action="edit-npc"]'),
+            'Vorbedingung: am Telefon gibt es kein ✏️'
+        ).toBeHidden();
+
+        await tippen(plusNPC(page));
+        await expect(page.locator('#npc-modal')).toHaveClass(/\bshow\b/);
+        weich(await formular(page), 'frisches "+ NPC" am Telefon').toEqual(LEER);
+        weich(
+            await page.locator('#npc-faction option').allTextContents(),
+            'Fraktionen am Telefon'
+        ).toEqual(['— Keine Fraktion —', '🎶 Harfner']);
+
+        await page.locator('#npc-name').fill('Elminster');
+        if (await page.locator('#npc-faction option[value="1"]').count()) {
+            await page.locator('#npc-faction').selectOption('1');
+        }
+        const stand = await meldungsStand(page);
+        await tippen(page.locator('#npc-modal [data-action="call"][data-value="saveNPC"]'));
+        await expect(page.locator('#npc-modal')).not.toHaveClass(/\bshow\b/);
+
+        // Ohne ID — welche ein neuer NPC bekommt, entscheidet nextId().
+        weich(
+            await page.evaluate(() => window.D.npcs.map(n => `${n.name}:${n.factionId ?? null}`)),
+            'D: Volo bleibt, Elminster kommt mit Fraktion dazu'
+        ).toEqual(['Volo Geddarm:1', 'Elminster:1']);
+        weich(await meldungenSeit(page, stand), 'die Meldung des Speicherns').toContain(
+            'success: NPC hinzugefügt'
+        );
+
+        weich(await fehler.alle(), 'Telefon: kein Fehler').toEqual([]);
+    });
 });
