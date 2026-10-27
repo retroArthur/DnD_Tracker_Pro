@@ -73,7 +73,15 @@ declare function rollSavingThrow(): void;
 declare function rollGroupPerception(): void;
 declare function createConfetti(container: Element): void;
 declare function toggleDamageType(chip: HTMLElement): void;
-declare function addToDiceHistory(notation: string, result: string | number, rolls: (number | string)[]): void;
+/**
+ * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
+ * @param optionen - `{ ohneSchadensart: true }` laesst den im Wuerfel-Tab gewaehlten
+ *   Schadensart-Chip weg (Schnellreferenz, Bestiar, Statblock, Schnellwurf). Alle
+ *   uebrigen Aufrufer, auch DM-Screen, Panel und Charakterwuerfe, tragen ihn weiter.
+ */
+declare function addToDiceHistory(notation: string, result: string | number, rolls: (number | string)[], optionen?: {
+    ohneSchadensart?: boolean;
+}): void;
 declare function addToFormulaHistory(formula: string): void;
 declare function renderFormulaHistory(): void;
 declare function renderDiceHistory(): void;

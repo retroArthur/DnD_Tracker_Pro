@@ -151,37 +151,56 @@ function applyQrefCondition(conditionKey) {
     if (save) save();
 }
 /**
- * Wuerfelt eine Formel aus der Quick Reference
- * @param diceFormula - Wuerfelformel (z.B. '3d6', '1d20')
+ * Wuerfelt eine Formel aus der Schnellreferenz, dem Bestiar oder dem
+ * Statblock-Panel der Initiative — alle drei laufen hier durch.
+ * @param diceFormula - Wuerfelformel (z.B. '3d6', '1d20+4', '1W6+2')
  */
 function rollQrefDice(diceFormula) {
+    // CLAUDE.md Regel 7: Schleifen ueber Nutzereingaben begrenzen. Ein eigener
+    // Bestiar-Text wie "99999W6" waere sonst eine Schleife ueber 99.999 Wuerfe.
+    const MAX_WUERFEL = 100;
     if (!diceFormula) return;
-    // Parse dice formula (e.g., "3d6", "1d6", "20d6")
-    const match = diceFormula.match(/(\d+)d(\d+)/i);
-    if (!match) {
+    // Deutsche Statbloecke schreiben W statt d (core/srd-monsters.js, alle
+    // Formeln). parseDiceNotation() kennt nur d, und die Statistik zaehlt nur
+    // 'd20' — darum EINMAL hier normalisieren; Verlauf und Statistik sehen d.
+    const notation = String(diceFormula).replace(/\s+/g, '').toLowerCase().replace(/w/g, 'd');
+    if (typeof parseDiceNotation !== 'function') {
+        // Nur in Unit-Werkbaenken ohne Wuerfelmodul — eine gueltige Formel
+        // ist hier nicht "ungueltig", das Wuerfeln fehlt.
+        showToast('Würfeln nicht möglich: Würfelmodul fehlt', 'error');
+        return;
+    }
+    // Vorab pruefen, MINDESTENS so streng wie parseDiceNotation(): die meldet
+    // Ungueltiges per alert(), und ein Klick in einen Statblock darf die Seite
+    // nicht blockieren. Kein "kh/kl" — das schreibt kein Statblock.
+    const teile = notation.match(/^(\d*)d(\d+)([+-]\d+)?$/);
+    // "0W6" und "1W0" beschreiben keinen Wurf, eigene Bestiar-Texte machen sie
+    // aber klickbar — und parseDiceNotation() wuerfelte daraus einen W6 bzw.
+    // eine feste 1 (`parseInt(...) || 1`, `random() * 0 + 1`).
+    const anzahl = teile ? parseInt(teile[1] || '1', 10) : 0;
+    if (!teile || anzahl < 1 || parseInt(teile[2], 10) < 1) {
         showToast('Ungültige Würfelformel', 'error');
         return;
     }
-    const numDice = parseInt(match[1]);
-    const dieType = parseInt(match[2]);
-    let total = 0;
-    const rolls = [];
-    for (let i = 0; i < numDice; i++) {
-        const roll = Math.floor(Math.random() * dieType) + 1;
-        rolls.push(roll);
-        total += roll;
+    if (anzahl > MAX_WUERFEL) {
+        showToast(`Zu viele Würfel (höchstens ${MAX_WUERFEL})`, 'error');
+        return;
     }
-    // Show result
-    const rollStr = rolls.length <= 10 ? ` (${rolls.join('+')})` : '';
-    showToast(`🎲 ${diceFormula} = ${total}${rollStr}`, 'info');
-    // Add to dice history if available
-    if (typeof window.addToHistory === 'function') {
-        window.addToHistory({
-            formula: diceFormula,
-            result: total,
-            rolls: rolls,
-            timestamp: Date.now()
-        });
+    // Derselbe Parser wie Wuerfel-Tab, DM-Screen und Charakter-Modal — der
+    // eigene Mini-Parser verlor den Modifikator ("+4" ergab 11 statt 15).
+    // `!parsed` ist unerreichbar, solange die Pruefung oben strenger ist; wird
+    // parseDiceNotation() strenger, haelt die Zeile den Scheineintrag ab.
+    const parsed = parseDiceNotation(notation);
+    if (!parsed) return;
+    const mod = parsed.modifier ? (parsed.modifier > 0 ? '+' : '') + parsed.modifier : '';
+    const rollStr = parsed.rolls.length <= 10 ? ` (${parsed.rolls.join('+')}${mod})` : '';
+    showToast(`🎲 ${diceFormula} = ${parsed.total}${rollStr}`, 'info');
+    // In Verlauf und Statistik (D-04). Frueher stand hier window.addToHistory —
+    // eine Funktion, die es nie gab; der typeof-Waechter machte das still. Der
+    // Waechter bleibt fuer Unit-Werkbaenke ohne Wuerfelmodul. Ohne Schadensart:
+    // der Chip des Wuerfel-Tabs gilt nicht fuer Fallschaden oder Monster.
+    if (typeof addToDiceHistory === 'function') {
+        addToDiceHistory(notation, parsed.total, parsed.rolls, { ohneSchadensart: true });
     }
 }
 /**

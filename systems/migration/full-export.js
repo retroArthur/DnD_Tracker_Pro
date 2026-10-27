@@ -175,7 +175,7 @@ function importFullExport(parsedObj) {
         // Start lud die aeltere IndexedDB-Kopie. setQuiet() statt set(), weil set() dabei
         // "💾 Speicher voll! Versuche Fallback zu IndexedDB..." meldet — es gibt hier
         // keinen Rueckfall. Ein VORHANDENER (auch alter) Stempel genuegt: load() prueft nur,
-        // DASS er da ist (quick-roll.js:152); nur ohne jeden Stempel ist es ein Fehlschlag.
+        // DASS er da ist (quick-roll.js:160); nur ohne jeden Stempel ist es ein Fehlschlag.
         const tsResult = StorageAPI.setQuiet(key + '_ts', String(Date.now()));
         if (!tsResult.success && StorageAPI.get(key + '_ts', null) === null) {
             throw new Error(

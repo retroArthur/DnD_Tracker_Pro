@@ -190,9 +190,17 @@ const MODULE_TEST_EXCEPTIONS = [
     // Gegenprobe zur Dateimenge), nicht nur im Erklaertext; das ist genau
     // das Kriterium, das die CR-01-Eintraege unten voneinander trennt.
     // Die Liste darf nur schrumpfen — und sie tut es hier um eins.
-    'features/dice/dice-core.js',
+    // -- 2026-10-27, WUERFEL: 'features/dice/dice-core.js' und
+    //    'features/dmscreen/dmscreen-widgets-base.js' sind hier GESTRICHEN.
+    //    tests/e2e/features/wurf-verlauf.spec.js faehrt am gebauten Buendel mit
+    //    echten Klicks und Tasten die Wurfwege der App in Verlauf und Statistik
+    //    und urteilt ueber das, was addToDiceHistory() daraus macht (Notation,
+    //    Summe, Einzelwuerfe, Schadensart-Zusatz), sowie ueber dmsRollDice() mit
+    //    gueltiger und ungueltiger Freiformel. tests/unit/wurf-eintrag.test.js
+    //    laedt beide Module in eine vm-Sandbox und fuehrt dieselben Funktionen
+    //    direkt aus. Ohne diese zwei Module waere keiner der Faelle erklaerbar.
+    //    Die Liste darf nur schrumpfen; sie tut es hier um zwei.
     'features/dice/dice-favorites.js',
-    'features/dmscreen/dmscreen-widgets-base.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-combat.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-reference.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     // -- 2026-10-26, RECHNER: 'features/encounter-calculator.js' ist hier

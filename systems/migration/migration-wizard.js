@@ -87,7 +87,7 @@ const CAMPAIGN_CONTENT_ARRAYS = [
     // Nutzerinhalt wie jeder andere. Der Schluessel existiert im Startzustand
     // gar nicht (core/data.js initializeData() legt ihn nicht an) und entsteht
     // ausschliesslich ueber saveQuickRefEntry() (systems/spellslots/
-    // quick-reference.js:408-414) — eine bewusste Nutzerhandlung, exakt die
+    // quick-reference.js:427-433) — eine bewusste Nutzerhandlung, exakt die
     // Aufnahmeregel oben.
     'quickRefCustom'
 ];

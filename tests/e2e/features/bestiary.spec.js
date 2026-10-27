@@ -275,11 +275,10 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
             return document.querySelectorAll('.bestiary-list-item').length > 0;
         }, { timeout: 5000 });
 
-        await page.evaluate(function() {
-            var item = document.querySelector('.bestiary-list-item');
-            if (item) item.click();
-        });
-        await page.waitForTimeout(500);
+        // Echter Klick: performSearch() setzt den Wert per evaluate() und legt
+        // den Fokus NICHT ins Suchfeld — darum verschluckt das Verlassen des
+        // Feldes hier keinen Klick (eigener Befund, wurf-verlauf.spec.js).
+        await page.locator('.bestiary-list-item').first().click();
 
         await page.waitForSelector('.bestiary-statblock', { timeout: 5000 });
 
@@ -299,23 +298,50 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
         expect(dataValue).toBeTruthy();
         expect(dataValue).toMatch(/\d+[dDwWW]\d+/);
 
-        await page.evaluate(function() {
-            var span = document.querySelector('.bestiary-dice');
-            if (span) span.click();
+        // WUERFEL (2026-10-27): echte Klicks und ein Urteil ueber die WIRKUNG.
+        // Vorher klickte dieser Fall per evaluate() und galt als bestanden,
+        // sobald IRGENDEIN Element des Ereignis-Logs da war — auch die
+        // Fehlermeldung "Ungültige Würfelformel", die seit 2026-06-13 jeder
+        // Klick auf eine Schadensformel brachte (alle SRD-Formeln stehen in
+        // W-Schreibweise). Der Fall war auf dem Fehlerpfad gruen. Jetzt: der
+        // Trefferbonus UND die erste Schadensformel in W-Schreibweise, je ein
+        // echter Klick, keine Fehlermeldung, kein Dialog, Verlauf +1.
+        // Die volle Messung (Summe, Statistik, Statblock der Initiative)
+        // steht in tests/e2e/features/wurf-verlauf.spec.js.
+        const dialoge = [];
+        page.on('dialog', async function(d) {
+            dialoge.push(d.message());
+            await d.dismiss().catch(function() {});
         });
-        await page.waitForTimeout(500);
+        const bonus = await page.locator('.bestiary-dice[data-value^="1d20"]').first().getAttribute('data-value');
+        const schaden = await page.locator('.bestiary-dice[data-value*="W"]').first().getAttribute('data-value');
+        expect(bonus, 'der Statblock traegt einen klickbaren Trefferbonus').toBeTruthy();
+        expect(schaden, 'der Statblock traegt eine klickbare W-Formel').toBeTruthy();
 
-        const hasFeedback = await page.evaluate(function() {
-            return !!(
-                document.querySelector('.event-log-entry') ||
-                document.querySelector('.toast') ||
-                document.querySelector('[class*="event-log"]')
-            );
-        });
-
-        if (!hasFeedback) {
-            expect(dataAction).toBe('bestiary-roll-dice');
+        for (const wert of [bonus, schaden]) {
+            const vor = await page.evaluate(function() {
+                var oben = window.getCombatLog()[0];
+                return {
+                    verlauf: window.diceHistory.length,
+                    zeilen: document.querySelectorAll('#dice-history .dice-history-item').length,
+                    nr: oben ? oben.nr : 0
+                };
+            });
+            await page.locator('.bestiary-dice[data-value="' + wert + '"]').first().click();
+            const nach = await page.evaluate(function(nr) {
+                return {
+                    verlauf: window.diceHistory.length,
+                    zeilen: document.querySelectorAll('#dice-history .dice-history-item').length,
+                    fehler: window.getCombatLog()
+                        .filter(function(e) { return e.nr > nr && e.typ === 'error'; })
+                        .map(function(e) { return e.text; })
+                };
+            }, vor.nr);
+            expect(nach.fehler, 'Klick auf "' + wert + '": keine Fehlermeldung').toEqual([]);
+            expect(nach.verlauf, 'Klick auf "' + wert + '": ein Eintrag im Verlauf').toBe(vor.verlauf + 1);
+            expect(nach.zeilen, 'Klick auf "' + wert + '": eine Zeile mehr im Wuerfel-Tab').toBe(vor.zeilen + 1);
         }
+        expect(dialoge, 'kein Dialog (alert)').toEqual([]);
         expect(dataValue).toMatch(/\d+[dDwW]\d+/);
     });
 });
