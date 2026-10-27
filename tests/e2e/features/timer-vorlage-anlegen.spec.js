@@ -12,39 +12,47 @@
  * DER BEFUND, aus dem diese Datei entstand
  *
  * Gemessen am Buendel zu e5bc99d (Branch abbrechen-neu), 1440x900, echte Klicks
- * und Tasten, Saat `[Fackel 🔥 1h, Segen ✨ 1m, Licht 30s]`:
+ * und Tasten, Saat `[Fackel 🔥 1h, Segen ✨ 1m, Licht 30s]`. So war es VOR
+ * dem Fix:
  *
- *   ✏️ Fackel → ✕ → ⚙️ → "Schild"   das Formular traegt nach ⚙️ noch Index 0,
+ *   ✏️ Fackel → ✕ → ⚙️ → "Schild"   das Formular trug nach ⚙️ noch Index 0,
  *   (ebenso mit Escape)             "Fackel", Knopf "Vorlage speichern"; 💾
- *                                   UEBERSCHREIBT Fackel: [Schild 🔥 1h, Segen,
+ *                                   UEBERSCHRIEB Fackel: [Schild 🔥 1h, Segen,
  *                                   Licht], "Vorlage aktualisiert", nach dem
  *                                   Neuladen ebenso
- *   ✏️ Fackel → "Abbrechen"         neu angelegt, aber "Schild" traegt 1 h —
- *                                   die Zeit von Fackel; das Formular zeigt
+ *   ✏️ Fackel → "Abbrechen"         neu angelegt, aber "Schild" trug 1 h —
+ *                                   die Zeit von Fackel; das Formular zeigte
  *                                   nach "Abbrechen" 1/0/0 statt 0/10/0
- *   ✏️ Fackel → 🗑️ Fackel → 💾       SEGEN, nie bearbeitet, ist weg:
+ *   ✏️ Fackel → 🗑️ Fackel → 💾       SEGEN, nie bearbeitet, war weg:
  *                                   [Schild 🔥 1h, Licht]
- *   ✏️ Licht (letzte) → 🗑️ Licht     neu angelegt, aber die Meldung sagt
+ *   ✏️ Licht (letzte) → 🗑️ Licht     neu angelegt, aber die Meldung sagte
  *   → 💾                             "Vorlage aktualisiert"
- *   Entwurf → Escape → ⚙️           der Entwurf bleibt stehen (so soll es sein)
+ *   Entwurf → Escape → ⚙️           der Entwurf blieb stehen (so soll es sein)
  *
- * DIE URSACHEN:
- *   - `assets/templates/view-tools.html:271` → `systems/spellslots/navigation.js:101`:
- *     ⚙️ oeffnet den Dialog per `showModal()`, das fuer diese Schale nur die
- *     Liste neu zeichnet — das Formular oben wird nie geleert. ⚙️ ist der
- *     EINZIGE Anlege-Weg (keine Taste n, keine Befehlspalette, keine Suche).
- *   - `features/timers/timers.js:107`: `presets[parseInt(editIndex)] = presetData`
- *     — der Bearbeiten-Zustand ist ein Array-INDEX in `#edit-preset-index`,
- *     keine ID. `timers.js:108` meldet "Vorlage aktualisiert" auch dann, wenn
- *     der Index hinter dem Array-Ende liegt.
- *   - `timers.js:152-161` `deleteTimerPreset()`: `splice` verschiebt alle
- *     folgenden Vorlagen um eins, `#edit-preset-index` bleibt stehen und zeigt
- *     danach auf den Nachfolger. ✏️ und 🗑️ liegen im SELBEN Dialog, das geht
- *     also auch ganz ohne Schliessen.
- *   - `timers.js:136-150` `clearPresetForm()`: die drei Zeitfelder stehen nur
- *     in `defaults`, nicht in `textFields`; `clearFormFields()`
- *     (`utils/form-helpers.js:39-44`) wendet `defaults` nur auf `textFields`
- *     an — die Zeiten werden nie zurueckgesetzt.
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ *   - ⚙️ (`assets/templates/view-tools.html`) oeffnete den Dialog per
+ *     `showModal()` (`systems/spellslots/navigation.js`), das fuer diese
+ *     Schale nur die Liste neu zeichnet — das Formular oben wurde nie
+ *     geleert. ⚙️ ist der EINZIGE Anlege-Weg (keine Taste n, keine
+ *     Befehlspalette, keine Suche).
+ *   - saveTimerPreset() (`features/timers/timers.js`) schrieb
+ *     `presets[parseInt(editIndex)] = presetData` — der Bearbeiten-Zustand
+ *     ist ein Array-INDEX in `#edit-preset-index`, keine ID — und meldete
+ *     "Vorlage aktualisiert" auch dann, wenn der Index hinter dem Array-Ende
+ *     lag.
+ *   - deleteTimerPreset(): `splice` verschiebt alle folgenden Vorlagen um
+ *     eins, `#edit-preset-index` blieb stehen und zeigte danach auf den
+ *     Nachfolger. ✏️ und 🗑️ liegen im SELBEN Dialog, das ging also auch ganz
+ *     ohne Schliessen.
+ *   - clearPresetForm(): die drei Zeitfelder standen nur in `defaults`, nicht
+ *     in `textFields`; `clearFormFields()` (`utils/form-helpers.js`) wendet
+ *     `defaults` nur auf `textFields` an — die Zeiten wurden nie
+ *     zurueckgesetzt.
+ *
+ * NACH DEM FIX gefunden (Gutachten): ein zweiter Tab, der die bearbeitete
+ * Vorlage selbst oder eine davor loescht, liess den Index IN der Liste — und
+ * 💾 ueberschrieb die nachgerueckte, "Vorlage aktualisiert" (10)(11).
  *
  * DIE REGELN (Vertrag ABBRUCH, docs/bugfixes.md):
  *   R1  Nach Bearbeiten → Abbrechen (✕, Escape, "Abbrechen") zeigt der
@@ -56,22 +64,26 @@
  *   R4  Zeigt der Index beim Speichern hinter das Array-Ende (die Vorlage ist
  *       weg, waehrend das Formular offen war), wird als NEU angelegt, mit einer
  *       Warnung und ohne "aktualisiert". Fall (5) — zweimal: Index GLEICH der
- *       Laenge (heute haengt `presets[i] = …` dort zufaellig richtig an, nur
- *       die Meldung luegt; das faengt ein `>` statt `>=` im Fix) und Index
- *       GROESSER als die Laenge (heute ein Loch: `[Fackel, null, neu]`; das
- *       faengt einen Fix, der nur warnt und weiter `presets[i] = …` schreibt).
+ *       Laenge (vor dem Fix hing `presets[i] = …` dort zufaellig richtig an,
+ *       nur die Meldung log; das faengt ein `>` statt `>=` im Fix) und Index
+ *       GROESSER als die Laenge (vor dem Fix ein Loch: `[Fackel, null, neu]`;
+ *       das faengt einen Fix, der nur warnt und weiter `presets[i] = …`
+ *       schreibt). Und Fall (10): der Index liegt nach dem Loeschen der
+ *       bearbeiteten Vorlage in einem zweiten Tab noch IN der Liste, zeigt
+ *       aber auf eine andere — auch das ist "gibt es nicht mehr".
  *   R8  Loeschen im Dialog fuehrt den Index nach: die gerade bearbeitete
  *       geloescht → Formular leer; eine davor geloescht → der Index rueckt
  *       nach; 💾 ueberschreibt nie eine Vorlage, die niemand bearbeitet hat.
  *       Faelle (6)-(8); (8) lehnt zuerst die Rueckfrage ab — wer VOR der
- *       Rueckfrage leert oder den Index verschiebt, wird dort rot.
- *   Kontrolle: ✏️ → 💾 → ⚙️ → 💾 legt schon heute richtig an. Fall (9).
+ *       Rueckfrage leert oder den Index verschiebt, wird dort rot. Fall (11):
+ *       dasselbe, wenn ein zweiter Tab eine Vorlage DAVOR loescht.
+ *   Kontrolle: ✏️ → 💾 → ⚙️ → 💾 legte schon vor dem Fix richtig an. Fall (9).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER SPEICHER IST NICHT D
  *
  * Timer-Vorlagen liegen in `localStorage['dnd-timer-presets']`, geschrieben
- * SOFORT und unentprellt von `saveTimerPresets()` (`timers.js:17-19`, der
+ * SOFORT und unentprellt von `saveTimerPresets()` (`timers.js`, der
  * einzige Schreiber dieses Schluessels im Quellbaum). Es gibt also keinen
  * `_rev`-Marker abzuwarten und keine Kopie in D: das, was der Nutzer sieht
  * (Liste im Dialog, Schnellleiste), wird bei jedem Zeichnen frisch aus diesem
@@ -87,7 +99,7 @@
  * R3 (Taste n, Befehlspalette): beides gibt es fuer Timer-Vorlagen nicht.
  * R4 per Strg+Z: Vorlagen haben kein Undo, Strg+Z erreicht sie nicht
  * (gemessen: Stapel leer, Speicher unveraendert) — der einzige Weg zu einem
- * Index hinter dem Ende ist darum ein zweiter Tab, Fall (5). R5-R7 betreffen
+ * verwaisten Index ist darum ein zweiter Tab, Faelle (5), (10), (11). R5-R7 betreffen
  * andere Formulare. "Klick daneben" schliesst diesen Dialog gar nicht
  * (gemessen) und ist darum kein Abbruch-Weg. Der Dialogtitel (V6) ist ein
  * eigener Vorgang.
@@ -487,9 +499,9 @@ test('(2) R1: nach ✏️ und Escape oeffnet ⚙️ ein leeres Formular, 💾 le
 // ===========================================================================
 //
 // Der Inline-Knopf "Abbrechen" laesst den Dialog offen — das Formular darueber
-// IST danach das Anlege-Formular (Knopf "Vorlage hinzufügen"). Heute leert er
-// Index, Name und Emoji, nicht aber die Zeiten: die neue Vorlage erbt die 1 h
-// von Fackel, ohne dass der Nutzer sie je eingegeben hat.
+// IST danach das Anlege-Formular (Knopf "Vorlage hinzufügen"). Vor dem Fix
+// leerte er Index, Name und Emoji, nicht aber die Zeiten: die neue Vorlage
+// erbte die 1 h von Fackel, ohne dass der Nutzer sie je eingegeben hatte.
 test('(3) R1: nach ✏️ und "Abbrechen" traegt das Formular keine Zeit der bearbeiteten Vorlage', async ({
     page
 }) => {
@@ -530,7 +542,7 @@ test('(3) R1: nach ✏️ und "Abbrechen" traegt das Formular keine Zeit der bea
 // (4) WAECHTER: EIN ANLEGE-ENTWURF UEBERLEBT ✕, ESCAPE UND ⚙️
 // ===========================================================================
 //
-// Schon heute gruen (gemessen: "Entwurf" → Escape → ⚙️, der Entwurf steht).
+// Schon vor dem Fix gruen (gemessen: "Entwurf" → Escape → ⚙️, der Entwurf stand).
 // Der Fix darf nur leeren, wenn ein Bearbeiten-Rest da ist — ein Fix, der bei
 // JEDEM ⚙️ leert, macht diesen Fall rot. Darum mit Emoji und eigener Zeit:
 // auch die Zeitfelder gehoeren zum Entwurf.
@@ -581,13 +593,14 @@ test('(4) R2 (Waechter): ein Anlege-Entwurf ueberlebt ✕, Escape und erneutes �
 // neu angelegt" UND dass der Nutzer es erfaehrt. Zwei Schritte, weil zwei
 // falsche Fixe verschieden aussehen:
 //   A  Index GLEICH der Laenge (✏️ Licht, Index 2; drueben 🗑️ Licht → Laenge 2).
-//      Heute landet die Eingabe zwar richtig am Ende — `presets[2] = …` auf ein
-//      Array der Laenge 2 —, aber die Meldung sagt "Vorlage aktualisiert"
-//      (gemessen, V3b). Ein Fix mit `>` statt `>=` bliebe hier rot.
+//      Vor dem Fix landete die Eingabe zwar richtig am Ende — `presets[2] = …`
+//      auf ein Array der Laenge 2 —, aber die Meldung sagte "Vorlage
+//      aktualisiert" (gemessen). Ein Fix mit `>` statt `>=` bliebe hier rot.
 //   B  Index GROESSER als die Laenge (✏️ "Licht hell", Index 2; drueben
-//      🗑️ Segen und 🗑️ "Licht hell" → Laenge 1). Heute reisst `presets[2] = …`
-//      ein Loch: im Speicher steht `[Fackel, null, …]`. Ein Fix, der nur warnt
-//      und weiter per Index schreibt, bliebe hier rot.
+//      🗑️ Segen und 🗑️ "Licht hell" → Laenge 1). Vor dem Fix riss
+//      `presets[2] = …` ein Loch: im Speicher stand `[Fackel, null, …]`. Ein
+//      Fix, der nur warnt und weiter per Index schreibt, bliebe hier rot.
+// Liegt der Index nach dem Loeschen noch IN der Liste, messen (10) und (11).
 test('(5) R4: ✏️ einer Vorlage, die ein zweiter Tab loescht: 💾 legt sie neu an und sagt es', async ({
     page
 }) => {
@@ -680,8 +693,8 @@ test('(5) R4: ✏️ einer Vorlage, die ein zweiter Tab loescht: 💾 legt sie n
 // (6) ✏️ A → 🗑️ A IM SELBEN DIALOG: DAS FORMULAR WIRD LEER
 // ===========================================================================
 //
-// Gemessen (V3): nach 🗑️ Fackel zeigt der Index 0 auf Segen, 💾 ueberschreibt
-// SEGEN — eine Vorlage, die niemand angefasst hat.
+// Vor dem Fix (gemessen): nach 🗑️ Fackel zeigte der Index 0 auf Segen, 💾
+// ueberschrieb SEGEN — eine Vorlage, die niemand angefasst hatte.
 test('(6) R8: ✏️ Fackel → 🗑️ Fackel: das Formular wird leer, 💾 ueberschreibt Segen nicht', async ({
     page
 }) => {
@@ -728,8 +741,8 @@ test('(6) R8: ✏️ Fackel → 🗑️ Fackel: das Formular wird leer, 💾 ueb
 // (7) ✏️ B → 🗑️ A (DAVOR): DER BEARBEITEN-INDEX RUECKT NACH
 // ===========================================================================
 //
-// Heute zeigt der Index 1 nach dem Loeschen von Fackel auf LICHT; 💾 schreibt
-// die geaenderte Segen-Vorlage ueber Licht, und Segen bleibt alt stehen. Die
+// Vor dem Fix zeigte der Index 1 nach dem Loeschen von Fackel auf LICHT; 💾
+// schrieb die geaenderte Segen-Vorlage ueber Licht, und Segen blieb alt stehen. Die
 // Regel: die Bearbeitung gilt weiter Segen, Licht bleibt feldgleich.
 test('(7) R8: ✏️ Segen → 🗑️ Fackel: 💾 aendert Segen, Licht bleibt feldgleich', async ({
     page
@@ -771,7 +784,7 @@ test('(7) R8: ✏️ Segen → 🗑️ Fackel: 💾 aendert Segen, Licht bleibt 
 // (8) WAECHTER: ✏️ A → 🗑️ A ABGELEHNT, 🗑️ C (DAHINTER): DER INDEX BLEIBT
 // ===========================================================================
 //
-// Schon heute gruen. Haelt den Fix von drei falschen Wegen ab:
+// Schon vor dem Fix gruen. Haelt den Fix von drei falschen Wegen ab:
 //   - das Formular bei JEDEM Loeschen leeren oder den Index bei JEDEM Loeschen
 //     senken (🗑️ Licht liegt HINTER der bearbeiteten Fackel);
 //   - VOR der Rueckfrage leeren bzw. nachfuehren (etwa im Aktions-Haendler):
@@ -819,13 +832,13 @@ test('(8) R8 (Waechter): ✏️ Fackel → 🗑️ Fackel abgelehnt → 🗑️ 
 });
 
 // ===========================================================================
-// (9) KONTROLLE: ✏️ → 💾 → ⚙️ → 💾 LEGT SCHON HEUTE RICHTIG AN
+// (9) KONTROLLE: ✏️ → 💾 → ⚙️ → 💾 LEGTE SCHON VOR DEM FIX RICHTIG AN
 // ===========================================================================
 //
 // Nach einem ECHTEN Speichern leert saveTimerPreset() das Formular selbst —
-// Index, Name, Emoji. Die Zeitfelder bleiben heute stehen (Ursache wie in
-// Fall 3); diese Kontrolle gibt darum ALLE Zeiten selbst ein und prueft sie im
-// Formular nicht — sie soll vor UND nach dem Fix gruen sein.
+// Index, Name, Emoji. Die Zeitfelder blieben vor dem Fix stehen (Ursache wie
+// in Fall 3); diese Kontrolle gibt darum ALLE Zeiten selbst ein und prueft sie
+// im Formular nicht — sie soll vor UND nach dem Fix gruen sein.
 test('(9) (Kontrolle): ✏️ → 💾 → ✕ → ⚙️ → 💾 legt eine neue Vorlage an', async ({ page }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);

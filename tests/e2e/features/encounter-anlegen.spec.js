@@ -17,48 +17,54 @@
  *
  * Gemessen am Buendel zu e5bc99d (Branch abbrechen-neu), 1440x900, echte
  * Klicks und Tasten, Saat wie unten (Goblinboss mit jedem Feld, das das
- * Formular kennt, dazu Schattenwolf).
+ * Formular kennt, dazu Schattenwolf). So war es VOR dem Fix:
  *
- *   ✏️ → Kopfzeile zu → Kopfzeile   das Formular traegt id 1 und ALLE Werte des
- *   auf (ebenso Taste n, Befehls-   Goblinboss; "Neu" → 💾 UEBERSCHREIBT ihn —
+ *   ✏️ → Kopfzeile zu → Kopfzeile   das Formular trug id 1 und ALLE Werte des
+ *   auf (ebenso Taste n, Befehls-   Goblinboss; "Neu" → 💾 UEBERSCHRIEB ihn —
  *   palette, in jeder Mischung)     D, Speicher und nach dem Neuladen
  *                                   ["1:Neu","2:Schattenwolf"]. Keine Meldung,
- *                                   kein Undo-Eintrag: Strg+Z sagt "Nichts zum
- *                                   Rückgängigmachen", der Goblinboss ist weg
+ *                                   kein Undo-Eintrag: Strg+Z sagte "Nichts zum
+ *                                   Rückgängigmachen", der Goblinboss war weg
  *   ✏️ → Escape                     Escape tut am Klappformular nichts; die
- *                                   Falle entsteht ueber den naechsten Weg
- *   ✏️ (offen) → "🗡️ Goblin" → 💾   die Vorlage laesst #edit-enc-id stehen:
- *                                   der Goblinboss WIRD zum Goblin, und der
- *                                   erbt Res. Feuer, Imm. Gift, Zustandsimm.
+ *                                   Falle entstand ueber den naechsten Weg
+ *   ✏️ (offen) → "🗡️ Goblin" → 💾   die Vorlage liess #edit-enc-id stehen:
+ *                                   der Goblinboss WURDE zum Goblin, und der
+ *                                   erbte Res. Feuer, Imm. Gift, Zustandsimm.
  *                                   Blind, RW Ges/Wei, Sprachen, Fertigkeiten
- *   ✏️ → Kopfzeile zu → 🗑️ →        "Neu" ist VERLOREN, still: keine Meldung,
+ *   ✏️ → Kopfzeile zu → 🗑️ →        "Neu" war VERLOREN, still: keine Meldung,
  *   Kopfzeile/n/Palette → 💾        D und Speicher ["2:Schattenwolf"]
- *   🗑️ Schattenwolf → "Neu A"       Strg+Z nimmt NICHT das Anlegen zurueck,
+ *   🗑️ Schattenwolf → "Neu A"       Strg+Z nahm NICHT das Anlegen zurueck,
  *   anlegen → Strg+Z                sondern das Loeschen — und "Neu A"
- *                                   verschwindet still mit
- *   … → ✏️ Neu A → RK 5 tippen →    Strg+Z (Fokus im Feld) nimmt "Neu A" unter
- *   Strg+Z → 💾                     dem offenen Formular weg; 💾 findet die ID
- *                                   nicht, speichert NICHTS und sagt nichts
- *   ✏️ → n bzw. Palette (offen)     klappt das Bearbeiten zu, statt nichts zu tun
+ *                                   verschwand still mit
+ *   … → ✏️ Neu A → RK 5 tippen →    Strg+Z (Fokus im Feld) nahm "Neu A" unter
+ *   Strg+Z → 💾                     dem offenen Formular weg; 💾 fand die ID
+ *                                   nicht, speicherte NICHTS und sagte nichts
+ *   ✏️ → n bzw. Palette (offen)     klappte das Bearbeiten zu, statt nichts zu tun
  *
- * DIE URSACHEN:
- *   - `systems/spellslots/navigation.js:119-134` toggleCollapse() schaltet nur
- *     die Klasse `open` um und leert nie. Darauf laufen die Kopfzeile
- *     (`assets/templates/view-encounters.html:32`), die Taste n
- *     (`systems/spellslots/keyboard-shortcuts.js:812`) und die Befehlspalette
- *     (`features/command-palette/action-registry.js:47`). Nur "+ Neuer
- *     Encounter" und der Knopf der leeren Liste leeren
- *     (`features/encounters/encounters-render.js:607-614`, showEncForm()).
- *   - `features/encounters/encounters-crud.js:90-92` saveEncounter(): findet
- *     findIndex die ID nicht, passiert nichts — und `save()` (Z. 104) schreibt
- *     den unveraenderten Stand. Die ganze Funktion (Z. 27-105) ruft weder
- *     pushUndo noch saveUndoState und meldet nichts.
- *   - `features/encounters/monster-templates.js:41-91` loadMonsterTemplate()
- *     laesst #edit-enc-id stehen und setzt Resistenzen, Immunitaeten,
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ *   - toggleCollapse() (`systems/spellslots/navigation.js`) schaltete nur die
+ *     Klasse `open` um und leerte nie. Darauf liefen die Kopfzeile
+ *     (`assets/templates/view-encounters.html`), die Taste n
+ *     (`systems/spellslots/keyboard-shortcuts.js`) und die Befehlspalette
+ *     (`features/command-palette/action-registry.js`). Nur "+ Neuer
+ *     Encounter" und der Knopf der leeren Liste leeren (showEncForm(),
+ *     `features/encounters/encounters-render.js`).
+ *   - saveEncounter() (`features/encounters/encounters-crud.js`): fand
+ *     findIndex die ID nicht, passierte nichts — und `save()` schrieb den
+ *     unveraenderten Stand. Die ganze Funktion rief weder pushUndo noch
+ *     saveUndoState und meldete nichts.
+ *   - loadMonsterTemplate() (`features/encounters/monster-templates.js`)
+ *     liess #edit-enc-id stehen und setzte Resistenzen, Immunitaeten,
  *     Zustandsimmunitaeten, Rettungswuerfe, Fertigkeiten und Sprachen nicht
  *     zurueck.
- *   - `systems/spellslots/keyboard-shortcuts.js:515-519` Strg+Z wirkt "immer",
- *     auch mit dem Fokus in einem Feld des offenen Formulars.
+ *   - Strg+Z wirkt "immer" (`keyboard-shortcuts.js`), auch mit dem Fokus in
+ *     einem Feld des offenen Formulars.
+ *
+ * NACH DEM FIX gefunden (Gutachten): ✏️ Goblinboss → Reiter Party →
+ * Befehlspalette "Neuer Encounter" landete im unsichtbar aufgeklappten ✏️,
+ * und 💾 ueberschrieb den Goblinboss (14); die Schnell-Vorlage leerte auch
+ * einen Entwurf ohne ID — gegen R2 (10).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag ABBRUCH, docs/bugfixes.md), je Fall vermerkt
@@ -66,15 +72,19 @@
  *   R1  Nach Bearbeiten → Abbruch zeigt JEDER Anlege-Weg ein Formular ohne
  *       Bearbeiten-ID und ohne Werte des bearbeiteten Eintrags; 💾 legt NEU an,
  *       der bearbeitete bleibt feldgleich (D, Speicher, Neuladen). Anlege-Wege
- *       hier: Kopfzeile (1), Taste n (2), Befehlspalette (3), Schnell-Vorlage
- *       (4). Abbruch-Wege: Kopfzeile zuklappen (1)(3)(4)(6)(13), Escape (2),
- *       Knopf "Abbrechen" (5). "+ Neuer Encounter" (5) und der Knopf der
- *       leeren Liste (13) leeren schon heute und bleiben so.
+ *       hier: Kopfzeile (1), Taste n (2), Befehlspalette (3), auch aus einer
+ *       anderen Ansicht (14), Schnell-Vorlage (4). Abbruch-Wege: Kopfzeile
+ *       zuklappen (1)(3)(4)(6)(13), Escape (2), Knopf "Abbrechen" (5).
+ *       "+ Neuer Encounter" (5) und der Knopf der leeren Liste (13) leerten
+ *       schon vor dem Fix und bleiben so.
  *   R2  Ein nie gespeicherter Entwurf ueberlebt Escape und Zuklappen; der
- *       naechste Anlege-Weg verwirft ihn nicht (10).
+ *       naechste Anlege-Weg verwirft ihn nicht (10) — auch die Schnell-Vorlage
+ *       nicht: sie setzt ihre Felder, den Rest laesst sie stehen (Ende von
+ *       (10)); ebenso die Palette aus einer anderen Ansicht (Ende von (14)).
  *   R3  Bei OFFENEM Formular tun Taste n und Befehlspalette nichts — kein
  *       Zuklappen, kein Leeren —, an einem offenen ✏️ wie an einem offenen
- *       Entwurf (11). Die Kopfzeile bleibt ein Umschalter (1).
+ *       Entwurf (11). Die Kopfzeile bleibt ein Umschalter (1). Offen heisst
+ *       SICHTBAR offen: ein ✏️ in einer anderen Ansicht ist ein Rest (14).
  *   R4  Zeigt die Bearbeiten-ID beim 💾 ins Leere (geloescht, per Strg+Z oder
  *       Rueckgaengig-Knopf zurueckgenommen), wird die Eingabe NEU gespeichert,
  *       mit Warnung "… existiert nicht mehr …"; keine Meldung "…
@@ -118,7 +128,7 @@
  * DIE TASTE n kommt nach einem Klick auf den Titel der Werkzeugleiste. Das
  * ist Vorbereitung, nicht die gemessene Handlung: nach der Befehlspalette
  * steht der Fokus noch im versteckten `.cp-input`
- * (`features/command-palette/command-palette.js:84-91`, gemessen in 16 von 20
+ * (`features/command-palette/command-palette.js`, gemessen in 16 von 20
  * Laeufen sofort danach), und die isTyping-Schranke schluckt das n. Ein
  * Mensch klickt dann irgendwohin; genau das tut `tasteN()`.
  *
@@ -133,7 +143,7 @@
  *   - Der Knopf "Abbrechen" an einem ENTWURF: er IST das Leeren
  *     (cancelEncEdit, Vertragstabelle "Leeren") und verwirft ihn ausdruecklich.
  *   - Loeschen bei offenem Formular: am Schreibtisch hat die Liste dann die
- *     Hoehe 0 und das Detail faengt keinen Klick (gemessen, 23 (1)). R4 wird
+ *     Hoehe 0 und das Detail faengt keinen Klick (gemessen). R4 wird
  *     darum ueber Strg+Z und den Rueckgaengig-Knopf gefahren, "geloescht" ueber
  *     Zuklappen → 🗑️.
  *   - Telefon, Bestiarium → Encounter und Encounter-Rechner (legen ohne
@@ -700,8 +710,8 @@ test('(1) R1: ✏️ → Kopfzeile zu → Kopfzeile auf zeigt ein leeres Formula
 // (2) R1 — ESCAPE, DANN TASTE n
 // ===========================================================================
 //
-// Escape tut am Klappformular heute nichts (gemessen: Formular, ID und Felder
-// bleiben). Ob ein Fix das aendert, laesst dieser Fall offen: ist das
+// Escape tut am Klappformular nichts (gemessen: Formular, ID und Felder
+// bleiben; Katalog Offen (6)). Ob ein Fix das aendert, laesst dieser Fall offen: ist das
 // Formular nach Escape noch offen, klappt der Nutzer es per Kopfzeile zu —
 // das ist dann der Abbruch. Danach oeffnet die Taste n.
 test('(2) R1: ✏️ → Escape (→ Kopfzeile zu) → Taste n zeigt ein leeres Formular, 💾 legt NEU an', async ({
@@ -800,9 +810,9 @@ test('(4) R1: ✏️ → Kopfzeile zu → auf → Schnell-Vorlage "Goblin": ohne
 // (5) KONTROLLE — WAS SCHON VOR DEM FIX STIMMTE, BLEIBT SO
 // ===========================================================================
 //
-// Drei Wege, die das Formular schon heute leeren und so bleiben sollen:
+// Drei Wege, die das Formular schon vor dem Fix leerten und so bleiben sollen:
 // 💾 (saveEncounter() ruft cancelEncEdit()), der Knopf "Abbrechen" (der
-// einzige Abbruch-Weg, der heute leert) und "+ Neuer Encounter" (leert immer,
+// einzige Abbruch-Weg, der vor dem Fix leerte) und "+ Neuer Encounter" (leert immer,
 // Vertrag R1: "bleibt, wie es ist"). Danach je ein Anlege-Weg — jeder zeigt
 // ein leeres Formular, und das letzte 💾 legt neu an.
 test('(5) R1 (Kontrolle): nach ✏️ → 💾, ✏️ → "Abbrechen" und ✏️ → "+ Neuer Encounter" ist das Formular leer und legt NEU an', async ({
@@ -1116,7 +1126,8 @@ test('(9) R5: 🗑️ Schattenwolf, "Neu A" anlegen, ✏️ Goblinboss TP 30 —
 //
 // Der Fix darf nur leeren, wenn ein Bearbeiten Reste hinterliess (Bearbeiten-
 // ID gesetzt). Ein nie gespeicherter Entwurf bleibt — wie im NPC-Waechter
-// (18). Schon vor dem Fix gruen (toggleCollapse() leert nie).
+// (18). Am Stand e5bc99d gruen (toggleCollapse() leerte nie, die Vorlage
+// auch nicht); am ersten Fix-Stand rot im letzten Schritt (Schnell-Vorlage).
 test('(10) R2 (Waechter): ein Entwurf ueberlebt Escape und Zuklappen, Taste n, Palette und Kopfzeile verwerfen ihn nicht', async ({
     page
 }) => {
@@ -1293,7 +1304,7 @@ test('(11) R3: Taste n und Befehlspalette bei offenem ✏️ und bei offenem Ent
 // Massstab ist derselbe Goblin aus einem FRISCHEN Formular ("+ Neuer
 // Encounter" → Vorlage → 💾): der Goblin nach ✏️ Goblinboss → Vorlage muss
 // ihm in jedem Feld gleichen — im Formular und in D. So misst der Fall "erbt
-// nichts" fuer jedes Feld, auch eines, das die Vorlage heute nicht setzt,
+// nichts" fuer jedes Feld, auch eines, das die Vorlage nicht setzt,
 // und haengt nicht an den SRD-Daten der Vorlage. Vor dem Fix: der Goblinboss
 // wurde zum Goblin und behielt Res. Feuer, Imm. Gift, Zustandsimm. Blind,
 // Rettungswuerfe, Sprachen und Fertigkeiten.
@@ -1356,14 +1367,14 @@ test('(12) R7: Schnell-Vorlage "Goblin" bei offenem ✏️ Goblinboss: ohne ID, 
 });
 
 // ===========================================================================
-// (13) KONTROLLE — DER KNOPF DER LEEREN LISTE LEERT SCHON HEUTE UND BLEIBT SO
+// (13) KONTROLLE — DER KNOPF DER LEEREN LISTE LEERTE SCHON VOR DEM FIX UND BLEIBT SO
 // ===========================================================================
 //
 // Der letzte Anlege-Weg aus dem Vertrag: "+ Encounter erstellen" in der
-// LEEREN Liste (`features/encounters/encounters-render.js:143`, showEncForm()).
+// LEEREN Liste (`features/encounters/encounters-render.js`, showEncForm()).
 // Man trifft ihn erst, wenn der letzte Encounter geloescht ist — typisch nach
 // ✏️ → Zuklappen → 🗑️, also genau mit einem Bearbeiten-Rest im Formular. Er
-// leert schon heute (gemessen, V3 "leerende Wege"); der Fall haelt fest, dass
+// leerte schon vor dem Fix (gemessen); der Fall haelt fest, dass
 // er es nach dem Fix weiter tut (Vertrag R1: "bleibt, wie er ist"). Gewaehlt
 // ueber Rolle und Text IN der Liste — die Kopfzeile traegt denselben Text,
 // ist aber kein Knopf und liegt nicht in #encounter-list.

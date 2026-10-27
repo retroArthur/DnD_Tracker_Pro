@@ -16,44 +16,44 @@
  *
  * Gemessen am Buendel zu e5bc99d (Branch abbrechen-neu), 1440x900, echte
  * Klicks und Tasten; Saat wie unten (Tiefwasser mit Filter, Beschreibung,
- * Tags, Links und einem Feld, das kein Formular kennt, dazu Niewinter):
+ * Tags, Links und einem Feld, das kein Formular kennt, dazu Niewinter). So
+ * war es VOR dem Fix:
  *
- *   ✏️ Tiefwasser → ✕ bzw.        das Formular traegt Tiefwasser samt
+ *   ✏️ Tiefwasser → ✕ bzw.        das Formular trug Tiefwasser samt
  *   Escape → "+ Neuer Ort" bzw.    #edit-loc-id 1; "Baldurs Tor" → 💾
- *   Palette "Neuer Ort"            UEBERSCHREIBT Tiefwasser (Filter,
- *                                  Beschreibung, Tags bleiben haengen), kein
+ *   Palette "Neuer Ort"            UEBERSCHRIEB Tiefwasser (Filter,
+ *                                  Beschreibung, Tags blieben haengen), kein
  *                                  neuer Ort — in D, im Speicher, nach dem
  *                                  Neuladen; keine Meldung, Undo-Kopf
  *                                  "Ort bearbeitet"
- *   ✏️ → ✕/Escape → 🗑️ →           das Formular traegt die ID des geloeschten
- *   "+ Ort erstellen" (leere       Orts; 💾 speichert NICHTS, D bleibt leer —
+ *   ✏️ → ✕/Escape → 🗑️ →           das Formular trug die ID des geloeschten
+ *   "+ Ort erstellen" (leere       Orts; 💾 speicherte NICHTS, D blieb leer —
  *   Liste), ebenso "+ Neuer Ort"   ohne jede Meldung, der Rueckgaengig-Stapel
- *   und Palette                    bekommt einen leeren "Ort bearbeitet"
- *   "+ Neuer Ort" → "Neu A" → 💾   Strg+Z nimmt "Ort erstellt" zurueck, das
- *   → ✏️ → Eingaben → Strg+Z mit   Formular bleibt offen mit ID 5; 💾 →
+ *   und Palette                    bekam einen leeren "Ort bearbeitet"
+ *   "+ Neuer Ort" → "Neu A" → 💾   Strg+Z nahm "Ort erstellt" zurueck, das
+ *   → ✏️ → Eingaben → Strg+Z mit   Formular blieb offen mit ID 5; 💾 →
  *   dem Fokus im Namen → 💾        Eingabe STILL VERLOREN, leerer Undo-Eintrag
  *
- * DIE URSACHEN:
- * - Kein Anlege-Weg leert das Formular. `assets/templates/view-content.html:75`
- *   ("+ Neuer Ort"), `features/locations/locations-render.js:113` ("+ Ort
- *   erstellen" der leeren Liste) und
- *   `features/command-palette/action-registry.js:40` ("Neuer Ort") rufen alle
- *   `showModal('location-modal')` (`systems/spellslots/navigation.js:94`), das
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ * - Kein Anlege-Weg leerte das Formular. "+ Neuer Ort"
+ *   (`assets/templates/view-content.html`), "+ Ort erstellen" der leeren Liste
+ *   (`features/locations/locations-render.js`) und "Neuer Ort" der Palette
+ *   (`features/command-palette/action-registry.js`) riefen alle
+ *   `showModal('location-modal')` (`systems/spellslots/navigation.js`), das
  *   nur `show` setzt und die Auswahllisten baut.
- * - Kein Schliessweg leert. ✕ (`ui/actions/ui-actions.js:9`) und Escape
- *   (`systems/spellslots/keyboard-shortcuts.js:505`) gehen durch
- *   `hideModal()` (`navigation.js:114`). `clearLocationForm()`
- *   (`features/locations/locations-crud.js:40`) laeuft nur nach erfolgreichem
- *   Speichern (Z. 33).
- * - `editLocation()` schreibt die ID in das versteckte `#edit-loc-id`
- *   (`features/locations/locations-crud.js:54-55`); `saveLocation()` liest sie
- *   als Weiche zwischen Bearbeiten und Anlegen (Z. 14, 25).
- * - `saveLocation()` ruft `pushUndo('Ort bearbeitet')` (Z. 24) VOR der Suche
- *   (Z. 26); findet es die ID nicht, tut Z. 27 nichts, es gibt keinen
- *   Else-Zweig — und danach laufen Schliessen, Leeren und `save()` trotzdem.
- * - Strg+Z wirkt auch mit dem Fokus in einem Feld
- *   (`keyboard-shortcuts.js:514`, "immer aktiv", vor der isTyping-Schranke in
- *   Z. 582) und nimmt den Ort unter dem offenen Formular weg.
+ * - Kein Schliessweg leert. ✕ (`ui/actions/ui-actions.js`) und Escape
+ *   (`systems/spellslots/keyboard-shortcuts.js`) gehen durch `hideModal()`;
+ *   `clearLocationForm()` (`features/locations/locations-crud.js`) lief nur
+ *   nach erfolgreichem Speichern.
+ * - `editLocation()` schreibt die ID in das versteckte `#edit-loc-id`;
+ *   `saveLocation()` liest sie als Weiche zwischen Bearbeiten und Anlegen.
+ * - `saveLocation()` rief `pushUndo('Ort bearbeitet')` VOR der Suche; fand es
+ *   die ID nicht, tat es nichts, es gab keinen Else-Zweig — und danach liefen
+ *   Schliessen, Leeren und `save()` trotzdem.
+ * - Strg+Z wirkt auch mit dem Fokus in einem Feld (`keyboard-shortcuts.js`,
+ *   "immer aktiv", vor der isTyping-Schranke) und nimmt den Ort unter dem
+ *   offenen Formular weg.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag ABBRUCH, docs/bugfixes.md), die diese Datei haelt
@@ -67,7 +67,7 @@
  *   R2  Ein nie gespeicherter Anlege-Entwurf ueberlebt Escape/✕ und den
  *       naechsten Anlege-Weg.                                    Fall (5), Waechter
  *   R3  Die Befehlspalette bei offenem Formular verwirft nichts. Fall (6), Waechter
- *   Kontrolle: ✏️ → 💾 → "+ Neuer Ort" legt schon heute neu an. Fall (7)
+ *   Kontrolle: ✏️ → 💾 → "+ Neuer Ort" legte schon vor dem Fix neu an. Fall (7)
  *
  * R5-R8 betreffen andere Formulare (Encounter, Notiz, Quest, Timer).
  *
@@ -749,7 +749,7 @@ test('(4) R4: ✏️ eines Orts, den Strg+Z im Namensfeld zuruecknimmt: 💾 spe
 //
 // Der Fix darf das Formular NUR leeren, wenn ein Bearbeiten Reste
 // hinterliess (#edit-loc-id gesetzt). Ein Entwurf, der nie gespeichert
-// wurde, bleibt stehen — wie heute und wie bei NPCs (npc-formular.spec.js
+// wurde, bleibt stehen — wie vor dem Fix und wie bei NPCs (npc-formular.spec.js
 // (18)). Leere Saat, damit auch der Knopf der leeren Liste dabei ist: alle
 // drei Anlege-Wege, beide Abbruch-Wege. Schon vor dem Fix gruen.
 test('(5) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape/✕ und jeden Anlege-Weg', async ({
@@ -857,7 +857,7 @@ test('(6) R3 (Waechter): Befehlspalette "Neuer Ort" bei offenem ✏️ — das F
 });
 
 // ===========================================================================
-// (7) KONTROLLE: ✏️ → 💾 → "+ NEUER ORT" LEGT SCHON HEUTE NEU AN
+// (7) KONTROLLE: ✏️ → 💾 → "+ NEUER ORT" LEGTE SCHON VOR DEM FIX NEU AN
 // ===========================================================================
 //
 // Nach einem GESPEICHERTEN Bearbeiten leert saveLocation() das Formular

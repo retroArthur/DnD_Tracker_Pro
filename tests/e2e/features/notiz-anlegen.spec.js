@@ -16,45 +16,49 @@
  *
  * Gemessen am Buendel zu e5bc99d, 1440x900, echte Klicks und Tasten, Saat
  * wie unten (S1 "Der Anfang" mit Arc, Zusammenfassung, Tags und einem Feld,
- * das kein Formular kennt; S2, S3 schlicht; zwei Arcs):
+ * das kein Formular kennt; S2, S3 schlicht; zwei Arcs). So war es VOR dem
+ * Fix:
  *
- *   ✏️ S1 → Kopf zu → Kopf auf    das Formular traegt id 1 und jedes Feld von
- *   → neue Eingabe → 💾           S1 ausser dem Arc (das Aufklappen setzt ihn
- *                                 auf ''); 💾 UEBERSCHREIBT S1 ("Notiz
+ *   ✏️ S1 → Kopf zu → Kopf auf    das Formular trug id 1 und jedes Feld von
+ *   → neue Eingabe → 💾           S1 ausser dem Arc (das Aufklappen setzte
+ *                                 ihn auf ''); 💾 UEBERSCHRIEB S1 ("Notiz
  *                                 aktualisiert"), Zusammenfassung und Tags von
- *                                 S1 bleiben stehen (Mischung), arcId 100 →
- *                                 null; kein Undo-Eintrag, Strg+Z sagt "Nichts
- *                                 zum Rueckgaengigmachen"; nach dem Neuladen
- *                                 bleibt S1 ueberschrieben
+ *                                 S1 blieben stehen (Mischung), arcId 100 →
+ *                                 null; kein Undo-Eintrag, Strg+Z sagte
+ *                                 "Nichts zum Rueckgaengigmachen"; nach dem
+ *                                 Neuladen blieb S1 ueberschrieben
  *   ✏️ S1 → 🗑️ S1 an der Karte →  NICHTS gespeichert, keine Meldung, die
- *   💾                            Eingabe ist weg
- *   🗑️ S3 → "Frisch" anlegen →    Strg+Z holt S3 zurueck UND nimmt "Frisch"
- *   ✏️ Frisch → Strg+Z im Titel   still mit (das Anlegen hat keinen
- *   → 💾                          Undo-Eintrag); 💾 speichert nichts, keine
+ *   💾                            Eingabe war weg
+ *   🗑️ S3 → "Frisch" anlegen →    Strg+Z holte S3 zurueck UND nahm "Frisch"
+ *   ✏️ Frisch → Strg+Z im Titel   still mit (das Anlegen hatte keinen
+ *   → 💾                          Undo-Eintrag); 💾 speicherte nichts, keine
  *                                 Meldung
- *   ✏️ S1 → ⚙️ → Arc anlegen      die Arc-Auswahl springt 100 → '', 💾
- *                                 schreibt arcId null (ebenso beim Loeschen
+ *   ✏️ S1 → ⚙️ → Arc anlegen      die Arc-Auswahl sprang 100 → '', 💾
+ *                                 schrieb arcId null (ebenso beim Loeschen
  *                                 eines ANDEREN Arcs und beim Aufklappen)
- *   ✏️ S1 → Reiter Wiki → Notizen das Datum springt 2026-01-10 → heute, 💾
- *                                 schreibt es
+ *   ✏️ S1 → Reiter Wiki → Notizen das Datum sprang 2026-01-10 → das des
+ *                                 Tages, 💾 schrieb es
  *
- * DIE URSACHEN (Stand e5bc99d):
- *   - `systems/spellslots/navigation.js:119` toggleCollapse() schaltet nur die
- *     Klasse `open`: Zuklappen bricht das Bearbeiten nicht ab, Aufklappen —
- *     der EINZIGE Anlege-Weg der Notiz — leert #edit-session-id nicht.
- *   - `features/sessions/sessions.js:362` `if (idx > -1) {…}` ohne else: eine
- *     verwaiste ID speichert nichts und meldet nichts; `:389`
- *     cancelSessionEdit() wirft die Eingabe danach weg.
- *   - `features/sessions/sessions.js:337` saveSession() ruft weder pushUndo
- *     noch saveUndoState — weder beim Anlegen noch beim Bearbeiten. Strg+Z
- *     (Schnappschuss-Undo) springt dann hinter die VORIGE Aktion und reisst
- *     die neue Notiz still mit.
- *   - `features/sessions/sessions.js:15` renderStoryArcSelects() baut
- *     #session-arc per innerHTML neu und haelt die Auswahl nicht; Aufrufer
- *     `navigation.js:126-132` (Aufklappen), `sessions.js:77` (addStoryArc),
- *     `sessions.js:92` (deleteStoryArc).
- *   - `systems/spellslots/navigation.js:48-50` switchView('notes') setzt
- *     #session-date bei JEDEM Wechsel auf heute, auch beim Bearbeiten.
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ *   - toggleCollapse() (`systems/spellslots/navigation.js`) schaltete nur die
+ *     Klasse `open`: Zuklappen brach das Bearbeiten nicht ab, Aufklappen —
+ *     der EINZIGE Anlege-Weg der Notiz — leerte #edit-session-id nicht.
+ *   - saveSession() (`features/sessions/sessions.js`): `if (idx > -1) {…}`
+ *     ohne else — eine verwaiste ID speicherte nichts und meldete nichts;
+ *     cancelSessionEdit() warf die Eingabe danach weg.
+ *   - saveSession() rief weder pushUndo noch saveUndoState — weder beim
+ *     Anlegen noch beim Bearbeiten. Strg+Z (Schnappschuss-Undo) sprang dann
+ *     hinter die VORIGE Aktion und riss die neue Notiz still mit.
+ *   - renderStoryArcSelects() baute #session-arc per innerHTML neu und hielt
+ *     die Auswahl nicht; Aufrufer u. a. toggleCollapse() (Aufklappen),
+ *     addStoryArc() und deleteStoryArc().
+ *   - switchView('notes') setzte #session-date bei JEDEM Wechsel auf das
+ *     Datum des Tages, auch beim Bearbeiten.
+ *
+ * NACH DEM FIX gefunden (Gutachten): ein angefangener, nicht uebernommener
+ * Tag der abgebrochenen Bearbeitung stand im neuen Formular (Teil von (1));
+ * der Datumsvorschlag blieb ueber einen Tageswechsel stehen (11).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag ABBRUCH, docs/bugfixes.md) UND IHRE FAELLE
@@ -63,11 +67,11 @@
  *   R2 ein Anlege-Entwurf bleibt (Waechter) ........... (2)
  *   R4 verwaiste ID: geloescht / Strg+Z im Feld ........ (3) (4)
  *   R5 Undo erfasst Anlegen und Bearbeiten ............. (5) (6)
- *   R6 Arc-Auswahl (⚙️, Zu-/Aufklappen), Datum ......... (7) (8) (9)
+ *   R6 Arc-Auswahl (⚙️, Zu-/Aufklappen), Datum ......... (7) (8) (9) (11)
  *   Kontrolle: Abbrechen bzw. 💾, dann Anlegen ......... (10)
  *
  * R3 entfaellt: die Taste n und die Befehlspalette kennen keine Notiz
- * (`keyboard-shortcuts.js:806-813`, `action-registry.js:7-50`). Dass der
+ * (`keyboard-shortcuts.js`, `action-registry.js`). Dass der
  * Kopf ein Umschalter bleibt und Zuklappen ein Abbruch ist, haelt Fall (1).
  * R7 und R8 gehoeren zu anderen Formularen.
  *
@@ -87,15 +91,17 @@
  *
  * R2 UND "ABBRECHEN". Der Knopf "Abbrechen" des Klappformulars IST die
  * Leer-Funktion des Vertrags (cancelSessionEdit, Vertragstabelle) und
- * verwirft auch den Entwurf — heute wie nach der Fix-Skizze. Fall (2) prueft
- * darum Zuklappen, Escape und Reiterwechsel, nicht "Abbrechen".
+ * verwirft auch den Entwurf — vor wie nach dem Fix. Fall (2) prueft darum
+ * Zuklappen, Escape und Reiterwechsel, nicht "Abbrechen".
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
- * Der Titel "✏️ Notiz bearbeiten" (V6, eigener PR), das Datum eines
- * ENTWURFS beim Reiterwechsel (der Vertrag nennt nur die bearbeitete Notiz),
- * der Wortlaut der Undo-Eintraege (der Vertrag nennt ihn nur als Muster;
+ * Der Titel beim Bearbeiten (V6, eigener PR; die Notiz ist das eine der
+ * acht Formulare, das ihn schon setzt: "✏️ Notiz bearbeiten"), das Datum
+ * eines ENTWURFS in Fall (2) (der Reiterwechsel kann einen leeren Entwurf
+ * mit dem Tagesvorschlag fuellen; was mit einem GETIPPTEN Datum geschieht,
+ * misst (11)), der Wortlaut der Undo-Eintraege (der Vertrag nennt ihn nur als Muster;
  * geprueft wird, WAS Strg+Z zuruecknimmt), Strg+Y, das Telefon-Layout. Die
  * Nummer einer neuen Notiz entscheidet getNextSessionNumber(), ihre ID
  * nextId() — darum vergleichen die Faelle Namen und Felder, keine IDs.
@@ -190,7 +196,7 @@ function seed() {
         partyGold: 0,
         quickRefCustom: [],
         // Der Zaehler steht AUSDRUECKLICH in der Saat: das Laden ergaenzt ihn
-        // nicht (gemessen in der Kritik, K4) — ohne ihn haenge die Art des
+        // nicht (gemessen bei der Gegenpruefung) — ohne ihn haenge die Art des
         // Verlusts (ueberschreiben statt verlieren) an der Saat.
         _nextId: {
             characters: 1,
@@ -695,9 +701,10 @@ test('(1) R1: ✏️ S1 → Kopf zu → Kopf auf → 💾 legt eine NEUE Notiz a
 // Schon vor dem Fix gruen. Er haelt fest, dass der Fix NUR einen
 // Bearbeiten-Rest leert: ein nie gespeicherter Entwurf (keine ID) bleibt
 // stehen, und der naechste Anlege-Weg — der Kopf — verwirft ihn nicht (wie
-// NPC-Fall 18). Das Datum des Entwurfs wird nicht verglichen: der
-// Reiterwechsel setzt es auf heute, und der Vertrag nennt nur das Datum einer
-// BEARBEITETEN Notiz (Fall 9).
+// NPC-Fall 18). Das Datum des Entwurfs wird hier nicht verglichen: der
+// Entwurf hat keins getippt, und der Reiterwechsel schlaegt das Datum des
+// Tages vor. Was mit einem getippten Entwurfsdatum geschieht, misst (11),
+// das Datum einer BEARBEITETEN Notiz (9).
 test('(2) R2 (Waechter): ein Entwurf ueberlebt Kopf zu/auf, Escape und Reiterwechsel', async ({
     page
 }) => {
@@ -837,8 +844,8 @@ test('(3) R4: ✏️ S1 → 🗑️ S1 an der Karte → 💾 speichert die Einga
 //
 // Strg+Z wirkt "immer", auch mit dem Fokus im Titelfeld des offenen
 // Formulars, und nimmt D zurueck — das Formular nicht. Das 🗑️ an S3 davor
-// sorgt dafuer, dass Strg+Z HEUTE ueberhaupt etwas zuruecknimmt (das
-// Anlegen hat keinen Undo-Eintrag, es geht still mit); nach dem Fix (R5)
+// sorgte dafuer, dass Strg+Z VOR dem Fix ueberhaupt etwas zuruecknahm (das
+// Anlegen hatte keinen Undo-Eintrag, es ging still mit); seit dem Fix (R5)
 // nimmt es genau das Anlegen zurueck. In beiden Faellen zeigt die ID danach
 // ins Leere — und 💾 muss die Eingabe als neue Notiz speichern.
 test('(4) R4: ✏️ einer Notiz, die Strg+Z im Titelfeld zuruecknimmt → 💾 speichert neu, mit Warnung', async ({
@@ -1127,8 +1134,8 @@ test('(8) R6: Entwurf mit Arc "Akt 2" → Kopf zu → Kopf auf → die Auswahl s
 // ===========================================================================
 //
 // Der Reiterwechsel schliesst das Klappformular nicht — das Bearbeiten
-// laeuft weiter. Vor dem Fix setzte jeder Wechsel auf "Notizen" das Datum auf
-// heute, und 💾 schrieb es.
+// laeuft weiter. Vor dem Fix setzte jeder Wechsel auf "Notizen" das Datum
+// des Tages ein, und 💾 schrieb es.
 test('(9) R6: ✏️ S1 → Reiter Wiki → Reiter Notizen → 💾 laesst das Datum von S1 stehen', async ({
     page
 }) => {
@@ -1236,8 +1243,8 @@ test('(10) (Kontrolle): ✏️ → Abbrechen → Kopf und ✏️ → 💾 → Ko
 // ueber mehrere Spieltage, ohne neu zu laden. Gemessen am ersten Fix-Stand
 // (Gutachten, Uhr der Seite auf 2026-10-20, dann 2026-10-23): der Vorschlag
 // vom 20. blieb stehen — ein automatisch eingesetztes Datum war von einem
-// getippten nicht zu unterscheiden; vor dem Fix setzte jeder Wechsel heute
-// ein. Die Regel: ein VORSCHLAG wird erneuert, ein getipptes Entwurfsdatum
+// getippten nicht zu unterscheiden; vor dem Fix setzte jeder Wechsel das
+// Tagesdatum ein. Die Regel: ein VORSCHLAG wird erneuert, ein getipptes Entwurfsdatum
 // und das Datum einer bearbeiteten Notiz (Fall (9)) bleiben.
 test('(11) R6: der Datumsvorschlag wird nach einem Tageswechsel erneuert, ein getipptes Datum bleibt', async ({
     page

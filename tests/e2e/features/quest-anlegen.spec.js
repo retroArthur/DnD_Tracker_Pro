@@ -18,44 +18,43 @@
  * Gemessen am Buendel zu e5bc99d (Branch abbrechen-neu), 1440x900, echte
  * Klicks und Tasten, Saat wie unten (Drachenjagd mit jedem Feld, das das
  * Formular kennt, dazu ein Feld, das es nicht kennt; Botengang mit leerer
- * Auswahl):
+ * Auswahl). So war es VOR dem Fix:
  *
- *   ✏️ → ✕/Escape → "+ Quest"    das Formular traegt Drachenjagd samt
+ *   ✏️ → ✕/Escape → "+ Quest"    das Formular trug Drachenjagd samt
  *   (ebenso Taste n, Befehls-    #edit-quest-id "1"; 💾 als "Neue Quest"
- *   palette "Neue Quest", und    UEBERSCHREIBT sie (Geber, Ort, Ziel, Gold,
- *   ✏️ ueber die Suche)          Item bleiben stehen, nur der Titel wechselt)
+ *   palette "Neue Quest", und    UEBERSCHRIEB sie (Geber, Ort, Ziel, Gold,
+ *   ✏️ ueber die Suche)          Item blieben stehen, nur der Titel wechselte)
  *                                — in D, im Speicher, nach dem Neuladen. Keine
  *                                Meldung, Undo-Kopf "Quest bearbeitet".
- *   ✏️ → ✕ → 🗑️ → "Aktive" ab    das Formular traegt die GELOESCHTE Quest;
- *   → "➕ Quest erstellen"       💾 speichert NICHTS (D und Speicher leer),
+ *   ✏️ → ✕ → 🗑️ → "Aktive" ab    das Formular trug die GELOESCHTE Quest;
+ *   → "➕ Quest erstellen"       💾 speicherte NICHTS (D und Speicher leer),
  *                                Undo-Kopf "Quest bearbeitet" (leer), keine
- *                                Meldung — das Schliessen sieht aus wie Erfolg
- *   "+ Quest" Neu A → 💾 → ✏️    Strg+Z mit dem Fokus im Feld nimmt Neu A in
- *   → "Ehre" → Strg+Z → 💾       D zurueck; 💾 schreibt nichts, Neu A samt
- *                                Eingabe ist weg
- *   ✏️ Drachenjagd → ✕ → ✏️      Botengang zeigt Geber 1, Ort 1, Ziel 2 von
- *   Botengang → 💾               Drachenjagd und speichert sie; ebenso nach
+ *                                Meldung — das Schliessen sah aus wie Erfolg
+ *   "+ Quest" Neu A → 💾 → ✏️    Strg+Z mit dem Fokus im Feld nahm Neu A in
+ *   → "Ehre" → Strg+Z → 💾       D zurueck; 💾 schrieb nichts, Neu A samt
+ *                                Eingabe war weg
+ *   ✏️ Drachenjagd → ✕ → ✏️      Botengang zeigte Geber 1, Ort 1, Ziel 2 von
+ *   Botengang → 💾               Drachenjagd und speicherte sie; ebenso nach
  *                                einem Anlege-ENTWURF mit Auswahl
  *
- * DIE URSACHEN:
- *   - Alle vier Anlege-Wege oeffnen per `showModal('quest-modal')`, ohne zu
- *     leeren: `assets/templates/view-content.html:127` ("+ Quest"),
- *     `features/quests/quests-render.js:41-42` (Knopf der leeren Liste),
- *     `systems/spellslots/keyboard-shortcuts.js:811` (Taste n),
- *     `features/command-palette/action-registry.js:34` (Befehlspalette).
- *   - ✕ und Escape nehmen nur `show` ab (`systems/spellslots/navigation.js:
- *     114-118`); `clearQuestForm()` (`features/quests/quests-crud.js:124-150`)
- *     ruft nur `saveQuest()` nach dem Speichern (Z. 59).
- *   - `saveQuest()` nimmt jede ID im versteckten Feld als Bearbeiten,
- *     `pushUndo('Quest bearbeitet')` VOR der Suche (`quests-crud.js:50`);
- *     findet es die ID nicht (Z. 52-53), schreibt es nichts und schliesst,
- *     leert und speichert trotzdem (Z. 58-61).
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ *   - Alle vier Anlege-Wege oeffneten per `showModal('quest-modal')`, ohne zu
+ *     leeren: "+ Quest" (`assets/templates/view-content.html`), der Knopf der
+ *     leeren Liste (`features/quests/quests-render.js`), die Taste n
+ *     (`systems/spellslots/keyboard-shortcuts.js`) und die Befehlspalette
+ *     (`features/command-palette/action-registry.js`).
+ *   - ✕ und Escape nehmen nur `show` ab (`hideModal()`,
+ *     `systems/spellslots/navigation.js`); `clearQuestForm()`
+ *     (`features/quests/quests-crud.js`) lief nur nach dem Speichern.
+ *   - `saveQuest()` nahm jede ID im versteckten Feld als Bearbeiten und rief
+ *     `pushUndo('Quest bearbeitet')` VOR der Suche; fand es die ID nicht,
+ *     schrieb es nichts und schloss, leerte und speicherte trotzdem.
  *   - Strg+Z ist "immer aktiv", auch mit dem Fokus in einem Formularfeld
- *     (`keyboard-shortcuts.js:514-519`, die isTyping-Schranke kommt spaeter).
- *   - `populateQuestSelects()` behaelt die Auswahl beim Neubefuellen
- *     (`quests-crud.js:156/165, 170/174, 179/183`), und `editQuest()` setzt
- *     im `setTimeout` nur WAHRE Werte (`quests-crud.js:95-97`) — eine leere
- *     Auswahl von B laesst die von A stehen.
+ *     (`keyboard-shortcuts.js`, vor der isTyping-Schranke).
+ *   - `populateQuestSelects()` behaelt die Auswahl beim Neubefuellen, und
+ *     `editQuest()` setzte im `setTimeout` nur WAHRE Werte — eine leere
+ *     Auswahl von B liess die von A stehen.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN, die hier gelten (aus dem Vertrag)
@@ -71,8 +70,8 @@
  *       und Befehlspalette; der Knopf der leeren Liste im Waechter-Teil von
  *       Fall (4), weil die Liste in (8) nie leer ist).
  *   R3  Bei offenem Formular tun Taste n und Befehlspalette nichts (Waechter
- *       — heute harmlos, weil nichts leert; ein Fix, der beim Anlegen leert,
- *       muss das offene Formular ausnehmen).
+ *       — vor dem Fix harmlos, weil nichts leerte; ein Anlege-Weg, der
+ *       leert, muss das offene Formular ausnehmen).
  *   R4  Zeigt die ID beim Speichern ins Leere (geloescht, per Strg+Z
  *       zurueckgenommen), wird die Eingabe als NEUE Quest gespeichert, mit
  *       Warnung, ohne "… aktualisiert", ohne leeren Undo-Eintrag
@@ -82,8 +81,8 @@
  *       leer.
  *
  * DER KNOPF DER LEEREN LISTE erscheint nur ungefiltert (`isFiltered = search
- * || activeOnly`, `quests-render.js:43`), und "Aktive" ist ab Werk angehakt
- * (`view-content.html:121`). Die Liste ist ungefiltert nur leer, wenn die
+ * || activeOnly` in `renderQuests()`), und "Aktive" ist ab Werk angehakt
+ * (`view-content.html`). Die Liste ist ungefiltert nur leer, wenn die
  * zuletzt bearbeitete Quest geloescht ist — dieser Weg fuehrt also nur zu
  * R4 (Fall 4), und der Fall waehlt "Aktive" per Klick ab.
  *
@@ -91,11 +90,12 @@
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
  * Der Fenstertitel "Quest bearbeiten" (V6, eigener PR), die Platzhalter als
- * gespeicherte Namen ("-- NPC wählen --", Nebenbefund 1), die fehlende
- * Erfolgsmeldung von `saveQuest()` beim normalen Anlegen und Bearbeiten,
- * Strg+Z bei offenem Formular auf eine NOCH VORHANDENE Quest (V4c: das
- * naechste 💾 schreibt das Formular darueber — dieselbe Grenze wie beim NPC).
- * Telefon: der Anlege-Weg ist dort derselbe Knopf (Kritik K3a), die
+ * gespeicherte Namen ("-- NPC wählen --", ein Nebenbefund der Messung), die
+ * fehlende Erfolgsmeldung von `saveQuest()` beim normalen Anlegen und
+ * Bearbeiten, Strg+Z bei offenem Formular auf eine NOCH VORHANDENE Quest (das
+ * naechste 💾 schreibt das Formular darueber — dieselbe Grenze wie beim NPC;
+ * `docs/bugfixes.md`, ABBRUCH, Offen (7)). Telefon: der Anlege-Weg ist dort
+ * derselbe Knopf (gemessen, `docs/bugfixes.md`, ABBRUCH, Problem), die
  * Desktop-Faelle tragen die Regel.
  *
  * ANLEGE-KNOEPFE werden ueber Rolle und sichtbaren Text gewaehlt, nicht ueber
@@ -312,7 +312,7 @@ async function questsLaden(page, quests) {
     // aus D. Erkennbar daran, dass `_version` der Saat ueberschrieben wird.
     // 2 s statt der 4 s des Vorbilds: die Reparatur-Speicherung stellt
     // `_finishAppliedCampaign()` per `setTimeout(…, 1000)` ein
-    // (`systems/spellslots/quick-roll.js:115`), und das laeuft VOR `appReady`.
+    // (`systems/spellslots/quick-roll.js`), und das laeuft VOR `appReady`.
     // Diese Saat braucht keine Reparatur — gemessen: binnen 4 s KEIN fremdes
     // Schreiben —, also wartete jeder Fall die volle Zeit, bei zehn Faellen
     // 20 s fuer nichts. 2 s lassen der eingestellten Sekunde eine Sekunde Luft.
@@ -456,9 +456,9 @@ function formular(page) {
 /**
  * Das leere Formular im Anlege-Zustand — so, wie ein frisches "+ Quest" es
  * zeigt (Fall 10 haelt das fest). DIE MARKDOWN-KNOEPFE GEHOEREN DAZU:
- * sichtbar zielen sie auf den bearbeiteten Eintrag — gemessen laedt 📄 dann
- * "Drachenjagd.md" herunter, und 📥 schreibt in dessen Beschreibung (M1 im
- * Gruppenbericht). Ein Anlege-Formular mit ihnen traegt also noch den alten
+ * sichtbar zielen sie auf den bearbeiteten Eintrag — gemessen am Stand
+ * e5bc99d lud 📄 dann "Drachenjagd.md" herunter, und 📥 schrieb in dessen
+ * Beschreibung. Ein Anlege-Formular mit ihnen traegt also noch den alten
  * Eintrag, auch wenn jedes Feld leer ist.
  */
 const LEER = {
@@ -498,7 +498,7 @@ function leereListeKnopf(page) {
  * `editQuest()` setzt Geber, Ort und Ziel erst per `setTimeout(…, 10)`. Ein
  * Zeitgeber mit 100 ms, NACH dem Klick gestellt, laeuft sicher danach — ein
  * fester Wert waere sonst die Frage, ob 150 ms reichen. Ein Warten auf den
- * ERWARTETEN Wert ginge bei R6 nicht: heute erscheint er nie, und der Fall
+ * ERWARTETEN Wert ginge bei R6 nicht: vor dem Fix erschien er nie, und der Fall
  * waere an einer Zeitgrenze rot statt an seiner Zusage.
  * @param {import('@playwright/test').Page} page
  */
@@ -544,7 +544,7 @@ async function bearbeiten(page, id) {
 }
 
 /** Der zweite Bearbeiten-Weg: globale Suche → Treffer
- *  (`systems/search/global-search.js:254-256`, editQuest() nach 100 ms).
+ *  (`systems/search/global-search.js`, editQuest() nach 100 ms).
  *  @param {import('@playwright/test').Page} page
  *  @param {string} begriff
  *  @param {number} id */
@@ -813,7 +813,7 @@ test('(4) R1/R4: nach ✏️, Escape und 🗑️ legt "➕ Quest erstellen" der 
     weich(await formular(page), '"➕ Quest erstellen" nach dem Loeschen').toEqual(LEER);
     await page.locator('#quest-title').fill('Neue Quest');
 
-    // R2 AUF DIESEM WEG (Waechter-Teil, heute gruen): der eben begonnene
+    // R2 AUF DIESEM WEG (Waechter-Teil, vor dem Fix gruen): der eben begonnene
     // Entwurf hat keinen Bearbeiten-Rest — Escape und derselbe Knopf duerfen
     // ihn nicht verwerfen. Der Waechter (8) erreicht diesen Knopf nicht, dort
     // ist die Liste nie leer. Gegengeprueft mit einem nachgestellten Fix, der
@@ -973,7 +973,7 @@ test('(6) R6: ✏️ Botengang nach ✏️ Drachenjagd und ✕ — Geber, Ort, Z
 // (7) R6: ✏️ B NACH EINEM ANLEGE-ENTWURF MIT AUSWAHL ERBT SIE NICHT
 // ===========================================================================
 //
-// Auch ein Anlege-ENTWURF vererbt heute seine Auswahl (gemessen: Geber 2,
+// Auch ein Anlege-ENTWURF vererbte vor dem Fix seine Auswahl (gemessen: Geber 2,
 // Ort 3 landeten in Botengang). Der Entwurf selbst darf bleiben (R2) — er
 // darf nur nicht in eine andere Quest wandern.
 test('(7) R6: ✏️ Botengang nach einem Entwurf mit Geber, Ort und Ziel — B bleibt leer', async ({
@@ -1023,7 +1023,7 @@ test('(7) R6: ✏️ Botengang nach einem Entwurf mit Geber, Ort und Ziel — B 
 // ===========================================================================
 //
 // Der neue Anlege-Weg darf nur leeren, wenn ein Bearbeiten Reste hinterliess.
-// Ein echter Entwurf bleibt stehen, wie heute — gemessen in allen drei
+// Ein echter Entwurf bleibt stehen, wie schon vor dem Fix — gemessen in allen drei
 // Kombinationen (Escape → "+ Quest", ✕ → Taste n, Escape → Befehlspalette),
 // samt Auswahl und Beschreibung, und 💾 legt ihn an.
 test('(8) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape/✕ und "+ Quest", Taste n, Befehlspalette', async ({
@@ -1092,9 +1092,10 @@ test('(8) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape/✕ und "+ Quest", 
 // (9) WAECHTER R3: TASTE n UND BEFEHLSPALETTE BEI OFFENEM ✏️ VERWERFEN NICHTS
 // ===========================================================================
 //
-// Heute harmlos, weil kein Anlege-Weg leert (V7 im Gruppenbericht). Ein Fix,
-// der beim Anlegen leert, sobald #edit-quest-id gesetzt ist, wuerde genau
-// diese laufende Bearbeitung ohne Rueckfrage wegwerfen (NPC-Fall 19). Der Fokus
+// Vor dem Fix harmlos, weil kein Anlege-Weg leerte. Der Fix leert beim
+// Anlegen, sobald #edit-quest-id gesetzt ist — ohne die Ausnahme fuer das
+// OFFENE Formular wuerfe er genau diese laufende Bearbeitung ohne Rueckfrage
+// weg (NPC-Fall 19). Der Fokus
 // liegt nach einem Klick auf eine Feldbeschriftung auf BODY — dort erreicht
 // die Taste n den Anlege-Zweig.
 test('(9) R3 (Waechter): Taste n und Befehlspalette bei offenem ✏️ — das Formular bleibt, wie es ist', async ({
@@ -1157,10 +1158,10 @@ test('(9) R3 (Waechter): Taste n und Befehlspalette bei offenem ✏️ — das F
 });
 
 // ===========================================================================
-// (10) KONTROLLE: ✏️ → 💾 → "+ QUEST" IST SCHON HEUTE LEER
+// (10) KONTROLLE: ✏️ → 💾 → "+ QUEST" WAR SCHON VOR DEM FIX LEER
 // ===========================================================================
 //
-// Der Speicherweg leert (`saveQuest()` ruft `clearQuestForm()`), nur
+// Der Speicherweg leert (`saveQuest()` ruft `clearQuestForm()`), vor dem Fix
 // Abbrechen nicht. Dieser Fall haelt fest, dass LEER dem Formular entspricht,
 // das ein Anlegen nach einem GESPEICHERTEN Bearbeiten zeigt — die
 // Zusage der Faelle (1)–(4) verlangt also nichts, was es nicht schon gibt.

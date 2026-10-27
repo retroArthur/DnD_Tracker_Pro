@@ -14,47 +14,53 @@
  *
  * Gemessen am Buendel zu e5bc99d (Branch abbrechen-neu), Chromium, 1440x900,
  * echte Klicks und Tasten, Saat wie unten (Aria mit jedem Feld, das das
- * Formular zeigt, dazu Bran), am Schreibtisch und am Telefon (390x844).
+ * Formular zeigt, dazu Bran), am Schreibtisch und am Telefon (390x844). So
+ * war es VOR dem Fix:
  *
- *   ✏️ Aria → Kopfzeile zu →       das Formular traegt id 1 / "Aria"; "Neu" →
- *   Kopfzeile, Taste n oder        💾 UEBERSCHREIBT Aria: D = Speicher = nach
+ *   ✏️ Aria → Kopfzeile zu →       das Formular trug id 1 / "Aria"; "Neu" →
+ *   Kopfzeile, Taste n oder        💾 UEBERSCHRIEB Aria: D = Speicher = nach
  *   Befehlspalette                 dem Neuladen ["1:Neu","2:Bran"], Meldung
  *                                  "Charakter aktualisiert" — in allen zwoelf
- *                                  Kombinationen, ebenso am Telefon (K3b)
+ *                                  Kombinationen, ebenso am Telefon
  *   ✏️ Aria → "Abbrechen" →        neu angelegt, aber mit Stufe 5, Resistenz
  *   ein Anlege-Weg                 Feuer, Immunitaet Gift von Aria
  *   ✏️ → Kopfzeile zu → 🗑️ →       NICHTS gespeichert, D = Speicher = [],
  *   "➕ Charakter erstellen"        Meldung "Charakter aktualisiert", leerer
  *   der leeren Liste → 💾           Rueckgaengig-Eintrag "Charakter bearbeitet"
- *   ✏️, 🗑️ unter dem offenen       die Eingabe ist weg, dieselbe falsche
+ *   ✏️, 🗑️ unter dem offenen       die Eingabe war weg, dieselbe falsche
  *   Formular, 💾                   Meldung, derselbe leere Eintrag
- *   "Neu A" → ✏️ → "Wirt" →        Strg+Z wirkt trotz Fokus im Feld und nimmt
- *   Strg+Z → 💾                    "Neu A" zurueck; 💾 speichert nichts,
- *                                  "Neu A (Wirt)" ist endgueltig verloren
- *   dasselbe mit ↩️ in der         ebenso verloren (K3c) — der Weg ohne
- *   Telefon-Kopfleiste             Tastatur
- *   Taste n / Palette bei          klappen das Formular ZU (Eingabe bleibt
- *   offenem ✏️                     stehen), das naechste n klappt es im
+ *   "Neu A" → ✏️ → "Wirt" →        Strg+Z wirkte trotz Fokus im Feld und nahm
+ *   Strg+Z → 💾                    "Neu A" zurueck; 💾 speicherte nichts,
+ *                                  "Neu A (Wirt)" war endgueltig verloren
+ *   dasselbe mit ↩️ in der         ebenso verloren — der Weg ohne Tastatur
+ *   Telefon-Kopfleiste
+ *   Taste n / Palette bei          klappten das Formular ZU (Eingabe blieb
+ *   offenem ✏️                     stehen), das naechste n klappte es im
  *                                  Bearbeiten-Zustand wieder auf
  *
- * DIE URSACHEN: Es gibt keine Anlegen-Funktion. Jeder Anlege-Weg ist der
- * reine Umschalter `toggleCollapse('char-form')`
- * (`systems/spellslots/navigation.js:119-134`), der nur die Klasse `open`
- * wechselt — die Kopfzeile (`assets/templates/view-party.html:44`), die Taste
- * n (`systems/spellslots/keyboard-shortcuts.js:809`), die Befehlspalette
- * (`features/command-palette/action-registry.js:26`) und der Knopf der leeren
- * Liste (`features/party/party-render.js:63-71`). Wer das Formular anders als
- * mit "Abbrechen" verlaesst, behaelt `#edit-char-id` samt allen Feldern.
- * `saveCharacter()` (`features/party/party-crud.js:174-329`) legt den
- * Rueckgaengig-Eintrag "Charakter bearbeitet" an, BEVOR es die ID sucht (Z.
- * 301), tut nichts, wenn `findIndex` -1 liefert (Z. 302-318, kein else), und
- * meldet trotzdem "Charakter aktualisiert" (Z. 328). Strg+Z ist "immer aktiv",
- * vor der isTyping-Schranke (`keyboard-shortcuts.js:514-519` gegen Z. 582).
- * Und `cancelCharEdit()` leert nicht alles: `'char-level'` steht nur unter
- * `defaults` (`party-crud.js:489`), `clearFormFields()` wendet die aber nur
- * auf gelistete Felder an (`utils/form-helpers.js:39-44`);
- * `clearChipSelection('.cf-chip')` (`party-crud.js:500`) baut den Selektor
- * `.cf-chip .cf-chip` (`utils/form-helpers.js:94`), der nichts trifft.
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH): Es gab keine Anlegen-Funktion. Jeder
+ * Anlege-Weg war der reine Umschalter `toggleCollapse('char-form')`
+ * (`systems/spellslots/navigation.js`), der nur die Klasse `open` wechselte —
+ * die Kopfzeile (`assets/templates/view-party.html`), die Taste n
+ * (`systems/spellslots/keyboard-shortcuts.js`), die Befehlspalette
+ * (`features/command-palette/action-registry.js`) und der Knopf der leeren
+ * Liste (`features/party/party-render.js`). Wer das Formular anders als mit
+ * "Abbrechen" verliess, behielt `#edit-char-id` samt allen Feldern.
+ * `saveCharacter()` (`features/party/party-crud.js`) legte den
+ * Rueckgaengig-Eintrag "Charakter bearbeitet" an, BEVOR es die ID suchte, tat
+ * nichts, wenn `findIndex` -1 lieferte (kein else), und meldete trotzdem
+ * "Charakter aktualisiert". Strg+Z ist "immer aktiv", vor der
+ * isTyping-Schranke (`keyboard-shortcuts.js`). Und `cancelCharEdit()` leerte
+ * nicht alles: `'char-level'` stand nur unter `defaults`, `clearFormFields()`
+ * (`utils/form-helpers.js`) wendet die aber nur auf gelistete Felder an;
+ * `clearChipSelection('.cf-chip')` baute den Selektor `.cf-chip .cf-chip`,
+ * der nichts trifft.
+ *
+ * NACH DEM FIX gefunden (Gutachten, Fall (11)): ✏️ Aria → Reiter Quests →
+ * Befehlspalette "Neuer Charakter" landete im liegengelassenen ✏️ — die
+ * Palette hielt das UNSICHTBAR aufgeklappte Formular fuer offen (R3), und 💾
+ * ueberschrieb Aria.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag ABBRUCH, docs/bugfixes.md), so wie sie hier gelten
@@ -63,13 +69,17 @@
  *       JEDER Anlege-Weg ein Formular ohne Bearbeiten-ID und ohne Werte des
  *       bearbeiteten Charakters; 💾 legt NEU an, der bearbeitete bleibt
  *       feldgleich — in D, im Speicher, nach dem Neuladen. Faelle (1)-(4),
- *       je Anlege-Weg einer: Kopfzeile, Taste n, Befehlspalette, leere Liste.
+ *       je Anlege-Weg einer: Kopfzeile, Taste n, Befehlspalette, leere Liste;
+ *       dazu (11): die Befehlspalette aus einer anderen Ansicht, waehrend
+ *       das ✏️ unsichtbar aufgeklappt liegt.
  *   R2  Ein nie gespeicherter Entwurf ueberlebt Escape und Zuklappen; der
  *       naechste Anlege-Weg verwirft ihn nicht — KEINER der vier, auch nicht
- *       der Knopf der leeren Liste. Fall (5), Waechter.
+ *       der Knopf der leeren Liste. Fall (5), Waechter; aus einer anderen
+ *       Ansicht der zweite Teil von (11).
  *   R3  Ist das Formular offen — im Bearbeiten-Zustand ODER als Entwurf —,
  *       tun Taste n und Befehlspalette NICHTS: kein Zuklappen, kein Leeren.
- *       Die Kopfzeile bleibt ein Umschalter. Fall (6).
+ *       Die Kopfzeile bleibt ein Umschalter. Fall (6). Offen heisst
+ *       SICHTBAR offen: ein ✏️ in einer anderen Ansicht ist ein Rest (11).
  *   R4  Zeigt die Bearbeiten-ID beim 💾 ins Leere (geloescht, per Strg+Z oder
  *       per Rueckgaengig-KNOPF zurueckgenommen, waehrend das Formular offen
  *       war), wird die Eingabe als NEUER Charakter gespeichert, mit einer
@@ -77,32 +87,34 @@
  *       bearbeitet" — auch nicht UNTER einem "… erstellt" (geprueft wird der
  *       Zuwachs des ganzen Stapels, nicht nur sein Kopf). Faelle (7), (8), (9).
  *   R5-R8 betreffen dieses Formular nicht.
- *   Fall (10) ist eine Kontrolle: ✏️ → 💾 → Anlegen legt schon heute neu an.
+ *   Fall (10) ist eine Kontrolle: ✏️ → 💾 → Anlegen legte schon vor dem Fix
+ *   neu an.
  *
  * Welche Abbruch-Wege es gibt, steht in der Messung: "Abbrechen" und
  * Zuklappen ueber die Kopfzeile. Escape tut am Klappformular nichts (es
- * schliesst nur Overlays und Modale, `keyboard-shortcuts.js:404-505`) — kein
- * eigener Abbruch-Weg (Kritik, Abschnitt 4); Taste n und Palette sind nach R3
- * keiner. Darum ist "Abbrechen" in Fall (2) Abbruch-Weg und NICHT Kontrolle:
- * es leert zwar die ID, laesst aber Stufe und Chips stehen — das ist rot nach
- * R1 ("ohne Werte des bearbeiteten Eintrags").
+ * schliesst nur Overlays und Modale, `keyboard-shortcuts.js`) — kein eigener
+ * Abbruch-Weg (`docs/bugfixes.md`, ABBRUCH, Offen (6)); Taste n und Palette
+ * sind nach R3 keiner. Darum ist "Abbrechen" in Fall (2) Abbruch-Weg und
+ * NICHT Kontrolle: vor dem Fix leerte es zwar die ID, liess aber Stufe und
+ * Chips stehen — rot nach R1 ("ohne Werte des bearbeiteten Eintrags").
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
  * Der Titel "… bearbeiten" (V6) und der Kampagnen-Import "Ersetzen" bei
- * offenem Formular (Kritik L2) — eigene Vorgaenge (Vertrag, "Nicht in diesem
- * PR"); ebenso die globale Suche ueber ein offenes Formular (Kritik,
- * Abschnitt 3, nur gelesen). Der Rueckgaengig-Knopf der Schreibtisch-Kopfzeile
- * (`header.html:38`) ruft dasselbe undo() wie der des Telefons — Fall (9)
- * faehrt den Weg ohne Tastatur nur einmal. Die Roster-Knoepfe "+ Neu"
- * (`party-render.js:88,122`) sind tot (`.party-roster { display: none }`,
- * `assets/styles/dashboard.css:2388-2390`) — kein Weg, den ein Nutzer hat.
- * Ob "Abbrechen" einen ANLEGE-Entwurf leeren darf, laesst der Vertrag fuer ein
- * Klappformular offen (dort ist "Abbrechen" das Leeren); Fall (5) faehrt den
- * Knopf "Abbrechen" darum nicht. Die Kontrolle (10) prueft nach ✏️ → 💾 nur
- * ID, Name und das Neu-Anlegen, nicht die Reste von Stufe und Chips — die
- * kommen aus derselben `cancelCharEdit()` und sind in Fall (2) rot.
+ * offenem Formular (`docs/bugfixes.md`, ABBRUCH, Offen (3)) — eigene
+ * Vorgaenge (Vertrag, "Nicht in diesem PR"); ebenso die globale Suche ueber
+ * ein offenes Formular (Offen (8), nur gelesen). Der Rueckgaengig-Knopf der
+ * Schreibtisch-Kopfzeile (`assets/templates/header.html`) ruft dasselbe
+ * undo() wie der des Telefons — Fall (9) faehrt den Weg ohne Tastatur nur
+ * einmal. Die Roster-Knoepfe "+ Neu" (`party-render.js`) sind tot
+ * (`.party-roster { display: none }`, `assets/styles/dashboard.css`) — kein
+ * Weg, den ein Nutzer hat (Offen (15)). Ob "Abbrechen" einen ANLEGE-Entwurf
+ * leeren darf, laesst der Vertrag fuer ein Klappformular offen (dort ist
+ * "Abbrechen" das Leeren); Fall (5) faehrt den Knopf "Abbrechen" darum
+ * nicht. Die Kontrolle (10) prueft nach ✏️ → 💾 nur ID, Name und das
+ * Neu-Anlegen, nicht die Reste von Stufe und Chips — die kommen aus
+ * derselben `cancelCharEdit()` und waren in Fall (2) rot.
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
@@ -123,7 +135,7 @@ const SOFORT_MS = 4000;
 /** Eine Figur mit einem Wert in JEDEM Feld, das das Formular zeigt — sonst
  *  koennte ein Rest im Anlege-Formular stehen, ohne dass ein Fall ihn sieht.
  *  Stufe, Resistenz und Immunitaet sind genau die Felder, die "Abbrechen"
- *  heute stehen laesst. */
+ *  vor dem Fix stehen liess. */
 const ARIA = {
     id: 1,
     name: 'Aria',
@@ -440,7 +452,7 @@ async function reiter(page, ansicht) {
 
 /** Vorbereitung, nicht die gemessene Handlung: den Fokus aus einem Feld
  *  nehmen, damit eine Taste auf der Seite landet (isTyping-Schranke,
- *  `keyboard-shortcuts.js:249-251` — auch eine Checkbox ist ein INPUT).
+ *  `keyboard-shortcuts.js` — auch eine Checkbox ist ein INPUT).
  *  @param {import('@playwright/test').Page} page */
 async function fokusWeg(page) {
     await page.evaluate(() => /** @type {HTMLElement|null} */ (document.activeElement)?.blur());
@@ -595,8 +607,8 @@ function idVon(page, name) {
 }
 
 /** Die Felder eines NEU angelegten Charakters, in denen Aria einen Wert
- *  traegt — ein frisch angelegter hat hier die Vorgaben (gemessen,
- *  `30-rest-diff`).
+ *  traegt — ein frisch angelegter hat hier die Vorgaben (gemessen, Diff
+ *  gegen einen frisch angelegten Charakter).
  *  @param {import('@playwright/test').Page} page
  *  @param {string} name */
 function neuerCharakter(page, name) {
@@ -673,8 +685,8 @@ async function speichern(page, was, druecken) {
     // neue `_rev` von IHR kommen und der Fall liest den Speicher, bevor dieses
     // 💾 geschrieben hat. Gemessen: in (4) und (7) steht beim 💾 das entprellte
     // save() des 🗑️ noch aus (`deleteWithConfirm()`, `utils/crud-helpers.js`;
-    // Anzeige `#save-indicator.saving`). Heute faellt das nicht auf, weil das
-    // 💾 dort nichts aendert — nach dem Fix waere es ein Wackler: feuert der
+    // Anzeige `#save-indicator.saving`). Vor dem Fix fiel das nicht auf, weil
+    // das 💾 dort nichts aenderte — seitdem waere es ein Wackler: feuert der
     // Zeitgeber des 🗑️ zwischen dem Lesen des `_rev` und dem Klick, fehlte der
     // neue Charakter im Speicher. save() setzt die Anzeige sofort auf
     // "Speichert..." und nimmt sie erst nach dem Schreiben zurueck.
@@ -736,10 +748,10 @@ function r4Meldungen(meldungen) {
 // (1) R1 — KOPFZEILE ZU, KOPFZEILE AUF: LEER, UND 💾 LEGT NEU AN
 // ===========================================================================
 //
-// Der Kernfall und der haeufigste Weg (auch am Telefon gemessen, K3b): die
+// Der Kernfall und der haeufigste Weg (auch am Telefon gemessen): die
 // Kopfzeile ist Umschalter UND Anlege-Weg. Zuklappen ist ein Abbruch (R3),
-// das naechste Aufklappen muss ein leeres Anlege-Formular bringen. Heute
-// traegt es id 1 / "Aria", und 💾 ueberschreibt Aria — auch nach dem Neuladen.
+// das naechste Aufklappen muss ein leeres Anlege-Formular bringen. Vor dem
+// Fix trug es id 1 / "Aria", und 💾 ueberschrieb Aria — auch nach dem Neuladen.
 test('(1) R1: ✏️ → Kopfzeile zu → Kopfzeile auf zeigt ein leeres Formular, 💾 legt NEU an', async ({
     page
 }) => {
@@ -785,9 +797,9 @@ test('(1) R1: ✏️ → Kopfzeile zu → Kopfzeile auf zeigt ein leeres Formula
 // (2) R1 — "ABBRECHEN", DANN TASTE n: OHNE STUFE UND CHIPS DES BEARBEITETEN
 // ===========================================================================
 //
-// "Abbrechen" leert heute die ID — aber nicht alles: Stufe 5, Resistenz
-// Feuer und Immunitaet Gift von Aria stehen im naechsten Anlege-Formular und
-// landen im neuen Charakter (gemessen, Diff gegen einen frisch angelegten:
+// "Abbrechen" leerte vor dem Fix die ID — aber nicht alles: Stufe 5, Resistenz
+// Feuer und Immunitaet Gift von Aria standen im naechsten Anlege-Formular und
+// landeten im neuen Charakter (gemessen, Diff gegen einen frisch angelegten:
 // genau level, proficiencyBonus, resistances, immunities).
 test('(2) R1: ✏️ → "Abbrechen" → Taste n zeigt ein Formular ohne Werte von Aria', async ({
     page
@@ -851,9 +863,9 @@ test('(3) R1: ✏️ → Kopfzeile zu → Befehlspalette "Neuer Charakter" zeigt
 // ===========================================================================
 //
 // Der Knopf der leeren Liste ist der Weg, auf den man nach dem Loeschen des
-// letzten Charakters gestossen wird. Heute traegt das Formular dann die ID
-// des geloeschten; 💾 speichert NICHTS, meldet "Charakter aktualisiert" und
-// legt einen leeren Rueckgaengig-Eintrag an — auch nach dem Neuladen leer.
+// letzten Charakters gestossen wird. Vor dem Fix trug das Formular dann die
+// ID des geloeschten; 💾 speicherte NICHTS, meldete "Charakter aktualisiert"
+// und legte einen leeren Rueckgaengig-Eintrag an — auch nach dem Neuladen leer.
 test('(4) R1: ✏️ → Kopfzeile zu → 🗑️ → Knopf der leeren Liste zeigt ein leeres Formular, 💾 legt an', async ({
     page
 }) => {
@@ -889,9 +901,9 @@ test('(4) R1: ✏️ → Kopfzeile zu → 🗑️ → Knopf der leeren Liste zei
 // ===========================================================================
 //
 // Der Fix leert NUR, wenn ein Bearbeiten Reste hinterliess (#edit-char-id
-// gesetzt). Ein Entwurf, der nie gespeichert wurde, bleibt — heute schon so
-// (gemessen, V5); dieser Fall haelt es fest. Escape tut am Klappformular
-// heute nichts; schliesst es das Formular kuenftig, ist das kein Bruch —
+// gesetzt). Ein Entwurf, der nie gespeichert wurde, bleibt — vor dem Fix
+// ebenso (gemessen); dieser Fall haelt es fest. Escape tut am Klappformular
+// nichts (Offen (6)); schliesst es das Formular kuenftig, ist das kein Bruch —
 // darum klappt der Fall nur zu, was noch offen ist.
 //
 // OHNE CHARAKTERE gesaet, damit ALLE VIER Anlege-Wege den Entwurf schonen
@@ -957,8 +969,8 @@ test('(5) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape, Zuklappen, Taste n
 // (6) R3 — TASTE n UND BEFEHLSPALETTE BEI OFFENEM FORMULAR TUN NICHTS
 // ===========================================================================
 //
-// Heute klappen beide das offene Bearbeiten-Formular ZU (die Eingabe bleibt
-// stehen, das naechste n klappt es im Bearbeiten-Zustand wieder auf). Nach
+// Vor dem Fix klappten beide das offene Bearbeiten-Formular ZU (die Eingabe
+// blieb stehen, das naechste n klappte es im Bearbeiten-Zustand wieder auf). Nach
 // R3 bleibt es offen und unveraendert — wie NPC-Fall (19); danach dasselbe
 // fuer einen offenen Anlege-Entwurf. Den Fokus aus dem Feld nimmt ein Klick
 // auf eine Panel-Ueberschrift, wie ein Nutzer es tut.
@@ -1056,7 +1068,7 @@ test('(6) R3: Taste n und Befehlspalette bei offenem ✏️ und offenem Entwurf:
 // ===========================================================================
 //
 // Das Formular bleibt nach 🗑️ an der Karte offen, die ID zeigt ins Leere.
-// Heute: die Eingabe ist weg, Meldung "Charakter aktualisiert", leerer
+// Vor dem Fix: die Eingabe war weg, Meldung "Charakter aktualisiert", leerer
 // Rueckgaengig-Eintrag "Charakter bearbeitet" — auch nach dem Neuladen.
 test('(7) R4: ✏️ → 🗑️ unter dem offenen Formular → 💾 speichert die Eingabe als neuen Charakter', async ({
     page
@@ -1098,7 +1110,7 @@ test('(7) R4: ✏️ → 🗑️ unter dem offenen Formular → 💾 speichert d
 //
 // Strg+Z ist "immer aktiv", auch im Textfeld des offenen Formulars, und nimmt
 // hier das Anlegen von "Neu A" zurueck. Das Formular haelt id/Name/"Wirt".
-// Heute: 💾 speichert nichts, "Neu A (Wirt)" ist verloren.
+// Vor dem Fix: 💾 speicherte nichts, "Neu A (Wirt)" war verloren.
 test('(8) R4: "Neu A" → ✏️ → "Wirt" → Strg+Z im Feld → 💾 speichert "Neu A" neu und sagt es', async ({
     page
 }) => {
@@ -1147,11 +1159,12 @@ test('(8) R4: "Neu A" → ✏️ → "Wirt" → Strg+Z im Feld → 💾 speicher
 // (9) R4 — DERSELBE WEG OHNE TASTATUR: ↩️ IN DER TELEFON-KOPFLEISTE
 // ===========================================================================
 //
-// Kritik K3c: eine Abwehr, die nur Strg+Z in Feldern sperrt, deckt diesen Weg
-// nicht — der Rueckgaengig-KNOPF ist bei offenem Formular sichtbar
-// (`assets/templates/modals-tools.html:299`; am Schreibtisch derselbe Weg
-// ueber `header.html:38`). Gemessen: "Neu A" samt Eingabe weg, Meldung
-// "Charakter aktualisiert", leerer Eintrag. Getippt wird mit `.tap()`.
+// Von der Gegenpruefung gemessen (`docs/bugfixes.md`, ABBRUCH, Problem): eine
+// Abwehr, die nur Strg+Z in Feldern sperrt, deckt diesen Weg nicht — der
+// Rueckgaengig-KNOPF ist bei offenem Formular sichtbar (`.mobile-header`,
+// `assets/templates/modals-tools.html`; am Schreibtisch derselbe Weg ueber
+// `assets/templates/header.html`). Vor dem Fix: "Neu A" samt Eingabe weg,
+// Meldung "Charakter aktualisiert", leerer Eintrag. Getippt wird mit `.tap()`.
 //
 // DER ABSTAND ZWISCHEN ZWEI TIPPERN IST NOETIG, nicht Geduld:
 // `initTouchOptimizations()` (`systems/avatars.js`) ruft `preventDefault()`
@@ -1220,13 +1233,13 @@ test.describe('(9) Telefon 390x844', () => {
 });
 
 // ===========================================================================
-// (10) KONTROLLE — ✏️ → 💾 → KOPFZEILE LEGT SCHON HEUTE NEU AN
+// (10) KONTROLLE — ✏️ → 💾 → KOPFZEILE LEGTE SCHON VOR DEM FIX NEU AN
 // ===========================================================================
 //
-// Speichern ruft `cancelCharEdit()` und leert die ID — der Weg ist heute
-// richtig, was das Neu-Anlegen angeht. Er muss es nach dem Fix bleiben (der
-// neue Aufklapp-Zweig darf ein gespeichertes Bearbeiten nicht anders
-// behandeln). Bewusst NUR ID, Name und das Ergebnis: Stufe und Chips stehen
+// Speichern ruft `cancelCharEdit()` und leert die ID — der Weg war schon vor
+// dem Fix richtig, was das Neu-Anlegen angeht, und muss es bleiben (der
+// Aufklapp-Zweig darf ein gespeichertes Bearbeiten nicht anders behandeln).
+// Bewusst NUR ID, Name und das Ergebnis: Stufe und Chips standen vor dem Fix
 // auch hier noch (dieselbe Ursache, rot in Fall (2)).
 test('(10) (Kontrolle): ✏️ → 💾 → Kopfzeile → "Neu" → 💾 legt neu an, Aria bleibt', async ({
     page

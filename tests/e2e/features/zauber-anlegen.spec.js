@@ -19,48 +19,47 @@
  *
  * Gemessen am Buendel zu e5bc99d, 1440x900, echte Klicks und Tasten,
  * Saat wie unten (Feuerball mit JEDEM Feld gefuellt, bewusst ungleich den
- * Vorgaben des Formulars):
+ * Vorgaben des Formulars). So war es VOR dem Fix:
  *
- *   ✏️ Feuerball → ✕ (oder       das Formular traegt Feuerball samt
+ *   ✏️ Feuerball → ✕ (oder       das Formular trug Feuerball samt
  *   Escape) → "+ Zauber"         #edit-spell-id "1", alle Felder, die
  *                                Markdown-Knoepfe sichtbar; 💾 als
- *                                "Magisches Geschoss" UEBERSCHREIBT Feuerball
+ *                                "Magisches Geschoss" UEBERSCHRIEB Feuerball
  *                                (id 1) — in D, im Speicher, nach dem
  *                                Neuladen. Keine Meldung.
  *   ebenso ✏️ aus der globalen   dasselbe
  *   Suche → Escape → "+ Zauber"
  *   ✏️ → ✕ → 🗑️ → "+ Zauber"     NICHTS gespeichert: D ["Licht"], der neue
- *                                Zauber ist still weg, der Rueckgaengig-Stapel
- *                                bekommt einen leeren Eintrag "Zauber
+ *                                Zauber war still weg, der Rueckgaengig-Stapel
+ *                                bekam einen leeren Eintrag "Zauber
  *                                bearbeitet"
  *   ✏️ → Escape → 🗑️ des         dasselbe ueber den Knopf der leeren Liste:
- *   letzten → "➕ Zauber         D [], die Liste zeigt weiter "Keine Zauber"
+ *   letzten → "➕ Zauber         D [], die Liste zeigte weiter "Keine Zauber"
  *   erstellen"
- *   "+ Zauber" Neu A → 💾 →      Strg+Z (mit dem Fokus im Namensfeld) nimmt
- *   ✏️ Neu A → " (Wirt)" →       "Neu A" aus D, das Formular bleibt offen;
- *   Strg+Z → 💾                  💾 speichert NICHTS, meldet nichts, und der
- *                                leere Eintrag "Zauber bearbeitet" leert den
- *                                Wiederholen-Stapel — Neu A ist unrettbar
+ *   "+ Zauber" Neu A → 💾 →      Strg+Z (mit dem Fokus im Namensfeld) nahm
+ *   ✏️ Neu A → " (Wirt)" →       "Neu A" aus D, das Formular blieb offen;
+ *   Strg+Z → 💾                  💾 speicherte NICHTS, meldete nichts, und der
+ *                                leere Eintrag "Zauber bearbeitet" leerte den
+ *                                Wiederholen-Stapel — Neu A war unrettbar
  *
- * DIE URSACHEN:
- *   - `assets/templates/view-resources.html:170`: "+ Zauber" ist ein nacktes
- *     `show-modal` → `ui/actions/ui-actions.js:8` → `showModal()`
- *     (`systems/spellslots/navigation.js:94`), das nur oeffnet.
- *   - `features/spells/spell-manager.js:157`: der Knopf der leeren Liste
- *     ebenso.
- *   - ✕ (`ui-actions.js:9` → `hideModal()`, `navigation.js:114`) und Escape
- *     (`systems/spellslots/keyboard-shortcuts.js:505`) schliessen nur.
- *     `clearSpellForm()` (`spell-manager.js:546`) ruft ausschliesslich
- *     `saveSpell()` (`:444`).
- *   - `saveSpell()` (`spell-manager.js:376`) entscheidet allein nach dem
- *     versteckten `#edit-spell-id` (`:397`), legt `pushUndo('Zauber
- *     bearbeitet')` an (`:435`), BEVOR es sucht, und `if (idx > -1)`
- *     (`:438`) faellt bei einer verwaisten ID still durch. Eine
- *     Erfolgsmeldung gibt es nicht — jeder Verlust ist stumm.
- *   - Strg+Z ist "immer aktiv" (`keyboard-shortcuts.js:514`), auch mit dem
+ * DIE URSACHEN (Stand e5bc99d; Fundstellen nach dem Fix nennt der Katalog,
+ * `docs/bugfixes.md`, Eintrag ABBRUCH):
+ *   - "+ Zauber" (`assets/templates/view-resources.html`) war ein nacktes
+ *     `show-modal` → `ui/actions/ui-actions.js` → `showModal()`
+ *     (`systems/spellslots/navigation.js`), das nur oeffnet.
+ *   - Der Knopf der leeren Liste (`renderSpells()`,
+ *     `features/spells/spell-manager.js`) ebenso.
+ *   - ✕ (`hideModal()`) und Escape (`systems/spellslots/keyboard-shortcuts.js`)
+ *     schliessen nur. `clearSpellForm()` lief ausschliesslich aus
+ *     `saveSpell()`.
+ *   - `saveSpell()` entschied allein nach dem versteckten `#edit-spell-id`,
+ *     legte `pushUndo('Zauber bearbeitet')` an, BEVOR es suchte, und
+ *     `if (idx > -1)` fiel bei einer verwaisten ID still durch. Eine
+ *     Erfolgsmeldung gibt es nicht — jeder Verlust war stumm.
+ *   - Strg+Z ist "immer aktiv" (`keyboard-shortcuts.js`), auch mit dem
  *     Fokus in einem Feld des offenen Formulars.
  *
- * DIE REGELN, die hier gelten (nicht die heutige Umsetzung):
+ * DIE REGELN, die hier gelten (nicht eine bestimmte Umsetzung):
  *   R1  Nach ✏️ → Abbrechen zeigt JEDER Anlege-Weg ein Formular ohne
  *       Bearbeiten-ID und ohne Werte des bearbeiteten Zaubers; 💾 legt neu
  *       an, der bearbeitete bleibt feldgleich.
@@ -79,7 +78,7 @@
  * leeren Liste. Keine Taste n, keine Befehlspalette (gemessen: n in
  * #view-spells oeffnet nichts, "Zauber" liefert 0 Treffer) — darum gibt es
  * hier keinen R3-Fall. Der Knopf der leeren Liste erscheint nur bei leerer
- * UND ungefilterter Liste (`render/helpers.js:424`): solange der bearbeitete
+ * UND ungefilterter Liste (`render/helpers.js`): solange der bearbeitete
  * Zauber existiert, gibt es ihn nicht. Er fuehrt darum IMMER ueber das
  * Loeschen — Fall (4).
  *
@@ -98,7 +97,8 @@
  *
  * Der Titel "Zauber bearbeiten" beim Bearbeiten (V6). Der veraltete
  * EntityLookup-Cache: das ZWEITE ✏️ desselben Zaubers nach einem 💾 zeigt
- * den alten Stand (`features/initiative.js:121`) — darum bearbeitet kein
+ * den alten Stand (`renderInit()`, `features/initiative.js`; Katalog
+ * ABBRUCH, Offen (2)) — darum bearbeitet kein
  * Fall hier denselben Zauber zweimal. Der SRD-Typ, den ✏️ → 💾 auf "spell"
  * umschreibt, und das verdeckte Materialfeld.
  */
@@ -899,7 +899,7 @@ test('(5) R4: Strg+Z im Namensfeld nimmt den Zauber unter dem offenen ✏️ zur
 //
 // Der neue Anlege-Weg darf das Formular NUR leeren, wenn ein Bearbeiten
 // Reste hinterliess (#edit-spell-id gesetzt). Ein echter Entwurf bleibt
-// stehen — vor dem Fix ebenso (gemessen, V5), darum ein Waechter. Er faehrt
+// stehen — vor dem Fix ebenso (gemessen), darum ein Waechter. Er faehrt
 // BEIDE Anlege-Wege: bei leerer Liste stehen "➕ Zauber erstellen" und
 // "+ Zauber" nebeneinander.
 test('(6) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape und ✕, "➕ Zauber erstellen" und "+ Zauber" verwerfen ihn nicht', async ({
@@ -950,7 +950,7 @@ test('(6) R2 (Waechter): ein Anlege-Entwurf ueberlebt Escape und ✕, "➕ Zaube
 });
 
 // ===========================================================================
-// (7) KONTROLLE: ✏️ → 💾 → "+ ZAUBER" — DER WEG, DER SCHON HEUTE STIMMT
+// (7) KONTROLLE: ✏️ → 💾 → "+ ZAUBER" — DER WEG, DER SCHON VOR DEM FIX STIMMTE
 // ===========================================================================
 //
 // Wer das Bearbeiten mit 💾 abschliesst, bekommt beim naechsten "+ Zauber"

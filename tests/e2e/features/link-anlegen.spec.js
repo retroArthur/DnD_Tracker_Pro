@@ -11,21 +11,20 @@
  * neuer Link gespeichert, und die Meldung sagt das.
  *
  * Das Formular ist kein Dialog, sondern die Karte `#link-form-card` in der
- * Links-Ansicht (`assets/templates/view-tools.html:38-62`), ein- und
- * ausgeblendet ueber `style.display`. "+ Link" (`view-tools.html:35`) ist ein
- * UMSCHALTER: ist die Karte sichtbar, blendet derselbe Klick sie aus.
+ * Links-Ansicht (`assets/templates/view-tools.html`), ein- und ausgeblendet
+ * ueber `style.display`. "+ Link" ist ein UMSCHALTER: ist die Karte sichtbar,
+ * blendet derselbe Klick sie aus.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND, aus dem diese Datei entstand
  *
- * Gemessen am Buendel zu e5bc99d, 1440x900, echte Klicks und Tasten (Sonden
- * der Gruppe "welt", `links.probe.js`; Saat: ein bearbeiteter Link und ein
- * Nachbar):
+ * Gemessen am Buendel zu e5bc99d, 1440x900, echte Klicks und Tasten (Saat:
+ * ein bearbeiteter Link und ein Nachbar). So war es VOR dem Fix:
  *
- *   ✏️ → "+ Link" (blendet aus)     die Karte traegt den bearbeiteten Link samt
+ *   ✏️ → "+ Link" (blendet aus)     die Karte trug den bearbeiteten Link samt
  *   → "+ Link" (blendet ein)        #edit-link-id; "Speichern" als "D&D Beyond"
- *   (ebenso nach Escape und nach    UEBERSCHREIBT ihn — Kategorie und
- *   einem Ansichtswechsel, die      Beschreibung bleiben die alten —, Meldung
+ *   (ebenso nach Escape und nach    UEBERSCHRIEB ihn — Kategorie und
+ *   einem Ansichtswechsel, die      Beschreibung blieben die alten —, Meldung
  *   die Karte gar nicht schliessen) "Link aktualisiert"; in D, im Speicher und
  *                                   nach dem Neuladen
  *   ✏️ → "+ Link" → 🗑️ → "+ Link   NICHTS gespeichert, D.links leer, KEINE
@@ -33,27 +32,28 @@
  *                                   "Link bearbeitet"
  *   ✏️ → 🗑️ bei offener Karte → 💾  ebenso still verloren
  *   ✏️ → Strg+Z im Feld → 💾        ebenso still verloren
- *   ✏️ → "Abbrechen" → "+ Link"     korrekt — "Abbrechen" leert (Fall 4)
+ *   ✏️ → "Abbrechen" → "+ Link"     korrekt — "Abbrechen" leerte (Fall 4)
  *
- * DIE URSACHEN, alle in `features/shops/links.js`:
- *   :62-68   toggleLinkForm() schaltet nur `display` um und leert nie. Es ist
- *            der Weg BEIDER Anlege-Knoepfe ("+ Link" und "+ Link hinzufügen"
- *            der leeren Liste, :34-42) — und bei sichtbarer Karte zugleich ein
- *            Schliessweg, der nicht leert.
- *   :90      pushUndo('Link bearbeitet') laeuft VOR der Pruefung, ob es den
- *            Link noch gibt — darum der leere Rueckgaengig-Eintrag.
- *   :91-96   `if (editId) { … if (idx > -1) { …; showToast(…) } }` ohne
- *            `else`: eine ID ins Leere speichert nichts und meldet nichts (die
- *            Meldung steht nur im Erfolgszweig, :95); :102-104 schliessen die
- *            Karte danach, als waere alles gut.
- *   :137-147 deleteLink() laesst eine offene Bearbeitung des geloeschten Links
- *            stehen, samt ID.
- * Dazu: Escape (`systems/spellslots/keyboard-shortcuts.js:404` ff.) kennt nur
+ * DIE URSACHEN (Stand e5bc99d), alle in `features/shops/links.js`; die
+ * Fundstellen nach dem Fix nennt der Katalog, `docs/bugfixes.md`, ABBRUCH:
+ *   - toggleLinkForm() schaltete nur `display` um und leerte nie. Es ist der
+ *     Weg BEIDER Anlege-Knoepfe ("+ Link" und "+ Link hinzufügen" der leeren
+ *     Liste) — und bei sichtbarer Karte zugleich ein Schliessweg, der nicht
+ *     leert.
+ *   - saveLink() rief pushUndo('Link bearbeitet') VOR der Pruefung, ob es den
+ *     Link noch gibt — darum der leere Rueckgaengig-Eintrag.
+ *   - `if (editId) { … if (idx > -1) { …; showToast(…) } }` ohne `else`: eine
+ *     ID ins Leere speicherte nichts und meldete nichts (die Meldung stand
+ *     nur im Erfolgszweig); danach schloss saveLink() die Karte, als waere
+ *     alles gut.
+ *   - deleteLink() laesst eine offene Bearbeitung des geloeschten Links
+ *     stehen, samt ID (so gewollt, siehe unten; R4 faengt es beim Speichern).
+ * Dazu: Escape (`systems/spellslots/keyboard-shortcuts.js`) kennt nur
  * Dialoge, und switchView() (`systems/spellslots/navigation.js`) fasst die
  * Karte nicht an — beide lassen die Bearbeitung offen, das naechste "+ Link"
- * blendet sie nur aus. Strg+Z ist "immer aktiv"
- * (`keyboard-shortcuts.js:514-518`), auch mit dem Fokus in einem Feld der
- * Karte, und nimmt D unter der offenen Bearbeitung zurueck.
+ * blendet sie nur aus. Strg+Z ist "immer aktiv" (`keyboard-shortcuts.js`),
+ * auch mit dem Fokus in einem Feld der Karte, und nimmt D unter der offenen
+ * Bearbeitung zurueck.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag ABBRUCH), die diese Datei prueft
@@ -63,8 +63,8 @@
  *       Speichern legt einen NEUEN an, der bearbeitete bleibt feldgleich.
  *       Anlege-Wege: "+ Link" (1, 2, 4), "+ Link hinzufügen" (3).
  *       Abbruch-Wege: Escape (1), Ansichtswechsel (2), "+ Link" bei offener
- *       Bearbeitung (3; in 1 und 2 heute der erste der zwei Klicks),
- *       "Abbrechen" (4, Waechter — leert schon heute).
+ *       Bearbeitung (3; in 1 und 2 der erste der zwei Klicks),
+ *       "Abbrechen" (4, Waechter — leerte schon vor dem Fix).
  *   R2  Ein nie gespeicherter Entwurf ueberlebt Zuklappen per "+ Link",
  *       Escape und Ansichtswechsel; der naechste Anlege-Weg verwirft ihn
  *       nicht — geprueft mit BEIDEN Anlege-Knoepfen. (7, Waechter)
@@ -72,22 +72,25 @@
  *       per Strg+Z mit dem Fokus im Feld zurueckgenommen (6) —, wird die
  *       Eingabe als NEUER Link gespeichert, mit einer Warnung, ohne
  *       "Link aktualisiert" und ohne leeren Eintrag "Link bearbeitet".
- *   Kontrolle: ✏️ → 💾 → "+ Link" ist schon heute korrekt. (8)
+ *   Kontrolle: ✏️ → 💾 → "+ Link" war schon vor dem Fix korrekt. (8)
  * R3 entfaellt: fuer Links gibt es weder die Taste n noch einen Eintrag der
  * Befehlspalette (gemessen: Karte bleibt versteckt bzw. 0 Treffer). R5–R8
  * gelten anderen Formularen.
  *
  * WIE DIE FAELLE ANLEGEN: der Anlege-Knopf wird geklickt, BIS die Karte
  * sichtbar ist, hoechstens zweimal. Steht eine Bearbeitung noch offen (nach
- * Escape oder Ansichtswechsel), blendet der erste Klick sie heute aus und
- * erst der zweite ein. Ob "+ Link" bei sichtbarer Bearbeitung kuenftig
- * ausblendet oder gleich auf ein leeres Anlegen umschaltet, ist eine offene
- * Entscheidung des Fixes — die Faelle pruefen, was der Nutzer danach VOR
- * SICH hat, nicht die Zahl der Klicks. "Leer" heisst: so, wie die Karte
- * frisch nach dem Laden war (jeder Fall liest diesen Stand vor dem ersten ✏️).
+ * Escape oder Ansichtswechsel), blendet der erste Klick sie aus und erst der
+ * zweite ein. Der Fix hat entschieden, dass "+ Link" bei sichtbarer
+ * Bearbeitung AUSBLENDET (er bleibt ein Umschalter) und das naechste
+ * Einblenden leer beginnt (Katalog ABBRUCH, Fix (C), bewusste
+ * Verhaltensaenderung (a)); die Faelle pruefen trotzdem, was der Nutzer
+ * danach VOR SICH hat, nicht die Zahl der Klicks — die andere Variante
+ * (gleich auf ein leeres Anlegen umschalten) waere ebenso gruen. "Leer"
+ * heisst: so, wie die Karte frisch nach dem Laden war (jeder Fall liest
+ * diesen Stand vor dem ersten ✏️).
  *
- * GEGENPROBE (beim Schreiben, nicht Teil der Datei): mit der Fix-Skizze des
- * Berichts — toggleLinkForm() leert beim EINblenden, wenn #edit-link-id
+ * GEGENPROBE (beim Schreiben, nicht Teil der Datei): mit der Fix-Skizze der
+ * Messung — toggleLinkForm() leert beim EINblenden, wenn #edit-link-id
  * gesetzt ist; saveLink() prueft die ID ueber `D.links` vor pushUndo() und
  * legt eine verwaiste als neu an, mit Warnung — zur Laufzeit nachgebildet,
  * liefen alle acht Faelle gruen; ebenso mit der Variante, in der "+ Link"
@@ -102,39 +105,39 @@
  * ───────────────────────────────────────────────────────────────────────────
  * DER ZWISCHENSPEICHER VON `EntityLookup` — UND WARUM FALL (5) DIREKT GEHT
  *
- * editLink() (`links.js:107`) und deleteLink() (`:139`) lesen ueber
- * `EntityLookup.link()`, und dessen Zwischenspeicher ist nach dem Laden
- * EINGESCHALTET: renderAll() ruft renderInit()
- * (`features/render-dashboard.js:55`), das ihn einschaltet
- * (`features/initiative.js:113`) und bei 0 Kaempfern in `:121-125`
- * zurueckkehrt, ohne ihn zu leeren. Ein zweites ✏️ desselben Links nach einem
+ * editLink() und deleteLink() (`links.js`) lesen ueber `EntityLookup.link()`,
+ * und dessen Zwischenspeicher ist nach dem Laden EINGESCHALTET: renderAll()
+ * ruft renderInit() (`features/render-dashboard.js`), das ihn einschaltet
+ * und bei 0 Kaempfern zurueckkehrt, ohne ihn zu leeren
+ * (`features/initiative.js`). Ein zweites ✏️ desselben Links nach einem
  * Speichern zeigt dann den alten Stand — ein ANDERER Fehler mit eigenem PR
- * (Kritik L1). Diese Datei haengt an ihm nicht:
+ * (`docs/bugfixes.md`, ABBRUCH, Offen (2)). Diese Datei haengt an ihm nicht:
  *  - Kein Fall bearbeitet denselben Link zweimal mit Speichern dazwischen.
  *  - Die Faelle ausser (5) klicken nach dem Laden zuerst in die NPC-Ansicht
  *    — deren Darstellung leert den Zwischenspeicher und schaltet ihn ab
- *    (Kritik K1b) — und erst dann in die Links-Ansicht. Wer L1 behebt, darf
- *    den Umweg stehen lassen; er schadet nicht.
+ *    (bei der Gegenpruefung gemessen) — und erst dann in die Links-Ansicht.
+ *    Wer Offen (2) behebt, darf den Umweg stehen lassen; er schadet nicht.
  *  - Fall (5) geht dagegen DIREKT von der Startansicht in die Links-Ansicht,
  *    so, wie ein Nutzer die App nach dem Laden vorfindet: der
  *    Zwischenspeicher ist an (nachgemessen: nach dem Laden, nach
  *    Start → Links und nach ✏️ eingeschaltet, `links-1` darin). Das haengt
- *    NICHT an L1 — es gibt kein zweites ✏️ —, prueft aber, worauf R4 baut:
- *    eine Existenzpruefung ueber `EntityLookup` saehe den geloeschten Link
- *    noch (deleteLink() hat ihn eben dort abgelegt) und verloere die Eingabe
- *    wie heute. Mit dem Umweg ueber die NPCs war genau dieser falsche Fix
- *    gruen. (Strg+Z in Fall (6) laeuft ueber renderAll(), das den
- *    Zwischenspeicher leert; dort fiele der Fehler nicht auf.)
+ *    NICHT an Offen (2) — es gibt kein zweites ✏️ —, prueft aber, worauf R4
+ *    baut: eine Existenzpruefung ueber `EntityLookup` saehe den geloeschten
+ *    Link noch (deleteLink() hat ihn eben dort abgelegt) und verloere die
+ *    Eingabe wie vor dem Fix. Mit dem Umweg ueber die NPCs war genau dieser
+ *    falsche Fix gruen. (Strg+Z in Fall (6) laeuft ueber renderAll(), das
+ *    den Zwischenspeicher leert; dort fiele der Fehler nicht auf.)
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
  * Der Kartenkopf heisst auch beim Bearbeiten "Link hinzufügen" (V6), der
- * veraltete Zwischenspeicher selbst (L1), der Kampagnen-Import "Ersetzen" bei
- * offener Karte (L2), das Telefon (L3) — eigene Vorgaenge. Ob deleteLink()
- * die Karte abraeumen sollte, war im Bericht offen; der Vertrag hat es mit
- * R4 entschieden ("geloescht, waehrend das Formular offen war" → als neuer
- * Link gespeichert), und Fall (5) verlangt genau das: die Eingabe steht nach
+ * veraltete Zwischenspeicher selbst (Offen (2)), der Kampagnen-Import
+ * "Ersetzen" bei offener Karte (Offen (3)), das Telefon — eigene Vorgaenge.
+ * Ob deleteLink() die Karte abraeumen sollte, war in der Messung offen; der
+ * Vertrag hat es mit R4 entschieden ("geloescht, waehrend das Formular offen
+ * war" → als neuer Link gespeichert), und Fall (5) verlangt genau das: die
+ * Eingabe steht nach
  * dem Loeschen noch da und wird gespeichert.
  */
 import { test, expect } from '@playwright/test';
@@ -355,7 +358,7 @@ function plusLink(page) {
     return page.locator('#view-links').getByRole('button', { name: '+ Link', exact: true });
 }
 
-/** "+ Link hinzufügen" der LEEREN Liste (`links.js:34-42`, nur bei leerem
+/** "+ Link hinzufügen" der LEEREN Liste (`renderLinks()`, nur bei leerem
  *  D.links; bei leerem Filterergebnis gibt es ihn nicht).
  *  @param {import('@playwright/test').Page} page */
 function leerKnopf(page) {
@@ -573,10 +576,10 @@ async function anlegenUndPruefen(page, frisch, weg) {
 // (1) ✏️ → ESCAPE → "+ LINK" LEGT NEU AN
 // ===========================================================================
 //
-// Escape schliesst die Karte heute gar nicht — die Bearbeitung bleibt mit
-// ihrer ID stehen. Der Nutzer drueckt "+ Link": der erste Klick blendet aus,
-// der zweite ein, und die Karte traegt die Weltkarte samt ID. Gemessen
-// (L-V1-escape): "Speichern" ueberschreibt die Weltkarte.
+// Escape schliesst die Karte gar nicht — die Bearbeitung bleibt mit ihrer ID
+// stehen (Katalog Offen (6)). Der Nutzer drueckt "+ Link": der erste Klick
+// blendet aus, der zweite ein. Vor dem Fix trug die Karte dann die Weltkarte
+// samt ID, und "Speichern" ueberschrieb sie (gemessen).
 test('(1) nach ✏️ und Escape legt "+ Link" einen NEUEN Link an', async ({ page }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
@@ -596,7 +599,7 @@ test('(1) nach ✏️ und Escape legt "+ Link" einen NEUEN Link an', async ({ pa
 // ===========================================================================
 //
 // Ueber die Navigation in die Startansicht und zurueck — auch das laesst die
-// Karte heute mit der ID stehen (L-V1-ansicht).
+// Karte mit der ID stehen (gemessen; Katalog Offen (6)).
 test('(2) nach ✏️ und einem Ansichtswechsel legt "+ Link" einen NEUEN Link an', async ({
     page
 }) => {
@@ -622,15 +625,14 @@ test('(2) nach ✏️ und einem Ansichtswechsel legt "+ Link" einen NEUEN Link a
 //
 // Der Knopf der LEEREN Liste ist der Weg, auf den man nach dem Loeschen des
 // letzten Links gestossen wird — oft nachdem man ihn sich in ✏️ angesehen und
-// die Karte mit "+ Link" wieder zugeklappt hat. Gemessen (L-V3-leer-plus):
-// die Karte traegt die ID des geloeschten Links, "Speichern" speichert NICHTS,
-// meldet NICHTS und hinterlaesst einen leeren Eintrag "Link bearbeitet".
+// die Karte mit "+ Link" wieder zugeklappt hat. Vor dem Fix (gemessen) trug
+// die Karte die ID des geloeschten Links, "Speichern" speicherte NICHTS,
+// meldete NICHTS und hinterliess einen leeren Eintrag "Link bearbeitet".
 //
-// Heute klappt der Klick auf "+ Link" die Bearbeitung zu. Ob er das nach dem
-// Fix noch tut oder gleich auf ein leeres Anlegen umschaltet, ist dessen
-// offene Entscheidung (siehe Kopf) — darum wird hier NICHT zugesichert, dass
-// die Karte danach verborgen ist. Beides muss beim Knopf der leeren Liste
-// zum selben Ergebnis fuehren.
+// Der Klick auf "+ Link" klappt die Bearbeitung zu (der Fix hat das so
+// gelassen, siehe Kopf). Hier wird trotzdem NICHT zugesichert, dass die Karte
+// danach verborgen ist: auch ein Fix, der gleich auf ein leeres Anlegen
+// umschaltet, muss beim Knopf der leeren Liste zum selben Ergebnis fuehren.
 test('(3) nach ✏️, "+ Link" und 🗑️ legt "+ Link hinzufügen" der leeren Liste einen NEUEN Link an', async ({
     page
 }) => {
@@ -677,9 +679,9 @@ test('(3) nach ✏️, "+ Link" und 🗑️ legt "+ Link hinzufügen" der leeren
 // (4) WAECHTER: ✏️ → "ABBRECHEN" → "+ LINK" LEGT NEU AN
 // ===========================================================================
 //
-// Schon vor dem Fix gruen: "Abbrechen" (`view-tools.html:60`) leert die Karte
-// (L-V1-abbrechen). Der Fall haelt den einzigen heute leerenden Abbruch-Weg
-// fest, damit der Fix ihn nicht nebenbei verliert.
+// Schon vor dem Fix gruen: "Abbrechen" (`cancelLinkEdit()`) leert die Karte
+// (gemessen). Der Fall haelt den einzigen Abbruch-Weg fest, der schon vor dem
+// Fix leerte, damit der Fix ihn nicht nebenbei verliert.
 test('(4) nach ✏️ und "Abbrechen" legt "+ Link" einen NEUEN Link an (Waechter)', async ({
     page
 }) => {
@@ -702,9 +704,9 @@ test('(4) nach ✏️ und "Abbrechen" legt "+ Link" einen NEUEN Link an (Waechte
 // ===========================================================================
 //
 // Anders als ein Dialog deckt die Karte die Liste nicht ab: 🗑️ ist bei
-// offener Bearbeitung erreichbar. Gemessen (L-V3-offen): die Karte bleibt mit
-// der ID des geloeschten Links stehen, "Speichern" speichert NICHTS, meldet
-// NICHTS, und der Rueckgaengig-Stapel bekommt einen leeren Eintrag
+// offener Bearbeitung erreichbar. Vor dem Fix (gemessen) blieb die Karte mit
+// der ID des geloeschten Links stehen, "Speichern" speicherte NICHTS, meldete
+// NICHTS, und der Rueckgaengig-Stapel bekam einen leeren Eintrag
 // "Link bearbeitet". Eingetippt wird VOR dem Loeschen — so prueft der Fall
 // auch, dass das Loeschen die laufende Eingabe nicht verwirft.
 //
@@ -781,8 +783,8 @@ test('(5) ✏️, Eingabe, 🗑️ desselben Links bei offener Karte: Speichern 
 //
 // Strg+Z wirkt auch mit dem Fokus im URL-Feld und nimmt hier das Anlegen von
 // "Neu A" zurueck, waehrend ✏️ denselben Link offen hat. Die Karte haelt die
-// Eingabe, die ID zeigt ins Leere. Gemessen (L-V4): nichts gespeichert,
-// keine Meldung, leerer Eintrag "Link bearbeitet".
+// Eingabe, die ID zeigt ins Leere. Vor dem Fix (gemessen): nichts
+// gespeichert, keine Meldung, leerer Eintrag "Link bearbeitet".
 test('(6) ✏️ eines Links, den Strg+Z im Feld zuruecknimmt: Speichern legt ihn neu an und sagt es', async ({
     page
 }) => {
@@ -853,11 +855,12 @@ test('(6) ✏️ eines Links, den Strg+Z im Feld zuruecknimmt: Speichern legt ih
 // (7) WAECHTER: EIN ANLEGE-ENTWURF UEBERLEBT ESCAPE, ANSICHTSWECHSEL UND ZUKLAPPEN
 // ===========================================================================
 //
-// Schon vor dem Fix gruen (L-V5-plus/-escape/-ansicht): ein nie
-// gespeicherter Entwurf (keine ID) bleibt stehen. Der Fix darf beim Anlegen
-// NUR leeren, wenn ein Bearbeiten Reste hinterliess — sonst verwirft "+ Link"
-// die laufende Eingabe. "Abbrechen" leert dagegen auch einen Entwurf, heute
-// wie kuenftig: das ist seine Aufgabe (cancelLinkEdit, im Vertrag die
+// Schon vor dem Fix gruen (gemessen fuer "+ Link", Escape und
+// Ansichtswechsel): ein nie gespeicherter Entwurf (keine ID) bleibt stehen.
+// Der Fix darf beim Anlegen NUR leeren, wenn ein Bearbeiten Reste
+// hinterliess — sonst verwirft "+ Link" die laufende Eingabe. "Abbrechen"
+// leert dagegen auch einen Entwurf, vor wie nach dem Fix: das ist seine
+// Aufgabe (cancelLinkEdit, im Vertrag die
 // Leeren-Funktion des Formulars), darum kommt es hier nicht vor.
 //
 // Die Liste ist LEER gesaet, damit es BEIDE Anlege-Knoepfe gibt: ein Fix,
@@ -920,10 +923,11 @@ test('(7) ein Anlege-Entwurf ueberlebt Escape, Ansichtswechsel und Zuklappen per
 // (8) KONTROLLE: ✏️ → SPEICHERN → "+ LINK" LEGT NEU AN
 // ===========================================================================
 //
-// Schon vor dem Fix gruen: Speichern leert die Karte (`links.js:102`), das
-// naechste "+ Link" legt an. Die Kontrolle haelt fest, dass der Bearbeiten-
-// Zweig und das Anlegen danach unberuehrt bleiben. Bearbeitet wird EINMAL —
-// ein zweites ✏️ desselben Links waere Kritik L1 (siehe Kopf).
+// Schon vor dem Fix gruen: Speichern leert die Karte (saveLink() ruft
+// cancelLinkEdit()), das naechste "+ Link" legt an. Die Kontrolle haelt fest,
+// dass der Bearbeiten-Zweig und das Anlegen danach unberuehrt bleiben.
+// Bearbeitet wird EINMAL — ein zweites ✏️ desselben Links liefe in den
+// veralteten Zwischenspeicher (Katalog Offen (2), siehe Kopf).
 test('(8) ✏️ → Speichern → "+ Link" legt einen NEUEN Link an (Kontrolle)', async ({ page }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
