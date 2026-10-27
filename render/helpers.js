@@ -540,38 +540,48 @@ const EntityLookup = {
     /** Ob Caching aktiviert ist */
     _cacheEnabled: false,
     /**
-     * Aktiviert Caching für Performance bei vielen Lookups
-     * Sollte vor Batch-Operationen aktiviert und danach deaktiviert werden
+     * Setzt nur noch den Schalter; get() liest seit RUECKSPRUNG nicht mehr
+     * aus der Ablage (siehe dort).
      */
     enableCache() {
         this._cacheEnabled = true;
     },
     /**
-     * Deaktiviert und leert den Cache
-     * Sollte nach Datenänderungen aufgerufen werden
+     * Setzt den Schalter zurueck und leert die Ablage; get() liest seit
+     * RUECKSPRUNG nicht mehr aus ihr (siehe dort).
      */
     clearCache() {
         this._cache.clear();
         this._cacheEnabled = false;
     },
     /**
-     * Holt eine Entity aus der entsprechenden Collection
+     * Holt eine Entity aus der entsprechenden Collection — immer das Objekt,
+     * das im Moment des Aufrufs in D steht (Vertrag RUECKSPRUNG, R1,
+     * docs/bugfixes.md). Nichts wird gemerkt, weder ein Treffer noch null.
+     *
+     * Bis RUECKSPRUNG legte get() bei eingeschaltetem enableCache() jeden
+     * Treffer als Objektreferenz ab, und kein Schreiben machte das ungueltig.
+     * Die Speicherpfade von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe
+     * ERSETZEN den Eintrag in D (`{ ...alt, ...neu }`), und eingeschaltet
+     * blieb die Ablage nach jedem Laden ohne Kampf (renderInit() kehrt bei 0
+     * Kaempfern frueh zurueck), nach dem DM-Screen ohne Grid-Widget, nach
+     * Langer Rast, HP-Rechner, Zustand und nach jedem Wurf in einer der acht
+     * Darstellungsfunktionen. Gemessen: das zweite ✏️ nach einem 💾 lud den
+     * alten Stand, das naechste 💾 schrieb ihn zurueck — in D, im Speicher
+     * und nach dem Neuladen. Eine Ablage, die an der Disziplin ihrer Aufrufer
+     * haengt, ist hier die falsche Abwaegung. Der Preis ist gemessen und
+     * klein: renderParty() mit 20 Helden zu je 30 Zaubern (600 Aufrufe) bei
+     * 500 Zaubern — im schlechtesten Fall teilen alle Helden die 30 letzten
+     * Zauber — Median 1,5 → 2,0 ms, also rund eine Mikrosekunde je Aufruf;
+     * mit verschiedenen Zaubern je Held kein messbarer Unterschied.
      */
     get(type, id) {
         const D = window.D;
         const numId = parseEntityId(id);
         if (numId === null) return null;
-        const key = `${type}-${numId}`;
-        if (this._cacheEnabled && this._cache.has(key)) {
-            return this._cache.get(key);
-        }
         const collection = D[type];
         if (!Array.isArray(collection)) return null;
-        const entity = collection.find(item => item.id === numId) || null;
-        if (this._cacheEnabled) {
-            this._cache.set(key, entity);
-        }
-        return entity;
+        return collection.find(item => item.id === numId) || null;
     },
     /**
      * Holt den Namen einer Entity
