@@ -99,41 +99,38 @@
  * Anlegen leert immer bzw. der Knopf der leeren Liste leert immer bzw.
  * Zuklappen per "+ Link" leert (alle drei: Fall 7); nur die ID wird
  * geleert, die Werte bleiben (1-3); die verwaiste Eingabe wird mit Warnung
- * verworfen (5, 6); die Existenzpruefung laeuft ueber `EntityLookup` (5,
- * siehe unten).
+ * verworfen (5, 6); die Existenzpruefung laeuft ueber `EntityLookup` (5 —
+ * falsch nur, solange es dessen Zwischenspeicher gab; siehe unten).
  *
  * ───────────────────────────────────────────────────────────────────────────
- * DER ZWISCHENSPEICHER VON `EntityLookup` — UND WARUM FALL (5) DIREKT GEHT
+ * DER FRUEHERE ZWISCHENSPEICHER VON `EntityLookup` — UND WARUM JEDER FALL
+ * DIREKT GEHT
  *
- * editLink() und deleteLink() (`links.js`) lesen ueber `EntityLookup.link()`,
- * und dessen Zwischenspeicher ist nach dem Laden EINGESCHALTET: renderAll()
- * ruft renderInit() (`features/render-dashboard.js`), das ihn einschaltet
- * und bei 0 Kaempfern zurueckkehrt, ohne ihn zu leeren
- * (`features/initiative.js`). Ein zweites ✏️ desselben Links nach einem
- * Speichern zeigt dann den alten Stand — ein ANDERER Fehler mit eigenem PR
- * (`docs/bugfixes.md`, ABBRUCH, Offen (2)). Diese Datei haengt an ihm nicht:
- *  - Kein Fall bearbeitet denselben Link zweimal mit Speichern dazwischen.
- *  - Die Faelle ausser (5) klicken nach dem Laden zuerst in die NPC-Ansicht
- *    — deren Darstellung leert den Zwischenspeicher und schaltet ihn ab
- *    (bei der Gegenpruefung gemessen) — und erst dann in die Links-Ansicht.
- *    Wer Offen (2) behebt, darf den Umweg stehen lassen; er schadet nicht.
- *  - Fall (5) geht dagegen DIREKT von der Startansicht in die Links-Ansicht,
- *    so, wie ein Nutzer die App nach dem Laden vorfindet: der
- *    Zwischenspeicher ist an (nachgemessen: nach dem Laden, nach
- *    Start → Links und nach ✏️ eingeschaltet, `links-1` darin). Das haengt
- *    NICHT an Offen (2) — es gibt kein zweites ✏️ —, prueft aber, worauf R4
- *    baut: eine Existenzpruefung ueber `EntityLookup` saehe den geloeschten
- *    Link noch (deleteLink() hat ihn eben dort abgelegt) und verloere die
- *    Eingabe wie vor dem Fix. Mit dem Umweg ueber die NPCs war genau dieser
- *    falsche Fix gruen. (Strg+Z in Fall (6) laeuft ueber renderAll(), das
- *    den Zwischenspeicher leert; dort fiele der Fehler nicht auf.)
+ * editLink() und deleteLink() (`links.js`) lesen ueber `EntityLookup.link()`.
+ * Als diese Datei entstand, hatte `EntityLookup` einen Zwischenspeicher, der
+ * nach dem Laden ohne Kampf eingeschaltet blieb: ein zweites ✏️ desselben
+ * Links nach einem Speichern zeigte den alten Stand (damals Offen (2) im
+ * Katalog ABBRUCH). Darum gingen die Faelle ausser (5) nach dem Laden zuerst
+ * in die NPC-Ansicht, deren Darstellung ihn abschaltete; nur (5) ging direkt,
+ * damit eine Existenzpruefung ueber `EntityLookup` — sie saehe den eben
+ * geloeschten Link noch — rot wurde.
+ * Seit RUECKSPRUNG liest `EntityLookup` immer aus D und hat keinen Schalter
+ * mehr (Vertrag RUECKSPRUNG, docs/bugfixes.md). Der Umweg schuetzte damit
+ * nichts mehr und ist gestrichen: JEDER Fall geht direkt von der
+ * Startansicht in die Links-Ansicht, so, wie ein Nutzer die App nach dem
+ * Laden vorfindet. Fall (5) verlangt unveraendert R4; eine Existenzpruefung
+ * ueber `EntityLookup` waere heute richtig und darf dort gruen sein. Dass
+ * `EntityLookup` frisch liest, pruefen `tests/unit/entity-lookup.test.js`
+ * und die Waechter `ruecksprung-rundlauf.spec.js` (das zweite ✏️) und
+ * `ruecksprung-anzeigen.spec.js` (u. a. die Loesch-Rueckfrage).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
- * Der Kartenkopf heisst auch beim Bearbeiten "Link hinzufügen" (V6), der
- * veraltete Zwischenspeicher selbst (Offen (2)), der Kampagnen-Import
- * "Ersetzen" bei offener Karte (Offen (3)), das Telefon — eigene Vorgaenge.
+ * Der Kartenkopf heisst auch beim Bearbeiten "Link hinzufügen" (V6), das
+ * zweite ✏️ nach einem Speichern (RUECKSPRUNG, eigener Waechter), der
+ * Kampagnen-Import "Ersetzen" bei offener Karte (Offen (3)), das Telefon —
+ * eigene Vorgaenge.
  * Ob deleteLink() die Karte abraeumen sollte, war in der Messung offen; der
  * Vertrag hat es mit R4 entschieden ("geloescht, waehrend das Formular offen
  * war" → als neuer Link gespeichert), und Fall (5) verlangt genau das: die
@@ -260,16 +257,15 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und geht per Klick ueber die NPC-Ansicht
- * in die Links-Ansicht — mit `{ direkt: true }` ohne den Umweg, von der
- * Startansicht aus (warum: siehe Kopf, "Der Zwischenspeicher"). Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit, saet EINMAL je Tab und geht per Klick von der Startansicht
+ * direkt in die Links-Ansicht (der fruehere Umweg ueber die NPC-Ansicht ist
+ * mit RUECKSPRUNG entfallen, siehe Kopf, "Der fruehere Zwischenspeicher").
+ * Die Saat steht hinter einer sessionStorage-Sperre: ein `page.reload()`
+ * liest dann, was die App gespeichert hat, statt die Saat neu zu schreiben.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} links
- * @param {{ direkt?: boolean }} [weg]
  */
-async function linksLaden(page, links, weg = {}) {
+async function linksLaden(page, links) {
     await page.setViewportSize(BREIT);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -306,10 +302,6 @@ async function linksLaden(page, links, weg = {}) {
             { timeout: 4000 }
         )
         .catch(() => {});
-    if (!weg.direkt) {
-        await navigateToTab(page, 'npcs');
-        await expect(page.locator('#view-npcs')).toBeVisible();
-    }
     await navigateToTab(page, 'links');
     await expect(page.locator('#view-links')).toBeVisible();
     expect(
@@ -710,17 +702,17 @@ test('(4) nach ✏️ und "Abbrechen" legt "+ Link" einen NEUEN Link an (Waechte
 // "Link bearbeitet". Eingetippt wird VOR dem Loeschen — so prueft der Fall
 // auch, dass das Loeschen die laufende Eingabe nicht verwirft.
 //
-// Der Fall geht DIREKT von der Startansicht in die Links-Ansicht, ohne den
-// Umweg ueber die NPCs: so steht die App nach dem Laden da, mit
-// eingeschaltetem Zwischenspeicher von `EntityLookup`. Eine
-// Existenzpruefung, die ueber ihn liefe, saehe den geloeschten Link noch —
-// genau das soll hier rot werden (siehe Kopf, "Der Zwischenspeicher").
+// Bis RUECKSPRUNG ging nur dieser Fall direkt von der Startansicht in die
+// Links-Ansicht, damit eine Existenzpruefung ueber den damals eingeschalteten
+// Zwischenspeicher von `EntityLookup` hier rot wurde. Den Zwischenspeicher
+// gibt es nicht mehr, und direkt gehen jetzt alle Faelle (siehe Kopf, "Der
+// fruehere Zwischenspeicher"); die Zusage R4 ist dieselbe.
 test('(5) ✏️, Eingabe, 🗑️ desselben Links bei offener Karte: Speichern legt ihn neu an und sagt es', async ({
     page
 }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
-    await linksLaden(page, [WELTKARTE, SRD], { direkt: true });
+    await linksLaden(page, [WELTKARTE, SRD]);
 
     await bearbeiten(page, 1);
     await eintippen(page, '#link-title', 'Weltkarte 2');
@@ -926,8 +918,8 @@ test('(7) ein Anlege-Entwurf ueberlebt Escape, Ansichtswechsel und Zuklappen per
 // Schon vor dem Fix gruen: Speichern leert die Karte (saveLink() ruft
 // cancelLinkEdit()), das naechste "+ Link" legt an. Die Kontrolle haelt fest,
 // dass der Bearbeiten-Zweig und das Anlegen danach unberuehrt bleiben.
-// Bearbeitet wird EINMAL — ein zweites ✏️ desselben Links liefe in den
-// veralteten Zwischenspeicher (Katalog Offen (2), siehe Kopf).
+// Bearbeitet wird EINMAL — das zweite ✏️ desselben Links nach dem Speichern
+// prueft ruecksprung-rundlauf.spec.js (siehe Kopf).
 test('(8) ✏️ → Speichern → "+ Link" legt einen NEUEN Link an (Kontrolle)', async ({ page }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
