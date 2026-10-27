@@ -49,7 +49,10 @@
  *     Wurf mit Summe 0, den es nicht gab.
  * (E) Sobald (A) behoben ist, haengt `addToDiceHistory()` den im Wuerfel-Tab
  *     gewaehlten Schadensart-Chip an JEDEN Eintrag — Fallschaden hiesse
- *     dann "1d6 (Feuer)". Der Chip gehoert zu den Wuerfen des Wuerfel-Tabs.
+ *     dann "1d6 (Feuer)". Fuer Schnellreferenz, Bestiar, Statblock und
+ *     Schnellwurf ist der Chip darum abgeschaltet. DM-Screen, schwebendes
+ *     Panel und Charakterwuerfe tragen ihn weiter wie zuvor ("Thorin:
+ *     Athletik (Feuer)") — nicht entschieden und hier nicht zugesichert.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WARUM JEDER FALL ROT WAR (am unveraenderten Code, Grund jeweils gelesen)

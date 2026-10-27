@@ -75,8 +75,9 @@ declare function createConfetti(container: Element): void;
 declare function toggleDamageType(chip: HTMLElement): void;
 /**
  * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
- * @param optionen - `{ ohneSchadensart: true }` fuer Wuerfe von ausserhalb des
- *   Wuerfel-Tabs: der dort gewaehlte Schadensart-Chip beschriftet nur dessen Wuerfe.
+ * @param optionen - `{ ohneSchadensart: true }` laesst den im Wuerfel-Tab gewaehlten
+ *   Schadensart-Chip weg (Schnellreferenz, Bestiar, Statblock, Schnellwurf). Alle
+ *   uebrigen Aufrufer, auch DM-Screen, Panel und Charakterwuerfe, tragen ihn weiter.
  */
 declare function addToDiceHistory(notation: string, result: string | number, rolls: (number | string)[], optionen?: {
     ohneSchadensart?: boolean;

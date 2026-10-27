@@ -438,13 +438,14 @@ function toggleDamageType(chip) {
 }
 /**
  * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
- * @param notation - Wuerfelnotation in d-Schreibweise (z.B. '1d20+4')
+ * @param notation - Notation oder Beschriftung (z.B. '1d20+4', 'Vorteil')
  * @param result - Summe
  * @param rolls - Einzelwuerfe
- * @param optionen - `{ ohneSchadensart: true }` fuer Wuerfe von AUSSERHALB des
- *   Wuerfel-Tabs (Schnellreferenz, Bestiar, Statblock, Schnellwurf): der dort
- *   gewaehlte Schadensart-Chip beschriftet nur die Wuerfe des Wuerfel-Tabs —
- *   sonst hiesse Fallschaden "1d6 (Feuer)" (WUERFEL).
+ * @param optionen - `{ ohneSchadensart: true }` laesst den im Wuerfel-Tab
+ *   gewaehlten Schadensart-Chip weg. Gesetzt von Schnellreferenz, Bestiar,
+ *   Statblock und Schnellwurf — sonst hiesse Fallschaden "1d6 (Feuer)"
+ *   (WUERFEL). Alle uebrigen Aufrufer, auch DM-Screen, schwebendes Panel und
+ *   die Charakterwuerfe, tragen den Zusatz weiter wie zuvor (nicht entschieden).
  */
 function addToDiceHistory(notation, result, rolls, optionen) {
     const dmgType =
