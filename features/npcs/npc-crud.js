@@ -142,13 +142,15 @@ function fillNPCFactionSelect() {
  * ('mensch' -> 'Mensch', so schrieb der NPC-Generator frueher); passt auch so
  * keine (Import, z. B. 'Zentaur'), traegt eine markierte Zusatzoption den
  * Wert, die clearNPCForm() wieder entfernt. Vorher lief `select.value = x`
- * still ins Leere, und Speichern loeschte das Volk.
+ * still ins Leere, und Speichern loeschte das Volk. Gelesen wird ohne
+ * umgebende Leerzeichen: ' Mensch ' (Import) bekam sonst eine ZWEITE, gleich
+ * aussehende Option neben 'Mensch'.
  */
 function setNPCRaceValue(race) {
     const sel = $('npc-race');
     if (!sel) return;
     sel.querySelectorAll('option[data-npc-fremd]').forEach(o => o.remove());
-    const wert = String(race || '');
+    const wert = String(race || '').trim();
     const optionen = Array.from(sel.options);
     const passend =
         optionen.find(o => o.value === wert) ||
@@ -172,8 +174,18 @@ function setNPCRaceValue(race) {
  * ueberschrieb den zuletzt bearbeiteten NPC. Geleert wird NUR bei solchen
  * Resten; ein echter Anlegen-Entwurf ueberlebt ein versehentliches Escape
  * weiter, und mit ihm seine gewaehlte Fraktion.
+ *
+ * Ist das Formular OFFEN, ist #edit-npc-id kein Rest, sondern die laufende
+ * Bearbeitung — dann tut der Weg nichts. Gemessen ohne diese Schranke: ✕ an
+ * einem Dialog oder ein Klick auf eine Ueberschrift laesst den Fokus auf
+ * BODY, die Taste n erreicht diesen Weg, und die Bearbeitung war ohne
+ * Rueckfrage weg; die Befehlspalette ebenso. Vor diesem Weg baute
+ * showModal() → populateSelects() Ort und Filter des offenen Formulars neu
+ * und setzte beide still auf leer. Wie die Taste h (oeffneHpRechnerAmZug())
+ * ueber einem offenen Dialog: still nichts.
  */
 function showNewNPCModal() {
+    if ($('npc-modal')?.classList.contains('show')) return;
     if ($('edit-npc-id')?.value) clearNPCForm();
     const fSel = $('npc-faction');
     const fraktion = fSel ? fSel.value : '';
