@@ -38,20 +38,29 @@ function convertNodeToMarkdown(node) {
         let markdown = '';
 
         switch (tag) {
+            // Betonung liest die KINDER, nicht textContent: textContent
+            // verschluckt <br> ("<b>eins<br>zwei</b>" wurde "**einszwei**") und
+            // jede Formatierung darin (MARKDOWN, docs/bugfixes.md).
             case 'b':
             case 'strong':
-                markdown = `**${getTextContent(node)}**`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '**', '**');
                 break;
 
             case 'i':
             case 'em':
-                markdown = `*${getTextContent(node)}*`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '*', '*');
                 break;
 
             case 's':
             case 'strike':
             case 'del':
-                markdown = `~~${getTextContent(node)}~~`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '~~', '~~');
+                break;
+
+            case 'u':
+                // Markdown kennt keine Unterstreichung. Als Inline-HTML reicht
+                // markdownToHtml() sie durch, und sanitizeHTML() erlaubt <u>.
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '<u>', '</u>');
                 break;
 
             case 'code':
@@ -117,23 +126,16 @@ function convertNodeToMarkdown(node) {
             case 'div':
                 // Check for read-aloud class
                 if (node.classList.contains('read-aloud')) {
-                    markdown = `:::read-aloud\n${getTextContent(node)}\n:::\n\n`;
+                    // Mehrzeilig: der Block traegt Zeilenumbrueche und Formatierung.
+                    markdown = `:::read-aloud\n${convertChildrenToMarkdown(node).trim()}\n:::\n\n`;
                 } else {
-                    // Process children and add line breaks
-                    markdown = '';
-                    for (const child of node.childNodes) {
-                        markdown += convertNodeToMarkdown(child);
-                    }
-                    markdown += '\n\n';
+                    markdown = convertChildrenToMarkdown(node) + '\n\n';
                 }
                 break;
 
             default:
                 // Process children for unknown tags
-                markdown = '';
-                for (const child of node.childNodes) {
-                    markdown += convertNodeToMarkdown(child);
-                }
+                markdown = convertChildrenToMarkdown(node);
                 break;
         }
 
@@ -144,12 +146,80 @@ function convertNodeToMarkdown(node) {
 }
 
 /**
- * Get text content from node without HTML
+ * Elemente, die in Markdown auf einer eigenen Zeile beginnen muessen —
+ * "Text<h2>X</h2>" ergab sonst "Text## X", also keine Ueberschrift.
+ */
+const MARKDOWN_EXPORT_BLOCK_TAGS = [
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'blockquote',
+    'table',
+    'p',
+    'div'
+];
+
+/**
+ * Wandelt die Kinder eines Knotens. Ein Block-Element bekommt davor eine
+ * Leerzeile ("\n\n" ZUSAETZLICH zu Zeilenumbruechen davor), ausser es folgt
+ * auf einen Block, der seine Leerzeile schon mitbringt. markdownToHtml()
+ * nimmt diese Leerzeile wieder als Blockgrenze weg — ein <br> davor bleibt.
+ * @param {Node} node - DOM node
+ * @returns {string} Markdown string
+ */
+function convertChildrenToMarkdown(node) {
+    const istBlock = child =>
+        child.nodeType === Node.ELEMENT_NODE &&
+        MARKDOWN_EXPORT_BLOCK_TAGS.includes(child.tagName.toLowerCase());
+    let markdown = '';
+    let vorigerBlock = true;
+    for (const child of node.childNodes) {
+        const teil = convertNodeToMarkdown(child);
+        if (!teil) continue;
+        const block = istBlock(child);
+        if (block && !vorigerBlock && markdown) markdown += '\n\n';
+        markdown += teil;
+        vorigerBlock = block;
+    }
+    return markdown;
+}
+
+/**
+ * Setzt Betonung JE ZEILE: markdownToHtml() erkennt "**…**" nur innerhalb
+ * einer Zeile, ein "**eins\nzwei**" bliebe Text. Leerraum am Rand bleibt
+ * ausserhalb der Marken, leere Zeilen bleiben leer.
+ * @param {string} inhalt - schon gewandeltes Markdown
+ * @param {string} auf - oeffnende Marke
+ * @param {string} zu - schliessende Marke
+ * @returns {string}
+ */
+function wrapMarkdownLines(inhalt, auf, zu) {
+    return inhalt
+        .split('\n')
+        .map(zeile => {
+            const teile = zeile.match(/^(\s*)([\s\S]*?)(\s*)$/);
+            return teile && teile[2] ? `${teile[1]}${auf}${teile[2]}${zu}${teile[3]}` : zeile;
+        })
+        .join('\n');
+}
+
+/**
+ * Text eines Elements fuer die EINZEILIGEN Markdown-Formen (Ueberschrift,
+ * Link, Listenpunkt, Zelle, Code). Ein <br> darin wird zum Leerzeichen —
+ * textContent verschluckt ihn und klebt "eins<br>zwei" zu "einszwei".
  * @param {Node} node - DOM node
  * @returns {string} Text content
  */
 function getTextContent(node) {
-    return (node.textContent || '').trim();
+    if (node.nodeType !== Node.ELEMENT_NODE) return (node.textContent || '').trim();
+    const kopie = /** @type {Element} */ (node.cloneNode(true));
+    kopie.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+    return (kopie.textContent || '').trim();
 }
 
 /**
@@ -241,15 +311,25 @@ function markdownToHtml(markdown) {
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
     );
 
-    // Unordered lists (lines starting with - or *)
+    // Unordered lists (lines starting with - or *). Der Zeilenumbruch NACH dem
+    // letzten Punkt bleibt draussen — er gehoert zur Blockgrenze darunter.
     html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    html = html.replace(/(?:<li>.*<\/li>(?:\n(?=<li>))?)+/g, '<ul>$&</ul>');
 
     // Blockquotes (lines starting with >)
     html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
 
-    // Line breaks (double newline = paragraph)
-    html = html.replace(/\n\n/g, '<br><br>');
+    // Zeilenumbrueche (MARKDOWN, docs/bugfixes.md). Bis zu zwei "\n" an einem
+    // Block-Element sind die Blockgrenze, die htmlToMarkdown() dort schreibt,
+    // und fallen weg; JEDES weitere "\n" ist ein <br> — htmlToMarkdown()
+    // schreibt jedes <br> als "\n". Frueher wurde nur "\n\n" zu <br><br>, ein
+    // einzelnes blieb Leerraum: "Zeile eins<br>Zeile zwei" kam nach der
+    // Rundreise als EINE Zeile zurueck. <blockquote> zaehlt nicht als Block:
+    // sanitizeHTML() macht Text daraus.
+    const block = '(?:h[1-6]|ul|ol|li|div|p|table|thead|tbody|tr|th|td)\\b';
+    html = html.replace(new RegExp(`(<\\/?${block}[^>]*>)\\n{1,2}`, 'gi'), '$1');
+    html = html.replace(new RegExp(`\\n{1,2}(<\\/?${block})`, 'gi'), '$1');
+    html = html.replace(/\n/g, '<br>');
 
     // Sanitize to prevent XSS
     if (typeof sanitizeHTML === 'function') {
