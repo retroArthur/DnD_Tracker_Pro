@@ -164,17 +164,33 @@ function saveQuickNotes() {
     if (save) save();
     showToast('📝 Notizen gespeichert');
 }
+// Baut die Auswahllisten von NPC- und Ort-Formular neu und HAELT dabei die
+// Auswahl (MARKDOWN, docs/bugfixes.md). showModal() ruft das fuer JEDES Modal —
+// auch fuer eines, das UEBER dem offenen Formular aufgeht. Vorher stand danach
+// alles auf '': die Markdown-Import-Schale ueber dem NPC-Formular leerte Ort
+// und Filter, und ✏️ an einem Ort verlor seinen Filter schon beim Oeffnen;
+// "Speichern" schrieb beide Male null. Leere Werte beim Bearbeiten setzen
+// editNPC()/editLocation() deshalb selbst.
 function populateSelects() {
     const D = window.D;
     const esc = window.esc;
+    const neuBefuellen = (select, optionen) => {
+        const vorher = select.value;
+        select.innerHTML = optionen;
+        if (vorher && Array.from(select.options).some(o => o.value === vorher)) {
+            select.value = vorher;
+        }
+    };
     // Location select for NPCs
     const locSel = $('npc-location');
     if (locSel) {
-        locSel.innerHTML =
+        neuBefuellen(
+            locSel,
             '<option value="">-- Ort --</option>' +
-            (D.locations || [])
-                .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
-                .join('');
+                (D.locations || [])
+                    .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
+                    .join('')
+        );
     }
     // Filter selects
     const filterOpts =
@@ -182,6 +198,6 @@ function populateSelects() {
         (D.filters || []).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
     ['loc-filter', 'npc-filter'].forEach(id => {
         const select = $(id);
-        if (select) select.innerHTML = filterOpts;
+        if (select) neuBefuellen(select, filterOpts);
     });
 }
