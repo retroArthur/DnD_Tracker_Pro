@@ -45,9 +45,16 @@ function switchView(name) {
         }
     }
     // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
+    // Das Datum wird nur VORGESCHLAGEN, wenn das Notizformular keins hat und
+    // keine Notiz bearbeitet (ABBRUCH, Vertrag R6). Vorher setzte jeder
+    // Wechsel auf "Notizen" heute ein — gemessen auch bei offenem ✏️: S1 vom
+    // 2026-01-10 wurde nach Wiki → Notizen → 💾 mit dem heutigen Datum
+    // gespeichert. Ein getipptes Entwurfsdatum bleibt aus demselben Grund.
     if (name === 'notes') {
         const sessionDate = $('session-date');
-        if (sessionDate) sessionDate.value = new Date().toISOString().split('T')[0];
+        if (sessionDate && !sessionDate.value && !$('edit-session-id')?.value) {
+            sessionDate.value = new Date().toISOString().split('T')[0];
+        }
     }
     // NEW: Use tab registry to render content
     const renderTabContent = window.renderTabContent;
@@ -132,7 +139,11 @@ function hideModal(id) {
 // Ein neues Klappformular mit Bearbeiten-ID gehoert hier mit hinein.
 const KLAPPFORMULAR_BEARBEITEN = {
     'char-form': { bearbeitenId: 'edit-char-id', leeren: () => cancelCharEdit },
-    'enc-form': { bearbeitenId: 'edit-enc-id', leeren: () => cancelEncEdit }
+    'enc-form': { bearbeitenId: 'edit-enc-id', leeren: () => cancelEncEdit },
+    // Die Notiz hat nur DIESEN Anlege-Weg (Kopf "+ Neue Session-Notiz"; keine
+    // Taste n, keine Palette). Gemessen ueberschrieb ✏️ S1 → Kopf zu → auf → 💾
+    // die Notiz S1 und mischte deren Zusammenfassung und Tags in die Eingabe.
+    'session-form': { bearbeitenId: 'edit-session-id', leeren: () => cancelSessionEdit }
 };
 /**
  * Verwirft den Bearbeiten-Rest eines Klappformulars (ID gesetzt → dessen
@@ -154,14 +165,15 @@ function toggleCollapse(id) {
     const el = $(id);
     const icon = $(id + '-icon');
     if (el) {
-        // Die Richtung VOR dem Leeren festhalten: cancelCharEdit() und
-        // cancelEncEdit() klappen selbst zu. Am Ende steht das Formular
-        // offen und leer, nicht wieder zu.
+        // Die Richtung VOR dem Leeren festhalten: cancelCharEdit(),
+        // cancelEncEdit() und cancelSessionEdit() klappen selbst zu. Am Ende
+        // steht das Formular offen und leer, nicht wieder zu.
         const aufklappen = !el.classList.contains('open');
         if (aufklappen) verwirfBearbeitenRest(id);
         el.classList.toggle('open', aufklappen);
         if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼';
         // Story-Arc Dropdown aktualisieren wenn Session-Formular geöffnet wird
+        // (haelt die Auswahl eines Entwurfs, siehe renderStoryArcSelects())
         if (
             id === 'session-form' &&
             el.classList.contains('open') &&

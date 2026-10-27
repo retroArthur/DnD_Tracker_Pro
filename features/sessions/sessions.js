@@ -12,18 +12,33 @@ function getStoryArcs() {
     if (!D.storyArcs) D.storyArcs = [];
     return D.storyArcs;
 }
+// Baut die Arc-Auswahl des Notizformulars und den Arc-Filter neu und HAELT
+// dabei die Auswahl, solange es ihre Option noch gibt (ABBRUCH, Vertrag R6;
+// Muster neuBefuellen in populateSelects(), navigation.js). Aufgerufen beim
+// Aufklappen des Formulars (toggleCollapse), von addStoryArc() und
+// deleteStoryArc(). Vorher stand die Auswahl danach auf '' — gemessen nach
+// ✏️ S1 → ⚙️ → Arc anlegen bzw. einen ANDEREN Arc loeschen, ebenso fuer einen
+// Entwurf beim Zu-/Aufklappen; 💾 schrieb arcId null. Den Arc-Filter haelt
+// dieselbe Regel: er fiel sonst auf "Alle", obwohl die Liste gefiltert blieb
+// (laut Quelltext — addStoryArc() und editSession() zeichnen sie nicht neu).
+// Ein geloeschter Arc faellt weiter auf '' zurueck: seine Option ist weg.
 function renderStoryArcSelects() {
-    const arcs = getStoryArcs();
-    const options =
-        '<option value="">— Kein Arc —</option>' +
-        arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    const arcOptionen = getStoryArcs()
+        .map(a => `<option value="${a.id}">${esc(a.name)}</option>`)
+        .join('');
+    const neuBefuellen = (select, optionen) => {
+        const vorher = select.value;
+        select.innerHTML = optionen;
+        if (vorher && Array.from(select.options).some(o => o.value === vorher)) {
+            select.value = vorher;
+        }
+    };
     const sessionArc = $('session-arc');
     const filterArc = $('filter-session-arc');
-    if (sessionArc) sessionArc.innerHTML = options;
-    if (filterArc)
-        filterArc.innerHTML =
-            '<option value="">Alle</option>' +
-            arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    if (sessionArc) {
+        neuBefuellen(sessionArc, '<option value="">— Kein Arc —</option>' + arcOptionen);
+    }
+    if (filterArc) neuBefuellen(filterArc, '<option value="">Alle</option>' + arcOptionen);
 }
 function manageStoryArcs() {
     renderStoryArcList();
@@ -344,7 +359,16 @@ function saveSession() {
     const arcInput = $('session-arc');
     const summaryInput = $('session-summary');
     const textInput = $('session-text');
-    const editId = editIdInput?.value || '';
+    let editId = editIdInput?.value || '';
+    // Zeigt die ID auf eine Notiz, die es nicht mehr gibt (geloescht, oder per
+    // Strg+Z zurueckgenommen, waehrend das Formular offen war), wird als NEUE
+    // Notiz gespeichert — die Eingabe bleibt erhalten. Vorher fand der
+    // Bearbeiten-Zweig nichts, schrieb nichts, meldete nichts, und
+    // cancelSessionEdit() warf die Eingabe danach weg (gemessen). Geprueft VOR
+    // pushUndo, wie in saveNPC().
+    const idx = editId ? (D.sessionNotes || []).findIndex(n => n.id === parseEntityId(editId)) : -1;
+    const verwaist = Boolean(editId) && idx === -1;
+    if (verwaist) editId = '';
     const number = parseInt(numberInput?.value || '') || getNextSessionNumber();
     const name = nameInput?.value.trim() || '';
     const date = dateInput?.value || '';
@@ -356,22 +380,24 @@ function saveSession() {
         showToast('⚠️ Datum und Text erforderlich', 'error');
         return;
     }
+    // Vorher legte saveSession() KEINEN Undo-Eintrag an (Vertrag R5): Strg+Z
+    // nach dem Anlegen nahm die vorige Aktion zurueck und die neue Notiz still
+    // mit (Schnappschuss-Undo), ein Ueberschreiben war endgueltig. Der Wortlaut
+    // folgt "Session gelöscht" in deleteSession().
+    pushUndo(editId ? 'Session bearbeitet' : 'Session erstellt');
     if (editId) {
         // Bearbeiten
-        const idx = D.sessionNotes.findIndex(n => n.id === parseInt(editId));
-        if (idx > -1) {
-            D.sessionNotes[idx] = {
-                ...D.sessionNotes[idx],
-                number,
-                name,
-                date,
-                arcId,
-                summary,
-                tags,
-                content
-            };
-            showToast('Notiz aktualisiert');
-        }
+        D.sessionNotes[idx] = {
+            ...D.sessionNotes[idx],
+            number,
+            name,
+            date,
+            arcId,
+            summary,
+            tags,
+            content
+        };
+        showToast('Notiz aktualisiert');
     } else {
         // Neu erstellen
         D.sessionNotes.push({
@@ -384,7 +410,17 @@ function saveSession() {
             tags,
             content
         });
-        showToast('Notiz gespeichert');
+        // Bei verwaister ID die Warnung STATT der Erfolgsmeldung (wie
+        // saveCharacter()): "gespeichert" allein verschwiege, dass es eine
+        // neue Notiz ist und keine bearbeitete.
+        if (verwaist) {
+            showToast(
+                'Die bearbeitete Notiz existiert nicht mehr — als neue Notiz gespeichert',
+                'warning'
+            );
+        } else {
+            showToast('Notiz gespeichert');
+        }
     }
     cancelSessionEdit();
     renderSessions();

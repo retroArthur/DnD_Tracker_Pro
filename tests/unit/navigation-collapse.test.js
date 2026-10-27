@@ -30,6 +30,9 @@
  *       Formular nichts. Und jede aufgeschobene Referenz der Tabelle
  *       `KLAPPFORMULAR_BEARBEITEN` nennt eine Funktion, die ein geladenes
  *       Modul deklariert — eine Umbenennung waere sonst ein stilles No-op.
+ *   (4) DATUM DER NOTIZ (ABBRUCH, R6) — `switchView('notes')` schlaegt heute
+ *       nur fuer ein leeres Datum ohne Bearbeiten vor; das Datum einer
+ *       bearbeiteten Notiz und ein getipptes Entwurfsdatum bleiben.
  *
  * `systems/spellslots/navigation.js` stand bis hierher auf der Ausnahmeliste
  * des Abdeckungs-Gates (`tests/unit/module-test-coverage.test.js`). Mit dieser
@@ -54,7 +57,8 @@ const SOURCE = fs.readFileSync(MODULE_PATH, 'utf8');
  * genau zwei: `$` und `document`. `window.renderStoryArcSelects` wird nur
  * fuer `session-form` gerufen und bleibt darum ein Doppel. `globale` legt
  * weitere Bezeichner in die Sandbox — die Leeren-Funktionen der Klappformulare
- * (`cancelCharEdit`, `cancelEncEdit`), die im Lader aus Feature-Modulen kommen.
+ * (`cancelCharEdit`, `cancelEncEdit`, `cancelSessionEdit`), die im Lader aus
+ * Feature-Modulen kommen.
  */
 function ladeModul(globale = {}) {
     const renderStoryArcSelects = jest.fn();
@@ -159,8 +163,8 @@ function baueKlappformular(id, idFeld, idWert, offen = false) {
     return teile;
 }
 
-/** Ein Doppel der Leeren-Funktion, das tut, was cancelCharEdit() und
- *  cancelEncEdit() tun: leeren UND zuklappen. */
+/** Ein Doppel der Leeren-Funktion, das tut, was cancelCharEdit(),
+ *  cancelEncEdit() und cancelSessionEdit() tun: leeren UND zuklappen. */
 function leerenDoppel(id, idFeld) {
     return jest.fn(() => {
         document.getElementById(idFeld).value = '';
@@ -172,7 +176,8 @@ function leerenDoppel(id, idFeld) {
 
 const KLAPPFORMULARE = [
     ['char-form', 'edit-char-id', 'cancelCharEdit'],
-    ['enc-form', 'edit-enc-id', 'cancelEncEdit']
+    ['enc-form', 'edit-enc-id', 'cancelEncEdit'],
+    ['session-form', 'edit-session-id', 'cancelSessionEdit']
 ];
 
 describe('toggleCollapse() — Bearbeiten-Rest beim Aufklappen (ABBRUCH)', () => {
@@ -280,6 +285,46 @@ describe('showNewCollapsibleForm() — Taste n und Befehlspalette (R3)', () => {
     });
 });
 
+describe("switchView('notes') — das Datum der Notiz (ABBRUCH, R6)", () => {
+    /** Datumsfeld und Bearbeiten-ID, wie `view-resources.html` sie fuehrt. */
+    function baueNotizformular(idWert, datum) {
+        document.body.innerHTML = `
+            <div id="view-notes" class="view"></div>
+            <div id="session-form" class="collapsible-content">
+                <input type="hidden" id="edit-session-id" value="${idWert}">
+                <input type="date" id="session-date" value="${datum}">
+            </div>`;
+        return document.getElementById('session-date');
+    }
+    const heute = () => new Date().toISOString().split('T')[0];
+
+    test('ein leeres Datum ohne Bearbeiten bekommt heute vorgeschlagen', () => {
+        const datum = baueNotizformular('', '');
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe(heute());
+    });
+
+    test('das Datum einer bearbeiteten Notiz bleibt stehen', () => {
+        // DER BEFUND: ✏️ S1 (2026-01-10) → Reiter Wiki → Notizen → 💾 schrieb
+        // das heutige Datum in S1.
+        const datum = baueNotizformular('1', '2026-01-10');
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe('2026-01-10');
+    });
+
+    test('ein getipptes Entwurfsdatum bleibt stehen', () => {
+        const datum = baueNotizformular('', '2026-03-01');
+        ladeModul().context.switchView('notes');
+        expect(datum.value).toBe('2026-03-01');
+    });
+
+    test('andere Ansichten fassen das Datum nicht an', () => {
+        const datum = baueNotizformular('', '');
+        ladeModul().context.switchView('wiki');
+        expect(datum.value).toBe('');
+    });
+});
+
 describe('KLAPPFORMULAR_BEARBEITEN — Vertrag mit Quelltext und Vorlagen (MAINT-02)', () => {
     // Top-Level-`const` liegt nicht am Globalobjekt der Sandbox, ist aber fuer
     // ein weiteres Skript im selben Kontext sichtbar. Fehlt die Tabelle, soll
@@ -310,9 +355,9 @@ describe('KLAPPFORMULAR_BEARBEITEN — Vertrag mit Quelltext und Vorlagen (MAINT
         .filter(f => f.endsWith('.html'))
         .map(f => fs.readFileSync(path.join(TEMPLATES_DIR, f), 'utf8'));
 
-    test('die Tabelle nennt mindestens Charakter- und Encounter-Formular', () => {
+    test('die Tabelle nennt mindestens Charakter-, Encounter- und Notizformular', () => {
         expect(tabelle.map(e => e.formular)).toEqual(
-            expect.arrayContaining(['char-form', 'enc-form'])
+            expect.arrayContaining(['char-form', 'enc-form', 'session-form'])
         );
         expect(moduldateien.length).toBeGreaterThan(0);
     });
