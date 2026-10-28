@@ -95,11 +95,12 @@
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (eigene Vorgaenge, siehe Vertrag)
  *
- * Der Titel "Zauber bearbeiten" beim Bearbeiten (V6). Der veraltete
- * EntityLookup-Cache: das ZWEITE ✏️ desselben Zaubers nach einem 💾 zeigt
- * den alten Stand (`renderInit()`, `features/initiative.js`; Katalog
- * ABBRUCH, Offen (2)) — darum bearbeitet kein
- * Fall hier denselben Zauber zweimal. Der SRD-Typ, den ✏️ → 💾 auf "spell"
+ * Der Titel "Zauber bearbeiten" beim Bearbeiten (V6). Das ZWEITE ✏️
+ * desselben Zaubers nach einem 💾: es zeigte den alten Stand, solange
+ * `EntityLookup` einen Zwischenspeicher hatte (Katalog ABBRUCH, Offen (2));
+ * seit RUECKSPRUNG ist das behoben und hat einen eigenen Waechter
+ * (ruecksprung-rundlauf.spec.js, Fall (3)) — darum bearbeitet kein Fall hier
+ * denselben Zauber zweimal. Der SRD-Typ, den ✏️ → 💾 auf "spell"
  * umschreibt, und das verdeckte Materialfeld.
  */
 import { test, expect } from '@playwright/test';

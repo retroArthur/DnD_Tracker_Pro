@@ -36,7 +36,7 @@
  *         unerreichbar 112, und das sind AUSSCHLIESSLICH die 112
  *         nicht-nativen Zeilen. Alle 112 nativen Knoepfe erreicht.
  *       - `grep -rn "VirtualScroll.create"` findet GENAU EINEN Aufrufer im
- *         ganzen Baum (`features/bestiary/bestiary-render.js:207`). Darum
+ *         ganzen Baum (`features/bestiary/bestiary-render.js:204`). Darum
  *         ist das Bestiarium die einzige Ansicht mit diesem Befund, und
  *         darum sind die vier globalen Stellen in den fuenf Kampfansichten
  *         erreichbar.

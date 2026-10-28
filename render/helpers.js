@@ -531,47 +531,46 @@ function populateFilterDropdown(selectId, items, config = {}) {
     return true;
 }
 /**
- * Zentrales Entity-Lookup-System mit optionalem Caching
- * Vermeidet redundante Array.find()-Aufrufe
+ * Zentrales Entity-Lookup-System: ein Ort fuer "Eintrag zu Sammlung und ID",
+ * statt ueberall eigener Array.find()-Aufrufe. Ohne Zwischenspeicher — jeder
+ * Leser sieht, was im Moment des Aufrufs in D steht (siehe get()). Den
+ * Schalter enableCache()/clearCache() samt seinen 23 Aufrufzeilen in acht
+ * Darstellungsfunktionen gibt es seit RUECKSPRUNG nicht mehr.
  */
 const EntityLookup = {
-    /** Cache für Entity-Lookups */
-    _cache: new Map(),
-    /** Ob Caching aktiviert ist */
-    _cacheEnabled: false,
     /**
-     * Aktiviert Caching für Performance bei vielen Lookups
-     * Sollte vor Batch-Operationen aktiviert und danach deaktiviert werden
-     */
-    enableCache() {
-        this._cacheEnabled = true;
-    },
-    /**
-     * Deaktiviert und leert den Cache
-     * Sollte nach Datenänderungen aufgerufen werden
-     */
-    clearCache() {
-        this._cache.clear();
-        this._cacheEnabled = false;
-    },
-    /**
-     * Holt eine Entity aus der entsprechenden Collection
+     * Holt eine Entity aus der entsprechenden Collection — immer das Objekt,
+     * das im Moment des Aufrufs in D steht (Vertrag RUECKSPRUNG, R1,
+     * docs/bugfixes.md). Nichts wird gemerkt, weder ein Treffer noch null.
+     *
+     * Bis RUECKSPRUNG legte get() bei eingeschaltetem Zwischenspeicher
+     * (enableCache(), inzwischen entfernt) jeden Treffer als Objektreferenz
+     * ab, und kein Schreiben machte das ungueltig.
+     * Die Speicherpfade von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe
+     * ERSETZEN den Eintrag in D (`{ ...alt, ...neu }`), und eingeschaltet
+     * blieb die Ablage nach jedem Laden ohne Kampf (renderInit() kehrt bei 0
+     * Kaempfern frueh zurueck), nach dem DM-Screen ohne Grid-Widget, nach
+     * Langer Rast, HP-Rechner, Zustand und nach jedem Wurf in einer der acht
+     * Darstellungsfunktionen. Gemessen: das zweite ✏️ nach einem 💾 lud den
+     * alten Stand, das naechste 💾 schrieb ihn zurueck — in D, im Speicher
+     * und nach dem Neuladen. Eine Ablage, die an der Disziplin ihrer Aufrufer
+     * haengt, ist hier die falsche Abwaegung. Der Preis ist gemessen: am
+     * meisten zahlt renderParty(), das je Held jeden Zauber und jeden
+     * Gegenstand sucht (20 Helden mit je 30 Zaubern und 20 Gegenstaenden aus
+     * 500 bzw. 400: 1000 Aufrufe). Bei realistischer Verteilung kein
+     * messbarer Unterschied, auch bei 4-fach gedrosselter CPU. Im kuenstlich
+     * schlechtesten Fall — alle Helden tragen die 30 letzten Zauber und die
+     * 20 letzten Gegenstaende — Median 1,2 → 3,4 ms, bei 4-fach gedrosselter
+     * CPU 6,9 → 15,8 ms. Wird das je eng: einen Index, der je Aufruf frisch
+     * aus D entsteht, keine Ablage ueber Aufrufe hinweg (R1).
      */
     get(type, id) {
         const D = window.D;
         const numId = parseEntityId(id);
         if (numId === null) return null;
-        const key = `${type}-${numId}`;
-        if (this._cacheEnabled && this._cache.has(key)) {
-            return this._cache.get(key);
-        }
         const collection = D[type];
         if (!Array.isArray(collection)) return null;
-        const entity = collection.find(item => item.id === numId) || null;
-        if (this._cacheEnabled) {
-            this._cache.set(key, entity);
-        }
-        return entity;
+        return collection.find(item => item.id === numId) || null;
     },
     /**
      * Holt den Namen einer Entity
@@ -659,9 +658,10 @@ function getEntityForCombat(entityType, entityName, encounterId) {
             id = entity.id;
         }
     } else if (entityType === 'enemy') {
-        // Check encounters first, then NPCs. Die ID direkt in D.encounters, nicht
-        // ueber den EntityLookup-Cache: renderInit() laesst ihn bei leerer
-        // Initiative eingeschaltet, dann hielte er ein ersetztes Objekt fest.
+        // Check encounters first, then NPCs. Die ID direkt in D.encounters — so
+        // geschrieben, als EntityLookup noch einen Zwischenspeicher hatte, der ein
+        // ersetztes Objekt festhielt; seit RUECKSPRUNG liest EntityLookup.encounter()
+        // ebenso frisch, beide Wege sind gleichwertig.
         const encId = parseEntityId(encounterId);
         entity =
             (encId !== null && (window.D.encounters || []).find(e => e.id === encId)) ||

@@ -16,8 +16,6 @@ function renderQuests() {
        auf der alten Zahl stehen, also genau umgekehrt falsch (Welle 6,
        Schritt 7; bewacht von W6-R-09 Fall 3 und W6-R-10 Fall 2). */
     setViewCount('quests', (D.quests || []).length);
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');
     const activeOnly = activeOnlyEl?.checked || false;
     const searchEl = $('quest-search');
@@ -41,11 +39,9 @@ function renderQuests() {
             buttonAction: 'show-new-quest-modal',
             isFiltered: !!(search || activeOnly)
         });
-        EntityLookup.clearCache();
         return;
     }
     c.innerHTML = quests.map(q => renderQuestItem(q)).join('');
-    EntityLookup.clearCache();
 }
 function renderQuestItem(q) {
     const renderEntityLinks = window.renderEntityLinks;

@@ -105,9 +105,9 @@ function saveLink() {
     // Bearbeiten-Zweig nichts (kein Else-Zweig), schloss die Karte und
     // speicherte trotzdem: gemessen war die Eingabe still weg, ohne jede
     // Meldung, mit einem leeren Undo-Eintrag "Link bearbeitet". Geprueft VOR
-    // pushUndo, wie in saveNPC(). Gesucht wird direkt in D.links, NICHT ueber
-    // EntityLookup.link(): dessen Zwischenspeicher ist nach dem Laden
-    // eingeschaltet und haelt einen eben geloeschten Link noch fest.
+    // pushUndo, wie in saveNPC(). Gesucht wird direkt in D.links, weil der
+    // Index gebraucht wird; der fruehere Grund (der Zwischenspeicher von
+    // EntityLookup hielt Geloeschtes fest) entfiel mit RUECKSPRUNG.
     const idx = editId ? D.links.findIndex(l => l.id === parseEntityId(editId)) : -1;
     const verwaist = Boolean(editId) && idx === -1;
     if (verwaist) editId = '';

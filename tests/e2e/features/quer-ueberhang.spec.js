@@ -111,7 +111,7 @@
  *
  *   Todesrettung   `.death-saves` (`display: flex`, `flex-wrap: nowrap`) steht
  *                  in `.init-info` und rendert nur fuer einen SPIELER bei 0
- *                  Trefferpunkten (`features/initiative.js:183`). Sie braucht
+ *                  Trefferpunkten (`features/initiative.js:181`). Sie braucht
  *                  277px und bekommt die 128px der `minmax(0, 1fr)`-Namensspalte
  *                  — die sechs 16px-Punkte sind Tippziele und schrumpfen nicht.
  *                  Der letzte lag bei x=431..447, in JEDEM der drei Fenster
@@ -482,7 +482,7 @@ const SAAT = {
              i=3  bei 0 Trefferpunkten mit zwei Fehlschlaegen → Todesrettung
              i=5  offene Konzentrationsprobe (pendingCheck 22) → Pruefbanner
            Alle drei Indizes sind ungerade, also `type: 'player'` — die
-           Todesrettung rendert nur fuer Spieler (features/initiative.js:183). */
+           Todesrettung rendert nur fuer Spieler (features/initiative.js:181). */
         combatants: reihe(10, i => ({
             id: i,
             name: `Kaempfer mit langem Namen ${zz(i)}`,

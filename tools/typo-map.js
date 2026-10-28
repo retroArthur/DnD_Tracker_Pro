@@ -193,7 +193,7 @@ const ZUORDNUNG = {
     /* --- rem: drei Werte, und nur aus der INLINE-Typografie ---
        NACHGETRAGEN am 2026-10-06 (Schritt 7). Im CSS kommt `rem` nicht vor —
        F-03 wacht darueber — aber die Inline-Stile in Templates und JS tragen
-       drei rem-Werte: `0.8rem` (initiative.js:157 und drei Stellen in
+       drei rem-Werte: `0.8rem` (initiative.js:155 und drei Stellen in
        soundboard-render.js), `0.85rem` (soundboard-render.js:32) und
        `1.2rem` (modals-entity.html:637).
        SIE STEHEN IN DERSELBEN TABELLE UND NICHT IN EINER ZWEITEN, weil die

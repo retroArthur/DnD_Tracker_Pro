@@ -73,7 +73,7 @@ dnd-tracker-modular/
 │       └── file-backup-ui.js
 │
 ├── render/                      # [4] Render infrastructure (1 file)
-│   └── helpers.js               # ErrorHandler, safeRender, EntityLookup (w/ optional cache)
+│   └── helpers.js               # ErrorHandler, safeRender, EntityLookup (no cache)
 │
 ├── features/                    # [5] Domain features (59 .js files: 20 subdirectories + 12 root-level)
 │   ├── party/                   # Character management
@@ -332,7 +332,7 @@ dnd-tracker-modular/
 
 **`render/` (1 module) — Render Infrastructure:**
 
-- `helpers.js`: ErrorHandler (error ring buffer), safeRender (error boundaries), EntityLookup (with optional per-render cache)
+- `helpers.js`: ErrorHandler (error ring buffer), safeRender (error boundaries), EntityLookup (no cache since RUECKSPRUNG, docs/bugfixes.md)
 
 **`features/` (59 files across 20+ subdirectories) — Domain Features:**
 

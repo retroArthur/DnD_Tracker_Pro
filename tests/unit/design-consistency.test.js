@@ -3857,7 +3857,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    Theme-Farbe
    ===========================================================================
    Der Bestiarium-Statblock liegt NICHT auf einer Theme-Flaeche. Er liegt auf
-   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:300` baut
+   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:295` baut
    `<div class="bestiary-statblock read-aloud parchment">`, und
    `party.css .read-aloud.parchment` faerbt das mit einem Verlauf aus
    --ra-parchment-from (#f5e6c8) nach --ra-parchment-to (#e8d4a8). Diese beiden
@@ -3924,7 +3924,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    #64503e und damit 5,66 und 5,22. Literal -> Token ist Welle-2-Arbeit, kein
    Kontrastmangel. Ebenso NICHT gemeint ist `.bestiary-attribution`: sie steht
    trotz des gemeinsamen Namensanfangs ausserhalb des Statblocks
-   (bestiary-render.js:435, Geschwister der Statblock-Schachtel).
+   (bestiary-render.js:430, Geschwister der Statblock-Schachtel).
    =========================================================================== */
 describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () => {
     /** Der Modulpfad steht hier BEWUSST am Stueck und in ausfuehrbarem Code,
@@ -3944,8 +3944,8 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
      *  deshalb bis 2026-09-28 aus dem Muster — lautlos, wie es sich fuer
      *  diesen Fehlertyp gehoert. Die Spans entstehen in
      *  renderClickableDice() (bestiary-render.js:41) und gehen ueber
-     *  renderTraitList() (:240, :249) in Merkmale und Aktionen; beides
-     *  verpackt renderStatblockHTML() (:300) in die Pergamentschachtel, auf
+     *  renderTraitList() (:235, :244) in Merkmale und Aktionen; beides
+     *  verpackt renderStatblockHTML() (:295) in die Pergamentschachtel, auf
      *  demselben Weg auch in der Initiative-Schublade
      *  (initiative-statblock.js:86). Die Spans liegen also mitten auf dem
      *  Pergament und trugen mit `var(--cyan)`/`var(--gold)` die schlechteste
@@ -7929,9 +7929,9 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
 
            6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
                4x `0 0 20px var(--gold)`   Sprungmarken:
-                   features/encounters/encounters-render.js:520  (heute :595)
-                   features/locations/locations-render.js:360    (heute :368)
-                   features/npcs/npc-render.js:382               (heute :390)
+                   features/encounters/encounters-render.js:520  (heute :590)
+                   features/locations/locations-render.js:360    (heute :363)
+                   features/npcs/npc-render.js:382               (heute :385)
                    systems/entity-links.js:430                   (heute :443)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
                    ui/actions/entity-actions.js:362              (heute :376)
@@ -10269,19 +10269,19 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
     const JS_MARKEN = [
         {
             datei: 'features/encounters/encounters-render.js',
-            zeile: 595,
+            zeile: 590,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'features/locations/locations-render.js',
-            zeile: 368,
+            zeile: 363,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'features/npcs/npc-render.js',
-            zeile: 390,
+            zeile: 385,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
