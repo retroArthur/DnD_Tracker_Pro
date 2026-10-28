@@ -130,7 +130,7 @@ function createMobCombatant(monster, count, source) {
 
 // ============================================================
 // RENDERMOBROW — Mob-Zeile als HTML-String (INIT-03, D-12)
-// Analog: lair-type Zweig in renderInit() (features/initiative.js Zeilen 148-161)
+// Analog: lair-type Zweig in renderInit() (features/initiative.js Zeilen 146-159)
 // UI-SPEC HTML-Struktur: 04-UI-SPEC.md Component Visual Contracts INIT-03
 // ============================================================
 

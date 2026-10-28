@@ -211,7 +211,7 @@
            Kampfzustaenden ueberhaupt im Markup stehen und deshalb von einer
            Saat aus gleich gesunden Kaempfern nie erzeugt wurden:
 
-             `.death-saves`                  braucht 277px (features/initiative.js:183,
+             `.death-saves`                  braucht 277px (features/initiative.js:181,
                                              nur SPIELER bei 0 Trefferpunkten)
              `.concentration-check-banner`   braucht 221px (nur bei
                                              `concentration.pendingCheck`)

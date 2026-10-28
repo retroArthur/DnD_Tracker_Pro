@@ -554,11 +554,15 @@ const EntityLookup = {
      * Darstellungsfunktionen. Gemessen: das zweite ✏️ nach einem 💾 lud den
      * alten Stand, das naechste 💾 schrieb ihn zurueck — in D, im Speicher
      * und nach dem Neuladen. Eine Ablage, die an der Disziplin ihrer Aufrufer
-     * haengt, ist hier die falsche Abwaegung. Der Preis ist gemessen und
-     * klein: renderParty() mit 20 Helden zu je 30 Zaubern (600 Aufrufe) bei
-     * 500 Zaubern — im schlechtesten Fall teilen alle Helden die 30 letzten
-     * Zauber — Median 1,5 → 2,0 ms, also rund eine Mikrosekunde je Aufruf;
-     * mit verschiedenen Zaubern je Held kein messbarer Unterschied.
+     * haengt, ist hier die falsche Abwaegung. Der Preis ist gemessen: am
+     * meisten zahlt renderParty(), das je Held jeden Zauber und jeden
+     * Gegenstand sucht (20 Helden mit je 30 Zaubern und 20 Gegenstaenden aus
+     * 500 bzw. 400: 1000 Aufrufe). Bei realistischer Verteilung kein
+     * messbarer Unterschied, auch bei 4-fach gedrosselter CPU. Im kuenstlich
+     * schlechtesten Fall — alle Helden tragen die 30 letzten Zauber und die
+     * 20 letzten Gegenstaende — Median 1,2 → 3,4 ms, bei 4-fach gedrosselter
+     * CPU 6,9 → 15,8 ms. Wird das je eng: einen Index, der je Aufruf frisch
+     * aus D entsteht, keine Ablage ueber Aufrufe hinweg (R1).
      */
     get(type, id) {
         const D = window.D;

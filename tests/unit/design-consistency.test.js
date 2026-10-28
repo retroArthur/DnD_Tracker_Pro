@@ -3944,8 +3944,8 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
      *  deshalb bis 2026-09-28 aus dem Muster — lautlos, wie es sich fuer
      *  diesen Fehlertyp gehoert. Die Spans entstehen in
      *  renderClickableDice() (bestiary-render.js:41) und gehen ueber
-     *  renderTraitList() (:240, :249) in Merkmale und Aktionen; beides
-     *  verpackt renderStatblockHTML() (:300) in die Pergamentschachtel, auf
+     *  renderTraitList() (:235, :244) in Merkmale und Aktionen; beides
+     *  verpackt renderStatblockHTML() (:295) in die Pergamentschachtel, auf
      *  demselben Weg auch in der Initiative-Schublade
      *  (initiative-statblock.js:86). Die Spans liegen also mitten auf dem
      *  Pergament und trugen mit `var(--cyan)`/`var(--gold)` die schlechteste

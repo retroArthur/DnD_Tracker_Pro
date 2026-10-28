@@ -150,7 +150,7 @@
 **Render Helpers** (`render/`):
 - **Purpose:** Rendering infrastructure and utilities
 - **Location:** `render/helpers.js`
-- **Contains:** ErrorHandler (error ring buffer), safeRender (error boundaries), EntityLookup (with optional cache), HTML building helpers
+- **Contains:** ErrorHandler (error ring buffer), safeRender (error boundaries), EntityLookup (no cache since RUECKSPRUNG, docs/bugfixes.md), HTML building helpers
 - **Depends on:** core/, utils/
 - **Used by:** All feature renders
 
@@ -212,9 +212,9 @@
 - Benefits: No hardcoded renders in switchView(), easy to add tabs
 
 **Entity Lookup** (`render/helpers.js`):
-- Purpose: Centralized entity access by type/id with optional per-render caching
-- Pattern: `EntityLookup.enableCache()` at start of heavy render, `clearCache()` at end
-- Benefits: Reduced redundant array iterations, improved performance
+- Purpose: Centralized entity access by type/id; every call reads what is in `D` at that moment
+- Pattern: no cache — the per-render cache (`enableCache()`/`clearCache()`) kept replaced entries and was removed with RUECKSPRUNG (docs/bugfixes.md); both methods no longer exist
+- Benefits: One place for "entry by collection and id" instead of scattered `Array.find()` calls
 
 **Widget Abstraction** (DM Screen):
 - Purpose: Modular, toggleable dashboard panels

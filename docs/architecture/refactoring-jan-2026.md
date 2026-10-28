@@ -79,7 +79,7 @@ function renderInit() {
 
 // GOOD: Extracted helpers
 function renderInit() {
-    EntityLookup.enableCache();
+    // (EntityLookup.enableCache() — entfernt mit RUECKSPRUNG, siehe Phase 4)
 
     const html = init.combatants.map(cb => {
         const { hpPercent, hpClass } = getCombatantHpStatus(cb);
@@ -88,7 +88,7 @@ function renderInit() {
         // ... simple template
     }).join('');
 
-    EntityLookup.clearCache();
+    // (EntityLookup.clearCache() — entfernt mit RUECKSPRUNG, siehe Phase 4)
 }
 ```
 - **Rule:** If a function is >100 lines, look for extraction opportunities
@@ -217,7 +217,7 @@ function renderInit() {
 }
 ```
 - **Result:** 50-70% faster rendering (150ms → <50ms with 10 combatants)
-- **Berichtigt (RUECKSPRUNG, 2026-10-27):** Dieses Muster ist zurückgenommen. `findByName()` las nie aus dem Cache — der frühere Kommentar „Cached!“ an diesem Aufruf im Beispiel stimmte nie —, und der genannte Gewinn ist nirgends gemessen. Der Cache selbst hielt ersetzte Objekte fest: Er blieb nach jedem Laden ohne Kampf eingeschaltet (`renderInit()` kehrte bei 0 Kämpfern vor `clearCache()` zurück), und das zweite ✏️ von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe lud nach einem 💾 den alten Stand, den das nächste 💾 zurückschrieb. `EntityLookup.get()` liest seither immer aus `D`; `enableCache()`/`clearCache()` gibt es nicht mehr. Gemessen mit 20 Helden zu je 30 Zaubern, 500 Zaubern, 100 NPCs und 20 Kämpfern: `renderInit()`, `renderNPCList()`, `renderDMScreen()` unverändert, `renderParty()` im schlechtesten Fall (alle Helden teilen die 30 letzten Zauber) Median 1,5 → 2,0 ms. Vertrag RUECKSPRUNG, `docs/bugfixes.md`.
+- **Berichtigt (RUECKSPRUNG, 2026-10-27):** Dieses Muster ist zurückgenommen. `findByName()` las nie aus dem Cache — der frühere Kommentar „Cached!“ an diesem Aufruf im Beispiel stimmte nie —, und der genannte Gewinn ist nirgends gemessen. Der Cache selbst hielt ersetzte Objekte fest: Er blieb nach jedem Laden ohne Kampf eingeschaltet (`renderInit()` kehrte bei 0 Kämpfern vor `clearCache()` zurück), und das zweite ✏️ von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe lud nach einem 💾 den alten Stand, den das nächste 💾 zurückschrieb. `EntityLookup.get()` liest seither immer aus `D`; `enableCache()`/`clearCache()` gibt es nicht mehr. Gemessen mit 20 Helden zu je 30 Zaubern, 500 Zaubern, 100 NPCs und 20 Kämpfern: `renderInit()`, `renderNPCList()`, `renderDMScreen()` unverändert, `renderParty()` im schlechtesten Fall (alle Helden teilen die 30 letzten Zauber) Median 1,5 → 2,0 ms. Nachgemessen mit zusätzlich 20 Gegenständen je Held (1000 Aufrufe in `renderParty()`): bei realistischer Verteilung kein Unterschied, auch bei 4-fach gedrosselter CPU; im künstlich schlechtesten Fall (alle Helden teilen die 30 letzten Zauber und die 20 letzten Gegenstände) 1,2 → 3,4 ms, bei 4-fach gedrosselter CPU 6,9 → 15,8 ms. Vertrag RUECKSPRUNG, `docs/bugfixes.md`.
 
 **Problem: Slow Deep Cloning in Backups**
 - **What was wrong:** `JSON.parse(JSON.stringify(obj))` used for deep cloning (slow, loses Date objects)
