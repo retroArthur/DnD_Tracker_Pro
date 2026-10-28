@@ -17,13 +17,13 @@
  * bleibt ungepinnt. Heldenkarte, Wiki-Schnellzugriff, Brotkrumen, Loesch-Rueckfragen
  * und der Markdown-Export des Zaubers zeigen alte Namen und geloeschte Eintraege.
  *
- * URSACHE. Die fuenf Speicherpfade (saveWikiEntry, saveLink, saveSpell, saveSession,
- * saveLoot) ERSETZEN das Objekt im Array — `D.wiki[idx] = { ...D.wiki[idx], ...entry }` —
- * und die Loeschpfade filtern das Array neu. Die abgelegte Referenz zeigt danach auf
- * ein Objekt, das nicht mehr in D steht. Wer es ins Formular laedt, speichert es
- * zurueck; wer hineinschreibt (toggleWikiPin), schreibt ins Leere. enableCache()
- * leert die Ablage nicht einmal, ein spaeteres Darstellungsfenster sieht also auch
- * Eintraege von vorher.
+ * URSACHE (Stand 785cdeb). Die fuenf Speicherpfade (saveWikiEntry, saveLink, saveSpell,
+ * saveSession, saveLoot) ERSETZEN das Objekt im Array — `D.wiki[idx] = { ...D.wiki[idx],
+ * ...entry }` — und die Loeschpfade filtern das Array neu. Die abgelegte Referenz
+ * zeigt danach auf ein Objekt, das nicht mehr in D steht. Wer es ins Formular laedt,
+ * speichert es zurueck; wer hineinschreibt (toggleWikiPin), schreibt ins Leere.
+ * enableCache() leert die Ablage nicht einmal, ein spaeteres Darstellungsfenster sieht
+ * also auch Eintraege von vorher.
  *
  * REGEL R1 — Lesen ist immer frisch. Jede Lesestelle ueber EntityLookup liefert das
  * Objekt, das im Moment des Aufrufs in D steht: nach Ersetzen das neue, nach Loeschen
@@ -32,22 +32,33 @@
  * toggleWikiPin schreibt in das gelieferte Objekt, und nur die Referenz aus D traegt
  * eine solche Aenderung in den Speicher.
  *
- * WARUM DER SCHALTER NUR BEDIENT WIRD, WENN ES IHN GIBT. Freigegeben ist, den
- * Zwischenspeicher abzuschaffen; ein zweiter Schritt entfernt enableCache() und
- * clearCache() samt ihrer Aufrufe. Jeder R1-Fall versetzt EntityLookup deshalb in den
- * Zustand, in dem es heute nach dem Laden ohne Kampf steht — enableCache(), aber nur,
- * wenn die Methode existiert — und liest nie `_cache` oder `_cacheEnabled`. Der
- * Vertrag haengt am Verhalten, nicht an den Innereien. Ein Fix, der nur die Aufrufer
- * diszipliniert (clearCache() im finally aller acht Darstellungsfunktionen), laesst
- * diese Datei absichtlich rot: der Fehler sitzt im Leser, und jede kuenftige
- * Einschaltstelle ohne finally risse das Leck wieder auf (Fixvergleich im Vertrag).
+ * WARUM DER SCHALTER NUR BEDIENT WIRD, WENN ES IHN GIBT. Freigegeben war, den
+ * Zwischenspeicher abzuschaffen; der zweite Schritt des Fixes hat enableCache() und
+ * clearCache() samt ihrer Aufrufe entfernt. Jeder R1-Fall versetzt EntityLookup deshalb
+ * in den Zustand, in dem es am Stand 785cdeb nach dem Laden ohne Kampf stand —
+ * enableCache(), aber nur, wenn die Methode existiert (seit dem Fix nicht mehr) — und
+ * liest nie `_cache` oder `_cacheEnabled`. Der Vertrag haengt am Verhalten, nicht an
+ * den Innereien. Ein Fix, der nur die Aufrufer diszipliniert haette (clearCache() im
+ * finally aller acht Darstellungsfunktionen), liesse diese Datei absichtlich rot: der
+ * Fehler sass im Leser, und jede kuenftige Einschaltstelle ohne finally risse das Leck
+ * wieder auf (Fixvergleich im Vertrag).
  * Die Kehrseite des "nur, wenn es ihn gibt": derselbe Fix mit UMBENANNTEM Schalter
  * (beginBatch()/endBatch() statt enableCache()/clearCache()) oder mit einem
- * Kennzeichen, das die Darstellungsfunktionen direkt setzen, liesse jeden R1-Fall
- * gruen — zustandNachDemLaden() kennt den neuen Schalter nicht und prueft den Leser
- * im ausgeschalteten Zustand (am Mutanten nachgemessen: 25 von 25 gruen). Das schliesst
- * W2: der Quellbaum darf EntityLookup nur ueber Leser bedienen, die ein R1-Fall dieser
- * Datei deckt, und ueber den einen bekannten Schalter.
+ * Kennzeichen AN EntityLookup, das die Darstellungsfunktionen direkt setzen
+ * (`EntityLookup._stapel = true`), liesse jeden R1-Fall gruen — zustandNachDemLaden()
+ * kennt den neuen Schalter nicht und prueft den Leser im ausgeschalteten Zustand (am
+ * Mutanten nachgemessen: 25 von 25 gruen). Das schliesst W2: der Quellbaum darf
+ * EntityLookup nur ueber Leser bedienen, die ein R1-Fall dieser Datei deckt, und ueber
+ * einen Schalter, den zustandNachDemLaden() bedient — und den bedient es nur, solange
+ * das Modul ihn anbietet. Ein blosser Aufruf `EntityLookup.enableCache()`, wie
+ * CLAUDE.md ihn noch als Muster zeigt, ist seit dem Fix also fremd: er wirft zur
+ * Laufzeit einen TypeError, und W2 nennt die Stelle (am Mutanten nachgemessen: eine
+ * Zeile in renderQuests(), vorher W2 gruen, jetzt rot).
+ * Was W2 NICHT schliesst: ein Kennzeichen AUSSERHALB von EntityLookup (`window.…`,
+ * eine Modulvariable), das die Darstellungsfunktionen setzen und get() liest. Das
+ * faengt nur der E2E-Waechter desselben Vertrags (ruecksprung-rundlauf.spec.js,
+ * ruecksprung-anzeigen.spec.js) — am Mutanten mit `window.__elBatch` nachgemessen:
+ * diese Datei 33 von 33 gruen, die beiden E2E-Waechter 25 von 25 rot.
  *
  * DIE BEQUEMLICHKEITSMETHODEN. Je ein Fall fuer die fuenf, ueber die der gemessene
  * Datenverlust laeuft: wiki() (editWikiEntry, toggleWikiPin), link() (editLink),
@@ -60,22 +71,23 @@
  * spaet (Fixvergleich im Vertrag).
  *
  * DIE UEBRIGEN SIEBEN (R1-9). character(), npc(), location(), quest(), encounter(),
- * shop() und filter() gelten heute nur als geschuetzt, weil ihre eigenen
- * Darstellungsfunktionen die Ablage leeren — solange die nicht werfen und keine
- * Party-Aktion folgt. Ihre Speicherpfade ersetzen genauso an derselben Stelle. Ohne
+ * shop() und filter() galten am Stand 785cdeb nur als geschuetzt, weil ihre eigenen
+ * Darstellungsfunktionen die Ablage leerten — solange die nicht warfen und keine
+ * Party-Aktion folgte. Ihre Speicherpfade ersetzen genauso an derselben Stelle. Ohne
  * diese Faelle machte ein Fix diese Datei gruen, der nur die fuenf
  * Datenverlust-Sammlungen an der Ablage vorbeischleust und den Rest weiter veralten
  * laesst (am Mutanten nachgemessen).
  *
- * KONTROLLEN, heute und nach dem Fix gruen: ohne eingeschalteten Schalter ist get()
- * schon heute frisch; eine Aenderung AM Objekt (dieselbe Referenz, wie bei
+ * KONTROLLEN, vor und nach dem Fix gruen: ohne eingeschalteten Schalter war get()
+ * schon vor dem Fix frisch; eine Aenderung AM Objekt (dieselbe Referenz, wie bei
  * toggleQuestStatus) ist auch mit Schalter sichtbar; findByName() liest nie aus der
  * Ablage; ungueltige IDs und fehlende Sammlungen liefern null. Waechter W1 haelt die
  * Tabelle dieser Datei gegen das Modul: jede Methode liest die genannte Sammlung —
  * sonst pruefte ein Fall eine Sammlung, die der Datenverlust-Pfad gar nicht liest.
  * Waechter W2 liest die Module aus loader.js und laesst an EntityLookup nur die
- * gedeckten Leser und enableCache()/clearCache() zu; ein neuer Leser braucht hier
- * einen R1-Fall, ein neuer Schalter muss in zustandNachDemLaden().
+ * gedeckten Leser zu und enableCache()/clearCache() nur, solange das Modul sie anbietet
+ * (seit dem Fix nie); ein neuer Leser braucht hier einen R1-Fall, ein neuer Schalter
+ * muss in zustandNachDemLaden().
  *
  * Werkbank: ein vm-Kontext, der zugleich `window` ist, mit den ECHTEN Quelldateien in
  * Loader-Reihenfolge (wie tests/unit/next-id.test.js). Frischer Kontext je Fall — die
@@ -124,9 +136,11 @@ function ladeKontext() {
 }
 
 /**
- * Versetzt EntityLookup in den Zustand, in dem es heute nach dem Laden ohne Kampf
- * steht (renderInit() mit 0 Kaempfern schaltet ein und nicht wieder aus). Nur, wenn
- * es den Schalter gibt — der Fix darf ihn entfernen (siehe Kopf).
+ * Versetzt EntityLookup in den Zustand, in dem es am Stand 785cdeb nach dem Laden ohne
+ * Kampf stand (renderInit() mit 0 Kaempfern schaltete ein und nicht wieder aus). Nur,
+ * wenn es den Schalter gibt — seit dem Fix gibt es ihn nicht, und die Funktion tut
+ * nichts. Sie bleibt, damit ein zurueckkehrender Schalter samt Ablage an jedem R1-Fall
+ * rot wird (siehe Kopf; W2 laesst seine Aufrufe auch nur dann zu).
  * @param {Object} lookup - ctx.EntityLookup
  */
 function zustandNachDemLaden(lookup) {
@@ -219,7 +233,7 @@ const UEBRIGE_LESER = [
  * Die Leser, die ein Fall dieser Datei deckt: get() ueber R1-1 bis R1-3 und R1-6,
  * getName() ueber R1-4, exists() ueber R1-5, findByName() ueber K3, die
  * Bequemlichkeitsmethoden ueber R1-7/R1-8 bzw. R1-9. W2 laesst im Quellbaum nur diese
- * zu (und SCHALTER).
+ * zu (und SCHALTER, solange das Modul ihn anbietet).
  */
 const GEDECKTE_LESER = [
     'get',
@@ -230,7 +244,11 @@ const GEDECKTE_LESER = [
     ...UEBRIGE_LESER.map(f => f.methode)
 ];
 
-/** Der Schalter, den zustandNachDemLaden() bedient, und sein Gegenstueck. */
+/**
+ * Der Schalter, den zustandNachDemLaden() bedient, und sein Gegenstueck. W2 laesst sie
+ * nur zu, solange das Modul sie anbietet — seit dem Fix tut es das nicht, ein Aufruf
+ * waere ein TypeError zur Laufzeit.
+ */
 const SCHALTER = ['enableCache', 'clearCache'];
 
 describe('R1 — Lesen ist immer frisch (Vertrag RUECKSPRUNG)', () => {
@@ -369,7 +387,7 @@ describe('R1 — Lesen ist immer frisch (Vertrag RUECKSPRUNG)', () => {
     );
 });
 
-describe('R1 — Kontrollen und Waechter (heute und nach dem Fix gruen)', () => {
+describe('R1 — Kontrollen und Waechter (vor und nach dem Fix gruen)', () => {
     let ctx;
     let lookup;
     beforeEach(() => {
@@ -377,7 +395,7 @@ describe('R1 — Kontrollen und Waechter (heute und nach dem Fix gruen)', () => 
         lookup = ctx.EntityLookup;
     });
 
-    test('K1 (Kontrolle): ohne eingeschalteten Schalter ist get() schon heute frisch', () => {
+    test('K1 (Kontrolle): ohne eingeschalteten Schalter war get() schon vor dem Fix frisch', () => {
         ctx.D.wiki = [{ id: 1, title: 'Waterdeep' }];
         ctx.D.links = [];
         ctx.D.spells = [{ id: 1, name: 'Feuerball' }];
@@ -436,7 +454,7 @@ describe('R1 — Kontrollen und Waechter (heute und nach dem Fix gruen)', () => 
         expect(lookup[fall.methode](3)).toBe(eintrag);
     });
 
-    test('W2 (Waechter): der Quellbaum bedient EntityLookup nur ueber gedeckte Leser und den bekannten Schalter', () => {
+    test('W2 (Waechter): der Quellbaum bedient EntityLookup nur ueber gedeckte Leser und einen Schalter, den es gibt', () => {
         const module = extractModulesFromLoader(
             fs.readFileSync(path.join(REPO_ROOT, 'loader.js'), 'utf8')
         );
@@ -451,9 +469,17 @@ describe('R1 — Kontrollen und Waechter (heute und nach dem Fix gruen)', () => 
                 /\bEntityLookup\s*\??\.\s*([A-Za-z_][\w$]*)/g
             )) {
                 gesehen.add(glied);
-                if (!GEDECKTE_LESER.includes(glied) && !SCHALTER.includes(glied)) {
-                    fremd.push(`${rel}: EntityLookup.${glied}`);
-                }
+                if (GEDECKTE_LESER.includes(glied)) continue;
+                // Ein Schalter zaehlt nur, solange das Modul ihn anbietet: nur dann
+                // bedient zustandNachDemLaden() ihn, und nur dann wirft sein Aufruf
+                // nicht. Seit RUECKSPRUNG gibt es ihn nicht (CLAUDE.md zeigt das
+                // Muster noch).
+                if (SCHALTER.includes(glied) && typeof lookup[glied] === 'function') continue;
+                fremd.push(
+                    SCHALTER.includes(glied)
+                        ? `${rel}: EntityLookup.${glied} (entfernt mit RUECKSPRUNG, wirft zur Laufzeit)`
+                        : `${rel}: EntityLookup.${glied}`
+                );
             }
         }
         // Nicht leer: der Scan findet wenigstens die Leser, die render/helpers.js selbst ruft.
