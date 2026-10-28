@@ -33,8 +33,8 @@
  *   mit einem Kaempfer, ohne         richtig, alle fuenf (13)
  *   diese Wege
  *
- * DIE URSACHE: `EntityLookup` (`render/helpers.js`) merkt sich bei
- * eingeschaltetem Zwischenspeicher, was `get()` gefunden hat — den
+ * DIE URSACHE (Stand 785cdeb): `EntityLookup` (`render/helpers.js`) merkt
+ * sich bei eingeschaltetem Zwischenspeicher, was `get()` gefunden hat — den
  * Objektverweis, auch `null` —, und kein Schreiben macht das ungueltig. Die
  * Speicherfunktionen der fuenf Arten ERSETZEN den Eintrag in D durch ein
  * neues Objekt (`{ ...alt, ...neu }`), und ihre Darstellung danach fasst den
@@ -54,8 +54,8 @@
  *     an der Sortierung eines NPC ohne Namen (12).
  * Die Darstellungen von Party, NPCs, Orten, Quests, Encountern und Bestiar
  * schalten ihn auf allen anderen Wegen wieder aus — darum war der Umweg ueber
- * den NPC-Reiter bisher ein unwissentlicher Schutz (link-anlegen.spec.js
- * faehrt ihn bewusst).
+ * den NPC-Reiter bis zum Fix ein unwissentlicher Schutz (link-anlegen.spec.js
+ * fuhr ihn bis RUECKSPRUNG bewusst; seither geht es dort direkt).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag RUECKSPRUNG, docs/bugfixes.md), die diese Datei prueft
@@ -66,8 +66,8 @@
  *       fuer Links nach jedem Einschaltweg (6–11).
  *   R3  Fehlerpfad: ein Fehler beim Darstellen einer Liste laesst spaetere
  *       Lesestellen nicht veralten. (12)
- *   R5  Mit mindestens einem Kaempfer ist es heute schon richtig und bleibt
- *       es. (13, Kontrolle)
+ *   R5  Mit mindestens einem Kaempfer war es schon vor dem Fix richtig und
+ *       bleibt es. (13, Kontrolle)
  * R1 (jede Lesestelle ueber `EntityLookup` liest frisch) und R4 (Anzeigen
  * folgen den Daten) prueft diese Datei nicht.
  *
@@ -86,7 +86,9 @@
  * aus — das Ende desselben Wegs, nur kuerzer; das kompakte Widget der
  * Schnellleiste bleibt, wie beim Nutzer. (11) bearbeitet den NACHBAR-Link
  * und nimmt das per Strg+Z zurueck; Strg+Z zeichnet ueber renderAll() alles
- * neu.
+ * neu. Die Mechanik ist die am Stand 785cdeb; seit dem Fix gibt es den
+ * Zwischenspeicher nicht mehr. Die Wege bleiben: kehrt einer zurueck, stellen
+ * sie den Zustand wieder her, an dem der Rundlauf damals fiel.
  *
  * WIE DIE FAELLE ROT SIND: an den vier weichen Zusagen des Rundlaufs —
  * Formular, D, Speicher, Neuladen —, keiner an einer Vorbedingung, einem
@@ -95,7 +97,7 @@
  * den neuen in D, jedes ✏️ traegt die ID 1, der Weg hat getan, was er soll
  * (Held geheilt, geblendet, Widget weg, Strg+Z genommen, NPC-Reiter
  * geworfen). Den Zustand des Zwischenspeichers liest die Datei NIE: mit dem
- * Fix verschwindet er, und zugesagt ist, was der Nutzer sieht und behaelt.
+ * Fix ist er verschwunden, und zugesagt ist, was der Nutzer sieht und behaelt.
  *
  * ERWARTETE FEHLERMELDUNGEN, ausdruecklich und eng: (7) das erste Oeffnen
  * der Rast meldet `Element not found: #rest-modal` (eigener Fehler, Vertrag
@@ -245,8 +247,8 @@ const SCHWERT = {
     tags: []
 };
 
-/** Ein Kaempfer in der Initiative — der Unterschied zwischen "heute schon
- *  richtig" (Kontrolle) und "heute kaputt". */
+/** Ein Kaempfer in der Initiative — der Unterschied zwischen "schon vor dem
+ *  Fix richtig" (Kontrolle) und "vor dem Fix kaputt". */
 const EIN_KAEMPFER = {
     combatants: [
         {
@@ -799,7 +801,7 @@ function heldInD(page, feld) {
 //
 // So steht die App da, wenn kein Kampf laeuft: Startansicht, dann gleich der
 // Reiter der Art — ohne den Umweg ueber NPCs oder Party, der den
-// Zwischenspeicher heute nebenbei ausschaltet.
+// Zwischenspeicher vor dem Fix nebenbei ausschaltete.
 for (const [nr, schluessel] of /** @type {const} */ ([
     [1, 'wiki'],
     [2, 'links'],
@@ -824,8 +826,8 @@ for (const [nr, schluessel] of /** @type {const} */ ([
 // ===========================================================================
 
 // (6) Der Initiative-Reiter mit 0 Kaempfern. Vorher der NPC-Reiter: danach
-// ist der Zwischenspeicher sicher aus, und nur der Initiative-Reiter kann
-// ihn wieder einschalten.
+// war der Zwischenspeicher am Stand 785cdeb sicher aus, und nur der
+// Initiative-Reiter konnte ihn wieder einschalten.
 test('(6) Links nach dem Initiative-Reiter mit 0 Kaempfern: der Rundlauf bleibt beim neuen Stand', async ({
     page
 }) => {
@@ -913,9 +915,9 @@ test('(9) Links nach dem Setzen eines Zustands an der Heldenkarte: der Rundlauf 
 });
 
 // (10) Der DM-Screen, dessen letztes Grid-Widget per ✕ ausgeblendet wird —
-// MIT einem Kaempfer: nach dem Laden ist der Zwischenspeicher dann aus, der
-// DM-Screen mit einem Grid-Widget schaltet ihn ein UND aus, erst das ✕ laesst
-// ihn an. Der Weg haengt also nicht an der Initiative.
+// MIT einem Kaempfer: nach dem Laden war der Zwischenspeicher am Stand
+// 785cdeb dann aus, der DM-Screen mit einem Grid-Widget schaltete ihn ein UND
+// aus, erst das ✕ liess ihn an. Der Weg haengt also nicht an der Initiative.
 test('(10) Links nach dem DM-Screen, letztes Grid-Widget per ✕ ausgeblendet (1 Kaempfer): der Rundlauf bleibt beim neuen Stand', async ({
     page
 }) => {
@@ -957,9 +959,10 @@ test('(11) Links nach Strg+Z: der Rundlauf bleibt beim neuen Stand', async ({ pa
 // (12) DER FEHLERPFAD (R3)
 // ===========================================================================
 //
-// Ein NPC ohne Namen aus Altdaten, EIN Kaempfer (der Zwischenspeicher ist
-// nach dem Laden also aus). Der NPC-Reiter wirft beim Sortieren der Liste
-// zwischen Ein- und Ausschalten. Danach der Link-Rundlauf.
+// Ein NPC ohne Namen aus Altdaten, EIN Kaempfer (der Zwischenspeicher war
+// am Stand 785cdeb nach dem Laden also aus). Der NPC-Reiter wirft beim
+// Sortieren der Liste — damals zwischen Ein- und Ausschalten, heute weiter,
+// nur ohne Schalter. Danach der Link-Rundlauf.
 test('(12) Fehlerpfad: nach dem werfenden NPC-Reiter (1 Kaempfer) bleibt der Link-Rundlauf beim neuen Stand', async ({
     page
 }) => {

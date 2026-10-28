@@ -74,8 +74,8 @@
  *       (5) und Zauber (6) mit neuem Namen, Zauber-Markdown-Export mit
  *       Dateiname und Kopf neu (7), Heldenkarte (8), NPC-Detail (9) und
  *       Ort-Detail (10) mit dem neuen Namen des verknuepften Eintrags.
- *   R5  Mit mindestens einem Kaempfer ist das Verhalten heute schon richtig
- *       und bleibt es: (11) und (12), Kontrollen.
+ *   R5  Mit mindestens einem Kaempfer war das Verhalten schon vor dem Fix
+ *       richtig und bleibt es: (11) und (12), Kontrollen.
  * R1-R3 (frisches Lesen, Rundlauf ✏️ → 💾 → ✏️ nach jedem Einschaltweg,
  * Fehlerpfad) pruefen andere Waechter desselben Vertrags.
  *
