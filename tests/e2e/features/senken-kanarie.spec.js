@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
- * E2E-Waechter SENKEN — Kanarien-Kampagne (Vertrag C:/sb/sx-proben/vertrag.md, Abschnitt
- * "Waechter", Nachtrag Kanarien 29.10.).
+ * E2E-Waechter SENKEN — Kanarien-Kampagne (Vertrag SENKEN in docs/bugfixes.md: Regeln
+ * R1–R6 und der Nachweis ueber Kanarien).
  *
  * WAS ER PRUEFT: kein Wert aus importierten oder gespeicherten Daten wird je als HTML,
  * als Stil oder als javascript:-Ziel wirksam (Regeln R1–R3), und legitime Inhalte werden
@@ -35,8 +35,8 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * den Wert vor dem Einsetzen per toUpperCase() veraendert.
  *
  * SAAT: Feldsaetze, wie die Speicherfunktionen der App sie schreiben (abgeleitet aus
- * core/data.js, IO_SCHEMA in systems/spellslots/import-export.js, der Messung E1 unter
- * C:/sb/sx-proben/eingaenge/ und echten Datensaetzen), je Sammlung ZWEI Datensaetze:
+ * core/data.js, IO_SCHEMA in systems/spellslots/import-export.js, der Messung am Import
+ * (Befund SENKEN, docs/bugfixes.md) und echten Datensaetzen), je Sammlung ZWEI Datensaetze:
  * im ersten bleiben IDs, Verweise (…Id, links[].id/.type, relations[].targetId/-Type) und
  * Kaempfer-/Widget-Typen gueltig, damit Details per Klick aufgehen; im zweiten tragen auch
  * sie eine Kanarie. Dazu im ersten Datensatz GEMISCHTE Verweise (Typ vergiftet, ID gueltig:

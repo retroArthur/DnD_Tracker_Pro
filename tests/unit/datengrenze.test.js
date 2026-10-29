@@ -14,7 +14,7 @@
  * waere eine Grenzfunktion gruen, die genau die 49 gemessenen Pfade kennt
  * und den Rest roh durchlaesst. Jedes dieser Felder schreibt die App selbst
  * als Zahl (parseInt/parseFloat/nextId in der jeweiligen Speicherfunktion).
- * `sanitizeImportedItem()` bereinigt nur 18 HTML-Felder auf oberster Ebene;
+ * `sanitizeImportedItem()` bereinigt nur 15 HTML-Felder auf oberster Ebene;
  * Backup-Wiederherstellung,
  * Datei-Backup, Migrations-Assistent, der Start (`load()`) und der zweite Tab
  * bereinigen gar nicht. `normalizeCampaignData()` entfernt verbotene Schluessel
@@ -284,7 +284,7 @@ const FELDER = [
 ];
 
 /**
- * Weitere Zahlen- und Verweisfelder: dieselbe Messung (E1-B) fand sie als Text
+ * Weitere Zahlen- und Verweisfelder: dieselbe Messung (Import) fand sie als Text
  * in D, ohne dass eine Ansicht sie ausgab. Jedes schreibt die App als Zahl;
  * die Quelle steht dahinter.
  */
@@ -733,7 +733,7 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
 // ============================================================
 // R4 — Grenzfaelle: Nicht-Text, Zahlenlisten, Gestalt
 // ============================================================
-// Nachgetragen mit der Umsetzung (SENKEN, Schritt GRENZE). Die Faelle oben belegen jedes
+// Nachgetragen mit der Umsetzung (SENKEN, Datengrenze). Die Faelle oben belegen jedes
 // Feld mit Text; diese hier belegen, was die Umsetzung mit allem ANDEREN tut, das in einer
 // Importdatei stehen kann — und sie halten die Coverage-Schwelle der Paritaetskopie
 // (jest.config.cjs, branches 89), weil jeder Zweig der Grenze hier einmal laeuft.
