@@ -108,8 +108,8 @@ function renderNPCList() {
             return true;
         }
     });
-    // Sort alphabetically
-    npcs.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
+    // Alphabetisch. Ein Objekt als Name wird an der Datengrenze '' (SENKEN R4); ein FEHLENDER Name wirft hier weiter (RUECKSPRUNG Offen (8), Rundlauf (12) braucht den Wurf)
+    npcs.sort((a, b) => a.name.localeCompare(b.name));
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
