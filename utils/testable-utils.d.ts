@@ -32,6 +32,8 @@ declare function throttle<T extends (...args: any[]) => any>(fn: T, limit?: numb
 declare function sichererLink(url: unknown): string;
 /** Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/, relativ). */
 declare function sichereBildquelle(url: unknown): string;
+/** Vertrag SENKEN R3, nur Linkliste: wie sichererLink, dazu lokale `file:///`-Pfade; Netzwerkpfade -> ''. */
+declare function sichererListenLink(url: unknown): string;
 /** Vertrag SENKEN R2: nur #rgb/#rrggbb, sonst der feste Ersatz aus dem Code. */
 declare function sichereFarbe(wert: unknown, ersatz: string): string;
 /** Vertrag SENKEN R2: nur ein Wert aus der Erlaubnisliste, sonst der feste Ersatz. */
