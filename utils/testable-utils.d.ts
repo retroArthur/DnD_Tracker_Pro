@@ -30,7 +30,11 @@ declare function debounce<T extends (...args: any[]) => any>(fn: T, delay?: numb
 declare function throttle<T extends (...args: any[]) => any>(fn: T, limit?: number): (...args: Parameters<T>) => void;
 /** Vertrag SENKEN R3: Link aus Daten -> derselbe Link oder '' (nur http:, https:, mailto:). */
 declare function sichererLink(url: unknown): string;
-/** Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/, relativ). */
+/**
+ * Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/,
+ * relativ, lokale `file:///`-Pfade nach demselben Pruefkern wie sichererListenLink;
+ * Netzwerkpfade und protokoll-relative Quellen -> '').
+ */
 declare function sichereBildquelle(url: unknown): string;
 /** Vertrag SENKEN R3, nur Linkliste: wie sichererLink, dazu lokale `file:///`-Pfade; Netzwerkpfade -> ''. */
 declare function sichererListenLink(url: unknown): string;

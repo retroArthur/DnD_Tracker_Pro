@@ -42,12 +42,17 @@
  *      der mit einem Trenner beginnt (`/`, `\`, `%2F`, `%5C`), und ein doppelter
  *      Trenner dahinter (`file:///home/../..//rechner` loest sich zu
  *      `file:////rechner` auf). Editor-Links bleiben bei `sichererLink()`.
+ *      Die Pruefung auf den lokalen Dateipfad teilt sie mit `sichereBildquelle()`.
  *   R3 `sichereBildquelle(url)` -> `url` oder `''` (Gutachten, Sonde D): eine
  *      Bildquelle laedt die App ohne Klick. Nur `http:`, `https:`,
- *      `data:image/` und relative Pfade; kein anderes Schema (`file:` lud die
- *      Party-Ansicht aus Daten) und kein protokoll-relativer Anfang aus zwei
- *      `/` oder `\` — unter file:// wird `//host/share` zu `file://host/share`,
- *      unter Windows ein UNC-Pfad samt Anmeldeversuch.
+ *      `data:image/`, relative Pfade und — seit Nachbesserung (14) wieder —
+ *      lokale Dateipfade nach demselben Pruefkern wie die Linkliste
+ *      (`istLokalerDateipfad()`, intern im Block, nicht exportiert): vor SENKEN
+ *      zeigte die App lokale Portraits unter file:// an. Kein anderes Schema,
+ *      kein Netzwerkpfad (`file://host/…` und alle Schreibweisen oben — ein Bild
+ *      braucht nicht einmal einen Klick) und kein protokoll-relativer Anfang aus
+ *      zwei `/` oder `\` — unter file:// wird `//host/share` zu
+ *      `file://host/share`, unter Windows ein UNC-Pfad samt Anmeldeversuch.
  *   R2 `sichereFarbe(wert, ersatz)`: nur `#rgb`/`#rrggbb`, sonst der feste
  *      Ersatz (der darf auch `var(--gold)` sein — er kommt aus dem Code).
  *   R2 `sichereKlasse(wert, erlaubteWerte, ersatz)`: nur ein Wert aus der
@@ -106,7 +111,10 @@
  *
  * ROT AM STAND 020e258: keine der Hilfen existierte; sichereBildquelle() kam mit
  * dem Gutachten dazu, sichererListenLink() mit der Nutzerentscheidung vom 29.10.
- * (rot am Stand 979a555d: die Hilfe fehlte in beiden Kopien).
+ * (rot am Stand 979a555d: die Hilfe fehlte in beiden Kopien). Lokale Bildquellen und
+ * der gemeinsame Pruefkern (Nachbesserung (14)) waren am Stand 7f12e806 rot: jede
+ * erlaubte lokale Bildquelle (`''` statt der Quelle) und der Gestalt-Block (kein
+ * istLokalerDateipfad(), das `file:`-Literal in sichererListenLink selbst).
  */
 
 const fs = require('fs');
@@ -217,19 +225,21 @@ const LINK_ERLAUBT = [
 ];
 const KEIN_TEXT = [null, undefined, 42, true, {}, []];
 
-// R3 fuer die Linkliste — sichererListenLink (Nutzerentscheidung 29.10.): was sichererLink
-// erlaubt, dazu lokale Datei-Links; jeder Netzwerkpfad bleibt gesperrt, auch so geschrieben,
-// wie der Browser ihn erst nach dem Lesen erkennt (Gross/Klein, Steuerzeichen davor, Tab und
-// Zeilenumbruch im Schema, `\` als `/`, kodierte Trenner, `..` vor einem doppelten Trenner).
-const LISTENLINK_ERLAUBT = [
-    ...LINK_ERLAUBT,
+// Lokale Dateipfade (Nutzerentscheidung 29.10.): EIN Pruefkern im Datengrenzen-Block
+// (istLokalerDateipfad) fuer die Linkliste UND die Bildquellen — die Faelle stehen darum
+// einmal und gelten fuer beide Hilfen. Erlaubt ist genau `file:///` mit Laufwerk oder
+// absolutem Pfad; jeder Netzwerkpfad bleibt gesperrt, auch so geschrieben, wie der Browser
+// ihn erst nach dem Lesen erkennt (Gross/Klein, Steuerzeichen davor, Tab und Zeilenumbruch im
+// Schema, `\` als `/`, kodierte Trenner, `..` vor einem doppelten Trenner). Unter Windows ist
+// ein Netzwerkpfad UNC: beim Link genuegt der Klick, beim Bild schon das Anzeigen, und das
+// System meldet den Nutzer beim fremden Rechner an (NTLM).
+const DATEIPFAD_LOKAL = [
     'file:///C:/x.pdf',
     'FILE:///D:/a%20b.pdf',
     ' file:///C:/x',
     'file:///home/x.pdf'
 ];
-const LISTENLINK_VERBOTEN = [
-    ...LINK_VERBOTEN,
+const DATEIPFAD_GESPERRT = [
     'file://rechner/x',
     'file:////rechner/x',
     'file:///\\\\rechner\\x',
@@ -249,15 +259,25 @@ const LISTENLINK_VERBOTEN = [
     'file:///\\rechner/x',
     'file:///%2F%2Frechner/x',
     'file:///%5Crechner/x',
-    'file:///home/../..//rechner/x'
+    'file:///home/../..//rechner/x',
+    // `localhost` ist ein Host und faellt wie jeder andere, obwohl der Browser ihn lokal liest
+    // (`file://localhost/x` -> `file:///x`): die Pruefung liest keine Hostnamen. Der
+    // E2E-Waechter (senken-kanarie.spec.js) nimmt genau diese Form als Bild-Kanarie.
+    'file://localhost/x',
+    'FILE://LOCALHOST/C:/x'
 ];
 
-// R3 fuer Bildquellen — sichereBildquelle
+// R3 fuer die Linkliste — sichererListenLink: was sichererLink erlaubt, dazu lokale
+// Datei-Links (Pruefkern oben)
+const LISTENLINK_ERLAUBT = [...LINK_ERLAUBT, ...DATEIPFAD_LOKAL];
+const LISTENLINK_VERBOTEN = [...LINK_VERBOTEN, ...DATEIPFAD_GESPERRT];
+
+// R3 fuer Bildquellen — sichereBildquelle: http(s), data:image/, relative Pfade und lokale
+// Dateipfade nach demselben Pruefkern wie die Linkliste (vor SENKEN zeigte die App lokale
+// Portraits unter file:// an; Nachbesserung (14)). Kein Netzwerkpfad, kein protokoll-relativer
+// Anfang, kein anderes Schema.
 const BILD_VERBOTEN = [
-    'file:///C:/kanarie.png',
-    'FILE:///C:/kanarie.png',
-    ' file:///C:/kanarie.png',
-    'fi\tle:///C:/kanarie.png',
+    ...DATEIPFAD_GESPERRT,
     '//host/share/kanarie.png',
     '\\\\host\\share\\kanarie.png',
     '/\\host/share/kanarie.png',
@@ -280,7 +300,15 @@ const BILD_ERLAUBT = [
     './held.png',
     '/bilder/held.png',
     '../held.png',
-    'held.png?v=1&x=2'
+    'held.png?v=1&x=2',
+    // lokale Portraits, wie der Nutzer sie unter file:// ablegt
+    'file:///C:/Bilder/held.png',
+    'FILE:///D:/a%20b.png',
+    ' file:///C:/Bilder/held.png',
+    // der Browser streicht den Tabulator: fuer ihn dieselbe lokale Datei
+    'fi\tle:///C:/Bilder/held.png',
+    'file:///home/x.png',
+    ...DATEIPFAD_LOKAL
 ];
 
 // ============================================================
@@ -640,9 +668,12 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
         test.each(BILD_VERBOTEN.map(u => [JSON.stringify(u), u]))('kein Bild: %s', (_n, url) => {
             expect(brauche(quellName, 'sichereBildquelle')(url)).toBe('');
         });
-        test.each(BILD_ERLAUBT.map(u => [u]))('bleibt unveraendert: %s', url => {
-            expect(brauche(quellName, 'sichereBildquelle')(url)).toBe(url);
-        });
+        test.each(BILD_ERLAUBT.map(u => [JSON.stringify(u), u]))(
+            'bleibt unveraendert: %s',
+            (_n, url) => {
+                expect(brauche(quellName, 'sichereBildquelle')(url)).toBe(url);
+            }
+        );
         test.each(KEIN_TEXT.concat(['', ' ']).map(w => [JSON.stringify(w) ?? 'undefined', w]))(
             'kein Text oder leer -> "": %s',
             (_n, wert) => {
@@ -861,6 +892,68 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
                 expect(typeof lies(erg, 'characters[0].hpCurrent')).not.toBe('string');
             });
         });
+    });
+});
+
+// ============================================================
+// R3 — EIN Pruefkern fuer lokale Dateipfade (Linkliste und Bildquellen)
+// ============================================================
+// Nutzerentscheidung 29.10.: ein lokaler Dateipfad gilt in der Linkliste UND als Bildquelle,
+// ein Netzwerkpfad nirgends. Die Faelle oben pruefen das Verhalten beider Hilfen an
+// denselben Werten (DATEIPFAD_LOKAL/DATEIPFAD_GESPERRT); dieser Block haelt die Gestalt fest:
+// die Pruefung steht genau einmal im Datengrenzen-Block, in `istLokalerDateipfad()`, und
+// beide Hilfen fragen sie. Zwei Abschriften derselben Pruefung liefen beim naechsten Fund
+// auseinander — eine Sperre, die nur eine Kopie bekommt, liesse den Netzwerkpfad durch die
+// andere. Gezaehlt wird jedes Literal (Zeichenkette oder Regex) mit `file:` im Code des
+// Blocks; Kommentare zaehlen nicht. Der Block ist in beiden Kopien zeichengleich
+// (sanitizer-parity.test.js (c)), gelesen wird er hier trotzdem aus beiden.
+describe.each(QUELLEN.map(([n]) => [n]))('R3 ein Pruefkern fuer Dateipfade — %s', quellName => {
+    const KERN = 'istLokalerDateipfad';
+    let funktionen;
+    beforeAll(() => {
+        const { datengrenzeBlock } = require('./helpers/datengrenze-block.js');
+        const ast = acorn.parse(datengrenzeBlock(quellName), { ecmaVersion: 'latest' });
+        funktionen = new Map(
+            ast.body.filter(n => n.type === 'FunctionDeclaration').map(n => [n.id.name, n])
+        );
+    });
+    /** Ruft fn fuer jeden Knoten unter `knoten` auf. */
+    function besuche(knoten, fn) {
+        fn(knoten);
+        for (const k of Object.keys(knoten)) {
+            const v = knoten[k];
+            for (const x of Array.isArray(v) ? v : [v]) {
+                if (x && typeof x.type === 'string') besuche(x, fn);
+            }
+        }
+    }
+
+    test(`${KERN}() steht im Block`, () => {
+        expect(funktionen.has(KERN)).toBe(true);
+    });
+
+    test('jedes file:-Literal des Blocks steht in ihr', () => {
+        const fundorte = [];
+        for (const [name, knoten] of funktionen) {
+            besuche(knoten, n => {
+                if (n.type !== 'Literal') return;
+                const text = n.regex ? n.regex.pattern : String(n.value);
+                if (/file:/i.test(text)) fundorte.push(name);
+            });
+        }
+        expect(fundorte.length).toBeGreaterThan(0);
+        expect(fundorte.filter(f => f !== KERN)).toEqual([]);
+    });
+
+    test.each(['sichererListenLink', 'sichereBildquelle'])(`%s ruft ${KERN}()`, name => {
+        expect(funktionen.has(name)).toBe(true);
+        const aufrufe = [];
+        besuche(funktionen.get(name), n => {
+            if (n.type === 'CallExpression' && n.callee.type === 'Identifier') {
+                aufrufe.push(n.callee.name);
+            }
+        });
+        expect(aufrufe).toContain(KERN);
     });
 });
 

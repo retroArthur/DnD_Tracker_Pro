@@ -14,7 +14,11 @@ declare function sichereFarbe(wert: unknown, ersatz: string): string;
 declare function sichereKlasse(wert: unknown, erlaubteWerte: readonly string[], ersatz: string): string;
 /** Vertrag SENKEN R4: verbotene Schluessel entfernen, Zahlen-/Verweisfelder auf Zahl zwingen. */
 declare function bereinigeDatengrenze<T>(daten: T): T;
-/** Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/, relativ). */
+/**
+ * Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/,
+ * relativ, lokale `file:///`-Pfade nach demselben Pruefkern wie sichererListenLink;
+ * Netzwerkpfade und protokoll-relative Quellen -> '').
+ */
 declare function sichereBildquelle(url: unknown): string;
 /** Vertrag SENKEN R1: bereinigtes Markup inert parsen, Knoten bearbeiten, Markup zurueck. */
 declare function bearbeiteMarkup(

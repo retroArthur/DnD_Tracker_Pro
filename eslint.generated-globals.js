@@ -949,6 +949,7 @@ export default {
     "isPlainDataObject": 'readonly',
     "isValidBackupRecord": 'readonly',
     "isValidEntityId": 'readonly',
+    "istLokalerDateipfad": 'readonly',
     "jahreszeitAusDatum": 'readonly',
     "knownBackupCampaignKeys": 'readonly',
     "kopfAufgeklappt": 'readonly',

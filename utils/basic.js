@@ -536,41 +536,56 @@ function sichererLink(url) {
     return /^(?:https?|mailto):/i.test(schema) ? url : '';
 }
 /**
+ * R3-Pruefkern fuer lokale Dateipfade — EINE Pruefung fuer die Linkliste (sichererListenLink)
+ * und die Bildquellen (sichereBildquelle); intern im Block, kein Export. Nutzerentscheidung
+ * (29.10.): der Nutzer arbeitet unter file://, verlinkt eigene PDFs und Karten und legt
+ * Portraits auf der eigenen Platte ab; vor SENKEN war beides bedienbar bzw. sichtbar und soll
+ * es wieder sein. Wahr ist darum genau `file:///` mit einem lokalen Pfad dahinter — ein
+ * Laufwerk (`file:///C:/Karten/x.pdf`) oder ein absoluter Pfad (`file:///home/x.pdf`).
+ * Falsch bleibt jeder Netzwerkpfad: unter Windows ist `file://rechner/freigabe/x` ein
+ * UNC-Pfad, und das System meldet sich beim fremden Rechner an (NTLM — die Anmeldung des
+ * Nutzers geht an einen Rechner, den die Daten bestimmen); beim Link genuegt der Klick, beim
+ * Bild schon das Anzeigen. Darum kein Host (auch nicht `localhost`: Hostnamen liest die
+ * Pruefung nicht), kein Pfad, der mit einem Trenner beginnt (`file:////rechner`,
+ * `file:///\\rechner`, `file:///%5C%5Crechner` — `\` liest der Browser wie `/`, `%2F`/`%5C`
+ * dekodiert ein Teil der Browser beim Oeffnen), und kein doppelter Trenner im Rest:
+ * `file:///home/../..//rechner` loest sich zu `file:////rechner` auf. Gelesen wie bei
+ * sichererLink: ohne fuehrende Leer-/Steuerzeichen, ohne Tabulator/Zeilenumbruch,
+ * Gross/Klein egal. Die Faelle stehen einmal fuer beide Hilfen in
+ * tests/unit/datengrenze.test.js (DATEIPFAD_LOKAL, DATEIPFAD_GESPERRT).
+ * @param {*} url - Wert aus Daten
+ * @returns {boolean} ob der Wert ein lokaler Dateipfad ist
+ */
+function istLokalerDateipfad(url) {
+    if (typeof url !== 'string') return false;
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
+    if (!/^file:\/\/\//i.test(gelesen)) return false;
+    const pfad = gelesen.slice('file:///'.length).replace(/%2f|%5c|\\/gi, '/');
+    return /^[^/?#]/.test(pfad) && !pfad.includes('//');
+}
+/**
  * R3 fuer die Linkliste (features/shops/links.js): was sichererLink() erlaubt, dazu lokale
- * Datei-Links. Nutzerentscheidung (29.10.): der Nutzer arbeitet unter file:// und verlinkt
- * eigene PDFs und Karten; vor SENKEN waren sie anklickbar und sollen es wieder sein. Erlaubt
- * ist darum zusaetzlich genau `file:///` mit einem lokalen Pfad dahinter — ein Laufwerk
- * (`file:///C:/Karten/x.pdf`) oder ein absoluter Pfad (`file:///home/x.pdf`). Gesperrt
- * bleibt jeder Netzwerkpfad: unter Windows ist `file://rechner/freigabe/x` ein UNC-Pfad, und
- * schon der Klick laesst das System sich beim fremden Rechner anmelden (NTLM — die Anmeldung
- * des Nutzers geht an einen Rechner, den die Daten bestimmen). Darum kein Host, kein Pfad,
- * der mit einem Trenner beginnt (`file:////rechner`, `file:///\\rechner`,
- * `file:///%5C%5Crechner` — `\` liest der Browser wie `/`, `%2F`/`%5C` dekodiert ein Teil
- * der Browser beim Oeffnen), und kein doppelter Trenner im Rest: `file:///home/../..//rechner`
- * loest sich zu `file:////rechner` auf. Gelesen wie bei sichererLink: ohne fuehrende Leer-/
- * Steuerzeichen, ohne Tabulator/Zeilenumbruch, Gross/Klein egal. Nur fuer die Linkliste —
- * Editor-Links (Linkmenue, Markdown-Wandler) bleiben bei sichererLink().
+ * Datei-Links nach istLokalerDateipfad() — Netzwerkpfade bleiben gesperrt (Nutzerentscheidung
+ * 29.10.). Nur fuer die Linkliste — Editor-Links (Linkmenue, Markdown-Wandler) bleiben bei
+ * sichererLink().
  * @param {*} url - Wert aus Daten
  * @returns {string} der Link oder ''
  */
 function sichererListenLink(url) {
-    if (sichererLink(url)) return url;
-    if (typeof url !== 'string') return '';
-    let start = 0;
-    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
-    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
-    if (!/^file:\/\/\//i.test(gelesen)) return '';
-    const pfad = gelesen.slice('file:///'.length).replace(/%2f|%5c|\\/gi, '/');
-    return /^[^/?#]/.test(pfad) && !pfad.includes('//') ? url : '';
+    return sichererLink(url) || (istLokalerDateipfad(url) ? url : '');
 }
 /**
  * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
- * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/ und
- * relative Pfade; verboten jedes andere Schema (file:, javascript:, data:text/html …) und ein
- * protokoll-relativer Anfang aus zwei `/` oder `\` (der Browser liest `\` hier wie `/`): unter
- * file:// wird `//host/share/x.png` zu `file://host/share/x.png`, unter Windows ein UNC-Pfad,
- * also eine Verbindung samt Anmeldeversuch zu einem fremden Rechner. Gelesen wie bei
- * sichererLink: ohne fuehrende Leer-/Steuerzeichen und ohne Tabulator/Zeilenumbruch.
+ * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/,
+ * relative Pfade und lokale Dateipfade nach istLokalerDateipfad() — derselbe Pruefkern wie
+ * in der Linkliste (Nutzerentscheidung 29.10.: lokale Portraits wieder sichtbar). Verboten
+ * jedes andere Schema (javascript:, data:text/html, blob:, ein Netzwerkpfad `file://host/…`
+ * …) und ein protokoll-relativer Anfang aus zwei `/` oder `\` (der Browser liest `\` hier wie
+ * `/`): unter file:// wird `//host/share/x.png` zu `file://host/share/x.png`, unter Windows
+ * ein UNC-Pfad, also eine Verbindung samt Anmeldeversuch zu einem fremden Rechner. Gelesen
+ * wie bei sichererLink: ohne fuehrende Leer-/Steuerzeichen und ohne Tabulator/Zeilenumbruch.
  * @param {*} url - Wert aus Daten
  * @returns {string} die Quelle oder ''
  */
@@ -581,7 +596,7 @@ function sichereBildquelle(url) {
     const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
     if (!gelesen || /^[/\\]{2}/.test(gelesen)) return '';
     if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return url;
-    return /^(?:https?:|data:image\/)/i.test(gelesen) ? url : '';
+    return /^(?:https?:|data:image\/)/i.test(gelesen) || istLokalerDateipfad(url) ? url : '';
 }
 /**
  * R2: Farbwert aus Daten fuer `style`/Farbattribute: nur `#rgb` oder `#rrggbb`, sonst der

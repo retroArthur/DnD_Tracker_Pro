@@ -1,5 +1,7 @@
 // @ts-check
 import fs from 'fs';
+import path from 'path';
+import { pathToFileURL } from 'url';
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
@@ -25,7 +27,7 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *                       (Stil R2 — auch in var(--…) und class/data-*, Begruendung bei stilKanarie)
  *   - links[0].url:     javascript:void('kanarie-<id>')                     (Schema, R3)
  *   - links[1].url:     https://example.org/"><img …>                       (erlaubtes Schema, R1)
- *   - avatar:           Datensatz 0 file:///kanarie-<id>.png, Datensatz 1
+ *   - avatar:           Datensatz 0 file://localhost/kanarie-<id>.png (Netzwerkpfad), Datensatz 1
  *                       //localhost/kanarie-<id>.png (Bildquelle, R3 — bei bildKanarie)
  * Kein Script, kein on*-Handler; die Bilddatei existiert nicht. Jede Anforderung an http(s)
  * bricht der Test ab (page.route), es geht nichts ins Netz.
@@ -150,15 +152,22 @@ const htmlKanarie = id =>
     grenzKanarie(id);
 /*
  * Bild-Kanarie (avatar). esc() haelt das src-Attribut zu, prueft aber kein Schema: eine
- * Bildquelle aus Daten mit `file:` oder protokoll-relativem `//host/…` laedt die App von
- * selbst, ohne Klick — unter file:// (Nutzung des Nutzers) wird `//host/share/x.png` zu
- * `file://host/share/x.png`, unter Windows ein UNC-Pfad, also eine Verbindung samt
- * Anmeldeversuch zu einem fremden Rechner. Die Kanarie nimmt `localhost`: die URL-Norm macht
- * daraus beim file-Schema den leeren Host (`file:///kanarie-….png`), es geht nichts ins Netz.
- * Erkannt wird die Anforderung (b).
+ * Bildquelle aus Daten mit einem Netzwerkpfad (`file://host/…`) oder protokoll-relativem
+ * `//host/…` laedt die App von selbst, ohne Klick — unter file:// (Nutzung des Nutzers) wird
+ * `//host/share/x.png` zu `file://host/share/x.png`, unter Windows ein UNC-Pfad, also eine
+ * Verbindung samt Anmeldeversuch zu einem fremden Rechner.
+ * Ein LOKALER Pfad (`file:///C:/…`, `file:///kanarie-….png`) ist seit Nachbesserung (14) eine
+ * legitime Bildquelle (Nutzerentscheidung 29.10., derselbe Pruefkern wie die Linkliste) und
+ * taugt darum nicht mehr als Kanarie — die App laedt ihn zu Recht. Beide Datensaetze nehmen
+ * deshalb einen Host, und zwar `localhost`: die URL-Norm macht daraus beim file-Schema den
+ * leeren Host, die Anforderung erscheint als `file:///kanarie-….png`, und es geht nichts ins
+ * Netz und an keinen fremden Rechner. Die Pruefung der App liest dagegen keine Hostnamen und
+ * muss den Host sperren wie jeden anderen; laesst sie ihn durch, laedt der Browser das Bild,
+ * und (b) meldet die Anforderung. Datensatz 0 prueft so die Host-Sperre des file-Schemas
+ * (istLokalerDateipfad), Datensatz 1 den protokoll-relativen Anfang.
  */
 const bildKanarie = (id, datensatz) =>
-    datensatz === '0' ? `file:///kanarie-${id}.png` : `//localhost/kanarie-${id}.png`;
+    datensatz === '0' ? `file://localhost/kanarie-${id}.png` : `//localhost/kanarie-${id}.png`;
 
 /**
  * Serialisierung vor 2025 (Gutachten, Sonde A): der Getter von Element.prototype.innerHTML
@@ -857,7 +866,7 @@ function vergiften(roh) {
             // Datensatz 0: Schema-Kanarie (R3); Datensatz 1: erlaubtes Schema, Attribut-Ausbruch (R1)
             return teile[1] === '0' ? linkKanarie(id) : 'https://example.org/' + attrKanarie(id);
         }
-        // Bildquelle: Datensatz 0 file:, Datensatz 1 protokoll-relativ (bildKanarie)
+        // Bildquelle: Datensatz 0 file://localhost, Datensatz 1 protokoll-relativ (bildKanarie)
         if (k === 'avatar') return bildKanarie(id, teile[1]);
         if (HTML_FELDER.has(k) || (teile[0] === 'spells' && k === 'note')) return htmlKanarie(id);
         return attrKanarie(id);
@@ -1884,11 +1893,21 @@ const TITEL_QUEST = 'Fracht <3 & "mehr" — Übergabe 📦';
 const NAME_ORT = 'Hafen & Turm <Alt> "Nord" 🌊';
 const TITEL_WIKI = 'Götter & <Dämonen> "Zeitalter" ✨';
 const URL_LINK = 'https://example.org/suche?a=1&b=<2>';
+/*
+ * Lokales Portrait (Nachbesserung (14), Nutzerentscheidung 29.10.): ein Held mit einem Bild
+ * von der eigenen Platte. Vor SENKEN zeigte die App es unter file:// an, seit R3 fuer
+ * Bildquellen stand dort der Platzhalter. Die Datei existiert im Repo, damit „angezeigt“
+ * messbar ist (naturalWidth > 0) und nicht nur „ein img steht da“. pathToFileURL statt
+ * Zusammensetzen von Hand: unter Linux beginnt der Pfad mit `/`, und `file:///` + `/home/…`
+ * ergaebe `file:////home/…` — einen Netzwerkpfad, den die Pruefung zu Recht sperrt.
+ */
+const LOKALES_BILD = pathToFileURL(path.resolve('icons/icon-192.png')).href;
 
 function legitimeKampagne() {
     const k = rohKampagne();
     k.characters[0].name = NAME_HELD;
     k.characters[0].hpCurrent = '40';
+    k.characters[1].avatar = LOKALES_BILD;
     k.npcs[0].name = NAME_NPC;
     k.npcs[0].description = '<p>Ein <b>fetter</b> und <i>kursiver</i> Text &amp; mehr</p>';
     k.quests[0].title = TITEL_QUEST;
@@ -1967,6 +1986,18 @@ for (const [eingang, eingangName] of Object.entries(EINGAENGE)) {
         await expect(
             page.locator('#party-list img[src="https://example.org/held.png"]').first()
         ).toBeAttached();
+        // Ein lokales Portrait (file:/// mit absolutem Pfad) wird wieder angezeigt — und zwar
+        // geladen, nicht nur eingesetzt (Nachbesserung (14)); der Netzwerkpfad bleibt Kanarie
+        const lokal = page.locator(`#party-list img[src="${LOKALES_BILD}"]`).first();
+        await expect(lokal).toBeAttached();
+        await expect
+            .poll(() =>
+                lokal.evaluate(img => {
+                    const bild = /** @type {HTMLImageElement} */ (img);
+                    return bild.complete ? bild.naturalWidth : 0;
+                })
+            )
+            .toBeGreaterThan(0);
         // Tag-Farbe und Quest-Typ, wie die Formulare sie schreiben, landen woertlich als Klasse
         // (R2 laesst Werte der Erlaubnisliste durch, statt sie auf den Ersatz zu setzen)
         await zuReiter(page, 'quests');
