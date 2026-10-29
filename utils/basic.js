@@ -519,51 +519,72 @@ const StorageAPI = {
 // Keine dieser Hilfen ist ein Kodierer: Text- und Attributausgabe laeuft weiter durch esc().
 // ============================================================
 /**
+ * Leseregel des Browsers fuer einen Wert, der als URL gelesen wird — EINMAL fuer alle R3-Hilfen
+ * (sichererLink, istLokalerDateipfad, sichereBildquelle); intern im Block, kein Export. Der
+ * Browser entfernt fuehrende Leer- und Steuerzeichen (U+0000 bis U+0020) und streicht
+ * Tabulator und Zeilenumbruch auch IM Text: "\tjava\nScRiPt:" ist fuer ihn javascript:,
+ * "fi\tle:///C:/x" eine lokale Datei. Gross/Klein bleibt stehen — das pruefen die Aufrufer.
+ * @param {string} url - Wert aus Daten (Text)
+ * @returns {string} der Wert, wie der Browser ihn liest
+ */
+function wieBrowserGelesen(url) {
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    return url.slice(start).replace(/[\t\n\r]/g, '');
+}
+/**
  * R3: Link aus Daten -> derselbe Link oder ''. Erlaubt sind nur http:, https:, mailto:.
- * Geprueft wird das Schema so, wie der Browser es liest: er entfernt fuehrende Leer- und
- * Steuerzeichen (U+0000 bis U+0020), streicht Tabulator und Zeilenumbruch auch IM Text und
- * ignoriert Gross/Klein — "\tjava\nScRiPt:" ist fuer ihn javascript:. Darum eine
- * Erlaubnisliste statt einer Sperrliste, verankert am Anfang. Ein erlaubter Link kommt
- * unveraendert zurueck; im Attribut gehoert er zusaetzlich in esc() (er laesst `"` stehen).
+ * Geprueft wird das Schema so, wie der Browser es liest (wieBrowserGelesen()), Gross/Klein
+ * egal. Darum eine Erlaubnisliste statt einer Sperrliste, verankert am Anfang. Ein erlaubter
+ * Link kommt unveraendert zurueck; im Attribut gehoert er zusaetzlich in esc() (er laesst `"`
+ * stehen).
  * @param {*} url - Wert aus Daten
  * @returns {string} der Link oder ''
  */
 function sichererLink(url) {
     if (typeof url !== 'string') return '';
-    let start = 0;
-    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
-    const schema = url.slice(start).replace(/[\t\n\r]/g, '');
-    return /^(?:https?|mailto):/i.test(schema) ? url : '';
+    return /^(?:https?|mailto):/i.test(wieBrowserGelesen(url)) ? url : '';
 }
 /**
- * R3-Pruefkern fuer lokale Dateipfade — EINE Pruefung fuer die Linkliste (sichererListenLink)
- * und die Bildquellen (sichereBildquelle); intern im Block, kein Export. Nutzerentscheidung
- * (29.10.): der Nutzer arbeitet unter file://, verlinkt eigene PDFs und Karten und legt
- * Portraits auf der eigenen Platte ab; vor SENKEN war beides bedienbar bzw. sichtbar und soll
- * es wieder sein. Wahr ist darum genau `file:///` mit einem lokalen Pfad dahinter — ein
+ * R3-Pruefkern fuer Pfade — EINE Pruefung fuer den Pfad hinter `file://` (istLokalerDateipfad)
+ * und fuer relative Bildquellen (sichereBildquelle); intern im Block, kein Export. Wahr ist ein
+ * Pfad mit hoechstens einem Trenner am Anfang, danach etwas anderes als `?`/`#`, und nirgends
+ * zwei Trenner hintereinander. Trenner werden gelesen wie vom Browser: `\` wie `/`, und `%2F`/
+ * `%5C` (Gross/Klein egal) ebenfalls, weil ein Teil der Browser sie beim Oeffnen einer Datei
+ * dekodiert. Ein doppelter Trenner, wo auch immer, ist unter Windows ein UNC-Pfad oder wird
+ * einer: `.`/`..` (auch kodiert, `%2e%2e`) loesen sich vorher auf, `/x/..//rechner` wird
+ * `//rechner`. Gemessen: Firefox setzt `/%5C%5Crechner/x.png` hinter `file://` und laedt
+ * `\\rechner\x.png` (Nachbesserung (15), docs/bugfixes.md SENKEN).
+ * @param {string} pfad - Pfad, wie der Browser ihn liest (wieBrowserGelesen())
+ * @returns {boolean} ob der Pfad keinen Netzwerkanteil hat
+ */
+function istLokalerPfad(pfad) {
+    const getrennt = pfad.replace(/%2f|%5c|\\/gi, '/');
+    return /^\/?[^/?#]/.test(getrennt) && !getrennt.includes('//');
+}
+/**
+ * R3: lokaler Dateipfad — EINE Pruefung fuer die Linkliste (sichererListenLink) und die
+ * Bildquellen (sichereBildquelle); intern im Block, kein Export. Nutzerentscheidung (29.10.):
+ * der Nutzer arbeitet unter file://, verlinkt eigene PDFs und Karten und legt Portraits auf der
+ * eigenen Platte ab; vor SENKEN war beides bedienbar bzw. sichtbar und soll es wieder sein.
+ * Wahr ist darum genau `file:///` mit einem lokalen Pfad dahinter (istLokalerPfad()) — ein
  * Laufwerk (`file:///C:/Karten/x.pdf`) oder ein absoluter Pfad (`file:///home/x.pdf`).
  * Falsch bleibt jeder Netzwerkpfad: unter Windows ist `file://rechner/freigabe/x` ein
  * UNC-Pfad, und das System meldet sich beim fremden Rechner an (NTLM — die Anmeldung des
  * Nutzers geht an einen Rechner, den die Daten bestimmen); beim Link genuegt der Klick, beim
  * Bild schon das Anzeigen. Darum kein Host (auch nicht `localhost`: Hostnamen liest die
- * Pruefung nicht), kein Pfad, der mit einem Trenner beginnt (`file:////rechner`,
- * `file:///\\rechner`, `file:///%5C%5Crechner` — `\` liest der Browser wie `/`, `%2F`/`%5C`
- * dekodiert ein Teil der Browser beim Oeffnen), und kein doppelter Trenner im Rest:
- * `file:///home/../..//rechner` loest sich zu `file:////rechner` auf. Gelesen wie bei
- * sichererLink: ohne fuehrende Leer-/Steuerzeichen, ohne Tabulator/Zeilenumbruch,
- * Gross/Klein egal. Die Faelle stehen einmal fuer beide Hilfen in
- * tests/unit/datengrenze.test.js (DATEIPFAD_LOKAL, DATEIPFAD_GESPERRT).
+ * Pruefung nicht, und Chromium liest ihn als Host), kein Pfad, der mit einem Trenner beginnt
+ * (`file:////rechner`, `file:///\\rechner`, `file:///%5C%5Crechner`), und kein doppelter
+ * Trenner im Rest (`file:///home/../..//rechner` loest sich zu `file:////rechner` auf). Gelesen
+ * wie der Browser (wieBrowserGelesen()), Gross/Klein egal. Die Faelle stehen einmal fuer beide
+ * Hilfen in tests/unit/datengrenze.test.js (DATEIPFAD_LOKAL, DATEIPFAD_GESPERRT).
  * @param {*} url - Wert aus Daten
  * @returns {boolean} ob der Wert ein lokaler Dateipfad ist
  */
 function istLokalerDateipfad(url) {
     if (typeof url !== 'string') return false;
-    let start = 0;
-    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
-    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
-    if (!/^file:\/\/\//i.test(gelesen)) return false;
-    const pfad = gelesen.slice('file:///'.length).replace(/%2f|%5c|\\/gi, '/');
-    return /^[^/?#]/.test(pfad) && !pfad.includes('//');
+    const gelesen = wieBrowserGelesen(url);
+    return /^file:\/\/\//i.test(gelesen) && istLokalerPfad(gelesen.slice('file://'.length));
 }
 /**
  * R3 fuer die Linkliste (features/shops/links.js): was sichererLink() erlaubt, dazu lokale
@@ -579,23 +600,23 @@ function sichererListenLink(url) {
 /**
  * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
  * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/,
- * relative Pfade und lokale Dateipfade nach istLokalerDateipfad() — derselbe Pruefkern wie
- * in der Linkliste (Nutzerentscheidung 29.10.: lokale Portraits wieder sichtbar). Verboten
- * jedes andere Schema (javascript:, data:text/html, blob:, ein Netzwerkpfad `file://host/…`
- * …) und ein protokoll-relativer Anfang aus zwei `/` oder `\` (der Browser liest `\` hier wie
- * `/`): unter file:// wird `//host/share/x.png` zu `file://host/share/x.png`, unter Windows
- * ein UNC-Pfad, also eine Verbindung samt Anmeldeversuch zu einem fremden Rechner. Gelesen
- * wie bei sichererLink: ohne fuehrende Leer-/Steuerzeichen und ohne Tabulator/Zeilenumbruch.
+ * lokale Dateipfade nach istLokalerDateipfad() (Nutzerentscheidung 29.10.: lokale Portraits
+ * wieder sichtbar) und relative Pfade nach demselben Pruefkern istLokalerPfad() wie der Pfad
+ * hinter `file://`. Verboten jedes andere Schema (javascript:, data:text/html, blob:, ein
+ * Netzwerkpfad `file://host/…` …) und jeder relative Wert mit Netzwerkanteil: ein
+ * protokoll-relativer Anfang (`//host/share/x.png` wird unter file:// zu
+ * `file://host/share/x.png`, unter Windows ein UNC-Pfad, also eine Verbindung samt
+ * Anmeldeversuch zu einem fremden Rechner) und ebenso ein doppelter Trenner aus `\`, `%2F` oder
+ * `%5C` irgendwo im Wert (`/%5C%5Chost/x.png` laedt Firefox als `\\host\x.png`, Nachbesserung
+ * (15)). Gelesen wie der Browser (wieBrowserGelesen()).
  * @param {*} url - Wert aus Daten
  * @returns {string} die Quelle oder ''
  */
 function sichereBildquelle(url) {
     if (typeof url !== 'string') return '';
-    let start = 0;
-    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
-    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
-    if (!gelesen || /^[/\\]{2}/.test(gelesen)) return '';
-    if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return url;
+    const gelesen = wieBrowserGelesen(url);
+    if (!gelesen) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return istLokalerPfad(gelesen) ? url : '';
     return /^(?:https?:|data:image\/)/i.test(gelesen) || istLokalerDateipfad(url) ? url : '';
 }
 /**

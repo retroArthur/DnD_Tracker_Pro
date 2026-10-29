@@ -53,6 +53,12 @@
  *      braucht nicht einmal einen Klick) und kein protokoll-relativer Anfang aus
  *      zwei `/` oder `\` — unter file:// wird `//host/share` zu
  *      `file://host/share`, unter Windows ein UNC-Pfad samt Anmeldeversuch.
+ *      Seit Nachbesserung (15) liest sie einen relativen Pfad mit demselben
+ *      Pruefkern wie den Pfad hinter `file://` (`istLokalerPfad()`): `\`, `%2F`
+ *      und `%5C` als Trenner, nirgends zwei hintereinander. Firefox unter Windows
+ *      setzte `/%5C%5Chost/x.png` hinter `file://` und lud `\\host\x.png`.
+ *      Die Leseregel des Browsers (fuehrende Zeichen, Tab/Zeilenumbruch) steht
+ *      fuer alle R3-Hilfen einmal, in `wieBrowserGelesen()`.
  *   R2 `sichereFarbe(wert, ersatz)`: nur `#rgb`/`#rrggbb`, sonst der feste
  *      Ersatz (der darf auch `var(--gold)` sein — er kommt aus dem Code).
  *   R2 `sichereKlasse(wert, erlaubteWerte, ersatz)`: nur ein Wert aus der
@@ -114,7 +120,11 @@
  * (rot am Stand 979a555d: die Hilfe fehlte in beiden Kopien). Lokale Bildquellen und
  * der gemeinsame Pruefkern (Nachbesserung (14)) waren am Stand 7f12e806 rot: jede
  * erlaubte lokale Bildquelle (`''` statt der Quelle) und der Gestalt-Block (kein
- * istLokalerDateipfad(), das `file:`-Literal in sichererListenLink selbst).
+ * istLokalerDateipfad(), das `file:`-Literal in sichererListenLink selbst). Relative
+ * Bildquellen mit kodierten Trennern und die eine Leseregel (Nachbesserung (15)) waren
+ * am Stand a80a23db rot: 44 Faelle, je Kopie 13 relative Werte mit (kodiert) doppeltem
+ * Trenner, die als Bild durchkamen, und 9 Gestaltfaelle (weder wieBrowserGelesen() noch
+ * istLokalerPfad(), die Leseregel dreimal abgeschrieben).
  */
 
 const fs = require('fs');
@@ -285,6 +295,27 @@ const BILD_VERBOTEN = [
     ' //host/kanarie.png',
     '\t//host/kanarie.png',
     '/\t/host/kanarie.png',
+    // Relative Pfade mit kodierten Trennern (Nachbesserung (15)): Firefox unter Windows setzt
+    // einen pfad-absoluten Wert ohne Laufwerk hinter `file://` und dekodiert `%5C` erst beim
+    // Oeffnen — `/%5C%5Crechner/x.png` wird `file:///%5C%5Crechner/x.png`, also
+    // `\\rechner\x.png` (UNC), ohne Klick (gemessen; Chromium bleibt auf dem Laufwerk). `.`,
+    // `..` und kodierte Punkte (`%2e%2e`) loesen sich vor dem doppelten Trenner auf. Gesperrt
+    // ist darum jeder relative Wert, der nach dem Lesen (`\`, `%2F`, `%5C` als `/`) irgendwo
+    // zwei Trenner hintereinander traegt — derselbe Pruefkern wie der Pfad hinter `file://`.
+    '/%5C%5Crechner/x.png',
+    '/%5c%5crechner/x.png',
+    '/%5C/rechner/x.png',
+    '/./%5C%5Crechner/x.png',
+    '/x/../%5C%5Crechner/x.png',
+    '/%2e%2e/%5C%5Crechner/x.png',
+    '/%2F%2Frechner/x.png',
+    '\\/rechner/x.png',
+    'x/..//rechner',
+    '%5C%5Crechner/x.png',
+    ' /%5C%5Crechner/x.png',
+    '/%5C\t%5Crechner/x.png',
+    '/%5C%5Crechner/x.png?v=1',
+    '/%2e%2e/%5C%5Crechner/x.png?v=1',
     'javascript:window.__xss=1',
     'data:text/html,<script>window.__xss=1</script>',
     'blob:file:///x',
@@ -301,6 +332,14 @@ const BILD_ERLAUBT = [
     '/bilder/held.png',
     '../held.png',
     'held.png?v=1&x=2',
+    // legitime relative Pfade bleiben (Nachbesserung (15)): einzelne Trenner, auch als `\`,
+    // `.`/`..`, kodierte Zeichen ausser Trennern
+    'icons/held.png',
+    './bilder/x.png',
+    '../bilder/x.png',
+    'bilder/a%20b.png',
+    '..\\bilder\\x.png',
+    '/bilder/held.png?v=1',
     // lokale Portraits, wie der Nutzer sie unter file:// ablegt
     'file:///C:/Bilder/held.png',
     'FILE:///D:/a%20b.png',
@@ -896,19 +935,26 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
 });
 
 // ============================================================
-// R3 — EIN Pruefkern fuer lokale Dateipfade (Linkliste und Bildquellen)
+// R3 — EINE Leseregel, EIN Pruefkern fuer Pfade (Linkliste und Bildquellen)
 // ============================================================
 // Nutzerentscheidung 29.10.: ein lokaler Dateipfad gilt in der Linkliste UND als Bildquelle,
-// ein Netzwerkpfad nirgends. Die Faelle oben pruefen das Verhalten beider Hilfen an
-// denselben Werten (DATEIPFAD_LOKAL/DATEIPFAD_GESPERRT); dieser Block haelt die Gestalt fest:
-// die Pruefung steht genau einmal im Datengrenzen-Block, in `istLokalerDateipfad()`, und
-// beide Hilfen fragen sie. Zwei Abschriften derselben Pruefung liefen beim naechsten Fund
-// auseinander — eine Sperre, die nur eine Kopie bekommt, liesse den Netzwerkpfad durch die
-// andere. Gezaehlt wird jedes Literal (Zeichenkette oder Regex) mit `file:` im Code des
-// Blocks; Kommentare zaehlen nicht. Der Block ist in beiden Kopien zeichengleich
+// ein Netzwerkpfad nirgends. Die Faelle oben pruefen das Verhalten der Hilfen an denselben
+// Werten (DATEIPFAD_LOKAL/DATEIPFAD_GESPERRT, BILD_VERBOTEN); dieser Block haelt die Gestalt
+// fest. Zwei Abschriften derselben Pruefung laufen beim naechsten Fund auseinander — so kam
+// Nachbesserung (15) zustande: der Pfad hinter `file:///` las `%5C` als Trenner, die relative
+// Bildquelle nicht, und `/%5C%5Crechner/x.png` lud in Firefox ueber UNC. Darum steht
+//   - die Leseregel des Browsers (fuehrende Zeichen bis U+0020 weg, Tabulator und
+//     Zeilenumbruch weg) genau einmal, in `wieBrowserGelesen()`; sichererLink,
+//     istLokalerDateipfad und sichereBildquelle rufen sie;
+//   - jedes `file:`-Literal in `istLokalerDateipfad()`; sichererListenLink und sichereBildquelle
+//     rufen sie;
+//   - die Lesung der Trenner (`\`, `%2F`, `%5C` als `/`) samt Sperre des Netzwerkanteils genau
+//     einmal, in `istLokalerPfad()`; istLokalerDateipfad (Pfad hinter `file://`) und
+//     sichereBildquelle (relativer Wert) rufen ihn.
+// Gezaehlt werden Literale (Zeichenkette oder Regex), Eigenschaftszugriffe und Aufrufe im Code
+// des Blocks; Kommentare zaehlen nicht. Der Block ist in beiden Kopien zeichengleich
 // (sanitizer-parity.test.js (c)), gelesen wird er hier trotzdem aus beiden.
-describe.each(QUELLEN.map(([n]) => [n]))('R3 ein Pruefkern fuer Dateipfade — %s', quellName => {
-    const KERN = 'istLokalerDateipfad';
+describe.each(QUELLEN.map(([n]) => [n]))('R3 eine Leseregel, ein Pruefkern — %s', quellName => {
     let funktionen;
     beforeAll(() => {
         const { datengrenzeBlock } = require('./helpers/datengrenze-block.js');
@@ -927,33 +973,71 @@ describe.each(QUELLEN.map(([n]) => [n]))('R3 ein Pruefkern fuer Dateipfade — %
             }
         }
     }
-
-    test(`${KERN}() steht im Block`, () => {
-        expect(funktionen.has(KERN)).toBe(true);
-    });
-
-    test('jedes file:-Literal des Blocks steht in ihr', () => {
-        const fundorte = [];
+    /** Namen der Funktionen des Blocks, in denen `trifft` mindestens einen Knoten findet. */
+    function fundorte(trifft) {
+        const namen = new Set();
         for (const [name, knoten] of funktionen) {
             besuche(knoten, n => {
-                if (n.type !== 'Literal') return;
-                const text = n.regex ? n.regex.pattern : String(n.value);
-                if (/file:/i.test(text)) fundorte.push(name);
+                if (trifft(n)) namen.add(name);
             });
         }
-        expect(fundorte.length).toBeGreaterThan(0);
-        expect(fundorte.filter(f => f !== KERN)).toEqual([]);
-    });
-
-    test.each(['sichererListenLink', 'sichereBildquelle'])(`%s ruft ${KERN}()`, name => {
-        expect(funktionen.has(name)).toBe(true);
-        const aufrufe = [];
+        return [...namen].sort();
+    }
+    /** Ein Literal, dessen Text (Zeichenkette oder Regex-Muster) auf `muster` passt. */
+    const literal = muster => n =>
+        n.type === 'Literal' && muster.test(n.regex ? n.regex.pattern : String(n.value));
+    /** Namen aller direkt aufgerufenen Funktionen in `name`. */
+    function aufrufe(name) {
+        const namen = [];
         besuche(funktionen.get(name), n => {
             if (n.type === 'CallExpression' && n.callee.type === 'Identifier') {
-                aufrufe.push(n.callee.name);
+                namen.push(n.callee.name);
             }
         });
-        expect(aufrufe).toContain(KERN);
+        return namen;
+    }
+
+    test.each(['wieBrowserGelesen', 'istLokalerDateipfad', 'istLokalerPfad'])(
+        '%s() steht im Block',
+        name => {
+            expect(funktionen.has(name)).toBe(true);
+        }
+    );
+
+    test('die Leseregel (charCodeAt, Tabulator/Zeilenumbruch) steht nur in wieBrowserGelesen()', () => {
+        const leseregel = n =>
+            (n.type === 'MemberExpression' && n.property && n.property.name === 'charCodeAt') ||
+            literal(/\\[tnr]|[\t\n\r]/)(n);
+        expect(fundorte(leseregel)).toEqual(['wieBrowserGelesen']);
+    });
+
+    test.each(['sichererLink', 'istLokalerDateipfad', 'sichereBildquelle'])(
+        '%s ruft wieBrowserGelesen()',
+        name => {
+            expect(funktionen.has(name)).toBe(true);
+            expect(aufrufe(name)).toContain('wieBrowserGelesen');
+        }
+    );
+
+    test('jedes file:-Literal des Blocks steht in istLokalerDateipfad()', () => {
+        expect(fundorte(literal(/file:/i))).toEqual(['istLokalerDateipfad']);
+    });
+
+    test.each(['sichererListenLink', 'sichereBildquelle'])(
+        '%s ruft istLokalerDateipfad()',
+        name => {
+            expect(funktionen.has(name)).toBe(true);
+            expect(aufrufe(name)).toContain('istLokalerDateipfad');
+        }
+    );
+
+    test('die Lesung kodierter Trenner (%2F, %5C) steht nur in istLokalerPfad()', () => {
+        expect(fundorte(literal(/%2f|%5c/i))).toEqual(['istLokalerPfad']);
+    });
+
+    test.each(['istLokalerDateipfad', 'sichereBildquelle'])('%s ruft istLokalerPfad()', name => {
+        expect(funktionen.has(name)).toBe(true);
+        expect(aufrufe(name)).toContain('istLokalerPfad');
     });
 });
 
