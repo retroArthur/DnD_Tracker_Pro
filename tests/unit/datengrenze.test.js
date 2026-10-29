@@ -31,6 +31,17 @@
  *      `javascript:`. Deshalb pruefen diese Faelle eine Erlaubnisliste, keine
  *      Sperrliste. Ein erlaubter Link kommt unveraendert zurueck (nicht
  *      "repariert"), alles andere als Leertext — "sonst kein Link".
+ *   R3 `sichererListenLink(url)` -> `url` oder `''`, nur fuer die Linkliste
+ *      (features/shops/links.js). Nutzerentscheidung 29.10.: lokale
+ *      Datei-Links sind dort wieder anklickbar — alles, was `sichererLink()`
+ *      erlaubt, dazu genau `file:///` mit einem lokalen Pfad (Laufwerk
+ *      `file:///C:/…` oder absolut `file:///home/…`). Netzwerkpfade bleiben
+ *      gesperrt, gelesen wie bei `sichererLink()`: unter Windows ist
+ *      `file://rechner/…` ein UNC-Pfad, und schon der Klick meldet den Nutzer
+ *      beim fremden Rechner an (NTLM). Gesperrt sind darum ein Host, ein Pfad,
+ *      der mit einem Trenner beginnt (`/`, `\`, `%2F`, `%5C`), und ein doppelter
+ *      Trenner dahinter (`file:///home/../..//rechner` loest sich zu
+ *      `file:////rechner` auf). Editor-Links bleiben bei `sichererLink()`.
  *   R3 `sichereBildquelle(url)` -> `url` oder `''` (Gutachten, Sonde D): eine
  *      Bildquelle laedt die App ohne Klick. Nur `http:`, `https:`,
  *      `data:image/` und relative Pfade; kein anderes Schema (`file:` lud die
@@ -94,7 +105,8 @@
  * bereinigt den gespeicherten Stand auch ohne Migration).
  *
  * ROT AM STAND 020e258: keine der Hilfen existierte; sichereBildquelle() kam mit
- * dem Gutachten dazu.
+ * dem Gutachten dazu, sichererListenLink() mit der Nutzerentscheidung vom 29.10.
+ * (rot am Stand 979a555d: die Hilfe fehlte in beiden Kopien).
  */
 
 const fs = require('fs');
@@ -105,6 +117,7 @@ const { extractModulesFromLoader } = require('../../tools/generate-eslint-global
 
 const HILFEN = [
     'sichererLink',
+    'sichererListenLink',
     'sichereBildquelle',
     'sichereFarbe',
     'sichereKlasse',
@@ -203,6 +216,41 @@ const LINK_ERLAUBT = [
     'MAILTO:dm@example.com'
 ];
 const KEIN_TEXT = [null, undefined, 42, true, {}, []];
+
+// R3 fuer die Linkliste — sichererListenLink (Nutzerentscheidung 29.10.): was sichererLink
+// erlaubt, dazu lokale Datei-Links; jeder Netzwerkpfad bleibt gesperrt, auch so geschrieben,
+// wie der Browser ihn erst nach dem Lesen erkennt (Gross/Klein, Steuerzeichen davor, Tab und
+// Zeilenumbruch im Schema, `\` als `/`, kodierte Trenner, `..` vor einem doppelten Trenner).
+const LISTENLINK_ERLAUBT = [
+    ...LINK_ERLAUBT,
+    'file:///C:/x.pdf',
+    'FILE:///D:/a%20b.pdf',
+    ' file:///C:/x',
+    'file:///home/x.pdf'
+];
+const LISTENLINK_VERBOTEN = [
+    ...LINK_VERBOTEN,
+    'file://rechner/x',
+    'file:////rechner/x',
+    'file:///\\\\rechner\\x',
+    'file:///%5C%5Crechner/x',
+    'file:///%5c%5crechner',
+    'file:\\\\rechner',
+    'file:/C:/x',
+    'file:C:/x',
+    'file:///',
+    // Netzwerkpfad in den Schreibweisen, die der Browser erst nach dem Lesen erkennt
+    'FILE://rechner/x',
+    ' file://rechner/x',
+    '\u0000file:////rechner/x',
+    '\tfile://rechner/x',
+    'fi\tle://rechner/x',
+    'file:/\n/rechner/x',
+    'file:///\\rechner/x',
+    'file:///%2F%2Frechner/x',
+    'file:///%5Crechner/x',
+    'file:///home/../..//rechner/x'
+];
 
 // R3 fuer Bildquellen — sichereBildquelle
 const BILD_VERBOTEN = [
@@ -562,6 +610,30 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
         test('leerer Text -> ""', () => {
             expect(brauche(quellName, 'sichererLink')('')).toBe('');
         });
+        test('ein lokaler Datei-Link bleibt hier kein Link (Editor-Links, nur die Linkliste erlaubt ihn)', () => {
+            expect(brauche(quellName, 'sichererLink')('file:///C:/x.pdf')).toBe('');
+        });
+    });
+
+    describe('R3 sichererListenLink(url) -> url oder "" (Linkliste: dazu lokale Datei-Links)', () => {
+        test.each(LISTENLINK_ERLAUBT.map(u => [JSON.stringify(u), u]))(
+            'bleibt unveraendert: %s',
+            (_n, url) => {
+                expect(brauche(quellName, 'sichererListenLink')(url)).toBe(url);
+            }
+        );
+        test.each(LISTENLINK_VERBOTEN.map(u => [JSON.stringify(u), u]))(
+            'kein Link: %s',
+            (_n, url) => {
+                expect(brauche(quellName, 'sichererListenLink')(url)).toBe('');
+            }
+        );
+        test.each(KEIN_TEXT.concat(['']).map(w => [JSON.stringify(w) ?? 'undefined', w]))(
+            'kein Text oder leer -> "": %s',
+            (_n, wert) => {
+                expect(brauche(quellName, 'sichererListenLink')(wert)).toBe('');
+            }
+        );
     });
 
     describe('R3 sichereBildquelle(url) -> url oder ""', () => {

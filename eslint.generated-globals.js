@@ -1551,6 +1551,7 @@ export default {
     "sichereFarbe": 'readonly',
     "sichereKlasse": 'readonly',
     "sichererLink": 'readonly',
+    "sichererListenLink": 'readonly',
     "sleep": 'readonly',
     "softDeleteSoundBlob": 'readonly',
     "sortAndLimitBackups": 'readonly',

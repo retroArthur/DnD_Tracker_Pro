@@ -536,6 +536,34 @@ function sichererLink(url) {
     return /^(?:https?|mailto):/i.test(schema) ? url : '';
 }
 /**
+ * R3 fuer die Linkliste (features/shops/links.js): was sichererLink() erlaubt, dazu lokale
+ * Datei-Links. Nutzerentscheidung (29.10.): der Nutzer arbeitet unter file:// und verlinkt
+ * eigene PDFs und Karten; vor SENKEN waren sie anklickbar und sollen es wieder sein. Erlaubt
+ * ist darum zusaetzlich genau `file:///` mit einem lokalen Pfad dahinter — ein Laufwerk
+ * (`file:///C:/Karten/x.pdf`) oder ein absoluter Pfad (`file:///home/x.pdf`). Gesperrt
+ * bleibt jeder Netzwerkpfad: unter Windows ist `file://rechner/freigabe/x` ein UNC-Pfad, und
+ * schon der Klick laesst das System sich beim fremden Rechner anmelden (NTLM — die Anmeldung
+ * des Nutzers geht an einen Rechner, den die Daten bestimmen). Darum kein Host, kein Pfad,
+ * der mit einem Trenner beginnt (`file:////rechner`, `file:///\\rechner`,
+ * `file:///%5C%5Crechner` — `\` liest der Browser wie `/`, `%2F`/`%5C` dekodiert ein Teil
+ * der Browser beim Oeffnen), und kein doppelter Trenner im Rest: `file:///home/../..//rechner`
+ * loest sich zu `file:////rechner` auf. Gelesen wie bei sichererLink: ohne fuehrende Leer-/
+ * Steuerzeichen, ohne Tabulator/Zeilenumbruch, Gross/Klein egal. Nur fuer die Linkliste —
+ * Editor-Links (Linkmenue, Markdown-Wandler) bleiben bei sichererLink().
+ * @param {*} url - Wert aus Daten
+ * @returns {string} der Link oder ''
+ */
+function sichererListenLink(url) {
+    if (sichererLink(url)) return url;
+    if (typeof url !== 'string') return '';
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
+    if (!/^file:\/\/\//i.test(gelesen)) return '';
+    const pfad = gelesen.slice('file:///'.length).replace(/%2f|%5c|\\/gi, '/');
+    return /^[^/?#]/.test(pfad) && !pfad.includes('//') ? url : '';
+}
+/**
  * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
  * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/ und
  * relative Pfade; verboten jedes andere Schema (file:, javascript:, data:text/html …) und ein
@@ -861,6 +889,7 @@ function bereinigeDatengrenze(daten) {
 // features/, systems/, ui/ und utils/). Ohne Verwendung in dieser Datei meldete
 // no-unused-vars jede dieser Deklarationen und hoebe den Lint-Pin.
 window.sichererLink = sichererLink;
+window.sichererListenLink = sichererListenLink;
 window.sichereBildquelle = sichereBildquelle;
 window.sichereFarbe = sichereFarbe;
 window.sichereKlasse = sichereKlasse;

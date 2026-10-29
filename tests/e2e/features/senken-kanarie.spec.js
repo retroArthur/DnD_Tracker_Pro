@@ -2095,9 +2095,13 @@ test('Robustheit: Werte mit Namen aus Object.prototype legen keine Ansicht lahm 
 
 // ---------------------------------------------------------------------------
 // Regressionen aus dem Gutachten (Verhaltensaenderungen von R3, nachgebessert):
-//   (a) Linkliste: ein Ziel ohne http(s)/mailto (der Nutzer arbeitet unter file://, ein Link
-//       auf eine lokale PDF war vorher bedienbar) wird weiter gespeichert, aber der Nutzer
-//       erfaehrt es beim Speichern, und die Liste kennzeichnet es — statt still Text.
+//   (a) Linkliste: der Nutzer arbeitet unter file:// und legt Links auf eigene PDFs an — ein
+//       solcher Link war vor SENKEN bedienbar. Nutzerentscheidung (29.10.): ein lokaler
+//       Datei-Link (`file:///` mit Laufwerk oder absolutem Pfad) ist in der Liste wieder ein
+//       Link, ohne Warnung und ohne Kennzeichnung. Ein Netzwerkpfad (`file://rechner/…`)
+//       bleibt Text: unter Windows ein UNC-Pfad, schon der Klick meldet den Nutzer beim
+//       fremden Rechner an. Er wird weiter gespeichert, aber der Nutzer erfaehrt es beim
+//       Speichern, und die Liste kennzeichnet ihn — statt still Text.
 //   (b) Linkmenue des Editors: "Oeffnen" verweigerte Ziele, die der Editor selbst anlegt
 //       und speichert (`./`, `/`, `#`), weil es das AUFGELOESTE link.href pruefte.
 // ---------------------------------------------------------------------------
@@ -2110,17 +2114,37 @@ test('Regression: Linkliste meldet nicht anklickbare Ziele, das Linkmenue oeffne
         '<p><a href="./karte.pdf">Karte</a> und <a href="//localhost/unc">UNC</a></p>';
     const ctx = await eingangSpielen(page, 'start', { daten: k, index: null });
     expect(ctx.luecken).toEqual([]);
+    const meldungen = () => page.evaluate(() => window.getCombatLog().map(e => String(e.text)));
 
-    // (a) Linkliste
+    // (a) Linkliste — lokaler Datei-Link: anklickbar, keine Warnung, keine Kennzeichnung
+    const LOKAL = 'file:///C:/Regeln/Spielerhandbuch.pdf';
     await zuReiter(page, 'links');
     await klick(page, '#view-links [data-action="call"][data-value="toggleLinkForm"]');
     await page.locator('#link-title').fill('Spielerhandbuch');
-    await page.locator('#link-url').fill('file:///C:/Regeln/Spielerhandbuch.pdf');
+    await page.locator('#link-url').fill(LOKAL);
+    await klick(page, '[data-action="call"][data-value="saveLink"]');
+    // Die Warnung kaeme in saveLink() synchron NACH "Link hinzugefügt" — steht diese
+    // Meldung im Protokoll, stuende auch eine Warnung schon dort.
+    await logAbwarten(page, 'Link hinzugefügt');
+    expect((await meldungen()).filter(t => t.includes('nicht anklickbar'))).toEqual([]);
+    const karte = page.locator('#view-links .link-card', { hasText: 'Spielerhandbuch' });
+    await expect(karte.locator('a[href]')).toHaveCount(1);
+    await expect(karte.locator('a[href]')).toHaveAttribute('href', LOKAL);
+    await expect(karte.locator('.link-nicht-anklickbar')).toHaveCount(0);
+
+    // Netzwerkpfad: bleibt Text, Warnung beim Speichern, Kennzeichnung in der Liste
+    await klick(page, '#view-links [data-action="call"][data-value="toggleLinkForm"]');
+    await page.locator('#link-title').fill('Gruppenlaufwerk');
+    await page.locator('#link-url').fill('file://rechner/freigabe/x.pdf');
     await klick(page, '[data-action="call"][data-value="saveLink"]');
     await logAbwarten(page, 'nicht anklickbar');
-    const karte = page.locator('#view-links .link-card', { hasText: 'Spielerhandbuch' });
-    await expect(karte.locator('a[href]')).toHaveCount(0);
-    await expect(karte.locator('.link-nicht-anklickbar')).toHaveText('(nicht anklickbar)');
+    const netz = page.locator('#view-links .link-card', { hasText: 'Gruppenlaufwerk' });
+    await expect(netz.locator('a[href]')).toHaveCount(0);
+    await expect(netz.locator('.link-nicht-anklickbar')).toHaveText('(nicht anklickbar)');
+    await expect(netz.locator('.link-nicht-anklickbar')).toHaveAttribute(
+        'title',
+        /lokale Datei-Links/
+    );
     // ein erlaubter Link bleibt Link, ohne Kennzeichnung
     const srd = page.locator('#view-links .link-card').first();
     await expect(srd.locator('a[href]')).toHaveCount(1);

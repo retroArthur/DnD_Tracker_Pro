@@ -45,13 +45,17 @@ function renderLinks() {
     c.innerHTML = links
         .map(l => {
             // R3 (Vertrag SENKEN, docs/bugfixes.md): ein Link aus Daten wird nur mit
-            // http:, https: oder mailto: anklickbar — `javascript:` & Co. bleiben Text.
-            // esc() allein haelt nur das Attribut zu, nicht das Schema.
-            const ziel = sichererLink(l.url);
+            // http:, https:, mailto: oder als lokaler Datei-Link (file:/// mit Laufwerk oder
+            // absolutem Pfad — Nutzerentscheidung 29.10., der Nutzer verlinkt unter file://
+            // eigene PDFs) anklickbar. `javascript:` & Co. bleiben Text, ebenso ein
+            // Netzwerkpfad (file://rechner/…): unter Windows ein UNC-Pfad, schon der Klick
+            // meldet den Nutzer beim fremden Rechner an (NTLM). esc() allein haelt nur das
+            // Attribut zu, nicht das Schema.
+            const ziel = sichererListenLink(l.url);
             // Nicht anklickbar heisst sichtbar gekennzeichnet, nicht still Text (Gutachten)
             const titel = ziel
                 ? `<a href="${esc(ziel)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a>`
-                : `${esc(l.title)} <span class="link-nicht-anklickbar" title="Nur http(s)- und mailto-Links lassen sich öffnen">(nicht anklickbar)</span>`;
+                : `${esc(l.title)} <span class="link-nicht-anklickbar" title="Nur http(s)-, mailto- und lokale Datei-Links lassen sich öffnen">(nicht anklickbar)</span>`;
             return `<div class="link-card">
         <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
         <div class="link-info">
@@ -141,12 +145,13 @@ function saveLink() {
             showToast('Link hinzugefügt');
         }
     }
-    // Gespeichert wird jedes Ziel; anklickbar ist nur http(s)/mailto (R3, renderLinks). Ohne
-    // diese Meldung erfuhr man es erst an der Liste (Gutachten: ein file:-Link auf eine
-    // lokale PDF war vorher bedienbar und stand danach still als Text da).
-    if (!sichererLink(url)) {
+    // Gespeichert wird jedes Ziel; anklickbar ist nur http(s), mailto und ein lokaler
+    // Datei-Link (R3, renderLinks — dieselbe Hilfe, damit Meldung und Liste nie
+    // auseinanderlaufen). Ohne diese Meldung erfuhr man es erst an der Liste (Gutachten).
+    // Ein Netzwerkpfad (file://rechner/…) landet hier: gesperrt wegen UNC/NTLM.
+    if (!sichererListenLink(url)) {
         showToast(
-            '⚠️ Gespeichert, aber nicht anklickbar: nur http(s)- und mailto-Links lassen sich öffnen',
+            '⚠️ Gespeichert, aber nicht anklickbar: nur http(s)-, mailto- und lokale Datei-Links lassen sich öffnen',
             'warning'
         );
     }
