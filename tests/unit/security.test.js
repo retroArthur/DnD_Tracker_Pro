@@ -367,6 +367,18 @@ describe('Security: sanitizeHTML XSS Prevention', () => {
             expect(clean).toContain('href="/page"');
         });
 
+        // SENKEN R3 (Gutachten): `//host/share` wird unter file:// zu file://host/share — unter
+        // Windows ein UNC-Pfad samt Anmeldeversuch. Der Browser liest `\` wie `/` und streicht
+        // Tabulator/Zeilenumbruch im Ziel.
+        test.each(['//host/share', '/\\host/share', '/\t/host/share', '  //host/share'])(
+            'blockiert protokoll-relative Links: %j',
+            ziel => {
+                const clean = sanitizeHTML(`<a href="${ziel}">Link</a>`);
+                expect(clean).not.toContain('href=');
+                expect(clean).toContain('Link');
+            }
+        );
+
         test('erlaubt Anker-Links', () => {
             const dirty = '<a href="#section">Link</a>';
             const clean = sanitizeHTML(dirty);

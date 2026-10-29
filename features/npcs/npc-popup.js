@@ -55,7 +55,7 @@ function showNPCPopup(npcId, event) {
     popup.innerHTML = `
         <div class="npc-popup-header">
             ${
-                npc.avatar
+                sichereBildquelle(npc.avatar)
                     ? `<img src="${esc(npc.avatar)}" class="npc-popup-avatar">`
                     : `<div class="npc-popup-avatar-placeholder">🧑</div>`
             }

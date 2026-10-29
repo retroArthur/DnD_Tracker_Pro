@@ -24,6 +24,47 @@ function htmlToMarkdown(html) {
 }
 
 /**
+ * Text aus Daten fuer eine Markdown-Datei (SENKEN R1). Die Datei verlaesst die App: ein
+ * HTML-faehiger Markdown-Betrachter macht aus `<…>` im Text Markup, und markdownToHtml() beim
+ * Re-Import Formatierung aus Text (frueher wurde `<p>&lt;img …&gt;</p>` — sichtbarer TEXT —
+ * in der Datei zu einem lebendigen `<img>`). Darum `<`/`>` als Entitaet, `&` nur, wo er eine
+ * Entitaet bilden wuerde ("Tom & Jerry" bleibt lesbar). Eine Linkmarke `](` bzw. `]:` vor
+ * einem Ziel mit fremdem Schema (alles ausser http/https/mailto, vgl. sichererLink) wird
+ * entwertet: `(`/`:` als Entitaet bilden keine Linkstruktur. Der Re-Import liest die
+ * Entitaeten wieder als Zeichen (sanitizeHTML parst sie), der Text kommt woertlich zurueck.
+ * @param {*} text
+ * @returns {string}
+ */
+function markdownText(text) {
+    return String(text ?? '')
+        .replace(/&(?=#?[a-zA-Z0-9]+;)/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\]([(:])(\s*)([^\s)]*)/g, (treffer, marke, raum, ziel) =>
+            /^[a-z][a-z0-9+.-]*:/i.test(ziel) && !sichererLink(ziel)
+                ? `]&#${marke.charCodeAt(0)};${raum}${ziel}`
+                : treffer
+        );
+}
+
+/**
+ * Linkziel aus Daten fuer `[text](ziel)` (SENKEN R3): http/https/mailto (sichererLink) oder
+ * ein relatives Ziel, wie der Editor es anlegt (`#…`, `./…`, `/…` — nicht `//`, das waere
+ * protokoll-relativ). Sonst '' (der Aufrufer schreibt dann nur den Text). Leerraum, `<`, `>`,
+ * `"` und Klammern prozentkodiert: sonst endet das Ziel vorzeitig, und der Rest stuende als
+ * Text — samt Markup — in der Datei.
+ * @param {*} href
+ * @returns {string}
+ */
+function markdownLinkZiel(href) {
+    const ziel = String(href ?? '').trim();
+    if (!sichererLink(ziel) && !/^(?:#|\.\/|\/(?![/\\]))/.test(ziel)) return '';
+    return ziel.replace(/[\s<>"()]/g, z =>
+        z === '(' ? '%28' : z === ')' ? '%29' : encodeURIComponent(z)
+    );
+}
+
+/**
  * Recursively convert DOM node to Markdown
  * @param {Node} node - DOM node to convert
  * @returns {string} Markdown string
@@ -33,7 +74,7 @@ function convertNodeToMarkdown(node) {
 
     // Text node
     if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent || '';
+        return markdownText(node.textContent || '');
     }
 
     // Element node
@@ -68,32 +109,33 @@ function convertNodeToMarkdown(node) {
                 break;
 
             case 'code':
-                markdown = `\`${getTextContent(node)}\``;
+                markdown = `\`${textAus(node)}\``;
                 break;
 
             case 'h1':
-                markdown = `# ${getTextContent(node)}\n\n`;
+                markdown = `# ${textAus(node)}\n\n`;
                 break;
             case 'h2':
-                markdown = `## ${getTextContent(node)}\n\n`;
+                markdown = `## ${textAus(node)}\n\n`;
                 break;
             case 'h3':
-                markdown = `### ${getTextContent(node)}\n\n`;
+                markdown = `### ${textAus(node)}\n\n`;
                 break;
             case 'h4':
-                markdown = `#### ${getTextContent(node)}\n\n`;
+                markdown = `#### ${textAus(node)}\n\n`;
                 break;
             case 'h5':
-                markdown = `##### ${getTextContent(node)}\n\n`;
+                markdown = `##### ${textAus(node)}\n\n`;
                 break;
             case 'h6':
-                markdown = `###### ${getTextContent(node)}\n\n`;
+                markdown = `###### ${textAus(node)}\n\n`;
                 break;
 
             case 'a': {
-                const href = node.getAttribute('href') || '';
-                const linkText = getTextContent(node);
-                markdown = `[${linkText}](${href})`;
+                // Nur ein erlaubtes Ziel wird ein Link (SENKEN R3), sonst bleibt der Text
+                const ziel = markdownLinkZiel(node.getAttribute('href'));
+                const linkText = textAus(node);
+                markdown = ziel ? `[${linkText}](${ziel})` : linkText;
                 break;
             }
 
@@ -106,14 +148,14 @@ function convertNodeToMarkdown(node) {
                     listItems
                         .map((li, index) => {
                             const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
-                            return `${prefix} ${getTextContent(li)}`;
+                            return `${prefix} ${textAus(li)}`;
                         })
                         .join('\n') + '\n\n';
                 break;
             }
 
             case 'blockquote': {
-                const lines = getTextContent(node).split('\n');
+                const lines = textAus(node).split('\n');
                 // Markdown-Zitatmarke, kein Markup — als Name, weil R6 das `>` im Literal
                 // fuer HTML hielte (tests/unit/html-senken.test.js, Regel der Vorsichtung).
                 const marke = '> ';
@@ -230,6 +272,15 @@ function getTextContent(node) {
 }
 
 /**
+ * Text eines Elements wie getTextContent(), fuer die Datei kodiert (markdownText, SENKEN R1).
+ * @param {Node} node - DOM node
+ * @returns {string}
+ */
+function textAus(node) {
+    return markdownText(getTextContent(node));
+}
+
+/**
  * Convert HTML table to Markdown table
  * @param {HTMLTableElement} table - Table element
  * @returns {string} Markdown table
@@ -243,7 +294,7 @@ function convertTableToMarkdown(table) {
     // Process rows
     rows.forEach((row, rowIndex) => {
         const cells = Array.from(row.cells);
-        const cellContents = cells.map(cell => getTextContent(cell).replace(/\|/g, '\\|'));
+        const cellContents = cells.map(cell => textAus(cell).replace(/\|/g, '\\|'));
         markdown += '| ' + cellContents.join(' | ') + ' |\n';
 
         // Add separator after first row (header)
@@ -416,3 +467,5 @@ function renderMarkdownInContent(html) {
 window.htmlToMarkdown = htmlToMarkdown;
 window.markdownToHtml = markdownToHtml;
 window.renderMarkdownInContent = renderMarkdownInContent;
+// markdownText: Kopfzeilen des Markdown-Exports (systems/markdown-import-export.js)
+window.markdownText = markdownText;

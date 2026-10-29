@@ -44,7 +44,7 @@ const SHOP_TYPES = Object.freeze({
 // Doppelfuehrung, die bei den Schadensarten dazu gefuehrt hat, dass zwei
 // Ansichten verschiedene Farben zeigten. Die Farben stehen jetzt
 // ausschliesslich als --cat-*-Tokens in assets/styles/variables.css.
-const SHOP_ITEM_CATEGORIES = Object.freeze({
+const SHOP_ITEM_CATEGORIES = Object.freeze({ __proto__: null, // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
     weapon: { icon: '⚔️', name: 'Waffe' },
     armor: { icon: '🛡️', name: 'Rüstung' },
     gear: { icon: '⚙️', name: 'Ausrüstung' },

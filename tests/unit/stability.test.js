@@ -2400,6 +2400,42 @@ describe('Nachzug R13 — echter >5-MB-IDB-only-Save plus echter Neustart-Lesepf
     });
 });
 
+/*
+ * SENKEN R4 (Gutachten, Regression der Verdrahtung): tests/unit/datengrenze.test.js prueft im
+ * Aufrufgraph nur, DASS load() die Datengrenze erreicht. Gemessen im Gutachten: ohne den Aufruf
+ * in _parseStoredCampaign() fuer Daten mit aktueller `_version` (Start, Kampagnenwechsel,
+ * Konflikt-Neuladen — der Hauptpfad) blieb die ganze Jest-Suite gruen, weil der
+ * Migrationszweig die Erreichbarkeit weiter erfuellte; rot wurde erst der E2E-Gegenfall. Hier
+ * das Verhalten am ECHTEN load() derselben Werkbank: aktueller Stempel, keine Migration.
+ */
+describe('SENKEN R4 — load() bereinigt den gespeicherten Stand auch ohne Migration', () => {
+    test('aktuelle _version: "40" wird 40, ein eigener __proto__ faellt weg, Text bleibt', async () => {
+        const gespeichert =
+            '{"_version":"9.9.9","__proto__":{"vergiftet":true},' +
+            '"characters":[{"id":"1","name":"Thorin & <Söhne> \\"Zwerg\\"","hpCurrent":"40"}]}';
+        const D = {};
+        const werkbank = _erzeugePersistenzKontext({
+            D,
+            mitLoad: true,
+            lsStart: { 'nachzug-key': gespeichert, 'nachzug-key_ts': '1700000000000' }
+        });
+        // Vorbedingung: der Stand ist aktuell — der Migrationszweig (mit seinem eigenen
+        // Aufruf der Grenze) laeuft NICHT, geprueft wird der Hauptpfad
+        werkbank.context.migrateData = jest.fn(daten => daten);
+
+        const erg = await werkbank.context.load();
+
+        expect(erg.ok).toBe(true);
+        expect(werkbank.context.migrateData).not.toHaveBeenCalled();
+        expect(D.characters[0].hpCurrent).toBe(40);
+        expect(D.characters[0].id).toBe(1);
+        expect(D.characters[0].name).toBe('Thorin & <Söhne> "Zwerg"');
+        expect(Object.prototype.hasOwnProperty.call(D, '__proto__')).toBe(false);
+        expect(Object.getPrototypeOf(D)).toBe(Object.prototype);
+        expect(D.vergiftet).toBeUndefined();
+    });
+});
+
 describe('Nachzug R14 — echte Quota-Kette localStorage -> StorageAPI -> persistence -> IndexedDB', () => {
     function quotaFehler() {
         const err = new Error('Quota exceeded');

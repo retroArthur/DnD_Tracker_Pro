@@ -7,7 +7,7 @@
  * Inventar-Kategorien für Loot und Items
  * @type {Object.<string, string>}
  */
-const CATS = {
+const CATS = { __proto__: null, // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
     weapons: '⚔️ Waffen',
     armor: '🛡️ Rüstung',
     potions: '🧪 Tränke',
@@ -22,7 +22,7 @@ const CATS = {
  * Link-Kategorien für externe Ressourcen
  * @type {Object.<string, string>}
  */
-const LINK_CATS = {
+const LINK_CATS = { __proto__: null, // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
     rules: '📖 Regeln',
     tools: '🛠️ Tools',
     maps: '🗺️ Karten',
@@ -250,7 +250,7 @@ const RARITIES = {
  * Seltenheits-Labels (deutsche Namen) - verwendet lowercase keys für Loot-System
  * @type {Object.<string, string>}
  */
-const RARITY_LABELS = {
+const RARITY_LABELS = { __proto__: null, // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
     normal: 'Normal',
     common: 'Gewöhnlich',
     uncommon: 'Ungewöhnlich',

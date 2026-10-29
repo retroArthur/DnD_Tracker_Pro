@@ -23,6 +23,12 @@
  * `loader.js` `MODULES`-Reihenfolge entsprechen: `wiki.js` VOR `wiki-crud.js`,
  * weil `wiki-crud.js` bare Bezeichner (`WikiState`, `WIKI_CATEGORIES`) aus
  * `wiki.js` referenziert.
+ *
+ * SENKEN (Nachbearbeitung, docs/bugfixes.md): parseWikiLinks() ersetzt seit dem Gutachten
+ * NUR in Textknoten von bereinigtem Markup (ersetzeImText, utils/basic.js) und baut den Link
+ * als Knoten. Die Eingabe ist darum, wie in wiki.js, bereinigtes Markup: ein vom Nutzer
+ * getippter Tag steht dort als Text (`&lt;b&gt;`), ein echtes Element ist Formatierung und
+ * gehoert nicht zum Titel. Die Werkbank reicht `DOMParser` aus jsdom durch.
  */
 
 const fs = require('fs');
@@ -44,6 +50,7 @@ function loadWikiModule({ wikiEntries = [] } = {}) {
         document: {
             getElementById: () => null
         },
+        DOMParser,
         console
     };
     vm.createContext(context);
@@ -60,12 +67,15 @@ function loadWikiModule({ wikiEntries = [] } = {}) {
 describe('parseWikiLinks() — SEC-04 Escaping', () => {
     test('Titel mit < und > erzeugt kein echtes Markup im Textknoten', () => {
         const context = loadWikiModule();
-        const content = 'Text mit [[Der <b>Hobbit</b>]] Link.';
+        // So, wie der Editor einen getippten Tag speichert (Text, kodiert)
+        const content = 'Text mit [[Der &lt;b&gt;Hobbit&lt;/b&gt;]] Link.';
 
         const result = context.parseWikiLinks(content);
 
-        // Der rohe Tag darf nicht mehr im Ergebnis auftauchen
-        expect(result).not.toMatch(/<b>Hobbit<\/b>/);
+        // Kein echtes <b>-Element, der Titel steht woertlich als Text
+        const doc = new DOMParser().parseFromString(result, 'text/html');
+        expect(doc.querySelector('b')).toBeNull();
+        expect(doc.querySelector('.wiki-link').textContent).toBe('Der <b>Hobbit</b>');
         // Escapte Form muss stattdessen sichtbar sein
         expect(result).toContain('Der &lt;b&gt;Hobbit&lt;/b&gt;');
     });

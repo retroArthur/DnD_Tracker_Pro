@@ -122,8 +122,8 @@ function buildHandoutHTML(shop, options) {
         itemsHTML =
             '<div class="empty-shop"><p>Dieser Shop hat derzeit keine verfügbaren Waren.</p></div>';
     } else if (options.groupByCategory) {
-        // Nach Kategorie gruppieren
-        const byCategory = {};
+        // Nach Kategorie gruppieren — ohne Prototyp: `__proto__`/`constructor` aus Daten ist ein Schluessel
+        const byCategory = Object.create(null);
         itemsToShow.forEach(item => {
             const cat = item.category || 'misc';
             if (!byCategory[cat]) byCategory[cat] = [];

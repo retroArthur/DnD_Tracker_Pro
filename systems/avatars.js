@@ -20,6 +20,9 @@ function validateAvatarURL(url) {
     if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
         return false;
     }
+    // SENKEN R3 (Bildquellen, wie sichereBildquelle): kein protokoll-relativer Anfang aus zwei
+    // `/` oder `\` — unter file:// wird `//host/share` zu `file://host/share` (UNC-Pfad)
+    if (/^[/\\]{2}/.test(strippedForProtocolCheck)) return false;
     const lowerUrl = trimmed.toLowerCase();
     // Allow relative paths
     if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
@@ -59,7 +62,12 @@ function previewAvatar() {
     const preview = $('avatar-preview');
     if (!preview) return;
     const url = urlEl?.value.trim();
-    if (url) {
+    // Die Vorschau laedt sofort, auch einen Wert aus Daten (showAvatarModal fuellt das Feld
+    // vor): nur eine sichere Bildquelle (SENKEN R3), sonst das Fehlerzeichen
+    if (url && !sichereBildquelle(url)) {
+        preview.innerHTML = '';
+        preview.textContent = '❌';
+    } else if (url) {
         const img = document.createElement('img');
         img.src = url;
         img.className = 'avatar avatar-xl';

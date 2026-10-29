@@ -18,8 +18,8 @@
  * Wert ungeprueft in HTML landet:
  *
  *   (a) jede Interpolation `${...}` in einem HTML-artigen Template-Literal
- *       (roher Text enthaelt `<`, `>`, `="` oder `='` — die Regel aus der
- *       Vorsichtung, die 1587 Rohfunde lieferte),
+ *       (roher Text enthaelt `<`, `>`, `="` oder `='` — die Regel der ersten
+ *       Vorsichtung vor dem Fix, Befund im Katalogeintrag SENKEN, docs/bugfixes.md),
  *   (b) jeder Nicht-Literal-Teil einer `+`-Kette, in der ein HTML-artiges
  *       Literal steht (die Kette wird flach gemacht, gezaehlt wird nur an
  *       ihrer Wurzel, damit kein Teil doppelt zaehlt),
@@ -135,7 +135,7 @@
  *     `Object.keys(o).length`) ist immer eine Zahl. `daten.length` dagegen
  *     NICHT: ein importiertes Objekt kann eine Eigenschaft `length` mit Text
  *     tragen — dieselbe Lage wie bei verschachtelten IDs, die kein Import
- *     normalisiert (Kritik: "IDs sind KEINE Ausnahme").
+ *     normalisierte (Befund SENKEN: `links[].id` als Text, docs/bugfixes.md).
  *   - Selektoren: ein Template oder eine Kette, die direkt an
  *     `querySelector(All)`, `closest` oder `matches` geht, wird nie als
  *     Markup geparst und ist keine HTML-Stelle.
@@ -155,7 +155,17 @@
  * gezaehlt ist (`html += x` zaehlt an der Senke EINMAL), und Werte, die per
  * `textContent` oder DOM-API gesetzt werden (die sind ohnehin sicher). Werte
  * aus destrukturierten Mustern und Methoden an Objekten (`EntityLookup.x()`)
- * zaehlen immer — sie gelten als Daten.
+ * zaehlen immer — sie gelten als Daten. Ebenfalls NICHT gesehen (Gutachten,
+ * Mutationen am echten Zaehler, beide 0 -> 0): (1) KNOTEN, die aus Daten geparst
+ * und in die Seite uebernommen werden —
+ * `el.append(...new DOMParser().parseFromString(daten, 'text/html').body.childNodes)`:
+ * uebernommene Knoten laden Bilder und fuehren Handler aus (die Gefahr steht in
+ * ui/editors/rich-text-insert.js). Inert parsen und als Zeichenkette weitergeben
+ * (bearbeiteMarkup/ersetzeImText, htmlToMarkdown) ist dagegen sicher. (2) Vertrauen
+ * nach dem Namen ist auf den Geltungsbereich geprueft (Regel UMGEBUNDEN unten): ein
+ * lokales `const esc = x => x`, ein Parameter `esc` oder ein lokales
+ * `const Number = x => x` zaehlen — erlaubt bleibt nur der Alias `const esc =
+ * window.esc` (das Importmuster des Projekts) und die Deklaration im Quellbaum.
  *
  * DIE MUTATIONSPROBE (Teil 1, letzter Fall) haengt an ein ECHTES Modul je
  * eine neue ungeschuetzte Stelle jeder Art an und verlangt in jeder Zeile
@@ -197,7 +207,7 @@ const LOADER_PATH = path.join(REPO_ROOT, 'loader.js');
 // REGELN (benannte Mengen, an genau einer Stelle)
 // ============================================================
 
-/** Roher Template-/Literaltext, der nach HTML aussieht (Regel der Vorsichtung). */
+/** Roher Template-/Literaltext, der nach HTML aussieht (Regel (a) im Kopfkommentar). */
 const HTML_ZEICHEN = /[<>]|="|='/;
 
 /** Aufrufe, deren Ergebnis ueberall sicher ist (Text UND Attribut). */
@@ -344,6 +354,15 @@ const FORMPRUEFER = new Map([
     ['sichereFarbe', [1]],
     ['sichereKlasse', [1, 2]]
 ]);
+
+/**
+ * Nachbearbeiter aus utils/basic.js (Vertrag SENKEN R1): parsen bereinigtes Markup inert,
+ * aendern nur Knoten (Ersatz per createElement/textContent, Kennung per Attribut) und
+ * serialisieren. Das Ergebnis ist so geprueft wie das Markup aus Argument 0 — wie
+ * sanitizeHTML nur im ELEMENTINHALT (Regel ATTRIBUT). Was der Rueckruf baut, ist DOM und
+ * keine Zeichenkette; ein innerHTML darin waere eine eigene Senke (c).
+ */
+const MARKUP_NACHBEARBEITER = new Set(['bearbeiteMarkup', 'ersetzeImText']);
 
 /** Mutierende Aufrufe, deren Argumente zu Wertquellen ihres Objekts werden. */
 const MUTIERENDE_METHODEN = new Set(['push', 'unshift', 'splice', 'set', 'add', 'fill']);
@@ -718,7 +737,9 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
         if (!rueckruf) return true;
         if (istFunktion(rueckruf)) return funktionGeprueft(rueckruf);
         if (rueckruf.type === 'Identifier') {
-            if (SICHERE_FUNKTIONEN.has(rueckruf.name)) return sichererName(rueckruf.name);
+            if (SICHERE_FUNKTIONEN.has(rueckruf.name) && unverbogen(rueckruf)) {
+                return sichererName(rueckruf.name);
+            }
             if (rueckruf.name === 'String') return geprueft(objekt);
             const fn = funktionVon(rueckruf);
             if (fn) return fn.every(funktionGeprueft);
@@ -906,6 +927,102 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
         });
     }
 
+    // --- Regel NACHBEARBEITUNG: Regex-Ersatz mit Markup auf Markup mit Attributen ---
+    /** Quellen eines lokalen oder Modul-Bezeichners (Initialisierung, Zuweisungen); sonst []. */
+    function wertQuellen(bezeichner) {
+        const b = bindung(bezeichner);
+        if (!b || (b.art !== 'lokal' && b.art !== 'modul')) return [];
+        const erg = [];
+        for (const f of b.funde) if (f.art === 'variable' && f.d.init) erg.push(f.d.init);
+        for (const q of quellen.get(bezeichner.name) || []) {
+            if (b.art === 'lokal' && !enthaelt(b.bereich, q.node)) continue;
+            if (q.art === 'zuweisung' && q.node.right) erg.push(q.node.right);
+        }
+        return erg;
+    }
+    /** Fuegt der Ersatz einer `.replace`-Stelle Markup ein (auch als Rueckgabe eines Rueckrufs)? */
+    function fuegtMarkupEin(e, gesehen = new Set()) {
+        if (!e || gesehen.has(e)) return false;
+        gesehen.add(e);
+        if (htmlArtig(e)) return true;
+        switch (e.type) {
+            case 'BinaryExpression':
+                return e.operator === '+' && kette(e).some(htmlArtig);
+            case 'ConditionalExpression':
+                return (
+                    fuegtMarkupEin(e.consequent, gesehen) || fuegtMarkupEin(e.alternate, gesehen)
+                );
+            case 'LogicalExpression':
+                return fuegtMarkupEin(e.left, gesehen) || fuegtMarkupEin(e.right, gesehen);
+            case 'Identifier': {
+                const fns = funktionVon(e);
+                if (fns) return fns.some(fn => fuegtMarkupEin(fn, gesehen));
+                return wertQuellen(e).some(q => fuegtMarkupEin(q, gesehen));
+            }
+            default:
+                return istFunktion(e) && rueckgaben(e).some(r => fuegtMarkupEin(r, gesehen));
+        }
+    }
+    /**
+     * Ist der Wert Markup mit Attributen, deren Werte aus Daten kommen koennen? Das Ergebnis
+     * von sanitizeHTML() (class, title, href, style bleiben stehen) und der Nachbearbeiter,
+     * ein HTML-Template oder eine HTML-Kette mit Attribut UND Datenanteil, ein Bezeichner mit
+     * einer solchen Quelle, eine Hilfe, die so etwas zurueckgibt, und `.replace`/durchreichende
+     * Methoden darauf. NICHT: esc()-Text (kein Tag, also kein Attribut), auch wenn spaetere
+     * Ersetzungen Tags ohne Attribute einfuegen (parseMarkdown in systems/undo.js).
+     */
+    function traegtAttribute(o, gesehen = new Set()) {
+        if (!o || gesehen.has(o)) return false;
+        gesehen.add(o);
+        const mitAttribut = t =>
+            (t.type === 'Literal' && typeof t.value === 'string' && /=["']/.test(t.value)) ||
+            (t.type === 'TemplateLiteral' && /=["']/.test(t.quasis.map(q => q.value.raw).join('')));
+        switch (o.type) {
+            case 'TemplateLiteral':
+                return mitAttribut(o) && o.expressions.length > 0;
+            case 'BinaryExpression': {
+                if (o.operator !== '+') return false;
+                const teile = kette(o);
+                return teile.some(mitAttribut) && teile.some(t => t.type !== 'Literal');
+            }
+            case 'ConditionalExpression':
+                return (
+                    traegtAttribute(o.consequent, gesehen) || traegtAttribute(o.alternate, gesehen)
+                );
+            case 'LogicalExpression':
+                return traegtAttribute(o.left, gesehen) || traegtAttribute(o.right, gesehen);
+            case 'ChainExpression':
+                return traegtAttribute(o.expression, gesehen);
+            case 'AssignmentExpression':
+                return traegtAttribute(o.right, gesehen);
+            case 'Identifier':
+                return wertQuellen(o).some(q => traegtAttribute(q, gesehen));
+            case 'CallExpression': {
+                const c = o.callee.type === 'ChainExpression' ? o.callee.expression : o.callee;
+                const name = c.type === 'Identifier' ? c.name : windowAlias(c);
+                if (name === 'sanitizeHTML' || MARKUP_NACHBEARBEITER.has(name)) return true;
+                if (c.type === 'MemberExpression' && !c.computed && !windowAlias(c)) {
+                    const m = c.property.name;
+                    if (m === 'replace' || m === 'replaceAll' || DURCHREICHENDE_METHODEN.has(m)) {
+                        return traegtAttribute(c.object, gesehen);
+                    }
+                    return false;
+                }
+                const fns =
+                    c.type === 'Identifier'
+                        ? funktionVon(c)
+                        : name && topFunktionen.has(name)
+                          ? [topFunktionen.get(name)]
+                          : null;
+                return (
+                    !!fns && fns.some(fn => rueckgaben(fn).some(r => traegtAttribute(r, gesehen)))
+                );
+            }
+            default:
+                return false;
+        }
+    }
+
     // --- Kern: ist dieser Wert geprueft? ---
     function geprueft(node) {
         if (!node) return true;
@@ -985,11 +1102,21 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
         const args = node.arguments;
         if (istFunktion(c)) return funktionGeprueft(c);
         if (c.type === 'Identifier') {
+            const bekannt =
+                SICHERE_FUNKTIONEN.has(c.name) ||
+                NUR_TEXT_SICHERE_FUNKTIONEN.has(c.name) ||
+                FORMPRUEFER.has(c.name) ||
+                MARKUP_NACHBEARBEITER.has(c.name);
+            if (bekannt && !unverbogen(c)) {
+                const fns = funktionVon(c);
+                return !!fns && fns.every(funktionGeprueft);
+            }
             if (SICHERE_FUNKTIONEN.has(c.name) || NUR_TEXT_SICHERE_FUNKTIONEN.has(c.name))
                 return sichererName(c.name);
             if (FORMPRUEFER.has(c.name)) {
                 return FORMPRUEFER.get(c.name).every(i => !args[i] || geprueft(args[i]));
             }
+            if (MARKUP_NACHBEARBEITER.has(c.name)) return modus === 'text' && geprueft(args[0]);
             if (c.name === 'String') return args.every(geprueft);
             const fns = funktionVon(c);
             return !!fns && fns.every(funktionGeprueft);
@@ -1006,6 +1133,7 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
                 if (FORMPRUEFER.has(m)) {
                     return FORMPRUEFER.get(m).every(i => !args[i] || geprueft(args[i]));
                 }
+                if (MARKUP_NACHBEARBEITER.has(m)) return modus === 'text' && geprueft(args[0]);
                 return topFunktionen.has(m) && funktionGeprueft(topFunktionen.get(m));
             }
             if (o.name === 'Object' && ['keys', 'values', 'entries'].includes(m)) {
@@ -1026,6 +1154,9 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
         }
         if (m === 'replace' || m === 'replaceAll') {
             const ersatz = args[1];
+            // Regel NACHBEARBEITUNG: ein Ersatz, der Markup einfuegt, auf Markup mit
+            // Attributen — der Treffer darf in einem Attributwert beginnen oder enden
+            if (fuegtMarkupEin(ersatz) && traegtAttribute(o)) return false;
             const ersatzGeprueft =
                 !ersatz || (istFunktion(ersatz) ? funktionGeprueft(ersatz) : geprueft(ersatz));
             return geprueft(o) && ersatzGeprueft;
@@ -1050,6 +1181,25 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
      *               Sicher sind dort nur Werte ohne Datentext: Literale, Zahlen,
      *               Formpruefer, eigene HTML-Bausteine.
      */
+    /**
+     * Regel UMGEBUNDEN: ein Name aus SICHERE_FUNKTIONEN, FORMPRUEFER oder
+     * MARKUP_NACHBEARBEITER ist nur dann der Pruefer, wenn er nicht lokal anders
+     * gebunden ist. Erlaubt: keine Bindung im Quellbaum (eingebaut: Number,
+     * parseInt …), die Deklaration auf oberster Ebene (utils/basic.js) und der Alias
+     * `const|var esc = window.esc`. Ein Parameter oder eine andere Bindung gleichen
+     * Namens ist Daten-Code wie jeder andere.
+     */
+    function unverbogen(bezeichner) {
+        const b = bindung(bezeichner);
+        if (!b) return true;
+        if (b.art === 'parameter') return false;
+        if (b.art === 'funktion') return b.fn === topFunktionen.get(bezeichner.name);
+        return b.funde.every(
+            f =>
+                (f.art === 'variable' && windowAlias(f.d.init) === bezeichner.name) ||
+                (f.art === 'funktion' && f.fn === topFunktionen.get(bezeichner.name))
+        );
+    }
     function sichererName(name) {
         if (modus === 'streng') return SICHERE_FUNKTIONEN.has(name) && name !== 'esc';
         if (modus === 'attribut') return SICHERE_FUNKTIONEN.has(name);
@@ -1318,14 +1468,17 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
 // DM-Screen samt Profilen und Widgets, Verknuepfungen, Schnellreferenz, Markdown-
 // Wandler und -Export, Notizen-Suche, Kampagnenliste, Rast, Encounter-Rechner,
 // Timer, Schnellaktionen, Event-Log, Debug, Restdateien): 182 -> 24 Stellen; 26
-// Dateien auf 0 (gestrichen). parseEntityLinks() bereinigt selbst und kodiert den
-// Namen der Marke — damit fiel auch renderSessionPrepDetail() (Bereich B) auf 0.
+// Dateien auf 0 (gestrichen). parseEntityLinks() bereinigt selbst und ersetzt nur
+// in Textknoten (ersetzeImText, Regel NACHBEARBEITUNG) — damit fiel auch
+// renderSessionPrepDetail() (Bereich B) auf 0. Nach dem Gutachten unveraendert.
 // Es bleiben sechs Dateien, deren Werte der Zaehler nicht als geprueft erkennen
 // kann; keine davon setzt einen Wert aus D roh ein (Kanarien-Waechter
-// tests/e2e/features/senken-kanarie.spec.js, alle drei Eingaenge gruen):
+// tests/e2e/features/senken-kanarie.spec.js, alle vier Eingaenge gruen):
 //   - features/wiki/wiki (Eintragsinhalt): renderMarkdownInContent() endet mit
-//     sanitizeHTML(), addTOCAnchors() setzt nur die Kennung ein, parseWikiLinks()
-//     kodiert seinen Fang mit esc() — der Zaehler sieht durch diese Kette nicht.
+//     sanitizeHTML(), addTOCAnchors() setzt die Kennung am Element
+//     (bearbeiteMarkup), parseWikiLinks() baut den Link als Knoten (ersetzeImText)
+//     — beide bekommen das Markup als Parameter, durch diese Kette sieht der
+//     Zaehler nicht.
 //   - features/dmscreen/dmscreen-render (3): `def.render()` ruft die Render-
 //     Funktion aus der Widget-Tabelle getDMScreenWidgets() — ein Methodenaufruf,
 //     den der Zaehler als Daten wertet. Jede dieser Funktionen wird an ihrer eigenen
@@ -1529,6 +1682,47 @@ describe('R6 Zaehlerprobe: rote Faelle zaehlen, begruendete Ausnahmen nicht', ()
             'for-of mit aeusserer Variable',
             'function f(el, n) { let v = ""; for (v of n.liste) {} el.innerHTML = v; }',
             1
+        ],
+        // --- Regel NACHBEARBEITUNG ---
+        [
+            'Regex-Ersatz mit Markup nach sanitizeHTML (Literal)',
+            'function f(c) { return `<div>${sanitizeHTML(c.h).replace(/x/g, "<b>$&</b>")}</div>`; }',
+            1
+        ],
+        [
+            'Regex-Ersatz mit Markup nach sanitizeHTML (Rueckruf, ueber Variable)',
+            'function f(c) { const h = sanitizeHTML(c.h); return `<div>${h.replace(/\\d+/g, m => `<i title="${esc(m)}">${esc(m)}</i>`)}</div>`; }',
+            1
+        ],
+        [
+            'Regex-Ersatz mit Markup auf einem HTML-Template mit Attribut aus Daten',
+            'function f(c) { return `<p>${`<i title="${esc(c.t)}">x</i>`.replace(/y/g, "<b>y</b>")}</p>`; }',
+            1
+        ],
+        [
+            'Nachbearbeiter auf Rohwert',
+            'function f(c) { return `<div>${ersetzeImText(c.h, /x/g, () => null)}</div>`; }',
+            1
+        ],
+        [
+            'esc lokal umgebunden (Regel UMGEBUNDEN)',
+            'function f(c) { const esc = x => x; return `<b>${esc(c.name)}</b>`; }',
+            1
+        ],
+        [
+            'esc als Parameter (Regel UMGEBUNDEN)',
+            'function f(c, esc) { return `<b>${esc(c.name)}</b>`; }',
+            1
+        ],
+        [
+            'Number lokal umgebunden (Regel UMGEBUNDEN)',
+            'function f(c) { const Number = x => x; return `<b>${Number(c.n)}</b>`; }',
+            1
+        ],
+        [
+            'Nachbearbeiter im Attribut',
+            'function f(c) { return `<p title="${bearbeiteMarkup(sanitizeHTML(c.t), () => {})}">x</p>`; }',
+            1
         ]
     ];
     const GRUEN = [
@@ -1609,6 +1803,22 @@ describe('R6 Zaehlerprobe: rote Faelle zaehlen, begruendete Ausnahmen nicht', ()
             'Formpruefer mit Ersatz und Liste aus dem Code',
             'function f(c) { return `<i style="color:${sichereFarbe(c.farbe, "var(--gold)")}"' +
                 ' class="${sichereKlasse(c.s, ["a", "b"], "a")}"></i>`; }'
+        ],
+        [
+            'esc ueber den Projekt-Alias const esc = window.esc',
+            'function f(c) { const esc = window.esc; return `<b>${esc(c.name)}</b>`; }'
+        ],
+        [
+            'Regex-Ersatz mit Markup auf esc()-Text (kein Tag, kein Attribut)',
+            'function f(c) { return `<div>${esc(c.t).replace(/\\n/g, "<br>")}</div>`; }'
+        ],
+        [
+            'Regex-Ersatz ohne Markup nach sanitizeHTML',
+            'function f(c) { return `<div>${sanitizeHTML(c.h).replace(/x/g, " ")}</div>`; }'
+        ],
+        [
+            'Nachbearbeiter auf bereinigtem Markup',
+            'function f(c) { return `<div>${ersetzeImText(sanitizeHTML(c.h), /x/g, (d, t) => d.createTextNode(t))}${window.bearbeiteMarkup(sanitizeHTML(c.g), () => {})}</div>`; }'
         ]
     ];
 
@@ -1684,7 +1894,15 @@ describe('R6 Zaehlerprobe: rote Faelle zaehlen, begruendete Ausnahmen nicht', ()
             'setAttribute("onclick")',
             'function __r6q(el, n) { el.setAttribute("onclick", esc(n.k)); }'
         ],
-        ['JSON.stringify', 'function __r6r(n) { return `<i>${JSON.stringify(n)}</i>`; }']
+        ['JSON.stringify', 'function __r6r(n) { return `<i>${JSON.stringify(n)}</i>`; }'],
+        [
+            'esc lokal umgebunden',
+            'function __r6t(n) { const esc = x => x; return `<b>${esc(n.name)}</b>`; }'
+        ],
+        [
+            'Regex-Ersatz mit Markup nach sanitizeHTML',
+            'function __r6s(n) { return `<div>${sanitizeHTML(n.h).replace(/x/g, "<b>$&</b>")}</div>`; }'
+        ]
     ];
 
     test(

@@ -99,7 +99,7 @@ function renderPartyRoster(container, characters) {
             <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${esc(ch.id)}">
                 ${conditions > 0 ? `<span class="roster-conditions">${esc(conditions)}</span>` : ''}
                 <div class="roster-avatar">
-                    ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
+                    ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                 </div>
                 <div class="roster-name">${esc(ch.name)}</div>
                 <div class="roster-class">${esc(ch.characterClass || '—')}</div>
@@ -167,7 +167,7 @@ function renderCharacterCard(ch) {
             <!-- Header -->
             <div class="char-card-header" data-action="edit-char" data-id="${esc(ch.id)}">
                 <div class="char-card-avatar">
-                    ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
+                    ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                 </div>
                 <div class="char-card-info">
                     <div class="char-card-name">

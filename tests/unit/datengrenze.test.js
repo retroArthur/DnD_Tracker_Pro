@@ -22,7 +22,7 @@
  * `Object.assign(D, parsed.p)` ohne jeden Filter aus. Werte aus Daten landen
  * ausserdem roh in `class`, `style` und `href`.
  *
- * DIE VIER HILFEN (utils/basic.js; Paritaetskopie in utils/testable-utils.js):
+ * DIE HILFEN (utils/basic.js; Paritaetskopie in utils/testable-utils.js):
  *
  *   R3 `sichererLink(url)` -> `url` oder `''`. Nur `http:`, `https:`,
  *      `mailto:`. Ein Browser entfernt vor dem Schema fuehrende Leer- und
@@ -31,6 +31,12 @@
  *      `javascript:`. Deshalb pruefen diese Faelle eine Erlaubnisliste, keine
  *      Sperrliste. Ein erlaubter Link kommt unveraendert zurueck (nicht
  *      "repariert"), alles andere als Leertext — "sonst kein Link".
+ *   R3 `sichereBildquelle(url)` -> `url` oder `''` (Gutachten, Sonde D): eine
+ *      Bildquelle laedt die App ohne Klick. Nur `http:`, `https:`,
+ *      `data:image/` und relative Pfade; kein anderes Schema (`file:` lud die
+ *      Party-Ansicht aus Daten) und kein protokoll-relativer Anfang aus zwei
+ *      `/` oder `\` — unter file:// wird `//host/share` zu `file://host/share`,
+ *      unter Windows ein UNC-Pfad samt Anmeldeversuch.
  *   R2 `sichereFarbe(wert, ersatz)`: nur `#rgb`/`#rrggbb`, sonst der feste
  *      Ersatz (der darf auch `var(--gold)` sein — er kommt aus dem Code).
  *   R2 `sichereKlasse(wert, erlaubteWerte, ersatz)`: nur ein Wert aus der
@@ -61,7 +67,7 @@
  * haelt fuer utils/testable-utils.js eine Coverage-Schwelle (branches 89),
  * und `npm run test:coverage` laeuft in der CI. Neue Zweige, die nur in einer
  * vm-Sandbox laufen, saehe Istanbul nicht — die Schwelle fiele. Die Kopie muss
- * die vier Hilfen deshalb auch in `module.exports` fuehren.
+ * die Hilfen deshalb auch in `module.exports` fuehren.
  *
  * DATEN IM RICHTIGEN REALM. Die Testdaten fuer die vm-Kopie entstehen per
  * `JSON.parse` IN der Sandbox, wie in der App: ein Objekt aus dem Jest-Realm
@@ -82,9 +88,13 @@
  * Kopie, ein verworfener Rueckgabewert bereinigte dann nichts. Die Eingaenge
  * stehen dort nur als Funktionsnamen, nicht als Modulpfade (Abdeckungsregel
  * in module-test-coverage.test.js). Das ersetzt nicht den E2E-Waechter; es
- * meldet den halben Fix nur frueher und mit Namen.
+ * meldet den halben Fix nur frueher und mit Namen. Er prueft die ERREICHBARKEIT,
+ * nicht jeden Pfad: das Verhalten des Hauptpfads von load() (aktueller Stempel,
+ * keine Migration) haelt tests/unit/stability.test.js fest (SENKEN R4 — load()
+ * bereinigt den gespeicherten Stand auch ohne Migration).
  *
- * HEUTE ROT: keine der vier Hilfen existiert (Stand main 020e258).
+ * ROT AM STAND 020e258: keine der Hilfen existierte; sichereBildquelle() kam mit
+ * dem Gutachten dazu.
  */
 
 const fs = require('fs');
@@ -93,7 +103,13 @@ const vm = require('vm');
 const acorn = require('acorn');
 const { extractModulesFromLoader } = require('../../tools/generate-eslint-globals.js');
 
-const HILFEN = ['sichererLink', 'sichereFarbe', 'sichereKlasse', 'bereinigeDatengrenze'];
+const HILFEN = [
+    'sichererLink',
+    'sichereBildquelle',
+    'sichereFarbe',
+    'sichereKlasse',
+    'bereinigeDatengrenze'
+];
 
 // ============================================================
 // LADEN — beide Kopien, je mit eigenem Realm fuer die Testdaten
@@ -187,6 +203,37 @@ const LINK_ERLAUBT = [
     'MAILTO:dm@example.com'
 ];
 const KEIN_TEXT = [null, undefined, 42, true, {}, []];
+
+// R3 fuer Bildquellen — sichereBildquelle
+const BILD_VERBOTEN = [
+    'file:///C:/kanarie.png',
+    'FILE:///C:/kanarie.png',
+    ' file:///C:/kanarie.png',
+    'fi\tle:///C:/kanarie.png',
+    '//host/share/kanarie.png',
+    '\\\\host\\share\\kanarie.png',
+    '/\\host/share/kanarie.png',
+    '\\/host/share/kanarie.png',
+    ' //host/kanarie.png',
+    '\t//host/kanarie.png',
+    '/\t/host/kanarie.png',
+    'javascript:window.__xss=1',
+    'data:text/html,<script>window.__xss=1</script>',
+    'blob:file:///x',
+    'ftp://example.com/x.png',
+    'C:\\Bilder\\held.png'
+];
+const BILD_ERLAUBT = [
+    'https://example.com/held.png',
+    'HTTP://example.com/held.png',
+    'data:image/png;base64,AAAA',
+    'DATA:image/svg+xml,%3Csvg%3E',
+    'bilder/held.png',
+    './held.png',
+    '/bilder/held.png',
+    '../held.png',
+    'held.png?v=1&x=2'
+];
 
 // ============================================================
 // R2 — sichereFarbe / sichereKlasse
@@ -494,7 +541,7 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
         }
     });
 
-    test('alle vier Hilfen sind vorhanden', () => {
+    test('alle Hilfen sind vorhanden', () => {
         const fehlend = HILFEN.filter(h => typeof quelle(quellName).hilfe(h) !== 'function');
         expect(fehlend).toEqual([]);
     });
@@ -515,6 +562,21 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
         test('leerer Text -> ""', () => {
             expect(brauche(quellName, 'sichererLink')('')).toBe('');
         });
+    });
+
+    describe('R3 sichereBildquelle(url) -> url oder ""', () => {
+        test.each(BILD_VERBOTEN.map(u => [JSON.stringify(u), u]))('kein Bild: %s', (_n, url) => {
+            expect(brauche(quellName, 'sichereBildquelle')(url)).toBe('');
+        });
+        test.each(BILD_ERLAUBT.map(u => [u]))('bleibt unveraendert: %s', url => {
+            expect(brauche(quellName, 'sichereBildquelle')(url)).toBe(url);
+        });
+        test.each(KEIN_TEXT.concat(['', ' ']).map(w => [JSON.stringify(w) ?? 'undefined', w]))(
+            'kein Text oder leer -> "": %s',
+            (_n, wert) => {
+                expect(brauche(quellName, 'sichereBildquelle')(wert)).toBe('');
+            }
+        );
     });
 
     describe('R2 sichereFarbe(wert, ersatz) — nur #rgb/#rrggbb', () => {
@@ -777,6 +839,54 @@ describe.each(QUELLEN.map(([n]) => [n]))('R4 Grenzfaelle der Datengrenze — %s'
         expect(lies(erg, 'characters[0].hpCurrent')).toBe(12);
         expect(lies(erg, 'loot[0].weight')).toBe(1.5);
         expect(lies(erg, 'factions[0].ruf')).toBe(3);
+    });
+
+    // Gutachten (Regression): "6.500" wurde 6.5 und blieb nach dem naechsten save() so. Eine
+    // Tausenderform ist mehrdeutig (deutsch 6500, englisch 6,5) und wird verworfen, nicht
+    // geraten; eindeutige Formen werden weiter umgewandelt.
+    // Gutachten, Sonde F (Robustheit, keine Einschleusung): ein Objekt mit einem Datenfeld
+    // `toString`/`valueOf` liess String(), esc() und jedes Template werfen; ein Objekt als
+    // Name (`a.name.localeCompare`) leerte die NPC-Liste. Beides faellt an der Grenze.
+    test('toString/valueOf als Datenfeld fallen in jeder Tiefe; jedes Objekt wird wieder Text', () => {
+        const k = geruest();
+        k.characters[0].race = { toString: 1, valueOf: 1 };
+        k.npcs[0].relations = [{ targetId: 2, note: { toString: 1 } }];
+        const erg = lauf(k);
+        expect(Object.keys(lies(erg, 'characters[0].race'))).toEqual([]);
+        expect(Object.keys(lies(erg, 'npcs[0].relations[0].note'))).toEqual([]);
+        expect(() => String(lies(erg, 'characters[0].race'))).not.toThrow();
+    });
+
+    test('Objekt oder Liste in name/title/category/type wird "", Text bleibt', () => {
+        const k = geruest();
+        k.npcs[0].name = { toString: 1 };
+        k.quests[0].title = ['<b>x</b>'];
+        k.loot[0].category = {};
+        k.characters[0].name = 'Ada & <Söhne>';
+        const erg = lauf(k);
+        expect(lies(erg, 'npcs[0].name')).toBe('');
+        expect(lies(erg, 'quests[0].title')).toBe('');
+        expect(lies(erg, 'loot[0].category')).toBe('');
+        expect(lies(erg, 'characters[0].name')).toBe('Ada & <Söhne>');
+    });
+
+    test('mehrdeutige Tausenderform wird verworfen, eindeutige Zahlform umgewandelt', () => {
+        const k = geruest();
+        k.characters[0].xp = '6.500';
+        k.quests[0].rewardGold = '1,500';
+        k.characters[0].hpCurrent = '-2.000';
+        k.loot[0].weight = '0.125';
+        k.characters[0].hpMax = '1234.567';
+        k.characters[0].level = '1.5';
+        k.factions[0].ruf = '1,80';
+        const erg = lauf(k);
+        expect(lies(erg, 'characters[0].xp')).toBeUndefined();
+        expect(lies(erg, 'quests[0].rewardGold')).toBeUndefined();
+        expect(lies(erg, 'characters[0].hpCurrent')).toBeUndefined();
+        expect(lies(erg, 'loot[0].weight')).toBe(0.125);
+        expect(lies(erg, 'characters[0].hpMax')).toBe(1234.567);
+        expect(lies(erg, 'characters[0].level')).toBe(1.5);
+        expect(lies(erg, 'factions[0].ruf')).toBe(1.8);
     });
 
     test('Zahlenlisten: Text wird Zahl, Unbrauchbares wird null, die Positionen bleiben', () => {

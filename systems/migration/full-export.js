@@ -128,15 +128,15 @@ function importFullExport(parsedObj) {
         throw new Error('Zu viele Kampagnen in der Datei (max ' + MAX_IMPORT_CAMPAIGNS + ')');
     }
 
-    // WR-03: Key-Whitelist — die Keys aus der (nicht vertrauenswuerdigen) Datei
-    // werden 1:1 als localStorage-Keys verwendet. Nur echte Kampagnen-Key-Formate
-    // zulassen: 'dnd-tracker-*' (Standard-Kampagne, core/config.js) und
-    // 'dnd-campaign-*' (benannte Kampagnen, campaign-manager.js createCampaign).
-    const ALLOWED_KEY_RE = /^(dnd-tracker(-|$)|dnd-campaign-)/;
+    // WR-03/SENKEN: die Keys der (fremden) Datei werden 1:1 localStorage-Keys. Nur die Formate,
+    // die die App selbst schreibt: Standard-Kampagne (APP_CONFIG.STORAGE_KEY, frueher
+    // 'dnd-tracker'/'dnd-tracker-vN') und 'dnd-campaign-<Date.now()>[-N]' (newCampaignKey).
+    // Die alte Regel /^(dnd-tracker(-|$)|dnd-campaign-)/ liess JEDEN App-Key durch, auch
+    // dnd-tracker-backups/-campaigns/-theme und `_ts`-Begleiter (Gutachten, Sonde G).
+    const istKampagnenKey = key => typeof key === 'string' && key.length <= 200 &&
+        (key === APP_CONFIG.STORAGE_KEY || /^(?:dnd-tracker(?:-v\d+)?|dnd-campaign-\d+(?:-\d+)?)$/.test(key));
     for (const [key] of campaignEntries) {
-        if (typeof key !== 'string' || key.length > 200 || !ALLOWED_KEY_RE.test(key)) {
-            throw new Error('Unerwarteter Kampagnen-Key: ' + key);
-        }
+        if (!istKampagnenKey(key)) throw new Error('Unerwarteter Kampagnen-Key: ' + key);
     }
 
     // CR-01 (Phase 12, Review-Fix): Formkorrektheit ALLER Kampagnen-Eintraege
@@ -179,7 +179,7 @@ function importFullExport(parsedObj) {
         // Start lud die aeltere IndexedDB-Kopie. setQuiet() statt set(), weil set() dabei
         // "💾 Speicher voll! Versuche Fallback zu IndexedDB..." meldet — es gibt hier
         // keinen Rueckfall. Ein VORHANDENER (auch alter) Stempel genuegt: load() prueft nur,
-        // DASS er da ist (quick-roll.js:160); nur ohne jeden Stempel ist es ein Fehlschlag.
+        // DASS er da ist (quick-roll.js:167); nur ohne jeden Stempel ist es ein Fehlschlag.
         const tsResult = StorageAPI.setQuiet(key + '_ts', String(Date.now()));
         if (!tsResult.success && StorageAPI.get(key + '_ts', null) === null) {
             throw new Error(
@@ -228,8 +228,8 @@ function importFullExport(parsedObj) {
         // Kampagnenliste. Ein `active` ausserhalb des Formats wird zur Standard-Kampagne,
         // genau das, was der Start aus einem fehlenden `active` macht (core/init.js).
         const importedIndex = bereinigeDatengrenze(parsedObj.campaignIndex);
-        const istKampagnenKey = key =>
-            typeof key === 'string' && key.length <= 200 && ALLOWED_KEY_RE.test(key);
+        // istKampagnenKey: oben bei den Keys von campaigns{} (nur Formate der App, also kein
+        // dnd-tracker-backups als Kampagne im Index)
         if (importedIndex && typeof importedIndex === 'object') {
             const importedCampaigns = (
                 Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : []

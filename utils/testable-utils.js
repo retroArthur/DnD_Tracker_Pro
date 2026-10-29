@@ -168,11 +168,13 @@ function sanitizeHTML(html) {
                     const href = attr.value.trim();
                     const hrefLower = href.toLowerCase();
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
+                    // kein protokoll-relatives `//host` (unter file:// ein UNC-Pfad, SENKEN R3)
+                    const protokollRelativ = /^[/\\]{2}/.test(href.replace(/[\t\n\r]/g, ''));
                     if (
                         isSafe &&
                         (hrefLower.startsWith('http://') ||
                             hrefLower.startsWith('https://') ||
-                            href.startsWith('/') ||
+                            (href.startsWith('/') && !protokollRelativ) ||
                             href.startsWith('#') ||
                             href.startsWith('./'))
                     ) {
@@ -502,6 +504,26 @@ function sichererLink(url) {
     return /^(?:https?|mailto):/i.test(schema) ? url : '';
 }
 /**
+ * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
+ * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/ und
+ * relative Pfade; verboten jedes andere Schema (file:, javascript:, data:text/html …) und ein
+ * protokoll-relativer Anfang aus zwei `/` oder `\` (der Browser liest `\` hier wie `/`): unter
+ * file:// wird `//host/share/x.png` zu `file://host/share/x.png`, unter Windows ein UNC-Pfad,
+ * also eine Verbindung samt Anmeldeversuch zu einem fremden Rechner. Gelesen wie bei
+ * sichererLink: ohne fuehrende Leer-/Steuerzeichen und ohne Tabulator/Zeilenumbruch.
+ * @param {*} url - Wert aus Daten
+ * @returns {string} die Quelle oder ''
+ */
+function sichereBildquelle(url) {
+    if (typeof url !== 'string') return '';
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
+    if (!gelesen || /^[/\\]{2}/.test(gelesen)) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return url;
+    return /^(?:https?:|data:image\/)/i.test(gelesen) ? url : '';
+}
+/**
  * R2: Farbwert aus Daten fuer `style`/Farbattribute: nur `#rgb` oder `#rrggbb`, sonst der
  * feste Ersatz aus dem Code (der darf auch `var(--gold)` sein).
  * @param {*} wert - Wert aus Daten
@@ -525,8 +547,25 @@ function sichereKlasse(wert, erlaubteWerte, ersatz) {
         ? wert
         : ersatz;
 }
-/** R4: Schluessel, die aus Daten nie uebernommen werden (Zuweisung setzt sonst den Prototyp). */
-const DATENGRENZE_VERBOTEN = Object.freeze(['__proto__', 'constructor', 'prototype']);
+/**
+ * R4: Schluessel, die aus Daten nie uebernommen werden: die Prototyp-Setzer (eine Zuweisung
+ * setzt sonst den Prototyp) und die Umwandler `toString`/`valueOf` — ein Objekt aus JSON mit
+ * einem solchen Datenfeld (`{"toString": 1}`) laesst String(), esc() und jedes Template
+ * werfen, die Ansicht zeichnet dann nicht (Gutachten, Sonde F).
+ */
+const DATENGRENZE_VERBOTEN = Object.freeze([
+    '__proto__',
+    'constructor',
+    'prototype',
+    'toString',
+    'valueOf'
+]);
+/**
+ * R4: Textfelder, auf denen Darstellung, Sortierung und Suche Zeichenketten-Methoden rufen
+ * (`a.name.localeCompare`, `.toLowerCase()`): ein Objekt oder eine Liste dort wird '' —
+ * sonst wirft die ganze Ansicht (Gutachten, Sonde F: ein NPC mit `name: {}` leerte die Liste).
+ */
+const DATENGRENZE_TEXTFELDER = Object.freeze(['name', 'title', 'category', 'type']);
 /**
  * R4: Zahlen- und Verweisfelder des Kampagnenformats, als Pfad ab der Kampagnenwurzel:
  * `a[]` = jeder Eintrag der Liste a, `a.*` = jeder Wert des Objekts a; ein Pfad, der auf `[]`
@@ -685,10 +724,20 @@ const DATENGRENZE_PFADE = DATENGRENZE_ZAHLENFELDER.map(pfad =>
 /** Zahl als Text aus einem alten Export: "12", "-2", "1.5", "1,5" (ohne Exponent, ohne Rest). */
 const DATENGRENZE_ZAHLTEXT = /^[+-]?\d+(?:[.,]\d+)?$/;
 /**
+ * Mehrdeutig: eine bis drei Ziffern (ohne fuehrende Null), ein Trenner, genau drei Ziffern.
+ * "6.500" ist deutsch 6500 und englisch 6,5; "1,500" umgekehrt. Die App schreibt solche Texte
+ * nie (jede Speicherfunktion nimmt parseInt/parseFloat); sie kommen nur aus fremden oder von
+ * Hand bearbeiteten Dateien. Eine Umwandlung riete und schriebe beim naechsten save() einen
+ * um den Faktor 1000 falschen Wert fest — ein solcher Wert wird verworfen wie Text mit Einheit
+ * ("80 kg"). Eindeutig bleiben "0.125", "1234.567", "1.5", "1,80".
+ */
+const DATENGRENZE_ZAHLTEXT_MEHRDEUTIG = /^[+-]?[1-9]\d{0,2}[.,]\d{3}$/;
+/**
  * Wert eines Zahlenfelds -> Zahl, unveraendert oder `undefined` (= verwerfen). Unveraendert
  * bleiben Zahl, `null` (z. B. unbegrenzter Bestand, kein Verweis), Wahrheitswert und der
- * leere Text — keiner davon traegt Markup. Zahl als Text wird umgewandelt, nicht verworfen.
- * Alles andere (Markup, Objekt, Liste — eine Liste wird im Template zu ihrem Text) faellt weg.
+ * leere Text — keiner davon traegt Markup. Zahl als Text wird umgewandelt, nicht verworfen —
+ * ausser in mehrdeutiger Form (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG). Alles andere (Markup, Objekt,
+ * Liste — eine Liste wird im Template zu ihrem Text) faellt weg.
  */
 function datengrenzeZahlwert(wert) {
     if (wert === null || wert === '' || typeof wert === 'number' || typeof wert === 'boolean') {
@@ -696,6 +745,7 @@ function datengrenzeZahlwert(wert) {
     }
     if (typeof wert === 'string') {
         const text = wert.trim();
+        if (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG.test(text)) return undefined;
         if (DATENGRENZE_ZAHLTEXT.test(text)) return Number(text.replace(',', '.'));
     }
     return undefined;
@@ -729,7 +779,10 @@ function datengrenzeFeld(knoten, pfad, stufe) {
         }
     }
 }
-/** Entfernt __proto__/constructor/prototype als eigene Schluessel in jeder Tiefe (iterativ). */
+/**
+ * Entfernt die verbotenen Schluessel (DATENGRENZE_VERBOTEN) in jeder Tiefe und setzt ein
+ * Objekt in einem Textfeld (DATENGRENZE_TEXTFELDER) auf '' (iterativ).
+ */
 function datengrenzeEntgiften(wurzel) {
     const offen = [wurzel];
     const gesehen = new Set();
@@ -744,13 +797,18 @@ function datengrenzeEntgiften(wurzel) {
         for (const schluessel of DATENGRENZE_VERBOTEN) {
             if (Object.prototype.hasOwnProperty.call(knoten, schluessel)) delete knoten[schluessel];
         }
+        for (const schluessel of DATENGRENZE_TEXTFELDER) {
+            const wert = knoten[schluessel];
+            if (wert && typeof wert === 'object') knoten[schluessel] = '';
+        }
         for (const schluessel of Object.keys(knoten)) offen.push(knoten[schluessel]);
     }
 }
 /**
  * R4: gemeinsame Datengrenze aller Wege nach D (Kampagnen-Import, Backup lokal und aus dem
  * Ordner, Migrations-Import, Start/Neuladen ueber load()). Entfernt __proto__/constructor/
- * prototype in jeder Tiefe und zwingt die Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe
+ * prototype/toString/valueOf in jeder Tiefe, setzt ein Objekt in name/title/category/type auf
+ * '' und zwingt die Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe
  * datengrenzeZahlwert). KEIN Sanitizer: Texte, Wuerfelformeln mit `<`/`>`, Namen mit `&`,
  * `<`, `"`, Rich-Text bleiben byte-gleich (R5) — die Ausgabe kodiert (R1). Arbeitet auf dem
  * uebergebenen Objekt (frisch aus JSON.parse) und gibt es zurueck; zweimal angewandt aendert
@@ -789,6 +847,7 @@ module.exports = {
     distributeXP,
     // Vertrag SENKEN R2/R3/R4 (tests/unit/datengrenze.test.js)
     sichererLink,
+    sichereBildquelle,
     sichereFarbe,
     sichereKlasse,
     bereinigeDatengrenze,

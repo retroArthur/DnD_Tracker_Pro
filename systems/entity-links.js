@@ -14,15 +14,25 @@ function showEntityLinksModal(type, id) {
     if (showModal) showModal('entity-links-modal');
 }
 // Entity-Links in Rich-Text: [[type:id:name]] -> klickbare Links. SENKEN R1: bereinigt selbst
-// (idempotent); der Name ist HTML-Text — inert als Text gelesen, kodiert (`"` beendete title).
+// (idempotent) und ersetzt NUR in Textknoten (ersetzeImText, utils/basic.js) — eine Marke, die
+// in einem Attributwert beginnt oder endet, bleibt Text. Die Marke wird als Knoten gebaut: der
+// Name ist Text, auch im title (frueher beendete ein `"` darin das Attribut).
 function parseEntityLinks(content) {
     if (!content) return '';
     const muster = /\[\[(\w+):(\d+):([^\]]+)\]\]/g; // [[type:id:name]]
-    return sanitizeHTML(content).replace(muster, (match, type, id, html) => {
-        const icon = LINK_ICONS[type] || '🔗';
-        const viewType = type.endsWith('s') ? type : type + 's'; // npcs, locations etc.
-        const name = esc(new DOMParser().parseFromString(html, 'text/html').body.textContent);
-        return `<span class="entity-link" data-action="navigate-entity" data-type="${esc(viewType)}" data-id="${esc(id)}" title="${esc(type)}: ${name}">${icon} ${name}</span>`;
+    return ersetzeImText(sanitizeHTML(content), muster, (doc, treffer, type, id, name) => {
+        const span = doc.createElement('span');
+        span.className = 'entity-link';
+        span.setAttribute('data-action', 'navigate-entity');
+        // npcs, locations etc.
+        span.setAttribute('data-type', type.endsWith('s') ? type : type + 's');
+        span.setAttribute('data-id', id);
+        span.title = `${type}: ${name}`;
+        const icon = Object.prototype.hasOwnProperty.call(LINK_ICONS, type)
+            ? LINK_ICONS[type]
+            : '🔗';
+        span.textContent = `${icon} ${name}`;
+        return span;
     });
 }
 // Zeige Modal zum Einfügen eines Entity-Links in einen Editor

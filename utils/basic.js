@@ -204,12 +204,14 @@ function sanitizeHTML(html) {
                     const hrefLower = href.toLowerCase();
                     // Prüfe gegen gefährliche Protokolle (case-insensitive)
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
-                    // Erlaube nur http(s), relative URLs, und Anker
+                    // Erlaube nur http(s), relative URLs, und Anker — kein protokoll-relatives
+                    // `//host` (auch `/\\host`, `/<Tab>/host`): unter file:// ein UNC-Pfad (SENKEN R3)
+                    const protokollRelativ = /^[/\\]{2}/.test(href.replace(/[\t\n\r]/g, ''));
                     if (
                         isSafe &&
                         (hrefLower.startsWith('http://') ||
                             hrefLower.startsWith('https://') ||
-                            href.startsWith('/') ||
+                            (href.startsWith('/') && !protokollRelativ) ||
                             href.startsWith('#') ||
                             href.startsWith('./'))
                     ) {
@@ -259,6 +261,71 @@ function sanitizeHTML(html) {
     }
     return result.innerHTML;
 }
+// ============================================================
+// NACHBEARBEITUNG BEREINIGTEN MARKUPS — Vertrag SENKEN R1, docs/bugfixes.md
+// ============================================================
+/**
+ * Parst bereinigtes Markup inert, gibt den Koerper an `bearbeiten` und liefert das Markup
+ * danach. Nie per Regex im serialisierten String nachbearbeiten: ein Treffer darf dort in
+ * einem Attributwert beginnen oder enden, die Ersetzung fuegt `"` ein und beendet das
+ * Attribut, und der Rest des Werts wird Markup — mit der Serialisierung vor 2025 (`<`/`>` roh
+ * in Attributwerten) ein echtes Element, mit der heutigen verfaelschte Attribute (die App
+ * setzte ihr data-action auf ein Element aus Daten). DOMParser laedt nichts und fuehrt nichts
+ * aus. Fuehrender Leerraum, den der Parser in den Kopf legt, wandert zurueck an den Anfang.
+ * `bearbeiten` aendert nur Knoten (createElement, textContent, setAttribute) — kein innerHTML.
+ * @param {string} html - bereinigtes Markup (sanitizeHTML() oder dessen Nachbearbeitung)
+ * @param {(koerper: HTMLElement, doc: Document) => void} bearbeiten
+ * @returns {string}
+ */
+function bearbeiteMarkup(html, bearbeiten) {
+    if (!html) return '';
+    const doc = new DOMParser().parseFromString(String(html), 'text/html');
+    doc.body.prepend(...doc.head.childNodes);
+    bearbeiten(doc.body, doc);
+    return doc.body.innerHTML;
+}
+/**
+ * Ersetzt die Treffer von `muster` NUR in Textknoten von bereinigtem Markup (bearbeiteMarkup)
+ * und baut den Ersatz als Knoten. Jeder Textknoten fuer sich: ein Treffer ueber eine
+ * Elementgrenze hinweg zaehlt nicht, und Lookbehind/Lookahead enden an der Grenze — wie
+ * frueher am `>`/`<` des serialisierten Markups.
+ * @param {string} html - bereinigtes Markup
+ * @param {RegExp} muster - wird je Textknoten global gesucht
+ * @param {(doc: Document, ...treffer: string[]) => (Node|null)} bauen - baut den Ersatz in
+ *   `doc`; null laesst den Treffer als Text stehen
+ * @returns {string}
+ */
+function ersetzeImText(html, muster, bauen) {
+    const flags = muster.flags.includes('g') ? muster.flags : muster.flags + 'g';
+    const suche = new RegExp(muster.source, flags);
+    return bearbeiteMarkup(html, (koerper, doc) => {
+        const lauf = doc.createTreeWalker(koerper, 4); // 4 = NodeFilter.SHOW_TEXT
+        const texte = [];
+        for (let t = lauf.nextNode(); t; t = lauf.nextNode()) texte.push(t);
+        for (const t of texte) {
+            const text = t.data;
+            const teile = [];
+            let pos = 0;
+            suche.lastIndex = 0;
+            for (let m = suche.exec(text); m; m = suche.exec(text)) {
+                if (m[0] === '') {
+                    suche.lastIndex++;
+                    continue;
+                }
+                const ersatz = bauen(doc, ...m);
+                if (!ersatz) continue;
+                if (m.index > pos) teile.push(doc.createTextNode(text.slice(pos, m.index)));
+                teile.push(ersatz);
+                pos = m.index + m[0].length;
+            }
+            if (!teile.length) continue;
+            if (pos < text.length) teile.push(doc.createTextNode(text.slice(pos)));
+            t.replaceWith(...teile);
+        }
+    });
+}
+window.bearbeiteMarkup = bearbeiteMarkup;
+window.ersetzeImText = ersetzeImText;
 // UTF-8-Bytezahl ohne Zwischenobjekt (PERF-01/D-08): ein Durchlauf pro Codepoint, exakt
 // gleich zu new Blob([s]).size — bewiesen gegen ASCII, Umlaute, Emoji (Surrogatpaar) und
 // unpaarige Surrogate in tests/unit/stability.test.js. Bewusst KEIN TextEncoder: der legt
@@ -469,6 +536,26 @@ function sichererLink(url) {
     return /^(?:https?|mailto):/i.test(schema) ? url : '';
 }
 /**
+ * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
+ * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/ und
+ * relative Pfade; verboten jedes andere Schema (file:, javascript:, data:text/html …) und ein
+ * protokoll-relativer Anfang aus zwei `/` oder `\` (der Browser liest `\` hier wie `/`): unter
+ * file:// wird `//host/share/x.png` zu `file://host/share/x.png`, unter Windows ein UNC-Pfad,
+ * also eine Verbindung samt Anmeldeversuch zu einem fremden Rechner. Gelesen wie bei
+ * sichererLink: ohne fuehrende Leer-/Steuerzeichen und ohne Tabulator/Zeilenumbruch.
+ * @param {*} url - Wert aus Daten
+ * @returns {string} die Quelle oder ''
+ */
+function sichereBildquelle(url) {
+    if (typeof url !== 'string') return '';
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    const gelesen = url.slice(start).replace(/[\t\n\r]/g, '');
+    if (!gelesen || /^[/\\]{2}/.test(gelesen)) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return url;
+    return /^(?:https?:|data:image\/)/i.test(gelesen) ? url : '';
+}
+/**
  * R2: Farbwert aus Daten fuer `style`/Farbattribute: nur `#rgb` oder `#rrggbb`, sonst der
  * feste Ersatz aus dem Code (der darf auch `var(--gold)` sein).
  * @param {*} wert - Wert aus Daten
@@ -492,8 +579,25 @@ function sichereKlasse(wert, erlaubteWerte, ersatz) {
         ? wert
         : ersatz;
 }
-/** R4: Schluessel, die aus Daten nie uebernommen werden (Zuweisung setzt sonst den Prototyp). */
-const DATENGRENZE_VERBOTEN = Object.freeze(['__proto__', 'constructor', 'prototype']);
+/**
+ * R4: Schluessel, die aus Daten nie uebernommen werden: die Prototyp-Setzer (eine Zuweisung
+ * setzt sonst den Prototyp) und die Umwandler `toString`/`valueOf` — ein Objekt aus JSON mit
+ * einem solchen Datenfeld (`{"toString": 1}`) laesst String(), esc() und jedes Template
+ * werfen, die Ansicht zeichnet dann nicht (Gutachten, Sonde F).
+ */
+const DATENGRENZE_VERBOTEN = Object.freeze([
+    '__proto__',
+    'constructor',
+    'prototype',
+    'toString',
+    'valueOf'
+]);
+/**
+ * R4: Textfelder, auf denen Darstellung, Sortierung und Suche Zeichenketten-Methoden rufen
+ * (`a.name.localeCompare`, `.toLowerCase()`): ein Objekt oder eine Liste dort wird '' —
+ * sonst wirft die ganze Ansicht (Gutachten, Sonde F: ein NPC mit `name: {}` leerte die Liste).
+ */
+const DATENGRENZE_TEXTFELDER = Object.freeze(['name', 'title', 'category', 'type']);
 /**
  * R4: Zahlen- und Verweisfelder des Kampagnenformats, als Pfad ab der Kampagnenwurzel:
  * `a[]` = jeder Eintrag der Liste a, `a.*` = jeder Wert des Objekts a; ein Pfad, der auf `[]`
@@ -652,10 +756,20 @@ const DATENGRENZE_PFADE = DATENGRENZE_ZAHLENFELDER.map(pfad =>
 /** Zahl als Text aus einem alten Export: "12", "-2", "1.5", "1,5" (ohne Exponent, ohne Rest). */
 const DATENGRENZE_ZAHLTEXT = /^[+-]?\d+(?:[.,]\d+)?$/;
 /**
+ * Mehrdeutig: eine bis drei Ziffern (ohne fuehrende Null), ein Trenner, genau drei Ziffern.
+ * "6.500" ist deutsch 6500 und englisch 6,5; "1,500" umgekehrt. Die App schreibt solche Texte
+ * nie (jede Speicherfunktion nimmt parseInt/parseFloat); sie kommen nur aus fremden oder von
+ * Hand bearbeiteten Dateien. Eine Umwandlung riete und schriebe beim naechsten save() einen
+ * um den Faktor 1000 falschen Wert fest — ein solcher Wert wird verworfen wie Text mit Einheit
+ * ("80 kg"). Eindeutig bleiben "0.125", "1234.567", "1.5", "1,80".
+ */
+const DATENGRENZE_ZAHLTEXT_MEHRDEUTIG = /^[+-]?[1-9]\d{0,2}[.,]\d{3}$/;
+/**
  * Wert eines Zahlenfelds -> Zahl, unveraendert oder `undefined` (= verwerfen). Unveraendert
  * bleiben Zahl, `null` (z. B. unbegrenzter Bestand, kein Verweis), Wahrheitswert und der
- * leere Text — keiner davon traegt Markup. Zahl als Text wird umgewandelt, nicht verworfen.
- * Alles andere (Markup, Objekt, Liste — eine Liste wird im Template zu ihrem Text) faellt weg.
+ * leere Text — keiner davon traegt Markup. Zahl als Text wird umgewandelt, nicht verworfen —
+ * ausser in mehrdeutiger Form (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG). Alles andere (Markup, Objekt,
+ * Liste — eine Liste wird im Template zu ihrem Text) faellt weg.
  */
 function datengrenzeZahlwert(wert) {
     if (wert === null || wert === '' || typeof wert === 'number' || typeof wert === 'boolean') {
@@ -663,6 +777,7 @@ function datengrenzeZahlwert(wert) {
     }
     if (typeof wert === 'string') {
         const text = wert.trim();
+        if (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG.test(text)) return undefined;
         if (DATENGRENZE_ZAHLTEXT.test(text)) return Number(text.replace(',', '.'));
     }
     return undefined;
@@ -696,7 +811,10 @@ function datengrenzeFeld(knoten, pfad, stufe) {
         }
     }
 }
-/** Entfernt __proto__/constructor/prototype als eigene Schluessel in jeder Tiefe (iterativ). */
+/**
+ * Entfernt die verbotenen Schluessel (DATENGRENZE_VERBOTEN) in jeder Tiefe und setzt ein
+ * Objekt in einem Textfeld (DATENGRENZE_TEXTFELDER) auf '' (iterativ).
+ */
 function datengrenzeEntgiften(wurzel) {
     const offen = [wurzel];
     const gesehen = new Set();
@@ -711,13 +829,18 @@ function datengrenzeEntgiften(wurzel) {
         for (const schluessel of DATENGRENZE_VERBOTEN) {
             if (Object.prototype.hasOwnProperty.call(knoten, schluessel)) delete knoten[schluessel];
         }
+        for (const schluessel of DATENGRENZE_TEXTFELDER) {
+            const wert = knoten[schluessel];
+            if (wert && typeof wert === 'object') knoten[schluessel] = '';
+        }
         for (const schluessel of Object.keys(knoten)) offen.push(knoten[schluessel]);
     }
 }
 /**
  * R4: gemeinsame Datengrenze aller Wege nach D (Kampagnen-Import, Backup lokal und aus dem
  * Ordner, Migrations-Import, Start/Neuladen ueber load()). Entfernt __proto__/constructor/
- * prototype in jeder Tiefe und zwingt die Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe
+ * prototype/toString/valueOf in jeder Tiefe, setzt ein Objekt in name/title/category/type auf
+ * '' und zwingt die Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe
  * datengrenzeZahlwert). KEIN Sanitizer: Texte, Wuerfelformeln mit `<`/`>`, Namen mit `&`,
  * `<`, `"`, Rich-Text bleiben byte-gleich (R5) — die Ausgabe kodiert (R1). Arbeitet auf dem
  * uebergebenen Objekt (frisch aus JSON.parse) und gibt es zurueck; zweimal angewandt aendert
@@ -733,11 +856,12 @@ function bereinigeDatengrenze(daten) {
 }
 // [DATENGRENZE:ENDE]
 // Auch als window-Eigenschaft: fuer Aufrufer anderer Module und Werkbaenke mit eigenem
-// window-Objekt. Heute ruft nur die Datengrenze von aussen (Kampagnen-Import, Backup,
-// Migration, load()); sichererLink/sichereFarbe/sichereKlasse sind fuer die Ausgabestellen
-// (R2/R3) bestimmt. Ohne Verwendung in dieser Datei meldete no-unused-vars jede der vier
-// Deklarationen und hoebe den Lint-Pin.
+// window-Objekt. Aufrufer in anderen Modulen: die Eingaenge (R4: Kampagnen-Import, Backup,
+// Migration, load()) und die Ausgabestellen (R2/R3: Klassen, Farben, Links, Bildquellen in
+// features/, systems/, ui/ und utils/). Ohne Verwendung in dieser Datei meldete
+// no-unused-vars jede dieser Deklarationen und hoebe den Lint-Pin.
 window.sichererLink = sichererLink;
+window.sichereBildquelle = sichereBildquelle;
 window.sichereFarbe = sichereFarbe;
 window.sichereKlasse = sichereKlasse;
 window.bereinigeDatengrenze = bereinigeDatengrenze;

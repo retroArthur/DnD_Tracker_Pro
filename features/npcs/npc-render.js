@@ -30,6 +30,8 @@ const NPC_ICONS = {
     default: '🎭'
 };
 const RELATION_STATUS = {
+    // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
+    __proto__: null,
     friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
     neutral: { label: 'Neutral', icon: '⚪', color: 'var(--text)' },
     hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
@@ -107,7 +109,7 @@ function renderNPCList() {
         }
     });
     // Sort alphabetically
-    npcs.sort((a, b) => a.name.localeCompare(b.name));
+    npcs.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
@@ -147,7 +149,7 @@ function renderNPCItem(npc) {
     return `
         <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${esc(npc.id)}">
             <div class="npc-item-avatar">
-                ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
+                ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
             </div>
             <div class="npc-item-info">
                 <div class="npc-item-name">
@@ -265,7 +267,7 @@ function showNPCDetail(id) {
         <div class="npc-detail-content">
             <div class="npc-detail-header">
                 <div class="npc-detail-avatar">
-                    ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
+                    ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
                 </div>
                 <div class="npc-detail-title">
                     <div class="npc-detail-name">${esc(npc.name)}</div>

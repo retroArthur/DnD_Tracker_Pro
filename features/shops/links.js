@@ -48,9 +48,10 @@ function renderLinks() {
             // http:, https: oder mailto: anklickbar — `javascript:` & Co. bleiben Text.
             // esc() allein haelt nur das Attribut zu, nicht das Schema.
             const ziel = sichererLink(l.url);
+            // Nicht anklickbar heisst sichtbar gekennzeichnet, nicht still Text (Gutachten)
             const titel = ziel
                 ? `<a href="${esc(ziel)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a>`
-                : esc(l.title);
+                : `${esc(l.title)} <span class="link-nicht-anklickbar" title="Nur http(s)- und mailto-Links lassen sich öffnen">(nicht anklickbar)</span>`;
             return `<div class="link-card">
         <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
         <div class="link-info">
@@ -139,6 +140,15 @@ function saveLink() {
         } else {
             showToast('Link hinzugefügt');
         }
+    }
+    // Gespeichert wird jedes Ziel; anklickbar ist nur http(s)/mailto (R3, renderLinks). Ohne
+    // diese Meldung erfuhr man es erst an der Liste (Gutachten: ein file:-Link auf eine
+    // lokale PDF war vorher bedienbar und stand danach still als Text da).
+    if (!sichererLink(url)) {
+        showToast(
+            '⚠️ Gespeichert, aber nicht anklickbar: nur http(s)- und mailto-Links lassen sich öffnen',
+            'warning'
+        );
     }
     cancelLinkEdit();
     renderLinks();

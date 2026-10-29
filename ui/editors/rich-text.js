@@ -80,10 +80,12 @@ function isAllowedEditorHref(url) {
     const lower = v.toLowerCase();
     const gefaehrlich = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
     if (gefaehrlich.some(proto => lower.startsWith(proto))) return false;
+    // wie sanitizeHTML(): kein protokoll-relatives `//host` (unter file:// ein UNC-Pfad, SENKEN R3)
+    const protokollRelativ = /^[/\\]{2}/.test(v.replace(/[\t\n\r]/g, ''));
     return (
         lower.startsWith('http://') ||
         lower.startsWith('https://') ||
-        v.startsWith('/') ||
+        (v.startsWith('/') && !protokollRelativ) ||
         v.startsWith('#') ||
         v.startsWith('./')
     );

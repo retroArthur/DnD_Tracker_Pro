@@ -102,12 +102,22 @@ function isDescendantOf(entryId, potentialAncestorId) {
     if (entry.parentId === potentialAncestorId) return true;
     return isDescendantOf(entry.parentId, potentialAncestorId);
 }
+// Wiki-Links [[Titel]] in bereinigtem Markup. SENKEN R1: Ersetzung NUR in Textknoten
+// (ersetzeImText, utils/basic.js), der Link wird als Knoten gebaut — eine Marke, die in einem
+// Attributwert beginnt oder endet (`<a href="…[[x]]">`), bleibt unberuehrt. Der Titel ist der
+// Text der Seite, nicht das serialisierte Markup: "Götter & Co" findet seinen Eintrag.
 function parseWikiLinks(content) {
     const D = window.D;
-    return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
-        const exists = D.wiki?.some(e => e.title.toLowerCase() === linkText.toLowerCase());
-        const escapedText = esc(linkText);
-        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${escapedText}</span>`;
+    return ersetzeImText(content, /\[\[([^\]]+)\]\]/g, (doc, treffer, linkText) => {
+        const gesucht = linkText.toLowerCase();
+        const exists = (D.wiki || []).some(e => String(e.title || '').toLowerCase() === gesucht);
+        const span = doc.createElement('span');
+        span.className = exists ? 'wiki-link' : 'wiki-link missing';
+        span.setAttribute('data-action', 'wiki-link-click-stop');
+        span.setAttribute('data-value', linkText);
+        span.setAttribute('data-exists', String(exists));
+        span.textContent = linkText;
+        return span;
     });
 }
 function extractWikiLinks(content) {
@@ -463,7 +473,9 @@ function extractWikiTOC(content) {
     while ((match = regex.exec(content)) !== null) {
         headings.push({
             level: parseInt(match[1]),
-            text: match[2].trim(),
+            // Der Fang ist serialisiertes Markup ohne Tag: "Zwei &amp; mehr" — als Text
+            // gelesen (inert), sonst zeigte die Inhaltsliste nach esc() "&amp;" (R5)
+            text: new DOMParser().parseFromString(match[2], 'text/html').body.textContent.trim(),
             id: `toc-${index++}`
         });
     }
@@ -484,11 +496,16 @@ function renderWikiTOC(content) {
 function addTOCAnchors(content) {
     if (!content) return content;
     let index = 0;
-    // Nur die Kennung einfuegen: Tag, Attribute und Text bleiben das schon bereinigte
-    // Markup des Aufrufers und werden nicht neu zusammengesetzt (R1, Vertrag SENKEN).
-    return content.replace(/<h([2-4])([^>]*)>([^<]+)<\/h[2-4]>/gi, match =>
-        match.replace(/^<h[2-4][^>]*/i, '$& id="toc-' + index++ + '"')
-    );
+    // Kennung als Attribut am Element (bearbeiteMarkup, utils/basic.js), nicht per Regex im
+    // serialisierten Markup: dort traf `<h2>…</h2>` auch IN einem Attributwert, und das
+    // eingefuegte `id="…"` beendete ihn (SENKEN R1). Wie bisher nur Ueberschriften aus reinem
+    // Text, in Dokumentreihenfolge — dieselben, die extractWikiTOC() auf dem Rohinhalt zaehlt.
+    return bearbeiteMarkup(content, koerper => {
+        for (const h of koerper.querySelectorAll('h2, h3, h4')) {
+            if (h.children.length || !h.textContent) continue;
+            h.id = 'toc-' + index++;
+        }
+    });
 }
 function scrollToTOCHeading(targetId) {
     const heading = document.getElementById(targetId);

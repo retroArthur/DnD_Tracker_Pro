@@ -317,7 +317,7 @@ function renderDashboard() {
                         <div class="dash-char ${esc(ch.status)}" data-action="show-view" data-value="party">
                             ${ch.conditions > 0 ? `<span class="dash-char-conditions">${Number(ch.conditions)}</span>` : ''}
                             <div class="dash-char-avatar">
-                                ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
+                                ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                             </div>
                             <div class="dash-char-name">${esc(ch.name)}</div>
                             <div class="dash-char-hp">

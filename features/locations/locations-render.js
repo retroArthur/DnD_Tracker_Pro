@@ -161,7 +161,7 @@ function renderLocationItem(loc, stripHtml) {
         .map(
             n => `
         <div class="loc-mini-avatar" title="${esc(n.name)}">
-            ${n.avatar ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
+            ${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
         </div>
     `
         )
@@ -240,7 +240,7 @@ function showLocationDetail(id) {
                   n => `
         <div class="loc-npc-item" data-action="show-npc-popup" data-id="${esc(n.id)}">
             <div class="loc-npc-avatar">
-                ${n.avatar ? `<img src="${esc(n.avatar)}">` : '👤'}
+                ${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}">` : '👤'}
             </div>
             <div class="loc-npc-name">${esc(n.name)}</div>
             <div class="loc-npc-role">${esc(n.role || n.race || '—')}</div>
@@ -269,7 +269,7 @@ function showLocationDetail(id) {
                   if (!target) return '';
                   // NPC-Links als Chips mit show-npc-popup für Konsistenz
                   if (link.type === 'npcs') {
-                      return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(link.id)}">${target.avatar ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
+                      return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(link.id)}">${sichereBildquelle(target.avatar) ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
                   }
                   // Alle anderen Links normal (LINK_ICONS aus core/constants.js)
                   return `<span class="loc-link" data-action="navigate-entity" data-type="${esc(link.type)}" data-id="${esc(link.id)}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
@@ -323,7 +323,7 @@ function showLocationDetail(id) {
                             .slice(0, 5)
                             .map(
                                 n =>
-                                    `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(n.id)}">${n.avatar ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`
+                                    `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(n.id)}">${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`
                             )
                             .join('')}
                         ${npcs.length > 5 ? `<span class="loc-npc-chip more">+${npcs.length - 5}</span>` : ''}

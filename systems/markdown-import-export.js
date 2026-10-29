@@ -99,11 +99,14 @@ function findMarkdownEntity(entityType, entityId) {
  * @returns {string}
  */
 function buildEntityMarkdown(entityType, entity) {
-    const zeilen = [`# ${entity.name || entity.title || 'Unbekannt'}`, ''];
+    // Jeder Wert aus Daten geht durch markdownText() (SENKEN R1): die Datei verlaesst die App,
+    // ein HTML-faehiger Betrachter machte aus `<…>` in einem Namen sonst Markup.
+    const md = markdownText;
+    const zeilen = [`# ${md(entity.name || entity.title || 'Unbekannt')}`, ''];
     if (entityType === 'npcs') {
         zeilen.push('**Typ:** NPC');
-        if (entity.race) zeilen.push(`**Rasse:** ${entity.race}`);
-        if (entity.role) zeilen.push(`**Rolle:** ${entity.role}`);
+        if (entity.race) zeilen.push(`**Rasse:** ${md(entity.race)}`);
+        if (entity.role) zeilen.push(`**Rolle:** ${md(entity.role)}`);
     } else if (entityType === 'quests') {
         zeilen.push(`**Status:** ${entity.completed ? 'Abgeschlossen' : 'Offen'}`);
         // giverName/locationName schreibt saveQuest() aus dem Text der
@@ -112,15 +115,16 @@ function buildEntityMarkdown(entityType, entity) {
         // ohne ID gilt das Altfeld giver/location.
         const auftraggeber = entity.giverId ? entity.giverName : entity.giver;
         const ort = entity.locationId ? entity.locationName : entity.location;
-        if (auftraggeber) zeilen.push(`**Auftraggeber:** ${auftraggeber}`);
-        if (ort) zeilen.push(`**Ort:** ${ort}`);
+        if (auftraggeber) zeilen.push(`**Auftraggeber:** ${md(auftraggeber)}`);
+        if (ort) zeilen.push(`**Ort:** ${md(ort)}`);
     } else if (entityType === 'spells') {
         // "Typ" nennt die Art des Eintrags wie beim NPC — `type` des Zaubers
         // ist seine Farbkategorie (spell/healing/...), kein Text fuer Menschen.
         zeilen.push('**Typ:** Zauber');
-        zeilen.push(`**Stufe:** ${entity.level || 0}`);
-        zeilen.push(`**Schule:** ${entity.school || 'Unbekannt'}`);
-        zeilen.push(`**Klassen:** ${(entity.spellClasses || []).join(', ') || 'Keine'}`);
+        zeilen.push(`**Stufe:** ${md(entity.level || 0)}`);
+        zeilen.push(`**Schule:** ${md(entity.school || 'Unbekannt')}`);
+        const klassen = Array.isArray(entity.spellClasses) ? entity.spellClasses : [];
+        zeilen.push(`**Klassen:** ${md(klassen.join(', ') || 'Keine')}`);
     }
     let markdown = zeilen.join('\n') + '\n\n';
     const beschreibung = htmlToMarkdown(entity.description || '').trim();

@@ -71,7 +71,7 @@ function showCharacterDetails(id) {
     const content = `
         <div class="char-modal-header">
             <div class="char-modal-avatar">
-                ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="${esc(ch.name)}">` : `<span class="char-modal-avatar-placeholder">${esc((ch.name || '?')[0].toUpperCase())}</span>`}
+                ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="${esc(ch.name)}">` : `<span class="char-modal-avatar-placeholder">${esc((ch.name || '?')[0].toUpperCase())}</span>`}
             </div>
             <div class="char-modal-title">
                 <h2>${ch.inspiration ? '⭐ ' : ''}${esc(ch.name)}</h2>

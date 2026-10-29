@@ -20,6 +20,8 @@ const WikiState = {
 // CONSTANTS
 // ============================================================
 const WIKI_CATEGORIES = Object.freeze({
+    // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
+    __proto__: null,
     campaign: { icon: '🎭', name: 'Kampagne' },
     quest: { icon: '📋', name: 'Quest' },
     character: { icon: '🧙', name: 'Charakter' },
@@ -430,12 +432,12 @@ function renderWikiDetail() {
         ? renderMarkdownInContent(entry.content || '')
         : sanitizeHTML(entry.content || '');
     const contentWithAnchors = addTOCAnchors(markdownRendered);
-    // parseWikiLinks() escapt seinen eigenen Regex-Capture (Attributwert UND
-    // sichtbarer Textknoten via esc()) und ist damit selbst sicher — nicht mehr
-    // von der vorgelagerten Sanitisierung abhängig. Die Aufrufreihenfolge
-    // renderMarkdownInContent() -> addTOCAnchors() -> parseWikiLinks() bleibt aus
-    // einem anderen Grund bestehen: addTOCAnchors() braucht das bereits
-    // gerenderte Markup, um die Anker-Ids an den richtigen Überschriften zu setzen.
+    // addTOCAnchors() und parseWikiLinks() arbeiten am geparsten Markup (Kennung als
+    // Attribut, Link nur in Textknoten — SENKEN R1), nie per Regex im String: ein
+    // Treffer IN einem Attributwert beendete sonst das Attribut. Die Reihenfolge
+    // renderMarkdownInContent() -> addTOCAnchors() -> parseWikiLinks() bleibt:
+    // addTOCAnchors() braucht das gerenderte Markup, um die Anker-Ids an den
+    // richtigen Überschriften zu setzen.
     const parsedContent = parseWikiLinks(contentWithAnchors);
     const backlinks = findBacklinks(entry.title);
     const outlinks = extractWikiLinks(entry.content || '');

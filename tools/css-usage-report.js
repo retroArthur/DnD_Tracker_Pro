@@ -88,7 +88,7 @@ const LIVE_PREFIXES = Object.freeze(['color-', 'condition-', 'editor-toolbar-', 
 // { class, date, reason }. Die fuenf Eintraege unten sind das Ergebnis der
 // Pflicht-Fehlalarm-Pruefung aus Plan 15-06 Task 3, nicht Ausgangszustand:
 // keine der fuenf Klassen ist tatsaechlich tot. `setReadAloudFormat()`
-// (ui/editors/rich-text.js:412) baut die Modifikator-Klasse ueber eine
+// (ui/editors/rich-text.js:414) baut die Modifikator-Klasse ueber eine
 // Ternary auf einer LAUFZEIT-Variable (`style`), deren moegliche Werte nur
 // als `value: '<farbe>'` in einer Dropdown-Optionsliste
 // (ui/editors/editor-toolbar-build.js:47ff) stehen — nie als eigenstaendiges
@@ -103,27 +103,27 @@ const DEAD_EXCEPTIONS = Object.freeze([
         class: 'crimson',
         date: '2026-09-09',
         reason:
-            'Read-Aloud-Farbvariante, nur ueber setReadAloudFormat()-Ternary auf einer Laufzeit-Variable erreichbar (rich-text.js:412) — kein Klassen-Kontext-Literal, kein echter Fehlalarm des Werkzeugs, sondern eine erkannte Grenze der Text-Pruefung.'
+            'Read-Aloud-Farbvariante, nur ueber setReadAloudFormat()-Ternary auf einer Laufzeit-Variable erreichbar (rich-text.js:414) — kein Klassen-Kontext-Literal, kein echter Fehlalarm des Werkzeugs, sondern eine erkannte Grenze der Text-Pruefung.'
     },
     {
         class: 'violet',
         date: '2026-09-09',
-        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:412).'
+        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:414).'
     },
     {
         class: 'sage',
         date: '2026-09-09',
-        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:412).'
+        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:414).'
     },
     {
         class: 'sky',
         date: '2026-09-09',
-        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:412).'
+        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:414).'
     },
     {
         class: 'slate',
         date: '2026-09-09',
-        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:412).'
+        reason: 'Wie crimson — Read-Aloud-Farbvariante (rich-text.js:414).'
     }
 ]);
 

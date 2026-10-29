@@ -67,6 +67,32 @@ describe('validateAvatarURL — Grundverhalten', () => {
     });
 });
 
+/*
+ * SENKEN R3 fuer Bildquellen (Gutachten, Sonde D): `//localhost/…` BESTAND die Pruefung
+ * (`trimmed.startsWith('/')`), und die App lud das Bild ohne Klick. Unter file:// wird
+ * `//host/share/x.png` zu `file://host/share/x.png` — unter Windows ein UNC-Pfad, also eine
+ * Verbindung samt Anmeldeversuch zu einem fremden Rechner. Der Browser liest `\` hier wie
+ * `/` und streicht Tabulatoren und Zeilenumbrueche. Die Ausgabe prueft dasselbe ueber
+ * sichereBildquelle() (utils/basic.js, Vertrag in tests/unit/datengrenze.test.js).
+ */
+describe('validateAvatarURL — SENKEN: kein protokoll-relativer Anfang', () => {
+    test.each([
+        '//host/share/avatar.png',
+        '//localhost/C:/avatar.png',
+        '\\\\host\\share\\avatar.png',
+        '/\\host/share/avatar.png',
+        '\\/host/share/avatar.png',
+        '  //host/avatar.png',
+        '/\t/host/avatar.png'
+    ])('%j wird abgelehnt', url => {
+        expect(validateAvatarURL(url)).toBe(false);
+    });
+
+    test('ein Pfad ab der Wurzel bleibt gueltig', () => {
+        expect(validateAvatarURL('/images/avatar.png')).toBe(true);
+    });
+});
+
 describe('validateAvatarURL — WR-01: Steuerzeichen-Bypass', () => {
     test('eingebettetes Tab-Zeichen in "javascript:" wird erkannt und abgelehnt', () => {
         expect(validateAvatarURL('java\tscript:alert(1)')).toBe(false);
