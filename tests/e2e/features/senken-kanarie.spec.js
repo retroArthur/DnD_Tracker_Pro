@@ -1,4 +1,5 @@
 // @ts-check
+import fs from 'fs';
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
@@ -17,11 +18,17 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   - sonstiger String: "><img src="kanarie-<id>.png" data-kanarie="<id>">   (Attribut-Ausbruch)
  *   - Rich-Text:        Text-Kanarie + [[npcs:1:k" data-kanarie="<id>.marke" x="]]
  *                       + [k](javascript:void('kanarie-<id>.md'))   (parseEntityLinks, Markdown)
+ *                       + drei Attributgrenzen-Kanarien (<id>.marke2/.wuerfel/.toc, bei
+ *                       grenzKanarie): Muster-Treffer, die in einem title-Attribut beginnen
+ *                       oder enden (Nachbearbeitung NACH sanitizeHTML)
  *   - Farbe (color):    red);background-image:url(kanarie-<id>.png);x:("><img …>
  *                       (Stil R2 — auch in var(--…) und class/data-*, Begruendung bei stilKanarie)
  *   - links[0].url:     javascript:void('kanarie-<id>')                     (Schema, R3)
  *   - links[1].url:     https://example.org/"><img …>                       (erlaubtes Schema, R1)
- * Kein Script, kein on*-Handler; die Bilddatei existiert nicht.
+ *   - avatar:           Datensatz 0 file:///kanarie-<id>.png, Datensatz 1
+ *                       //localhost/kanarie-<id>.png (Bildquelle, R3 — bei bildKanarie)
+ * Kein Script, kein on*-Handler; die Bilddatei existiert nicht. Jede Anforderung an http(s)
+ * bricht der Test ab (page.route), es geht nichts ins Netz.
  *
  * ERKENNUNG (jede Einschleusung zaehlt, nicht erst eine Ausfuehrung):
  *   (a) ein [data-kanarie] im Dokument (MutationObserver ab Dokumentbeginn, auch fluechtige
@@ -30,11 +37,17 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *       escapter Wert als relative URL ist KEIN Fund); deckt losgeloeste Elemente
  *       (div.innerHTML ausserhalb des Dokuments) und Stil-Einschleusung ab,
  *   (c) href/src/action mit javascript: im Dokument oder window.open damit (window.open ist
- *       ersetzt und oeffnet nie etwas).
+ *       ersetzt und oeffnet nie etwas),
+ *   (d) in einer heruntergeladenen Markdown-Datei: Markup aus Daten (jedes `<tag` ausser der
+ *       Unterstreichungsmarke `<u>`) oder ein Markdown-Link auf ein Skript-/Dateischema —
+ *       die Datei verlaesst die App, ein HTML-faehiger Markdown-Betrachter zeigte es an.
+ * Dazu ist jeder Seitenfehler rot: ein Renderer, der an einem Kanarienwert abbricht, uebt den
+ * Rest seiner Ausgabe nicht aus, und der Fall bliebe sonst leer gruen.
  * Grossgeschriebene ids (z. B. ENCOUNTERS.0.SAVINGTHROWS.SCHLUESSEL) zeigen eine Senke, die
  * den Wert vor dem Einsetzen per toUpperCase() veraendert.
  *
- * SAAT: Feldsaetze, wie die Speicherfunktionen der App sie schreiben (abgeleitet aus
+ * SAAT: Feldsaetze, wie die Speicherfunktionen der App sie schreiben — Tag- und Filterfarben
+ * als Namen aus TAG_COLORS, der Quest-Typ aus #quest-type (abgeleitet aus
  * core/data.js, IO_SCHEMA in systems/spellslots/import-export.js, der Messung am Import
  * (Befund SENKEN, docs/bugfixes.md) und echten Datensaetzen), je Sammlung ZWEI Datensaetze:
  * im ersten bleiben IDs, Verweise (…Id, links[].id/.type, relations[].targetId/-Type) und
@@ -57,10 +70,16 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * erster Dialog "weitere Optionen", zweiter "Ersetzen"), Backup-Wiederherstellung (Daten ->
  * "Backups anzeigen" -> "Wiederherstellen"; das Backup liegt vorher im localStorage-
  * Rueckfall `dnd-tracker-backups`), Start aus localStorage (Saat vor dem Laden, dazu ein
- * Kampagnen-Index mit Kanarien).
+ * Kampagnen-Index mit Kanarien) — und derselbe Start mit der ALTEN Serialisierung
+ * (altSerialisierungInstallieren): Browser vor der Aenderung von 2025 (im Gutachten gemessen:
+ * Chromium 143, Firefox 148, WebKit 26 kodieren `<`/`>` in Attributwerten; aeltere, nach
+ * dessen Angabe z. B. Chrome <= 137 einschliesslich Chrome 109 auf Windows 7/8.1 und Firefox
+ * ESR 115, liessen sie roh). Eine Ersetzung per Regex im serialisierten Markup, deren Treffer in einem Attributwert
+ * beginnt oder endet, macht dort aus dem Rest des Werts Markup; der heutige Browser zeigt nur
+ * verfaelschte Attribute. Ohne diesen Lauf waere die Klasse fuer den Waechter unsichtbar.
  *
- * FALLSCHNITT: Eingang x Ansichtsgruppe (3 x 5) plus der legitime Gegenfall je Eingang
- * (3) = 18 Faelle. Der Gegenfall laeuft durch DENSELBEN Eingang wie die Kanarien: ein Fix,
+ * FALLSCHNITT: Eingang x Ansichtsgruppe (4 x 5) plus der legitime Gegenfall je Eingang
+ * (4) = 24 Faelle. Der Gegenfall laeuft durch DENSELBEN Eingang wie die Kanarien: ein Fix,
  * der nur an einem Eingang zu viel kodiert oder entfernt, faellt dort auf.
  * Ein roter Fall nennt Eingang und Gruppe und listet je Schritt die ausgeloesten ids mit
  * Erkennungsart. Die Renders WAEHREND des Eingangs (renderAll zeichnet alle Ansichten,
@@ -111,8 +130,110 @@ const linkKanarie = id => `javascript:void('kanarie-${id}')`;
  * aus. Der Markdown-Link `[k](javascript:…)` prueft, dass renderMarkdownInContent() kein
  * javascript:-Ziel erzeugt.
  */
+/*
+ * Attributgrenzen-Kanarien. parseEntityLinks()/parseWikiLinks() (Marke `[[…]]`),
+ * renderClickableDice() (Wuerfelformel) und addTOCAnchors() (Ueberschrift) ersetzten per Regex
+ * im SERIALISIERTEN, bereits bereinigten Markup. Ein Treffer darf dort in einem Attributwert
+ * beginnen (`[[npcs:1:k<span title="]]…`) oder ganz darin liegen (`title="1d6…"`,
+ * `title="<h2>k</h2>…"`); die Ersetzung fuegt `"` ein und beendet das Attribut, der Rest des
+ * Werts wird Markup — mit der alten Serialisierung (`<`/`>` roh im Attribut) ein echtes
+ * Element. Mit der heutigen bleibt es Text, aber die App setzt ihre eigenen Attribute
+ * (data-action …) auf ein Element aus Daten. Die Kanarie steht im title (sanitizeHTML laesst
+ * title stehen), das Bild darin ist unquotiert, damit kein `"` im Wert steht.
+ */
+const grenzKanarie = id =>
+    `[[npcs:1:k<span title="]]<img src=kanarie-${id}.marke2.png data-kanarie=${id}.marke2>">k</span>` +
+    `<span title="1d6<img src=kanarie-${id}.wuerfel.png data-kanarie=${id}.wuerfel>">k</span>` +
+    `<span title="<h2>k</h2><img src=kanarie-${id}.toc.png data-kanarie=${id}.toc>">k</span>`;
 const htmlKanarie = id =>
-    `${textKanarie(id)} [[npcs:1:k" data-kanarie="${id}.marke" x="]] [k](javascript:void('kanarie-${id}.md'))`;
+    `${textKanarie(id)} [[npcs:1:k" data-kanarie="${id}.marke" x="]] [k](javascript:void('kanarie-${id}.md'))` +
+    grenzKanarie(id);
+/*
+ * Bild-Kanarie (avatar). esc() haelt das src-Attribut zu, prueft aber kein Schema: eine
+ * Bildquelle aus Daten mit `file:` oder protokoll-relativem `//host/…` laedt die App von
+ * selbst, ohne Klick — unter file:// (Nutzung des Nutzers) wird `//host/share/x.png` zu
+ * `file://host/share/x.png`, unter Windows ein UNC-Pfad, also eine Verbindung samt
+ * Anmeldeversuch zu einem fremden Rechner. Die Kanarie nimmt `localhost`: die URL-Norm macht
+ * daraus beim file-Schema den leeren Host (`file:///kanarie-….png`), es geht nichts ins Netz.
+ * Erkannt wird die Anforderung (b).
+ */
+const bildKanarie = (id, datensatz) =>
+    datensatz === '0' ? `file:///kanarie-${id}.png` : `//localhost/kanarie-${id}.png`;
+
+/**
+ * Serialisierung vor 2025 (Gutachten, Sonde A): der Getter von Element.prototype.innerHTML
+ * kodiert in Attributwerten nur `&`, NBSP und `"` — `<` und `>` bleiben roh. Der Setter bleibt
+ * der echte. Laeuft vor jedem Skript der App (addInitScript).
+ */
+function altSerialisierungInstallieren() {
+    const LEER = new Set([
+        'area',
+        'base',
+        'br',
+        'col',
+        'embed',
+        'hr',
+        'img',
+        'input',
+        'link',
+        'meta',
+        'source',
+        'track',
+        'wbr',
+        'basefont',
+        'bgsound',
+        'frame',
+        'keygen',
+        'param'
+    ]);
+    const ROH = new Set([
+        'style',
+        'script',
+        'xmp',
+        'iframe',
+        'noembed',
+        'noframes',
+        'plaintext',
+        'noscript'
+    ]);
+    // NBSP ueber den Zeichencode: als Zeichen im Quelltext waere es unsichtbar
+    const NBSP = new RegExp(String.fromCharCode(160), 'g');
+    const text = s =>
+        s
+            .replace(/&/g, '&amp;')
+            .replace(NBSP, '&nbsp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    const attr = s => s.replace(/&/g, '&amp;').replace(NBSP, '&nbsp;').replace(/"/g, '&quot;');
+    const kinder = n => {
+        let out = '';
+        const liste = n.localName === 'template' ? n.content.childNodes : n.childNodes;
+        for (const c of liste) out += knoten(c, n);
+        return out;
+    };
+    const knoten = (n, eltern) => {
+        if (n.nodeType === 1) {
+            let s = '<' + n.localName;
+            for (const a of n.attributes) s += ' ' + a.name + '="' + attr(a.value) + '"';
+            s += '>';
+            if (LEER.has(n.localName)) return s;
+            return s + kinder(n) + '</' + n.localName + '>';
+        }
+        if (n.nodeType === 3) return eltern && ROH.has(eltern.localName) ? n.data : text(n.data);
+        if (n.nodeType === 8) return '<!--' + n.data + '-->';
+        return '';
+    };
+    const echt = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+    Object.defineProperty(Element.prototype, 'innerHTML', {
+        configurable: true,
+        get() {
+            return kinder(this);
+        },
+        set(v) {
+            echt.set.call(this, v);
+        }
+    });
+}
 
 // ---------------------------------------------------------------------------
 // Saat (UNVERGIFTET). Feldsaetze wie die Speicherfunktionen der App: party-crud.js
@@ -164,7 +285,7 @@ function charakter(id, name) {
         spells: [1],
         items: [{ id: 1, quantity: 1 }],
         conditions: [{ type: 'poisoned', name: 'Vergiftet', addedAt: 1700000000000 }],
-        tags: [{ name: 'tank', color: '#a855f7' }],
+        tags: [{ name: 'tank', color: 'purple' }],
         links: [{ type: 'npcs', id: 1 }]
     };
 }
@@ -202,7 +323,7 @@ function npc(id, name) {
             { targetType: 'party', status: 'neutral', note: 'Auftraggeber' }
         ],
         avatar: 'https://example.org/npc.png',
-        tags: [{ name: 'adel', color: '#ef4444' }],
+        tags: [{ name: 'adel', color: 'red' }],
         links: [
             { type: 'quests', id: 1 },
             { type: 'locations', id: 1 },
@@ -232,7 +353,7 @@ function rohKampagne() {
             description: '<p>Ort</p>',
             filterId: 1,
             avatar: 'https://example.org/ort.png',
-            tags: [{ name: 'kueste', color: '#3b82f6' }],
+            tags: [{ name: 'kueste', color: 'blue' }],
             links: [{ type: 'npcs', id: 1 }]
         })),
         factions: [1, 2].map(id => ({
@@ -264,7 +385,7 @@ function rohKampagne() {
             locationName: 'Turmruine',
             targetId: 2,
             targetName: 'Vela',
-            type: 'main',
+            type: 'side',
             description: '<p>Quest</p>',
             reward: '250 GM',
             rewardGold: 250,
@@ -275,7 +396,7 @@ function rohKampagne() {
             tracked: true,
             rewardReceived: false,
             createdAt: 1700000000000,
-            tags: [{ name: 'haupt', color: '#22c55e' }],
+            tags: [{ name: 'haupt', color: 'green' }],
             // encounters: die Vorschau eines Encounters ist eine eigene Senke (entity-links.js,
             // `CR ${entity.cr}`), die das Encounter-Detail nicht mitprueft
             links: [
@@ -423,7 +544,7 @@ function rohKampagne() {
             equipment: '<p>Kettenhemd</p>',
             actions: '<p>Krummsaebel</p>',
             skills: '<p>Heimlichkeit +6</p>',
-            tags: [{ name: 'boss', color: '#f59e0b' }],
+            tags: [{ name: 'boss', color: 'orange' }],
             links: [{ type: 'npcs', id: 1 }]
         })),
         sessionNotes: [1, 2].map(id => ({
@@ -583,10 +704,10 @@ function rohKampagne() {
             content: '<p>Kritische Treffer</p>',
             expanded: true
         })),
-        filters: [1, 2].map(id => ({ id, name: 'Kueste', color: '#3b82f6' })),
+        filters: [1, 2].map(id => ({ id, name: 'Kueste', color: 'blue' })),
         tags: [
-            { name: 'kueste', color: '#3b82f6' },
-            { name: 'adel', color: '#ef4444' }
+            { name: 'kueste', color: 'blue' },
+            { name: 'adel', color: 'red' }
         ],
         soundboard: {
             scenes: [1, 2].map(id => ({
@@ -736,6 +857,8 @@ function vergiften(roh) {
             // Datensatz 0: Schema-Kanarie (R3); Datensatz 1: erlaubtes Schema, Attribut-Ausbruch (R1)
             return teile[1] === '0' ? linkKanarie(id) : 'https://example.org/' + attrKanarie(id);
         }
+        // Bildquelle: Datensatz 0 file:, Datensatz 1 protokoll-relativ (bildKanarie)
+        if (k === 'avatar') return bildKanarie(id, teile[1]);
         if (HTML_FELDER.has(k) || (teile[0] === 'spells' && k === 'note')) return htmlKanarie(id);
         return attrKanarie(id);
     };
@@ -955,7 +1078,8 @@ function erkennungInstallieren(startPhase) {
 const EINGAENGE = {
     import: 'Kampagnen-Import (Daten -> Datei auswaehlen -> Ersetzen)',
     backup: 'Backup-Wiederherstellung (Daten -> Backups anzeigen -> Wiederherstellen)',
-    start: 'Start aus localStorage (Saat vor dem Laden)'
+    start: 'Start aus localStorage (Saat vor dem Laden)',
+    alt: 'Start aus localStorage, Serialisierung vor 2025 (Attributwerte mit rohem < und >)'
 };
 
 /**
@@ -963,15 +1087,17 @@ const EINGAENGE = {
  * Oberflaeche ein. Liefert den Kontext fuer die Schritte. Ohne `opt` die Kanarien-Kampagne
  * samt Kanarien-Index; der Gegenfall gibt legitime Daten und keinen Index mit.
  * @param {import('@playwright/test').Page} page
- * @param {'import'|'backup'|'start'} eingang
+ * @param {'import'|'backup'|'start'|'alt'} eingang
  * @param {{daten?: object, index?: object|null, kampagnenName?: string}} [opt]
  */
 async function eingangSpielen(page, eingang, opt = {}) {
     const daten = opt.daten || vergiften(rohKampagne()).daten;
     const index = opt.index === undefined ? kanarienIndex() : opt.index;
     const kampagnenName = opt.kampagnenName || attrKanarie('_campaignName');
+    // 'alt' ist der Start aus localStorage mit der Serialisierung vor 2025
+    const start = eingang === 'start' || eingang === 'alt';
     const ctx = {
-        phase: eingang === 'start' ? 'Eingang' : 'Vorlauf',
+        phase: start ? 'Eingang' : 'Vorlauf',
         netz: [],
         fehler: [],
         luecken: [],
@@ -979,6 +1105,10 @@ async function eingangSpielen(page, eingang, opt = {}) {
         /** @type {string[]} */
         dialogPlan: []
     };
+    KONTEXTE.set(page, ctx);
+    // Nichts geht ins Netz: legitime Bildquellen (https://example.org/…) und jede Anforderung
+    // einer eingeschleusten Quelle an http(s) bricht hier ab, bevor sie das Geraet verlaesst
+    await page.route(/^https?:/i, r => r.abort());
     page.on('pageerror', e => ctx.fehler.push(String(e).split('\n')[0].slice(0, 200)));
     page.on('request', req => {
         const letzte = req.url().split(/[/\\]/).pop() || '';
@@ -1002,8 +1132,9 @@ async function eingangSpielen(page, eingang, opt = {}) {
         return d.accept().catch(() => {});
     });
     await page.addInitScript(erkennungInstallieren, ctx.phase);
+    if (eingang === 'alt') await page.addInitScript(altSerialisierungInstallieren);
     const lokal = {};
-    if (eingang === 'start') {
+    if (start) {
         lokal[KEY] = JSON.stringify(daten);
         if (index) lokal[INDEX_KEY] = JSON.stringify(index);
     } else {
@@ -1070,7 +1201,69 @@ async function eingangSpielen(page, eingang, opt = {}) {
     if (bestand.join('/') !== '2/2/2/2/2/2') {
         ctx.luecken.push(`Eingang nicht angekommen: Bestand ${bestand.join('/')} statt je 2`);
     }
+    if (eingang === 'alt') {
+        // Nicht-Vakuitaet: die alte Serialisierung ist wirklich aktiv (`<` roh im Attribut)
+        const roh = await page.evaluate(() => {
+            const d = document.createElement('div');
+            d.innerHTML = '<span title="a<b>c"></span>';
+            return d.innerHTML;
+        });
+        if (roh !== '<span title="a<b>c"></span>') {
+            ctx.luecken.push(`alte Serialisierung nicht aktiv: ${roh}`);
+        }
+    }
     return ctx;
+}
+
+/** Kontext je Seite: die Schritte bekommen nur die Seite und melden Funde hierueber. */
+const KONTEXTE = new WeakMap();
+
+/**
+ * Erkennung (d): prueft den Text einer heruntergeladenen Markdown-Datei. Markup aus Daten ist
+ * jedes `<tag` ausser der Unterstreichungsmarke `<u>`/`</u>`, die htmlToMarkdown() selbst
+ * schreibt; dazu ein Markdown-Link oder eine Linkdefinition auf ein Skript- oder Dateischema.
+ * @param {string} md
+ * @returns {{id: string, art: string}[]}
+ */
+function markdownDateiPruefen(md) {
+    const idAus = s => {
+        const m = /kanarie-([A-Za-z0-9._-]+)/i.exec(String(s));
+        return m ? m[1].replace(/\.png$/i, '') : '(ohne id)';
+    };
+    const funde = [];
+    for (const m of md.matchAll(/<(?!\/?u>)[a-zA-Z!/?][^>\n]*>?/g)) {
+        funde.push({ id: idAus(m[0]), art: 'md-datei:markup' });
+    }
+    const schema = '<?\\s*(?:javascript|vbscript|data|file)\\s*:';
+    for (const m of md.matchAll(new RegExp(`\\]\\(\\s*${schema}[^)\\n]*`, 'gi'))) {
+        funde.push({ id: idAus(m[0]), art: 'md-datei:link' });
+    }
+    for (const m of md.matchAll(new RegExp(`^\\s*\\[[^\\]\\n]*\\]:\\s*${schema}.*$`, 'gim'))) {
+        funde.push({ id: idAus(m[0]), art: 'md-datei:linkdefinition' });
+    }
+    return funde;
+}
+
+/**
+ * Klickt den Markdown-Export und prueft die heruntergeladene Datei (Erkennung (d)). Ein
+ * Klick ohne Download ist eine Weg-Luecke.
+ * @param {import('@playwright/test').Page} p
+ * @param {string} typ - npcs | quests | spells
+ */
+async function markdownExportPruefen(p, typ) {
+    const ctx = KONTEXTE.get(p);
+    const knopf = p
+        .locator(`[data-action="export-markdown"][data-type="${typ}"]`)
+        .filter({ visible: true })
+        .first();
+    const [download] = await Promise.all([
+        p.waitForEvent('download', { timeout: 4000 }),
+        knopf.click({ timeout: 2500 })
+    ]);
+    const datei = await download.path();
+    const md = fs.readFileSync(datei, 'utf8');
+    for (const f of markdownDateiPruefen(md)) ctx.netz.push({ ...f, phase: ctx.phase });
+    await p.waitForTimeout(300);
 }
 
 /** Wartet auf einen Eintrag im Kampfprotokoll (der Ringpuffer verliert keine Meldung). */
@@ -1557,9 +1750,7 @@ const GRUPPEN = [
                     await zuReiter(p, 'npcs');
                     await klick(p, '#view-npcs [data-action="select-npc"]');
                     await klick(p, '#view-npcs [data-action="edit-npc"]');
-                    await klick(p, '[data-action="export-markdown"][data-type="npcs"]', {
-                        warte: 500
-                    });
+                    await markdownExportPruefen(p, 'npcs');
                     await schliessen(p);
                 }
             ],
@@ -1569,9 +1760,7 @@ const GRUPPEN = [
                     await zuReiter(p, 'quests');
                     await klick(p, '#view-quests .quest-header .quest-title');
                     await klick(p, '#view-quests [data-action="edit-quest"]');
-                    await klick(p, '[data-action="export-markdown"][data-type="quests"]', {
-                        warte: 500
-                    });
+                    await markdownExportPruefen(p, 'quests');
                     await schliessen(p);
                 }
             ],
@@ -1581,9 +1770,7 @@ const GRUPPEN = [
                     await zuReiter(p, 'spells');
                     await klick(p, '#view-spells .spell-card-header .spell-level');
                     await klick(p, '#view-spells [data-action="edit-spell-stop"]');
-                    await klick(p, '[data-action="export-markdown"][data-type="spells"]', {
-                        warte: 500
-                    });
+                    await markdownExportPruefen(p, 'spells');
                     await schliessen(p);
                 }
             ],
@@ -1679,6 +1866,11 @@ for (const [eingang, eingangName] of Object.entries(EINGAENGE)) {
                     `Weg nicht begehbar (${eingangName}, ${gruppe.name}):\n  ${ctx.luecken.join('\n  ')}`
                 )
                 .toEqual([]);
+            // Seitenfehler sind rot: ein Renderer, der an einem Kanarienwert abbricht, uebt den
+            // Rest seiner Ausgabe nicht aus — der Fall bliebe sonst leer gruen
+            expect
+                .soft([...new Set(ctx.fehler)], `Seitenfehler (${eingangName}, ${gruppe.name})`)
+                .toEqual([]);
         });
     }
 }
@@ -1710,6 +1902,14 @@ function legitimeKampagne() {
     // parseEntityLinks den schon serialisierten Namen nicht ein zweites Mal kodiert. Ohne `"`:
     // das ist die Einschleusung selbst (Kanarie `.marke`), heute kaputt und kein Gegenfall.
     k.quickRefCustom[0].content = `<p>Siehe ${MARKE_ROH}</p>`;
+    // Legitime Nachbearbeitung (R5): Inhaltsverzeichnis ab drei Ueberschriften, Wiki-Link auf
+    // einen vorhandenen Eintrag, Wuerfelformel und Trefferbonus im Statblock — die Ersetzung
+    // im Text muss sie weiter erzeugen
+    k.wiki[0].content =
+        '<h2>Eins</h2><p>a</p><h2>Zwei &amp; mehr</h2><p>b</p><h3>Drei</h3>' +
+        '<p>Siehe [[Goetter]] und <a href="https://example.org/suche?q=[[Goetter]]">Suche</a></p>';
+    k.bestiary[0].traits =
+        '<p>Biss: +5 zum Treffen, 2W6+3 Stich, <a href="https://example.org/regel?w=1d6+2">Regel</a></p>';
     return k;
 }
 
@@ -1761,6 +1961,50 @@ for (const [eingang, eingangName] of Object.entries(EINGAENGE)) {
         await expect(page.locator('#view-links')).toContainText('Regeln & <Tabellen>');
         // Ein erlaubter Link bleibt bedienbar und unveraendert (R3 verwirft nur fremde Schemata)
         await expect(page.locator('#view-links a[href]').first()).toHaveAttribute('href', URL_LINK);
+        // Eine erlaubte Bildquelle bleibt ein Bild (R3 fuer Bildquellen verwirft nur fremde
+        // Schemata); die Anforderung an example.org bricht der Test ab (page.route)
+        await zuReiter(page, 'party');
+        await expect(
+            page.locator('#party-list img[src="https://example.org/held.png"]').first()
+        ).toBeAttached();
+        // Tag-Farbe und Quest-Typ, wie die Formulare sie schreiben, landen woertlich als Klasse
+        // (R2 laesst Werte der Erlaubnisliste durch, statt sie auf den Ersatz zu setzen)
+        await zuReiter(page, 'quests');
+        await expect(page.locator('#view-quests .quest-type-badge.side').first()).toHaveText(
+            'Side'
+        );
+        await expect(page.locator('#view-quests .tag.tag-green').first()).toBeAttached();
+        // Nachbearbeitung im Text: Anker der Ueberschriften, Wiki-Link, Wuerfel — Attribute
+        // (ein href mit `[[…]]` bzw. `1d6+2`) bleiben unberuehrt
+        await zuReiter(page, 'wiki');
+        await klick(page, '#view-wiki [data-action="select-wiki-entry"][data-id="1"]');
+        const wikiInhalt = page.locator('#view-wiki .wiki-detail-body');
+        await expect(wikiInhalt.locator('h2#toc-0')).toHaveText('Eins');
+        await expect(wikiInhalt.locator('h2#toc-1')).toHaveText('Zwei & mehr');
+        await expect(wikiInhalt.locator('h3#toc-2')).toHaveText('Drei');
+        await expect(
+            wikiInhalt.locator('.wiki-link[data-value="Goetter"]:not(.missing)')
+        ).toHaveText('Goetter');
+        await expect(
+            wikiInhalt.locator('a[href="https://example.org/suche?q=[[Goetter]]"]')
+        ).toHaveText('Suche');
+        await zuReiter(page, 'bestiary');
+        // Die eigene Kreatur liegt alphabetisch tief in der virtuellen Liste: nur Eigene zeigen
+        await page.locator('#bestiary-filter-custom').check();
+        await page.waitForTimeout(300);
+        await klick(
+            page,
+            '#view-bestiary [data-action="bestiary-select"]:not([data-source="srd"])'
+        );
+        await expect(
+            page.locator('#view-bestiary .bestiary-dice[data-value="2W6+3"]').first()
+        ).toHaveText('2W6+3');
+        await expect(
+            page.locator('#view-bestiary .bestiary-dice[data-value="1d20+5"]').first()
+        ).toHaveText('+5');
+        await expect(
+            page.locator('#view-bestiary a[href="https://example.org/regel?w=1d6+2"]').first()
+        ).toHaveText('Regel');
 
         // Kein sichtbares Entity-Rudiment in den besuchten Ansichten
         const rudimente = await page.evaluate(() =>
@@ -1788,3 +2032,121 @@ for (const [eingang, eingangName] of Object.entries(EINGAENGE)) {
         expect(ctx.fehler).toEqual([]);
     });
 }
+
+// ---------------------------------------------------------------------------
+// Robustheit (Gutachten, Sonde F): Werte mit Namen aus Object.prototype legen keine Ansicht
+// lahm. Keine Einschleusung — aber `TABELLE[wert]?.split(' ')` liefert bei `constructor` eine
+// Funktion bzw. bei `__proto__` Object.prototype (`?.` schuetzt nur vor nullish), der Render
+// warf; ein Objekt als Name (`a.name.localeCompare`) leerte die NPC-Liste, eine Kategorie
+// `__proto__` liess den gruppierten Handout-Export still ausfallen. Je EIN fremder Eintrag
+// reichte. Verlangt: die gueltigen Nachbarn bleiben sichtbar, der Export laeuft, kein
+// Seitenfehler.
+// ---------------------------------------------------------------------------
+function prototypKampagne() {
+    const k = rohKampagne();
+    k.loot[1].category = 'constructor';
+    k.loot[1].rarity = '__proto__';
+    k.links[1].category = '__proto__';
+    k.shops[0].items[1].category = '__proto__';
+    k.shops[0].items[2].category = 'constructor';
+    k.npcs[1].name = { toString: 1 };
+    k.npcs[1].relations[0].status = 'constructor';
+    k.characters[0].race = { toString: 1, valueOf: 1 };
+    k.quests[1].title = { titel: 'Objekt' };
+    k.wiki[1].category = '__proto__';
+    return k;
+}
+
+test('Robustheit: Werte mit Namen aus Object.prototype legen keine Ansicht lahm (Start aus localStorage)', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const ctx = await eingangSpielen(page, 'start', { daten: prototypKampagne(), index: null });
+    expect(ctx.luecken).toEqual([]);
+    await zuReiter(page, 'loot');
+    await expect(page.locator('#view-loot')).toContainText('Flammenschwert');
+    await klick(page, '#view-loot [data-action="select-loot"]', { nr: 1 });
+    await zuReiter(page, 'links');
+    await expect(page.locator('#view-links')).toContainText('SRD');
+    await expect(page.locator('#view-links')).toContainText('Karte');
+    await zuReiter(page, 'npcs');
+    await expect(page.locator('#npc-list')).toContainText('Alrik');
+    await klick(page, '#view-npcs [data-action="select-npc"]');
+    await zuReiter(page, 'party');
+    await expect(page.locator('#party-list')).toContainText('Thorin');
+    await zuReiter(page, 'quests');
+    await expect(page.locator('#view-quests')).toContainText('Die verlorene Fracht');
+    await zuReiter(page, 'wiki');
+    await klick(page, '#view-wiki [data-action="call"][data-value="expandAllWikiCategories"]');
+    await expect(page.locator('#view-wiki')).toContainText('Weltwissen');
+    // Gruppierter Handout-Export mit Kategorie __proto__/constructor: es kommt ein Download
+    await zuReiter(page, 'shops');
+    await klick(page, '#view-shops [data-action="export-shop-handout"]');
+    await page.locator('#handout-group-by-category').setChecked(true);
+    const [download] = await Promise.all([
+        page.waitForEvent('download', { timeout: 5000 }),
+        page.locator('[data-action="generate-shop-handout"]').click()
+    ]);
+    const handout = fs.readFileSync(await download.path(), 'utf8');
+    expect(handout).toContain('Langschwert');
+    expect(handout).toContain('Kettenhemd');
+    expect([...new Set(ctx.fehler)]).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Regressionen aus dem Gutachten (Verhaltensaenderungen von R3, nachgebessert):
+//   (a) Linkliste: ein Ziel ohne http(s)/mailto (der Nutzer arbeitet unter file://, ein Link
+//       auf eine lokale PDF war vorher bedienbar) wird weiter gespeichert, aber der Nutzer
+//       erfaehrt es beim Speichern, und die Liste kennzeichnet es — statt still Text.
+//   (b) Linkmenue des Editors: "Oeffnen" verweigerte Ziele, die der Editor selbst anlegt
+//       und speichert (`./`, `/`, `#`), weil es das AUFGELOESTE link.href pruefte.
+// ---------------------------------------------------------------------------
+test('Regression: Linkliste meldet nicht anklickbare Ziele, das Linkmenue oeffnet Editor-Ziele', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const k = legitimeKampagne();
+    k.npcs[0].description =
+        '<p><a href="./karte.pdf">Karte</a> und <a href="//localhost/unc">UNC</a></p>';
+    const ctx = await eingangSpielen(page, 'start', { daten: k, index: null });
+    expect(ctx.luecken).toEqual([]);
+
+    // (a) Linkliste
+    await zuReiter(page, 'links');
+    await klick(page, '#view-links [data-action="call"][data-value="toggleLinkForm"]');
+    await page.locator('#link-title').fill('Spielerhandbuch');
+    await page.locator('#link-url').fill('file:///C:/Regeln/Spielerhandbuch.pdf');
+    await klick(page, '[data-action="call"][data-value="saveLink"]');
+    await logAbwarten(page, 'nicht anklickbar');
+    const karte = page.locator('#view-links .link-card', { hasText: 'Spielerhandbuch' });
+    await expect(karte.locator('a[href]')).toHaveCount(0);
+    await expect(karte.locator('.link-nicht-anklickbar')).toHaveText('(nicht anklickbar)');
+    // ein erlaubter Link bleibt Link, ohne Kennzeichnung
+    const srd = page.locator('#view-links .link-card').first();
+    await expect(srd.locator('a[href]')).toHaveCount(1);
+    await expect(srd.locator('.link-nicht-anklickbar')).toHaveCount(0);
+
+    // (b) Linkmenue im NPC-Editor: ./karte.pdf oeffnet, //localhost (protokoll-relativ) nicht
+    await page.evaluate(() => {
+        const erkennung = window.open;
+        // @ts-ignore
+        window.__geoeffnet = [];
+        window.open = (url, ...rest) => {
+            // @ts-ignore
+            window.__geoeffnet.push(String(url));
+            return erkennung(url, ...rest);
+        };
+    });
+    await zuReiter(page, 'npcs');
+    await klick(page, '#view-npcs [data-action="select-npc"]');
+    await klick(page, '#view-npcs [data-action="edit-npc"]');
+    await page.locator('#npc-desc a', { hasText: 'Karte' }).click();
+    await klick(page, '#link-context-toolbar [data-link-action="open"]');
+    // @ts-ignore
+    const geoeffnet = await page.evaluate(() => window.__geoeffnet);
+    expect(geoeffnet).toHaveLength(1);
+    expect(geoeffnet[0]).toMatch(/^file:\/\/\/.*\/karte\.pdf$/);
+    // das protokoll-relative Ziel hat die Bereinigung gar nicht erst als href stehen lassen
+    await expect(page.locator('#npc-desc a', { hasText: 'UNC' })).not.toHaveAttribute('href', /.+/);
+    expect([...new Set(ctx.fehler)]).toEqual([]);
+});
