@@ -30,7 +30,8 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   - avatar:           Datensatz 0 file://localhost/kanarie-<id>.png (Netzwerkpfad), Datensatz 1
  *                       //localhost/kanarie-<id>.png (Bildquelle, R3 — bei bildKanarie)
  * Kein Script, kein on*-Handler; die Bilddatei existiert nicht. Jede Anforderung an http(s)
- * bricht der Test ab (page.route), es geht nichts ins Netz.
+ * und jede Kanarien-Anforderung (auch file:) bricht der Test ab (page.route), es geht nichts
+ * ins Netz und nichts an einen Rechner (Begruendung bei bildKanarie).
  *
  * ERKENNUNG (jede Einschleusung zaehlt, nicht erst eine Ausfuehrung):
  *   (a) ein [data-kanarie] im Dokument (MutationObserver ab Dokumentbeginn, auch fluechtige
@@ -159,15 +160,39 @@ const htmlKanarie = id =>
  * Ein LOKALER Pfad (`file:///C:/…`, `file:///kanarie-….png`) ist seit Nachbesserung (14) eine
  * legitime Bildquelle (Nutzerentscheidung 29.10., derselbe Pruefkern wie die Linkliste) und
  * taugt darum nicht mehr als Kanarie — die App laedt ihn zu Recht. Beide Datensaetze nehmen
- * deshalb einen Host, und zwar `localhost`: die URL-Norm macht daraus beim file-Schema den
- * leeren Host, die Anforderung erscheint als `file:///kanarie-….png`, und es geht nichts ins
- * Netz und an keinen fremden Rechner. Die Pruefung der App liest dagegen keine Hostnamen und
- * muss den Host sperren wie jeden anderen; laesst sie ihn durch, laedt der Browser das Bild,
- * und (b) meldet die Anforderung. Datensatz 0 prueft so die Host-Sperre des file-Schemas
- * (istLokalerDateipfad), Datensatz 1 den protokoll-relativen Anfang.
+ * deshalb einen Host, und zwar `localhost`: kein FREMDER Rechner. Den leeren Host macht daraus
+ * nur node (`new URL()`); Chromium behaelt `file://localhost/…` als Host und oeffnet ihn unter
+ * Windows als UNC-Pfad `\\localhost\…` — gemessen: `file://localhost/C$/…/icon-192.png` laedt
+ * das Bild. Ohne Gegenmassnahme ginge im roten Fall also eine SMB-Anfrage an den eigenen Rechner
+ * (Loopback). Darum bricht eingangSpielen() jede Kanarien-Anforderung ab, bevor der Browser sie
+ * oeffnet (page.route faengt auch file: ab — gemessen: dieselbe Datei mit Abbruch nicht
+ * geladen); (b) erkennt sie vorher am letzten Pfadsegment (kanarienBild()). Im roten Fall geht
+ * damit weder eine Anfrage an einen Rechner noch an die Platte. Die Pruefung der App liest
+ * keine Hostnamen und muss `localhost` sperren wie jeden anderen Host; laesst sie ihn durch,
+ * setzt die App die Quelle, der Browser fordert sie an, und (b) meldet sie. Datensatz 0 prueft
+ * so die Host-Sperre des file-Schemas (istLokalerDateipfad), Datensatz 1 den protokoll-relativen
+ * Anfang. Eine Form, die den Host-Zweig prueft und gar keine Anforderung ausloest, taugt nicht
+ * als Kanarie: ohne Anforderung saehe (b) eine durchgelassene Quelle nicht.
  */
 const bildKanarie = (id, datensatz) =>
     datensatz === '0' ? `file://localhost/kanarie-${id}.png` : `//localhost/kanarie-${id}.png`;
+/**
+ * Id einer Kanarien-Anforderung (`kanarie-<id>.png` als letztes Pfadsegment, dekodiert) oder
+ * null — EINE Lesart fuer die Erkennung (b) und den Abbruch in eingangSpielen().
+ * @param {string} url
+ * @returns {string|null}
+ */
+function kanarienBild(url) {
+    const letzte = String(url).split(/[/\\]/).pop() || '';
+    let datei = letzte;
+    try {
+        datei = decodeURIComponent(letzte);
+    } catch {
+        // unlesbare Kodierung: roh vergleichen
+    }
+    const m = /^kanarie-(.+)\.png$/i.exec(datei);
+    return m ? m[1] : null;
+}
 
 /**
  * Serialisierung vor 2025 (Gutachten, Sonde A): der Getter von Element.prototype.innerHTML
@@ -1118,17 +1143,18 @@ async function eingangSpielen(page, eingang, opt = {}) {
     // Nichts geht ins Netz: legitime Bildquellen (https://example.org/…) und jede Anforderung
     // einer eingeschleusten Quelle an http(s) bricht hier ab, bevor sie das Geraet verlaesst
     await page.route(/^https?:/i, r => r.abort());
+    // Und keine Kanarien-Anforderung wird geoeffnet, auch nicht unter file: — (b) hat sie da
+    // schon gesehen ('request' feuert vor dem Abbruch). Ohne den Abbruch oeffnete Chromium unter
+    // Windows die Bild-Kanarie `file://localhost/kanarie-….png` als UNC-Pfad `\\localhost\…`,
+    // also mit einer SMB-Anfrage an den eigenen Rechner (gemessen; Begruendung bei bildKanarie).
+    await page.route(
+        url => kanarienBild(url.href) !== null,
+        r => r.abort()
+    );
     page.on('pageerror', e => ctx.fehler.push(String(e).split('\n')[0].slice(0, 200)));
     page.on('request', req => {
-        const letzte = req.url().split(/[/\\]/).pop() || '';
-        let datei = letzte;
-        try {
-            datei = decodeURIComponent(letzte);
-        } catch {
-            // unlesbare Kodierung: roh vergleichen
-        }
-        const m = /^kanarie-(.+)\.png$/i.exec(datei);
-        if (m) ctx.netz.push({ id: m[1], art: 'netz:png', phase: ctx.phase });
+        const id = kanarienBild(req.url());
+        if (id !== null) ctx.netz.push({ id, art: 'netz:png', phase: ctx.phase });
     });
     // Bestaetigungen nach Plan (Import: erst "weitere Optionen", dann "Ersetzen"),
     // sonst abbrechen; Hinweise (alert) bestaetigen

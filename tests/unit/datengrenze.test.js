@@ -270,9 +270,12 @@ const DATEIPFAD_GESPERRT = [
     'file:///%2F%2Frechner/x',
     'file:///%5Crechner/x',
     'file:///home/../..//rechner/x',
-    // `localhost` ist ein Host und faellt wie jeder andere, obwohl der Browser ihn lokal liest
-    // (`file://localhost/x` -> `file:///x`): die Pruefung liest keine Hostnamen. Der
-    // E2E-Waechter (senken-kanarie.spec.js) nimmt genau diese Form als Bild-Kanarie.
+    // `localhost` ist ein Host und faellt wie jeder andere: die Pruefung liest keine Hostnamen.
+    // Den leeren Host macht daraus nur node (`new URL('file://localhost/x')` -> `file:///x`);
+    // Chromium behaelt ihn und oeffnet unter Windows `\\localhost\x` — UNC an den eigenen
+    // Rechner (Loopback, kein fremder; gemessen). Der E2E-Waechter (senken-kanarie.spec.js)
+    // nimmt genau diese Form als Bild-Kanarie und bricht die Anforderung ab, bevor der Browser
+    // sie oeffnet.
     'file://localhost/x',
     'FILE://LOCALHOST/C:/x'
 ];
