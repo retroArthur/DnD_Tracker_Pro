@@ -13,11 +13,11 @@ function showCharacterDetails(id) {
     const cur = ch.currency || {};
     const coins =
         [
-            cur.pm && `${cur.pm}P`,
-            cur.gm && `${cur.gm}G`,
-            cur.em && `${cur.em}E`,
-            cur.sm && `${cur.sm}S`,
-            cur.km && `${cur.km}K`
+            cur.pm && `${esc(cur.pm)}P`,
+            cur.gm && `${esc(cur.gm)}G`,
+            cur.em && `${esc(cur.em)}E`,
+            cur.sm && `${esc(cur.sm)}S`,
+            cur.km && `${esc(cur.km)}K`
         ]
             .filter(Boolean)
             .join(' ') || '—';
@@ -71,11 +71,11 @@ function showCharacterDetails(id) {
     const content = `
         <div class="char-modal-header">
             <div class="char-modal-avatar">
-                ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="${esc(ch.name)}">` : `<span class="char-modal-avatar-placeholder">${(ch.name || '?')[0].toUpperCase()}</span>`}
+                ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="${esc(ch.name)}">` : `<span class="char-modal-avatar-placeholder">${esc((ch.name || '?')[0].toUpperCase())}</span>`}
             </div>
             <div class="char-modal-title">
                 <h2>${ch.inspiration ? '⭐ ' : ''}${esc(ch.name)}</h2>
-                <div class="char-modal-subtitle">${classDisplay} • Lv.${ch.level || 1}</div>
+                <div class="char-modal-subtitle">${classDisplay} • Lv.${esc(ch.level || 1)}</div>
                 <div class="char-modal-meta">${esc(ch.race || '')} ${ch.background ? '• ' + esc(ch.background) : ''}</div>
             </div>
             <button class="btn btn-sm char-modal-close" data-action="hide-modal" data-value="char-detail-modal">✕</button>
@@ -86,27 +86,27 @@ function showCharacterDetails(id) {
             <div class="char-vital-row">
                 <div class="char-vital-box hp">
                     <div class="char-vital-icon">❤️</div>
-                    <div class="char-vital-value" style="color: ${hpColor};">${ch.hpCurrent || 0}/${ch.hpMax || 0}</div>
+                    <div class="char-vital-value" style="color: ${hpColor};">${esc(String(ch.hpCurrent || 0))}/${esc(String(ch.hpMax || 0))}</div>
                     <div class="char-vital-label">HP</div>
                 </div>
                 <div class="char-vital-box">
                     <div class="char-vital-icon">🛡️</div>
-                    <div class="char-vital-value">${ch.armorClass || '—'}</div>
+                    <div class="char-vital-value">${esc(ch.armorClass || '—')}</div>
                     <div class="char-vital-label">RK</div>
                 </div>
                 <div class="char-vital-box">
                     <div class="char-vital-icon">⚡</div>
-                    <div class="char-vital-value">${ch.initiative !== undefined ? (ch.initiative >= 0 ? '+' : '') + ch.initiative : '—'}</div>
+                    <div class="char-vital-value">${esc(ch.initiative !== undefined ? (ch.initiative >= 0 ? '+' : '') + ch.initiative : '—')}</div>
                     <div class="char-vital-label">Init</div>
                 </div>
                 <div class="char-vital-box">
                     <div class="char-vital-icon">👟</div>
-                    <div class="char-vital-value">${ch.speed || '—'}</div>
+                    <div class="char-vital-value">${esc(ch.speed || '—')}</div>
                     <div class="char-vital-label">Speed</div>
                 </div>
                 <div class="char-vital-box">
                     <div class="char-vital-icon">👁️</div>
-                    <div class="char-vital-value">${ch.passivePerception || '—'}</div>
+                    <div class="char-vital-value">${esc(ch.passivePerception || '—')}</div>
                     <div class="char-vital-label">Wahr.</div>
                 </div>
             </div>
@@ -118,15 +118,15 @@ function showCharacterDetails(id) {
                         attr => `
                     <div class="char-attr-box clickable ${saves[attr] ? 'proficient' : ''}"
                          data-action="roll-char-attr-stop"
-                         data-id="${ch.id}"
+                         data-id="${esc(ch.id)}"
                          data-attr="${attr}"
                          title="${attr.toUpperCase()} Attribut-Check würfeln (${attrMod(attrs[attr] || 10)})">
                         <div class="char-attr-name">${attr.toUpperCase()}</div>
-                        <div class="char-attr-value">${attrs[attr] || 10}</div>
+                        <div class="char-attr-value">${esc(attrs[attr] || 10)}</div>
                         <div class="char-attr-mod">${attrMod(attrs[attr] || 10)}</div>
                         <div class="char-adv-btns">
-                            <button class="char-adv-btn adv" data-action="roll-char-attr-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
-                            <button class="char-adv-btn dis" data-action="roll-char-attr-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
+                            <button class="char-adv-btn adv" data-action="roll-char-attr-stop" data-id="${esc(ch.id)}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
+                            <button class="char-adv-btn dis" data-action="roll-char-attr-stop" data-id="${esc(ch.id)}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
                         </div>
                     </div>
                 `
@@ -152,15 +152,15 @@ function showCharacterDetails(id) {
                                 const cssClass = isExp ? 'expertise' : (isProf ? 'proficient' : '');
                                 return `<div class="char-skill-item ${cssClass} char-roll-btn"
                                     data-action="roll-char-skill-stop"
-                                    data-id="${ch.id}"
+                                    data-id="${esc(ch.id)}"
                                     data-skill="${key}"
                                     title="${esc(info.name)} würfeln (${modStr})">
                                     <span class="char-skill-item-dot"></span>
                                     <span class="char-skill-item-name">${esc(info.name)}</span>
                                     <span class="char-skill-item-mod">${modStr}</span>
                                     <span class="char-adv-btns">
-                                        <button class="char-adv-btn adv" data-action="roll-char-skill-stop" data-id="${ch.id}" data-skill="${key}" data-adv="adv" title="Vorteil">V</button>
-                                        <button class="char-adv-btn dis" data-action="roll-char-skill-stop" data-id="${ch.id}" data-skill="${key}" data-adv="dis" title="Nachteil">N</button>
+                                        <button class="char-adv-btn adv" data-action="roll-char-skill-stop" data-id="${esc(ch.id)}" data-skill="${key}" data-adv="adv" title="Vorteil">V</button>
+                                        <button class="char-adv-btn dis" data-action="roll-char-skill-stop" data-id="${esc(ch.id)}" data-skill="${key}" data-adv="dis" title="Nachteil">N</button>
                                     </span>
                                 </div>`;
                             }).join('')}
@@ -182,14 +182,14 @@ function showCharacterDetails(id) {
                         const isProf = saves[attr];
                         return `<div class="char-save-box ${isProf ? 'proficient' : ''} char-roll-btn"
                             data-action="roll-char-save-stop"
-                            data-id="${ch.id}"
+                            data-id="${esc(ch.id)}"
                             data-attr="${attr}"
                             title="${attr.toUpperCase()} Rettungswurf (${saveModStr})">
                             <span class="char-save-box-name">${attr.toUpperCase()}</span>
                             <span class="char-save-box-mod">${saveModStr}</span>
                             <span class="char-adv-btns">
-                                <button class="char-adv-btn adv" data-action="roll-char-save-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
-                                <button class="char-adv-btn dis" data-action="roll-char-save-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
+                                <button class="char-adv-btn adv" data-action="roll-char-save-stop" data-id="${esc(ch.id)}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
+                                <button class="char-adv-btn dis" data-action="roll-char-save-stop" data-id="${esc(ch.id)}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
                             </span>
                         </div>`;
                     }).join('')}
@@ -212,8 +212,8 @@ function showCharacterDetails(id) {
                         const damageFormula = atk.damage || '';
                         // Use dedicated roll-char-attack-stop handler so rolls land in diceHistory (A2)
                         // data-value kept for E2E assertion ([data-value="1d20+5"])
-                        const hitSpan = `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${ch.id}" data-value="${esc(hitFormula)}" data-formula="${esc(hitFormula)}" data-label="${safeName} Treffer" title="Trefferwurf (${esc(hitFormula)})">${esc(hitFormula)}</span>`;
-                        const dmgSpan = damageFormula ? `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${ch.id}" data-value="${esc(damageFormula)}" data-formula="${esc(damageFormula)}" data-label="${safeName} Schaden" title="Schadenswurf (${esc(damageFormula)})">${esc(damageFormula)}</span>` : '';
+                        const hitSpan = `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${esc(ch.id)}" data-value="${esc(hitFormula)}" data-formula="${esc(hitFormula)}" data-label="${safeName} Treffer" title="Trefferwurf (${esc(hitFormula)})">${esc(hitFormula)}</span>`;
+                        const dmgSpan = damageFormula ? `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${esc(ch.id)}" data-value="${esc(damageFormula)}" data-formula="${esc(damageFormula)}" data-label="${safeName} Schaden" title="Schadenswurf (${esc(damageFormula)})">${esc(damageFormula)}</span>` : '';
                         return `<div class="char-attack-entry">
                             <span class="char-attack-name">${safeName}</span>
                             ${safeType ? `<span class="char-attack-type-badge">${safeType}</span>` : ''}
@@ -243,7 +243,7 @@ function showCharacterDetails(id) {
                         '<div class="char-xp-section-title">🎯 Aufstieg (Meilenstein)</div>' +
                         '<div class="char-xp-milestone-info">Meilenstein-Modus: Levelaufstieg durch DM-Entscheidung</div>' +
                         '<button class="btn btn-warning char-milestone-btn" ' +
-                            'data-action="milestone-level-up" data-id="' + ch.id + '" ' +
+                            'data-action="milestone-level-up" data-id="' + esc(ch.id) + '" ' +
                             'title="+1 Level vergeben">' +
                             '⬆️ +1 Level' +
                         '</button>' +
@@ -265,7 +265,7 @@ function showCharacterDetails(id) {
                     var levelUpHint = levelUpReady
                         ? '<div class="char-level-up-badge level-up-hint">⬆️ Kann aufsteigen!' +
                           '<button class="btn btn-sm btn-success char-confirm-level-btn" ' +
-                              'data-action="confirm-level-up" data-id="' + ch.id + '">' +
+                              'data-action="confirm-level-up" data-id="' + esc(ch.id) + '">' +
                               'Stufe bestätigen' +
                           '</button></div>'
                         : '';
@@ -273,9 +273,9 @@ function showCharacterDetails(id) {
                         '<div class="char-xp-section-title">⭐ XP / Aufstieg</div>' +
                         '<div class="char-xp-row">' +
                             '<span class="char-xp-label">XP:</span>' +
-                            '<span class="char-xp-value">' + currentXP.toLocaleString('de-DE') + '</span>' +
+                            '<span class="char-xp-value">' + esc(currentXP.toLocaleString('de-DE')) + '</span>' +
                             (nextThreshold !== null && !isMaxLevel
-                                ? '<span class="char-xp-threshold">/ ' + nextThreshold.toLocaleString('de-DE') + ' (Lv.' + nextLevel + ')</span>'
+                                ? '<span class="char-xp-threshold">/ ' + esc(nextThreshold.toLocaleString('de-DE')) + ' (Lv.' + esc(String(nextLevel)) + ')</span>'
                                 : '<span class="char-xp-threshold">Max Level</span>') +
                         '</div>' +
                         xpBar +
@@ -293,7 +293,7 @@ function showCharacterDetails(id) {
                     </div>
                     <div class="char-info-row">
                         <span class="char-info-label">🎯 Übung</span>
-                        <span class="char-info-value">+${ch.proficiencyBonus || 2}</span>
+                        <span class="char-info-value">+${esc(ch.proficiencyBonus || 2)}</span>
                     </div>
                     <div class="char-info-row">
                         <span class="char-info-label">🎲 Trefferwürfel</span>
@@ -321,7 +321,7 @@ function showCharacterDetails(id) {
                         ch.resistances?.length
                             ? `<div class="char-info-row">
                         <span class="char-info-label">🛡️ Resist.</span>
-                        <span class="char-info-value wrap">${ch.resistances.join(', ')}</span>
+                        <span class="char-info-value wrap">${esc(ch.resistances.join(', '))}</span>
                     </div>`
                             : ''
                     }
@@ -329,7 +329,7 @@ function showCharacterDetails(id) {
                         ch.immunities?.length
                             ? `<div class="char-info-row">
                         <span class="char-info-label">⭐ Immun.</span>
-                        <span class="char-info-value wrap">${ch.immunities.join(', ')}</span>
+                        <span class="char-info-value wrap">${esc(ch.immunities.join(', '))}</span>
                     </div>`
                             : ''
                     }
@@ -340,20 +340,20 @@ function showCharacterDetails(id) {
             <div class="char-inventory-row">
                 <div class="char-inventory-box">
                     <div class="char-inventory-header" data-action="toggle-parent-expanded">
-                        <span>✨ Zauber (${spells.length})</span>
+                        <span>✨ Zauber (${Number(spells.length)})</span>
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${spells.length ? spells.map(s => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
+                        ${spells.length ? spells.map(s => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${esc(s.id)}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
                     </div>
                 </div>
                 <div class="char-inventory-box">
                     <div class="char-inventory-header" data-action="toggle-parent-expanded">
-                        <span>📦 Items (${items.length})</span>
+                        <span>📦 Items (${Number(items.length)})</span>
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${items.length ? items.map(i => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${i.assignedQty}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
+                        ${items.length ? items.map(i => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${esc(i.id)}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${esc(i.assignedQty)}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
                     </div>
                 </div>
             </div>
@@ -370,9 +370,9 @@ function showCharacterDetails(id) {
         </div>
 
         <div class="char-modal-actions">
-            <button class="btn" data-action="edit-char-from-modal" data-id="${ch.id}">✏️ Bearbeiten</button>
-            <button class="btn" data-action="show-assign-spells-from-modal" data-id="${ch.id}">✨ Zauber</button>
-            <button class="btn" data-action="show-assign-items-from-modal" data-id="${ch.id}">📦 Items</button>
+            <button class="btn" data-action="edit-char-from-modal" data-id="${esc(ch.id)}">✏️ Bearbeiten</button>
+            <button class="btn" data-action="show-assign-spells-from-modal" data-id="${esc(ch.id)}">✨ Zauber</button>
+            <button class="btn" data-action="show-assign-items-from-modal" data-id="${esc(ch.id)}">📦 Items</button>
         </div>
     `;
     const contentEl = $('char-detail-content');

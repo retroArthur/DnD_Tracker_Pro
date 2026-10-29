@@ -461,7 +461,7 @@ const ModalFocus = {
      * Reihenfolgen ab. Die andere ist die haeufigere: der Dialog schliesst
      * SICH SELBST und zeichnet DANACH neu. `saveCustomEffect()` tut genau das
      * — `hideModal('effect-modal')`, dann `renderInit()`
-     * (initiative-combat-widgets.js:97/98). Dann laeuft `kehreZurueck()` noch
+     * (initiative-combat-widgets.js:98/99). Dann laeuft `kehreZurueck()` noch
      * VOR dem Neuzeichnen, Stufe 1 greift korrekt, und das DANACH laufende
      * Neuzeichnen zerstoert den gerade fokussierten Knoten. Stufe 2 kann dort
      * nichts retten: sie laeuft nur, wenn der Knoten beim Schliessen schon
@@ -481,7 +481,7 @@ const ModalFocus = {
      * BREITE: 26 Aufrufstellen im Quellbaum rufen `hideModal(...)` und
      * innerhalb von sechs Zeilen danach eine `render*()`-Funktion (eigener
      * statischer Lauf ueber features/, systems/, ui/), u. a.
-     * initiative-combat-widgets.js:97/408/650, conditions.js:86,
+     * initiative-combat-widgets.js:98/409/651, conditions.js:87,
      * rest-manager.js:258, render-loot.js:201, render-spells.js:296,
      * random-tables.js:573, shops-core.js:317/788.
      *

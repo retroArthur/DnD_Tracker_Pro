@@ -13,26 +13,19 @@ function showNPCPopup(npcId, event) {
     closeNPCPopup();
     const _location = EntityLookup.location(npc.locationId);
     const filter = EntityLookup.filter(npc.filterId);
-    // Tags zusammenstellen
-    const tags = [];
-    if (npc.quests?.length)
-        tags.push(
-            ...npc.quests.map(
-                q => `<span class="chip color-green">📜 ${esc(q)}</span>`
-            )
-        );
-    if (npc.info?.length)
-        tags.push(
-            ...npc.info.map(
-                i => `<span class="chip color-purple">💡 ${esc(i)}</span>`
-            )
-        );
-    if (npc.relationships?.length)
-        tags.push(
-            ...npc.relationships.map(
-                r => `<span class="chip color-pink">🔗 ${esc(r)}</span>`
-            )
-        );
+    // Tags zusammenstellen — ein Array-Literal statt push(...): jeder Teil ist
+    // sichtbar ein kodiertes Template (Vertrag SENKEN, Ratsche html-senken.test.js).
+    const tags = [
+        ...(npc.quests?.length ? npc.quests : []).map(
+            q => `<span class="chip color-green">📜 ${esc(q)}</span>`
+        ),
+        ...(npc.info?.length ? npc.info : []).map(
+            i => `<span class="chip color-purple">💡 ${esc(i)}</span>`
+        ),
+        ...(npc.relationships?.length ? npc.relationships : []).map(
+            r => `<span class="chip color-pink">🔗 ${esc(r)}</span>`
+        )
+    ];
     // Trigger
     const triggers = (npc.triggers || [])
         .map(
@@ -71,7 +64,7 @@ function showNPCPopup(npcId, event) {
                 <div class="npc-popup-role">
                     ${npc.race ? `<span style="color: var(--purple);">${esc(npc.race)}</span>` : ''}
                     ${npc.race && npc.role ? ' • ' : ''}
-                    ${npc.role || ''}
+                    ${esc(npc.role || '')}
                 </div>
             </div>
             <button class="npc-popup-close" data-action="call" data-value="closeNPCPopup">✕</button>
@@ -121,12 +114,12 @@ function showNPCPopup(npcId, event) {
             }
 
             ${npc.chapter ? `<div style="font-size: var(--text-xs); color: var(--text-dim);">📖 ${esc(npc.chapter)}</div>` : ''}
-            ${filter ? `<span class="chip color-${filter.color}" style="margin-top: 4px;">${esc(filter.name)}</span>` : ''}
+            ${filter ? `<span class="chip color-${sichereKlasse(filter.color, TAG_COLORS, 'blue')}" style="margin-top: 4px;">${esc(filter.name)}</span>` : ''}
         </div>
         <div class="npc-popup-footer">
-            <button class="btn btn-sm" data-action="edit-npc-close-popup" data-id="${npc.id}">✏️ Bearbeiten</button>
-            <button class="btn btn-sm" data-action="show-add-dialog-modal" data-id="${npc.id}">💬 Dialog</button>
-            <button class="btn btn-sm" data-action="view-npc-details" data-id="${npc.id}">🔍 Details</button>
+            <button class="btn btn-sm" data-action="edit-npc-close-popup" data-id="${esc(npc.id)}">✏️ Bearbeiten</button>
+            <button class="btn btn-sm" data-action="show-add-dialog-modal" data-id="${esc(npc.id)}">💬 Dialog</button>
+            <button class="btn btn-sm" data-action="view-npc-details" data-id="${esc(npc.id)}">🔍 Details</button>
         </div>
     `;
     document.body.appendChild(popup);

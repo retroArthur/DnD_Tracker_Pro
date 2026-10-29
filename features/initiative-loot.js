@@ -25,12 +25,12 @@ function renderLootList() {
     if (filterContainer) {
         filterContainer.innerHTML = `
             <div class="loot-filter-chip ${currentLootFilter === 'all' ? 'active' : ''}" data-action="set-loot-filter" data-value="all">Alle</div>
-            ${Object.entries(CATS)
+            ${Object.keys(CATS)
                 .map(
-                    ([k, v]) => `
+                    k => `
                 <div class="loot-filter-chip ${currentLootFilter === k ? 'active' : ''}"
                      data-action="set-loot-filter" data-value="${k}">
-                    ${v}
+                    ${CATS[k]}
                 </div>
             `
                 )
@@ -101,7 +101,7 @@ function renderLootItem(item) {
     const rarityBg = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
     const depleted = item.quantity <= 0;
     return `
-        <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${item.id}">
+        <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${esc(item.id)}">
             <div class="loot-item-icon">${catIcon}</div>
             <div class="loot-item-info">
                 <div class="loot-item-name" style="color: ${rarityInk};">
@@ -109,7 +109,7 @@ function renderLootItem(item) {
                     ${rarity !== 'normal' ? `<span class="loot-item-tag" style="background: ${rarityBg}; color: var(--on-rarity);">${RARITY_LABELS[rarity]}</span>` : ''}
                 </div>
                 <div class="loot-item-meta">
-                    ×${item.quantity} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
+                    ×${esc(String(item.quantity))} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
                 </div>
             </div>
             <div class="loot-item-badges">
@@ -155,8 +155,8 @@ function showLootDetail(id) {
                     <div class="loot-detail-subtitle">${CATS[item.category] || 'Sonstiges'} • ${RARITY_LABELS[rarity]}</div>
                 </div>
                 <div class="loot-detail-actions">
-                    <button class="loot-detail-btn" data-action="edit-loot" data-id="${id}" title="Bearbeiten">✏️</button>
-                    <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${id}" title="Löschen">🗑️</button>
+                    <button class="loot-detail-btn" data-action="edit-loot" data-id="${esc(id)}" title="Bearbeiten">✏️</button>
+                    <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${esc(id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -165,7 +165,7 @@ function showLootDetail(id) {
                     ? `
                 <div class="loot-tags-section">
                     <div class="loot-tags">
-                        ${(item.tags || []).map(t => `<span class="loot-tag">${LOOT_TAG_LABELS[t] || t}</span>`).join('')}
+                        ${(item.tags || []).map(t => `<span class="loot-tag">${esc(LOOT_TAG_LABELS[t] || t)}</span>`).join('')}
                     </div>
                 </div>
             `
@@ -176,7 +176,7 @@ function showLootDetail(id) {
                 <div class="loot-stats">
                     <div class="loot-stat">
                         <div class="loot-stat-label">Menge</div>
-                        <div class="loot-stat-value">${item.quantity}</div>
+                        <div class="loot-stat-value">${esc(String(item.quantity))}</div>
                     </div>
                     <div class="loot-stat">
                         <div class="loot-stat-label">Wert</div>
@@ -184,7 +184,7 @@ function showLootDetail(id) {
                     </div>
                     <div class="loot-stat">
                         <div class="loot-stat-label">Gewicht</div>
-                        <div class="loot-stat-value">${item.weight ? item.weight + ' kg' : '—'}</div>
+                        <div class="loot-stat-value">${esc(item.weight ? item.weight + ' kg' : '—')}</div>
                     </div>
                 </div>
             </div>
@@ -194,7 +194,7 @@ function showLootDetail(id) {
                     ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Herkunft</div>
-                    <div>${ORIGIN_LABELS[item.origin] || item.origin}</div>
+                    <div>${esc(ORIGIN_LABELS[item.origin] || item.origin)}</div>
                 </div>
             `
                     : ''

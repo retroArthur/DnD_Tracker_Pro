@@ -40,13 +40,13 @@ function crToSortValue(cr) {
 // ============================================================
 function renderClickableDice(text) {
     if (!text) return '';
+    // sanitizeHTML() hier selbst (idempotent): sicher fuer JEDE Eingabe (Vertrag SENKEN).
     // Schadensformeln: NdN, NdN+N, NdN-N (auch mit W statt d)
-    text = text.replace(/(\d+[dWw]\d+(?:[+\-]\d+)?)/g,
+    var html = sanitizeHTML(text).replace(/(\d+[dWw]\d+(?:[+\-]\d+)?)/g,
         '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="$1" title="W\xfcrfeln">$1</span>');
     // Trefferwurf-Boni: isoliertes +N (nicht Teil einer Wuerfelformel, nicht direkt vor 'd'/'W')
-    text = text.replace(/(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
+    return html.replace(/(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
         '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="1d20$1" title="W\xfcrfeln">$1</span>');
-    return text;
 }
 
 // ============================================================
@@ -132,7 +132,7 @@ function renderBestiaryListItem(monster) {
         '<button class="bestiary-fav' + (isFav ? ' active' : '') + '"' +
             ' data-action="bestiary-toggle-fav"' +
             ' data-id="' + esc(String(mId)) + '"' +
-            ' data-source="' + monster.source + '"' +
+            ' data-source="' + esc(monster.source) + '"' +
             ' aria-label="Favorit">' +
             (isFav ? '★' : '☆') +
             '<span class="sr-only">Favorit</span>' +

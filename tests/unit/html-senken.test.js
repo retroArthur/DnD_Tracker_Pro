@@ -1308,32 +1308,20 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
 
 // ============================================================
 // BASIS — Stand main 020e258, je Datei die heutige Zahl. Darf nur sinken.
+// Gesenkt mit SENKEN Bereich A (Party, NPCs, Orte, Quests, Encounter, Initiative
+// samt Loot/Kampf-Widgets/Mob, Bestiarium, Wuerfel, render/helpers, Zustaende, Tags):
+// 664 -> 358 Stellen; 18 Dateien auf 0 (gestrichen), entity-actions 7 -> 1.
 // Schluessel: loader.js-Pfad OHNE ".js" (Begruendung im Kopfkommentar).
 // ============================================================
 const BASIS = {
-    'features/bestiary/bestiary-render': 3,
     'features/dice-stats/dice-stats-render': 4,
-    'features/dice/dice-core': 17,
     'features/dmscreen/dmscreen-config': 8,
     'features/dmscreen/dmscreen-render': 6,
     'features/dmscreen/dmscreen-widgets-base': 7,
     'features/encounter-calculator': 22,
-    'features/encounters/encounters-render': 23,
     'features/fraktionen/fraktionen-render': 17,
-    'features/initiative-combat-widgets': 19,
-    'features/initiative-loot': 11,
-    'features/initiative-mob': 11,
-    'features/initiative': 37,
-    'features/locations/locations-render': 17,
     'features/loot-distribution': 3,
     'features/npc-generator/npc-generator': 7,
-    'features/npcs/npc-interactions': 1,
-    'features/npcs/npc-popup': 5,
-    'features/npcs/npc-render': 37,
-    'features/party/party-details': 37,
-    'features/party/party-render': 34,
-    'features/quests/quests-crud': 5,
-    'features/quests/quests-render': 11,
     'features/quick-actions': 6,
     'features/random-tables': 24,
     'features/reise/reise-crud': 2,
@@ -1351,10 +1339,8 @@ const BASIS = {
     'features/timers/timers': 8,
     'features/wiki/wiki-crud': 12,
     'features/wiki/wiki': 18,
-    'render/helpers': 16,
     'systems/backups': 2,
     'systems/campaign-manager/campaign-manager': 2,
-    'systems/conditions': 7,
     'systems/entity-links': 16,
     'systems/markdown-import-export': 2,
     'systems/migration/migration-wizard': 1,
@@ -1364,12 +1350,11 @@ const BASIS = {
     'systems/spellslots/quick-reference': 6,
     'systems/spellslots/spellslots-ui': 1,
     'systems/spellslots/virtual-list': 1,
-    'systems/tags': 9,
     'systems/undo': 12,
     'systems/wiki-links': 2,
     'tools/debug': 8,
     'ui/actions/combat-actions': 1,
-    'ui/actions/entity-actions': 7,
+    'ui/actions/entity-actions': 1,
     'ui/editors/editor-toolbar-build': 14,
     'ui/editors/markdown-converter': 2,
     'ui/virtual-scroll': 2,

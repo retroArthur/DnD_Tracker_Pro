@@ -1297,7 +1297,7 @@ test.describe('Modalfokus — der Rueckweg, wenn der Dialog NACH dem Schliessen 
             // haeufigere: der Dialog schliesst SICH SELBST und zeichnet DANACH
             // neu. `saveCustomEffect()` tut genau das —
             // `hideModal('effect-modal')`, dann `renderInit()`
-            // (initiative-combat-widgets.js:97/98). Dann laeuft
+            // (initiative-combat-widgets.js:98/99). Dann laeuft
             // `kehreZurueck()` noch VOR dem Neuzeichnen, Stufe 1 greift
             // korrekt, und das DANACH laufende `renderInit()` zerstoert den
             // gerade fokussierten Knoten. Stufe 2 kann dort nichts retten:
@@ -1330,7 +1330,7 @@ test.describe('Modalfokus — der Rueckweg, wenn der Dialog NACH dem Schliessen 
             // BREITE: 26 Aufrufstellen im Quellbaum rufen `hideModal(...)` und
             // innerhalb von sechs Zeilen danach eine `render*()`-Funktion
             // (eigener statischer Lauf ueber features/, systems/, ui/), u. a.
-            // conditions.js:86, rest-manager.js:258, render-loot.js:201,
+            // conditions.js:87, rest-manager.js:258, render-loot.js:201,
             // render-spells.js:296, random-tables.js:573,
             // shops-core.js:317/788. Der Effekt-Dialog ist davon der
             // kuerzeste Griff und steht hier als Stellvertreter.

@@ -203,7 +203,7 @@ function populateQuestSelects() {
             D.npcs
                 .map(
                     n =>
-                        `<option value="${n.id}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`
+                        `<option value="${esc(n.id)}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`
                 )
                 .join('');
         giverSelect.value = currentValue;
@@ -214,7 +214,7 @@ function populateQuestSelects() {
         const currentValue = locationSelect.value;
         locationSelect.innerHTML =
             '<option value="">-- Ort wählen --</option>' +
-            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+            D.locations.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
         locationSelect.value = currentValue;
     }
     // Target location dropdown
@@ -223,7 +223,7 @@ function populateQuestSelects() {
         const currentValue = targetSelect.value;
         targetSelect.innerHTML =
             '<option value="">-- Zielort wählen --</option>' +
-            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+            D.locations.map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
         targetSelect.value = currentValue;
     }
     // Items from loot for reward
@@ -234,7 +234,7 @@ function populateQuestSelects() {
             D.loot
                 .map(
                     i =>
-                        `<option value="${i.id}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${i.quantity}x)` : ''}</option>`
+                        `<option value="${esc(i.id)}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${esc(i.quantity)}x)` : ''}</option>`
                 )
                 .join('');
     }
