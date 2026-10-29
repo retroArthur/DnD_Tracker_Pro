@@ -174,16 +174,16 @@ function renderRandomTables() {
     container.innerHTML = tables
         .map(
             table => `
-        <div class="rt-card ${selectedTableId === table.id ? 'selected' : ''}" data-id="${table.id}">
-            <div class="rt-card-header" data-action="select-table" data-id="${table.id}">
+        <div class="rt-card ${selectedTableId === table.id ? 'selected' : ''}" data-id="${esc(table.id)}">
+            <div class="rt-card-header" data-action="select-table" data-id="${esc(table.id)}">
                 <span class="rt-card-icon">${esc(table.icon || '🎲')}</span>
                 <span class="rt-card-name">${esc(table.name)}</span>
-                <span class="rt-card-count">${table.entries.length} Einträge</span>
+                <span class="rt-card-count">${Number(table.entries.length)} Einträge</span>
             </div>
             <div class="rt-card-actions">
-                <button class="btn btn-sm btn-primary" data-action="roll-on-table" data-id="${table.id}" title="Würfeln">🎲</button>
-                <button class="btn btn-sm" data-action="show-table-modal" data-id="${table.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-table" data-id="${table.id}" title="Löschen">🗑️</button>
+                <button class="btn btn-sm btn-primary" data-action="roll-on-table" data-id="${esc(table.id)}" title="Würfeln">🎲</button>
+                <button class="btn btn-sm" data-action="show-table-modal" data-id="${esc(table.id)}" title="Bearbeiten">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-table" data-id="${esc(table.id)}" title="Löschen">🗑️</button>
             </div>
         </div>
     `
@@ -210,8 +210,8 @@ function showTablePreview(id) {
         <div class="rt-preview-header">
             <span class="rt-preview-icon">${esc(table.icon || '🎲')}</span>
             <span class="rt-preview-name">${esc(table.name)}</span>
-            ${hasRanges ? `<span class="rt-preview-dice">1W${diceType}</span>` : ''}
-            <button class="rt-roll-btn" data-action="roll-on-table" data-id="${table.id}">🎲 Würfeln</button>
+            ${hasRanges ? `<span class="rt-preview-dice">1W${esc(String(diceType))}</span>` : ''}
+            <button class="rt-roll-btn" data-action="roll-on-table" data-id="${esc(table.id)}">🎲 Würfeln</button>
         </div>
         <div class="rt-preview-entries">
             ${table.entries
@@ -235,7 +235,7 @@ function showTablePreview(id) {
                         <div class="rt-entry">
                             <span class="rt-entry-num">${idx + 1}</span>
                             <span class="rt-entry-text">${esc(entry.text)}</span>
-                            <span class="rt-entry-weight" title="Gewichtung: ${entry.weight || 1}">${pct}%</span>
+                            <span class="rt-entry-weight" title="Gewichtung: ${esc(String(entry.weight || 1))}">${pct}%</span>
                         </div>
                     `;
                     }
@@ -259,7 +259,7 @@ function rollOnTable(id) {
     if (resultArea) {
         resultArea.innerHTML = `
             <div class="rt-result">
-                <span class="rt-result-label">🎲 1W${diceType} = ${roll}:</span>
+                <span class="rt-result-label">🎲 1W${esc(String(diceType))} = ${esc(String(roll))}:</span>
                 <span class="rt-result-text">${esc(result.text)}</span>
             </div>
         `;
@@ -267,7 +267,7 @@ function rollOnTable(id) {
         resultArea.offsetHeight;
         resultArea.style.animation = 'pulse 0.3s ease-out';
     }
-    showToast(`${esc(table.icon || '🎲')} [${roll}] ${esc(result.text)}`, 'info');
+    showToast(`${table.icon || '🎲'} [${roll}] ${result.text}`, 'info');
 }
 // ============================================================
 // TABLE MODAL
@@ -284,7 +284,7 @@ function showTableModal(id = null) {
             </div>
 
             <div class="rt-form">
-                <input type="hidden" id="table-edit-id" value="${table?.id || ''}">
+                <input type="hidden" id="table-edit-id" value="${esc(table?.id || '')}">
 
                 <div class="rt-form-row">
                     <div class="rt-field">
@@ -293,7 +293,7 @@ function showTableModal(id = null) {
                     </div>
                     <div class="rt-field rt-field-sm">
                         <label>Icon</label>
-                        <input type="text" id="table-icon" value="${table?.icon || '🎲'}" placeholder="🎲" maxlength="2">
+                        <input type="text" id="table-icon" value="${esc(table?.icon || '🎲')}" placeholder="🎲" maxlength="2">
                     </div>
                 </div>
 
@@ -309,12 +309,12 @@ function showTableModal(id = null) {
                         `
                         ).join('')}
                     </div>
-                    <input type="hidden" id="table-dice-type" value="${diceType}">
+                    <input type="hidden" id="table-dice-type" value="${esc(String(diceType))}">
                 </div>
 
                 <div class="rt-entries-section">
                     <div class="rt-entries-header">
-                        <label>Einträge <span class="rt-dice-label">(1W${diceType})</span></label>
+                        <label>Einträge <span class="rt-dice-label">(1W${esc(String(diceType))})</span></label>
                         <div class="rt-entries-actions">
                             <button class="btn btn-sm" data-action="fill-remaining-ranges" title="Leere Bereiche auffüllen">⚡ Auto</button>
                             <button class="btn btn-sm" data-action="add-table-entry">+ Eintrag</button>
@@ -368,12 +368,12 @@ function renderTableEntryRow(index, entry = { range: '', text: '' }) {
     // Support both old (weight) and new (range) format
     const rangeValue = entry.range || '';
     return `
-        <div class="rt-entry-row" data-index="${index}">
+        <div class="rt-entry-row" data-index="${Number(index)}">
             <input type="text" class="rt-entry-range" value="${esc(rangeValue)}"
                    placeholder="z.B. 1-4" title="Bereich (z.B. 1, 1-4, 5-8)"
                    data-on-input="updateRangeHint">
             <input type="text" class="rt-entry-text" value="${esc(entry.text)}" placeholder="Eintrag...">
-            <button class="btn btn-sm btn-danger" data-action="remove-table-entry" data-value="${index}">✕</button>
+            <button class="btn btn-sm btn-danger" data-action="remove-table-entry" data-value="${Number(index)}">✕</button>
         </div>
     `;
 }
@@ -619,13 +619,13 @@ function showGeneratorModal() {
                         <div class="generator-table-info">
                             <span class="generator-table-icon">${esc(t.icon || '🎲')}</span>
                             <span class="generator-table-name">${esc(t.name)}</span>
-                            ${hasRanges ? `<span class="generator-table-dice">1W${diceType}</span>` : ''}
-                            <span class="generator-table-count">${t.entries.length} Einträge</span>
+                            ${hasRanges ? `<span class="generator-table-dice">1W${esc(String(diceType))}</span>` : ''}
+                            <span class="generator-table-count">${Number(t.entries.length)} Einträge</span>
                         </div>
                         <div class="generator-table-actions">
-                            <button class="btn btn-primary" data-action="roll-on-table-show" data-id="${t.id}">🎲 Würfeln</button>
-                            <button class="btn btn-sm" data-action="show-table-modal" data-id="${t.id}">✏️</button>
-                            <button class="btn btn-sm btn-danger" data-action="delete-table-refresh" data-id="${t.id}">🗑️</button>
+                            <button class="btn btn-primary" data-action="roll-on-table-show" data-id="${esc(t.id)}">🎲 Würfeln</button>
+                            <button class="btn btn-sm" data-action="show-table-modal" data-id="${esc(t.id)}">✏️</button>
+                            <button class="btn btn-sm btn-danger" data-action="delete-table-refresh" data-id="${esc(t.id)}">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -679,7 +679,7 @@ function rollOnTableAndShow(id) {
                     <span class="generator-result-table">${esc(table.name)}</span>
                 </div>
                 <div class="generator-result-text">${esc(result.text)}</div>
-                <div class="generator-result-roll">🎲 1W${diceType} = ${roll}</div>
+                <div class="generator-result-roll">🎲 1W${esc(String(diceType))} = ${esc(String(roll))}</div>
             </div>
         `;
         resultArea.style.animation = 'none';
@@ -712,7 +712,7 @@ function quickRandomRoll() {
                 ${D.randomTables
                     .map(
                         t => `
-                    <button class="btn" data-action="quick-roll-table" data-id="${t.id}" style="justify-content: flex-start; gap: 10px;">
+                    <button class="btn" data-action="quick-roll-table" data-id="${esc(t.id)}" style="justify-content: flex-start; gap: 10px;">
                         <span>${esc(t.icon || '🎲')}</span>
                         <span>${esc(t.name)}</span>
                     </button>

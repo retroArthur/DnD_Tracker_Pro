@@ -39,7 +39,7 @@ function processWikiLinks(text) {
                 break;
         }
         if (found) {
-            return `<span class="wiki-link" data-action="navigate-result" data-type="${targetType}" data-id="${found.id}" data-loc="${found.locationId || 'null'}">${esc(name)}</span>`;
+            return `<span class="wiki-link" data-action="navigate-result" data-type="${targetType}" data-id="${esc(found.id)}" data-loc="${esc(found.locationId || 'null')}">${esc(name)}</span>`;
         }
         return `<span style="color: var(--red);" title="Nicht gefunden">${esc(name)}</span>`;
     });

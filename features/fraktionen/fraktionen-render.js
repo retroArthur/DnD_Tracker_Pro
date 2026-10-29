@@ -105,21 +105,21 @@ function renderFraktionen() {
         var mitgliederCount = (window.D.npcs || []).filter(function(n) {
             return parseEntityId(n.factionId) === f.id;
         }).length;
-        listHTML += '<div class="fr-faction-card' + (isSelected ? ' fr-selected' : '') + '" data-id="' + f.id + '" data-action="select-fraktion" data-value="' + f.id + '">';
+        listHTML += '<div class="fr-faction-card' + (isSelected ? ' fr-selected' : '') + '" data-id="' + esc(f.id) + '" data-action="select-fraktion" data-value="' + esc(f.id) + '">';
         listHTML += '<div class="fr-card-symbol">' + esc(f.symbol || '⚔️') + '</div>';
         listHTML += '<div class="fr-card-body">';
         listHTML += '<div class="fr-card-name">' + esc(f.name) + '</div>';
         listHTML += '<div class="fr-card-ruf">';
         listHTML += '<span class="fr-ruf-badge" style="color:' + stufe.farbe + '">' + stufe.icon + ' ' + esc(stufe.label) + '</span>';
-        listHTML += '<span class="fr-ruf-value">Ruf: ' + (f.ruf || 0) + '</span>';
+        listHTML += '<span class="fr-ruf-value">Ruf: ' + esc(String(f.ruf || 0)) + '</span>';
         listHTML += '</div>';
         if (mitgliederCount > 0) {
             listHTML += '<div class="fr-card-meta">👥 ' + mitgliederCount + ' Mitglied' + (mitgliederCount !== 1 ? 'er' : '') + '</div>';
         }
         listHTML += '</div>';
         listHTML += '<div class="fr-card-actions">';
-        listHTML += '<button class="btn btn-sm" data-action="edit-fraktion" data-value="' + f.id + '" title="Bearbeiten">✏️</button>';
-        listHTML += '<button class="btn btn-sm btn-danger" data-action="delete-fraktion" data-value="' + f.id + '" title="Löschen">🗑️</button>';
+        listHTML += '<button class="btn btn-sm" data-action="edit-fraktion" data-value="' + esc(f.id) + '" title="Bearbeiten">✏️</button>';
+        listHTML += '<button class="btn btn-sm btn-danger" data-action="delete-fraktion" data-value="' + esc(f.id) + '" title="Löschen">🗑️</button>';
         listHTML += '</div>';
         listHTML += '</div>';
     });
@@ -128,7 +128,7 @@ function renderFraktionen() {
     // Detail panel: show if something selected
     listHTML += '<div id="fr-detail-panel" class="fr-detail-panel"';
     if (selectedId !== null) {
-        listHTML += ' data-faction-id="' + selectedId + '">';
+        listHTML += ' data-faction-id="' + esc(selectedId) + '">';
         listHTML += _renderFraktionDetail(selectedId);
     } else {
         listHTML += '>';
@@ -175,7 +175,7 @@ function _renderFraktionDetail(fraktionId) {
        Toenung waere eine Sichtaenderung ohne Entscheidung. Aktenkundig als
        W2-E-01. */
     html += '<div class="fr-ruf-statusbar" style="background:' + stufe.farbe + '22; border-left: 3px solid ' + stufe.farbe + '">';
-    html += stufe.icon + ' ' + esc(stufe.label) + ' &nbsp;|&nbsp; Ruf: <strong>' + (faction.ruf || 0) + '</strong> / 50';
+    html += stufe.icon + ' ' + esc(stufe.label) + ' &nbsp;|&nbsp; Ruf: <strong>' + esc(String(faction.ruf || 0)) + '</strong> / 50';
     html += '</div>';
     html += '</div>';
     html += '</div>';
@@ -200,24 +200,24 @@ function _renderFraktionDetail(fraktionId) {
     html += '<div class="fr-detail-section">';
     html += '<div class="fr-section-title">Ruf anpassen</div>';
     html += '<div class="fr-ruf-controls">';
-    html += '<input type="text" id="fr-ruf-grund-' + faction.id + '" class="fr-ruf-grund-input" placeholder="Grund / Notiz (optional)">';
+    html += '<input type="text" id="fr-ruf-grund-' + esc(faction.id) + '" class="fr-ruf-grund-input" placeholder="Grund / Notiz (optional)">';
     html += '</div>';
     html += '<div class="fr-ruf-buttons">';
-    html += '<button class="btn btn-sm fr-ruf-btn-minus" data-action="ruf-minus" data-value="' + faction.id + '" title="−10">−10</button>';
-    html += '<button class="btn btn-sm fr-ruf-btn-minus" data-action="ruf-minus5" data-value="' + faction.id + '" title="−5">−5</button>';
-    html += '<button class="btn btn-sm fr-ruf-btn-plus" data-action="ruf-plus5" data-value="' + faction.id + '" title="+5">+5</button>';
-    html += '<button class="btn btn-sm fr-ruf-btn-plus" data-action="ruf-plus" data-value="' + faction.id + '" title="+10">+10</button>';
+    html += '<button class="btn btn-sm fr-ruf-btn-minus" data-action="ruf-minus" data-value="' + esc(faction.id) + '" title="−10">−10</button>';
+    html += '<button class="btn btn-sm fr-ruf-btn-minus" data-action="ruf-minus5" data-value="' + esc(faction.id) + '" title="−5">−5</button>';
+    html += '<button class="btn btn-sm fr-ruf-btn-plus" data-action="ruf-plus5" data-value="' + esc(faction.id) + '" title="+5">+5</button>';
+    html += '<button class="btn btn-sm fr-ruf-btn-plus" data-action="ruf-plus" data-value="' + esc(faction.id) + '" title="+10">+10</button>';
     html += '</div>';
     html += '<div class="fr-ruf-set-row">';
-    html += '<input type="number" id="fr-ruf-set-' + faction.id + '" class="fr-ruf-set-input" placeholder="Direkt setzen (−50…+50)" min="-50" max="50">';
-    html += '<button class="btn btn-sm" data-action="ruf-set" data-value="' + faction.id + '">Setzen</button>';
+    html += '<input type="number" id="fr-ruf-set-' + esc(faction.id) + '" class="fr-ruf-set-input" placeholder="Direkt setzen (−50…+50)" min="-50" max="50">';
+    html += '<button class="btn btn-sm" data-action="ruf-set" data-value="' + esc(faction.id) + '">Setzen</button>';
     html += '</div>';
     html += '</div>';
 
     // Ruf-Historie
     var historie = faction.rufHistorie || [];
     html += '<div class="fr-detail-section">';
-    html += '<div class="fr-section-title">Ruf-Historie (' + historie.length + ' Einträge)</div>';
+    html += '<div class="fr-section-title">Ruf-Historie (' + Number(historie.length) + ' Einträge)</div>';
     if (historie.length === 0) {
         html += '<div class="fr-historie-empty">Noch keine Änderungen.</div>';
     } else {
@@ -232,7 +232,7 @@ function _renderFraktionDetail(fraktionId) {
             html += '<div class="fr-historie-eintrag">';
             html += '<span class="fr-hist-delta ' + deltaClass + '">' + esc(deltaStr) + '</span>';
             html += '<span class="fr-hist-grund">' + esc(eintrag.grund || '—') + '</span>';
-            html += '<span class="fr-hist-ts">' + ts + '</span>';
+            html += '<span class="fr-hist-ts">' + esc(ts) + '</span>';
             html += '</div>';
         });
         html += '</div>';
@@ -244,7 +244,7 @@ function _renderFraktionDetail(fraktionId) {
         return parseEntityId(n.factionId) === numId;
     });
     html += '<div class="fr-detail-section">';
-    html += '<div class="fr-section-title">Mitglieder (' + mitglieder.length + ')</div>';
+    html += '<div class="fr-section-title">Mitglieder (' + Number(mitglieder.length) + ')</div>';
     if (mitglieder.length === 0) {
         html += '<div class="fr-mitglieder-empty">Keine NPCs dieser Fraktion zugewiesen. (NPC bearbeiten → Fraktion setzen)</div>';
     } else {

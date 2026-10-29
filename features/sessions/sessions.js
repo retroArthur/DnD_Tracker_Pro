@@ -28,7 +28,7 @@ function getStoryArcs() {
 // auf '' zurueck: seine Option ist weg.
 function renderStoryArcSelects() {
     const arcOptionen = getStoryArcs()
-        .map(a => `<option value="${a.id}">${esc(a.name)}</option>`)
+        .map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`)
         .join('');
     const neuBefuellen = (select, optionen) => {
         const vorher = select.value;
@@ -61,10 +61,10 @@ function renderStoryArcList() {
         .map(
             a => `
         <div class="story-arc-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 4px; margin-bottom: 4px;">
-            <span style="width: 16px; height: 16px; background: ${a.color || 'var(--gold)'}; border-radius: 3px;"></span>
+            <span style="width: 16px; height: 16px; background: ${sichereFarbe(a.color, 'var(--gold)')}; border-radius: 3px;"></span>
             <span style="flex: 1; color: var(--text);">${esc(a.name)}</span>
             <span style="color: var(--text-dim); font-size: var(--text-sm);">${countSessionsInArc(a.id)} Sessions</span>
-            <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${a.id}" title="Löschen">🗑️</button>
+            <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${esc(a.id)}" title="Löschen">🗑️</button>
         </div>
     `
         )
@@ -275,13 +275,13 @@ function renderSessions() {
             if (arcNotes.length === 0) return;
             html += `
                 <div class="session-arc-group">
-                    <div class="session-arc-header" data-action="toggle-arc-group" data-id="${arc.id}">
-                        <span style="width: 12px; height: 12px; background: ${arc.color || 'var(--gold)'}; border-radius: 2px;"></span>
+                    <div class="session-arc-header" data-action="toggle-arc-group" data-id="${esc(arc.id)}">
+                        <span style="width: 12px; height: 12px; background: ${sichereFarbe(arc.color, 'var(--gold)')}; border-radius: 2px;"></span>
                         <span class="session-arc-title">${esc(arc.name)}</span>
-                        <span class="session-arc-count">${arcNotes.length} Sessions</span>
+                        <span class="session-arc-count">${Number(arcNotes.length)} Sessions</span>
                         <span class="session-arc-toggle">▼</span>
                     </div>
-                    <div class="session-arc-sessions" id="arc-sessions-${arc.id}">
+                    <div class="session-arc-sessions" id="arc-sessions-${esc(arc.id)}">
                         ${arcNotes.map(n => renderSessionCard(n)).join('')}
                     </div>
                 </div>
@@ -294,7 +294,7 @@ function renderSessions() {
                     <div class="session-arc-header" data-action="toggle-arc-group" data-id="none">
                         <span style="width: 12px; height: 12px; background: var(--text-dim); border-radius: 2px;"></span>
                         <span class="session-arc-title" style="color: var(--text-dim);">Ohne Arc</span>
-                        <span class="session-arc-count">${noArc.length} Sessions</span>
+                        <span class="session-arc-count">${Number(noArc.length)} Sessions</span>
                         <span class="session-arc-toggle">▼</span>
                     </div>
                     <div class="session-arc-sessions" id="arc-sessions-none">
@@ -317,20 +317,20 @@ function renderSessionCard(n) {
     return `
         <div class="session-card">
             <div class="session-card-header">
-                <div class="session-number">#${n.number || '?'}</div>
+                <div class="session-number">#${esc(n.number || '?')}</div>
                 <div class="session-info">
                     <div class="session-title">${esc(n.name) || 'Unbenannte Session'}</div>
-                    <div class="session-date">${formatDate(n.date)}</div>
+                    <div class="session-date">${esc(formatDate(n.date))}</div>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-sm" data-action="toggle-session-content" data-id="${n.id}" title="Auf-/Zuklappen">📖</button>
-                    <button class="btn btn-sm" data-action="edit-session" data-id="${n.id}" title="Bearbeiten">✏️</button>
-                    <button class="btn btn-sm btn-danger" data-action="delete-session" data-id="${n.id}" title="Löschen">🗑️</button>
+                    <button class="btn btn-sm" data-action="toggle-session-content" data-id="${esc(n.id)}" title="Auf-/Zuklappen">📖</button>
+                    <button class="btn btn-sm" data-action="edit-session" data-id="${esc(n.id)}" title="Bearbeiten">✏️</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete-session" data-id="${esc(n.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
             ${n.summary ? `<div class="session-summary">${esc(n.summary)}</div>` : ''}
             ${tagsHtml ? `<div class="session-tags">${tagsHtml}</div>` : ''}
-            <div class="session-content collapsed" id="session-content-${n.id}">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(n.content)) || ''}</div>
+            <div class="session-content collapsed" id="session-content-${esc(n.id)}">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(n.content)) || ''}</div>
         </div>
     `;
 }

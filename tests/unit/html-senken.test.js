@@ -1311,6 +1311,16 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
 // Gesenkt mit SENKEN Bereich A (Party, NPCs, Orte, Quests, Encounter, Initiative
 // samt Loot/Kampf-Widgets/Mob, Bestiarium, Wuerfel, render/helpers, Zustaende, Tags):
 // 664 -> 358 Stellen; 18 Dateien auf 0 (gestrichen), entity-actions 7 -> 1.
+// Gesenkt mit SENKEN Bereich B (Truhe/Zuweisung, Zauber, Shops samt Handout und Links,
+// Wiki, Notizen/Story-Arcs, Session-Prep, Fraktionen, Reise, Zufallstabellen,
+// Soundboard): 358 -> 182 Stellen; 15 Dateien auf 0 (gestrichen). Je eine Stelle
+// bleibt, die der Zaehler nicht als geprueft erkennen kann:
+//   - features/wiki/wiki (Eintragsinhalt): renderMarkdownInContent() endet mit
+//     sanitizeHTML(), addTOCAnchors() setzt nur die Kennung ein, parseWikiLinks()
+//     kodiert seinen Fang mit esc() — der Zaehler sieht durch diese Kette nicht.
+//   - features/session-prep/session-prep-render (renderSessionPrepDetail, ohne
+//     Aufrufer): parseEntityLinks() (systems/entity-links.js) gilt dem Zaehler nicht
+//     als geprueft — zu Recht, der Name einer Marke geht dort roh in title="…".
 // Schluessel: loader.js-Pfad OHNE ".js" (Begruendung im Kopfkommentar).
 // ============================================================
 const BASIS = {
@@ -1319,26 +1329,12 @@ const BASIS = {
     'features/dmscreen/dmscreen-render': 6,
     'features/dmscreen/dmscreen-widgets-base': 7,
     'features/encounter-calculator': 22,
-    'features/fraktionen/fraktionen-render': 17,
-    'features/loot-distribution': 3,
     'features/npc-generator/npc-generator': 7,
     'features/quick-actions': 6,
-    'features/random-tables': 24,
-    'features/reise/reise-crud': 2,
-    'features/render-loot': 8,
-    'features/render-spells': 4,
     'features/rest-manager': 9,
-    'features/session-prep/session-prep-render': 13,
-    'features/sessions/sessions': 14,
-    'features/shops/links': 2,
-    'features/shops/shop-export': 2,
-    'features/shops/shops-core': 46,
-    'features/soundboard/soundboard-player': 1,
-    'features/soundboard/soundboard-render': 2,
-    'features/spells/spell-manager': 8,
+    'features/session-prep/session-prep-render': 1,
     'features/timers/timers': 8,
-    'features/wiki/wiki-crud': 12,
-    'features/wiki/wiki': 18,
+    'features/wiki/wiki': 1,
     'systems/backups': 2,
     'systems/campaign-manager/campaign-manager': 2,
     'systems/entity-links': 16,
@@ -1351,7 +1347,6 @@ const BASIS = {
     'systems/spellslots/spellslots-ui': 1,
     'systems/spellslots/virtual-list': 1,
     'systems/undo': 12,
-    'systems/wiki-links': 2,
     'tools/debug': 8,
     'ui/actions/combat-actions': 1,
     'ui/actions/entity-actions': 1,

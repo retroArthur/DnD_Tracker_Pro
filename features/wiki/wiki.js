@@ -233,7 +233,7 @@ function renderWikiQuickAccess() {
         favorites.slice(0, 5).forEach(entry => {
             const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
             html += `
-                <div class="quick-access-item favorite" data-action="select-wiki-entry" data-id="${entry.id}" title="${esc(entry.title)}">
+                <div class="quick-access-item favorite" data-action="select-wiki-entry" data-id="${esc(entry.id)}" title="${esc(entry.title)}">
                     <span class="quick-access-icon">⭐</span>
                     <span class="quick-access-label">${esc(entry.title)}</span>
                 </div>
@@ -252,7 +252,7 @@ function renderWikiQuickAccess() {
             if (!entry) return;
             const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
             html += `
-            <div class="quick-access-item recent" data-action="select-wiki-entry" data-id="${entry.id}" title="${esc(entry.title)}">
+            <div class="quick-access-item recent" data-action="select-wiki-entry" data-id="${esc(entry.id)}" title="${esc(entry.title)}">
                 <span class="quick-access-icon">${cat.icon}</span>
                 <span class="quick-access-label">${esc(entry.title)}</span>
             </div>
@@ -305,7 +305,10 @@ function renderWikiTree() {
         });
     });
     let html = '';
-    Object.entries(WIKI_CATEGORIES).forEach(([catKey, catInfo]) => {
+    // Ueber die Schluessel statt destrukturierter entries: so erkennt die Ratsche R6
+    // (html-senken.test.js) Schluessel und Beschriftung als Werte der festen Tabelle.
+    Object.keys(WIKI_CATEGORIES).forEach(catKey => {
+        const catInfo = WIKI_CATEGORIES[catKey];
         const catEntries = byCategory[catKey] || [];
         if (catEntries.length === 0 && !search) return;
         const isExpanded = WikiState.expandedCategories.has(catKey);
@@ -326,7 +329,7 @@ function renderWikiTree() {
                     <span class="wiki-tree-toggle">▶</span>
                     <span class="wiki-tree-cat-icon">${catInfo.icon}</span>
                     <span class="wiki-tree-cat-name">${catInfo.name}</span>
-                    <span class="wiki-tree-cat-count">${catEntries.length}</span>
+                    <span class="wiki-tree-cat-count">${Number(catEntries.length)}</span>
                 </div>
                 <div class="wiki-tree-items">
                     ${renderWikiTreeItems(rootEntries, childrenMap, 0)}
@@ -350,7 +353,7 @@ function renderWikiTree() {
                     <span class="wiki-tree-toggle">▶</span>
                     <span class="wiki-tree-cat-icon">📄</span>
                     <span class="wiki-tree-cat-name">Sonstiges</span>
-                    <span class="wiki-tree-cat-count">${byCategory['other'].length}</span>
+                    <span class="wiki-tree-cat-count">${Number(byCategory['other'].length)}</span>
                 </div>
                 <div class="wiki-tree-items">
                     ${renderWikiTreeItems(otherRootEntries, otherChildrenMap, 0)}
@@ -387,10 +390,10 @@ function renderWikiTreeItem(entry, childrenMap, depth) {
     const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
     return `
         <div class="wiki-tree-item ${isSelected ? 'selected' : ''} ${entry.pinned ? 'pinned' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}"
-             data-action="select-wiki-entry" data-id="${entry.id}"
+             data-action="select-wiki-entry" data-id="${esc(entry.id)}"
              style="padding-left: ${4 + depth * 8}px;"
              title="${esc(entry.title)}">
-            ${hasChildren ? `<span class="wiki-tree-item-toggle" data-action="toggle-wiki-stop" data-id="${entry.id}">▶</span>` : ''}
+            ${hasChildren ? `<span class="wiki-tree-item-toggle" data-action="toggle-wiki-stop" data-id="${esc(entry.id)}">▶</span>` : ''}
             <span style="opacity: 0.7;">${cat.icon}</span>
             <span class="wiki-tree-item-name">${esc(entry.title)}</span>
         </div>
@@ -425,7 +428,7 @@ function renderWikiDetail() {
     const renderMarkdownInContent = window.renderMarkdownInContent;
     const markdownRendered = renderMarkdownInContent
         ? renderMarkdownInContent(entry.content || '')
-        : entry.content || '';
+        : sanitizeHTML(entry.content || '');
     const contentWithAnchors = addTOCAnchors(markdownRendered);
     // parseWikiLinks() escapt seinen eigenen Regex-Capture (Attributwert UND
     // sichtbarer Textknoten via esc()) und ist damit selbst sicher — nicht mehr
@@ -459,14 +462,14 @@ function renderWikiDetail() {
                 <div class="wiki-detail-meta">
                     <span class="wiki-detail-category">${cat.icon} ${cat.name}</span>
                     <span class="wiki-stat">📝 ${wordCount} Wörter</span>
-                    <span class="wiki-stat">🔗 ${outlinks.length} Links</span>
-                    <span class="wiki-stat">↩️ ${backlinks.length} Backlinks</span>
+                    <span class="wiki-stat">🔗 ${Number(outlinks.length)} Links</span>
+                    <span class="wiki-stat">↩️ ${Number(backlinks.length)} Backlinks</span>
                 </div>
             </div>
             <div class="wiki-detail-actions">
-                <button class="btn btn-sm" data-action="toggle-wiki-pin" data-id="${entry.id}" title="${entry.pinned ? 'Entpinnen' : 'Pinnen'}">${entry.pinned ? '📌' : '📍'}</button>
-                <button class="btn btn-sm" data-action="edit-wiki" data-id="${entry.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-wiki" data-id="${entry.id}" title="Löschen">🗑️</button>
+                <button class="btn btn-sm" data-action="toggle-wiki-pin" data-id="${esc(entry.id)}" title="${entry.pinned ? 'Entpinnen' : 'Pinnen'}">${entry.pinned ? '📌' : '📍'}</button>
+                <button class="btn btn-sm" data-action="edit-wiki" data-id="${esc(entry.id)}" title="Bearbeiten">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-wiki" data-id="${esc(entry.id)}" title="Löschen">🗑️</button>
             </div>
         </div>
 
@@ -491,9 +494,9 @@ function renderWikiDetail() {
                 ? `
             <div class="wiki-detail-links">
                 <div class="wiki-detail-links-section">
-                    <div class="wiki-detail-links-label">📁 Untereinträge (${children.length})</div>
+                    <div class="wiki-detail-links-label">📁 Untereinträge (${Number(children.length)})</div>
                     <div class="wiki-detail-links-list">
-                        ${children.map(c => `<span class="wiki-link" data-action="select-wiki-entry" data-id="${c.id}">${esc(c.title)}</span>`).join('')}
+                        ${children.map(c => `<span class="wiki-link" data-action="select-wiki-entry" data-id="${esc(c.id)}">${esc(c.title)}</span>`).join('')}
                     </div>
                 </div>
             </div>

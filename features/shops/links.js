@@ -43,20 +43,27 @@ function renderLinks() {
         return;
     }
     c.innerHTML = links
-        .map(
-            l => `<div class="link-card">
+        .map(l => {
+            // R3 (Vertrag SENKEN, docs/bugfixes.md): ein Link aus Daten wird nur mit
+            // http:, https: oder mailto: anklickbar — `javascript:` & Co. bleiben Text.
+            // esc() allein haelt nur das Attribut zu, nicht das Schema.
+            const ziel = sichererLink(l.url);
+            const titel = ziel
+                ? `<a href="${esc(ziel)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a>`
+                : esc(l.title);
+            return `<div class="link-card">
         <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
         <div class="link-info">
-            <div class="link-title"><a href="${esc(l.url)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a></div>
+            <div class="link-title">${titel}</div>
             <div class="link-url">${esc(l.url)}</div>
             ${l.description ? `<div style="font-size:var(--text-sm); color:var(--text-dim); margin-top:4px;">${esc(l.description)}</div>` : ''}
         </div>
         <div class="btn-group">
-            <button class="btn btn-sm" data-action="edit-link" data-id="${l.id}" title="Bearbeiten">✏️</button>
-            <button class="btn btn-sm btn-danger" data-action="delete-link" data-id="${l.id}" title="Löschen">🗑️</button>
+            <button class="btn btn-sm" data-action="edit-link" data-id="${esc(l.id)}" title="Bearbeiten">✏️</button>
+            <button class="btn btn-sm btn-danger" data-action="delete-link" data-id="${esc(l.id)}" title="Löschen">🗑️</button>
         </div>
-    </div>`
-        )
+    </div>`;
+        })
         .join('');
 }
 /**

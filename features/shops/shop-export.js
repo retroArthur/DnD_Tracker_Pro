@@ -171,7 +171,7 @@ function buildHandoutHTML(shop, options) {
         ${shopHeader}
 
         <main>
-            <h2>Verfügbare Waren (${itemsToShow.length} Artikel)</h2>
+            <h2>Verfügbare Waren (${Number(itemsToShow.length)} Artikel)</h2>
             ${itemsHTML}
         </main>
 
@@ -246,7 +246,7 @@ function renderHandoutItem(item, options) {
     if (options.showAvailability) {
         const qtyText = item.unlimited ? '∞' : item.quantity || 1;
         const availText = isAvailable ? `Verfügbar (${qtyText}×)` : 'Nicht verfügbar';
-        itemHTML += `<div class="item-availability ${isAvailable ? 'available' : 'unavailable'}">${availText}</div>`;
+        itemHTML += `<div class="item-availability ${isAvailable ? 'available' : 'unavailable'}">${esc(availText)}</div>`;
     }
 
     // Special/Note (nur im DM-Modus)

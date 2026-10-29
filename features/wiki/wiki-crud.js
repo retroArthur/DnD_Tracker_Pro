@@ -72,7 +72,7 @@ function updateWikiParentSelect() {
         if (isDescendantOf(entry.id, currentId)) return;
         if (selectedCategory && entry.category !== selectedCategory) return;
         const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
-        select.innerHTML += `<option value="${entry.id}">${cat.icon} ${esc(entry.title)}</option>`;
+        select.innerHTML += `<option value="${esc(entry.id)}">${cat.icon} ${esc(entry.title)}</option>`;
     });
     if (previousValue && select.querySelector(`option[value="${previousValue}"]`)) {
         select.value = previousValue;
@@ -333,7 +333,7 @@ function renderWikiBreadcrumb(entryId) {
         if (isLast) {
             html += `<span class="breadcrumb-item current">${esc(item.title)}</span>`;
         } else {
-            html += `<span class="breadcrumb-item" data-action="select-wiki-entry" data-id="${item.id}">${esc(item.title)}</span>`;
+            html += `<span class="breadcrumb-item" data-action="select-wiki-entry" data-id="${esc(item.id)}">${esc(item.title)}</span>`;
             html += '<span class="breadcrumb-separator">›</span>';
         }
     });
@@ -353,8 +353,8 @@ function getSearchContextPreview(content, query, maxLength = 80) {
     if (start > 0) preview = '...' + preview;
     if (end < plainText.length) preview = preview + '...';
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    preview = esc(preview).replace(regex, '<mark>$1</mark>');
-    return preview;
+    // Erst kodiert, dann markiert: jede Rueckgabe ist geprueftes Markup (R1, Vertrag SENKEN).
+    return esc(preview).replace(regex, '<mark>$1</mark>');
 }
 function renderWikiSearchDropdown(query) {
     const D = window.D;
@@ -376,8 +376,7 @@ function renderWikiSearchDropdown(query) {
                 entry,
                 titleMatch,
                 contentMatch,
-                tagMatch,
-                preview: contentMatch ? getSearchContextPreview(entry.content, query) : ''
+                tagMatch
             };
         })
         .filter(Boolean)
@@ -395,19 +394,20 @@ function renderWikiSearchDropdown(query) {
     container.innerHTML = results
         .map((r, i) => {
             const cat = WIKI_CATEGORIES[r.entry.category] || { icon: '📄' };
+            const preview = r.contentMatch ? getSearchContextPreview(r.entry.content, query) : '';
             const highlightedTitle = esc(r.entry.title).replace(
                 new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
                 '<mark>$1</mark>'
             );
             return `
             <div class="search-result-item ${i === WikiState.searchDropdownIndex ? 'selected' : ''}"
-                 data-action="select-wiki-entry" data-id="${r.entry.id}">
+                 data-action="select-wiki-entry" data-id="${esc(r.entry.id)}">
                 <div class="search-result-header">
                     <span class="search-result-icon">${cat.icon}</span>
                     <span class="search-result-title">${highlightedTitle}</span>
                     ${r.tagMatch ? '<span class="search-result-badge">Tag</span>' : ''}
                 </div>
-                ${r.preview ? `<div class="search-result-preview">${r.preview}</div>` : ''}
+                ${preview ? `<div class="search-result-preview">${preview}</div>` : ''}
             </div>
         `;
         })
@@ -476,7 +476,7 @@ function renderWikiTOC(content) {
     html += '<div class="wiki-toc-title">📋 Inhalt</div>';
     headings.forEach(h => {
         const levelClass = `level-${h.level - 2}`;
-        html += `<div class="toc-item ${levelClass}" data-action="wiki-toc-jump" data-target="${h.id}">${esc(h.text)}</div>`;
+        html += `<div class="toc-item ${levelClass}" data-action="wiki-toc-jump" data-target="${esc(h.id)}">${esc(h.text)}</div>`;
     });
     html += '</div>';
     return html;
@@ -484,9 +484,11 @@ function renderWikiTOC(content) {
 function addTOCAnchors(content) {
     if (!content) return content;
     let index = 0;
-    return content.replace(/<h([2-4])([^>]*)>([^<]+)<\/h[2-4]>/gi, (match, level, attrs, text) => {
-        return `<h${level}${attrs} id="toc-${index++}">${text}</h${level}>`;
-    });
+    // Nur die Kennung einfuegen: Tag, Attribute und Text bleiben das schon bereinigte
+    // Markup des Aufrufers und werden nicht neu zusammengesetzt (R1, Vertrag SENKEN).
+    return content.replace(/<h([2-4])([^>]*)>([^<]+)<\/h[2-4]>/gi, match =>
+        match.replace(/^<h[2-4][^>]*/i, '$& id="toc-' + index++ + '"')
+    );
 }
 function scrollToTOCHeading(targetId) {
     const heading = document.getElementById(targetId);
@@ -498,7 +500,8 @@ function scrollToTOCHeading(targetId) {
 }
 function renderWikiTemplateSelector() {
     let html = '<div class="wiki-templates-grid">';
-    Object.entries(WIKI_TEMPLATES).forEach(([key, template]) => {
+    Object.keys(WIKI_TEMPLATES).forEach(key => {
+        const template = WIKI_TEMPLATES[key];
         html += `
             <div class="wiki-template-card" data-action="apply-wiki-template" data-template="${key}">
                 <div class="wiki-template-icon">${template.icon}</div>
