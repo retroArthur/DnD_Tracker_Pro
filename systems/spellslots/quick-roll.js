@@ -63,6 +63,12 @@ function _parseStoredCampaign(s) {
         ErrorHandler.log('load', error);
         return { reason: 'invalid', error };
     }
+    // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): der gespeicherte Stand ist so fremd
+    // wie eine Datei — ein anderer Tab, der Migrations-Import oder ein Altstand legt ihn ab.
+    // __proto__/constructor/prototype fallen VOR der Migration und vor Object.assign(D, p)
+    // im Startpfad (ein eigener "__proto__"-Schluessel setzte dort den Prototyp von D), und
+    // Zahlen-/Verweisfelder werden Zahlen statt Text.
+    p = bereinigeDatengrenze(p);
     // (D-05/STAB-06) Legacy-Stempel-Normalisierung: '2.11' wurde fälschlicherweise
     // als "neuer als 2.6.x" behandelt (compareVersions: 11 > 6).
     // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
@@ -78,7 +84,8 @@ function _parseStoredCampaign(s) {
             log(`[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
         }
         try {
-            p = migrateData(p);
+            // Nach der Migration noch einmal: sie fuellt Felder aus Altformaten nach
+            p = bereinigeDatengrenze(migrateData(p));
         } catch (migrateError) {
             ErrorHandler.log('load', migrateError, 'Migration fehlgeschlagen');
             // Fahre trotzdem fort mit unmigierten Daten

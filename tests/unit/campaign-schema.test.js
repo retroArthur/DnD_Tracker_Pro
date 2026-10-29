@@ -116,7 +116,9 @@ function buildFullFixture(ctx) {
         spells: [{ id: 7, name: 'Feuerball', level: 3 }],
         wiki: [{ id: 8, title: 'Goetter', content: '<p>Pantheon</p>' }],
         sessionNotes: [{ id: 9, title: 'Sitzung 1', content: 'Start' }],
-        storyArcs: [{ id: 'arc-1', name: 'Der Bogen' }],
+        // Arc-IDs schreibt die App als Zahl (features/sessions/sessions.js: id: Date.now());
+        // seit Vertrag SENKEN R4 zwingt die Datengrenze sie auf Zahl — 'arc-1' fiele weg
+        storyArcs: [{ id: 1700000000001, name: 'Der Bogen' }],
         bestiary: [{ id: 10, name: 'Hausdrache', cr: '5' }],
         sessionPreps: [{ id: 11, title: 'Vorbereitung' }],
         factions: [{ id: 12, name: 'Zhentarim', ruf: 5, historie: [] }],

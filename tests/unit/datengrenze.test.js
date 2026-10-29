@@ -731,6 +731,126 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
 });
 
 // ============================================================
+// R4 — Grenzfaelle: Nicht-Text, Zahlenlisten, Gestalt
+// ============================================================
+// Nachgetragen mit der Umsetzung (SENKEN, Schritt GRENZE). Die Faelle oben belegen jedes
+// Feld mit Text; diese hier belegen, was die Umsetzung mit allem ANDEREN tut, das in einer
+// Importdatei stehen kann — und sie halten die Coverage-Schwelle der Paritaetskopie
+// (jest.config.cjs, branches 89), weil jeder Zweig der Grenze hier einmal laeuft.
+//   - Eine Liste in einem Zahlenfeld ist kein harmloser Wert: `${['<img …>']}` ergibt im
+//     Template genau ihren Text. Objekt und Liste fallen deshalb weg wie Markup.
+//   - Wahrheitswert, '' und null tragen kein Markup und bleiben (R5: nichts Legitimes
+//     aendern, was keine Gefahr ist).
+//   - Zahlenlisten (Zauberplaetze, Mitglieder-IDs, Wiki-Verlauf) behalten ihre Positionen:
+//     spellSlotsUsed[i] haengt am Grad. Ein unbrauchbarer Eintrag wird null, keine Luecke.
+//   - Was keine Liste/kein Objekt ist, wo eine Liste/ein Objekt hingehoert, wird
+//     uebersprungen statt zu werfen — die Grenze laeuft bei jedem Start (load()).
+describe.each(QUELLEN.map(([n]) => [n]))('R4 Grenzfaelle der Datengrenze — %s', quellName => {
+    const lauf = k =>
+        klar(
+            brauche(quellName, 'bereinigeDatengrenze')(quelle(quellName).daten(JSON.stringify(k)))
+        );
+
+    test('Objekt und Liste in einem Zahlenfeld fallen weg (eine Liste wird im Template zu ihrem Text)', () => {
+        const k = geruest();
+        k.characters[0].hpCurrent = [MARKUP];
+        k.characters[0].hpMax = { wert: MARKUP };
+        k.quests[0].links[0].id = [3];
+        const erg = lauf(k);
+        expect(lies(erg, 'characters[0].hpCurrent')).toBeUndefined();
+        expect(lies(erg, 'characters[0].hpMax')).toBeUndefined();
+        expect(lies(erg, 'quests[0].links[0].id')).toBeUndefined();
+    });
+
+    test('Wahrheitswert, leerer Text und null bleiben; Zahlformen aus Text werden Zahl', () => {
+        const k = geruest();
+        k.characters[0].level = true;
+        k.characters[0].xp = '';
+        k.npcs[0].locationId = null;
+        k.characters[0].hpCurrent = ' 12 ';
+        k.loot[0].weight = '1,5';
+        k.factions[0].ruf = '+3';
+        const erg = lauf(k);
+        expect(lies(erg, 'characters[0].level')).toBe(true);
+        expect(lies(erg, 'characters[0].xp')).toBe('');
+        expect(lies(erg, 'npcs[0].locationId')).toBeNull();
+        expect(lies(erg, 'characters[0].hpCurrent')).toBe(12);
+        expect(lies(erg, 'loot[0].weight')).toBe(1.5);
+        expect(lies(erg, 'factions[0].ruf')).toBe(3);
+    });
+
+    test('Zahlenlisten: Text wird Zahl, Unbrauchbares wird null, die Positionen bleiben', () => {
+        const k = geruest();
+        k.characters[0].spellSlotsUsed = ['1', MARKUP, 0, [2], { x: 1 }, null];
+        k.factions[0].mitgliederNpcIds = [2, '13'];
+        k.wikiRecentlyViewed = ['14', MARKUP];
+        const erg = lauf(k);
+        expect(lies(erg, 'characters[0].spellSlotsUsed')).toEqual([1, null, 0, null, null, null]);
+        expect(lies(erg, 'factions[0].mitgliederNpcIds')).toEqual([2, 13]);
+        expect(erg.wikiRecentlyViewed).toEqual([14, null]);
+    });
+
+    test('Inventar eines Helden: Altformat (Zahl) bleibt, {id, quantity} wird Zahl, Markup faellt', () => {
+        const k = geruest();
+        k.characters[0].items = [3, { id: '7', quantity: '2' }, { id: MARKUP, quantity: 1 }];
+        k.characters[0].spells = ['12', MARKUP, 4];
+        const erg = lauf(k);
+        expect(lies(erg, 'characters[0].items')).toEqual([
+            3,
+            { id: 7, quantity: 2 },
+            { quantity: 1 }
+        ]);
+        expect(lies(erg, 'characters[0].spells')).toEqual([12, null, 4]);
+    });
+
+    test('Zahlenliste, die keine Liste ist: Text/Objekt wird leere Liste, null bleibt', () => {
+        const k = geruest();
+        k.factions[0].mitgliederNpcIds = MARKUP;
+        k.characters[0].spellSlotsMax = { 0: '4' };
+        k.wikiRecentlyViewed = null;
+        const erg = lauf(k);
+        expect(lies(erg, 'factions[0].mitgliederNpcIds')).toEqual([]);
+        expect(lies(erg, 'characters[0].spellSlotsMax')).toEqual([]);
+        expect(erg.wikiRecentlyViewed).toBeNull();
+    });
+
+    test('falsche Gestalt wirft nicht: Sammlung als Text, Eintrag als Text, Liste als Objekt', () => {
+        const k = geruest();
+        k.characters.push(MARKUP, null, 7);
+        k.characters[0].attributes = MARKUP;
+        k.quests[0].links = { 0: { id: MARKUP } };
+        k.npcs = MARKUP;
+        k.initiative.combatants[0].effects = MARKUP;
+        const erg = lauf(k);
+        expect(erg.characters.slice(1)).toEqual([MARKUP, null, 7]);
+        expect(lies(erg, 'characters[0].attributes')).toBe(MARKUP);
+        expect(erg.npcs).toBe(MARKUP);
+        // Kein Typzwang durch eine Liste, die keine ist — das ist Formsache, nicht R4
+        expect(lies(erg, 'quests[0].links')).toEqual({ 0: { id: MARKUP } });
+    });
+
+    test('dasselbe Objekt an zwei Stellen wird einmal bereinigt, verbotene Schluessel in Listen', () => {
+        const fn = brauche(quellName, 'bereinigeDatengrenze');
+        const daten = quelle(quellName).daten(
+            '{"characters":[{"id":"1","__proto__":{"x":1}}],"liste":[[{"prototype":{"y":2}}]]}'
+        );
+        daten.zweitesMal = daten.characters[0];
+        const erg = fn(daten);
+        expect(erg.zweitesMal).toBe(erg.characters[0]);
+        expect(erg.characters[0].id).toBe(1);
+        expect(Object.prototype.hasOwnProperty.call(erg.characters[0], '__proto__')).toBe(false);
+        expect(Object.prototype.hasOwnProperty.call(erg.liste[0][0], 'prototype')).toBe(false);
+    });
+
+    test.each([[null], [undefined], ['Text'], [42]])(
+        'kein Objekt (%p): unveraendert zurueck',
+        wert => {
+            expect(brauche(quellName, 'bereinigeDatengrenze')(wert)).toBe(wert);
+        }
+    );
+});
+
+// ============================================================
 // R4 VERDRAHTUNG — jeder Eingang erreicht bereinigeDatengrenze()
 // ============================================================
 const EINGAENGE = [

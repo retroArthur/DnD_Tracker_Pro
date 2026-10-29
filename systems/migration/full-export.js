@@ -155,12 +155,16 @@ function importFullExport(parsedObj) {
     // Jede Kampagne migrieren und speichern
     for (const [key, campaign] of campaignEntries) {
         // T-02-08: migrateData pro Kampagne (Sanitierung + Versions-Migration)
-        let migratedData = campaign.data;
+        // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): VOR der Migration, weil die Datei
+        // fremd ist (verbotene Schluessel, Zahlenfelder als Text), und danach noch einmal,
+        // weil die Migration Felder aus Altformaten nachfuellt.
+        let migratedData = bereinigeDatengrenze(campaign.data);
         if (typeof migrateData === 'function') {
-            migratedData = migrateData(campaign.data);
+            migratedData = migrateData(migratedData);
         } else if (typeof window.migrateData === 'function') {
-            migratedData = window.migrateData(campaign.data);
+            migratedData = window.migrateData(migratedData);
         }
+        migratedData = bereinigeDatengrenze(migratedData);
 
         // Kampagnendaten speichern — mit {success, error}-Pruefung (StorageAPI-Muster)
         const saveResult = StorageAPI.setJSON(key, migratedData);
@@ -217,9 +221,19 @@ function importFullExport(parsedObj) {
     };
     let preservedIndexEntriesCount = 0;
     if (typeof saveCampaignIndexFn === 'function') {
-        const importedIndex = parsedObj.campaignIndex;
+        // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): auch der Index kommt aus der
+        // Datei. Verbotene Schluessel fallen in jeder Tiefe; ein Eintrag bleibt nur mit einem
+        // Schluessel im Kampagnenformat (dieselbe Regel wie fuer campaigns{} oben) — er wird
+        // beim Wechsel zum localStorage-Schluessel und steht als data-value in der
+        // Kampagnenliste. Ein `active` ausserhalb des Formats wird zur Standard-Kampagne,
+        // genau das, was der Start aus einem fehlenden `active` macht (core/init.js).
+        const importedIndex = bereinigeDatengrenze(parsedObj.campaignIndex);
+        const istKampagnenKey = key =>
+            typeof key === 'string' && key.length <= 200 && ALLOWED_KEY_RE.test(key);
         if (importedIndex && typeof importedIndex === 'object') {
-            const importedCampaigns = Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : [];
+            const importedCampaigns = (
+                Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : []
+            ).filter(c => c && typeof c === 'object' && istKampagnenKey(c.key));
             let localCampaigns = [];
             if (typeof getCampaignIndexFn === 'function') {
                 const localIndex = getCampaignIndexFn();
@@ -232,7 +246,9 @@ function importFullExport(parsedObj) {
             preservedIndexEntriesCount = keptLocalCampaigns.length;
             const mergedIndex = Object.assign({}, importedIndex, {
                 campaigns: importedCampaigns.concat(keptLocalCampaigns),
-                active: importedIndex.active
+                active: istKampagnenKey(importedIndex.active)
+                    ? importedIndex.active
+                    : APP_CONFIG.STORAGE_KEY
             });
             pruefeIndexErgebnis(saveCampaignIndexFn(mergedIndex));
         } else {

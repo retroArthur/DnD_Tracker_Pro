@@ -28,4 +28,12 @@ declare function debounce<T extends (...args: any[]) => any>(fn: T, delay?: numb
  * @returns Throttled Funktion
  */
 declare function throttle<T extends (...args: any[]) => any>(fn: T, limit?: number): (...args: Parameters<T>) => void;
+/** Vertrag SENKEN R3: Link aus Daten -> derselbe Link oder '' (nur http:, https:, mailto:). */
+declare function sichererLink(url: unknown): string;
+/** Vertrag SENKEN R2: nur #rgb/#rrggbb, sonst der feste Ersatz aus dem Code. */
+declare function sichereFarbe(wert: unknown, ersatz: string): string;
+/** Vertrag SENKEN R2: nur ein Wert aus der Erlaubnisliste, sonst der feste Ersatz. */
+declare function sichereKlasse(wert: unknown, erlaubteWerte: readonly string[], ersatz: string): string;
+/** Vertrag SENKEN R4: verbotene Schluessel entfernen, Zahlen-/Verweisfelder auf Zahl zwingen. */
+declare function bereinigeDatengrenze<T>(daten: T): T;
 //# sourceMappingURL=testable-utils.d.ts.map

@@ -2320,6 +2320,9 @@ function _erzeugePersistenzKontext(optionen = {}) {
         context
     );
     if (optionen.mitLoad) {
+        // load() ruft seit SENKEN die Datengrenze auf (Vertrag SENKEN R4) — der echte Block
+        // aus utils/basic.js, keine Attrappe; ohne ihn warf load() still ('exception')
+        require('./helpers/datengrenze-block.js').ladeDatengrenze(context);
         vm.runInContext(
             fs.readFileSync(path.join(wurzel, 'systems/spellslots/quick-roll.js'), 'utf-8'),
             context

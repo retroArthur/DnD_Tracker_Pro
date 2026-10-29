@@ -8,6 +8,9 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+// importFullExport() ruft seit SENKEN die Datengrenze auf (Vertrag SENKEN R4) — der echte
+// Block aus utils/basic.js, keine Attrappe
+const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 // ============================================================
 // SETUP: full-export.js in vm-Kontext laden (non-ESM-Muster)
@@ -131,6 +134,7 @@ beforeAll(() => {
         console: console
     };
     vm.createContext(context);
+    ladeDatengrenze(context);
 
     const filePath = path.join(__dirname, '../../systems/migration/full-export.js');
     const code = fs.readFileSync(filePath, 'utf8');
@@ -618,6 +622,7 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
             console: console
         };
         vm.createContext(context);
+        ladeDatengrenze(context);
 
         // ECHTE Migration zuerst — full-export.js schlaegt `migrateData` als
         // globale Funktion nach (full-export.js:149).
