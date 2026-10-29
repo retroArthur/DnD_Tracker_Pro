@@ -179,9 +179,9 @@ function performGlobalSearch() {
             .slice(0, 12)
             .map(m => {
                 // Sanitize type via Whitelist
-                const safeType = allowedTypes.includes(m.type) ? m.type : 'unknown';
-                const safeId = typeof m.id === 'number' ? m.id : parseInt(String(m.id)) || 0;
-                const safeLocId = m.locId && typeof m.locId === 'number' ? m.locId : 'null';
+                const safeType = sichereKlasse(m.type, allowedTypes, 'unknown');
+                const safeId = Number(m.id) || parseInt(String(m.id)) || 0;
+                const safeLocId = m.locId && typeof m.locId === 'number' ? Number(m.locId) : 'null';
                 return `
                 <div class="search-result-item" data-action="navigate-result" data-type="${safeType}" data-id="${safeId}" data-loc="${safeLocId}">
                     <span class="search-result-type ${safeType}">${getTypeIcon(safeType)}</span>

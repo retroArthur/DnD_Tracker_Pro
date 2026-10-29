@@ -364,6 +364,8 @@ describe('MARKDOWN: Rundreise htmlToMarkdown() -> markdownToHtml() (echtes Modul
                 }
             },
             document,
+            // htmlToMarkdown() parst inert ueber DOMParser (SENKEN R1, kein div.innerHTML).
+            DOMParser,
             Node,
             console
         };

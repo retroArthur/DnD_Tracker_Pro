@@ -131,19 +131,19 @@ function renderRestCharacters(characters, type) {
                       : 'healthy';
             const hitDieType = getHitDieType(char.class);
             return `
-            <div class="rest-character" data-id="${char.id}">
+            <div class="rest-character" data-id="${esc(char.id)}">
                 <span class="rest-char-name">${esc(char.name)}</span>
                 <span class="rest-hp-bar ${hpClass}" style="--hp-pct: ${hpPct}%"></span>
-                <span class="rest-hp-text">${currentHp}/${maxHp}</span>
+                <span class="rest-hp-text">${esc(String(currentHp))}/${esc(String(maxHp))}</span>
                 ${
                     type === 'short'
                         ? `
                     <span class="rest-hd-controls">
-                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${char.id}" data-value="-1">−</button>
-                        <input type="number" id="rest-hd-${char.id}" value="0" min="0" max="${currentHitDice}" class="rest-hd-input">
-                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${char.id}" data-value="1">+</button>
+                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${esc(char.id)}" data-value="-1">−</button>
+                        <input type="number" id="rest-hd-${esc(char.id)}" value="0" min="0" max="${esc(String(currentHitDice))}" class="rest-hd-input">
+                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${esc(char.id)}" data-value="1">+</button>
                     </span>
-                    <span class="rest-hd-label">d${hitDieType} <span class="rest-hd-available">${currentHitDice}/${maxHitDice}</span></span>
+                    <span class="rest-hd-label">d${hitDieType} <span class="rest-hd-available">${esc(String(currentHitDice))}/${esc(String(maxHitDice))}</span></span>
                 `
                         : `
                     <span class="rest-heal-preview">+${maxHp - currentHp} HP</span>

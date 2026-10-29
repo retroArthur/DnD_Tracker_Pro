@@ -177,12 +177,12 @@ function performMobileSearch() {
             .map(
                 m => `
             <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;"
-                 data-action="mobile-search-navigate" data-type="${m.type}" data-id="${m.id}" data-loc="${m.locId || 'null'}">
+                 data-action="mobile-search-navigate" data-type="${esc(m.type)}" data-id="${esc(m.id)}" data-loc="${esc(m.locId || 'null')}">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: var(--text-xl);">${getTypeIcon(m.type)}</span>
                     <div>
                         <div style="font-weight: 500;">${highlightMatch(m.name, query)}</div>
-                        <div style="font-size: var(--text-sm); color: var(--text-dim);">${m.detail}</div>
+                        <div style="font-size: var(--text-sm); color: var(--text-dim);">${esc(m.detail)}</div>
                     </div>
                 </div>
             </div>
@@ -267,14 +267,14 @@ function handleDrop(e) {
 function renderDashboard() {
     const c = $('dashboard-content');
     if (!c) return;
-    const charCount = D.characters?.length || 0;
-    const npcCount = D.npcs?.length || 0;
-    const locCount = D.locations?.length || 0;
+    const charCount = Number(D.characters?.length) || 0;
+    const npcCount = Number(D.npcs?.length) || 0;
+    const locCount = Number(D.locations?.length) || 0;
     const questCount = D.quests?.length || 0;
     const activeQuests = D.quests?.filter(q => q.status !== 'completed')?.length || 0;
-    const spellCount = D.spells?.length || 0;
-    const lootCount = D.loot?.length || 0;
-    const sessionCount = D.sessionNotes?.length || 0;
+    const spellCount = Number(D.spells?.length) || 0;
+    const lootCount = Number(D.loot?.length) || 0;
+    const sessionCount = Number(D.sessionNotes?.length) || 0;
     // Party Health Overview
     const partyHealth =
         D.characters?.map(ch => {
@@ -314,16 +314,16 @@ function renderDashboard() {
                     ${partyHealth
                         .map(
                             ch => `
-                        <div class="dash-char ${ch.status}" data-action="show-view" data-value="party">
-                            ${ch.conditions > 0 ? `<span class="dash-char-conditions">${ch.conditions}</span>` : ''}
+                        <div class="dash-char ${esc(ch.status)}" data-action="show-view" data-value="party">
+                            ${ch.conditions > 0 ? `<span class="dash-char-conditions">${Number(ch.conditions)}</span>` : ''}
                             <div class="dash-char-avatar">
                                 ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                             </div>
                             <div class="dash-char-name">${esc(ch.name)}</div>
                             <div class="dash-char-hp">
-                                <div class="dash-char-hp-bar ${ch.status}" style="width: ${Math.max(0, Math.min(100, ch.pct))}%"></div>
+                                <div class="dash-char-hp-bar ${esc(ch.status)}" style="width: ${Math.max(0, Math.min(100, ch.pct))}%"></div>
                             </div>
-                            <div class="dash-char-hp-text">${ch.hp}/${ch.hpMax}</div>
+                            <div class="dash-char-hp-text">${esc(String(ch.hp))}/${esc(String(ch.hpMax))}</div>
                         </div>
                     `
                         )
@@ -398,10 +398,10 @@ function renderDashboard() {
                             ? trackedQuestList
                                   .map(
                                       q => `
-                        <div class="dash-quest" data-action="navigate-to-quest" data-id="${q.id}">
+                        <div class="dash-quest" data-action="navigate-to-quest" data-id="${esc(q.id)}">
                             <span class="dash-quest-pin">📌</span>
                             <span class="dash-quest-title">${esc(q.title || q.name)}</span>
-                            <span class="dash-quest-type ${q.type || 'quest'}">${q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest'}</span>
+                            <span class="dash-quest-type ${sichereKlasse(q.type, ['quest', 'side', 'plot'], 'quest')}">${q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest'}</span>
                         </div>
                     `
                                   )
@@ -429,9 +429,9 @@ function renderDashboard() {
                                   .map(
                                       s => `
                         <div class="dash-session" data-action="show-view" data-value="notes">
-                            <span class="dash-session-num">${s.number ? '#' + s.number : '•'}</span>
+                            <span class="dash-session-num">${s.number ? '#' + esc(String(s.number)) : '•'}</span>
                             <span class="dash-session-title">${esc(s.name || s.title || 'Session')}</span>
-                            <span class="dash-session-date">${s.date ? formatDate(s.date) : ''}</span>
+                            <span class="dash-session-date">${s.date ? esc(formatDate(s.date)) : ''}</span>
                         </div>
                     `
                                   )
@@ -462,7 +462,7 @@ function renderDashboard() {
                     <div class="dash-timer-name">${esc(focusedTimer.name)}</div>
                     <div class="dash-timer-time">${formatTime(focusedTimer.remainingSeconds)}</div>
                 </div>
-                <button class="dash-timer-btn" data-action="toggle-timer" data-id="${focusedTimer.id}">${focusedTimer.running ? '⏸' : '▶'}</button>
+                <button class="dash-timer-btn" data-action="toggle-timer" data-id="${esc(focusedTimer.id)}">${focusedTimer.running ? '⏸' : '▶'}</button>
                 <button class="dash-timer-btn" data-action="show-view" data-value="timers">→</button>
             </div>
         `

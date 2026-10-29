@@ -61,11 +61,11 @@ function renderDMSPartyWidget() {
             </div>
             <div class="dms-stat-row">
                 <span class="dms-stat-label">Höchste Pass. Wahrn.</span>
-                <span class="dms-stat-value">${highestPP} <span class="dms-stat-char">(${esc(highestPPChar)})</span></span>
+                <span class="dms-stat-value">${esc(String(highestPP))} <span class="dms-stat-char">(${esc(highestPPChar)})</span></span>
             </div>
             <div class="dms-stat-row">
                 <span class="dms-stat-label">Spieler</span>
-                <span class="dms-stat-value">${chars.length}</span>
+                <span class="dms-stat-value">${Number(chars.length)}</span>
             </div>
         </div>
     `;
@@ -82,7 +82,7 @@ function renderDMSInitiativeWidget() {
     }
     return `
         <div class="dms-initiative">
-            <div class="dms-init-header">Runde ${round} <span class="dms-init-count">(${combatants.length})</span></div>
+            <div class="dms-init-header">Runde ${esc(String(round))} <span class="dms-init-count">(${Number(combatants.length)})</span></div>
             <div class="dms-init-list">
                 ${combatants
                     .map((c, i) => {
@@ -97,7 +97,7 @@ function renderDMSInitiativeWidget() {
                         <div class="dms-init-entry ${isCurrent ? 'active' : ''} ${hpClass}">
                             <span class="dms-init-marker">${isCurrent ? '▶' : ''}</span>
                             <span class="dms-init-name">${esc(c.name)}</span>
-                            <span class="dms-init-value">${c.initiative || 0}</span>
+                            <span class="dms-init-value">${esc(String(c.initiative || 0))}</span>
                         </div>
                     `;
                     })
@@ -225,9 +225,9 @@ function renderDMSTablesWidget() {
                 .map(
                     t => `
                 <div class="dms-table-entry">
-                    <span class="dms-table-icon">${t.icon || '🎲'}</span>
+                    <span class="dms-table-icon">${esc(t.icon || '🎲')}</span>
                     <span class="dms-table-name">${esc(t.name)}</span>
-                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="${t.id}">Roll</button>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="${esc(t.id)}">Roll</button>
                 </div>
             `
                 )

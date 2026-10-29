@@ -362,7 +362,7 @@ function showConcentrationModal(cbId) {
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn" data-action="hide-modal" data-value="concentration-modal">Abbrechen</button>
-                <button class="btn btn-primary" data-action="set-concentration" data-id="${cbId}">✓ Setzen</button>
+                <button class="btn btn-primary" data-action="set-concentration" data-id="${esc(cbId)}">✓ Setzen</button>
             </div>
         </div>
     `;

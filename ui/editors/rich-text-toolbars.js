@@ -472,7 +472,10 @@ function initContextToolbars() {
         const action = btn.dataset.linkAction || '';
         const link = currentContextLink;
         if (action === 'open') {
-            window.open(link.href, '_blank', 'noopener,noreferrer');
+            // SENKEN R3: das Ziel kommt aus dem Inhalt (auch importiert) — nur http(s)/mailto.
+            const ziel = sichererLink(link.href);
+            if (ziel) window.open(ziel, '_blank', 'noopener,noreferrer');
+            else showToast('⚠️ Nur http(s)- und mailto-Links lassen sich öffnen', 'error');
         } else if (action === 'edit') {
             const newUrl = prompt('URL bearbeiten:', link.href);
             if (newUrl && newUrl !== link.href && !isAllowedEditorHref(newUrl)) {

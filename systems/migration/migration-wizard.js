@@ -574,7 +574,7 @@ function _processWizardFile(file, dropzone) {
         if (resultEl) {
             const sizeKB = (result.totalBytes / 1024).toFixed(1);
             let html = `
-                <div class="migration-success-line">Kampagnen importiert: <strong>${result.campaignCount}</strong></div>
+                <div class="migration-success-line">Kampagnen importiert: <strong>${Number(result.campaignCount)}</strong></div>
                 <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
             `;
 

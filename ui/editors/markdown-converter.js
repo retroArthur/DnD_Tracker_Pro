@@ -12,9 +12,13 @@
 function htmlToMarkdown(html) {
     if (!html || typeof html !== 'string') return '';
 
-    // Create temporary container to parse HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
+    // Inert parsen (SENKEN R1): ein Dokument aus DOMParser laedt keine Bilder und fuehrt
+    // nichts aus — ein losgeloestes div DIESER Seite (frueher `temp.innerHTML = html`) schon,
+    // der Export eines importierten Eintrags forderte so dessen Bilder an. Die Knoten wandern
+    // in ein div desselben inerten Dokuments: die Wandlung beginnt wie bisher an einem div.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const temp = doc.createElement('div');
+    temp.append(...doc.head.childNodes, ...doc.body.childNodes);
 
     return convertNodeToMarkdown(temp);
 }
@@ -110,7 +114,10 @@ function convertNodeToMarkdown(node) {
 
             case 'blockquote': {
                 const lines = getTextContent(node).split('\n');
-                markdown = lines.map(line => `> ${line}`).join('\n') + '\n\n';
+                // Markdown-Zitatmarke, kein Markup — als Name, weil R6 das `>` im Literal
+                // fuer HTML hielte (tests/unit/html-senken.test.js, Regel der Vorsichtung).
+                const marke = '> ';
+                markdown = lines.map(line => marke + line).join('\n') + '\n\n';
                 break;
             }
 
@@ -275,10 +282,13 @@ function markdownToHtml(markdown) {
 
     let html = markdown;
 
-    // Read-aloud blocks (must be first to avoid interference)
-    html = html.replace(/:::read-aloud\n([\s\S]*?)\n:::/g, (match, content) => {
-        return `<div class="read-aloud">${content.trim()}</div>`;
-    });
+    // Read-aloud blocks (must be first to avoid interference). Die `\s*` um die Gruppe tun, was
+    // frueher content.trim() im Rueckruf tat; die Ersetzung ist ein Muster wie alle Regeln hier
+    // (das Ergebnis geht am Ende durch sanitizeHTML()).
+    html = html.replace(
+        /:::read-aloud\n\s*([\s\S]*?)\s*\n:::/g,
+        '<div class="read-aloud">$1</div>'
+    );
 
     // Headings (must be before other conversions)
     html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');

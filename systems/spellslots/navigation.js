@@ -284,14 +284,14 @@ function populateSelects() {
             locSel,
             '<option value="">-- Ort --</option>' +
                 (D.locations || [])
-                    .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
+                    .map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`)
                     .join('')
         );
     }
     // Filter selects
     const filterOpts =
         '<option value="">-- Kein Filter --</option>' +
-        (D.filters || []).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+        (D.filters || []).map(f => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
     ['loc-filter', 'npc-filter'].forEach(id => {
         const select = $(id);
         if (select) neuBefuellen(select, filterOpts);

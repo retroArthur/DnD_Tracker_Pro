@@ -729,10 +729,10 @@ async function showBackupsModal() {
                 const sizeMB = b.data ? (new Blob([b.data]).size / (1024 * 1024)).toFixed(1) : '?';
                 return `<div class="backup-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 8px;">
                 <div>
-                    <div style="font-weight: 500;">${timeStr}</div>
+                    <div style="font-weight: 500;">${esc(timeStr)}</div>
                     <div style="font-size: var(--text-sm); color: var(--text-dim);">Backup #${i + 1} (${sizeMB} MB)</div>
                 </div>
-                <button class="btn btn-sm" data-action="restore-backup" data-id="${b.timestamp}">Wiederherstellen</button>
+                <button class="btn btn-sm" data-action="restore-backup" data-id="${Number(b.timestamp)}">Wiederherstellen</button>
             </div>`;
             })
             .join('');

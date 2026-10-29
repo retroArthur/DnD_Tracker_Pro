@@ -1313,49 +1313,41 @@ function zaehleHtmlSenken(dateien, weitereTexte = []) {
 // 664 -> 358 Stellen; 18 Dateien auf 0 (gestrichen), entity-actions 7 -> 1.
 // Gesenkt mit SENKEN Bereich B (Truhe/Zuweisung, Zauber, Shops samt Handout und Links,
 // Wiki, Notizen/Story-Arcs, Session-Prep, Fraktionen, Reise, Zufallstabellen,
-// Soundboard): 358 -> 182 Stellen; 15 Dateien auf 0 (gestrichen). Je eine Stelle
-// bleibt, die der Zaehler nicht als geprueft erkennen kann:
+// Soundboard): 358 -> 182 Stellen; 15 Dateien auf 0 (gestrichen).
+// Gesenkt mit SENKEN Bereich C (Dashboard und Telefon-Suche, globale Suche,
+// DM-Screen samt Profilen und Widgets, Verknuepfungen, Schnellreferenz, Markdown-
+// Wandler und -Export, Notizen-Suche, Kampagnenliste, Rast, Encounter-Rechner,
+// Timer, Schnellaktionen, Event-Log, Debug, Restdateien): 182 -> 24 Stellen; 26
+// Dateien auf 0 (gestrichen). parseEntityLinks() bereinigt selbst und kodiert den
+// Namen der Marke — damit fiel auch renderSessionPrepDetail() (Bereich B) auf 0.
+// Es bleiben sechs Dateien, deren Werte der Zaehler nicht als geprueft erkennen
+// kann; keine davon setzt einen Wert aus D roh ein (Kanarien-Waechter
+// tests/e2e/features/senken-kanarie.spec.js, alle drei Eingaenge gruen):
 //   - features/wiki/wiki (Eintragsinhalt): renderMarkdownInContent() endet mit
 //     sanitizeHTML(), addTOCAnchors() setzt nur die Kennung ein, parseWikiLinks()
 //     kodiert seinen Fang mit esc() — der Zaehler sieht durch diese Kette nicht.
-//   - features/session-prep/session-prep-render (renderSessionPrepDetail, ohne
-//     Aufrufer): parseEntityLinks() (systems/entity-links.js) gilt dem Zaehler nicht
-//     als geprueft — zu Recht, der Name einer Marke geht dort roh in title="…".
+//   - features/dmscreen/dmscreen-render (3): `def.render()` ruft die Render-
+//     Funktion aus der Widget-Tabelle getDMScreenWidgets() — ein Methodenaufruf,
+//     den der Zaehler als Daten wertet. Jede dieser Funktionen wird an ihrer eigenen
+//     Stelle gezaehlt (dmscreen-widgets-*: 0).
+//   - ui/virtual-scroll (2), utils/performance (3), systems/spellslots/virtual-list
+//     (1): Listenhelfer, die einen Render-Rueckruf als Parameter bekommen
+//     (`items.map(renderItem)`). Der einzige Aufrufer (bestiary-render.js mit
+//     renderBestiaryListItem, 0) ist geprueft; renderList() und VirtualList haben
+//     keinen Aufrufer.
+//   - ui/editors/editor-toolbar-build (14): baut die Editor-Leisten nur aus Werten
+//     des Codes (Editor-IDs aus Literalen oder einem Zaehler, Tabellen der Datei);
+//     die Ausgabe ist zugleich die Quelle der statischen Leisten in den Templates
+//     (tools/sync-editor-toolbars.js) und muss zeichengleich bleiben.
 // Schluessel: loader.js-Pfad OHNE ".js" (Begruendung im Kopfkommentar).
 // ============================================================
 const BASIS = {
-    'features/dice-stats/dice-stats-render': 4,
-    'features/dmscreen/dmscreen-config': 8,
-    'features/dmscreen/dmscreen-render': 6,
-    'features/dmscreen/dmscreen-widgets-base': 7,
-    'features/encounter-calculator': 22,
-    'features/npc-generator/npc-generator': 7,
-    'features/quick-actions': 6,
-    'features/rest-manager': 9,
-    'features/session-prep/session-prep-render': 1,
-    'features/timers/timers': 8,
+    'features/dmscreen/dmscreen-render': 3,
     'features/wiki/wiki': 1,
-    'systems/backups': 2,
-    'systems/campaign-manager/campaign-manager': 2,
-    'systems/entity-links': 16,
-    'systems/markdown-import-export': 2,
-    'systems/migration/migration-wizard': 1,
-    'systems/search/global-search': 4,
-    'systems/spellslots/import-export': 2,
-    'systems/spellslots/navigation': 2,
-    'systems/spellslots/quick-reference': 6,
-    'systems/spellslots/spellslots-ui': 1,
     'systems/spellslots/virtual-list': 1,
-    'systems/undo': 12,
-    'tools/debug': 8,
-    'ui/actions/combat-actions': 1,
-    'ui/actions/entity-actions': 1,
     'ui/editors/editor-toolbar-build': 14,
-    'ui/editors/markdown-converter': 2,
     'ui/virtual-scroll': 2,
-    'utils/performance-extras': 20,
-    'utils/performance': 3,
-    'utils/utilities': 1
+    'utils/performance': 3
 };
 
 /** loader.js-Pfad -> Schluessel der BASIS-Tabelle. */
