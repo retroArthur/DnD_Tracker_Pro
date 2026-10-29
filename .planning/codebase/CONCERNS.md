@@ -128,7 +128,7 @@ markiert. Zählungen stammen ausschließlich aus in dieser Sitzung ausgeführten
   },
   ```
   Keine Whitelist. Genutzt u. a. in `features/bestiary/bestiary-render.js:427`,
-  `features/npcs/npc-popup.js:77`, `ui/editors/rich-text.js:228`.
+  `features/npcs/npc-popup.js:70`, `ui/editors/rich-text.js:228`.
 - **Bewertung:** Der naheliegende Eskalationspfad (importiertes/eingefügtes Rich-Text-HTML mit
   `data-action="call"`) ist **derzeit blockiert**: `sanitizeHTML()` baut jedes erlaubte Element
   neu auf und kopiert nur explizit gelistete Attribute (`utils/basic.js:176-186` ff.);
