@@ -799,7 +799,7 @@ declare global {
   
   /** Reiter-Import: schreibt die vorbereitete Datei ("Importieren" in #import-modal) */
   function executeImport(type?: string | null): void;
-  
+
   /** Reiter-Import: zeichnet die Vorschau #import-info fuer den gewaehlten Modus neu */
   function renderImportVorschau(): void;
   
