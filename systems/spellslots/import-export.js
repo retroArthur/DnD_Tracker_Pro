@@ -973,6 +973,501 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
     };
 }
 
+// VERWEISE (R5, R6). Ein Eintrag zeigt ueber IDs auf andere Eintraege — derselben Sammlung
+// (NPC-Beziehung NPC→NPC, Wiki-Eltern, Verknuepfung desselben Typs, Encounter-Gruppe →
+// Vorlage) oder einer anderen (Ort, Fraktion, Zauber, Gegenstand …). Einen zentralen Katalog
+// gab es nicht: utils/validation.js kennt drei Felder, normalizeEntityIds() schreibt beim
+// Umnummerieren gar keine Verweise um. Gemessen schrieb der Merge darum nur `id` neu, und
+// alles andere zeigte still weiter auf die Zahlen der Quelle — in einer fremden Kampagne auf
+// "Eiswueste" und "Hexe Morla", in derselben auf die Originale statt auf die Kopien.
+//
+// REITER_VERWEISE ist DER Katalog, je Sammlung, aus dem Datenmodell und den CRUD-Modulen
+// gelesen (Fundstellen an den Eintraegen). Er traegt beide Richtungen: R5 bildet mit ihm die
+// Verweise der importierten Eintraege ab, R6 liest mit ihm die Verweise ANDERER Bereiche auf
+// den ersetzten Typ. Darum stehen hier auch Sammlungen ohne Reiter-Import (Shops, Initiative,
+// Session-Notizen, Schnellreferenz) — als Quellen fuer R6. tests/unit/reiterimport-verweise
+// .test.js haelt ihn gegen die Verweispfade der Datengrenze und gegen eine Saat aller Typen.
+// Ein neues Verweisfeld im Datenmodell gehoert hier hinein.
+
+/** Ziel eines Verweises, dessen Typ die App nicht kennt (z. B. `links[].type` aus einer Datei). */
+const REITER_ZIEL_UNBEKANNT = '?';
+
+/** Typwort einer Verknuepfung (`links[].type`, `[[typ:id:name]]`) -> Sammlung. Die App schreibt
+ *  die Mehrzahl (systems/entity-links.js), getEntityByTypeAndId() nimmt auch die Einzahl. */
+const REITER_LINKTYPEN = Object.freeze({
+    npc: 'npcs',
+    npcs: 'npcs',
+    character: 'characters',
+    characters: 'characters',
+    location: 'locations',
+    locations: 'locations',
+    quest: 'quests',
+    quests: 'quests',
+    encounter: 'encounters',
+    encounters: 'encounters',
+    spell: 'spells',
+    spells: 'spells',
+    loot: 'loot',
+    item: 'loot',
+    items: 'loot',
+    wiki: 'wiki',
+    faction: 'factions',
+    factions: 'factions'
+});
+
+/** Namen der Bereiche ohne Reiter-Import (die anderen nennt REITER_TYPNAMEN). */
+const REITER_WEITERE_BEREICHE = Object.freeze({
+    filters: 'Filter',
+    storyArcs: 'Story-Arcs',
+    shops: 'Shops',
+    initiative: 'Initiative',
+    quickRefCustom: 'Schnellreferenz'
+});
+
+/**
+ * Wo eine Sammlung liegt, die nicht direkt unter D steht (wie IO_DATA_PATH).
+ * @type {Readonly<Record<string, string[]>>}
+ */
+const REITER_VERWEIS_PFADE = Object.freeze({
+    calendarEvents: ['calendar', 'events'],
+    initiative: ['initiative', 'combatants']
+});
+
+/**
+ * @param {*} typ
+ * @returns {string}
+ */
+function reiterLinkZiel(typ) {
+    return typeof typ === 'string' && Object.prototype.hasOwnProperty.call(REITER_LINKTYPEN, typ)
+        ? REITER_LINKTYPEN[typ]
+        : REITER_ZIEL_UNBEKANNT;
+}
+
+/**
+ * Der deutsche Name eines Bereichs in der Mehrzahl — nie sein Schluessel.
+ * @param {string} ziel
+ * @returns {string}
+ */
+function reiterZielName(ziel) {
+    if (Object.prototype.hasOwnProperty.call(REITER_TYPNAMEN, ziel)) return reiterTypName(ziel, 2);
+    if (Object.prototype.hasOwnProperty.call(REITER_WEITERE_BEREICHE, ziel)) {
+        return REITER_WEITERE_BEREICHE[ziel];
+    }
+    return 'unbekannter Bereich';
+}
+
+/** Verknuepfungen (systems/entity-links.js addEntityLink(): `{type, id}`, beidseitig). Jeder
+ *  Typ kann sie tragen — auch als ZIEL einer Verknuepfung. */
+const REITER_VERWEIS_LINKS = Object.freeze({
+    feld: 'links',
+    art: 'typisiert',
+    typFeld: 'type',
+    idFeld: 'id',
+    zielVon: reiterLinkZiel,
+    wort: ziel => `Verknüpfung → ${reiterZielName(ziel)}`
+});
+
+/** Das alte Beziehungsmodell (systems/undo.js saveRelationship(): `relationships[]` mit
+ *  `targetType` 'character'/'npc'). Kein Knopf erreicht es mehr, alte Daten tragen es aber;
+ *  Text-Eintraege (`npcs[].relationships` des Formulars ist eine Liste von Namen) sind kein
+ *  Verweis. */
+const REITER_VERWEIS_BEZIEHUNGEN_ALT = Object.freeze({
+    feld: 'relationships',
+    art: 'typisiert',
+    typFeld: 'targetType',
+    idFeld: 'targetId',
+    zielVon: t => (t === 'npc' ? 'npcs' : t === 'character' ? 'characters' : null),
+    wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
+});
+
+/**
+ * @typedef {Object} ReiterVerweisFeld
+ * @property {string} feld - Schluessel im Eintrag
+ * @property {'wert'|'liste'|'typisiert'} art - `wert`: der Wert IST die ID; `liste`: Liste von
+ *   IDs oder von Objekten, deren `idFeld` die ID ist; `typisiert`: Liste von Objekten, deren
+ *   `typFeld` das Ziel nennt
+ * @property {string} [ziel] - Sammlung, auf die `wert` und `liste` zeigen
+ * @property {string} [idFeld] - Feld der ID im Objekt (Vorgabe `id`)
+ * @property {string} [typFeld]
+ * @property {(typWert: *) => string|null} [zielVon] - Typwert -> Sammlung; null: kein Verweis
+ *   (die Beziehung zu "Die Gruppe" traegt `targetId: 0`)
+ * @property {'nullen'} [leeren] - ein geleerter Listeneintrag bleibt mit ID null stehen, statt
+ *   zu verschwinden (sein uebriger Inhalt ist Arbeit des Nutzers: Text des offenen Fadens,
+ *   Monster einer Gruppe)
+ * @property {string|((ziel: string) => string)} wort - wie die Vorschau den Verweis nennt
+ */
+
+/**
+ * DER Verweiskatalog (siehe oben).
+ * @type {Readonly<Record<string, ReadonlyArray<ReiterVerweisFeld>>>}
+ */
+const REITER_VERWEISE = Object.freeze({
+    // features/party/party-render.js: spells[] sind Zauber-IDs, items[] Gegenstaende ({id,
+    // quantity}, alt: reine IDs — render-loot.js wandelt sie)
+    characters: Object.freeze([
+        { feld: 'spells', art: 'liste', ziel: 'spells', wort: 'Zauber' },
+        { feld: 'items', art: 'liste', ziel: 'loot', wort: 'Gegenstände' },
+        REITER_VERWEIS_BEZIEHUNGEN_ALT,
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/npcs/npc-crud.js saveNPC(), npc-render.js addRelation() ('npcs'/'characters';
+    // 'party' ist "Die Gruppe", kein Eintrag)
+    npcs: Object.freeze([
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' },
+        { feld: 'factionId', art: 'wert', ziel: 'factions', wort: 'Fraktion' },
+        { feld: 'filterId', art: 'wert', ziel: 'filters', wort: 'Filter' },
+        {
+            feld: 'relations',
+            art: 'typisiert',
+            typFeld: 'targetType',
+            idFeld: 'targetId',
+            zielVon: t => (t === 'npcs' || t === 'characters' ? t : null),
+            wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
+        },
+        REITER_VERWEIS_BEZIEHUNGEN_ALT,
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/locations/locations-crud.js (kein Eltern-Ort im Datenmodell)
+    locations: Object.freeze([
+        { feld: 'filterId', art: 'wert', ziel: 'filters', wort: 'Filter' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/quests/quests-crud.js saveQuest(); das "Ziel" ist ein ZIELORT
+    // (populateQuestSelects(), quests-render.js renderEntityLink('locations', q.targetId))
+    quests: Object.freeze([
+        { feld: 'giverId', art: 'wert', ziel: 'npcs', wort: 'Auftraggeber' },
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' },
+        { feld: 'targetId', art: 'wert', ziel: 'locations', wort: 'Zielort' },
+        { feld: 'rewardItems', art: 'liste', ziel: 'loot', wort: 'Belohnungs-Gegenstand' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/encounter-calculator.js: eine im Rechner gespeicherte Gruppe nennt je Monster
+    // die Vorlage (`monsters[].encounterId`, RECHNER) — ein Verweis INNERHALB des Typs
+    encounters: Object.freeze([
+        {
+            feld: 'monsters',
+            art: 'liste',
+            ziel: 'encounters',
+            idFeld: 'encounterId',
+            leeren: 'nullen',
+            wort: 'Vorlage eines Gruppen-Monsters'
+        },
+        REITER_VERWEIS_LINKS
+    ]),
+    loot: Object.freeze([REITER_VERWEIS_LINKS]),
+    spells: Object.freeze([REITER_VERWEIS_LINKS]),
+    // features/wiki/wiki-crud.js: parentId
+    wiki: Object.freeze([
+        { feld: 'parentId', art: 'wert', ziel: 'wiki', wort: 'Übergeordneter Eintrag' },
+        REITER_VERWEIS_LINKS
+    ]),
+    links: Object.freeze([]),
+    // features/session-prep/session-prep-crud.js: offene Faeden aus Quests und Story-Arcs
+    sessionPreps: Object.freeze([
+        {
+            feld: 'offeneFaeden',
+            art: 'typisiert',
+            typFeld: 'quelleTyp',
+            idFeld: 'quelleId',
+            zielVon: t => (t === 'quest' ? 'quests' : t === 'storyArc' ? 'storyArcs' : null),
+            leeren: 'nullen',
+            wort: ziel => `Offener Faden → ${reiterZielName(ziel)}`
+        },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/timeline/timeline-render.js: ein uebernommener Vorschlag nennt seine
+    // Session-Notiz (`quelleId`, typ 'session')
+    calendarEvents: Object.freeze([
+        { feld: 'quelleId', art: 'wert', ziel: 'sessionNotes', wort: 'Quelle' }
+    ]),
+    // features/fraktionen/fraktionen-crud.js saveFraktion()
+    factions: Object.freeze([
+        { feld: 'sitzOrtId', art: 'wert', ziel: 'locations', wort: 'Sitz' },
+        { feld: 'mitgliederNpcIds', art: 'liste', ziel: 'npcs', wort: 'Mitglieder' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // Nur Quellen fuer R6 (kein Reiter-Import):
+    // features/shops/shops-core.js
+    shops: Object.freeze([
+        { feld: 'npcId', art: 'wert', ziel: 'npcs', wort: 'Händler' },
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' }
+    ]),
+    // features/encounter-calculator.js "⚔️ Zur Initiative": der Kaempfer nennt seine Vorlage
+    initiative: Object.freeze([
+        { feld: 'encounterId', art: 'wert', ziel: 'encounters', wort: 'Vorlage' }
+    ]),
+    // features/sessions/sessions.js
+    sessionNotes: Object.freeze([
+        { feld: 'arcId', art: 'wert', ziel: 'storyArcs', wort: 'Story-Arc' }
+    ]),
+    // systems/spellslots/quick-reference.js: nur Text-Verknuepfungen
+    quickRefCustom: Object.freeze([])
+});
+
+/**
+ * Text-Verknuepfungen `[[typ:id:name]]` (systems/entity-links.js, "🔗 Entity-Link"):
+ * parseEntityLinks() macht sie zu Spruengen auf `typ`/`id`. Dasselbe Muster wie dort.
+ */
+const REITER_TEXTVERWEIS = /\[\[(\w+):(\d+):([^\]]+)\]\]/g;
+
+/** So tief folgt die Suche nach Text-Verknuepfungen verschachtelten Werten. */
+const REITER_TEXTVERWEIS_TIEFE = 64;
+
+/**
+ * Eine ID als Zahl — positive ganze Zahl oder Zahltext ("7"), sonst null.
+ * @param {*} wert
+ * @returns {number|null}
+ */
+function reiterIdZahl(wert) {
+    const zahl = typeof wert === 'string' && /^\s*\d+\s*$/.test(wert) ? Number(wert) : wert;
+    return typeof zahl === 'number' && Number.isSafeInteger(zahl) && zahl > 0 ? zahl : null;
+}
+
+/**
+ * @param {ReiterVerweisFeld} v
+ * @param {string} ziel
+ * @returns {string}
+ */
+function reiterVerweisWort(v, ziel) {
+    return typeof v.wort === 'function' ? v.wort(ziel) : v.wort;
+}
+
+/**
+ * Bildet EINEN Listeneintrag ab. Gibt den Eintrag selbst zurueck, wenn er bleibt, `undefined`,
+ * wenn er entfaellt.
+ * @param {*} el
+ * @param {string|null} ziel - null: kein Verweis
+ * @param {string} idFeld
+ * @param {ReiterVerweisFeld} v
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @returns {*}
+ */
+function reiterListeneintragAbbilden(el, ziel, idFeld, v, abbilden) {
+    const objekt = !!el && typeof el === 'object' && !Array.isArray(el);
+    const roh = objekt ? el[idFeld] : el;
+    if (ziel === null || !roh || (!objekt && typeof roh === 'object')) return el;
+    const id = reiterIdZahl(roh);
+    const neu = abbilden(ziel, id, reiterVerweisWort(v, ziel));
+    if (neu === roh) return el;
+    if (neu === null && v.leeren !== 'nullen') return undefined;
+    return objekt ? { ...el, [idFeld]: neu } : neu;
+}
+
+/**
+ * Ersetzt Text-Verknuepfungen in allen Texten eines Werts, in jeder Tiefe. Eine geleerte wird
+ * zu ihrem Namen (der sichtbare Text bleibt, der Sprung entfaellt). Gibt den Wert selbst
+ * zurueck, wenn sich nichts aendert.
+ * @param {*} wert
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @param {number} tiefe
+ * @returns {*}
+ */
+function reiterTextverweiseAbbilden(wert, abbilden, tiefe) {
+    if (typeof wert === 'string') {
+        if (!wert.includes('[[')) return wert;
+        return wert.replace(REITER_TEXTVERWEIS, (ganz, typWort, idText, name) => {
+            const ziel = reiterLinkZiel(typWort);
+            const id = reiterIdZahl(idText);
+            const neu = abbilden(ziel, id, `Text-Verknüpfung → ${reiterZielName(ziel)}`);
+            if (neu === id) return ganz;
+            return neu === null ? name : `[[${typWort}:${neu}:${name}]]`;
+        });
+    }
+    if (!wert || typeof wert !== 'object' || tiefe >= REITER_TEXTVERWEIS_TIEFE) return wert;
+    let kopie = wert;
+    for (const schluessel of Object.keys(wert)) {
+        const neu = reiterTextverweiseAbbilden(wert[schluessel], abbilden, tiefe + 1);
+        if (neu === wert[schluessel]) continue;
+        if (kopie === wert) kopie = Array.isArray(wert) ? wert.slice() : { ...wert };
+        kopie[schluessel] = neu;
+    }
+    return kopie;
+}
+
+/**
+ * Bildet jeden Verweis eines Eintrags ab (Katalog und Text-Verknuepfungen): `abbilden(ziel,
+ * id, wort)` gibt die ID zurueck, auf die er danach zeigt, oder null — dann ist er geleert
+ * (Feld null, Listeneintrag entfernt bzw. mit ID null, Text-Verknuepfung nur noch Name).
+ * Veraendert NIE den Eintrag selbst: geaenderte Teile werden kopiert, unveraenderte geteilt.
+ * Mit einem `abbilden`, das die ID zurueckgibt, ist es ein reines Lesen (R5-Vorschau, R6).
+ * Ein leerer Wert (null, 0, '') ist kein Verweis.
+ * @param {string} typ - Sammlung des Eintrags (Schluessel in REITER_VERWEISE)
+ * @param {*} eintrag
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @returns {*}
+ */
+function reiterVerweiseAbbilden(typ, eintrag, abbilden) {
+    if (!eintrag || typeof eintrag !== 'object') return eintrag;
+    let neu = eintrag;
+    const setze = (feld, wert) => {
+        if (neu === eintrag) neu = { ...eintrag };
+        neu[feld] = wert;
+    };
+    const felder = Object.prototype.hasOwnProperty.call(REITER_VERWEISE, typ)
+        ? REITER_VERWEISE[typ]
+        : [];
+    for (const v of felder) {
+        if (!Object.prototype.hasOwnProperty.call(eintrag, v.feld)) continue;
+        const wert = eintrag[v.feld];
+        if (v.art === 'wert') {
+            if (!wert || typeof wert === 'object') continue;
+            const ziel = /** @type {string} */ (v.ziel);
+            const ergebnis = abbilden(ziel, reiterIdZahl(wert), reiterVerweisWort(v, ziel));
+            if (ergebnis !== wert) setze(v.feld, ergebnis);
+            continue;
+        }
+        if (!Array.isArray(wert)) continue;
+        let geaendert = false;
+        const liste = [];
+        for (const el of wert) {
+            let ziel = v.ziel || null;
+            let idFeld = v.idFeld || 'id';
+            if (v.art === 'typisiert') {
+                if (!el || typeof el !== 'object') {
+                    liste.push(el);
+                    continue;
+                }
+                ziel = v.zielVon(el[v.typFeld]);
+                idFeld = /** @type {string} */ (v.idFeld);
+            }
+            const ergebnis = reiterListeneintragAbbilden(el, ziel, idFeld, v, abbilden);
+            if (ergebnis !== el) geaendert = true;
+            if (ergebnis !== undefined) liste.push(ergebnis);
+        }
+        if (geaendert) setze(v.feld, liste);
+    }
+    return reiterTextverweiseAbbilden(neu, abbilden, 0);
+}
+
+/**
+ * Die IDs, die in den Eintraegen GENAU EINMAL vorkommen (als Zahl). Nur auf sie kann ein
+ * Verweis innerhalb der Datei eindeutig umgeschrieben werden; eine doppelte ID ist
+ * mehrdeutig, und eine ungueltige hat die Datengrenze schon geloescht.
+ * @param {Object[]} items
+ * @returns {Set<number>}
+ */
+function reiterEindeutigeIds(items) {
+    const anzahl = new Map();
+    for (const item of items) {
+        const id = reiterIdZahl(item && item.id);
+        if (id !== null) anzahl.set(id, (anzahl.get(id) || 0) + 1);
+    }
+    return new Set([...anzahl].filter(([, n]) => n === 1).map(([id]) => id));
+}
+
+/**
+ * Was "Hinzufügen" mit den Verweisen der Datei tut (R5), gezaehlt fuer die Vorschau — genau
+ * die Regel von reiterHinzufuegen(): innerhalb des Typs mit eindeutigem Ziel in der Datei →
+ * umgeschrieben (`intern`); innerhalb des Typs ohne solches Ziel → geleert (`haengend`, z. B.
+ * eine Beziehung auf einen in der Quelle geloeschten NPC); auf einen anderen Bereich → geleert
+ * (`fremd`, je Feld).
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{intern: number, haengend: number, fremd: {wort: string, n: number}[]}}
+ */
+function reiterHinzufuegenVerweise(typ, items) {
+    const eindeutig = reiterEindeutigeIds(items);
+    /** @type {Map<string, number>} */
+    const fremd = new Map();
+    let intern = 0;
+    let haengend = 0;
+    for (const item of items) {
+        reiterVerweiseAbbilden(typ, item, (ziel, id, wort) => {
+            if (ziel !== typ) fremd.set(wort, (fremd.get(wort) || 0) + 1);
+            else if (id !== null && eindeutig.has(id)) intern++;
+            else haengend++;
+            return id;
+        });
+    }
+    return { intern, haengend, fremd: [...fremd].map(([wort, n]) => ({ wort, n })) };
+}
+
+/**
+ * "Hinzufügen" (R5): jeder Eintrag bekommt eine neue ID (nextId(), als Stapel); ein Verweis
+ * INNERHALB des Typs zeigt danach auf die neue ID seines Ziels in der Datei — hat er dort kein
+ * eindeutiges Ziel, wird er geleert, statt mit seiner alten Zahl auf wen auch immer zu zeigen,
+ * der in dieser Kampagne so heisst. Jeder Verweis auf einen ANDEREN Bereich wird geleert: die
+ * Datei weiss nicht, welche Eintraege dort gemeint sind (Entscheidung des Nutzers, 29.10.).
+ * Die Eintraege der Vorbereitung bleiben unveraendert.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {Object[]}
+ */
+function reiterHinzufuegen(typ, items) {
+    const eindeutig = reiterEindeutigeIds(items);
+    const neueIds = items.map(() => nextId(typ));
+    /** @type {Map<number, number>} */
+    const abbildung = new Map();
+    items.forEach((item, i) => {
+        const id = reiterIdZahl(item && item.id);
+        if (id !== null && eindeutig.has(id)) abbildung.set(id, neueIds[i]);
+    });
+    return items.map((item, i) => ({
+        ...reiterVerweiseAbbilden(typ, item, (ziel, id) =>
+            ziel === typ && id !== null && abbildung.has(id)
+                ? /** @type {number} */ (abbildung.get(id))
+                : null
+        ),
+        id: neueIds[i]
+    }));
+}
+
+/**
+ * Eine Sammlung aus D (auch verschachtelt, REITER_VERWEIS_PFADE).
+ * @param {string} schluessel
+ * @returns {*}
+ */
+function reiterSammlung(schluessel) {
+    const pfad = REITER_VERWEIS_PFADE[schluessel] || [schluessel];
+    return pfad.reduce(
+        (knoten, schritt) => (knoten && typeof knoten === 'object' ? knoten[schritt] : undefined),
+        window.D
+    );
+}
+
+/**
+ * Die Verweise ANDERER Bereiche auf den Typ, der ersetzt wird (R6): wie viele danach ins Leere
+ * zeigen (ihre ID steht nicht in der Datei), je Bereich mit den Feldern, und wie viele auf einen
+ * Eintrag der Datei mit derselben ID — Ersetzen behaelt die IDs der Datei, ein solcher Verweis
+ * zeigt danach auf DEN Eintrag, der in der Datei so heisst. Liest D, aendert nichts.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{insLeere: number, gleicheId: number, quellen: {name: string, worte: string[], n: number}[]}}
+ */
+function reiterVerweiseNachErsetzen(typ, items) {
+    const bleibt = new Set(
+        items.map(item => reiterIdZahl(item && item.id)).filter(id => id !== null)
+    );
+    const quellen = [];
+    let insLeere = 0;
+    let gleicheId = 0;
+    for (const quelle of Object.keys(REITER_VERWEISE)) {
+        if (quelle === typ) continue;
+        const sammlung = reiterSammlung(quelle);
+        if (!Array.isArray(sammlung)) continue;
+        /** @type {Set<string>} */
+        const worte = new Set();
+        let n = 0;
+        for (const eintrag of sammlung) {
+            reiterVerweiseAbbilden(quelle, eintrag, (ziel, id, wort) => {
+                if (ziel === typ && id !== null) {
+                    if (bleibt.has(id)) gleicheId++;
+                    else {
+                        n++;
+                        worte.add(wort);
+                    }
+                }
+                return id;
+            });
+        }
+        if (n > 0) {
+            quellen.push({ name: reiterZielName(quelle), worte: [...worte], n });
+            insLeere += n;
+        }
+    }
+    return { insLeere, gleicheId, quellen };
+}
+
 /**
  * Setzt den Fokus auf das 📥 des Reiterfelds, wenn er beim Oeffnen nirgends steht.
  * showModal() merkt sich den Oeffner, und ✕, "Abbrechen" und Escape geben ihm den Fokus
@@ -1024,14 +1519,7 @@ function importVorschauZeilen(bereit, modus) {
     const moduszeilen =
         modus === 'replace'
             ? ersetzenVorschauZeilen(bereit, vorhanden)
-            : [
-                  {
-                      text:
-                          `Hinzufügen: ${n} ` +
-                          (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
-                          ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
-                  }
-              ];
+            : hinzufuegenVorschauZeilen(bereit, vorhanden);
     return [
         { text: `Typ: ${reiterTypName(bereit.dataType, 2)}` },
         { text: `Einträge: ${n}` },
@@ -1043,10 +1531,70 @@ function importVorschauZeilen(bereit, modus) {
 }
 
 /**
+ * Die Zeilen der Vorschau, die nur fuer "Hinzufügen" gelten (R5): wie viele Eintraege mit neuer
+ * ID dazukommen, und VOR dem Import, was mit ihren Verweisen geschieht — dieselbe Regel wie das
+ * Schreiben (reiterHinzufuegenVerweise()). Welche Verweise auf andere Bereiche geleert werden,
+ * steht je Feld da; die erste Zeile dazu nennt die Summe.
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {number} vorhanden - Zahl der Eintraege, die heute in D stehen
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function hinzufuegenVorschauZeilen(bereit, vorhanden) {
+    const n = bereit.items.length;
+    const name = reiterTypName(bereit.dataType, 2);
+    const { intern, haengend, fremd } = reiterHinzufuegenVerweise(bereit.dataType, bereit.items);
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const zeilen = [
+        {
+            text:
+                `Hinzufügen: ${n} ` +
+                (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
+                ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
+        }
+    ];
+    if (intern > 0) {
+        zeilen.push({
+            text:
+                (intern === 1 ? '1 Verweis' : `${intern} Verweise`) +
+                ` innerhalb der ${name} ` +
+                (intern === 1 ? 'zeigt' : 'zeigen') +
+                ' danach auf die mitimportierten Einträge'
+        });
+    }
+    const summe = fremd.reduce((s, f) => s + f.n, 0);
+    if (summe > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (summe === 1
+                    ? '1 Verweis auf einen anderen Bereich wird'
+                    : `${summe} Verweise auf andere Bereiche werden`) +
+                ' geleert — die Datei weiß nicht, welche Einträge dort gemeint sind:',
+            warnung: true
+        });
+        for (const f of fremd) zeilen.push({ text: `– ${f.wort}: ${f.n}`, warnung: true });
+    }
+    if (haengend > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (haengend === 1 ? '1 Verweis' : `${haengend} Verweise`) +
+                ` innerhalb der ${name} ` +
+                (haengend === 1 ? 'zeigt' : 'zeigen') +
+                ' auf einen Eintrag, der nicht (eindeutig) in der Datei steht — ' +
+                (haengend === 1 ? 'er wird' : 'sie werden') +
+                ' geleert',
+            warnung: true
+        });
+    }
+    return zeilen;
+}
+
+/**
  * Die Zeilen der Vorschau, die nur fuer "Ersetzen" gelten (R6): wie viele vorhandene Eintraege
- * ersetzt werden — oder, bei ungueltigen bzw. doppelten IDs in der Datei, dass Ersetzen nicht
- * geht (executeImport() lehnt dann ab). Hier gehoeren auch weitere Folgen des Ersetzens hin,
- * etwa Verweise anderer Bereiche, die danach ins Leere zeigen (R6, zweiter Satz).
+ * ersetzt werden und wie viele Verweise anderer Bereiche danach ins Leere zeigen
+ * (reiterVerweiseNachErsetzen(), je Bereich mit den Feldern) — oder, bei ungueltigen bzw.
+ * doppelten IDs in der Datei, dass Ersetzen nicht geht (executeImport() lehnt dann ab).
  * @param {ReiterImportVorbereitung} bereit
  * @param {number} vorhanden - Zahl der Eintraege, die heute in D stehen
  * @returns {{text: string, warnung?: boolean}[]}
@@ -1054,7 +1602,8 @@ function importVorschauZeilen(bereit, modus) {
 function ersetzenVorschauZeilen(bereit, vorhanden) {
     const idFehler = ersetzenIdFehler(bereit);
     if (idFehler) return [{ text: '⚠️ ' + idFehler, warnung: true }];
-    return [
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const zeilen = [
         {
             text:
                 `Ersetzen: ${vorhanden} ` +
@@ -1063,6 +1612,34 @@ function ersetzenVorschauZeilen(bereit, vorhanden) {
             warnung: true
         }
     ];
+    const { insLeere, gleicheId, quellen } = reiterVerweiseNachErsetzen(
+        bereit.dataType,
+        bereit.items
+    );
+    if (insLeere > 0) {
+        zeilen.push({
+            text:
+                '⚠️ Danach ' +
+                (insLeere === 1 ? 'zeigt 1 Verweis' : `zeigen ${insLeere} Verweise`) +
+                ' anderer Bereiche ins Leere (die Datei enthält ihr Ziel nicht):',
+            warnung: true
+        });
+        for (const q of quellen) {
+            zeilen.push({ text: `– ${q.name} (${q.worte.join(', ')}): ${q.n}`, warnung: true });
+        }
+    } else {
+        zeilen.push({ text: 'Kein Verweis anderer Bereiche zeigt danach ins Leere' });
+    }
+    if (gleicheId > 0) {
+        zeilen.push({
+            text:
+                (gleicheId === 1 ? '1 Verweis' : `${gleicheId} Verweise`) +
+                ' anderer Bereiche ' +
+                (gleicheId === 1 ? 'zeigt' : 'zeigen') +
+                ' danach auf den Eintrag der Datei mit derselben ID'
+        });
+    }
+    return zeilen;
 }
 
 /**
@@ -1128,12 +1705,10 @@ function executeImport(dataType) {
         // Zaehler ueber die groesste ersetzte ID heben (Code-Review 2026-09-21, R03)
         validateAndRepairNextId(undefined, [type]);
     } else {
-        // Merge: neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
-        // Sammlungen wie calendarEvents) — R03: die hier frueher aufgerufene Funktion gab es nicht
-        const merged = items.map(item => {
-            return { ...item, id: nextId(type) };
-        });
-        ioSetArray(type, [...(ioGetArray(type) || []), ...merged]);
+        // Merge (R5): neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
+        // Sammlungen wie calendarEvents — R03: die hier frueher aufgerufene Funktion gab es
+        // nicht); Verweise innerhalb des Typs auf die neuen IDs, alle anderen geleert
+        ioSetArray(type, [...(ioGetArray(type) || []), ...reiterHinzufuegen(type, items)]);
     }
     // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
     _reiterImport = null;
