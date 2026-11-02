@@ -160,10 +160,11 @@ const htmlKanarie = id =>
  * Ein LOKALER Pfad (`file:///C:/…`, `file:///kanarie-….png`) ist seit Nachbesserung (14) eine
  * legitime Bildquelle (Nutzerentscheidung 29.10., derselbe Pruefkern wie die Linkliste) und
  * taugt darum nicht mehr als Kanarie — die App laedt ihn zu Recht. Beide Datensaetze nehmen
- * deshalb einen Host, und zwar `localhost`: kein FREMDER Rechner. Den leeren Host macht daraus
- * nur node (`new URL()`); Chromium behaelt `file://localhost/…` als Host und oeffnet ihn unter
- * Windows als UNC-Pfad `\\localhost\…` — gemessen: `file://localhost/C$/…/icon-192.png` laedt
- * das Bild. Ohne Gegenmassnahme ginge im roten Fall also eine SMB-Anfrage an den eigenen Rechner
+ * deshalb einen Host, und zwar `localhost`: kein FREMDER Rechner. Den leeren Host machen node
+ * (`new URL()`) und Firefox (148) daraus, wie es der URL-Standard verlangt (`file:///…`); nur
+ * Chromium (143, das Projekt dieses Waechters) behaelt `file://localhost/…` als Host und oeffnet
+ * ihn unter Windows als UNC-Pfad `\\localhost\…` — gemessen: `file://localhost/C$/…/icon-192.png`
+ * laedt das Bild. Ohne Gegenmassnahme ginge im roten Fall also eine SMB-Anfrage an den eigenen Rechner
  * (Loopback). Darum bricht eingangSpielen() jede Kanarien-Anforderung ab, bevor der Browser sie
  * oeffnet (page.route faengt auch file: ab — gemessen: dieselbe Datei mit Abbruch nicht
  * geladen); (b) erkennt sie vorher am letzten Pfadsegment (kanarienBild()). Im roten Fall geht
