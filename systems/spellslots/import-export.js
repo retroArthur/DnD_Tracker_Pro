@@ -1673,6 +1673,69 @@ function renderImportVorschau() {
 }
 
 /**
+ * Die Bearbeiten-Formulare je Typ (R7): das Feld, das die Bearbeiten-ID traegt, die Funktion,
+ * die das Formular leert (und ein Klappformular bzw. die Link-Karte zuklappt) — eine
+ * AUFGESCHOBENE Referenz wie in KLAPPFORMULAR_BEARBEITEN (systems/spellslots/navigation.js):
+ * der Bezeichner steht im Quelltext, aufgeloest wird erst beim Import — und das Fenster des
+ * Formulars, falls es eines hat. Gemessen (Kritik K3): ✏️ Thorin → Ersetzen (id 1 ist jetzt
+ * "Mira") → "Speichern" schrieb Thorin ueber Mira, "Charakter aktualisiert"; der Schutz fuer
+ * verwaiste IDs greift nicht, die ID gehoert jetzt einem ANDEREN Eintrag. Ebenso Encounter,
+ * Quest (✏️ → ✕ laesst die ID liegen) und die Link-Karte.
+ * Session-Prep und Fraktion bauen ihr Fenster beim Oeffnen neu bzw. setzen jedes Feld — dort
+ * genuegt es, die liegengebliebene ID zu loeschen. Kalender-Ereignisse haben kein Bearbeiten.
+ */
+const REITER_BEARBEITEN = Object.freeze({
+    characters: [{ id: 'edit-char-id', leeren: () => cancelCharEdit }],
+    npcs: [{ id: 'edit-npc-id', leeren: () => clearNPCForm, fenster: 'npc-modal' }],
+    locations: [{ id: 'edit-loc-id', leeren: () => clearLocationForm, fenster: 'location-modal' }],
+    quests: [{ id: 'edit-quest-id', leeren: () => clearQuestForm, fenster: 'quest-modal' }],
+    encounters: [{ id: 'edit-enc-id', leeren: () => cancelEncEdit }],
+    loot: [{ id: 'edit-loot-id', leeren: () => clearLootForm, fenster: 'loot-modal' }],
+    spells: [{ id: 'edit-spell-id', leeren: () => clearSpellForm, fenster: 'spell-modal' }],
+    wiki: [{ id: 'edit-wiki-id', leeren: () => hideWikiForm }],
+    links: [{ id: 'edit-link-id', leeren: () => cancelLinkEdit }],
+    sessionPreps: [{ id: 'prep-edit-id', leeren: null, fenster: 'session-prep-modal' }],
+    calendarEvents: [],
+    factions: [{ id: 'edit-fraktion-id', leeren: null, fenster: 'fraktionen-modal' }]
+});
+
+/**
+ * R7: verwirft jedes Bearbeiten des Typs — offen oder liegengeblieben — nach dem ERSETZEN.
+ * Nur ein Formular MIT Bearbeiten-ID: ein Anlege-Entwurf ist Arbeit des Nutzers und legt beim
+ * Speichern ohnehin einen neuen Eintrag an (ABBRUCH R2). Beim Hinzufuegen bleibt jeder
+ * vorhandene Eintrag unter seiner ID stehen, und keine neue ID kann einer liegengebliebenen
+ * gleichen (nextId() vergibt geloeschte IDs nicht neu) — dort wuerde Leeren nur Eingaben
+ * wegwerfen. Die ID wird in jedem Fall geloescht, auch wenn die Leeren-Funktion fehlt
+ * (Einzeltest) oder scheitert: ohne ID legt "Speichern" neu an, statt zu ueberschreiben.
+ * @param {string} typ
+ */
+function reiterBearbeitenVerwerfen(typ) {
+    const formulare = Object.prototype.hasOwnProperty.call(REITER_BEARBEITEN, typ)
+        ? REITER_BEARBEITEN[typ]
+        : [];
+    for (const formular of formulare) {
+        // getElementById statt $(): ein Formular, das noch nie offen war (Session-Prep baut
+        // seins erst beim Oeffnen), ist kein Fehler
+        const feld = /** @type {HTMLInputElement|null} */ (document.getElementById(formular.id));
+        if (!feld || !feld.value) continue;
+        let leeren = null;
+        try {
+            leeren = formular.leeren ? formular.leeren() : null;
+        } catch {
+            // Modul nicht geladen (Einzeltest) — die ID wird unten trotzdem geloescht.
+        }
+        try {
+            if (typeof leeren === 'function') leeren();
+        } catch (err) {
+            if (window.ErrorHandler) window.ErrorHandler.log('Import', err, 'Formular leeren');
+        }
+        feld.value = '';
+        const fenster = formular.fenster ? document.getElementById(formular.fenster) : null;
+        if (fenster && fenster.classList.contains('show')) hideModal(formular.fenster);
+    }
+}
+
+/**
  * "Importieren" im Fenster: schreibt die vorbereitete Datei und meldet den Erfolg erst danach,
  * mit deutschem Typnamen im richtigen Numerus (R2).
  * @param {string} [dataType] - nur zur Gegenprobe: weicht er vom vorbereiteten Typ ab, wird
@@ -1712,6 +1775,8 @@ function executeImport(dataType) {
     }
     // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
     _reiterImport = null;
+    // R7: nach dem Ersetzen gehoert eine Bearbeiten-ID womoeglich einem ANDEREN Eintrag
+    if (mode === 'replace') reiterBearbeitenVerwerfen(type);
     save();
     renderAll();
     updateIOCounts();
