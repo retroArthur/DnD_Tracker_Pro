@@ -170,6 +170,20 @@ function renderTagsBar(tags) {
         ${tags.map(t => `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')} clickable" data-action="show-entities-with-tag-stop" data-value="${esc(t.name)}" title="Alle mit Tag '${esc(t.name)}' anzeigen">${esc(t.name)}</span>`).join('')}
     </div>`;
 }
+/**
+ * Der Anzeigetext eines Tags, in beiden Formen, die in D stehen (Vertrag NPC-NAME, E4): 🏷️
+ * schreibt `{name, color}` (addTagToEntity()), Altdaten und Importe tragen auch Text. EIN Leser
+ * fuer beide — `esc(t)` zeigte das Objekt im NPC-Detail als "[object Object]" (seit 254ff3b2),
+ * `t.name || t` im Ort-Detail das Objekt, wenn sein Name fehlte. Ein Name als Zahl oder
+ * Wahrheitswert wird Text, alles andere ''. Liest nur — die Tags selbst bleiben, wie sie sind
+ * (keine Umwandlung an der Grenze: Truhe, Wiki und Notizen fuehren Text-Tags regulaer).
+ */
+function tagText(tag) {
+    const name = tag && typeof tag === 'object' ? tag.name : tag;
+    if (typeof name === 'string') return name;
+    if (typeof name === 'number' || typeof name === 'boolean') return String(name);
+    return '';
+}
 // Zeigt alle Entities mit einem bestimmten Tag
 // Verwendet ENTITY_ICONS aus core/constants.js
 function showEntitiesWithTag(tagName) {
@@ -249,4 +263,7 @@ function showEntitiesWithTag(tagName) {
     const showModal = window.showModal;
     if (showModal) showModal('tag-search-modal');
 }
+// tagText() hat zwei Verbraucher in anderen Modulen: showNPCDetail()
+// (features/npcs/npc-render.js) und showLocationDetail() (features/locations/locations-render.js).
+window.tagText = tagText;
 // ============================================================
