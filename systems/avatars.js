@@ -20,11 +20,9 @@ function validateAvatarURL(url) {
     if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
         return false;
     }
-    // SENKEN R3 (Bildquellen, wie sichereBildquelle): kein protokoll-relativer Anfang aus zwei
-    // `/` oder `\` — unter file:// wird `//host/share` zu `file://host/share` (UNC-Pfad)
-    if (/^[/\\]{2}/.test(strippedForProtocolCheck)) return false;
     // SENKEN Nachbesserung (16): gespeichert wird nur, was die Anzeige zeigt. sichereBildquelle()
-    // sperrt auch relative Pfade mit doppeltem, kodiertem Trenner (`/%5C%5Chost/x.png` laedt
+    // sperrt protokoll-relative Anfaenge (`//host/share` wird unter file:// zu einem UNC-Pfad) und
+    // relative Pfade mit doppeltem, kodiertem Trenner (`/%5C%5Chost/x.png` laedt
     // Firefox als `\\host\x.png`) und relative Werte, die mit `?`/`#` beginnen; vorher
     // speicherte das Bild-Modal sie, und die Karte zeigte danach den Platzhalter. Die Sperre von
     // `file:` oben bleibt (Offen (15), eine eigene Nutzerentscheidung).
