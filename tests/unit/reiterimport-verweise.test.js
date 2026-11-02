@@ -15,8 +15,8 @@
  *     Ziels, ein Verweis ohne eindeutiges Ziel in der Datei ist geleert, und die Originale sind
  *     unveraendert. Das Soll je Typ steht hier als Literal, nicht aus dem Katalog berechnet.
  *   - R5/R6 Vorschau: was sie nennt, ist genau, was das Schreiben tut.
- *   - R7: Ersetzen verwirft ein Bearbeiten des Typs; Hinzufuegen und ein Anlege-Entwurf ohne ID
- *     bleiben unberuehrt.
+ *   - R7: Ersetzen verwirft ein Bearbeiten des Typs; Hinzufuegen nur eines, dessen ID neu
+ *     vergeben wurde (sonst bleibt es stehen); ein Anlege-Entwurf ohne ID bleibt unberuehrt.
  *   - R8: updateIOCounts() kennt die drei Welt-Reiter (bei aktiver Suche schreibt die Liste),
  *     renderAll() zeichnet den offenen Welt-Reiter neu (features/render-dashboard.js).
  */
@@ -705,7 +705,7 @@ describe('REITERIMPORT R6 — die Vorschau beim Ersetzen nennt die Verweise ande
 // R7 — OFFENE UND LIEGENGEBLIEBENE FORMULARE
 // ===========================================================================
 
-describe('REITERIMPORT R7 — ein Bearbeiten des Typs wird beim Ersetzen verworfen', () => {
+describe('REITERIMPORT R7 — ein Bearbeiten, dessen ID danach einem importierten Eintrag gehoert, wird verworfen', () => {
     function formulare() {
         document.body.insertAdjacentHTML(
             'beforeend',
@@ -807,6 +807,30 @@ describe('REITERIMPORT R7 — ein Bearbeiten des Typs wird beim Ersetzen verworf
         document.querySelector('input[name="import-mode"][value="replace"]').checked = true;
         seite.ctx.executeImport();
         expect(seite.ctx.clearNPCForm).not.toHaveBeenCalled();
+    });
+
+    test('F6: Hinzufuegen — gleicht die liegengebliebene ID einer NEU vergebenen, wird das Bearbeiten verworfen', async () => {
+        // Die liegengebliebene ID gehoerte einem geloeschten Eintrag; ohne Zaehler (Kampagne ohne
+        // `_nextId`) vergibt nextId() sie wieder — hier die Attrappe: die erste neue ID ist 101.
+        // Ohne Verwerfen schriebe "Speichern" Thorins Formular ueber die importierte Mira.
+        formulare();
+        document.getElementById('edit-char-id').value = '101';
+        const seite = erzeugeSeite({ characters: [{ id: 1, name: 'Thorin' }] });
+        attrappen(seite);
+        seite.ctx.importData(
+            reiterfeld('characters', datei('characters', [{ id: 1, name: 'Mira' }]))
+        );
+        await ruhe();
+        seite.ctx.executeImport();
+        expect(plain(seite.ctx.D.characters)).toEqual([
+            { id: 1, name: 'Thorin' },
+            { id: 101, name: 'Mira' }
+        ]);
+        expect(seite.ctx.cancelCharEdit).toHaveBeenCalledTimes(1);
+        expect(document.getElementById('edit-char-id').value).toBe('');
+        expect(document.getElementById('char-form').classList.contains('open')).toBe(false);
+        // Nur der importierte Typ: die Quest-ID bleibt
+        expect(document.getElementById('edit-quest-id').value).toBe('1');
     });
 });
 
