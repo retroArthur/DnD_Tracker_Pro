@@ -1808,6 +1808,20 @@ function updateIOCounts() {
     for (const [view, count] of Object.entries(counts)) {
         setViewCount(view, count);
     }
+    // Die drei Welt-Reiter (REITERIMPORT R8): ohne sie blieben ihre Zaehler nach einem Import,
+    // Strg+Z oder Strg+Y stehen, bis man den Reiter wechselte (gemessen). Bei aktiver Suche
+    // zeigt ihr Zaehler das GEFILTERTE Ergebnis (F-09) — das schreibt dann ihre Liste selbst
+    // (renderAll() zeichnet den offenen Welt-Reiter neu), hier also nur ohne Suche.
+    const welt = [
+        ['sessionprep', D.sessionPreps, 'sessionprep-search'],
+        ['kalender', D.calendar?.events, 'kalender-search'],
+        ['fraktionen', D.factions, 'fraktionen-search']
+    ];
+    for (const [view, liste, suchfeld] of welt) {
+        const suche = /** @type {HTMLInputElement|null} */ (document.getElementById(suchfeld));
+        if (suche && String(suche.value || '').trim() !== '') continue;
+        setViewCount(view, Array.isArray(liste) ? liste.length : 0);
+    }
     // Encounter-Runde aktualisieren
     const roundEl = $('encounter-round-num');
     if (roundEl) roundEl.textContent = String(D.initiative?.round || 1);
