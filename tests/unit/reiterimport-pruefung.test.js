@@ -565,3 +565,39 @@ describe('REITERIMPORT R4 — der ganze Eintrag hin und zurueck', () => {
         ]);
     });
 });
+
+describe('REITERIMPORT — der neue Eingang erreicht die Datengrenze (SENKEN R4)', () => {
+    // Die Verdrahtung (importData -> bereinigeDatengrenze, Ergebnis verwendet) prueft
+    // tests/unit/datengrenze.test.js im Aufrufgraph. Hier die Wirkung am echten Weg: was die
+    // Grenze an jedem anderen Eingang tut, tut sie auch hier — auch in einer verschachtelten
+    // Sammlung (Kalender-Ereignisse liegen unter calendar.events).
+    test('G1: toString/valueOf fallen weg, ein Objekt in category/type wird leer, in jeder Tiefe', async () => {
+        const { bereit } = await angenommen(
+            'quests',
+            datei('quests', [
+                {
+                    id: 1,
+                    title: 'Q',
+                    toString: 'x',
+                    type: { a: 1 },
+                    tags: [{ name: 't', color: '#ffffff', valueOf: 2 }]
+                }
+            ])
+        );
+        expect(plain(bereit.items)).toEqual([
+            { id: 1, title: 'Q', type: '', tags: [{ name: 't', color: '#ffffff' }] }
+        ]);
+    });
+
+    test('G2: Kalender-Ereignisse: Zahltext im Datum wird Zahl, die Grenze greift unter calendar.events', async () => {
+        const { bereit } = await angenommen(
+            'calendarEvents',
+            datei('calendarEvents', [
+                { id: '3', titel: 'T', datum: { tag: '4', monat: 2, jahr: '1492' }, valueOf: 1 }
+            ])
+        );
+        expect(plain(bereit.items)).toEqual([
+            { id: 3, titel: 'T', datum: { tag: 4, monat: 2, jahr: 1492 } }
+        ]);
+    });
+});
