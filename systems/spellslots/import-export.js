@@ -1700,16 +1700,24 @@ const REITER_BEARBEITEN = Object.freeze({
 });
 
 /**
- * R7: verwirft jedes Bearbeiten des Typs — offen oder liegengeblieben — nach dem ERSETZEN.
+ * R7: verwirft ein Bearbeiten des Typs — offen oder liegengeblieben —, dessen ID nach dem
+ * Import einem importierten Eintrag gehoert. Nach dem ERSETZEN ist das jedes (`neueIds` fehlt):
+ * jede ID kann jetzt einem anderen Eintrag gehoeren. Nach dem HINZUFUEGEN nur eines, dessen ID
+ * unter den neu vergebenen steht (`neueIds`): jeder vorhandene Eintrag bleibt unter seiner ID,
+ * ein Bearbeiten daran ueberschreibt beim Speichern keinen importierten Eintrag, und Leeren
+ * wuerde nur Eingaben wegwerfen. Getroffen werden kann dort nur die liegengebliebene ID eines
+ * geloeschten Eintrags (deleteChar() leert das Party-Klappformular nicht), die nextId() wieder
+ * vergibt: ohne Zaehler fuer den Typ (core/data.js legt `_nextId` leer an) ist max(ID) + 1 die
+ * ID eines geloeschten hoechsten Eintrags. Darum wird die ID selbst verglichen, statt sich auf
+ * eine Annahme ueber nextId() zu verlassen.
  * Nur ein Formular MIT Bearbeiten-ID: ein Anlege-Entwurf ist Arbeit des Nutzers und legt beim
- * Speichern ohnehin einen neuen Eintrag an (ABBRUCH R2). Beim Hinzufuegen bleibt jeder
- * vorhandene Eintrag unter seiner ID stehen, und keine neue ID kann einer liegengebliebenen
- * gleichen (nextId() vergibt geloeschte IDs nicht neu) — dort wuerde Leeren nur Eingaben
- * wegwerfen. Die ID wird in jedem Fall geloescht, auch wenn die Leeren-Funktion fehlt
- * (Einzeltest) oder scheitert: ohne ID legt "Speichern" neu an, statt zu ueberschreiben.
+ * Speichern ohnehin einen neuen Eintrag an (ABBRUCH R2). Die ID wird in jedem Fall geloescht,
+ * auch wenn die Leeren-Funktion fehlt (Einzeltest) oder scheitert: ohne ID legt "Speichern" neu
+ * an, statt zu ueberschreiben.
  * @param {string} typ
+ * @param {Set<number>} [neueIds] - nur beim Hinzufuegen: die IDs der importierten Eintraege
  */
-function reiterBearbeitenVerwerfen(typ) {
+function reiterBearbeitenVerwerfen(typ, neueIds) {
     const formulare = Object.prototype.hasOwnProperty.call(REITER_BEARBEITEN, typ)
         ? REITER_BEARBEITEN[typ]
         : [];
@@ -1718,6 +1726,10 @@ function reiterBearbeitenVerwerfen(typ) {
         // seins erst beim Oeffnen), ist kein Fehler
         const feld = /** @type {HTMLInputElement|null} */ (document.getElementById(formular.id));
         if (!feld || !feld.value) continue;
+        if (neueIds) {
+            const id = reiterIdZahl(feld.value);
+            if (id === null || !neueIds.has(id)) continue;
+        }
         let leeren = null;
         try {
             leeren = formular.leeren ? formular.leeren() : null;
@@ -1760,6 +1772,8 @@ function executeImport(dataType) {
     const name = reiterTypName(type, items.length);
     const renderAll = window.renderAll;
     saveUndoState(`${items.length} ${name} importiert`);
+    /** @type {Set<number>|undefined} */
+    let neueIds;
     // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
     // deshalb ohne await; die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10).
     if (mode === 'replace') {
@@ -1771,12 +1785,16 @@ function executeImport(dataType) {
         // Merge (R5): neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
         // Sammlungen wie calendarEvents — R03: die hier frueher aufgerufene Funktion gab es
         // nicht); Verweise innerhalb des Typs auf die neuen IDs, alle anderen geleert
-        ioSetArray(type, [...(ioGetArray(type) || []), ...reiterHinzufuegen(type, items)]);
+        const neu = reiterHinzufuegen(type, items);
+        neueIds = new Set(neu.map(item => item.id));
+        ioSetArray(type, [...(ioGetArray(type) || []), ...neu]);
     }
     // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
     _reiterImport = null;
-    // R7: nach dem Ersetzen gehoert eine Bearbeiten-ID womoeglich einem ANDEREN Eintrag
-    if (mode === 'replace') reiterBearbeitenVerwerfen(type);
+    // R7: kein spaeteres Speichern ueberschreibt einen importierten Eintrag — nach dem Ersetzen
+    // kann jede Bearbeiten-ID einem ANDEREN Eintrag gehoeren, nach dem Hinzufuegen nur eine neu
+    // vergebene
+    reiterBearbeitenVerwerfen(type, neueIds);
     save();
     renderAll();
     updateIOCounts();
