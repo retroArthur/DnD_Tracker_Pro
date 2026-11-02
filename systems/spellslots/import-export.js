@@ -1025,11 +1025,13 @@ const REITER_WEITERE_BEREICHE = Object.freeze({
 });
 
 /**
- * Wo eine Sammlung liegt, die nicht direkt unter D steht (wie IO_DATA_PATH).
+ * Wo eine Sammlung liegt, die nicht direkt unter D steht: die Pfade der Reiter-Typen
+ * (IO_DATA_PATH — EINE Quelle, ein neuer verschachtelter Typ ist hier sofort Quelle fuer R6)
+ * und dazu die Initiative, die keinen Reiter-Import hat.
  * @type {Readonly<Record<string, string[]>>}
  */
 const REITER_VERWEIS_PFADE = Object.freeze({
-    calendarEvents: ['calendar', 'events'],
+    ...IO_DATA_PATH,
     initiative: ['initiative', 'combatants']
 });
 
