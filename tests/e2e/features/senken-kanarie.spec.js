@@ -2167,8 +2167,11 @@ test('Regression: Linkliste meldet nicht anklickbare Ziele, das Linkmenue oeffne
 }) => {
     test.setTimeout(60000);
     const k = legitimeKampagne();
+    // `/%5C%5Clocalhost/…`: kodierte Trenner, Firefox oeffnet das beim Klick als UNC
+    // (Nachbesserung (16)); die Bereinigung laesst es wie `//localhost` nicht als href stehen
     k.npcs[0].description =
-        '<p><a href="./karte.pdf">Karte</a> und <a href="//localhost/unc">UNC</a></p>';
+        '<p><a href="./karte.pdf">Karte</a> und <a href="//localhost/unc">UNC</a> und ' +
+        '<a href="/%5C%5Clocalhost/kodiert">Kodiert</a></p>';
     const ctx = await eingangSpielen(page, 'start', { daten: k, index: null });
     expect(ctx.luecken).toEqual([]);
     const meldungen = () => page.evaluate(() => window.getCombatLog().map(e => String(e.text)));
@@ -2227,7 +2230,12 @@ test('Regression: Linkliste meldet nicht anklickbare Ziele, das Linkmenue oeffne
     const geoeffnet = await page.evaluate(() => window.__geoeffnet);
     expect(geoeffnet).toHaveLength(1);
     expect(geoeffnet[0]).toMatch(/^file:\/\/\/.*\/karte\.pdf$/);
-    // das protokoll-relative Ziel hat die Bereinigung gar nicht erst als href stehen lassen
+    // das protokoll-relative Ziel hat die Bereinigung gar nicht erst als href stehen lassen,
+    // das mit kodierten Trennern ebenso wenig
     await expect(page.locator('#npc-desc a', { hasText: 'UNC' })).not.toHaveAttribute('href', /.+/);
+    await expect(page.locator('#npc-desc a', { hasText: 'Kodiert' })).not.toHaveAttribute(
+        'href',
+        /.+/
+    );
     expect([...new Set(ctx.fehler)]).toEqual([]);
 });

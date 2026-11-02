@@ -59,6 +59,14 @@
  *      setzte `/%5C%5Chost/x.png` hinter `file://` und lud `\\host\x.png`.
  *      Die Leseregel des Browsers (fuehrende Zeichen, Tab/Zeilenumbruch) steht
  *      fuer alle R3-Hilfen einmal, in `wieBrowserGelesen()`.
+ *   R3 `istRelativerLink(url)` -> wahr/falsch (Nachbesserung (16)): relatives
+ *      Linkziel im Rich-Text, EINE Pruefung fuer `sanitizeHTML()` (beide
+ *      Kopien), `isAllowedEditorHref()` und `markdownLinkZiel()`. Erlaubt ist,
+ *      was der Editor anlegt: ein Anker `#…` und ein Pfad ab `./` oder `/`
+ *      ohne Netzwerkanteil nach `istLokalerPfad()` — derselbe Kern wie fuer
+ *      relative Bildquellen. Die drei Stellen prueften vorher je fuer sich nur
+ *      einen rohen Anfang aus zwei `/` oder `\`; Firefox oeffnete
+ *      `/%5C%5Chost/x.pdf` beim Klick als `\\host\x.pdf`.
  *   R2 `sichereFarbe(wert, ersatz)`: nur `#rgb`/`#rrggbb`, sonst der feste
  *      Ersatz (der darf auch `var(--gold)` sein — er kommt aus dem Code).
  *   R2 `sichereKlasse(wert, erlaubteWerte, ersatz)`: nur ein Wert aus der
@@ -124,7 +132,12 @@
  * Bildquellen mit kodierten Trennern und die eine Leseregel (Nachbesserung (15)) waren
  * am Stand a80a23db rot: 44 Faelle, je Kopie 13 relative Werte mit (kodiert) doppeltem
  * Trenner, die als Bild durchkamen, und 9 Gestaltfaelle (weder wieBrowserGelesen() noch
- * istLokalerPfad(), die Leseregel dreimal abgeschrieben).
+ * istLokalerPfad(), die Leseregel dreimal abgeschrieben). Relative Linkziele im Rich-Text
+ * (Nachbesserung (16)) waren am Stand 1ed8a8a5 rot: 134 Faelle — je Kopie die fehlende Hilfe
+ * (istRelativerLink, 35 Faelle samt "alle Hilfen sind vorhanden") und 12 Ziele, die
+ * sanitizeHTML() stehen liess; 12 bzw. 13 Ziele, die isAllowedEditorHref() bzw.
+ * markdownLinkZiel() durchliessen, der Fund im Markdown-Export, und 14 Gestaltfaelle (6 im
+ * Block, 8 an den vier Linkstellen).
  */
 
 const fs = require('fs');
@@ -137,6 +150,7 @@ const HILFEN = [
     'sichererLink',
     'sichererListenLink',
     'sichereBildquelle',
+    'istRelativerLink',
     'sichereFarbe',
     'sichereKlasse',
     'bereinigeDatengrenze'
@@ -190,6 +204,21 @@ const geladen = new Map();
 function quelle(name) {
     if (!geladen.has(name)) geladen.set(name, QUELLEN.find(([n]) => n === name)[1]());
     return geladen.get(name);
+}
+/**
+ * Ziel und Text eines Links nach einer Bereinigung: das Markup entsteht per DOM (kein
+ * Zusammensetzen von Text), gelesen wird das erste `<a>` des Ergebnisses.
+ * @param {(html: string) => string} bereinige - sanitizeHTML() einer Kopie
+ * @param {string} ziel
+ * @returns {{href: string|null, text: string}}
+ */
+function hrefNachBereinigung(bereinige, ziel) {
+    const a = document.createElement('a');
+    a.setAttribute('href', ziel);
+    a.textContent = 'Karte';
+    const aus = new DOMParser().parseFromString(bereinige(a.outerHTML), 'text/html');
+    const link = aus.querySelector('a');
+    return { href: link ? link.getAttribute('href') : null, text: aus.body.textContent };
 }
 /** Liefert die Hilfe oder wirft mit klarer Meldung (heute: sie fehlt). */
 function brauche(quellName, hilfsName) {
@@ -351,6 +380,51 @@ const BILD_ERLAUBT = [
     'fi\tle:///C:/Bilder/held.png',
     'file:///home/x.png',
     ...DATEIPFAD_LOKAL
+];
+
+// R3 fuer relative Linkziele im Rich-Text — istRelativerLink, EINE Pruefung fuer sanitizeHTML()
+// (beide Kopien), isAllowedEditorHref() (Link-Eingabe und Linkmenue des Editors) und
+// markdownLinkZiel() (Markdown-Export), Nachbesserung (16). Dieselbe Luecke wie bei den
+// Bildquellen (15), nur mit Klick: die drei Stellen prueften nur einen rohen Anfang aus zwei
+// `/` oder `\`, und `<a href="/%5C%5Crechner/share/x.pdf">` blieb stehen. Firefox (148) unter
+// Windows setzt das Ziel beim Klick hinter `file://` und oeffnet `\\rechner\share\x.pdf` (UNC;
+// gemessen mit `\\127.0.0.1\C$`, Chromium bleibt auf dem Laufwerk). Erlaubt bleibt, was der
+// Editor selbst anlegt: ein Anker `#…` (ein Sprung im Dokument, er oeffnet nichts) und ein Pfad
+// ab `./` oder `/` ohne Netzwerkanteil nach demselben Kern wie eine relative Bildquelle
+// (istLokalerPfad); `?` und `#` hinter dem Pfad sind legitim. Die Listen gelten fuer alle drei
+// Stellen; ein Ziel ohne `./`, `/` oder `#` am Anfang legt der Editor nicht an und erlaubte
+// keine der Stellen je — daran aendert (16) nichts.
+const LINK_RELATIV_GESPERRT = [
+    // protokoll-relativ, roh (schon vorher gesperrt)
+    '//rechner/share/x.pdf',
+    '/\\rechner/share/x.pdf',
+    '/\t/rechner/x.pdf',
+    '  //rechner/x.pdf',
+    // kodierte Trenner (Nachbesserung (16)); `.`, `..` und `%2e%2e` loesen sich vor dem
+    // doppelten Trenner auf
+    '/%5C%5Crechner/x.pdf',
+    '/%5c%5crechner/x',
+    '/%5C/rechner/x',
+    '/./%5C%5Crechner/x.pdf',
+    '/x/../%5C%5Crechner',
+    '/%2e%2e/%5C%5Crechner',
+    '/%2F%2Frechner',
+    '/%5C%5Crechner/x.pdf?v=1',
+    '/%2e%2e/%5C%5Crechner?v=1',
+    '/%5C\t%5Crechner/x.pdf',
+    './%5C%5Crechner/x.pdf',
+    // der Fund aus der Pruefung
+    '/%5C%5Cneben.invalid/share/x.pdf'
+];
+const LINK_RELATIV_ERLAUBT = [
+    '#abschnitt',
+    '#kapitel-2',
+    './karte.pdf',
+    './abschnitt.html#a',
+    './karten/a%20b.pdf',
+    '/bilder/x',
+    '/bilder/x.png?v=1',
+    '/handbuch/abschnitt.html#a'
 ];
 
 // ============================================================
@@ -724,6 +798,45 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
         );
     });
 
+    describe('R3 istRelativerLink(url) — relatives Linkziel im Rich-Text (Nachbesserung (16))', () => {
+        test.each(LINK_RELATIV_GESPERRT.map(u => [JSON.stringify(u), u]))(
+            'gesperrt: %s',
+            (_n, url) => {
+                expect(brauche(quellName, 'istRelativerLink')(url)).toBe(false);
+            }
+        );
+        test.each(LINK_RELATIV_ERLAUBT.map(u => [u]))('erlaubt: %s', url => {
+            expect(brauche(quellName, 'istRelativerLink')(url)).toBe(true);
+        });
+        // absolute Ziele prueft der Aufrufer selbst (http(s) bzw. sichererLink())
+        test.each(
+            KEIN_TEXT.concat(['', '/', 'https://example.com/', 'mailto:dm@example.com']).map(w => [
+                JSON.stringify(w) ?? 'undefined',
+                w
+            ])
+        )('kein relatives Linkziel: %s', (_n, wert) => {
+            expect(brauche(quellName, 'istRelativerLink')(wert)).toBe(false);
+        });
+    });
+
+    describe('R3 sanitizeHTML(): ein relatives href nur nach istRelativerLink() (Nachbesserung (16))', () => {
+        test.each(LINK_RELATIV_GESPERRT.map(u => [JSON.stringify(u), u]))(
+            'das Ziel faellt weg, der Text bleibt: %s',
+            (_n, url) => {
+                expect(hrefNachBereinigung(brauche(quellName, 'sanitizeHTML'), url)).toEqual({
+                    href: null,
+                    text: 'Karte'
+                });
+            }
+        );
+        test.each(LINK_RELATIV_ERLAUBT.map(u => [u]))('das Ziel bleibt: %s', url => {
+            expect(hrefNachBereinigung(brauche(quellName, 'sanitizeHTML'), url)).toEqual({
+                href: url,
+                text: 'Karte'
+            });
+        });
+    });
+
     describe('R2 sichereFarbe(wert, ersatz) — nur #rgb/#rrggbb', () => {
         const ERSATZ = '#d4af37';
         test.each(FARBE_ERLAUBT.map(f => [f]))('bleibt: %s', farbe => {
@@ -952,8 +1065,9 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
 //   - jedes `file:`-Literal in `istLokalerDateipfad()`; sichererListenLink und sichereBildquelle
 //     rufen sie;
 //   - die Lesung der Trenner (`\`, `%2F`, `%5C` als `/`) samt Sperre des Netzwerkanteils genau
-//     einmal, in `istLokalerPfad()`; istLokalerDateipfad (Pfad hinter `file://`) und
-//     sichereBildquelle (relativer Wert) rufen ihn.
+//     einmal, in `istLokalerPfad()`; istLokalerDateipfad (Pfad hinter `file://`),
+//     sichereBildquelle (relativer Wert) und istRelativerLink (relatives Linkziel im Rich-Text,
+//     Nachbesserung (16)) rufen ihn.
 // Gezaehlt werden Literale (Zeichenkette oder Regex), Eigenschaftszugriffe und Aufrufe im Code
 // des Blocks; Kommentare zaehlen nicht. Der Block ist in beiden Kopien zeichengleich
 // (sanitizer-parity.test.js (c)), gelesen wird er hier trotzdem aus beiden.
@@ -1000,7 +1114,7 @@ describe.each(QUELLEN.map(([n]) => [n]))('R3 eine Leseregel, ein Pruefkern — %
         return namen;
     }
 
-    test.each(['wieBrowserGelesen', 'istLokalerDateipfad', 'istLokalerPfad'])(
+    test.each(['wieBrowserGelesen', 'istLokalerDateipfad', 'istLokalerPfad', 'istRelativerLink'])(
         '%s() steht im Block',
         name => {
             expect(funktionen.has(name)).toBe(true);
@@ -1014,7 +1128,7 @@ describe.each(QUELLEN.map(([n]) => [n]))('R3 eine Leseregel, ein Pruefkern — %
         expect(fundorte(leseregel)).toEqual(['wieBrowserGelesen']);
     });
 
-    test.each(['sichererLink', 'istLokalerDateipfad', 'sichereBildquelle'])(
+    test.each(['sichererLink', 'istLokalerDateipfad', 'sichereBildquelle', 'istRelativerLink'])(
         '%s ruft wieBrowserGelesen()',
         name => {
             expect(funktionen.has(name)).toBe(true);
@@ -1038,9 +1152,122 @@ describe.each(QUELLEN.map(([n]) => [n]))('R3 eine Leseregel, ein Pruefkern — %
         expect(fundorte(literal(/%2f|%5c/i))).toEqual(['istLokalerPfad']);
     });
 
-    test.each(['istLokalerDateipfad', 'sichereBildquelle'])('%s ruft istLokalerPfad()', name => {
-        expect(funktionen.has(name)).toBe(true);
-        expect(aufrufe(name)).toContain('istLokalerPfad');
+    test.each(['istLokalerDateipfad', 'sichereBildquelle', 'istRelativerLink'])(
+        '%s ruft istLokalerPfad()',
+        name => {
+            expect(funktionen.has(name)).toBe(true);
+            expect(aufrufe(name)).toContain('istLokalerPfad');
+        }
+    );
+});
+
+// ============================================================
+// R3 — relative Linkziele: die drei Stellen fragen EINEN Kern (Nachbesserung (16))
+// ============================================================
+// sanitizeHTML() (beide Kopien, Faelle oben je Kopie), isAllowedEditorHref() (Link-Eingabe der
+// schwebenden Leiste, "Oeffnen" und "Bearbeiten" im Linkmenue) und markdownLinkZiel()
+// (Markdown-Export) prueften je fuer sich einen rohen Anfang aus zwei `/` oder `\` — drei
+// Abschriften, keine kannte kodierte Trenner. Jetzt fragt jede istRelativerLink(): hier das
+// Verhalten der beiden Editor-Module an denselben Listen, darunter die Gestalt aller vier
+// Stellen (kein eigenes Literal fuer Trenner, Leseregel oder Praefix — sonst laeuft die naechste
+// Abschrift wieder auseinander). Die Module laden in einen vm-Kontext mit dem echten
+// Datengrenzen-Block (tests/unit/helpers/datengrenze-block.js), wie in der App ueber loader.js.
+describe('R3 relative Linkziele — Editor und Markdown-Export (Nachbesserung (16))', () => {
+    const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
+    /** Laedt ein Editor-Modul samt Datengrenzen-Block in einen eigenen vm-Kontext. */
+    function ladeModul(rel) {
+        const context = { window: {}, document, DOMParser, Node, console };
+        vm.createContext(context);
+        ladeDatengrenze(context);
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '../..', rel), 'utf8'), context, {
+            filename: rel
+        });
+        return context;
+    }
+    const editor = ladeModul('ui/editors/rich-text.js');
+    const markdown = ladeModul('ui/editors/markdown-converter.js');
+
+    test.each(LINK_RELATIV_GESPERRT.map(u => [JSON.stringify(u), u]))(
+        'isAllowedEditorHref() verweigert: %s',
+        (_n, url) => {
+            expect(editor.isAllowedEditorHref(url)).toBe(false);
+        }
+    );
+    test.each(LINK_RELATIV_ERLAUBT.map(u => [u]))('isAllowedEditorHref() nimmt: %s', url => {
+        expect(editor.isAllowedEditorHref(url)).toBe(true);
+    });
+    test.each(LINK_RELATIV_GESPERRT.map(u => [JSON.stringify(u), u]))(
+        'markdownLinkZiel() schreibt kein Ziel: %s',
+        (_n, url) => {
+            expect(markdown.markdownLinkZiel(url)).toBe('');
+        }
+    );
+    test.each(LINK_RELATIV_ERLAUBT.map(u => [u]))('markdownLinkZiel() behaelt: %s', url => {
+        expect(markdown.markdownLinkZiel(url)).toBe(url);
+    });
+    test('htmlToMarkdown(): der Fund aus der Pruefung wird nur Text', () => {
+        const html = '<p><a href="/%5C%5Cneben.invalid/share/x.pdf">Karte</a></p>';
+        expect(markdown.htmlToMarkdown(html).trim()).toBe('Karte');
+    });
+    test('http(s) bleibt in beiden erlaubt, mailto nur im Markdown-Export (wie vorher)', () => {
+        expect(editor.isAllowedEditorHref('https://example.com/x')).toBe(true);
+        expect(editor.isAllowedEditorHref('mailto:dm@example.com')).toBe(false);
+        expect(markdown.markdownLinkZiel('https://example.com/x')).toBe('https://example.com/x');
+        expect(markdown.markdownLinkZiel('mailto:dm@example.com')).toBe('mailto:dm@example.com');
+    });
+});
+
+const LINK_STELLEN = [
+    ['utils/basic.js', 'sanitizeHTML'],
+    ['utils/testable-utils.js', 'sanitizeHTML'],
+    ['ui/editors/rich-text.js', 'isAllowedEditorHref'],
+    ['ui/editors/markdown-converter.js', 'markdownLinkZiel']
+];
+describe.each(LINK_STELLEN)('R3 Gestalt — %s: %s()', (datei, name) => {
+    let funktion;
+    beforeAll(() => {
+        const text = fs.readFileSync(path.join(__dirname, '../..', datei), 'utf8');
+        const ast = acorn.parse(text, { ecmaVersion: 'latest' });
+        funktion = ast.body.find(n => n.type === 'FunctionDeclaration' && n.id.name === name);
+    });
+    /** Alle Knoten unter `knoten`, auf die `trifft` passt. */
+    function knoten(wurzel, trifft) {
+        const treffer = [];
+        (function besuche(k) {
+            if (trifft(k)) treffer.push(k);
+            for (const s of Object.keys(k)) {
+                for (const x of Array.isArray(k[s]) ? k[s] : [k[s]]) {
+                    if (x && typeof x.type === 'string') besuche(x);
+                }
+            }
+        })(wurzel);
+        return treffer;
+    }
+
+    test('ruft istRelativerLink()', () => {
+        expect(funktion).toBeDefined();
+        const aufrufe = knoten(
+            funktion,
+            n =>
+                n.type === 'CallExpression' &&
+                n.callee.type === 'Identifier' &&
+                n.callee.name === 'istRelativerLink'
+        );
+        expect(aufrufe.length).toBeGreaterThan(0);
+    });
+
+    test('liest keine Trenner, keine Leseregel und kein relatives Praefix selbst', () => {
+        const eigen = knoten(funktion, n => {
+            if (n.type !== 'Literal') return false;
+            const text = n.regex ? n.regex.pattern : String(n.value);
+            return (
+                text.includes('[/\\\\]') ||
+                /%2f|%5c/i.test(text) ||
+                /\\[tnr]|[\t\n\r]/.test(text) ||
+                ['/', './', '#'].includes(text)
+            );
+        }).map(n => (n.regex ? `/${n.regex.pattern}/` : JSON.stringify(n.value)));
+        expect(eigen).toEqual([]);
     });
 });
 

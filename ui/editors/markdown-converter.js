@@ -49,16 +49,17 @@ function markdownText(text) {
 
 /**
  * Linkziel aus Daten fuer `[text](ziel)` (SENKEN R3): http/https/mailto (sichererLink) oder
- * ein relatives Ziel, wie der Editor es anlegt (`#…`, `./…`, `/…` — nicht `//`, das waere
- * protokoll-relativ). Sonst '' (der Aufrufer schreibt dann nur den Text). Leerraum, `<`, `>`,
- * `"` und Klammern prozentkodiert: sonst endet das Ziel vorzeitig, und der Rest stuende als
- * Text — samt Markup — in der Datei.
+ * ein relatives Ziel, wie der Editor es anlegt (`#…`, `./…`, `/…`), nach istRelativerLink() —
+ * derselbe Pruefkern wie sanitizeHTML() und der Editor: kein doppelter, auch kodierter Trenner
+ * (`//host`, `/%5C%5Chost`), unter file:// ein UNC-Pfad (Nachbesserung (16)). Sonst '' (der
+ * Aufrufer schreibt dann nur den Text). Leerraum, `<`, `>`, `"` und Klammern prozentkodiert:
+ * sonst endet das Ziel vorzeitig, und der Rest stuende als Text — samt Markup — in der Datei.
  * @param {*} href
  * @returns {string}
  */
 function markdownLinkZiel(href) {
     const ziel = String(href ?? '').trim();
-    if (!sichererLink(ziel) && !/^(?:#|\.\/|\/(?![/\\]))/.test(ziel)) return '';
+    if (!sichererLink(ziel) && !istRelativerLink(ziel)) return '';
     return ziel.replace(/[\s<>"()]/g, z =>
         z === '(' ? '%28' : z === ')' ? '%29' : encodeURIComponent(z)
     );

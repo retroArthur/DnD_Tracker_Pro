@@ -379,6 +379,28 @@ describe('Security: sanitizeHTML XSS Prevention', () => {
             }
         );
 
+        // SENKEN Nachbesserung (16): ein doppelter Trenner, auch kodiert (`%5C`, `%2F`) und hinter
+        // `.`/`..` — Firefox setzt `/%5C%5Chost/share` beim Klick hinter file:// und oeffnet
+        // `\\host\share` (UNC). Derselbe Pruefkern wie fuer Bildquellen (istRelativerLink();
+        // Faelle fuer alle drei Linkstellen in tests/unit/datengrenze.test.js).
+        test.each([
+            '/%5C%5Chost/share/x.pdf',
+            '/%5c%5chost/share',
+            '/x/../%5C%5Chost/share',
+            '/%2F%2Fhost/share?v=1'
+        ])('blockiert Links mit kodiertem doppeltem Trenner: %j', ziel => {
+            const clean = sanitizeHTML(`<a href="${ziel}">Link</a>`);
+            expect(clean).not.toContain('href=');
+            expect(clean).toContain('Link');
+        });
+
+        test.each(['./karte.pdf', './abschnitt.html#a', '/bilder/x.png?v=1'])(
+            'erlaubt relative Ziele, wie der Editor sie anlegt: %j',
+            ziel => {
+                expect(sanitizeHTML(`<a href="${ziel}">Link</a>`)).toContain(`href="${ziel}"`);
+            }
+        );
+
         test('erlaubt Anker-Links', () => {
             const dirty = '<a href="#section">Link</a>';
             const clean = sanitizeHTML(dirty);

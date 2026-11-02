@@ -39,6 +39,12 @@ declare function sichererLink(url: unknown): string;
 declare function sichereBildquelle(url: unknown): string;
 /** Vertrag SENKEN R3, nur Linkliste: wie sichererLink, dazu lokale `file:///`-Pfade; Netzwerkpfade -> ''. */
 declare function sichererListenLink(url: unknown): string;
+/**
+ * Vertrag SENKEN R3: relatives Linkziel im Rich-Text (sanitizeHTML, Editor, Markdown-Export) —
+ * ein Anker `#…` oder ein Pfad ab `./` bzw. `/` ohne doppelten, auch kodierten Trenner; derselbe
+ * Pruefkern wie fuer relative Bildquellen.
+ */
+declare function istRelativerLink(url: unknown): boolean;
 /** Vertrag SENKEN R2: nur #rgb/#rrggbb, sonst der feste Ersatz aus dem Code. */
 declare function sichereFarbe(wert: unknown, ersatz: string): string;
 /** Vertrag SENKEN R2: nur ein Wert aus der Erlaubnisliste, sonst der feste Ersatz. */

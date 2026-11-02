@@ -80,15 +80,15 @@ function isAllowedEditorHref(url) {
     const lower = v.toLowerCase();
     const gefaehrlich = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
     if (gefaehrlich.some(proto => lower.startsWith(proto))) return false;
-    // wie sanitizeHTML(): kein protokoll-relatives `//host` (unter file:// ein UNC-Pfad, SENKEN R3)
-    const protokollRelativ = /^[/\\]{2}/.test(v.replace(/[\t\n\r]/g, ''));
-    return (
-        lower.startsWith('http://') ||
-        lower.startsWith('https://') ||
-        (v.startsWith('/') && !protokollRelativ) ||
-        v.startsWith('#') ||
-        v.startsWith('./')
-    );
+    // wie sanitizeHTML(): relative Ziele (`#…`, `./…`, `/…`) nur nach istRelativerLink()
+    // (Datengrenzen-Block, utils/basic.js) — kein doppelter, auch kodierter Trenner (`//host`,
+    // `/%5C%5Chost`): unter file:// ein UNC-Pfad, Firefox oeffnet ihn beim Klick. Derselbe
+    // Pruefkern wie fuer Bildquellen (SENKEN R3, Nachbesserung (16)), keine eigene Lesung der
+    // Trenner hier. Die Meldungen der Aufrufer ("Nur http(s)-, /-, #- oder ./-Adressen")
+    // stimmen damit weiter; ein Ziel mit doppeltem Trenner faellt unter dieselbe Meldung.
+    // Ein Ziel ohne `./`, `/` oder `#` am Anfang legt der Editor weiter nicht an (wie vorher).
+    if (lower.startsWith('http://') || lower.startsWith('https://')) return true;
+    return istRelativerLink(v);
 }
 window.isAllowedEditorHref = isAllowedEditorHref;
 function closestEditorAncestor(container, selector) {

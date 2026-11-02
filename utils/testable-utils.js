@@ -168,15 +168,13 @@ function sanitizeHTML(html) {
                     const href = attr.value.trim();
                     const hrefLower = href.toLowerCase();
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
-                    // kein protokoll-relatives `//host` (unter file:// ein UNC-Pfad, SENKEN R3)
-                    const protokollRelativ = /^[/\\]{2}/.test(href.replace(/[\t\n\r]/g, ''));
+                    // relativ nur nach istRelativerLink() (Datengrenzen-Block): kein doppelter,
+                    // auch kodierter Trenner — unter file:// ein UNC-Pfad (SENKEN R3, (16))
                     if (
                         isSafe &&
                         (hrefLower.startsWith('http://') ||
                             hrefLower.startsWith('https://') ||
-                            (href.startsWith('/') && !protokollRelativ) ||
-                            href.startsWith('#') ||
-                            href.startsWith('./'))
+                            istRelativerLink(href))
                     ) {
                         cleanElement.setAttribute('href', href);
                         cleanElement.setAttribute('target', '_blank');
@@ -488,9 +486,9 @@ function distributeXP(totalXP, activeChars) {
 // ============================================================
 /**
  * Leseregel des Browsers fuer einen Wert, der als URL gelesen wird — EINMAL fuer alle R3-Hilfen
- * (sichererLink, istLokalerDateipfad, sichereBildquelle); intern im Block, kein Export. Der
- * Browser entfernt fuehrende Leer- und Steuerzeichen (U+0000 bis U+0020) und streicht
- * Tabulator und Zeilenumbruch auch IM Text: "\tjava\nScRiPt:" ist fuer ihn javascript:,
+ * (sichererLink, istLokalerDateipfad, sichereBildquelle, istRelativerLink); intern im Block,
+ * kein Export. Der Browser entfernt fuehrende Leer- und Steuerzeichen (U+0000 bis U+0020) und
+ * streicht Tabulator und Zeilenumbruch auch IM Text: "\tjava\nScRiPt:" ist fuer ihn javascript:,
  * "fi\tle:///C:/x" eine lokale Datei. Gross/Klein bleibt stehen — das pruefen die Aufrufer.
  * @param {string} url - Wert aus Daten (Text)
  * @returns {string} der Wert, wie der Browser ihn liest
@@ -514,15 +512,17 @@ function sichererLink(url) {
     return /^(?:https?|mailto):/i.test(wieBrowserGelesen(url)) ? url : '';
 }
 /**
- * R3-Pruefkern fuer Pfade — EINE Pruefung fuer den Pfad hinter `file://` (istLokalerDateipfad)
- * und fuer relative Bildquellen (sichereBildquelle); intern im Block, kein Export. Wahr ist ein
- * Pfad mit hoechstens einem Trenner am Anfang, danach etwas anderes als `?`/`#`, und nirgends
- * zwei Trenner hintereinander. Trenner werden gelesen wie vom Browser: `\` wie `/`, und `%2F`/
- * `%5C` (Gross/Klein egal) ebenfalls, weil ein Teil der Browser sie beim Oeffnen einer Datei
+ * R3-Pruefkern fuer Pfade — EINE Pruefung fuer den Pfad hinter `file://` (istLokalerDateipfad),
+ * fuer relative Bildquellen (sichereBildquelle) und fuer relative Linkziele im Rich-Text
+ * (istRelativerLink, Nachbesserung (16)); intern im Block, kein Export. Wahr ist ein Pfad mit
+ * hoechstens einem Trenner am Anfang, danach etwas anderes als `?`/`#`, und nirgends zwei
+ * Trenner hintereinander. Trenner werden gelesen wie vom Browser: `\` wie `/`, und `%2F`/`%5C`
+ * (Gross/Klein egal) ebenfalls, weil ein Teil der Browser sie beim Oeffnen einer Datei
  * dekodiert. Ein doppelter Trenner, wo auch immer, ist unter Windows ein UNC-Pfad oder wird
  * einer: `.`/`..` (auch kodiert, `%2e%2e`) loesen sich vorher auf, `/x/..//rechner` wird
  * `//rechner`. Gemessen: Firefox setzt `/%5C%5Crechner/x.png` hinter `file://` und laedt
- * `\\rechner\x.png` (Nachbesserung (15), docs/bugfixes.md SENKEN).
+ * `\\rechner\x.png` (Nachbesserung (15), docs/bugfixes.md SENKEN) — und oeffnet ebenso
+ * `/%5C%5Crechner/x.pdf` als Linkziel beim Klick (Nachbesserung (16)).
  * @param {string} pfad - Pfad, wie der Browser ihn liest (wieBrowserGelesen())
  * @returns {boolean} ob der Pfad keinen Netzwerkanteil hat
  */
@@ -586,6 +586,26 @@ function sichereBildquelle(url) {
     if (!gelesen) return '';
     if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return istLokalerPfad(gelesen) ? url : '';
     return /^(?:https?:|data:image\/)/i.test(gelesen) || istLokalerDateipfad(url) ? url : '';
+}
+/**
+ * R3 fuer relative Linkziele im Rich-Text — EINE Pruefung fuer sanitizeHTML() (beide Kopien),
+ * isAllowedEditorHref() (Link-Eingabe und Linkmenue des Editors, ui/editors/rich-text.js) und
+ * markdownLinkZiel() (Markdown-Export, ui/editors/markdown-converter.js). Erlaubt ist, was der
+ * Editor selbst anlegt: ein Anker `#…` (ein Sprung im Dokument, er oeffnet nichts) und ein Pfad
+ * ab `./` oder `/` ohne Netzwerkanteil nach demselben Pruefkern wie eine relative Bildquelle
+ * (istLokalerPfad()) — `?` und `#` hinter dem Pfad bleiben erlaubt (`./abschnitt.html#a`,
+ * `/bilder/x.png?v=1`). Gesperrt ist jeder doppelte, auch kodierte Trenner: Firefox setzt
+ * `/%5C%5Crechner/x.pdf` beim Klick hinter `file://` und oeffnet `\\rechner\x.pdf` (UNC,
+ * Nachbesserung (16)). Gelesen wie der Browser (wieBrowserGelesen()). Absolute Ziele (http(s),
+ * mailto) prueft der Aufrufer selbst.
+ * @param {*} url - Linkziel aus Daten oder aus der Eingabe
+ * @returns {boolean} ob der Wert ein erlaubtes relatives Linkziel ist
+ */
+function istRelativerLink(url) {
+    if (typeof url !== 'string') return false;
+    const gelesen = wieBrowserGelesen(url);
+    if (gelesen.startsWith('#')) return true;
+    return /^\.?\//.test(gelesen) && istLokalerPfad(gelesen);
 }
 /**
  * R2: Farbwert aus Daten fuer `style`/Farbattribute: nur `#rgb` oder `#rrggbb`, sonst der
@@ -913,6 +933,7 @@ module.exports = {
     sichererLink,
     sichererListenLink,
     sichereBildquelle,
+    istRelativerLink,
     sichereFarbe,
     sichereKlasse,
     bereinigeDatengrenze,

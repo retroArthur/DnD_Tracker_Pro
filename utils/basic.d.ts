@@ -21,6 +21,12 @@ declare function bereinigeDatengrenze<T>(daten: T): T;
  * Trenner (`/%5C%5Chost`) -> '').
  */
 declare function sichereBildquelle(url: unknown): string;
+/**
+ * Vertrag SENKEN R3: relatives Linkziel im Rich-Text (sanitizeHTML, Editor, Markdown-Export) —
+ * ein Anker `#…` oder ein Pfad ab `./` bzw. `/` ohne doppelten, auch kodierten Trenner; derselbe
+ * Pruefkern wie fuer relative Bildquellen.
+ */
+declare function istRelativerLink(url: unknown): boolean;
 /** Vertrag SENKEN R1: bereinigtes Markup inert parsen, Knoten bearbeiten, Markup zurueck. */
 declare function bearbeiteMarkup(
     html: string,

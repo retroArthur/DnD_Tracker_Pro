@@ -475,8 +475,9 @@ function initContextToolbars() {
             // SENKEN R3: das Ziel kommt aus dem Inhalt (auch importiert). Geoeffnet wird, was
             // der Editor selbst anlegt (isAllowedEditorHref, gelesen am ROHEN Attribut — link.href
             // ist unter file:// immer file:///…): http(s) bzw. mailto in einem neuen Fenster,
-            // ein Anker `#…` als Sprung im Dokument, `./…` und `/…` (kein `//`) als aufgeloeste
-            // Adresse. Alles andere (javascript:, file:, //host) meldet nur.
+            // ein Anker `#…` als Sprung im Dokument, `./…` und `/…` als aufgeloeste Adresse — ohne
+            // doppelten, auch kodierten Trenner (istRelativerLink(), Nachbesserung (16)). Alles
+            // andere (javascript:, file:, //host, /%5C%5Chost) meldet nur.
             const roh = link.getAttribute('href') || '';
             const ziel = sichererLink(roh);
             if (ziel) window.open(ziel, '_blank', 'noopener,noreferrer');

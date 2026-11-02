@@ -951,6 +951,7 @@ export default {
     "isValidEntityId": 'readonly',
     "istLokalerDateipfad": 'readonly',
     "istLokalerPfad": 'readonly',
+    "istRelativerLink": 'readonly',
     "jahreszeitAusDatum": 'readonly',
     "knownBackupCampaignKeys": 'readonly',
     "kopfAufgeklappt": 'readonly',

@@ -483,6 +483,14 @@ describe('SENKEN: htmlToMarkdown() schreibt Text als Text und nur erlaubte Linkz
         ['data:', '<a href="data:text/html,x">Karte</a>', 'Karte'],
         ['file:', '<a href="file:///C:/x.pdf">Karte</a>', 'Karte'],
         ['protokoll-relativ', '<a href="//host/share">Karte</a>', 'Karte'],
+        // SENKEN (16): kodierter doppelter Trenner — Firefox oeffnet ihn beim Klick als UNC
+        ['kodierte Trenner', '<a href="/%5C%5Chost/share/x.pdf">Karte</a>', 'Karte'],
+        ['kodiert hinter ..', '<a href="/x/../%2F%2Fhost/x.pdf?v=1">Karte</a>', 'Karte'],
+        [
+            'relativ mit Anker bleibt Link',
+            '<a href="/handbuch/abschnitt.html#a">Hier</a>',
+            '[Hier](/handbuch/abschnitt.html#a)'
+        ],
         ['https bleibt Link', '<a href="https://e.org/a">Karte</a>', '[Karte](https://e.org/a)'],
         ['mailto bleibt Link', '<a href="mailto:a@b.de">Post</a>', '[Post](mailto:a@b.de)'],
         ['Anker bleibt Link', '<a href="#abschnitt">Hier</a>', '[Hier](#abschnitt)'],
