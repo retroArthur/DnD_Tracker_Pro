@@ -13,6 +13,10 @@
  * oder liegengebliebenes Bearbeiten-Formular des Typs ueberschreibt danach
  * keinen importierten Eintrag.
  *
+ * Der Branch REITERIMPORT setzt auf SENKEN auf (8702f84a, Ausgabe kodiert,
+ * Datengrenze an jedem Eingang); am Rot-Nachweis zu a9858d23 war das
+ * Fehlerbild dieser Datei dort dasselbe wie am Buendel 020e258 unten.
+ *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND, aus dem diese Datei entstand
  *
@@ -187,7 +191,13 @@
  * beim Hinzufuegen (nicht in diesem PR). OFFEN IM VERTRAG: Text-Verknuepfungen
  * `[[typ:id:name]]` in Beschreibungen (`parseEntityLinks()`, eingefuegt ueber
  * "🔗 Entity-Link") sind ebenfalls ID-Verweise; R5 sagt nicht, ob sie
- * umgeschrieben, entfernt oder gezaehlt werden — darum hier kein Fall. Das
+ * umgeschrieben, entfernt oder gezaehlt werden — darum hier kein Fall. (Der
+ * Fix wendet auf sie dieselbe Regel an wie auf jeden anderen Verweis:
+ * innerhalb des Typs umgeschrieben, sonst bleibt nur der Name als Text, und
+ * die Vorschau zaehlt sie mit. Den Katalog des Fixes — weiter als der dieser
+ * Datei: auch Session-Prep, Kalender, Encounter-Gruppen, Shops und Initiative
+ * als Quellen fuer R6 — haelt tests/unit/reiterimport-verweise.test.js an
+ * einer Saat aller zwoelf Typen fest.) Das
  * Quest-Formular ist ein Modal: bei offenem Modal ist der 📥 dahinter nicht
  * bedienbar, darum prueft (10) die LIEGENGEBLIEBENE Bearbeiten-ID (✏️ → ✕).
  * Deren sichtbarer Folgeweg "+ Quest" leert schon heute (showNewQuestModal(),

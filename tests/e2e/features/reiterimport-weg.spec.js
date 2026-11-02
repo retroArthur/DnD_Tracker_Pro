@@ -12,7 +12,10 @@
  *
  * Vertrag REITERIMPORT, docs/bugfixes.md — diese Datei prueft R1, R2 und
  * R10. Feldtreue, Verweise, Pruefung kaputter Dateien, Undo und Sicherheit
- * (R3–R9) pruefen eigene Dateien.
+ * (R3–R9) pruefen eigene Dateien. Der Branch REITERIMPORT setzt auf SENKEN
+ * auf (8702f84a, Ausgabe kodiert, Datengrenze an jedem Eingang); am
+ * Rot-Nachweis zu a9858d23 war das Fehlerbild dieser Datei dort dasselbe wie
+ * am Buendel 020e258 unten.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND, aus dem diese Datei entstand
