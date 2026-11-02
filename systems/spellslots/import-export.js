@@ -2,17 +2,13 @@
 // Extrahiert aus spellslots.js
 // Import/Export System mit Validierung
 // Zeilen: 565
-// Code-Review 2026-09-08: Vorgabewerte NIE per Referenz herausgeben.
-// field.default wurde an drei Stellen direkt zugewiesen; zwei Datensaetze
-// ohne dasselbe Feld teilten sich dadurch EIN Array-Objekt, und weil
-// IO_SCHEMA nicht eingefroren ist, mutierte eine Aenderung daran das
-// Schema selbst.
-function ioCloneDefault(wert) {
-    if (Array.isArray(wert)) return wert.slice();
-    if (wert && typeof wert === 'object') return Object.assign({}, wert);
-    return wert;
-}
-// Schema-Definition: Welche Felder werden für jeden Datentyp exportiert/importiert?
+// Schema-Definition je Datentyp. Seit REITERIMPORT (R4) traegt sie nur noch zwei Aufgaben:
+// welche Typen der Reiter-Export kennt, und die Spalten des CSV-Exports. Der JSON-Export pro
+// Reiter schreibt den ganzen Eintrag, der Import reicht ihn ganz durch — die Feldliste hier
+// filterte frueher beide Wege und erfand Felder, die das Datenmodell nie hatte (`class`, `ac`,
+// `hpTemp`, `str`…`cha`, `avatarUrl`; siehe REITER_ALTFELDER). Ihre Vorgaben werden darum
+// nirgends mehr in einen Eintrag geschrieben (frueher ioCloneDefault(), Code-Review
+// 2026-09-08: nie per Referenz herausgeben).
 const IO_SCHEMA = {
     characters: {
         id: { type: 'number', required: true },
@@ -273,27 +269,32 @@ function sanitizeImportedItem(type, item) {
 }
 // EXPORT FUNCTIONS
 // ============================================================
+/**
+ * Formatkennung des Reiter-Exports (REITERIMPORT R4), Kopfschluessel `_format`. Eine Datei MIT
+ * dieser Kennung traegt jeden Eintrag GANZ, so wie er in D steht. Eine Datei OHNE sie stammt
+ * aus dem Export davor: der filterte jeden Eintrag auf IO_SCHEMA (Charakter 22 von 35 Feldern
+ * weg) und schrieb fuer Felder, die der Eintrag nicht hatte, erfundene Vorgaben (`ac: 10`,
+ * `str: 10`) — die Vorschau warnt vor einer solchen Datei (bereiteReiterImportVor()).
+ */
+const REITER_EXPORT_FORMAT = 'dnd-tracker/reiter-export@2';
+
+/**
+ * 📤 eines Reiters: schreibt jeden Eintrag GANZ (R4) — kein Schemafilter mehr. IO_SCHEMA
+ * entscheidet nur noch, welche Typen es gibt; seine Feldliste traegt der CSV-Export.
+ * @param {string} dataType
+ */
 function exportData(dataType) {
     const APP_CONFIG = window.APP_CONFIG;
     const data = ioGetArray(dataType);
     if (!data || !Array.isArray(data) || data.length === 0) {
-        showToast(`Keine ${dataType} zum Exportieren vorhanden`, 'warning');
+        showToast(`Keine ${reiterTypName(dataType, 2)} zum Exportieren vorhanden`, 'warning');
         return;
     }
-    const schema = IO_SCHEMA[dataType];
-    if (!schema) {
+    if (!IO_SCHEMA[dataType]) {
         showToast('Datentyp wird nicht unterstützt', 'error');
         return;
     }
     try {
-        // Daten nach Schema filtern
-        const filtered = data.map(item => {
-            const obj = {};
-            for (const [key, field] of Object.entries(schema)) {
-                obj[key] = item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
-            }
-            return obj;
-        });
         // Kampagnennamen hinzufügen
         const getCampaignIndex = window.getCampaignIndex;
         const index = getCampaignIndex();
@@ -303,11 +304,12 @@ function exportData(dataType) {
             campaignName = campaign?.name || 'Unbenannte Kampagne';
         }
         const exportObj = {
+            _format: REITER_EXPORT_FORMAT,
             _exportDate: new Date().toISOString(),
             _campaignName: campaignName,
             _version: APP_CONFIG.VERSION,
             _dataType: dataType,
-            data: filtered
+            data
         };
         const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
@@ -317,7 +319,7 @@ function exportData(dataType) {
         a.download = `${dataType}-${campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast(`📁 ${data.length} ${dataType} exportiert`);
+        showToast(`📁 ${data.length} ${reiterTypName(dataType, data.length)} exportiert`);
     } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
         // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
@@ -375,7 +377,8 @@ function exportToCSV(dataType) {
 // IMPORT FUNCTIONS — der Import pro Reiter (REITERIMPORT)
 // ============================================================
 // Vertrag REITERIMPORT (docs/bugfixes.md): R1 ein Dateidialog, R2 Meldung erst nach dem
-// Schreiben, R10 Telefon und Fokus, dazu der Oberflaechen-Vertrag (#import-modal).
+// Schreiben, R3 Pruefung vor dem Fenster, R4 Feldtreue, R6 Ersetzen nur mit gueltigen IDs,
+// R9 Sicherheit, R10 Telefon und Fokus, dazu der Oberflaechen-Vertrag (#import-modal).
 //
 // DER WEG. 📥 (trigger-click) oeffnet den Dateidialog des Reiterfelds (`.io-file-input`,
 // data-on-change="importData"), und importData() liest GENAU die dort gewaehlte Datei. Vorher
@@ -390,14 +393,21 @@ function exportToCSV(dataType) {
 // DIE KETTE. Jede Stufe VOR dem Fenster laesst D, Speicher und Index unberuehrt; eine
 // unbrauchbare Datei endet mit einer deutschen Meldung und ohne Fenster:
 //   leseReiterImport()        Text -> Objekt (JSON mit Reviver)
-//   pruefeReiterImport()      Form der Datei, passender Typ (Rueckfrage)
-//   bereiteReiterImportVor()  Datengrenze, Feldabbildung, HTML-Bereinigung, Hinweise
+//   pruefeReiterImport()      Form der Datei, passender Typ (Rueckfrage), jeder Eintrag (R3)
+//   bereiteReiterImportVor()  IDs fuers Ersetzen (R6), Datengrenze, alte Dateien (R4),
+//                             HTML-Bereinigung, Hinweise
 //   showImportModal()         Fenster mit Vorschau; die Daten bleiben im Modulzustand
 //   executeImport()           schreibt — und meldet den Erfolg ERST DANACH
 // Pruefungen gehoeren in pruefeReiterImport() und laufen damit VOR der Datengrenze: die Grenze
 // verwirft Text in Zahlenfeldern still ("viel" -> Feld weg), eine Ablehnung muss ihn vorher
-// sehen. Was die Vorschau zusaetzlich nennen soll, haengt bereiteReiterImportVor() an
-// `hinweise` an; was nur fuer einen Modus gilt, steht in importVorschauZeilen().
+// sehen. Ebenso die ID-Pruefung (die Grenze loescht eine ID "abc"). Was die Vorschau
+// zusaetzlich nennen soll, haengt bereiteReiterImportVor() an `hinweise` an; was nur fuer einen
+// Modus gilt, steht in importVorschauZeilen().
+//
+// FELDTREUE (R4). Der Export schreibt den ganzen Eintrag mit der Formatkennung
+// REITER_EXPORT_FORMAT; der Import reicht ihn ganz durch — dieselbe Schutzlage wie der
+// Kampagnen-Import: Datengrenze (SENKEN R4) und Bereinigung der HTML-Felder (SEC-01), alles
+// Weitere kodiert die Ausgabe (SENKEN R1). Kein Feld wird umbenannt oder mit Vorgaben gefuellt.
 
 /**
  * @typedef {Object} ReiterImportVorbereitung
@@ -406,6 +416,8 @@ function exportToCSV(dataType) {
  * @property {string} kampagne - Kampagne laut Datei, sonst der Dateiname
  * @property {string} exportDatum - Exportdatum laut Datei (TT.MM.JJJJ) oder "unbekannt"
  * @property {{text: string, warnung?: boolean}[]} hinweise - weitere Zeilen der Vorschau
+ * @property {string|null} [idFehler] - warum "Ersetzen" mit dieser Datei nicht geht (R6), sonst
+ *   null; fehlt er, prueft executeImport() die IDs der Eintraege selbst
  */
 
 /**
@@ -579,12 +591,25 @@ function leseReiterImport(text) {
  * @returns {boolean} false: der Nutzer hat die Rueckfrage abgelehnt
  */
 function pruefeReiterImport(inhalt, dataType) {
-    if (
-        !inhalt ||
-        typeof inhalt !== 'object' ||
-        Array.isArray(inhalt) ||
-        !Array.isArray(inhalt.data)
-    ) {
+    const istObjekt = !!inhalt && typeof inhalt === 'object' && !Array.isArray(inhalt);
+    if (istObjekt && !Array.isArray(inhalt.data)) {
+        // Die beiden anderen Exportarten der App beim Namen nennen, statt nur "Format falsch"
+        // zu sagen — der Kampagnenweg sagt es umgekehrt genauso ("Einzel-Export – bitte im
+        // jeweiligen Reiter importieren", prepareCampaignImport())
+        if (typeof inhalt._exportType === 'string') {
+            throw reiterImportFehler(
+                'Das ist ein Umzugs- oder Audio-Export, kein Export dieses Reiters – bitte über ' +
+                    'den Umzugs-Assistenten importieren'
+            );
+        }
+        if (istKampagnenDatei(inhalt)) {
+            throw reiterImportFehler(
+                'Das ist eine Kampagnen-Datei (die ganze Kampagne), kein Export dieses Reiters – ' +
+                    'bitte unter „💾 Daten“ mit „📁 Datei auswählen“ importieren'
+            );
+        }
+    }
+    if (!istObjekt || !Array.isArray(inhalt.data)) {
         throw reiterImportFehler('Ungültiges Format: der Datei fehlt die Liste „data“');
     }
     if (inhalt.data.length === 0) {
@@ -597,13 +622,241 @@ function pruefeReiterImport(inhalt, dataType) {
         throw reiterImportFehler(`Eintrag ${keinObjekt + 1} der Datei ist kein Eintrag`);
     }
     const dateiTyp = inhalt._dataType;
-    if (typeof dateiTyp === 'string' && dateiTyp !== '' && dateiTyp !== dataType) {
-        return confirm(
+    if (
+        typeof dateiTyp === 'string' &&
+        dateiTyp !== '' &&
+        dateiTyp !== dataType &&
+        !confirm(
             `Die Datei enthält ${reiterTypName(dateiTyp, 2)}, dieser Reiter importiert ` +
                 `${reiterTypName(dataType, 2)}.\n\nTrotzdem importieren?`
-        );
+        )
+    ) {
+        return false;
     }
+    // Erst nach der Rueckfrage: geprueft wird gegen den Typ, in den importiert wird
+    pruefeReiterEintraege(inhalt.data, dataType);
     return true;
+}
+
+/**
+ * Sieht die Datei aus wie eine Kampagnen-Datei (💾 Daten → "📁 Als Datei speichern")? Dann
+ * traegt sie mindestens eine Sammlung des Kampagnenformats (CAMPAIGN_IMPORT_COLLECTIONS).
+ * @param {Object} inhalt
+ * @returns {boolean}
+ */
+function istKampagnenDatei(inhalt) {
+    return CAMPAIGN_IMPORT_COLLECTIONS.some(pfad => {
+        let knoten = inhalt;
+        for (const schritt of pfad) {
+            if (!knoten || typeof knoten !== 'object') return false;
+            knoten = knoten[schritt];
+        }
+        return Array.isArray(knoten);
+    });
+}
+
+/**
+ * Das Namensfeld je Typ (R3): ohne nicht-leeren Text dort legt ein Eintrag seine Liste lahm
+ * (gemessen: `name: null` bzw. 42 — die NPC-Liste sortiert mit `localeCompare` und zeigte nur
+ * noch "Anzeigefehler"). Session-Preps haben kein Namensfeld (sie heissen nach ihrer Nummer).
+ */
+const REITER_NAMENSFELD = Object.freeze({
+    characters: 'name',
+    npcs: 'name',
+    locations: 'name',
+    quests: 'title',
+    encounters: 'name',
+    loot: 'name',
+    spells: 'name',
+    wiki: 'title',
+    links: 'title',
+    sessionPreps: null,
+    calendarEvents: 'titel',
+    factions: 'name'
+});
+
+/**
+ * Textfelder je Typ, die eine Datei nicht als Zahl, Liste oder Objekt bringen darf (R3,
+ * "umgekehrt"): die App schreibt sie nur als Text, und ihre Anzeige ruft Textmethoden darauf.
+ * Gemessen bzw. am Code: `speed` des Helden (`speedVal.split` beim Bearbeiten, quick-actions.js
+ * `char.speed.split`), `school` des Zaubers (render-spells.js `s.school.substring`), `content`
+ * des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`). Dazu jedes HTML-Feld
+ * (HTML_FIELDS_BY_TYPE) — die App schreibt dort immer Markup als Text. Fehlt ein Feld oder ist
+ * es null, ist das kein Fehler.
+ */
+const REITER_TEXTFELDER = Object.freeze({
+    characters: Object.freeze(['speed']),
+    spells: Object.freeze(['school']),
+    wiki: Object.freeze(['content'])
+});
+
+/**
+ * Die Zahlenfelder eines Eintrags dieses Typs, als zerlegte Pfade AB dem Eintrag — genau die
+ * Pfade der Datengrenze (DATENGRENZE_PFADE), die unter der Sammlung des Typs liegen. EINE Liste
+ * fuer Grenze und Pruefung: was die Grenze still verwerfen wuerde ("viel" in `hpMax`), lehnt die
+ * Pruefung vorher laut ab (R3). Die eigene `id` fehlt bewusst: sie zaehlt nur beim Ersetzen,
+ * Hinzufuegen vergibt neue (R6, reiterIdFehler()).
+ * @param {string} dataType
+ * @returns {{name: string, liste: boolean}[][]}
+ */
+function reiterZahlenpfade(dataType) {
+    const praefix = IO_DATA_PATH[dataType] || [dataType];
+    return DATENGRENZE_PFADE.filter(
+        teile =>
+            teile.length > praefix.length &&
+            praefix.every(
+                (name, i) => teile[i].name === name && teile[i].liste === (i === praefix.length - 1)
+            )
+    )
+        .map(teile => teile.slice(praefix.length))
+        .filter(rest => !(rest.length === 1 && rest[0].name === 'id'));
+}
+
+/**
+ * Ein Wert fuer eine Meldung — nie als Laufzeittext ("undefined", "[object Object]").
+ * @param {*} wert
+ * @returns {string}
+ */
+function reiterWertText(wert) {
+    if (wert === null || wert === undefined) return 'nichts';
+    if (Array.isArray(wert)) return 'eine Liste';
+    if (typeof wert === 'object') return 'ein Objekt';
+    if (typeof wert === 'string') {
+        return wert.trim() === ''
+            ? 'einen leeren Text'
+            : `den Text „${wert.length > 40 ? wert.slice(0, 40) + '…' : wert}“`;
+    }
+    if (typeof wert === 'number') return `die Zahl ${String(wert)}`;
+    return `den Wert ${String(wert)}`;
+}
+
+/**
+ * Sucht im Eintrag den ersten Wert unter dem Pfad `teile`, den die Datengrenze verwerfen
+ * wuerde (datengrenzeZahlwert() liefert undefined). Geht wie datengrenzeFeld(): `*` = jeder
+ * Schluessel, `liste` = jedes Element; eine Liste, deren Element kein Objekt ist, wird dort
+ * nicht weiter verfolgt (characters[].items[] traegt Zahlen ODER Objekte).
+ * @param {*} knoten
+ * @param {{name: string, liste: boolean}[]} teile
+ * @param {number} stufe
+ * @param {string} weg - Anzeigepfad bis hierher
+ * @returns {string|null} die Meldung oder null
+ */
+function reiterZahlFehler(knoten, teile, stufe, weg) {
+    if (!knoten || typeof knoten !== 'object') return null;
+    const teil = teile[stufe];
+    const letzte = stufe === teile.length - 1;
+    const namen = teil.name === '*' ? Object.keys(knoten) : [teil.name];
+    for (const name of namen) {
+        if (!Object.prototype.hasOwnProperty.call(knoten, name)) continue;
+        const wert = knoten[name];
+        const hier = weg ? `${weg}.${name}` : name;
+        let fehler = null;
+        if (!letzte) {
+            if (!teil.liste) fehler = reiterZahlFehler(wert, teile, stufe + 1, hier);
+            else if (Array.isArray(wert)) {
+                for (let i = 0; i < wert.length && !fehler; i++) {
+                    fehler = reiterZahlFehler(wert[i], teile, stufe + 1, `${hier}[${i + 1}]`);
+                }
+            }
+        } else if (teil.liste) {
+            if (Array.isArray(wert)) {
+                const i = wert.findIndex(e => datengrenzeZahlwert(e) === undefined);
+                if (i >= 0) {
+                    fehler = `„${hier}“ darf nur Zahlen enthalten, an Stelle ${i + 1} steht ${reiterWertText(wert[i])}`;
+                }
+            } else if (wert !== null && wert !== undefined) {
+                fehler = `„${hier}“ muss eine Liste von Zahlen sein, die Datei enthält ${reiterWertText(wert)}`;
+            }
+        } else if (datengrenzeZahlwert(wert) === undefined) {
+            fehler = `„${hier}“ muss eine Zahl sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+        if (fehler) return fehler;
+    }
+    return null;
+}
+
+/**
+ * Was an EINEM Eintrag nicht stimmt (R3), sonst null: das Namensfeld, die Zahlenfelder
+ * (reiterZahlenpfade()), die Textfelder (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
+ * @param {Object} eintrag
+ * @param {string} dataType
+ * @returns {string|null}
+ */
+function reiterEintragFehler(eintrag, dataType) {
+    const namensfeld = REITER_NAMENSFELD[dataType];
+    if (namensfeld) {
+        const name = eintrag[namensfeld];
+        if (typeof name !== 'string' || name.trim() === '') {
+            const was = namensfeld === 'name' ? 'der Name' : 'der Titel';
+            return `${was} (Feld „${namensfeld}“) fehlt, ist leer oder kein Text`;
+        }
+    }
+    for (const teile of reiterZahlenpfade(dataType)) {
+        const fehler = reiterZahlFehler(eintrag, teile, 0, '');
+        if (fehler) return fehler;
+    }
+    const textfelder = [
+        ...(REITER_TEXTFELDER[dataType] || []),
+        ...(HTML_FIELDS_BY_TYPE[dataType] || [])
+    ];
+    for (const feld of textfelder) {
+        const wert = eintrag[feld];
+        if (wert !== null && wert !== undefined && typeof wert !== 'string') {
+            return `„${feld}“ muss Text sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+    }
+    return null;
+}
+
+/**
+ * Prueft jeden Eintrag der Datei (R3) und lehnt beim ersten Fehler ab — mit der Nummer des
+ * Eintrags und dem Feld, deutsch. Beruehrt nichts.
+ * @param {Object[]} eintraege - die Eintraege der Datei, roh (vor der Datengrenze)
+ * @param {string} dataType
+ */
+function pruefeReiterEintraege(eintraege, dataType) {
+    if (!Object.prototype.hasOwnProperty.call(REITER_NAMENSFELD, dataType)) {
+        throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
+    }
+    for (let i = 0; i < eintraege.length; i++) {
+        const fehler = reiterEintragFehler(eintraege[i], dataType);
+        if (fehler) throw reiterImportFehler(`Eintrag ${i + 1} der Datei: ${fehler}`);
+    }
+}
+
+/**
+ * Warum "Ersetzen" diese Eintraege nicht uebernehmen darf (R6), sonst null. Ersetzen behaelt
+ * die IDs der Datei; eine ID, die keine positive ganze Zahl ist ("abc", -1, 2.5), oder dieselbe
+ * ID zweimal ergab gemessen Karten, die sich nicht oeffnen bzw. nur gemeinsam loeschen liessen.
+ * Eine Zahl als Text ("7") gilt — die Datengrenze macht daraus 7. Hinzufuegen vergibt ohnehin
+ * neue IDs und ist davon nicht betroffen.
+ * @param {Object[]} eintraege - roh (vor der Datengrenze) oder vorbereitet
+ * @returns {string|null}
+ */
+function reiterIdFehler(eintraege) {
+    const gesehen = new Map();
+    for (let i = 0; i < eintraege.length; i++) {
+        const roh = eintraege[i] ? eintraege[i].id : undefined;
+        const id = roh === undefined ? undefined : datengrenzeZahlwert(roh);
+        if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+            let welche = `die ungültige ID ${String(roh)}`;
+            if (roh === undefined || roh === null || roh === '') welche = 'keine ID';
+            else if (typeof roh === 'object') welche = `statt einer ID ${reiterWertText(roh)}`;
+            else if (typeof roh === 'string') welche = `die ungültige ID „${roh.slice(0, 40)}“`;
+            return (
+                `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat ${welche} — eine ID muss ` +
+                'eine positive ganze Zahl sein. „Hinzufügen“ vergibt neue IDs.'
+            );
+        }
+        if (gesehen.has(id)) {
+            return (
+                `Ersetzen nicht möglich: die ID ${id} kommt in der Datei doppelt vor (Einträge ` +
+                `${gesehen.get(id) + 1} und ${i + 1}). „Hinzufügen“ vergibt neue IDs.`
+            );
+        }
+        gesehen.set(id, i);
+    }
+    return null;
 }
 
 /**
@@ -626,35 +879,84 @@ function reiterImportWurzel(type, items) {
 }
 
 /**
- * Bereitet die gepruefte Datei fuer das Fenster vor: dieselbe Datengrenze wie jeder andere
- * Eingang nach D (SENKEN R4), die Feldabbildung nach IO_SCHEMA und die Bereinigung der
- * HTML-Felder (SEC-01). Beruehrt nichts Globales.
+ * Felder, die NUR der alte Reiter-Export erfand (IO_SCHEMA vor REITERIMPORT, gemessen; Vertrag
+ * R4): das Datenmodell kennt sie nicht — die Klasse heisst `characterClass`, die RK
+ * `armorClass`, die Attribute stehen unter `attributes`, das Bild unter `avatar` —, und ihre
+ * Werte in alten Dateien sind Vorgaben (`ac: 10`, `str: 10`), keine echten. Aus einer Datei OHNE
+ * Formatkennung werden sie verworfen und NIE auf ein Feld des Datenmodells abgebildet.
+ * Liegengelassen wirkten sie trotzdem: initiative.js liest `ch.ac || ch.armorClass`, ein
+ * `ac: 10` aus der Datei ueberstimmte dort die echte RK.
+ */
+const REITER_ALTFELDER = Object.freeze({
+    characters: Object.freeze([
+        'class',
+        'ac',
+        'hpTemp',
+        'str',
+        'dex',
+        'con',
+        'int',
+        'wis',
+        'cha',
+        'avatarUrl'
+    ]),
+    npcs: Object.freeze(['avatarUrl']),
+    locations: Object.freeze(['avatarUrl'])
+});
+
+/**
+ * Bereitet die gepruefte Datei fuer das Fenster vor: die ID-Pruefung fuers Ersetzen (R6, auf
+ * den ROHEN Eintraegen — die Grenze loescht eine ID "abc"), dieselbe Datengrenze wie jeder
+ * andere Eingang nach D (SENKEN R4), bei einer alten Datei ohne Formatkennung die Warnung und
+ * das Verwerfen der erfundenen Felder (R4) und die Bereinigung der HTML-Felder (SEC-01). Sonst
+ * kommt jeder Eintrag GANZ durch (R4). Beruehrt nichts Globales.
  * @param {*} inhalt - von pruefeReiterImport() angenommene Datei
  * @param {string} dataType
  * @param {string} dateiname
  * @returns {ReiterImportVorbereitung}
  */
 function bereiteReiterImportVor(inhalt, dataType, dateiname) {
-    const schema = IO_SCHEMA[dataType];
-    if (!schema) {
+    if (!IO_SCHEMA[dataType]) {
         throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
     }
+    const idFehler = reiterIdFehler(inhalt.data);
     const grenze = bereinigeDatengrenze(reiterImportWurzel(dataType, inhalt.data));
     const eintraege = (IO_DATA_PATH[dataType] || [dataType]).reduce(
         (knoten, schluessel) => (knoten ? knoten[schluessel] : undefined),
         grenze
     );
-    const items = (Array.isArray(eintraege) ? eintraege : []).map((item, idx) => {
-        const validated = {};
-        for (const [key, field] of Object.entries(schema)) {
-            if (field.required && item[key] === undefined) {
-                throw reiterImportFehler(`Eintrag ${idx + 1}: Pflichtfeld „${key}“ fehlt`);
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const hinweise = [];
+    const format = inhalt._format;
+    const altfelder = format === undefined ? REITER_ALTFELDER[dataType] || [] : [];
+    const verworfen = new Set();
+    const items = (Array.isArray(eintraege) ? eintraege : []).map(item => {
+        const eintrag = { ...item };
+        for (const feld of altfelder) {
+            if (Object.prototype.hasOwnProperty.call(eintrag, feld)) {
+                delete eintrag[feld];
+                verworfen.add(feld);
             }
-            validated[key] = item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
         }
         // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
-        return sanitizeImportedItem(dataType, validated);
+        return sanitizeImportedItem(dataType, eintrag);
     });
+    if (format === undefined) {
+        hinweise.push({
+            text:
+                '⚠️ Ältere Exportdatei ohne Formatkennung: frühere Exporte enthielten nicht alle ' +
+                'Felder eines Eintrags — was in der Datei fehlt, bleibt leer.' +
+                (verworfen.size > 0
+                    ? ` Nicht übernommen, weil die App sie nicht kennt: ${[...verworfen].join(', ')}.`
+                    : ''),
+            warnung: true
+        });
+    } else if (format !== REITER_EXPORT_FORMAT) {
+        hinweise.push({
+            text: '⚠️ Unbekannte Formatkennung — die Datei stammt vermutlich aus einer anderen App-Version.',
+            warnung: true
+        });
+    }
     const kampagne =
         typeof inhalt._campaignName === 'string' && inhalt._campaignName.trim() !== ''
             ? inhalt._campaignName.trim()
@@ -666,7 +968,8 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
         kampagne: kampagne.slice(0, 100),
         exportDatum:
             datum && !isNaN(datum.getTime()) ? datum.toLocaleDateString('de-DE') : 'unbekannt',
-        hinweise: []
+        hinweise,
+        idFehler
     };
 }
 
@@ -718,31 +1021,59 @@ function importVorschauZeilen(bereit, modus) {
     const n = bereit.items.length;
     const bestand = ioGetArray(bereit.dataType);
     const vorhanden = Array.isArray(bestand) ? bestand.length : 0;
-    const modusZeile =
+    const moduszeilen =
         modus === 'replace'
-            ? {
-                  text:
-                      `Ersetzen: ${vorhanden} ` +
-                      (vorhanden === 1
-                          ? 'vorhandener Eintrag wird'
-                          : 'vorhandene Einträge werden') +
-                      ' durch die Datei ersetzt; vorher wird eine Sicherheitskopie angelegt',
-                  warnung: true
-              }
-            : {
-                  text:
-                      `Hinzufügen: ${n} ` +
-                      (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
-                      ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
-              };
+            ? ersetzenVorschauZeilen(bereit, vorhanden)
+            : [
+                  {
+                      text:
+                          `Hinzufügen: ${n} ` +
+                          (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
+                          ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
+                  }
+              ];
     return [
         { text: `Typ: ${reiterTypName(bereit.dataType, 2)}` },
         { text: `Einträge: ${n}` },
         { text: `Kampagne: ${bereit.kampagne}` },
         { text: `Export-Datum: ${bereit.exportDatum}` },
-        modusZeile,
+        ...moduszeilen,
         ...bereit.hinweise
     ];
+}
+
+/**
+ * Die Zeilen der Vorschau, die nur fuer "Ersetzen" gelten (R6): wie viele vorhandene Eintraege
+ * ersetzt werden — oder, bei ungueltigen bzw. doppelten IDs in der Datei, dass Ersetzen nicht
+ * geht (executeImport() lehnt dann ab). Hier gehoeren auch weitere Folgen des Ersetzens hin,
+ * etwa Verweise anderer Bereiche, die danach ins Leere zeigen (R6, zweiter Satz).
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {number} vorhanden - Zahl der Eintraege, die heute in D stehen
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function ersetzenVorschauZeilen(bereit, vorhanden) {
+    const idFehler = ersetzenIdFehler(bereit);
+    if (idFehler) return [{ text: '⚠️ ' + idFehler, warnung: true }];
+    return [
+        {
+            text:
+                `Ersetzen: ${vorhanden} ` +
+                (vorhanden === 1 ? 'vorhandener Eintrag wird' : 'vorhandene Einträge werden') +
+                ' durch die Datei ersetzt; vorher wird eine Sicherheitskopie angelegt',
+            warnung: true
+        }
+    ];
+}
+
+/**
+ * Warum "Ersetzen" mit dieser Vorbereitung nicht geht, sonst null (R6). Die Vorbereitung
+ * bringt das Urteil ueber die ROHEN IDs mit; fehlt es, werden die vorbereiteten Eintraege
+ * geprueft.
+ * @param {ReiterImportVorbereitung} bereit
+ * @returns {string|null}
+ */
+function ersetzenIdFehler(bereit) {
+    return bereit.idFehler !== undefined ? bereit.idFehler : reiterIdFehler(bereit.items);
 }
 
 /**
@@ -779,6 +1110,13 @@ function executeImport(dataType) {
     const type = bereit.dataType;
     const items = bereit.items;
     const mode = gewaehlterImportModus();
+    // R6: Ersetzen uebernimmt die IDs der Datei — nur gueltige und eindeutige. Das Fenster
+    // bleibt offen: "Hinzufügen" vergibt neue IDs und geht weiter.
+    const idFehler = mode === 'replace' ? ersetzenIdFehler(bereit) : null;
+    if (idFehler) {
+        showToast('❌ ' + idFehler, 'error');
+        return;
+    }
     const name = reiterTypName(type, items.length);
     const renderAll = window.renderAll;
     saveUndoState(`${items.length} ${name} importiert`);

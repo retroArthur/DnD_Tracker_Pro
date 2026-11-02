@@ -13,6 +13,8 @@ interface ReiterImportVorbereitung {
     kampagne: string;
     exportDatum: string;
     hinweise: { text: string; warnung?: boolean }[];
+    /** Warum "Ersetzen" mit dieser Datei nicht geht (R6), sonst null. */
+    idFehler?: string | null;
 }
 declare function showImportModal(dataType: string, vorbereitung: ReiterImportVorbereitung): void;
 declare function updateIOCounts(): void;
