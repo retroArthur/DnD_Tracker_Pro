@@ -376,9 +376,9 @@ function exportToCSV(dataType) {
 }
 // IMPORT FUNCTIONS — der Import pro Reiter (REITERIMPORT)
 // ============================================================
-// Vertrag REITERIMPORT (docs/bugfixes.md): R1 ein Dateidialog, R2 Meldung erst nach dem
-// Schreiben, R3 Pruefung vor dem Fenster, R4 Feldtreue, R6 Ersetzen nur mit gueltigen IDs,
-// R9 Sicherheit, R10 Telefon und Fokus, dazu der Oberflaechen-Vertrag (#import-modal).
+// Vertrag REITERIMPORT (docs/bugfixes.md): R1 ein Dateidialog, R2 Meldung nach dem Schreiben,
+// R3 Pruefung vor dem Fenster, R4 Feldtreue, R5/R6 IDs und Verweise (VERWEISE unten), R7 offene
+// Formulare, R8 Ansicht/Zaehler/Undo, R9 Sicherheit, R10 Telefon und Fokus, dazu das Fenster.
 //
 // DER WEG. 📥 (trigger-click) oeffnet den Dateidialog des Reiterfelds (`.io-file-input`,
 // data-on-change="importData"), und importData() liest GENAU die dort gewaehlte Datei. Vorher
