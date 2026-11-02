@@ -7,12 +7,13 @@
  * Reiter-Import (📥) nicht verarbeiten darf, wird VOR dem Fenster mit einer
  * verstaendlichen deutschen Meldung abgelehnt — D, Speicher und alle Listen
  * bleiben, wie sie waren, und das Fehlerlog bleibt leer; eine Datei, die er
- * verarbeiten darf, bringt keine Nutzlast zur Ausfuehrung — weder in der
- * Vorschau noch in Liste oder Detail.**
+ * verarbeiten darf, schleust keine Nutzlast ein — weder in der Vorschau noch
+ * in Liste oder Detail.**
  *
  * Vertrag REITERIMPORT, docs/bugfixes.md. Diese Datei prueft R3 (Pruefung vor
  * dem Fenster), R6 (Ablehnung beim Ersetzen) und R9 (Sicherheit). Das
- * Fenster gibt es am Stand 020e258 nicht; die Faelle bedienen den
+ * Fenster gibt es am Stand 020e258 nicht (ebenso am Stand 8702f84a, SENKEN,
+ * auf dem der Branch REITERIMPORT aufsetzt); die Faelle bedienen den
  * Oberflaechen-Vertrag: `#import-modal` (`.modal-overlay`) mit Vorschau
  * `#import-info`, Modus `input[name="import-mode"]` (`merge` "Hinzufügen",
  * `replace` "Ersetzen"), Knopf `[data-action="execute-import"]` mit dem
@@ -94,11 +95,12 @@
  *   R6  Ungueltige (keine positive Ganzzahl: "abc", -1, 2.5) oder doppelte
  *       IDs in der Datei → Ersetzen abgelehnt mit deutscher Meldung. (10)
  *   R9  Nutzlasten in Text- und HTML-Feldern — auch im Dateikopf und in
- *       Feldern, die das Formular nur als Auswahl kennt — fuehren ueber den
- *       Reiter-Import in Vorschau, Liste und Detail zu keiner
- *       Script-Ausfuehrung; ein `javascript:`-Link wird nicht als solcher
- *       verlinkt. Gemessen an den fuenf Typen mit gefundener Senke
- *       (Charakter, Quest, Zauber, Encounter, Truhe) und den Links. (11)–(14)
+ *       Feldern, die das Formular nur als Auswahl kennt — werden ueber den
+ *       Reiter-Import in Vorschau, Liste und Detail nicht eingeschleust; ein
+ *       `javascript:`-Link wird nicht als solcher verlinkt. Gemessen an den
+ *       fuenf Typen mit gefundener Senke (Charakter, Quest, Zauber,
+ *       Encounter, Truhe) und den Links (11)–(14), und an den uebrigen sechs
+ *       Typen (NPC, Ort, Wiki, Session-Prep, Kalender, Fraktion) (15).
  * Dazu bei jeder Ablehnung: kein englischer Parser-/Laufzeit-Rohtext, keine
  * Erfolgsmeldung (R2: vor dem Fenster hoechstens neutrale Hinweise), nichts
  * geschrieben (`_rev` unveraendert), danach rendern ALLE zwoelf Reiter ohne
@@ -147,13 +149,33 @@
  * DIE RUECKFRAGE (9) darf ein nativer Dialog oder ein sichtbarer Dialog der
  * Seite sein; sie wird abgelehnt (Abbrechen bzw. Escape).
  *
- * DIE NUTZLASTEN (11)–(14) setzen ein Kennzeichen (`window.__xss`, vor dem
- * Laden angelegt) statt `alert`: jede Nutzlast traegt ihren Ort, ein roter
- * Lauf nennt also die Senke. Sie stehen NUR in Textfeldern — in einem
- * Zahlfeld (`ac`, `hp`, `weight` …) wuerde R3 die Datei zu Recht ablehnen,
- * und der Fall maesse nichts. Jeder Nutzlast-Fall verlangt als Vorbedingung,
- * dass die Datei ankommt (Fenster, Schreiben, Eintrag in D): am Buendel ist
- * er dort rot, weil der Reiter-Weg gar nichts importiert.
+ * DIE NUTZLASTEN (11)–(15) sind HARMLOSE KANARIEN (Projektregel; Muster
+ * tests/e2e/features/senken-kanarie.spec.js): ein Attribut-Ausbruch mit
+ * `<img src="kanarie-<ort>.png" data-kanarie="<ort>">` (N()), in
+ * Rich-Text-Feldern dazu eine Verknuepfungsmarke mit Ausbruch (NH()), als
+ * Link- oder Bildziel `javascript:void('kanarie-<ort>')` (JS()). Kein
+ * Script, kein Ereignis-Handler. Erkannt wird schon die EINSCHLEUSUNG
+ * (erkennungInstallieren(), laden()): ein `[data-kanarie]` im Dokument, die
+ * Anforderung einer kanarie-*.png (abgebrochen, bevor sie die Platte
+ * erreicht), ein javascript:-Ziel in href/src/action. Jede Kanarie traegt
+ * ihren Ort, ein roter Lauf nennt also die Senke. Bis 2026-11-02 setzten die
+ * Nutzlasten per `onerror` ein Kennzeichen `window.__xss` — das schlug erst
+ * bei einer AUSFUEHRUNG an; die Kanarie ist strenger, keine Abschwaechung.
+ * Sie stehen NUR in Textfeldern — in einem Zahlfeld (`ac`, `hp`, `weight` …)
+ * wuerde R3 die Datei zu Recht ablehnen, und der Fall maesse nichts. Jeder
+ * Nutzlast-Fall verlangt als Vorbedingung, dass die Datei ankommt (Fenster,
+ * Schreiben, Eintrag in D): am Buendel ist er dort rot, weil der Reiter-Weg
+ * gar nichts importiert.
+ *
+ * NACH SENKEN (Stand 8702f84a, Ausgabe kodiert, Datengrenze an jedem
+ * Eingang): die Senken, an denen (11)–(14) in den Gegenproben unten rot
+ * wurden (`cr`, Loot-Tags, `speed`, `speed.walk`, `savingThrows`, Klasse,
+ * Resistenzen, `type`, javascript:-hrefs), sind dort geschlossen — gemessen
+ * im Rot-Nachweis zu a9858d23: mit dem halben Fix (nur das Fenster) und mit
+ * vollem Felddurchlass waren (11)–(14) GRUEN. Rot waren sie am Branch nur an
+ * der Vorbedingung (kein Fenster). Sie sind damit Regressionswaechter am
+ * neuen Eingang, kein roter Nachweis eines REITERIMPORT-Defekts mehr; die
+ * Gegenproben unten beschreiben den Stand VOR SENKEN.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * GEGENPROBE (beim Schreiben, nicht Teil der Datei)
@@ -213,14 +235,14 @@
  * einer bestaetigten Typ-Rueckfrage geschieht, und XSS-Senken jenseits des
  * Reiter-Wegs (Kampagnen-Import, DM-Screen, Suche, Handouts — eigener
  * Sicherheits-PR). Die Bearbeiten-Formulare der importierten Eintraege
- * oeffnet nur (14): Links haben kein Detail, ✏️ ist ihr einziges.
- * R9 fuer NPC, Ort, Wiki, Session-Prep, Kalender und Fraktion: keine Senke
- * gefunden — mit Schemafilter in der Liste und im Detail von NPC, Ort,
- * Fraktion und Session-Prep (Datenpfad-Bericht; Wiki- und Kalender-Detail
- * dort nicht geoeffnet), mit vollem Felddurchlass in der Liste (Sonde des
- * Skeptikers, jedes Textfeld vergiftet); die Details mit Felddurchlass
- * sind nicht gemessen.
- * Findet ein Fix dort eine Senke, gehoert sie in (11).
+ * oeffnet nur (14) — Links haben kein Detail, ✏️ ist ihr einziges — und
+ * (15) beim Session-Prep, dessen Detail das Bearbeiten-Fenster ist.
+ * R9 fuer NPC, Ort, Wiki, Session-Prep, Kalender und Fraktion: frueher hier
+ * ungeprueft (keine Senke gefunden — mit Schemafilter in Liste und Detail
+ * von NPC, Ort, Fraktion und Session-Prep, mit vollem Felddurchlass nur in
+ * der Liste); seit dem vollen Felddurchlass (R4) misst (15) Liste und
+ * Detail mit jedem Textfeld vergiftet. Der Kalender hat kein Detail: seine
+ * Liste zeigt jedes Feld.
  */
 import fs from 'fs';
 import { test, expect } from '@playwright/test';
@@ -510,12 +532,30 @@ function reiterDatei(typ, data, name, kopf = {}) {
     );
 }
 
-/** Die Nutzlast fuer den Ort `ort`: bricht aus Attributen aus (`"'>`) und
- *  setzt bei Ausfuehrung ein Kennzeichen — kein `alert`, das hielte den Lauf
- *  an. `src=x` scheitert unter file:// sofort, `onerror` feuert.
+/** Die Kanarie fuer den Ort `ort` (Muster tests/e2e/features/senken-kanarie.spec.js):
+ *  bricht aus Attributen aus (`"'>`) und setzt ein HARMLOSES Element mit
+ *  `data-kanarie` — kein Script, kein Ereignis-Handler. Erkannt wird schon die
+ *  Einschleusung, nicht erst eine Ausfuehrung (erkennungInstallieren(),
+ *  laden()); das ist strenger als das fruehere `onerror`-Kennzeichen, das erst
+ *  bei einem ausgefuehrten Handler anschlug.
  *  @param {string} ort */
 function N(ort) {
-    return `${ort}"'><img src=x onerror="window.__xss.push('${ort}')">`;
+    return `${ort}"'><img src="kanarie-${ort}.png" data-kanarie="${ort}">`;
+}
+
+/** Die Kanarie fuer ein Rich-Text-Feld: dazu eine Verknuepfungsmarke, deren
+ *  Name aus dem `title`-Attribut ausbricht (parseEntityLinks() setzt ihn nach
+ *  sanitizeHTML() ein — Muster htmlKanarie in senken-kanarie.spec.js).
+ *  @param {string} ort */
+function NH(ort) {
+    return `${N(ort)} [[npcs:1:k" data-kanarie="${ort}.marke" x="]]`;
+}
+
+/** Ein javascript:-Ziel, das nichts tut und seinen Ort traegt (`void`). Als
+ *  Bild- oder Linkziel gesetzt, meldet es die Erkennung (c).
+ *  @param {string} ort */
+function JS(ort) {
+    return `javascript:void('kanarie-${ort}')`;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -560,17 +600,107 @@ function beobachten(page) {
 }
 
 /**
+ * Erkennung der Kanarien im Seitenkontext, vor jedem Skript der App
+ * (addInitScript; Muster senken-kanarie.spec.js). JEDE Einschleusung zaehlt:
+ *  (a) ein Element mit `data-kanarie` im Dokument — auch fluechtig, auch als
+ *      Attribut auf einem Wirtselement nach einem Attribut-Ausbruch;
+ *  (c) ein `href`/`src`/`action`/`formaction` mit javascript: — gelesen wie
+ *      der Browser, also ohne Leer- und Steuerzeichen und ohne Gross/klein.
+ * (b), die Anforderung einer kanarie-*.png (auch aus einem losgeloesten
+ * Element), sieht laden() im Testprozess. Jeder Fund traegt den Ort der
+ * Kanarie und die Erkennungsart.
+ */
+function erkennungInstallieren() {
+    /** @type {string[]} */
+    const funde = [];
+    // @ts-ignore — die Funde der Seite
+    window.__kanarie = funde;
+    const ATTRIBUTE = ['href', 'src', 'action', 'formaction'];
+    // Wie der URL-Parser: Tab und Zeilenumbruch fallen ueberall weg, fuehrende
+    // Steuer- und Leerzeichen (<= U+0020) ebenso (Muster senken-kanarie.spec.js)
+    /** @param {string} wert */
+    const istJs = wert => {
+        const t = wert.replace(/[\t\n\r]/g, '');
+        let i = 0;
+        while (i < t.length && t.charCodeAt(i) <= 0x20) i++;
+        return /^javascript:/i.test(t.slice(i));
+    };
+    /** @param {Element} el */
+    const pruefe = el => {
+        const ort = el.getAttribute('data-kanarie');
+        if (ort !== null) funde.push(`${ort} (dom)`);
+        for (const a of ATTRIBUTE) {
+            const wert = el.getAttribute(a);
+            if (wert !== null && istJs(wert)) {
+                const m = /kanarie-([^'")]+)/.exec(wert);
+                funde.push(`${m ? m[1] : wert.slice(0, 40)} (${a}: javascript)`);
+            }
+        }
+    };
+    new MutationObserver(aenderungen => {
+        for (const m of aenderungen) {
+            if (m.type === 'attributes') {
+                pruefe(/** @type {Element} */ (m.target));
+                continue;
+            }
+            for (const knoten of m.addedNodes) {
+                if (knoten.nodeType !== 1) continue;
+                const el = /** @type {Element} */ (knoten);
+                pruefe(el);
+                el.querySelectorAll(
+                    '[data-kanarie], [href], [src], [action], [formaction]'
+                ).forEach(pruefe);
+            }
+        }
+    }).observe(document, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['data-kanarie', ...ATTRIBUTE]
+    });
+}
+
+/** Die Anforderungen einer kanarie-*.png je Seite (Erkennung (b)). */
+const NETZ = new WeakMap();
+
+/** Der Ort einer Kanarien-Anforderung (`kanarie-<ort>.png` als letztes
+ *  Pfadsegment) oder null.
+ *  @param {string} url */
+function kanarienBild(url) {
+    const letzte = String(url).split(/[/\\]/).pop() || '';
+    let name = letzte;
+    try {
+        name = decodeURIComponent(letzte);
+    } catch {
+        // unlesbare Kodierung: roh vergleichen
+    }
+    const m = /^kanarie-(.+)\.png$/i.exec(name);
+    return m ? m[1] : null;
+}
+
+/**
  * Laedt breit, saet EINMAL je Tab (sessionStorage-Sperre wie
- * link-anlegen.spec.js) und legt vor jedem Skript der Seite das Kennzeichen
- * der Nutzlasten an.
+ * link-anlegen.spec.js) und richtet vor jedem Skript der Seite die Erkennung
+ * der Kanarien ein. Eine Kanarien-Anforderung wird gezaehlt und abgebrochen,
+ * bevor der Browser sie oeffnet (nichts geht an die Platte oder ins Netz).
  * @param {import('@playwright/test').Page} page
  */
 async function laden(page) {
     await page.setViewportSize(BREIT);
+    /** @type {string[]} */
+    const netz = [];
+    NETZ.set(page, netz);
+    page.on('request', anfrage => {
+        const ort = kanarienBild(anfrage.url());
+        if (ort !== null) netz.push(`${ort} (netz)`);
+    });
+    await page.route(
+        url => kanarienBild(url.href) !== null,
+        route => route.abort()
+    );
+    await page.addInitScript(erkennungInstallieren);
     await page.addInitScript(
         ([schluessel, s]) => {
-            // @ts-ignore — nur das Kennzeichen der Nutzlasten
-            window.__xss = [];
             try {
                 if (!sessionStorage.getItem('reiterimport-pruefung-gesaet')) {
                     localStorage.setItem(schluessel, JSON.stringify(s));
@@ -683,12 +813,14 @@ function meldungenSeit(page, nr) {
     );
 }
 
-/** Liest das Kennzeichen der Nutzlasten und leert es — jede Stufe meldet
- *  nur, was SIE ausgeloest hat.
+/** Liest die Kanarien-Funde (Seite und Netz) und leert sie — jede Stufe
+ *  meldet nur, was SIE ausgeloest hat.
  *  @param {import('@playwright/test').Page} page */
-function kennzeichen(page) {
+async function kennzeichen(page) {
     // @ts-ignore
-    return page.evaluate(() => (window.__xss || []).splice(0));
+    const imDom = await page.evaluate(() => (window.__kanarie || []).splice(0));
+    const netz = NETZ.get(page) || [];
+    return [...new Set([...imDom, ...netz.splice(0)])].sort();
 }
 
 /** @param {import('@playwright/test').Page} page */
@@ -935,15 +1067,21 @@ async function ablehnungen(page, beob, ansicht, faelle) {
 
 /**
  * Importiert eine GUELTIGE Datei per "Hinzufügen" — die Vorbedingung der
- * Nutzlast-Faelle (11)–(14) und von (7). Prueft unterwegs das Kennzeichen:
- * in der Vorschau und beim Import (renderAll).
+ * Nutzlast-Faelle (11)–(15) und von (7). Prueft unterwegs die Kanarien: in
+ * der Vorschau und beim Import (renderAll).
+ * Mit `vorschauKanarie` (der Kanarie im Dateikopf): die Vorschau muss sie
+ * GANZ als Text zeigen — sonst waere "die Vorschau schleust nichts ein"
+ * leer erfuellt. Gemessen: die Vorschau kuerzt den Kampagnennamen auf 100
+ * Zeichen; eine laengere Kanarie verlor dabei ihr Tagende, und ein roh
+ * gesetztes `innerHTML` blieb unentdeckt (Gegenprobe zu (12)/(15)).
  * @param {import('@playwright/test').Page} page
  * @param {ReturnType<typeof beobachten>} beob
  * @param {string} ansicht
  * @param {ReturnType<typeof datei>} dateiInhalt
  * @param {string} was
+ * @param {string} [vorschauKanarie]
  */
-async function gueltigHinzufuegen(page, beob, ansicht, dateiInhalt, was) {
+async function gueltigHinzufuegen(page, beob, ansicht, dateiInhalt, was, vorschauKanarie) {
     beob.steuer.annehmen = true;
     await waehlen(page, beob, ansicht, dateiInhalt);
     await expect(
@@ -951,16 +1089,23 @@ async function gueltigHinzufuegen(page, beob, ansicht, dateiInhalt, was) {
         `Vorbedingung (${was}): die gueltige Datei oeffnet das Fenster — ohne Import misst der Fall nichts`
     ).toBeVisible();
     await page.waitForTimeout(400);
-    weich(await kennzeichen(page), `${was}: die Vorschau fuehrt kein Script aus`).toEqual([]);
+    if (vorschauKanarie !== undefined) {
+        weich(
+            await page.locator('#import-info').innerText(),
+            `Vorbedingung (${was}): die Vorschau zeigt die Kanarie des Dateikopfs ganz`
+        ).toContain(vorschauKanarie);
+    }
+    weich(await kennzeichen(page), `${was}: die Vorschau schleust keine Kanarie ein`).toEqual([]);
     await modusWaehlen(page, 'merge');
     const rev = await revStand(page);
     await importierenKnopf(page).click();
     await geschriebenSeit(page, rev, `${was} → Importieren`);
     await fensterSchliessen(page);
     await page.waitForTimeout(500);
-    weich(await kennzeichen(page), `${was}: beim Import (renderAll) laeuft kein Script`).toEqual(
-        []
-    );
+    weich(
+        await kennzeichen(page),
+        `${was}: beim Import (renderAll) wird keine Kanarie eingeschleust`
+    ).toEqual([]);
     beob.steuer.annehmen = false;
 }
 
@@ -1561,7 +1706,7 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
         resistances: [N('characters.resistances')],
         immunities: [N('characters.immunities')],
         languages: [N('characters.languages')],
-        notes: N('characters.notes'),
+        notes: NH('characters.notes'),
         conditions: [],
         tags: [{ name: N('characters.tags'), color: '#a855f7' }],
         spells: [],
@@ -1571,9 +1716,9 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
         id: 1,
         title: `Quest-Nutzlast ${N('quests.title')}`,
         type: N('quests.type'),
-        description: N('quests.description'),
+        description: NH('quests.description'),
         rewardOther: N('quests.rewardOther'),
-        epilog: N('quests.epilog'),
+        epilog: NH('quests.epilog'),
         giverId: null,
         locationId: null,
         completed: false,
@@ -1589,8 +1734,8 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
         range: N('spells.range'),
         duration: N('spells.duration'),
         material: N('spells.material'),
-        description: N('spells.description'),
-        note: N('spells.note'),
+        description: NH('spells.description'),
+        note: NH('spells.note'),
         spellClasses: [N('spells.spellClasses')],
         ritual: false,
         v: true,
@@ -1674,7 +1819,11 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
 // Der KOPF der Datei traegt ebenfalls eine (`_campaignName`): die Vorschau
 // zeigt ihn ("Kampagne: …"), und ohne Nutzlast dort pruefte "die Vorschau
 // fuehrt kein Script aus" nichts — ein Teilfix, der den Namen roh einsetzt,
-// war in der Gegenprobe des Skeptikers gruen.
+// war in der Gegenprobe des Skeptikers gruen. Die Kanarie dort ist KURZ
+// (`kopf.12`): die Vorschau kuerzt den Namen auf 100 Zeichen, und die erste
+// Kanarienfassung (`vorschau._campaignName`, 109 Zeichen) verlor ihr Tagende —
+// gemessen blieb ein roh gesetztes innerHTML der Vorschau damit unentdeckt.
+// gueltigHinzufuegen() verlangt darum, dass die Vorschau sie GANZ zeigt.
 test('(12) Nutzlasten in einem Encounter (cr, Name, Texte) und im Dateikopf laufen weder in Vorschau, Liste noch Detail', async ({
     page
 }) => {
@@ -1702,10 +1851,10 @@ test('(12) Nutzlasten in einem Encounter (cr, Name, Texte) und im Dateikopf lauf
         resistances: [N('encounters.resistances')],
         immunities: [N('encounters.immunities')],
         conditionImmunities: [N('encounters.conditionImmunities')],
-        traits: N('encounters.traits'),
-        equipment: N('encounters.equipment'),
-        actions: N('encounters.actions'),
-        skills: N('encounters.skills'),
+        traits: NH('encounters.traits'),
+        equipment: NH('encounters.equipment'),
+        actions: NH('encounters.actions'),
+        skills: NH('encounters.skills'),
         tags: [{ name: N('encounters.tags'), color: '#f59e0b' }]
     };
     await gueltigHinzufuegen(
@@ -1713,9 +1862,10 @@ test('(12) Nutzlasten in einem Encounter (cr, Name, Texte) und im Dateikopf lauf
         beob,
         'encounter',
         reiterDatei('encounters', [enc], 'probe-12.json', {
-            _campaignName: N('vorschau._campaignName')
+            _campaignName: N('kopf.12')
         }),
-        'Encounter'
+        'Encounter',
+        N('kopf.12')
     );
     weich(
         await page.evaluate(() =>
@@ -1758,7 +1908,7 @@ test('(13) Nutzlasten in einem Gegenstand der Truhe (Tags, Name, Texte) laufen w
         quantity: 1,
         weight: 2,
         value: 10,
-        description: N('loot.description'),
+        description: NH('loot.description'),
         origin: N('loot.origin'),
         special: N('loot.special'),
         property: N('loot.property'),
@@ -1815,21 +1965,21 @@ test('(14) ein javascript:-Link wird nicht verlinkt, Nutzlasten in Titel und Bes
         {
             id: 1,
             title: `Link-Nutzlast ${N('links.title')}`,
-            url: "javascript:window.__xss.push('links.url')",
+            url: JS('links.url'),
             category: 'rules',
-            description: N('links.description')
+            description: NH('links.description')
         },
         {
             id: 2,
             title: 'Link-Gross',
-            url: " JaVaScRiPt:window.__xss.push('links.url.gross')",
+            url: " JaVaScRiPt:void('kanarie-links.url.gross')",
             category: 'rules',
             description: ''
         },
         {
             id: 3,
             title: 'Link-Tab',
-            url: "java\tscript:window.__xss.push('links.url.tab')",
+            url: "java\tscript:void('kanarie-links.url.tab')",
             category: 'rules',
             description: ''
         },
@@ -1878,6 +2028,288 @@ test('(14) ein javascript:-Link wird nicht verlinkt, Nutzlasten in Titel und Bes
     await expect(page.locator('#link-form-card')).toBeVisible();
     await page.waitForTimeout(500);
     weich(await kennzeichen(page), 'Link bearbeiten: kein Script').toEqual([]);
+    weich(
+        beob.dialoge.filter(d => d.typ === 'alert'),
+        'kein alert'
+    ).toEqual([]);
+    weich(await beob.alle(), 'kein Fehler').toEqual([]);
+});
+
+/** Die Stil-Kanarie fuer ein Farbfeld (Muster stilKanarie in
+ *  senken-kanarie.spec.js): roh in `style` fordert sie ein Bild an, roh in
+ *  `class`/`data-*` bricht sie aus dem Attribut aus.
+ *  @param {string} ort */
+function S(ort) {
+    return `red);background-image:url(kanarie-${ort}.png);x:("><img src="kanarie-${ort}.png" data-kanarie="${ort}">`;
+}
+
+// Die uebrigen sechs Typen mit 📥. Frueher hier nicht geprueft (siehe "Was
+// hier bewusst nicht geprueft wird"): mit dem alten Schemafilter kam nur ein
+// Teil ihrer Felder an. Seit dem vollen Felddurchlass (R4) kommt JEDES Feld
+// an — jedes Textfeld traegt hier seine Kanarie, Rich-Text dazu die
+// Verknuepfungsmarke, Farben die Stil-Kanarie, Bildquellen ein
+// javascript:-Ziel. Zahlen und Verweise bleiben gueltig (sonst lehnte R3 die
+// Datei ab bzw. leerte R5 den Verweis). Detail heisst: das ausgewaehlte NPC,
+// der Ort und die Fraktion samt Bearbeiten-Fenster, der Wiki-Eintrag, das
+// Bearbeiten-Fenster des Session-Preps (sein einziges Detail); der Kalender
+// hat keines, seine Liste zeigt jedes Feld.
+test('(15) Kanarien in NPC, Ort, Wiki, Session-Prep, Kalender und Fraktion werden weder beim Import noch in Liste oder Detail eingeschleust', async ({
+    page
+}) => {
+    test.setTimeout(180000);
+    const beob = beobachten(page);
+    await laden(page);
+    const typen = await importTypen(page);
+    /** @param {string} typ */
+    const ansichtVon = typ => typen.find(t => t.typ === typ)?.ansicht || '';
+    /** Klickt das erste sichtbare Element (hart: ein fehlender Weg ist rot).
+     *  @param {import('@playwright/test').Locator} ziel */
+    const klick = async ziel => {
+        await ziel.filter({ visible: true }).first().click();
+        await page.waitForTimeout(300);
+    };
+
+    const npc = {
+        id: 1,
+        name: `NPC-Nutzlast ${N('npcs.name')}`,
+        role: N('npcs.role'),
+        race: N('npcs.race'),
+        chapter: N('npcs.chapter'),
+        locationId: null,
+        filterId: null,
+        factionId: null,
+        quests: [N('npcs.quests')],
+        info: [N('npcs.info')],
+        relationships: [N('npcs.relationships')],
+        description: NH('npcs.description'),
+        triggers: [
+            {
+                condition: N('npcs.triggers.condition'),
+                reveal: N('npcs.triggers.reveal'),
+                triggered: false
+            }
+        ],
+        dialogs: [
+            {
+                title: N('npcs.dialogs.title'),
+                triggerCondition: N('npcs.dialogs.triggerCondition'),
+                text: N('npcs.dialogs.text'),
+                used: false
+            }
+        ],
+        relations: [],
+        avatar: JS('npcs.avatar'),
+        tags: [{ name: N('npcs.tags.name'), color: S('npcs.tags.color') }],
+        links: []
+    };
+    const ort = {
+        id: 1,
+        name: `Ort-Nutzlast ${N('locations.name')}`,
+        description: NH('locations.description'),
+        filterId: null,
+        avatar: JS('locations.avatar'),
+        tags: [{ name: N('locations.tags.name'), color: S('locations.tags.color') }],
+        links: []
+    };
+    const wiki = {
+        id: 1,
+        title: `Wiki-Nutzlast ${N('wiki.title')}`,
+        category: N('wiki.category'),
+        content: NH('wiki.content'),
+        tags: [N('wiki.tags')],
+        pinned: false,
+        parentId: null,
+        createdAt: 1700000000000,
+        updatedAt: 1700000000001
+    };
+    const prep = {
+        id: 1,
+        sessionNr: 77,
+        datum: N('sessionPreps.datum'),
+        inGameDatum: N('sessionPreps.inGameDatum'),
+        strongStart: NH('sessionPreps.strongStart'),
+        szenen: [
+            {
+                id: 1,
+                titel: N('sessionPreps.szenen.titel'),
+                beschreibung: NH('sessionPreps.szenen.beschreibung'),
+                ort: N('sessionPreps.szenen.ort')
+            }
+        ],
+        offeneFaeden: [
+            {
+                text: N('sessionPreps.offeneFaeden.text'),
+                quelleId: null,
+                quelleTyp: N('sessionPreps.offeneFaeden.quelleTyp')
+            }
+        ],
+        geheimeHinweise: NH('sessionPreps.geheimeHinweise'),
+        wichtigeNpcs: NH('sessionPreps.wichtigeNpcs'),
+        belohnungen: N('sessionPreps.belohnungen'),
+        links: [],
+        erstellt: 1700000000002
+    };
+    const ereignis = {
+        id: 1,
+        datum: { tag: 4, monat: 2, jahr: 1492 },
+        titel: `Kalender-Nutzlast ${N('calendarEvents.titel')}`,
+        beschreibung: NH('calendarEvents.beschreibung'),
+        typ: N('calendarEvents.typ'),
+        quelleId: null
+    };
+    const fraktion = {
+        id: 1,
+        name: `Fraktion-Nutzlast ${N('factions.name')}`,
+        symbol: N('factions.symbol'),
+        agenda: NH('factions.agenda'),
+        beschreibung: NH('factions.beschreibung'),
+        ruf: 3,
+        rufHistorie: [{ datum: 1700000000000, delta: 3, grund: N('factions.rufHistorie.grund') }],
+        mitgliederNpcIds: [],
+        sitzOrtId: null,
+        rivalen: N('factions.rivalen'),
+        verbuendete: N('factions.verbuendete'),
+        links: []
+    };
+
+    /** @type {{ typ: string, data: any, was: string, feld: string, marke: string, liste: string, detail: (ansicht: string) => Promise<void> }[]} */
+    const stufen = [
+        {
+            typ: 'npcs',
+            data: npc,
+            was: 'NPC',
+            feld: 'name',
+            marke: 'NPC-Nutzlast',
+            liste: 'NPC-Nutzlast',
+            detail: async ansicht => {
+                await klick(
+                    page
+                        .locator(`#view-${ansicht} [data-action="select-npc"]`)
+                        .filter({ hasText: 'NPC-Nutzlast' })
+                );
+                await expect(page.locator('#npc-detail-panel')).toContainText('NPC-Nutzlast');
+                await klick(
+                    page.locator('#npc-detail-panel [data-action="toggle-npc-dialog-stop"]')
+                );
+                await klick(
+                    page.locator('#npc-detail-panel [data-action="toggle-npc-trigger-stop"]')
+                );
+            }
+        },
+        {
+            typ: 'locations',
+            data: ort,
+            was: 'Ort',
+            feld: 'name',
+            marke: 'Ort-Nutzlast',
+            liste: 'Ort-Nutzlast',
+            detail: async ansicht => {
+                await klick(
+                    page
+                        .locator(`#view-${ansicht} [data-action="select-location"]`)
+                        .filter({ hasText: 'Ort-Nutzlast' })
+                );
+            }
+        },
+        {
+            typ: 'wiki',
+            data: wiki,
+            was: 'Wiki',
+            feld: 'title',
+            marke: 'Wiki-Nutzlast',
+            liste: 'Wiki-Nutzlast',
+            detail: async ansicht => {
+                await klick(
+                    page
+                        .locator(`#view-${ansicht} [data-action="select-wiki-entry"]`)
+                        .filter({ hasText: 'Wiki-Nutzlast' })
+                );
+            }
+        },
+        {
+            typ: 'sessionPreps',
+            data: prep,
+            was: 'Session-Prep',
+            feld: 'sessionNr',
+            marke: '77',
+            liste: 'Session 77',
+            detail: async ansicht => {
+                await klick(
+                    page
+                        .locator(`#view-${ansicht} .wp-card`, { hasText: 'Session 77' })
+                        .locator('[data-action="edit-session-prep"]')
+                );
+            }
+        },
+        {
+            typ: 'calendarEvents',
+            data: ereignis,
+            was: 'Kalender',
+            feld: 'titel',
+            marke: 'Kalender-Nutzlast',
+            liste: 'Kalender-Nutzlast',
+            detail: async () => {}
+        },
+        {
+            typ: 'factions',
+            data: fraktion,
+            was: 'Fraktion',
+            feld: 'name',
+            marke: 'Fraktion-Nutzlast',
+            liste: 'Fraktion-Nutzlast',
+            detail: async ansicht => {
+                const karte = page
+                    .locator(`#view-${ansicht} [data-action="select-fraktion"]`)
+                    .filter({ hasText: 'Fraktion-Nutzlast' });
+                await klick(karte);
+                await klick(karte.locator('[data-action="edit-fraktion"]'));
+            }
+        }
+    ];
+    for (const [i, s] of stufen.entries()) {
+        const ansicht = ansichtVon(s.typ);
+        expect(ansicht, `Vorbedingung: ${s.was} traegt ein 📥 (Typliste aus dem Buendel)`).not.toBe(
+            ''
+        );
+        // kurz genug fuer die 100 Zeichen der Vorschau (siehe (12))
+        const kopf = N(`kopf.15${'abcdef'[i]}`);
+        await gueltigHinzufuegen(
+            page,
+            beob,
+            ansicht,
+            reiterDatei(s.typ, [s.data], `probe-15${'abcdef'[i]}.json`, { _campaignName: kopf }),
+            s.was,
+            kopf
+        );
+        weich(
+            await page.evaluate(
+                ([t, f, m]) => {
+                    const liste = t === 'calendarEvents' ? window.D.calendar?.events : window.D[t];
+                    return (liste || []).some(e => String(e[f]).startsWith(m));
+                },
+                [s.typ, s.feld, s.marke]
+            ),
+            `${s.was}: der Eintrag ist in D angekommen`
+        ).toBe(true);
+        await neuZeichnen(page, ansicht);
+        if (s.typ === 'wiki') {
+            await klick(
+                page.locator(
+                    `#view-${ansicht} [data-action="call"][data-value="expandAllWikiCategories"]`
+                )
+            );
+        }
+        await expect(page.locator(`#view-${ansicht}`)).toContainText(s.liste);
+        weich(await kennzeichen(page), `${s.was}-Liste: keine Kanarie`).toEqual([]);
+        await s.detail(ansicht);
+        await page.waitForTimeout(500);
+        weich(await kennzeichen(page), `${s.was}-Detail: keine Kanarie`).toEqual([]);
+        // ein offenes Bearbeiten-Fenster schliessen (Escape, Vertrag ui/modal-focus.js)
+        for (let n = 0; n < 2; n++) {
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(200);
+        }
+    }
     weich(
         beob.dialoge.filter(d => d.typ === 'alert'),
         'kein alert'

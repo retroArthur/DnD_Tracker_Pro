@@ -12,7 +12,9 @@
  *
  * Vertrag REITERIMPORT, docs/bugfixes.md. Diese Datei prueft R4 (Feldtreue)
  * und R8 (Ansicht, Zaehler, Undo); R1-R3, R5-R7, R9 und R10 haben eigene
- * Dateien.
+ * Dateien. Der Branch REITERIMPORT setzt auf SENKEN auf (8702f84a, Ausgabe
+ * kodiert, Datengrenze an jedem Eingang); am Rot-Nachweis zu a9858d23 war
+ * das Fehlerbild dieser Datei dort dasselbe wie am Buendel 020e258 unten.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND, aus dem diese Datei entstand
@@ -877,11 +879,16 @@ const HTML_FELDER = {
     factions: ['agenda', 'beschreibung']
 };
 
-/** Eine Nutzlast fuer die HTML-Felder in (9): `sanitizeHTML()` macht daraus
- *  `<p>Nutzlast</p><b>fett</b>` und laesst das Ergebnis beim zweiten Mal
- *  stehen (beides prueft (9) als Vorbedingung). Kein Bild, kein Netz. */
+/** Eine Nutzlast fuer die HTML-Felder in (9) — HARMLOSE Kanarien
+ *  (Projektregel, Muster senken-kanarie.spec.js): ein `data-*`-Attribut und
+ *  ein Bild, das es nicht gibt; kein Script, kein Ereignis-Handler.
+ *  `sanitizeHTML()` macht daraus `<p>Nutzlast</p><b>fett</b>` und laesst das
+ *  Ergebnis beim zweiten Mal stehen (beides prueft (9) als Vorbedingung).
+ *  Bis 2026-11-02 stand hier `onmouseover` und ein `<script>`; die Bereinigung
+ *  ergibt fuer beide Fassungen dasselbe (gemessen), (9) prueft also
+ *  unveraendert. */
 const NUTZLAST =
-    '<p onmouseover="window.__datenNutzlast=1">Nutzlast</p><script>window.__datenNutzlast=2</script><b>fett</b>';
+    '<p data-kanarie="daten.9.p">Nutzlast</p><img src="kanarie-daten.9.png" data-kanarie="daten.9"><b>fett</b>';
 
 // ===========================================================================
 // HELFER
