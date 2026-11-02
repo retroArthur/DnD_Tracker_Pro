@@ -27,8 +27,34 @@ function _npcgZufallsElement(arr) {
 }
 
 /**
+ * Name aus einem Eintrag einer Namenstabelle (Vertrag NPC-NAME, N3) oder ''.
+ * Uebernommen wird nur Text: der `text` eines Eintrags `{weight, text}` oder
+ * ein Eintrag, der selbst Text ist; eine Zahl wird verlustfrei Text
+ * (7 -> '7'). Alles andere ergibt '' und faellt aus dem Pool: ein Eintrag
+ * ohne `text`, ein leerer oder nur aus Leerzeichen bestehender Text, `null`,
+ * ein Objekt oder ein Wahrheitswert als `text` — ein Tabelleneintrag ist ein
+ * Namensvorschlag, und ihn zu ueberspringen verliert nichts (anders als an
+ * der Datengrenze, die einen GESPEICHERTEN Namen `true` als 'true' erhaelt).
+ * Vorher (`e.text || e`) wurde eine Zahl unveraendert Name und ein Eintrag
+ * ohne Text (auch `{text: 0}`) das ganze Objekt — `name: 7` bzw.
+ * `name: {weight: 1}` in D, und die NPC-Liste brach (herkunft B5/B6). Ein
+ * `null`-Eintrag warf, und der catch in generiereNPCName() verwarf die ganze
+ * Tabelle samt ihren gueltigen Namen.
+ * Interne Hilfsfunktion — kein window-Export nötig.
+ * @param {*} eintrag
+ * @returns {string}
+ */
+function _npcgTabellenName(eintrag) {
+    var wert = (eintrag !== null && typeof eintrag === 'object') ? eintrag.text : eintrag;
+    if (typeof wert === 'number') wert = String(wert);
+    if (typeof wert !== 'string' || wert.trim() === '') return '';
+    return wert;
+}
+
+/**
  * Generiert einen zufälligen NPC-Namen basierend auf Volk und Geschlecht.
- * Nutzt NPC_DEFAULT_TABLES.namen[volk][geschlecht].
+ * Nutzt NPC_DEFAULT_TABLES.namen[volk][geschlecht], dazu die Texte einer
+ * Nutzertabelle 'npc-namen-<volk>-<geschlecht>' (_npcgTabellenName).
  * Falls kein Pool vorhanden: Fallback 'Unbekannt'.
  * @param {string} volk - z.B. 'mensch', 'elf', 'zwerg'
  * @param {string} geschlecht - 'maennlich' | 'weiblich' | 'neutral'
@@ -48,7 +74,7 @@ function generiereNPCName(volk, geschlecht) {
             var userKey = 'npc-namen-' + volk + '-' + geschlecht;
             var userTable = userD.randomTables.find(function(t) { return t.name === userKey; });
             if (userTable && Array.isArray(userTable.entries) && userTable.entries.length > 0) {
-                pool = pool.concat(userTable.entries.map(function(e) { return e.text || e; }).filter(Boolean));
+                pool = pool.concat(userTable.entries.map(_npcgTabellenName).filter(Boolean));
             }
         }
     } catch (_e) {

@@ -288,6 +288,7 @@ export default {
     "_notifyUndoHooks": 'readonly',
     "_npcgAktuell": 'writable',
     "_npcgRenderVorschau": 'readonly',
+    "_npcgTabellenName": 'readonly',
     "_npcgVolkName": 'readonly',
     "_npcgZufallsElement": 'readonly',
     "_onPersistSuccess": 'readonly',
