@@ -134,8 +134,9 @@
  *
  * Die Anzeigen (R4: Truhen-Detail nach dem ersten 💾, Wiki-Pin, Brotkrumen,
  * Schnellzugriff, Loesch-Rueckfragen, Markdown-Export, Heldenkarte), der
- * Import (der Reiter-Import erreicht `#import-modal` nicht, eigener PR), der
- * Kampagnenwechsel, das Telefon — eigene Waechter bzw. eigene Vorgaenge.
+ * Import (der Reiter-Import erreichte `#import-modal` damals nicht; seit
+ * REITERIMPORT steht das Fenster, geprueft von den reiterimport-*-Specs),
+ * der Kampagnenwechsel, das Telefon — eigene Waechter bzw. eigene Vorgaenge.
  *
  * Und ein Fix, der den Zwischenspeicher in save() SOFORT leert: er besteht
  * jeden Rundlauf, denn jedes 💾 ruft save(), bevor das naechste ✏️ lesen

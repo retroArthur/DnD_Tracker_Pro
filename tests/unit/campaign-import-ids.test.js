@@ -415,7 +415,7 @@ describe('R03 — Ueberschreiben ersetzt die Kampagne (Review-Tests)', () => {
     });
 
     // Korrekturrunde zum Code-Review 2026-09-21 (F5, U5 minor:6): Pin fuer die
-    // Sicherheitskopie des Ueberschreib-Zweigs (import-export.js:829). Der bestehende
+    // Sicherheitskopie des Ueberschreib-Zweigs (import-export.js, importDataGlobal()). Der bestehende
     // Quelltext-Pin in import-sanitization.test.js prueft nur die Reihenfolge
     // "createAutoBackup( vor replaceCampaignData(" — die alte, luegende Form
     // (createAutoBackup() ohne reason plus bedingungsloses
