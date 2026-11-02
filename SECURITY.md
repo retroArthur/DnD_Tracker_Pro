@@ -61,7 +61,7 @@ milestone: v1.1 Tech-Debt & Härtung
 ## 1. Import/Export
 
 **Geprüfte Dateien und Codepfade:**
-- `systems/spellslots/import-export.js` — `HTML_FIELDS_BY_TYPE` (Zeile 148, neun Entity-Typen), `sanitizeImportedItem()` (Zeile 164), beide Import-Eintrittspunkte: `showImportModal()`/`executeImport()` (typspezifisch, Zeilen 285/374) und `importDataGlobal()` (global, Zeile 499, BEIDE Zweige — „neue Kampagne" via `StorageAPI.setJSON` und „überschreiben" via `Object.assign(D, imp)`)
+- `systems/spellslots/import-export.js` — `HTML_FIELDS_BY_TYPE` (Zeile 148, neun Entity-Typen), `sanitizeImportedItem()` (Zeile 164), beide Import-Eintrittspunkte: `showImportModal()`/`executeImport()` (typspezifisch, Zeilen 285/374) und `importDataGlobal()` (global, Zeile 499, BEIDE Zweige — „neue Kampagne" via `StorageAPI.setJSON` und „überschreiben" via `Object.assign(D, imp)`). Zeilenangaben am Stand von Phase 10. Seit REITERIMPORT (`docs/bugfixes.md`) läuft der typspezifische Import über `importData()` → `bereiteReiterImportVor()` (`bereinigeDatengrenze()`, dann `sanitizeImportedItem()`) → `showImportModal()` (nur noch das Fenster) → `executeImport()`; die Abbildung `validatedItems` gibt es nicht mehr.
 - `ui/editors/markdown-converter.js` — `renderMarkdownInContent()` (Zeile 258), sanitisiert seit Phase 10 identisch zu ihrem Zwilling `markdownToHtml()`
 - `features/wiki/wiki.js` — `renderWikiDetail()` (Zeile 401): Sanitisierung läuft VOR der TOC-Anker-Injektion (Zeilen 427-431); Speichern-Pfad (Zeile 710), Wiedereröffnen-Pfad (Zeile 753)
 
