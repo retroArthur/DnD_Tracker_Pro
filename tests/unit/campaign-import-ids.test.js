@@ -960,10 +960,19 @@ describe('R03 — bestehende Schaeden werden beim Laden repariert (validateDataI
 // ============================================================
 
 describe('R03 — executeImport() und Pfad-Register', () => {
+    // REITERIMPORT (bewusst nachgezogen): die vorbereitete Datei liegt im Modulzustand und
+    // nicht mehr als JSON-Text in `dataset.importItems` des Fensters. Sie kommt darum auf dem
+    // Weg dorthin, den auch die App nimmt — showImportModal() mit dem Ergebnis der
+    // Vorbereitung. Die Zusagen von C13 bleiben.
     function mitImportModal(seite, typ, items, modus) {
-        seite.elemente['import-modal'] = {
-            dataset: { importItems: JSON.stringify(items), dataType: typ }
-        };
+        seite.ctx.showModal = jest.fn();
+        seite.ctx.showImportModal(typ, {
+            dataType: typ,
+            items,
+            kampagne: 'Test',
+            exportDatum: 'unbekannt',
+            hinweise: []
+        });
         const radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'import-mode';

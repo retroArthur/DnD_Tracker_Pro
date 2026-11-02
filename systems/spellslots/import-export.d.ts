@@ -6,7 +6,15 @@ interface SchemaField {
 type IOSchema = Record<string, Record<string, SchemaField>>;
 declare const IO_SCHEMA: IOSchema;
 declare function exportToCSV(dataType: string): void;
-declare function showImportModal(dataType: string): void;
+/** Vorbereitete Datei des Reiter-Imports (REITERIMPORT), Inhalt des Fensters #import-modal. */
+interface ReiterImportVorbereitung {
+    dataType: string;
+    items: Record<string, any>[];
+    kampagne: string;
+    exportDatum: string;
+    hinweise: { text: string; warnung?: boolean }[];
+}
+declare function showImportModal(dataType: string, vorbereitung: ReiterImportVorbereitung): void;
 declare function updateIOCounts(): void;
 declare function exportSpells(): void;
 declare function importDataGlobal(): void;

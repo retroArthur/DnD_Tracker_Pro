@@ -794,11 +794,14 @@ declare global {
   /** Export data as CSV */
   function exportToCSV(dataType: string): void;
   
-  /** Import data */
-  function importData(file: File): void;
+  /** Reiter-Import: liest die im Reiterfeld (.io-file-input) gewaehlte Datei und oeffnet #import-modal */
+  function importData(inputEl: HTMLInputElement): void;
   
-  /** Execute import */
-  function executeImport(type: string): void;
+  /** Reiter-Import: schreibt die vorbereitete Datei ("Importieren" in #import-modal) */
+  function executeImport(type?: string | null): void;
+  
+  /** Reiter-Import: zeichnet die Vorschau #import-info fuer den gewaehlten Modus neu */
+  function renderImportVorschau(): void;
   
   // ============================================================
   // ERROR HANDLER

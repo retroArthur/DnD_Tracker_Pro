@@ -372,120 +372,416 @@ function exportToCSV(dataType) {
         }
     }
 }
-// IMPORT FUNCTIONS
+// IMPORT FUNCTIONS — der Import pro Reiter (REITERIMPORT)
 // ============================================================
-function importData(inputEl) {
-    const dataType = inputEl.dataset.type;
-    if (!dataType) {
-        showToast('Datentyp nicht angegeben', 'error');
+// Vertrag REITERIMPORT (docs/bugfixes.md): R1 ein Dateidialog, R2 Meldung erst nach dem
+// Schreiben, R10 Telefon und Fokus, dazu der Oberflaechen-Vertrag (#import-modal).
+//
+// DER WEG. 📥 (trigger-click) oeffnet den Dateidialog des Reiterfelds (`.io-file-input`,
+// data-on-change="importData"), und importData() liest GENAU die dort gewaehlte Datei. Vorher
+// baute showImportModal() ein ZWEITES, namenloses Datei-Feld und klickte es: ein Dateidialog
+// braucht in Chromium transiente Nutzeraktivierung, und die ist ~5 s nach dem Klick auf 📥
+// abgelaufen — wer laenger im ersten Dialog suchte, erlebte gar nichts (gemessen, Kritik K1).
+// `#import-modal` gab es seit der TS-Migration (Jan. 2026) nicht mehr; nach der gruenen Meldung
+// "✅ Datei validiert" wurde nie etwas importiert. Das Fenster steht jetzt statisch in
+// assets/templates/modals-tools.html — Fokusfalle, Escape und Rueckkehr zum 📥 kommen damit von
+// ui/modal-focus.js wie bei jeder Schale.
+//
+// DIE KETTE. Jede Stufe VOR dem Fenster laesst D, Speicher und Index unberuehrt; eine
+// unbrauchbare Datei endet mit einer deutschen Meldung und ohne Fenster:
+//   leseReiterImport()        Text -> Objekt (JSON mit Reviver)
+//   pruefeReiterImport()      Form der Datei, passender Typ (Rueckfrage)
+//   bereiteReiterImportVor()  Datengrenze, Feldabbildung, HTML-Bereinigung, Hinweise
+//   showImportModal()         Fenster mit Vorschau; die Daten bleiben im Modulzustand
+//   executeImport()           schreibt — und meldet den Erfolg ERST DANACH
+// Pruefungen gehoeren in pruefeReiterImport() und laufen damit VOR der Datengrenze: die Grenze
+// verwirft Text in Zahlenfeldern still ("viel" -> Feld weg), eine Ablehnung muss ihn vorher
+// sehen. Was die Vorschau zusaetzlich nennen soll, haengt bereiteReiterImportVor() an
+// `hinweise` an; was nur fuer einen Modus gilt, steht in importVorschauZeilen().
+
+/**
+ * @typedef {Object} ReiterImportVorbereitung
+ * @property {string} dataType - Typ des Reiterfelds (`data-type`)
+ * @property {Object[]} items - die vorbereiteten Eintraege, so wie executeImport() sie schreibt
+ * @property {string} kampagne - Kampagne laut Datei, sonst der Dateiname
+ * @property {string} exportDatum - Exportdatum laut Datei (TT.MM.JJJJ) oder "unbekannt"
+ * @property {{text: string, warnung?: boolean}[]} hinweise - weitere Zeilen der Vorschau
+ */
+
+/**
+ * Deutsche Namen der Reiter-Typen, [Einzahl, Mehrzahl] (R2). Eine Meldung nennt nie den
+ * internen Schluessel — "2 calendarEvents importiert" sagt einem Spielleiter nichts. Die Woerter
+ * sind die der App: "Charakter aktualisiert", "Ereignis gespeichert", "Session-Prep gelöscht",
+ * die Reiter "🏠 Orte" und "⚔️ Fraktionen".
+ */
+const REITER_TYPNAMEN = Object.freeze({
+    characters: Object.freeze(['Charakter', 'Charaktere']),
+    npcs: Object.freeze(['NPC', 'NPCs']),
+    locations: Object.freeze(['Ort', 'Orte']),
+    quests: Object.freeze(['Quest', 'Quests']),
+    encounters: Object.freeze(['Encounter', 'Encounter']),
+    loot: Object.freeze(['Gegenstand', 'Gegenstände']),
+    spells: Object.freeze(['Zauber', 'Zauber']),
+    wiki: Object.freeze(['Wiki-Eintrag', 'Wiki-Einträge']),
+    links: Object.freeze(['Link', 'Links']),
+    sessionPreps: Object.freeze(['Session-Prep', 'Session-Preps']),
+    calendarEvents: Object.freeze(['Ereignis', 'Ereignisse']),
+    factions: Object.freeze(['Fraktion', 'Fraktionen']),
+    sessionNotes: Object.freeze(['Session-Notiz', 'Session-Notizen'])
+});
+
+/**
+ * Der deutsche Typname im passenden Numerus. Ein unbekannter Typ heisst "Eintrag"/"Einträge"
+ * und nie wie sein Schluessel — `_dataType` kommt aus der Datei, darum die Pruefung auf eigene
+ * Eigenschaft (sonst lieferte "constructor" eine Funktion).
+ * @param {string} typ
+ * @param {number} anzahl
+ * @returns {string}
+ */
+function reiterTypName(typ, anzahl) {
+    const namen = Object.prototype.hasOwnProperty.call(REITER_TYPNAMEN, typ)
+        ? REITER_TYPNAMEN[typ]
+        : ['Eintrag', 'Einträge'];
+    return anzahl === 1 ? namen[0] : namen[1];
+}
+
+/** Die groesste Datei, die der Reiter-Import liest (wie bisher). */
+const REITER_IMPORT_MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Sperre gegen parallele Laeufe: eine Auswahl wird gerade gelesen und vorbereitet. Ein
+ * `<input type=file>` meldet eine Auswahl als `input` UND `change`; das Reiterfeld traegt nur
+ * data-on-change (ui/event-delegation.js ruft also einmal), aber jede weitere Ausloesung,
+ * solange die erste laeuft, braechte eine zweite Rueckfrage und ein zweites Fenster.
+ */
+let _reiterImportLaeuft = false;
+
+/**
+ * Die vorbereitete Datei, solange das Fenster steht — im Modulzustand und NICHT als Text im
+ * DOM (frueher `modal.dataset.importItems`: bis zu 10 MB JSON in einem Attribut, bei jedem
+ * Lesen neu geparst). Gilt fuer genau EINEN Import: executeImport() und die naechste Dateiwahl
+ * setzen ihn zurueck.
+ * @type {ReiterImportVorbereitung|null}
+ */
+let _reiterImport = null;
+
+/**
+ * Eine erwartete Ablehnung: ihre Meldung ist deutsch und geht so an den Nutzer, und sie ist
+ * kein Programmfehler (kein Eintrag im Fehlerlog).
+ * @param {string} text
+ * @returns {Error}
+ */
+function reiterImportFehler(text) {
+    const fehler = new Error(text);
+    fehler.reiterImport = true;
+    return fehler;
+}
+
+/**
+ * Meldet das Ende einer Kette, die nicht im Fenster ankam. Eine erwartete Ablehnung nennt
+ * ihren Grund; alles andere ist ein Programmfehler: eine allgemeine deutsche Meldung (kein
+ * Laufzeit-Rohtext) und ein Eintrag im Fehlerlog.
+ * @param {*} err
+ */
+function meldeReiterImportFehler(err) {
+    if (err && err.reiterImport) {
+        showToast('❌ ' + err.message, 'error');
         return;
     }
-    showImportModal(dataType);
+    showToast('❌ Import fehlgeschlagen: die Datei ließ sich nicht verarbeiten', 'error');
+    if (window.ErrorHandler) window.ErrorHandler.log('Import', err, 'Reiter-Import');
 }
-function showImportModal(dataType) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.json';
-    fileInput.style.display = 'none';
-    document.body.appendChild(fileInput);
-    fileInput.addEventListener('change', e => {
-        const target = e.target;
-        const file = target.files?.[0];
-        if (!file) return;
-        // Größenlimit: 10MB
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('❌ Datei zu groß (max 10MB)', 'error');
-            document.body.removeChild(fileInput);
-            return;
+
+/**
+ * `change` des Reiterfelds: liest die dort gewaehlte Datei, bereitet sie vor und oeffnet das
+ * Fenster (R1). Eine leere Auswahl — der Dialog wurde abgebrochen oder die Wahl geleert — ist
+ * still: keine Meldung, nichts geaendert.
+ * @param {HTMLInputElement} inputEl - das Reiterfeld (`.io-file-input` mit `data-type`)
+ */
+function importData(inputEl) {
+    const datei = inputEl && inputEl.files ? inputEl.files[0] : null;
+    if (!datei || _reiterImportLaeuft) return;
+    _reiterImportLaeuft = true;
+    _reiterImport = null;
+    oeffneReiterImport(inputEl, datei);
+}
+
+/**
+ * Die Kette von der Datei bis zum Fenster. Lehnt nie ab: jedes Ende wird hier gemeldet.
+ * @param {HTMLInputElement} inputEl
+ * @param {File} datei
+ * @returns {Promise<void>}
+ */
+async function oeffneReiterImport(inputEl, datei) {
+    const dataType = inputEl.dataset.type || '';
+    try {
+        if (datei.size > REITER_IMPORT_MAX_BYTES) {
+            throw reiterImportFehler('Datei zu groß (max. 10 MB)');
         }
-        const reader = new FileReader();
-        reader.onload = evt => {
-            try {
-                const result = evt.target?.result;
-                const importData = JSON.parse(result);
-                // Validierung: Hat das Import-Objekt die richtige Struktur?
-                if (!importData.data || !Array.isArray(importData.data)) {
-                    throw new Error('Ungültiges Format: "data"-Array fehlt');
-                }
-                // Validierung: Datentyp passt?
-                if (importData._dataType && importData._dataType !== dataType) {
-                    const continueImport = confirm(
-                        `Import-Datentyp ist "${importData._dataType}", aber erwartet wird "${dataType}".\n\n` +
-                            `Trotzdem importieren?`
-                    );
-                    if (!continueImport) {
-                        document.body.removeChild(fileInput);
-                        return;
-                    }
-                }
-                // Schema-Validierung
-                const schema = IO_SCHEMA[dataType];
-                if (!schema) {
-                    throw new Error(`Schema für "${dataType}" nicht gefunden`);
-                }
-                const validatedItems = importData.data.map((item, idx) => {
-                    const validated = {};
-                    for (const [key, field] of Object.entries(schema)) {
-                        if (field.required && item[key] === undefined) {
-                            throw new Error(`Eintrag ${idx + 1}: Pflichtfeld "${key}" fehlt`);
-                        }
-                        validated[key] =
-                            item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
-                    }
-                    // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
-                    return sanitizeImportedItem(dataType, validated);
-                });
-                // Import-Modal anzeigen
-                const modal = $('import-modal');
-                if (modal) {
-                    const campaignName = importData._campaignName || file.name.replace('.json', '');
-                    const exportDate = importData._exportDate
-                        ? new Date(importData._exportDate).toLocaleDateString('de-DE')
-                        : 'Unbekannt';
-                    modal.dataset.importItems = JSON.stringify(validatedItems);
-                    modal.dataset.dataType = dataType;
-                    const infoEl = $('import-info');
-                    if (infoEl) {
-                        infoEl.innerHTML = `
-                            <div style="display: grid; gap: 8px;">
-                                <div><strong>Kampagne:</strong> ${esc(campaignName)}</div>
-                                <div><strong>Export-Datum:</strong> ${exportDate}</div>
-                                <div><strong>Einträge:</strong> ${Number(validatedItems.length)}</div>
-                                <div><strong>Typ:</strong> ${esc(dataType)}</div>
-                            </div>
-                        `;
-                    }
-                    showModal('import-modal');
-                }
-                showToast(`✅ Datei validiert: ${validatedItems.length} Einträge bereit`);
-            } catch (err) {
-                showToast('❌ Import-Fehler: ' + err.message, 'error');
-                if (window.ErrorHandler) {
-                    window.ErrorHandler.log('Import', err, 'Parse error');
-                }
-            }
-            document.body.removeChild(fileInput);
-        };
-        reader.onerror = () => {
-            showToast('❌ Datei konnte nicht gelesen werden', 'error');
-            document.body.removeChild(fileInput);
-        };
-        reader.readAsText(file);
-    });
-    fileInput.click();
+        const inhalt = leseReiterImport(await leseDateiText(datei));
+        // Rueckfrage abgelehnt: still, wie ein abgebrochener Dialog
+        if (!pruefeReiterImport(inhalt, dataType)) return;
+        const vorbereitung = bereiteReiterImportVor(inhalt, dataType, datei.name);
+        fokussiereEinfuhrKnopf(inputEl);
+        showImportModal(dataType, vorbereitung);
+    } catch (err) {
+        meldeReiterImportFehler(err);
+    } finally {
+        // `value` leeren — auch nach einer Ablehnung und nach ✕ im Fenster: dieselbe Datei
+        // noch einmal gewaehlt ist fuer den Browser sonst keine Aenderung, kein `change`, gar
+        // keine Rueckmeldung (gemessen, Bedienweg C1). Erst hier und nicht vor dem Lesen: der
+        // File-Verweis ist schon gehalten, und solange die Sperre steht, kommt keine Wahl an.
+        inputEl.value = '';
+        _reiterImportLaeuft = false;
+    }
 }
+
+/**
+ * Liest eine Datei als Text.
+ * @param {File} datei
+ * @returns {Promise<string>}
+ */
+function leseDateiText(datei) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(String(e.target?.result ?? ''));
+        reader.onerror = () => reject(reiterImportFehler('Datei konnte nicht gelesen werden'));
+        reader.readAsText(datei);
+    });
+}
+
+/**
+ * Text -> Objekt. Der Reviver verwirft `__proto__`, `constructor` und `prototype` in jeder
+ * Tiefe (CAMPAIGN_FORBIDDEN_KEYS, wie der Kampagnenweg) — ein solcher Schluessel waere sonst
+ * ein eigenes Feld, das jede spaetere Zuweisung oder Kopie zum Prototyp-Setzer macht.
+ * @param {string} text
+ * @returns {*}
+ */
+function leseReiterImport(text) {
+    if (typeof text !== 'string' || text.trim() === '') {
+        throw reiterImportFehler('Die Datei ist leer');
+    }
+    try {
+        return JSON.parse(text, (schluessel, wert) =>
+            CAMPAIGN_FORBIDDEN_KEYS.includes(schluessel) ? undefined : wert
+        );
+    } catch {
+        throw reiterImportFehler('Die Datei ist kein gültiges JSON');
+    }
+}
+
+/**
+ * Ist die Datei ein Reiter-Export fuer DIESEN Reiter? Wirft bei einer unbrauchbaren Datei,
+ * fragt bei einem anderen `_dataType` nach (deutsche Typnamen) und gibt zurueck, ob es
+ * weitergeht. Beruehrt nichts Globales.
+ * @param {*} inhalt - geparste Datei
+ * @param {string} dataType - Typ des Reiterfelds
+ * @returns {boolean} false: der Nutzer hat die Rueckfrage abgelehnt
+ */
+function pruefeReiterImport(inhalt, dataType) {
+    if (
+        !inhalt ||
+        typeof inhalt !== 'object' ||
+        Array.isArray(inhalt) ||
+        !Array.isArray(inhalt.data)
+    ) {
+        throw reiterImportFehler('Ungültiges Format: der Datei fehlt die Liste „data“');
+    }
+    if (inhalt.data.length === 0) {
+        throw reiterImportFehler('Die Datei enthält keine Einträge');
+    }
+    const keinObjekt = inhalt.data.findIndex(
+        item => !item || typeof item !== 'object' || Array.isArray(item)
+    );
+    if (keinObjekt >= 0) {
+        throw reiterImportFehler(`Eintrag ${keinObjekt + 1} der Datei ist kein Eintrag`);
+    }
+    const dateiTyp = inhalt._dataType;
+    if (typeof dateiTyp === 'string' && dateiTyp !== '' && dateiTyp !== dataType) {
+        return confirm(
+            `Die Datei enthält ${reiterTypName(dateiTyp, 2)}, dieser Reiter importiert ` +
+                `${reiterTypName(dataType, 2)}.\n\nTrotzdem importieren?`
+        );
+    }
+    return true;
+}
+
+/**
+ * Die Eintraege eines Typs an ihrem Platz im Kampagnenformat (IO_DATA_PATH) — die Form, auf
+ * der bereinigeDatengrenze() arbeitet (`npcs[].id`, `calendar.events[].id`).
+ * @param {string} type
+ * @param {Object[]} items
+ * @returns {Object}
+ */
+function reiterImportWurzel(type, items) {
+    const pfad = IO_DATA_PATH[type] || [type];
+    const wurzel = {};
+    let knoten = wurzel;
+    for (let i = 0; i < pfad.length - 1; i++) {
+        knoten[pfad[i]] = {};
+        knoten = knoten[pfad[i]];
+    }
+    knoten[pfad[pfad.length - 1]] = items;
+    return wurzel;
+}
+
+/**
+ * Bereitet die gepruefte Datei fuer das Fenster vor: dieselbe Datengrenze wie jeder andere
+ * Eingang nach D (SENKEN R4), die Feldabbildung nach IO_SCHEMA und die Bereinigung der
+ * HTML-Felder (SEC-01). Beruehrt nichts Globales.
+ * @param {*} inhalt - von pruefeReiterImport() angenommene Datei
+ * @param {string} dataType
+ * @param {string} dateiname
+ * @returns {ReiterImportVorbereitung}
+ */
+function bereiteReiterImportVor(inhalt, dataType, dateiname) {
+    const schema = IO_SCHEMA[dataType];
+    if (!schema) {
+        throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
+    }
+    const grenze = bereinigeDatengrenze(reiterImportWurzel(dataType, inhalt.data));
+    const eintraege = (IO_DATA_PATH[dataType] || [dataType]).reduce(
+        (knoten, schluessel) => (knoten ? knoten[schluessel] : undefined),
+        grenze
+    );
+    const items = (Array.isArray(eintraege) ? eintraege : []).map((item, idx) => {
+        const validated = {};
+        for (const [key, field] of Object.entries(schema)) {
+            if (field.required && item[key] === undefined) {
+                throw reiterImportFehler(`Eintrag ${idx + 1}: Pflichtfeld „${key}“ fehlt`);
+            }
+            validated[key] = item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
+        }
+        // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
+        return sanitizeImportedItem(dataType, validated);
+    });
+    const kampagne =
+        typeof inhalt._campaignName === 'string' && inhalt._campaignName.trim() !== ''
+            ? inhalt._campaignName.trim()
+            : String(dateiname || '').replace(/\.json$/i, '');
+    const datum = typeof inhalt._exportDate === 'string' ? new Date(inhalt._exportDate) : null;
+    return {
+        dataType,
+        items,
+        kampagne: kampagne.slice(0, 100),
+        exportDatum:
+            datum && !isNaN(datum.getTime()) ? datum.toLocaleDateString('de-DE') : 'unbekannt',
+        hinweise: []
+    };
+}
+
+/**
+ * Setzt den Fokus auf das 📥 des Reiterfelds, wenn er beim Oeffnen nirgends steht.
+ * showModal() merkt sich den Oeffner, und ✕, "Abbrechen" und Escape geben ihm den Fokus
+ * zurueck (R10). Nach einem Klick auf 📥 steht er in Chromium ohnehin dort; ein Browser, der
+ * Knoepfe beim Klick nicht fokussiert, liesse ihn auf <body>, und das Fenster haette keinen
+ * Rueckweg.
+ * @param {HTMLInputElement} inputEl
+ */
+function fokussiereEinfuhrKnopf(inputEl) {
+    const aktiv = document.activeElement;
+    if (aktiv && aktiv !== document.body && aktiv !== document.documentElement) return;
+    const knopf = Array.from(document.querySelectorAll('[data-action="trigger-click"]')).find(
+        k => k.dataset.value === inputEl.id
+    );
+    if (knopf && typeof knopf.focus === 'function') knopf.focus({ preventScroll: true });
+}
+
+/**
+ * Oeffnet das Fenster fuer eine vorbereitete Datei: merkt sie im Modulzustand, stellt den
+ * Modus auf "Hinzufügen" (der Weg, der nichts Vorhandenes ersetzt) und zeichnet die Vorschau.
+ * @param {string} dataType
+ * @param {ReiterImportVorbereitung} vorbereitung
+ */
+function showImportModal(dataType, vorbereitung) {
+    _reiterImport = { ...vorbereitung, dataType };
+    const hinzufuegen = document.querySelector('input[name="import-mode"][value="merge"]');
+    if (hinzufuegen) hinzufuegen.checked = true;
+    renderImportVorschau();
+    showModal('import-modal');
+}
+
+/** Der gewaehlte Modus: 'replace' nur, wenn "Ersetzen" ausdruecklich gewaehlt ist. */
+function gewaehlterImportModus() {
+    const gewaehlt = document.querySelector('input[name="import-mode"]:checked');
+    return gewaehlt && gewaehlt.value === 'replace' ? 'replace' : 'merge';
+}
+
+/**
+ * Die Zeilen der Vorschau fuer den gewaehlten Modus. Die Modus-Zeile steht VOR den Hinweisen,
+ * damit Hinweise, die zusammengehoeren (etwa alle Verweise), einen Block bilden.
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {'merge'|'replace'} modus
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function importVorschauZeilen(bereit, modus) {
+    const n = bereit.items.length;
+    const bestand = ioGetArray(bereit.dataType);
+    const vorhanden = Array.isArray(bestand) ? bestand.length : 0;
+    const modusZeile =
+        modus === 'replace'
+            ? {
+                  text:
+                      `Ersetzen: ${vorhanden} ` +
+                      (vorhanden === 1
+                          ? 'vorhandener Eintrag wird'
+                          : 'vorhandene Einträge werden') +
+                      ' durch die Datei ersetzt; vorher wird eine Sicherheitskopie angelegt',
+                  warnung: true
+              }
+            : {
+                  text:
+                      `Hinzufügen: ${n} ` +
+                      (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
+                      ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
+              };
+    return [
+        { text: `Typ: ${reiterTypName(bereit.dataType, 2)}` },
+        { text: `Einträge: ${n}` },
+        { text: `Kampagne: ${bereit.kampagne}` },
+        { text: `Export-Datum: ${bereit.exportDatum}` },
+        modusZeile,
+        ...bereit.hinweise
+    ];
+}
+
+/**
+ * Zeichnet die Vorschau `#import-info` neu — beim Oeffnen und bei jedem Wechsel des Modus
+ * (data-action="import-vorschau" an den Optionsfeldern). Als Text, nicht als Markup: Name der
+ * Kampagne und Hinweise kommen aus der Datei.
+ */
+function renderImportVorschau() {
+    const ziel = $('import-info');
+    if (!ziel || !_reiterImport) return;
+    ziel.textContent = '';
+    for (const zeile of importVorschauZeilen(_reiterImport, gewaehlterImportModus())) {
+        const div = document.createElement('div');
+        div.className = zeile.warnung
+            ? 'reiterimport-zeile reiterimport-warnung'
+            : 'reiterimport-zeile';
+        div.textContent = zeile.text;
+        ziel.appendChild(div);
+    }
+}
+
+/**
+ * "Importieren" im Fenster: schreibt die vorbereitete Datei und meldet den Erfolg erst danach,
+ * mit deutschem Typnamen im richtigen Numerus (R2).
+ * @param {string} [dataType] - nur zur Gegenprobe: weicht er vom vorbereiteten Typ ab, wird
+ *   nichts geschrieben
+ */
 function executeImport(dataType) {
-    const modal = $('import-modal');
-    const items = JSON.parse(modal.dataset.importItems || '[]');
-    const type = dataType || modal.dataset.dataType || '';
-    const modeInput = document.querySelector('input[name="import-mode"]:checked');
-    const mode = modeInput?.value || 'merge';
-    if (!type || items.length === 0) {
+    const bereit = _reiterImport;
+    if (!bereit || bereit.items.length === 0 || (dataType && dataType !== bereit.dataType)) {
         showToast('Keine Daten zum Importieren', 'error');
         return;
     }
+    const type = bereit.dataType;
+    const items = bereit.items;
+    const mode = gewaehlterImportModus();
+    const name = reiterTypName(type, items.length);
     const renderAll = window.renderAll;
-    saveUndoState(`${items.length} ${type} importiert`);
+    saveUndoState(`${items.length} ${name} importiert`);
     // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
     // deshalb ohne await; die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10).
     if (mode === 'replace') {
@@ -501,12 +797,14 @@ function executeImport(dataType) {
         });
         ioSetArray(type, [...(ioGetArray(type) || []), ...merged]);
     }
+    // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
+    _reiterImport = null;
     save();
     renderAll();
     updateIOCounts();
     hideModal('import-modal');
     showToast(
-        `✅ ${items.length} ${type} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
+        `✅ ${items.length} ${name} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
     );
 }
 // UTILITY FUNCTIONS

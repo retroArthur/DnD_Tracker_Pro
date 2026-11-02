@@ -303,24 +303,40 @@ describe('sanitizeImportedItem() — Unveränderlichkeit', () => {
 // QUELLTEXT-STRUKTURPRÜFUNG (nach Muster von Test E in storage-conflict.test.js)
 // ============================================================
 describe('Quelltext-Strukturprüfung — Verdrahtung an beiden Eintrittspunkten', () => {
-    test('validatedItems-Abbildung (Import-Validierungspfad vor executeImport()) ruft sanitizeImportedItem() auf', () => {
-        // Korrektur gegenüber der Planvorlage: die validatedItems-Abbildung, die den
-        // Datentyp-spezifischen Import validiert, lebt tatsächlich in showImportModal()
-        // (verifiziert per Quelltext-Read) — sie befüllt modal.dataset.importItems, das
-        // executeImport() anschließend unverändert persistiert. Funktional identisch zum
-        // Plan-Text ("in executeImport() liefert die validatedItems-Abbildung..."): die
-        // Bereinigung sitzt an der Stelle, an der die Rohdaten zu vertrauten Daten werden,
-        // bevor sie in den Speicherpfad gelangen.
-        const fnStart = importExportSourceCode.indexOf('function showImportModal(');
-        expect(fnStart).toBeGreaterThan(-1);
-        // Nächste Top-Level-Funktion im Quelltext dient als Ende-Marker.
-        const fnEnd = importExportSourceCode.indexOf('function executeImport(');
-        expect(fnEnd).toBeGreaterThan(fnStart);
-        const body = importExportSourceCode.slice(fnStart, fnEnd);
-        const mapStart = body.indexOf('const validatedItems');
-        expect(mapStart).toBeGreaterThan(-1);
-        const sanitizeCallIdx = body.indexOf('sanitizeImportedItem(', mapStart);
-        expect(sanitizeCallIdx).toBeGreaterThan(mapStart);
+    // REITERIMPORT (bewusst nachgezogen): bis dahin lebte die validatedItems-Abbildung in
+    // showImportModal() und befuellte modal.dataset.importItems, das executeImport() wieder
+    // parste — und weil showImportModal() ein zweites Datei-Feld baute und `#import-modal` im
+    // Buendel fehlte, kam der Weg nie an. Die Abbildung sitzt jetzt in der Vorbereitungsstufe
+    // bereiteReiterImportVor(), die VOR dem Fenster laeuft; showImportModal() nimmt das fertige
+    // Ergebnis und haelt es im Modulzustand. Die Zusage dieses Tests bleibt dieselbe: die
+    // Bereinigung sitzt an der Stelle, an der die Rohdaten zu vertrauten Daten werden, bevor sie
+    // in den Speicherpfad gelangen — und hinter der Datengrenze (SENKEN R4).
+    /** Rumpf einer Top-Level-Funktion bis zur naechsten Top-Level-Funktion. */
+    const rumpfVon = name => {
+        const kopf = new RegExp(`\\n(?:async )?function ${name}\\(`);
+        const treffer = kopf.exec(importExportSourceCode);
+        expect(treffer).not.toBeNull();
+        // ab dem Kopf selbst: ihm geht hier kein Zeilenumbruch voran, er trifft sich also nicht
+        const rest = importExportSourceCode.slice(treffer.index + 1);
+        const naechste = rest.search(/\n(?:async )?function \w+\(/);
+        return naechste < 0 ? rest : rest.slice(0, naechste);
+    };
+
+    test('Reiter-Import: die Vorbereitung vor dem Fenster laeuft durch die Datengrenze und ruft dann sanitizeImportedItem() auf', () => {
+        const body = rumpfVon('bereiteReiterImportVor');
+        const grenzeIdx = body.indexOf('bereinigeDatengrenze(');
+        expect(grenzeIdx).toBeGreaterThan(-1);
+        const sanitizeCallIdx = body.indexOf('sanitizeImportedItem(', grenzeIdx);
+        expect(sanitizeCallIdx).toBeGreaterThan(grenzeIdx);
+    });
+
+    test('Reiter-Import: das Fenster oeffnet erst nach der Vorbereitung, executeImport() liest nichts aus dem DOM nach', () => {
+        const kette = rumpfVon('oeffneReiterImport');
+        const vorbereitet = kette.indexOf('bereiteReiterImportVor(');
+        expect(vorbereitet).toBeGreaterThan(-1);
+        expect(kette.indexOf('showImportModal(', vorbereitet)).toBeGreaterThan(vorbereitet);
+        const schreiben = rumpfVon('executeImport');
+        expect(schreiben).not.toMatch(/dataset\.importItems|JSON\.parse/);
     });
 
     // Code-Review 2026-09-21 (R03, Einheit U6): der Kampagnen-Import bereitet die Datei in
