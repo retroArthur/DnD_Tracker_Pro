@@ -578,6 +578,8 @@ export default {
     "cycleRelationStatus": 'readonly',
     "datengrenzeEntgiften": 'readonly',
     "datengrenzeFeld": 'readonly',
+    "datengrenzeNpcTexte": 'readonly',
+    "datengrenzeText": 'readonly',
     "datengrenzeZahlwert": 'readonly',
     "debounce": 'readonly',
     "debouncedCommandSearch": 'writable',
