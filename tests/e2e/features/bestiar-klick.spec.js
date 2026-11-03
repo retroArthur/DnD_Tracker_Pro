@@ -33,8 +33,11 @@
  *    ("r", Cora), Orte, Auftraege, Encounter, Gruppe, Truhe — und Felder mit
  *    ANDEREN Aktionen als `search-input`: das Wiki-Suchfeld (der Aufklapp
  *    wird per innerHTML neu geschrieben), "Zauber zuweisen" ("feu",
- *    Feuerball braucht 2 Klicks bis zum Haken) und "Items zuweisen" ("rub",
- *    "+" laesst die Menge auf 0). Die Zaubersuche ist die Gegenprobe: sie
+ *    Feuerball braucht 2 Klicks bis zum Haken), "Items zuweisen" ("rub",
+ *    "+" laesst die Menge auf 0) und die Notizen-Suche (System -> Debug ->
+ *    Notizen-Suche, `search-notes`; "dra", der Treffer angeklickt: die
+ *    Suche bleibt offen, die Notizen-Ansicht oeffnet nicht — nachgetragen in
+ *    der Endpruefung). Die Zaubersuche ist die Gegenprobe: sie
  *    zeichnet ENTPRELLT (150 ms), der Klick ist durch, bevor die Liste
  *    wechselt.
  *
@@ -113,7 +116,7 @@
  *         Gruppe/Truhe, ERSTER Klick                       rot je Ansicht
  *         Gegenprobe Zauber (entprellt)                    gruen
  *   (W5)  andere Aktionen: Wiki, Zauber zuweisen,
- *         Items zuweisen                                   rot je Feld
+ *         Items zuweisen, Notizen-Suche                    rot je Feld
  *   (W6)  Gegenproben: HG per Tastatur, Favoriten-
  *         Kaestchen, Kopfsuche, Item-Menge (reiner
  *         change-Pfad), Enter vor dem Klick                gruen
@@ -354,6 +357,28 @@ function saat(opt = {}) {
                 tags: []
             }
         ],
+        // Zwei Sitzungsnotizen, beide Treffer fuer "dra" (W5 Notizen-Suche);
+        // das Ziel ist die zweite, wie bei den Listen oben.
+        sessionNotes: [
+            {
+                id: 1,
+                number: 1,
+                date: '2026-10-01',
+                name: 'Am Berg',
+                summary: '',
+                tags: [],
+                content: '<p>Der Drache schlaeft</p>'
+            },
+            {
+                id: 2,
+                number: 2,
+                date: '2026-10-08',
+                name: 'Im Hort',
+                summary: '',
+                tags: [],
+                content: '<p>Drachenhort entdeckt</p>'
+            }
+        ],
         bestiary,
         // Zwei Favoriten fuer die Gegenprobe (W6): der Haken muss genau sie
         // zeigen. Der Goblin ist bewusst KEINER — (W3) braucht ihn frei. Mit
@@ -372,7 +397,7 @@ function saat(opt = {}) {
             loot: 4,
             items: 1,
             wiki: 3,
-            sessionNotes: 1,
+            sessionNotes: 3,
             randomTables: 1
         }
     };
@@ -886,6 +911,45 @@ test.describe('A: andere Aktionen als search-input — ein Fix nur dort reicht n
         await expect(menge, 'Vorbedingung: Menge 0').toHaveValue('0');
         await zeile.locator('[data-action="change-assign-qty"][data-value="1"]').click();
         await expect(menge, 'nach EINEM Klick auf "+" ist die Menge 1').toHaveValue('1');
+        weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
+    });
+
+    // Das Feld traegt `search-notes`; die Treffer werden per innerHTML neu
+    // geschrieben, an der Basis auch beim change, das das Verlassen des Feldes
+    // feuert. Nachgetragen in der Endpruefung: R1 deckte das Feld, kein Fall
+    // hielt es fest.
+    test('(W5) Notizen-Suche "dra": EIN Klick auf den Treffer schliesst die Suche und oeffnet die Notizen', async ({
+        page
+    }) => {
+        const fehler = await laden(page);
+        const debug = page.locator('.nav-tab[data-action="call"][data-value="showDebugModal"]');
+        await page.locator('.nav-group', { has: debug }).locator('.nav-group-btn').click();
+        await debug.click();
+        await expect(page.locator('#debug-modal')).toHaveClass(/\bshow\b/);
+        await page
+            .locator('#debug-modal [data-action="call"][data-value="showNotesSearch"]')
+            .click();
+        const suche = page.locator('#notes-search-modal');
+        await expect(suche, 'Vorbedingung: die Notizen-Suche ist offen').toHaveClass(/\bshow\b/);
+        await page.locator('#notes-search-input').click();
+        await page.keyboard.type('dra', { delay: 40 });
+        const eintraege = page.locator('#notes-search-results .notes-search-result');
+        await expect(eintraege, 'Vorbedingung: beide Notizen sind Treffer').toHaveCount(2);
+        const ziel = page.locator(
+            '#notes-search-results [data-action="go-to-note"][data-value="2026-10-08"]'
+        );
+        await expect(ziel, 'Vorbedingung: "Im Hort" ist ein Treffer').toBeVisible();
+        await page.waitForTimeout(300);
+        await expect(
+            page.locator('#view-notes'),
+            'Vorbedingung: die Notizen-Ansicht ist noch nicht offen'
+        ).not.toHaveClass(/\bactive\b/);
+        await ziel.locator('.notes-search-date').click();
+        await page.waitForTimeout(SETZEN_MS);
+        await weich(suche, 'nach EINEM Klick ist die Notizen-Suche zu').not.toHaveClass(/\bshow\b/);
+        await weich(page.locator('#view-notes'), 'und die Notizen-Ansicht ist offen').toHaveClass(
+            /\bactive\b/
+        );
         weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
     });
 });
