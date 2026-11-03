@@ -179,7 +179,16 @@ const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
     'features/bestiary/bestiary-crud.js',
-    'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    // -- 2026-11-03, AVATAR-DATEI: 'features/bestiary/bestiary-editor.js' (CR-01)
+    //    ist hier GESTRICHEN. tests/e2e/features/bild-lokal.spec.js (c) faehrt am
+    //    gebauten Buendel mit echten Klicks "Bearbeiten" -> "🖼️ Bild setzen" ->
+    //    Speichern, einmal mit einer lokalen Datei und einmal mit Netzwerkpfaden,
+    //    und urteilt ueber Vorschau, Meldung, D, Speicher und das Portrait im
+    //    Detail. openBestiaryEditor(), openBstAvatarModal(),
+    //    validateAvatarUrlSafe() und refreshBstAvatarPreview() stehen in diesem
+    //    Modul; ohne es waere keiner der Faelle erklaerbar. Bis zum Pruefbefund
+    //    nach bd06445d nannte die Spec nur den Dateinamen, damit dieser Fall
+    //    nicht rot wurde. Die Liste darf nur schrumpfen; sie tut es hier.
     // -- 2026-10-27, ABBRUCH: 'features/command-palette/command-palette.js' ist
     //    hier GESTRICHEN, und mit ihm acht weitere Eintraege (unten markiert):
     //    die Liste schrumpft um neun. Die Waechter des Vertrags ABBRUCH
@@ -323,7 +332,16 @@ const MODULE_TEST_EXCEPTIONS = [
     'systems/spellslots/spell-slots-core.js',
     'systems/spellslots/spellslots-ui.js',
     'systems/spellslots/virtual-list.js',
-    'systems/tags.js',
+    // -- 2026-11-03, NPC-NAME: 'systems/tags.js' ist hier GESTRICHEN. Das Gate
+    //    wurde rot, weil der Kopf von tests/e2e/features/npc-altdaten.spec.js den
+    //    Pfad nennt — aber die Abdeckung ist echt: W11f und W11g fahren das
+    //    🏷️-Fenster mit echten Klicks (renderTagsModal(), "+" ueber
+    //    addTagToEntity(), der Klick auf ein globales Tag ueber
+    //    addExistingTagToEntity(), das Loeschen ueber deleteGlobalTag()), W11 und
+    //    W11o lesen tagText() im NPC- und im Ort-Detail. Gemessen: jede der fuenf
+    //    Stellen des Fensters einzeln auf `t.name` zurueckgesetzt macht W11f bzw.
+    //    W11g rot. Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur
+    //    schrumpfen; sie tut es hier.
     'systems/wiki-links.js',
     'tools/debug.js',
     'ui/actions/combat-actions.js',
@@ -344,7 +362,16 @@ const MODULE_TEST_EXCEPTIONS = [
     // Commit — und steht damit auch nicht mehr in loader.js MODULES.
     'ui/virtual-scroll.js',
     // -- 2026-10-27, ABBRUCH: 'utils/crud-helpers.js' GESTRICHEN, s. oben.
-    'utils/filter-engine.js',
+    // -- 2026-11-03, NPC-SUCHE: 'utils/filter-engine.js' ist hier GESTRICHEN.
+    //    tests/unit/filter-engine.test.js laedt das ECHTE Modul per
+    //    vm.runInContext und fuehrt applyFilters() aus: Feld UND filters UND
+    //    customFilter wie bisher, leeres searchFields, und den ODER-Zweig
+    //    searchAlso aus dem Vertrag NPC-SUCHE (R2) — getrimmter Begriff, kein
+    //    Aufruf bei leerem Begriff, UND mit filters und customFilter. Am Stand
+    //    vor dem Fix sind dort genau die fuenf searchAlso-Faelle rot, die einen
+    //    Treffer ueber den neuen Zweig verlangen oder seinen Aufruf beobachten.
+    //    Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen;
+    //    sie tut es hier.
     // -- 2026-10-27, ABBRUCH: 'utils/form-helpers.js' GESTRICHEN, s. oben.
     'utils/game-rules.js',
     'utils/performance-extras.js',

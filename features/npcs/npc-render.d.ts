@@ -10,6 +10,8 @@ interface RelationStatusDef {
 declare const RELATION_STATUS: Record<string, RelationStatusDef>;
 /** Statuswerte, die als Klasse landen duerfen (Erlaubnisliste, Vertrag SENKEN R2). */
 declare const RELATION_STATUS_KLASSEN: string[];
+/** Vertrag NPC-NAME E1: Name als HTML fuer Liste und Detail, ohne Namen "Unbenannt" (gedimmt). */
+declare function npcNameHtml(npc: any): string;
 /**
  * Gets the appropriate icon for an NPC based on race
  */

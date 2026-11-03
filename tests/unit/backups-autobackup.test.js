@@ -1441,17 +1441,25 @@ describe('R10 — reportSafetyBackup(): die Meldung folgt dem echten Ergebnis', 
         expect(w.toasts[0].typ).toBe('warning');
     });
 
-    function importModal(items, typ) {
-        const modal = document.createElement('div');
-        modal.id = 'import-modal';
-        modal.dataset.importItems = JSON.stringify(items);
-        modal.dataset.dataType = typ;
+    // REITERIMPORT (bewusst nachgezogen): die vorbereitete Datei liegt im Modulzustand und
+    // nicht mehr als JSON-Text in `modal.dataset.importItems`. Sie kommt darum auf dem Weg
+    // dorthin, den auch die App nimmt — showImportModal() mit dem Ergebnis der Vorbereitung —,
+    // und der Modus ueber das Optionsfeld wie im Fenster. Die Zusagen von T18b/c bleiben.
+    function importModal(w, items, typ) {
+        w.ctx.showModal = jest.fn();
+        w.ctx.showImportModal(typ, {
+            dataType: typ,
+            items,
+            kampagne: 'Test',
+            exportDatum: 'unbekannt',
+            hinweise: []
+        });
         const radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'import-mode';
         radio.value = 'replace';
         radio.checked = true;
-        document.body.append(modal, radio);
+        document.body.append(radio);
     }
 
     test('T18b: executeImport (Ersetzen) mit gescheiterter Sicherheitskopie zeigt die Warnung statt "erstellt"', async () => {
@@ -1462,7 +1470,7 @@ describe('R10 — reportSafetyBackup(): die Meldung folgt dem echten Ergebnis', 
         const d = startzustand(w);
         d.wiki = [{ id: 1, title: 'Alt' }];
         setzeD(w, d);
-        importModal([{ id: 7, title: 'Neu' }], 'wiki');
+        importModal(w, [{ id: 7, title: 'Neu' }], 'wiki');
         w.ctx.executeImport('wiki');
         await warteBis(() => texte(w).some(t => t.includes('Sicherheitskopie fehlgeschlagen')));
         expect(texte(w)).toContain('⚠️ Sicherheitskopie fehlgeschlagen');
@@ -1475,7 +1483,7 @@ describe('R10 — reportSafetyBackup(): die Meldung folgt dem echten Ergebnis', 
         const d = startzustand(w);
         d.wiki = [{ id: 1, title: 'Alt' }];
         setzeD(w, d);
-        importModal([{ id: 7, title: 'Neu' }], 'wiki');
+        importModal(w, [{ id: 7, title: 'Neu' }], 'wiki');
         w.ctx.executeImport('wiki');
         expect(texte(w)).not.toContain('💾 Sicherheitskopie erstellt');
         await warteBis(() => texte(w).includes('💾 Sicherheitskopie erstellt'));

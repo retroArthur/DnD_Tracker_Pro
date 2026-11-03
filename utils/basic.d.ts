@@ -15,6 +15,11 @@ declare function sichereKlasse(wert: unknown, erlaubteWerte: readonly string[], 
 /** Vertrag SENKEN R4: verbotene Schluessel entfernen, Zahlen-/Verweisfelder auf Zahl zwingen. */
 declare function bereinigeDatengrenze<T>(daten: T): T;
 /**
+ * Vertrag NPC-NAME N2/E4: ein Wert aus D als Text fuer jeden Wert — dieselbe Umwandlung wie
+ * datengrenzeText() (Zahl/Wahrheitswert -> Text, Objekt/Liste -> ''), fehlend/null -> ''.
+ */
+declare function datenText(wert: unknown): string;
+/**
  * Vertrag SENKEN R3: Bildquelle aus Daten -> dieselbe Quelle oder '' (http(s), data:image/,
  * relativ und lokale `file:///`-Pfade, beide nach demselben Pruefkern wie sichererListenLink;
  * Netzwerkpfade, protokoll-relative Quellen und relative Pfade mit doppeltem, auch kodiertem

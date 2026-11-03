@@ -90,6 +90,11 @@
  *      alte IO_SCHEMA dort `number` behauptet. Eine Grenzfunktion, die jedes
  *      `weight`/`id`/`speed` zur Zahl zwingt, loescht solche Werte — die
  *      R5-Faelle unten halten sie fest.
+ *   N1 (Vertrag NPC-NAME) `bereinigeDatengrenze()` zwingt ausserdem GENAU
+ *      `npcs[].name` und `npcs[].race` auf Text: Zahl und Wahrheitswert
+ *      verlustfrei (`42` -> "42"), Objekt und Liste -> '', ein fehlender oder
+ *      `null`-Name -> ''; ein fehlendes oder `null`-Volk bleibt. Nur auf diesem
+ *      Pfad, nicht in jeder Tiefe — Block "N1" unten.
  *
  * WARUM BEIDE KOPIEN. utils/basic.js wird wie in sanitizer-parity.test.js in
  * eine vm-Sandbox geladen (das Produktionsmodul hat keinen Export). Die
@@ -110,10 +115,11 @@
  * VERDRAHTUNG. Eine richtige Grenzfunktion, die nur der Kampagnen-Import
  * aufruft, liesse Backup, Datei-Backup, Migration und den Start offen — genau
  * die Wege, auf denen heute gar nichts bereinigt. Der letzte Block prueft
- * deshalb im Aufrufgraph ueber loader.js MODULES, dass JEDER der fuenf
- * Eingaenge des Vertrags (`importDataGlobal`, `restoreBackup`,
- * `restoreFromFileBackup`, `importFullExport`, `load` — der zweite Tab und der
- * Kampagnenwechsel laufen ueber `load`) die Funktion erreicht, direkt oder
+ * deshalb im Aufrufgraph ueber loader.js MODULES, dass JEDER der sechs
+ * Eingaenge (`importDataGlobal`, `restoreBackup`, `restoreFromFileBackup`,
+ * `importFullExport`, `load` — der zweite Tab und der Kampagnenwechsel laufen
+ * ueber `load` —, und seit REITERIMPORT der Import pro Reiter `importData`)
+ * die Funktion erreicht, direkt oder
  * ueber eine Hilfe, und ihr ERGEBNIS verwendet: der Vertrag erlaubt eine
  * Kopie, ein verworfener Rueckgabewert bereinigte dann nichts. Die Eingaenge
  * stehen dort nur als Funktionsnamen, nicht als Modulpfade (Abdeckungsregel
@@ -137,7 +143,11 @@
  * (istRelativerLink, 35 Faelle samt "alle Hilfen sind vorhanden") und 12 Ziele, die
  * sanitizeHTML() stehen liess; 12 bzw. 13 Ziele, die isAllowedEditorHref() bzw.
  * markdownLinkZiel() durchliessen, der Fund im Markdown-Export, und 14 Gestaltfaelle (6 im
- * Block, 8 an den vier Linkstellen).
+ * Block, 8 an den vier Linkstellen). N1 (Vertrag NPC-NAME) war am Stand 8702f84a rot: 32
+ * Faelle, je Kopie 16 — sechs Namen, die Text werden muessen (42, 0, -1.5, true, false,
+ * null), der fehlende Name, acht Werte fuer das Volk und "jeder NPC der Sammlung". Gruen
+ * waren dort die vier Namen aus Objekt oder Liste (die Objektregel gab es schon) und die
+ * sechs Faelle, die festhalten, was bleibt.
  */
 
 const fs = require('fs');
@@ -1450,10 +1460,201 @@ describe.each(QUELLEN.map(([n]) => [n]))('R4 Grenzfaelle der Datengrenze — %s'
 });
 
 // ============================================================
+// N1 — NPC-Name und Volk sind Text, pfadgebunden (Vertrag NPC-NAME)
+// ============================================================
+// DER BEFUND (Stand 8702f84a, tests/e2e/features/npc-altdaten.spec.js): ein NPC, dessen
+// Name fehlt, `null`, eine Zahl oder ein Wahrheitswert ist, oder dessen Volk kein Text ist,
+// leert die NPC-Liste ("Anzeigefehler", 0 Eintraege) und legt Orts-, Kopf- und
+// Telefonsuche und die Initiative lahm. Herein kommt er ueber Kampagnen-Import und Start —
+// und die Grenze liess ihn durch: `name` wurde nur als Objekt/Liste '' (die Objektregel in
+// datengrenzeEntgiften(), in jeder Tiefe), `race` gar nicht angefasst.
+// DIE REGEL N1: genau `npcs[].name` und `npcs[].race` werden Text —
+//   - Zahl und Wahrheitswert -> String(x), verlustfrei (E2/E3: 42 -> "42", true -> "true");
+//   - Objekt und Liste -> '' (wie bisher beim Namen);
+//   - `name` fehlend oder `null` -> '' (E1: gespeichert wird '', die Anzeige sagt
+//     "Unbenannt");
+//   - `race` fehlend oder `null` bleibt, wie es ist — kein Volk ist ein gueltiger Stand.
+// NUR auf diesem Pfad, nicht in jeder Tiefe: dieselben Werte anderswo (Heldenname und -volk,
+// Tag-Name, Wiki-Titel, Kaempfer, Ort, Dialog) bleiben stehen, und ein fehlender Name wird
+// nirgends sonst ergaenzt. Eine Textregel nach dem Muster der Objektregel schriebe in Daten,
+// die die App regulaer anders fuehrt (R5). Die Faelle "bleibt" sind am Stand 8702f84a
+// gruen, weil die Grenze diese Felder heute gar nicht anfasst — sie halten fest, dass der Fix
+// nicht ueber den Pfad hinausgreift; rot sind dort die Faelle, die Text verlangen.
+describe.each(QUELLEN.map(([n]) => [n]))('N1 NPC-Name und Volk sind Text — %s', quellName => {
+    const lauf = k =>
+        klar(
+            brauche(quellName, 'bereinigeDatengrenze')(quelle(quellName).daten(JSON.stringify(k)))
+        );
+    /** Die Kampagne des Geruests, deren NPC `feld` = `wert` traegt. */
+    const mitNpc = (feld, wert) => {
+        const k = geruest();
+        k.npcs[0][feld] = wert;
+        return k;
+    };
+
+    // [Titel, Wert, Soll]
+    const NAME = [
+        ['Zahl', 42, '42'],
+        ['Zahl 0', 0, '0'],
+        ['negative Kommazahl', -1.5, '-1.5'],
+        ['true', true, 'true'],
+        ['false', false, 'false'],
+        ['null', null, ''],
+        ['Objekt', { x: 1 }, ''],
+        ['leeres Objekt', {}, ''],
+        ['Liste', ['Zora'], ''],
+        ['leere Liste', [], '']
+    ];
+    const VOLK = [
+        ['Zahl', 5, '5'],
+        ['Zahl 0', 0, '0'],
+        ['true', true, 'true'],
+        ['false', false, 'false'],
+        ['Objekt', { x: 1 }, ''],
+        ['leeres Objekt', {}, ''],
+        ['Liste', ['Elf'], ''],
+        ['leere Liste', [], '']
+    ];
+
+    test.each(NAME)('npcs[].name als %s (%j) -> %j', (_titel, wert, soll) => {
+        expect(lies(lauf(mitNpc('name', wert)), 'npcs[0].name')).toBe(soll);
+    });
+
+    test('npcs[].name fehlt -> "" (das Feld steht danach da)', () => {
+        const k = geruest();
+        delete k.npcs[0].name;
+        const npc = lauf(k).npcs[0];
+        expect(Object.prototype.hasOwnProperty.call(npc, 'name')).toBe(true);
+        expect(npc.name).toBe('');
+    });
+
+    test.each(VOLK)('npcs[].race als %s (%j) -> %j', (_titel, wert, soll) => {
+        expect(lies(lauf(mitNpc('race', wert)), 'npcs[0].race')).toBe(soll);
+    });
+
+    test('npcs[].race null bleibt null, fehlend bleibt fehlend, Text bleibt', () => {
+        const k = geruest();
+        k.npcs = [
+            { id: 2, name: 'Abe', race: null },
+            { id: 3, name: 'Mara' },
+            { id: 4, name: 'Zed', race: 'Halbelf 🧝 <&>' }
+        ];
+        const erg = lauf(k);
+        expect(erg.npcs[0].race).toBeNull();
+        expect(Object.prototype.hasOwnProperty.call(erg.npcs[1], 'race')).toBe(false);
+        expect(erg.npcs[2].race).toBe('Halbelf 🧝 <&>');
+    });
+
+    test('jeder NPC der Sammlung, nicht nur der erste', () => {
+        const k = geruest();
+        k.npcs = [
+            { id: 2, name: 'Anna', race: 'Mensch' },
+            { id: 3, name: 42, race: 5 },
+            { id: 4, race: true },
+            { id: 5, name: null, race: { x: 1 } }
+        ];
+        const erg = lauf(k);
+        expect(erg.npcs.map(n => [n.name, n.race])).toEqual([
+            ['Anna', 'Mensch'],
+            ['42', '5'],
+            ['', 'true'],
+            ['', '']
+        ]);
+    });
+
+    test('nur auf diesem Pfad: dieselben Werte anderswo bleiben stehen', () => {
+        const k = geruest();
+        k.characters[0].name = 42;
+        k.characters[0].race = 5;
+        k.tags = [{ name: 5, color: 'red' }];
+        k.npcs[0].tags = [{ name: 5, color: 'red' }];
+        k.npcs[0].dialogs = [{ title: 7, text: 9 }];
+        k.wiki[0].title = 7;
+        k.initiative.combatants[0].name = 42;
+        k.locations[0].name = 3;
+        k.loot[0].name = true;
+        const erg = lauf(k);
+        expect({
+            held: lies(erg, 'characters[0].name'),
+            heldVolk: lies(erg, 'characters[0].race'),
+            tag: lies(erg, 'tags[0].name'),
+            npcTag: lies(erg, 'npcs[0].tags[0].name'),
+            dialog: lies(erg, 'npcs[0].dialogs[0].title'),
+            wiki: lies(erg, 'wiki[0].title'),
+            kaempfer: lies(erg, 'initiative.combatants[0].name'),
+            ort: lies(erg, 'locations[0].name'),
+            beute: lies(erg, 'loot[0].name')
+        }).toEqual({
+            held: 42,
+            heldVolk: 5,
+            tag: 5,
+            npcTag: 5,
+            dialog: 7,
+            wiki: 7,
+            kaempfer: 42,
+            ort: 3,
+            beute: true
+        });
+    });
+
+    test('nur auf diesem Pfad: ein fehlender Name wird nirgends sonst ergaenzt', () => {
+        const k = geruest();
+        k.characters.push({ id: 20, notes: 'ohne Namen' });
+        k.npcs[0].dialogs = [{ text: 'Hallo' }];
+        const erg = lauf(k);
+        const mitName = [
+            'characters[1]',
+            'npcs[0].relations[0]',
+            'npcs[0].links[0]',
+            'npcs[0].dialogs[0]',
+            'quests[0].links[0]',
+            'sessionPreps[0].offeneFaeden[0]'
+        ].filter(pfad => Object.prototype.hasOwnProperty.call(lies(erg, pfad), 'name'));
+        expect(mitName).toEqual([]);
+        expect(Object.prototype.hasOwnProperty.call(erg.characters[0], 'race')).toBe(false);
+    });
+
+    test('legitime NPCs kommen unveraendert heraus (R5): Zahl als Text bleibt Text, leerer Name bleibt leer', () => {
+        const k = geruest();
+        k.npcs = [
+            { id: 2, name: 'Café-Wirt 🍺 <Ü&Ö>', race: 'Halbling', role: 'Wirt' },
+            { id: 3, name: '  Zora  ', race: '' },
+            { id: 4, name: '' },
+            { id: 5, name: '42', race: '5' }
+        ];
+        expect(lauf(k).npcs).toEqual(k.npcs);
+    });
+
+    test('falsche Gestalt wirft nicht: ein NPC als null, Text, Zahl oder Liste bleibt, wie er ist', () => {
+        const k = geruest();
+        k.npcs.push(null, 'Text', 7, ['x']);
+        const erg = lauf(k);
+        expect(erg.npcs.slice(1)).toEqual([null, 'Text', 7, ['x']]);
+    });
+
+    test('zweimal angewandt aendert nichts mehr (load() laeuft wiederholt)', () => {
+        const k = geruest();
+        k.npcs = [
+            { id: 2, name: 42, race: 5 },
+            { id: 3, race: true },
+            { id: 4, name: null, race: null },
+            { id: 5, name: { x: 1 }, race: ['Elf'] },
+            { id: 6, name: false }
+        ];
+        const einmal = lauf(k);
+        expect(lauf(einmal)).toEqual(einmal);
+    });
+});
+
+// ============================================================
 // R4 VERDRAHTUNG — jeder Eingang erreicht bereinigeDatengrenze()
 // ============================================================
 const EINGAENGE = [
     'importDataGlobal',
+    // REITERIMPORT: der Import pro Reiter (📥 in zwoelf Reitern) ist seit dem Fenster
+    // #import-modal ein Weg nach D wie die anderen — importData() -> oeffneReiterImport()
+    // -> bereiteReiterImportVor() -> bereinigeDatengrenze()
+    'importData',
     'restoreBackup',
     'restoreFromFileBackup',
     'importFullExport',
