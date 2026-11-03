@@ -49,23 +49,9 @@ const UIActions = {
         else if (filterType === 'loc') setLocFilter(ctx.value);
         else if (filterType === 'spell') setSpellFilter(ctx.value);
     },
-    'clear-search': ctx => {
-        const searchRenderMap = {
-            'party-search': renderParty,
-            'npc-search': renderNPCList,
-            'loc-search': renderLocations,
-            'quest-search': renderQuests,
-            'enc-search': renderEncounters,
-            'loot-search': renderLoot,
-            'shop-search': renderShops,
-            'spell-search': renderSpells,
-            'notes-search': renderSessions,
-            'wiki-search': renderWiki,
-            'link-search': renderLinks
-        };
-        const renderFn = searchRenderMap[ctx.value];
-        if (renderFn) clearSearch(ctx.value, renderFn);
-    },
+    // ✕ eines Suchfeldes: data-value nennt das Feld, geleert wird ueber dessen
+    // eigene Aktion — keine Liste Feld -> Renderfunktion (SUCHE-LEEREN, R1).
+    'clear-search': ctx => clearSearch(ctx.value),
 
     // Toggle actions
     'toggle-selected': ctx => ctx.target.classList.toggle('selected'),
