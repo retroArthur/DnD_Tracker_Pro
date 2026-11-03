@@ -1342,12 +1342,62 @@ const REITER_VERWEISE = Object.freeze({
 
 /**
  * Text-Verknuepfungen `[[typ:id:name]]` (systems/entity-links.js, "🔗 Entity-Link"):
- * parseEntityLinks() macht sie zu Spruengen auf `typ`/`id`. Dasselbe Muster wie dort.
+ * parseEntityLinks() macht sie mit /\[\[(\w+):(\d+):([^\]]+)\]\]/g zu Spruengen auf `typ`/`id`.
+ * Hier steht nur der Kopf dieses Musters; den Namen sucht reiterTextverweiseErsetzen() selbst —
+ * mit denselben Treffern, aber in linearer Zeit (siehe dort).
  */
-const REITER_TEXTVERWEIS = /\[\[(\w+):(\d+):([^\]]+)\]\]/g;
+const REITER_TEXTVERWEIS_KOPF = /\[\[(\w+):(\d+):/g;
 
 /** So tief folgt die Suche nach Text-Verknuepfungen verschachtelten Werten. */
 const REITER_TEXTVERWEIS_TIEFE = 64;
+
+/**
+ * `text.replace(/\[\[(\w+):(\d+):([^\]]+)\]\]/g, ersetzen)` — dieselben Treffer in linearer Zeit.
+ * Das Muster selbst braucht quadratische Zeit, wenn viele Koepfe kein `]]` finden: jeder Ansatz
+ * sucht bis zum naechsten `]`, ohne eines bis zum Textende. Gemessen (Pruefer, Runde 1): ein
+ * NPC-Name aus 40000 "[[a:1:" (240 KB) hielt die Dateiwahl 3,4 s auf, bevor der Nutzer etwas
+ * entschieden hatte (die Abbildung laeuft schon fuer die Vorschau) — hochgerechnet etwa 1,5 h an
+ * der Grenze von 10 MB. Dieselben Treffer heisst: der Name ist der ganze Lauf ohne `]` hinter
+ * dem Kopf, mindestens ein Zeichen, und ihm folgt `]]`; ein `[` darin bleibt erlaubt wie im
+ * Muster. Eine Laengenkappe oder `[^\[\]]` haette Treffer geaendert — eine Verknuepfung, die die
+ * Anzeige als Sprung zeigt, der Import aber nicht saehe, zeigte nach dem Hinzufuegen still auf
+ * einen fremden Eintrag (R5). Linear, weil die Stelle des naechsten `]` gemerkt bleibt, solange
+ * sie hinter dem Kopf liegt: jedes Zeichen wird hoechstens einmal danach durchsucht.
+ * tests/unit/reiterimport-verweise.test.js T1 haelt die Treffer gegen das Muster, T2/T3 die Zeit.
+ * @param {string} text
+ * @param {(ganz: string, typWort: string, idText: string, name: string) => string} ersetzen
+ * @returns {string}
+ */
+function reiterTextverweiseErsetzen(text, ersetzen) {
+    // Eigener Zustand (lastIndex) je Aufruf
+    const kopf = new RegExp(REITER_TEXTVERWEIS_KOPF);
+    let aus = '';
+    let geschrieben = 0;
+    let klammer = -1;
+    for (let treffer = kopf.exec(text); treffer; treffer = kopf.exec(text)) {
+        const nameAb = treffer.index + treffer[0].length;
+        if (klammer < nameAb) {
+            klammer = text.indexOf(']', nameAb);
+            if (klammer < 0) break;
+        }
+        if (klammer > nameAb && text[klammer + 1] === ']') {
+            aus +=
+                text.slice(geschrieben, treffer.index) +
+                ersetzen(
+                    text.slice(treffer.index, klammer + 2),
+                    treffer[1],
+                    treffer[2],
+                    text.slice(nameAb, klammer)
+                );
+            geschrieben = klammer + 2;
+            kopf.lastIndex = geschrieben;
+        } else {
+            // Wie das Muster: der naechste Ansatz eine Stelle weiter
+            kopf.lastIndex = treffer.index + 1;
+        }
+    }
+    return geschrieben === 0 ? text : aus + text.slice(geschrieben);
+}
 
 /**
  * Eine ID als Zahl — positive ganze Zahl oder Zahltext ("7"), sonst null.
@@ -1401,7 +1451,7 @@ function reiterListeneintragAbbilden(el, ziel, idFeld, v, abbilden) {
 function reiterTextverweiseAbbilden(wert, abbilden, tiefe) {
     if (typeof wert === 'string') {
         if (!wert.includes('[[')) return wert;
-        return wert.replace(REITER_TEXTVERWEIS, (ganz, typWort, idText, name) => {
+        return reiterTextverweiseErsetzen(wert, (ganz, typWort, idText, name) => {
             const ziel = reiterLinkZiel(typWort);
             const id = reiterIdZahl(idText);
             const neu = abbilden(ziel, id, `Text-Verknüpfung → ${reiterZielName(ziel)}`);
