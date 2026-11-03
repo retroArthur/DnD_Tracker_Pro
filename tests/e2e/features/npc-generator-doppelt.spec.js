@@ -61,8 +61,10 @@
  *       der Nutzer sieht die Erfolgsmeldung UND eine sichtbare Fehlermeldung
  *       (Meldung vom Typ error), der Wurf steht im Fehlerlog.
  *   R5  Der heile Fall bleibt: 1 NPC, 1 Undo, 1 Meldung, Fenster weg.
- * W1–W7 pruefen R1 und R2 an dem, was der Nutzer sieht und behaelt (DOM, D,
- * Speicher), K1/K2 pruefen R5. Was diese Datei nicht erreicht: R1 fuer einen
+ * W1–W3 und W5–W7 pruefen R1 und R2 an dem, was der Nutzer sieht und
+ * behaelt (DOM, D, Speicher, Meldungen), R1 dazu an der Vorschau selbst
+ * (DIE VORSCHAU, unten); W4 prueft D und Speicher nach dem Neuladen. K1/K2
+ * pruefen R5, und R1 auch heil. Was diese Datei nicht erreicht: R1 fuer einen
  * Wurf in save() oder showToast() und R4 (pushUndo, push, save VOR dem
  * Zeichnen) prueft tests/unit/npc-generator-speichern.test.js am echten
  * Modul. R3 (abgefangen IN saveGeneratedNPC, nicht in renderNPCList, weil
@@ -94,10 +96,24 @@
  * Liste nicht gezeichnet) scheitert der Fall dort, statt still gruen zu
  * werden.
  *
+ * DIE VORSCHAU (`_npcgAktuell`) zu verbrauchen IST die Sperre des Fixes —
+ * und von aussen nicht zu sehen, sobald das Fenster weg ist: der zweite
+ * Klick faellt dann auf den Hintergrund, keine Bedienung erreicht die alte
+ * Vorschau noch. Ohne Ablesung blieb sie fuer diese Datei unsichtbar
+ * (gemessen in der Nachpruefung an einer Mutante, die das Fenster entfernt,
+ * `_npcgAktuell = null` aber streicht: alle elf Faelle gruen, nur der
+ * Unit-Test sah es). Darum liest ablesen() sie ab — `var` auf oberster Ebene,
+ * also `window._npcgAktuell`, in beiden Buendeln unter diesem Namen —, hart
+ * vorbedingt in generatorBereit(): nach dem Oeffnen ist sie ablesbar und
+ * traegt den angezeigten Namen, sonst urteilte die Zusage ueber nichts.
+ * Geurteilt wird weich: nach dem Speichern ist sie null (vorschauVerbraucht(),
+ * in W2 und W3 schon nach der ersten Bedienung, in K1/K2 auch heil).
+ *
  * WIE DIE FAELLE URTEILEN: weich (jede gebrochene Zusage wird genannt) an D,
  * am Speicher (`npcs` in localStorage, abgelesen, sobald er D eingeholt hat —
- * save() entprellt), am Undo-Stapel, am DOM (Fenster im DOM ja/nein) und an
- * den Meldungen des Ereignis-Logs; alles gegen den Stand VOR der Bedienung
+ * save() entprellt), am Undo-Stapel, am DOM (Fenster im DOM ja/nein), an der
+ * Vorschau (`_npcgAktuell`, siehe oben) und an den Meldungen des
+ * Ereignis-Logs; alles gegen den Stand VOR der Bedienung
  * gezaehlt. Die Meldungen zaehlt ein MutationObserver aus dem Init-Skript
  * beim Einhaengen (`.event-log-entry <typ>`), samt `checkVisibility()` im
  * selben Augenblick — ein Eintrag verblasst nach gut 2 s, gezaehlt wird er
@@ -115,7 +131,9 @@
  * ───────────────────────────────────────────────────────────────────────────
  * DIE FAELLE, gemessen mit dieser Datei am Basisstand b1fc7da6 (Kopf von #22),
  * Chromium, dev- und prod-Buendel, drei Worker — rot jeweils an den Zusagen,
- * keiner an einer Vorbedingung:
+ * keiner an einer Vorbedingung; ausser W4 jeder Fehlerpfad-Fall auch an der
+ * Vorschau (`_npcgAktuell` bleibt gesetzt; nachgemessen, als die Ablesung
+ * dazukam — K1/K2 auch damit gruen):
  *
  *   W1  1440, dev, mouse.dblclick            rot: 2 → 4, Undo 2, Speicher
  *                                            4, Fenster offen, 0 Erfolgs-,
@@ -161,6 +179,11 @@
  *   ebenso mit Fokus-Rueckgabe an "🎲 Generator" alle 11 gruen (W3!)
  *   R1-Reihenfolge woertlich, ohne finally      alle 11 gruen — nur der Unit-
  *   um save()                                   Fall "save() wirft" rot
+ *   Fenster entfernt, `_npcgAktuell = null`     ohne Ablesung der Vorschau
+ *   gestrichen (Nachpruefung, Mutante m13)      alle 11 gruen, nur der Unit-
+ *                                               Test sah es; mit ihr 10 rot,
+ *                                               jeder NUR an der Vorschau
+ *                                               (W4 liest sie nicht: gruen)
  *   Zeitflag wie createCampaign, im finally     W1–W7 rot wie vorher
  *   zurueckgesetzt
  *   nur die Vorschau sofort verbrauchen,        rot an Fenster und Meldungen
@@ -553,6 +576,10 @@ async function generatorBereit(page) {
     await expect(knopf).toBeVisible();
     const name = ((await page.locator('.npcg-preview-name').textContent()) || '').trim();
     expect(name, 'Vorbedingung: die Vorschau zeigt einen Namen').not.toBe('');
+    expect(
+        (await ablesen(page)).vorschau,
+        'Vorbedingung: die Vorschau ist ablesbar (_npcgAktuell, globale Variable des Buendels) und ist die angezeigte — sonst urteilte vorschauVerbraucht() ueber nichts'
+    ).toBe(name);
     const box = await knopf.boundingBox();
     if (!box) throw new Error('Vorbedingung: "Als NPC speichern" hat keine Lage');
     const mitte = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -614,6 +641,16 @@ function ablesen(page) {
                 gespeichert,
                 undo: typeof undoStack !== 'undefined' ? undoStack.length : null,
                 fensterImDom: !!document.getElementById('npc-generator-modal'),
+                // Die Vorschau selbst (R1, siehe DIE VORSCHAU im Kopf): `var`
+                // auf oberster Ebene des Buendels, also eine Eigenschaft von
+                // window. 'fehlt' = nicht ablesbar (umbenannt, gekapselt) —
+                // daran scheitert die Vorbedingung in generatorBereit().
+                /** @type {string | null} */
+                vorschau: !('_npcgAktuell' in w)
+                    ? 'fehlt'
+                    : w._npcgAktuell === null
+                      ? null
+                      : String(w._npcgAktuell?.name ?? ''),
                 /** @type {{ typ: string, text: string, sichtbar: boolean }[]} */
                 meldungen: (w.__meldungen || []).slice(),
                 pruefwuerfe: (w.ErrorHandler?.getRecentErrors(50) || []).filter(
@@ -710,7 +747,22 @@ function gemeldet(nachher, vorher, name, wann, fehlerpfad) {
 }
 
 /**
- * Das Fenster ist zu (R1), und die Meldungen sind die des Vertrags.
+ * R1, die Sperre selbst: die gespeicherte Vorschau ist verbraucht
+ * (`_npcgAktuell === null`). Von aussen nicht zu sehen, sobald das Fenster
+ * weg ist — darum abgelesen (siehe DIE VORSCHAU im Kopf).
+ * @param {Stand} nachher
+ * @param {string} wann
+ */
+function vorschauVerbraucht(nachher, wann) {
+    weich(
+        nachher.vorschau,
+        `${wann}: die gespeicherte Vorschau ist verbraucht (_npcgAktuell === null, R1)`
+    ).toBe(null);
+}
+
+/**
+ * Das Fenster ist zu und die Vorschau verbraucht (R1), und die Meldungen
+ * sind die des Vertrags.
  * @param {Stand} nachher
  * @param {Stand} vorher
  * @param {string} name
@@ -719,6 +771,7 @@ function gemeldet(nachher, vorher, name, wann, fehlerpfad) {
  */
 function fensterZuUndGemeldet(nachher, vorher, name, wann, fehlerpfad) {
     weich(nachher.fensterImDom, `${wann}: #npc-generator-modal nicht mehr im DOM`).toBe(false);
+    vorschauVerbraucht(nachher, wann);
     gemeldet(nachher, vorher, name, wann, fehlerpfad);
 }
 
@@ -784,6 +837,7 @@ test('W2 1440, dev: Klick – 800 ms – Klick — schon der erste Klick schlies
         nachErstem.fensterImDom,
         'nach dem ersten Klick: #npc-generator-modal nicht mehr im DOM'
     ).toBe(false);
+    vorschauVerbraucht(nachErstem, 'nach dem ersten Klick');
     // Der Nutzer sieht das offene Fenster und klickt noch einmal.
     await page.mouse.click(mitte.x, mitte.y);
     const nachher = await ablesenGespeichert(page);
@@ -807,12 +861,14 @@ for (const [kuerzel, taste, wie] of /** @type {const} */ ([
         await page.keyboard.press(taste);
         const nachErstem = await ablesen(page);
         vorbedingungWurf(nachErstem, 'nach dem ersten Druck');
-        // Das Fenster nur nach dem ERSTEN Druck: kaeme die Fokus-Rueckgabe an
-        // "🎲 Generator" (eigener PR), oeffnete der zweite ihn richtig neu.
+        // Fenster und Vorschau nur nach dem ERSTEN Druck: kaeme die
+        // Fokus-Rueckgabe an "🎲 Generator" (eigener PR), oeffnete der zweite
+        // ihn richtig neu — mit einer neuen Vorschau.
         weich(
             nachErstem.fensterImDom,
             'nach dem ersten Druck: #npc-generator-modal nicht mehr im DOM'
         ).toBe(false);
+        vorschauVerbraucht(nachErstem, 'nach dem ersten Druck');
         weich(nachErstem.npcs, 'nach dem ersten Druck: genau ein NPC mehr in D').toBe(
             vorher.npcs + 1
         );
