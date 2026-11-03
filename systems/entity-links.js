@@ -13,16 +13,26 @@ function showEntityLinksModal(type, id) {
     const showModal = window.showModal;
     if (showModal) showModal('entity-links-modal');
 }
-// Parse Entity-Links in Text: [[type:id:name]] -> klickbare Links
-// Verwendet zentrale LINK_ICONS Konstante aus core/constants.js
+// Entity-Links in Rich-Text: [[type:id:name]] -> klickbare Links. SENKEN R1: bereinigt selbst
+// (idempotent) und ersetzt NUR in Textknoten (ersetzeImText, utils/basic.js) — eine Marke, die
+// in einem Attributwert beginnt oder endet, bleibt Text. Die Marke wird als Knoten gebaut: der
+// Name ist Text, auch im title (frueher beendete ein `"` darin das Attribut).
 function parseEntityLinks(content) {
     if (!content) return '';
-    const LINK_ICONS = window.LINK_ICONS;
-    // Pattern: [[type:id:name]]
-    return content.replace(/\[\[(\w+):(\d+):([^\]]+)\]\]/g, (match, type, id, name) => {
-        const icon = LINK_ICONS[type] || '🔗';
-        const viewType = type.endsWith('s') ? type : type + 's'; // npcs, locations etc.
-        return `<span class="entity-link" data-action="navigate-entity" data-type="${viewType}" data-id="${id}" title="${type}: ${name}">${icon} ${name}</span>`;
+    const muster = /\[\[(\w+):(\d+):([^\]]+)\]\]/g; // [[type:id:name]]
+    return ersetzeImText(sanitizeHTML(content), muster, (doc, treffer, type, id, name) => {
+        const span = doc.createElement('span');
+        span.className = 'entity-link';
+        span.setAttribute('data-action', 'navigate-entity');
+        // npcs, locations etc.
+        span.setAttribute('data-type', type.endsWith('s') ? type : type + 's');
+        span.setAttribute('data-id', id);
+        span.title = `${type}: ${name}`;
+        const icon = Object.prototype.hasOwnProperty.call(LINK_ICONS, type)
+            ? LINK_ICONS[type]
+            : '🔗';
+        span.textContent = `${icon} ${name}`;
+        return span;
     });
 }
 // Zeige Modal zum Einfügen eines Entity-Links in einen Editor
@@ -54,7 +64,7 @@ function renderInsertLinkTargets() {
         items
             .map(i => {
                 const displayName = i.name || i.title || 'Unbenannt';
-                return `<option value="${i.id}">${esc(displayName)}</option>`;
+                return `<option value="${esc(i.id)}">${esc(displayName)}</option>`;
             })
             .join('') || '<option value="">Keine verfügbar</option>';
 }
@@ -121,7 +131,7 @@ function renderLinkTargets() {
         items
             .map(i => {
                 const displayName = i.name || i.title || 'Unbenannt';
-                return `<option value="${i.id}">${esc(displayName)}</option>`;
+                return `<option value="${esc(i.id)}">${esc(displayName)}</option>`;
             })
             .join('') || '<option value="">Keine verfügbar</option>';
 }
@@ -150,7 +160,7 @@ function renderCurrentLinks() {
                     const target = getEntityByTypeAndId(link.type, link.id);
                     const icon = LINK_ICONS[link.type] || '🔗';
                     const targetName = target?.name || target?.title || 'Unbekannt';
-                    return `<span class="tag tag-cyan clickable" style="display: flex; align-items: center; gap: 4px; cursor: pointer;" data-action="navigate-entity-stop" data-type="${link.type}" data-id="${link.id}">
+                    return `<span class="tag tag-cyan clickable" style="display: flex; align-items: center; gap: 4px; cursor: pointer;" data-action="navigate-entity-stop" data-type="${esc(link.type)}" data-id="${esc(link.id)}">
                     ${icon} ${esc(targetName)}
                     <button data-action="remove-entity-link" data-id="${i}" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0 2px;" data-stop-propagation="true">✕</button>
                 </span>`;
@@ -231,7 +241,7 @@ function renderEntityLinks(links) {
                 const target = getEntityByTypeAndId(link.type, link.id);
                 const icon = LINK_ICONS[link.type] || '🔗';
                 const targetName = target?.name || target?.title || '?';
-                return `<span class="link-chip clickable" data-action="navigate-entity-stop" data-type="${link.type}" data-id="${link.id}" title="Klicken für Vorschau">${icon} ${esc(targetName)}</span>`;
+                return `<span class="link-chip clickable" data-action="navigate-entity-stop" data-type="${esc(link.type)}" data-id="${esc(link.id)}" title="Klicken für Vorschau">${icon} ${esc(targetName)}</span>`;
             })
             .join('')}
         ${links.length > 5 ? `<span class="link-chip" style="background: var(--bg-dark);">+${links.length - 5}</span>` : ''}
@@ -295,10 +305,10 @@ function showEntityPreviewModal(type, id, entity) {
             fehlgeschlagen: 'red'
         };
         const status = entity.status || 'offen';
-        const statusRolle = statusColors[status] || statusColors.offen;
+        const statusRolle = statusColors[sichereKlasse(status, Object.keys(statusColors), 'offen')];
         content = `
             <div style="margin-bottom: 12px;">
-                <span style="background: var(--${statusRolle}); color: var(--on-${statusRolle}); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm); font-weight: 600;">${status.toUpperCase()}</span>
+                <span style="background: var(--${statusRolle}); color: var(--on-${statusRolle}); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm); font-weight: 600;">${esc(String(status).toUpperCase())}</span>
             </div>
             ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
             ${entity.reward ? `<div style="color: var(--gold); font-size: var(--text-md);">💰 ${esc(entity.reward)}</div>` : ''}
@@ -317,12 +327,12 @@ function showEntityPreviewModal(type, id, entity) {
     } else if (type === 'characters') {
         content = `
             ${entity.race ? `<div style="color: var(--purple);">${esc(entity.race)} ${entity.class ? esc(entity.class) : ''}</div>` : ''}
-            ${entity.level ? `<div style="color: var(--gold);">Level ${entity.level}</div>` : ''}
+            ${entity.level ? `<div style="color: var(--gold);">Level ${esc(String(entity.level))}</div>` : ''}
         `;
     } else if (type === 'encounters') {
         content = `
             ${entity.type ? `<div style="color: var(--red);">${esc(entity.type)}</div>` : ''}
-            ${entity.cr ? `<div style="color: var(--yellow);">CR ${entity.cr}</div>` : ''}
+            ${entity.cr ? `<div style="color: var(--yellow);">CR ${esc(String(entity.cr))}</div>` : ''}
         `;
     } else if (type === 'spells') {
         const levelText = entity.level === 0 ? 'Zaubertrick' : `Grad ${entity.level}`;
@@ -332,7 +342,7 @@ function showEntityPreviewModal(type, id, entity) {
            2,93, die Schul-Pille 4,02. Jetzt 4,97-7,43 bzw. 5,05-6,94. */
         content = `
             <div style="margin-bottom: 8px;">
-                <span style="background: var(--blue); color: var(--on-blue); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm);">${levelText}</span>
+                <span style="background: var(--blue); color: var(--on-blue); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm);">${esc(levelText)}</span>
                 ${entity.school ? `<span style="background: var(--purple); color: var(--on-purple); padding: 2px 8px; border-radius: 10px; font-size: var(--text-sm); margin-left: 4px;">${esc(entity.school)}</span>` : ''}
             </div>
             ${entity.castingTime ? `<div style="font-size: var(--text-sm);"><span style="color: var(--text-dim);">Zeitaufwand:</span> ${esc(entity.castingTime)}</div>` : ''}
@@ -397,7 +407,7 @@ function showEntityPreviewModal(type, id, entity) {
     const contentEl = $('entity-preview-content');
     const gotoBtn = $('entity-preview-goto');
     if (titleEl) {
-        titleEl.innerHTML = `${LINK_ICONS[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: var(--text-sm);">(${ENTITY_TYPE_NAMES[type] || type})</span>`;
+        titleEl.innerHTML = `${LINK_ICONS[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: var(--text-sm);">(${esc(ENTITY_TYPE_NAMES[type] || type)})</span>`;
     }
     if (contentEl) {
         contentEl.innerHTML =

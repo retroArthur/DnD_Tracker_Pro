@@ -278,12 +278,12 @@ function renderDMScreen() {
                     content = '<div class="dms-widget-empty">Fehler beim Laden</div>';
                 }
                 return `
-                <div class="dmscreen-widget" data-widget-id="${widget.id}" data-widget-type="${widget.type}" draggable="true">
+                <div class="dmscreen-widget" data-widget-id="${esc(widget.id)}" data-widget-type="${esc(widget.type)}" draggable="true">
                     <div class="dmscreen-widget-header">
                         <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
                         <span class="dmscreen-widget-icon">${def.icon}</span>
                         <span class="dmscreen-widget-title">${def.name}</span>
-                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="${widget.id}" title="Widget ausblenden">✕</button>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="${esc(widget.id)}" title="Widget ausblenden">✕</button>
                     </div>
                     <div class="dmscreen-widget-body">
                         ${content}

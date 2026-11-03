@@ -280,7 +280,7 @@ function addBestiaryToEncounter(id, source) {
 
     if (typeof window.save === 'function') window.save();
     if (typeof window.renderEncounters === 'function') window.renderEncounters();
-    showToast(esc(monster.name) + ' zu Encounter hinzugef\xfcgt');
+    showToast(monster.name + ' zu Encounter hinzugef\xfcgt');
 }
 
 // ============================================================

@@ -184,12 +184,12 @@ function renderSpellCards(spells) {
                 ? s.spellClasses.join(', ')
                 : s.spellClass || '';
             const isExpanded = expandedSpells.has(s.id);
-            return `<div class="spell-card ${s.type} ${isExpanded ? 'expanded' : ''}" data-spell-id="${s.id}">
-            <div class="spell-card-header" data-action="toggle-spell-card" data-id="${s.id}">
+            return `<div class="spell-card ${sichereKlasse(s.type, ['spell', 'healing', 'damage', 'buff', 'debuff', 'cantrip'], '')} ${isExpanded ? 'expanded' : ''}" data-spell-id="${esc(s.id)}">
+            <div class="spell-card-header" data-action="toggle-spell-card" data-id="${esc(s.id)}">
                 <div style="flex: 1;">
                     <div class="spell-header">
                         <div class="spell-name">${esc(s.name)} ${s.ritual ? '<span style="color:var(--purple);">(R)</span>' : ''}</div>
-                        <div class="spell-level">${levelText}</div>
+                        <div class="spell-level">${esc(levelText)}</div>
                     </div>
                     <div class="spell-info-line classes">${esc(classText)}</div>
                     <div class="spell-info-line school">✨ ${esc(s.school || 'Unbekannt')}</div>
@@ -212,8 +212,8 @@ function renderSpellCards(spells) {
                 ${s.description ? `<div class="spell-desc">${sanitizeHTML(s.description)}</div>` : ''}
                 ${s.note ? `<div class="spell-note">📝 ${sanitizeHTML(s.note)}</div>` : ''}
                 <div class="btn-group">
-                    <button class="btn btn-sm" data-action="edit-spell-stop" data-id="${s.id}">✏️ Bearbeiten</button>
-                    <button class="btn btn-sm btn-danger" data-action="delete-spell-stop" data-id="${s.id}">🗑️ Löschen</button>
+                    <button class="btn btn-sm" data-action="edit-spell-stop" data-id="${esc(s.id)}">✏️ Bearbeiten</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete-spell-stop" data-id="${esc(s.id)}">🗑️ Löschen</button>
                 </div>
             </div>
         </div>`;
@@ -226,7 +226,7 @@ function renderLoadMoreButton(total, perPage) {
     if (remaining <= 0) return '';
     return `<div class="load-more-container" style="grid-column: 1/-1; text-align: center; padding: 16px;">
         <button class="btn" data-action="call" data-value="loadMoreSpells">
-            📜 ${remaining} weitere laden (${shown}/${total} angezeigt)
+            📜 ${remaining} weitere laden (${shown}/${Number(total)} angezeigt)
         </button>
     </div>`;
 }

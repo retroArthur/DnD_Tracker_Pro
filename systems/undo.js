@@ -627,11 +627,11 @@ function renderConditionBadges(conditions = [], exhaustion = 0, small = false) {
     conditions.forEach(key => {
         const cond = CONDITIONS[key];
         if (cond) {
-            html += `<span class="condition-badge ${key} active" title="${cond.name}: ${cond.desc}">${cond.icon}</span>`;
+            html += `<span class="condition-badge ${esc(key)} active" title="${cond.name}: ${cond.desc}">${cond.icon}</span>`;
         }
     });
     if (exhaustion > 0) {
-        html += `<span class="condition-badge exhaustion active" title="Erschöpfung Stufe ${exhaustion}">${CONDITIONS.exhaustion.icon}${exhaustion}</span>`;
+        html += `<span class="condition-badge exhaustion active" title="Erschöpfung Stufe ${esc(String(exhaustion))}">${CONDITIONS.exhaustion.icon}${esc(String(exhaustion))}</span>`;
     }
     html += '</div>';
     return html;
@@ -660,7 +660,7 @@ function showRelationshipsModal(type, id) {
         targetEl.innerHTML = targets
             .map(
                 t =>
-                    `<option value="${t.type}:${t.id}">${t.type === 'character' ? '👤' : '🎭'} ${esc(t.name)}</option>`
+                    `<option value="${esc(t.type)}:${esc(t.id)}">${t.type === 'character' ? '👤' : '🎭'} ${esc(t.name)}</option>`
             )
             .join('');
     }
@@ -740,7 +740,7 @@ function renderRelationshipBadges(relationships = [], sourceType, sourceId) {
                 ? EntityLookup.character(rel.targetId)
                 : EntityLookup.npc(rel.targetId);
         const targetName = target?.name || '?';
-        html += `<span class="relationship-badge ${rel.type}" title="${rel.note || typeLabels[rel.type]}">${targetName} <span data-action="remove-relationship-stop" data-source-type="${sourceType}" data-source-id="${sourceId}" data-target-type="${rel.targetType}" data-target-id="${rel.targetId}" style="cursor:pointer;opacity:0.6;">✕</span></span>`;
+        html += `<span class="relationship-badge ${sichereKlasse(rel.type, Object.keys(typeLabels), '')}" title="${esc(rel.note || typeLabels[rel.type])}">${esc(targetName)} <span data-action="remove-relationship-stop" data-source-type="${esc(sourceType)}" data-source-id="${esc(sourceId)}" data-target-type="${esc(rel.targetType)}" data-target-id="${esc(rel.targetId)}" style="cursor:pointer;opacity:0.6;">✕</span></span>`;
     });
     html += '</div></div>';
     return html;
@@ -816,8 +816,8 @@ function searchNotes() {
             const excerpt = highlightExcerpt(content.replace(/<[^>]+>/g, ''), query, 150);
             const name = note.name || note.title || '';
             return `
-            <div class="notes-search-result" data-action="go-to-note" data-value="${note.date}">
-                <div class="notes-search-date">${note.date}${name ? ' - ' + esc(name) : ''}</div>
+            <div class="notes-search-result" data-action="go-to-note" data-value="${esc(note.date)}">
+                <div class="notes-search-date">${esc(note.date)}${name ? ' - ' + esc(name) : ''}</div>
                 <div class="notes-search-excerpt">${excerpt}</div>
             </div>
         `;

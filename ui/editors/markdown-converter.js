@@ -12,11 +12,57 @@
 function htmlToMarkdown(html) {
     if (!html || typeof html !== 'string') return '';
 
-    // Create temporary container to parse HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
+    // Inert parsen (SENKEN R1): ein Dokument aus DOMParser laedt keine Bilder und fuehrt
+    // nichts aus — ein losgeloestes div DIESER Seite (frueher `temp.innerHTML = html`) schon,
+    // der Export eines importierten Eintrags forderte so dessen Bilder an. Die Knoten wandern
+    // in ein div desselben inerten Dokuments: die Wandlung beginnt wie bisher an einem div.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const temp = doc.createElement('div');
+    temp.append(...doc.head.childNodes, ...doc.body.childNodes);
 
     return convertNodeToMarkdown(temp);
+}
+
+/**
+ * Text aus Daten fuer eine Markdown-Datei (SENKEN R1). Die Datei verlaesst die App: ein
+ * HTML-faehiger Markdown-Betrachter macht aus `<…>` im Text Markup, und markdownToHtml() beim
+ * Re-Import Formatierung aus Text (frueher wurde `<p>&lt;img …&gt;</p>` — sichtbarer TEXT —
+ * in der Datei zu einem lebendigen `<img>`). Darum `<`/`>` als Entitaet, `&` nur, wo er eine
+ * Entitaet bilden wuerde ("Tom & Jerry" bleibt lesbar). Eine Linkmarke `](` bzw. `]:` vor
+ * einem Ziel mit fremdem Schema (alles ausser http/https/mailto, vgl. sichererLink) wird
+ * entwertet: `(`/`:` als Entitaet bilden keine Linkstruktur. Der Re-Import liest die
+ * Entitaeten wieder als Zeichen (sanitizeHTML parst sie), der Text kommt woertlich zurueck.
+ * @param {*} text
+ * @returns {string}
+ */
+function markdownText(text) {
+    return String(text ?? '')
+        .replace(/&(?=#?[a-zA-Z0-9]+;)/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\]([(:])(\s*)([^\s)]*)/g, (treffer, marke, raum, ziel) =>
+            /^[a-z][a-z0-9+.-]*:/i.test(ziel) && !sichererLink(ziel)
+                ? `]&#${marke.charCodeAt(0)};${raum}${ziel}`
+                : treffer
+        );
+}
+
+/**
+ * Linkziel aus Daten fuer `[text](ziel)` (SENKEN R3): http/https/mailto (sichererLink) oder
+ * ein relatives Ziel, wie der Editor es anlegt (`#…`, `./…`, `/…`), nach istRelativerLink() —
+ * derselbe Pruefkern wie sanitizeHTML() und der Editor: kein doppelter, auch kodierter Trenner
+ * (`//host`, `/%5C%5Chost`), unter file:// ein UNC-Pfad (Nachbesserung (16)). Sonst '' (der
+ * Aufrufer schreibt dann nur den Text). Leerraum, `<`, `>`, `"` und Klammern prozentkodiert:
+ * sonst endet das Ziel vorzeitig, und der Rest stuende als Text — samt Markup — in der Datei.
+ * @param {*} href
+ * @returns {string}
+ */
+function markdownLinkZiel(href) {
+    const ziel = String(href ?? '').trim();
+    if (!sichererLink(ziel) && !istRelativerLink(ziel)) return '';
+    return ziel.replace(/[\s<>"()]/g, z =>
+        z === '(' ? '%28' : z === ')' ? '%29' : encodeURIComponent(z)
+    );
 }
 
 /**
@@ -29,7 +75,7 @@ function convertNodeToMarkdown(node) {
 
     // Text node
     if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent || '';
+        return markdownText(node.textContent || '');
     }
 
     // Element node
@@ -64,32 +110,33 @@ function convertNodeToMarkdown(node) {
                 break;
 
             case 'code':
-                markdown = `\`${getTextContent(node)}\``;
+                markdown = `\`${textAus(node)}\``;
                 break;
 
             case 'h1':
-                markdown = `# ${getTextContent(node)}\n\n`;
+                markdown = `# ${textAus(node)}\n\n`;
                 break;
             case 'h2':
-                markdown = `## ${getTextContent(node)}\n\n`;
+                markdown = `## ${textAus(node)}\n\n`;
                 break;
             case 'h3':
-                markdown = `### ${getTextContent(node)}\n\n`;
+                markdown = `### ${textAus(node)}\n\n`;
                 break;
             case 'h4':
-                markdown = `#### ${getTextContent(node)}\n\n`;
+                markdown = `#### ${textAus(node)}\n\n`;
                 break;
             case 'h5':
-                markdown = `##### ${getTextContent(node)}\n\n`;
+                markdown = `##### ${textAus(node)}\n\n`;
                 break;
             case 'h6':
-                markdown = `###### ${getTextContent(node)}\n\n`;
+                markdown = `###### ${textAus(node)}\n\n`;
                 break;
 
             case 'a': {
-                const href = node.getAttribute('href') || '';
-                const linkText = getTextContent(node);
-                markdown = `[${linkText}](${href})`;
+                // Nur ein erlaubtes Ziel wird ein Link (SENKEN R3), sonst bleibt der Text
+                const ziel = markdownLinkZiel(node.getAttribute('href'));
+                const linkText = textAus(node);
+                markdown = ziel ? `[${linkText}](${ziel})` : linkText;
                 break;
             }
 
@@ -102,15 +149,18 @@ function convertNodeToMarkdown(node) {
                     listItems
                         .map((li, index) => {
                             const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
-                            return `${prefix} ${getTextContent(li)}`;
+                            return `${prefix} ${textAus(li)}`;
                         })
                         .join('\n') + '\n\n';
                 break;
             }
 
             case 'blockquote': {
-                const lines = getTextContent(node).split('\n');
-                markdown = lines.map(line => `> ${line}`).join('\n') + '\n\n';
+                const lines = textAus(node).split('\n');
+                // Markdown-Zitatmarke, kein Markup — als Name, weil R6 das `>` im Literal
+                // fuer HTML hielte (tests/unit/html-senken.test.js, Regel der Vorsichtung).
+                const marke = '> ';
+                markdown = lines.map(line => marke + line).join('\n') + '\n\n';
                 break;
             }
 
@@ -223,6 +273,15 @@ function getTextContent(node) {
 }
 
 /**
+ * Text eines Elements wie getTextContent(), fuer die Datei kodiert (markdownText, SENKEN R1).
+ * @param {Node} node - DOM node
+ * @returns {string}
+ */
+function textAus(node) {
+    return markdownText(getTextContent(node));
+}
+
+/**
  * Convert HTML table to Markdown table
  * @param {HTMLTableElement} table - Table element
  * @returns {string} Markdown table
@@ -236,7 +295,7 @@ function convertTableToMarkdown(table) {
     // Process rows
     rows.forEach((row, rowIndex) => {
         const cells = Array.from(row.cells);
-        const cellContents = cells.map(cell => getTextContent(cell).replace(/\|/g, '\\|'));
+        const cellContents = cells.map(cell => textAus(cell).replace(/\|/g, '\\|'));
         markdown += '| ' + cellContents.join(' | ') + ' |\n';
 
         // Add separator after first row (header)
@@ -275,10 +334,13 @@ function markdownToHtml(markdown) {
 
     let html = markdown;
 
-    // Read-aloud blocks (must be first to avoid interference)
-    html = html.replace(/:::read-aloud\n([\s\S]*?)\n:::/g, (match, content) => {
-        return `<div class="read-aloud">${content.trim()}</div>`;
-    });
+    // Read-aloud blocks (must be first to avoid interference). Die `\s*` um die Gruppe tun, was
+    // frueher content.trim() im Rueckruf tat; die Ersetzung ist ein Muster wie alle Regeln hier
+    // (das Ergebnis geht am Ende durch sanitizeHTML()).
+    html = html.replace(
+        /:::read-aloud\n\s*([\s\S]*?)\s*\n:::/g,
+        '<div class="read-aloud">$1</div>'
+    );
 
     // Headings (must be before other conversions)
     html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
@@ -406,3 +468,5 @@ function renderMarkdownInContent(html) {
 window.htmlToMarkdown = htmlToMarkdown;
 window.markdownToHtml = markdownToHtml;
 window.renderMarkdownInContent = renderMarkdownInContent;
+// markdownText: Kopfzeilen des Markdown-Exports (systems/markdown-import-export.js)
+window.markdownText = markdownText;

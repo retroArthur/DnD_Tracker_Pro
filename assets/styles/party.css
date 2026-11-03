@@ -3121,3 +3121,11 @@
     filter: brightness(1.15);
 }
 
+/* Linkliste (SENKEN R3): ein Ziel ohne http(s)/mailto steht als Text, sichtbar gekennzeichnet
+   statt still entlinkt (features/shops/links.js renderLinks) */
+.link-nicht-anklickbar {
+    font-size: var(--text-xs);
+    font-weight: 400;
+    color: var(--text-dim);
+}
+

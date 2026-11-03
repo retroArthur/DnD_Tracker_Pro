@@ -283,7 +283,7 @@ function renderNPCCard(npc) {
     const triggerCount = (npc.triggers || []).length;
 
     // Avatar
-    const avatarContent = npc.avatar
+    const avatarContent = sichereBildquelle(npc.avatar)
         ? el('img', { src: npc.avatar, alt: '' })
         : document.createTextNode(npc.name ? npc.name.charAt(0).toUpperCase() : '?');
 

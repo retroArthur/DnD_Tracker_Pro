@@ -472,7 +472,27 @@ function initContextToolbars() {
         const action = btn.dataset.linkAction || '';
         const link = currentContextLink;
         if (action === 'open') {
-            window.open(link.href, '_blank', 'noopener,noreferrer');
+            // SENKEN R3: das Ziel kommt aus dem Inhalt (auch importiert). Geoeffnet wird, was
+            // der Editor selbst anlegt (isAllowedEditorHref, gelesen am ROHEN Attribut — link.href
+            // ist unter file:// immer file:///…): http(s) bzw. mailto in einem neuen Fenster,
+            // ein Anker `#…` als Sprung im Dokument, `./…` und `/…` als aufgeloeste Adresse — ohne
+            // doppelten, auch kodierten Trenner (istRelativerLink(), Nachbesserung (16)). Alles
+            // andere (javascript:, file:, //host, /%5C%5Chost) meldet nur.
+            const roh = link.getAttribute('href') || '';
+            const ziel = sichererLink(roh);
+            if (ziel) window.open(ziel, '_blank', 'noopener,noreferrer');
+            else if (roh.startsWith('#') && isAllowedEditorHref(roh)) {
+                let kennung = roh.slice(1);
+                try {
+                    kennung = decodeURIComponent(kennung);
+                } catch {
+                    // unlesbare Kodierung: die Kennung so, wie sie dasteht
+                }
+                const anker = document.getElementById(kennung);
+                if (anker) anker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                else showToast('⚠️ Anker im Dokument nicht gefunden', 'error');
+            } else if (isAllowedEditorHref(roh)) window.open(link.href, '_blank', 'noopener,noreferrer');
+            else showToast('⚠️ Nur http(s)-, mailto-, /-, #- oder ./-Ziele lassen sich öffnen', 'error');
         } else if (action === 'edit') {
             const newUrl = prompt('URL bearbeiten:', link.href);
             if (newUrl && newUrl !== link.href && !isAllowedEditorHref(newUrl)) {

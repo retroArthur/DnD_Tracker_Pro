@@ -9,7 +9,7 @@ declare function renderPartyRoster(container: HTMLElement, characters: any[]): v
 /**
  * Renders a single character card
  */
-declare function renderCharacterCard(ch: any, renderConditionsBar: any, CATS: any): string;
+declare function renderCharacterCard(ch: any): string;
 /**
  * Renders compact spell slot pips
  */

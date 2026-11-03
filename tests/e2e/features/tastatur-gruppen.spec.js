@@ -79,7 +79,7 @@
  *      `blur()`.
  *   3. VERKNUEPFTE Spielerkaempfer im Seed. Mit der Saat der
  *      Erreichbarkeitsdatei ("Held N"/"Ork N") gibt es GAR KEINE Punkte:
- *      `renderCombatantSpellSlots()` (features/initiative.js:77) braucht
+ *      `renderCombatantSpellSlots()` (features/initiative.js:86) braucht
  *      `type === 'player'` UND einen namensgleichen Charakter mit
  *      `spellSlots`. Gemessen 0 Punkte bei 6 und bei 20 Kaempfern. Eine
  *      leere Gruppe ist kein Beweis.
@@ -655,7 +655,7 @@ test('(11) Leertaste auf einem Glied loest GENAU EINEN Klick aus und schaltet de
 // (12)-(13) DAS NEUZEICHNEN
 // ============================================================
 //
-// `toggleInitSlot()` (features/initiative.js:223) ruft `renderInit()` und
+// `toggleInitSlot()` (features/initiative.js:235) ruft `renderInit()` und
 // ersetzt damit die ganze Kampfliste. Gemessen am Ist-Zustand: nach der
 // Leertaste ist der fokussierte Knoten NICHT mehr im Baum
 // (`document.contains(...) === false`) und `activeElement` ist `BODY`.

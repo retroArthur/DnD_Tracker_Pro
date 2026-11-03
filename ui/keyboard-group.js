@@ -161,7 +161,7 @@ const KeyboardGroup = {
      * wo man war" — und weil jede Renderfunktion, die `innerHTML` ersetzt,
      * die Glieder gegen FRISCHE Knoten austauscht. Ohne Gedaechtnis faellt
      * der Spielleiter nach jeder einzelnen Bedienung an den Anfang der
-     * Reihe zurueck: `toggleInitSlot()` (features/initiative.js:223) ruft
+     * Reihe zurueck: `toggleInitSlot()` (features/initiative.js:235) ruft
      * `renderInit()`, und damit ist die ganze Kampfliste neu.
      *
      * EIN `Map` MIT ZEICHENKETTEN, KEIN `WeakMap` AUF KNOTEN: der Knoten
@@ -259,7 +259,7 @@ const KeyboardGroup = {
         // Pfeiltasten-Zweig (nachgezaehlt: Pfeiltasten sind im Quellbaum
         // nur in zwei eigenen Aufklappmenues belegt,
         // `features/command-palette/command-palette.js:137,141` und
-        // `features/wiki/wiki-crud.js:422,429`), aber die Reihenfolge soll
+        // `features/wiki/wiki-crud.js:432,439`), aber die Reihenfolge soll
         // nicht von dieser Lage abhaengen.
         document.addEventListener('keydown', e => this._tasten(e), { capture: true });
 

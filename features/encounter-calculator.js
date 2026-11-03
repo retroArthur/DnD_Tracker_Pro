@@ -222,11 +222,11 @@ function renderFavoritesDropdown() {
             ${favs
                 .map(
                     f => `
-                <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${f.id}">
+                <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${esc(f.id)}">
                     <span>⭐</span>
                     <span class="calc-fav-name">${esc(f.name)}</span>
-                    <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + m.count, 0)})</span>
-                    <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${f.id}" title="Löschen">×</button>
+                    <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + Number(m.count), 0)})</span>
+                    <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${esc(f.id)}" title="Löschen">×</button>
                 </div>
             `
                 )
@@ -409,7 +409,7 @@ function updateMonsterPreview() {
         : `<span class="calc-preview-same">${newDiff.label}</span>`;
     previewDiv.innerHTML = `
         <span class="calc-preview-icon">📊</span>
-        <span class="calc-preview-xp">+${addedXP.toLocaleString()} XP</span>
+        <span class="calc-preview-xp">+${esc(addedXP.toLocaleString())} XP</span>
         ${diffHtml}
     `;
 }
@@ -623,9 +623,9 @@ function recalculateEncounter() {
         <div class="calc-difficulty-main">
             <div class="calc-diff-badge ${difficulty.level}">${difficulty.label}</div>
             <div class="calc-diff-info">
-                <div class="calc-diff-xp">${monsters.finalXP.toLocaleString()} <span>Final XP</span></div>
+                <div class="calc-diff-xp">${esc(monsters.finalXP.toLocaleString())} <span>Final XP</span></div>
                 <div class="calc-diff-details">
-                    ${monsters.baseXP.toLocaleString()} Base × ${monsters.multiplier} (${monsters.totalMonsters} Monster)${modifierInfo}
+                    ${esc(monsters.baseXP.toLocaleString())} Base × ${esc(String(monsters.multiplier))} (${esc(String(monsters.totalMonsters))} Monster)${esc(modifierInfo)}
                     ${difficulty.percentage > 100 ? ` • ${Math.round(difficulty.percentage - 100)}% über Deadly` : ''}
                 </div>
             </div>
@@ -634,10 +634,10 @@ function recalculateEncounter() {
         <!-- Threshold Bar -->
         <div class="calc-threshold-bar">
             <div class="calc-threshold-labels">
-                <div class="calc-threshold-label easy">Easy<br>${thresholds.easy.toLocaleString()}</div>
-                <div class="calc-threshold-label medium">Medium<br>${thresholds.medium.toLocaleString()}</div>
-                <div class="calc-threshold-label hard">Hard<br>${thresholds.hard.toLocaleString()}</div>
-                <div class="calc-threshold-label deadly">Deadly<br>${thresholds.deadly.toLocaleString()}</div>
+                <div class="calc-threshold-label easy">Easy<br>${esc(thresholds.easy.toLocaleString())}</div>
+                <div class="calc-threshold-label medium">Medium<br>${esc(thresholds.medium.toLocaleString())}</div>
+                <div class="calc-threshold-label hard">Hard<br>${esc(thresholds.hard.toLocaleString())}</div>
+                <div class="calc-threshold-label deadly">Deadly<br>${esc(thresholds.deadly.toLocaleString())}</div>
             </div>
             <div class="calc-threshold-track">
                 <div class="calc-threshold-seg easy"></div>
@@ -651,21 +651,21 @@ function recalculateEncounter() {
         <!-- Stats Grid -->
         <div class="calc-stats">
             <div class="calc-stat">
-                <div class="calc-stat-value">${thresholds.totalPCs}</div>
+                <div class="calc-stat-value">${esc(String(thresholds.totalPCs))}</div>
                 <div class="calc-stat-label">Spieler</div>
             </div>
             <div class="calc-stat">
-                <div class="calc-stat-value">${monsters.totalMonsters}</div>
+                <div class="calc-stat-value">${esc(String(monsters.totalMonsters))}</div>
                 <div class="calc-stat-label">Monster</div>
             </div>
             <div class="calc-stat">
-                <div class="calc-stat-value">${xpPerPlayer.toLocaleString()}</div>
+                <div class="calc-stat-value">${esc(xpPerPlayer.toLocaleString())}</div>
                 <div class="calc-stat-label">XP/Spieler</div>
             </div>
             <div class="calc-stat">
                 <div class="calc-stat-value">
-                    ×${monsters.multiplier}
-                    <span class="calc-stat-info" title="${getMultiplierExplanation(monsters.totalMonsters, thresholds.totalPCs, monsters.multiplier)}">ⓘ</span>
+                    ×${esc(String(monsters.multiplier))}
+                    <span class="calc-stat-info" title="${esc(getMultiplierExplanation(monsters.totalMonsters, thresholds.totalPCs, monsters.multiplier))}">ⓘ</span>
                 </div>
                 <div class="calc-stat-label">Multiplier</div>
             </div>
@@ -1047,7 +1047,7 @@ function renderCalculator() {
             .map(
                 (m, i) => `
             <div class="calc-list-item">
-                <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
+                <span class="calc-list-text">${esc(String(m.count))}× ${esc(m.name)}</span>
                 <span class="calc-list-xp">CR ${esc(m.cr) || '–'} (${xpFuerCR(m.cr)} XP)</span>
                 <button class="calc-list-remove" data-action="calc-remove-monster" data-value="${i}">✕</button>
             </div>
@@ -1264,17 +1264,17 @@ function showEncounterImport() {
                         // angepassten XP (mit Multiplikator), s. saveAsEncounter().
                         const art = gruppe
                             ? `Gruppe - ${gruppe.length} Monster-Typ(en) - ${xp} Basis-XP`
-                            : `CR ${esc(cr) || '–'} - ${xp} XP`;
+                            : `CR ${cr || '–'} - ${xp} XP`;
                         const type = enc.creatureType || enc.type || '';
                         return `
                         <div class="calc-import-card">
                             <div class="calc-import-info">
                                 <div class="calc-import-name">${esc(enc.name)}</div>
-                                <div class="calc-import-meta">${type ? esc(type) + ' - ' : ''}${art}</div>
+                                <div class="calc-import-meta">${type ? esc(type) + ' - ' : ''}${esc(art)}</div>
                             </div>
                             <div class="calc-import-actions">
-                                <input type="number" class="calc-import-count" id="import-count-${enc.id}" min="1" value="1" title="Anzahl">
-                                <button class="calc-import-btn" data-action="calc-import-encounter" data-value="${enc.id}">+</button>
+                                <input type="number" class="calc-import-count" id="import-count-${esc(enc.id)}" min="1" value="1" title="Anzahl">
+                                <button class="calc-import-btn" data-action="calc-import-encounter" data-value="${esc(enc.id)}">+</button>
                             </div>
                         </div>
                     `;

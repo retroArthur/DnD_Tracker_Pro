@@ -108,14 +108,14 @@ function renderDistributionCharacters(characters) {
         .map(char => {
             const currentGold = char.gold || 0;
             return `
-            <div class="ld-char-row" data-id="${char.id}">
+            <div class="ld-char-row" data-id="${esc(char.id)}">
                 <div class="ld-char-info">
                     <span class="ld-char-name">${esc(char.name)}</span>
-                    <span class="ld-char-gold">${currentGold} GM</span>
+                    <span class="ld-char-gold">${esc(String(currentGold))} GM</span>
                 </div>
                 <div class="ld-char-controls">
                     <label class="ld-char-include">
-                        <input type="checkbox" checked data-char-id="${char.id}">
+                        <input type="checkbox" checked data-char-id="${esc(char.id)}">
                         <span>Einbeziehen</span>
                     </label>
                 </div>

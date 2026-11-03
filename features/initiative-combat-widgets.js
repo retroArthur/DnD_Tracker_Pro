@@ -29,8 +29,9 @@ function renderEffectConditionsGrid() {
     if (cbId === null) return;
     const cb = getCombatant(cbId);
     const currentEffects = cb?.effects || [];
-    container.innerHTML = Object.entries(CONDITIONS)
-        .map(([key, cond]) => {
+    container.innerHTML = Object.keys(CONDITIONS)
+        .map(key => {
+            const cond = CONDITIONS[key];
             const hasEffect = currentEffects.some(
                 e => e.name.toLowerCase() === cond.name.toLowerCase()
             );
@@ -132,7 +133,7 @@ function renderDeathSaves(cb) {
                             i => `
                         <span class="death-save-dot success ${i < ds.successes ? 'active' : ''}"
                             data-action="toggle-death-save-stop"
-                            data-id="${cb.id}"
+                            data-id="${esc(cb.id)}"
                             data-type="success"
                             data-index="${i}"
                             title="Erfolg ${i + 1}"></span>
@@ -149,7 +150,7 @@ function renderDeathSaves(cb) {
                             i => `
                         <span class="death-save-dot failure ${i < ds.failures ? 'active' : ''}"
                             data-action="toggle-death-save-stop"
-                            data-id="${cb.id}"
+                            data-id="${esc(cb.id)}"
                             data-type="failure"
                             data-index="${i}"
                             title="Fehlschlag ${i + 1}"></span>
@@ -214,7 +215,7 @@ function renderLegendaryActionPips(cb) {
         dots.push(
             '<span class="la-dot ' + active + '"' +
             ' data-action="init-use-la-stop"' +
-            ' data-id="' + cb.id + '"' +
+            ' data-id="' + esc(cb.id) + '"' +
             ' data-index="' + i + '"' +
             ' title="' + titleText + '"></span>'
         );
@@ -236,7 +237,7 @@ function renderLegendaryResistancePips(cb) {
         dots.push(
             '<span class="lr-dot ' + active + '"' +
             ' data-action="init-use-lr-stop"' +
-            ' data-id="' + cb.id + '"' +
+            ' data-id="' + esc(cb.id) + '"' +
             ' data-index="' + i + '"' +
             ' title="' + titleText + '"></span>'
         );
@@ -246,7 +247,7 @@ function renderLegendaryResistancePips(cb) {
         '<div class="lr-dots">' + dots.join('') + '</div>' +
         '<button class="lr-reset-btn btn-icon"' +
         ' data-action="init-reset-lr-stop"' +
-        ' data-id="' + cb.id + '"' +
+        ' data-id="' + esc(cb.id) + '"' +
         ' title="Legendären Widerstand zurücksetzen (Lange Rast)">↺</button>' +
         '</div>';
 }
@@ -294,14 +295,14 @@ function renderConcentration(cb) {
             <div class="concentration-badge" title="Konzentration: ${esc(conc.spell)}">
                 <span class="conc-icon">🔮</span>
                 <span class="conc-spell">${esc(conc.spell)}</span>
-                <span class="conc-break" data-action="break-concentration-stop" data-id="${cb.id}" title="Konzentration brechen">✕</span>
+                <span class="conc-break" data-action="break-concentration-stop" data-id="${esc(cb.id)}" title="Konzentration brechen">✕</span>
             </div>
         `;
     }
     // Hinzufügen-Button für Spieler/Verbündete anzeigen (nur wenn keine Konzentration aktiv)
     if (cb.type === 'player' || cb.type === 'ally') {
         return `
-            <button class="concentration-add-btn" data-action="show-concentration-modal-stop" data-id="${cb.id}">
+            <button class="concentration-add-btn" data-action="show-concentration-modal-stop" data-id="${esc(cb.id)}">
                 🔮 Konzentration
             </button>
         `;
@@ -316,7 +317,7 @@ function renderConcentrationCheck(cb, damage) {
         <div class="concentration-check-banner">
             <span>⚠️ Konzentrations-Check für <strong>${esc(cb.concentration.spell)}</strong></span>
             <span class="conc-dc">DC ${dc}</span>
-            <button class="conc-roll-btn" data-action="roll-concentration-check-stop" data-id="${cb.id}" data-dc="${dc}">
+            <button class="conc-roll-btn" data-action="roll-concentration-check-stop" data-id="${esc(cb.id)}" data-dc="${dc}">
                 🎲 CON-Save
             </button>
         </div>
@@ -361,7 +362,7 @@ function showConcentrationModal(cbId) {
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn" data-action="hide-modal" data-value="concentration-modal">Abbrechen</button>
-                <button class="btn btn-primary" data-action="set-concentration" data-id="${cbId}">✓ Setzen</button>
+                <button class="btn btn-primary" data-action="set-concentration" data-id="${esc(cbId)}">✓ Setzen</button>
             </div>
         </div>
     `;
@@ -494,15 +495,15 @@ function showAoEDamageModal() {
                         const typeIcon =
                             cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
                         return `
-                        <label class="aoe-target" data-id="${cb.id}">
-                            <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" data-on-change="updateAoETargetDisplay">
-                            <span class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</span>
+                        <label class="aoe-target" data-id="${esc(cb.id)}">
+                            <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${esc(cb.id)}" data-id="${esc(cb.id)}" data-on-change="updateAoETargetDisplay">
+                            <span class="aoe-target-hp">${esc(String(cb.currentHp))}/${esc(String(cb.maxHp))} HP</span>
                             <span class="aoe-target-name">${typeIcon} ${esc(cb.name)}</span>
                             <span class="aoe-target-save">
-                                <input type="checkbox" id="aoe-save-${cb.id}" data-id="${cb.id}" data-on-change="updateAoETargetDisplay">
+                                <input type="checkbox" id="aoe-save-${esc(cb.id)}" data-id="${esc(cb.id)}" data-on-change="updateAoETargetDisplay">
                                 Save ½
                             </span>
-                            <span class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</span>
+                            <span class="aoe-target-damage" id="aoe-dmg-${esc(cb.id)}">—</span>
                         </label>
                     `;
                     })

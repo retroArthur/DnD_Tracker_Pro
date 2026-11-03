@@ -122,8 +122,8 @@ function buildHandoutHTML(shop, options) {
         itemsHTML =
             '<div class="empty-shop"><p>Dieser Shop hat derzeit keine verfügbaren Waren.</p></div>';
     } else if (options.groupByCategory) {
-        // Nach Kategorie gruppieren
-        const byCategory = {};
+        // Nach Kategorie gruppieren — ohne Prototyp: `__proto__`/`constructor` aus Daten ist ein Schluessel
+        const byCategory = Object.create(null);
         itemsToShow.forEach(item => {
             const cat = item.category || 'misc';
             if (!byCategory[cat]) byCategory[cat] = [];
@@ -171,7 +171,7 @@ function buildHandoutHTML(shop, options) {
         ${shopHeader}
 
         <main>
-            <h2>Verfügbare Waren (${itemsToShow.length} Artikel)</h2>
+            <h2>Verfügbare Waren (${Number(itemsToShow.length)} Artikel)</h2>
             ${itemsHTML}
         </main>
 
@@ -246,7 +246,7 @@ function renderHandoutItem(item, options) {
     if (options.showAvailability) {
         const qtyText = item.unlimited ? '∞' : item.quantity || 1;
         const availText = isAvailable ? `Verfügbar (${qtyText}×)` : 'Nicht verfügbar';
-        itemHTML += `<div class="item-availability ${isAvailable ? 'available' : 'unavailable'}">${availText}</div>`;
+        itemHTML += `<div class="item-availability ${isAvailable ? 'available' : 'unavailable'}">${esc(availText)}</div>`;
     }
 
     // Special/Note (nur im DM-Modus)

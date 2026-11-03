@@ -423,18 +423,18 @@ function renderEmptyState(config) {
     const desc = isFiltered ? descFiltered : descEmpty;
     const showButton = !isFiltered && buttonText && buttonAction;
     return `
-        <div class="empty-state" style="grid-column: ${gridSpan};">
-            <div class="empty-state-icon">${icon}</div>
-            <div class="empty-state-title">${title}</div>
-            <div class="empty-state-desc">${desc}</div>
+        <div class="empty-state" style="grid-column: ${esc(gridSpan)};">
+            <div class="empty-state-icon">${esc(icon)}</div>
+            <div class="empty-state-title">${esc(title)}</div>
+            <div class="empty-state-desc">${esc(desc)}</div>
             ${
                 showButton
                     ? `
                 <button class="btn btn-success"
-                    data-action="${buttonAction}"
-                    ${buttonValue ? `data-value="${buttonValue}"` : ''}
+                    data-action="${esc(buttonAction)}"
+                    ${buttonValue ? `data-value="${esc(buttonValue)}"` : ''}
                     style="font-size: var(--text-lg); padding: 12px 24px;">
-                    ${buttonText}
+                    ${esc(buttonText)}
                 </button>
             `
                     : ''
@@ -517,12 +517,13 @@ function populateFilterDropdown(selectId, items, config = {}) {
     } = config;
     const currentValue = preserveValue ? select.value : '';
     select.innerHTML =
-        `<option value="">${allLabel}</option>` +
+        `<option value="">${esc(allLabel)}</option>` +
         (items || [])
             .map(item => {
                 const value = item[valueField];
-                const label = labelFn ? labelFn(item) : esc(item[labelField] || '');
-                return `<option value="${value}">${label}</option>`;
+                // labelFn liefert Klartext wie labelField — kodiert wird hier (Vertrag SENKEN).
+                const label = labelFn ? labelFn(item) : item[labelField] || '';
+                return `<option value="${esc(value)}">${esc(label)}</option>`;
             })
             .join('');
     if (preserveValue && currentValue) {
@@ -718,17 +719,17 @@ function renderEntityLink(type, id, label, options = {}) {
         fallbackColor = 'var(--gold)',
         className = ''
     } = options;
-    const iconHtml = showIcon && icon ? `${icon} ` : '';
+    const iconHtml = showIcon && icon ? `${esc(icon)} ` : '';
     const escapedLabel = esc(label || '—');
     // Kein Link wenn keine ID
     if (!id) {
-        return `<span style="color: ${fallbackColor};">${iconHtml}${escapedLabel}</span>`;
+        return `<span style="color: ${esc(fallbackColor)};">${iconHtml}${escapedLabel}</span>`;
     }
     // Verwende data-action System für korrekte Event-Propagation
-    return `<span class="entity-link clickable ${className}"
+    return `<span class="entity-link clickable ${esc(className)}"
         data-action="navigate-entity"
-        data-type="${type}"
-        data-id="${id}"
+        data-type="${esc(type)}"
+        data-id="${esc(id)}"
         title="Klicken für Details"
         style="cursor: pointer;">
         ${iconHtml}${escapedLabel}

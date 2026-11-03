@@ -107,9 +107,9 @@ function renderDMSProfileList() {
     for (const [id, profile] of Object.entries(DEFAULT_DMSCREEN_PROFILES)) {
         const isActive = id === activeId;
         html += `
-            <div class="dms-profile-item ${isActive ? 'active' : ''}" data-action="dms-switch-profile" data-profile="${id}">
-                <span class="dms-profile-icon">${profile.icon}</span>
-                <span class="dms-profile-name">${profile.name}</span>
+            <div class="dms-profile-item ${isActive ? 'active' : ''}" data-action="dms-switch-profile" data-profile="${esc(id)}">
+                <span class="dms-profile-icon">${esc(profile.icon)}</span>
+                <span class="dms-profile-name">${esc(profile.name)}</span>
                 ${isActive ? '<span class="dms-profile-check">✓</span>' : ''}
             </div>
         `;
@@ -121,11 +121,11 @@ function renderDMSProfileList() {
         for (const [id, profile] of customProfiles) {
             const isActive = id === activeId;
             html += `
-                <div class="dms-profile-item ${isActive ? 'active' : ''}" data-action="dms-switch-profile" data-profile="${id}">
-                    <span class="dms-profile-icon">${profile.icon}</span>
+                <div class="dms-profile-item ${isActive ? 'active' : ''}" data-action="dms-switch-profile" data-profile="${esc(id)}">
+                    <span class="dms-profile-icon">${esc(profile.icon)}</span>
                     <span class="dms-profile-name">${esc(profile.name)}</span>
                     ${isActive ? '<span class="dms-profile-check">✓</span>' : ''}
-                    <button class="dms-profile-delete" data-action="dms-delete-profile" data-profile="${id}" title="Löschen">✕</button>
+                    <button class="dms-profile-delete" data-action="dms-delete-profile" data-profile="${esc(id)}" title="Löschen">✕</button>
                 </div>
             `;
         }
@@ -166,10 +166,10 @@ function renderDMSConfigList() {
             const def = widgetDefs[widget.type];
             if (!def) return '';
             return `
-            <label class="dms-config-item" data-widget-id="${widget.id}">
+            <label class="dms-config-item" data-widget-id="${esc(widget.id)}">
                 <span class="dms-config-drag" title="Ziehen zum Sortieren">⋮⋮</span>
                 <input type="checkbox" ${widget.visible ? 'checked' : ''}
-                       data-action="dms-toggle-widget" data-widget="${widget.id}">
+                       data-action="dms-toggle-widget" data-widget="${esc(widget.id)}">
                 <span class="dms-config-icon">${def.icon}</span>
                 <span class="dms-config-name">${def.name}</span>
             </label>

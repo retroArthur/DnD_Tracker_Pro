@@ -55,16 +55,25 @@ function getCombatantHpStatus(combatant) {
     return { hpPercent: hpPct, hpClass };
 }
 /**
+ * Effektfarben, die die App selbst schreibt: #effect-color, CONDITION_COLORS (beide in
+ * TAG_COLORS), dazu 'gray'/'brown' aus den Schnellaktionen und der Schnellreferenz
+ * (features/quick-actions.js, systems/spellslots/quick-reference.js). Erlaubnisliste fuer
+ * die Klasse color-* (Vertrag SENKEN R2, docs/bugfixes.md).
+ */
+const EFFEKT_FARBEN = TAG_COLORS.concat(['gray', 'brown']);
+/**
  * Render combatant effects as HTML
  * @param combatant - Initiative combatant
  * @returns HTML string of effects
  */
 function renderCombatantEffects(combatant) {
     if (!combatant.effects || combatant.effects.length === 0) return '';
+    // Ein fremder Farbwert bekommt wie bisher keinen Farbstil (leere Klasse statt Ersatzfarbe);
+    // alles andere aus D laeuft durch esc().
     return combatant.effects
         .map(
             e =>
-                `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${combatant.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`
+                `<span class="init-effect color-${sichereKlasse(e.color, EFFEKT_FARBEN, '')}" data-action="remove-effect" data-id="${esc(combatant.id)}" data-value="${esc(e.id)}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + esc(String(e.duration)) + 'R</span>'}</span>`
         )
         .join('');
 }
@@ -89,7 +98,7 @@ function renderCombatantSpellSlots(combatant, character) {
                         .fill(0)
                         .map(
                             (_, idx) =>
-                                `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${character.id}" data-value="${lvl},${idx}"></span>`
+                                `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${esc(character.id)}" data-value="${lvl},${idx}"></span>`
                         )
                         .join('')}</div>
                 </div>`);
@@ -130,12 +139,12 @@ function renderInit() {
             const { ac, entityType, entityId } = getInitCombatantDetails(cb);
             const effects = renderCombatantEffects(cb);
             const rollInfo = cb.lastRoll
-                ? `<span style="font-size: var(--text-xs); color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>`
+                ? `<span style="font-size: var(--text-xs); color: var(--text-dim);" title="Letzter Wurf: ${esc(cb.lastRoll)}">(${esc(cb.lastRoll)})</span>`
                 : '';
             // Name clickable if entity found
             const nameClickHandler =
                 entityType && entityId
-                    ? `data-action="navigate-entity-stop" data-type="${entityType}" data-id="${entityId}" title="Klicken für Details"`
+                    ? `data-action="navigate-entity-stop" data-type="${esc(entityType)}" data-id="${esc(entityId)}" title="Klicken für Details"`
                     : '';
             // Spell slots for players - get character reference
             const character =
@@ -143,7 +152,7 @@ function renderInit() {
             const spellSlotsHtml = renderCombatantSpellSlots(cb, character);
             // Special handling for lair action entry
             if (cb.type === 'lair') {
-                return `<div class="init-entry init-row lair ${active ? 'active' : ''}" draggable="true" data-id="${cb.id}">
+                return `<div class="init-entry init-row lair ${active ? 'active' : ''}" draggable="true" data-id="${esc(cb.id)}">
                 <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
                 <div class="init-value" title="Initiative 20 (fest)">20</div>
                 <div class="init-ac" style="visibility: hidden;">-</div>
@@ -153,7 +162,7 @@ function renderInit() {
                 </div>
                 <div class="init-right">
                     <span style="color: var(--text-dim); font-size: var(--text-sm); margin-right: 8px;">Am Rundenende</span>
-                    <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
+                    <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${esc(cb.id)}">❌</button>
                 </div>
             </div>`;
             }
@@ -170,13 +179,16 @@ function renderInit() {
                 monster: 'Monster'
             };
             const typeLabel = typeLabels[cb.type] || cb.type;
-            return `<div class="init-entry init-row ${cb.type} ${active ? 'active' : ''} ${dead ? 'dead' : ''}" draggable="true" data-id="${cb.id}">
+            // Der Typ landet auch als Klasse: nur die Typen, die das Kampf-CSS kennt
+            // (Vertrag SENKEN R2); ein fremder Typ bekam schon bisher keinen Stil.
+            const typeKlasse = sichereKlasse(cb.type, ['player', 'enemy', 'ally', 'monster', 'lair'], '');
+            return `<div class="init-entry init-row ${typeKlasse} ${active ? 'active' : ''} ${dead ? 'dead' : ''}" draggable="true" data-id="${esc(cb.id)}">
             <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
-            <div class="init-value" data-action="edit-init-value" data-id="${cb.id}" title="Klicken zum Bearbeiten">${cb.initiative} ${rollInfo}</div>
-            <div class="init-ac" title="Rüstungsklasse"><span class="init-ac-icon">🛡️</span>${ac}</div>
+            <div class="init-value" data-action="edit-init-value" data-id="${esc(cb.id)}" title="Klicken zum Bearbeiten">${esc(String(cb.initiative))} ${rollInfo}</div>
+            <div class="init-ac" title="Rüstungsklasse"><span class="init-ac-icon">🛡️</span>${esc(ac)}</div>
             <div class="init-info">
                 <div class="init-name" ${nameClickHandler}>${esc(cb.name)}</div>
-                <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${esc(cb.cr)}` : ''}</div>
+                <div class="init-type">${esc(typeLabel)}${cb.cr ? ` • CR ${esc(cb.cr)}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
                 ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
                 ${!dead && !cb.mob ? renderConcentration(cb) : ''}
@@ -187,16 +199,16 @@ function renderInit() {
             ${spellSlotsHtml}
             <div class="init-right">
                 <div class="init-hp">
-                    <span class="init-hp-value ${hpClass}">${cb.currentHp}/${cb.maxHp}${cb.tempHp ? ` <span style="color:var(--cyan);">(+${cb.tempHp})</span>` : ''}</span>
+                    <span class="init-hp-value ${esc(hpClass)}">${esc(String(cb.currentHp))}/${esc(String(cb.maxHp))}${cb.tempHp ? ` <span style="color:var(--cyan);">(+${esc(cb.tempHp)})</span>` : ''}</span>
                     <div class="init-hp-btns">
-                        <button class="btn btn-sm btn-success" data-action="mod-hp" data-id="${cb.id}" data-value="1">➕</button>
-                        <button class="btn btn-sm btn-danger" data-action="mod-hp" data-id="${cb.id}" data-value="-1">➖</button>
-                        <button class="btn btn-sm" data-action="show-hp-calculator" data-type="combatant" data-id="${cb.id}" title="HP ändern">➗</button>
+                        <button class="btn btn-sm btn-success" data-action="mod-hp" data-id="${esc(cb.id)}" data-value="1">➕</button>
+                        <button class="btn btn-sm btn-danger" data-action="mod-hp" data-id="${esc(cb.id)}" data-value="-1">➖</button>
+                        <button class="btn btn-sm" data-action="show-hp-calculator" data-type="combatant" data-id="${esc(cb.id)}" title="HP ändern">➗</button>
                     </div>
                 </div>
-                <button class="btn btn-sm" data-action="show-add-effect" data-id="${cb.id}">🔮</button>
-                <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
-                <button class="btn-icon init-statblock-btn" data-action="show-init-statblock" data-id="${cb.id}" title="${cb.statblockRef ? 'Statblock anzeigen' : 'Basisinfos anzeigen'}">📖</button>
+                <button class="btn btn-sm" data-action="show-add-effect" data-id="${esc(cb.id)}">🔮</button>
+                <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${esc(cb.id)}">❌</button>
+                <button class="btn-icon init-statblock-btn" data-action="show-init-statblock" data-id="${esc(cb.id)}" title="${cb.statblockRef ? 'Statblock anzeigen' : 'Basisinfos anzeigen'}">📖</button>
             </div>
         </div>`;
         })
@@ -282,11 +294,11 @@ function showXpDistributionModal() {
             var hpMax = ch.hpMax || 0;
             var hpBadge = hpCur <= 0
                 ? '<span class="xp-dist-char-hp xp-dist-char-hp--down">\u{1F480} 0 HP</span>'
-                : '<span class="xp-dist-char-hp">❤️ ' + hpCur + '/' + hpMax + '</span>';
+                : '<span class="xp-dist-char-hp">❤️ ' + esc(String(hpCur)) + '/' + esc(String(hpMax)) + '</span>';
             rowsHtml += '<label class="xp-dist-char-row">'
-                + '<input type="checkbox" class="xp-dist-char-cb" data-id="' + ch.id + '" value="' + ch.id + '" checked>'
+                + '<input type="checkbox" class="xp-dist-char-cb" data-id="' + esc(ch.id) + '" value="' + esc(ch.id) + '" checked>'
                 + '<span class="xp-dist-char-name">' + esc(ch.name) + '</span>'
-                + '<span class="xp-dist-char-xp">' + (ch.xp || 0) + ' XP</span>'
+                + '<span class="xp-dist-char-xp">' + esc(String(ch.xp || 0)) + ' XP</span>'
                 + hpBadge
                 + '</label>';
         });
@@ -574,7 +586,7 @@ function renderBattlefieldBanner() {
     // Terrain tag
     if (bf.terrain && bf.terrain !== 'normal') {
         tags.push(
-            `<span class="bf-tag terrain">${bf.terrainIcon} ${bf.terrainLabel} (×${bf.terrainMod})</span>`
+            `<span class="bf-tag terrain">${esc(bf.terrainIcon)} ${esc(bf.terrainLabel)} (×${esc(bf.terrainMod)})</span>`
         );
     }
     // Lair tag
@@ -584,7 +596,7 @@ function renderBattlefieldBanner() {
     banner.innerHTML = `
         <span class="bf-label">⚔️ Battlefield:</span>
         <div class="bf-conditions">${tags.join('')}</div>
-        <span class="bf-xp">${bf.difficulty} • ${bf.finalXP?.toLocaleString() || '?'} XP</span>
+        <span class="bf-xp">${esc(bf.difficulty)} • ${esc(bf.finalXP?.toLocaleString() || '?')} XP</span>
         <button class="bf-clear" data-action="clear-battlefield" title="Battlefield zurücksetzen">✕</button>
     `;
 }

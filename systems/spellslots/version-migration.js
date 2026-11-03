@@ -367,7 +367,7 @@ function normalizeCampaignData(raw) {
         // 6. Standardwerte: einstufiger Merge fuer Objekte, sonst gewinnt die Datei. Kein
         //    Schluessel, den weder initializeData() noch die Datei kennt (randomTables, shops,
         //    dmScreenLayout bleiben abwesend — random-tables.js seedet nur bei !D.randomTables)
-        const out = window.initializeData();
+        let out = window.initializeData();
         for (const key of Object.keys(src)) {
             out[key] =
                 isPlainDataObject(out[key]) && isPlainDataObject(src[key])
@@ -378,6 +378,12 @@ function normalizeCampaignData(raw) {
         ensureCampaignContainerLists(out, repairs);
         // 8. IDs eindeutig und gueltig machen
         const renumbered = window.normalizeEntityIds(out);
+        // 8a. Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): Zahlen- und Verweisfelder
+        //     auch in der Tiefe (links[].id, relations[].targetId, Initiative, Kalender) auf
+        //     Zahl zwingen, Markup dort verwerfen. NACH Schritt 8, damit die Meldung der
+        //     reinen Typumwandlungen von Entitaets-IDs ('7' -> 7) erhalten bleibt; die
+        //     verbotenen Schluessel hat der Reviver in Schritt 1 schon entfernt.
+        out = bereinigeDatengrenze(out);
         const renumberedPerType = {};
         for (const change of renumbered) {
             renumberedPerType[change.type] = (renumberedPerType[change.type] || 0) + 1;

@@ -7929,10 +7929,10 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
 
            6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
                4x `0 0 20px var(--gold)`   Sprungmarken:
-                   features/encounters/encounters-render.js:520  (heute :590)
-                   features/locations/locations-render.js:360    (heute :363)
-                   features/npcs/npc-render.js:382               (heute :385)
-                   systems/entity-links.js:430                   (heute :443)
+                   features/encounters/encounters-render.js:520  (heute :596)
+                   features/locations/locations-render.js:360    (heute :385)
+                   features/npcs/npc-render.js:382               (heute :389)
+                   systems/entity-links.js:430                   (heute :453)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
                    ui/actions/entity-actions.js:362              (heute :376)
                    systems/undo.js:873                           (war :756, :766, :778, :821, dann :864)
@@ -10269,25 +10269,25 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
     const JS_MARKEN = [
         {
             datei: 'features/encounters/encounters-render.js',
-            zeile: 590,
+            zeile: 596,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'features/locations/locations-render.js',
-            zeile: 363,
-            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
-            art: 'sprungmarke'
-        },
-        {
-            datei: 'features/npcs/npc-render.js',
             zeile: 385,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
+            datei: 'features/npcs/npc-render.js',
+            zeile: 389,
+            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
+            art: 'sprungmarke'
+        },
+        {
             datei: 'systems/entity-links.js',
-            zeile: 443,
+            zeile: 453,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
@@ -15206,7 +15206,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     /** SCHRANKE 2 — Inline-Gewichte in Templates und JS.
      *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
      *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
-     *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
+     *                tags.js:67 (das Loeschkreuz der Schlagwortliste),
      *                loader.js:383 (die Zusammenfassungszeile des Ladefehlers)
      *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
      *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
@@ -15215,7 +15215,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  das Modul von seiner datierten Ausnahmeliste zu streichen — und haette
      *  damit eine Testabdeckung behauptet, die es nicht gibt. Diese Schranke
      *  liest den Dateitext, sie fuehrt keine Zeile des Moduls aus. Dieselbe
-     *  Loesung wie bei `dice-core.js:372` im W5-R-07-Block.
+     *  Loesung wie bei `dice-core.js:378` im W5-R-07-Block.
      *    normal  1x  assets/templates/view-resources.html (der Klammerhinweis
      *                neben "Zusammenfassung")
      *  Die uebrigen 13 stehen schon auf 500 oder 600.
@@ -16032,7 +16032,7 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
             // verlangt, das Modul von seiner datierten Ausnahmeliste zu
             // streichen — und damit eine Abdeckung behauptet, die es nicht
             // gibt. Es gibt genau EINE dice-core.js im Baum.
-            'vom Rueckfallpfad in dice-core.js:372 angesprochen, und der ' +
+            'vom Rueckfallpfad in dice-core.js:378 angesprochen, und der ' +
             'findet seinen Behaelter nie (gemessen auf der Wuerfelansicht nach einem ' +
             'Wurf: 0 Treffer fuer .dice-result-main, #dice-result nicht vorhanden). Der ' +
             'tote Behaelter ist ein eigener Befund und in der Aktenlage gefuehrt; die ' +

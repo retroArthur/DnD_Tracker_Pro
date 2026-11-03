@@ -190,7 +190,7 @@ function startReise() {
     html += '<div class="rs-tages-list">';
     tagesErgebnisse.forEach(function(te) {
         html += '<div class="rs-tag-eintrag">';
-        html += '<div class="rs-tag-header">Tag ' + te.tag + '</div>';
+        html += '<div class="rs-tag-header">Tag ' + Number(te.tag) + '</div>';
 
         // Wetter
         if (te.wetter && te.wetter.entry) {
@@ -206,7 +206,7 @@ function startReise() {
                 : 'Unbekannte Begegnung';
             html += '<div class="rs-begegnung-badge rs-begegnung-aktiv">&#9876; ' + esc(begText) + '</div>';
         } else {
-            html += '<div class="rs-begegnung-badge">&#9876; Keine Begegnung (Wurf ' + te.begegnung.wurf + ' &gt; ' + threshold + ')</div>';
+            html += '<div class="rs-begegnung-badge">&#9876; Keine Begegnung (Wurf ' + Number(te.begegnung.wurf) + ' &gt; ' + threshold + ')</div>';
         }
 
         html += '</div>';

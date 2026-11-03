@@ -36,17 +36,17 @@ function crToSortValue(cr) {
 // ============================================================
 // CLICKABLE DICE (D-09, Muster aus PATTERNS.md)
 // Wraps damage formulas and to-hit bonuses with data-action spans
-// renderClickableDice runs AFTER sanitizeHTML — dice spans are added to already-sanitized HTML
+// renderClickableDice bereinigt selbst und ersetzt NUR in Textknoten (Vertrag SENKEN R1)
 // ============================================================
 function renderClickableDice(text) {
     if (!text) return '';
+    // sanitizeHTML() selbst (idempotent); Knopf als Knoten, nie per Regex im Markup (ersetzeImText)
+    var knopf = function (wert) { return function (doc, t) { var s = doc.createElement('span'); s.className = 'bestiary-dice'; s.setAttribute('data-action', 'bestiary-roll-dice'); s.setAttribute('data-value', wert(t)); s.title = 'Würfeln'; s.textContent = t; return s; }; };
     // Schadensformeln: NdN, NdN+N, NdN-N (auch mit W statt d)
-    text = text.replace(/(\d+[dWw]\d+(?:[+\-]\d+)?)/g,
-        '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="$1" title="W\xfcrfeln">$1</span>');
+    var html = ersetzeImText(sanitizeHTML(text), /(\d+[dWw]\d+(?:[+\-]\d+)?)/g, knopf(function (t) { return t; }));
     // Trefferwurf-Boni: isoliertes +N (nicht Teil einer Wuerfelformel, nicht direkt vor 'd'/'W')
-    text = text.replace(/(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
-        '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="1d20$1" title="W\xfcrfeln">$1</span>');
-    return text;
+    return ersetzeImText(html, /(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
+        knopf(function (t) { return '1d20' + t; }));
 }
 
 // ============================================================
@@ -132,7 +132,7 @@ function renderBestiaryListItem(monster) {
         '<button class="bestiary-fav' + (isFav ? ' active' : '') + '"' +
             ' data-action="bestiary-toggle-fav"' +
             ' data-id="' + esc(String(mId)) + '"' +
-            ' data-source="' + monster.source + '"' +
+            ' data-source="' + esc(monster.source) + '"' +
             ' aria-label="Favorit">' +
             (isFav ? '★' : '☆') +
             '<span class="sr-only">Favorit</span>' +
@@ -402,7 +402,7 @@ function renderBestiaryDetail(id, source) {
 
     // Portrait (custom only)
     var portraitHtml = '';
-    if (source === 'custom' && monster.avatar) {
+    if (source === 'custom' && sichereBildquelle(monster.avatar)) {
         portraitHtml = '<img class="bestiary-detail-avatar" src="' + esc(monster.avatar) + '" alt="Portrait" onerror="this.style.display=\'none\'">';
     }
 

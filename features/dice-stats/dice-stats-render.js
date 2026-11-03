@@ -221,7 +221,7 @@ function renderD20Histogram(counts) {
         + ' text-anchor="end" class="ds-hist-axis-label">0</text>';
     if (total > 0) {
         yAxis += '<text x="' + (PAD.left - 4) + '" y="' + (PAD.top + 4) + '"'
-            + ' text-anchor="end" class="ds-hist-axis-label">' + maxCount + '</text>';
+            + ' text-anchor="end" class="ds-hist-axis-label">' + Number(maxCount) + '</text>';
     }
 
     return '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '"'
@@ -335,7 +335,7 @@ function _renderDiceStatsContent(container, aggregate, totalStoreCount) {
         + rates.critPct.toFixed(1) + '&nbsp;%</span>'
         + '<span class="ds-rate-chip ds-fumble">&#128128; Fumble (1): '
         + rates.fumblePct.toFixed(1) + '&nbsp;%</span>'
-        + '<span class="ds-rate-total">Gesamt d20-Wuerfe: ' + rates.total + '</span>'
+        + '<span class="ds-rate-total">Gesamt d20-Wuerfe: ' + Number(rates.total) + '</span>'
         + '</div>';
 
     // Per-Character Breakdown — aus aggregate.byChar (bereits vom Cursor-Pfad klassifiziert,
@@ -352,10 +352,10 @@ function _renderDiceStatsContent(container, aggregate, totalStoreCount) {
             var bCounts = byChar[name];
             var bRates = critFumbleRates(bCounts);
             // esc() auf Character-Namen (T-07-NOTATION-XSS)
-            var safeName = typeof esc === 'function' ? esc(name) : name;
+            var safeName = esc(name);
             breakdownHtml += '<tr>'
                 + '<td>' + safeName + '</td>'
-                + '<td>' + bRates.total + '</td>'
+                + '<td>' + Number(bRates.total) + '</td>'
                 + '<td>' + bRates.critPct.toFixed(1) + '&nbsp;%</td>'
                 + '<td>' + bRates.fumblePct.toFixed(1) + '&nbsp;%</td>'
                 + '</tr>';

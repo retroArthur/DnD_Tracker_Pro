@@ -49,7 +49,9 @@ function updateAvatarPreview(url) {
         // Sichere Erstellung ohne innerHTML mit User-Input
         preview.innerHTML = '';
         const img = document.createElement('img');
-        img.src = esc(url);
+        // DOM-Eigenschaft, kein HTML: esc() machte aus `&` in der URL `&amp;` und damit
+        // eine andere Adresse (Vertrag SENKEN R5). Das Schema ist oben auf http(s) begrenzt.
+        img.src = url;
         img.alt = 'Avatar Preview';
         img.onerror = function () {
             if (this.parentElement) {

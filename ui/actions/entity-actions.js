@@ -92,7 +92,7 @@ const EntityActions = {
         if (typeof window.renderParty === 'function') window.renderParty();
         // Detail-Modal neu öffnen damit Änderungen sofort sichtbar sind
         if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
-        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '!', 'success');
+        showToast('⬆️ ' + ch.name + ' ist jetzt Level ' + ch.level + '!', 'success');
     },
     'milestone-level-up': ctx => {
         // Identische Logik wie confirm-level-up — Milestone-Modus-Alias
@@ -108,7 +108,7 @@ const EntityActions = {
         window.save();
         if (typeof window.renderParty === 'function') window.renderParty();
         if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
-        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '! (Meilenstein)', 'success');
+        showToast('⬆️ ' + ch.name + ' ist jetzt Level ' + ch.level + '! (Meilenstein)', 'success');
     },
 
     // Charakter-Angriffs-Editor: add-attack / delete-attack (D-05, CHAR-03)
@@ -559,7 +559,7 @@ const EntityActions = {
             '<div class="wp-faden-item">',
             '  <input type="hidden" class="wp-faden-quelle-id" value="">',
             '  <input type="hidden" class="wp-faden-quelle-typ" value="manual">',
-            '  <input type="text" class="wp-faden-text form-control" value="' + (typeof esc === 'function' ? esc(text) : text) + '">',
+            '  <input type="text" class="wp-faden-text form-control" value="' + esc(text) + '">',
             '  <button type="button" class="btn btn-sm wp-faden-remove-btn" data-action="remove-faden" title="Entfernen">×</button>',
             '</div>'
         ].join('');

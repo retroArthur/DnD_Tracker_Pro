@@ -76,9 +76,9 @@ function renderQuickActionsBar() {
             ${Object.entries(QUICK_ACTIONS)
                 .map(
                     ([key, action]) => `
-                <button class="qa-btn" data-action="apply-quick-action" data-id="${current.id}" data-value="${key}" title="${esc(action.desc)}">
-                    <span class="qa-icon">${action.icon}</span>
-                    <span class="qa-name">${action.name}</span>
+                <button class="qa-btn" data-action="apply-quick-action" data-id="${esc(current.id)}" data-value="${esc(key)}" title="${esc(action.desc)}">
+                    <span class="qa-icon">${esc(action.icon)}</span>
+                    <span class="qa-name">${esc(action.name)}</span>
                 </button>
             `
                 )
@@ -239,8 +239,8 @@ function renderConditionList(filter = '') {
             ([key, cond]) => `
             <div class="condition-ref-item">
                 <div class="condition-ref-name">
-                    <span class="condition-ref-icon">${cond.icon}</span>
-                    <span>${cond.name}</span>
+                    <span class="condition-ref-icon">${esc(cond.icon)}</span>
+                    <span>${esc(cond.name)}</span>
                 </div>
                 <div class="condition-ref-desc">${esc(cond.desc)}</div>
             </div>

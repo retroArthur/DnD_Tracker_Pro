@@ -20,6 +20,24 @@ const LOC_ICONS = {
     schloss: '🏯',
     default: '📍'
 };
+/**
+ * Ein Filter aus D.filters in der Form, in der die Ortsansicht ihn ausgibt —
+ * Vertrag SENKEN R1/R2 (docs/bugfixes.md). `color` landet in Klasse und
+ * Inline-Stil und ist nur eine Farbe aus TAG_COLORS (deckt die acht Optionen
+ * des Filterdialogs), sonst 'blue', die erste Option des Dialogs; ein fremder
+ * Wert faellt damit nicht mehr auf die tote Flaeche zurueck, die der Kommentar
+ * an renderLocationItem() beschreibt. `id` bleibt eine Zahl (Vergleich mit
+ * currentLocFilter), `nameHtml` ist fertig kodiert. Bewusst kein Spread des
+ * Datenobjekts: jedes Feld ist einzeln geprueft.
+ */
+function filterFuerAusgabe(f) {
+    if (!f) return null;
+    return {
+        id: Number(f.id),
+        nameHtml: esc(f.name),
+        color: sichereKlasse(f.color, TAG_COLORS, 'blue')
+    };
+}
 function getLocationIcon(loc) {
     // Try to detect type from name or description
     const text = ((loc.name || '') + ' ' + (loc.description || '')).toLowerCase();
@@ -66,12 +84,13 @@ function renderLocations() {
         filterContainer.innerHTML = `
             <div class="loc-filter-chip ${currentLocFilter === 'all' ? 'active' : ''}" data-action="set-loc-filter" data-value="all">Alle</div>
             ${D.filters
+                .map(filterFuerAusgabe)
                 .map(
                     f => `
                 <div class="loc-filter-chip ${currentLocFilter === f.id ? 'active' : ''}"
                      data-action="set-loc-filter" data-id="${f.id}"
                      style="${currentLocFilter === f.id ? '' : `border-color: var(--${f.color}); color: var(--${f.color}-text)`}">
-                    ${esc(f.name)}
+                    ${f.nameHtml}
                 </div>
             `
                 )
@@ -132,7 +151,7 @@ function renderLocations() {
 function renderLocationItem(loc, stripHtml) {
     const D = window.D;
     const npcs = D.npcs.filter(n => n.locationId === loc.id);
-    const filter = EntityLookup.filter(loc.filterId);
+    const filter = filterFuerAusgabe(EntityLookup.filter(loc.filterId));
     const icon = getLocationIcon(loc);
     const isSelected = loc.id === selectedLocationId;
     const descPreview = loc.description ? stripHtml(loc.description).substring(0, 60) : '';
@@ -142,7 +161,7 @@ function renderLocationItem(loc, stripHtml) {
         .map(
             n => `
         <div class="loc-mini-avatar" title="${esc(n.name)}">
-            ${n.avatar ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
+            ${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
         </div>
     `
         )
@@ -167,15 +186,15 @@ function renderLocationItem(loc, stripHtml) {
     // waere in drei von vier Themes unsichtbar gewesen. R-09 rechnet das
     // bei jedem Lauf nach.
     return `
-        <div class="loc-item ${isSelected ? 'selected' : ''}" data-action="select-location" data-id="${loc.id}">
+        <div class="loc-item ${isSelected ? 'selected' : ''}" data-action="select-location" data-id="${esc(loc.id)}">
             <div class="loc-item-icon">${icon}</div>
             <div class="loc-item-info">
                 <div class="loc-item-name">
-                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color}); color: var(--on-${filter.color}, var(--text))">${esc(filter.name)}</span>` : ''}${esc(loc.name)}
+                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color}); color: var(--on-${filter.color}, var(--text))">${filter.nameHtml}</span>` : ''}${esc(loc.name)}
                 </div>
                 <div class="loc-item-meta">
-                    ${descPreview ? descPreview + (loc.description && stripHtml(loc.description).length > 60 ? '...' : '') : 'Keine Beschreibung'}
-                    ${npcs.length ? ` • ${npcs.length} NPC${npcs.length > 1 ? 's' : ''}` : ''}
+                    ${descPreview ? esc(descPreview + (loc.description && stripHtml(loc.description).length > 60 ? '...' : '')) : 'Keine Beschreibung'}
+                    ${npcs.length ? ` • ${Number(npcs.length)} NPC${npcs.length > 1 ? 's' : ''}` : ''}
                 </div>
             </div>
             ${npcs.length ? `<div class="loc-item-npcs">${npcAvatars}${moreNpcs}</div>` : ''}
@@ -210,7 +229,7 @@ function showLocationDetail(id) {
         return;
     }
     const npcs = D.npcs.filter(n => n.locationId === loc.id);
-    const filter = EntityLookup.filter(loc.filterId);
+    const filter = filterFuerAusgabe(EntityLookup.filter(loc.filterId));
     const icon = getLocationIcon(loc);
     const tags = loc.tags || [];
     const links = loc.links || [];
@@ -219,9 +238,9 @@ function showLocationDetail(id) {
         ? npcs
               .map(
                   n => `
-        <div class="loc-npc-item" data-action="show-npc-popup" data-id="${n.id}">
+        <div class="loc-npc-item" data-action="show-npc-popup" data-id="${esc(n.id)}">
             <div class="loc-npc-avatar">
-                ${n.avatar ? `<img src="${esc(n.avatar)}">` : '👤'}
+                ${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}">` : '👤'}
             </div>
             <div class="loc-npc-name">${esc(n.name)}</div>
             <div class="loc-npc-role">${esc(n.role || n.race || '—')}</div>
@@ -250,10 +269,10 @@ function showLocationDetail(id) {
                   if (!target) return '';
                   // NPC-Links als Chips mit show-npc-popup für Konsistenz
                   if (link.type === 'npcs') {
-                      return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${link.id}">${target.avatar ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
+                      return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(link.id)}">${sichereBildquelle(target.avatar) ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
                   }
                   // Alle anderen Links normal (LINK_ICONS aus core/constants.js)
-                  return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
+                  return `<span class="loc-link" data-action="navigate-entity" data-type="${esc(link.type)}" data-id="${esc(link.id)}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
               })
               .filter(Boolean)
               .join('')
@@ -261,7 +280,10 @@ function showLocationDetail(id) {
     // Build tags - Tags sind Objekte mit {name, color}
     const tagsHtml = tags.length
         ? tags
-              .map(t => `<span class="loc-tag tag-${t.color || 'blue'}">${esc(t.name || t)}</span>`)
+              .map(
+                  t =>
+                      `<span class="loc-tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(t.name || t)}</span>`
+              )
               .join('')
         : '';
     // Schritt 13 (Design-Handoff v3, Welle 1): Der Filtername in der
@@ -276,14 +298,14 @@ function showLocationDetail(id) {
                 <div class="loc-detail-title">
                     <div class="loc-detail-name">${esc(loc.name)}</div>
                     <div class="loc-detail-region">
-                        ${filter ? `<span style="color: var(--${filter.color}-text)">● ${esc(filter.name)}</span>` : '📍 Ort'}
+                        ${filter ? `<span style="color: var(--${filter.color}-text)">● ${filter.nameHtml}</span>` : '📍 Ort'}
                     </div>
                 </div>
                 <div class="loc-detail-actions">
-                    <button class="loc-detail-btn" data-action="show-entity-links-modal" data-type="locations" data-id="${loc.id}" title="Verknüpfungen">🔗</button>
-                    <button class="loc-detail-btn" data-action="show-tags-modal" data-type="locations" data-id="${loc.id}" title="Tags">🏷️</button>
-                    <button class="loc-detail-btn" data-action="edit-location" data-id="${loc.id}" title="Bearbeiten">✏️</button>
-                    <button class="loc-detail-btn danger" data-action="delete-location" data-id="${loc.id}" title="Löschen">🗑️</button>
+                    <button class="loc-detail-btn" data-action="show-entity-links-modal" data-type="locations" data-id="${esc(loc.id)}" title="Verknüpfungen">🔗</button>
+                    <button class="loc-detail-btn" data-action="show-tags-modal" data-type="locations" data-id="${esc(loc.id)}" title="Tags">🏷️</button>
+                    <button class="loc-detail-btn" data-action="edit-location" data-id="${esc(loc.id)}" title="Bearbeiten">✏️</button>
+                    <button class="loc-detail-btn danger" data-action="delete-location" data-id="${esc(loc.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -301,7 +323,7 @@ function showLocationDetail(id) {
                             .slice(0, 5)
                             .map(
                                 n =>
-                                    `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${n.id}">${n.avatar ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`
+                                    `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${esc(n.id)}">${sichereBildquelle(n.avatar) ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`
                             )
                             .join('')}
                         ${npcs.length > 5 ? `<span class="loc-npc-chip more">+${npcs.length - 5}</span>` : ''}
@@ -375,9 +397,10 @@ function renderFilterList() {
     const c = $('filter-list');
     if (!c) return;
     c.innerHTML = D.filters
+        .map(filterFuerAusgabe)
         .map(
             f =>
-                `<div class="chip color-${f.color}" style="margin:3px;">${esc(f.name)} <button data-action="delete-filter" data-id="${f.id}" style="background:none;border:none;color:inherit;cursor:pointer;">✕</button></div>`
+                `<div class="chip color-${f.color}" style="margin:3px;">${f.nameHtml} <button data-action="delete-filter" data-id="${f.id}" style="background:none;border:none;color:inherit;cursor:pointer;">✕</button></div>`
         )
         .join('');
 }

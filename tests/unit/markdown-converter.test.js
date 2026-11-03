@@ -201,6 +201,8 @@ const path = require('path');
 const vm = require('vm');
 
 const MARKDOWN_CONVERTER_PATH = path.join(__dirname, '../../ui/editors/markdown-converter.js');
+// sichererLink() fuer htmlToMarkdown(): der echte Block aus utils/basic.js (SENKEN R3)
+const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 function loadMarkdownConverterModule() {
     const context = {
@@ -364,10 +366,13 @@ describe('MARKDOWN: Rundreise htmlToMarkdown() -> markdownToHtml() (echtes Modul
                 }
             },
             document,
+            // htmlToMarkdown() parst inert ueber DOMParser (SENKEN R1, kein div.innerHTML).
+            DOMParser,
             Node,
             console
         };
         vm.createContext(context);
+        ladeDatengrenze(context);
         vm.runInContext(fs.readFileSync(MARKDOWN_CONVERTER_PATH, 'utf8'), context, {
             filename: MARKDOWN_CONVERTER_PATH
         });
@@ -424,5 +429,106 @@ describe('MARKDOWN: Rundreise htmlToMarkdown() -> markdownToHtml() (echtes Modul
         expect(markdownToHtml('> a\n> b')).toBe(
             '<blockquote>a</blockquote><br><blockquote>b</blockquote>'
         );
+    });
+});
+
+// ============================================================
+// SENKEN (Gutachten, Sonde E): die exportierte Markdown-Datei traegt kein Markup und kein
+// Skript-Ziel aus Daten. Gemessen am Buendel: aus `<p>&lt;img …&gt;</p>` — sichtbarem TEXT —
+// wurde in der Datei ein lebendiges `<img>`, aus `<a href="javascript:…">` ein
+// `[Karte](javascript:…)`. Jeder HTML-faehige Markdown-Betrachter haette beides umgesetzt.
+// Der Kanarien-Waechter (tests/e2e/features/senken-kanarie.spec.js, Erkennung (d)) prueft
+// die heruntergeladene Datei; hier die Regeln am echten Modul.
+// ============================================================
+describe('SENKEN: htmlToMarkdown() schreibt Text als Text und nur erlaubte Linkziele', () => {
+    const ctx = (() => {
+        const context = {
+            window: {
+                sanitizeHTML: html => {
+                    const huelle = document.createElement('div');
+                    huelle.innerHTML = html;
+                    return huelle.innerHTML;
+                }
+            },
+            document,
+            DOMParser,
+            Node,
+            console
+        };
+        vm.createContext(context);
+        ladeDatengrenze(context);
+        vm.runInContext(fs.readFileSync(MARKDOWN_CONVERTER_PATH, 'utf8'), context, {
+            filename: MARKDOWN_CONVERTER_PATH
+        });
+        return context;
+    })();
+    const { htmlToMarkdown, markdownToHtml, markdownText } = ctx;
+    /** Markup in der Datei: jedes `<tag` ausser der Unterstreichungsmarke. */
+    const markup = md => md.match(/<(?!\/?u>)[a-zA-Z!/?]/g);
+
+    test.each([
+        ['Text, der wie ein Tag aussieht', '<p>&lt;img src="k.png" data-k="1"&gt;</p>'],
+        ['in einer Ueberschrift', '<h2>&lt;img src=k.png&gt;</h2>'],
+        ['in einem Listenpunkt', '<ul><li>&lt;b&gt;x&lt;/b&gt;</li></ul>'],
+        ['in einer Tabellenzelle', '<table><tr><td>&lt;i&gt;</td></tr></table>'],
+        ['im Code', '<code>&lt;script&gt;</code>'],
+        ['im Linktext', '<a href="https://e.org">&lt;img&gt;</a>']
+    ])('%s bleibt Text (kein Markup in der Datei)', (_name, html) => {
+        expect(markup(htmlToMarkdown(html))).toBeNull();
+    });
+
+    test.each([
+        ['javascript:', '<a href="javascript:void(0)">Karte</a>', 'Karte'],
+        ['JavaScript mit Steuerzeichen', '<a href="  JaVa\tScript:x">Karte</a>', 'Karte'],
+        ['data:', '<a href="data:text/html,x">Karte</a>', 'Karte'],
+        ['file:', '<a href="file:///C:/x.pdf">Karte</a>', 'Karte'],
+        ['protokoll-relativ', '<a href="//host/share">Karte</a>', 'Karte'],
+        // SENKEN (16): kodierter doppelter Trenner — Firefox oeffnet ihn beim Klick als UNC
+        ['kodierte Trenner', '<a href="/%5C%5Chost/share/x.pdf">Karte</a>', 'Karte'],
+        ['kodiert hinter ..', '<a href="/x/../%2F%2Fhost/x.pdf?v=1">Karte</a>', 'Karte'],
+        [
+            'relativ mit Anker bleibt Link',
+            '<a href="/handbuch/abschnitt.html#a">Hier</a>',
+            '[Hier](/handbuch/abschnitt.html#a)'
+        ],
+        ['https bleibt Link', '<a href="https://e.org/a">Karte</a>', '[Karte](https://e.org/a)'],
+        ['mailto bleibt Link', '<a href="mailto:a@b.de">Post</a>', '[Post](mailto:a@b.de)'],
+        ['Anker bleibt Link', '<a href="#abschnitt">Hier</a>', '[Hier](#abschnitt)'],
+        ['relativ bleibt Link', '<a href="./karte.pdf">Karte</a>', '[Karte](./karte.pdf)'],
+        [
+            'Ziel mit Leerraum, Klammern und Anfuehrungszeichen wird kodiert',
+            '<a href="https://e.org/a b(c)&quot;&gt;&lt;img">K</a>',
+            '[K](https://e.org/a%20b%28c%29%22%3E%3Cimg)'
+        ]
+    ])('Link %s', (_name, html, erwartet) => {
+        expect(htmlToMarkdown(html).trim()).toBe(erwartet);
+    });
+
+    test('eine Linkmarke im TEXT mit fremdem Schema wird entwertet, eine erlaubte bleibt', () => {
+        const md = htmlToMarkdown(
+            "<p>[k](javascript:void('x')) [r]: vbscript:x [ok](https://e.org) Hinweis [1]: siehe</p>"
+        );
+        expect(md).not.toMatch(/\]\(\s*javascript:/i);
+        expect(md).not.toMatch(/\]:\s*vbscript:/i);
+        expect(md).toContain('[ok](https://e.org)');
+        expect(md).toContain('Hinweis [1]: siehe');
+    });
+
+    test('"&" bleibt lesbar, nur ein entitaetsartiges "&" wird kodiert', () => {
+        expect(markdownText('Tom & Jerry')).toBe('Tom & Jerry');
+        expect(markdownText('&amp; und &#60;')).toBe('&amp;amp; und &amp;#60;');
+    });
+
+    test.each([
+        '<p>Tom &amp; Jerry &lt;b&gt;fett&lt;/b&gt; 5 &gt; 3</p>',
+        '<p>&amp;lt;wörtlich&amp;gt;</p>',
+        "<p>[k](javascript:void('x'))</p>"
+    ])('Rundreise in die App: %s kommt als derselbe Text zurueck', html => {
+        const zurueck = markdownToHtml(htmlToMarkdown(html).trim());
+        const text = h => new DOMParser().parseFromString(h, 'text/html').body.textContent;
+        expect(text(zurueck)).toBe(text(html));
+        expect(
+            new DOMParser().parseFromString(zurueck, 'text/html').querySelector('b,a')
+        ).toBeNull();
     });
 });

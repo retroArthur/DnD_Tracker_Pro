@@ -44,7 +44,7 @@ const SHOP_TYPES = Object.freeze({
 // Doppelfuehrung, die bei den Schadensarten dazu gefuehrt hat, dass zwei
 // Ansichten verschiedene Farben zeigten. Die Farben stehen jetzt
 // ausschliesslich als --cat-*-Tokens in assets/styles/variables.css.
-const SHOP_ITEM_CATEGORIES = Object.freeze({
+const SHOP_ITEM_CATEGORIES = Object.freeze({ __proto__: null, // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
     weapon: { icon: '⚔️', name: 'Waffe' },
     armor: { icon: '🛡️', name: 'Rüstung' },
     gear: { icon: '⚙️', name: 'Ausrüstung' },
@@ -237,16 +237,16 @@ function renderCartModal() {
                             <span class="cart-item-name">${esc(item.itemName)}</span>
                         </div>
                         <div class="cart-item-controls">
-                            <button class="btn btn-sm" data-action="cart-qty-decrease" data-id="${item.cartIdx}" data-value="${item.qty}">−</button>
-                            <input type="number" class="cart-qty-input" value="${item.qty}" min="1" max="${item.maxQty}"
-                                   data-onChange="updateCartQtyFromInput" data-id="${item.cartIdx}">
-                            <button class="btn btn-sm" data-action="cart-qty-increase" data-id="${item.cartIdx}" data-value="${item.qty}">+</button>
+                            <button class="btn btn-sm" data-action="cart-qty-decrease" data-id="${Number(item.cartIdx)}" data-value="${Number(item.qty)}">−</button>
+                            <input type="number" class="cart-qty-input" value="${Number(item.qty)}" min="1" max="${esc(String(item.maxQty))}"
+                                   data-onChange="updateCartQtyFromInput" data-id="${Number(item.cartIdx)}">
+                            <button class="btn btn-sm" data-action="cart-qty-increase" data-id="${Number(item.cartIdx)}" data-value="${Number(item.qty)}">+</button>
                         </div>
                         <div class="cart-item-price">
-                            <span class="cart-item-unit">${esc(item.cost)} × ${item.qty}</span>
-                            <span class="cart-item-total">${formatCurrency(lineTotal)}</span>
+                            <span class="cart-item-unit">${esc(item.cost)} × ${Number(item.qty)}</span>
+                            <span class="cart-item-total">${esc(formatCurrency(lineTotal))}</span>
                         </div>
-                        <button class="btn btn-sm btn-danger" data-action="cart-remove" data-id="${item.cartIdx}">✕</button>
+                        <button class="btn btn-sm btn-danger" data-action="cart-remove" data-id="${Number(item.cartIdx)}">✕</button>
                     </div>
                 `;
                 })
@@ -396,8 +396,8 @@ function renderShops() {
                         categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
                     });
                     return `
-                    <div class="shop-card ${isExpanded ? 'expanded' : 'collapsed'}" id="shop-card-${shop.id}" data-shop-id="${shop.id}">
-                        <div class="shop-header" data-action="toggle-shop" data-id="${shop.id}">
+                    <div class="shop-card ${isExpanded ? 'expanded' : 'collapsed'}" id="shop-card-${esc(shop.id)}" data-shop-id="${esc(shop.id)}">
+                        <div class="shop-header" data-action="toggle-shop" data-id="${esc(shop.id)}">
                             <div class="shop-header-main">
                                 <span class="shop-toggle">${isExpanded ? '▼' : '▶'}</span>
                                 <span class="shop-icon">${type.icon}</span>
@@ -409,12 +409,12 @@ function renderShops() {
                             <div class="shop-header-meta">
                                 ${npc ? renderEntityLink('npcs', npc.id, npc.name, { icon: '🎭', className: 'shop-meta-tag npc' }) : ''}
                                 ${location ? renderEntityLink('locations', location.id, location.name, { icon: '📍', className: 'shop-meta-tag location' }) : ''}
-                                <span class="shop-item-count">${availableItems.length}/${items.length} Artikel</span>
+                                <span class="shop-item-count">${Number(availableItems.length)}/${Number(items.length)} Artikel</span>
                             </div>
                             <div class="shop-header-actions" data-stop-propagation="true">
-                                <button class="btn btn-sm" data-action="export-shop-handout" data-id="${shop.id}" title="Handout exportieren">📋</button>
-                                <button class="btn btn-sm" data-action="edit-shop" data-id="${shop.id}" title="Bearbeiten">✏️</button>
-                                <button class="btn btn-sm btn-danger" data-action="delete-shop" data-id="${shop.id}" title="Löschen">🗑️</button>
+                                <button class="btn btn-sm" data-action="export-shop-handout" data-id="${esc(shop.id)}" title="Handout exportieren">📋</button>
+                                <button class="btn btn-sm" data-action="edit-shop" data-id="${esc(shop.id)}" title="Bearbeiten">✏️</button>
+                                <button class="btn btn-sm btn-danger" data-action="delete-shop" data-id="${esc(shop.id)}" title="Löschen">🗑️</button>
                             </div>
                         </div>
 
@@ -425,9 +425,9 @@ function renderShops() {
 
                             <div class="shop-category-tabs">
                                 <span class="shop-cat-badge all ${!activeShopFilters[shop.id] ? 'active' : ''}"
-                                      data-action="filter-shop-category" data-id="${shop.id}" data-value=""
+                                      data-action="filter-shop-category" data-id="${esc(shop.id)}" data-value=""
                                       title="Alle Kategorien anzeigen">
-                                    📦 Alle (${items.length})
+                                    📦 Alle (${Number(items.length)})
                                 </span>
                                 ${Object.entries(categoryCounts)
                                     .map(([catKey, count]) => {
@@ -435,10 +435,10 @@ function renderShops() {
                                             SHOP_ITEM_CATEGORIES[catKey] ||
                                             SHOP_ITEM_CATEGORIES.misc;
                                         const isActive = activeShopFilters[shop.id] === catKey;
-                                        return `<span class="shop-cat-badge ${catKey} ${isActive ? 'active' : ''}"
-                                                  data-action="filter-shop-category" data-id="${shop.id}" data-value="${catKey}"
+                                        return `<span class="shop-cat-badge ${sichereKlasse(catKey, Object.keys(SHOP_ITEM_CATEGORIES), '')} ${isActive ? 'active' : ''}"
+                                                  data-action="filter-shop-category" data-id="${esc(shop.id)}" data-value="${esc(catKey)}"
                                                   title="${catInfo.name} anzeigen">
-                                        ${catInfo.icon} ${count}
+                                        ${catInfo.icon} ${Number(count)}
                                     </span>`;
                                     })
                                     .join('')}
@@ -465,7 +465,7 @@ function renderShops() {
                             </div>
 
                             <div class="shop-footer">
-                                <button class="btn btn-sm btn-success" data-action="show-shop-item-modal" data-id="${shop.id}">+ Artikel hinzufügen</button>
+                                <button class="btn btn-sm btn-success" data-action="show-shop-item-modal" data-id="${esc(shop.id)}">+ Artikel hinzufügen</button>
                             </div>
                         </div>
                     </div>
@@ -593,18 +593,18 @@ function renderShopItems(shopId, items) {
                         const noteText = item.note
                             ? `<span class="si-note">📝 ${esc(item.note)}</span>`
                             : '';
-                        return `<div class="si-item ${item.category || 'misc'} ${isAvailable ? '' : 'si-unavailable'} ${isExpanded ? 'expanded' : ''}" data-shop="${shopId}" data-idx="${idx}">
-                        <div class="si-main" data-action="toggle-shop-item" data-id="${shopId}" data-value="${idx}">
-                            <div class="si-qty">×${itemQty}</div>
+                        return `<div class="si-item ${sichereKlasse(item.category || 'misc', Object.keys(SHOP_ITEM_CATEGORIES), '')} ${isAvailable ? '' : 'si-unavailable'} ${isExpanded ? 'expanded' : ''}" data-shop="${esc(shopId)}" data-idx="${Number(idx)}">
+                        <div class="si-main" data-action="toggle-shop-item" data-id="${esc(shopId)}" data-value="${Number(idx)}">
+                            <div class="si-qty">×${esc(String(itemQty))}</div>
                             <div class="si-cat">${cat.icon}</div>
                             <div class="si-name">${esc(itemName)}</div>
                             <div class="si-cost">
                                 <span>${esc(itemCost)}</span>
-                                ${isAvailable ? `<button class="si-cart-btn" data-action="add-to-cart-stop" data-id="${shopId}" data-value="${idx}" title="In den Warenkorb">🛒</button>` : ''}
+                                ${isAvailable ? `<button class="si-cart-btn" data-action="add-to-cart-stop" data-id="${esc(shopId)}" data-value="${Number(idx)}" title="In den Warenkorb">🛒</button>` : ''}
                             </div>
                             <div class="si-btns" data-stop-propagation="true">
-                                <button class="btn btn-sm" data-action="edit-shop-item" data-id="${shopId}" data-value="${idx}" title="Bearbeiten">✏️</button>
-                                <button class="btn btn-sm btn-danger" data-action="delete-shop-item" data-id="${shopId}" data-value="${idx}" title="Löschen">✕</button>
+                                <button class="btn btn-sm" data-action="edit-shop-item" data-id="${esc(shopId)}" data-value="${Number(idx)}" title="Bearbeiten">✏️</button>
+                                <button class="btn btn-sm btn-danger" data-action="delete-shop-item" data-id="${esc(shopId)}" data-value="${Number(idx)}" title="Löschen">✕</button>
                             </div>
                         </div>
                         <div class="si-details">
@@ -612,15 +612,15 @@ function renderShopItems(shopId, items) {
                             ${specialNote || noteText ? `<div class="si-detail-row">${specialNote}${noteText}</div>` : ''}
                             <div class="si-detail-row si-detail-actions">
                                 <label class="si-avail-toggle">
-                                    <input type="checkbox" ${isAvailable ? 'checked' : ''} data-on-change="toggleShopItemAvailability" data-shop-id="${shopId}" data-item-idx="${idx}">
+                                    <input type="checkbox" ${isAvailable ? 'checked' : ''} data-on-change="toggleShopItemAvailability" data-shop-id="${esc(shopId)}" data-item-idx="${Number(idx)}">
                                     <span>${isAvailable ? 'Verfügbar' : 'Nicht verfügbar'}</span>
                                 </label>
                                 ${
                                     isAvailable
                                         ? `
                                     <div class="si-add-cart-section">
-                                        <input type="number" class="si-qty-input" id="si-qty-${shopId}-${idx}" value="1" min="1" max="${itemQty}" data-stop-propagation="true">
-                                        <button class="btn btn-sm btn-success" data-action="add-to-cart-qty-stop" data-id="${shopId}" data-value="${idx}">🛒 In Warenkorb</button>
+                                        <input type="number" class="si-qty-input" id="si-qty-${esc(shopId)}-${Number(idx)}" value="1" min="1" max="${esc(String(itemQty))}" data-stop-propagation="true">
+                                        <button class="btn btn-sm btn-success" data-action="add-to-cart-qty-stop" data-id="${esc(shopId)}" data-value="${Number(idx)}">🛒 In Warenkorb</button>
                                     </div>
                                 `
                                         : ''
@@ -700,13 +700,13 @@ function showShopModal(id = null) {
     if (npcSelect) {
         npcSelect.innerHTML =
             '<option value="">-- Kein NPC --</option>' +
-            (D.npcs || []).map(n => `<option value="${n.id}">${esc(n.name)}</option>`).join('');
+            (D.npcs || []).map(n => `<option value="${esc(n.id)}">${esc(n.name)}</option>`).join('');
     }
     if (locSelect) {
         locSelect.innerHTML =
             '<option value="">-- Kein Ort --</option>' +
             (D.locations || [])
-                .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
+                .map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`)
                 .join('');
     }
     if (id) {

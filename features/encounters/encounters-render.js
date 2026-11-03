@@ -28,11 +28,13 @@ const ENC_ICONS = {
     undead: '💀',
     default: '⚔️'
 };
-// Format speed for display (supports both old string and new object format)
+// Format speed for display (supports both old string and new object format).
+// Beide Formen liefern kodierten Text bzw. Markup fuer innerHTML, nicht fuer
+// textContent: jeder Wert aus D laeuft durch esc() (Vertrag SENKEN, docs/bugfixes.md).
 function formatEncSpeed(speed, html = false) {
     if (!speed) return '—';
     // Old format: just a string
-    if (typeof speed === 'string') return speed || '—';
+    if (typeof speed === 'string') return esc(speed);
     // New format: object with walk, climb, swim, fly, burrow
     const icons = { walk: '🚶', climb: '🧗', swim: '🏊', fly: '🦅', burrow: '⛏️' };
     const labels = {
@@ -43,11 +45,13 @@ function formatEncSpeed(speed, html = false) {
         burrow: 'Graben'
     };
     const parts = [];
-    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: speed.walk });
-    if (speed.climb) parts.push({ icon: icons.climb, label: labels.climb, value: speed.climb });
-    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: speed.swim });
-    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: speed.fly });
-    if (speed.burrow) parts.push({ icon: icons.burrow, label: labels.burrow, value: speed.burrow });
+    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: esc(speed.walk) });
+    if (speed.climb)
+        parts.push({ icon: icons.climb, label: labels.climb, value: esc(speed.climb) });
+    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: esc(speed.swim) });
+    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: esc(speed.fly) });
+    if (speed.burrow)
+        parts.push({ icon: icons.burrow, label: labels.burrow, value: esc(speed.burrow) });
     if (parts.length === 0) return '—';
     if (html) {
         // Return as HTML with icons for multi-line display
@@ -63,8 +67,10 @@ function formatEncSpeed(speed, html = false) {
 }
 function getEncounterIcon(enc) {
     const type = (enc.creatureType || enc.race || '').toLowerCase();
-    for (const [key, icon] of Object.entries(ENC_ICONS)) {
-        if (type.includes(key)) return icon;
+    // Ueber die Schluessel statt Object.entries: der Rueckgabewert ist sichtbar ein
+    // Tabellenwert (Vertrag SENKEN, Ratsche tests/unit/html-senken.test.js).
+    for (const key of Object.keys(ENC_ICONS)) {
+        if (type.includes(key)) return ENC_ICONS[key];
     }
     return ENC_ICONS.default;
 }
@@ -236,11 +242,11 @@ function renderEncounterItem(enc) {
     const isSelected = enc.id === selectedEncounterId;
     const difficulty = enc.cr ? getEncounterDifficulty(enc.cr) : null;
     return `
-        <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${enc.id}">
+        <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${esc(enc.id)}">
             <div class="enc-item-icon">${icon}</div>
             <div class="enc-item-info">
                 <div class="enc-item-name">
-                    ${enc.cr ? `<span class="enc-item-cr">CR ${enc.cr}</span>` : ''}
+                    ${enc.cr ? `<span class="enc-item-cr">CR ${esc(enc.cr)}</span>` : ''}
                     ${esc(enc.name)}
                 </div>
                 <div class="enc-item-meta">
@@ -248,8 +254,8 @@ function renderEncounterItem(enc) {
                 </div>
             </div>
             <div class="enc-item-stats">
-                <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${enc.ac || '—'}</span>
-                <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${enc.hp || '—'}</span>
+                <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${esc(enc.ac || '—')}</span>
+                <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${esc(enc.hp || '—')}</span>
             </div>
             ${
                 difficulty
@@ -385,7 +391,7 @@ function showEncounterDetail(id) {
                           const total = mod + profBonus;
                           displayValue = `+${total}`;
                       }
-                      return `<span class="enc-save-tag">${attr.toUpperCase()} ${displayValue}</span>`;
+                      return `<span class="enc-save-tag">${esc(attr.toUpperCase())} ${esc(displayValue)}</span>`;
                   })
                   .join('')
             : '';
@@ -408,13 +414,13 @@ function showEncounterDetail(id) {
                     <div class="enc-detail-name">${esc(enc.name)}</div>
                     <div class="enc-detail-subtitle">
                         ${enc.creatureType ? esc(enc.creatureType) : ''}
-                        ${enc.cr ? ` • CR ${enc.cr}` : ''}
+                        ${enc.cr ? ` • CR ${esc(enc.cr)}` : ''}
                     </div>
                 </div>
                 <div class="enc-detail-actions">
-                    <button class="enc-detail-btn success" data-action="load-encounter" data-id="${enc.id}" title="Zum Kampf hinzufügen">⚔️</button>
-                    <button class="enc-detail-btn" data-action="edit-encounter" data-id="${enc.id}" title="Bearbeiten">✏️</button>
-                    <button class="enc-detail-btn danger" data-action="delete-encounter" data-id="${enc.id}" title="Löschen">🗑️</button>
+                    <button class="enc-detail-btn success" data-action="load-encounter" data-id="${esc(enc.id)}" title="Zum Kampf hinzufügen">⚔️</button>
+                    <button class="enc-detail-btn" data-action="edit-encounter" data-id="${esc(enc.id)}" title="Bearbeiten">✏️</button>
+                    <button class="enc-detail-btn danger" data-action="delete-encounter" data-id="${esc(enc.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -422,15 +428,15 @@ function showEncounterDetail(id) {
             <div class="enc-stats-row">
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">RK</div>
-                    <div class="enc-core-stat-value">${enc.ac || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.ac || '—')}</div>
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">HP</div>
-                    <div class="enc-core-stat-value">${enc.hp || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.hp || '—')}</div>
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">Init</div>
-                    <div class="enc-core-stat-value">${enc.init || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.init || '—')}</div>
                 </div>
                 <div class="enc-core-stat enc-speed-stat">
                     <div class="enc-core-stat-label">Speed</div>
@@ -438,7 +444,7 @@ function showEncounterDetail(id) {
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">Wahr.</div>
-                    <div class="enc-core-stat-value">${enc.perception || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.perception || '—')}</div>
                 </div>
             </div>
 
@@ -450,9 +456,9 @@ function showEncounterDetail(id) {
                         .map(
                             a => `
                         <div class="enc-attr-box">
-                            <div class="enc-attr-name">${a.name}</div>
-                            <div class="enc-attr-value">${a.val}</div>
-                            <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${a.mod}</div>
+                            <div class="enc-attr-name">${esc(a.name)}</div>
+                            <div class="enc-attr-value">${esc(a.val)}</div>
+                            <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${esc(a.mod)}</div>
                         </div>
                     `
                         )

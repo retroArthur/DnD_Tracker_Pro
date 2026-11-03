@@ -93,6 +93,8 @@ const commitNummernScheitern =
 // ============================================================
 
 const { erzeugeFakeIDB } = require('./helpers/fake-idb.js');
+// load() ruft seit SENKEN die Datengrenze auf — der echte Block, keine Attrappe
+const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 // ============================================================
 // Werkbank: Module wie loader.js laden
@@ -202,6 +204,7 @@ function erzeugePersistenz(opt = {}) {
     context.window = context;
     context.self = context;
     ladeStorageApi(context);
+    ladeDatengrenze(context);
     ladeModule(context, [
         IDB_TX_PFAD,
         'systems/spellslots/persistence.js',

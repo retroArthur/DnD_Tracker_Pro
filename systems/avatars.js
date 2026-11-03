@@ -20,6 +20,13 @@ function validateAvatarURL(url) {
     if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
         return false;
     }
+    // SENKEN Nachbesserung (16): gespeichert wird nur, was die Anzeige zeigt. sichereBildquelle()
+    // sperrt protokoll-relative Anfaenge (`//host/share` wird unter file:// zu einem UNC-Pfad) und
+    // relative Pfade mit doppeltem, kodiertem Trenner (`/%5C%5Chost/x.png` laedt
+    // Firefox als `\\host\x.png`) und relative Werte, die mit `?`/`#` beginnen; vorher
+    // speicherte das Bild-Modal sie, und die Karte zeigte danach den Platzhalter. Die Sperre von
+    // `file:` oben bleibt (Offen (15), eine eigene Nutzerentscheidung).
+    if (!sichereBildquelle(trimmed)) return false;
     const lowerUrl = trimmed.toLowerCase();
     // Allow relative paths
     if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
@@ -59,7 +66,12 @@ function previewAvatar() {
     const preview = $('avatar-preview');
     if (!preview) return;
     const url = urlEl?.value.trim();
-    if (url) {
+    // Die Vorschau laedt sofort, auch einen Wert aus Daten (showAvatarModal fuellt das Feld
+    // vor): nur eine sichere Bildquelle (SENKEN R3), sonst das Fehlerzeichen
+    if (url && !sichereBildquelle(url)) {
+        preview.innerHTML = '';
+        preview.textContent = '❌';
+    } else if (url) {
         const img = document.createElement('img');
         img.src = url;
         img.className = 'avatar avatar-xl';
@@ -84,7 +96,7 @@ function saveAvatar() {
     // Validate URL for security
     if (!validateAvatarURL(url)) {
         showToast(
-            '❌ Ungültige URL: Nur http(s), data:image/ oder relative Pfade erlaubt',
+            '❌ Ungültige URL: Nur http(s), data:image/ oder relative Pfade erlaubt, keine Netzwerkpfade',
             'error'
         );
         return;

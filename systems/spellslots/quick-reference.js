@@ -352,14 +352,14 @@ function renderQuickRefCustom() {
         .map(entry => {
             const isExpanded = entry.expanded ? 'expanded' : '';
             // Parse Entity-Links im Content
-            const content = parseEntityLinks(entry.content || '');
+            const content = parseEntityLinks(sanitizeHTML(entry.content || ''));
             return `
-        <div class="qref-custom-entry ${isExpanded}" data-id="${entry.id}">
-            <div class="quick-ref-section-title" data-action="toggle-quick-ref-custom" data-id="${entry.id}">
+        <div class="qref-custom-entry ${isExpanded}" data-id="${esc(entry.id)}">
+            <div class="quick-ref-section-title" data-action="toggle-quick-ref-custom" data-id="${esc(entry.id)}">
                 <span>📌 ${esc(entry.title)}</span>
                 <div style="display: flex; align-items: center; gap: 4px;">
-                    <button class="qref-btn" data-action="edit-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Bearbeiten">✏️</button>
-                    <button class="qref-btn qref-btn-del" data-action="delete-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Löschen">🗑️</button>
+                    <button class="qref-btn" data-action="edit-quick-ref-entry" data-id="${esc(entry.id)}" data-stop-propagation="true" title="Bearbeiten">✏️</button>
+                    <button class="qref-btn qref-btn-del" data-action="delete-quick-ref-entry" data-id="${esc(entry.id)}" data-stop-propagation="true" title="Löschen">🗑️</button>
                     <span class="quick-ref-toggle-arrow">▼</span>
                 </div>
             </div>
@@ -400,7 +400,7 @@ function editQuickRefEntry(id) {
     const modalTitle = $('quick-ref-modal-title');
     if (editId) editId.value = String(id);
     if (title) title.value = entry.title || '';
-    if (content) content.innerHTML = entry.content || '';
+    if (content) content.innerHTML = sanitizeHTML(entry.content || '');
     if (modalTitle) modalTitle.textContent = 'Eintrag bearbeiten';
     const showModal = window.showModal;
     if (showModal) showModal('quick-ref-entry-modal');

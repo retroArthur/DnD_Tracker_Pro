@@ -450,8 +450,8 @@ function showImportModal(dataType) {
                             <div style="display: grid; gap: 8px;">
                                 <div><strong>Kampagne:</strong> ${esc(campaignName)}</div>
                                 <div><strong>Export-Datum:</strong> ${exportDate}</div>
-                                <div><strong>Einträge:</strong> ${validatedItems.length}</div>
-                                <div><strong>Typ:</strong> ${dataType}</div>
+                                <div><strong>Einträge:</strong> ${Number(validatedItems.length)}</div>
+                                <div><strong>Typ:</strong> ${esc(dataType)}</div>
                             </div>
                         `;
                     }

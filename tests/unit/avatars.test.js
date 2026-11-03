@@ -22,8 +22,11 @@ const path = require('path');
 const vm = require('vm');
 
 const AVATARS_PATH = path.join(__dirname, '../../systems/avatars.js');
+// sichereBildquelle() fuer validateAvatarURL(): der echte Block aus utils/basic.js (SENKEN R3)
+const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 let validateAvatarURL;
+let sichereBildquelle;
 
 beforeAll(() => {
     // validateAvatarURL() ruft `new URL(trimmed)` auf — vm.createContext()
@@ -33,8 +36,10 @@ beforeAll(() => {
     // wuerden faelschlich ueber den relative-Pfad-Fallback laufen).
     const context = { window: {}, URL };
     vm.createContext(context);
+    ladeDatengrenze(context);
     vm.runInContext(fs.readFileSync(AVATARS_PATH, 'utf8'), context);
     validateAvatarURL = context.validateAvatarURL;
+    sichereBildquelle = context.sichereBildquelle;
 });
 
 describe('validateAvatarURL — Grundverhalten', () => {
@@ -64,6 +69,78 @@ describe('validateAvatarURL — Grundverhalten', () => {
         expect(validateAvatarURL('file:///etc/passwd')).toBe(false);
         expect(validateAvatarURL('vbscript:msgbox(1)')).toBe(false);
         expect(validateAvatarURL('data:text/html,<script>alert(1)</script>')).toBe(false);
+    });
+});
+
+/*
+ * SENKEN R3 fuer Bildquellen (Gutachten, Sonde D): `//localhost/…` BESTAND die Pruefung
+ * (`trimmed.startsWith('/')`), und die App lud das Bild ohne Klick. Unter file:// wird
+ * `//host/share/x.png` zu `file://host/share/x.png` — unter Windows ein UNC-Pfad, also eine
+ * Verbindung samt Anmeldeversuch zu einem fremden Rechner. Der Browser liest `\` hier wie
+ * `/` und streicht Tabulatoren und Zeilenumbrueche. Die Ausgabe prueft dasselbe ueber
+ * sichereBildquelle() (utils/basic.js, Vertrag in tests/unit/datengrenze.test.js).
+ */
+describe('validateAvatarURL — SENKEN: kein protokoll-relativer Anfang', () => {
+    test.each([
+        '//host/share/avatar.png',
+        '//localhost/C:/avatar.png',
+        '\\\\host\\share\\avatar.png',
+        '/\\host/share/avatar.png',
+        '\\/host/share/avatar.png',
+        '  //host/avatar.png',
+        '/\t/host/avatar.png'
+    ])('%j wird abgelehnt', url => {
+        expect(validateAvatarURL(url)).toBe(false);
+    });
+
+    test('ein Pfad ab der Wurzel bleibt gueltig', () => {
+        expect(validateAvatarURL('/images/avatar.png')).toBe(true);
+    });
+});
+
+/*
+ * SENKEN Nachbesserung (16): Speichern und Anzeige widersprachen sich. validateAvatarURL()
+ * pruefte nur einen rohen Anfang aus zwei `/` oder `\` und speicherte Werte, die die Anzeige
+ * (sichereBildquelle(), Nachbesserung (15)) sperrt: einen relativen Pfad mit kodiertem doppeltem
+ * Trenner (`/%5C%5Chost/x.png` laedt Firefox als `\\host\x.png`) und einen relativen Wert, der
+ * mit `?` oder `#` beginnt. Das Bild-Modal zeigte in der Vorschau das Fehlerzeichen und
+ * speicherte trotzdem, die Karte zeigte danach den Platzhalter. Jetzt speichert es nur, was
+ * sichereBildquelle() anzeigt. Die Ablehnung von `file:` in der Eingabe bleibt (Offen (15),
+ * eine eigene Nutzerentscheidung).
+ */
+describe('validateAvatarURL — SENKEN (16): speichert nur, was angezeigt wird', () => {
+    test.each([
+        '/%5C%5Chost/share/avatar.png',
+        '/%5c%5chost/avatar.png',
+        '/%5C/host/avatar.png',
+        '/./%5C%5Chost/avatar.png',
+        '/x/../%5C%5Chost/avatar.png',
+        '/%2e%2e/%5C%5Chost/avatar.png',
+        '/%2F%2Fhost/avatar.png',
+        '/%5C%5Chost/avatar.png?v=1',
+        'x/..//host/avatar.png',
+        '?v=1',
+        '#avatar'
+    ])('%j wird abgelehnt (die Anzeige sperrt ihn)', url => {
+        expect(sichereBildquelle(url)).toBe('');
+        expect(validateAvatarURL(url)).toBe(false);
+    });
+
+    test.each([
+        'https://example.com/avatar.png',
+        '/images/avatar.png',
+        './avatar.png',
+        '../bilder/avatar.png',
+        'bilder/avatar.png?v=1',
+        'data:image/png;base64,AAAA'
+    ])('%j bleibt gueltig und wird angezeigt', url => {
+        expect(validateAvatarURL(url)).toBe(true);
+        expect(sichereBildquelle(url)).toBe(url);
+    });
+
+    test('ein lokaler Dateipfad wird angezeigt, die Eingabe lehnt ihn weiter ab (Offen (15))', () => {
+        expect(sichereBildquelle('file:///C:/Bilder/held.png')).toBe('file:///C:/Bilder/held.png');
+        expect(validateAvatarURL('file:///C:/Bilder/held.png')).toBe(false);
     });
 });
 

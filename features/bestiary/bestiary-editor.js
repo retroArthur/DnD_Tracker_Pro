@@ -65,7 +65,7 @@ function refreshBstAvatarPreview() {
     var preview = window.$('bst-avatar-preview');
     var clearBtn = window.$('bst-avatar-clear');
     if (preview) {
-        if (_bstEditorAvatarUrl) {
+        if (sichereBildquelle(_bstEditorAvatarUrl)) {
             preview.src = _bstEditorAvatarUrl;
             preview.style.display = '';
         } else {

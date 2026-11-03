@@ -29,8 +29,8 @@ function renderTimerPresets() {
     container.innerHTML = presets
         .map(p => {
             const totalSec = (p.hours || 0) * 3600 + (p.minutes || 0) * 60 + (p.seconds || 0);
-            return `<button class="timer-preset-btn" data-action="add-preset-timer" data-value="${esc(p.name)}" data-duration="${totalSec}">
-            <span>${p.emoji || '⏱️'}</span>
+            return `<button class="timer-preset-btn" data-action="add-preset-timer" data-value="${esc(p.name)}" data-duration="${Number(totalSec)}">
+            <span>${esc(p.emoji || '⏱️')}</span>
             <span>${esc(p.name)}</span>
         </button>`;
         })
@@ -57,9 +57,9 @@ function renderPresetList() {
             const timeStr = formatPresetTime(p.hours, p.minutes, p.seconds);
             return `<div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 6px;">
             <span style="flex: 1; display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: var(--text-xl);">${p.emoji || '⏱️'}</span>
+                <span style="font-size: var(--text-xl);">${esc(p.emoji || '⏱️')}</span>
                 <span style="font-weight: 500;">${esc(p.name)}</span>
-                <span style="color: var(--text-dim); font-size: var(--text-sm);">(${timeStr})</span>
+                <span style="color: var(--text-dim); font-size: var(--text-sm);">(${esc(timeStr)})</span>
             </span>
             <button class="btn btn-sm" data-action="edit-timer-preset" data-id="${i}" title="Bearbeiten">✏️</button>
             <button class="btn btn-sm btn-danger" data-action="delete-timer-preset" data-id="${i}" title="Löschen">🗑️</button>
@@ -420,11 +420,11 @@ function renderTimers() {
         .map(t => {
             const status = t.remainingSeconds === 0 ? 'expired' : t.running ? 'running' : 'paused';
             const focused = t.id === focusedTimerId ? 'focused' : '';
-            return `<div class="timer-card ${status} ${focused}" data-action="focus-timer" data-id="${t.id}">
+            return `<div class="timer-card ${status} ${focused}" data-action="focus-timer" data-id="${esc(t.id)}">
             <div class="timer-card-actions">
-                <button class="timer-card-btn" data-action="toggle-timer" data-id="${t.id}">${t.running ? '⏸' : '▶'}</button>
-                <button class="timer-card-btn" data-action="reset-timer" data-id="${t.id}">↺</button>
-                <button class="timer-card-btn delete" data-action="delete-timer" data-id="${t.id}">✕</button>
+                <button class="timer-card-btn" data-action="toggle-timer" data-id="${esc(t.id)}">${t.running ? '⏸' : '▶'}</button>
+                <button class="timer-card-btn" data-action="reset-timer" data-id="${esc(t.id)}">↺</button>
+                <button class="timer-card-btn delete" data-action="delete-timer" data-id="${esc(t.id)}">✕</button>
             </div>
             <div class="timer-card-time">${formatTime(t.remainingSeconds)}</div>
             <div class="timer-card-name">${esc(t.name)}</div>

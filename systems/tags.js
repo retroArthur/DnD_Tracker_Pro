@@ -13,6 +13,10 @@ function showTagsModal(type, id) {
     const showModal = window.showModal;
     if (showModal) showModal('tags-modal');
 }
+// Tagfarbe aus Daten: sie landet als Klasse `tag-…` (und als data-color, aus dem
+// "add-existing-tag" die Farbe des kopierten Tags liest) und kommt deshalb nur aus
+// TAG_COLORS — das sind genau die Optionen von #new-tag-color —, sonst 'blue' wie bisher
+// bei fehlender Farbe (Vertrag SENKEN R2, docs/bugfixes.md). Namen laufen durch esc().
 function renderTagsModal() {
     const typeEl = $('tags-target-type');
     const idEl = $('tags-target-id');
@@ -30,7 +34,7 @@ function renderTagsModal() {
             ? entityTags
                   .map(
                       (t, i) =>
-                          `<span class="tag tag-${t.color || 'blue'}">${esc(t.name)} <span style="cursor:pointer;" data-action="remove-tag" data-id="${i}">✕</span></span>`
+                          `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(t.name)} <span style="cursor:pointer;" data-action="remove-tag" data-id="${i}">✕</span></span>`
                   )
                   .join('')
             : '<span style="color: var(--text-dim);">Keine Tags</span>';
@@ -43,7 +47,8 @@ function renderTagsModal() {
             ? allTags
                   .map(t => {
                       const hasTag = entityTags.some(et => et.name === t.name);
-                      return `<span class="tag tag-${t.color || 'blue'}" style="cursor: pointer; ${hasTag ? 'opacity: 0.5;' : ''}" data-action="add-existing-tag" data-value="${esc(t.name)}" data-color="${t.color}">${esc(t.name)}</span>`;
+                      const farbe = sichereKlasse(t.color, TAG_COLORS, 'blue');
+                      return `<span class="tag tag-${farbe}" style="cursor: pointer; ${hasTag ? 'opacity: 0.5;' : ''}" data-action="add-existing-tag" data-value="${esc(t.name)}" data-color="${farbe}">${esc(t.name)}</span>`;
                   })
                   .join('')
             : '<span style="color: var(--text-dim);">Keine globalen Tags</span>';
@@ -57,7 +62,7 @@ function renderTagsModal() {
                       (
                           t,
                           i
-                      ) => `<span class="tag tag-${t.color || 'blue'}" style="display: inline-flex; align-items: center; gap: 4px;">
+                      ) => `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}" style="display: inline-flex; align-items: center; gap: 4px;">
             ${esc(t.name)}
             <span style="cursor:pointer; color: var(--red); font-weight: 600;" data-action="delete-global-tag" data-value="${i}" title="Tag überall löschen">✕</span>
         </span>`
@@ -162,7 +167,7 @@ function renderTagsBar(tags) {
     if (!tags || !tags.length) return '';
     const esc = window.esc;
     return `<div class="tags-container" style="margin-top: 4px;">
-        ${tags.map(t => `<span class="tag tag-${t.color || 'blue'} clickable" data-action="show-entities-with-tag-stop" data-value="${esc(t.name)}" title="Alle mit Tag '${esc(t.name)}' anzeigen">${esc(t.name)}</span>`).join('')}
+        ${tags.map(t => `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')} clickable" data-action="show-entities-with-tag-stop" data-value="${esc(t.name)}" title="Alle mit Tag '${esc(t.name)}' anzeigen">${esc(t.name)}</span>`).join('')}
     </div>`;
 }
 // Zeigt alle Entities mit einem bestimmten Tag
@@ -222,18 +227,18 @@ function showEntitiesWithTag(tagName) {
             resultsEl.innerHTML = renderEmptyState({
                 icon: '🏷️',
                 titleEmpty: 'Keine Ergebnisse',
-                descEmpty: `Keine Einträge mit Tag "${esc(tagName)}" gefunden.`,
+                descEmpty: `Keine Einträge mit Tag "${tagName}" gefunden.`,
                 gridSpan: 'auto'
             });
         } else {
             resultsEl.innerHTML = results
                 .map(
                     r => `
-            <div class="search-result-item" data-action="tag-search-navigate" data-type="${r.type}" data-id="${r.id}" style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);">
-                <span style="font-size: var(--text-xl);">${r.icon}</span>
+            <div class="search-result-item" data-action="tag-search-navigate" data-type="${esc(r.type)}" data-id="${esc(r.id)}" style="display: flex; align-items: center; gap: 10px; padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);">
+                <span style="font-size: var(--text-xl);">${esc(r.icon)}</span>
                 <div>
                     <div style="font-weight: 500;">${esc(r.name)}</div>
-                    <div style="font-size: var(--text-sm); color: var(--text-dim);">${r.label}</div>
+                    <div style="font-size: var(--text-sm); color: var(--text-dim);">${esc(r.label)}</div>
                 </div>
             </div>
         `

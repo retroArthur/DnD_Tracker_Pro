@@ -138,27 +138,27 @@ function _npcgVolkName(volk) {
  */
 function _npcgRenderVorschau(npcData) {
     if (!npcData) return '<p class="npcg-empty">Noch kein NPC generiert.</p>';
-    var e = (typeof esc === 'function') ? esc : function(s) { return String(s || ''); };
+    // SENKEN R1: esc() direkt — der fruehere Rueckfall ohne esc kodierte nichts.
     return [
         '<div class="npcg-preview-card">',
-        '  <div class="npcg-preview-name">' + e(npcData.name) + '</div>',
+        '  <div class="npcg-preview-name">' + esc(npcData.name) + '</div>',
         '  <div class="npcg-preview-meta">',
-        '    <span class="npcg-meta-tag npcg-volk">' + e(npcData.volk) + '</span>',
-        '    <span class="npcg-meta-tag npcg-geschlecht">' + e(npcData.geschlecht) + '</span>',
-        npcData.beruf ? '    <span class="npcg-meta-tag npcg-beruf">' + e(npcData.beruf) + '</span>' : '',
+        '    <span class="npcg-meta-tag npcg-volk">' + esc(npcData.volk) + '</span>',
+        '    <span class="npcg-meta-tag npcg-geschlecht">' + esc(npcData.geschlecht) + '</span>',
+        npcData.beruf ? '    <span class="npcg-meta-tag npcg-beruf">' + esc(npcData.beruf) + '</span>' : '',
         '  </div>',
         '  <div class="npcg-preview-section">',
         '    <span class="npcg-label">Persönlichkeit:</span>',
-        '    <span class="npcg-zug">' + e(npcData.zug) + '</span>',
+        '    <span class="npcg-zug">' + esc(npcData.zug) + '</span>',
         '  </div>',
         '  <div class="npcg-preview-section">',
         '    <span class="npcg-label">Marotte:</span>',
-        '    <span class="npcg-marotte">' + e(npcData.marotte) + '</span>',
+        '    <span class="npcg-marotte">' + esc(npcData.marotte) + '</span>',
         '  </div>',
         npcData.aussehen ? [
             '  <div class="npcg-preview-section npcg-secondary">',
             '    <span class="npcg-label">Aussehen:</span>',
-            '    <span class="npcg-aussehen">' + e(npcData.aussehen) + '</span>',
+            '    <span class="npcg-aussehen">' + esc(npcData.aussehen) + '</span>',
             '  </div>'
         ].join('') : '',
         '</div>'
