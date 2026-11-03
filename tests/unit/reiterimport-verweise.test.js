@@ -718,6 +718,69 @@ describe('REITERIMPORT R5 — Hinzufuegen an einer Saat aller zwoelf Typen', () 
 });
 
 // ===========================================================================
+// R4/R9 — HINZUFUEGEN: DIE HTML-FELDER SIND AUCH NACH DEM UMSCHREIBEN BEREINIGT
+// ===========================================================================
+//
+// Befund der Pruefer (Runde 2, Sicherheit, gemessen ueber die Oberflaeche am Dev- und am
+// Produktionsbuendel): bereiteReiterImportVor() bereinigt die HTML-Felder (sanitizeImportedItem()),
+// DANACH schrieb reiterHinzufuegen() jede Text-Verknuepfung auf einen anderen Bereich im fertig
+// serialisierten Markup zu ihrem Namen um. Aus dem erlaubten relativen Ziel
+// `/[[locations:7:/kanarie-host/x.pdf]]` wurde so `//kanarie-host/x.pdf` — ein Netzwerkziel
+// (unter file:// ein UNC-Pfad), das sanitizeHTML() nie durchgelassen haette; in D stand danach
+// in npcs.description, characters.notes, links.description und wiki.content Markup, das nicht
+// mehr bereinigt war. Die Ausgabe bereinigt erneut (gemessen: 0 Funde) — aber die zweite Schicht
+// (SEC-01) war auf diesem Weg ausgehebelt. Gegenprobe Ersetzen (kein Umschreiben): bereinigt.
+describe('REITERIMPORT R4/R9 — Hinzufuegen: jedes HTML-Feld ist nach dem Umschreiben bereinigt', () => {
+    /** Je Typ ein Bereich, auf den eine Text-Verknuepfung FREMD zeigt (sie wird geleert). */
+    const FREMDER_BEREICH = t => (t === 'locations' ? 'npcs' : 'locations');
+
+    test('H1: kein Feld aus HTML_FIELDS_BY_TYPE traegt danach mehr, als sanitizeHTML() zulaesst', async () => {
+        const seite0 = erzeugeSeite({});
+        const htmlFelder = plain(vm.runInContext('HTML_FIELDS_BY_TYPE', seite0.ctx));
+        const typen = vm.runInContext('Object.keys(REITER_NAMENSFELD)', seite0.ctx);
+        const geprueft = [];
+        for (const typ of typen) {
+            const felder = htmlFelder[typ] || [];
+            if (felder.length === 0) continue;
+            const ziel = FREMDER_BEREICH(typ);
+            const eintrag = { id: 1, name: 'A', title: 'A', titel: 'A' };
+            for (const feld of felder) {
+                eintrag[feld] =
+                    `<p><a href="/[[${ziel}:7:/kanarie-host/${typ}-${feld}.pdf]]">Karte</a>` +
+                    ` <a href="/[[${ziel}:8:%5Ckanarie-host]]">Ablage</a></p>`;
+            }
+            const { seite } = await importiere(typ, [eintrag], kampagneMit(typ), 'merge');
+            const sanitize = seite.ctx.sanitizeHTML;
+            const kopie = sammlung(plain(seite.ctx.D), typ).find(e => e.id === 101);
+            expect(kopie).toBeDefined();
+            for (const feld of felder) {
+                geprueft.push(`${typ}.${feld}`);
+                expect({ feld: `${typ}.${feld}`, wert: kopie[feld] }).toEqual({
+                    feld: `${typ}.${feld}`,
+                    wert: sanitize(kopie[feld])
+                });
+                expect(kopie[feld]).not.toMatch(/href="\/[/\\]|href="\/%5C/i);
+                // Der sichtbare Text bleibt (die Verknuepfung ist nur noch ihr Name)
+                expect(kopie[feld]).toContain('Karte');
+            }
+        }
+        // Gegenprobe: der Test sieht die Felder wirklich
+        expect(geprueft).toEqual(
+            expect.arrayContaining([
+                'characters.notes',
+                'npcs.description',
+                'links.description',
+                'wiki.content',
+                'encounters.traits',
+                'factions.agenda',
+                'calendarEvents.beschreibung',
+                'sessionPreps.strongStart'
+            ])
+        );
+    });
+});
+
+// ===========================================================================
 // TEXT-VERKNUEPFUNGEN [[typ:id:name]] — DIESELBEN TREFFER, IN LINEARER ZEIT
 // ===========================================================================
 //
