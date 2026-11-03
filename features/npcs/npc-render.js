@@ -63,15 +63,15 @@ function getNPCIcon(npc) {
 }
 /**
  * Ein Dialogtext (HTML aus dem Editor) als sichtbarer Text fuer die Suche, kleingeschrieben
- * (Vertrag NPC-SUCHE, R4): <br> und die Grenzen von div, p und li werden ein Leerzeichen, alle
- * anderen Tags fallen weg, &nbsp; &lt; &gt; &amp; werden dekodiert (&amp; zuletzt, sonst wuerde
- * "&amp;lt;" zu "<"), Leerraum wird zusammengefasst. Ein eigener Normalisierer: stripHtml()
- * klebt die Woerter beiderseits einer Zeilengrenze zusammen ("Rabattenur"), dient aber der
- * Anzeige und bleibt darum, wie es ist.
+ * (Vertrag NPC-SUCHE, R4): <br> und die Grenzen von div, p, li, td und th (Tabellen schreibt
+ * die App selbst in einen Dialog) werden ein Leerzeichen, alle anderen Tags fallen weg, &nbsp;
+ * &lt; &gt; &amp; werden dekodiert (&amp; zuletzt, sonst wuerde "&amp;lt;" zu "<"), Leerraum
+ * wird zusammengefasst. Ein eigener Normalisierer: stripHtml() klebt die Woerter beiderseits
+ * einer Zeilengrenze zusammen ("Rabattenur"), dient aber der Anzeige und bleibt, wie es ist.
  */
 function npcDialogSuchtext(html) {
     return html
-        .replace(/<(br|\/?(div|p|li))\b[^>]*>/gi, ' ')
+        .replace(/<(br|\/?(div|p|li|td|th))\b[^>]*>/gi, ' ')
         .replace(/<[^>]*>/g, '')
         .replace(/&nbsp;/g, ' ')
         .replace(/&lt;/g, '<')
