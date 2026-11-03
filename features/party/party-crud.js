@@ -40,18 +40,24 @@ function updateSpeedDisplay() {
     ftDisplay.textContent = ft + 'ft';
 }
 /**
- * Avatar preview - sichere Implementierung
+ * Avatar preview - sichere Implementierung. Zeigt, was die Karte zeigt (AVATAR-DATEI, A3): ein
+ * Bild genau dann, wenn sichereBildquelle() den Wert anzeigt — http(s), data:image/, eine lokale
+ * Datei (`file:///C:/Bilder/held.png`) oder ein relativer Pfad —, sonst den Platzhalter "?". Bis
+ * AVATAR-DATEI liess sie nur http(s) zu: ein lokales Portrait stand nach dem Speichern auf der
+ * Karte, die Vorschau zeigte "?" (SENKEN Offen (15)). Ein Netzwerkpfad laedt auch hier nicht.
  */
 function updateAvatarPreview(url) {
     const preview = $('cf-avatar-preview');
     if (!preview) return;
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    // Getrimmt wie beim Speichern (saveCharacter()): Vorschau und Karte pruefen denselben Wert
+    const quelle = typeof url === 'string' ? url.trim() : '';
+    if (sichereBildquelle(quelle)) {
         // Sichere Erstellung ohne innerHTML mit User-Input
         preview.innerHTML = '';
         const img = document.createElement('img');
         // DOM-Eigenschaft, kein HTML: esc() machte aus `&` in der URL `&amp;` und damit
-        // eine andere Adresse (Vertrag SENKEN R5). Das Schema ist oben auf http(s) begrenzt.
-        img.src = url;
+        // eine andere Adresse (Vertrag SENKEN R5). Das Schema prueft sichereBildquelle() oben.
+        img.src = quelle;
         img.alt = 'Avatar Preview';
         img.onerror = function () {
             if (this.parentElement) {

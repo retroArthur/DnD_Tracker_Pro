@@ -4,6 +4,20 @@
 // ============================================================
 // Global render state variable
 let renderPending = false;
+/** Die Welt-Reiter mit gespeicherten Listen (Reise ist ein Rechner ohne Eintraege). */
+const WELT_LISTEN_ANSICHTEN = Object.freeze(['sessionprep', 'kalender', 'fraktionen']);
+/**
+ * Zeichnet den offenen Welt-Reiter ueber seinen Eintrag in TAB_RENDER_REGISTRY neu (Liste,
+ * Kopf, Detail und gefilterter Zaehler) — fuer renderAll(), das sonst keine Welt-Ansicht kennt.
+ * Ein anderer offener Reiter: nichts.
+ */
+function renderOffeneWeltAnsicht() {
+    const aktiv = document.querySelector('.view.active');
+    const ansicht = aktiv && aktiv.id ? aktiv.id.replace(/^view-/, '') : '';
+    if (WELT_LISTEN_ANSICHTEN.includes(ansicht) && typeof window.renderTabContent === 'function') {
+        window.renderTabContent(ansicht);
+    }
+}
 function renderAll() {
     const ErrorHandler = window.ErrorHandler;
     // Prevent multiple renders in the same frame
@@ -67,6 +81,11 @@ function renderAll() {
         // einem Undo/Redo veraltet, waehrend ihr Tab aktiv ist.
         renderSafe(renderRandomTables, 'renderRandomTables', 'random-tables-list');
         renderSafe(renderTimers, 'renderTimers');
+        // REITERIMPORT R8: dieselbe Luecke fuer die drei Welt-Reiter — nach einem Import, Strg+Z
+        // oder Strg+Y zeigten Session-Prep, Kalender und Fraktionen den alten Stand, bis man den
+        // Reiter wechselte (gemessen). Gezeichnet wird nur der OFFENE: die anderen zeichnet der
+        // Reiterwechsel (TAB_RENDER_REGISTRY), ihre Zaehler schreibt updateIOCounts().
+        renderSafe(renderOffeneWeltAnsicht, 'renderOffeneWeltAnsicht');
         // Update IO-Counter
         try {
             updateIOCounts();
