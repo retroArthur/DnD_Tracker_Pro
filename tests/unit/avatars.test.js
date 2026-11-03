@@ -38,11 +38,11 @@ let validateAvatarURL;
 let sichereBildquelle;
 
 beforeAll(() => {
-    // validateAvatarURL() ruft `new URL(trimmed)` auf — vm.createContext()
-    // erbt KEINE Host-Globals, daher muss die echte Node-URL-Klasse explizit
-    // durchgereicht werden (sonst wirft new URL() ReferenceError, wird vom
-    // try/catch der Funktion geschluckt, und alle absoluten http/https-URLs
-    // wuerden faelschlich ueber den relative-Pfad-Fallback laufen).
+    // vm.createContext() erbt KEINE Host-Globals. Bis AVATAR-DATEI rief validateAvatarURL()
+    // `new URL(trimmed)` auf; ohne die echte Node-URL-Klasse warf das einen ReferenceError, den
+    // das try/catch der Funktion schluckte, und absolute http(s)-URLs liefen faelschlich ueber
+    // den Relativpfad-Zweig. Seither entscheidet sichereBildquelle() allein, ohne `new URL()`;
+    // die Klasse bleibt im Kontext, damit ein kuenftiger Aufruf nicht wieder still so scheitert.
     const context = { window: {}, URL };
     vm.createContext(context);
     ladeDatengrenze(context);
