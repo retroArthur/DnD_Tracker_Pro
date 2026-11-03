@@ -26,7 +26,12 @@
  *     meldet bei JEDEM Umschalten `value === 'on'`. Eine Regel, die nur Werte
  *     vergleicht, wuerde dort jedes zweite Ereignis schlucken.
  *   - file (Markdown-Import und Soundboard unterscheiden input/change), range
- *     und date; ebenso TEXTAREA, die R1 nicht nennt.
+ *     und date; ebenso TEXTAREA, die R1 nicht nennt. Die Zeile file faehrt die
+ *     App wirklich: beide Datei-Aktionen lesen NUR beim change, und ohne die
+ *     Typschranke sind `tests/e2e/features/markdown-austausch.spec.js` und
+ *     `tests/e2e/features/soundboard.spec.js` rot (21 von 31 Faellen, am
+ *     Mutanten nachgemessen) — das change desselben Dateinamens wuerde als
+ *     "nichts Neues" verschluckt. Die uebrigen Zeilen haelt nur diese Tabelle.
  *
  * WAS NUR EIN BROWSER BEANTWORTEN KANN — ob danach der erste Klick wirklich
  * waehlt —, steht in `tests/e2e/features/bestiar-klick.spec.js` (W1–W6, echte

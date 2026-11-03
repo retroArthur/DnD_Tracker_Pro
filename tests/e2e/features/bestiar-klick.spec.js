@@ -79,7 +79,13 @@
  *     change), SELECT, checkbox, radio, file, range/date. Ein Fix nur in
  *     'search-input' erfuellt den Vertrag NICHT — (W5) ist dafuer da. Die
  *     Entscheidungstabelle von R1 haelt
- *     `tests/unit/event-delegation-change.test.js` fest.
+ *     `tests/unit/event-delegation-change.test.js` fest. Die TYPSCHRANKE
+ *     sieht man am Bildschirm nur am Datei-Input: der Markdown-Import und
+ *     das Soundboard lesen ihre Datei NUR beim change, und ohne die Schranke
+ *     sind `markdown-austausch.spec.js` und `soundboard.spec.js` rot (21 von
+ *     31, am Mutanten gemessen). Bei SELECT und checkbox hat das `input` die
+ *     Arbeit schon getan — ein geschlucktes change aendert dort nichts
+ *     Sichtbares, darum behaupten die (W6)-Faelle dazu nichts.
  * R2  Die Huelle schrumpft nicht: VirtualScroll.create setzt inline
  *     `flex-shrink: 0` (oder `flex: none`). Keine Klasse an der Huelle, keine
  *     neue Regel in bestiary.css, keine neue innerHTML-Senke.
@@ -887,7 +893,12 @@ test.describe('A: andere Aktionen als search-input — ein Fix nur dort reicht n
 test.describe('A: Gegenproben — vorher und nachher gruen', () => {
     test.use({ viewport: BREIT });
 
-    test('(W6) HG per Tastatur filtert (SELECT bleibt unberuehrt)', async ({ page }) => {
+    // (W6) HG und Favoriten: die Bedienung filtert weiter. Ob R1 eine SELECT
+    // oder eine checkbox AUSNIMMT, koennen diese zwei Faelle nicht feststellen:
+    // `input` zeichnet vor dem `change`, ein geschlucktes `change` sieht hier
+    // niemand. Das halten die Entscheidungstabelle (Unit) und, am Bildschirm,
+    // die Datei-Inputs von Markdown-Import und Soundboard (Kopf dieser Datei, R1).
+    test('(W6) HG per Tastatur filtert', async ({ page }) => {
         const fehler = await laden(page);
         await zurAnsicht(page, 'bestiary');
         await page.locator('#bestiary-filter-cr').click();
@@ -910,7 +921,7 @@ test.describe('A: Gegenproben — vorher und nachher gruen', () => {
         weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
     });
 
-    test('(W6) das Favoriten-Kaestchen filtert (checkbox bleibt unberuehrt)', async ({ page }) => {
+    test('(W6) das Favoriten-Kaestchen filtert', async ({ page }) => {
         const fehler = await laden(page);
         await zurAnsicht(page, 'bestiary');
         await page.locator('#bestiary-filter-favs').click();
