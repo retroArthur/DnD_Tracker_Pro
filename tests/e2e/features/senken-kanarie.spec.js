@@ -636,8 +636,11 @@ function rohKampagne() {
                 initBonus: 1,
                 maxHp: 44,
                 currentHp: 0,
-                // tempHp und lastRoll stehen NICHT in der Datengrenze und gehen roh in die Zeile
-                // (initiative.js `(+${cb.tempHp})`, `title="Letzter Wurf: ${cb.lastRoll}"`)
+                // lastRoll steht NICHT in der Datengrenze und geht als Text in die Zeile
+                // (initiative.js `title="Letzter Wurf: ${cb.lastRoll}"`). tempHp steht seit SENKEN (17)
+                // darin (nur Zahl): als Text ging es in die sechste Rasterspalte der Kampfzeile, die bis
+                // max-content waechst, bevor die Namensspalte (1fr) Platz bekommt — unter Linux-Schriften
+                // blieben dem Namen 0px, und dieser Weg war nicht mehr begehbar (docs/bugfixes.md SENKEN)
                 tempHp: 3,
                 lastRoll: 14,
                 cr: '1/4',
@@ -871,6 +874,11 @@ function istStruktur(teile) {
     // traegt die Kanarie (spell-manager.js: class="spell-card ${type}").
     if (teile[0] === 'spells' && k === 'type') return true;
     if (teile[0] === 'initiative' && k === 'type') return true;
+    // Die offene Konzentrationspruefung ist eine Zahl, die das Banner samt CON-Wurf erst
+    // zeichnet; seit SENKEN (17) verwirft die Datengrenze Text darin. Als Kanarie im ersten
+    // Kaempfer gaebe es also kein Banner und keinen Weg "Konzentration". Datensatz 1 traegt
+    // die Kanarie (und prueft damit die Grenze).
+    if (teile[0] === 'initiative' && k === 'pendingCheck') return true;
     if (teile[0] === 'dmScreenActiveProfile') return true;
     return false;
 }
