@@ -204,6 +204,27 @@
  *         -> [], "<b>" -> [Dora]); die Reihenfolge begruendeten Kommentar und
  *         Katalog, kein Fall hielt sie. Am Stand b1fc7da6 rot 1 ("&lt;b&gt;").
  *
+ * Die ganze Datei (21 Faelle, drei Worker) gegen jeden Mutanten: rot ist der
+ * Fall, der ihn fangen soll, und nur dort steht eine Zusage falsch —
+ *
+ *   ohne td (am neuen Kopf gebaut)          rot W10t ("Gold Silber",
+ *                                           "GoldSilber")
+ *   ohne th (am neuen Kopf gebaut)          rot W10t ("Spalte 1 Spalte 2",
+ *                                           "1Spalte")
+ *   jedes uebrige Tag wird ein Leerzeichen  rot W10w (W10t gruen: dort
+ *                                           trennt jedes Tag, auch die Zelle)
+ *   nur schliessende Tags trennen           rot W10e, W10t
+ *   nur oeffnende Tags trennen              rot W10e, W10t
+ *   &amp; zuerst dekodiert                  rot W9r, W10t
+ *
+ * Die vier unteren Mutanten sind die der Pruefung, auf 3aaf8ad1 gebaut, also
+ * ohne td/th — daher dort zusaetzlich W10t. Damit macht jede zurueckgenommene
+ * Teilregel von R4 einen Fall rot; fuer die uebrigen Regeln gilt DIE
+ * GEGENPROBE oben (ihre Faelle sind unveraendert). Im selben Durchgang: am
+ * Kopf 3aaf8ad1 rot nur W10t; am Stand b1fc7da6 19 rot, 2 gruen (W8, W9),
+ * 78 falsche Zusagen (die 70 von DER ROTE LAUF, dazu W10t 2, W10w 1, W10e 4,
+ * W9r 1).
+ *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (Vertrag, "NICHT IM PR")
  *
@@ -216,7 +237,10 @@
  * Detail, Popup und Formular fuer Altdaten-Dialoge (NPC-NAME Offen (1)) —
  * ihre Wuerfe sind in W9a ausgenommen. Die Dialog-Vorschau im Detail, die
  * Zeilen zusammenklebt. Die Auswahl "Mehr…" (mehr als fuenf Orte) setzt
- * denselben Ortsfilter wie ein Chip und ist nicht eigens gefahren.
+ * denselben Ortsfilter wie ein Chip und ist nicht eigens gefahren. Andere
+ * Bloecke als div, p, li, td und th (Ueberschriften, blockquote, hr) trennen
+ * im Normalisierer nicht — kein Weg der App schreibt sie in einen Dialog
+ * (benannte Grenze, Katalog NPC-SUCHE Offen (6)).
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
