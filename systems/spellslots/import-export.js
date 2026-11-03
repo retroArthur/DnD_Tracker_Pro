@@ -2132,6 +2132,10 @@ function reiterBearbeitenVerwerfen(typ, neueIds) {
  * dessen ID ein importierter Eintrag traegt (vorher und nachher gehoert sie sonst niemandem).
  * Welche Aktion ein Schritt betrifft, sagt die Kennung, die executeImport() dem Undo-Punkt
  * mitgibt — das Label ("2 Charaktere importiert") ist dafuer nicht eindeutig.
+ * Steht dabei das Import-Fenster, wird seine Vorschau neu gezeichnet — bei JEDEM Schritt, nicht
+ * nur bei einem des Imports: sie liest D (vorhandene Eintraege, Verweise). Gemessen (Pruefer,
+ * Runde 2, Sonde p7): Strg+Z wirkt auch bei offenem Fenster, und die Vorschau blieb auf dem
+ * alten Stand, bis man den Modus wechselte; "Importieren" schrieb trotzdem auf den aktuellen.
  * @param {{action?: string, direction?: string, kennungen?: unknown[]}} [info]
  */
 function reiterImportNachUndo(info) {
@@ -2144,6 +2148,8 @@ function reiterImportNachUndo(info) {
             imp.modus === 'replace' ? undefined : new Set(imp.neueIds || [])
         );
     }
+    const fenster = document.getElementById('import-modal');
+    if (_reiterImport && fenster && fenster.classList.contains('show')) renderImportVorschau();
 }
 // Anmeldung wie features/soundboard/soundboard-crud.js: systems/undo.js laedt vorher (loader.js)
 if (typeof window.registerUndoHook === 'function') {
