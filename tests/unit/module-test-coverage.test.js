@@ -179,7 +179,16 @@ const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
     'features/bestiary/bestiary-crud.js',
-    'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    // -- 2026-11-03, AVATAR-DATEI: 'features/bestiary/bestiary-editor.js' (CR-01)
+    //    ist hier GESTRICHEN. tests/e2e/features/bild-lokal.spec.js (c) faehrt am
+    //    gebauten Buendel mit echten Klicks "Bearbeiten" -> "🖼️ Bild setzen" ->
+    //    Speichern, einmal mit einer lokalen Datei und einmal mit Netzwerkpfaden,
+    //    und urteilt ueber Vorschau, Meldung, D, Speicher und das Portrait im
+    //    Detail. openBestiaryEditor(), openBstAvatarModal(),
+    //    validateAvatarUrlSafe() und refreshBstAvatarPreview() stehen in diesem
+    //    Modul; ohne es waere keiner der Faelle erklaerbar. Bis zum Pruefbefund
+    //    nach bd06445d nannte die Spec nur den Dateinamen, damit dieser Fall
+    //    nicht rot wurde. Die Liste darf nur schrumpfen; sie tut es hier.
     // -- 2026-10-27, ABBRUCH: 'features/command-palette/command-palette.js' ist
     //    hier GESTRICHEN, und mit ihm acht weitere Eintraege (unten markiert):
     //    die Liste schrumpft um neun. Die Waechter des Vertrags ABBRUCH
