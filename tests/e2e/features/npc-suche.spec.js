@@ -68,9 +68,11 @@
  *   R4  Sichtbarer Text: der Dialog wird vor dem Vergleich Text — Tags fallen
  *       weg, &amp; &nbsp; &lt; &gt; dekodiert, <br>, div, p und li werden ein
  *       Leerzeichen, Leerraum wird zusammengefasst; ueber einen EIGENEN
- *       Such-Normalisierer, stripHtml() bleibt unveraendert.
+ *       Such-Normalisierer, stripHtml() bleibt unveraendert. Dazu die Zellen
+ *       td und th (Nachbesserung, siehe unten): die App schreibt Tabellen
+ *       selbst in einen Dialog, und ihre Zellen stehen sichtbar getrennt.
  *                                     W2, W2t, W9 (kein Markup-Treffer), W10f,
- *                                     W10s
+ *                                     W10s, W10t
  *   R5  Ortsansicht: Ortsname ODER Beschreibung ODER ein NPC an diesem Ort,
  *       dessen Name den GETRIMMTEN Begriff enthaelt — derselbe Mechanismus,
  *       der Name total gelesen (datenText()).                         W7, W4o
@@ -163,6 +165,19 @@
  * (dort bleibt die Bedingung `searchFields.length > 0`). Kein Fall dieser
  * Datei ist an der richtigen Skizze rot, und jede zurueckgenommene Regel macht
  * mindestens einen Fall rot — hier oder in tests/unit/filter-engine.test.js.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DIE NACHBESSERUNG — nach der Pruefung des Kopfes 3aaf8ad1 (Verhalten und
+ * Tests, Chromium, echte Bedienung, Mutanten des Normalisierers). Jeder neue
+ * Fall ist vor seinem Fix am Kopf rot gezeigt, oder — wo kein Fehler im Code
+ * lag — an dem Mutanten, den er fangen soll (drei Worker, Chromium, dev).
+ *
+ *   W10t  Tabelle ueber Strg+Umschalt+T im Schnell-Dialog, zwei Zellen
+ *         beschrieben, 💾. Am Kopf 3aaf8ad1 rot 4: "Gold Silber" und
+ *         "Spalte 1 Spalte 2" -> [], "GoldSilber" und "1Spalte" -> [Tilo]
+ *         (Scheintreffer) — der Normalisierer kannte td und th nicht. Am
+ *         Stand b1fc7da6 rot 2: die zwei Begriffe ueber eine Zellgrenze (ein
+ *         reiner Dialogtreffer fand dort ohnehin nichts).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (Vertrag, "NICHT IM PR")
@@ -992,4 +1007,54 @@ test('W10s Zeilen- und Blockgrenzen und Leerraum im gespeicherten Dialog', async
     ]))
         await npcSuche(page, zeile);
     await keinFehlerAusser(fehler);
+});
+
+test('W10t Tabelle aus dem Editor: Woerter in zwei Zellen stehen getrennt', async ({ page }) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, { npcs: [] });
+    await zuAnsicht(page, 'npcs');
+    const tilo = await npcAnlegen(page, { name: 'Tilo', rolle: 'Wechsler', volk: 'Zwerg' });
+    await tippen(page, '#npc-search', '');
+    await page.locator(`#npc-list .npc-item[data-id="${tilo}"]`).click();
+    await expect(page.locator('#npc-detail-panel .npc-detail-name')).toContainText('Tilo');
+    await page
+        .locator(`#npc-detail-panel [data-action="show-add-dialog-modal-stop"][data-id="${tilo}"]`)
+        .click();
+    const editor = page.locator('#quick-dialog-text');
+    await expect(editor).toBeVisible();
+    await editor.click();
+    // Strg+Umschalt+T fuegt eine 3x3-Tabelle ein (insertTable(), ui/editors/
+    // rich-text-insert.js): Kopfzeile <th> "Spalte 1".."Spalte 3", darunter
+    // zwei Zeilen leerer <td>. Das Einfuegen einer Tabelle (Strg+V) laesst
+    // <table>, <tr>, <td> und <th> ebenso stehen.
+    await page.keyboard.press('Control+Shift+T');
+    const zellen = editor.locator('td');
+    await expect(zellen, 'Vorbedingung: die Tabelle steht im Schnell-Dialog').toHaveCount(6);
+    await zellen.nth(0).click();
+    await page.keyboard.type('Gold');
+    await zellen.nth(1).click();
+    await page.keyboard.type('Silber');
+    // Aus der Tabelle heraus ins Titelfeld klicken: solange die Schreibmarke in
+    // der Tabelle steht, liegt deren Kontextleiste ueber 💾 und faengt den Klick
+    // (vorbestehend, gemessen; nicht dieser Vorgang).
+    await page.locator('#quick-dialog-title').click();
+    await expect(page.locator('#table-context-toolbar')).not.toHaveClass(/visible/);
+    await page.locator('#quick-dialog-modal [data-action="save-quick-dialog"]').click();
+    await expect(editor).toBeHidden();
+    const texte = await dialogTexte(page, tilo);
+    expect(texte, 'Vorbedingung: Tilo hat genau einen Dialog').toHaveLength(1);
+    expect(String(texte[0]), 'Vorbedingung: zwei Kopfzellen nebeneinander').toMatch(
+        /<th\b[^>]*>Spalte 1<\/th>\s*<th\b[^>]*>Spalte 2<\/th>/
+    );
+    expect(String(texte[0]), 'Vorbedingung: "Gold" und "Silber" in zwei Zellen').toMatch(
+        /<td\b[^>]*>Gold<\/td>\s*<td\b[^>]*>Silber<\/td>/
+    );
+    for (const zeile of /** @type {[string, number[], string][]} */ ([
+        ['Gold Silber', [tilo], '</td><td>'],
+        ['GoldSilber', [], '</td><td> zusammengeklebt — kein Scheintreffer'],
+        ['Spalte 1 Spalte 2', [tilo], '</th><th>'],
+        ['1Spalte', [], '</th><th> zusammengeklebt — kein Scheintreffer']
+    ]))
+        await npcSuche(page, zeile);
+    await keinFehlerAusser(fehler, ERLAUBT_SCHNELLDIALOG);
 });
