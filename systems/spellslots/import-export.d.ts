@@ -17,6 +17,8 @@ interface ReiterImportVorbereitung {
     idFehler?: string | null;
 }
 declare function showImportModal(dataType: string, vorbereitung: ReiterImportVorbereitung): void;
+/** Undo-Hook des Reiter-Imports (R7): verwirft nach Strg+Z/Strg+Y ein Bearbeiten des Typs. */
+declare function reiterImportNachUndo(info?: { action?: string; direction?: string; kennungen?: unknown[] }): void;
 declare function updateIOCounts(): void;
 declare function exportSpells(): void;
 declare function importDataGlobal(): void;

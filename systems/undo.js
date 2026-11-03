@@ -27,7 +27,7 @@ function enforceUndoByteBudget() {
         undoStack.shift();
     }
 }
-function pushUndo(action) {
+function pushUndo(action, kennung) {
     // Serialisierbarkeit VOR dem Push prüfen (D-06): ein zirkuläres oder sonst nicht
     // serialisierbares window.D darf keinen kaputten Eintrag auf den Stack legen. Der
     // Aufrufer (die destruktive Operation) läuft trotzdem weiter — "am Spieltisch nie
@@ -48,32 +48,42 @@ function pushUndo(action) {
         redoStack.length = 0;
         return;
     }
-    _pushUndoSnapshot(action, stateJSON);
+    _pushUndoSnapshot(action, stateJSON, kennung);
 }
 // Legt einen bereits serialisierten Stand auf den Undo-Stack — gemeinsam fuer pushUndo() und
-// das Konflikt-Neuladen (reloadData, R06).
-function _pushUndoSnapshot(action, stateJSON) {
+// das Konflikt-Neuladen (reloadData, R06). `kennung` (optional) sagt den Undo-Hooks, WELCHE
+// Aktion ein Schritt zuruecknimmt bzw. wiederherstellt — das Label ist dafuer nicht eindeutig
+// (REITERIMPORT R7: Rueckgaengig und Wiederholen eines Ersetzens tauschen, welcher Eintrag
+// hinter einer ID steht). Ein Eintrag fuehrt sie als Liste `kennungen`.
+function _pushUndoSnapshot(action, stateJSON, kennung) {
     // Dedupe (D-09a): ein Snapshot, der zeichengleich zum aktuellen Stack-Kopf ist, wird
     // NICHT erneut gepusht — die Serialisierung in pushUndo() lief trotzdem, weil sie der
     // einzige Weg ist, das ueberhaupt festzustellen. Der Redo-Stack wird unten unabhaengig
     // davon geleert, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23).
     const currentTop = undoStack[undoStack.length - 1];
     if (!currentTop || currentTop.state !== stateJSON) {
-        undoStack.push({
-            action,
-            state: stateJSON,
-            timestamp: Date.now()
-        });
+        const eintrag = { action, state: stateJSON, timestamp: Date.now() };
+        if (kennung !== undefined) eintrag.kennungen = [kennung];
+        undoStack.push(eintrag);
         if (undoStack.length > UNDO_LIMIT) {
             undoStack.shift();
         }
         enforceUndoByteBudget();
+    } else if (kennung !== undefined) {
+        // Gleicher Stand: kein neuer Eintrag — das Rueckgaengig des Kopfs nimmt die neue
+        // Aktion mit zurueck, also traegt der Kopf auch ihre Kennung.
+        currentTop.kennungen = (currentTop.kennungen || []).concat([kennung]);
     }
     // Redo-Stack leeren wenn neue Aktion
     redoStack.length = 0;
 }
-function saveUndoState(action = 'Änderung') {
-    pushUndo(action);
+function saveUndoState(action = 'Änderung', kennung) {
+    pushUndo(action, kennung);
+}
+// Die Kennungen eines Eintrags fuer Stack-Wechsel und Hook-Nachricht — ohne Kennung kein Feld,
+// die Nachricht bleibt dann { action, direction } wie zuvor.
+function _undoKennungen(eintrag) {
+    return eintrag.kennungen ? { kennungen: eintrag.kennungen } : {};
 }
 function undo() {
     if (undoStack.length === 0) {
@@ -118,7 +128,8 @@ function undo() {
     redoStack.push({
         action: last.action,
         state: redoStateJSON,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        ..._undoKennungen(last)
     });
     if (redoStack.length > UNDO_LIMIT) {
         redoStack.shift();
@@ -140,7 +151,7 @@ function undo() {
     if (renderAll) renderAll();
     if (saveImmediate) saveImmediate();
     showToast(`↩️ Rückgängig: ${last.action}`);
-    _notifyUndoHooks({ action: last.action, direction: 'undo' });
+    _notifyUndoHooks({ action: last.action, direction: 'undo', ..._undoKennungen(last) });
 }
 function redo() {
     if (redoStack.length === 0) {
@@ -174,7 +185,8 @@ function redo() {
     undoStack.push({
         action: last.action,
         state: undoStateJSON,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        ..._undoKennungen(last)
     });
     if (undoStack.length > UNDO_LIMIT) {
         undoStack.shift();
@@ -197,7 +209,7 @@ function redo() {
     if (renderAll) renderAll();
     if (saveImmediate) saveImmediate();
     showToast('↪️ Wiederhergestellt');
-    _notifyUndoHooks({ action: last.action, direction: 'redo' });
+    _notifyUndoHooks({ action: last.action, direction: 'redo', ..._undoKennungen(last) });
 }
 function clearUndoHistory() {
     undoStack.length = 0;

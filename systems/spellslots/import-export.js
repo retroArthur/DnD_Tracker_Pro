@@ -1750,6 +1750,35 @@ function reiterBearbeitenVerwerfen(typ, neueIds) {
 }
 
 /**
+ * R7 auch nach Strg+Z und Strg+Y (Undo-Hook, systems/undo.js registerUndoHook()). Rueckgaengig
+ * und Wiederholen eines Imports tauschen genau wie der Import selbst, welcher Eintrag hinter
+ * einer ID steht. Gemessen (Pruefer, Runde 1, Stand a3822abf): Ersetzen (id 1 ist jetzt "Mira")
+ * → Strg+Z → ✏️ Thorin → Strg+Y → "Speichern" schrieb Thorin ueber Mira, "Charakter
+ * aktualisiert"; spiegelbildlich ✏️ Mira → Strg+Z → "Speichern" Mira ueber den
+ * urspruenglichen Thorin; ueber ↩️/↪️ und beim Encounter genauso. Darum dieselbe Regel wie beim
+ * Import, in beide Richtungen: Ersetzen → jedes Bearbeiten des Typs, Hinzufuegen → nur eines,
+ * dessen ID ein importierter Eintrag traegt (vorher und nachher gehoert sie sonst niemandem).
+ * Welche Aktion ein Schritt betrifft, sagt die Kennung, die executeImport() dem Undo-Punkt
+ * mitgibt — das Label ("2 Charaktere importiert") ist dafuer nicht eindeutig.
+ * @param {{action?: string, direction?: string, kennungen?: unknown[]}} [info]
+ */
+function reiterImportNachUndo(info) {
+    const kennungen = info && Array.isArray(info.kennungen) ? info.kennungen : [];
+    for (const kennung of kennungen) {
+        const imp = kennung && typeof kennung === 'object' ? kennung.reiterImport : null;
+        if (!imp || typeof imp.typ !== 'string') continue;
+        reiterBearbeitenVerwerfen(
+            imp.typ,
+            imp.modus === 'replace' ? undefined : new Set(imp.neueIds || [])
+        );
+    }
+}
+// Anmeldung wie features/soundboard/soundboard-crud.js: systems/undo.js laedt vorher (loader.js)
+if (typeof window.registerUndoHook === 'function') {
+    window.registerUndoHook(reiterImportNachUndo);
+}
+
+/**
  * "Importieren" im Fenster: schreibt die vorbereitete Datei und meldet den Erfolg erst danach,
  * mit deutschem Typnamen im richtigen Numerus (R2).
  * @param {string} [dataType] - nur zur Gegenprobe: weicht er vom vorbereiteten Typ ab, wird
@@ -1773,7 +1802,12 @@ function executeImport(dataType) {
     }
     const name = reiterTypName(type, items.length);
     const renderAll = window.renderAll;
-    saveUndoState(`${items.length} ${name} importiert`);
+    // Die Kennung sagt reiterImportNachUndo(), welchen Typ ein Strg+Z/Strg+Y dieses Imports
+    // betrifft (R7) — beim Hinzufuegen dazu die neuen IDs, die erst unten feststehen: nextId()
+    // laeuft NACH dem Undo-Punkt, damit Strg+Z auch den Zaehler zuruecknimmt.
+    /** @type {{reiterImport: {typ: string, modus: string, neueIds?: number[]}}} */
+    const kennung = { reiterImport: { typ: type, modus: mode } };
+    saveUndoState(`${items.length} ${name} importiert`, kennung);
     /** @type {Set<number>|undefined} */
     let neueIds;
     // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
@@ -1789,6 +1823,7 @@ function executeImport(dataType) {
         // nicht); Verweise innerhalb des Typs auf die neuen IDs, alle anderen geleert
         const neu = reiterHinzufuegen(type, items);
         neueIds = new Set(neu.map(item => item.id));
+        kennung.reiterImport.neueIds = [...neueIds];
         ioSetArray(type, [...(ioGetArray(type) || []), ...neu]);
     }
     // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor

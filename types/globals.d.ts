@@ -110,7 +110,7 @@ declare global {
   function hideConflictBanner(): void;
   
   /** Push undo state */
-  function pushUndo(description?: string): void;
+  function pushUndo(description?: string, kennung?: unknown): void;
   
   /** Undo last action */
   function undo(): void;
