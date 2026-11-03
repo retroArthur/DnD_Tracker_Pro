@@ -557,6 +557,11 @@ function cancelCharEdit() {
             if (attacksContainer) attacksContainer.innerHTML = '';
         }
     });
+    // Vorschau aus dem geleerten Feld nachfuehren (AVATAR-VORSCHAU R3) — fuer alle Leerwege:
+    // Abbrechen, Speichern, Kopfzeile/Taste n/Palette (verwirfBearbeitenRest) und Import R7.
+    // Bewusst NACH clearFormFields() und nicht in customHandlers: dort laeuft alles in einem
+    // try-Block, und ein frueherer werfender Handler liesse den Aufruf still wegfallen.
+    updateAvatarPreview($('char-avatar')?.value || '');
 
     // Formular schließen
     $('char-form').classList.remove('open');
