@@ -1021,6 +1021,7 @@ export default {
     "normalizeCampaignData": 'readonly',
     "normalizeEntityIds": 'readonly',
     "normalizeLegacyVersionStamp": 'readonly',
+    "npcDialogSuchtext": 'readonly',
     "npcFeldUrsprung": 'readonly',
     "npcNameHtml": 'readonly',
     "oeffneHpRechnerAmZug": 'readonly',

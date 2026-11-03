@@ -62,6 +62,25 @@ function getNPCIcon(npc) {
     return NPC_ICONS.default;
 }
 /**
+ * Ein Dialogtext (HTML aus dem Editor) als sichtbarer Text fuer die Suche, kleingeschrieben
+ * (Vertrag NPC-SUCHE, R4): <br> und die Grenzen von div, p und li werden ein Leerzeichen, alle
+ * anderen Tags fallen weg, &nbsp; &lt; &gt; &amp; werden dekodiert (&amp; zuletzt, sonst wuerde
+ * "&amp;lt;" zu "<"), Leerraum wird zusammengefasst. Ein eigener Normalisierer: stripHtml()
+ * klebt die Woerter beiderseits einer Zeilengrenze zusammen ("Rabattenur"), dient aber der
+ * Anzeige und bleibt darum, wie es ist.
+ */
+function npcDialogSuchtext(html) {
+    return html
+        .replace(/<(br|\/?(div|p|li))\b[^>]*>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+}
+/**
  * Renders the NPC list in master-detail layout
  * Considers active filters and search terms
  */
@@ -103,22 +122,24 @@ function renderNPCList() {
             }
         `;
     }
-    // Get search and filter
+    // Get search and filter — der Begriff einmal beim Lesen getrimmt (Vertrag NPC-SUCHE, R6):
+    // der Leerzustand sieht denselben Begriff wie applyFilters() und der Dialogzweig.
     const searchEl = $('npc-search');
-    const search = (searchEl?.value || '').toLowerCase();
-    // Apply filters (single pass)
+    const search = (searchEl?.value || '').trim().toLowerCase();
+    // Apply filters (single pass). Der Dialogtext ist ein ODER-Zweig der Suche (searchAlso, R1),
+    // kein customFilter mehr: der schraenkt nur ein, und seit 73d3193b fand die Ansicht einen
+    // NPC mit Dialogen nur, wenn der Begriff in einem Feld UND einem Dialog stand. Total (R3):
+    // dialogs, das keine Liste ist, und ein Element, dessen text kein String ist, treffen nie.
     const npcs = applyFilters(D.npcs || [], {
         searchText: search,
         searchFields: ['name', 'role', 'race', 'description'],
+        searchAlso: (n, s) =>
+            Array.isArray(n?.dialogs) &&
+            n.dialogs.some(
+                d => typeof d?.text === 'string' && npcDialogSuchtext(d.text).includes(s)
+            ),
         filters: {
             locationId: currentNpcFilter !== 'all' ? currentNpcFilter : null
-        },
-        customFilter: n => {
-            // Also search in dialog texts
-            if (search && (n.dialogs || []).length > 0) {
-                return (n.dialogs || []).some(d => (d.text || '').toLowerCase().includes(search));
-            }
-            return true;
         }
     });
     // Alphabetisch, total fuer JEDEN Namen (Vertrag NPC-NAME, N2): `a.name.localeCompare(b.name)`
