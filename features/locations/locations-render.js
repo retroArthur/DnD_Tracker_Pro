@@ -101,12 +101,12 @@ function renderLocations() {
     const searchEl = $('loc-search');
     const search = (searchEl?.value || '').toLowerCase();
     // Pre-compute NPC locations that match search (if searching). Der NPC-Name total gelesen
-    // (npcText(), Vertrag NPC-NAME N2): `n.name.toLowerCase()` warf je Taste, wenn ein Name
+    // (datenText(), Vertrag NPC-NAME N2): `n.name.toLowerCase()` warf je Taste, wenn ein Name
     // fehlte oder eine Zahl war, und die Suche filterte nichts mehr.
     const npcLocs = search
         ? new Set(
               D.npcs
-                  .filter(n => npcText(n.name).toLowerCase().includes(search))
+                  .filter(n => datenText(n.name).toLowerCase().includes(search))
                   .map(n => n.locationId)
           )
         : null;

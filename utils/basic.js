@@ -982,11 +982,26 @@ function bereinigeDatengrenze(daten) {
     return daten;
 }
 // [DATENGRENZE:ENDE]
+/**
+ * Ein Wert aus D als Text, fuer JEDEN Wert und ohne zu werfen (Vertrag NPC-NAME, N2/E4) — fuer
+ * Leser, die danach Zeichenketten-Methoden rufen. Dieselbe Umwandlung wie datengrenzeText() an
+ * der Grenze (Zahl und Wahrheitswert verlustfrei Text, Objekt und Liste ''); was jene
+ * unveraendert laesst, ohne dass es Text ist — fehlend, `null` —, wird hier ''. Damit gilt der
+ * Leser auch fuer Werte, die zur Laufzeit an der Grenze vorbei nach D kommen (der 🎲 Generator
+ * vor N3). NICHT `(x || '')`: das rettet nur Falsches, eine Zahl bliebe eine Zahl. Ausserhalb
+ * des Datengrenzen-Blocks: die Grenze selbst braucht ihn nicht, die Jest-Kopie auch nicht.
+ */
+function datenText(wert) {
+    const text = datengrenzeText(wert);
+    return typeof text === 'string' ? text : '';
+}
 // Auch als window-Eigenschaft: fuer Aufrufer anderer Module und Werkbaenke mit eigenem
 // window-Objekt. Aufrufer in anderen Modulen: die Eingaenge (R4: Kampagnen-Import, Backup,
 // Migration, load()) und die Ausgabestellen (R2/R3: Klassen, Farben, Links, Bildquellen in
-// features/, systems/, ui/ und utils/). Ohne Verwendung in dieser Datei meldete
-// no-unused-vars jede dieser Deklarationen und hoebe den Lint-Pin.
+// features/, systems/, ui/ und utils/); datenText() fuer Sortierung, Volks-Symbol und Namen
+// der NPCs (features/npcs/npc-render.js), die Ortssuche (features/locations/locations-render.js)
+// und tagText() (systems/tags.js). Ohne Verwendung in dieser Datei meldete no-unused-vars jede
+// dieser Deklarationen und hoebe den Lint-Pin.
 window.sichererLink = sichererLink;
 window.sichererListenLink = sichererListenLink;
 window.sichereBildquelle = sichereBildquelle;
@@ -994,3 +1009,4 @@ window.istRelativerLink = istRelativerLink;
 window.sichereFarbe = sichereFarbe;
 window.sichereKlasse = sichereKlasse;
 window.bereinigeDatengrenze = bereinigeDatengrenze;
+window.datenText = datenText;

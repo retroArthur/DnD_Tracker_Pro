@@ -37,26 +37,14 @@ const RELATION_STATUS = {
     hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
 };
 /**
- * Name oder Volk eines NPC als Text, fuer JEDEN Wert (Vertrag NPC-NAME, N2): Text bleibt, Zahl
- * und Wahrheitswert werden Text (`42` -> "42", E2/E3), alles andere — fehlend, `null`, Objekt,
- * Liste — wird ''. Dieselbe Regel wie datengrenzeText() an der Datengrenze (N1), hier auch fuer
- * Werte, die zur Laufzeit an ihr vorbei nach D kommen (🎲 Generator). Wirft nie: Sortierung,
- * Volks-Symbol und Ortssuche rufen danach Zeichenketten-Methoden. NICHT `(x || '')` — das rettet
- * nur Falsches, eine Zahl bleibt eine Zahl.
- */
-function npcText(wert) {
-    if (typeof wert === 'string') return wert;
-    if (typeof wert === 'number' || typeof wert === 'boolean') return String(wert);
-    return '';
-}
-/**
  * Der Name eines NPC als HTML fuer Liste und Detail (Vertrag NPC-NAME, E1): ohne Namen (auch
  * nur aus Leerzeichen) ein gedimmtes "Unbenannt" (.npc-unbenannt). Gespeichert bleibt '' (so
  * setzt die Datengrenze einen fehlenden Namen, N1), und 💾 verlangt weiter einen Namen. Chips,
- * Popup und Suchen zeigen weiter den gespeicherten Wert.
+ * Popup und Suchen zeigen weiter den gespeicherten Wert. Name und Volk liest diese Datei ueber
+ * datenText() (utils/basic.js, N2): Text fuer jeden Wert, auch zur Laufzeit an der Grenze vorbei.
  */
 function npcNameHtml(npc) {
-    const name = npcText(npc.name);
+    const name = datenText(npc.name);
     return name.trim() ? esc(name) : '<span class="npc-unbenannt">Unbenannt</span>';
 }
 /**
@@ -65,7 +53,7 @@ function npcNameHtml(npc) {
 function getNPCIcon(npc) {
     // Das Volk total gelesen (N2): `(npc.race || '').toLowerCase()` warf bei einer Zahl oder
     // einem Objekt — in jeder Lage — und leerte die ganze Liste.
-    const race = npcText(npc.race).toLowerCase();
+    const race = datenText(npc.race).toLowerCase();
     // Ueber die Schluessel statt Object.entries: der Rueckgabewert ist sichtbar ein
     // Tabellenwert (Vertrag SENKEN, Ratsche tests/unit/html-senken.test.js).
     for (const key of Object.keys(NPC_ICONS)) {
@@ -138,7 +126,7 @@ function renderNPCList() {
     // Engine (Chromium letzte/mittlere, Firefox erste/mittlere Lage; npc-altdaten.spec.js).
     // Ein NPC ohne Namen ('') steht vorn. Damit ist RUECKSPRUNG Offen (8) erledigt; Rundlauf
     // (12) haengt nicht mehr an diesem Wurf, sondern an einem Pruefwurf in getNPCIcon().
-    npcs.sort((a, b) => npcText(a.name).localeCompare(npcText(b.name)));
+    npcs.sort((a, b) => datenText(a.name).localeCompare(datenText(b.name)));
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
