@@ -474,6 +474,10 @@ const EntityActions = {
     // Encounter form actions
     'update-enc-languages': () => updateEncLanguages(),
     'update-enc-attr-mod': ctx => updateEncAttrMod(ctx.target.dataset.value),
+    // KREATUR-ATTRIBUTE: die sechs Attributfelder des Kreaturen-Editors. Der Schlüssel kommt
+    // aus data-value, NIE aus ctx.value — bei input ist das der getippte Wert, bei leerem
+    // Feld der data-value-Rückfall. Idempotent für input, change und click.
+    'update-bst-attr-mod': ctx => updateBstAttrMod(ctx.target.dataset.value),
     'toggle-enc-save-box': ctx => toggleEncSaveBox(ctx.target.dataset.value),
 
     // Spell form actions
