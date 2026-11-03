@@ -25,6 +25,10 @@ declare function reiterFormFehler(eintrag: Record<string, any>, dataType: string
 declare function reiterTextverweiseErsetzen(text: string, ersetzen: (ganz: string, typWort: string, idText: string, name: string) => string): string;
 /** Ein Text aus der Datei, gekuerzt fuer eine Meldung (REITER_MELDUNG_TEXT_MAX). */
 declare function reiterZitat(text: string): string;
+/** R3: die Stelle eines Eintrags, dessen Eltern-Kette (REITER_ELTERNFELD) in der Datei im Kreis laeuft, sonst -1. */
+declare function reiterElternKreis(eintraege: Record<string, any>[], feld: string): number;
+/** R6: wohin die Verweise der Datei auf andere Bereiche nach dem Ersetzen zeigen — je Feld auf einen vorhandenen Eintrag, oder ins Leere. */
+declare function reiterVerweiseDerDatei(typ: string, items: Record<string, any>[]): { treffer: { wort: string; n: number }[]; insLeere: number };
 declare function updateIOCounts(): void;
 declare function exportSpells(): void;
 declare function importDataGlobal(): void;
