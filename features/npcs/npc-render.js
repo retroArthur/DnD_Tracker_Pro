@@ -37,10 +37,23 @@ const RELATION_STATUS = {
     hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
 };
 /**
+ * Der Name eines NPC als HTML fuer Liste und Detail (Vertrag NPC-NAME, E1): ohne Namen (auch
+ * nur aus Leerzeichen) ein gedimmtes "Unbenannt" (.npc-unbenannt). Gespeichert bleibt '' (so
+ * setzt die Datengrenze einen fehlenden Namen, N1), und 💾 verlangt weiter einen Namen. Chips,
+ * Popup und Suchen zeigen weiter den gespeicherten Wert. Name und Volk liest diese Datei ueber
+ * datenText() (utils/basic.js, N2): Text fuer jeden Wert, auch zur Laufzeit an der Grenze vorbei.
+ */
+function npcNameHtml(npc) {
+    const name = datenText(npc.name);
+    return name.trim() ? esc(name) : '<span class="npc-unbenannt">Unbenannt</span>';
+}
+/**
  * Gets the appropriate icon for an NPC based on race
  */
 function getNPCIcon(npc) {
-    const race = (npc.race || '').toLowerCase();
+    // Das Volk total gelesen (N2): `(npc.race || '').toLowerCase()` warf bei einer Zahl oder
+    // einem Objekt — in jeder Lage — und leerte die ganze Liste.
+    const race = datenText(npc.race).toLowerCase();
     // Ueber die Schluessel statt Object.entries: der Rueckgabewert ist sichtbar ein
     // Tabellenwert (Vertrag SENKEN, Ratsche tests/unit/html-senken.test.js).
     for (const key of Object.keys(NPC_ICONS)) {
@@ -108,8 +121,12 @@ function renderNPCList() {
             return true;
         }
     });
-    // Alphabetisch. Ein Objekt als Name wird an der Datengrenze '' (SENKEN R4); ein FEHLENDER Name wirft hier weiter (RUECKSPRUNG Offen (8), Rundlauf (12) braucht den Wurf)
-    npcs.sort((a, b) => a.name.localeCompare(b.name));
+    // Alphabetisch, total fuer JEDEN Namen (Vertrag NPC-NAME, N2): `a.name.localeCompare(b.name)`
+    // warf an einem Namen, der kein Text war, und leerte die ganze Liste — ob, hing an Lage UND
+    // Engine (Chromium letzte/mittlere, Firefox erste/mittlere Lage; npc-altdaten.spec.js).
+    // Ein NPC ohne Namen ('') steht vorn. Damit ist RUECKSPRUNG Offen (8) erledigt; Rundlauf
+    // (12) haengt nicht mehr an diesem Wurf, sondern an einem Pruefwurf in getNPCIcon().
+    npcs.sort((a, b) => datenText(a.name).localeCompare(datenText(b.name)));
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
@@ -153,7 +170,7 @@ function renderNPCItem(npc) {
             </div>
             <div class="npc-item-info">
                 <div class="npc-item-name">
-                    ${esc(npc.name)}
+                    ${npcNameHtml(npc)}
                     ${location ? `<span class="npc-item-tag">${esc(location.name)}</span>` : ''}
                 </div>
                 <div class="npc-item-meta">
@@ -249,9 +266,10 @@ function showNPCDetail(id) {
               )
               .join('')
         : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
-    // Build tags
+    // Build tags — in beiden Formen, die in D stehen (Vertrag NPC-NAME, E4): 🏷️ schreibt
+    // {name, color}, Altdaten tragen Text. `esc(t)` zeigte das Objekt als "[object Object]".
     const tagsHtml = tags.length
-        ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('')
+        ? tags.map(t => `<span class="npc-tag">${esc(tagText(t))}</span>`).join('')
         : '';
     // Build links (LINK_ICONS from core/constants.js)
     const linksHtml = links.length
@@ -270,7 +288,7 @@ function showNPCDetail(id) {
                     ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
                 </div>
                 <div class="npc-detail-title">
-                    <div class="npc-detail-name">${esc(npc.name)}</div>
+                    <div class="npc-detail-name">${npcNameHtml(npc)}</div>
                     <div class="npc-detail-subtitle">
                         ${npc.race ? `<span class="npc-detail-race">${esc(npc.race)}</span>` : ''}
                         ${npc.race && npc.role ? ' • ' : ''}

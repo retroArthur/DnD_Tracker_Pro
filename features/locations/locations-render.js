@@ -100,9 +100,15 @@ function renderLocations() {
     // Get search and filter
     const searchEl = $('loc-search');
     const search = (searchEl?.value || '').toLowerCase();
-    // Pre-compute NPC locations that match search (if searching)
+    // Pre-compute NPC locations that match search (if searching). Der NPC-Name total gelesen
+    // (datenText(), Vertrag NPC-NAME N2): `n.name.toLowerCase()` warf je Taste, wenn ein Name
+    // fehlte oder eine Zahl war, und die Suche filterte nichts mehr.
     const npcLocs = search
-        ? new Set(D.npcs.filter(n => n.name.toLowerCase().includes(search)).map(n => n.locationId))
+        ? new Set(
+              D.npcs
+                  .filter(n => datenText(n.name).toLowerCase().includes(search))
+                  .map(n => n.locationId)
+          )
         : null;
     // Apply filters (single pass)
     const locs = applyFilters(D.locations || [], {
@@ -277,12 +283,12 @@ function showLocationDetail(id) {
               .filter(Boolean)
               .join('')
         : '';
-    // Build tags - Tags sind Objekte mit {name, color}
+    // Build tags - Objekte mit {name, color} oder Text, gelesen ueber tagText() (systems/tags.js)
     const tagsHtml = tags.length
         ? tags
               .map(
                   t =>
-                      `<span class="loc-tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(t.name || t)}</span>`
+                      `<span class="loc-tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(tagText(t))}</span>`
               )
               .join('')
         : '';
