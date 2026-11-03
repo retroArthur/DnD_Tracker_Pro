@@ -437,6 +437,11 @@ function editChar(id) {
     // Avatar and height
     const avatarInput = $('char-avatar');
     if (avatarInput) avatarInput.value = ch.avatar || '';
+    // Die Vorschau folgt dem FELD (AVATAR-VORSCHAU R1/R2): `.value =` loest kein input-Ereignis
+    // aus, und 'update-avatar-preview' hing nur daran — sie zeigte den zuletzt GETIPPTEN Wert
+    // oder "?", nie das Bild des geladenen Helden. Direkt aufrufen, kein synthetisches Ereignis
+    // (R4): BESTIAR-KLICK stellt ein change mit dem schon zugestellten Wert nicht mehr zu.
+    updateAvatarPreview(avatarInput ? avatarInput.value : '');
     const heightInput = $('char-height');
     if (heightInput) heightInput.value = String(ch.height || '');
     // Skill proficiencies + expertise (D-03, CHAR-03)
