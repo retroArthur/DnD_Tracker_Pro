@@ -323,7 +323,16 @@ const MODULE_TEST_EXCEPTIONS = [
     'systems/spellslots/spell-slots-core.js',
     'systems/spellslots/spellslots-ui.js',
     'systems/spellslots/virtual-list.js',
-    'systems/tags.js',
+    // -- 2026-11-03, NPC-NAME: 'systems/tags.js' ist hier GESTRICHEN. Das Gate
+    //    wurde rot, weil der Kopf von tests/e2e/features/npc-altdaten.spec.js den
+    //    Pfad nennt — aber die Abdeckung ist echt: W11f und W11g fahren das
+    //    🏷️-Fenster mit echten Klicks (renderTagsModal(), "+" ueber
+    //    addTagToEntity(), der Klick auf ein globales Tag ueber
+    //    addExistingTagToEntity(), das Loeschen ueber deleteGlobalTag()), W11 und
+    //    W11o lesen tagText() im NPC- und im Ort-Detail. Gemessen: jede der fuenf
+    //    Stellen des Fensters einzeln auf `t.name` zurueckgesetzt macht W11f bzw.
+    //    W11g rot. Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur
+    //    schrumpfen; sie tut es hier.
     'systems/wiki-links.js',
     'tools/debug.js',
     'ui/actions/combat-actions.js',

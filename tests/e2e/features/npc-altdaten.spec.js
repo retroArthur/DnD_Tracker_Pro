@@ -750,7 +750,9 @@ for (const [id, titel, tags] of /** @type {[string, string, any[]][]} */ ([
 const GLOBAL_WICHTIG = [{ name: 'Wichtig', color: 'red' }];
 
 /**
- * Oeffnet das 🏷️-Fenster aus Annas Detail — der Weg eines Nutzers.
+ * Oeffnet das 🏷️-Fenster aus Annas Detail — der Weg eines Nutzers. Das Fenster
+ * gehoert systems/tags.js: W11f und W11g fahren dort renderTagsModal(),
+ * addTagToEntity(), addExistingTagToEntity() und deleteGlobalTag().
  * @param {import('@playwright/test').Page} page
  */
 async function tagFensterVonAnna(page) {
