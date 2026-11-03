@@ -4,17 +4,22 @@
 // ============================================================
 // Global render state variable
 let renderPending = false;
-/** Die Welt-Reiter mit gespeicherten Listen (Reise ist ein Rechner ohne Eintraege). */
-const WELT_LISTEN_ANSICHTEN = Object.freeze(['sessionprep', 'kalender', 'fraktionen']);
 /**
- * Zeichnet den offenen Welt-Reiter ueber seinen Eintrag in TAB_RENDER_REGISTRY neu (Liste,
- * Kopf, Detail und gefilterter Zaehler) — fuer renderAll(), das sonst keine Welt-Ansicht kennt.
- * Ein anderer offener Reiter: nichts.
+ * Die Ansichten, die renderAll() nur OFFEN zeichnet, ueber ihren Eintrag in TAB_RENDER_REGISTRY:
+ * die Welt-Reiter mit gespeicherten Listen (REITERIMPORT R8; Reise ist ein Rechner ohne
+ * Eintraege) und das Bestiar (BESTIAR-UNDO R2). Das Bestiar NIE versteckt: sein Rollwerk misst
+ * beim ersten Zeichnen die Fensterhoehe und setzte im versteckten Reiter den Rueckfall 400 px fest.
  */
-function renderOffeneWeltAnsicht() {
+const LISTEN_ANSICHTEN = Object.freeze(['sessionprep', 'kalender', 'fraktionen', 'bestiary']);
+/**
+ * Zeichnet die offene Listen-Ansicht ueber ihren Eintrag in TAB_RENDER_REGISTRY neu (Liste,
+ * Kopf, Detail und gefilterter Zaehler) — fuer renderAll(), das sonst keine dieser Ansichten
+ * kennt. Ein anderer offener Reiter: nichts.
+ */
+function renderOffeneListenAnsicht() {
     const aktiv = document.querySelector('.view.active');
     const ansicht = aktiv && aktiv.id ? aktiv.id.replace(/^view-/, '') : '';
-    if (WELT_LISTEN_ANSICHTEN.includes(ansicht) && typeof window.renderTabContent === 'function') {
+    if (LISTEN_ANSICHTEN.includes(ansicht) && typeof window.renderTabContent === 'function') {
         window.renderTabContent(ansicht);
     }
 }
@@ -85,7 +90,9 @@ function renderAll() {
         // oder Strg+Y zeigten Session-Prep, Kalender und Fraktionen den alten Stand, bis man den
         // Reiter wechselte (gemessen). Gezeichnet wird nur der OFFENE: die anderen zeichnet der
         // Reiterwechsel (TAB_RENDER_REGISTRY), ihre Zaehler schreibt updateIOCounts().
-        renderSafe(renderOffeneWeltAnsicht, 'renderOffeneWeltAnsicht');
+        // BESTIAR-UNDO R2: ebenso das offene Bestiar — nach Strg+Z blieben ★, Zeilen, Zaehler,
+        // Filteroptionen und Detail auf dem alten Stand (gemessen).
+        renderSafe(renderOffeneListenAnsicht, 'renderOffeneListenAnsicht');
         // Update IO-Counter
         try {
             updateIOCounts();

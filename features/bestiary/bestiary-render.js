@@ -147,9 +147,9 @@ function renderBestiaryListItem(monster) {
 // steht der Anfang der neuen Trefferliste im Bild. Bleibt sie gleich
 // (Auswahl, ★, Klick ins Suchfeld, Neuzeichnen nach dem Speichern einer
 // Kreatur), bleibt die Lage, und der gewaehlte Eintrag bleibt gezeichnet und
-// im Bild. Strg+Z zeichnet diese Liste NICHT neu (renderAll() kennt sie
-// nicht): die Lage bleibt dort ohnehin, ein zurueckgenommener ★ steht aber
-// bis zum naechsten Zeichnen falsch da (Katalog BESTIAR-KLICK, Offen).
+// im Bild. Das gilt auch fuer Strg+Z/Strg+Y: renderAll() zeichnet die OFFENE
+// Liste neu (BESTIAR-UNDO R2), ihre Signatur bleibt — ausser ein gewaehlter
+// HG-/Typ-Wert verschwand; dann "Alle" und nach oben (BESTIAR-UNDO R5).
 // Bewusst NICHT an der Aktion 'search-input' festgemacht: die ruft schon der
 // Klick ins Suchfeld (ui/event-delegation.js, _handleClick), und der aendert
 // nichts. Dass die Lage ein Neuzeichnen ueberhaupt ueberlebt, sichert das
@@ -462,6 +462,9 @@ function renderBestiaryDetail(id, source) {
             renderStatblockHTML(monster, source) +
             attributionHtml +
         '</div>';
+    // Was das Detail jetzt zeigt — renderBestiaryAnsicht() zeichnet es nur neu, wenn sich die
+    // Kreatur in D davon unterscheidet (BESTIAR-UNDO R3)
+    bestiaryDetailStand = JSON.stringify(monster);
 }
 
 // ============================================================
@@ -473,6 +476,92 @@ function selectBestiary(id, source) {
     selectedBestiarySource = source;
     renderBestiaryDetail(id, source);
     renderBestiaryList();
+}
+
+// ============================================================
+// BESTIAR-ANSICHT (BESTIAR-UNDO, R2-R4)
+// Der Eintrag 'bestiary' in TAB_RENDER_REGISTRY: Liste UND Detail im Stand
+// von D. Ein Weg fuer den Reiterwechsel, renderAll() bei OFFENEM Bestiar
+// (Strg+Z/Strg+Y, Import, Wiederherstellen) und Speichern/Loeschen einer
+// eigenen Kreatur — darum stimmt das Detail auch, wenn Strg+Z in einem
+// anderen Reiter fiel und man zurueckkommt.
+// Liste: immer neu, die Lage haelt BESTIAR-KLICK R3. Der Fokus einer Zeile
+//   oder ihres ★ bleibt bei DIESER Kreatur (die Tastaturgruppe hielte nur
+//   den Index und gaebe ihn einem fremden Monster); ist sie weg: Suchfeld.
+// Detail: nur neu, wenn sich die gewaehlte Kreatur in D geaendert hat —
+//   sonst gingen Fokus, Rolllage und der Oeffner eines Dialogs verloren.
+//   Gibt es sie nicht mehr: Auswahl null, leerer Zustand, Fokus ins Suchfeld.
+// Der Fokus faellt dabei nie auf BODY.
+// ============================================================
+
+/** JSON der Kreatur, die das Detail zuletzt zeigte (gesetzt in renderBestiaryDetail). */
+var bestiaryDetailStand = null;
+
+function renderBestiaryAnsicht() {
+    var ZEILE = '#bestiary-list .bestiary-list-item';
+    var suchfeld = window.$('bestiary-search');
+    // Fokus nach dem Neuzeichnen an ziel — gelingt das nicht, ins Suchfeld
+    function fokussiere(ziel) {
+        if (ziel) {
+            ziel.focus({ preventScroll: true });
+            if (document.activeElement !== ziel && window.KeyboardGroup) {
+                // Eine frische Zeile ist ein div ohne tabindex, bis die Kehrschleife
+                // laeuft — derselbe Griff wie fokusZurueck() in ui/virtual-scroll.js
+                window.KeyboardGroup.aktualisieren();
+                ziel.focus({ preventScroll: true });
+            }
+        }
+        if (document.activeElement !== ziel && suchfeld) suchfeld.focus({ preventScroll: true });
+    }
+
+    // ---- Liste ----
+    var vorher = document.activeElement;
+    var zeile = vorher && vorher.closest ? vorher.closest(ZEILE) : null;
+    var zeilenFokus = null;
+    if (zeile) {
+        zeilenFokus = {
+            id: zeile.dataset.id,
+            source: zeile.dataset.source,
+            aktion: vorher === zeile ? null : vorher.getAttribute('data-action')
+        };
+    }
+    renderBestiaryList();
+    if (zeilenFokus) {
+        var ziel = null;
+        document.querySelectorAll(ZEILE).forEach(function (z) {
+            if (z.dataset.id === zeilenFokus.id && z.dataset.source === zeilenFokus.source) {
+                ziel = z;
+            }
+        });
+        if (ziel && zeilenFokus.aktion) {
+            ziel = ziel.querySelector('[data-action="' + zeilenFokus.aktion + '"]');
+        }
+        fokussiere(ziel);
+    }
+
+    // ---- Detail ----
+    var panel = window.$('bestiary-detail-panel');
+    if (!panel || selectedBestiaryId === null) return;
+    var monster = getBestiaryMonster(selectedBestiaryId, selectedBestiarySource);
+    var fokusImDetail = panel.contains(document.activeElement);
+    if (!monster) {
+        selectedBestiaryId = null;
+        selectedBestiarySource = null;
+        bestiaryDetailStand = null;
+        panel.innerHTML =
+            '<div class="bestiary-detail-empty"><div class="bestiary-detail-empty-icon">🐉</div>' +
+            '<div class="bestiary-detail-empty-text">Wähle ein Monster aus der Liste</div></div>';
+        if (fokusImDetail) fokussiere(null);
+        return;
+    }
+    if (JSON.stringify(monster) === bestiaryDetailStand) return;
+    var aktion = fokusImDetail ? document.activeElement.getAttribute('data-action') : null;
+    var lage = panel.scrollTop;
+    renderBestiaryDetail(selectedBestiaryId, selectedBestiarySource);
+    panel.scrollTop = lage;
+    if (fokusImDetail) {
+        fokussiere(aktion ? panel.querySelector('[data-action="' + aktion + '"]') : null);
+    }
 }
 
 // cleanupBestiaryEditor is implemented in bestiary-editor.js (Plan 04).
@@ -497,4 +586,6 @@ window.renderStatblockHTML = renderStatblockHTML;
 window.renderClickableDice = renderClickableDice;
 window.crToSortValue = crToSortValue;
 window.selectBestiary = selectBestiary;
+// Registry-Eintrag 'bestiary' (systems/tab-registry.js) und Speichern/Loeschen im CRUD-Modul
+window.renderBestiaryAnsicht = renderBestiaryAnsicht;
 // cleanupBestiaryEditor: exported by bestiary-editor.js (loads after this module)
