@@ -691,6 +691,106 @@ const REITER_TEXTFELDER = Object.freeze({
 });
 
 /**
+ * Listen- und Objektfelder je Typ und die Form, die die App dort liest (R3). Gemessen (Pruefer,
+ * Runde 1, Sonden p3/p11, und eine eigene Formprobe je Typ, Feld und Form — Liste, Detail,
+ * Bearbeiten, Dashboard, Suche): EINE Quest mit `tags: "eilig"` legte den ganzen Quest-Reiter
+ * lahm ("⚠️ Anzeigefehler tags.map is not a function", auch nach dem Neuladen, ohne Strg+Z);
+ * Gegenstaende des Helden als Objekt, `spellClasses` als Text, ein `null` in `rewardItems` ebenso
+ * ihren Reiter, die uebrigen Felder hier Detail oder ✏️. Die Formen:
+ *   liste          eine Liste (ihre Eintraege liest die App, wie sie kommen)
+ *   ohneNull       eine Liste ohne leeren Eintrag — Tags sind Text (Truhe, Wiki) oder
+ *                  `{name, color}`, Gegenstaende eine ID oder `{id, quantity}`; ein `null` darin
+ *                  wirft (`t.color`, `item.id`)
+ *   objekte        eine Liste von Objekten
+ *   listeOderText  eine Liste oder ein Text — Sprachen alter Daten sind Text, und
+ *                  encounters-crud.js/party-crud.js lesen beides (`.split(',')`)
+ * Fehlt ein Feld oder ist es null, ist das kein Fehler (die App liest `|| []`). Nur Felder mit
+ * gemessenem oder am Code belegtem Wurf: jede weitere Form lehnte Dateien ab, die die App liest
+ * (`attributes`, `currency`, `spellSlots` in falscher Form warfen nirgends). Die Tags aller acht
+ * Typen, die showEntitiesWithTag() (systems/tags.js) durchsucht, und die Verknuepfungen jedes
+ * Typs, der sie traegt (REITER_VERWEIS_LINKS: `{type, id}`), stehen einheitlich drin.
+ */
+const REITER_FORMFELDER = Object.freeze({
+    characters: Object.freeze({
+        items: 'ohneNull',
+        conditions: 'objekte',
+        attacks: 'objekte',
+        resistances: 'liste',
+        immunities: 'liste',
+        languages: 'listeOderText',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    npcs: Object.freeze({
+        quests: 'liste',
+        info: 'liste',
+        relationships: 'liste',
+        triggers: 'objekte',
+        dialogs: 'objekte',
+        relations: 'objekte',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    locations: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    quests: Object.freeze({ rewardItems: 'objekte', tags: 'ohneNull', links: 'objekte' }),
+    // `monsters` einer Gruppe: importEncounterMonsters() (encounter-calculator.js) liest
+    // `m.count` je Eintrag (am Code)
+    encounters: Object.freeze({
+        languages: 'listeOderText',
+        resistances: 'liste',
+        immunities: 'liste',
+        conditionImmunities: 'liste',
+        monsters: 'objekte',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    loot: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    spells: Object.freeze({ spellClasses: 'liste', tags: 'ohneNull', links: 'objekte' }),
+    wiki: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    links: Object.freeze({}),
+    sessionPreps: Object.freeze({ szenen: 'objekte', offeneFaeden: 'objekte', links: 'objekte' }),
+    calendarEvents: Object.freeze({}),
+    factions: Object.freeze({ rufHistorie: 'objekte', links: 'objekte' })
+});
+
+/**
+ * Was an der Form der Listen- und Objektfelder eines Eintrags nicht stimmt (REITER_FORMFELDER),
+ * sonst null.
+ * @param {Object} eintrag
+ * @param {string} dataType
+ * @returns {string|null}
+ */
+function reiterFormFehler(eintrag, dataType) {
+    const felder = Object.prototype.hasOwnProperty.call(REITER_FORMFELDER, dataType)
+        ? REITER_FORMFELDER[dataType]
+        : {};
+    for (const [feld, form] of Object.entries(felder)) {
+        if (!Object.prototype.hasOwnProperty.call(eintrag, feld)) continue;
+        const wert = eintrag[feld];
+        if (wert === null || (form === 'listeOderText' && typeof wert === 'string')) continue;
+        if (!Array.isArray(wert)) {
+            const soll = form === 'listeOderText' ? 'eine Liste oder ein Text' : 'eine Liste';
+            return `„${feld}“ muss ${soll} sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+        if (form === 'ohneNull') {
+            const i = wert.indexOf(null);
+            if (i >= 0) {
+                return `„${feld}“ darf keine leeren Einträge haben, an Stelle ${i + 1} enthält die Datei nichts`;
+            }
+        } else if (form === 'objekte') {
+            const i = wert.findIndex(el => !el || typeof el !== 'object' || Array.isArray(el));
+            if (i >= 0) {
+                return (
+                    `„${feld}“ muss eine Liste von Objekten sein, an Stelle ${i + 1} enthält die ` +
+                    `Datei ${reiterWertText(wert[i])}`
+                );
+            }
+        }
+    }
+    return null;
+}
+
+/**
  * Die Zahlenfelder eines Eintrags dieses Typs, als zerlegte Pfade AB dem Eintrag — genau die
  * Pfade der Datengrenze (DATENGRENZE_PFADE), die unter der Sammlung des Typs liegen. EINE Liste
  * fuer Grenze und Pruefung: was die Grenze still verwerfen wuerde ("viel" in `hpMax`), lehnt die
@@ -777,7 +877,8 @@ function reiterZahlFehler(knoten, teile, stufe, weg) {
 
 /**
  * Was an EINEM Eintrag nicht stimmt (R3), sonst null: das Namensfeld, die Zahlenfelder
- * (reiterZahlenpfade()), die Textfelder (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
+ * (reiterZahlenpfade()), die Listen- und Objektfelder (REITER_FORMFELDER), die Textfelder
+ * (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
  * @param {Object} eintrag
  * @param {string} dataType
  * @returns {string|null}
@@ -795,6 +896,8 @@ function reiterEintragFehler(eintrag, dataType) {
         const fehler = reiterZahlFehler(eintrag, teile, 0, '');
         if (fehler) return fehler;
     }
+    const formFehler = reiterFormFehler(eintrag, dataType);
+    if (formFehler) return formFehler;
     const textfelder = [
         ...(REITER_TEXTFELDER[dataType] || []),
         ...(HTML_FIELDS_BY_TYPE[dataType] || [])
