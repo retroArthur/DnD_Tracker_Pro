@@ -27,18 +27,28 @@
  *   R2  Wirft renderNPCList(): der NPC bleibt (kein Zurueckrollen), genau
  *       eine Erfolgsmeldung UND mindestens eine Meldung vom Typ error, der
  *       Wurf steht im Fehlerlog (ErrorHandler).
+ *   R1  dazu die Reihenfolge: save() → Vorschau verbrauchen, Fenster weg →
+ *       Erfolgsmeldung → ZULETZT das Zeichnen.
+ *   R2  ... und die Fehlermeldung kommt auch, wenn kurz zuvor eine andere
+ *       ueber ErrorHandler.showError lief (dessen Entprellung, 2 s, global,
+ *       schluckte sie — darum schliesst R3 showError aus).
+ *   R3  Im prod-Buendel (DEBUG_MODE aus) erreicht der Wurf des Zeichnens
+ *       den Aufrufer nicht — abgefangen IN saveGeneratedNPC. Im dev-Buendel
+ *       laesst R3 das erneute Werfen zu, das safeRender als LETZTE Anweisung
+ *       ausloest; darum nur prod.
  *   R4  pushUndo, push und save() VOR dem Zeichnen.
  *   R5  Heil: 1 NPC, 1 Undo, 1 Erfolgsmeldung, Fenster weg.
- * R3 (abgefangen IN saveGeneratedNPC, nicht in renderNPCList) prueft dieser
- * Test nicht: seine Doppel ersetzen renderNPCList. Zum Stand von R3 siehe den
+ * Den ORT des Abfangens (saveGeneratedNPC, nicht renderNPCList) prueft dieser
+ * Test nicht: seine Doppel ersetzen renderNPCList. Zum Stand dort siehe den
  * Kopf der E2E-Spec (GEGENPROBE).
  *
  * WIE GEMESSEN WIRD. Geladen werden das ECHTE Modul
  * (features/npc-generator/npc-generator.js) und die echten Fehler-Helfer
  * (render/helpers.js: ErrorHandler, safeRender) per vm.runInContext in einen
  * gemeinsamen Kontext — wie im Buendel teilen sie sich den globalen Bereich;
- * ein Fix darf also safeRender, ErrorHandler.showError oder einen eigenen
- * catch nehmen. DOM ist das jsdom-Dokument der Testumgebung; der Generator
+ * ein Fix darf also safeRender (als letzte Anweisung, mit showToastOnError)
+ * oder einen eigenen catch nehmen — nicht ErrorHandler.showError (R2,
+ * Entprellung). DOM ist das jsdom-Dokument der Testumgebung; der Generator
  * wird ueber showNPCGeneratorModal() geoeffnet. Doppel, die protokollieren
  * und auf Wunsch werfen: save, pushUndo, nextId, showToast, renderNPCList,
  * sanitizeHTML, esc, $. Ein "Klick" laeuft wie in der App durch den catch von
@@ -49,7 +59,10 @@
  * AM BASISSTAND (b1fc7da6) gemessen: rot an der ersten gebrochenen Zusage,
  * keiner an einer Vorbedingung — "Zeichnen wirft" dev und prod: 0
  * Erfolgsmeldungen statt 1; "save() wirft": das Fenster steht noch im DOM.
- * Gruen (Kontrollen): heil (R5), Reihenfolge (R4), showToast() wirft.
+ * Gruen (Kontrollen): heil (R5), Reihenfolge (R4), showToast() wirft. Die
+ * sechs Faelle der Nachpruefung dort ebenfalls rot (9 von 12 rot): die
+ * Erfolgsmeldung kam heil NACH dem Zeichnen und fehlte beim Wurf, der Wurf
+ * erreichte den Aufrufer, und eine Fehlermeldung gab es nicht.
  *
  * GEGENPROBE (beim Schreiben, an Kopien des Moduls, nicht Teil der Datei):
  * der Fix des Vertrags — Verbrauchen und Schliessen im finally um save(),
@@ -60,6 +73,17 @@
  * Knopf sperren: die drei Fehlerfaelle rot. safeRender mit Standard-
  * rethrowInDebug und Schliessen DANACH: dev rot, prod gruen. Reihenfolge von
  * saveNPC (save() nach dem Zeichnen): R4 und beide Zeichnen-Faelle rot.
+ *
+ * NACHPRUEFUNG (an Kopien des Kopfes 39fc6cd5, beide Buendel gebaut, nicht
+ * Teil der Datei): drei Vertragsteile sah bis dahin KEIN Test — jede dieser
+ * Mutanten war in allen elf E2E- und allen sechs bisherigen Unit-Faellen
+ * gruen: die Erfolgsmeldung nach dem abgefangenen Zeichnen (m23), der catch
+ * meldet und wirft dann weiter (m21), ErrorHandler.showError statt showToast
+ * (m12). Mit den drei neuen Faellen rot, je NUR an seinem: m23 die drei
+ * Reihenfolge-Faelle, m21 "R3 prod", m12 beide Entprellungs-Faelle. Die
+ * vertragsgemaesse Fassung mit safeRender als letzter Anweisung und
+ * showToastOnError bleibt 12 von 12 — die Faelle verlangen nicht mehr als
+ * der Vertrag.
  */
 
 const fs = require('fs');
@@ -120,6 +144,8 @@ function lade({ debug, wirft = null }) {
             if (wirft === 'renderNPCList') throw new Error(PRUEFWURF);
         },
         showToast: (text, typ) => {
+            // Auch in die Schritte: R1 legt die Erfolgsmeldung VOR das Zeichnen.
+            protokoll.schritte.push('showToast:' + typ);
             protokoll.meldungen.push({ text: String(text), typ: String(typ) });
             if (wirft === 'showToast') throw new Error(PRUEFWURF);
         }
@@ -252,4 +278,61 @@ describe('GENERATOR-DOPPELT: saveGeneratedNPC() verbraucht die Vorschau bei jede
         verbraucht(ctx);
         expect(protokoll.schritte.filter(s => s.startsWith('pushUndo'))).toHaveLength(1);
     });
+
+    // ── Nachpruefung: drei Vertragsteile, die bis dahin kein Test sah ──────
+    // (gemessen an Kopien des Kopfes 39fc6cd5, dev- und prod-Buendel gebaut:
+    // jede der drei Mutanten war in allen elf E2E- und allen sechs bisherigen
+    // Unit-Faellen gruen; siehe NACHPRUEFUNG im Kopf)
+
+    for (const [fall, wirft, debug] of /** @type {const} */ ([
+        ['heil', null, true],
+        ['Zeichnen wirft, dev', 'renderNPCList', true],
+        ['Zeichnen wirft, prod', 'renderNPCList', false]
+    ])) {
+        test(`R1 Reihenfolge (${fall}): die Erfolgsmeldung kommt nach save() und VOR dem Zeichnen`, () => {
+            const { protokoll } = einKlick({ debug, wirft });
+            const n = VORHER.length + 1;
+            const stelle = s => protokoll.schritte.indexOf(s);
+            // Vorbedingung: gespeichert und gezeichnet wurde je einmal.
+            expect(stelle(`save:${n}`)).toBeGreaterThanOrEqual(0);
+            expect(protokoll.schritte.filter(s => s.startsWith('renderNPCList'))).toHaveLength(1);
+            expect(stelle('showToast:success')).toBeGreaterThan(stelle(`save:${n}`));
+            expect(stelle(`renderNPCList:${n}`)).toBeGreaterThan(stelle('showToast:success'));
+        });
+    }
+
+    test('R3 prod (DEBUG_MODE false): der Wurf des Zeichnens wird IN saveGeneratedNPC abgefangen — der Aufruf wirft nicht weiter', () => {
+        // Nur prod: im dev-Buendel laesst R3 das erneute Werfen zu, das
+        // safeRender als LETZTE Anweisung wegen DEBUG_MODE ausloest.
+        const { ctx, protokoll } = lade({ debug: false, wirft: 'renderNPCList' });
+        ctx.showNPCGeneratorModal();
+        expect(fensterImDom(ctx)).toBe(true);
+        expect(() => ctx.saveGeneratedNPC()).not.toThrow();
+        // Vorbedingung: das Zeichnen lief und warf, der Wurf steht im Fehlerlog (R2).
+        expect(protokoll.schritte.filter(s => s.startsWith('renderNPCList'))).toHaveLength(1);
+        expect(wurfImFehlerlog(ctx)).toBeGreaterThanOrEqual(1);
+    });
+
+    for (const [buendel, debug] of [
+        ['dev', true],
+        ['prod', false]
+    ]) {
+        test(`R2 (${buendel}): die Fehlermeldung kommt auch, wenn kurz zuvor eine andere ueber ErrorHandler.showError lief (2 s Entprellung, global)`, () => {
+            const { ctx, protokoll } = lade({ debug, wirft: 'renderNPCList' });
+            ctx.showNPCGeneratorModal();
+            // Eine andere Fehlermeldung unmittelbar davor, ueber den ECHTEN
+            // ErrorHandler.showError — so meldet die App z. B. "Daten konnten
+            // nicht serialisiert werden" (systems/spellslots/persistence.js).
+            ctx.ErrorHandler.showError('Daten konnten nicht serialisiert werden');
+            // Vorbedingung: sie kam an — die Entprellung ist damit gespannt.
+            expect(protokoll.meldungen.filter(m => m.typ === 'error')).toHaveLength(1);
+            const vorher = protokoll.meldungen.length;
+            klick(ctx);
+            // Vorbedingung: das Zeichnen warf.
+            expect(wurfImFehlerlog(ctx)).toBeGreaterThanOrEqual(1);
+            expect(
+                protokoll.meldungen.slice(vorher).filter(m => m.typ === 'error').length
+            ).toBeGreaterThanOrEqual(1);
+        });
+    }
 });

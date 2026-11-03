@@ -64,11 +64,18 @@
  * W1–W3 und W5–W7 pruefen R1 und R2 an dem, was der Nutzer sieht und
  * behaelt (DOM, D, Speicher, Meldungen), R1 dazu an der Vorschau selbst
  * (DIE VORSCHAU, unten); W4 prueft D und Speicher nach dem Neuladen. K1/K2
- * pruefen R5, und R1 auch heil. Was diese Datei nicht erreicht: R1 fuer einen
- * Wurf in save() oder showToast() und R4 (pushUndo, push, save VOR dem
- * Zeichnen) prueft tests/unit/npc-generator-speichern.test.js am echten
- * Modul. R3 (abgefangen IN saveGeneratedNPC, nicht in renderNPCList, weil
- * ruecksprung-rundlauf.spec.js (12) den Wurf beim Reiterwechsel braucht)
+ * pruefen R5, und R1 auch heil. Was diese Datei nicht erreicht, prueft
+ * tests/unit/npc-generator-speichern.test.js am echten Modul: R1 fuer einen
+ * Wurf in save() oder showToast(), die Reihenfolge von R1 (Erfolgsmeldung
+ * VOR dem Zeichnen), R2 nach einer anderen Fehlermeldung binnen 2 s
+ * (Entprellung von ErrorHandler.showError), R3 im prod-Buendel (der Wurf
+ * erreicht den Aufrufer nicht) und R4 (pushUndo, push, save VOR dem
+ * Zeichnen). Hier sind die mittleren drei unsichtbar — die Meldungen zaehlt
+ * diese Datei ohne Reihenfolge, ein weitergeworfener Wurf traegt den
+ * Pruefwurf-Text und ist erlaubt, und vor dem Doppelklick laeuft keine
+ * andere Fehlermeldung (Nachpruefung: je eine Mutante, alle elf Faelle
+ * gruen). Der ORT des Abfangens (IN saveGeneratedNPC, nicht in renderNPCList,
+ * weil ruecksprung-rundlauf.spec.js (12) den Wurf beim Reiterwechsel braucht)
  * bleibt eine Regel der Durchsicht: ein catch in renderNPCList, der
  * protokolliert und meldet, ist am Verhalten nicht zu unterscheiden — auch
  * (12) bleibt dann gruen; rot wird (12) erst, wenn er schweigt (GEGENPROBE).
