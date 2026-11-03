@@ -73,7 +73,8 @@
  *       selbst in einen Dialog, und ihre Zellen stehen sichtbar getrennt.
  *                                     W2, W2t, W9 (kein Markup-Treffer), W10f,
  *                                     W10s, W10t; W10w (Tags fallen weg, auch
- *                                     mitten im Wort)
+ *                                     mitten im Wort); W10e (oeffnendes und
+ *                                     schliessendes Tag je allein)
  *   R5  Ortsansicht: Ortsname ODER Beschreibung ODER ein NPC an diesem Ort,
  *       dessen Name den GETRIMMTEN Begriff enthaelt — derselbe Mechanismus,
  *       der Name total gelesen (datenText()).                         W7, W4o
@@ -189,6 +190,13 @@
  *         -> [], "Gold enen" -> [Wanda]); W2 "Goldenen Krug" fing ihn nicht,
  *         weil dort die Tags auf Wortgrenzen sitzen und das Zusammenfassen
  *         ' ' und '' gleich macht. Am Stand b1fc7da6 rot 1 ("Goldenen").
+ *   W10e  Gesaet: zwischen zwei Woertern steht nur das oeffnende ("Zeile<div>
+ *         zweite", "Intro<ul><li>Punkt") oder nur das schliessende Tag
+ *         ("</div>unten", "Punkt</li></ul>Schluss"). Am Kopf gruen. Rot (4)
+ *         am Mutanten "nur schliessende Tags trennen" (die zwei oeffnenden
+ *         Grenzen: getrennt [], zusammengeklebt Scheintreffer) und rot (4) am
+ *         Mutanten "nur oeffnende Tags trennen" (die zwei schliessenden). Am
+ *         Stand b1fc7da6 rot 4 (die getrennten Begriffe).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (Vertrag, "NICHT IM PR")
@@ -1119,4 +1127,47 @@ test('W10w ein Tag mitten im Wort faellt weg, ohne das Wort zu trennen', async (
     ]))
         await npcSuche(page, zeile);
     await keinFehlerAusser(fehler, ERLAUBT_SCHNELLDIALOG);
+});
+
+test('W10e einseitige Blockgrenzen: ein oeffnendes oder schliessendes Tag allein trennt', async ({
+    page
+}) => {
+    // Gesaet: Grenzen, an denen zwischen zwei Woertern NUR das oeffnende oder
+    // NUR das schliessende Tag eines Blocks steht. W10s fuehrt Blockgrenzen nur
+    // als Paare (`</div><div>`), und dort reicht jede Seite allein fuer das
+    // Leerzeichen.
+    /** @type {(id: number, name: string, text: string) => Record<string, any>} */
+    const mit = (id, name, text) => ({
+        id,
+        name,
+        role: '',
+        race: '',
+        description: '',
+        chapter: '',
+        locationId: null,
+        tags: [],
+        triggers: [],
+        dialogs: [dlg('', '', text)]
+    });
+    const fehler = fehlerFangen(page);
+    await laden(page, {
+        npcs: [
+            mit(1, 'Berta', 'Erste Zeile<div>zweite Zeile</div>'),
+            mit(2, 'Cara', '<div>Oben</div>unten'),
+            mit(3, 'Emil', 'Intro<ul><li>Punkt</li></ul>Schluss')
+        ]
+    });
+    await zuAnsicht(page, 'npcs');
+    for (const zeile of /** @type {[string, number[], string][]} */ ([
+        ['Zeile zweite', [1], 'nur <div> zwischen den Woertern'],
+        ['Zeilezweite', [], 'nur <div> — kein Scheintreffer'],
+        ['Oben unten', [2], 'nur </div> zwischen den Woertern'],
+        ['Obenunten', [], 'nur </div> — kein Scheintreffer'],
+        ['Intro Punkt', [3], 'nur <ul><li> zwischen den Woertern'],
+        ['IntroPunkt', [], 'nur <ul><li> — kein Scheintreffer'],
+        ['Punkt Schluss', [3], 'nur </li></ul> zwischen den Woertern'],
+        ['PunktSchluss', [], 'nur </li></ul> — kein Scheintreffer']
+    ]))
+        await npcSuche(page, zeile);
+    await keinFehlerAusser(fehler);
 });
