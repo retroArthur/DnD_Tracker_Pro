@@ -638,6 +638,84 @@ describe('REITERIMPORT R5 — Hinzufuegen an einer Saat aller zwoelf Typen', () 
 });
 
 // ===========================================================================
+// TEXT-VERKNUEPFUNGEN [[typ:id:name]] — DIESELBEN TREFFER, IN LINEARER ZEIT
+// ===========================================================================
+//
+// Befund der Pruefer (Runde 1, gemessen): das Muster /\[\[(\w+):(\d+):([^\]]+)\]\]/g braucht auf
+// "[[a:1:" ohne schliessende Klammern quadratische Zeit — jeder Ansatz sucht bis zum Textende
+// nach "]". Ein NPC-Name aus 40000 Wiederholungen (240 KB) hielt die Dateiwahl 3,4 s auf, bevor
+// der Nutzer etwas entschieden hatte (Vorschau beim Oeffnen, Hinzufuegen, Ersetzen ueber alle
+// Sammlungen); hochgerechnet etwa 1,5 h an der erlaubten Grenze von 10 MB. Der Ersatz muss
+// GENAU die Treffer von systems/entity-links.js parseEntityLinks() behalten (dasselbe Muster):
+// eine Verknuepfung, die die Anzeige als Sprung zeigt, der Import aber nicht saehe, zeigte nach
+// dem Hinzufuegen still auf einen fremden Eintrag (R5).
+describe('REITERIMPORT — Text-Verknuepfungen: dieselben Treffer wie das Muster, in linearer Zeit', () => {
+    const MUSTER = /\[\[(\w+):(\d+):([^\]]+)\]\]/g;
+    const markiere = (ganz, typ, id, name) => `<${typ}|${id}|${name}>`;
+
+    test('T1: dieselben Treffer wie text.replace(MUSTER) — Grenzfaelle und 20000 Zufallstexte', () => {
+        const seite = erzeugeSeite({});
+        const ersetze = vm.runInContext('reiterTextverweiseErsetzen', seite.ctx);
+        const faelle = [
+            '',
+            'kein Verweis',
+            '[[npcs:12:Vela]]',
+            'a [[npcs:1:A]] b [[locations:2:Hafen & Markt]] c',
+            '[[npcs:1:]]',
+            '[[npcs::A]]',
+            '[[:1:A]]',
+            '[[npcs:1:A]',
+            '[[npcs:1:A]]]',
+            '[[[npcs:1:A]]',
+            '[[npcs:1:A [x]]]',
+            '[[npcs:1:A\n]]',
+            '[[npc_2:007:Zahl]]',
+            '[[npcs:1:a[[npcs:2:b]]',
+            '[[npcs:1:a]] [[npcs:2:b]]x]]',
+            '[[a:1:'.repeat(5) + ']]'
+        ];
+        const ALPHA = ['[', ']', ':', 'a', '1', '_', ' ', 'ä', '\n'];
+        let zustand = 4711;
+        const zufall = n => {
+            zustand = (zustand * 1103515245 + 12345) & 0x7fffffff;
+            return zustand % n;
+        };
+        for (let i = 0; i < 20000; i++) {
+            let text = '';
+            const laenge = zufall(32);
+            for (let j = 0; j < laenge; j++) text += ALPHA[zufall(ALPHA.length)];
+            faelle.push(zufall(3) === 0 ? `${text}[[npcs:3:N]]${text}` : text);
+        }
+        const abweichend = faelle.filter(
+            text => ersetze(text, markiere) !== text.replace(MUSTER, markiere)
+        );
+        expect(abweichend).toEqual([]);
+    });
+
+    test('T2: "[[a:1:" vierzigtausendmal ohne Klammer — die Abbildung braucht keine 400 ms', () => {
+        const seite = erzeugeSeite({});
+        const text = 'Langname ' + '[[a:1:'.repeat(40000);
+        const start = performance.now();
+        const ergebnis = seite.ctx.reiterTextverweiseAbbilden(text, (ziel, id) => id, 0);
+        const dauer = performance.now() - start;
+        expect(ergebnis).toBe(text);
+        expect(dauer).toBeLessThan(400);
+    });
+
+    test('T3: dieselbe Datei ueber den ganzen Weg — Dateiwahl bis Vorschau, dann Ersetzen-Vorschau', async () => {
+        const name = 'Langname ' + '[[a:1:'.repeat(40000);
+        const start = performance.now();
+        const seite = erzeugeSeite({ npcs: [{ id: 1, name: 'Volo' }] });
+        seite.ctx.importData(reiterfeld('npcs', datei('npcs', [{ id: 5, name }])));
+        await ruhe();
+        expect(seite.ctx.showModal).toHaveBeenCalledWith('import-modal');
+        document.querySelector('input[name="import-mode"][value="replace"]').checked = true;
+        seite.ctx.renderImportVorschau();
+        expect(performance.now() - start).toBeLessThan(1500);
+    });
+});
+
+// ===========================================================================
 // R6 — ERSETZEN: VERWEISE ANDERER BEREICHE INS LEERE
 // ===========================================================================
 
