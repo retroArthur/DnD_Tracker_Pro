@@ -1625,6 +1625,13 @@ function reiterHinzufuegenVerweise(typ, items) {
  * der in dieser Kampagne so heisst. Jeder Verweis auf einen ANDEREN Bereich wird geleert: die
  * Datei weiss nicht, welche Eintraege dort gemeint sind (Entscheidung des Nutzers, 29.10.).
  * Die Eintraege der Vorbereitung bleiben unveraendert.
+ * Die HTML-Felder werden NACH dem Umschreiben noch einmal bereinigt (SEC-01): eine geleerte
+ * Text-Verknuepfung wird im fertigen Markup zu ihrem Namen, und das kann ein Attribut
+ * veraendern, das die Bereinigung in bereiteReiterImportVor() schon durchgelassen hatte.
+ * Gemessen (Pruefer, Runde 2, Sicherheit): aus dem erlaubten relativen Ziel
+ * `/[[locations:7:/host/x.pdf]]` wurde `//host/x.pdf` — ein Netzwerkziel, in D unbereinigt.
+ * Die Ausgabe bereinigt ohnehin; ohne diesen Schritt stuende in D trotzdem Markup, das
+ * sanitizeHTML() nie durchgelassen haette. Doppelt bereinigt aendert nichts mehr.
  * @param {string} typ
  * @param {Object[]} items
  * @returns {Object[]}
@@ -1638,14 +1645,16 @@ function reiterHinzufuegen(typ, items) {
         const id = reiterIdZahl(item && item.id);
         if (id !== null && eindeutig.has(id)) abbildung.set(id, neueIds[i]);
     });
-    return items.map((item, i) => ({
-        ...reiterVerweiseAbbilden(typ, item, (ziel, id) =>
-            ziel === typ && id !== null && abbildung.has(id)
-                ? /** @type {number} */ (abbildung.get(id))
-                : null
-        ),
-        id: neueIds[i]
-    }));
+    return items.map((item, i) =>
+        sanitizeImportedItem(typ, {
+            ...reiterVerweiseAbbilden(typ, item, (ziel, id) =>
+                ziel === typ && id !== null && abbildung.has(id)
+                    ? /** @type {number} */ (abbildung.get(id))
+                    : null
+            ),
+            id: neueIds[i]
+        })
+    );
 }
 
 /**
