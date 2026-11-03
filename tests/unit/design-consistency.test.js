@@ -7931,7 +7931,7 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
                4x `0 0 20px var(--gold)`   Sprungmarken:
                    features/encounters/encounters-render.js:520  (heute :596)
                    features/locations/locations-render.js:360    (heute :391)
-                   features/npcs/npc-render.js:382               (heute :407)
+                   features/npcs/npc-render.js:382               (heute :428)
                    systems/entity-links.js:430                   (heute :453)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
                    ui/actions/entity-actions.js:362              (heute :376)
@@ -10281,7 +10281,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'features/npcs/npc-render.js',
-            zeile: 407,
+            zeile: 428,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },

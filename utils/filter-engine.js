@@ -11,8 +11,15 @@
  * @param {Object} config - Filter configuration
  * @param {string} config.searchText - Text to search for (case-insensitive)
  * @param {string[]} config.searchFields - Fields to search in
+ * @param {Function} config.searchAlso - Weiterer Suchzweig (optional), ODER-verknuepft mit dem
+ *   Feldvergleich: `searchAlso(item, search)` bekommt den getrimmten, kleingeschriebenen Begriff
+ *   und wird nur bei nicht leerem Begriff gefragt; ohne searchFields entscheidet er allein.
+ *   filters und customFilter bleiben UND-verknuepft (Vertrag NPC-SUCHE, R2).
  * @param {Object} config.filters - Object with filter name -> value mappings
- * @param {Function} config.customFilter - Additional filter function (optional)
+ * @param {Function} config.customFilter - Additional filter function (optional). Schraenkt NUR
+ *   ein: er laeuft nach Begriff und filters und holt keinen Eintrag zurueck, den der Begriff
+ *   verworfen hat. Wer die Suche erweitert, nimmt searchAlso (NPC-SUCHE: als Erweiterung
+ *   benutzt, machte customFilter seit 73d3193b aus der NPC-Suche Feld UND Dialog).
  * @returns {Array} - Filtered array
  *
  * @example
@@ -27,18 +34,26 @@
  * });
  */
 function applyFilters(items, config) {
-    const { searchText = '', searchFields = [], filters = {}, customFilter = null } = config;
+    const {
+        searchText = '',
+        searchFields = [],
+        searchAlso = null,
+        filters = {},
+        customFilter = null
+    } = config;
 
     const search = searchText.trim().toLowerCase();
+    // Der ODER-Zweig der Suche zaehlt nur als Funktion (Vertrag NPC-SUCHE, R2)
+    const auchSuchen = typeof searchAlso === 'function' ? searchAlso : null;
 
     return items.filter(item => {
-        // Search text filter (if provided)
-        if (search && searchFields.length > 0) {
+        // Search text filter (if provided): ein Feld ODER der Zweig searchAlso trifft
+        if (search && (searchFields.length > 0 || auchSuchen)) {
             const matchesSearch = searchFields.some(field => {
                 const value = getNestedValue(item, field);
                 return value && String(value).toLowerCase().includes(search);
             });
-            if (!matchesSearch) return false;
+            if (!matchesSearch && !(auchSuchen && auchSuchen(item, search))) return false;
         }
 
         // Dropdown/select filters
