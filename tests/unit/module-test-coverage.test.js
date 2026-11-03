@@ -353,7 +353,16 @@ const MODULE_TEST_EXCEPTIONS = [
     // Commit — und steht damit auch nicht mehr in loader.js MODULES.
     'ui/virtual-scroll.js',
     // -- 2026-10-27, ABBRUCH: 'utils/crud-helpers.js' GESTRICHEN, s. oben.
-    'utils/filter-engine.js',
+    // -- 2026-11-03, NPC-SUCHE: 'utils/filter-engine.js' ist hier GESTRICHEN.
+    //    tests/unit/filter-engine.test.js laedt das ECHTE Modul per
+    //    vm.runInContext und fuehrt applyFilters() aus: Feld UND filters UND
+    //    customFilter wie bisher, leeres searchFields, und den ODER-Zweig
+    //    searchAlso aus dem Vertrag NPC-SUCHE (R2) — getrimmter Begriff, kein
+    //    Aufruf bei leerem Begriff, UND mit filters und customFilter. Am Stand
+    //    vor dem Fix sind dort genau die fuenf searchAlso-Faelle rot, die einen
+    //    Treffer ueber den neuen Zweig verlangen oder seinen Aufruf beobachten.
+    //    Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen;
+    //    sie tut es hier.
     // -- 2026-10-27, ABBRUCH: 'utils/form-helpers.js' GESTRICHEN, s. oben.
     'utils/game-rules.js',
     'utils/performance-extras.js',
