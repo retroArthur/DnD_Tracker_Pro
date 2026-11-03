@@ -2124,7 +2124,7 @@ function reiterBearbeitenVerwerfen(typ, neueIds) {
 /**
  * R7 auch nach Strg+Z und Strg+Y (Undo-Hook, systems/undo.js registerUndoHook()). Rueckgaengig
  * und Wiederholen eines Imports tauschen genau wie der Import selbst, welcher Eintrag hinter
- * einer ID steht. Gemessen (Pruefer, Runde 1, Stand a3822abf): Ersetzen (id 1 ist jetzt "Mira")
+ * einer ID steht. Gemessen (Pruefer, Runde 1, Stand 16053668): Ersetzen (id 1 ist jetzt "Mira")
  * → Strg+Z → ✏️ Thorin → Strg+Y → "Speichern" schrieb Thorin ueber Mira, "Charakter
  * aktualisiert"; spiegelbildlich ✏️ Mira → Strg+Z → "Speichern" Mira ueber den
  * urspruenglichen Thorin; ueber ↩️/↪️ und beim Encounter genauso. Darum dieselbe Regel wie beim

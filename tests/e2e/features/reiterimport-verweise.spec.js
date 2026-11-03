@@ -14,7 +14,7 @@
  * keinen importierten Eintrag.
  *
  * Der Branch REITERIMPORT setzt auf SENKEN auf (8702f84a, Ausgabe kodiert,
- * Datengrenze an jedem Eingang); am Rot-Nachweis zu a9858d23 war das
+ * Datengrenze an jedem Eingang); am Rot-Nachweis zu ef782074 war das
  * Fehlerbild dieser Datei dort dasselbe wie am Buendel 020e258 unten.
  *
  * ───────────────────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@
  *       Klappformular, steht unter dem 📥 und ueberschrieb gemessen genauso).
  *       Auch nicht nach Strg+Z oder Strg+Y: beide tauschen beim Ersetzen aus,
  *       welcher Eintrag hinter einer ID steht (15-18, Party ueber die Tasten,
- *       Encounter ueber ↩️/↪️ — Befund der Pruefer, Runde 1, Stand a3822abf).
+ *       Encounter ueber ↩️/↪️ — Befund der Pruefer, Runde 1, Stand 16053668).
  *   Kontrollen: (13) Export und Dateiwahl tragen, was die Faelle brauchen;
  *   (14) die Speicher-Wege der Formulare schreiben wirklich — sonst waere
  *   "der importierte Eintrag bleibt unveraendert" in 9-12 billig.
@@ -2221,7 +2221,7 @@ test('(14) die Speicher-Wege der Formulare schreiben, ✏️ setzt die Quest-ID 
 // R8 verspricht, dass Strg+Z den Import zuruecknimmt und Strg+Y ihn
 // wiederherstellt. Beides zusammen oeffnet K3 ein zweites Mal: Rueckgaengig
 // und Wiederholen tauschen beim Ersetzen aus, WELCHER Eintrag hinter einer ID
-// steht — genau wie der Import selbst. Gemessen am Stand a3822abf (Pruefer,
+// steht — genau wie der Import selbst. Gemessen am Stand 16053668 (Pruefer,
 // Runde 1, Sonden p6/p7): Ersetzen (id 1 ist jetzt Mira) → Strg+Z (Thorin
 // wieder id 1) → ✏️ Thorin → Strg+Y (id 1 ist wieder Mira) → "Speichern"
 // schrieb Thorin ueber Mira, "Charakter aktualisiert"; ueber die Kopf-Knoepfe

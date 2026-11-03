@@ -14,7 +14,7 @@
  * R10. Feldtreue, Verweise, Pruefung kaputter Dateien, Undo und Sicherheit
  * (R3–R9) pruefen eigene Dateien. Der Branch REITERIMPORT setzt auf SENKEN
  * auf (8702f84a, Ausgabe kodiert, Datengrenze an jedem Eingang); am
- * Rot-Nachweis zu a9858d23 war das Fehlerbild dieser Datei dort dasselbe wie
+ * Rot-Nachweis zu ef782074 war das Fehlerbild dieser Datei dort dasselbe wie
  * am Buendel 020e258 unten.
  *
  * ───────────────────────────────────────────────────────────────────────────

@@ -174,7 +174,7 @@
  * Eingang): die Senken, an denen (11)–(14) in den Gegenproben unten rot
  * wurden (`cr`, Loot-Tags, `speed`, `speed.walk`, `savingThrows`, Klasse,
  * Resistenzen, `type`, javascript:-hrefs), sind dort geschlossen — gemessen
- * im Rot-Nachweis zu a9858d23: mit dem halben Fix (nur das Fenster) und mit
+ * im Rot-Nachweis zu ef782074: mit dem halben Fix (nur das Fenster) und mit
  * vollem Felddurchlass waren (11)–(14) GRUEN. Rot waren sie am Branch nur an
  * der Vorbedingung (kein Fenster). Sie sind damit Regressionswaechter am
  * neuen Eingang, kein roter Nachweis eines REITERIMPORT-Defekts mehr; die
@@ -2363,7 +2363,7 @@ test('(15) Kanarien in NPC, Ort, Wiki, Session-Prep, Kalender und Fraktion werde
 // ===========================================================================
 //
 // Befund der Pruefer (Runde 1, Sonden p3 und p11, gemessen am Stand
-// a3822abf): die Form von Listen- und Objektfeldern prueft niemand. EINE
+// 16053668): die Form von Listen- und Objektfeldern prueft niemand. EINE
 // Quest mit `tags: "eilig"` kam per "Hinzufügen" an ("✅ 1 Quest importiert
 // (hinzugefügt)"), und der GANZE Quest-Reiter zeigte danach nur noch
 // "⚠️ Anzeigefehler tags.map is not a function" — auch nach dem Neuladen, ohne
@@ -2438,7 +2438,7 @@ test('(16) Listen- und Objektfelder in falscher Form (Tags als Text, Gegenständ
 // ===========================================================================
 //
 // Befund der Pruefer (Runde 2, Sonden p11 und p18, gemessen am Stand
-// 7fd321c6): EIN NPC mit `race: 42` (oder `["Elf"]`) kam per "Hinzufügen" an
+// 09645865): EIN NPC mit `race: 42` (oder `["Elf"]`) kam per "Hinzufügen" an
 // ("✅ 1 NPC importiert (hinzugefügt)"), und die GANZE NPC-Liste zeigte danach
 // nur "⚠️ Anzeigefehler (npc.race || "").toLowerCase is not a function" —
 // auch nach dem Neuladen (getNPCIcon, features/npcs/npc-render.js). Ebenso
