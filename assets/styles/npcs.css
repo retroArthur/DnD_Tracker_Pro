@@ -1275,3 +1275,11 @@
             flex-shrink: 0; /* F-18: aus der Dublette uebernommen */
         }
         
+
+/* NPC ohne Namen (Vertrag NPC-NAME, E1): "Unbenannt" in Liste und Detail, gedimmt.
+   Keine neue Farbe — --text-dim ist die Tinte von .npc-item-meta und .npc-detail-subtitle,
+   die auf denselben Flaechen stehen. Am Dateiende, damit die Zeilenanker der Aktenlage
+   (R-06, R-19 in tests/unit/design-consistency.test.js) nicht wandern. */
+.npc-unbenannt {
+    color: var(--text-dim);
+}

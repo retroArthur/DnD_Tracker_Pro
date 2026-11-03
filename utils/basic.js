@@ -681,6 +681,9 @@ const DATENGRENZE_VERBOTEN = Object.freeze([
  * R4: Textfelder, auf denen Darstellung, Sortierung und Suche Zeichenketten-Methoden rufen
  * (`a.name.localeCompare`, `.toLowerCase()`): ein Objekt oder eine Liste dort wird '' —
  * sonst wirft die ganze Ansicht (Gutachten, Sonde F: ein NPC mit `name: {}` leerte die Liste).
+ * Zahl, Wahrheitswert und `null` bleiben hier stehen: ob die App diese Felder anderswo
+ * regulaer so schreibt, ist nicht gezaehlt. Ganz Text werden nur `npcs[].name` und
+ * `npcs[].race` (N1, datengrenzeNpcTexte()).
  */
 const DATENGRENZE_TEXTFELDER = Object.freeze(['name', 'title', 'category', 'type']);
 /**
@@ -924,29 +927,81 @@ function datengrenzeEntgiften(wurzel) {
     }
 }
 /**
+ * N1 (Vertrag NPC-NAME): Wert eines Textfelds -> Text oder unveraendert. Zahl und
+ * Wahrheitswert werden verlustfrei Text (`42` -> "42", `true` -> "true"), Objekt und Liste ''
+ * (wie die Objektregel in datengrenzeEntgiften()). Text, `null` und ein fehlender Wert kommen
+ * unveraendert zurueck — was dort gilt, entscheidet das Feld (datengrenzeNpcTexte()).
+ */
+function datengrenzeText(wert) {
+    if (typeof wert === 'number' || typeof wert === 'boolean') return String(wert);
+    if (wert && typeof wert === 'object') return '';
+    return wert;
+}
+/**
+ * N1 (Vertrag NPC-NAME): GENAU `npcs[].name` und `npcs[].race` werden Text. Sortierung,
+ * Suchen, Initiative und Volks-Symbol rufen dort Zeichenketten-Methoden
+ * (`a.name.localeCompare`, `.toLowerCase()`): ein Name als Zahl, Wahrheitswert, `null` oder
+ * fehlend und ein Volk, das kein Text ist, leerten die ganze NPC-Liste und legten Orts-, Kopf-
+ * und Telefonsuche und die Initiative lahm (tests/e2e/features/npc-altdaten.spec.js). Ein
+ * fehlender oder `null`-Name wird '' (E1: gespeichert wird '', die Anzeige sagt "Unbenannt"),
+ * ein fehlendes oder `null`-Volk bleibt — kein Volk ist ein gueltiger Stand. Pfadgebunden,
+ * NICHT in jeder Tiefe wie die Objektregel: dieselben Werte in Heldenname, Tag-Name,
+ * Wiki-Titel oder Kaempfer bleiben stehen (R5), und kein fehlender Name wird anderswo
+ * ergaenzt. Ein Eintrag, der kein Objekt ist (auch eine Liste), bleibt unberuehrt — die
+ * Grenze repariert Felder, keine Eintraege.
+ */
+function datengrenzeNpcTexte(daten) {
+    if (!Array.isArray(daten.npcs)) return;
+    for (const npc of daten.npcs) {
+        if (!npc || typeof npc !== 'object' || Array.isArray(npc)) continue;
+        const name = datengrenzeText(npc.name);
+        if (name === null || name === undefined) npc.name = '';
+        else if (name !== npc.name) npc.name = name;
+        const volk = datengrenzeText(npc.race);
+        if (volk !== npc.race) npc.race = volk;
+    }
+}
+/**
  * R4: gemeinsame Datengrenze aller Wege nach D (Kampagnen-Import, Backup lokal und aus dem
  * Ordner, Migrations-Import, Start/Neuladen ueber load()). Entfernt __proto__/constructor/
  * prototype/toString/valueOf in jeder Tiefe, setzt ein Objekt in name/title/category/type auf
- * '' und zwingt die Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe
- * datengrenzeZahlwert). KEIN Sanitizer: Texte, Wuerfelformeln mit `<`/`>`, Namen mit `&`,
- * `<`, `"`, Rich-Text bleiben byte-gleich (R5) — die Ausgabe kodiert (R1). Arbeitet auf dem
- * uebergebenen Objekt (frisch aus JSON.parse) und gibt es zurueck; zweimal angewandt aendert
- * nichts mehr. Aufrufer verwenden das Ergebnis (tests/unit/datengrenze.test.js, Verdrahtung).
+ * '', zwingt `npcs[].name` und `npcs[].race` auf Text (N1, datengrenzeNpcTexte()) und die
+ * Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe datengrenzeZahlwert). KEIN Sanitizer:
+ * Texte, Wuerfelformeln mit `<`/`>`, Namen mit `&`, `<`, `"`, Rich-Text bleiben byte-gleich
+ * (R5) — die Ausgabe kodiert (R1). Arbeitet auf dem uebergebenen Objekt (frisch aus
+ * JSON.parse) und gibt es zurueck; zweimal angewandt aendert nichts mehr. Aufrufer verwenden
+ * das Ergebnis (tests/unit/datengrenze.test.js, Verdrahtung).
  * @param {*} daten - Kampagnenobjekt aus Datei oder Speicher
  * @returns {*} dieselben, bereinigten Daten (kein Objekt: unveraendert)
  */
 function bereinigeDatengrenze(daten) {
     if (!daten || typeof daten !== 'object') return daten;
     datengrenzeEntgiften(daten);
+    datengrenzeNpcTexte(daten);
     for (const pfad of DATENGRENZE_PFADE) datengrenzeFeld(daten, pfad, 0);
     return daten;
 }
 // [DATENGRENZE:ENDE]
+/**
+ * Ein Wert aus D als Text, fuer JEDEN Wert und ohne zu werfen (Vertrag NPC-NAME, N2/E4) — fuer
+ * Leser, die danach Zeichenketten-Methoden rufen. Dieselbe Umwandlung wie datengrenzeText() an
+ * der Grenze (Zahl und Wahrheitswert verlustfrei Text, Objekt und Liste ''); was jene
+ * unveraendert laesst, ohne dass es Text ist — fehlend, `null` —, wird hier ''. Damit gilt der
+ * Leser auch fuer Werte, die zur Laufzeit an der Grenze vorbei nach D kommen (der 🎲 Generator
+ * vor N3). NICHT `(x || '')`: das rettet nur Falsches, eine Zahl bliebe eine Zahl. Ausserhalb
+ * des Datengrenzen-Blocks: die Grenze selbst braucht ihn nicht, die Jest-Kopie auch nicht.
+ */
+function datenText(wert) {
+    const text = datengrenzeText(wert);
+    return typeof text === 'string' ? text : '';
+}
 // Auch als window-Eigenschaft: fuer Aufrufer anderer Module und Werkbaenke mit eigenem
 // window-Objekt. Aufrufer in anderen Modulen: die Eingaenge (R4: Kampagnen-Import, Backup,
 // Migration, load()) und die Ausgabestellen (R2/R3: Klassen, Farben, Links, Bildquellen in
-// features/, systems/, ui/ und utils/). Ohne Verwendung in dieser Datei meldete
-// no-unused-vars jede dieser Deklarationen und hoebe den Lint-Pin.
+// features/, systems/, ui/ und utils/); datenText() fuer Sortierung, Volks-Symbol und Namen
+// der NPCs (features/npcs/npc-render.js), die Ortssuche (features/locations/locations-render.js)
+// und tagText() (systems/tags.js). Ohne Verwendung in dieser Datei meldete no-unused-vars jede
+// dieser Deklarationen und hoebe den Lint-Pin.
 window.sichererLink = sichererLink;
 window.sichererListenLink = sichererListenLink;
 window.sichereBildquelle = sichereBildquelle;
@@ -954,3 +1009,4 @@ window.istRelativerLink = istRelativerLink;
 window.sichereFarbe = sichereFarbe;
 window.sichereKlasse = sichereKlasse;
 window.bereinigeDatengrenze = bereinigeDatengrenze;
+window.datenText = datenText;

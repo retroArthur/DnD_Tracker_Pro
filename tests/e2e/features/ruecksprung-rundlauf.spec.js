@@ -29,7 +29,8 @@
  *   verschwindet (10)
  *   Links nach dem NPC-Reiter, der   ebenso — MIT einem Kaempfer
  *   an einem NPC ohne Namen wirft
- *   (12)
+ *   (12; heute mit eigenem
+ *   Ausloeser, siehe unten)
  *   mit einem Kaempfer, ohne         richtig, alle fuenf (13)
  *   diese Wege
  *
@@ -50,8 +51,8 @@
  *     zeichnen (schaltet aus) und DANN die Initiative.
  *   - renderDMScreen() kehrt frueh zurueck, wenn kein Grid-Widget sichtbar
  *     ist — unabhaengig von der Initiative (10).
- *   - Jede der acht laesst ihn an, wenn sie dazwischen wirft: renderNPCList()
- *     an der Sortierung eines NPC ohne Namen (12).
+ *   - Jede der acht laesst ihn an, wenn sie dazwischen wirft — gemessen an
+ *     renderNPCList(), deren Sortierung an einem NPC ohne Namen warf (12).
  * Die Darstellungen von Party, NPCs, Orten, Quests, Encountern und Bestiar
  * schalten ihn auf allen anderen Wegen wieder aus — darum war der Umweg ueber
  * den NPC-Reiter bis zum Fix ein unwissentlicher Schutz (link-anlegen.spec.js
@@ -101,12 +102,38 @@
  *
  * ERWARTETE FEHLERMELDUNGEN, ausdruecklich und eng: (7) das erste Oeffnen
  * der Rast meldet `Element not found: #rest-modal` (eigener Fehler, Vertrag
- * "Nicht in diesem PR"); (12) der Wurf der NPC-Sortierung (der Ausloeser,
- * bleibt mit dem Fix). Jede andere Meldung ist ein Fehler.
+ * "Nicht in diesem PR"); (12) der Pruefwurf, den der Fall selbst setzt (der
+ * Ausloeser), und nur als Wurf von renderNPCList(). Jede andere Meldung ist
+ * ein Fehler.
  *
- * GEGENPROBE (beim Schreiben, nicht Teil der Datei): mit protokolliertem
- * Zwischenspeicher war er vor jedem Weg aus und danach an. Dann die Fixe,
- * jeder in einer Kopie des Buendels nachgebildet, alle 13 Faelle gefahren:
+ * DER AUSLOESER VON (12) ist ein Pruefwurf, kein Altdatum (seit NPC-NAME).
+ * Der NPC ohne Namen, an dem die Sortierung warf, war selbst ein Fehler
+ * (RUECKSPRUNG Offen (8)), und NPC-NAME behebt ihn: mit ihm verschwaende
+ * der Wurf, (12) wuerde an der Vorbedingung rot (so geschehen in SENKEN,
+ * Nachbesserung (7)) — oder, ohne sie, still gruen, auch wenn der
+ * Zwischenspeicher zurueckkehrte. Darum setzt der Fall nach dem Laden
+ * `window.getNPCIcon` auf eine Funktion, die wirft: renderNPCList() ruft sie
+ * ueber renderNPCItem() fuer jeden Eintrag, nach dem Sortieren, also mitten
+ * im Zeichnen. Der Wurf haelt bis zum Neuladen und haengt nicht an Name,
+ * Volk oder Lage eines NPC. Die Vorbedingung bleibt hart: wird getNPCIcon()
+ * umbenannt oder keine globale Funktion mehr, greift die Zuweisung ins
+ * Leere, der Reiter wirft nicht, und der Fall scheitert dort, statt still
+ * gruen zu werden.
+ * Gemessen mit dieser Datei, Chromium, dev-Buendel: am Stand 8702f84a alle 13
+ * gruen, der Reiter legt in (12) zwei Meldungen des Pruefwurfs dazu (0 → 2:
+ * die Reiter-Verwaltung meldet ihn als `console.error` und im Fehlerlog der
+ * App); ohne die Zuweisung ist (12) rot an der Vorbedingung (0 → 0). An einer
+ * Mutante mit zurueckgeholtem Zwischenspeicher (8702f84a, dazu der
+ * EntityLookup-Block von 785cdeb und Ein-/Ausschalten in renderNPCList()) ist
+ * (12) rot an allen vier Zusagen, bei erfuellter Vorbedingung (0 → 2), die
+ * uebrigen zwoelf gruen; dieselbe Mutante mit `finally` um renderNPCList():
+ * alle 13 gruen.
+ *
+ * GEGENPROBE (beim Schreiben, nicht Teil der Datei; (12) damals noch mit dem
+ * NPC ohne Namen, die Zeile "A" mit dem Pruefwurf nachgemessen: gleich): mit
+ * protokolliertem Zwischenspeicher war er vor jedem Weg aus und danach an.
+ * Dann die Fixe, jeder in einer Kopie des Buendels nachgebildet, alle 13
+ * Faelle gefahren:
  *   `get()` liest immer aus D (der Fix     alle 13 gruen, samt Fehlerliste
  *   des Vertrags)
  *   "A": nur die fruehen Rueckkehren von   nur (12) rot — der Fehlerpfad
@@ -284,12 +311,12 @@ const DM_SCREEN_EIN_GRID_WIDGET = {
     ]
 };
 
-/** Altdaten: der zweite NPC hat keinen Namen — die Sortierung der
- *  NPC-Liste wirft daran (ueber die Oberflaeche nicht anlegbar, die
- *  Pruefung verlangt einen Namen; er kommt aus Saat, Import, altem Stand). */
-const NPCS_EINER_OHNE_NAMEN = [
+/** Drei gewoehnliche NPCs fuer (12). Der Wurf kommt nicht aus ihnen, sondern
+ *  aus dem Pruefwurf, den der Fall in getNPCIcon() setzt; ohne einen NPC
+ *  zeichnete die Liste nur den leeren Zustand und riefe getNPCIcon() nie. */
+const NPCS_MIT_NAMEN = [
     { id: 1, name: 'Zed', role: 'Wirt', description: '' },
-    { id: 2, role: 'Bettler', description: '' },
+    { id: 2, name: 'Mara', role: 'Bettler', race: 'Mensch', description: '' },
     { id: 3, name: 'Abe', role: 'Wache', description: '' }
 ];
 
@@ -443,12 +470,15 @@ function fehlerFangen(page) {
  *  (Vertrag RUECKSPRUNG, "Nicht in diesem PR") — erlaubt, nicht verlangt. */
 const ERWARTET_RAST = [/Element not found: #rest-modal$/];
 
-/** Der Wurf der NPC-Sortierung an einem NPC ohne Namen — der Ausloeser des
- *  Fehlerpfads (12). Er bleibt nach dem Fix bestehen (anderer Fehler); jede
- *  andere Meldung bleibt ein Fehler. */
-const ERWARTET_NPC = [
-    /renderNPCList.*Cannot read properties of undefined \(reading 'localeCompare'\)/
-];
+/** Der Ausloeser des Fehlerpfads (12): (12) setzt nach dem Laden
+ *  `window.getNPCIcon` auf eine Funktion, die mit diesem Text wirft. */
+const PRUEFWURF = 'Pruefwurf RUECKSPRUNG (12)';
+
+/** Der Pruefwurf als Wurf von renderNPCList() — die Reiter-Verwaltung meldet
+ *  ihn als `console.error` und im Fehlerlog der App; nur so ist er erlaubt.
+ *  Derselbe Text aus einer anderen Funktion oder als unbehandelter
+ *  `pageerror` bleibt ein Fehler, ebenso jede andere Meldung. */
+const ERWARTET_NPC = [/renderNPCList.*Pruefwurf RUECKSPRUNG \(12\)/];
 
 /**
  * Am Ende jedes Falls: kein Fehler ausser den ausdruecklich erwarteten.
@@ -959,25 +989,32 @@ test('(11) Links nach Strg+Z: der Rundlauf bleibt beim neuen Stand', async ({ pa
 // (12) DER FEHLERPFAD (R3)
 // ===========================================================================
 //
-// Ein NPC ohne Namen aus Altdaten, EIN Kaempfer (der Zwischenspeicher war
-// am Stand 785cdeb nach dem Laden also aus). Der NPC-Reiter wirft beim
-// Sortieren der Liste — damals zwischen Ein- und Ausschalten, heute weiter,
-// nur ohne Schalter. Danach der Link-Rundlauf.
+// EIN Kaempfer (der Zwischenspeicher war am Stand 785cdeb nach dem Laden
+// also aus) und drei NPCs mit Namen. Nach dem Laden wird getNPCIcon() zum
+// Pruefwurf: der NPC-Reiter wirft beim Zeichnen der Liste, nach dem
+// Sortieren — wie am Stand 785cdeb die Sortierung an einem NPC ohne Namen,
+// zwischen Ein- und Ausschalten. Danach der Link-Rundlauf. Warum ein eigener
+// Ausloeser: siehe Kopf, DER AUSLOESER VON (12).
 test('(12) Fehlerpfad: nach dem werfenden NPC-Reiter (1 Kaempfer) bleibt der Link-Rundlauf beim neuen Stand', async ({
     page
 }) => {
     test.setTimeout(60000);
     const fehler = fehlerFangen(page);
-    await laden(page, { initiative: EIN_KAEMPFER, npcs: NPCS_EINER_OHNE_NAMEN });
-    // Die NPC-Liste wirft schon beim Laden (renderAll()) — gezaehlt wird,
-    // was der REITER dazulegt.
+    await laden(page, { initiative: EIN_KAEMPFER, npcs: NPCS_MIT_NAMEN });
+    // Erst NACH dem Laden: renderAll() zeichnet die Liste noch heil, gezaehlt
+    // wird, was der REITER dazulegt. Der Wurf haelt bis zum Neuladen.
+    await page.evaluate(wurf => {
+        window.getNPCIcon = () => {
+            throw new Error(wurf);
+        };
+    }, PRUEFWURF);
     const npcWuerfe = async () =>
         (await fehler.alle()).filter(z => ERWARTET_NPC.some(r => r.test(z))).length;
     const vorher = await npcWuerfe();
     await zuAnsicht(page, 'npcs');
     expect(
         await npcWuerfe(),
-        'Vorbedingung: der NPC-Reiter wirft am NPC ohne Namen — sonst prueft dieser Fall den Fehlerpfad nicht'
+        'Vorbedingung: der NPC-Reiter wirft den Pruefwurf — sonst prueft dieser Fall den Fehlerpfad nicht (getNPCIcon() umbenannt oder keine globale Funktion mehr?)'
     ).toBeGreaterThan(vorher);
     await rundlauf(page, ARTEN.links, fehler);
     await keinFehlerAusser(fehler, ERWARTET_NPC);
