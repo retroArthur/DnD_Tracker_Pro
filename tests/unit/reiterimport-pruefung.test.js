@@ -324,6 +324,148 @@ describe('REITERIMPORT R3 — die Datei wird vor dem Fenster geprueft', () => {
     });
 });
 
+// Befund der Pruefer (Runde 1, Sonden p3/p11, gemessen): die Form von Listen- und Objektfeldern
+// prueft niemand. EINE Quest mit `tags: "eilig"` kam "✅ … importiert (hinzugefügt)" an, und der
+// ganze Quest-Reiter zeigte danach nur "⚠️ Anzeigefehler tags.map is not a function" — auch
+// nach dem Neuladen, ohne Strg+Z (Hinzufuegen legt keine Sicherheitskopie an). Dieselbe
+// Fehlerklasse wie "name null legt die NPC-Liste lahm" (R3), nur ueber andere Felder. Die Felder
+// hier sind die, an denen eine eigene Formprobe (je Typ, Feld und Form: Liste, Detail,
+// Bearbeiten, Dashboard, Suche) einen Wurf gemessen hat; der Katalog ist REITER_FORMFELDER.
+describe('REITERIMPORT R3 — Listen- und Objektfelder haben die Form, die die App liest', () => {
+    test.each([
+        [
+            'quests',
+            { tags: 'eilig' },
+            /„tags“ muss eine Liste sein, die Datei enthält den Text „eilig“/
+        ],
+        ['quests', { tags: [null] }, /„tags“ darf keine leeren Einträge haben, an Stelle 1/],
+        ['quests', { links: 'x' }, /„links“ muss eine Liste sein/],
+        [
+            'quests',
+            { rewardItems: [{ id: 1, name: 'Schwert' }, null] },
+            /„rewardItems“ muss eine Liste von Objekten sein, an Stelle 2 enthält die Datei nichts/
+        ],
+        [
+            'characters',
+            { items: { a: 1 } },
+            /„items“ muss eine Liste sein, die Datei enthält ein Objekt/
+        ],
+        [
+            'characters',
+            { items: [1, null] },
+            /„items“ darf keine leeren Einträge haben, an Stelle 2/
+        ],
+        ['characters', { conditions: 'vergiftet' }, /„conditions“ muss eine Liste sein/],
+        [
+            'characters',
+            { attacks: [{ name: 'Axt' }, 'Dolch'] },
+            /„attacks“ muss eine Liste von Objekten sein, an Stelle 2 enthält die Datei den Text „Dolch“/
+        ],
+        ['characters', { resistances: 'Feuer' }, /„resistances“ muss eine Liste sein/],
+        [
+            'characters',
+            { immunities: 5 },
+            /„immunities“ muss eine Liste sein, die Datei enthält die Zahl 5/
+        ],
+        [
+            'characters',
+            { languages: { a: 1 } },
+            /„languages“ muss eine Liste oder ein Text sein, die Datei enthält ein Objekt/
+        ],
+        ['npcs', { tags: 'adel' }, /„tags“ muss eine Liste sein/],
+        ['npcs', { links: [null] }, /„links“ muss eine Liste von Objekten sein/],
+        ['npcs', { relations: [null] }, /„relations“ muss eine Liste von Objekten sein/],
+        ['npcs', { triggers: 'x' }, /„triggers“ muss eine Liste sein/],
+        ['npcs', { dialogs: [null] }, /„dialogs“ muss eine Liste von Objekten sein/],
+        ['npcs', { quests: 'Fracht' }, /„quests“ muss eine Liste sein/],
+        ['npcs', { info: 5 }, /„info“ muss eine Liste sein/],
+        ['npcs', { relationships: { a: 1 } }, /„relationships“ muss eine Liste sein/],
+        ['locations', { tags: [null] }, /„tags“ darf keine leeren Einträge haben/],
+        ['locations', { links: 'x' }, /„links“ muss eine Liste sein/],
+        ['encounters', { resistances: 'feuer' }, /„resistances“ muss eine Liste sein/],
+        ['encounters', { conditionImmunities: 5 }, /„conditionImmunities“ muss eine Liste sein/],
+        ['encounters', { languages: 5 }, /„languages“ muss eine Liste oder ein Text sein/],
+        ['encounters', { monsters: [null] }, /„monsters“ muss eine Liste von Objekten sein/],
+        ['loot', { tags: 5 }, /„tags“ muss eine Liste sein/],
+        ['spells', { spellClasses: 'Magier' }, /„spellClasses“ muss eine Liste sein/],
+        ['wiki', { tags: 'welt' }, /„tags“ muss eine Liste sein/],
+        ['sessionPreps', { szenen: 'x' }, /„szenen“ muss eine Liste sein/],
+        [
+            'sessionPreps',
+            { offeneFaeden: [null] },
+            /„offeneFaeden“ muss eine Liste von Objekten sein/
+        ],
+        [
+            'factions',
+            { rufHistorie: {} },
+            /„rufHistorie“ muss eine Liste sein, die Datei enthält ein Objekt/
+        ],
+        ['factions', { rufHistorie: [null] }, /„rufHistorie“ muss eine Liste von Objekten sein/]
+    ])('L1: %s mit %j wird vor dem Fenster abgelehnt', async (typ, feld, thema) => {
+        const name = { quests: 'title', wiki: 'title', sessionPreps: null }[typ];
+        const eintrag = { id: 1, ...(name === null ? {} : { [name || 'name']: 'Probe' }), ...feld };
+        const meldung = await abgelehnt(typ, datei(typ, [eintrag]), thema);
+        expect(meldung).toMatch(/Eintrag 1 der Datei: /);
+    });
+
+    test('L2: jede Form, die die App selbst schreibt, geht durch — auch leer, null oder fehlend', async () => {
+        const faelle = {
+            characters: {
+                id: 1,
+                name: 'Thorin',
+                items: [1, { id: 2, quantity: 3 }],
+                conditions: [{ type: 'poisoned', duration: 2 }],
+                attacks: [{ name: 'Axt', attackBonus: 6, damage: '1d8+3' }],
+                resistances: ['poison'],
+                immunities: [],
+                languages: 'Gemeinsprache, Zwergisch',
+                tags: [{ name: 'tank', color: '#a855f7' }],
+                links: [{ type: 'npcs', id: 1 }],
+                relationships: ['Bruder', { targetType: 'npc', targetId: 1 }]
+            },
+            npcs: {
+                id: 1,
+                name: 'Alrik',
+                quests: ['Fracht'],
+                info: [],
+                relationships: ['Bruder von Vela'],
+                triggers: [{ condition: 'Gold', reveal: 'gierig', triggered: false }],
+                dialogs: [{ title: 'Gruss', text: 'Hallo', used: true }],
+                relations: [{ targetId: 0, targetType: 'party', status: 'neutral' }],
+                tags: null,
+                links: []
+            },
+            encounters: {
+                id: 1,
+                name: 'Goblin',
+                languages: ['common', 'goblin'],
+                monsters: [{ name: 'Goblin', count: 2, encounterId: null }],
+                resistances: [],
+                tags: []
+            },
+            loot: { id: 1, name: 'Trank', tags: ['attunement', 'selten'] },
+            wiki: { id: 1, title: 'Welt', tags: ['welt'] },
+            spells: { id: 1, name: 'Feuerball', spellClasses: ['Magier'] },
+            sessionPreps: {
+                id: 1,
+                szenen: [{ id: 1, titel: 'Hafen' }],
+                offeneFaeden: [{ text: 'frei', quelleId: null, quelleTyp: 'manual' }]
+            },
+            factions: { id: 1, name: 'Gilde', rufHistorie: [{ datum: 1, delta: 2, grund: '' }] },
+            quests: { id: 1, title: 'Fracht', rewardItems: [], tags: [], links: [] }
+        };
+        for (const [typ, eintrag] of Object.entries(faelle)) {
+            const { bereit } = await angenommen(typ, datei(typ, [eintrag]));
+            expect(bereit.items).toHaveLength(1);
+        }
+        // Ein Encounter mit Sprachen als Text (alte Daten, encounters-crud.js liest beides)
+        await angenommen(
+            'encounters',
+            datei('encounters', [{ id: 1, name: 'E', languages: 'common' }])
+        );
+    });
+});
+
 describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () => {
     test.each([
         [[{ id: 5 }, { id: 5 }], /die ID 5 kommt in der Datei doppelt vor \(Einträge 1 und 2\)/],

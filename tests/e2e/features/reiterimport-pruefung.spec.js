@@ -92,6 +92,8 @@
  *       Fenster. JSON wird mit Reviver gelesen, der `__proto__`,
  *       `constructor`, `prototype` verwirft. Falscher `_dataType` →
  *       Rueckfrage mit deutschen Typnamen.               (1)–(9)
+ *       Dazu (Pruefer, Runde 1): Listen- und Objektfelder in der Form, die
+ *       die App liest — sonst legt EIN Eintrag den ganzen Reiter lahm. (16)
  *   R6  Ungueltige (keine positive Ganzzahl: "abc", -1, 2.5) oder doppelte
  *       IDs in der Datei → Ersetzen abgelehnt mit deutscher Meldung. (10)
  *   R9  Nutzlasten in Text- und HTML-Feldern — auch im Dateikopf und in
@@ -2315,4 +2317,79 @@ test('(15) Kanarien in NPC, Ort, Wiki, Session-Prep, Kalender und Fraktion werde
         'kein alert'
     ).toEqual([]);
     weich(await beob.alle(), 'kein Fehler').toEqual([]);
+});
+
+// ===========================================================================
+// (16) LISTEN- UND OBJEKTFELDER IN FALSCHER FORM (R3)
+// ===========================================================================
+//
+// Befund der Pruefer (Runde 1, Sonden p3 und p11, gemessen am Stand
+// a3822abf): die Form von Listen- und Objektfeldern prueft niemand. EINE
+// Quest mit `tags: "eilig"` kam per "Hinzufügen" an ("✅ 1 Quest importiert
+// (hinzugefügt)"), und der GANZE Quest-Reiter zeigte danach nur noch
+// "⚠️ Anzeigefehler tags.map is not a function" — auch nach dem Neuladen, ohne
+// Strg+Z und ohne Sicherheitskopie; die beiden vorhandenen Quests waren ueber
+// die Oberflaeche weder sichtbar noch zu bearbeiten oder zu loeschen.
+// Ebenso `rewardItems: [null]`, `items` des Helden als Objekt, `spellClasses`
+// als Text (Party-, Quest- und Zauber-Reiter ganz) und `rufHistorie` als
+// Objekt (Fraktions-Detail). Dieselbe Fehlerklasse wie "name null legt die
+// NPC-Liste lahm" (5) — R3 verlangt die Ablehnung VOR dem Fenster. Die
+// uebrigen Felder des Katalogs haelt tests/unit/reiterimport-pruefung.test.js
+// (L1, L2).
+test('(16) Listen- und Objektfelder in falscher Form (Tags als Text, Gegenstände als Objekt …) werden vor dem Fenster abgelehnt', async ({
+    page
+}) => {
+    test.setTimeout(120000);
+    const beob = beobachten(page);
+    await laden(page);
+    await ablehnungen(page, beob, 'quests', [
+        {
+            was: "Quest tags 'eilig'",
+            thema: /„tags“ muss eine Liste sein/,
+            datei: reiterDatei(
+                'quests',
+                [{ id: 9, title: 'Kaputte Quest', tags: 'eilig' }],
+                'probe-16a.json'
+            )
+        },
+        {
+            was: 'Quest rewardItems [null]',
+            thema: /„rewardItems“/,
+            datei: reiterDatei(
+                'quests',
+                [{ id: 9, title: 'Belohnung', rewardItems: [null] }],
+                'probe-16b.json'
+            )
+        },
+        {
+            was: 'Held items als Objekt',
+            ansicht: 'party',
+            thema: /„items“ muss eine Liste sein/,
+            datei: reiterDatei(
+                'characters',
+                [{ id: 9, name: 'Packesel', items: { a: 1 } }],
+                'probe-16c.json'
+            )
+        },
+        {
+            was: "Zauber spellClasses 'Magier'",
+            ansicht: 'spells',
+            thema: /„spellClasses“ muss eine Liste sein/,
+            datei: reiterDatei(
+                'spells',
+                [{ id: 9, name: 'Funke', spellClasses: 'Magier' }],
+                'probe-16d.json'
+            )
+        },
+        {
+            was: 'Fraktion rufHistorie als Objekt',
+            ansicht: 'fraktionen',
+            thema: /„rufHistorie“ muss eine Liste sein/,
+            datei: reiterDatei(
+                'factions',
+                [{ id: 9, name: 'Gilde', rufHistorie: {} }],
+                'probe-16e.json'
+            )
+        }
+    ]);
 });
