@@ -145,8 +145,11 @@ function renderBestiaryListItem(monster) {
 // Die Filtersignatur des letzten Zeichnens: Suchwert, HG, Typ, Nur Eigene,
 // Favoriten. Nur wenn sie sich AENDERT, geht die Liste nach oben — dann
 // steht der Anfang der neuen Trefferliste im Bild. Bleibt sie gleich
-// (Auswahl, ★, Klick ins Suchfeld, Neuzeichnen nach Speichern oder Undo),
-// bleibt die Lage, und der gewaehlte Eintrag bleibt gezeichnet und im Bild.
+// (Auswahl, ★, Klick ins Suchfeld, Neuzeichnen nach dem Speichern einer
+// Kreatur), bleibt die Lage, und der gewaehlte Eintrag bleibt gezeichnet und
+// im Bild. Strg+Z zeichnet diese Liste NICHT neu (renderAll() kennt sie
+// nicht): die Lage bleibt dort ohnehin, ein zurueckgenommener ★ steht aber
+// bis zum naechsten Zeichnen falsch da (Katalog BESTIAR-KLICK, Offen).
 // Bewusst NICHT an der Aktion 'search-input' festgemacht: die ruft schon der
 // Klick ins Suchfeld (ui/event-delegation.js, _handleClick), und der aendert
 // nichts. Dass die Lage ein Neuzeichnen ueberhaupt ueberlebt, sichert das
