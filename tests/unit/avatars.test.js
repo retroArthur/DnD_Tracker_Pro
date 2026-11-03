@@ -526,11 +526,11 @@ describe('validateAvatarURL — AVATAR-DATEI: lokale Bilder angenommen, Netzwerk
  * (UNICODE_LEERRAUM). Fuer solche Werte gehen "sichereBildquelle(x)" und
  * "sichereBildquelle(x.trim())" auseinander, und nur die zweite Lesung haelt "gespeichert wird,
  * was die Anzeige zeigt" (SENKEN (16)) und A4 zugleich:
- *   - ` https://example.org/held.png` zeigt sichereBildquelle() roh NICHT (ein relativer
+ *   - `\u00a0https://example.org/held.png` zeigt sichereBildquelle() roh NICHT (ein relativer
  *     Pfad mit `//`). Gespeichert wird `https://…`, und das zeigt die Karte; dd399a32 nahm den
  *     Wert schon an. Am Rohwert geprueft, lehnte der Dialog ihn ab — eine Verhaltensaenderung
  *     gegen A4, ohne Schutz, denn gespeichert wird der getrimmte Wert.
- *   - ` file:192.0.2.1/s/x.png` zeigt sichereBildquelle() roh (ein relativer Pfad ohne
+ *   - `\u00a0file:192.0.2.1/s/x.png` zeigt sichereBildquelle() roh (ein relativer Pfad ohne
  *     Trennerpaar). Gespeichert wuerde `file:192.0.2.1/s/x.png`, und das sperrt die Anzeige —
  *     am Rohwert geprueft, speicherte der Dialog, was die Karte dann als Platzhalter zeigt.
  * Bis zu diesem Befund behauptete die Eigenschaft oben die Rohlesung, aber keine Liste enthielt
