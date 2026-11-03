@@ -97,9 +97,10 @@ function renderLocations() {
                 .join('')}
         `;
     }
-    // Get search and filter
+    // Get search and filter — der Begriff einmal beim Lesen getrimmt (Vertrag NPC-SUCHE, R6):
+    // Leerzustand, NPC-Orte und applyFilters() sehen denselben Begriff.
     const searchEl = $('loc-search');
-    const search = (searchEl?.value || '').toLowerCase();
+    const search = (searchEl?.value || '').trim().toLowerCase();
     // Pre-compute NPC locations that match search (if searching). Der NPC-Name total gelesen
     // (datenText(), Vertrag NPC-NAME N2): `n.name.toLowerCase()` warf je Taste, wenn ein Name
     // fehlte oder eine Zahl war, und die Suche filterte nichts mehr.
@@ -110,17 +111,16 @@ function renderLocations() {
                   .map(n => n.locationId)
           )
         : null;
-    // Apply filters (single pass)
+    // Apply filters (single pass). Ein Ort mit einem passenden NPC ist ein ODER-Zweig der Suche
+    // (searchAlso, Vertrag NPC-SUCHE R5) — als customFilter tat er seit 73d3193b nichts. Gefragt
+    // wird er nur bei nicht leerem Begriff, dann steht npcLocs; ein Eintrag, der kein Ort ist,
+    // faellt wie bisher heraus.
     const locs = applyFilters(D.locations || [], {
         searchText: search,
         searchFields: ['name', 'description'],
+        searchAlso: l => !!l && npcLocs.has(l.id),
         filters: {
             filterId: currentLocFilter !== 'all' ? currentLocFilter : null
-        },
-        customFilter: l => {
-            // Also match locations that contain NPCs matching search
-            if (npcLocs && npcLocs.has(l.id)) return true;
-            return true;
         }
     });
     // Empty state
