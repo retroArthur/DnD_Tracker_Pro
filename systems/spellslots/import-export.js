@@ -461,6 +461,28 @@ function reiterTypName(typ, anzahl) {
 const REITER_IMPORT_MAX_BYTES = 10 * 1024 * 1024;
 
 /**
+ * So viele Zeichen eines Kampagnennamens aus einer Datei uebernimmt die App: die Vorschau des
+ * Reiter-Imports ("Kampagne: …") und der Kampagnen-Import fuer die neue Kampagne.
+ * tests/e2e/features/reiterimport-pruefung.spec.js (12) haengt daran: die Kanarie im Dateikopf
+ * muss darunter bleiben, sonst verliert sie ihr Tagende.
+ */
+const KAMPAGNENNAME_MAX = 100;
+
+/** So viele Zeichen eines Textwerts aus der Datei zitiert eine Meldung (Wert, ungueltige ID). */
+const REITER_MELDUNG_TEXT_MAX = 40;
+
+/**
+ * Ein Text aus der Datei, gekuerzt fuer eine Meldung.
+ * @param {string} text
+ * @returns {string}
+ */
+function reiterZitat(text) {
+    return text.length > REITER_MELDUNG_TEXT_MAX
+        ? text.slice(0, REITER_MELDUNG_TEXT_MAX) + '…'
+        : text;
+}
+
+/**
  * Sperre gegen parallele Laeufe: eine Auswahl wird gerade gelesen und vorbereitet. Ein
  * `<input type=file>` meldet eine Auswahl als `input` UND `change`; das Reiterfeld traegt nur
  * data-on-change (ui/event-delegation.js ruft also einmal), aber jede weitere Ausloesung,
@@ -822,9 +844,7 @@ function reiterWertText(wert) {
     if (Array.isArray(wert)) return 'eine Liste';
     if (typeof wert === 'object') return 'ein Objekt';
     if (typeof wert === 'string') {
-        return wert.trim() === ''
-            ? 'einen leeren Text'
-            : `den Text „${wert.length > 40 ? wert.slice(0, 40) + '…' : wert}“`;
+        return wert.trim() === '' ? 'einen leeren Text' : `den Text „${reiterZitat(wert)}“`;
     }
     if (typeof wert === 'number') return `die Zahl ${String(wert)}`;
     return `den Wert ${String(wert)}`;
@@ -950,7 +970,7 @@ function reiterIdFehler(eintraege) {
             let welche;
             if (roh === undefined || roh === null || roh === '') welche = 'keine ID';
             else if (typeof roh === 'object') welche = `statt einer ID ${reiterWertText(roh)}`;
-            else if (typeof roh === 'string') welche = `die ungültige ID „${roh.slice(0, 40)}“`;
+            else if (typeof roh === 'string') welche = `die ungültige ID „${reiterZitat(roh)}“`;
             else welche = `die ungültige ID ${String(roh)}`;
             return (
                 `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat ${welche} — eine ID muss ` +
@@ -1080,7 +1100,7 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
     return {
         dataType,
         items,
-        kampagne: kampagne.slice(0, 100),
+        kampagne: kampagne.slice(0, KAMPAGNENNAME_MAX),
         exportDatum:
             datum && !isNaN(datum.getTime()) ? datum.toLocaleDateString('de-DE') : 'unbekannt',
         hinweise,
@@ -1850,9 +1870,7 @@ function renderImportVorschau() {
     ziel.textContent = '';
     for (const zeile of importVorschauZeilen(_reiterImport, gewaehlterImportModus())) {
         const div = document.createElement('div');
-        div.className = zeile.warnung
-            ? 'reiterimport-zeile reiterimport-warnung'
-            : 'reiterimport-zeile';
+        if (zeile.warnung) div.className = 'reiterimport-warnung';
         div.textContent = zeile.text;
         ziel.appendChild(div);
     }
@@ -2293,7 +2311,7 @@ function importDataGlobal() {
                         file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '')
                 )
                     .trim()
-                    .slice(0, 100) || 'Import';
+                    .slice(0, KAMPAGNENNAME_MAX) || 'Import';
             // D3 = A: zwei native Dialoge — Abbrechen/Escape ist nie zerstoererisch
             const choice = confirm(
                 `Import: "${campaignName}"\n\n` +
