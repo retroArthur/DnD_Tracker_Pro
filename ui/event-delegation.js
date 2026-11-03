@@ -47,7 +47,10 @@ const KNOPFARTIGE_INPUT_TYPEN = new Set(['button', 'submit', 'reset']);
 // checkbox, radio, file, range und date fehlen mit Absicht: ihr Wert ist kein
 // Getipptes (eine Checkbox meldet bei JEDEM Umschalten 'on'), und die zwei
 // Handler, die input und change unterscheiden, sitzen an Datei-Inputs
-// (ui/actions/system-actions.js). TEXTAREA nennt der Vertrag nicht.
+// (ui/actions/system-actions.js): sie lesen NUR beim change, das denselben
+// Wert traegt wie das input davor. Ohne diese Schranke waeren der Markdown-
+// und der Audio-Import tot (markdown-austausch.spec.js und soundboard.spec.js
+// am Mutanten 21 von 31 rot). TEXTAREA nennt der Vertrag nicht.
 const TEXTARTIGE_INPUT_TYPEN = new Set([
     'text',
     'search',
@@ -333,7 +336,8 @@ const EventDelegation = {
      * "Items zuweisen" NUR am change.
      *
      * Entscheidungstabelle: tests/unit/event-delegation-change.test.js;
-     * Bedienwege: tests/e2e/features/bestiar-klick.spec.js (W1–W6).
+     * Bedienwege: tests/e2e/features/bestiar-klick.spec.js (W1–W6); die
+     * Typschranke am Bildschirm: markdown-austausch.spec.js, soundboard.spec.js.
      * @param {HTMLInputElement} target
      * @param {string} action
      */
