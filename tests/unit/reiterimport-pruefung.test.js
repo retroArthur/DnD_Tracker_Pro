@@ -360,6 +360,66 @@ describe('REITERIMPORT R3 — die Datei wird vor dem Fenster geprueft', () => {
             expect.stringMatching(/^error: ❌ Eintrag 1 der Datei: der Name/)
         ]);
     });
+
+    // Befund der Pruefer (Runde 2, Sonde p15, gemessen mit Hinzufuegen und Ersetzen): eine Datei
+    // mit A→B, B→A und C→C kam "✅ 4 Wiki-Einträge importiert" an — sichtbar war nur der
+    // normale Eintrag (der Baum zeichnet von den Wurzeln aus, die Suche fand die uebrigen nicht),
+    // und ✏️ auf einem Kreis-Eintrag warf "Maximum call stack size exceeded" (isDescendantOf,
+    // features/wiki/wiki-crud.js). Kein Weg der App erzeugt einen Kreis.
+    test.each([
+        [
+            'Selbst-Eltern',
+            [
+                { id: 1, title: 'Normal' },
+                { id: 3, title: 'C', parentId: 3 }
+            ],
+            /Eintrag 2 der Datei: der übergeordnete Eintrag \(Feld „parentId“\) führt im Kreis/
+        ],
+        [
+            'A→B→A',
+            [
+                { id: 1, title: 'A', parentId: 2 },
+                { id: 2, title: 'B', parentId: '1' }
+            ],
+            /Eintrag \d der Datei: der übergeordnete Eintrag \(Feld „parentId“\) führt im Kreis/
+        ],
+        [
+            'ein Kreis hinter einer Kette',
+            [
+                { id: 1, title: 'Blatt', parentId: 2 },
+                { id: 2, title: 'Mitte', parentId: 3 },
+                { id: 3, title: 'X', parentId: 4 },
+                { id: 4, title: 'Y', parentId: 3 }
+            ],
+            /Eintrag [34] der Datei: .*führt im Kreis/
+        ]
+    ])(
+        'P11: Wiki-Eltern im Kreis (%s) werden vor dem Fenster abgelehnt',
+        async (was, data, thema) => {
+            await abgelehnt('wiki', datei('wiki', data), thema);
+        }
+    );
+
+    test('P12: eine Kette ohne Kreis, ein Elternteil ausserhalb der Datei und doppelte IDs sind kein Kreis', async () => {
+        await angenommen(
+            'wiki',
+            datei('wiki', [
+                { id: 1, title: 'Wurzel', parentId: null },
+                { id: 2, title: 'Kind', parentId: 1 },
+                { id: 3, title: 'Enkel', parentId: 2 },
+                { id: 4, title: 'Waise', parentId: 99 }
+            ])
+        );
+        // Doppelte ID: beim Hinzufuegen ist der Verweis mehrdeutig und wird geleert, Ersetzen
+        // lehnt die Datei ab (R6) — ein Kreis entsteht in keinem Modus
+        await angenommen(
+            'wiki',
+            datei('wiki', [
+                { id: 5, title: 'A', parentId: 5 },
+                { id: 5, title: 'A2' }
+            ])
+        );
+    });
 });
 
 // Befund der Pruefer (Runde 1, Sonden p3/p11, gemessen): die Form von Listen- und Objektfeldern
