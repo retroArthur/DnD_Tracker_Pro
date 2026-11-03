@@ -66,12 +66,16 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   (a) Bild-Dialog, lokale Datei: gespeichert in D und im Speicher, NSC-Karte und Detail zeigen
  *       das Bild GELADEN (naturalWidth 192, die Datei icons/icon-192.png des Repos), keine
  *       Fehlermeldung; nach dem Neuladen dasselbe.                          rot an dd399a32
- *   (b) Bild-Dialog, drei Netzwerkpfade: Fehlermeldung, nichts gespeichert, keine Anforderung.
+ *   (b) Bild-Dialog, fuenf Netzwerkpfade: Fehlermeldung, nichts gespeichert, keine Anforderung.
  *                                                                          gruen (Sperre steht)
  *   (c) Bestiar-Editor: lokal angenommen (Vorschau 192, gespeichert, Portrait im Detail)  rot;
  *       Netzwerkpfade abgelehnt, nichts gespeichert, keine Anforderung                   gruen
  *   (d) Charakterformular: lokale Datei -> Vorschau zeigt das Bild (192)   rot;
  *       Netzwerkpfade -> Platzhalter "?", kein Bild, keine Anforderung     gruen
+ *       Nachgeschaerft (Pruefbefund nach bd06445d): auch data:image/ (1 px), ein relativer Pfad
+ *       und http(s) (je 192 px) zeigen das Bild, und zwei der Netzwerkpfade beginnen mit
+ *       `file:///` (`file:////host/…`, `file:///%5C%5Chost/…`). Vorher blieb (d) gruen mit
+ *       einer Vorschau, die jedes `file:///` ohne Pruefung zeigte und data:image/ nicht.
  *   (e) Die Meldung des Bild-Dialogs nennt lokale Dateien (A2).            rot an dd399a32
  *   (f) Kontrolle: http(s)-Bild und data:image/ werden weiter angenommen.  gruen
  *
@@ -91,16 +95,22 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * nicht nur "ein img steht da".
  *
  * Ein Netzwerkpfad wird nie wirklich geladen (Muster eingangSpielen()/kanarienBild() in
- * senken-kanarie.spec.js): jede Anforderung, deren Ziel ein Host unter file: ist, `neben.invalid`
- * nennt oder als letztes Pfadsegment `netzbild-?.png` traegt, bricht page.route ab, BEVOR der
+ * senken-kanarie.spec.js): jede Anforderung unter file:, die kein lokaler Pfad ist (Host,
+ * Trenner am Pfadanfang, doppelter Trenner — auch jeder getippte Zwischenstand wie
+ * `file:////n`), jede, die `neben.invalid` nennt oder als letztes Pfadsegment `netzbild-?.png`
+ * traegt, bricht page.route ab, BEVOR der
  * Browser sie oeffnet ('request' feuert vorher und wird gezaehlt). Entschieden wird an der URL,
  * wie Chromium sie anfordert (route.request().url()): die route-Pruefung selbst bekommt eine
  * node-URL, und node normalisiert `file://localhost/x` zu `file:///x` — Chromium behaelt den Host
  * und oeffnete ihn unter Windows als UNC `\\localhost\…`. http(s) bricht ebenfalls ab: auch die
- * Kontrolle (f) verlaesst das Geraet nicht. Dass die Beobachtung greift, ist gemessen: mit einer
+ * Kontrolle (f) verlaesst das Geraet nicht; das http(s)-Bild in (d) beantwortet der Test selbst
+ * mit der Datei des Repos. Dass die Beobachtung greift, ist gemessen: mit einer
  * Vorschau ohne jede Pruefung (Gegenprobe am Buendel, nicht eingecheckt) zaehlt (d) 68
  * Anforderungen an Netzwerkpfade — Chromium fordert jeden getippten Zwischenstand an — und
  * bricht jede ab; mit einer Pruefung nach A1 (Probe am Buendel) sind alle sieben Faelle gruen.
+ * Ebenso mit der halben Vorschau `/^(?:https?:\/\/|file:\/\/\/)/i` statt sichereBildquelle()
+ * (Gegenprobe am Buendel): (d) rot an beiden `file:///`-Netzwerkformen (Bild und Anforderung)
+ * und an data:image/ und dem relativen Pfad (kein Bild) — vor dem Nachschaerfen 7 von 7 gruen.
  */
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -108,14 +118,23 @@ const SPEICHER = 'dnd-tracker-v4';
 const BREIT = { width: 1440, height: 900 };
 
 /** Die Datei des Repos, 192x192 — als file:///-URL aus process.cwd(). */
-const LOKALES_BILD = pathToFileURL(path.resolve(process.cwd(), 'icons', 'icon-192.png')).href;
+const LOKALE_DATEI = path.resolve(process.cwd(), 'icons', 'icon-192.png');
+const LOKALES_BILD = pathToFileURL(LOKALE_DATEI).href;
 const LOKALE_BREITE = 192;
+/** Dieselbe Datei als relativer Pfad, vom Buendel in dist/ aus gelesen. */
+const RELATIVES_BILD = '../icons/icon-192.png';
 
-/** Netzwerkpfade (A1): Host unter file:, protokoll-relativ, kodierter doppelter Trenner. */
+/**
+ * Netzwerkpfade (A1): Host unter file:, protokoll-relativ, kodierter doppelter Trenner — und
+ * zwei, die mit `file:///` beginnen (Trenner am Pfadanfang, roh und kodiert): eine Pruefung, die
+ * nur auf das Praefix `file:///` schaut, laesst sie durch.
+ */
 const NETZWERKPFADE = [
     'file://localhost/netzbild-a.png',
     '//neben.invalid/netzbild-b.png',
-    '/%5C%5Cneben.invalid/netzbild-c.png'
+    '/%5C%5Cneben.invalid/netzbild-c.png',
+    'file:////neben.invalid/netzbild-d.png',
+    'file:///%5C%5Cneben.invalid/netzbild-e.png'
 ];
 
 /** Kontrolle (f): ein http(s)-Bild (die Anforderung bricht der Test ab) und ein data:image/ (1x1). */
@@ -238,13 +257,21 @@ function saat() {
 // Netz beobachten (Kanarien-Muster)
 // ---------------------------------------------------------------------------
 /**
- * Ob eine Anforderung einen Netzwerkpfad aus NETZWERKPFADE (oder sonst einen Host unter file:)
- * betrifft. EINE Lesart fuer den Abbruch (page.route) und die Zaehlung ('request').
+ * Ob eine Anforderung einen Netzwerkpfad aus NETZWERKPFADE (oder sonst einen unter file:)
+ * betrifft. EINE Lesart fuer den Abbruch (page.route) und die Zaehlung ('request'). Unter file:
+ * ist nur `file:///` mit einem Pfad lokal, der nicht mit einem weiteren Trenner beginnt und
+ * nirgends zwei hintereinander traegt — Trenner gelesen wie istLokalerPfad() (`\`, `%2F`, `%5C`
+ * wie `/`). Alles andere hat einen Host oder bekommt einen (unter Windows UNC): `file://host/…`,
+ * `file:////host/…`, `file:///%5C%5Chost/…` und jeder ihrer getippten Zwischenstaende
+ * (`file:////n`), die `neben.invalid` noch nicht nennen.
  * @param {string} url
  */
 function istNetzziel(url) {
     const s = String(url);
-    if (/^file:\/\/[^/]/i.test(s)) return true; // file: mit Host — unter Windows UNC
+    if (/^file:/i.test(s)) {
+        const rest = s.replace(/^file:/i, '').replace(/%2f|%5c|\\/gi, '/');
+        if (!/^\/\/\/(?!\/)/.test(rest) || rest.slice(3).includes('//')) return true;
+    }
     if (/neben\.invalid/i.test(s)) return true;
     const letzte = s.split(/[/\\]/).pop() || '';
     let datei = letzte;
@@ -590,19 +617,39 @@ test('(c) Bestiar-Editor: Netzwerkpfade werden abgelehnt, nichts gespeichert, ke
 // ===========================================================================
 // (d) Charakterformular: die Vorschau zeigt, was die Karte zeigt (A3)
 // ===========================================================================
-test('(d) Charakterformular: die Vorschau zeigt ein lokales Bild geladen, bei einem Netzwerkpfad den Platzhalter', async ({
+test('(d) Charakterformular: die Vorschau zeigt lokale Datei, data:image/, relativen Pfad und http(s) geladen, bei einem Netzwerkpfad den Platzhalter', async ({
     page
 }) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
     const { netz, seitenfehler } = await laden(page);
+    // Das http(s)-Bild beantwortet der Test mit der Datei des Repos; spaeter angemeldet als der
+    // Abbruch in laden(), darum geht diese Route vor. Das Geraet verlaesst nichts.
+    await page.route(
+        u => u.href === HTTPS_BILD,
+        r => r.fulfill({ path: LOKALE_DATEI, contentType: 'image/png' })
+    );
     await charakterFormularOeffnen(page);
     const vorschau = page.locator('#cf-avatar-preview');
 
-    await eintippen(page, '#char-avatar', LOKALES_BILD);
-    await weich
-        .poll(() => bildBreite(vorschau.locator('img')), { timeout: 5000 })
-        .toBe(LOKALE_BREITE);
-    weich(await vorschau.locator('.cf-avatar-placeholder').count(), 'kein Platzhalter').toBe(0);
+    // A3: ein Bild genau dann, wenn sichereBildquelle() es anzeigt — jede der vier Arten
+    for (const [art, url, breite] of [
+        ['lokale Datei', LOKALES_BILD, LOKALE_BREITE],
+        ['data:image/', DATA_BILD, 1],
+        ['relativer Pfad', RELATIVES_BILD, LOKALE_BREITE],
+        ['http(s)', HTTPS_BILD, LOKALE_BREITE]
+    ]) {
+        await eintippen(page, '#char-avatar', String(url));
+        await weich
+            .poll(() => bildBreite(vorschau.locator('img')), {
+                timeout: 5000,
+                message: `Vorschau laedt das Bild (${art})`
+            })
+            .toBe(breite);
+        weich(
+            await vorschau.locator('.cf-avatar-placeholder').count(),
+            `kein Platzhalter (${art})`
+        ).toBe(0);
+    }
 
     for (const url of NETZWERKPFADE) {
         await eintippen(page, '#char-avatar', url);

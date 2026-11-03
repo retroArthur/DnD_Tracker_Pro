@@ -580,3 +580,73 @@ describe('validateAvatarURL — A1 am gespeicherten (getrimmten) Wert', () => {
         expect(nichtAngezeigt).toEqual([]);
     });
 });
+
+// ============================================================
+// AVATAR-DATEI A3 — die Vorschau im Charakterformular, ueber dieselben Tabellen
+// ============================================================
+/*
+ * Pruefbefund nach bd06445d (soll): kein Unit-Test rief updateAvatarPreview()
+ * (features/party/party-crud.js) auf, und Fall (d) von tests/e2e/features/bild-lokal.spec.js
+ * blieb gruen mit einer halben Vorschau `/^(?:https?:\/\/|file:\/\/\/)/i` statt
+ * sichereBildquelle(): sie zeigte `file:////host/…` und `file:///%5C%5Chost/…` als Bild (unter
+ * Windows UNC) und data:image/ sowie relative Pfade nicht. A3: ein Bild genau dann, wenn
+ * sichereBildquelle() den getrimmten Wert anzeigt — getrimmt wie saveCharacter() speichert —,
+ * sonst der Platzhalter "?"; die Quelle als DOM-Eigenschaft, kein Element aus dem Wert (R1/R5).
+ * Gefahren ueber ALLE Werte der Tabellen oben. Das Modul laeuft echt, im vm-Kontext mit dem
+ * jsdom-Dokument der Suite und dem echten Datengrenzen-Block; jsdom laedt keine Bilder.
+ */
+describe('updateAvatarPreview — A3: die Vorschau im Charakterformular zeigt, was die Karte zeigt', () => {
+    const PARTY_CRUD_PATH = path.join(__dirname, '../../features/party/party-crud.js');
+    // Zeichen, die in HTML etwas bedeuten: die Quelle steht als Eigenschaft, kein Element entsteht
+    const HTML_ZEICHEN = ['bilder/a&b.png', 'bilder/"><b id="x">x</b>.png'];
+    const ALLE = [
+        ...ALLE_ERLAUBT,
+        ...ALLE_GESPERRT,
+        ...UNICODE_ERLAUBT,
+        ...UNICODE_GESPERRT,
+        ...HTML_ZEICHEN
+    ];
+    let updateAvatarPreview;
+    let vorschau;
+
+    beforeAll(() => {
+        const context = { window: {}, document, URL };
+        vm.createContext(context);
+        ladeDatengrenze(context);
+        context.$ = id => document.getElementById(id);
+        vm.runInContext(fs.readFileSync(PARTY_CRUD_PATH, 'utf8'), context);
+        updateAvatarPreview = context.updateAvatarPreview;
+    });
+
+    beforeEach(() => {
+        document.body.innerHTML = '<div id="cf-avatar-preview"></div>';
+        vorschau = document.getElementById('cf-avatar-preview');
+    });
+
+    test('die Faelle tragen: Werte mit Bild, ohne Bild, und jede der vier Arten mit Bild', () => {
+        const mitBild = ALLE.filter(x => sichereBildquelle(gespeichert(x)) !== '');
+        expect(mitBild.length).toBeGreaterThan(20);
+        expect(ALLE.length - mitBild.length).toBeGreaterThan(20);
+        for (const art of [/^file:\/\/\//i, /^https?:/i, /^data:image\//i, /^[.\w]/]) {
+            expect(mitBild.some(x => art.test(gespeichert(x)))).toBe(true);
+        }
+        expect(typeof updateAvatarPreview).toBe('function');
+    });
+
+    test.each(ALLE)(
+        'Vorschau fuer %j: Bild genau dann, wenn sichereBildquelle() den getrimmten Wert anzeigt',
+        url => {
+            updateAvatarPreview(url);
+            const quelle = gespeichert(url);
+            const bilder = vorschau.querySelectorAll('img');
+            if (sichereBildquelle(quelle) !== '') {
+                expect(bilder.length).toBe(1);
+                expect(bilder[0].getAttribute('src')).toBe(quelle);
+                expect(vorschau.children.length).toBe(1);
+            } else {
+                expect(bilder.length).toBe(0);
+                expect(vorschau.innerHTML).toBe('<span class="cf-avatar-placeholder">?</span>');
+            }
+        }
+    );
+});
