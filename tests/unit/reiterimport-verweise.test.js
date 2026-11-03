@@ -221,7 +221,14 @@ describe('REITERIMPORT — der Verweiskatalog', () => {
                 if (v.ziel) ziele.add(v.ziel);
             }
         }
-        for (const ziel of [...ziele, 'shops', 'initiative', 'quickRefCustom', 'filters']) {
+        for (const ziel of [
+            ...ziele,
+            'shops',
+            'initiative',
+            'monsterFavorites',
+            'quickRefCustom',
+            'filters'
+        ]) {
             expect(zielName(ziel)).not.toBe(ziel);
             expect(zielName(ziel)).not.toBe('unbekannter Bereich');
         }
@@ -700,6 +707,49 @@ describe('REITERIMPORT R6 — die Vorschau beim Ersetzen nennt die Verweise ande
             'replace'
         );
         expect(vorschau).toContain('Kein Verweis anderer Bereiche zeigt danach ins Leere');
+    });
+
+    // Befund der Pruefer (Runde 1, gemessen): "⭐ Vorlage speichern" im Encounter-Rechner legt
+    // die Monster der Rechnerliste samt `encounterId` in D.monsterFavorites ab
+    // (features/encounter-calculator.js saveMonsterFavorite()), "⚔️ Zur Initiative" liest ueber
+    // sie RK und TP. Die Vorschau zaehlte nur den Kaempfer der Initiative — nach dem Ersetzen
+    // mit id 1 = Oger kamen die Goblins der Vorlage mit den Werten des Ogers in die Initiative.
+    // Die Datengrenze kennt das Feld nicht, darum faengt K1 es nicht: hier als eigener Fall.
+    test('E4: die Vorlagen des Encounter-Rechners zaehlen mit (monsterFavorites[].monsters[].encounterId)', async () => {
+        const kampagne = () => ({
+            encounters: [{ id: 1, name: 'Goblin', cr: '1/4' }],
+            initiative: { combatants: [{ id: 1, name: 'Goblin #1', encounterId: 1 }] },
+            monsterFavorites: [
+                {
+                    id: 1700000000000,
+                    name: 'Goblinbande',
+                    monsters: [{ cr: '1/4', count: 3, name: 'Goblin', encounterId: 1 }]
+                }
+            ]
+        });
+        const leer = await importiere(
+            'encounters',
+            [{ id: 5, name: 'Oger', cr: '2' }],
+            kampagne(),
+            'replace'
+        );
+        expect(leer.vorschau.slice(5)).toEqual([
+            '⚠️ Danach zeigen 2 Verweise anderer Bereiche ins Leere (die Datei enthält ihr Ziel nicht):',
+            '– Initiative (Vorlage): 1',
+            '– Rechner-Vorlagen (Vorlage eines Monsters): 1'
+        ]);
+        const gleich = await importiere(
+            'encounters',
+            [{ id: 1, name: 'Oger', cr: '2' }],
+            kampagne(),
+            'replace'
+        );
+        expect(gleich.vorschau.slice(5)).toEqual([
+            'Kein Verweis anderer Bereiche zeigt danach ins Leere',
+            '2 Verweise anderer Bereiche zeigen danach auf den Eintrag der Datei mit derselben ID'
+        ]);
+        // Die Vorlage selbst bleibt beim Ersetzen, wie sie war (R6 nennt, schreibt nicht um)
+        expect(plain(gleich.seite.ctx.D.monsterFavorites)).toEqual(kampagne().monsterFavorites);
     });
 });
 
