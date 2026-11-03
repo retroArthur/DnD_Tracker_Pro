@@ -985,9 +985,13 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
 // gelesen (Fundstellen an den Eintraegen). Er traegt beide Richtungen: R5 bildet mit ihm die
 // Verweise der importierten Eintraege ab, R6 liest mit ihm die Verweise ANDERER Bereiche auf
 // den ersetzten Typ. Darum stehen hier auch Sammlungen ohne Reiter-Import (Shops, Initiative,
-// Session-Notizen, Schnellreferenz) — als Quellen fuer R6. tests/unit/reiterimport-verweise
-// .test.js haelt ihn gegen die Verweispfade der Datengrenze und gegen eine Saat aller Typen.
-// Ein neues Verweisfeld im Datenmodell gehoert hier hinein.
+// Rechner-Vorlagen, Session-Notizen, Schnellreferenz) — als Quellen fuer R6. Bewusst nicht
+// darunter: `wikiRecentlyViewed` ("Zuletzt angesehen"), eine blosse Liste von Wiki-IDs zur
+// Navigation ohne Eintraege mit Feldern — nach dem Ersetzen zeigt sie den Eintrag, der die ID
+// jetzt traegt, eine fehlende laesst die Anzeige fallen (RUECKSPRUNG Offen (5)).
+// tests/unit/reiterimport-verweise.test.js haelt ihn gegen die Verweispfade der Datengrenze und
+// gegen eine Saat aller Typen; die Rechner-Vorlagen haelt dort E4, weil die Grenze ihr Feld nicht
+// kennt. Ein neues Verweisfeld im Datenmodell gehoert hier hinein.
 
 /** Ziel eines Verweises, dessen Typ die App nicht kennt (z. B. `links[].type` aus einer Datei). */
 const REITER_ZIEL_UNBEKANNT = '?';
@@ -1021,6 +1025,7 @@ const REITER_WEITERE_BEREICHE = Object.freeze({
     storyArcs: 'Story-Arcs',
     shops: 'Shops',
     initiative: 'Initiative',
+    monsterFavorites: 'Rechner-Vorlagen',
     quickRefCustom: 'Schnellreferenz'
 });
 
@@ -1197,6 +1202,20 @@ const REITER_VERWEISE = Object.freeze({
     // features/encounter-calculator.js "⚔️ Zur Initiative": der Kaempfer nennt seine Vorlage
     initiative: Object.freeze([
         { feld: 'encounterId', art: 'wert', ziel: 'encounters', wort: 'Vorlage' }
+    ]),
+    // features/encounter-calculator.js saveMonsterFavorite(): "⭐ Vorlage speichern" legt die
+    // Monster der Rechnerliste samt Vorlage ab, "⚔️ Zur Initiative" liest ueber sie RK und TP.
+    // Die Datengrenze kennt das Feld nicht (K1 sieht es nicht; E4 in
+    // tests/unit/reiterimport-verweise.test.js haelt es fest).
+    monsterFavorites: Object.freeze([
+        {
+            feld: 'monsters',
+            art: 'liste',
+            ziel: 'encounters',
+            idFeld: 'encounterId',
+            leeren: 'nullen',
+            wort: 'Vorlage eines Monsters'
+        }
     ]),
     // features/sessions/sessions.js
     sessionNotes: Object.freeze([
