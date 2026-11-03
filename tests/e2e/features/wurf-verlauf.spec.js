@@ -481,12 +481,13 @@ async function fallschadenOeffnen(page) {
  * Bestiar oeffnen und den SRD-Goblin waehlen — ueber den HG-Filter, OHNE das
  * Suchfeld. Ungefiltert ist er nicht im DOM: die Liste laeuft ueber
  * `VirtualScroll` und zeichnet nur die sichtbaren Zeilen, und vor dem Goblin
- * (HG 1/4) stehen alle Kreaturen mit HG 0 und 1/8. Die Suche waere der
- * falsche Umweg: nach einer Eingabe dort wird der ERSTE Klick auf die Liste
- * verschluckt (das Verlassen des Feldes feuert `change`, die Liste wird
- * zwischen mousedown und mouseup neu gezeichnet, es entsteht kein click).
- * Eigener Fehler, hier nicht behoben. Die Auswahlliste feuert `change` schon
- * beim Waehlen, nicht erst beim Verlassen — sie steht dem Klick nicht im Weg.
+ * (HG 1/4) stehen alle Kreaturen mit HG 0 und 1/8. Ueber die Suche ginge es
+ * inzwischen auch: dass dort nach einer Eingabe der ERSTE Klick auf die Liste
+ * verschluckt wurde (das Verlassen des Feldes feuerte `change`, die Liste
+ * wurde zwischen mousedown und mouseup neu gezeichnet, es entstand kein
+ * click), ist mit BESTIAR-KLICK behoben und in `bestiar-klick.spec.js`
+ * bewacht. Der HG-Filter bleibt der kuerzere Weg: die Auswahlliste feuert
+ * `change` schon beim Waehlen, nicht erst beim Verlassen.
  * @param {import('@playwright/test').Page} page
  */
 async function goblinImBestiar(page) {

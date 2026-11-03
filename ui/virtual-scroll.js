@@ -61,6 +61,16 @@ const VirtualScroll = {
         const wrapper = document.createElement('div');
         wrapper.style.height = totalHeight + 'px';
         wrapper.style.position = 'relative';
+        // DIE HUELLE DARF NICHT SCHRUMPFEN (BESTIAR-KLICK, R2). Der Behaelter
+        // des Bestiars ist eine Flex-Spalte; mit `flex-shrink: 1` (Vorgabe)
+        // und einer automatischen Mindesthoehe von 0 — ihr einziges Kind ist
+        // absolut positioniert — schrumpfte die Huelle von 5824 auf 539 px.
+        // Die Scrollhoehe kam dann nur vom gezeichneten Fenster (952 statt
+        // ~5824), und beim naechsten create() klemmte der Browser scrollTop
+        // auf 0: nach einer Auswahl in der gerollten Liste war der gewaehlte
+        // Eintrag weg, der Fokus auf einem fremden Monster. INLINE und ohne
+        // Klasse, weil der Stil-Sollstand nur Elemente mit Klasse erfasst.
+        wrapper.style.flexShrink = '0';
 
         const visibleContainer = document.createElement('div');
         visibleContainer.style.position = 'absolute';

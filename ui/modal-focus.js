@@ -253,7 +253,7 @@ const oeffnerVon = new WeakMap();
  *
  * WAS "GLEICHWERTIG" HEISST, und warum es keine Heuristik ist. Der Verteiler
  * baut aus `data-action`, `data-id`, `data-type` und `data-value` das
- * Kontextobjekt, mit dem die Aktion laeuft (`ui/event-delegation.js:111-117`).
+ * Kontextobjekt, mit dem die Aktion laeuft (`ui/event-delegation.js:135-141`).
  * Zwei Elemente mit identischen vier Werten loesen also dieselbe Handlung mit
  * demselben Ziel aus — sie sind austauschbar, bis auf `ctx.target`. Darum ist
  * der Rueckfall eine Gleichheitspruefung auf genau diese vier Werte und keine

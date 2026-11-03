@@ -53,7 +53,7 @@
 // 40 Auftrags-Statusmarken hat weder Klasse noch id
 // (`features/quests/quests-render.js:97` schreibt ein `div` mit reinem
 // Inline-Stil), und der Behaelter der Bestiarienzeilen ist der
-// klassenlose `visibleContainer`, den `ui/virtual-scroll.js:64` zur
+// klassenlose `visibleContainer`, den `ui/virtual-scroll.js:75` zur
 // Laufzeit erzeugt. Eine Liste, die man lesen kann, ist einer Regel
 // vorzuziehen, die man nachrechnen muss. Neue Gruppen kommen ueber
 // `KeyboardGroup.registriere()` oder in `GRUPPEN_ARTEN` dazu.

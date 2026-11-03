@@ -3857,7 +3857,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    Theme-Farbe
    ===========================================================================
    Der Bestiarium-Statblock liegt NICHT auf einer Theme-Flaeche. Er liegt auf
-   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:295` baut
+   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:320` baut
    `<div class="bestiary-statblock read-aloud parchment">`, und
    `party.css .read-aloud.parchment` faerbt das mit einem Verlauf aus
    --ra-parchment-from (#f5e6c8) nach --ra-parchment-to (#e8d4a8). Diese beiden
@@ -3924,7 +3924,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    #64503e und damit 5,66 und 5,22. Literal -> Token ist Welle-2-Arbeit, kein
    Kontrastmangel. Ebenso NICHT gemeint ist `.bestiary-attribution`: sie steht
    trotz des gemeinsamen Namensanfangs ausserhalb des Statblocks
-   (bestiary-render.js:430, Geschwister der Statblock-Schachtel).
+   (bestiary-render.js:455, Geschwister der Statblock-Schachtel).
    =========================================================================== */
 describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () => {
     /** Der Modulpfad steht hier BEWUSST am Stueck und in ausfuehrbarem Code,

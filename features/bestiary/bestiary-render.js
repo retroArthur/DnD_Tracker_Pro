@@ -141,6 +141,23 @@ function renderBestiaryListItem(monster) {
 }
 
 // ============================================================
+// LAGE DER LISTE (BESTIAR-KLICK, R3)
+// Die Filtersignatur des letzten Zeichnens: Suchwert, HG, Typ, Nur Eigene,
+// Favoriten. Nur wenn sie sich AENDERT, geht die Liste nach oben — dann
+// steht der Anfang der neuen Trefferliste im Bild. Bleibt sie gleich
+// (Auswahl, ★, Klick ins Suchfeld, Neuzeichnen nach dem Speichern einer
+// Kreatur), bleibt die Lage, und der gewaehlte Eintrag bleibt gezeichnet und
+// im Bild. Strg+Z zeichnet diese Liste NICHT neu (renderAll() kennt sie
+// nicht): die Lage bleibt dort ohnehin, ein zurueckgenommener ★ steht aber
+// bis zum naechsten Zeichnen falsch da (Katalog BESTIAR-KLICK, Offen).
+// Bewusst NICHT an der Aktion 'search-input' festgemacht: die ruft schon der
+// Klick ins Suchfeld (ui/event-delegation.js, _handleClick), und der aendert
+// nichts. Dass die Lage ein Neuzeichnen ueberhaupt ueberlebt, sichert das
+// Rollwerk selbst (BESTIAR-KLICK, R2).
+// ============================================================
+var bestiaryFilterSignatur = null;
+
+// ============================================================
 // RENDER BESTIARY LIST (main render hook, called by tab-registry)
 // ============================================================
 function renderBestiaryList() {
@@ -169,16 +186,24 @@ function renderBestiaryList() {
     setViewCount('bestiary', allMonsters.length);
 
     // Read filter values
+    var searchText = window.$('bestiary-search') ? window.$('bestiary-search').value : '';
+    var crFilter = window.$('bestiary-filter-cr') ? window.$('bestiary-filter-cr').value : '';
+    var typeFilter = window.$('bestiary-filter-type') ? window.$('bestiary-filter-type').value : '';
     var onlyCustom = window.$('bestiary-filter-custom') ? window.$('bestiary-filter-custom').checked : false;
     var onlyFavs = window.$('bestiary-filter-favs') ? window.$('bestiary-filter-favs').checked : false;
 
+    // Geaenderter Filter -> nach oben, sonst Lage halten (BESTIAR-KLICK, R3).
+    var signatur = JSON.stringify([searchText, crFilter, typeFilter, onlyCustom, onlyFavs]);
+    if (signatur !== bestiaryFilterSignatur) container.scrollTop = 0;
+    bestiaryFilterSignatur = signatur;
+
     // Single-pass filter via applyFilters (utils/filter-engine.js)
     var filtered = applyFilters(allMonsters, {
-        searchText: window.$('bestiary-search') ? window.$('bestiary-search').value : '',
+        searchText: searchText,
         searchFields: ['name', 'creatureType'],
         filters: {
-            cr: window.$('bestiary-filter-cr') ? window.$('bestiary-filter-cr').value : '',
-            creatureType: window.$('bestiary-filter-type') ? window.$('bestiary-filter-type').value : ''
+            cr: crFilter,
+            creatureType: typeFilter
         },
         customFilter: function(item) {
             if (onlyCustom && item.source !== 'custom') return false;
