@@ -296,7 +296,30 @@ describe('REITERIMPORT R3 — die Datei wird vor dem Fenster geprueft', () => {
             'encounters',
             { id: 1, name: 'E', traits: ['a'] },
             /„traits“ muss Text sein, die Datei enthält eine Liste/
-        ]
+        ],
+        // Pruefer, Runde 2 (Sonden p11/p18, gemessen): ein einziger solcher Eintrag legte die
+        // ganze NPC- bzw. Encounter-Liste dauerhaft lahm ("Anzeigefehler (npc.race ||
+        // "").toLowerCase is not a function", auch nach dem Neuladen), die Link- und die
+        // Zaubersuche warfen; die Suche der Truhe ebenso (eigene Nachmessung mit der Suche
+        // jedes Reiters, Sonde p11c)
+        [
+            'npcs',
+            { id: 1, name: 'N', race: 42 },
+            /„race“ muss Text sein, die Datei enthält die Zahl 42/
+        ],
+        [
+            'npcs',
+            { id: 1, name: 'N', race: ['Elf'] },
+            /„race“ muss Text sein, die Datei enthält eine Liste/
+        ],
+        ['encounters', { id: 1, name: 'E', creatureType: 7 }, /„creatureType“ muss Text sein/],
+        ['encounters', { id: 1, name: 'E', race: 7 }, /„race“ muss Text sein/],
+        ['links', { id: 1, title: 'L', url: 42 }, /„url“ muss Text sein/],
+        ['spells', { id: 1, name: 'Z', material: 42 }, /„material“ muss Text sein/],
+        ['spells', { id: 1, name: 'Z', note: 42 }, /„note“ muss Text sein/],
+        ['loot', { id: 1, name: 'G', description: 42 }, /„description“ muss Text sein/],
+        ['loot', { id: 1, name: 'G', special: ['x'] }, /„special“ muss Text sein/],
+        ['loot', { id: 1, name: 'G', property: { a: 1 } }, /„property“ muss Text sein/]
     ])('P8: %s mit Zahl statt Text %j wird abgelehnt', async (typ, eintrag, thema) => {
         await abgelehnt(typ, datei(typ, [eintrag]), thema);
     });

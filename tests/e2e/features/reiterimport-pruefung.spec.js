@@ -2432,3 +2432,80 @@ test('(16) Listen- und Objektfelder in falscher Form (Tags als Text, Gegenständ
         }
     ]);
 });
+
+// ===========================================================================
+// (17) TEXTFELDER, AUF DENEN DIE ANZEIGE TEXTMETHODEN RUFT (R3)
+// ===========================================================================
+//
+// Befund der Pruefer (Runde 2, Sonden p11 und p18, gemessen am Stand
+// 7fd321c6): EIN NPC mit `race: 42` (oder `["Elf"]`) kam per "Hinzufügen" an
+// ("✅ 1 NPC importiert (hinzugefügt)"), und die GANZE NPC-Liste zeigte danach
+// nur "⚠️ Anzeigefehler (npc.race || "").toLowerCase is not a function" —
+// auch nach dem Neuladen (getNPCIcon, features/npcs/npc-render.js). Ebenso
+// ein Encounter mit `creatureType: 7` (getEncounterIcon,
+// features/encounters/encounters-render.js); ein Link mit `url: 42` und ein
+// Zauber mit `material: 42` liessen die Suche ihres Reiters werfen, ebenso ein
+// Gegenstand mit `description: 42` die Suche der Truhe (eigene Nachmessung
+// mit der Suche jedes Reiters). Dieselbe Fehlerklasse wie (6) `speed` und
+// (16) — R3 verlangt die Ablehnung VOR dem Fenster. Die uebrigen Felder
+// (Encounter `race`, Zauber `note`, Truhe `special`/`property`) haelt
+// tests/unit/reiterimport-pruefung.test.js (P8).
+test('(17) Textfelder als Zahl oder Liste (NPC-Volk, Kreaturtyp, Link-Ziel, Material, Beschreibung) werden vor dem Fenster abgelehnt', async ({
+    page
+}) => {
+    test.setTimeout(120000);
+    const beob = beobachten(page);
+    await laden(page);
+    await ablehnungen(page, beob, 'npcs', [
+        {
+            was: 'NPC race 42',
+            thema: /„race“ muss Text sein/,
+            datei: reiterDatei('npcs', [{ id: 9, name: 'Zahlvolk', race: 42 }], 'probe-17a.json')
+        },
+        {
+            was: "NPC race ['Elf']",
+            thema: /„race“ muss Text sein/,
+            datei: reiterDatei(
+                'npcs',
+                [{ id: 9, name: 'Listenvolk', race: ['Elf'] }],
+                'probe-17b.json'
+            )
+        },
+        {
+            was: 'Encounter creatureType 7',
+            ansicht: 'encounter',
+            thema: /„creatureType“ muss Text sein/,
+            datei: reiterDatei(
+                'encounters',
+                [{ id: 9, name: 'Zahlwesen', creatureType: 7 }],
+                'probe-17c.json'
+            )
+        },
+        {
+            was: 'Link url 42',
+            ansicht: 'links',
+            thema: /„url“ muss Text sein/,
+            datei: reiterDatei('links', [{ id: 9, title: 'Zahlziel', url: 42 }], 'probe-17d.json')
+        },
+        {
+            was: 'Zauber material 42',
+            ansicht: 'spells',
+            thema: /„material“ muss Text sein/,
+            datei: reiterDatei(
+                'spells',
+                [{ id: 9, name: 'Zahlstaub', level: 1, school: 'Bannmagie', material: 42 }],
+                'probe-17e.json'
+            )
+        },
+        {
+            was: 'Gegenstand description 42',
+            ansicht: 'loot',
+            thema: /„description“ muss Text sein/,
+            datei: reiterDatei(
+                'loot',
+                [{ id: 9, name: 'Zahlkiste', description: 42 }],
+                'probe-17f.json'
+            )
+        }
+    ]);
+});
