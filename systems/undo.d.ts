@@ -2,12 +2,14 @@ interface UndoState {
     action: string;
     state: string;
     timestamp: number;
+    /** Kennungen der Aktionen, die dieser Schritt zuruecknimmt (REITERIMPORT R7) */
+    kennungen?: unknown[];
 }
 declare const undoStack: UndoState[];
 declare const redoStack: UndoState[];
 declare const UNDO_LIMIT: any;
-declare function pushUndo(action: string): void;
-declare function saveUndoState(action?: string): void;
+declare function pushUndo(action: string, kennung?: unknown): void;
+declare function saveUndoState(action?: string, kennung?: unknown): void;
 declare function undo(): void;
 declare function redo(): void;
 declare function clearUndoHistory(): void;

@@ -1766,6 +1766,70 @@ describe('Data Integrity', () => {
 
                 expect(hook).toHaveBeenCalledTimes(1);
             });
+
+            // REITERIMPORT R7: Rueckgaengig und Wiederholen eines Ersetzens tauschen, WELCHER
+            // Eintrag hinter einer ID steht — wie der Import selbst. Ein Konsument (der
+            // Reiter-Import) muss darum erfahren, welche Aktion ein Schritt zuruecknimmt bzw.
+            // wiederherstellt; das Label allein ist dafuer nicht eindeutig.
+            test('Kennung: saveUndoState(label, kennung) gibt sie dem Hook bei Undo UND Redo mit', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                const kennung = { reiterImport: { typ: 'characters', modus: 'replace' } };
+                realSaveUndoState('1 Charakter importiert', kennung);
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+                realRedo();
+                realUndo();
+
+                expect(hook.mock.calls.map(c => c[0])).toEqual([
+                    { action: '1 Charakter importiert', direction: 'undo', kennungen: [kennung] },
+                    { action: '1 Charakter importiert', direction: 'redo', kennungen: [kennung] },
+                    { action: '1 Charakter importiert', direction: 'undo', kennungen: [kennung] }
+                ]);
+                expect(context.window.D.characters[0].name).toBe('X');
+            });
+
+            test('Kennung bei gleichem Stand (Dedupe): sie geht an den Kopf — dessen Rueckgaengig nimmt die Aktion mit zurueck', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Frueheres Oeffnen');
+                // D unveraendert: der Stand gleicht dem Kopf, es entsteht kein neuer Eintrag
+                const kennung = { reiterImport: { typ: 'characters', modus: 'replace' } };
+                realSaveUndoState('1 Charakter importiert', kennung);
+                const zweite = { reiterImport: { typ: 'npcs', modus: 'replace' } };
+                realSaveUndoState('1 NPC importiert', zweite);
+                context.window.D.characters[0].name = 'Y';
+                expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+
+                expect(hook.mock.calls.map(c => c[0])).toEqual([
+                    {
+                        action: 'Frueheres Oeffnen',
+                        direction: 'undo',
+                        kennungen: [kennung, zweite]
+                    }
+                ]);
+            });
+
+            test('Ohne Kennung bleibt die Nachricht an den Hook, wie sie war: { action, direction }', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Aktion');
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+                realRedo();
+
+                expect(hook.mock.calls.map(c => Object.keys(c[0]))).toEqual([
+                    ['action', 'direction'],
+                    ['action', 'direction']
+                ]);
+            });
         });
     });
 

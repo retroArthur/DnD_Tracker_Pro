@@ -17,6 +17,10 @@ function showTagsModal(type, id) {
 // "add-existing-tag" die Farbe des kopierten Tags liest) und kommt deshalb nur aus
 // TAG_COLORS — das sind genau die Optionen von #new-tag-color —, sonst 'blue' wie bisher
 // bei fehlender Farbe (Vertrag SENKEN R2, docs/bugfixes.md). Namen laufen durch esc().
+// Die Tags des Elements liest das Fenster ueber tagText() (Vertrag NPC-NAME, E4): Altdaten
+// und Importe tragen dort auch Text, und `t.name` machte aus "Wichtig" eine leere Pille, die
+// die Doppelpruefung nicht erkannte. Die globalen Tags (D.tags) schreibt die App nur als
+// {name, color}; sie liest das Fenster weiter so.
 function renderTagsModal() {
     const typeEl = $('tags-target-type');
     const idEl = $('tags-target-id');
@@ -34,7 +38,7 @@ function renderTagsModal() {
             ? entityTags
                   .map(
                       (t, i) =>
-                          `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(t.name)} <span style="cursor:pointer;" data-action="remove-tag" data-id="${i}">✕</span></span>`
+                          `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')}">${esc(tagText(t))} <span style="cursor:pointer;" data-action="remove-tag" data-id="${i}">✕</span></span>`
                   )
                   .join('')
             : '<span style="color: var(--text-dim);">Keine Tags</span>';
@@ -46,7 +50,7 @@ function renderTagsModal() {
         allTagsEl.innerHTML = allTags.length
             ? allTags
                   .map(t => {
-                      const hasTag = entityTags.some(et => et.name === t.name);
+                      const hasTag = entityTags.some(et => tagText(et) === t.name);
                       const farbe = sichereKlasse(t.color, TAG_COLORS, 'blue');
                       return `<span class="tag tag-${farbe}" style="cursor: pointer; ${hasTag ? 'opacity: 0.5;' : ''}" data-action="add-existing-tag" data-value="${esc(t.name)}" data-color="${farbe}">${esc(t.name)}</span>`;
                   })
@@ -82,11 +86,12 @@ function deleteGlobalTag(index) {
         )
     )
         return;
-    // Remove from all entities
+    // Remove from all entities — auch ein gleichnamiges Text-Tag (tagText(), E4): das
+    // Fenster zeigt es als dasselbe Tag, also nimmt das Loeschen es mit.
     ['npcs', 'locations', 'quests'].forEach(type => {
         (D[type] || []).forEach(entity => {
             if (entity.tags) {
-                entity.tags = entity.tags.filter(t => t.name !== tagToDelete.name);
+                entity.tags = entity.tags.filter(t => tagText(t) !== tagToDelete.name);
             }
         });
     });
@@ -113,7 +118,8 @@ function addTagToEntity() {
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     if (!entity.tags) entity.tags = [];
-    if (entity.tags.some(t => t.name === name)) {
+    // Doppelpruefung in beiden Formen (tagText(), E4): ein Text-Tag "Wichtig" ist dasselbe Tag.
+    if (entity.tags.some(t => tagText(t) === name)) {
         showToast('Tag existiert bereits');
         return;
     }
@@ -140,7 +146,7 @@ function addExistingTagToEntity(name, color) {
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     if (!entity.tags) entity.tags = [];
-    if (entity.tags.some(t => t.name === name)) return;
+    if (entity.tags.some(t => tagText(t) === name)) return;
     entity.tags.push({ name, color });
     renderTagsModal();
     const renderAll = window.renderAll;
@@ -169,6 +175,18 @@ function renderTagsBar(tags) {
     return `<div class="tags-container" style="margin-top: 4px;">
         ${tags.map(t => `<span class="tag tag-${sichereKlasse(t.color, TAG_COLORS, 'blue')} clickable" data-action="show-entities-with-tag-stop" data-value="${esc(t.name)}" title="Alle mit Tag '${esc(t.name)}' anzeigen">${esc(t.name)}</span>`).join('')}
     </div>`;
+}
+/**
+ * Der Anzeigetext eines Tags, in beiden Formen, die in D stehen (Vertrag NPC-NAME, E4): 🏷️
+ * schreibt `{name, color}` (addTagToEntity()), Altdaten und Importe tragen auch Text. EIN Leser
+ * fuer beide — `esc(t)` zeigte das Objekt im NPC-Detail als "[object Object]" (seit 254ff3b2),
+ * `t.name || t` im Ort-Detail das Objekt, wenn sein Name fehlte. Den Namen liest datenText()
+ * (utils/basic.js), dieselbe Regel wie fuer NPC-Name und -Volk: eine Zahl oder ein
+ * Wahrheitswert wird Text, alles andere ''. Liest nur — die Tags selbst bleiben, wie sie sind
+ * (keine Umwandlung an der Grenze: Truhe, Wiki und Notizen fuehren Text-Tags regulaer).
+ */
+function tagText(tag) {
+    return datenText(tag && typeof tag === 'object' ? tag.name : tag);
 }
 // Zeigt alle Entities mit einem bestimmten Tag
 // Verwendet ENTITY_ICONS aus core/constants.js
@@ -249,4 +267,7 @@ function showEntitiesWithTag(tagName) {
     const showModal = window.showModal;
     if (showModal) showModal('tag-search-modal');
 }
+// tagText() hat zwei Verbraucher in anderen Modulen: showNPCDetail()
+// (features/npcs/npc-render.js) und showLocationDetail() (features/locations/locations-render.js).
+window.tagText = tagText;
 // ============================================================

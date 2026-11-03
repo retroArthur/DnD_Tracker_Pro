@@ -1878,3 +1878,44 @@
     text-align: center;
     padding: 32px;
 }
+
+/* ========================================
+   REITER-IMPORT — das Fenster #import-modal (REITERIMPORT)
+   Vorlage: assets/templates/modals-tools.html; die Zeilen der Vorschau
+   schreibt renderImportVorschau() (systems/spellslots/import-export.js).
+   ======================================== */
+
+.reiterimport-vorschau {
+    display: grid;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    overflow-wrap: anywhere;
+}
+
+.reiterimport-warnung {
+    color: var(--yellow-text);
+}
+
+.reiterimport-modus {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+/* Die ganze Beschriftung ist die Tippflaeche: 43px wie die Kopfknoepfe am
+   Telefon (core.css), der Kreis allein waere 13px hoch. Eigene Klasse statt
+   ".reiterimport-modus label": die haette dieselbe Spezifitaet wie
+   ".form-group label" (core.css) und setzte dieselbe Eigenschaft — dann
+   entschiede die Ladereihenfolge, und genau das bewacht
+   tests/unit/f18-kaskade.test.js. */
+.reiterimport-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 43px;
+    cursor: pointer;
+}

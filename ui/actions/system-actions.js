@@ -42,6 +42,8 @@ const SystemActions = {
     'export-json': ctx => exportData(ctx.value),
     'export-csv': ctx => exportToCSV(ctx.value),
     'execute-import': ctx => executeImport(ctx.value),
+    // Moduswechsel im Fenster #import-modal: die Vorschau nennt, was der Modus tut
+    'import-vorschau': () => renderImportVorschau(),
 
     // Backup
     'restore-backup': ctx => {
