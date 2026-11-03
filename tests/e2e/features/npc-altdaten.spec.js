@@ -321,6 +321,16 @@ async function laden(page, teile) {
  * einen geworfenen Renderer dort und als `console.error`). "Failed to load
  * resource" ist Netzrauschen (Schriften unter file://). Das Fehlerlog lebt im
  * Speicher der Seite — `sichern()` liest es VOR jedem Neuladen.
+ *
+ * Eine `console.error`-Zeile wird aus ihren ARGUMENTEN gebaut, nicht aus
+ * `m.text()`: die App meldet `console.error('[$]:', error)`
+ * (render/helpers.js), und `m.text()` gibt den Error-Parameter je Engine
+ * anders aus — Chromium "[$]: Error: Element not found: #…", Firefox nur
+ * "[$]: Error" (gemessen). Ein Error wird darum ueber `String(error)` gelesen
+ * ("Error: <Meldung>", in beiden Engines gleich), ein Text bleibt Text; steht
+ * ein anderes Argument dabei, oder geht das Auslesen schief (Neuladen), gilt
+ * `m.text()`. Gezaehlt wird jede Zeile so oder so — nur ihr Wortlaut haengt
+ * davon ab, und an ihm haengt ERWARTET_TELEFON.
  * @param {import('@playwright/test').Page} page
  */
 function fehlerFangen(page) {
@@ -328,11 +338,27 @@ function fehlerFangen(page) {
     const fehler = [];
     /** @type {string[]} */
     const gesichert = [];
+    /** @type {Promise<void>[]} */
+    const offen = [];
     page.on('pageerror', e => fehler.push('pageerror: ' + e.message));
     page.on('console', m => {
-        if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
-            fehler.push('console.error: ' + m.text().split('\n')[0]);
-        }
+        if (m.type() !== 'error' || m.text().startsWith('Failed to load resource')) return;
+        offen.push(
+            Promise.all(
+                m
+                    .args()
+                    .map(a =>
+                        a.evaluate(v =>
+                            v instanceof Error ? String(v) : typeof v === 'string' ? v : null
+                        )
+                    )
+            )
+                .then(teile => (teile.every(t => t !== null) ? teile.join(' ') : m.text()))
+                .catch(() => m.text())
+                .then(text => {
+                    fehler.push('console.error: ' + text.split('\n')[0]);
+                })
+        );
     });
     const appLog = () =>
         page.evaluate(() =>
@@ -343,10 +369,12 @@ function fehlerFangen(page) {
     return {
         /** Das Fehlerlog der App festhalten, bevor ein Neuladen es leert. */
         async sichern() {
+            await Promise.all(offen);
             gesichert.push(...(await appLog()));
         },
         /** Alles bisher Gefangene plus das Fehlerlog der App. */
         async alle() {
+            await Promise.all(offen);
             return [...fehler, ...gesichert, ...(await appLog())];
         }
     };
@@ -356,10 +384,14 @@ function fehlerFangen(page) {
  *  hinterlassen: `$()` meldet im DEBUG_MODE das Dialogfenster der mobilen
  *  Suche, das erst beim ersten Oeffnen angelegt wird — als `console.error`
  *  und im Fehlerlog der App (vorbestehend, globale-suche-ziel.spec.js (9)).
- *  Gemessen beim Schreiben: alle Wege dieser Datei einmal mit drei gueltigen
- *  NPCs gefahren (fuer W7–W10, W13–W15 eine Kopie mit gueltiger Saat, nicht
- *  Teil der Datei) — nur W15 meldet etwas, genau diese zwei Zeilen; K0, W2v
- *  und W11t melden nichts. Ein anderer Weg hat keine Ausnahme. */
+ *  Gemessen beim Schreiben, in Chromium: alle Wege dieser Datei einmal mit
+ *  drei gueltigen NPCs gefahren (fuer W7–W10, W13–W15 eine Kopie mit
+ *  gueltiger Saat, nicht Teil der Datei) — nur W15 meldet etwas, genau diese
+ *  zwei Zeilen; K0, W2v und W11t melden nichts. Ein anderer Weg hat keine
+ *  Ausnahme. Dass dasselbe Muster auch in Firefox passt, macht erst
+ *  fehlerFangen(), das die `console.error`-Zeile aus ihren Argumenten liest:
+ *  mit `m.text()` stand dort nur "[$]: Error", und W15 war in Firefox bei
+ *  heiler App rot (gemessen). */
 const ERWARTET_TELEFON = [/Element not found: #mobile-search-modal$/];
 
 /**
