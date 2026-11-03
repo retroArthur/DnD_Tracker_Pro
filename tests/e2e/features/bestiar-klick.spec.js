@@ -115,9 +115,12 @@
  *         1440x900, 900x800, 390x844; dazu der ★           rot (Lage 480 -> 0)
  *   (W8)  Tastatur: Tab, Pfeil bis Goblin, Enter, Enter    rot (Giftschlange)
  *   (W9)  gerollt, Klick ins Suchfeld ohne Tippen          rot (480 -> 0)
- *   (W10) gerollt, "e" tippen / "Nur Eigene" anhaken
+ *   (W10) gerollt, je ein Teil der Filtersignatur
+ *         geaendert — "e" tippen, HG per Tastatur, Typ
+ *         per Tastatur, "Nur Eigene", Favoriten
  *         -> oben, erste Zeile = erster Treffer            gruen — RUECKSCHRITT-
- *         WAECHTER: mit R2 allein (Lage gehalten) rot
+ *         WAECHTER: mit R2 allein (Lage gehalten) rot,
+ *         und je Teil rot, wenn er in der Signatur fehlt
  *   (W11) Scrollhoehe >= n x 52; Form der Huelle (R2)      rot (952; kein flex-shrink)
  *   (W12) Listenende: letzte Zeile voll sichtbar,
  *         Ueberhang <= Dach, keine Luecke                  gruen
@@ -172,7 +175,10 @@ const weich = expect.configure({ soft: true });
  * automatische Vorauswahl ist (sonst misst der erste Klick nichts — gemessen:
  * Orte und Truhe waehlen nach der Suche den ersten Treffer selbst aus, darum
  * gibt es je zwei Treffer und das Ziel ist der zweite).
- * @param {{eigene?: number}} [opt] eigene Kreaturen (HG 30, ans Listenende)
+ * @param {{eigene?: number, eigeneFavoriten?: boolean}} [opt] eigene Kreaturen
+ *   (HG 30, Typ Konstrukt, ans Listenende); `eigeneFavoriten` macht sie alle
+ *   zusaetzlich zu Favoriten (Schluessel 'custom:<id>', wie
+ *   toggleBestiaryFavorite ihn bildet)
  */
 function saat(opt = {}) {
     const eigene = opt.eigene || 0;
@@ -344,8 +350,12 @@ function saat(opt = {}) {
         ],
         bestiary,
         // Zwei Favoriten fuer die Gegenprobe (W6): der Haken muss genau sie
-        // zeigen. Der Goblin ist bewusst KEINER — (W3) braucht ihn frei.
-        bestiaryFavorites: ['adler', 'kraken'],
+        // zeigen. Der Goblin ist bewusst KEINER — (W3) braucht ihn frei. Mit
+        // `eigeneFavoriten` kommen die eigenen Kreaturen dazu, damit der Haken
+        // die Liste virtuell laesst (W10).
+        bestiaryFavorites: ['adler', 'kraken'].concat(
+            opt.eigeneFavoriten ? bestiary.map(m => 'custom:' + m.id) : []
+        ),
         _nextId: {
             characters: 3,
             npcs: 4,
@@ -390,7 +400,7 @@ function fehlerFangen(page) {
  * auch keine aus. Gewartet wird auf `appReady`, nicht auf `.app-title` — die
  * ist im Mobil-Layout versteckt.
  * @param {import('@playwright/test').Page} page
- * @param {{url?: string, eigene?: number}} [opt]
+ * @param {{url?: string, eigene?: number, eigeneFavoriten?: boolean}} [opt]
  */
 async function laden(page, opt = {}) {
     const fehler = fehlerFangen(page);
@@ -404,7 +414,7 @@ async function laden(page, opt = {}) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        [SPEICHER, saat({ eigene: opt.eigene })]
+        [SPEICHER, saat({ eigene: opt.eigene, eigeneFavoriten: opt.eigeneFavoriten })]
     );
     await page.goto(opt.url || DEV);
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', null, {
@@ -541,9 +551,10 @@ function listenZustand(page) {
 
 /**
  * Die Trefferliste, wie renderBestiaryList sie bildet — aus dem Buendel
- * GELESEN (SRD plus eigene, applyFilters, Sortierung nach HG und Name).
+ * GELESEN (SRD plus eigene, applyFilters, isBestiaryFavorite, Sortierung nach
+ * HG und Name).
  * @param {import('@playwright/test').Page} page
- * @param {{suche?: string, nurEigene?: boolean}} f
+ * @param {{suche?: string, hg?: string, typ?: string, nurEigene?: boolean, nurFavoriten?: boolean}} f
  * @returns {Promise<{n: number, erste: string, letzte: string}>}
  */
 function treffer(page, f) {
@@ -555,8 +566,10 @@ function treffer(page, f) {
         const liste = applyFilters(alle, {
             searchText: filter.suche || '',
             searchFields: ['name', 'creatureType'],
-            filters: { cr: '', creatureType: '' },
-            customFilter: m => !filter.nurEigene || m.source === 'custom'
+            filters: { cr: filter.hg || '', creatureType: filter.typ || '' },
+            customFilter: m =>
+                (!filter.nurEigene || m.source === 'custom') &&
+                (!filter.nurFavoriten || w.isBestiaryFavorite(m))
         });
         liste.sort(
             (a, b) =>
@@ -1104,6 +1117,81 @@ test.describe('B: geaenderter Filter -> nach oben (Rueckschritt-Waechter zu R2 a
         );
         const z = await listenZustand(page);
         weich(z.scrollTop, 'der geaenderte Filter setzt die Liste nach oben').toBe(0);
+        weich(z.ersteSichtbare, 'die erste sichtbare Zeile ist der erste Treffer').toBe(t.erste);
+        weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
+    });
+
+    // Die drei uebrigen Teile der Filtersignatur (R3: Suchwert, HG, Typ, Nur
+    // Eigene, Favoriten). Gemessen in der Nachpruefung: ein Mutant, dessen
+    // Signatur nur Suchwert und "Nur Eigene" kennt, bestand die beiden Faelle
+    // oben — und liess die Liste nach einem HG-, Typ- oder Favoritenwechsel in
+    // der Mitte der neuen Trefferliste stehen (Typ "Tier" bei scrollTop 480:
+    // erste sichtbare Zeile "giftschlange" statt "adler"). Je Teil darum ein
+    // Fall, jeder mit >= 50 Treffern, damit die Liste virtuell bleibt und die
+    // alte Lage ueberhaupt halten KOENNTE.
+
+    test('(W10) gerollt, HG per Tastatur auf die hoechste Stufe (60 eigene, HG 30): oben, die erste sichtbare Zeile ist der erste Treffer', async ({
+        page
+    }) => {
+        const fehler = await laden(page, { eigene: 60 });
+        await zurAnsicht(page, 'bestiary');
+        await radBisGoblin(page);
+        const hg = page.locator('#bestiary-filter-cr');
+        await hg.click();
+        await page.keyboard.press('Escape');
+        await page.keyboard.press('End');
+        await page.waitForTimeout(SETZEN_MS);
+        const wert = await hg.inputValue();
+        expect(wert, 'Vorbedingung: Ende waehlt die hoechste Stufe, die der eigenen').toBe('30');
+        const t = await treffer(page, { hg: wert });
+        expect(t.n, 'Vorbedingung: HG 30 laesst die Liste virtuell').toBeGreaterThanOrEqual(
+            VIRTUELL_AB
+        );
+        const z = await listenZustand(page);
+        weich(z.scrollTop, 'der geaenderte HG-Filter setzt die Liste nach oben').toBe(0);
+        weich(z.ersteSichtbare, 'die erste sichtbare Zeile ist der erste Treffer').toBe(t.erste);
+        weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
+    });
+
+    test('(W10) gerollt, Typ per Tastatur auf "Konstrukt" (60 eigene): oben, die erste sichtbare Zeile ist der erste Treffer', async ({
+        page
+    }) => {
+        const fehler = await laden(page, { eigene: 60 });
+        await zurAnsicht(page, 'bestiary');
+        await radBisGoblin(page);
+        const typ = page.locator('#bestiary-filter-type');
+        await typ.click();
+        await page.keyboard.press('Escape');
+        await page.keyboard.type('Konstrukt', { delay: 40 });
+        await page.waitForTimeout(SETZEN_MS);
+        expect(await typ.inputValue(), 'Vorbedingung: getippt ist der Typ gewaehlt').toBe(
+            'Konstrukt'
+        );
+        const t = await treffer(page, { typ: 'Konstrukt' });
+        expect(t.n, 'Vorbedingung: der Typ laesst die Liste virtuell').toBeGreaterThanOrEqual(
+            VIRTUELL_AB
+        );
+        const z = await listenZustand(page);
+        weich(z.scrollTop, 'der geaenderte Typ-Filter setzt die Liste nach oben').toBe(0);
+        weich(z.ersteSichtbare, 'die erste sichtbare Zeile ist der erste Treffer').toBe(t.erste);
+        weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
+    });
+
+    test('(W10) gerollt, Favoriten anhaken (60 eigene als Favoriten): oben, die erste sichtbare Zeile ist der erste Treffer', async ({
+        page
+    }) => {
+        const fehler = await laden(page, { eigene: 60, eigeneFavoriten: true });
+        await zurAnsicht(page, 'bestiary');
+        await radBisGoblin(page);
+        await page.locator('#bestiary-filter-favs').click();
+        await expect(page.locator('#bestiary-filter-favs')).toBeChecked();
+        await page.waitForTimeout(SETZEN_MS);
+        const t = await treffer(page, { nurFavoriten: true });
+        expect(t.n, 'Vorbedingung: die Favoriten lassen die Liste virtuell').toBeGreaterThanOrEqual(
+            VIRTUELL_AB
+        );
+        const z = await listenZustand(page);
+        weich(z.scrollTop, 'der geaenderte Favoritenfilter setzt die Liste nach oben').toBe(0);
         weich(z.ersteSichtbare, 'die erste sichtbare Zeile ist der erste Treffer').toBe(t.erste);
         weich(fehler, 'kein Fehler, kein Dialog').toEqual([]);
     });
