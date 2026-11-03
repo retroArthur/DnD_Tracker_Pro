@@ -179,6 +179,10 @@
  * der Vorbedingung (kein Fenster). Sie sind damit Regressionswaechter am
  * neuen Eingang, kein roter Nachweis eines REITERIMPORT-Defekts mehr; die
  * Gegenproben unten beschreiben den Stand VOR SENKEN.
+ * Dasselbe gilt fuer (7), aus einem anderen Grund (Pruefer, Runde 1, am
+ * Mutanten gemessen): die Datengrenze verwirft `__proto__`, `constructor`
+ * und `prototype` ein zweites Mal, ein Import ohne Reviver blieb hier gruen.
+ * Den Reviver haelt W4 in tests/unit/reiterimport-weg.test.js.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * GEGENPROBE (beim Schreiben, nicht Teil der Datei)
@@ -1384,6 +1388,14 @@ test('(6) speed als Zahl, hpMax bzw. Truhen-Menge als Text wird vor dem Fenster 
 // Am Buendel kommt die Datei nicht an (kein Fenster). Mit Fenster filterte
 // das Schema die obersten Schluessel weg, `tags[0].__proto__` aber blieb als
 // eigener Schluessel in D und im Speicher.
+// WAS DIESER FALL NICHT SIEHT (Pruefer, Runde 1, am Mutanten gemessen): den
+// Reviver selbst. `JSON.parse(text)` ohne Reviver in leseReiterImport() liess
+// (7) gruen — bereinigeDatengrenze() (datengrenzeEntgiften(), utils/basic.js)
+// entfernt dieselben Schluessel danach noch einmal. Rot wurde nur der
+// Unit-Fall W4 in tests/unit/reiterimport-weg.test.js, der den Reviver
+// haelt. (7) ist damit wie (11)–(14) ein Regressionswaechter am neuen
+// Eingang: er sichert, dass die Schluessel nicht ankommen — nicht, welche
+// der beiden Schichten sie verwirft.
 test('(7) __proto__/constructor/prototype werden verworfen und verschmutzen Object.prototype nicht', async ({
     page
 }) => {
