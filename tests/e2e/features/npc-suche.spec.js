@@ -72,7 +72,8 @@
  *       td und th (Nachbesserung, siehe unten): die App schreibt Tabellen
  *       selbst in einen Dialog, und ihre Zellen stehen sichtbar getrennt.
  *                                     W2, W2t, W9 (kein Markup-Treffer), W10f,
- *                                     W10s, W10t
+ *                                     W10s, W10t; W10w (Tags fallen weg, auch
+ *                                     mitten im Wort)
  *   R5  Ortsansicht: Ortsname ODER Beschreibung ODER ein NPC an diesem Ort,
  *       dessen Name den GETRIMMTEN Begriff enthaelt — derselbe Mechanismus,
  *       der Name total gelesen (datenText()).                         W7, W4o
@@ -82,8 +83,8 @@
  *
  * Die Saat (acht NPCs, zwei Orte) traegt Dialoge in genau der Form, die
  * saveNPC() und saveQuickDialog() schreiben ({title, triggerCondition, text,
- * used}, `text` als HTML aus dem contenteditable); W6f, W6q und W10f legen
- * ihre NPCs ueber die Oberflaeche an. Die Saat geht wie in
+ * used}, `text` als HTML aus dem contenteditable); W6f, W6q, W10f, W10t und
+ * W10w legen ihre NPCs ueber die Oberflaeche an. Die Saat geht wie in
  * npc-altdaten.spec.js ueber den Speicher und die Datengrenze; W9a prueft als
  * harte Vorbedingung, dass die Altdaten-Formen dort ankommen.
  *
@@ -163,8 +164,11 @@
  *
  * "Unit 1" bei fix/fix2/fix3: der Fall "leeres searchFields mit searchAlso"
  * (dort bleibt die Bedingung `searchFields.length > 0`). Kein Fall dieser
- * Datei ist an der richtigen Skizze rot, und jede zurueckgenommene Regel macht
- * mindestens einen Fall rot — hier oder in tests/unit/filter-engine.test.js.
+ * Datei ist an der richtigen Skizze rot. Dass jede zurueckgenommene Regel
+ * mindestens einen Fall rot macht — hier oder in
+ * tests/unit/filter-engine.test.js —, stand hier schon am Kopf 3aaf8ad1 und
+ * galt dort fuer vier Teile von R4 NICHT: die Pruefung fand vier Mutanten des
+ * Normalisierers, die alle 17 Faelle ueberlebten (siehe DIE NACHBESSERUNG).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE NACHBESSERUNG — nach der Pruefung des Kopfes 3aaf8ad1 (Verhalten und
@@ -178,6 +182,13 @@
  *         (Scheintreffer) — der Normalisierer kannte td und th nicht. Am
  *         Stand b1fc7da6 rot 2: die zwei Begriffe ueber eine Zellgrenze (ein
  *         reiner Dialogtreffer fand dort ohnehin nichts).
+ *   W10w  "Der Goldenen Krug" im Schnell-Dialog getippt, "Gold" per Umschalt+
+ *         Pfeil markiert und ueber "B" der Blase fett gesetzt, 💾: das Tag
+ *         sitzt mitten im Wort. Am Kopf gruen. Rot (2) am Mutanten "jedes
+ *         uebrige Tag wird ein Leerzeichen statt zu verschwinden" ("Goldenen"
+ *         -> [], "Gold enen" -> [Wanda]); W2 "Goldenen Krug" fing ihn nicht,
+ *         weil dort die Tags auf Wortgrenzen sitzen und das Zusammenfassen
+ *         ' ' und '' gleich macht. Am Stand b1fc7da6 rot 1 ("Goldenen").
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (Vertrag, "NICHT IM PR")
@@ -643,6 +654,41 @@ async function npcAnlegen(page, { name, rolle, volk, dialogZeilen }) {
     return /** @type {number} */ (id);
 }
 
+/**
+ * Oeffnet den Schnell-Dialog eines NPC wie ein Nutzer: Begriff leeren, den NPC
+ * in der Liste anklicken, "+" unter Dialoge im Detail, Klick ins Textfeld.
+ * Gibt das Textfeld zurueck.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} id
+ * @param {string} name
+ */
+async function schnellDialogOeffnen(page, id, name) {
+    await tippen(page, '#npc-search', '');
+    await page.locator(`#npc-list .npc-item[data-id="${id}"]`).click();
+    await expect(page.locator('#npc-detail-panel .npc-detail-name')).toContainText(name);
+    await page
+        .locator(`#npc-detail-panel [data-action="show-add-dialog-modal-stop"][data-id="${id}"]`)
+        .click();
+    const editor = page.locator('#quick-dialog-text');
+    await expect(editor).toBeVisible();
+    await editor.click();
+    return editor;
+}
+
+/**
+ * Speichert den Schnell-Dialog: erst ein Klick ins Titelfeld, dann 💾. Solange
+ * die Schreibmarke in einer Tabelle steht, liegt deren Kontextleiste ueber 💾
+ * und faengt den Klick (vorbestehend, gemessen; nicht dieser Vorgang) — der
+ * Klick daneben schliesst sie, wie ein Nutzer es auch taete.
+ * @param {import('@playwright/test').Page} page
+ */
+async function schnellDialogSpeichern(page) {
+    await page.locator('#quick-dialog-title').click();
+    await expect(page.locator('#table-context-toolbar')).not.toHaveClass(/visible/);
+    await page.locator('#quick-dialog-modal [data-action="save-quick-dialog"]').click();
+    await expect(page.locator('#quick-dialog-text')).toBeHidden();
+}
+
 /** Die Dialogtexte eines NPC aus D (Ablesen).
  *  @param {import('@playwright/test').Page} page
  *  @param {number} id */
@@ -1014,15 +1060,7 @@ test('W10t Tabelle aus dem Editor: Woerter in zwei Zellen stehen getrennt', asyn
     await laden(page, { npcs: [] });
     await zuAnsicht(page, 'npcs');
     const tilo = await npcAnlegen(page, { name: 'Tilo', rolle: 'Wechsler', volk: 'Zwerg' });
-    await tippen(page, '#npc-search', '');
-    await page.locator(`#npc-list .npc-item[data-id="${tilo}"]`).click();
-    await expect(page.locator('#npc-detail-panel .npc-detail-name')).toContainText('Tilo');
-    await page
-        .locator(`#npc-detail-panel [data-action="show-add-dialog-modal-stop"][data-id="${tilo}"]`)
-        .click();
-    const editor = page.locator('#quick-dialog-text');
-    await expect(editor).toBeVisible();
-    await editor.click();
+    const editor = await schnellDialogOeffnen(page, tilo, 'Tilo');
     // Strg+Umschalt+T fuegt eine 3x3-Tabelle ein (insertTable(), ui/editors/
     // rich-text-insert.js): Kopfzeile <th> "Spalte 1".."Spalte 3", darunter
     // zwei Zeilen leerer <td>. Das Einfuegen einer Tabelle (Strg+V) laesst
@@ -1034,13 +1072,7 @@ test('W10t Tabelle aus dem Editor: Woerter in zwei Zellen stehen getrennt', asyn
     await page.keyboard.type('Gold');
     await zellen.nth(1).click();
     await page.keyboard.type('Silber');
-    // Aus der Tabelle heraus ins Titelfeld klicken: solange die Schreibmarke in
-    // der Tabelle steht, liegt deren Kontextleiste ueber 💾 und faengt den Klick
-    // (vorbestehend, gemessen; nicht dieser Vorgang).
-    await page.locator('#quick-dialog-title').click();
-    await expect(page.locator('#table-context-toolbar')).not.toHaveClass(/visible/);
-    await page.locator('#quick-dialog-modal [data-action="save-quick-dialog"]').click();
-    await expect(editor).toBeHidden();
+    await schnellDialogSpeichern(page);
     const texte = await dialogTexte(page, tilo);
     expect(texte, 'Vorbedingung: Tilo hat genau einen Dialog').toHaveLength(1);
     expect(String(texte[0]), 'Vorbedingung: zwei Kopfzellen nebeneinander').toMatch(
@@ -1054,6 +1086,36 @@ test('W10t Tabelle aus dem Editor: Woerter in zwei Zellen stehen getrennt', asyn
         ['GoldSilber', [], '</td><td> zusammengeklebt — kein Scheintreffer'],
         ['Spalte 1 Spalte 2', [tilo], '</th><th>'],
         ['1Spalte', [], '</th><th> zusammengeklebt — kein Scheintreffer']
+    ]))
+        await npcSuche(page, zeile);
+    await keinFehlerAusser(fehler, ERLAUBT_SCHNELLDIALOG);
+});
+
+test('W10w ein Tag mitten im Wort faellt weg, ohne das Wort zu trennen', async ({ page }) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, { npcs: [] });
+    await zuAnsicht(page, 'npcs');
+    const wanda = await npcAnlegen(page, { name: 'Wanda', rolle: 'Wirtin', volk: 'Mensch' });
+    await schnellDialogOeffnen(page, wanda, 'Wanda');
+    await page.keyboard.type('Der Goldenen Krug');
+    // "Gold" markieren — Pos1, vier Zeichen nach rechts, vier mit Umschalt —
+    // und ueber "B" der Blase setzen, die zur Markierung erscheint (sie legt
+    // sich ueber die feste Leiste): nur ein Teil des Worts ist danach fett.
+    await page.keyboard.press('Home');
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+    for (let i = 0; i < 4; i++) await page.keyboard.press('Shift+ArrowRight');
+    const blase = page.locator('#floating-toolbar');
+    await expect(blase, 'Vorbedingung: die Blase erscheint zur Markierung').toHaveClass(/visible/);
+    await blase.locator('[data-floating-action="bold"]').click();
+    await schnellDialogSpeichern(page);
+    const texte = await dialogTexte(page, wanda);
+    expect(texte, 'Vorbedingung: Wanda hat genau einen Dialog').toHaveLength(1);
+    expect(String(texte[0]), 'Vorbedingung: das Tag sitzt mitten im Wort').toMatch(
+        /Der <(b|strong)\b[^>]*>Gold<\/(b|strong)>enen Krug/
+    );
+    for (const zeile of /** @type {[string, number[], string][]} */ ([
+        ['Goldenen', [wanda], 'Wort, dessen erster Teil fett ist'],
+        ['Gold enen', [], 'das Tag ist keine Wortgrenze — kein Scheintreffer']
     ]))
         await npcSuche(page, zeile);
     await keinFehlerAusser(fehler, ERLAUBT_SCHNELLDIALOG);
