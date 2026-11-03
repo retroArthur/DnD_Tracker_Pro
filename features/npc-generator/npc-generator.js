@@ -329,18 +329,41 @@ function saveGeneratedNPC() {
         relations: []
     });
 
-    if (typeof save === 'function') save();
-
-    // NPC-Liste neu rendern
-    if (typeof renderNPCList === 'function') renderNPCList();
-
-    // Modal schließen
-    var modal = document.getElementById('npc-generator-modal');
-    if (modal) modal.remove();
-    _npcgAktuell = null;
+    // GENERATOR-DOPPELT: Ab dem push endet JEDER Ausgang mit verbrauchter
+    // Vorschau und geschlossenem Fenster — auch wenn save() wirft. Das
+    // Verbrauchen IST die Sperre gegen den zweiten Klick (wie in
+    // createCampaign das Leeren der Eingabe vor dem Zeichnen), kein Zeitflag:
+    // ein weiterer Klick auf dieselbe Vorschau gelangt nicht mehr bis hierher.
+    try {
+        if (typeof save === 'function') save();
+    } finally {
+        _npcgAktuell = null;
+        var modal = document.getElementById('npc-generator-modal');
+        if (modal) modal.remove();
+    }
 
     if (typeof showToast === 'function') {
         showToast(npc.name + ' als NPC gespeichert', 'success');
+    }
+
+    // NPC-Liste neu rendern — ZULETZT und hier abgefangen (GENERATOR-DOPPELT):
+    // der NPC ist gespeichert und bleibt es, ein Wurf rollt nichts zurueck.
+    // Der Nutzer sieht ihn als Fehlermeldung, das Fehlerlog bekommt den Wurf.
+    // Nicht in renderNPCList fangen: der Reiterwechsel braucht den Wurf
+    // (ruecksprung-rundlauf.spec.js (12)). Nicht ueber safeRender: das wirft
+    // im dev-Buendel (DEBUG_MODE) erneut, dev und prod liefen auseinander.
+    try {
+        if (typeof renderNPCList === 'function') renderNPCList();
+    } catch (fehler) {
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('saveGeneratedNPC', fehler, 'renderNPCList nach dem Speichern');
+        }
+        if (typeof showToast === 'function') {
+            showToast(
+                '⚠️ NPC gespeichert – die NPC-Liste konnte nicht aktualisiert werden',
+                'error'
+            );
+        }
     }
 }
 

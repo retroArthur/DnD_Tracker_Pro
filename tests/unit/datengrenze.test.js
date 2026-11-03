@@ -115,10 +115,11 @@
  * VERDRAHTUNG. Eine richtige Grenzfunktion, die nur der Kampagnen-Import
  * aufruft, liesse Backup, Datei-Backup, Migration und den Start offen — genau
  * die Wege, auf denen heute gar nichts bereinigt. Der letzte Block prueft
- * deshalb im Aufrufgraph ueber loader.js MODULES, dass JEDER der fuenf
- * Eingaenge des Vertrags (`importDataGlobal`, `restoreBackup`,
- * `restoreFromFileBackup`, `importFullExport`, `load` — der zweite Tab und der
- * Kampagnenwechsel laufen ueber `load`) die Funktion erreicht, direkt oder
+ * deshalb im Aufrufgraph ueber loader.js MODULES, dass JEDER der sechs
+ * Eingaenge (`importDataGlobal`, `restoreBackup`, `restoreFromFileBackup`,
+ * `importFullExport`, `load` — der zweite Tab und der Kampagnenwechsel laufen
+ * ueber `load` —, und seit REITERIMPORT der Import pro Reiter `importData`)
+ * die Funktion erreicht, direkt oder
  * ueber eine Hilfe, und ihr ERGEBNIS verwendet: der Vertrag erlaubt eine
  * Kopie, ein verworfener Rueckgabewert bereinigte dann nichts. Die Eingaenge
  * stehen dort nur als Funktionsnamen, nicht als Modulpfade (Abdeckungsregel
@@ -1650,6 +1651,10 @@ describe.each(QUELLEN.map(([n]) => [n]))('N1 NPC-Name und Volk sind Text — %s'
 // ============================================================
 const EINGAENGE = [
     'importDataGlobal',
+    // REITERIMPORT: der Import pro Reiter (📥 in zwoelf Reitern) ist seit dem Fenster
+    // #import-modal ein Weg nach D wie die anderen — importData() -> oeffneReiterImport()
+    // -> bereiteReiterImportVor() -> bereinigeDatengrenze()
+    'importData',
     'restoreBackup',
     'restoreFromFileBackup',
     'importFullExport',
