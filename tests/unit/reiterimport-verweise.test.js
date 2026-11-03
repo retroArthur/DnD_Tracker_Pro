@@ -17,6 +17,8 @@
  *   - R5/R6 Vorschau: was sie nennt, ist genau, was das Schreiben tut.
  *   - R7: Ersetzen verwirft ein Bearbeiten des Typs; Hinzufuegen nur eines, dessen ID neu
  *     vergeben wurde (sonst bleibt es stehen); ein Anlege-Entwurf ohne ID bleibt unberuehrt.
+ *     Dasselbe nach Strg+Z und Strg+Y (F7-F10): der Undo-Punkt des Imports traegt eine
+ *     Kennung, sein Undo-Hook verwirft danach nach derselben Regel.
  *   - R8: updateIOCounts() kennt die drei Welt-Reiter (bei aktiver Suche schreibt die Liste),
  *     renderAll() zeichnet den offenen Welt-Reiter neu (features/render-dashboard.js).
  */
@@ -831,6 +833,97 @@ describe('REITERIMPORT R7 — ein Bearbeiten, dessen ID danach einem importierte
         expect(document.getElementById('char-form').classList.contains('open')).toBe(false);
         // Nur der importierte Typ: die Quest-ID bleibt
         expect(document.getElementById('edit-quest-id').value).toBe('1');
+    });
+
+    // R7 ueber Strg+Z/Strg+Y (Pruefer, Runde 1, gemessen): Rueckgaengig und Wiederholen eines
+    // Ersetzens tauschen, WELCHER Eintrag hinter einer ID steht. Der Import gibt seinem
+    // Undo-Punkt darum eine Kennung mit, und sein Undo-Hook verwirft nach jedem Schritt, der
+    // ihn zuruecknimmt oder wiederherstellt, was ein Bearbeiten des Typs sonst ueberschriebe.
+    /** Das Party-Formular steht (wieder) offen mit `id`. */
+    function wiederOffen(id) {
+        document.getElementById('edit-char-id').value = id;
+        document.getElementById('char-name').value = 'Thorin';
+        document.getElementById('char-form').classList.add('open');
+    }
+
+    test('F7: Ersetzen — der Undo-Punkt traegt die Kennung; Strg+Z und Strg+Y verwerfen jedes Bearbeiten des Typs', async () => {
+        formulare();
+        const seite = erzeugeSeite({ characters: [{ id: 1, name: 'Thorin' }] });
+        attrappen(seite);
+        seite.ctx.importData(
+            reiterfeld('characters', datei('characters', [{ id: 1, name: 'Mira' }]))
+        );
+        await ruhe();
+        document.querySelector('input[name="import-mode"][value="replace"]').checked = true;
+        seite.ctx.executeImport();
+        expect(seite.ctx.saveUndoState).toHaveBeenCalledTimes(1);
+        const [label, kennung] = seite.ctx.saveUndoState.mock.calls[0];
+        expect(label).toBe('1 Charakter importiert');
+        expect(plain(kennung)).toEqual({ reiterImport: { typ: 'characters', modus: 'replace' } });
+        for (const direction of ['undo', 'redo']) {
+            seite.ctx.cancelCharEdit.mockClear();
+            wiederOffen('1');
+            seite.ctx.reiterImportNachUndo({ action: label, direction, kennungen: [kennung] });
+            expect(seite.ctx.cancelCharEdit).toHaveBeenCalledTimes(1);
+            expect(document.getElementById('edit-char-id').value).toBe('');
+            expect(document.getElementById('char-form').classList.contains('open')).toBe(false);
+        }
+        // Nur der importierte Typ: die Quest-ID bleibt
+        expect(document.getElementById('edit-quest-id').value).toBe('1');
+    });
+
+    test('F8: Hinzufuegen — die Kennung nennt die neuen IDs; nur ein Bearbeiten mit einer davon wird verworfen', async () => {
+        formulare();
+        const seite = erzeugeSeite({ characters: [{ id: 1, name: 'Thorin' }] });
+        attrappen(seite);
+        seite.ctx.importData(
+            reiterfeld('characters', datei('characters', [{ id: 1, name: 'Mira' }]))
+        );
+        await ruhe();
+        seite.ctx.executeImport();
+        const [, kennung] = seite.ctx.saveUndoState.mock.calls[0];
+        expect(plain(kennung)).toEqual({
+            reiterImport: { typ: 'characters', modus: 'merge', neueIds: [101] }
+        });
+        for (const direction of ['undo', 'redo']) {
+            // Ein vorhandener Eintrag behaelt seine ID in beiden Staenden: es bleibt stehen
+            seite.ctx.cancelCharEdit.mockClear();
+            wiederOffen('1');
+            seite.ctx.reiterImportNachUndo({ action: 'x', direction, kennungen: [kennung] });
+            expect(seite.ctx.cancelCharEdit).not.toHaveBeenCalled();
+            expect(document.getElementById('edit-char-id').value).toBe('1');
+            // Die ID des importierten Eintrags gehoert vorher bzw. nachher niemandem
+            wiederOffen('101');
+            seite.ctx.reiterImportNachUndo({ action: 'x', direction, kennungen: [kennung] });
+            expect(seite.ctx.cancelCharEdit).toHaveBeenCalledTimes(1);
+            expect(document.getElementById('edit-char-id').value).toBe('');
+        }
+    });
+
+    test('F9: ein Schritt ohne Kennung des Reiter-Imports laesst jedes Bearbeiten stehen', () => {
+        formulare();
+        const seite = erzeugeSeite({ characters: [{ id: 1, name: 'Thorin' }] });
+        attrappen(seite);
+        for (const info of [
+            { action: 'Charakter bearbeitet', direction: 'undo' },
+            { action: 'Charakter bearbeitet', direction: 'redo', kennungen: [] },
+            { action: 'x', direction: 'undo', kennungen: [{ anderes: true }, null] },
+            undefined
+        ]) {
+            seite.ctx.reiterImportNachUndo(info);
+        }
+        expect(seite.ctx.cancelCharEdit).not.toHaveBeenCalled();
+        expect(document.getElementById('edit-char-id').value).toBe('1');
+    });
+
+    test('F10: das Modul meldet seinen Undo-Hook an, wenn es registerUndoHook() gibt (wie soundboard-crud.js)', () => {
+        const ctx = { console, document, DOMParser, Node, setTimeout, clearTimeout };
+        ctx.window = ctx;
+        ctx.registerUndoHook = jest.fn();
+        vm.createContext(ctx);
+        for (const rel of MODULE) vm.runInContext(QUELLTEXT[rel], ctx, { filename: rel });
+        expect(ctx.registerUndoHook).toHaveBeenCalledTimes(1);
+        expect(ctx.registerUndoHook.mock.calls[0][0]).toBe(ctx.reiterImportNachUndo);
     });
 });
 

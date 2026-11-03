@@ -80,6 +80,9 @@
  *       ueberschreibt keinen importierten Eintrag (9 Party, 10 Quest,
  *       11 Encounter, 12 die Link-Karte — sie ist weder Modal noch
  *       Klappformular, steht unter dem 📥 und ueberschrieb gemessen genauso).
+ *       Auch nicht nach Strg+Z oder Strg+Y: beide tauschen beim Ersetzen aus,
+ *       welcher Eintrag hinter einer ID steht (15-18, Party ueber die Tasten,
+ *       Encounter ueber ↩️/↪️ — Befund der Pruefer, Runde 1, Stand a3822abf).
  *   Kontrollen: (13) Export und Dateiwahl tragen, was die Faelle brauchen;
  *   (14) die Speicher-Wege der Formulare schreiben wirklich — sonst waere
  *   "der importierte Eintrag bleibt unveraendert" in 9-12 billig.
@@ -2208,4 +2211,198 @@ test('(14) die Speicher-Wege der Formulare schreiben, ✏️ setzt die Quest-ID 
         description: `#edit-quest-id = "${await page.locator('#edit-quest-id').inputValue()}"`
     });
     weich(await fehler.alle(), 'keine Fehler auf dem Weg').toEqual([]);
+});
+
+// ===========================================================================
+// (15)-(18) R7 UEBER STRG+Z / STRG+Y
+// ===========================================================================
+//
+// R7 sagt "ein spaeteres Speichern ueberschreibt keinen importierten Eintrag",
+// R8 verspricht, dass Strg+Z den Import zuruecknimmt und Strg+Y ihn
+// wiederherstellt. Beides zusammen oeffnet K3 ein zweites Mal: Rueckgaengig
+// und Wiederholen tauschen beim Ersetzen aus, WELCHER Eintrag hinter einer ID
+// steht — genau wie der Import selbst. Gemessen am Stand a3822abf (Pruefer,
+// Runde 1, Sonden p6/p7): Ersetzen (id 1 ist jetzt Mira) → Strg+Z (Thorin
+// wieder id 1) → ✏️ Thorin → Strg+Y (id 1 ist wieder Mira) → "Speichern"
+// schrieb Thorin ueber Mira, "Charakter aktualisiert"; ueber die Kopf-Knoepfe
+// ↩️/↪️ identisch, beim Encounter ueberschrieb der Goblin den Oger. Und
+// spiegelbildlich: Ersetzen → ✏️ Mira → Strg+Z → "Speichern" schrieb Mira
+// ueber den urspruenglichen Thorin. Der Verwaist-Schutz greift nicht — die
+// ID gehoert danach einem ANDEREN Eintrag. Je Richtung ein Fall, die Party
+// ueber die Tasten, der Encounter ueber die Kopf-Knoepfe.
+
+/**
+ * Der gemeinsame Ablauf von (15)-(18).
+ * @param {import('@playwright/test').Page} page
+ * @param {{
+ *   typ: 'characters'|'encounters',
+ *   saat: Record<string, any>,
+ *   datei: { name: string, buffer: Buffer },
+ *   bearbeiten: () => Promise<void>,
+ *   formular: string, idFeld: string, nameFeld: string,
+ *   richtung: 'undo'|'redo',
+ *   weg: 'tasten'|'knoepfe',
+ *   meldung: RegExp
+ * }} f
+ */
+async function nachUndoSpeichern(page, f) {
+    const fehler = fehlerFangen(page);
+    await appLaden(page, kampagne(f.saat));
+    await zuAnsicht(page, f.typ);
+    const original = await einsInD(page, f.typ);
+    expect(original, 'Vorbedingung: id 1 steht in der Saat').not.toBeNull();
+    await fensterOeffnen(page, f.typ, f.datei);
+    await modusWaehlen(page, 'replace');
+    await importieren(page, `Ersetzen ${f.typ}`);
+    const importiert = await einsInD(page, f.typ);
+    expect(importiert?.name, 'Vorbedingung: id 1 ist jetzt der Eintrag der Datei').toMatch(
+        /aus Datei/
+    );
+
+    /** @param {'undo'|'redo'} was @param {any} soll */
+    const schritt = async (was, soll) => {
+        const rev = await revStand(page);
+        if (f.weg === 'tasten') {
+            await page.keyboard.press(was === 'undo' ? 'Control+z' : 'Control+y');
+        } else {
+            await page.locator(`.header-action-btn[data-action="${was}"]`).click();
+        }
+        await geschriebenSeit(page, rev, was === 'undo' ? 'Strg+Z' : 'Strg+Y');
+        expect(
+            (await einsInD(page, f.typ))?.name,
+            `Vorbedingung: nach ${was === 'undo' ? 'Strg+Z' : 'Strg+Y'} steht "${soll.name}" unter id 1`
+        ).toBe(soll.name);
+    };
+
+    // undo: ✏️ am IMPORTIERTEN Eintrag, dann Strg+Z — danach gehoert id 1
+    // wieder dem Original. redo: erst Strg+Z, ✏️ am ORIGINAL, dann Strg+Y —
+    // danach gehoert id 1 wieder dem importierten Eintrag.
+    if (f.richtung === 'redo') await schritt('undo', original);
+    await f.bearbeiten();
+    expect(
+        await formularStand(page, f.formular, f.idFeld, f.nameFeld),
+        'Vorbedingung: ✏️ oeffnet das Formular mit id 1'
+    ).toEqual({
+        offen: true,
+        id: '1',
+        name: (f.richtung === 'redo' ? original : importiert).name
+    });
+    const soll = f.richtung === 'redo' ? importiert : original;
+    await schritt(f.richtung, soll);
+
+    const stand = await formularStand(page, f.formular, f.idFeld, f.nameFeld);
+    weich(
+        stand.offen && (stand.id !== '' || stand.name !== ''),
+        `R7: das Formular ist nach ${f.richtung === 'redo' ? 'Strg+Y' : 'Strg+Z'} geleert oder geschlossen — war ${JSON.stringify(stand)}`
+    ).toBe(false);
+    const stand0 = await meldungsStand(page);
+    await speichernFallsDa(
+        page,
+        page.locator(`#${f.formular}`).getByRole('button', { name: 'Speichern', exact: true })
+    );
+    weich(
+        (await meldungenSeit(page, stand0)).filter(m => f.meldung.test(m)),
+        'R7: kein "… aktualisiert" — das Formular schreibt nicht ueber den Eintrag unter id 1'
+    ).toEqual([]);
+    await bleibtImportiert(
+        page,
+        f.typ,
+        soll,
+        f.richtung === 'redo'
+            ? 'der wiederhergestellte importierte Eintrag bleibt feldgleich'
+            : 'das Original bleibt feldgleich'
+    );
+    weich(await fehler.alle(), 'keine Fehler auf dem Weg').toEqual([]);
+}
+
+/** ✏️ an Charakter 1 (Klappformular der Party).
+ *  @param {import('@playwright/test').Page} page */
+const charBearbeiten = page => async () => {
+    await page.locator('[data-action="edit-char"][data-id="1"]').first().click();
+};
+
+/** ✏️ an Encounter 1: erst die Karte waehlen, dann ✏️ im Detail.
+ *  @param {import('@playwright/test').Page} page */
+const encBearbeiten = page => async () => {
+    await page.locator('.enc-item[data-id="1"]').click();
+    await page.locator('[data-action="edit-encounter"][data-id="1"]').click();
+};
+
+const PARTY_UNDO = {
+    typ: /** @type {'characters'} */ ('characters'),
+    saat: { characters: [{ ...THORIN, spells: [], items: [] }, KIRA] },
+    datei: dateiBauen('characters', [MIRA, { ...MIRA, id: 2, name: 'Bob (aus Datei)' }]),
+    formular: 'char-form',
+    idFeld: 'edit-char-id',
+    nameFeld: 'char-name',
+    weg: /** @type {'tasten'} */ ('tasten'),
+    meldung: /Charakter aktualisiert/
+};
+
+const ENCOUNTER_UNDO = {
+    typ: /** @type {'encounters'} */ ('encounters'),
+    saat: { encounters: [GOBLIN] },
+    datei: dateiBauen('encounters', [
+        {
+            ...GOBLIN,
+            name: 'Oger (aus Datei)',
+            creatureType: 'giant',
+            cr: '2',
+            ac: 11,
+            hp: 59,
+            traits: '<p>Stark</p>',
+            equipment: '',
+            actions: '<p>Keule</p>'
+        }
+    ]),
+    formular: 'enc-form',
+    idFeld: 'edit-enc-id',
+    nameFeld: 'enc-name',
+    weg: /** @type {'knoepfe'} */ ('knoepfe'),
+    // saveEncounter() meldet beim Ueberschreiben nichts — entscheidend ist D
+    meldung: /aktualisiert/
+};
+
+test('(15) Ersetzen → ✏️ am importierten Charakter → Strg+Z → Speichern: der ursprüngliche Thorin bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    await nachUndoSpeichern(page, {
+        ...PARTY_UNDO,
+        bearbeiten: charBearbeiten(page),
+        richtung: 'undo'
+    });
+});
+
+test('(16) Ersetzen → Strg+Z → ✏️ Thorin → Strg+Y → Speichern: die wiederhergestellte Mira bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    await nachUndoSpeichern(page, {
+        ...PARTY_UNDO,
+        bearbeiten: charBearbeiten(page),
+        richtung: 'redo'
+    });
+});
+
+test('(17) Ersetzen → ✏️ am importierten Encounter → ↩️ → Speichern: der ursprüngliche Goblin bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    await nachUndoSpeichern(page, {
+        ...ENCOUNTER_UNDO,
+        bearbeiten: encBearbeiten(page),
+        richtung: 'undo'
+    });
+});
+
+test('(18) Ersetzen → ↩️ → ✏️ Goblin → ↪️ → Speichern: der wiederhergestellte Oger bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    await nachUndoSpeichern(page, {
+        ...ENCOUNTER_UNDO,
+        bearbeiten: encBearbeiten(page),
+        richtung: 'redo'
+    });
 });
