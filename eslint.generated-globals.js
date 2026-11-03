@@ -434,6 +434,7 @@ export default {
     "berechneTagesmarsch": 'readonly',
     "bereinigeDatengrenze": 'readonly',
     "bestaetigeReiseTimeline": 'readonly',
+    "bestiaryFilterSignatur": 'writable',
     "blendenSammlung": 'readonly',
     "blobToBase64": 'readonly',
     "breakConcentration": 'readonly',
