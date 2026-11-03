@@ -702,14 +702,24 @@ const REITER_NAMENSFELD = Object.freeze({
  * "umgekehrt"): die App schreibt sie nur als Text, und ihre Anzeige ruft Textmethoden darauf.
  * Gemessen bzw. am Code: `speed` des Helden (`speedVal.split` beim Bearbeiten, quick-actions.js
  * `char.speed.split`), `school` des Zaubers (render-spells.js `s.school.substring`), `content`
- * des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`). Dazu jedes HTML-Feld
- * (HTML_FIELDS_BY_TYPE) — die App schreibt dort immer Markup als Text. Fehlt ein Feld oder ist
- * es null, ist das kein Fehler.
+ * des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`). Pruefer, Runde 2 (Sonden p11/p18,
+ * gemessen): `race` des NPCs (npc-render.js getNPCIcon `(npc.race || '').toLowerCase` — EIN
+ * solcher NPC legte die ganze NPC-Liste lahm, auch nach dem Neuladen), `creatureType` und
+ * `race` des Encounters (encounters-render.js getEncounterIcon, ebenso die ganze Liste),
+ * `url` des Links (links.js, die Suche) und `material` und `note` des Zaubers
+ * (spell-manager.js, die Suche); dazu, mit der Suche JEDES Reiters nachgemessen (Sonde p11c),
+ * `description`, `special` und `property` des Gegenstands (initiative-loot.js, die Suche der
+ * Truhe). Dazu jedes HTML-Feld (HTML_FIELDS_BY_TYPE) — die App schreibt dort immer Markup als
+ * Text. Fehlt ein Feld oder ist es null, ist das kein Fehler.
  */
 const REITER_TEXTFELDER = Object.freeze({
     characters: Object.freeze(['speed']),
-    spells: Object.freeze(['school']),
-    wiki: Object.freeze(['content'])
+    npcs: Object.freeze(['race']),
+    encounters: Object.freeze(['creatureType', 'race']),
+    loot: Object.freeze(['description', 'special', 'property']),
+    spells: Object.freeze(['school', 'material', 'note']),
+    wiki: Object.freeze(['content']),
+    links: Object.freeze(['url'])
 });
 
 /**
