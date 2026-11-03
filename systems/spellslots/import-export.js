@@ -907,8 +907,12 @@ function reiterZahlFehler(knoten, teile, stufe, weg) {
 
 /**
  * Was an EINEM Eintrag nicht stimmt (R3), sonst null: das Namensfeld, die Zahlenfelder
- * (reiterZahlenpfade()), die Listen- und Objektfelder (REITER_FORMFELDER), die Textfelder
- * (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
+ * (reiterZahlenpfade()), die Feldverweise des Katalogs, die Listen- und Objektfelder
+ * (REITER_FORMFELDER), die Textfelder (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
+ * Die Feldverweise (`art: 'wert'` in REITER_VERWEISE) pruefen wie die Zahlenfelder, auch wo die
+ * Datengrenze das Feld nicht kennt (`filterId` von NPC und Ort). Gemessen (Pruefer, Runde 2,
+ * Sonde p1): `filterId: [1]` ueberstand die Pruefung, und parseEntityId([1]) ergibt 1 — nach dem
+ * Hinzufuegen zeigte die Karte den Filter der Ziel-Kampagne mit dieser ID.
  * @param {Object} eintrag
  * @param {string} dataType
  * @returns {string|null}
@@ -924,6 +928,14 @@ function reiterEintragFehler(eintrag, dataType) {
     }
     for (const teile of reiterZahlenpfade(dataType)) {
         const fehler = reiterZahlFehler(eintrag, teile, 0, '');
+        if (fehler) return fehler;
+    }
+    const verweise = Object.prototype.hasOwnProperty.call(REITER_VERWEISE, dataType)
+        ? REITER_VERWEISE[dataType]
+        : [];
+    for (const v of verweise) {
+        if (v.art !== 'wert') continue;
+        const fehler = reiterZahlFehler(eintrag, [{ name: v.feld, liste: false }], 0, '');
         if (fehler) return fehler;
     }
     const formFehler = reiterFormFehler(eintrag, dataType);
@@ -1222,13 +1234,14 @@ const REITER_VERWEIS_LINKS = Object.freeze({
 /** Das alte Beziehungsmodell (systems/undo.js saveRelationship(): `relationships[]` mit
  *  `targetType` 'character'/'npc'). Kein Knopf erreicht es mehr, alte Daten tragen es aber;
  *  Text-Eintraege (`npcs[].relationships` des Formulars ist eine Liste von Namen) sind kein
- *  Verweis. */
+ *  Verweis. Das Ziel loest der Katalog auf wie die Anzeige (systems/undo.js
+ *  renderRelationshipBadges()): 'character' ist ein Held, JEDER andere Typ ein NPC. */
 const REITER_VERWEIS_BEZIEHUNGEN_ALT = Object.freeze({
     feld: 'relationships',
     art: 'typisiert',
     typFeld: 'targetType',
     idFeld: 'targetId',
-    zielVon: t => (t === 'npc' ? 'npcs' : t === 'character' ? 'characters' : null),
+    zielVon: t => (t === 'character' ? 'characters' : 'npcs'),
     wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
 });
 
@@ -1263,7 +1276,11 @@ const REITER_VERWEISE = Object.freeze({
         REITER_VERWEIS_LINKS
     ]),
     // features/npcs/npc-crud.js saveNPC(), npc-render.js addRelation() ('npcs'/'characters';
-    // 'party' ist "Die Gruppe", kein Eintrag)
+    // 'party' ist "Die Gruppe", kein Eintrag). Das Ziel loest der Katalog auf wie die Anzeige
+    // (npc-render.js renderNPCRelations(), showRelationsModal()): 'characters' ist ein Held,
+    // JEDER andere Typ — auch 'npc' und ein fehlender — ein NPC. Gemessen (Pruefer, Runde 2,
+    // Sonde p1): mit "kein Verweis" fuer 'npc' und ohne Typ blieben solche Beziehungen beim
+    // Hinzufuegen stehen, und das Detail zeigte die NPCs der Ziel-Kampagne mit diesen IDs.
     npcs: Object.freeze([
         { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' },
         { feld: 'factionId', art: 'wert', ziel: 'factions', wort: 'Fraktion' },
@@ -1273,7 +1290,7 @@ const REITER_VERWEISE = Object.freeze({
             art: 'typisiert',
             typFeld: 'targetType',
             idFeld: 'targetId',
-            zielVon: t => (t === 'npcs' || t === 'characters' ? t : null),
+            zielVon: t => (t === 'party' ? null : t === 'characters' ? 'characters' : 'npcs'),
             wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
         },
         REITER_VERWEIS_BEZIEHUNGEN_ALT,
@@ -1526,7 +1543,10 @@ function reiterVerweiseAbbilden(typ, eintrag, abbilden) {
         if (!Object.prototype.hasOwnProperty.call(eintrag, v.feld)) continue;
         const wert = eintrag[v.feld];
         if (v.art === 'wert') {
-            if (!wert || typeof wert === 'object') continue;
+            // Auch eine Liste oder ein Objekt ist ein Verweis — ohne gueltige ID (null): die App
+            // liest ihn mit parseEntityId(), und das macht aus [1] die ID 1 (Pruefer, Runde 2,
+            // Sonde p1). Uebersprungen, bliebe er beim Hinzufuegen still stehen.
+            if (!wert) continue;
             const ziel = /** @type {string} */ (v.ziel);
             const ergebnis = abbilden(ziel, reiterIdZahl(wert), reiterVerweisWort(v, ziel));
             if (ergebnis !== wert) setze(v.feld, ergebnis);
