@@ -845,6 +845,35 @@ describe('REITERIMPORT — Text-Verknuepfungen: dieselben Treffer wie das Muster
         expect(dauer).toBeLessThan(400);
     });
 
+    // Pruefer, Runde 2 (Tests, am Mutanten gemessen): T2 bricht schon beim ersten Kopf ab, weil
+    // es kein "]" gibt. Eine Fassung, die die naechste Klammer bei JEDEM Kopf neu sucht (gleiche
+    // Treffer, quadratisch), blieb in T1-T3 gruen — mit einer Klammer am Textende brauchte sie
+    // auf 240 KB 152 ms statt 29 ms, unter jeder Zeitschranke, die ein langsamer Rechner noch
+    // einhaelt. Darum hier gezaehlt statt gemessen: wie oft nach "]" gesucht wird.
+    test('T2b: mit EINER Klammer am Textende — nach "]" wird einmal gesucht, nicht je Kopf', () => {
+        const seite = erzeugeSeite({});
+        // Die Suche im vm-Kontext beobachten: dort laeuft reiterTextverweiseErsetzen()
+        const zaehler = vm.runInContext(
+            `(() => {
+                const z = { n: 0 };
+                const indexOf = String.prototype.indexOf;
+                String.prototype.indexOf = function (suche, ...rest) {
+                    if (suche === ']') z.n++;
+                    return indexOf.call(this, suche, ...rest);
+                };
+                return z;
+            })()`,
+            seite.ctx
+        );
+        const text = 'Langname ' + '[[a:1:'.repeat(40000) + ']';
+        expect(seite.ctx.reiterTextverweiseErsetzen(text, () => 'X')).toBe(text);
+        expect(zaehler.n).toBeLessThanOrEqual(2);
+        // Gegenprobe: der Zaehler sieht die Suche wirklich (ein Treffer je Verknuepfung)
+        zaehler.n = 0;
+        expect(seite.ctx.reiterTextverweiseErsetzen('[[a:1:x]] [[b:2:y]]', () => 'X')).toBe('X X');
+        expect(zaehler.n).toBe(2);
+    });
+
     test('T3: dieselbe Datei ueber den ganzen Weg — Dateiwahl bis Vorschau, dann Ersetzen-Vorschau', async () => {
         const name = 'Langname ' + '[[a:1:'.repeat(40000);
         const start = performance.now();
