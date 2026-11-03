@@ -1721,6 +1721,16 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
         resistances: [N('characters.resistances')],
         immunities: [N('characters.immunities')],
         languages: [N('characters.languages')],
+        // Pruefer, Runde 1: die Angriffe stehen im Helden-Detail (party-details.js
+        // `ch.attacks.map`) und waren an keinem Eingang vergiftet
+        attacks: [
+            {
+                name: N('characters.attacks.name'),
+                attackBonus: 5,
+                damage: N('characters.attacks.damage'),
+                damageType: N('characters.attacks.damageType')
+            }
+        ],
         notes: NH('characters.notes'),
         conditions: [],
         tags: [{ name: N('characters.tags'), color: '#a855f7' }],
@@ -1771,6 +1781,10 @@ test('(11) Nutzlasten in Charakter, Quest und Zauber (speed, Klasse, Resistenzen
                     .locator('[data-action="show-char-details"]')
                     .click();
                 await expect(page.locator('#char-detail-modal')).toContainText('Helden-Nutzlast');
+                // Nicht-Vakuitaet: der Angriff steht im Detail (als Text)
+                await expect(page.locator('#char-detail-modal')).toContainText(
+                    'characters.attacks.name'
+                );
             }
         },
         {
