@@ -19,6 +19,12 @@ interface ReiterImportVorbereitung {
 declare function showImportModal(dataType: string, vorbereitung: ReiterImportVorbereitung): void;
 /** Undo-Hook des Reiter-Imports (R7): verwirft nach Strg+Z/Strg+Y ein Bearbeiten des Typs. */
 declare function reiterImportNachUndo(info?: { action?: string; direction?: string; kennungen?: unknown[] }): void;
+/** R3: was an der Form der Listen- und Objektfelder eines Eintrags nicht stimmt (REITER_FORMFELDER), sonst null. */
+declare function reiterFormFehler(eintrag: Record<string, any>, dataType: string): string | null;
+/** `text.replace(/\[\[(\w+):(\d+):([^\]]+)\]\]/g, ersetzen)` mit denselben Treffern in linearer Zeit. */
+declare function reiterTextverweiseErsetzen(text: string, ersetzen: (ganz: string, typWort: string, idText: string, name: string) => string): string;
+/** Ein Text aus der Datei, gekuerzt fuer eine Meldung (REITER_MELDUNG_TEXT_MAX). */
+declare function reiterZitat(text: string): string;
 declare function updateIOCounts(): void;
 declare function exportSpells(): void;
 declare function importDataGlobal(): void;
