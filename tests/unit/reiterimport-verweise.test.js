@@ -1273,6 +1273,93 @@ describe('REITERIMPORT R7 — ein Bearbeiten, dessen ID danach einem importierte
             'Hinzufügen: 1 Eintrag kommt mit neuer ID zu den vorhandenen (2) dazu'
         );
     });
+
+    // Befund der Pruefer (Runde 2, Tests, am Mutanten gemessen): die Tabelle REITER_BEARBEITEN
+    // hielt kein Fall fest. Mit vertippten Feld-IDs fuer NPC, Ort, Truhe, Zauber, Wiki und
+    // Session-Prep blieben alle Unit- und E2E-Faelle gruen (F1-F10 bauen ihr Markup selbst, die
+    // E2E-Faelle fahren nur Party, Quest, Encounter und Link) — und am Mutanten blieb nach
+    // Ersetzen → ✏️ Ort 1 → Strg+Z das Ortsfenster offen, "Speichern" schrieb den importierten Ort
+    // ueber den zurueckgeholten. Hier gegen die ECHTEN Vorlagen und Module: jedes Feld und jedes
+    // Fenster existiert, das Feld liegt IM Fenster, ein Modul der App schreibt es, und jede
+    // Leeren-Funktion ist eine Funktion eines geladenen Moduls.
+    test('F11: die Tabelle REITER_BEARBEITEN trifft die echten Formulare — Feld, Fenster, Leeren-Funktion', () => {
+        const vorlagen = fs
+            .readdirSync(path.join(REPO_ROOT, 'assets', 'templates'))
+            .filter(n => n.endsWith('.html'))
+            .map(n => fs.readFileSync(path.join(REPO_ROOT, 'assets', 'templates', n), 'utf8'));
+        const loader = fs.readFileSync(path.join(REPO_ROOT, 'loader.js'), 'utf8');
+        const module = [
+            ...loader.matchAll(/'((?:core|utils|systems|features|ui|render)\/[^']+\.js)'/g)
+        ]
+            .map(t => t[1])
+            .filter(rel => fs.existsSync(path.join(REPO_ROOT, rel)))
+            .map(rel => ({ rel, text: fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8') }));
+        expect(module.length).toBeGreaterThan(50);
+        const seite = erzeugeSeite({});
+        const tabelle = vm.runInContext('REITER_BEARBEITEN', seite.ctx);
+        const typen = vm.runInContext('Object.keys(REITER_NAMENSFELD)', seite.ctx);
+        expect(Object.keys(tabelle).sort()).toEqual([...typen].sort());
+        /** Die Stelle, die ein Element mit dieser ID baut: eine Vorlage oder ein Modul. */
+        const traeger = id => [
+            ...vorlagen
+                .filter(t => t.includes(`id="${id}"`))
+                .map(text => ({ text, vorlage: true })),
+            ...module
+                .filter(m => m.rel !== 'systems/spellslots/import-export.js')
+                .filter(m => m.text.includes(`id="${id}"`))
+                .map(m => ({ text: m.text, vorlage: false }))
+        ];
+        const geprueft = [];
+        for (const typ of typen) {
+            for (const formular of tabelle[typ]) {
+                const was = `${typ}: ${formular.id}`;
+                geprueft.push(typ);
+                const feld = traeger(formular.id);
+                expect({ was, traeger: feld.length }).toEqual({ was, traeger: 1 });
+                // Ein Modul der App liest oder schreibt das Feld (das Bearbeiten selbst)
+                const nutzer = module.filter(
+                    m =>
+                        m.rel !== 'systems/spellslots/import-export.js' &&
+                        (m.text.includes(`'${formular.id}'`) || m.text.includes(`"${formular.id}"`))
+                );
+                expect({ was, nutzer: nutzer.length > 0 }).toEqual({ was, nutzer: true });
+                if (formular.fenster) {
+                    const fenster = traeger(formular.fenster);
+                    expect({ was, fenster: fenster.length }).toEqual({ was, fenster: 1 });
+                    if (fenster[0].vorlage) {
+                        const doc = new DOMParser().parseFromString(fenster[0].text, 'text/html');
+                        const imFenster = doc
+                            .getElementById(formular.fenster)
+                            ?.querySelector(`#${formular.id}`);
+                        expect({ was, imFenster: !!imFenster }).toEqual({ was, imFenster: true });
+                    } else {
+                        // Zur Laufzeit gebaut (Session-Prep): Feld und Fenster im selben Modul
+                        expect({
+                            was,
+                            imModul: fenster[0].text.includes(`id="${formular.id}"`)
+                        }).toEqual({ was, imModul: true });
+                    }
+                }
+                if (formular.leeren !== null) {
+                    // Die aufgeschobene Referenz nennt ihren Bezeichner: `() => clearNPCForm`
+                    const name = (/=>\s*([A-Za-z_$][\w$]*)\s*$/.exec(String(formular.leeren)) ||
+                        [])[1];
+                    const definiert = module.some(m =>
+                        new RegExp(`^(?:async )?function ${name}\\(`, 'm').test(m.text)
+                    );
+                    expect({ was, leeren: name, definiert }).toEqual({
+                        was,
+                        leeren: name,
+                        definiert: true
+                    });
+                }
+            }
+        }
+        // Kalender-Ereignisse haben kein Bearbeiten; jeder andere Typ steht drin
+        expect([...new Set(geprueft)].sort()).toEqual(
+            typen.filter(t => t !== 'calendarEvents').sort()
+        );
+    });
 });
 
 // ===========================================================================

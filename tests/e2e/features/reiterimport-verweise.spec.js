@@ -2406,3 +2406,89 @@ test('(18) Ersetzen → ↩️ → ✏️ Goblin → ↪️ → Speichern: der w
         richtung: 'redo'
     });
 });
+
+// ===========================================================================
+// (19) R7 UEBER STRG+Z BEI EINEM FORMULAR IM FENSTER (ORT)
+// ===========================================================================
+//
+// Befund der Pruefer (Runde 2, Tests, am Mutanten gemessen): (15)-(18) und
+// (9)-(12) fahren nur Klappformulare und die Link-Karte. Mit vertippten
+// Feld-IDs in REITER_BEARBEITEN fuer die sechs Typen mit Fenster (NPC, Ort,
+// Truhe, Zauber, Wiki, Session-Prep) blieben alle vier Waechter gruen — und
+// am Mutanten blieb nach Ersetzen (id 1 = "Neu (aus Datei)") → ✏️ Ort 1 →
+// Strg+Z das Ortsfenster offen mit `edit-loc-id` 1; "Speichern" schrieb den
+// importierten Namen ueber die zurueckgeholte "Hafenstadt". Strg+Z wirkt
+// auch beim Tippen (systems/spellslots/keyboard-shortcuts.js prueft es vor
+// der Tipp-Schranke), darum steht der Fokus hier im Namensfeld des Fensters.
+// Die Tabelle selbst haelt tests/unit/reiterimport-verweise.test.js (F11).
+test('(19) Ersetzen → ✏️ am importierten Ort (Fenster) → Strg+Z im Namensfeld → Speichern: die ursprüngliche Hafenstadt bleibt', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await appLaden(
+        page,
+        kampagne({
+            locations: [
+                { id: 1, name: 'Hafenstadt', description: '<p>alt</p>', filterId: null, tags: [] },
+                { id: 2, name: 'Eiswueste', description: '', filterId: null, tags: [] }
+            ]
+        })
+    );
+    await zuAnsicht(page, 'locations');
+    const original = await einsInD(page, 'locations');
+    expect(original?.name, 'Vorbedingung: id 1 steht in der Saat').toBe('Hafenstadt');
+    await fensterOeffnen(
+        page,
+        'locations',
+        dateiBauen('locations', [
+            {
+                id: 1,
+                name: 'Neu (aus Datei)',
+                description: '<p>neu</p>',
+                filterId: null,
+                tags: []
+            }
+        ])
+    );
+    await modusWaehlen(page, 'replace');
+    await importieren(page, 'Ersetzen Orte');
+    expect(
+        (await einsInD(page, 'locations'))?.name,
+        'Vorbedingung: id 1 ist jetzt der Ort der Datei'
+    ).toBe('Neu (aus Datei)');
+
+    const fenster = page.locator('#location-modal');
+    await page.locator('.loc-item[data-id="1"]').click();
+    await page.locator('[data-action="edit-location"][data-id="1"]').click();
+    await expect(fenster, 'Vorbedingung: ✏️ oeffnet das Ortsfenster').toBeVisible();
+    expect(
+        await page.locator('#edit-loc-id').inputValue(),
+        'Vorbedingung: das Fenster bearbeitet id 1'
+    ).toBe('1');
+    await page.locator('#loc-name').click();
+    const rev = await revStand(page);
+    await page.keyboard.press('Control+z');
+    await geschriebenSeit(page, rev, 'Strg+Z');
+    expect(
+        (await einsInD(page, 'locations'))?.name,
+        'Vorbedingung: nach Strg+Z steht wieder "Hafenstadt" unter id 1'
+    ).toBe('Hafenstadt');
+
+    const stand = await page.evaluate(() => ({
+        offen: !!document.getElementById('location-modal')?.classList.contains('show'),
+        id: /** @type {HTMLInputElement|null} */ (document.getElementById('edit-loc-id'))?.value
+    }));
+    weich(
+        stand.offen && stand.id !== '',
+        `R7: nach Strg+Z bearbeitet das Fenster nicht mehr id 1 (geschlossen oder ohne ID) — war ${JSON.stringify(stand)}`
+    ).toBe(false);
+    await speichernFallsDa(page, fenster.getByRole('button', { name: 'Speichern', exact: true }));
+    await bleibtImportiert(
+        page,
+        'locations',
+        original,
+        'die zurueckgeholte Hafenstadt bleibt feldgleich'
+    );
+    weich(await fehler.alle(), 'keine Fehler auf dem Weg').toEqual([]);
+});
