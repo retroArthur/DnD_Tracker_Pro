@@ -1243,6 +1243,36 @@ describe('REITERIMPORT R7 — ein Bearbeiten, dessen ID danach einem importierte
         expect(ctx.registerUndoHook).toHaveBeenCalledTimes(1);
         expect(ctx.registerUndoHook.mock.calls[0][0]).toBe(ctx.reiterImportNachUndo);
     });
+
+    // Befund der Pruefer (Runde 2, Sonde p7, gemessen): Strg+Z und Strg+Y wirken auch bei
+    // offenem Import-Fenster — die Vorschau blieb danach auf dem alten Stand stehen ("… zu den
+    // vorhandenen (3)" mit 2 Eintraegen in D), bis man den Modus wechselte. "Importieren"
+    // schrieb trotzdem auf den aktuellen Stand; falsch war nur, was das Fenster ankuendigte.
+    test('F12: Strg+Z/Strg+Y bei offenem Import-Fenster — die Vorschau zeigt danach den aktuellen Stand', async () => {
+        const seite = erzeugeSeite({ npcs: [1, 2, 3].map(id => ({ id, name: `N${id}` })) });
+        seite.ctx.importData(reiterfeld('npcs', datei('npcs', [{ id: 9, name: 'Neu' }])));
+        await ruhe();
+        expect(vorschauZeilen()).toContain(
+            'Hinzufügen: 1 Eintrag kommt mit neuer ID zu den vorhandenen (3) dazu'
+        );
+        document.body.insertAdjacentHTML(
+            'beforeend',
+            '<div id="import-modal" class="modal-overlay show"></div>'
+        );
+        // Ein Rueckgaengig ohne Kennung des Reiter-Imports (die vorige Aenderung)
+        seite.ctx.D.npcs.pop();
+        seite.ctx.reiterImportNachUndo({ action: 'NPC angelegt', direction: 'undo' });
+        expect(vorschauZeilen()).toContain(
+            'Hinzufügen: 1 Eintrag kommt mit neuer ID zu den vorhandenen (2) dazu'
+        );
+        // Bei geschlossenem Fenster bleibt die Vorschau, wie sie ist (es gibt nichts zu zeigen)
+        document.getElementById('import-modal').classList.remove('show');
+        seite.ctx.D.npcs.pop();
+        seite.ctx.reiterImportNachUndo({ action: 'NPC angelegt', direction: 'undo' });
+        expect(vorschauZeilen()).toContain(
+            'Hinzufügen: 1 Eintrag kommt mit neuer ID zu den vorhandenen (2) dazu'
+        );
+    });
 });
 
 // ===========================================================================
