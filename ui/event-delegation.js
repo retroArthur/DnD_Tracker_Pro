@@ -42,8 +42,29 @@ const AUSLOESE_TASTEN = new Set(['Enter', ' ']);
 // bzw. 'input'.
 const KNOPFARTIGE_INPUT_TYPEN = new Set(['button', 'submit', 'reset']);
 
+// INPUT-Arten, deren Wert GETIPPT wird (BESTIAR-KLICK, R1). Nur fuer sie
+// stellt _handleChange ein `change` nicht zu, das nichts Neues bringt. SELECT,
+// checkbox, radio, file, range und date fehlen mit Absicht: ihr Wert ist kein
+// Getipptes (eine Checkbox meldet bei JEDEM Umschalten 'on'), und die zwei
+// Handler, die input und change unterscheiden, sitzen an Datei-Inputs
+// (ui/actions/system-actions.js). TEXTAREA nennt der Vertrag nicht.
+const TEXTARTIGE_INPUT_TYPEN = new Set([
+    'text',
+    'search',
+    'url',
+    'email',
+    'tel',
+    'password',
+    'number'
+]);
+
 const EventDelegation = {
     _handlers: new Map(),
+
+    // Element -> { action, value }: was der data-action-Zweig von _handleInput
+    // diesem Feld zuletzt zugestellt hat (BESTIAR-KLICK, R1). Eine WeakMap,
+    // damit ein per innerHTML ersetztes Feld keinen Eintrag zuruecklaesst.
+    _perInputZugestellt: new WeakMap(),
 
     init() {
         // Event listener in CAPTURE-Phase, um Events vor onclick-Handlern abzufangen
@@ -284,12 +305,54 @@ const EventDelegation = {
         return false;
     },
 
+    /**
+     * Bringt dieses `change` dem Handler nichts Neues? (BESTIAR-KLICK, R1)
+     *
+     * DER FEHLER. Nach dem Tippen in ein Suchfeld wurde der ERSTE Klick auf
+     * einen Treffer verschluckt — gemessen im Bestiar, in sechs weiteren
+     * Listen, im Wiki-Suchfeld, in "Zauber zuweisen" und "Items zuweisen",
+     * mit Maus und Finger, in dev und prod. Beim mousedown verliert das Feld
+     * den Fokus, Chromium feuert SYNCHRON `change`, und dieser Verteiler rief
+     * dieselbe Aktion wie fuer `input` ein zweites Mal — fuer einen Wert, den
+     * die Liste beim Tippen laengst gezeichnet hatte. Das Neuzeichnen per
+     * innerHTML nahm den mousedown-Knoten mit, und aus mousedown und mouseup
+     * auf verschiedenen Knoten entsteht kein click.
+     *
+     * DIE REGEL. Nicht zugestellt wird ein `change` nur, wenn ALLES zutrifft:
+     * das Feld ist ein textartiges INPUT, und DERSELBE Handler hat fuer
+     * DIESES Element den IDENTISCHEN Wert schon per `input` bekommen. Jede
+     * getippte, eingefuegte oder per Autofill gesetzte Aenderung feuert
+     * vorher `input`; was ein Handler so verpassen koennte, hat er schon.
+     *
+     * WARUM HIER UND NICHT IN 'search-input'. Die Klasse reicht ueber diese
+     * eine Aktion hinaus ('wiki-search-input', 'filter-assign-spells',
+     * 'filter-assign-items', 'search-notes'); ein Fix je Handler waere eine
+     * Disziplin, die der naechste Handler nicht kennt. Und WARUM NUR IM
+     * data-action-ZWEIG: der Legacy-Zweig `data-on-change` hat keinen
+     * input-Pfad — `validateAssignItemQty` klemmt die Mengenfelder in
+     * "Items zuweisen" NUR am change.
+     *
+     * Entscheidungstabelle: tests/unit/event-delegation-change.test.js;
+     * Bedienwege: tests/e2e/features/bestiar-klick.spec.js (W1–W6).
+     * @param {HTMLInputElement} target
+     * @param {string} action
+     */
+    _changeBringtNichtsNeues(target, action) {
+        if (target.tagName !== 'INPUT') return false;
+        if (!TEXTARTIGE_INPUT_TYPEN.has((target.type || '').toLowerCase())) return false;
+        const zuletzt = this._perInputZugestellt.get(target);
+        return !!zuletzt && zuletzt.action === action && zuletzt.value === target.value;
+    },
+
     _handleChange(e) {
         const target = e.target;
 
         // Prüfe zuerst auf data-action (neue konsistente Methode)
         const action = target.dataset.action;
         if (action && this._handlers.has(action)) {
+            // BESTIAR-KLICK, R1 — Begruendung an _changeBringtNichtsNeues().
+            if (this._changeBringtNichtsNeues(target, action)) return;
+
             const id = target.dataset.id ? parseEntityId(target.dataset.id) : null;
             const type = target.dataset.type || null;
             const value = target.value || target.dataset.value || null;
@@ -354,6 +417,10 @@ const EventDelegation = {
             const type = target.dataset.type || null;
             const value = target.value || target.dataset.value || null;
             const ctx = { id, type, value, target, event: e };
+
+            // Gemerkt wird der Wert, den der Handler JETZT bekommt — vor dem
+            // Aufruf, falls er das Feld selbst umschreibt (BESTIAR-KLICK, R1).
+            this._perInputZugestellt.set(target, { action, value: target.value });
 
             try {
                 this._handlers.get(action)(ctx);

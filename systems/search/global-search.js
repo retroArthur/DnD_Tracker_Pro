@@ -64,11 +64,15 @@ function performGlobalSearch() {
         return;
     }
     // Die offene Liste zeigt schon diesen Begriff: nicht neu zeichnen. Das
-    // 'change' beim Verlassen des Feldes (Tab auf den ersten Treffer) ruft
+    // 'change' beim Verlassen des Feldes (Tab auf den ersten Treffer) rief
     // diese Funktion entprellt ein zweites Mal — das innerHTML unten ersetzte
     // dann den fokussierten Treffer, der Fokus fiel auf BODY, und Enter tat
-    // fuer keinen Typ etwas. Eine geschlossene Liste zeichnet immer neu, das
-    // Betreten des Feldes und ein Speichern ebenso (initGlobalSearchListener).
+    // fuer keinen Typ etwas. Seit BESTIAR-KLICK (R1) ist dieses change
+    // ZENTRAL gefiltert: ui/event-delegation.js stellt es nicht mehr zu, wenn
+    // der Wert schon per input kam. Die Sperre hier bleibt als zweite Linie
+    // (globale-suche-ziel.spec.js haelt sie) — sie deckt auch die Wege ohne
+    // Verteiler. Eine geschlossene Liste zeichnet immer neu, das Betreten des
+    // Feldes und ein Speichern ebenso (initGlobalSearchListener).
     if (results.classList.contains('visible') && results.dataset.begriff === query) return;
     const matches = [];
     // Search Characters (fuzzy)

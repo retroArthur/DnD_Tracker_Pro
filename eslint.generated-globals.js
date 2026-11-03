@@ -220,6 +220,7 @@ export default {
     "TASTEN_BEDIENELEMENT_SELEKTOR": 'readonly',
     "TASTE_HP_RECHNER": 'readonly',
     "TERRAIN_MODIFIERS": 'readonly',
+    "TEXTARTIGE_INPUT_TYPEN": 'readonly',
     "THIRD_CASTER_TABLE": 'readonly',
     "TIMER_PRESETS_KEY": 'writable',
     "TOOLBAR_DIMENSIONS": 'readonly',
