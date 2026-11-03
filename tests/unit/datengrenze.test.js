@@ -554,6 +554,11 @@ const FELDER_BEKANNT = [
     ['initiative.currentTurn', '1', 1],
     ['initiative.combatants[0].ac', '18', 18],
     ['initiative.combatants[0].initBonus', '1', 1],
+    // Laufzeitfelder der Kaempfer: Rechenwerte, die nur Kampf-Aktionen schreiben (hp-calculator,
+    // modHP, Flaechenschaden). Text in tempHp ging in die sechste Rasterspalte der Kampfzeile und
+    // drueckte die Namensspalte auf 0px — der Name war nicht mehr anklickbar (CI-Lauf zu 8702f84a)
+    ['initiative.combatants[0].tempHp', '3', 3], // hp-calculator: Math.max, modHP: -=
+    ['initiative.combatants[0].concentration.pendingCheck', '12', 12], // modHP/AoE: Schaden
     // weitere Zahlen aus den Speicherfunktionen
     ['characters[0].weight', '80', 80], // party-crud: parseInt
     ['characters[0].height', '140', 140],
@@ -600,7 +605,12 @@ function geruest() {
         factions: [{ id: 4, name: 'Diebesgilde', links: [{ type: 'npcs' }] }],
         initiative: {
             combatants: [
-                { id: 5, name: 'Ork', effects: [{ name: 'Vergiftet' }] },
+                {
+                    id: 5,
+                    name: 'Ork',
+                    effects: [{ name: 'Vergiftet' }],
+                    concentration: { active: true, spell: 'Segen' }
+                },
                 { id: 6, name: 'Elf' }
             ],
             currentTurn: 0,
