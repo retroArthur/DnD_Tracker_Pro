@@ -1714,6 +1714,47 @@ function reiterVerweiseNachErsetzen(typ, items) {
 }
 
 /**
+ * Die Verweise der DATEI auf andere Bereiche beim Ersetzen (R6, die Gegenrichtung von
+ * reiterVerweiseNachErsetzen()): Ersetzen schreibt sie nicht um, sie zeigen danach auf den
+ * Eintrag DIESER Kampagne mit derselben ID (`treffer`, je Feld) oder ins Leere (`insLeere`).
+ * Gemessen (Pruefer, Runde 2, Sonde p12): in einer fremden Kampagne bekam der ersetzte NPC so
+ * still deren Ort, Fraktion und Held — die Vorschau sagte nichts dazu. Ob ein Treffer der
+ * gemeinte Eintrag ist, kann die App nicht wissen (viele Kampagnen heissen
+ * "Standard-Kampagne"); sie nennt die Zahl, bevor geschrieben wird. Liest D, aendert nichts.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{treffer: {wort: string, n: number}[], insLeere: number}}
+ */
+function reiterVerweiseDerDatei(typ, items) {
+    /** @type {Map<string, Set<number>|null>} */
+    const idsJeBereich = new Map();
+    const vorhanden = (ziel, id) => {
+        if (!idsJeBereich.has(ziel)) {
+            const liste = ziel === REITER_ZIEL_UNBEKANNT ? null : reiterSammlung(ziel);
+            idsJeBereich.set(
+                ziel,
+                Array.isArray(liste) ? new Set(liste.map(e => reiterIdZahl(e && e.id))) : null
+            );
+        }
+        const ids = idsJeBereich.get(ziel);
+        return !!ids && ids.has(id);
+    };
+    /** @type {Map<string, number>} */
+    const treffer = new Map();
+    let insLeere = 0;
+    for (const item of items) {
+        reiterVerweiseAbbilden(typ, item, (ziel, id, wort) => {
+            if (ziel !== typ && id !== null) {
+                if (vorhanden(ziel, id)) treffer.set(wort, (treffer.get(wort) || 0) + 1);
+                else insLeere++;
+            }
+            return id;
+        });
+    }
+    return { treffer: [...treffer].map(([wort, n]) => ({ wort, n })), insLeere };
+}
+
+/**
  * Setzt den Fokus auf das 📥 des Reiterfelds, wenn er beim Oeffnen nirgends steht.
  * showModal() merkt sich den Oeffner, und ✕, "Abbrechen" und Escape geben ihm den Fokus
  * zurueck (R10). Nach einem Klick auf 📥 steht er in Chromium ohnehin dort; ein Browser, der
@@ -1882,6 +1923,35 @@ function ersetzenVorschauZeilen(bereit, vorhanden) {
                 ' anderer Bereiche ' +
                 (gleicheId === 1 ? 'zeigt' : 'zeigen') +
                 ' danach auf den Eintrag der Datei mit derselben ID'
+        });
+    }
+    // Die Gegenrichtung: die Verweise der Datei auf andere Bereiche bleiben stehen
+    const datei = reiterVerweiseDerDatei(bereit.dataType, bereit.items);
+    const summe = datei.treffer.reduce((s, t) => s + t.n, 0);
+    if (summe > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (summe === 1
+                    ? '1 Verweis der Datei auf einen anderen Bereich bleibt, wie er ist — er zeigt'
+                    : `${summe} Verweise der Datei auf andere Bereiche bleiben, wie sie sind — sie zeigen`) +
+                ' danach auf den Eintrag DIESER Kampagne mit derselben ID; stammt die Datei aus ' +
+                'einer anderen Kampagne, ist das ein anderer Eintrag:',
+            warnung: true
+        });
+        for (const t of datei.treffer) zeilen.push({ text: `– ${t.wort}: ${t.n}`, warnung: true });
+    }
+    if (datei.insLeere > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (datei.insLeere === 1
+                    ? '1 Verweis der Datei auf einen anderen Bereich zeigt'
+                    : `${datei.insLeere} Verweise der Datei auf andere Bereiche zeigen`) +
+                ' danach ins Leere (diese Kampagne hat dort keinen Eintrag mit ' +
+                (datei.insLeere === 1 ? 'seiner' : 'ihrer') +
+                ' ID)',
+            warnung: true
         });
     }
     return zeilen;
