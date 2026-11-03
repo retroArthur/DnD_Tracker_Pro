@@ -2,17 +2,13 @@
 // Extrahiert aus spellslots.js
 // Import/Export System mit Validierung
 // Zeilen: 565
-// Code-Review 2026-09-08: Vorgabewerte NIE per Referenz herausgeben.
-// field.default wurde an drei Stellen direkt zugewiesen; zwei Datensaetze
-// ohne dasselbe Feld teilten sich dadurch EIN Array-Objekt, und weil
-// IO_SCHEMA nicht eingefroren ist, mutierte eine Aenderung daran das
-// Schema selbst.
-function ioCloneDefault(wert) {
-    if (Array.isArray(wert)) return wert.slice();
-    if (wert && typeof wert === 'object') return Object.assign({}, wert);
-    return wert;
-}
-// Schema-Definition: Welche Felder werden für jeden Datentyp exportiert/importiert?
+// Schema-Definition je Datentyp. Seit REITERIMPORT (R4) traegt sie nur noch zwei Aufgaben:
+// welche Typen der Reiter-Export kennt, und die Spalten des CSV-Exports. Der JSON-Export pro
+// Reiter schreibt den ganzen Eintrag, der Import reicht ihn ganz durch — die Feldliste hier
+// filterte frueher beide Wege und erfand Felder, die das Datenmodell nie hatte (`class`, `ac`,
+// `hpTemp`, `str`…`cha`, `avatarUrl`; siehe REITER_ALTFELDER). Ihre Vorgaben werden darum
+// nirgends mehr in einen Eintrag geschrieben (frueher ioCloneDefault(), Code-Review
+// 2026-09-08: nie per Referenz herausgeben).
 const IO_SCHEMA = {
     characters: {
         id: { type: 'number', required: true },
@@ -273,27 +269,32 @@ function sanitizeImportedItem(type, item) {
 }
 // EXPORT FUNCTIONS
 // ============================================================
+/**
+ * Formatkennung des Reiter-Exports (REITERIMPORT R4), Kopfschluessel `_format`. Eine Datei MIT
+ * dieser Kennung traegt jeden Eintrag GANZ, so wie er in D steht. Eine Datei OHNE sie stammt
+ * aus dem Export davor: der filterte jeden Eintrag auf IO_SCHEMA (Charakter 22 von 35 Feldern
+ * weg) und schrieb fuer Felder, die der Eintrag nicht hatte, erfundene Vorgaben (`ac: 10`,
+ * `str: 10`) — die Vorschau warnt vor einer solchen Datei (bereiteReiterImportVor()).
+ */
+const REITER_EXPORT_FORMAT = 'dnd-tracker/reiter-export@2';
+
+/**
+ * 📤 eines Reiters: schreibt jeden Eintrag GANZ (R4) — kein Schemafilter mehr. IO_SCHEMA
+ * entscheidet nur noch, welche Typen es gibt; seine Feldliste traegt der CSV-Export.
+ * @param {string} dataType
+ */
 function exportData(dataType) {
     const APP_CONFIG = window.APP_CONFIG;
     const data = ioGetArray(dataType);
     if (!data || !Array.isArray(data) || data.length === 0) {
-        showToast(`Keine ${dataType} zum Exportieren vorhanden`, 'warning');
+        showToast(`Keine ${reiterTypName(dataType, 2)} zum Exportieren vorhanden`, 'warning');
         return;
     }
-    const schema = IO_SCHEMA[dataType];
-    if (!schema) {
+    if (!IO_SCHEMA[dataType]) {
         showToast('Datentyp wird nicht unterstützt', 'error');
         return;
     }
     try {
-        // Daten nach Schema filtern
-        const filtered = data.map(item => {
-            const obj = {};
-            for (const [key, field] of Object.entries(schema)) {
-                obj[key] = item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
-            }
-            return obj;
-        });
         // Kampagnennamen hinzufügen
         const getCampaignIndex = window.getCampaignIndex;
         const index = getCampaignIndex();
@@ -303,11 +304,12 @@ function exportData(dataType) {
             campaignName = campaign?.name || 'Unbenannte Kampagne';
         }
         const exportObj = {
+            _format: REITER_EXPORT_FORMAT,
             _exportDate: new Date().toISOString(),
             _campaignName: campaignName,
             _version: APP_CONFIG.VERSION,
             _dataType: dataType,
-            data: filtered
+            data
         };
         const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
@@ -317,7 +319,7 @@ function exportData(dataType) {
         a.download = `${dataType}-${campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast(`📁 ${data.length} ${dataType} exportiert`);
+        showToast(`📁 ${data.length} ${reiterTypName(dataType, data.length)} exportiert`);
     } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
         // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
@@ -372,120 +374,1820 @@ function exportToCSV(dataType) {
         }
     }
 }
-// IMPORT FUNCTIONS
+// IMPORT FUNCTIONS — der Import pro Reiter (REITERIMPORT)
 // ============================================================
-function importData(inputEl) {
-    const dataType = inputEl.dataset.type;
-    if (!dataType) {
-        showToast('Datentyp nicht angegeben', 'error');
+// Vertrag REITERIMPORT (docs/bugfixes.md): R1 ein Dateidialog, R2 Meldung nach dem Schreiben,
+// R3 Pruefung vor dem Fenster, R4 Feldtreue, R5/R6 IDs und Verweise (VERWEISE unten), R7 offene
+// Formulare, R8 Ansicht/Zaehler/Undo, R9 Sicherheit, R10 Telefon und Fokus, dazu das Fenster.
+//
+// DER WEG. 📥 (trigger-click) oeffnet den Dateidialog des Reiterfelds (`.io-file-input`,
+// data-on-change="importData"), und importData() liest GENAU die dort gewaehlte Datei. Vorher
+// baute showImportModal() ein ZWEITES, namenloses Datei-Feld und klickte es: ein Dateidialog
+// braucht in Chromium transiente Nutzeraktivierung, und die ist ~5 s nach dem Klick auf 📥
+// abgelaufen — wer laenger im ersten Dialog suchte, erlebte gar nichts (gemessen, Kritik K1).
+// `#import-modal` gab es seit der TS-Migration (Jan. 2026) nicht mehr; nach der gruenen Meldung
+// "✅ Datei validiert" wurde nie etwas importiert. Das Fenster steht jetzt statisch in
+// assets/templates/modals-tools.html — Fokusfalle, Escape und Rueckkehr zum 📥 kommen damit von
+// ui/modal-focus.js wie bei jeder Schale.
+//
+// DIE KETTE. Jede Stufe VOR dem Fenster laesst D, Speicher und Index unberuehrt; eine
+// unbrauchbare Datei endet mit einer deutschen Meldung und ohne Fenster:
+//   leseReiterImport()        Text -> Objekt (JSON mit Reviver)
+//   pruefeReiterImport()      Form der Datei, passender Typ (Rueckfrage), jeder Eintrag (R3)
+//   bereiteReiterImportVor()  IDs fuers Ersetzen (R6), Datengrenze, alte Dateien (R4),
+//                             HTML-Bereinigung, Hinweise
+//   showImportModal()         Fenster mit Vorschau; die Daten bleiben im Modulzustand
+//   executeImport()           schreibt — und meldet den Erfolg ERST DANACH
+// Pruefungen gehoeren in pruefeReiterImport() und laufen damit VOR der Datengrenze: die Grenze
+// verwirft Text in Zahlenfeldern still ("viel" -> Feld weg), eine Ablehnung muss ihn vorher
+// sehen. Ebenso die ID-Pruefung (die Grenze loescht eine ID "abc"). Was die Vorschau
+// zusaetzlich nennen soll, haengt bereiteReiterImportVor() an `hinweise` an; was nur fuer einen
+// Modus gilt, steht in importVorschauZeilen().
+//
+// FELDTREUE (R4). Der Export schreibt den ganzen Eintrag mit der Formatkennung
+// REITER_EXPORT_FORMAT; der Import reicht ihn ganz durch — dieselbe Schutzlage wie der
+// Kampagnen-Import: Datengrenze (SENKEN R4) und Bereinigung der HTML-Felder (SEC-01), alles
+// Weitere kodiert die Ausgabe (SENKEN R1). Kein Feld wird umbenannt oder mit Vorgaben gefuellt.
+
+/**
+ * @typedef {Object} ReiterImportVorbereitung
+ * @property {string} dataType - Typ des Reiterfelds (`data-type`)
+ * @property {Object[]} items - die vorbereiteten Eintraege, so wie executeImport() sie schreibt
+ * @property {string} kampagne - Kampagne laut Datei, sonst der Dateiname
+ * @property {string} exportDatum - Exportdatum laut Datei (TT.MM.JJJJ) oder "unbekannt"
+ * @property {{text: string, warnung?: boolean}[]} hinweise - weitere Zeilen der Vorschau
+ * @property {string|null} [idFehler] - warum "Ersetzen" mit dieser Datei nicht geht (R6), sonst
+ *   null; fehlt er, prueft executeImport() die IDs der Eintraege selbst
+ */
+
+/**
+ * Deutsche Namen der Reiter-Typen, [Einzahl, Mehrzahl] (R2). Eine Meldung nennt nie den
+ * internen Schluessel — "2 calendarEvents importiert" sagt einem Spielleiter nichts. Die Woerter
+ * sind die der App: "Charakter aktualisiert", "Ereignis gespeichert", "Session-Prep gelöscht",
+ * die Reiter "🏠 Orte" und "⚔️ Fraktionen".
+ */
+const REITER_TYPNAMEN = Object.freeze({
+    characters: Object.freeze(['Charakter', 'Charaktere']),
+    npcs: Object.freeze(['NPC', 'NPCs']),
+    locations: Object.freeze(['Ort', 'Orte']),
+    quests: Object.freeze(['Quest', 'Quests']),
+    encounters: Object.freeze(['Encounter', 'Encounter']),
+    loot: Object.freeze(['Gegenstand', 'Gegenstände']),
+    spells: Object.freeze(['Zauber', 'Zauber']),
+    wiki: Object.freeze(['Wiki-Eintrag', 'Wiki-Einträge']),
+    links: Object.freeze(['Link', 'Links']),
+    sessionPreps: Object.freeze(['Session-Prep', 'Session-Preps']),
+    calendarEvents: Object.freeze(['Ereignis', 'Ereignisse']),
+    factions: Object.freeze(['Fraktion', 'Fraktionen']),
+    sessionNotes: Object.freeze(['Session-Notiz', 'Session-Notizen'])
+});
+
+/**
+ * Der deutsche Typname im passenden Numerus. Ein unbekannter Typ heisst "Eintrag"/"Einträge"
+ * und nie wie sein Schluessel — `_dataType` kommt aus der Datei, darum die Pruefung auf eigene
+ * Eigenschaft (sonst lieferte "constructor" eine Funktion).
+ * @param {string} typ
+ * @param {number} anzahl
+ * @returns {string}
+ */
+function reiterTypName(typ, anzahl) {
+    const namen = Object.prototype.hasOwnProperty.call(REITER_TYPNAMEN, typ)
+        ? REITER_TYPNAMEN[typ]
+        : ['Eintrag', 'Einträge'];
+    return anzahl === 1 ? namen[0] : namen[1];
+}
+
+/** Die groesste Datei, die der Reiter-Import liest (wie bisher). */
+const REITER_IMPORT_MAX_BYTES = 10 * 1024 * 1024;
+
+/**
+ * So viele Zeichen eines Kampagnennamens aus einer Datei uebernimmt die App: die Vorschau des
+ * Reiter-Imports ("Kampagne: …") und der Kampagnen-Import fuer die neue Kampagne.
+ * tests/e2e/features/reiterimport-pruefung.spec.js (12) haengt daran: die Kanarie im Dateikopf
+ * muss darunter bleiben, sonst verliert sie ihr Tagende.
+ */
+const KAMPAGNENNAME_MAX = 100;
+
+/** So viele Zeichen eines Textwerts aus der Datei zitiert eine Meldung (Wert, ungueltige ID). */
+const REITER_MELDUNG_TEXT_MAX = 40;
+
+/**
+ * Ein Text aus der Datei, gekuerzt fuer eine Meldung.
+ * @param {string} text
+ * @returns {string}
+ */
+function reiterZitat(text) {
+    return text.length > REITER_MELDUNG_TEXT_MAX
+        ? text.slice(0, REITER_MELDUNG_TEXT_MAX) + '…'
+        : text;
+}
+
+/**
+ * Sperre gegen parallele Laeufe: eine Auswahl wird gerade gelesen und vorbereitet. Ein
+ * `<input type=file>` meldet eine Auswahl als `input` UND `change`; das Reiterfeld traegt nur
+ * data-on-change (ui/event-delegation.js ruft also einmal), aber jede weitere Ausloesung,
+ * solange die erste laeuft, braechte eine zweite Rueckfrage und ein zweites Fenster.
+ */
+let _reiterImportLaeuft = false;
+
+/**
+ * Die vorbereitete Datei, solange das Fenster steht — im Modulzustand und NICHT als Text im
+ * DOM (frueher `modal.dataset.importItems`: bis zu 10 MB JSON in einem Attribut, bei jedem
+ * Lesen neu geparst). Gilt fuer genau EINEN Import: executeImport() und die naechste Dateiwahl
+ * setzen ihn zurueck.
+ * @type {ReiterImportVorbereitung|null}
+ */
+let _reiterImport = null;
+
+/**
+ * Eine erwartete Ablehnung: ihre Meldung ist deutsch und geht so an den Nutzer, und sie ist
+ * kein Programmfehler (kein Eintrag im Fehlerlog).
+ * @param {string} text
+ * @returns {Error}
+ */
+function reiterImportFehler(text) {
+    const fehler = new Error(text);
+    fehler.reiterImport = true;
+    return fehler;
+}
+
+/**
+ * Meldet das Ende einer Kette, die nicht im Fenster ankam. Eine erwartete Ablehnung nennt
+ * ihren Grund; alles andere ist ein Programmfehler: eine allgemeine deutsche Meldung (kein
+ * Laufzeit-Rohtext) und ein Eintrag im Fehlerlog.
+ * @param {*} err
+ */
+function meldeReiterImportFehler(err) {
+    if (err && err.reiterImport) {
+        showToast('❌ ' + err.message, 'error');
         return;
     }
-    showImportModal(dataType);
+    showToast('❌ Import fehlgeschlagen: die Datei ließ sich nicht verarbeiten', 'error');
+    if (window.ErrorHandler) window.ErrorHandler.log('Import', err, 'Reiter-Import');
 }
-function showImportModal(dataType) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.json';
-    fileInput.style.display = 'none';
-    document.body.appendChild(fileInput);
-    fileInput.addEventListener('change', e => {
-        const target = e.target;
-        const file = target.files?.[0];
-        if (!file) return;
-        // Größenlimit: 10MB
-        if (file.size > 10 * 1024 * 1024) {
-            showToast('❌ Datei zu groß (max 10MB)', 'error');
-            document.body.removeChild(fileInput);
-            return;
+
+/**
+ * `change` des Reiterfelds: liest die dort gewaehlte Datei, bereitet sie vor und oeffnet das
+ * Fenster (R1). Eine leere Auswahl — der Dialog wurde abgebrochen oder die Wahl geleert — ist
+ * still: keine Meldung, nichts geaendert.
+ * @param {HTMLInputElement} inputEl - das Reiterfeld (`.io-file-input` mit `data-type`)
+ */
+function importData(inputEl) {
+    const datei = inputEl && inputEl.files ? inputEl.files[0] : null;
+    if (!datei || _reiterImportLaeuft) return;
+    _reiterImportLaeuft = true;
+    _reiterImport = null;
+    oeffneReiterImport(inputEl, datei);
+}
+
+/**
+ * Die Kette von der Datei bis zum Fenster. Lehnt nie ab: jedes Ende wird hier gemeldet.
+ * @param {HTMLInputElement} inputEl
+ * @param {File} datei
+ * @returns {Promise<void>}
+ */
+async function oeffneReiterImport(inputEl, datei) {
+    const dataType = inputEl.dataset.type || '';
+    try {
+        if (datei.size > REITER_IMPORT_MAX_BYTES) {
+            throw reiterImportFehler('Datei zu groß (max. 10 MB)');
         }
+        const inhalt = leseReiterImport(await leseDateiText(datei));
+        // Rueckfrage abgelehnt: still, wie ein abgebrochener Dialog
+        if (!pruefeReiterImport(inhalt, dataType)) return;
+        const vorbereitung = bereiteReiterImportVor(inhalt, dataType, datei.name);
+        fokussiereEinfuhrKnopf(inputEl);
+        showImportModal(dataType, vorbereitung);
+    } catch (err) {
+        meldeReiterImportFehler(err);
+    } finally {
+        // `value` leeren — auch nach einer Ablehnung und nach ✕ im Fenster: dieselbe Datei
+        // noch einmal gewaehlt ist fuer den Browser sonst keine Aenderung, kein `change`, gar
+        // keine Rueckmeldung (gemessen, Bedienweg C1). Erst hier und nicht vor dem Lesen: der
+        // File-Verweis ist schon gehalten, und solange die Sperre steht, kommt keine Wahl an.
+        inputEl.value = '';
+        _reiterImportLaeuft = false;
+    }
+}
+
+/**
+ * Liest eine Datei als Text.
+ * @param {File} datei
+ * @returns {Promise<string>}
+ */
+function leseDateiText(datei) {
+    return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = evt => {
-            try {
-                const result = evt.target?.result;
-                const importData = JSON.parse(result);
-                // Validierung: Hat das Import-Objekt die richtige Struktur?
-                if (!importData.data || !Array.isArray(importData.data)) {
-                    throw new Error('Ungültiges Format: "data"-Array fehlt');
-                }
-                // Validierung: Datentyp passt?
-                if (importData._dataType && importData._dataType !== dataType) {
-                    const continueImport = confirm(
-                        `Import-Datentyp ist "${importData._dataType}", aber erwartet wird "${dataType}".\n\n` +
-                            `Trotzdem importieren?`
-                    );
-                    if (!continueImport) {
-                        document.body.removeChild(fileInput);
-                        return;
-                    }
-                }
-                // Schema-Validierung
-                const schema = IO_SCHEMA[dataType];
-                if (!schema) {
-                    throw new Error(`Schema für "${dataType}" nicht gefunden`);
-                }
-                const validatedItems = importData.data.map((item, idx) => {
-                    const validated = {};
-                    for (const [key, field] of Object.entries(schema)) {
-                        if (field.required && item[key] === undefined) {
-                            throw new Error(`Eintrag ${idx + 1}: Pflichtfeld "${key}" fehlt`);
-                        }
-                        validated[key] =
-                            item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
-                    }
-                    // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
-                    return sanitizeImportedItem(dataType, validated);
-                });
-                // Import-Modal anzeigen
-                const modal = $('import-modal');
-                if (modal) {
-                    const campaignName = importData._campaignName || file.name.replace('.json', '');
-                    const exportDate = importData._exportDate
-                        ? new Date(importData._exportDate).toLocaleDateString('de-DE')
-                        : 'Unbekannt';
-                    modal.dataset.importItems = JSON.stringify(validatedItems);
-                    modal.dataset.dataType = dataType;
-                    const infoEl = $('import-info');
-                    if (infoEl) {
-                        infoEl.innerHTML = `
-                            <div style="display: grid; gap: 8px;">
-                                <div><strong>Kampagne:</strong> ${esc(campaignName)}</div>
-                                <div><strong>Export-Datum:</strong> ${exportDate}</div>
-                                <div><strong>Einträge:</strong> ${Number(validatedItems.length)}</div>
-                                <div><strong>Typ:</strong> ${esc(dataType)}</div>
-                            </div>
-                        `;
-                    }
-                    showModal('import-modal');
-                }
-                showToast(`✅ Datei validiert: ${validatedItems.length} Einträge bereit`);
-            } catch (err) {
-                showToast('❌ Import-Fehler: ' + err.message, 'error');
-                if (window.ErrorHandler) {
-                    window.ErrorHandler.log('Import', err, 'Parse error');
+        reader.onload = e => resolve(String(e.target?.result ?? ''));
+        reader.onerror = () => reject(reiterImportFehler('Datei konnte nicht gelesen werden'));
+        reader.readAsText(datei);
+    });
+}
+
+/**
+ * Text -> Objekt. Der Reviver verwirft `__proto__`, `constructor` und `prototype` in jeder
+ * Tiefe (CAMPAIGN_FORBIDDEN_KEYS, wie der Kampagnenweg) — ein solcher Schluessel waere sonst
+ * ein eigenes Feld, das jede spaetere Zuweisung oder Kopie zum Prototyp-Setzer macht.
+ * @param {string} text
+ * @returns {*}
+ */
+function leseReiterImport(text) {
+    if (typeof text !== 'string' || text.trim() === '') {
+        throw reiterImportFehler('Die Datei ist leer');
+    }
+    try {
+        return JSON.parse(text, (schluessel, wert) =>
+            CAMPAIGN_FORBIDDEN_KEYS.includes(schluessel) ? undefined : wert
+        );
+    } catch {
+        throw reiterImportFehler('Die Datei ist kein gültiges JSON');
+    }
+}
+
+/**
+ * Ist die Datei ein Reiter-Export fuer DIESEN Reiter? Wirft bei einer unbrauchbaren Datei,
+ * fragt bei einem anderen `_dataType` nach (deutsche Typnamen) und gibt zurueck, ob es
+ * weitergeht. Beruehrt nichts Globales.
+ * @param {*} inhalt - geparste Datei
+ * @param {string} dataType - Typ des Reiterfelds
+ * @returns {boolean} false: der Nutzer hat die Rueckfrage abgelehnt
+ */
+function pruefeReiterImport(inhalt, dataType) {
+    const istObjekt = !!inhalt && typeof inhalt === 'object' && !Array.isArray(inhalt);
+    if (istObjekt && !Array.isArray(inhalt.data)) {
+        // Die beiden anderen Exportarten der App beim Namen nennen, statt nur "Format falsch"
+        // zu sagen — der Kampagnenweg sagt es umgekehrt genauso ("Einzel-Export – bitte im
+        // jeweiligen Reiter importieren", prepareCampaignImport())
+        if (typeof inhalt._exportType === 'string') {
+            throw reiterImportFehler(
+                'Das ist ein Umzugs- oder Audio-Export, kein Export dieses Reiters – bitte über ' +
+                    'den Umzugs-Assistenten importieren'
+            );
+        }
+        if (istKampagnenDatei(inhalt)) {
+            throw reiterImportFehler(
+                'Das ist eine Kampagnen-Datei (die ganze Kampagne), kein Export dieses Reiters – ' +
+                    'bitte unter „💾 Daten“ mit „📁 Datei auswählen“ importieren'
+            );
+        }
+    }
+    if (!istObjekt || !Array.isArray(inhalt.data)) {
+        throw reiterImportFehler('Ungültiges Format: der Datei fehlt die Liste „data“');
+    }
+    if (inhalt.data.length === 0) {
+        throw reiterImportFehler('Die Datei enthält keine Einträge');
+    }
+    const keinObjekt = inhalt.data.findIndex(
+        item => !item || typeof item !== 'object' || Array.isArray(item)
+    );
+    if (keinObjekt >= 0) {
+        throw reiterImportFehler(`Eintrag ${keinObjekt + 1} der Datei ist kein Eintrag`);
+    }
+    const dateiTyp = inhalt._dataType;
+    if (
+        typeof dateiTyp === 'string' &&
+        dateiTyp !== '' &&
+        dateiTyp !== dataType &&
+        !confirm(
+            `Die Datei enthält ${reiterTypName(dateiTyp, 2)}, dieser Reiter importiert ` +
+                `${reiterTypName(dataType, 2)}.\n\nTrotzdem importieren?`
+        )
+    ) {
+        return false;
+    }
+    // Erst nach der Rueckfrage: geprueft wird gegen den Typ, in den importiert wird
+    pruefeReiterEintraege(inhalt.data, dataType);
+    return true;
+}
+
+/**
+ * Sieht die Datei aus wie eine Kampagnen-Datei (💾 Daten → "📁 Als Datei speichern")? Dann
+ * traegt sie mindestens eine Sammlung des Kampagnenformats (CAMPAIGN_IMPORT_COLLECTIONS).
+ * @param {Object} inhalt
+ * @returns {boolean}
+ */
+function istKampagnenDatei(inhalt) {
+    return CAMPAIGN_IMPORT_COLLECTIONS.some(pfad => {
+        let knoten = inhalt;
+        for (const schritt of pfad) {
+            if (!knoten || typeof knoten !== 'object') return false;
+            knoten = knoten[schritt];
+        }
+        return Array.isArray(knoten);
+    });
+}
+
+/**
+ * Das Namensfeld je Typ (R3): ohne nicht-leeren Text dort legt ein Eintrag seine Liste lahm
+ * (gemessen: `name: null` bzw. 42 — die NPC-Liste sortiert mit `localeCompare` und zeigte nur
+ * noch "Anzeigefehler"). Session-Preps haben kein Namensfeld (sie heissen nach ihrer Nummer).
+ */
+const REITER_NAMENSFELD = Object.freeze({
+    characters: 'name',
+    npcs: 'name',
+    locations: 'name',
+    quests: 'title',
+    encounters: 'name',
+    loot: 'name',
+    spells: 'name',
+    wiki: 'title',
+    links: 'title',
+    sessionPreps: null,
+    calendarEvents: 'titel',
+    factions: 'name'
+});
+
+/**
+ * Textfelder je Typ, die eine Datei nicht als Zahl, Liste oder Objekt bringen darf (R3,
+ * "umgekehrt"): die App schreibt sie nur als Text, und ihre Anzeige ruft Textmethoden darauf.
+ * Gemessen bzw. am Code: `speed` des Helden (`speedVal.split` beim Bearbeiten, quick-actions.js
+ * `char.speed.split`), `school` des Zaubers (render-spells.js `s.school.substring`), `content`
+ * des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`). Pruefer, Runde 2 (Sonden p11/p18,
+ * gemessen): `race` des NPCs (npc-render.js getNPCIcon `(npc.race || '').toLowerCase` — EIN
+ * solcher NPC legte die ganze NPC-Liste lahm, auch nach dem Neuladen), `creatureType` und
+ * `race` des Encounters (encounters-render.js getEncounterIcon, ebenso die ganze Liste),
+ * `url` des Links (links.js, die Suche) und `material` und `note` des Zaubers
+ * (spell-manager.js, die Suche); dazu, mit der Suche JEDES Reiters nachgemessen (Sonde p11c),
+ * `description`, `special` und `property` des Gegenstands (initiative-loot.js, die Suche der
+ * Truhe). Dazu jedes HTML-Feld (HTML_FIELDS_BY_TYPE) — die App schreibt dort immer Markup als
+ * Text. Fehlt ein Feld oder ist es null, ist das kein Fehler.
+ */
+const REITER_TEXTFELDER = Object.freeze({
+    characters: Object.freeze(['speed']),
+    npcs: Object.freeze(['race']),
+    encounters: Object.freeze(['creatureType', 'race']),
+    loot: Object.freeze(['description', 'special', 'property']),
+    spells: Object.freeze(['school', 'material', 'note']),
+    wiki: Object.freeze(['content']),
+    links: Object.freeze(['url'])
+});
+
+/**
+ * Listen- und Objektfelder je Typ und die Form, die die App dort liest (R3). Gemessen (Pruefer,
+ * Runde 1, Sonden p3/p11, und eine eigene Formprobe je Typ, Feld und Form — Liste, Detail,
+ * Bearbeiten, Dashboard, Suche): EINE Quest mit `tags: "eilig"` legte den ganzen Quest-Reiter
+ * lahm ("⚠️ Anzeigefehler tags.map is not a function", auch nach dem Neuladen, ohne Strg+Z);
+ * Gegenstaende des Helden als Objekt, `spellClasses` als Text, ein `null` in `rewardItems` ebenso
+ * ihren Reiter, die uebrigen Felder hier Detail oder ✏️. Die Formen:
+ *   liste          eine Liste (ihre Eintraege liest die App, wie sie kommen)
+ *   ohneNull       eine Liste ohne leeren Eintrag — Tags sind Text (Truhe, Wiki) oder
+ *                  `{name, color}`, Gegenstaende eine ID oder `{id, quantity}`; ein `null` darin
+ *                  wirft (`t.color`, `item.id`)
+ *   objekte        eine Liste von Objekten
+ *   listeOderText  eine Liste oder ein Text — Sprachen alter Daten sind Text, und
+ *                  encounters-crud.js/party-crud.js lesen beides (`.split(',')`)
+ * Fehlt ein Feld oder ist es null, ist das kein Fehler (die App liest `|| []`). Nur Felder mit
+ * gemessenem oder am Code belegtem Wurf: jede weitere Form lehnte Dateien ab, die die App liest
+ * (`attributes`, `currency`, `spellSlots` in falscher Form warfen nirgends). Die Tags aller acht
+ * Typen, die showEntitiesWithTag() (systems/tags.js) durchsucht, und die Verknuepfungen jedes
+ * Typs, der sie traegt (REITER_VERWEIS_LINKS: `{type, id}`), stehen einheitlich drin.
+ */
+const REITER_FORMFELDER = Object.freeze({
+    characters: Object.freeze({
+        items: 'ohneNull',
+        conditions: 'objekte',
+        attacks: 'objekte',
+        resistances: 'liste',
+        immunities: 'liste',
+        languages: 'listeOderText',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    npcs: Object.freeze({
+        quests: 'liste',
+        info: 'liste',
+        relationships: 'liste',
+        triggers: 'objekte',
+        dialogs: 'objekte',
+        relations: 'objekte',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    locations: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    quests: Object.freeze({ rewardItems: 'objekte', tags: 'ohneNull', links: 'objekte' }),
+    // `monsters` einer Gruppe: importEncounterMonsters() (encounter-calculator.js) liest
+    // `m.count` je Eintrag (am Code)
+    encounters: Object.freeze({
+        languages: 'listeOderText',
+        resistances: 'liste',
+        immunities: 'liste',
+        conditionImmunities: 'liste',
+        monsters: 'objekte',
+        tags: 'ohneNull',
+        links: 'objekte'
+    }),
+    loot: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    spells: Object.freeze({ spellClasses: 'liste', tags: 'ohneNull', links: 'objekte' }),
+    wiki: Object.freeze({ tags: 'ohneNull', links: 'objekte' }),
+    links: Object.freeze({}),
+    sessionPreps: Object.freeze({ szenen: 'objekte', offeneFaeden: 'objekte', links: 'objekte' }),
+    calendarEvents: Object.freeze({}),
+    factions: Object.freeze({ rufHistorie: 'objekte', links: 'objekte' })
+});
+
+/**
+ * Was an der Form der Listen- und Objektfelder eines Eintrags nicht stimmt (REITER_FORMFELDER),
+ * sonst null.
+ * @param {Object} eintrag
+ * @param {string} dataType
+ * @returns {string|null}
+ */
+function reiterFormFehler(eintrag, dataType) {
+    const felder = Object.prototype.hasOwnProperty.call(REITER_FORMFELDER, dataType)
+        ? REITER_FORMFELDER[dataType]
+        : {};
+    for (const [feld, form] of Object.entries(felder)) {
+        if (!Object.prototype.hasOwnProperty.call(eintrag, feld)) continue;
+        const wert = eintrag[feld];
+        if (wert === null || (form === 'listeOderText' && typeof wert === 'string')) continue;
+        if (!Array.isArray(wert)) {
+            const soll = form === 'listeOderText' ? 'eine Liste oder ein Text' : 'eine Liste';
+            return `„${feld}“ muss ${soll} sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+        if (form === 'ohneNull') {
+            const i = wert.indexOf(null);
+            if (i >= 0) {
+                return `„${feld}“ darf keine leeren Einträge haben, an Stelle ${i + 1} enthält die Datei nichts`;
+            }
+        } else if (form === 'objekte') {
+            const i = wert.findIndex(el => !el || typeof el !== 'object' || Array.isArray(el));
+            if (i >= 0) {
+                return (
+                    `„${feld}“ muss eine Liste von Objekten sein, an Stelle ${i + 1} enthält die ` +
+                    `Datei ${reiterWertText(wert[i])}`
+                );
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Die Zahlenfelder eines Eintrags dieses Typs, als zerlegte Pfade AB dem Eintrag — genau die
+ * Pfade der Datengrenze (DATENGRENZE_PFADE), die unter der Sammlung des Typs liegen. EINE Liste
+ * fuer Grenze und Pruefung: was die Grenze still verwerfen wuerde ("viel" in `hpMax`), lehnt die
+ * Pruefung vorher laut ab (R3). Die eigene `id` fehlt bewusst: sie zaehlt nur beim Ersetzen,
+ * Hinzufuegen vergibt neue (R6, reiterIdFehler()).
+ * @param {string} dataType
+ * @returns {{name: string, liste: boolean}[][]}
+ */
+function reiterZahlenpfade(dataType) {
+    const praefix = IO_DATA_PATH[dataType] || [dataType];
+    return DATENGRENZE_PFADE.filter(
+        teile =>
+            teile.length > praefix.length &&
+            praefix.every(
+                (name, i) => teile[i].name === name && teile[i].liste === (i === praefix.length - 1)
+            )
+    )
+        .map(teile => teile.slice(praefix.length))
+        .filter(rest => !(rest.length === 1 && rest[0].name === 'id'));
+}
+
+/**
+ * Ein Wert fuer eine Meldung — nie als Laufzeittext ("undefined", "[object Object]").
+ * @param {*} wert
+ * @returns {string}
+ */
+function reiterWertText(wert) {
+    if (wert === null || wert === undefined) return 'nichts';
+    if (Array.isArray(wert)) return 'eine Liste';
+    if (typeof wert === 'object') return 'ein Objekt';
+    if (typeof wert === 'string') {
+        return wert.trim() === '' ? 'einen leeren Text' : `den Text „${reiterZitat(wert)}“`;
+    }
+    if (typeof wert === 'number') return `die Zahl ${String(wert)}`;
+    return `den Wert ${String(wert)}`;
+}
+
+/**
+ * Sucht im Eintrag den ersten Wert unter dem Pfad `teile`, den die Datengrenze verwerfen
+ * wuerde (datengrenzeZahlwert() liefert undefined). Geht wie datengrenzeFeld(): `*` = jeder
+ * Schluessel, `liste` = jedes Element; eine Liste, deren Element kein Objekt ist, wird dort
+ * nicht weiter verfolgt (characters[].items[] traegt Zahlen ODER Objekte).
+ * @param {*} knoten
+ * @param {{name: string, liste: boolean}[]} teile
+ * @param {number} stufe
+ * @param {string} weg - Anzeigepfad bis hierher
+ * @returns {string|null} die Meldung oder null
+ */
+function reiterZahlFehler(knoten, teile, stufe, weg) {
+    if (!knoten || typeof knoten !== 'object') return null;
+    const teil = teile[stufe];
+    const letzte = stufe === teile.length - 1;
+    const namen = teil.name === '*' ? Object.keys(knoten) : [teil.name];
+    for (const name of namen) {
+        if (!Object.prototype.hasOwnProperty.call(knoten, name)) continue;
+        const wert = knoten[name];
+        const hier = weg ? `${weg}.${name}` : name;
+        let fehler = null;
+        if (!letzte) {
+            if (!teil.liste) fehler = reiterZahlFehler(wert, teile, stufe + 1, hier);
+            else if (Array.isArray(wert)) {
+                for (let i = 0; i < wert.length && !fehler; i++) {
+                    fehler = reiterZahlFehler(wert[i], teile, stufe + 1, `${hier}[${i + 1}]`);
                 }
             }
-            document.body.removeChild(fileInput);
-        };
-        reader.onerror = () => {
-            showToast('❌ Datei konnte nicht gelesen werden', 'error');
-            document.body.removeChild(fileInput);
-        };
-        reader.readAsText(file);
-    });
-    fileInput.click();
+        } else if (teil.liste) {
+            if (Array.isArray(wert)) {
+                const i = wert.findIndex(e => datengrenzeZahlwert(e) === undefined);
+                if (i >= 0) {
+                    fehler = `„${hier}“ darf nur Zahlen enthalten, an Stelle ${i + 1} steht ${reiterWertText(wert[i])}`;
+                }
+            } else if (wert !== null && wert !== undefined) {
+                fehler = `„${hier}“ muss eine Liste von Zahlen sein, die Datei enthält ${reiterWertText(wert)}`;
+            }
+        } else if (datengrenzeZahlwert(wert) === undefined) {
+            fehler = `„${hier}“ muss eine Zahl sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+        if (fehler) return fehler;
+    }
+    return null;
 }
+
+/**
+ * Was an EINEM Eintrag nicht stimmt (R3), sonst null: das Namensfeld, die Zahlenfelder
+ * (reiterZahlenpfade()), die Feldverweise des Katalogs, die Listen- und Objektfelder
+ * (REITER_FORMFELDER), die Textfelder (REITER_TEXTFELDER, HTML_FIELDS_BY_TYPE).
+ * Die Feldverweise (`art: 'wert'` in REITER_VERWEISE) pruefen wie die Zahlenfelder, auch wo die
+ * Datengrenze das Feld nicht kennt (`filterId` von NPC und Ort). Gemessen (Pruefer, Runde 2,
+ * Sonde p1): `filterId: [1]` ueberstand die Pruefung, und parseEntityId([1]) ergibt 1 — nach dem
+ * Hinzufuegen zeigte die Karte den Filter der Ziel-Kampagne mit dieser ID.
+ * @param {Object} eintrag
+ * @param {string} dataType
+ * @returns {string|null}
+ */
+function reiterEintragFehler(eintrag, dataType) {
+    const namensfeld = REITER_NAMENSFELD[dataType];
+    if (namensfeld) {
+        const name = eintrag[namensfeld];
+        if (typeof name !== 'string' || name.trim() === '') {
+            const was = namensfeld === 'name' ? 'der Name' : 'der Titel';
+            return `${was} (Feld „${namensfeld}“) fehlt, ist leer oder kein Text`;
+        }
+    }
+    for (const teile of reiterZahlenpfade(dataType)) {
+        const fehler = reiterZahlFehler(eintrag, teile, 0, '');
+        if (fehler) return fehler;
+    }
+    const verweise = Object.prototype.hasOwnProperty.call(REITER_VERWEISE, dataType)
+        ? REITER_VERWEISE[dataType]
+        : [];
+    for (const v of verweise) {
+        if (v.art !== 'wert') continue;
+        const fehler = reiterZahlFehler(eintrag, [{ name: v.feld, liste: false }], 0, '');
+        if (fehler) return fehler;
+    }
+    const formFehler = reiterFormFehler(eintrag, dataType);
+    if (formFehler) return formFehler;
+    const textfelder = [
+        ...(REITER_TEXTFELDER[dataType] || []),
+        ...(HTML_FIELDS_BY_TYPE[dataType] || [])
+    ];
+    for (const feld of textfelder) {
+        const wert = eintrag[feld];
+        if (wert !== null && wert !== undefined && typeof wert !== 'string') {
+            return `„${feld}“ muss Text sein, die Datei enthält ${reiterWertText(wert)}`;
+        }
+    }
+    return null;
+}
+
+/**
+ * Prueft jeden Eintrag der Datei (R3) und lehnt beim ersten Fehler ab — mit der Nummer des
+ * Eintrags und dem Feld, deutsch. Beruehrt nichts.
+ * @param {Object[]} eintraege - die Eintraege der Datei, roh (vor der Datengrenze)
+ * @param {string} dataType
+ */
+function pruefeReiterEintraege(eintraege, dataType) {
+    if (!Object.prototype.hasOwnProperty.call(REITER_NAMENSFELD, dataType)) {
+        throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
+    }
+    for (let i = 0; i < eintraege.length; i++) {
+        const fehler = reiterEintragFehler(eintraege[i], dataType);
+        if (fehler) throw reiterImportFehler(`Eintrag ${i + 1} der Datei: ${fehler}`);
+    }
+    const elternfeld = Object.prototype.hasOwnProperty.call(REITER_ELTERNFELD, dataType)
+        ? REITER_ELTERNFELD[dataType]
+        : null;
+    const kreis = elternfeld ? reiterElternKreis(eintraege, elternfeld) : -1;
+    if (kreis >= 0) {
+        throw reiterImportFehler(
+            `Eintrag ${kreis + 1} der Datei: der übergeordnete Eintrag (Feld „${elternfeld}“) ` +
+                'führt im Kreis — über seine übergeordneten Einträge wäre der Eintrag sein ' +
+                'eigener übergeordneter Eintrag'
+        );
+    }
+}
+
+/**
+ * Das Eltern-Feld je Typ: ein Baum innerhalb der Sammlung (features/wiki/wiki-crud.js).
+ * Gemessen (Pruefer, Runde 2, Sonde p15): eine Datei mit A→B, B→A und C→C kam mit Hinzufuegen
+ * wie mit Ersetzen an — der Wiki-Baum zeichnet von den Wurzeln aus und zeigte nur den normalen
+ * Eintrag, die Suche fand die uebrigen nicht, und ✏️ auf einem Kreis-Eintrag warf "Maximum call
+ * stack size exceeded" (isDescendantOf() ohne Kreisschutz). Kein Weg der App erzeugt einen
+ * Kreis; eine Datei mit einem Kreis ist kaputt (R3).
+ */
+const REITER_ELTERNFELD = Object.freeze({ wiki: 'parentId' });
+
+/**
+ * Die Stelle eines Eintrags, dessen Eltern-Kette im Kreis laeuft, sonst -1. Ein Kreis kann nur
+ * INNERHALB der Datei entstehen: beim Hinzufuegen wird ein Eltern-Verweis ohne eindeutiges
+ * Ziel in der Datei geleert (reiterHinzufuegen()), Ersetzen nimmt die ganze Sammlung aus der
+ * Datei und lehnt doppelte IDs ab (R6). Darum zaehlen nur Kanten zwischen IDs, die in der
+ * Datei GENAU EINMAL stehen (reiterEindeutigeIds()); eine solche zu einer doppelten ID ist in
+ * keinem Modus ein Kreis. Linear: jede ID wird hoechstens einmal entlang ihrer Kette besucht.
+ * @param {Object[]} eintraege - roh (vor der Datengrenze)
+ * @param {string} feld
+ * @returns {number}
+ */
+function reiterElternKreis(eintraege, feld) {
+    const eindeutig = reiterEindeutigeIds(eintraege);
+    /** @type {Map<number, number>} */
+    const eltern = new Map();
+    /** @type {Map<number, number>} */
+    const stelle = new Map();
+    eintraege.forEach((eintrag, i) => {
+        const id = reiterIdZahl(eintrag && eintrag.id);
+        if (id === null || !eindeutig.has(id)) return;
+        stelle.set(id, i);
+        const elternId = reiterIdZahl(eintrag[feld]);
+        if (elternId !== null && eindeutig.has(elternId)) eltern.set(id, elternId);
+    });
+    /** @type {Set<number>} */
+    const fertig = new Set();
+    for (const start of eltern.keys()) {
+        /** @type {Set<number>} */
+        const weg = new Set();
+        let id = start;
+        while (eltern.has(id) && !fertig.has(id)) {
+            if (weg.has(id)) return /** @type {number} */ (stelle.get(id));
+            weg.add(id);
+            id = /** @type {number} */ (eltern.get(id));
+        }
+        for (const besucht of weg) fertig.add(besucht);
+    }
+    return -1;
+}
+
+/**
+ * Warum "Ersetzen" diese Eintraege nicht uebernehmen darf (R6), sonst null. Ersetzen behaelt
+ * die IDs der Datei; eine ID, die keine positive ganze Zahl ist ("abc", -1, 2.5), oder dieselbe
+ * ID zweimal ergab gemessen Karten, die sich nicht oeffnen bzw. nur gemeinsam loeschen liessen.
+ * Eine Zahl als Text ("7") gilt — die Datengrenze macht daraus 7. Gueltig heisst wie ueberall in
+ * der App isValidEntityId() (utils/utilities.js): hoechstens ENTITY_ID_MAX. Gemessen (Pruefer,
+ * Runde 1): 2e15 kam beim Ersetzen an, und der naechste Kampagnen-Rundlauf vergab dem Eintrag
+ * eine neue ID, ohne die Verweise darauf umzuschreiben. Hinzufuegen vergibt ohnehin neue IDs und
+ * ist davon nicht betroffen — die Funktion laeuft trotzdem fuer jede Datei (Vorschau) und darf
+ * darum an keinem Wert der Datei werfen: ein Objekt mit eigenem toString/valueOf wird nie in
+ * Text verwandelt (gemessen warf `String(roh)` "Cannot convert object to primitive value").
+ * @param {Object[]} eintraege - roh (vor der Datengrenze) oder vorbereitet
+ * @returns {string|null}
+ */
+function reiterIdFehler(eintraege) {
+    const gesehen = new Map();
+    for (let i = 0; i < eintraege.length; i++) {
+        const roh = eintraege[i] ? eintraege[i].id : undefined;
+        const id = roh === undefined ? undefined : datengrenzeZahlwert(roh);
+        if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+            let welche;
+            if (roh === undefined || roh === null || roh === '') welche = 'keine ID';
+            else if (typeof roh === 'object') welche = `statt einer ID ${reiterWertText(roh)}`;
+            else if (typeof roh === 'string') welche = `die ungültige ID „${reiterZitat(roh)}“`;
+            else welche = `die ungültige ID ${String(roh)}`;
+            return (
+                `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat ${welche} — eine ID muss ` +
+                'eine positive ganze Zahl sein. „Hinzufügen“ vergibt neue IDs.'
+            );
+        }
+        if (!isValidEntityId(id)) {
+            return (
+                `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat die ID ${id} — eine ID darf ` +
+                `höchstens ${ENTITY_ID_MAX.toLocaleString('de-DE')} sein. „Hinzufügen“ vergibt neue IDs.`
+            );
+        }
+        if (gesehen.has(id)) {
+            return (
+                `Ersetzen nicht möglich: die ID ${id} kommt in der Datei doppelt vor (Einträge ` +
+                `${gesehen.get(id) + 1} und ${i + 1}). „Hinzufügen“ vergibt neue IDs.`
+            );
+        }
+        gesehen.set(id, i);
+    }
+    return null;
+}
+
+/**
+ * Die Eintraege eines Typs an ihrem Platz im Kampagnenformat (IO_DATA_PATH) — die Form, auf
+ * der bereinigeDatengrenze() arbeitet (`npcs[].id`, `calendar.events[].id`).
+ * @param {string} type
+ * @param {Object[]} items
+ * @returns {Object}
+ */
+function reiterImportWurzel(type, items) {
+    const pfad = IO_DATA_PATH[type] || [type];
+    const wurzel = {};
+    let knoten = wurzel;
+    for (let i = 0; i < pfad.length - 1; i++) {
+        knoten[pfad[i]] = {};
+        knoten = knoten[pfad[i]];
+    }
+    knoten[pfad[pfad.length - 1]] = items;
+    return wurzel;
+}
+
+/**
+ * Felder, die NUR der alte Reiter-Export erfand (IO_SCHEMA vor REITERIMPORT, gemessen; Vertrag
+ * R4): das Datenmodell kennt sie nicht — die Klasse heisst `characterClass`, die RK
+ * `armorClass`, die Attribute stehen unter `attributes`, das Bild unter `avatar` —, und ihre
+ * Werte in alten Dateien sind Vorgaben (`ac: 10`, `str: 10`), keine echten. Aus einer Datei OHNE
+ * Formatkennung werden sie verworfen und NIE auf ein Feld des Datenmodells abgebildet.
+ * Liegengelassen wirkten sie trotzdem: initiative.js liest `ch.ac || ch.armorClass`, ein
+ * `ac: 10` aus der Datei ueberstimmte dort die echte RK.
+ */
+const REITER_ALTFELDER = Object.freeze({
+    characters: Object.freeze([
+        'class',
+        'ac',
+        'hpTemp',
+        'str',
+        'dex',
+        'con',
+        'int',
+        'wis',
+        'cha',
+        'avatarUrl'
+    ]),
+    npcs: Object.freeze(['avatarUrl']),
+    locations: Object.freeze(['avatarUrl'])
+});
+
+/**
+ * Bereitet die gepruefte Datei fuer das Fenster vor: die ID-Pruefung fuers Ersetzen (R6, auf
+ * den ROHEN Eintraegen — die Grenze loescht eine ID "abc"), dieselbe Datengrenze wie jeder
+ * andere Eingang nach D (SENKEN R4), bei einer alten Datei ohne Formatkennung die Warnung und
+ * das Verwerfen der erfundenen Felder (R4) und die Bereinigung der HTML-Felder (SEC-01). Sonst
+ * kommt jeder Eintrag GANZ durch (R4). Beruehrt nichts Globales.
+ * @param {*} inhalt - von pruefeReiterImport() angenommene Datei
+ * @param {string} dataType
+ * @param {string} dateiname
+ * @returns {ReiterImportVorbereitung}
+ */
+function bereiteReiterImportVor(inhalt, dataType, dateiname) {
+    if (!IO_SCHEMA[dataType]) {
+        throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
+    }
+    const idFehler = reiterIdFehler(inhalt.data);
+    const grenze = bereinigeDatengrenze(reiterImportWurzel(dataType, inhalt.data));
+    const eintraege = (IO_DATA_PATH[dataType] || [dataType]).reduce(
+        (knoten, schluessel) => (knoten ? knoten[schluessel] : undefined),
+        grenze
+    );
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const hinweise = [];
+    const format = inhalt._format;
+    const altfelder = format === undefined ? REITER_ALTFELDER[dataType] || [] : [];
+    const verworfen = new Set();
+    const items = (Array.isArray(eintraege) ? eintraege : []).map(item => {
+        const eintrag = { ...item };
+        for (const feld of altfelder) {
+            if (Object.prototype.hasOwnProperty.call(eintrag, feld)) {
+                delete eintrag[feld];
+                verworfen.add(feld);
+            }
+        }
+        // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
+        return sanitizeImportedItem(dataType, eintrag);
+    });
+    if (format === undefined) {
+        hinweise.push({
+            text:
+                '⚠️ Ältere Exportdatei ohne Formatkennung: frühere Exporte enthielten nicht alle ' +
+                'Felder eines Eintrags — was in der Datei fehlt, bleibt leer.' +
+                (verworfen.size > 0
+                    ? ` Nicht übernommen, weil die App sie nicht kennt: ${[...verworfen].join(', ')}.`
+                    : ''),
+            warnung: true
+        });
+    } else if (format !== REITER_EXPORT_FORMAT) {
+        hinweise.push({
+            text: '⚠️ Unbekannte Formatkennung — die Datei stammt vermutlich aus einer anderen App-Version.',
+            warnung: true
+        });
+    }
+    const kampagne =
+        typeof inhalt._campaignName === 'string' && inhalt._campaignName.trim() !== ''
+            ? inhalt._campaignName.trim()
+            : String(dateiname || '').replace(/\.json$/i, '');
+    const datum = typeof inhalt._exportDate === 'string' ? new Date(inhalt._exportDate) : null;
+    return {
+        dataType,
+        items,
+        kampagne: kampagne.slice(0, KAMPAGNENNAME_MAX),
+        exportDatum:
+            datum && !isNaN(datum.getTime()) ? datum.toLocaleDateString('de-DE') : 'unbekannt',
+        hinweise,
+        idFehler
+    };
+}
+
+// VERWEISE (R5, R6). Ein Eintrag zeigt ueber IDs auf andere Eintraege — derselben Sammlung
+// (NPC-Beziehung NPC→NPC, Wiki-Eltern, Verknuepfung desselben Typs, Encounter-Gruppe →
+// Vorlage) oder einer anderen (Ort, Fraktion, Zauber, Gegenstand …). Einen zentralen Katalog
+// gab es nicht: utils/validation.js kennt drei Felder, normalizeEntityIds() schreibt beim
+// Umnummerieren gar keine Verweise um. Gemessen schrieb der Merge darum nur `id` neu, und
+// alles andere zeigte still weiter auf die Zahlen der Quelle — in einer fremden Kampagne auf
+// "Eiswueste" und "Hexe Morla", in derselben auf die Originale statt auf die Kopien.
+//
+// REITER_VERWEISE ist DER Katalog, je Sammlung, aus dem Datenmodell und den CRUD-Modulen
+// gelesen (Fundstellen an den Eintraegen). Er traegt beide Richtungen: R5 bildet mit ihm die
+// Verweise der importierten Eintraege ab, R6 liest mit ihm die Verweise ANDERER Bereiche auf
+// den ersetzten Typ. Darum stehen hier auch Sammlungen ohne Reiter-Import (Shops, Initiative,
+// Rechner-Vorlagen, Session-Notizen, Schnellreferenz) — als Quellen fuer R6. Bewusst nicht
+// darunter: `wikiRecentlyViewed` ("Zuletzt angesehen"), eine blosse Liste von Wiki-IDs zur
+// Navigation ohne Eintraege mit Feldern — nach dem Ersetzen zeigt sie den Eintrag, der die ID
+// jetzt traegt, eine fehlende laesst die Anzeige fallen (RUECKSPRUNG Offen (5)).
+// tests/unit/reiterimport-verweise.test.js haelt ihn gegen die Verweispfade der Datengrenze und
+// gegen eine Saat aller Typen; die Rechner-Vorlagen haelt dort E4, weil die Grenze ihr Feld nicht
+// kennt. Ein neues Verweisfeld im Datenmodell gehoert hier hinein.
+
+/** Ziel eines Verweises, dessen Typ die App nicht kennt (z. B. `links[].type` aus einer Datei). */
+const REITER_ZIEL_UNBEKANNT = '?';
+
+/** Typwort einer Verknuepfung (`links[].type`, `[[typ:id:name]]`) -> Sammlung. Die App schreibt
+ *  die Mehrzahl (systems/entity-links.js), getEntityByTypeAndId() nimmt auch die Einzahl. */
+const REITER_LINKTYPEN = Object.freeze({
+    npc: 'npcs',
+    npcs: 'npcs',
+    character: 'characters',
+    characters: 'characters',
+    location: 'locations',
+    locations: 'locations',
+    quest: 'quests',
+    quests: 'quests',
+    encounter: 'encounters',
+    encounters: 'encounters',
+    spell: 'spells',
+    spells: 'spells',
+    loot: 'loot',
+    item: 'loot',
+    items: 'loot',
+    wiki: 'wiki',
+    faction: 'factions',
+    factions: 'factions'
+});
+
+/** Namen der Bereiche ohne Reiter-Import (die anderen nennt REITER_TYPNAMEN). */
+const REITER_WEITERE_BEREICHE = Object.freeze({
+    filters: 'Filter',
+    storyArcs: 'Story-Arcs',
+    shops: 'Shops',
+    initiative: 'Initiative',
+    monsterFavorites: 'Rechner-Vorlagen',
+    quickRefCustom: 'Schnellreferenz'
+});
+
+/**
+ * Wo eine Sammlung liegt, die nicht direkt unter D steht: die Pfade der Reiter-Typen
+ * (IO_DATA_PATH — EINE Quelle, ein neuer verschachtelter Typ ist hier sofort Quelle fuer R6)
+ * und dazu die Initiative, die keinen Reiter-Import hat.
+ * @type {Readonly<Record<string, string[]>>}
+ */
+const REITER_VERWEIS_PFADE = Object.freeze({
+    ...IO_DATA_PATH,
+    initiative: ['initiative', 'combatants']
+});
+
+/**
+ * @param {*} typ
+ * @returns {string}
+ */
+function reiterLinkZiel(typ) {
+    return typeof typ === 'string' && Object.prototype.hasOwnProperty.call(REITER_LINKTYPEN, typ)
+        ? REITER_LINKTYPEN[typ]
+        : REITER_ZIEL_UNBEKANNT;
+}
+
+/**
+ * Der deutsche Name eines Bereichs in der Mehrzahl — nie sein Schluessel.
+ * @param {string} ziel
+ * @returns {string}
+ */
+function reiterZielName(ziel) {
+    if (Object.prototype.hasOwnProperty.call(REITER_TYPNAMEN, ziel)) return reiterTypName(ziel, 2);
+    if (Object.prototype.hasOwnProperty.call(REITER_WEITERE_BEREICHE, ziel)) {
+        return REITER_WEITERE_BEREICHE[ziel];
+    }
+    return 'unbekannter Bereich';
+}
+
+/** Verknuepfungen (systems/entity-links.js addEntityLink(): `{type, id}`, beidseitig). Jeder
+ *  Typ kann sie tragen — auch als ZIEL einer Verknuepfung. */
+const REITER_VERWEIS_LINKS = Object.freeze({
+    feld: 'links',
+    art: 'typisiert',
+    typFeld: 'type',
+    idFeld: 'id',
+    zielVon: reiterLinkZiel,
+    wort: ziel => `Verknüpfung → ${reiterZielName(ziel)}`
+});
+
+/** Das alte Beziehungsmodell (systems/undo.js saveRelationship(): `relationships[]` mit
+ *  `targetType` 'character'/'npc'). Kein Knopf erreicht es mehr, alte Daten tragen es aber;
+ *  Text-Eintraege (`npcs[].relationships` des Formulars ist eine Liste von Namen) sind kein
+ *  Verweis. Das Ziel loest der Katalog auf wie die Anzeige (systems/undo.js
+ *  renderRelationshipBadges()): 'character' ist ein Held, JEDER andere Typ ein NPC. */
+const REITER_VERWEIS_BEZIEHUNGEN_ALT = Object.freeze({
+    feld: 'relationships',
+    art: 'typisiert',
+    typFeld: 'targetType',
+    idFeld: 'targetId',
+    zielVon: t => (t === 'character' ? 'characters' : 'npcs'),
+    wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
+});
+
+/**
+ * @typedef {Object} ReiterVerweisFeld
+ * @property {string} feld - Schluessel im Eintrag
+ * @property {'wert'|'liste'|'typisiert'} art - `wert`: der Wert IST die ID; `liste`: Liste von
+ *   IDs oder von Objekten, deren `idFeld` die ID ist; `typisiert`: Liste von Objekten, deren
+ *   `typFeld` das Ziel nennt
+ * @property {string} [ziel] - Sammlung, auf die `wert` und `liste` zeigen
+ * @property {string} [idFeld] - Feld der ID im Objekt (Vorgabe `id`)
+ * @property {string} [typFeld]
+ * @property {(typWert: *) => string|null} [zielVon] - Typwert -> Sammlung; null: kein Verweis
+ *   (die Beziehung zu "Die Gruppe" traegt `targetId: 0`)
+ * @property {'nullen'} [leeren] - ein geleerter Listeneintrag bleibt mit ID null stehen, statt
+ *   zu verschwinden (sein uebriger Inhalt ist Arbeit des Nutzers: Text des offenen Fadens,
+ *   Monster einer Gruppe)
+ * @property {string|((ziel: string) => string)} wort - wie die Vorschau den Verweis nennt
+ */
+
+/**
+ * DER Verweiskatalog (siehe oben).
+ * @type {Readonly<Record<string, ReadonlyArray<ReiterVerweisFeld>>>}
+ */
+const REITER_VERWEISE = Object.freeze({
+    // features/party/party-render.js: spells[] sind Zauber-IDs, items[] Gegenstaende ({id,
+    // quantity}, alt: reine IDs — render-loot.js wandelt sie)
+    characters: Object.freeze([
+        { feld: 'spells', art: 'liste', ziel: 'spells', wort: 'Zauber' },
+        { feld: 'items', art: 'liste', ziel: 'loot', wort: 'Gegenstände' },
+        REITER_VERWEIS_BEZIEHUNGEN_ALT,
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/npcs/npc-crud.js saveNPC(), npc-render.js addRelation() ('npcs'/'characters';
+    // 'party' ist "Die Gruppe", kein Eintrag). Das Ziel loest der Katalog auf wie die Anzeige
+    // (npc-render.js renderNPCRelations(), showRelationsModal()): 'characters' ist ein Held,
+    // JEDER andere Typ — auch 'npc' und ein fehlender — ein NPC. Gemessen (Pruefer, Runde 2,
+    // Sonde p1): mit "kein Verweis" fuer 'npc' und ohne Typ blieben solche Beziehungen beim
+    // Hinzufuegen stehen, und das Detail zeigte die NPCs der Ziel-Kampagne mit diesen IDs.
+    npcs: Object.freeze([
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' },
+        { feld: 'factionId', art: 'wert', ziel: 'factions', wort: 'Fraktion' },
+        { feld: 'filterId', art: 'wert', ziel: 'filters', wort: 'Filter' },
+        {
+            feld: 'relations',
+            art: 'typisiert',
+            typFeld: 'targetType',
+            idFeld: 'targetId',
+            zielVon: t => (t === 'party' ? null : t === 'characters' ? 'characters' : 'npcs'),
+            wort: ziel => `Beziehung → ${reiterZielName(ziel)}`
+        },
+        REITER_VERWEIS_BEZIEHUNGEN_ALT,
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/locations/locations-crud.js (kein Eltern-Ort im Datenmodell)
+    locations: Object.freeze([
+        { feld: 'filterId', art: 'wert', ziel: 'filters', wort: 'Filter' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/quests/quests-crud.js saveQuest(); das "Ziel" ist ein ZIELORT
+    // (populateQuestSelects(), quests-render.js renderEntityLink('locations', q.targetId))
+    quests: Object.freeze([
+        { feld: 'giverId', art: 'wert', ziel: 'npcs', wort: 'Auftraggeber' },
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' },
+        { feld: 'targetId', art: 'wert', ziel: 'locations', wort: 'Zielort' },
+        { feld: 'rewardItems', art: 'liste', ziel: 'loot', wort: 'Belohnungs-Gegenstand' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/encounter-calculator.js: eine im Rechner gespeicherte Gruppe nennt je Monster
+    // die Vorlage (`monsters[].encounterId`, RECHNER) — ein Verweis INNERHALB des Typs
+    encounters: Object.freeze([
+        {
+            feld: 'monsters',
+            art: 'liste',
+            ziel: 'encounters',
+            idFeld: 'encounterId',
+            leeren: 'nullen',
+            wort: 'Vorlage eines Gruppen-Monsters'
+        },
+        REITER_VERWEIS_LINKS
+    ]),
+    loot: Object.freeze([REITER_VERWEIS_LINKS]),
+    spells: Object.freeze([REITER_VERWEIS_LINKS]),
+    // features/wiki/wiki-crud.js: parentId
+    wiki: Object.freeze([
+        { feld: 'parentId', art: 'wert', ziel: 'wiki', wort: 'Übergeordneter Eintrag' },
+        REITER_VERWEIS_LINKS
+    ]),
+    links: Object.freeze([]),
+    // features/session-prep/session-prep-crud.js: offene Faeden aus Quests und Story-Arcs
+    sessionPreps: Object.freeze([
+        {
+            feld: 'offeneFaeden',
+            art: 'typisiert',
+            typFeld: 'quelleTyp',
+            idFeld: 'quelleId',
+            zielVon: t => (t === 'quest' ? 'quests' : t === 'storyArc' ? 'storyArcs' : null),
+            leeren: 'nullen',
+            wort: ziel => `Offener Faden → ${reiterZielName(ziel)}`
+        },
+        REITER_VERWEIS_LINKS
+    ]),
+    // features/timeline/timeline-render.js: ein uebernommener Vorschlag nennt seine
+    // Session-Notiz (`quelleId`, typ 'session')
+    calendarEvents: Object.freeze([
+        { feld: 'quelleId', art: 'wert', ziel: 'sessionNotes', wort: 'Quelle' }
+    ]),
+    // features/fraktionen/fraktionen-crud.js saveFraktion()
+    factions: Object.freeze([
+        { feld: 'sitzOrtId', art: 'wert', ziel: 'locations', wort: 'Sitz' },
+        { feld: 'mitgliederNpcIds', art: 'liste', ziel: 'npcs', wort: 'Mitglieder' },
+        REITER_VERWEIS_LINKS
+    ]),
+    // Nur Quellen fuer R6 (kein Reiter-Import):
+    // features/shops/shops-core.js
+    shops: Object.freeze([
+        { feld: 'npcId', art: 'wert', ziel: 'npcs', wort: 'Händler' },
+        { feld: 'locationId', art: 'wert', ziel: 'locations', wort: 'Ort' }
+    ]),
+    // features/encounter-calculator.js "⚔️ Zur Initiative": der Kaempfer nennt seine Vorlage
+    initiative: Object.freeze([
+        { feld: 'encounterId', art: 'wert', ziel: 'encounters', wort: 'Vorlage' }
+    ]),
+    // features/encounter-calculator.js saveMonsterFavorite(): "⭐ Vorlage speichern" legt die
+    // Monster der Rechnerliste samt Vorlage ab, "⚔️ Zur Initiative" liest ueber sie RK und TP.
+    // Die Datengrenze kennt das Feld nicht (K1 sieht es nicht; E4 in
+    // tests/unit/reiterimport-verweise.test.js haelt es fest).
+    monsterFavorites: Object.freeze([
+        {
+            feld: 'monsters',
+            art: 'liste',
+            ziel: 'encounters',
+            idFeld: 'encounterId',
+            leeren: 'nullen',
+            wort: 'Vorlage eines Monsters'
+        }
+    ]),
+    // features/sessions/sessions.js
+    sessionNotes: Object.freeze([
+        { feld: 'arcId', art: 'wert', ziel: 'storyArcs', wort: 'Story-Arc' }
+    ]),
+    // systems/spellslots/quick-reference.js: nur Text-Verknuepfungen
+    quickRefCustom: Object.freeze([])
+});
+
+/**
+ * Text-Verknuepfungen `[[typ:id:name]]` (systems/entity-links.js, "🔗 Entity-Link"):
+ * parseEntityLinks() macht sie mit /\[\[(\w+):(\d+):([^\]]+)\]\]/g zu Spruengen auf `typ`/`id`.
+ * Hier steht nur der Kopf dieses Musters; den Namen sucht reiterTextverweiseErsetzen() selbst —
+ * mit denselben Treffern, aber in linearer Zeit (siehe dort).
+ */
+const REITER_TEXTVERWEIS_KOPF = /\[\[(\w+):(\d+):/g;
+
+/** So tief folgt die Suche nach Text-Verknuepfungen verschachtelten Werten. */
+const REITER_TEXTVERWEIS_TIEFE = 64;
+
+/**
+ * `text.replace(/\[\[(\w+):(\d+):([^\]]+)\]\]/g, ersetzen)` — dieselben Treffer in linearer Zeit.
+ * Das Muster selbst braucht quadratische Zeit, wenn viele Koepfe kein `]]` finden: jeder Ansatz
+ * sucht bis zum naechsten `]`, ohne eines bis zum Textende. Gemessen (Pruefer, Runde 1): ein
+ * NPC-Name aus 40000 "[[a:1:" (240 KB) hielt die Dateiwahl 3,4 s auf, bevor der Nutzer etwas
+ * entschieden hatte (die Abbildung laeuft schon fuer die Vorschau) — hochgerechnet etwa 1,5 h an
+ * der Grenze von 10 MB. Dieselben Treffer heisst: der Name ist der ganze Lauf ohne `]` hinter
+ * dem Kopf, mindestens ein Zeichen, und ihm folgt `]]`; ein `[` darin bleibt erlaubt wie im
+ * Muster. Eine Laengenkappe oder `[^\[\]]` haette Treffer geaendert — eine Verknuepfung, die die
+ * Anzeige als Sprung zeigt, der Import aber nicht saehe, zeigte nach dem Hinzufuegen still auf
+ * einen fremden Eintrag (R5). Linear, weil die Stelle des naechsten `]` gemerkt bleibt, solange
+ * sie hinter dem Kopf liegt: jedes Zeichen wird hoechstens einmal danach durchsucht.
+ * tests/unit/reiterimport-verweise.test.js T1 haelt die Treffer gegen das Muster, T2/T3 die Zeit.
+ * @param {string} text
+ * @param {(ganz: string, typWort: string, idText: string, name: string) => string} ersetzen
+ * @returns {string}
+ */
+function reiterTextverweiseErsetzen(text, ersetzen) {
+    // Eigener Zustand (lastIndex) je Aufruf
+    const kopf = new RegExp(REITER_TEXTVERWEIS_KOPF);
+    let aus = '';
+    let geschrieben = 0;
+    let klammer = -1;
+    for (let treffer = kopf.exec(text); treffer; treffer = kopf.exec(text)) {
+        const nameAb = treffer.index + treffer[0].length;
+        if (klammer < nameAb) {
+            klammer = text.indexOf(']', nameAb);
+            if (klammer < 0) break;
+        }
+        if (klammer > nameAb && text[klammer + 1] === ']') {
+            aus +=
+                text.slice(geschrieben, treffer.index) +
+                ersetzen(
+                    text.slice(treffer.index, klammer + 2),
+                    treffer[1],
+                    treffer[2],
+                    text.slice(nameAb, klammer)
+                );
+            geschrieben = klammer + 2;
+            kopf.lastIndex = geschrieben;
+        } else {
+            // Wie das Muster: der naechste Ansatz eine Stelle weiter
+            kopf.lastIndex = treffer.index + 1;
+        }
+    }
+    return geschrieben === 0 ? text : aus + text.slice(geschrieben);
+}
+
+/**
+ * Eine ID als Zahl — positive ganze Zahl oder Zahltext ("7"), sonst null.
+ * @param {*} wert
+ * @returns {number|null}
+ */
+function reiterIdZahl(wert) {
+    const zahl = typeof wert === 'string' && /^\s*\d+\s*$/.test(wert) ? Number(wert) : wert;
+    return typeof zahl === 'number' && Number.isSafeInteger(zahl) && zahl > 0 ? zahl : null;
+}
+
+/**
+ * @param {ReiterVerweisFeld} v
+ * @param {string} ziel
+ * @returns {string}
+ */
+function reiterVerweisWort(v, ziel) {
+    return typeof v.wort === 'function' ? v.wort(ziel) : v.wort;
+}
+
+/**
+ * Bildet EINEN Listeneintrag ab. Gibt den Eintrag selbst zurueck, wenn er bleibt, `undefined`,
+ * wenn er entfaellt.
+ * @param {*} el
+ * @param {string|null} ziel - null: kein Verweis
+ * @param {string} idFeld
+ * @param {ReiterVerweisFeld} v
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @returns {*}
+ */
+function reiterListeneintragAbbilden(el, ziel, idFeld, v, abbilden) {
+    const objekt = !!el && typeof el === 'object' && !Array.isArray(el);
+    const roh = objekt ? el[idFeld] : el;
+    if (ziel === null || !roh || (!objekt && typeof roh === 'object')) return el;
+    const id = reiterIdZahl(roh);
+    const neu = abbilden(ziel, id, reiterVerweisWort(v, ziel));
+    if (neu === roh) return el;
+    if (neu === null && v.leeren !== 'nullen') return undefined;
+    return objekt ? { ...el, [idFeld]: neu } : neu;
+}
+
+/**
+ * Ersetzt Text-Verknuepfungen in allen Texten eines Werts, in jeder Tiefe. Eine geleerte wird
+ * zu ihrem Namen (der sichtbare Text bleibt, der Sprung entfaellt). Gibt den Wert selbst
+ * zurueck, wenn sich nichts aendert.
+ * @param {*} wert
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @param {number} tiefe
+ * @returns {*}
+ */
+function reiterTextverweiseAbbilden(wert, abbilden, tiefe) {
+    if (typeof wert === 'string') {
+        if (!wert.includes('[[')) return wert;
+        return reiterTextverweiseErsetzen(wert, (ganz, typWort, idText, name) => {
+            const ziel = reiterLinkZiel(typWort);
+            const id = reiterIdZahl(idText);
+            const neu = abbilden(ziel, id, `Text-Verknüpfung → ${reiterZielName(ziel)}`);
+            if (neu === id) return ganz;
+            return neu === null ? name : `[[${typWort}:${neu}:${name}]]`;
+        });
+    }
+    if (!wert || typeof wert !== 'object' || tiefe >= REITER_TEXTVERWEIS_TIEFE) return wert;
+    let kopie = wert;
+    for (const schluessel of Object.keys(wert)) {
+        const neu = reiterTextverweiseAbbilden(wert[schluessel], abbilden, tiefe + 1);
+        if (neu === wert[schluessel]) continue;
+        if (kopie === wert) kopie = Array.isArray(wert) ? wert.slice() : { ...wert };
+        kopie[schluessel] = neu;
+    }
+    return kopie;
+}
+
+/**
+ * Bildet jeden Verweis eines Eintrags ab (Katalog und Text-Verknuepfungen): `abbilden(ziel,
+ * id, wort)` gibt die ID zurueck, auf die er danach zeigt, oder null — dann ist er geleert
+ * (Feld null, Listeneintrag entfernt bzw. mit ID null, Text-Verknuepfung nur noch Name).
+ * Veraendert NIE den Eintrag selbst: geaenderte Teile werden kopiert, unveraenderte geteilt.
+ * Mit einem `abbilden`, das die ID zurueckgibt, ist es ein reines Lesen (R5-Vorschau, R6).
+ * Ein leerer Wert (null, 0, '') ist kein Verweis.
+ * @param {string} typ - Sammlung des Eintrags (Schluessel in REITER_VERWEISE)
+ * @param {*} eintrag
+ * @param {(ziel: string, id: number|null, wort: string) => number|null} abbilden
+ * @returns {*}
+ */
+function reiterVerweiseAbbilden(typ, eintrag, abbilden) {
+    if (!eintrag || typeof eintrag !== 'object') return eintrag;
+    let neu = eintrag;
+    const setze = (feld, wert) => {
+        if (neu === eintrag) neu = { ...eintrag };
+        neu[feld] = wert;
+    };
+    const felder = Object.prototype.hasOwnProperty.call(REITER_VERWEISE, typ)
+        ? REITER_VERWEISE[typ]
+        : [];
+    for (const v of felder) {
+        if (!Object.prototype.hasOwnProperty.call(eintrag, v.feld)) continue;
+        const wert = eintrag[v.feld];
+        if (v.art === 'wert') {
+            // Auch eine Liste oder ein Objekt ist ein Verweis — ohne gueltige ID (null): die App
+            // liest ihn mit parseEntityId(), und das macht aus [1] die ID 1 (Pruefer, Runde 2,
+            // Sonde p1). Uebersprungen, bliebe er beim Hinzufuegen still stehen.
+            if (!wert) continue;
+            const ziel = /** @type {string} */ (v.ziel);
+            const ergebnis = abbilden(ziel, reiterIdZahl(wert), reiterVerweisWort(v, ziel));
+            if (ergebnis !== wert) setze(v.feld, ergebnis);
+            continue;
+        }
+        if (!Array.isArray(wert)) continue;
+        let geaendert = false;
+        const liste = [];
+        for (const el of wert) {
+            let ziel = v.ziel || null;
+            let idFeld = v.idFeld || 'id';
+            if (v.art === 'typisiert') {
+                if (!el || typeof el !== 'object') {
+                    liste.push(el);
+                    continue;
+                }
+                ziel = v.zielVon(el[v.typFeld]);
+                idFeld = /** @type {string} */ (v.idFeld);
+            }
+            const ergebnis = reiterListeneintragAbbilden(el, ziel, idFeld, v, abbilden);
+            if (ergebnis !== el) geaendert = true;
+            if (ergebnis !== undefined) liste.push(ergebnis);
+        }
+        if (geaendert) setze(v.feld, liste);
+    }
+    return reiterTextverweiseAbbilden(neu, abbilden, 0);
+}
+
+/**
+ * Die IDs, die in den Eintraegen GENAU EINMAL vorkommen (als Zahl). Nur auf sie kann ein
+ * Verweis innerhalb der Datei eindeutig umgeschrieben werden; eine doppelte ID ist
+ * mehrdeutig, und eine ungueltige hat die Datengrenze schon geloescht.
+ * @param {Object[]} items
+ * @returns {Set<number>}
+ */
+function reiterEindeutigeIds(items) {
+    const anzahl = new Map();
+    for (const item of items) {
+        const id = reiterIdZahl(item && item.id);
+        if (id !== null) anzahl.set(id, (anzahl.get(id) || 0) + 1);
+    }
+    return new Set([...anzahl].filter(([, n]) => n === 1).map(([id]) => id));
+}
+
+/**
+ * Was "Hinzufügen" mit den Verweisen der Datei tut (R5), gezaehlt fuer die Vorschau — genau
+ * die Regel von reiterHinzufuegen(): innerhalb des Typs mit eindeutigem Ziel in der Datei →
+ * umgeschrieben (`intern`); innerhalb des Typs ohne solches Ziel → geleert (`haengend`, z. B.
+ * eine Beziehung auf einen in der Quelle geloeschten NPC); auf einen anderen Bereich → geleert
+ * (`fremd`, je Feld).
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{intern: number, haengend: number, fremd: {wort: string, n: number}[]}}
+ */
+function reiterHinzufuegenVerweise(typ, items) {
+    const eindeutig = reiterEindeutigeIds(items);
+    /** @type {Map<string, number>} */
+    const fremd = new Map();
+    let intern = 0;
+    let haengend = 0;
+    for (const item of items) {
+        reiterVerweiseAbbilden(typ, item, (ziel, id, wort) => {
+            if (ziel !== typ) fremd.set(wort, (fremd.get(wort) || 0) + 1);
+            else if (id !== null && eindeutig.has(id)) intern++;
+            else haengend++;
+            return id;
+        });
+    }
+    return { intern, haengend, fremd: [...fremd].map(([wort, n]) => ({ wort, n })) };
+}
+
+/**
+ * "Hinzufügen" (R5): jeder Eintrag bekommt eine neue ID (nextId(), als Stapel); ein Verweis
+ * INNERHALB des Typs zeigt danach auf die neue ID seines Ziels in der Datei — hat er dort kein
+ * eindeutiges Ziel, wird er geleert, statt mit seiner alten Zahl auf wen auch immer zu zeigen,
+ * der in dieser Kampagne so heisst. Jeder Verweis auf einen ANDEREN Bereich wird geleert: die
+ * Datei weiss nicht, welche Eintraege dort gemeint sind (Entscheidung des Nutzers, 29.10.).
+ * Die Eintraege der Vorbereitung bleiben unveraendert.
+ * Die HTML-Felder werden NACH dem Umschreiben noch einmal bereinigt (SEC-01): eine geleerte
+ * Text-Verknuepfung wird im fertigen Markup zu ihrem Namen, und das kann ein Attribut
+ * veraendern, das die Bereinigung in bereiteReiterImportVor() schon durchgelassen hatte.
+ * Gemessen (Pruefer, Runde 2, Sicherheit): aus dem erlaubten relativen Ziel
+ * `/[[locations:7:/host/x.pdf]]` wurde `//host/x.pdf` — ein Netzwerkziel, in D unbereinigt.
+ * Die Ausgabe bereinigt ohnehin; ohne diesen Schritt stuende in D trotzdem Markup, das
+ * sanitizeHTML() nie durchgelassen haette. Doppelt bereinigt aendert nichts mehr.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {Object[]}
+ */
+function reiterHinzufuegen(typ, items) {
+    const eindeutig = reiterEindeutigeIds(items);
+    const neueIds = items.map(() => nextId(typ));
+    /** @type {Map<number, number>} */
+    const abbildung = new Map();
+    items.forEach((item, i) => {
+        const id = reiterIdZahl(item && item.id);
+        if (id !== null && eindeutig.has(id)) abbildung.set(id, neueIds[i]);
+    });
+    return items.map((item, i) =>
+        sanitizeImportedItem(typ, {
+            ...reiterVerweiseAbbilden(typ, item, (ziel, id) =>
+                ziel === typ && id !== null && abbildung.has(id)
+                    ? /** @type {number} */ (abbildung.get(id))
+                    : null
+            ),
+            id: neueIds[i]
+        })
+    );
+}
+
+/**
+ * Eine Sammlung aus D (auch verschachtelt, REITER_VERWEIS_PFADE).
+ * @param {string} schluessel
+ * @returns {*}
+ */
+function reiterSammlung(schluessel) {
+    const pfad = REITER_VERWEIS_PFADE[schluessel] || [schluessel];
+    return pfad.reduce(
+        (knoten, schritt) => (knoten && typeof knoten === 'object' ? knoten[schritt] : undefined),
+        window.D
+    );
+}
+
+/**
+ * Die Verweise ANDERER Bereiche auf den Typ, der ersetzt wird (R6): wie viele danach ins Leere
+ * zeigen (ihre ID steht nicht in der Datei), je Bereich mit den Feldern, und wie viele auf einen
+ * Eintrag der Datei mit derselben ID — Ersetzen behaelt die IDs der Datei, ein solcher Verweis
+ * zeigt danach auf DEN Eintrag, der in der Datei so heisst. Liest D, aendert nichts.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{insLeere: number, gleicheId: number, quellen: {name: string, worte: string[], n: number}[]}}
+ */
+function reiterVerweiseNachErsetzen(typ, items) {
+    const bleibt = new Set(
+        items.map(item => reiterIdZahl(item && item.id)).filter(id => id !== null)
+    );
+    const quellen = [];
+    let insLeere = 0;
+    let gleicheId = 0;
+    for (const quelle of Object.keys(REITER_VERWEISE)) {
+        if (quelle === typ) continue;
+        const sammlung = reiterSammlung(quelle);
+        if (!Array.isArray(sammlung)) continue;
+        /** @type {Set<string>} */
+        const worte = new Set();
+        let n = 0;
+        for (const eintrag of sammlung) {
+            reiterVerweiseAbbilden(quelle, eintrag, (ziel, id, wort) => {
+                if (ziel === typ && id !== null) {
+                    if (bleibt.has(id)) gleicheId++;
+                    else {
+                        n++;
+                        worte.add(wort);
+                    }
+                }
+                return id;
+            });
+        }
+        if (n > 0) {
+            quellen.push({ name: reiterZielName(quelle), worte: [...worte], n });
+            insLeere += n;
+        }
+    }
+    return { insLeere, gleicheId, quellen };
+}
+
+/**
+ * Die Verweise der DATEI auf andere Bereiche beim Ersetzen (R6, die Gegenrichtung von
+ * reiterVerweiseNachErsetzen()): Ersetzen schreibt sie nicht um, sie zeigen danach auf den
+ * Eintrag DIESER Kampagne mit derselben ID (`treffer`, je Feld) oder ins Leere (`insLeere`).
+ * Gemessen (Pruefer, Runde 2, Sonde p12): in einer fremden Kampagne bekam der ersetzte NPC so
+ * still deren Ort, Fraktion und Held — die Vorschau sagte nichts dazu. Ob ein Treffer der
+ * gemeinte Eintrag ist, kann die App nicht wissen (viele Kampagnen heissen
+ * "Standard-Kampagne"); sie nennt die Zahl, bevor geschrieben wird. Liest D, aendert nichts.
+ * @param {string} typ
+ * @param {Object[]} items
+ * @returns {{treffer: {wort: string, n: number}[], insLeere: number}}
+ */
+function reiterVerweiseDerDatei(typ, items) {
+    /** @type {Map<string, Set<number>|null>} */
+    const idsJeBereich = new Map();
+    const vorhanden = (ziel, id) => {
+        if (!idsJeBereich.has(ziel)) {
+            const liste = ziel === REITER_ZIEL_UNBEKANNT ? null : reiterSammlung(ziel);
+            idsJeBereich.set(
+                ziel,
+                Array.isArray(liste) ? new Set(liste.map(e => reiterIdZahl(e && e.id))) : null
+            );
+        }
+        const ids = idsJeBereich.get(ziel);
+        return !!ids && ids.has(id);
+    };
+    /** @type {Map<string, number>} */
+    const treffer = new Map();
+    let insLeere = 0;
+    for (const item of items) {
+        reiterVerweiseAbbilden(typ, item, (ziel, id, wort) => {
+            if (ziel !== typ && id !== null) {
+                if (vorhanden(ziel, id)) treffer.set(wort, (treffer.get(wort) || 0) + 1);
+                else insLeere++;
+            }
+            return id;
+        });
+    }
+    return { treffer: [...treffer].map(([wort, n]) => ({ wort, n })), insLeere };
+}
+
+/**
+ * Setzt den Fokus auf das 📥 des Reiterfelds, wenn er beim Oeffnen nirgends steht.
+ * showModal() merkt sich den Oeffner, und ✕, "Abbrechen" und Escape geben ihm den Fokus
+ * zurueck (R10). Nach einem Klick auf 📥 steht er in Chromium ohnehin dort; ein Browser, der
+ * Knoepfe beim Klick nicht fokussiert, liesse ihn auf <body>, und das Fenster haette keinen
+ * Rueckweg.
+ * @param {HTMLInputElement} inputEl
+ */
+function fokussiereEinfuhrKnopf(inputEl) {
+    const aktiv = document.activeElement;
+    if (aktiv && aktiv !== document.body && aktiv !== document.documentElement) return;
+    const knopf = Array.from(document.querySelectorAll('[data-action="trigger-click"]')).find(
+        k => k.dataset.value === inputEl.id
+    );
+    if (knopf && typeof knopf.focus === 'function') knopf.focus({ preventScroll: true });
+}
+
+/**
+ * Oeffnet das Fenster fuer eine vorbereitete Datei: merkt sie im Modulzustand, stellt den
+ * Modus auf "Hinzufügen" (der Weg, der nichts Vorhandenes ersetzt) und zeichnet die Vorschau.
+ * @param {string} dataType
+ * @param {ReiterImportVorbereitung} vorbereitung
+ */
+function showImportModal(dataType, vorbereitung) {
+    _reiterImport = { ...vorbereitung, dataType };
+    const hinzufuegen = document.querySelector('input[name="import-mode"][value="merge"]');
+    if (hinzufuegen) hinzufuegen.checked = true;
+    renderImportVorschau();
+    showModal('import-modal');
+}
+
+/** Der gewaehlte Modus: 'replace' nur, wenn "Ersetzen" ausdruecklich gewaehlt ist. */
+function gewaehlterImportModus() {
+    const gewaehlt = document.querySelector('input[name="import-mode"]:checked');
+    return gewaehlt && gewaehlt.value === 'replace' ? 'replace' : 'merge';
+}
+
+/**
+ * Die Zeilen der Vorschau fuer den gewaehlten Modus. Die Modus-Zeile steht VOR den Hinweisen,
+ * damit Hinweise, die zusammengehoeren (etwa alle Verweise), einen Block bilden.
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {'merge'|'replace'} modus
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function importVorschauZeilen(bereit, modus) {
+    const n = bereit.items.length;
+    const bestand = ioGetArray(bereit.dataType);
+    const vorhanden = Array.isArray(bestand) ? bestand.length : 0;
+    const moduszeilen =
+        modus === 'replace'
+            ? ersetzenVorschauZeilen(bereit, vorhanden)
+            : hinzufuegenVorschauZeilen(bereit, vorhanden);
+    return [
+        { text: `Typ: ${reiterTypName(bereit.dataType, 2)}` },
+        { text: `Einträge: ${n}` },
+        { text: `Kampagne: ${bereit.kampagne}` },
+        { text: `Export-Datum: ${bereit.exportDatum}` },
+        ...moduszeilen,
+        ...bereit.hinweise
+    ];
+}
+
+/**
+ * Die Zeilen der Vorschau, die nur fuer "Hinzufügen" gelten (R5): wie viele Eintraege mit neuer
+ * ID dazukommen, und VOR dem Import, was mit ihren Verweisen geschieht — dieselbe Regel wie das
+ * Schreiben (reiterHinzufuegenVerweise()). Welche Verweise auf andere Bereiche geleert werden,
+ * steht je Feld da; die erste Zeile dazu nennt die Summe.
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {number} vorhanden - Zahl der Eintraege, die heute in D stehen
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function hinzufuegenVorschauZeilen(bereit, vorhanden) {
+    const n = bereit.items.length;
+    const name = reiterTypName(bereit.dataType, 2);
+    const { intern, haengend, fremd } = reiterHinzufuegenVerweise(bereit.dataType, bereit.items);
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const zeilen = [
+        {
+            text:
+                `Hinzufügen: ${n} ` +
+                (n === 1 ? 'Eintrag kommt' : 'Einträge kommen') +
+                ` mit neuer ID zu den vorhandenen (${vorhanden}) dazu`
+        }
+    ];
+    if (intern > 0) {
+        zeilen.push({
+            text:
+                (intern === 1 ? '1 Verweis' : `${intern} Verweise`) +
+                ` innerhalb der ${name} ` +
+                (intern === 1 ? 'zeigt' : 'zeigen') +
+                ' danach auf die mitimportierten Einträge'
+        });
+    }
+    const summe = fremd.reduce((s, f) => s + f.n, 0);
+    if (summe > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (summe === 1
+                    ? '1 Verweis auf einen anderen Bereich wird'
+                    : `${summe} Verweise auf andere Bereiche werden`) +
+                ' geleert — die Datei weiß nicht, welche Einträge dort gemeint sind:',
+            warnung: true
+        });
+        for (const f of fremd) zeilen.push({ text: `– ${f.wort}: ${f.n}`, warnung: true });
+    }
+    if (haengend > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (haengend === 1 ? '1 Verweis' : `${haengend} Verweise`) +
+                ` innerhalb der ${name} ` +
+                (haengend === 1 ? 'zeigt' : 'zeigen') +
+                ' auf einen Eintrag, der nicht (eindeutig) in der Datei steht — ' +
+                (haengend === 1 ? 'er wird' : 'sie werden') +
+                ' geleert',
+            warnung: true
+        });
+    }
+    return zeilen;
+}
+
+/**
+ * Die Zeilen der Vorschau, die nur fuer "Ersetzen" gelten (R6): wie viele vorhandene Eintraege
+ * ersetzt werden und wie viele Verweise anderer Bereiche danach ins Leere zeigen
+ * (reiterVerweiseNachErsetzen(), je Bereich mit den Feldern) — oder, bei ungueltigen bzw.
+ * doppelten IDs in der Datei, dass Ersetzen nicht geht (executeImport() lehnt dann ab).
+ * @param {ReiterImportVorbereitung} bereit
+ * @param {number} vorhanden - Zahl der Eintraege, die heute in D stehen
+ * @returns {{text: string, warnung?: boolean}[]}
+ */
+function ersetzenVorschauZeilen(bereit, vorhanden) {
+    const idFehler = ersetzenIdFehler(bereit);
+    if (idFehler) return [{ text: '⚠️ ' + idFehler, warnung: true }];
+    /** @type {{text: string, warnung?: boolean}[]} */
+    const zeilen = [
+        {
+            text:
+                `Ersetzen: ${vorhanden} ` +
+                (vorhanden === 1 ? 'vorhandener Eintrag wird' : 'vorhandene Einträge werden') +
+                ' durch die Datei ersetzt; vorher wird eine Sicherheitskopie angelegt',
+            warnung: true
+        }
+    ];
+    const { insLeere, gleicheId, quellen } = reiterVerweiseNachErsetzen(
+        bereit.dataType,
+        bereit.items
+    );
+    if (insLeere > 0) {
+        zeilen.push({
+            text:
+                '⚠️ Danach ' +
+                (insLeere === 1 ? 'zeigt 1 Verweis' : `zeigen ${insLeere} Verweise`) +
+                ' anderer Bereiche ins Leere (die Datei enthält ihr Ziel nicht):',
+            warnung: true
+        });
+        for (const q of quellen) {
+            zeilen.push({ text: `– ${q.name} (${q.worte.join(', ')}): ${q.n}`, warnung: true });
+        }
+    } else {
+        zeilen.push({ text: 'Kein Verweis anderer Bereiche zeigt danach ins Leere' });
+    }
+    if (gleicheId > 0) {
+        zeilen.push({
+            text:
+                (gleicheId === 1 ? '1 Verweis' : `${gleicheId} Verweise`) +
+                ' anderer Bereiche ' +
+                (gleicheId === 1 ? 'zeigt' : 'zeigen') +
+                ' danach auf den Eintrag der Datei mit derselben ID'
+        });
+    }
+    // Die Gegenrichtung: die Verweise der Datei auf andere Bereiche bleiben stehen
+    const datei = reiterVerweiseDerDatei(bereit.dataType, bereit.items);
+    const summe = datei.treffer.reduce((s, t) => s + t.n, 0);
+    if (summe > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (summe === 1
+                    ? '1 Verweis der Datei auf einen anderen Bereich bleibt, wie er ist — er zeigt'
+                    : `${summe} Verweise der Datei auf andere Bereiche bleiben, wie sie sind — sie zeigen`) +
+                ' danach auf den Eintrag DIESER Kampagne mit derselben ID; stammt die Datei aus ' +
+                'einer anderen Kampagne, ist das ein anderer Eintrag:',
+            warnung: true
+        });
+        for (const t of datei.treffer) zeilen.push({ text: `– ${t.wort}: ${t.n}`, warnung: true });
+    }
+    if (datei.insLeere > 0) {
+        zeilen.push({
+            text:
+                '⚠️ ' +
+                (datei.insLeere === 1
+                    ? '1 Verweis der Datei auf einen anderen Bereich zeigt'
+                    : `${datei.insLeere} Verweise der Datei auf andere Bereiche zeigen`) +
+                ' danach ins Leere (diese Kampagne hat dort keinen Eintrag mit ' +
+                (datei.insLeere === 1 ? 'seiner' : 'ihrer') +
+                ' ID)',
+            warnung: true
+        });
+    }
+    return zeilen;
+}
+
+/**
+ * Warum "Ersetzen" mit dieser Vorbereitung nicht geht, sonst null (R6). Die Vorbereitung
+ * bringt das Urteil ueber die ROHEN IDs mit; fehlt es, werden die vorbereiteten Eintraege
+ * geprueft.
+ * @param {ReiterImportVorbereitung} bereit
+ * @returns {string|null}
+ */
+function ersetzenIdFehler(bereit) {
+    return bereit.idFehler !== undefined ? bereit.idFehler : reiterIdFehler(bereit.items);
+}
+
+/**
+ * Zeichnet die Vorschau `#import-info` neu — beim Oeffnen und bei jedem Wechsel des Modus
+ * (data-action="import-vorschau" an den Optionsfeldern). Als Text, nicht als Markup: Name der
+ * Kampagne und Hinweise kommen aus der Datei.
+ */
+function renderImportVorschau() {
+    const ziel = $('import-info');
+    if (!ziel || !_reiterImport) return;
+    ziel.textContent = '';
+    for (const zeile of importVorschauZeilen(_reiterImport, gewaehlterImportModus())) {
+        const div = document.createElement('div');
+        if (zeile.warnung) div.className = 'reiterimport-warnung';
+        div.textContent = zeile.text;
+        ziel.appendChild(div);
+    }
+}
+
+/**
+ * Die Bearbeiten-Formulare je Typ (R7): das Feld, das die Bearbeiten-ID traegt, die Funktion,
+ * die das Formular leert (und ein Klappformular bzw. die Link-Karte zuklappt) — eine
+ * AUFGESCHOBENE Referenz wie in KLAPPFORMULAR_BEARBEITEN (systems/spellslots/navigation.js):
+ * der Bezeichner steht im Quelltext, aufgeloest wird erst beim Import — und das Fenster des
+ * Formulars, falls es eines hat. Gemessen (Kritik K3): ✏️ Thorin → Ersetzen (id 1 ist jetzt
+ * "Mira") → "Speichern" schrieb Thorin ueber Mira, "Charakter aktualisiert"; der Schutz fuer
+ * verwaiste IDs greift nicht, die ID gehoert jetzt einem ANDEREN Eintrag. Ebenso Encounter,
+ * Quest (✏️ → ✕ laesst die ID liegen) und die Link-Karte.
+ * Session-Prep und Fraktion bauen ihr Fenster beim Oeffnen neu bzw. setzen jedes Feld — dort
+ * genuegt es, die liegengebliebene ID zu loeschen. Kalender-Ereignisse haben kein Bearbeiten.
+ */
+const REITER_BEARBEITEN = Object.freeze({
+    characters: [{ id: 'edit-char-id', leeren: () => cancelCharEdit }],
+    npcs: [{ id: 'edit-npc-id', leeren: () => clearNPCForm, fenster: 'npc-modal' }],
+    locations: [{ id: 'edit-loc-id', leeren: () => clearLocationForm, fenster: 'location-modal' }],
+    quests: [{ id: 'edit-quest-id', leeren: () => clearQuestForm, fenster: 'quest-modal' }],
+    encounters: [{ id: 'edit-enc-id', leeren: () => cancelEncEdit }],
+    loot: [{ id: 'edit-loot-id', leeren: () => clearLootForm, fenster: 'loot-modal' }],
+    spells: [{ id: 'edit-spell-id', leeren: () => clearSpellForm, fenster: 'spell-modal' }],
+    wiki: [{ id: 'edit-wiki-id', leeren: () => hideWikiForm }],
+    links: [{ id: 'edit-link-id', leeren: () => cancelLinkEdit }],
+    sessionPreps: [{ id: 'prep-edit-id', leeren: null, fenster: 'session-prep-modal' }],
+    calendarEvents: [],
+    factions: [{ id: 'edit-fraktion-id', leeren: null, fenster: 'fraktionen-modal' }]
+});
+
+/**
+ * R7: verwirft ein Bearbeiten des Typs — offen oder liegengeblieben —, dessen ID nach dem
+ * Import einem importierten Eintrag gehoert. Nach dem ERSETZEN ist das jedes (`neueIds` fehlt):
+ * jede ID kann jetzt einem anderen Eintrag gehoeren. Nach dem HINZUFUEGEN nur eines, dessen ID
+ * unter den neu vergebenen steht (`neueIds`): jeder vorhandene Eintrag bleibt unter seiner ID,
+ * ein Bearbeiten daran ueberschreibt beim Speichern keinen importierten Eintrag, und Leeren
+ * wuerde nur Eingaben wegwerfen. Getroffen werden kann dort nur die liegengebliebene ID eines
+ * geloeschten Eintrags (deleteChar() leert das Party-Klappformular nicht), die nextId() wieder
+ * vergibt: ohne Zaehler fuer den Typ (core/data.js legt `_nextId` leer an) ist max(ID) + 1 die
+ * ID eines geloeschten hoechsten Eintrags. Darum wird die ID selbst verglichen, statt sich auf
+ * eine Annahme ueber nextId() zu verlassen.
+ * Nur ein Formular MIT Bearbeiten-ID: ein Anlege-Entwurf ist Arbeit des Nutzers und legt beim
+ * Speichern ohnehin einen neuen Eintrag an (ABBRUCH R2). Die ID wird in jedem Fall geloescht,
+ * auch wenn die Leeren-Funktion fehlt (Einzeltest) oder scheitert: ohne ID legt "Speichern" neu
+ * an, statt zu ueberschreiben.
+ * @param {string} typ
+ * @param {Set<number>} [neueIds] - nur beim Hinzufuegen: die IDs der importierten Eintraege
+ */
+function reiterBearbeitenVerwerfen(typ, neueIds) {
+    const formulare = Object.prototype.hasOwnProperty.call(REITER_BEARBEITEN, typ)
+        ? REITER_BEARBEITEN[typ]
+        : [];
+    for (const formular of formulare) {
+        // getElementById statt $(): ein Formular, das noch nie offen war (Session-Prep baut
+        // seins erst beim Oeffnen), ist kein Fehler
+        const feld = /** @type {HTMLInputElement|null} */ (document.getElementById(formular.id));
+        if (!feld || !feld.value) continue;
+        if (neueIds) {
+            const id = reiterIdZahl(feld.value);
+            if (id === null || !neueIds.has(id)) continue;
+        }
+        let leeren = null;
+        try {
+            leeren = formular.leeren ? formular.leeren() : null;
+        } catch {
+            // Modul nicht geladen (Einzeltest) — die ID wird unten trotzdem geloescht.
+        }
+        try {
+            if (typeof leeren === 'function') leeren();
+        } catch (err) {
+            if (window.ErrorHandler) window.ErrorHandler.log('Import', err, 'Formular leeren');
+        }
+        feld.value = '';
+        const fenster = formular.fenster ? document.getElementById(formular.fenster) : null;
+        if (fenster && fenster.classList.contains('show')) hideModal(formular.fenster);
+    }
+}
+
+/**
+ * R7 auch nach Strg+Z und Strg+Y (Undo-Hook, systems/undo.js registerUndoHook()). Rueckgaengig
+ * und Wiederholen eines Imports tauschen genau wie der Import selbst, welcher Eintrag hinter
+ * einer ID steht. Gemessen (Pruefer, Runde 1, Stand 16053668): Ersetzen (id 1 ist jetzt "Mira")
+ * → Strg+Z → ✏️ Thorin → Strg+Y → "Speichern" schrieb Thorin ueber Mira, "Charakter
+ * aktualisiert"; spiegelbildlich ✏️ Mira → Strg+Z → "Speichern" Mira ueber den
+ * urspruenglichen Thorin; ueber ↩️/↪️ und beim Encounter genauso. Darum dieselbe Regel wie beim
+ * Import, in beide Richtungen: Ersetzen → jedes Bearbeiten des Typs, Hinzufuegen → nur eines,
+ * dessen ID ein importierter Eintrag traegt (vorher und nachher gehoert sie sonst niemandem).
+ * Welche Aktion ein Schritt betrifft, sagt die Kennung, die executeImport() dem Undo-Punkt
+ * mitgibt — das Label ("2 Charaktere importiert") ist dafuer nicht eindeutig.
+ * Steht dabei das Import-Fenster, wird seine Vorschau neu gezeichnet — bei JEDEM Schritt, nicht
+ * nur bei einem des Imports: sie liest D (vorhandene Eintraege, Verweise). Gemessen (Pruefer,
+ * Runde 2, Sonde p7): Strg+Z wirkt auch bei offenem Fenster, und die Vorschau blieb auf dem
+ * alten Stand, bis man den Modus wechselte; "Importieren" schrieb trotzdem auf den aktuellen.
+ * @param {{action?: string, direction?: string, kennungen?: unknown[]}} [info]
+ */
+function reiterImportNachUndo(info) {
+    const kennungen = info && Array.isArray(info.kennungen) ? info.kennungen : [];
+    for (const kennung of kennungen) {
+        const imp = kennung && typeof kennung === 'object' ? kennung.reiterImport : null;
+        if (!imp || typeof imp.typ !== 'string') continue;
+        reiterBearbeitenVerwerfen(
+            imp.typ,
+            imp.modus === 'replace' ? undefined : new Set(imp.neueIds || [])
+        );
+    }
+    const fenster = document.getElementById('import-modal');
+    if (_reiterImport && fenster && fenster.classList.contains('show')) renderImportVorschau();
+}
+// Anmeldung wie features/soundboard/soundboard-crud.js: systems/undo.js laedt vorher (loader.js)
+if (typeof window.registerUndoHook === 'function') {
+    window.registerUndoHook(reiterImportNachUndo);
+}
+
+/**
+ * "Importieren" im Fenster: schreibt die vorbereitete Datei und meldet den Erfolg erst danach,
+ * mit deutschem Typnamen im richtigen Numerus (R2).
+ * @param {string} [dataType] - nur zur Gegenprobe: weicht er vom vorbereiteten Typ ab, wird
+ *   nichts geschrieben
+ */
 function executeImport(dataType) {
-    const modal = $('import-modal');
-    const items = JSON.parse(modal.dataset.importItems || '[]');
-    const type = dataType || modal.dataset.dataType || '';
-    const modeInput = document.querySelector('input[name="import-mode"]:checked');
-    const mode = modeInput?.value || 'merge';
-    if (!type || items.length === 0) {
+    const bereit = _reiterImport;
+    if (!bereit || bereit.items.length === 0 || (dataType && dataType !== bereit.dataType)) {
         showToast('Keine Daten zum Importieren', 'error');
         return;
     }
+    const type = bereit.dataType;
+    const items = bereit.items;
+    const mode = gewaehlterImportModus();
+    // R6: Ersetzen uebernimmt die IDs der Datei — nur gueltige und eindeutige. Das Fenster
+    // bleibt offen: "Hinzufügen" vergibt neue IDs und geht weiter.
+    const idFehler = mode === 'replace' ? ersetzenIdFehler(bereit) : null;
+    if (idFehler) {
+        showToast('❌ ' + idFehler, 'error');
+        return;
+    }
+    const name = reiterTypName(type, items.length);
     const renderAll = window.renderAll;
-    saveUndoState(`${items.length} ${type} importiert`);
+    // Die Kennung sagt reiterImportNachUndo(), welchen Typ ein Strg+Z/Strg+Y dieses Imports
+    // betrifft (R7) — beim Hinzufuegen dazu die neuen IDs, die erst unten feststehen: nextId()
+    // laeuft NACH dem Undo-Punkt, damit Strg+Z auch den Zaehler zuruecknimmt.
+    /** @type {{reiterImport: {typ: string, modus: string, neueIds?: number[]}}} */
+    const kennung = { reiterImport: { typ: type, modus: mode } };
+    saveUndoState(`${items.length} ${name} importiert`, kennung);
+    /** @type {Set<number>|undefined} */
+    let neueIds;
     // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
     // deshalb ohne await; die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10).
     if (mode === 'replace') {
@@ -494,19 +2196,26 @@ function executeImport(dataType) {
         // Zaehler ueber die groesste ersetzte ID heben (Code-Review 2026-09-21, R03)
         validateAndRepairNextId(undefined, [type]);
     } else {
-        // Merge: neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
-        // Sammlungen wie calendarEvents) — R03: die hier frueher aufgerufene Funktion gab es nicht
-        const merged = items.map(item => {
-            return { ...item, id: nextId(type) };
-        });
-        ioSetArray(type, [...(ioGetArray(type) || []), ...merged]);
+        // Merge (R5): neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
+        // Sammlungen wie calendarEvents — R03: die hier frueher aufgerufene Funktion gab es
+        // nicht); Verweise innerhalb des Typs auf die neuen IDs, alle anderen geleert
+        const neu = reiterHinzufuegen(type, items);
+        neueIds = new Set(neu.map(item => item.id));
+        kennung.reiterImport.neueIds = [...neueIds];
+        ioSetArray(type, [...(ioGetArray(type) || []), ...neu]);
     }
+    // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
+    _reiterImport = null;
+    // R7: kein spaeteres Speichern ueberschreibt einen importierten Eintrag — nach dem Ersetzen
+    // kann jede Bearbeiten-ID einem ANDEREN Eintrag gehoeren, nach dem Hinzufuegen nur eine neu
+    // vergebene
+    reiterBearbeitenVerwerfen(type, neueIds);
     save();
     renderAll();
     updateIOCounts();
     hideModal('import-modal');
     showToast(
-        `✅ ${items.length} ${type} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
+        `✅ ${items.length} ${name} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
     );
 }
 // UTILITY FUNCTIONS
@@ -531,6 +2240,20 @@ function updateIOCounts() {
     };
     for (const [view, count] of Object.entries(counts)) {
         setViewCount(view, count);
+    }
+    // Die drei Welt-Reiter (REITERIMPORT R8): ohne sie blieben ihre Zaehler nach einem Import,
+    // Strg+Z oder Strg+Y stehen, bis man den Reiter wechselte (gemessen). Bei aktiver Suche
+    // zeigt ihr Zaehler das GEFILTERTE Ergebnis (F-09) — das schreibt dann ihre Liste selbst
+    // (renderAll() zeichnet den offenen Welt-Reiter neu), hier also nur ohne Suche.
+    const welt = [
+        ['sessionprep', D.sessionPreps, 'sessionprep-search'],
+        ['kalender', D.calendar?.events, 'kalender-search'],
+        ['fraktionen', D.factions, 'fraktionen-search']
+    ];
+    for (const [view, liste, suchfeld] of welt) {
+        const suche = /** @type {HTMLInputElement|null} */ (document.getElementById(suchfeld));
+        if (suche && String(suche.value || '').trim() !== '') continue;
+        setViewCount(view, Array.isArray(liste) ? liste.length : 0);
     }
     // Encounter-Runde aktualisieren
     const roundEl = $('encounter-round-num');
@@ -764,7 +2487,7 @@ function importDataGlobal() {
                         file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '')
                 )
                     .trim()
-                    .slice(0, 100) || 'Import';
+                    .slice(0, KAMPAGNENNAME_MAX) || 'Import';
             // D3 = A: zwei native Dialoge — Abbrechen/Escape ist nie zerstoererisch
             const choice = confirm(
                 `Import: "${campaignName}"\n\n` +

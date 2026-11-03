@@ -611,3 +611,27 @@
         </div>
     </div>
 
+    <!-- Reiter-Import (REITERIMPORT): EIN Fenster fuer die 12 📥 der Reiter. importData()
+         liest die im Reiterfeld gewaehlte Datei, prueft und bereitet sie vor und oeffnet erst
+         dann dieses Fenster; geschrieben wird nur mit "Importieren" (executeImport()). Die
+         Vorschau #import-info zeichnet renderImportVorschau() als Text, bei jedem Moduswechsel
+         neu. Statisch und nicht zur Laufzeit gebaut: so ist es eine Schale wie jede andere —
+         Fokusfalle, Escape und Rueckkehr zum 📥 kommen aus ui/modal-focus.js. -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">📥 Import</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="import-modal">✕</button>
+            </div>
+            <div class="reiterimport-vorschau" id="import-info"></div>
+            <div class="reiterimport-modus" role="radiogroup" aria-label="Import-Modus">
+                <label class="reiterimport-option"><input type="radio" name="import-mode" value="merge" checked data-action="import-vorschau"> Hinzufügen</label>
+                <label class="reiterimport-option"><input type="radio" name="import-mode" value="replace" data-action="import-vorschau"> Ersetzen</label>
+            </div>
+            <div class="btn-group">
+                <button class="btn" data-action="hide-modal" data-value="import-modal">Abbrechen</button>
+                <button class="btn btn-success" data-action="execute-import">Importieren</button>
+            </div>
+        </div>
+    </div>
+
