@@ -74,7 +74,8 @@
  *                                     W2, W2t, W9 (kein Markup-Treffer), W10f,
  *                                     W10s, W10t; W10w (Tags fallen weg, auch
  *                                     mitten im Wort); W10e (oeffnendes und
- *                                     schliessendes Tag je allein)
+ *                                     schliessendes Tag je allein); W9r
+ *                                     (&amp; zuletzt dekodiert)
  *   R5  Ortsansicht: Ortsname ODER Beschreibung ODER ein NPC an diesem Ort,
  *       dessen Name den GETRIMMTEN Begriff enthaelt — derselbe Mechanismus,
  *       der Name total gelesen (datenText()).                         W7, W4o
@@ -197,6 +198,11 @@
  *         Grenzen: getrennt [], zusammengeklebt Scheintreffer) und rot (4) am
  *         Mutanten "nur oeffnende Tags trennen" (die zwei schliessenden). Am
  *         Stand b1fc7da6 rot 4 (die getrennten Begriffe).
+ *   W9r   "Woertlich &lt;b&gt; getippt" Zeichen fuer Zeichen in den Schnell-
+ *         Dialog getippt, 💾: gespeichert steht "&amp;lt;b&amp;gt;". Am Kopf
+ *         gruen. Rot (2) am Mutanten "&amp; zuerst dekodiert" ("&lt;b&gt;"
+ *         -> [], "<b>" -> [Dora]); die Reihenfolge begruendeten Kommentar und
+ *         Katalog, kein Fall hielt sie. Am Stand b1fc7da6 rot 1 ("&lt;b&gt;").
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD (Vertrag, "NICHT IM PR")
@@ -1170,4 +1176,30 @@ test('W10e einseitige Blockgrenzen: ein oeffnendes oder schliessendes Tag allein
     ]))
         await npcSuche(page, zeile);
     await keinFehlerAusser(fehler);
+});
+
+test('W9r eine woertlich getippte Entitaet bleibt Text: "&lt;b&gt;" trifft, "<b>" nicht', async ({
+    page
+}) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, { npcs: [] });
+    await zuAnsicht(page, 'npcs');
+    const dora = await npcAnlegen(page, { name: 'Dora', rolle: 'Schreiberin', volk: 'Mensch' });
+    await schnellDialogOeffnen(page, dora, 'Dora');
+    // Sichtbar steht danach "&lt;b&gt;"; gespeichert wird "&amp;lt;b&amp;gt;".
+    // Nur wenn &amp; ZULETZT dekodiert wird, bleibt das sichtbarer Text — zuerst
+    // dekodiert, wuerde daraus "&lt;b&gt;" und dann "<b>".
+    await page.keyboard.type('Woertlich &lt;b&gt; getippt');
+    await schnellDialogSpeichern(page);
+    const texte = await dialogTexte(page, dora);
+    expect(texte, 'Vorbedingung: Dora hat genau einen Dialog').toHaveLength(1);
+    expect(String(texte[0]), 'Vorbedingung: das getippte "&" ist als &amp; gespeichert').toContain(
+        'Woertlich &amp;lt;b&amp;gt; getippt'
+    );
+    for (const zeile of /** @type {[string, number[], string][]} */ ([
+        ['&lt;b&gt;', [dora], 'so steht es sichtbar da'],
+        ['<b>', [], 'sichtbar steht kein <b> — kein Scheintreffer']
+    ]))
+        await npcSuche(page, zeile);
+    await keinFehlerAusser(fehler, ERLAUBT_SCHNELLDIALOG);
 });
