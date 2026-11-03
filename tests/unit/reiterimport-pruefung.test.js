@@ -28,6 +28,7 @@ const MODULE = [
     'core/config.js',
     'core/data.js',
     'utils/basic.js',
+    'utils/utilities.js',
     'systems/spellslots/import-export.js'
 ];
 const QUELLTEXT = Object.fromEntries(
@@ -475,7 +476,23 @@ describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () =
         [[{ name: 'ohne' }], /Eintrag 1 der Datei hat keine ID/],
         [[{ id: true }], /die ungültige ID true/],
         [[{ id: { a: 1 } }], /hat statt einer ID ein Objekt/],
-        [[{ id: '7' }, { id: 7 }], /die ID 7 kommt in der Datei doppelt vor/]
+        [[{ id: '7' }, { id: 7 }], /die ID 7 kommt in der Datei doppelt vor/],
+        // Pruefer, Runde 1 (gemessen): sicher und positiv, aber ueber ENTITY_ID_MAX — die App
+        // haelt sie fuer ungueltig (isValidEntityId()), der naechste Kampagnen-Rundlauf vergab
+        // dem Eintrag eine neue ID und liess die Verweise darauf stehen
+        [
+            [{ id: 2e15 }],
+            /Eintrag 1 der Datei hat die ID 2000000000000000 — eine ID darf höchstens 1\.000\.000\.000\.000\.000 sein/
+        ],
+        [
+            [{ id: 1 }, { id: '1000000000000001' }],
+            /Eintrag 2 der Datei hat die ID 1000000000000001/
+        ],
+        // Pruefer, Runde 1 (gemessen): ein Objekt mit eigenem toString/valueOf liess die Meldung
+        // selbst werfen ("Cannot convert object to primitive value") — allgemeine Meldung und
+        // Eintrag im Fehlerlog statt der deutschen Ablehnung
+        [[{ id: { toString: 1 } }], /hat statt einer ID ein Objekt/],
+        [[{ id: { valueOf: 'x', toString: 'y' } }], /hat statt einer ID ein Objekt/]
     ])('I1: %j — deutsch, nennt die ID, kein Laufzeittext', (eintraege, thema) => {
         const seite = erzeugeSeite();
         const fehler = seite.ctx.reiterIdFehler(eintraege);
@@ -484,9 +501,30 @@ describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () =
         expect(fehler).not.toMatch(ROHTEXT);
     });
 
-    test('I2: positive ganze IDs, auch als Zahltext, sind in Ordnung', () => {
+    test('I2: positive ganze IDs, auch als Zahltext, sind in Ordnung — bis zur Obergrenze der App', () => {
         const seite = erzeugeSeite();
         expect(seite.ctx.reiterIdFehler([{ id: 1 }, { id: '2' }, { id: 300 }])).toBeNull();
+        // ENTITY_ID_MAX selbst ist eine gueltige GESPEICHERTE ID (utils/utilities.js)
+        expect(seite.ctx.reiterIdFehler([{ id: 1e15 }, { id: 1700000000000 }])).toBeNull();
+    });
+
+    test('I7: eine ID als Objekt mit toString — das Fenster geht auf, ohne Fehlerlog; Ersetzen lehnt deutsch ab', async () => {
+        const { seite, bereit } = await angenommen(
+            'npcs',
+            '{"_format":"dnd-tracker/reiter-export@2","_dataType":"npcs","data":' +
+                '[{"id":{"toString":1},"name":"Objekt-ID"}]}'
+        );
+        expect(seite.ctx.ErrorHandler.log).not.toHaveBeenCalled();
+        expect(bereit.idFehler).toMatch(/hat statt einer ID ein Objekt/);
+        modus(seite, 'replace');
+        seite.ctx.executeImport('npcs');
+        expect(seite.toasts).toEqual([
+            expect.stringMatching(/^error: ❌ Ersetzen nicht möglich: /)
+        ]);
+        // "Hinzufügen" vergibt eine neue ID und geht weiter
+        modus(seite, 'merge');
+        seite.ctx.executeImport('npcs');
+        expect(plain(seite.ctx.D.npcs).map(n => n.name)).toEqual(['Volo', 'Objekt-ID']);
     });
 
     test('I3: das Fenster geht auf; "Ersetzen" nennt den Grund und schreibt nichts, "Hinzufügen" schreibt', async () => {

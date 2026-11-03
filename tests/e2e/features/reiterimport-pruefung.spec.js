@@ -94,8 +94,9 @@
  *       Rueckfrage mit deutschen Typnamen.               (1)–(9)
  *       Dazu (Pruefer, Runde 1): Listen- und Objektfelder in der Form, die
  *       die App liest — sonst legt EIN Eintrag den ganzen Reiter lahm. (16)
- *   R6  Ungueltige (keine positive Ganzzahl: "abc", -1, 2.5) oder doppelte
- *       IDs in der Datei → Ersetzen abgelehnt mit deutscher Meldung. (10)
+ *   R6  Ungueltige (keine positive Ganzzahl: "abc", -1, 2.5; ueber der
+ *       Obergrenze der App, 2e15) oder doppelte IDs in der Datei →
+ *       Ersetzen abgelehnt mit deutscher Meldung. (10)
  *   R9  Nutzlasten in Text- und HTML-Feldern — auch im Dateikopf und in
  *       Feldern, die das Formular nur als Auswahl kennt — werden ueber den
  *       Reiter-Import in Vorschau, Liste und Detail nicht eingeschleust; ein
@@ -1609,7 +1610,12 @@ async function ersetzenAbgelehnt(page, beob, was, dateiInhalt) {
 // Fall damit gruen (Gegenprobe des Skeptikers, Kopf). Doppelte und
 // ungueltige IDs teilen sich EINEN Fall (frueher (10) und (11)): dieselbe
 // Regel, derselbe Weg, und der Platz ging an die Nutzlasten (11).
-test('(10) "Ersetzen" mit doppelter ID bzw. der ID "abc", -1 oder 2.5 wird mit deutscher Meldung abgelehnt', async ({
+// 2e15 kam nach der ersten Pruefrunde dazu (Pruefer, Runde 1, gemessen): eine
+// sichere positive Ganzzahl, aber ueber ENTITY_ID_MAX (1e15) — die App selbst
+// haelt sie fuer ungueltig (isValidEntityId()). Ersetzen nahm sie an, und der
+// naechste Kampagnen-Rundlauf vergab dem Eintrag eine neue ID, ohne die
+// Verweise darauf umzuschreiben (Wiki-Eltern still zerrissen).
+test('(10) "Ersetzen" mit doppelter ID bzw. der ID "abc", -1, 2.5 oder 2e15 wird mit deutscher Meldung abgelehnt', async ({
     page
 }) => {
     test.setTimeout(120000);
@@ -1644,6 +1650,13 @@ test('(10) "Ersetzen" mit doppelter ID bzw. der ID "abc", -1 oder 2.5 wird mit d
                 { id: 2.5, name: 'Bruch', race: 'Mensch' },
                 { id: 12, name: 'Normal', race: 'Elf' }
             ]
+        ],
+        [
+            'ID 2e15',
+            [
+                { id: 2e15, name: 'Riesig', race: 'Mensch' },
+                { id: 13, name: 'Normal', race: 'Elf' }
+            ]
         ]
     ];
     for (const [i, [was, data]] of dateien.entries()) {
@@ -1651,7 +1664,7 @@ test('(10) "Ersetzen" mit doppelter ID bzw. der ID "abc", -1 oder 2.5 wird mit d
             page,
             beob,
             was,
-            reiterDatei('npcs', data, `probe-10${'abcd'[i]}.json`)
+            reiterDatei('npcs', data, `probe-10${'abcde'[i]}.json`)
         );
     }
     await listenUndFehlerlog(page, beob);
