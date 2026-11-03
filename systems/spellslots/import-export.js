@@ -967,6 +967,67 @@ function pruefeReiterEintraege(eintraege, dataType) {
         const fehler = reiterEintragFehler(eintraege[i], dataType);
         if (fehler) throw reiterImportFehler(`Eintrag ${i + 1} der Datei: ${fehler}`);
     }
+    const elternfeld = Object.prototype.hasOwnProperty.call(REITER_ELTERNFELD, dataType)
+        ? REITER_ELTERNFELD[dataType]
+        : null;
+    const kreis = elternfeld ? reiterElternKreis(eintraege, elternfeld) : -1;
+    if (kreis >= 0) {
+        throw reiterImportFehler(
+            `Eintrag ${kreis + 1} der Datei: der übergeordnete Eintrag (Feld „${elternfeld}“) ` +
+                'führt im Kreis — über seine übergeordneten Einträge wäre der Eintrag sein ' +
+                'eigener übergeordneter Eintrag'
+        );
+    }
+}
+
+/**
+ * Das Eltern-Feld je Typ: ein Baum innerhalb der Sammlung (features/wiki/wiki-crud.js).
+ * Gemessen (Pruefer, Runde 2, Sonde p15): eine Datei mit A→B, B→A und C→C kam mit Hinzufuegen
+ * wie mit Ersetzen an — der Wiki-Baum zeichnet von den Wurzeln aus und zeigte nur den normalen
+ * Eintrag, die Suche fand die uebrigen nicht, und ✏️ auf einem Kreis-Eintrag warf "Maximum call
+ * stack size exceeded" (isDescendantOf() ohne Kreisschutz). Kein Weg der App erzeugt einen
+ * Kreis; eine Datei mit einem Kreis ist kaputt (R3).
+ */
+const REITER_ELTERNFELD = Object.freeze({ wiki: 'parentId' });
+
+/**
+ * Die Stelle eines Eintrags, dessen Eltern-Kette im Kreis laeuft, sonst -1. Ein Kreis kann nur
+ * INNERHALB der Datei entstehen: beim Hinzufuegen wird ein Eltern-Verweis ohne eindeutiges
+ * Ziel in der Datei geleert (reiterHinzufuegen()), Ersetzen nimmt die ganze Sammlung aus der
+ * Datei und lehnt doppelte IDs ab (R6). Darum zaehlen nur Kanten zwischen IDs, die in der
+ * Datei GENAU EINMAL stehen (reiterEindeutigeIds()); eine solche zu einer doppelten ID ist in
+ * keinem Modus ein Kreis. Linear: jede ID wird hoechstens einmal entlang ihrer Kette besucht.
+ * @param {Object[]} eintraege - roh (vor der Datengrenze)
+ * @param {string} feld
+ * @returns {number}
+ */
+function reiterElternKreis(eintraege, feld) {
+    const eindeutig = reiterEindeutigeIds(eintraege);
+    /** @type {Map<number, number>} */
+    const eltern = new Map();
+    /** @type {Map<number, number>} */
+    const stelle = new Map();
+    eintraege.forEach((eintrag, i) => {
+        const id = reiterIdZahl(eintrag && eintrag.id);
+        if (id === null || !eindeutig.has(id)) return;
+        stelle.set(id, i);
+        const elternId = reiterIdZahl(eintrag[feld]);
+        if (elternId !== null && eindeutig.has(elternId)) eltern.set(id, elternId);
+    });
+    /** @type {Set<number>} */
+    const fertig = new Set();
+    for (const start of eltern.keys()) {
+        /** @type {Set<number>} */
+        const weg = new Set();
+        let id = start;
+        while (eltern.has(id) && !fertig.has(id)) {
+            if (weg.has(id)) return /** @type {number} */ (stelle.get(id));
+            weg.add(id);
+            id = /** @type {number} */ (eltern.get(id));
+        }
+        for (const besucht of weg) fertig.add(besucht);
+    }
+    return -1;
 }
 
 /**
