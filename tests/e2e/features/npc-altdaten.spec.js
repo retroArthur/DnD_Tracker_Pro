@@ -29,6 +29,8 @@
  *   W4   Name true, letzte Lage          `a.name.localeCompare is not a function`
  *   W2v  Name 42, erste Lage             richtig: "42" in Liste und Detail
  *   W3   Name null, letzte Lage          0 Eintraege, Anzeigefehler
+ *   W3v  Name null, erste Lage           richtig (3 Eintraege)
+ *   W4v  Name true, erste Lage           richtig (3 Eintraege)
  *   W5   Volk 5, erste Lage              0 Eintraege, Anzeigefehler,
  *   W6   Volk {x:1}, letzte Lage         `(npc.race || "").toLowerCase is not
  *                                        a function` — in jeder Lage
@@ -41,6 +43,15 @@
  *   W11  Tag {name, color} (die Form,    Detail zeigt "[object Object]" statt
  *        die 🏷️ selbst schreibt)          "Wichtig"
  *   W11t Tag als Text                    richtig (Gegenfall)
+ *   W11f 🏷️-Fenster, Annas Tag als       eine leere Pille (nur "✕"), das globale
+ *        Text "Wichtig", global          "Wichtig" nicht als vorhanden gedimmt;
+ *        {name, color}                   "+" und der Klick darauf legen je eine
+ *                                        Dublette {name, color} an, das Detail
+ *                                        zeigt "Wichtig" zweimal
+ *   W11g 🏷️-Fenster, das globale         das Text-Tag bleibt stehen (das
+ *        "Wichtig" loeschen              Tag-Objekt Coras ist weg)
+ *   W11o Ort-Detail, Tags {name}, Text   das Tag ohne Namen steht als
+ *        und {color} ohne Namen          "[object Object]" da
  *   W13  🎲 Generator, Namenstabelle     in D steht `name: 7` (Zahl); die Liste
  *        mit `{text: 7}`, "Als NPC       bleibt beim alten Stand (3), das 💾
  *        speichern"                      wirft `a.name.localeCompare`; nach dem
@@ -49,9 +60,24 @@
  *        NPC ohne Namen, letzte Lage     Anzeigefehler — auch nach dem Neuladen
  *   W15  Telefon, 🔍 "Wirt", Name 42      0 Treffer, je Taste ab der zweiten ein
  *                                        TypeError (`performMobileSearch`)
+ *   W16  an der Grenze vorbei (der Wert  der Reiter wirft beim Zeichnen
+ *        kommt NACH dem Laden nach D):   (`localeCompare`), die ALTE Liste
+ *        Name fehlt, letzte Lage         bleibt stehen, Zora unter ihrem alten
+ *   W17  ... Name 42, letzte Lage        Namen
+ *   W16v ... Name fehlt, erste Lage      3 Eintraege, kein Fehler, aber kein
+ *                                        "Unbenannt" (E1)
+ *   W17v ... Name 42, erste Lage         richtig
+ *   W18  ... Volk 5, letzte Lage         der Reiter wirft, alte Liste
+ *   W19  Ortssuche "mar", Name 42 an     wie W8
+ *        der Grenze vorbei
  *
  * Bei allen Faellen mit kaputter Liste kommen die Fehlerzeilen schon beim
  * Laden dazu: das Startzeichnen ruft renderNPCList() und wirft dort zuerst.
+ * Die Zeilen W3v, W4v, W11f, W11g, W11o und W16–W19 kamen nach der Pruefung
+ * des Fixes dazu; gemessen mit dieser Datei am Buendel von 8702f84a (git
+ * archive, gebaut): 24 rot, 6 gruen (K0, W2v, W3v, W4v, W17v, W11t). Dasselbe
+ * Buendel in Firefox: 23 rot, 7 gruen (K0, W2, W3, W4, W17, W11t, W14) — die
+ * Lage kehrt sich um (siehe unten), W1 und W16 sind dort nur an E1 rot.
  *
  * DIE URSACHE (Stand 8702f84a): die Darstellung liest Name und Volk, als
  * waeren sie immer Text — die Sortierung `a.name.localeCompare(b.name)`
@@ -60,7 +86,9 @@
  * `n.name.toLowerCase()` (features/locations/locations-render.js:105), die
  * Unscharfsuche hinter Kopf- und Telefonsuche und `findByName` der
  * Initiative. Das Tag-Detail schreibt `esc(t)` und macht aus dem Objekt, das
- * 🏷️ seit jeher speichert, "[object Object]" (seit 254ff3b2). Herein kommen
+ * 🏷️ seit jeher speichert, "[object Object]" (seit 254ff3b2); das 🏷️-Fenster
+ * selbst liest die Tags nur als `t.name` (systems/tags.js), das Ort-Detail als
+ * `t.name || t`. Herein kommen
  * die Werte ueber Kampagnen-Import und Start: die Datengrenze setzte `name`
  * nur bei Objekt/Liste auf '' und liess `race` unberuehrt — und zur Laufzeit
  * ueber den Generator, der mit `e.text || e` (npc-generator.js:51) eine Zahl
@@ -69,40 +97,66 @@
  * ───────────────────────────────────────────────────────────────────────────
  * DIE REGELN (Vertrag NPC-NAME), die diese Datei prueft
  *
+ * Welcher Fall welche Regel prueft, ist GEMESSEN, nicht zugeordnet: je eine
+ * Stelle des Fixes zurueckgenommen, gebaut, die Datei gefahren.
+ *
  *   N1  Grenze: `npcs[].name` und `npcs[].race` werden Text (Zahl/Wahrheits-
  *       wert verlustfrei, E2/E3; Objekt/Liste und ein fehlender Name ''). Im
- *       Einzelnen in tests/unit/datengrenze.test.js; hier W13 (Neuladen),
- *       W14 und mittelbar alle Start-Faelle.
- *   N2  Darstellung total: Sortierung, getNPCIcon(), Ortssuche lesen jeden
- *       Wert, ein NPC ohne Namen steht in Liste und Detail als "Unbenannt"
- *       (E1), ein Tag wird in beiden Formen gelesen (E4). W1–W11.
- *   N3  Generator: ein Tabelleneintrag wird nur mit Text Name. W13 sofort.
+ *       Einzelnen in tests/unit/datengrenze.test.js. Hier rot ohne die Grenze:
+ *       W6 (Volk) sowie W9, W10, W15 (Name — Kopfsuche, Initiative und
+ *       Telefon lesen ihn weiter ohne Text-Helfer, nur die Grenze schuetzt
+ *       sie). W13 (Neuladen) und W14 gehen ueber die Grenze, werden ohne sie
+ *       aber nicht rot: die Darstellung (N2) faengt die Werte dort ab.
+ *   N2  Darstellung total, rot je mit dem alten Leser: die Sortierung in
+ *       W16/W17 (Chromium) bzw. W16v/W17v (Firefox), getNPCIcon() in W18,
+ *       die Ortssuche in W19 — der Wert kommt dort NACH dem Laden nach D, an
+ *       der Grenze vorbei; "Unbenannt" und seine Dimmung (E1) in W1, W1v,
+ *       W1m, W16, W16v; die Tags (E4) im NPC-Detail in W11, im 🏷️-Fenster in
+ *       W11f (Anzeige, Dimmung, beide Doppelpruefungen) und W11g (Loeschen),
+ *       im Ort-Detail in W11o.
+ *   N3  Generator: ein Tabelleneintrag wird nur mit Text Name. W13 sofort
+ *       (vor N3 rot nur an "der Name in D ist der Text '7'"); im Einzelnen
+ *       tests/unit/npc-generator-namenstabelle.test.js.
+ *
+ *   Die uebrigen Ladefaelle — W2, W2v, W3, W3v, W4, W4v, W5, W7, W8, W14 —
+ *   halten den Befund fest: rot am Stand vor dem Fix, unter keiner EINZELNEN
+ *   Ruecknahme rot (gemessen). Sie fangen nur einen Rueckfall von Grenze UND
+ *   Darstellung zugleich.
  *
  * WARUM ERSTE UND LETZTE LAGE (E8, Kritik K1): ob die Sortierung an einem
  * kaputten Namen wirft, haengt nicht nur an seiner Lage, sondern an der
  * Engine — daran, welches Paar ihr Sortierverfahren in welcher Reihenfolge
  * vergleicht. Gemessen (Kritik K1, 60 Reihen n = 2…500): Chromium wirft bei
  * Lage 0 in 0 von 60, bei Lage 1 und der letzten in 60 von 60; Firefox genau
- * umgekehrt — Lage 0 in 60 von 60, Lage 1 in 39, die letzte in 0. Darum
- * steht hier am Stand die Liste in W1v/W2v (erste Lage; W1v ist nur an E1
- * rot) und bricht in W1/W2 (letzte Lage). Die Entwuerfe dieser Faelle in
- * Firefox gefahren (Kritik, W-firefox): W1–W4 gruen, W1v und W2v rot; die
- * mittlere Lage (W1m, die fruehere Saat von ruecksprung-rundlauf (12)) ist
- * in beiden Engines rot. Die CI faehrt nur Chromium (E8: kein zweites
- * Engine-Projekt). Mit beiden Lagen urteilt dieselbe Datei trotzdem in jeder
- * Engine: in Chromium faengt die letzte Lage den Fehler, in Firefox die
- * erste. Gruen in beiden Lagen und beiden Engines wird sie nur mit einer
- * Sortierung, die JEDEN Wert vergleichen kann — nicht mit einer, die den
- * kaputten Eintrag zufaellig dorthin legt, wo die eine Engine nicht
- * hinsieht. Das Volk (W5/W6) wirft schon heute in jeder Lage.
+ * umgekehrt — Lage 0 in 60 von 60, Lage 1 in 39, die letzte in 0. Darum stand
+ * am Stand 8702f84a die Liste in Chromium in der ersten Lage (W2v, W3v, W4v;
+ * W1v nur an E1 rot) und brach in der letzten (W1–W4), in Firefox umgekehrt;
+ * die mittlere Lage (W1m, die fruehere Saat von ruecksprung-rundlauf (12))
+ * brach in beiden. Darum steht jeder NAMENSfall in erster und letzter Lage,
+ * in der Saat (W1–W4 je mit v) und an der Grenze vorbei (W16/W16v,
+ * W17/W17v). Das Volk warf am Stand 8702f84a schon in jeder Lage, dort
+ * genuegt eine (W5 erste, W6 und W18 letzte). Die CI faehrt nur Chromium (E8:
+ * kein zweites Engine-Projekt). Mit beiden Lagen urteilt dieselbe Datei
+ * trotzdem in jeder Engine — nach dem Fix allerdings nur ueber die Faelle an
+ * der Grenze vorbei: in den Ladefaellen macht N1 den Namen vorher zu Text,
+ * und die alte Sortierung wuerde dort nicht mehr werfen. Gemessen mit der
+ * alten Sortierung (`a.name.localeCompare(b.name)`) am Stand des Fixes: in
+ * Chromium rot W16 und W17, in Firefox W16v und W17v. Gruen in beiden Lagen
+ * und beiden Engines wird die Datei nur mit einer Sortierung, die JEDEN Wert
+ * vergleichen kann — nicht mit einer, die den kaputten Eintrag zufaellig
+ * dorthin legt, wo die eine Engine nicht hinsieht.
  *
  * WIE GEURTEILT WIRD: am DOM — Eintraege, "Anzeigefehler", Name in Liste und
- * Detail, "Unbenannt", "[object Object]", Treffer, Zeilen. Im
- * Produktionsbuendel (DEBUG_MODE aus) hinterlassen die Listenfehler KEINE
- * Logzeile (Kritik, W-prod); der Nutzer sieht nur das DOM. Zusaetzlich darf
- * kein `pageerror`, kein `console.error` und keine Zeile im Fehlerlog der App
+ * Detail, "Unbenannt" und seine Tinte, "[object Object]", Treffer, Zeilen,
+ * Tags in Fenster und D. Im Produktionsbuendel (DEBUG_MODE aus) hinterlassen
+ * die Listenfehler KEINE Logzeile (Kritik, W-prod); der Nutzer sieht nur das
+ * DOM, und dort urteilt auch diese Datei nur am DOM. Zusaetzlich darf kein
+ * `pageerror`, kein `console.error` und keine Zeile im Fehlerlog der App
  * stehen, ausser der einen gemessenen "Element not found"-Meldung der
- * Kontrolle (siehe ERWARTET_TELEFON). Gezaehlt wird vom Laden an.
+ * Kontrolle (siehe ERWARTET_TELEFON). Gezaehlt wird vom Laden an; eine
+ * `console.error`-Zeile liest fehlerFangen() aus ihren Argumenten, damit sie
+ * in beiden Engines gleich lautet (mit `m.text()` war W15 in Firefox bei
+ * heiler App rot).
  *
  * WIE DIE FAELLE ROT SIND: an den weichen Zusagen (Eintraege, Anzeigefehler,
  * Name, Treffer, Fehlerliste) — ein roter Lauf nennt jede gebrochene. Hart
@@ -116,11 +170,14 @@
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD
  *
  * Listenfelder als Text oder mit `null` (`dialogs`, `triggers`, `tags`,
- * `relations`, `links` — sperren Detail, Popup und 🗑️; PR NPC-LISTENFELDER),
- * dieselbe Klasse in den uebrigen Listen (PR LISTEN-QUER), der Reiter-Import
- * 📥 (heute kein Eingang, `#import-modal` fehlt), Backup, Migration und
- * Kampagnenwechsel (laufen ueber dieselbe Grenze; die Verdrahtung prueft
- * tests/unit/datengrenze.test.js), Firefox als eigenes Projekt (E8).
+ * `relations`, `links` — sperren Detail, Popup und 🗑️; ein `null`-Tag laesst
+ * das 🏷️-Fenster an seiner Farbe werfen; PR NPC-LISTENFELDER), dieselbe Klasse
+ * in den uebrigen Listen (PR LISTEN-QUER; dazu ein `null`-Tag im Ort-Detail),
+ * die Tag-Leiste der Quests und ihre Tag-Suche (lesen nur `{name, color}`;
+ * Katalog NPC-NAME, Offen), der Reiter-Import 📥 (heute kein Eingang,
+ * `#import-modal` fehlt), Backup, Migration und Kampagnenwechsel (laufen ueber
+ * dieselbe Grenze; die Verdrahtung prueft tests/unit/datengrenze.test.js),
+ * Firefox als eigenes Projekt (E8).
  */
 import { test, expect } from '@playwright/test';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
