@@ -156,9 +156,19 @@ describe('validateAvatarURL — SENKEN (16): speichert nur, was angezeigt wird',
 
     // AVATAR-DATEI: hier stand "die Eingabe lehnt ihn weiter ab (Offen (15))" mit
     // validateAvatarURL(...) === false. Offen (15) ist am 03.11. entschieden ("Erlauben").
+    // Daneben seine Netzwerkformen: Host, localhost, Trenner am Pfadanfang (roh und kodiert).
     test('ein lokaler Dateipfad wird angezeigt und angenommen (AVATAR-DATEI, Offen (15) entschieden)', () => {
         expect(sichereBildquelle('file:///C:/Bilder/held.png')).toBe('file:///C:/Bilder/held.png');
         expect(validateAvatarURL('file:///C:/Bilder/held.png')).toBe(true);
+        for (const netz of [
+            'file://rechner/C:/Bilder/held.png',
+            'file://localhost/C:/Bilder/held.png',
+            'file:////rechner/C:/Bilder/held.png',
+            'file:///%5C%5Crechner/C:/Bilder/held.png'
+        ]) {
+            expect(sichereBildquelle(netz)).toBe('');
+            expect(validateAvatarURL(netz)).toBe(false);
+        }
     });
 });
 
