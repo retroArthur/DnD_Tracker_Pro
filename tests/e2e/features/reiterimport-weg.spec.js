@@ -908,6 +908,21 @@ test('(1) R1: genau ein Dateidialog, die dort gewaehlte Datei wird importiert, k
     weich(dialoge, 'Zahl der Dateidialoge fuer EINEN Import').toBe(1);
     await weich(fenster(page), 'nach der Dateiwahl steht das Fenster').toBeVisible(GEWARTET);
     if (await fenster(page).isVisible()) {
+        // Oberflaechen-Vertrag: die Beschriftung "Hinzufügen" waehlt `merge`, "Ersetzen"
+        // `replace` — per Klick auf die BESCHRIFTUNG, wie ein Mensch waehlt. Pruefer, Runde 2
+        // (am Mutanten gemessen): mit vertauschten Beschriftungen blieben alle Faelle gruen,
+        // jeder waehlte den Modus ueber `value`; wer "Hinzufügen" anklickte, haette ersetzt.
+        const radio = wert => fenster(page).locator(`input[name="import-mode"][value="${wert}"]`);
+        await fenster(page).getByText('Ersetzen', { exact: true }).click();
+        await weich(radio('replace'), 'die Beschriftung "Ersetzen" waehlt replace').toBeChecked();
+        await weich(page.locator('#import-info'), 'die Vorschau folgt: Ersetzen').toContainText(
+            'Ersetzen:'
+        );
+        await fenster(page).getByText('Hinzufügen', { exact: true }).click();
+        await weich(radio('merge'), 'die Beschriftung "Hinzufügen" waehlt merge').toBeChecked();
+        await weich(page.locator('#import-info'), 'die Vorschau folgt: Hinzufügen').toContainText(
+            'Hinzufügen:'
+        );
         await modusWaehlen(page, 'merge');
         await importieren(page);
     }
