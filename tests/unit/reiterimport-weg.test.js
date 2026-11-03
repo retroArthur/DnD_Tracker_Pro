@@ -27,6 +27,7 @@ const MODULE = [
     'core/config.js',
     'core/data.js',
     'utils/basic.js',
+    'utils/utilities.js',
     'systems/spellslots/import-export.js'
 ];
 const QUELLTEXT = Object.fromEntries(

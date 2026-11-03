@@ -931,8 +931,13 @@ function pruefeReiterEintraege(eintraege, dataType) {
  * Warum "Ersetzen" diese Eintraege nicht uebernehmen darf (R6), sonst null. Ersetzen behaelt
  * die IDs der Datei; eine ID, die keine positive ganze Zahl ist ("abc", -1, 2.5), oder dieselbe
  * ID zweimal ergab gemessen Karten, die sich nicht oeffnen bzw. nur gemeinsam loeschen liessen.
- * Eine Zahl als Text ("7") gilt — die Datengrenze macht daraus 7. Hinzufuegen vergibt ohnehin
- * neue IDs und ist davon nicht betroffen.
+ * Eine Zahl als Text ("7") gilt — die Datengrenze macht daraus 7. Gueltig heisst wie ueberall in
+ * der App isValidEntityId() (utils/utilities.js): hoechstens ENTITY_ID_MAX. Gemessen (Pruefer,
+ * Runde 1): 2e15 kam beim Ersetzen an, und der naechste Kampagnen-Rundlauf vergab dem Eintrag
+ * eine neue ID, ohne die Verweise darauf umzuschreiben. Hinzufuegen vergibt ohnehin neue IDs und
+ * ist davon nicht betroffen — die Funktion laeuft trotzdem fuer jede Datei (Vorschau) und darf
+ * darum an keinem Wert der Datei werfen: ein Objekt mit eigenem toString/valueOf wird nie in
+ * Text verwandelt (gemessen warf `String(roh)` "Cannot convert object to primitive value").
  * @param {Object[]} eintraege - roh (vor der Datengrenze) oder vorbereitet
  * @returns {string|null}
  */
@@ -942,13 +947,20 @@ function reiterIdFehler(eintraege) {
         const roh = eintraege[i] ? eintraege[i].id : undefined;
         const id = roh === undefined ? undefined : datengrenzeZahlwert(roh);
         if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
-            let welche = `die ungültige ID ${String(roh)}`;
+            let welche;
             if (roh === undefined || roh === null || roh === '') welche = 'keine ID';
             else if (typeof roh === 'object') welche = `statt einer ID ${reiterWertText(roh)}`;
             else if (typeof roh === 'string') welche = `die ungültige ID „${roh.slice(0, 40)}“`;
+            else welche = `die ungültige ID ${String(roh)}`;
             return (
                 `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat ${welche} — eine ID muss ` +
                 'eine positive ganze Zahl sein. „Hinzufügen“ vergibt neue IDs.'
+            );
+        }
+        if (!isValidEntityId(id)) {
+            return (
+                `Ersetzen nicht möglich: Eintrag ${i + 1} der Datei hat die ID ${id} — eine ID darf ` +
+                `höchstens ${ENTITY_ID_MAX.toLocaleString('de-DE')} sein. „Hinzufügen“ vergibt neue IDs.`
             );
         }
         if (gesehen.has(id)) {
