@@ -33,6 +33,11 @@ function validateAvatarURL(url) {
     // (docs/bugfixes.md, AVATAR-DATEI). Die frueheren Zweige danach (relativ, data:image/,
     // `new URL()` mit http(s)) waren nur noch enger als sichereBildquelle(): einen relativen Pfad
     // mit `:` hinter dem Trenner (`bilder/a:b.png`) zeigte die Karte, die Eingabe lehnte ihn ab.
+    // Geprueft wird der GETRIMMTE Wert, denn den speichern beide Aufrufer (saveAvatar() unten und
+    // openBstAvatarModal() trimmen vor dem Aufruf). JS-trim() streicht am Anfang mehr als der
+    // Browser (U+00A0, U+FEFF, U+3000 …): am Rohwert gelesen lehnte der Dialog ` https://…`
+    // ab, obwohl `https://…` gespeichert wird, und naehme ` file:host/x.png` an, dessen
+    // gespeicherte Form die Anzeige sperrt (tests/unit/avatars.test.js, "A1 am gespeicherten Wert").
     return sichereBildquelle(trimmed) !== '';
 }
 // ============================================================

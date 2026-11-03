@@ -19,11 +19,14 @@
  * AVATAR-DATEI (Nutzerentscheidung 03.11. zu SENKEN Offen (15), docs/bugfixes.md: "Erlauben"):
  * der Bild-Dialog nimmt lokale Bilder wie file:///C:/Bilder/held.png an, Netzwerkpfade bleiben
  * gesperrt — derselbe Pruefkern wie Anzeige und Linkliste (sichereBildquelle()). Vertrag A1:
- * validateAvatarURL(x) ist wahr genau dann, wenn x leer ist ODER sichereBildquelle(x) ihn
- * anzeigt UND er kein gefaehrliches Schema (javascript:, vbscript:, data:text/html, auch mit
- * Steuerzeichen) traegt. Drei Zusicherungen dieser Datei hielten die alte Sperre von `file:`
- * fest und sind mit der Entscheidung umgedreht (Begruendung je am Fall), nicht abgeschwaecht:
- * die Netzwerkform jedes dieser Faelle bleibt gesperrt und steht daneben.
+ * validateAvatarURL(x) ist wahr genau dann, wenn x leer ist ODER sichereBildquelle() den
+ * GESPEICHERTEN Wert x.trim() anzeigt UND x kein gefaehrliches Schema (javascript:, vbscript:,
+ * data:text/html, auch mit Steuerzeichen) traegt. Gespeichert wird x.trim(): beide Aufrufer
+ * trimmen vor dem Aufruf (saveAvatar(), openBstAvatarModal()). Am Rohwert gelesen waere A1
+ * nicht erfuellbar — begruendet und gemessen im describe "A1 am gespeicherten Wert" unten.
+ * Drei Zusicherungen dieser Datei hielten die alte Sperre von `file:` fest und sind mit der
+ * Entscheidung umgedreht (Begruendung je am Fall), nicht abgeschwaecht: die Netzwerkform jedes
+ * dieser Faelle bleibt gesperrt und steht daneben.
  */
 
 const fs = require('fs');
@@ -240,12 +243,13 @@ describe('validateAvatarURL — WR-01: Steuerzeichen-Bypass', () => {
  * im Dialog es schon geladen hatte. Nutzerentscheidung 03.11. zu SENKEN Offen (15): erlauben,
  * Netzwerkpfade bleiben gesperrt, derselbe Pruefkern.
  *
- * VERTRAG A1: validateAvatarURL(x) === (x leer || sichereBildquelle(x) !== '' && kein
- * gefaehrliches Schema). "Gefaehrlich" sind javascript:, vbscript:, data:text/html, gelesen wie
- * heute (WR-01): Steuer- und Leerzeichen UEBERALL gestrichen, Gross/Klein egal. Die zweite
- * Bedingung ist nicht ueberfluessig: sichereBildquelle() liest `java script:…` und
- * `jav\vascript:…` als relativen Pfad (Leerzeichen und vertikaler Tab gehoeren nicht zum
- * Schema) und zeigt sie an.
+ * VERTRAG A1: validateAvatarURL(x) === (x leer || sichereBildquelle(x.trim()) !== '' && kein
+ * gefaehrliches Schema) — x.trim() ist der Wert, den die Aufrufer speichern (Kopf der Datei und
+ * describe "A1 am gespeicherten Wert"). "Gefaehrlich" sind javascript:, vbscript:,
+ * data:text/html, gelesen wie heute (WR-01): Steuer- und Leerzeichen UEBERALL gestrichen,
+ * Gross/Klein egal. Die zweite Bedingung ist nicht ueberfluessig: sichereBildquelle() liest
+ * `java script:…` und `jav\vascript:…` als relativen Pfad (Leerzeichen und vertikaler Tab
+ * gehoeren nicht zum Schema) und zeigt sie an.
  *
  * Die Bildfaelle des Datengrenzen-Vertrags (BILD_ERLAUBT, BILD_VERBOTEN, LINK_VERBOTEN) werden
  * aus tests/unit/datengrenze.test.js gelesen, nicht abgeschrieben: eine neue Sperrform dort gilt
@@ -383,8 +387,13 @@ function gefaehrlichesSchema(x) {
         .toLowerCase();
     return ['javascript:', 'vbscript:', 'data:text/html'].some(p => gelesen.startsWith(p));
 }
-/** Was A1 fuer x verlangt. */
-const erwartet = x => leer(x) || (sichereBildquelle(x) !== '' && !gefaehrlichesSchema(x));
+/** Der Wert, den die Aufrufer speichern: saveAvatar() und openBstAvatarModal() trimmen. */
+const gespeichert = x => String(x).trim();
+/** Was A1 fuer x verlangt — am gespeicherten Wert (describe "A1 am gespeicherten Wert"). */
+const erwartet = x =>
+    leer(x) || (sichereBildquelle(gespeichert(x)) !== '' && !gefaehrlichesSchema(x));
+/** Dieselbe Erwartung am Rohwert: die woertliche Lesung, nur zum Vergleich (s. dort). */
+const erwartetRoh = x => leer(x) || (sichereBildquelle(x) !== '' && !gefaehrlichesSchema(x));
 
 const ALLE_ERLAUBT = [
     '',
@@ -401,6 +410,27 @@ const ALLE_GESPERRT = [
     ...VERTRAG.BILD_VERBOTEN,
     ...VERTRAG.LINK_VERBOTEN
 ];
+
+// Leerraum, den JS-trim() am Anfang streicht und der Browser nicht: NBSP, BOM, ideographisches
+// Leerzeichen, Zeilentrenner, Ogham-Leerzeichen. wieBrowserGelesen() (utils/basic.js) streicht
+// wie der Browser nur Zeichen bis U+0020 und Tabulator/Zeilenumbruch.
+const UNICODE_LEERRAUM = ['\u00a0', '\ufeff', '\u3000', '\u2028', '\u1680'];
+const UNICODE_ERLAUBT = UNICODE_LEERRAUM.flatMap(z => [
+    z,
+    `${z}file:///C:/Bilder/held.png`,
+    `${z}https://example.org/held.png`,
+    `${z}data:image/png;base64,AAAA`,
+    `${z}bilder/held.png`
+]);
+const UNICODE_GESPERRT = UNICODE_LEERRAUM.flatMap(z => [
+    `${z}file://host/share/held.png`,
+    `${z}file:////host/share/held.png`,
+    `${z}file:///%5C%5Chost/share/held.png`,
+    `${z}file:192.0.2.1/s/x.png`,
+    `${z}//host/held.png`,
+    `${z}/%5C%5Chost/held.png`,
+    `${z}javascript:alert(1)`
+]);
 
 describe('validateAvatarURL — AVATAR-DATEI: lokale Bilder angenommen, Netzwerkpfade gesperrt (A1)', () => {
     test('die Bildfaelle des Datengrenzen-Vertrags sind gelesen (nicht leer, mit lokalen und Netzwerkpfaden)', () => {
@@ -465,16 +495,78 @@ describe('validateAvatarURL — AVATAR-DATEI: lokale Bilder angenommen, Netzwerk
     // Nicht-Vakuitaet der Eigenschaft: ihre Erwartung trennt die Listen wirklich. Sonst koennte
     // ein falsch gebautes erwartet() mit einer falsch gebauten Eingabe uebereinstimmen.
     test('Nicht-Vakuitaet: die Erwartung nach A1 ist fuer jede Erlaubnis wahr, fuer jede Sperre falsch', () => {
-        expect(ALLE_ERLAUBT.filter(x => !erwartet(x))).toEqual([]);
-        expect(ALLE_GESPERRT.filter(x => erwartet(x))).toEqual([]);
+        expect([...ALLE_ERLAUBT, ...UNICODE_ERLAUBT].filter(x => !erwartet(x))).toEqual([]);
+        expect([...ALLE_GESPERRT, ...UNICODE_GESPERRT].filter(x => erwartet(x))).toEqual([]);
         // die Schemapruefung traegt: ohne sie stuende `java script:` auf der Erlaubnisseite
         expect(sichereBildquelle('java script:alert(1)')).not.toBe('');
     });
 
-    test.each([...ALLE_ERLAUBT, ...ALLE_GESPERRT])(
-        'Eigenschaft A1 fuer %j: angenommen genau dann, wenn leer oder angezeigt und kein gefaehrliches Schema',
+    test.each([...ALLE_ERLAUBT, ...ALLE_GESPERRT, ...UNICODE_ERLAUBT, ...UNICODE_GESPERRT])(
+        'Eigenschaft A1 fuer %j: angenommen genau dann, wenn leer oder der gespeicherte Wert angezeigt wird und kein gefaehrliches Schema',
         url => {
             expect(validateAvatarURL(url)).toBe(erwartet(url));
         }
     );
+});
+
+/*
+ * A1 AM GESPEICHERTEN WERT (Pruefbefund nach bd06445d, kann). Beide Aufrufer trimmen vor dem
+ * Aufruf und speichern den getrimmten Wert (saveAvatar() in systems/avatars.js,
+ * openBstAvatarModal() im Bestiar-Editor). JS-trim() streicht am Anfang mehr als der Browser
+ * (UNICODE_LEERRAUM). Fuer solche Werte gehen "sichereBildquelle(x)" und
+ * "sichereBildquelle(x.trim())" auseinander, und nur die zweite Lesung haelt "gespeichert wird,
+ * was die Anzeige zeigt" (SENKEN (16)) und A4 zugleich:
+ *   - ` https://example.org/held.png` zeigt sichereBildquelle() roh NICHT (ein relativer
+ *     Pfad mit `//`). Gespeichert wird `https://…`, und das zeigt die Karte; dd399a32 nahm den
+ *     Wert schon an. Am Rohwert geprueft, lehnte der Dialog ihn ab — eine Verhaltensaenderung
+ *     gegen A4, ohne Schutz, denn gespeichert wird der getrimmte Wert.
+ *   - ` file:192.0.2.1/s/x.png` zeigt sichereBildquelle() roh (ein relativer Pfad ohne
+ *     Trennerpaar). Gespeichert wuerde `file:192.0.2.1/s/x.png`, und das sperrt die Anzeige —
+ *     am Rohwert geprueft, speicherte der Dialog, was die Karte dann als Platzhalter zeigt.
+ * Bis zu diesem Befund behauptete die Eigenschaft oben die Rohlesung, aber keine Liste enthielt
+ * einen solchen Wert, darum war sie gruen. Mit UNICODE_ERLAUBT/UNICODE_GESPERRT und der
+ * Rohlesung waren an bd06445d 15 Faelle der Eigenschaft rot (gemessen: je Leerzeichen die lokale
+ * Datei und https angenommen, `file:192.0.2.1/…` gesperrt); die Rohlesung ist nicht erfuellbar,
+ * ohne A4 oder SENKEN (16) zu brechen. Gegenprobe: prueft validateAvatarURL() den Rohwert
+ * (`sichereBildquelle(url)`), ist diese Datei in 31 Faellen rot, die Fassung davor in keinem.
+ * Sicherheitsfolge keine: angenommen wird nur, was als gespeicherter Wert angezeigt wird
+ * (letzter Fall).
+ */
+describe('validateAvatarURL — A1 am gespeicherten (getrimmten) Wert', () => {
+    test('die beiden Lesungen gehen bei Unicode-Leerraum am Anfang auseinander (die Faelle tragen)', () => {
+        for (const z of UNICODE_LEERRAUM) {
+            expect(sichereBildquelle(`${z}https://example.org/held.png`)).toBe('');
+            expect(erwartetRoh(`${z}https://example.org/held.png`)).toBe(false);
+            expect(erwartet(`${z}https://example.org/held.png`)).toBe(true);
+            expect(sichereBildquelle(`${z}file:192.0.2.1/s/x.png`)).not.toBe('');
+            expect(erwartetRoh(`${z}file:192.0.2.1/s/x.png`)).toBe(true);
+            expect(erwartet(`${z}file:192.0.2.1/s/x.png`)).toBe(false);
+        }
+    });
+
+    test('ohne solchen Leerraum sind beide Lesungen gleich — keine bisherige Erwartung geaendert', () => {
+        const abweichend = [...ALLE_ERLAUBT, ...ALLE_GESPERRT].filter(
+            x => erwartet(x) !== erwartetRoh(x)
+        );
+        expect(abweichend).toEqual([]);
+    });
+
+    test.each(UNICODE_ERLAUBT)('%j wird angenommen', url => {
+        expect(validateAvatarURL(url)).toBe(true);
+    });
+
+    test.each(UNICODE_GESPERRT)('%j bleibt gesperrt', url => {
+        expect(validateAvatarURL(url)).toBe(false);
+    });
+
+    test('angenommen heisst: der gespeicherte Wert wird angezeigt — ueber alle Listen', () => {
+        const alle = [...ALLE_ERLAUBT, ...ALLE_GESPERRT, ...UNICODE_ERLAUBT, ...UNICODE_GESPERRT];
+        const nichtAngezeigt = alle.filter(
+            x =>
+                !leer(x) &&
+                validateAvatarURL(x) &&
+                sichereBildquelle(gespeichert(x)) !== gespeichert(x)
+        );
+        expect(nichtAngezeigt).toEqual([]);
+    });
 });

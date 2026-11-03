@@ -42,9 +42,10 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * DER VERTRAG (AVATAR-DATEI)
  *
- *   A1  validateAvatarURL(x) nimmt x genau dann an, wenn x leer ist ODER sichereBildquelle(x) ihn
- *       anzeigt UND er kein gefaehrliches Schema hat (javascript:, vbscript:, data:text/html,
- *       auch mit Steuerzeichen). Neu erlaubt: lokale `file:///`-Pfade ohne Host. Weiter
+ *   A1  validateAvatarURL(x) nimmt x genau dann an, wenn x leer ist ODER sichereBildquelle() den
+ *       gespeicherten Wert x.trim() anzeigt (beide Aufrufer trimmen vorher) UND x kein
+ *       gefaehrliches Schema hat (javascript:, vbscript:, data:text/html, auch mit
+ *       Steuerzeichen). Neu erlaubt: lokale `file:///`-Pfade ohne Host. Weiter
  *       gesperrt: `file://host/…`, `file://localhost/…`, `file:////host`, `//host/…`,
  *       `/%5C%5Chost/…` usw. Gilt fuer Bild-Dialog UND Bestiar-Editor. Die Tabelle aller Werte
  *       steht in tests/unit/avatars.test.js; hier der Weg durch die Oberflaeche.
