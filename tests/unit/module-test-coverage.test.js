@@ -177,8 +177,17 @@ function isCovered(relModulePath) {
 // den Modulpfad in AUSFUEHRBAREM Code, nicht nur im Erklaertext.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
-    'features/bestiary/bestiary-actions.js',
-    'features/bestiary/bestiary-crud.js',
+    // -- 2026-11-03, KREATUR-ATTRIBUTE: 'features/bestiary/bestiary-actions.js' und
+    //    'features/bestiary/bestiary-crud.js' sind hier GESTRICHEN, die Liste
+    //    schrumpft um zwei. tests/e2e/features/kreatur-attribute.spec.js faehrt am
+    //    gebauten Buendel mit echten Klicks und Tasten "+ Neue Kreatur" bzw.
+    //    "Bearbeiten" -> Werte -> "Kreatur speichern" -> erneute Auswahl ->
+    //    "Zur Initiative" (W5, W6, W7) und urteilt ueber die Werte in D, die
+    //    saveBestiary() geklemmt schreibt (35 -> 30, -5 -> 1), ueber die
+    //    Statblock-Zellen und ueber den initBonus, den addBestiaryToInitiative()
+    //    aus dem GE-Wert rechnet. Ohne diese zwei Module waere keiner der Faelle
+    //    erklaerbar — keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur
+    //    schrumpfen; sie tut es hier.
     // -- 2026-11-03, AVATAR-DATEI: 'features/bestiary/bestiary-editor.js' (CR-01)
     //    ist hier GESTRICHEN. tests/e2e/features/bild-lokal.spec.js (c) faehrt am
     //    gebauten Buendel mit echten Klicks "Bearbeiten" -> "🖼️ Bild setzen" ->
