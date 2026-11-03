@@ -8,7 +8,11 @@
  *       Feld nach, nicht in dessen try-Block (customHandlers). clearFormFields()
  *       (utils/form-helpers.js) faengt jeden Fehler eines Handlers und meldet ihn nur bei
  *       DEBUG_MODE; ein Aufruf hinter einem werfenden Handler fiele still weg. Am Bildschirm
- *       wirft heute keiner — darum hier, mit einem Handler, der wirft (U1).
+ *       wirft heute keiner — darum hier, mit einem Handler, der wirft (U1), und mit einem
+ *       customHandlers, das schon beim Eintritt wirft (U4). U1 allein haelt nur "hinter einem
+ *       werfenden Handler": ein Aufruf als ERSTE Anweisung in customHandlers (m5a) lief vor
+ *       dem werfenden updateSpeedDisplay() und bestand U0-U3 und alle E2E-Faelle. U4 haelt den
+ *       Wortlaut von R3 — kein Aufruf im Block, gleich an welcher Stelle.
  *   R4  Direkt aufrufen, kein synthetisches input-/change-Ereignis und kein dispatchEvent am
  *       Feld. Am Bildschirm faengt (W5) nur das change (BESTIAR-KLICK verschluckt es beim schon
  *       zugestellten Wert); ein synthetisches input waere dort unsichtbar. Hier gibt es keinen
@@ -16,17 +20,20 @@
  *       Ereignis am Feld wird gezaehlt (U2, U3).
  *   R2  editChar() fuehrt die Vorschau direkt nach der Feldzuweisung nach (U3).
  *
- * Gemessen am Kopf 543706c6: U1, U2 und U3 rot (die Vorschau bleibt, wie sie war), U0 gruen.
- * Gegenproben an Kopien von party-crud.js (nicht eingecheckt; Namen wie in der E2E-Datei):
- *   fix  R2 + R3 wie im Vertrag                                   alle vier gruen
- *   m1   nur editChar()                                           U1, U2 rot
+ * Gemessen am Kopf 543706c6: U1, U2, U3 und U4 rot (die Vorschau bleibt, wie sie war), U0
+ * gruen. Gegenproben an Kopien von party-crud.js (nicht eingecheckt; Namen wie in der E2E-Datei):
+ *   fix  R2 + R3 wie im Vertrag                                   alle fuenf gruen
+ *   m1   nur editChar()                                           U1, U2, U4 rot
  *   m2   nur cancelCharEdit()                                     U3 rot
- *   m4   dispatchEvent(change) am Feld statt des Aufrufs          U1, U2, U3 rot
- *   m5   der Aufruf IN customHandlers (hinter dem Leeren der      U1 rot — am Bildschirm
- *        Angriffe), sonst wie fix                                 zwoelf von zwoelf gruen
- *   m6   dispatchEvent(input) am Feld statt des Aufrufs           U1, U2, U3 rot — am
- *                                                                 Bildschirm zwoelf gruen
- *   m7/m8  Vorschau aus ch.avatar (am Anfang bzw. an der Stelle   alle vier gruen; m7 faengt
+ *   m4   dispatchEvent(change) am Feld statt des Aufrufs          U1, U2, U3, U4 rot
+ *   m5   der Aufruf IN customHandlers (hinter dem Leeren der      U1, U4 rot — am Bildschirm
+ *        Angriffe), sonst wie fix                                 alle Faelle gruen
+ *   m5a  der Aufruf als ERSTE Anweisung in customHandlers (vor    genau U4 rot — am
+ *        updateSpeedDisplay()), sonst wie fix                     Bildschirm alle gruen
+ *   m6   dispatchEvent(input) am Feld statt des Aufrufs           U1, U2, U3, U4 rot — am
+ *                                                                 Bildschirm alle gruen
+ *   m10  der Aufruf VOR clearFormFields() (liest den alten Wert)  U1, U2, U4 rot
+ *   m7/m8  Vorschau aus ch.avatar (am Anfang bzw. an der Stelle   alle fuenf gruen; m7 faengt
  *        von R2), plus R3                                         (W9) der E2E-Datei
  *
  * Das Modul laeuft echt: vm-Kontext mit dem jsdom-Dokument der Suite, der echten Vorlage
@@ -151,6 +158,33 @@ describe('AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden und Leeren,
             throw new Error('Probe: ein frueherer Leeren-Handler wirft');
         };
         expect(() => ctx.cancelCharEdit()).not.toThrow();
+        expect(feld().value).toBe('');
+        expect(zeigt()).toBe('?');
+    });
+
+    test('(U4) R3: die Nachfuehrung haengt nicht am Leeren-Block — wirft customHandlers schon beim Eintritt, wird die Vorschau trotzdem "?"', () => {
+        getippt(LOKALES_BILD);
+        // Fehlerinjektion am Rand des try-Blocks von clearFormFields(): die echte Funktion laeuft
+        // (Textfelder werden geleert), aber ihr customHandlers wirft vor seiner ersten Anweisung.
+        // U1 laesst erst den ersten HANDLER werfen — ein Aufruf davor (Mutante m5a) liefe dort
+        // noch. Hier faellt JEDER Aufruf im Block weg; R3 verlangt ihn ausserhalb.
+        const echteClearFormFields = ctx.clearFormFields;
+        let gerufen = 0;
+        ctx.clearFormFields = config => {
+            gerufen++;
+            return echteClearFormFields({
+                ...config,
+                customHandlers: () => {
+                    throw new Error('Probe: customHandlers wirft beim Eintritt');
+                }
+            });
+        };
+        try {
+            expect(() => ctx.cancelCharEdit()).not.toThrow();
+        } finally {
+            ctx.clearFormFields = echteClearFormFields;
+        }
+        expect(gerufen).toBe(1);
         expect(feld().value).toBe('');
         expect(zeigt()).toBe('?');
     });

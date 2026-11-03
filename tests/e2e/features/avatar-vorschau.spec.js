@@ -66,7 +66,9 @@ import { test, expect } from '@playwright/test';
  *   R3  Leeren: cancelCharEdit() fuehrt die Vorschau nach dem Leeren aus dem Feld nach, und zwar
  *       NACH der Rueckkehr von clearFormFields(), vor dem Zuklappen — nicht in dessen try-Block
  *       (customHandlers): dort fiele der Aufruf still weg, sobald ein frueherer Handler wirft.
- *       Von aussen nicht zu sehen; der Waechter ist tests/unit/avatar-vorschau.test.js (U1).
+ *       Von aussen nicht zu sehen; die Waechter sind tests/unit/avatar-vorschau.test.js (U1:
+ *       hinter einem werfenden Handler; U4: customHandlers wirft beim Eintritt — erst U4 faengt
+ *       einen Aufruf als ERSTE Anweisung im Block, m5a).
  *   R4  Direkt aufrufen. Kein synthetisches input-/change-Ereignis und kein dispatchEvent am
  *       Feld: BESTIAR-KLICK (#27) stellt ein change mit dem Wert, den derselbe Handler schon
  *       per input bekam, nicht mehr zu (_changeBringtNichtsNeues(), ui/event-delegation.js) —
@@ -133,8 +135,9 @@ import { test, expect } from '@playwright/test';
  *   m8   updateAvatarPreview(ch.avatar || '') an    12 gruen — zulaessig: von aussen nicht vom
  *        der Stelle von R2, plus R3                 Feld zu unterscheiden (der Kritik-Vertrag)
  * Von aussen NICHT zu unterscheiden, darum in tests/unit/avatar-vorschau.test.js: der Aufruf
- * IN customHandlers (m5, R3; hier 12 gruen, dort U1 rot) und ein synthetisches input statt
- * des Aufrufs (m6, R4; hier 12 gruen, dort U1-U3 rot).
+ * IN customHandlers (m5, R3; hier 12 gruen, dort U1 und U4 rot; als ERSTE Anweisung im Block,
+ * m5a, hier 12 gruen, dort genau U4 rot) und ein synthetisches input statt des Aufrufs (m6,
+ * R4; hier 12 gruen, dort U1-U4 rot).
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * WIE GEMESSEN WIRD
