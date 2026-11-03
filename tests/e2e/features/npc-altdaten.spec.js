@@ -434,18 +434,56 @@ async function listeSteht(page, anzahl, wann) {
     );
 }
 
-/** Nirgends in der NPC-Ansicht steht "[object Object]" (sichtbarer Text).
- *  @param {import('@playwright/test').Page} page */
-async function keinObjektText(page) {
+/** Nirgends in der Ansicht steht "[object Object]" (sichtbarer Text).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {string} [ansicht] */
+async function keinObjektText(page, ansicht = 'npcs') {
     await weich(
-        page.locator('#view-npcs'),
-        'nirgends in der NPC-Ansicht "[object Object]"'
+        page.locator(`#view-${ansicht}`),
+        `nirgends in der Ansicht ${ansicht} "[object Object]"`
     ).not.toContainText('[object Object]', { useInnerText: true });
+}
+
+/** Was ein NPC ohne Namen zeigt (E1). */
+const UNBENANNT = 'Unbenannt';
+
+/**
+ * E1 verlangt ein GEDIMMTES "Unbenannt": die vorhandene Dimm-Tinte, kein neuer
+ * Farbwert. Geprueft an der berechneten Farbe, nicht nur am Text — der Text
+ * allein war auch mit einem nackten 'Unbenannt' ohne Dimmung gruen (Pruefer-
+ * Mutante, gemessen). `traeger` ist der Namensplatz (Listeneintrag oder
+ * Detail), `gleichWie` das Element derselben Flaeche, das die Dimm-Tinte
+ * traegt (.npc-item-meta bzw. .npc-detail-subtitle).
+ * @param {import('@playwright/test').Locator} traeger
+ * @param {string} gleichWie - Selektor, relativ zur Wurzel des Bereichs
+ * @param {import('@playwright/test').Locator} bereich
+ * @param {string} wo
+ */
+async function unbenanntGedimmt(traeger, gleichWie, bereich, wo) {
+    const marke = traeger.locator('.npc-unbenannt');
+    await weich(marke, `${wo}: "Unbenannt" traegt .npc-unbenannt`).toHaveText(UNBENANNT);
+    if ((await marke.count()) !== 1) return;
+    const farben = await bereich.evaluate(
+        (wurzel, [sel, rolle]) => {
+            const farbe = /** @param {Element|null} e */ e =>
+                e ? getComputedStyle(e).color : null;
+            return {
+                marke: farbe(wurzel.querySelector('.npc-unbenannt')),
+                dimm: farbe(wurzel.querySelector(sel)),
+                name: farbe(wurzel.querySelector(rolle))
+            };
+        },
+        [gleichWie, '.npc-item-name, .npc-detail-name']
+    );
+    weich(farben.marke, `${wo}: "Unbenannt" in der Dimm-Tinte von ${gleichWie}`).toBe(farben.dimm);
+    weich(farben.marke, `${wo}: "Unbenannt" hat nicht die Tinte eines Namens`).not.toBe(
+        farben.name
+    );
 }
 
 /**
  * Zoras Eintrag (ID 3) traegt `text` — in der Liste UND, nach einem Klick auf
- * ihn, als Name im Detail.
+ * ihn, als Name im Detail. Bei "Unbenannt" zusaetzlich gedimmt (E1).
  * @param {import('@playwright/test').Page} page
  * @param {string} text
  */
@@ -456,11 +494,28 @@ async function zoraZeigt(page, text) {
         `Liste: Zora steht als "${text}" da`
     ).toBeVisible();
     if ((await eintrag.count()) !== 1) return; // schon oben rot: Eintrag fehlt
+    if (text === UNBENANNT) {
+        await unbenanntGedimmt(
+            eintrag.locator('.npc-item-name'),
+            '.npc-item-meta',
+            eintrag,
+            'Liste'
+        );
+    }
     await eintrag.click();
+    const detail = page.locator('#npc-detail-panel');
     await weich(
-        page.locator('#npc-detail-panel .npc-detail-name'),
+        detail.locator('.npc-detail-name'),
         `Detail: Zora steht als "${text}" da`
     ).toContainText(text);
+    if (text === UNBENANNT) {
+        await unbenanntGedimmt(
+            detail.locator('.npc-detail-name'),
+            '.npc-detail-subtitle',
+            detail,
+            'Detail'
+        );
+    }
 }
 
 // ===========================================================================
@@ -479,7 +534,9 @@ const LISTE = [
     ['W2', 'Name 42, letzte Lage', [ANNA(), CORA(), zora('name', 42)], '42'],
     ['W2v', 'Name 42, erste Lage', [zora('name', 42), ANNA(), CORA()], '42'],
     ['W3', 'Name null, letzte Lage', [ANNA(), CORA(), zora('name', null)], null],
+    ['W3v', 'Name null, erste Lage', [zora('name', null), ANNA(), CORA()], null],
     ['W4', 'Name true, letzte Lage', [ANNA(), CORA(), zora('name', true)], null],
+    ['W4v', 'Name true, erste Lage', [zora('name', true), ANNA(), CORA()], null],
     ['W5', 'Volk 5, erste Lage', [zora('race', 5), ANNA(), CORA()], null],
     ['W6', 'Volk {x:1}, letzte Lage', [ANNA(), CORA(), zora('race', { x: 1 })], null]
 ];
@@ -496,15 +553,82 @@ for (const [id, titel, npcs, zeigt] of LISTE) {
     });
 }
 
-for (const [id, titel, wert] of /** @type {[string, string, any][]} */ ([
-    ['W7', 'NPC ohne Namen', FEHLT],
-    ['W8', 'NPC-Name 42', 42]
+/**
+ * Legt `wert` NACH dem Laden in Zoras `feld` (FEHLT entfernt es) — an der
+ * Datengrenze vorbei, wie es der 🎲 Generator vor N3 tat (`name: 7` in D bis
+ * zum Neuladen). Gezeichnet wird erst danach, per Klick auf den Reiter.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} feld
+ * @param {any} wert
+ */
+async function zurLaufzeit(page, feld, wert) {
+    await page.evaluate(
+        ([f, w, entfernen]) => {
+            const z = window.D.npcs.find(n => n.id === 3);
+            if (entfernen) delete z[f];
+            else z[f] = w;
+        },
+        [feld, wert === FEHLT ? null : wert, wert === FEHLT]
+    );
+}
+
+/**
+ * Die NPC-Liste AN DER GRENZE VORBEI. [ID, Titel, NPCs (gueltig, in dieser
+ * Lage gesaet), Feld, Wert zur Laufzeit, was Zora zeigt]
+ *
+ * Hier zeichnet das Startzeichnen noch die gueltige Saat. Wirft danach das
+ * Zeichnen des Reiters, bleibt die ALTE Liste stehen — drei Eintraege, kein
+ * "Anzeigefehler" (die Reiter-Verwaltung faengt den Wurf), Zora unter ihrem
+ * alten Namen. Darum verlangt jeder Fall den NEUEN Wert sichtbar: den Namen
+ * in Liste und Detail, das Volk in der Liste. Ohne DEBUG_MODE (Produktion)
+ * ist er das einzige Zeichen; die Fehlerliste allein saehe dort nichts.
+ * @type {[string, string, Record<string, any>[], string, any, string][]}
+ */
+const LAUFZEIT = [
+    ['W16', 'Name fehlt, letzte Lage', [ANNA(), CORA(), zora()], 'name', FEHLT, UNBENANNT],
+    ['W16v', 'Name fehlt, erste Lage', [zora(), ANNA(), CORA()], 'name', FEHLT, UNBENANNT],
+    ['W17', 'Name 42, letzte Lage', [ANNA(), CORA(), zora()], 'name', 42, '42'],
+    ['W17v', 'Name 42, erste Lage', [zora(), ANNA(), CORA()], 'name', 42, '42'],
+    ['W18', 'Volk 5, letzte Lage', [ANNA(), CORA(), zora()], 'race', 5, '5']
+];
+
+for (const [id, titel, npcs, feld, wert, zeigt] of LAUFZEIT) {
+    test(`${id} NPC-Liste an der Grenze vorbei, ${titel}: drei Eintraege, kein Fehler`, async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        await laden(page, { npcs });
+        await zurLaufzeit(page, feld, wert);
+        await zuAnsicht(page, 'npcs');
+        await listeSteht(page, 3, 'NPC-Reiter');
+        if (feld === 'name') {
+            await zoraZeigt(page, zeigt);
+        } else {
+            await weich(
+                page.locator('#npc-list .npc-item[data-id="3"] .npc-item-race'),
+                `Liste: Zoras Volk steht als "${zeigt}" da (frisch gezeichnet)`
+            ).toHaveText(zeigt);
+        }
+        await keinObjektText(page);
+        await keinFehlerAusser(fehler);
+    });
+}
+
+for (const [id, titel, wert, laufzeit] of /** @type {[string, string, any, boolean][]} */ ([
+    ['W7', 'NPC ohne Namen', FEHLT, false],
+    ['W8', 'NPC-Name 42', 42, false],
+    ['W19', 'NPC-Name 42 an der Grenze vorbei', 42, true]
 ])) {
     test(`${id} Ortssuche, ${titel}: "mar" laesst nur den Markt stehen, kein Fehler`, async ({
         page
     }) => {
         const fehler = fehlerFangen(page);
-        await laden(page, { npcs: [ANNA(), CORA(), zora('name', wert)] });
+        if (laufzeit) {
+            await laden(page, { npcs: [ANNA(), CORA(), zora()] });
+            await zurLaufzeit(page, 'name', wert);
+        } else {
+            await laden(page, { npcs: [ANNA(), CORA(), zora('name', wert)] });
+        }
         await zuAnsicht(page, 'locations');
         const orte = page.locator('#locations-list .loc-item');
         await expect(orte, 'Vorbedingung: beide Orte stehen vor der Suche').toHaveCount(2);
@@ -564,6 +688,125 @@ for (const [id, titel, tags] of /** @type {[string, string, any[]][]} */ ([
         await keinFehlerAusser(fehler);
     });
 }
+
+/** Das globale Tag in der Form, die 🏷️ selbst schreibt. */
+const GLOBAL_WICHTIG = [{ name: 'Wichtig', color: 'red' }];
+
+/**
+ * Oeffnet das 🏷️-Fenster aus Annas Detail — der Weg eines Nutzers.
+ * @param {import('@playwright/test').Page} page
+ */
+async function tagFensterVonAnna(page) {
+    await zuAnsicht(page, 'npcs');
+    await page.locator('#npc-list .npc-item[data-id="1"]').click();
+    await expect(
+        page.locator('#npc-detail-panel .npc-detail-name'),
+        'Vorbedingung: das Detail zeigt Anna'
+    ).toHaveText('Anna');
+    await page.locator('#npc-detail-panel [data-action="show-tags-modal"]').click();
+    const fenster = page.locator('#tags-modal');
+    await expect(fenster, 'Vorbedingung: das 🏷️-Fenster ist offen').toBeVisible();
+    return fenster;
+}
+
+/** Die Tags eines NPC in D, als JSON.
+ *  @param {import('@playwright/test').Page} page
+ *  @param {number} id */
+function tagsIn(page, id) {
+    return page.evaluate(i => JSON.stringify(window.D.npcs.find(n => n.id === i).tags), id);
+}
+
+test('W11f 🏷️-Fenster, Tag als Text: das Fenster zeigt "Wichtig", die Doppelpruefung erkennt es', async ({
+    page
+}) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, {
+        npcs: [ANNA({ tags: ['Wichtig'] }), CORA(), zora()],
+        tags: GLOBAL_WICHTIG
+    });
+    const fenster = await tagFensterVonAnna(page);
+    const eigene = fenster.locator('#entity-tags-list .tag');
+    await weich(eigene, 'Fenster: Anna traegt genau ein Tag').toHaveCount(1);
+    await weich(eigene, 'Fenster: Annas Tag steht als "Wichtig" da').toContainText(['Wichtig']);
+    const verfuegbar = fenster.locator('#all-tags-list .tag', { hasText: 'Wichtig' });
+    await weich(
+        verfuegbar,
+        '"Wichtig" unter "Verfuegbare Tags" ist als vorhanden gedimmt'
+    ).toHaveCSS('opacity', '0.5');
+
+    // Doppelpruefung 1: denselben Namen eintippen und "+".
+    await fenster.locator('#new-tag-name').click();
+    await page.keyboard.type('Wichtig');
+    await fenster.locator('button[data-value="addTagToEntity"]').click();
+    weich(await tagsIn(page, 1), '"+" mit "Wichtig" legt keine Dublette an').toBe('["Wichtig"]');
+    // Doppelpruefung 2: das globale Tag anklicken.
+    await verfuegbar.click();
+    weich(await tagsIn(page, 1), 'der Klick auf das globale "Wichtig" legt keine Dublette an').toBe(
+        '["Wichtig"]'
+    );
+
+    await fenster.locator('button[data-value="tags-modal"]').click();
+    await weich(
+        page.locator('#npc-detail-panel .npc-tag'),
+        'das Detail zeigt "Wichtig" genau einmal'
+    ).toHaveText(['Wichtig']);
+    await keinObjektText(page);
+    await keinFehlerAusser(fehler);
+});
+
+test('W11g 🏷️-Fenster, Tag als Text: das globale "Wichtig" loeschen nimmt es ueberall mit', async ({
+    page
+}) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, {
+        npcs: [ANNA({ tags: ['Wichtig'] }), CORA({ tags: [...GLOBAL_WICHTIG] }), zora()],
+        tags: GLOBAL_WICHTIG
+    });
+    const fenster = await tagFensterVonAnna(page);
+    let rueckfrage = '';
+    page.once('dialog', d => {
+        rueckfrage = d.message();
+        return d.accept();
+    });
+    await fenster.locator('#global-tags-list [data-action="delete-global-tag"]').click();
+    expect(rueckfrage, 'Vorbedingung: die Rueckfrage nennt "Wichtig"').toContain(
+        'Tag "Wichtig" wirklich löschen?'
+    );
+    weich(await tagsIn(page, 2), 'Coras Tag in der Form der App ist weg (Kontrolle)').toBe('[]');
+    weich(await tagsIn(page, 1), 'Annas Text-Tag "Wichtig" ist weg').toBe('[]');
+    await fenster.locator('button[data-value="tags-modal"]').click();
+    await weich(
+        page.locator('#npc-detail-panel .npc-tag'),
+        'das Detail zeigt kein Tag mehr'
+    ).toHaveCount(0);
+    await keinFehlerAusser(fehler);
+});
+
+test('W11o Ort-Detail, Tags in beiden Formen: "Wichtig" und "Alt" stehen da, nirgends "[object Object]"', async ({
+    page
+}) => {
+    const fehler = fehlerFangen(page);
+    await laden(page, {
+        npcs: [ANNA(), CORA(), zora()],
+        locations: [
+            { ...ORTE[0], tags: [{ name: 'Wichtig', color: 'red' }, 'Alt', { color: 'blue' }] },
+            ORTE[1]
+        ]
+    });
+    await zuAnsicht(page, 'locations');
+    await page.locator('#locations-list .loc-item[data-id="1"]').click();
+    const detail = page.locator('#loc-detail-panel');
+    await expect(
+        detail.locator('.loc-detail-name'),
+        'Vorbedingung: das Detail zeigt die Taverne'
+    ).toContainText('Taverne');
+    await weich(
+        detail.locator('.loc-tag'),
+        'drei Tags: "Wichtig", "Alt" und das ohne Namen leer'
+    ).toHaveText(['Wichtig', 'Alt', '']);
+    await keinObjektText(page, 'locations');
+    await keinFehlerAusser(fehler);
+});
 
 test('W13 Generator mit Namenstabelle {text: 7}: der Name in D ist Text, die Liste zeigt den NPC sofort und nach dem Neuladen', async ({
     page
