@@ -27,8 +27,12 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   - systems/avatars.js validateAvatarURL() fuehrt `file:` in dangerousProtocols und laesst bei
  *     absoluten URLs nur http:/https: zu. saveAvatar() meldet "❌ Ungültige URL: Nur http(s),
  *     data:image/ oder relative Pfade erlaubt, keine Netzwerkpfade" und speichert nichts.
- *   - Dieselbe Funktion fragt der Bestiar-Editor (bestiary-editor.js, validateAvatarUrlSafe()
- *     hinter "🖼️ Bild setzen"): er meldet "⚠️ Ungültige oder unsichere URL".
+ *   - Dieselbe Funktion fragt der Bestiar-Editor (features/bestiary/bestiary-editor.js,
+ *     validateAvatarUrlSafe() hinter "🖼️ Bild setzen"): er meldet "⚠️ Ungültige oder unsichere
+ *     URL". Fall (c) faehrt dieses Modul am Buendel: openBestiaryEditor(), openBstAvatarModal(),
+ *     validateAvatarUrlSafe() und refreshBstAvatarPreview() — ohne es waere keiner der beiden
+ *     Faelle erklaerbar. Darum steht es nicht mehr in der Ausnahmeliste von
+ *     tests/unit/module-test-coverage.test.js.
  *   - Die Vorschau IM Bild-Dialog (previewAvatar) zeigt das lokale Bild schon
  *     (sichereBildquelle) — der Dialog zeigt es also und lehnt es beim Speichern ab.
  *   - Die Karten zeigen es (SENKEN (14)), wenn es auf anderem Weg in die Daten kommt.
