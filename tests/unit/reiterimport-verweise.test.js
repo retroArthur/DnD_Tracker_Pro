@@ -972,6 +972,53 @@ describe('REITERIMPORT R6 — die Vorschau beim Ersetzen nennt die Verweise ande
         // Die Vorlage selbst bleibt beim Ersetzen, wie sie war (R6 nennt, schreibt nicht um)
         expect(plain(gleich.seite.ctx.D.monsterFavorites)).toEqual(kampagne().monsterFavorites);
     });
+
+    // Befund der Pruefer (Runde 2, Sonde p12, gemessen): in der Kampagne FREMD wurden die NPCs
+    // durch die von HEIM ersetzt. Die Vorschau sagte nur "Kampagne: HEIM" und "Kein Verweis
+    // anderer Bereiche zeigt danach ins Leere" — danach hatte HEIM-Alrik den Ort
+    // "FREMD-Eiswueste", die Fraktion "FREMD-Diebesgilde" und eine Beziehung zu "FREMD-Held-A".
+    // Ersetzen schreibt die Verweise der Datei nicht um (R6); die Vorschau nennt sie, je Feld,
+    // bevor geschrieben wird — wie beim Hinzufuegen die geleerten.
+    test('E5: die Verweise der DATEI auf andere Bereiche — welche hier ein Ziel mit derselben ID haben, welche ins Leere zeigen', async () => {
+        const fremd = () => ({
+            npcs: [1, 2, 3].map(id => ({ id, name: `FREMD-${id}` })),
+            locations: [
+                { id: 1, name: 'FREMD-Eiswueste' },
+                { id: 2, name: 'FREMD-Vulkan' }
+            ],
+            factions: [{ id: 1, name: 'FREMD-Diebesgilde' }],
+            characters: [{ id: 1, name: 'FREMD-Held-A' }]
+        });
+        const datei = [
+            {
+                id: 1,
+                name: 'HEIM-Alrik',
+                locationId: 1,
+                factionId: 1,
+                relations: [
+                    { targetType: 'characters', targetId: 1, status: 'friendly' },
+                    { targetType: 'npcs', targetId: 2, status: 'friendly' },
+                    { targetType: 'party', targetId: 0, status: 'neutral' }
+                ],
+                links: [{ type: 'quests', id: 4 }]
+            },
+            { id: 2, name: 'HEIM-Vela', locationId: 2, description: '<p>[[locations:9:Turm]]</p>' }
+        ];
+        const { seite, vorschau } = await importiere('npcs', datei, fremd(), 'replace');
+        expect(vorschau.slice(5)).toEqual([
+            'Kein Verweis anderer Bereiche zeigt danach ins Leere',
+            '⚠️ 4 Verweise der Datei auf andere Bereiche bleiben, wie sie sind — sie zeigen danach auf den Eintrag DIESER Kampagne mit derselben ID; stammt die Datei aus einer anderen Kampagne, ist das ein anderer Eintrag:',
+            '– Ort: 2',
+            '– Fraktion: 1',
+            '– Beziehung → Charaktere: 1',
+            '⚠️ 2 Verweise der Datei auf andere Bereiche zeigen danach ins Leere (diese Kampagne hat dort keinen Eintrag mit ihrer ID)'
+        ]);
+        // Die Vorschau nennt, umgeschrieben wird nichts (R6)
+        expect(plain(seite.ctx.D.npcs)).toEqual(datei);
+        // Ohne solche Verweise sagt die Vorschau nichts dazu
+        const ohne = await importiere('npcs', [{ id: 1, name: 'Neu' }], fremd(), 'replace');
+        expect(ohne.vorschau.join('\n')).not.toMatch(/Verweise? der Datei/);
+    });
 });
 
 // ===========================================================================
