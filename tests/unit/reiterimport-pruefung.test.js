@@ -260,7 +260,21 @@ describe('REITERIMPORT R3 — die Datei wird vor dem Fenster geprueft', () => {
             /„rewardGold“ muss eine Zahl sein, die Datei enthält ein Objekt/
         ],
         ['characters', { id: 1, name: 'A', weight: '6.500' }, /„weight“ muss eine Zahl sein/],
-        ['characters', { id: 1, name: 'A', weight: '80 kg' }, /„weight“ muss eine Zahl sein/]
+        ['characters', { id: 1, name: 'A', weight: '80 kg' }, /„weight“ muss eine Zahl sein/],
+        // Pruefer, Runde 2 (Sonde p1, gemessen): die Datengrenze kennt `filterId` nicht, und
+        // parseEntityId([1]) ergibt 1 — die Karte zeigte nach dem Hinzufuegen den Filter der
+        // Ziel-Kampagne mit dieser ID. Jeder Feldverweis des Katalogs muss eine ID sein koennen.
+        [
+            'npcs',
+            { id: 1, name: 'A', filterId: [1] },
+            /„filterId“ muss eine Zahl sein, die Datei enthält eine Liste/
+        ],
+        [
+            'locations',
+            { id: 1, name: 'A', filterId: { id: 2 } },
+            /„filterId“ muss eine Zahl sein, die Datei enthält ein Objekt/
+        ],
+        ['npcs', { id: 1, name: 'A', filterId: 'Kapitel 1' }, /„filterId“ muss eine Zahl sein/]
     ])('P6: %s mit Text statt Zahl %j wird abgelehnt', async (typ, eintrag, thema) => {
         await abgelehnt(typ, datei(typ, [eintrag]), thema);
     });

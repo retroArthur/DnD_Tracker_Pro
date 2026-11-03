@@ -636,6 +636,85 @@ describe('REITERIMPORT R5 — Hinzufuegen an einer Saat aller zwoelf Typen', () 
             'Hinzufügen: 1 Eintrag kommt mit neuer ID zu den vorhandenen (0) dazu'
         ]);
     });
+
+    // Befund der Pruefer (Runde 2, Sonde p1, gemessen in einer FREMDEN Kampagne): eine Beziehung
+    // mit `targetType: 'npc'` oder ganz ohne Typ blieb beim Hinzufuegen stehen — der Katalog
+    // hielt sie fuer "kein Verweis" —, die Anzeige aber loest jeden Typ ausser 'party' und
+    // 'characters' als NPC auf (features/npcs/npc-render.js renderNPCRelations()). Das Detail
+    // zeigte danach "🎭 FREMD-Hexe Morla … Typ npc" und "🎭 FREMD-Ritter Kunz … ohne Typ".
+    test('S6: Beziehungen mit Einzahl-, fremdem oder ohne Typ sind NPC-Beziehungen — wie in der Anzeige', async () => {
+        const fremd = { npcs: [1, 7, 8, 9].map(id => ({ id, name: `Fremd ${id}` })) };
+        const data = [
+            { id: 1, name: 'A' },
+            {
+                id: 2,
+                name: 'B',
+                relations: [
+                    { targetType: 'npc', targetId: 1, status: 'friendly', note: 'Typ npc' },
+                    { targetId: 1, status: 'hostile', note: 'ohne Typ' },
+                    { targetType: 'wesen', targetId: 1, status: 'neutral', note: 'fremder Typ' },
+                    { targetType: 'npc', targetId: 7, status: 'neutral', note: 'tot' },
+                    { targetId: 8, status: 'neutral', note: 'tot, ohne Typ' },
+                    { targetType: 'wesen', targetId: 9, status: 'neutral', note: 'tot, fremd' },
+                    { targetType: 'party', targetId: 0, status: 'neutral', note: 'Gruppe' }
+                ],
+                // Das alte Modell: die Anzeige (systems/undo.js renderRelationshipBadges()) loest
+                // jeden Typ ausser 'character' als NPC auf
+                relationships: [
+                    { targetType: 'npc', targetId: 1, type: 'ally' },
+                    { targetType: 'wesen', targetId: 8, type: 'rival' }
+                ]
+            }
+        ];
+        const { seite, vorschau } = await importiere('npcs', data, fremd, 'merge');
+        const kopie = plain(seite.ctx.D.npcs).find(n => n.id === 102);
+        expect(kopie.relations).toEqual([
+            { targetType: 'npc', targetId: 101, status: 'friendly', note: 'Typ npc' },
+            { targetId: 101, status: 'hostile', note: 'ohne Typ' },
+            { targetType: 'wesen', targetId: 101, status: 'neutral', note: 'fremder Typ' },
+            { targetType: 'party', targetId: 0, status: 'neutral', note: 'Gruppe' }
+        ]);
+        expect(kopie.relationships).toEqual([{ targetType: 'npc', targetId: 101, type: 'ally' }]);
+        expect(waechterIn(kopie)).toEqual([]);
+        expect(vorschau).toContain(
+            '4 Verweise innerhalb der NPCs zeigen danach auf die mitimportierten Einträge'
+        );
+        expect(vorschau).toContain(
+            '⚠️ 4 Verweise innerhalb der NPCs zeigen auf einen Eintrag, der nicht (eindeutig) in der Datei steht — sie werden geleert'
+        );
+    });
+
+    // Befund der Pruefer (Runde 2, Sonde p1, gemessen): `filterId: [1]` blieb beim Hinzufuegen
+    // stehen — der Zweig fuer Feldverweise uebersprang jedes Objekt —, und parseEntityId([1])
+    // ergibt 1: die Karte zeigte den Filter der Ziel-Kampagne mit dieser ID. Vor dem Fenster
+    // lehnt die Pruefung eine solche Datei ab (tests/unit/reiterimport-pruefung.test.js P6); die
+    // Abbildung selbst laesst trotzdem nichts still stehen, was die App als ID liest.
+    test('S7: ein Feldverweis, der keine ID ist (Liste, Objekt), wird beim Hinzufuegen geleert und genannt', () => {
+        const seite = erzeugeSeite({ npcs: [], locations: [] });
+        const hinzufuegen = vm.runInContext('reiterHinzufuegen', seite.ctx);
+        const zaehlen = vm.runInContext('reiterHinzufuegenVerweise', seite.ctx);
+        const npcs = [
+            { id: 1, name: 'A', filterId: [1] },
+            { id: 2, name: 'B', filterId: { id: 1 }, locationId: [3] }
+        ];
+        expect(plain(hinzufuegen('npcs', npcs))).toEqual([
+            { id: 101, name: 'A', filterId: null },
+            { id: 102, name: 'B', filterId: null, locationId: null }
+        ]);
+        expect(plain(zaehlen('npcs', npcs)).fremd).toEqual([
+            { wort: 'Filter', n: 2 },
+            { wort: 'Ort', n: 1 }
+        ]);
+        // Innerhalb des Typs ebenso: ein Wiki-Elternteil als Liste ist kein eindeutiges Ziel
+        expect(
+            plain(
+                hinzufuegen('wiki', [
+                    { id: 1, title: 'A' },
+                    { id: 2, title: 'B', parentId: [1] }
+                ])
+            )[1].parentId
+        ).toBeNull();
+    });
 });
 
 // ===========================================================================
