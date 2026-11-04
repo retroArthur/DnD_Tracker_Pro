@@ -434,8 +434,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:870` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:887` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:891` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:2081` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2360` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2089` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2368` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:465` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:595` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:678` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -540,8 +540,8 @@ diese Tabelle führt.
 | `dashboard.css:534` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:778` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `core.css:758` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2690` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2691` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2698` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2699` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -649,12 +649,12 @@ npcs.css
   971  .npc-popup-name
  1004  .npc-popup-section-title
 party.css
- 1972  .party-stat-card.critical .party-stat-value
- 2264  .rest-heal-preview
- 2270  .rest-hd-restore
- 2645  .cf-attack-remove:hover
- 2794  .char-skill-item.proficient .char-skill-item-name
- 2817  .char-skill-item.expertise .char-skill-item-name
+ 1980  .party-stat-card.critical .party-stat-value
+ 2272  .rest-heal-preview
+ 2278  .rest-hd-restore
+ 2653  .cf-attack-remove:hover
+ 2802  .char-skill-item.proficient .char-skill-item-name
+ 2825  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css
