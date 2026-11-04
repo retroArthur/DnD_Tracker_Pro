@@ -47,8 +47,11 @@ function stripHtml(s) {
 // das ihr fehlte — vier ✕ taten nichts. Das ✕ neben dem Feld zieht der Helfer
 // selbst nach (generisch ueber den Behaelter, wie es die Aktionen beim Tippen
 // tun), damit es ohne Begriff auch dann verschwindet, wenn eine Aktion das
-// vergisst. Danach steht der Fokus im Feld, auch auf dem Telefon (R3): sonst
-// saesse er auf dem unsichtbar gewordenen ✕, und getippte Buchstaben loesten
+// vergisst (tests/unit/suche-leeren.test.js, R2). Der Aufruf haelt zugleich
+// den Lint-Pin: ohne ihn ist `updateSearchClear` in dieser Datei unbenutzt
+// (no-unused-vars), ESLint zaehlt eine Warnung mehr, und lint-gate prueft
+// den Pin exakt. Danach steht der Fokus im Feld, auch auf dem Telefon (R3):
+// sonst saesse er auf dem unsichtbar gewordenen ✕, und getippte Buchstaben loesten
 // Kurztasten aus. Ein Ziel, das sich so nicht leeren laesst, wird gemeldet,
 // nicht verschluckt (R4). Aufrufer: 'clear-search' (ui/actions/ui-actions.js)
 // und Enter im Wiki-Aufklapp (R8, wiki-crud.js).
