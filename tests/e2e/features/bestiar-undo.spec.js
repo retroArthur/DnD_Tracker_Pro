@@ -6,9 +6,10 @@
  * DIE AUSSAGE, AUF DIE ES ANKOMMT, in zwei Saetzen: **nach Strg+Z oder Strg+Y
  * zeigt die OFFENE Bestiar-Ansicht den Stand von D** — ★, Zeilen, Namen,
  * Zaehler, Filteroptionen und das Detail —, auf jedem Weg (Taste, ↩️ im
- * Telefonkopf, ⋯ → ↪️, Reiterwechsel). Und **das Detail folgt D auch nach
- * Speichern und Loeschen**, ohne dass Fokus, Lage oder Rolllage des Details
- * verloren gehen, wenn sich an der gewaehlten Kreatur nichts geaendert hat.
+ * Telefonkopf, ⋯ → ↪️, Befehlspalette, Reiterwechsel). Und **das Detail
+ * folgt D auch nach Speichern und Loeschen**, ohne dass Fokus, Lage oder
+ * Rolllage des Details verloren gehen, wenn sich an der gewaehlten Kreatur
+ * nichts geaendert hat.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND — GEMESSEN am Kopf 543706c6 (BESTIAR-KLICK, #27) und am main
@@ -138,6 +139,10 @@
  *   (W11) Typ-Filter Probetyp per Tastatur,
  *         Strg+Z, Strg+Y                          R5 (d)      rot ×2 (Filter bleibt auf
  *                                                             dem verschwundenen Wert)
+ *   (W13) Befehlspalette: ★ Goblin,
+ *         "Rueckgaengig", "Wiederholen",
+ *         "Rueckgaengig", Klick auf den ☆           R1          rot ×2 (★, active, aria
+ *                                                             "true"; der Klick fuegt hinzu)
  *   (W12a) Telefon: ★ Altwesen, zum Detail
  *         gerollt, ↩️, ⋯ → ↪️                    R1 R3       rot ×2 (★)
  *   (W12b) Telefon: anlegen, waehlen, ↩️           R1 R3       rot ×2 (Zeile, 114, Detail)
@@ -145,7 +150,7 @@
  *   In jedem Fall: kein pageerror, kein console.error, kein Toast "nicht
  *   gefunden", als Dialog hoechstens das confirm des Loeschens (W5).
  *   Aus der Pruefung nachgetragen (Luecken, die ein Halbfix gruen liess), am
- *   Basisstand gemessen: (W3b) (W6b) (W9b) rot ×2.
+ *   Basisstand gemessen: (W3b) (W6b) (W9b) (W13) rot ×2.
  *
  * AN BUENDELKOPIEN DES DEV-BUENDELS GEMESSEN (ausserhalb des Repos):
  *   Fix-Skizze (Registry: Liste + Detail mit Aenderungspruefung, offene
@@ -161,6 +166,7 @@
  *   Fokusrueckgabe nur bei verschwundener Zeile     rot NUR (W3b) — 16 andere gruen
  *   Aenderungspruefung nur ueber den Namen          rot NUR (W6b) — 14 andere gruen
  *   Rolllage des Details nach dem Neuzeichnen auf 0 rot (W9b) 462 → 0
+ *   'bestiary' nicht in renderAll()                 rot u. a. (W13) — der Palettenweg
  *   ohne die Rueckgabe der Rolllage                 gruen (W9b) — Chromium haelt sie selbst
  *
  * MODULPFADE: das CRUD- und das Aktionsmodul des Bestiars stehen auf der
@@ -1417,6 +1423,70 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
                 z2.typWert,
                 'nach Strg+Y bleibt der Filter auf "Alle" (Entscheidung (d), nicht wiederhergestellt)'
             ).toBe('');
+            await rahmen(page, f);
+        });
+
+        // R1 nennt die Befehlspalette als eigenen Weg; kein Fall fuhr sie. Ihr "Rueckgaengig"
+        // und "Wiederholen" rufen undo()/redo() selbst auf, nicht ueber die Taste. Den Fokus
+        // prueft dieser Fall NICHT: die Palette gibt ihn beim Schliessen nicht zurueck, er
+        // faellt nach jeder Palettenaktion auf BODY — vorbestehend (am Basisstand gleich),
+        // aus der Palette und nicht aus dem Bestiar (Katalog BESTIAR-UNDO, Offen).
+        test(`(W13) Befehlspalette: ★ Goblin, "Rueckgaengig", "Wiederholen", "Rueckgaengig", Klick auf den ☆ — ${buendel}`, async ({
+            page
+        }) => {
+            test.skip(buendel === 'prod' && !PROD_DA, 'kein prod-Buendel gebaut');
+            const f = await laden(page, url);
+            await zurAnsicht(page, 'bestiary');
+            await suchen(page, 'gob');
+            await bediene(page, sternSel(GOB), '★ Goblin');
+            const z0 = await zustand(page, [GOB]);
+            expect(z0.D_fav, 'Vorbedingung: der Goblin ist Favorit').toContain('goblin');
+
+            /** Strg+Shift+K, Befehl tippen, Enter fuehrt den ersten Treffer aus. @param {string} wort @param {string} id */
+            const befehl = async (wort, id) => {
+                await page.keyboard.press('Control+Shift+K');
+                await expect(
+                    page.locator('#cp-overlay'),
+                    'Vorbedingung: die Palette ist offen'
+                ).toHaveClass(/\bcp-visible\b/);
+                await expect(page.locator('#cp-overlay .cp-input')).toBeFocused();
+                await page.keyboard.type(wort, { delay: 30 });
+                await expect(
+                    page.locator('#cp-results-list .cp-result').first(),
+                    `Vorbedingung: der erste Treffer fuer "${wort}" ist ${id}`
+                ).toHaveAttribute('data-command-id', id);
+                await page.keyboard.press('Enter');
+                await expect(page.locator('#cp-overlay')).not.toHaveClass(/\bcp-visible\b/);
+                await page.waitForTimeout(SETZEN_MS);
+            };
+
+            await befehl('Rueckgaengig', 'undo');
+            const z1 = await zustand(page, [GOB]);
+            expect(z1.D_fav, 'Vorbedingung: "Rueckgaengig" nimmt den Favoriten zurueck').toEqual([
+                'adler',
+                'kraken'
+            ]);
+            sternPasst(z1, GOB, 'nach "Rueckgaengig" (Palette)');
+
+            await befehl('Wiederholen', 'redo');
+            const z2 = await zustand(page, [GOB]);
+            expect(z2.D_fav, 'Vorbedingung: "Wiederholen" stellt ihn wieder her').toContain(
+                'goblin'
+            );
+            sternPasst(z2, GOB, 'nach "Wiederholen" (Palette)');
+
+            await befehl('Rueckgaengig', 'undo');
+            const z3 = await zustand(page, [GOB]);
+            sternPasst(z3, GOB, 'nach dem zweiten "Rueckgaengig" (Palette)');
+
+            const versprochen = z3.knoepfe[GOB] ? z3.knoepfe[GOB].zeichen : '?';
+            await bediene(page, sternSel(GOB), 'der ★ des Goblin nach der Palette');
+            const z4 = await zustand(page, [GOB]);
+            weich(
+                z4.D_fav.includes('goblin'),
+                `der Klick tut, was die Anzeige versprach (${versprochen})`
+            ).toBe(versprochen === '☆');
+            sternPasst(z4, GOB, 'nach dem Klick');
             await rahmen(page, f);
         });
     }
