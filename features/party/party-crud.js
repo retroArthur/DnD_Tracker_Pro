@@ -351,124 +351,140 @@ function saveCharacter() {
     }
 }
 /**
- * Oeffnet das Bearbeitungsformular fuer einen Charakter
+ * Oeffnet das Bearbeitungsformular fuer einen Charakter — ganz oder gar nicht (CHAR-HALBLADEN,
+ * docs/bugfixes.md): danach steht im Formular genau dieser Held, oder es ist leer und zu.
  */
 function editChar(id) {
     const ch = EntityLookup.character(id);
     if (!ch) return;
-    $('edit-char-id').value = String(id);
-    // Basic info
-    $('char-name').value = ch.name || '';
-    $('char-player').value = ch.playerName || '';
-    $('char-class').value = ch.characterClass || '';
-    $('char-subclass').value = ch.subclass || '';
-    $('char-race').value = ch.race || '';
-    $('char-level').value = String(ch.level || 1);
-    $('char-background').value = ch.background || '';
-    $('char-alignment').value = ch.alignment || '';
-    $('char-weight').value = String(ch.weight || '');
-    // Attributes
-    const attrs = ch.attributes || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        $(`char-${attr}`).value = String(attrs[attr] || 10);
-        updateAttrMod(attr);
-    });
-    // Saving throw proficiencies
-    const saves = ch.saveProficiencies || {};
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        const checkbox = $(`char-save-${attr}`);
-        checkbox.checked = saves[attr] || false;
-    });
-    // Combat stats
-    $('char-hp-cur').value = String(ch.hpCurrent || '');
-    $('char-hp-max').value = String(ch.hpMax || '');
-    $('char-hp-temp').value = String(ch.tempHp || '');
-    $('char-ac').value = String(ch.armorClass || '');
-    $('char-init').value = String(ch.initiative || '');
-    // Speed - handle both old format (just "9m") and new format ("9m|30ft.")
-    const speedVal = ch.speed || '9m|30ft.';
-    const speedSelect = $('char-speed');
-    if (speedSelect) {
-        // Try to find matching option
-        let found = false;
-        for (const opt of speedSelect.options) {
-            if (opt.value === speedVal || opt.value.startsWith(speedVal.split('|')[0])) {
-                opt.selected = true;
-                found = true;
-                break;
-            }
-        }
-        if (!found) speedSelect.value = '9m|30ft.';
-        updateSpeedDisplay();
-    }
-    $('char-hitdice').value = ch.hitDice || '';
-    $('char-perception').value = String(ch.passivePerception || '');
-    updateProficiencyBonus();
-    // Inspiration
-    $('char-inspiration').checked = ch.inspiration || false;
-    // Resistances and immunities
-    document.querySelectorAll('#char-resistances .cf-chip').forEach(chip => {
-        const input = chip.querySelector('input');
-        const val = input.value;
-        input.checked = (ch.resistances || []).includes(val);
-        chip.classList.toggle('selected', input.checked);
-    });
-    document.querySelectorAll('#char-immunities .cf-chip').forEach(chip => {
-        const input = chip.querySelector('input');
-        const val = input.value;
-        input.checked = (ch.immunities || []).includes(val);
-        chip.classList.toggle('selected', input.checked);
-    });
-    // Languages - use new dropdown with checkboxes
-    setCharLanguages(ch.languages);
-    // Spell slots
-    for (let i = 0; i <= 9; i++) {
-        const slot = ch.spellSlots && ch.spellSlots[i];
-        $(`char-slot-${i}`).value = String(slot ? slot.max : 0);
-    }
-    // Currency and notes
-    $('char-notes').innerHTML = sanitizeHTML(ch.notes) || '';
-    const cur = ch.currency || {};
-    $('char-pm').value = String(cur.pm || 0);
-    $('char-gm').value = String(cur.gm || 0);
-    $('char-em').value = String(cur.em || 0);
-    $('char-sm').value = String(cur.sm || 0);
-    $('char-km').value = String(cur.km || 0);
-    // Avatar and height
-    const avatarInput = $('char-avatar');
-    if (avatarInput) avatarInput.value = ch.avatar || '';
-    // Die Vorschau folgt dem FELD (AVATAR-VORSCHAU R1/R2): `.value =` loest kein input-Ereignis
-    // aus, und 'update-avatar-preview' hing nur daran — sie zeigte den zuletzt GETIPPTEN Wert
-    // oder "?", nie das Bild des geladenen Helden. Direkt aufrufen, kein synthetisches Ereignis
-    // (R4): BESTIAR-KLICK stellt ein change mit dem schon zugestellten Wert nicht mehr zu.
-    updateAvatarPreview(avatarInput ? avatarInput.value : '');
-    const heightInput = $('char-height');
-    if (heightInput) heightInput.value = String(ch.height || '');
-    // Skill proficiencies + expertise (D-03, CHAR-03)
-    const SKILL_KEYS_EDIT = [
-        'acrobatics', 'animalHandling', 'arcana', 'athletics', 'deception',
-        'history', 'insight', 'intimidation', 'investigation', 'medicine',
-        'nature', 'perception', 'performance', 'persuasion', 'religion',
-        'sleightOfHand', 'stealth', 'survival'
-    ];
-    const chSkillProf = ch.skillProficiencies || {};
-    const chSkillExp = ch.skillExpertise || {};
-    SKILL_KEYS_EDIT.forEach(key => {
-        const profEl = $(`char-skill-${key}`);
-        const expEl = $(`char-skill-exp-${key}`);
-        if (profEl) profEl.checked = chSkillProf[key] || false;
-        if (expEl) expEl.checked = chSkillExp[key] || false;
-    });
-    // Attacks (D-05, CHAR-03)
-    const attacksContainer = $('cf-attacks-container');
-    if (attacksContainer) {
-        attacksContainer.innerHTML = '';
-        (ch.attacks || []).forEach(atk => {
-            attacksContainer.insertAdjacentHTML('beforeend', buildAttackRowHTML(atk));
+    // Ein Wurf beim Laden liess frueher alles davor vom neuen und alles danach vom vorigen
+    // Helden stehen, bei offenem Formular — und 💾 ohne Aenderung schrieb den Mischzustand auf
+    // den neuen Helden. Die Aufrufer schlucken den Wurf (EventDelegation protokolliert nur, die
+    // Kopfsuche ruft per setTimeout); darum faengt ihn editChar() selbst (CHAR-HALBLADEN R3).
+    try {
+        // Basic info
+        $('char-name').value = ch.name || '';
+        $('char-player').value = ch.playerName || '';
+        $('char-class').value = ch.characterClass || '';
+        $('char-subclass').value = ch.subclass || '';
+        $('char-race').value = ch.race || '';
+        $('char-level').value = String(ch.level || 1);
+        $('char-background').value = ch.background || '';
+        $('char-alignment').value = ch.alignment || '';
+        $('char-weight').value = String(ch.weight || '');
+        // Attributes
+        const attrs = ch.attributes || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+        ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+            $(`char-${attr}`).value = String(attrs[attr] || 10);
+            updateAttrMod(attr);
         });
+        // Saving throw proficiencies
+        const saves = ch.saveProficiencies || {};
+        ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+            const checkbox = $(`char-save-${attr}`);
+            checkbox.checked = saves[attr] || false;
+        });
+        // Combat stats
+        $('char-hp-cur').value = String(ch.hpCurrent || '');
+        $('char-hp-max').value = String(ch.hpMax || '');
+        $('char-hp-temp').value = String(ch.tempHp || '');
+        $('char-ac').value = String(ch.armorClass || '');
+        $('char-init').value = String(ch.initiative || '');
+        // Speed - handle both old format (just "9m") and new format ("9m|30ft.")
+        const speedVal = ch.speed || '9m|30ft.';
+        const speedSelect = $('char-speed');
+        if (speedSelect) {
+            // Try to find matching option
+            let found = false;
+            for (const opt of speedSelect.options) {
+                if (opt.value === speedVal || opt.value.startsWith(speedVal.split('|')[0])) {
+                    opt.selected = true;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) speedSelect.value = '9m|30ft.';
+            updateSpeedDisplay();
+        }
+        $('char-hitdice').value = ch.hitDice || '';
+        $('char-perception').value = String(ch.passivePerception || '');
+        updateProficiencyBonus();
+        // Inspiration
+        $('char-inspiration').checked = ch.inspiration || false;
+        // Resistances and immunities
+        document.querySelectorAll('#char-resistances .cf-chip').forEach(chip => {
+            const input = chip.querySelector('input');
+            const val = input.value;
+            input.checked = (ch.resistances || []).includes(val);
+            chip.classList.toggle('selected', input.checked);
+        });
+        document.querySelectorAll('#char-immunities .cf-chip').forEach(chip => {
+            const input = chip.querySelector('input');
+            const val = input.value;
+            input.checked = (ch.immunities || []).includes(val);
+            chip.classList.toggle('selected', input.checked);
+        });
+        // Languages - use new dropdown with checkboxes
+        setCharLanguages(ch.languages);
+        // Spell slots
+        for (let i = 0; i <= 9; i++) {
+            const slot = ch.spellSlots && ch.spellSlots[i];
+            $(`char-slot-${i}`).value = String(slot ? slot.max : 0);
+        }
+        // Currency and notes
+        $('char-notes').innerHTML = sanitizeHTML(ch.notes) || '';
+        const cur = ch.currency || {};
+        $('char-pm').value = String(cur.pm || 0);
+        $('char-gm').value = String(cur.gm || 0);
+        $('char-em').value = String(cur.em || 0);
+        $('char-sm').value = String(cur.sm || 0);
+        $('char-km').value = String(cur.km || 0);
+        // Avatar and height
+        const avatarInput = $('char-avatar');
+        if (avatarInput) avatarInput.value = ch.avatar || '';
+        // Die Vorschau folgt dem FELD (AVATAR-VORSCHAU R1/R2): `.value =` loest kein input-Ereignis
+        // aus, und 'update-avatar-preview' hing nur daran — sie zeigte den zuletzt GETIPPTEN Wert
+        // oder "?", nie das Bild des geladenen Helden. Direkt aufrufen, kein synthetisches Ereignis
+        // (R4): BESTIAR-KLICK stellt ein change mit dem schon zugestellten Wert nicht mehr zu.
+        updateAvatarPreview(avatarInput ? avatarInput.value : '');
+        const heightInput = $('char-height');
+        if (heightInput) heightInput.value = String(ch.height || '');
+        // Skill proficiencies + expertise (D-03, CHAR-03)
+        const SKILL_KEYS_EDIT = [
+            'acrobatics', 'animalHandling', 'arcana', 'athletics', 'deception',
+            'history', 'insight', 'intimidation', 'investigation', 'medicine',
+            'nature', 'perception', 'performance', 'persuasion', 'religion',
+            'sleightOfHand', 'stealth', 'survival'
+        ];
+        const chSkillProf = ch.skillProficiencies || {};
+        const chSkillExp = ch.skillExpertise || {};
+        SKILL_KEYS_EDIT.forEach(key => {
+            const profEl = $(`char-skill-${key}`);
+            const expEl = $(`char-skill-exp-${key}`);
+            if (profEl) profEl.checked = chSkillProf[key] || false;
+            if (expEl) expEl.checked = chSkillExp[key] || false;
+        });
+        // Attacks (D-05, CHAR-03)
+        const attacksContainer = $('cf-attacks-container');
+        if (attacksContainer) {
+            attacksContainer.innerHTML = '';
+            (ch.attacks || []).forEach(atk => {
+                attacksContainer.insertAdjacentHTML('beforeend', buildAttackRowHTML(atk));
+            });
+        }
+        // Die Bearbeiten-ID erst, wenn alles geladen ist (die Atomaritaet traegt der catch-Zweig,
+        // nicht diese Stelle).
+        $('edit-char-id').value = String(id);
+        $('char-form').classList.add('open');
+        $('char-form-icon').textContent = '▲';
+    } catch (fehler) {
+        // Atomar macht DIESER Zweig das Laden (CHAR-HALBLADEN R3/E5): Formular leer und zu, keine
+        // Bearbeiten-ID, keine Teilwerte. Sichtbar ueber showToast — nicht ErrorHandler.showError,
+        // dessen Entprellung eine Meldung binnen 2 s verschluckt —, der Wurf im Fehlerlog.
+        cancelCharEdit();
+        ErrorHandler.log('editChar', fehler, `Charakter ${id}`);
+        showToast('⚠️ Charakter konnte nicht geladen werden — Formular geleert', 'error');
     }
-    $('char-form').classList.add('open');
-    $('char-form-icon').textContent = '▲';
 }
 /**
  * Cancel character edit
