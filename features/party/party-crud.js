@@ -357,6 +357,10 @@ function saveCharacter() {
 function editChar(id) {
     const ch = EntityLookup.character(id);
     if (!ch) return;
+    // Erst leeren (CHAR-HALBLADEN R4): kein Steuerelement erbt etwas vom vorher bearbeiteten
+    // Helden, einem Entwurf oder einem leer geoeffneten Formular — auch keines, das unten
+    // kuenftig vergessen wird. Schliesst nebenbei das Sprachmenue (AVATAR-VORSCHAU Offen (c)).
+    cancelCharEdit();
     // Ein Wurf beim Laden liess frueher alles davor vom neuen und alles danach vom vorigen
     // Helden stehen, bei offenem Formular — und 💾 ohne Aenderung schrieb den Mischzustand auf
     // den neuen Helden. Die Aufrufer schlucken den Wurf (EventDelegation protokolliert nur, die
