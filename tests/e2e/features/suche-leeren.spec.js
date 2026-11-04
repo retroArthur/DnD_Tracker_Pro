@@ -70,7 +70,8 @@
  *       INPUT mit registrierter Aktion, meldet der Zweig das ueber
  *       ErrorHandler.log.         statisch W6; zur Laufzeit die Unit-Datei
  *   R5  BESTIAR-KLICK R1 bleibt stimmig: ein change beim Verlassen des Feldes
- *       zeichnet nicht ein zweites Mal.                                    W1
+ *       zeichnet nicht ein zweites Mal.         Unit-Datei (R6/R5-Fall); in
+ *                                     W1 nur Gegenprobe, keine Ratsche (unten)
  *   R6  Sonst aendert sich nichts; kein synthetisches Ereignis ausser dem
  *       einen input.                                    Unit-Datei (Zaehlung)
  *   R7  Tore (Lint-Pin, Globals, d.ts) — kein Fall hier.
@@ -80,7 +81,7 @@
  * DIE FAELLE und ihr Stand am unveraenderten Buendel (543706c6)
  *
  *   (W1)  Maus 1440x900, je Feld: ✕ wie Ruecktaste,     rot: Bestiar, Session-
- *         danach Klick daneben ohne Neuzeichnen (R5)     Vorbereitung, Kalender,
+ *         danach Klick daneben (Gegenprobe zu R5)        Vorbereitung, Kalender,
  *                                                        Fraktionen, Wiki
  *   (W1p) dasselbe im prod-Buendel, alle Felder in       rot (dieselben fuenf)
  *         einem Fall
@@ -135,12 +136,13 @@
  * ───────────────────────────────────────────────────────────────────────────
  * DER ROTE LAUF — diese Datei am Stand 543706c6 (vor dem Fix), Chromium,
  * dev- und prod-Buendel frisch gebaut, drei Worker: 110 Faelle, 69 rot,
- * 41 gruen. tests/unit/suche-leeren.test.js dazu: 9 von 9 rot.
+ * 41 gruen. tests/unit/suche-leeren.test.js dazu: 9 von 9 rot (seit der
+ * Nachpruefung 10 Faelle, 10 von 10 rot).
  *
  *   (W1)  rot   5  bestiary, sessionprep, kalender, fraktionen: Wert "gob",
  *                  ✕ .visible, Ansicht gefiltert, Welt-Zaehler 1 statt 2;
  *                  wiki: Aufklapp offen mit "Goblinstaemme"
- *         gruen 10 die uebrigen Felder, R5 eingeschlossen
+ *         gruen 10 die uebrigen Felder, die R5-Gegenprobe eingeschlossen
  *   (W1p) rot      dieselben fuenf Felder im prod-Buendel
  *   (W2)  rot   5 / gruen 10   wie W1
  *   (W2b) rot   5 / gruen 10   wie W1
@@ -187,8 +189,13 @@
  *                                                    R5 hier nichts; Unit 2 rot
  *                                                    (R1 eigene Aktion, R6)
  *
- * Kein Fall ist an der richtigen Skizze rot. Die R5-Pruefung in (W1) war in
- * keinem gemessenen Stand rot — sie ist eine Ratsche fuer BESTIAR-KLICK R1.
+ * Kein Fall ist an der richtigen Skizze rot. Die R5-Pruefung in (W1) ist
+ * KEINE Ratsche, nur eine Gegenprobe im echten Browser: Chromium feuert nach
+ * dem programmatischen Leeren beim Verlassen des Feldes kein change, sie kann
+ * also nicht rot werden. Gemessen in der Nachpruefung am Mutanten, der nach
+ * dem input den Eintrag in `_perInputZugestellt` wieder loescht (R5
+ * gebrochen): (W1) 15 von 15 gruen, die Unit-Datei rot. R5 haelt
+ * tests/unit/suche-leeren.test.js (R6/R5-Fall), nicht diese Datei.
  *
  * LAUFZEIT: ~9 s je Fall bei drei Workern; die ganze Datei ~8 min.
  */
@@ -1076,9 +1083,10 @@ test.describe('(W1) Maus, 1440x900: ✕ wirkt wie leer getippt', () => {
             const fehler = await laden(page);
             const { ansicht } = await wieVonHandGeleert(page, feld, 'maus');
 
-            // R5: das Verlassen des Feldes (Klick auf den App-Titel, eine
-            // Flaeche ohne Aktion) zeichnet die Ansicht nicht noch einmal —
-            // ein nachlaufendes change muss BESTIAR-KLICK R1 abfangen.
+            // Gegenprobe zu R5, keine Ratsche (siehe Kopf): das Verlassen des
+            // Feldes (Klick auf den App-Titel, eine Flaeche ohne Aktion)
+            // zeichnet die Ansicht nicht noch einmal. Chromium reicht hier gar
+            // kein change nach — R5 selbst haelt die Unit-Datei.
             await page.evaluate(id => {
                 const w = /** @type {any} */ (window);
                 w.__sucheLeerenMut = 0;

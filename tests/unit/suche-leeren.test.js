@@ -23,10 +23,13 @@
  *       und ohne neuen Konsolen-Ausweg (console-hygiene pinnt in
  *       ui-actions.js genau zwei).
  *   R6  KEIN WEITERES SYNTHETISCHES EREIGNIS: genau ein `input`, kein
- *       `change`. Und R5: ein spaeteres change mit demselben leeren Wert (der
- *       Browser feuert es beim Verlassen des Feldes) zeichnet nicht ein
- *       zweites Mal — BESTIAR-KLICK R1 im Verteiler faengt es, weil das
- *       `input` den Wert '' zugestellt hat.
+ *       `change`. Und R5: ein spaeteres change mit demselben leeren Wert
+ *       zeichnet nicht ein zweites Mal — BESTIAR-KLICK R1 im Verteiler faengt
+ *       es, weil das `input` den Wert '' zugestellt hat. NUR diese Datei haelt
+ *       R5: Chromium reicht nach dem programmatischen Leeren beim Verlassen
+ *       des Feldes gar kein change nach, die Pruefung in (W1) der E2E-Datei
+ *       ist darum nur eine Gegenprobe (Nachpruefung: am Mutanten, der den
+ *       zugestellten Wert wieder loescht, dort gruen, hier rot).
  *   R3  Der Fokus steht danach im Feld (der Klick fokussiert vorher das ✕,
  *       wie der mousedown im Browser).
  *   R2  Das ✕ verliert `.visible` auch bei einer Feldaktion, die es nicht
@@ -307,7 +310,8 @@ describe('R6/R5: genau ein synthetisches input, kein change — und kein zweites
         const durchKreuz = gezeichnet;
         const ereignisseDurchKreuz = amFeld.slice();
 
-        // R5: das change, das der Browser beim Verlassen des Feldes nachreicht,
+        // R5: ein change, das ein Browser beim Verlassen des Feldes nachreichen
+        // kann (Chromium tut es hier nicht, darum steht der Fall nur hier),
         // traegt denselben leeren Wert — BESTIAR-KLICK R1 schluckt es, weil
         // das input den Wert '' zugestellt hat.
         input.dispatchEvent(new Event('change', { bubbles: true }));
