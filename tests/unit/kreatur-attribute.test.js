@@ -27,6 +27,12 @@
  * U4-Faelle mit Schluessel als Text (die heutige Signatur liest `.target` von
  * einem String und schreibt nichts) und der Export-Fall. Gruen als Gegenprobe:
  * fremder Schluessel schreibt nichts, updateAllBstAttrMods.
+ *
+ * NACHPRUEFUNG (an einem Mutanten gemessen): der Fall "fremder Schluessel"
+ * legt seither ein Feldpaar zum fremden Schluessel an. Vorher lieferte
+ * `window.$('bst-xyz')` ohnehin null, und ein Mutant OHNE die
+ * Schluesselpruefung von R2 blieb gruen (21 von 21); jetzt sind an ihm alle
+ * vier Faelle rot.
  */
 
 const fs = require('fs');
@@ -48,13 +54,21 @@ const UNBERUEHRT = 'unberuehrt';
  * liefert sie nach ID. D, save und saveUndoState sind Fallen, die jeden Zugriff
  * mitschreiben.
  * @param {Record<string, string>} werte Feldwerte je Attribut
+ * @param {string[]} [fremde] Schluessel AUSSERHALB der sechs, fuer die die
+ *   Sandbox trotzdem ein Paar bst-<schluessel> (Wert "18") und
+ *   bst-<schluessel>-mod anlegt — ohne dieses Paar kehrte die Funktion schon an
+ *   `!inputEl` zurueck, und die Schluesselpruefung von R2 waere unbewacht.
  */
-function ladeEditor(werte) {
+function ladeEditor(werte, fremde = []) {
     /** @type {Record<string, any>} */
     const elemente = {};
     ATTR.forEach(a => {
         elemente['bst-' + a] = { value: werte[a] !== undefined ? werte[a] : '10' };
         elemente['bst-' + a + '-mod'] = { textContent: UNBERUEHRT };
+    });
+    fremde.forEach(f => {
+        elemente['bst-' + f] = { value: '18' };
+        elemente['bst-' + f + '-mod'] = { textContent: UNBERUEHRT };
     });
     const zugriffe = [];
     const falle = name =>
@@ -129,14 +143,19 @@ describe('updateBstAttrMod(attr) — der Schluessel als Text (KREATUR-ATTRIBUTE,
         });
     });
 
+    // Die Sandbox legt fuer den fremden Schluessel ein eigenes Feldpaar an (Wert "18"):
+    // nur so sieht der Fall die Schluesselpruefung selbst und nicht bloss ein fehlendes
+    // Element. Nachpruefung: an einem Mutanten ohne die Pruefung blieb die fruehere Form
+    // dieses Falls gruen, weil `window.$('bst-xyz')` ohnehin null lieferte.
     test.each([['xyz'], [''], ['updateBstAttrMod'], ['18']])(
-        'fremder Schluessel %p schreibt nichts und wirft nicht (Gegenprobe)',
+        'fremder Schluessel %p schreibt nichts und wirft nicht — auch wenn ein Feldpaar dazu existiert (R2)',
         fremd => {
-            const { context, elemente } = ladeEditor({ str: '18' });
+            const { context, elemente } = ladeEditor({ str: '18' }, [fremd]);
 
             expect(() => context.updateBstAttrMod(fremd)).not.toThrow();
 
             expect(anzeigen(elemente)).toEqual(Object.fromEntries(ATTR.map(a => [a, UNBERUEHRT])));
+            expect(elemente['bst-' + fremd + '-mod'].textContent).toBe(UNBERUEHRT);
         }
     );
 
