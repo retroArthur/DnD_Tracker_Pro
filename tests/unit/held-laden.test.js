@@ -395,6 +395,8 @@ beforeAll(() => {
     });
     echt = {
         updateAttrMod: ctx.updateAttrMod,
+        updateSpeedDisplay: ctx.updateSpeedDisplay,
+        updateProficiencyBonus: ctx.updateProficiencyBonus,
         setCharLanguages: ctx.setCharLanguages,
         buildAttackRowHTML: ctx.buildAttackRowHTML
     };
@@ -423,6 +425,7 @@ beforeEach(() => {
 
 afterEach(() => {
     Object.assign(ctx, echt);
+    delete ctx.window.APP_CONFIG;
 });
 
 const fehlerMeldungen = () => meldungen.filter(([, typ]) => typ === 'error');
@@ -506,19 +509,24 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
     });
 
     describe('(HL2) R3: ein unerwarteter Fehler beim Laden hinterlaesst ein leeres, geschlossenes Formular', () => {
+        /**
+         * Ein Anzeige-Helfer, der IMMER wirft — auch beim Leeren, denn cancelCharEdit() ruft
+         * dieselben Helfer wie das Laden (CHAR-HALBLADEN Offen (4)). Fuer updateAttrMod ist
+         * das die Injektion des Vertrags (WAECHTER, HL2 "frueh").
+         * @param {string} name
+         */
+        const wirftImmer = name => () => {
+            ctx[name] = () => {
+                throw new Error(`Probe: ${name} wirft immer`);
+            };
+        };
         /** @type {Array<[string, () => void]>} */
         const STELLEN = [
+            ['frueh (updateAttrMod wirft immer)', wirftImmer('updateAttrMod')],
+            ['beim Tempo (updateSpeedDisplay wirft immer)', wirftImmer('updateSpeedDisplay')],
             [
-                'frueh (updateAttrMod, fuer jeden Wert ausser der Vorgabe 10)',
-                () => {
-                    ctx.updateAttrMod = (/** @type {string} */ attr) => {
-                        const eingabe = /** @type {HTMLInputElement} */ (
-                            document.getElementById(`char-${attr}`)
-                        );
-                        if (eingabe.value !== '10') throw new Error('Probe: updateAttrMod wirft');
-                        return echt.updateAttrMod(attr);
-                    };
-                }
+                'beim Uebungsbonus (updateProficiencyBonus wirft immer)',
+                wirftImmer('updateProficiencyBonus')
             ],
             [
                 'mittig (setCharLanguages)',
@@ -547,11 +555,38 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
             const z = formularStand();
             expect({ id: z['edit-char-id'], offen: z.offen }).toEqual({ id: '', offen: false });
             expect(arienWerte(z)).toEqual([]);
-            // Leer heisst: kein Teilwert von Xaver und nichts von Aria, in JEDEM Steuerelement.
+            // Leer heisst: kein Teilwert von Xaver und nichts von Aria, in JEDEM Steuerelement
+            // und in jeder Anzeige (Modifikatoren, Fuss, Uebungsbonus).
             expect(z).toEqual(STAND.leer);
             expect(fehlerMeldungen()).toHaveLength(1);
-            expect(protokoll).toHaveLength(1);
+            // Genau ein Eintrag, der von editChar() (R3). Ein Wurf eines Helfers beim Leeren
+            // steht nur unter DEBUG_MODE im Fehlerlog (Fall unten), wie jeder in form-helpers.js.
+            expect(protokoll.map(([fn]) => fn)).toEqual(['editChar']);
         });
+
+        // Das Leeren selbst, ohne editChar(): der Abbrechen-Knopf und verwirfBearbeitenRest()
+        // rufen cancelCharEdit() direkt. Ein Helfer, der wirft, laesst keinen Wert und keine
+        // Anzeige von Aria stehen, und der Wurf geht ins Fehlerlog (unter DEBUG_MODE).
+        test.each(['updateAttrMod', 'updateSpeedDisplay', 'updateProficiencyBonus'])(
+            '(HL2) das Leeren selbst: %s wirft immer — cancelCharEdit() nach editChar(Aria) laesst nichts von Aria stehen, der Wurf steht unter DEBUG_MODE im Fehlerlog',
+            name => {
+                ctx.editChar(1);
+                expect(formularStand()['edit-char-id']).toBe('1');
+                meldungen.length = 0;
+                protokoll.length = 0;
+                const probe = new Error(`Probe: ${name} wirft immer`);
+                ctx[name] = () => {
+                    throw probe;
+                };
+                ctx.window.APP_CONFIG = { DEBUG_MODE: true };
+                expect(() => ctx.cancelCharEdit()).not.toThrow();
+                const z = formularStand();
+                expect(arienWerte(z)).toEqual([]);
+                expect(z).toEqual(STAND.leer);
+                expect(protokoll.some(([, fehler]) => fehler === probe)).toBe(true);
+                expect(meldungen).toEqual([]);
+            }
+        );
     });
 
     describe('(HL3) E3: speed als Zahl waehlt die Option mit data-ft gleich der Zahl, sonst 9m|30ft.', () => {
