@@ -534,7 +534,10 @@ function cancelCharEdit() {
             // die aber nur auf GELISTETE Felder an. Gemessen trug der naechste
             // neue Charakter nach "Abbrechen" (und nach 💾) Stufe 5 und
             // Uebungsbonus 3 des zuletzt bearbeiteten.
-            'char-level'
+            'char-level',
+            // Ebenso der Uebungsbonus: geschrieben hat ihn allein updateProficiencyBonus();
+            // warf das, blieb der des vorigen Helden stehen (CHAR-HALBLADEN Offen (4)).
+            'char-proficiency'
         ],
         selectFields: [
             'char-class',
@@ -562,8 +565,17 @@ function cancelCharEdit() {
             'char-km': '0'
         },
         customHandlers: () => {
-            updateSpeedDisplay();
-            updateProficiencyBonus();
+            // Total (CHAR-HALBLADEN Offen (4)): erst die Anzeigen auf ihren Leerwert, dann alle
+            // Daten, die Anzeige-Helfer zuletzt. Es sind dieselben Helfer wie beim Laden, und
+            // ein Wurf bricht diesen Block ab: standen sie vorn, blieben Sprachen, Chips,
+            // Attribute, Zauberplaetze, Fertigkeiten und Angriffe des vorigen Helden stehen;
+            // die Anzeigen schrieb nur der Helfer selbst. Wirft er jetzt, gilt der Leerwert.
+            ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+                const modEl = $(`char-${attr}-mod`);
+                if (modEl) modEl.textContent = '+0';
+            });
+            const ftEl = $('char-speed-ft');
+            if (ftEl) ftEl.textContent = '30ft';
             clearCharLanguages();
             // clearChipSelection() haengt selbst ' .cf-chip' an: der Aufruf mit
             // '.cf-chip' suchte '.cf-chip .cf-chip' und traf nichts — die
@@ -589,6 +601,9 @@ function cancelCharEdit() {
             // Clear attacks container (D-05)
             const attacksContainer = $('cf-attacks-container');
             if (attacksContainer) attacksContainer.innerHTML = '';
+            // Zuletzt, s. oben: hinter ihnen steht nichts, das ein Wurf ueberspringen koennte
+            updateSpeedDisplay();
+            updateProficiencyBonus();
         }
     });
     // Vorschau aus dem geleerten Feld nachfuehren (AVATAR-VORSCHAU R3) — fuer alle Leerwege:
