@@ -62,6 +62,7 @@ const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 const WURZEL = path.join(__dirname, '..', '..');
 const PARTY_CRUD = path.join(WURZEL, 'features', 'party', 'party-crud.js');
 const FORM_HELPERS = path.join(WURZEL, 'utils', 'form-helpers.js');
+const RENDER_HELPERS = path.join(WURZEL, 'render', 'helpers.js');
 const VORLAGE = path.join(WURZEL, 'assets', 'templates', 'view-party.html');
 
 const BILD_A =
@@ -599,6 +600,42 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
             expect(STAND.leer['char-speed']).toBe('9m|30ft.');
             expect(meldungen).toEqual([]);
             expect(protokoll).toEqual([]);
+        });
+    });
+
+    describe('(HL7) E5: jeder Ladefehler meldet sich sichtbar — auch zwei kurz hintereinander', () => {
+        test('(HL7) zwei Ladefehler binnen 2 s: zwei Meldungen (der echte ErrorHandler.showError entprellt)', () => {
+            // Der echte ErrorHandler aus render/helpers.js, in einem eigenen Kontext: showError()
+            // verschluckt jede Meldung binnen 2 s nach der vorigen — der Grund fuer E5.
+            /** @type {any} */
+            const ehKtx = { window: {}, document };
+            vm.createContext(ehKtx);
+            vm.runInContext(fs.readFileSync(RENDER_HELPERS, 'utf8'), ehKtx, {
+                filename: 'render/helpers.js'
+            });
+            const echterEH = ehKtx.window.ErrorHandler;
+            echterEH._consoleLog = false;
+            ehKtx.showToast = ctx.showToast;
+            const attrappe = ctx.ErrorHandler;
+            ctx.ErrorHandler = echterEH;
+            ctx.window.ErrorHandler = echterEH;
+            try {
+                ctx.buildAttackRowHTML = () => {
+                    throw new Error('Probe: buildAttackRowHTML wirft');
+                };
+                expect(() => ctx.editChar(1)).not.toThrow();
+                expect(() => ctx.editChar(2)).not.toThrow();
+                expect(formularStand()).toEqual(STAND.leer);
+                expect(
+                    echterEH
+                        .getRecentErrors(10)
+                        .filter((/** @type {any} */ e) => e.fn === 'editChar')
+                ).toHaveLength(2);
+                expect(fehlerMeldungen()).toHaveLength(2);
+            } finally {
+                ctx.ErrorHandler = attrappe;
+                ctx.window.ErrorHandler = attrappe;
+            }
         });
     });
 });
