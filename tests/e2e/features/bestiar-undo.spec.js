@@ -93,6 +93,7 @@
  *   Detail bei jedem Neuzeichnen ohne Aenderungspruefung (BODY)     → (W6) (W7)
  *   ... auch mit Fokus/Rolllage von Hand zurueckgesetzt             → (W7)(W8)(W9)(W12a)
  *   Fokus der verschwundenen Zeile an die Nachbarzeile (Index)      → (W3)
+ *   Fokus einer BLEIBENDEN Zeile nach Index, nicht nach Kreatur     → (W3b)
  *   Aenderungspruefung des Details nur ueber den Namen              → (W6b)
  *   Rolllage des Details beim Neuzeichnen zurueckgesetzt            → (W9b)
  *
@@ -109,6 +110,9 @@
  *   (W3)  Probewesen anlegen, Zeile waehlen,
  *         Strg+Z, Strg+Y                          R1 R3 R4    rot ×2 (Zeile, 114,
  *                                                             Probetyp, Detail)
+ *   (W3b) Aawesen ueber Altwesen anlegen, Zeile
+ *         Altwesen fokussiert, Strg+Z, Strg+Y     R4          rot ×2 (Zeile Aawesen
+ *                                                             bleibt stehen)
  *   (W4)  wie (W3), Strg+Z aber in der Party       R2 R3       rot ×2 (Detail Probewesen)
  *   (W5)  Altwesen im Detail loeschen (confirm),
  *         Strg+Z, Strg+Y                          R1 R3 R4 (c) rot ×2 (Detail nach dem
@@ -141,7 +145,7 @@
  *   In jedem Fall: kein pageerror, kein console.error, kein Toast "nicht
  *   gefunden", als Dialog hoechstens das confirm des Loeschens (W5).
  *   Aus der Pruefung nachgetragen (Luecken, die ein Halbfix gruen liess), am
- *   Basisstand gemessen: (W6b) (W9b) rot ×2.
+ *   Basisstand gemessen: (W3b) (W6b) (W9b) rot ×2.
  *
  * AN BUENDELKOPIEN DES DEV-BUENDELS GEMESSEN (ausserhalb des Repos):
  *   Fix-Skizze (Registry: Liste + Detail mit Aenderungspruefung, offene
@@ -150,9 +154,11 @@
  *   Liste ueber die Registry, ohne Detail           rot (W3)(W4)(W5)(W6)(W12b)
  *   renderBestiaryList unbedingt in renderAll       rot (W10) 400 statt 587 px
  *   Detail-Abgleich nur in renderAll, ungeprueft    rot (W4), (W6)(W7) BODY, (W3)(W5)
- *   Kritik-Kandidat (Nachbarzeile gleichen Index)   rot NUR (W3) — fremde Zeile
+ *   Kritik-Kandidat (Nachbarzeile gleichen Index)   rot NUR (W3) — fremde Zeile;
+ *                                                   seit (W3b) auch dort rot
  *   Detail immer neu, Fokus/Rolllage von Hand       rot (W7)(W8)(W9)(W12a) — Beobachter
  * NACHGETRAGEN, an Quelltextkopien des Fix-Stands gemessen (dev gebaut):
+ *   Fokusrueckgabe nur bei verschwundener Zeile     rot NUR (W3b) — 16 andere gruen
  *   Aenderungspruefung nur ueber den Namen          rot NUR (W6b) — 14 andere gruen
  *   Rolllage des Details nach dem Neuzeichnen auf 0 rot (W9b) 462 → 0
  *   ohne die Rueckgabe der Rolllage                 gruen (W9b) — Chromium haelt sie selbst
@@ -875,6 +881,63 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
                 [null, PROBE],
                 `nach Strg+Y nicht auf einer fremden Zeile (${z2.fokus.beschreibung})`
             ).toContain(z2.fokus.zeile);
+            await rahmen(page, f);
+        });
+
+        // R4 "Auf ★ oder einer Zeile, die BLEIBT: er bleibt dort" — auch wenn eine Zeile
+        // DARUEBER wegfaellt. (W3) prueft nur die verschwundene Zeile, (W1)/(W8) nur einen
+        // unveraenderten Index. Die Tastaturgruppe allein haelt den Index und gaebe den Fokus
+        // der Zeile, die jetzt an dieser Stelle steht — einem fremden Monster. An Quelltextkopien
+        // gemessen (dev): gibt renderBestiaryAnsicht() den Fokus nur zurueck, wenn die Zeile
+        // verschwand, bleiben alle 16 anderen Faelle gruen und dieser wird rot (nach Strg+Z
+        // auf gruene-vettel statt auf Altwesen); ebenso die Rueckgabe per Index.
+        test(`(W3b) Aawesen ueber Altwesen anlegen, Zeile Altwesen fokussiert, Strg+Z, Strg+Y: der Fokus bleibt bei Altwesen — ${buendel}`, async ({
+            page
+        }) => {
+            test.skip(buendel === 'prod' && !PROD_DA, 'kein prod-Buendel gebaut');
+            const f = await laden(page, url);
+            await zurAnsicht(page, 'bestiary');
+            await suchen(page, 'wesen');
+            await anlegen(page, 'Aawesen', 'Probetyp');
+            await bediene(page, zeileSel(ALT) + ' .bestiary-name', 'die Zeile Altwesen');
+            const z0 = await zustand(page);
+            expect(z0.D_namen, 'Vorbedingung: Aawesen ist angelegt').toEqual([
+                '1:Altwesen',
+                '2:Aawesen'
+            ]);
+            expect(
+                z0.fokus.zeile === ALT && z0.fokus.aktion === 'bestiary-select',
+                `Vorbedingung: der Fokus liegt auf der Zeile Altwesen (${z0.fokus.beschreibung})`
+            ).toBe(true);
+            const stelle = z0.zeilen.indexOf(ALT);
+            const ueber = z0.zeilen.indexOf(PROBE);
+            expect(ueber, 'Vorbedingung: Aawesen ist gelistet').toBeGreaterThanOrEqual(0);
+            expect(ueber, 'Vorbedingung: Aawesen steht UEBER Altwesen').toBeLessThan(stelle);
+            const nachbar = z0.zeilen[stelle + 1];
+            expect(nachbar, 'Vorbedingung: unter Altwesen steht eine weitere Zeile').toBeTruthy();
+
+            await rueckgaengig(page);
+            const z1 = await zustand(page);
+            expect(z1.D_namen, 'Vorbedingung: Strg+Z nimmt Aawesen in D zurueck').toEqual([
+                '1:Altwesen'
+            ]);
+            weich(z1.zeilen, 'nach Strg+Z ist die Zeile Aawesen weg').not.toContain(PROBE);
+            weich(
+                z1.fokus.zeile,
+                `nach Strg+Z bleibt der Fokus bei Altwesen, nicht bei ${nachbar} (${z1.fokus.beschreibung})`
+            ).toBe(ALT);
+            weich(z1.fokus.aktion, 'auf der Zeile selbst').toBe('bestiary-select');
+            detailUnberuehrt(z0, z1, 'nach Strg+Z');
+
+            await wiederholen(page);
+            const z2 = await zustand(page);
+            weich(z2.zeilen, 'nach Strg+Y ist die Zeile Aawesen zurueck').toContain(PROBE);
+            weich(
+                z2.fokus.zeile,
+                `nach Strg+Y bleibt der Fokus bei Altwesen (${z2.fokus.beschreibung})`
+            ).toBe(ALT);
+            weich(z2.fokus.aktion, 'auf der Zeile selbst').toBe('bestiary-select');
+            detailUnberuehrt(z1, z2, 'nach Strg+Y');
             await rahmen(page, f);
         });
 
