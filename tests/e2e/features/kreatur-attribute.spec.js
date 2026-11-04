@@ -195,7 +195,9 @@
  *   VERWORFEN: INPUT type=number im Klick-       rot W1 W2 W3 W3r W4 W5 W7 W9;
  *     Zweig ausgenommen                           Unit 17
  *   Handler nur bei click (Kritik)               rot W1 W2 W3 W3r W4 W7 —
- *                                                 W1 allein haelt ihn; Unit 3
+ *                                                 schon W1 allein faengt ihn,
+ *                                                 W2 (Klick, dann Tippen)
+ *                                                 ebenso; Unit 3
  *   Handler liest ctx.value (Kritik)             rot W1 W2 W3 W3r W4 W7; Unit 2
  *   Whitelist-Eintrag bleibt (R4 vergessen)      E2E gruen; Unit 1 (U3)
  *   Anzeige geklemmt (Variante b statt a)        rot W3r (35, -5); Unit 2
