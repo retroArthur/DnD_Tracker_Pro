@@ -846,7 +846,8 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  * DIE AUSSAGE, AUF DIE ES ANKOMMT, in einem Satz: **solange das Charakterformular offen ist,
  * zeigt die Vorschau #cf-avatar-preview, was der Wert im Feld #char-avatar beim Speichern auf
  * der Karte ergaebe — nach jedem ✏️, nach jedem Leeren, und gleich, was vorher getippt oder
- * bearbeitet wurde.**
+ * bearbeitet wurde.** Das ist das Bild, das 💾 schriebe; bei Altdaten (Avatar als Array oder
+ * mit NBSP davor) NICHT unbedingt das, was die Karte VOR dem Speichern zeigt — Fall (W9).
  *
  * Ursprung: docs/bugfixes.md, Eintrag AVATAR-DATEI, Offen (1) ("editChar() ruft die Vorschau
  * nicht auf"). A3 galt nur fuer das TIPPEN (Fall (d) oben); dieser Block dehnt ihn auf Laden
@@ -949,11 +950,16 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *   (W7) 390x844 mit hasTouch per .tap(): (W1), (W3), (W4) — dort ohne Taste n und Palette
  *        (Telefon), "Speichern" gefolgt von der Kopfzeile                     rot, rot, gruen
  *   (W8) prod-Buendel: (W1) und (W3)                                                  rot
- *   (W9) Altdaten (R1, nicht R7): ✏️ Aria, dann ✏️ Gus (`speed: 30` als Zahl) — die Vorschau
- *        folgt dem FELD, was immer editChar() dort hinterlaesst (heute Arias Bild, weil es vor
- *        der Avatar-Zeile wirft)                                                          rot
- *        Waecht gegen eine Vorschau aus ch.avatar am ANFANG von editChar() (m7): sie zeigte
- *        "?" neben Arias Bild im Feld, und 💾 schriebe dieses Bild auf Gus.
+ *   (W9) Altdaten (R1, nicht R7): ✏️ Aria, dann ✏️ Gus (`speed: 30` als Zahl) — editChar()
+ *        wirft vor der Avatar-Zeile, im Feld bleibt Arias Bild —, dann ✏️ Ida (Avatar als
+ *        ARRAY `[HTTPS_BILD]`, im Feld als Text) und ✏️ Kai (NBSP vor DATA_BILD, JS-trim()
+ *        entfernt es). Die Vorschau folgt jeweils dem FELD, gleich was dort steht        rot
+ *        Waecht gegen eine Vorschau aus ch.avatar statt aus dem Feld: am ANFANG von editChar()
+ *        (m7) zeigte sie bei Gus "?" neben Arias Bild im Feld, das 💾 auf Gus schriebe; an der
+ *        Stelle von R2 (m8) zeigte sie bei Ida "?" — updateAvatarPreview() nimmt nur Text —,
+ *        waehrend 💾 das Bild schriebe. Die KARTE haelt der Fall nicht fest: bei Ida und Kai
+ *        zeigt sie vor dem Speichern 👤 (sie prueft den rohen Wert, und sichereBildquelle()
+ *        entfernt nur Zeichen <= U+0020), danach das Bild.
  *   (W10) Import R7 am Bildschirm, mit dem echten 📤-Export als Vorlage und 📥 ueber den
  *        Dateidialog: ✏️ Cora, "Hinzufuegen" — der Held bleibt in Bearbeitung (Kontrolle);
  *        ✏️ Aria, ein anderes Bild tippen, "Ersetzen" → das Formular ist zu, die Bearbeiten-ID
@@ -971,14 +977,14 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *                                                   nach "Ersetzen"; ebenso (W7)-(W3),
  *                                                   (W7)-(W4), (W8)-(W3)
  *   m2   nur cancelCharEdit() (Halbfix)             10 rot: (W1), (W2), (W3) "✏️ Aria", (W5)
- *                                                   "✏️ Cora", (W9), (W10) die vier ✏️-Schritte;
- *                                                   ebenso (W7)-(W1), (W7)-(W3), (W8)
+ *                                                   "✏️ Cora", (W9) alle vier ✏️, (W10) die vier
+ *                                                   ✏️-Schritte; ebenso (W7)-(W1), (W7)-(W3), (W8)
  *   m4   dispatchEvent(change) am Feld in beiden,   1 rot: genau (W5) "✏️ Cora"
  *        statt des Aufrufs (verworfen, R4)
- *   m7   updateAvatarPreview(ch.avatar) am ANFANG   1 rot: genau (W9) "✏️ Gus"
+ *   m7   updateAvatarPreview(ch.avatar) am ANFANG   1 rot: genau (W9), "✏️ Gus" und "✏️ Ida"
  *        von editChar(), plus R3
- *   m8   updateAvatarPreview(ch.avatar || '') an    alle 13 gruen — zulaessig: von aussen nicht
- *        der Stelle von R2, plus R3                 vom Feld zu unterscheiden (Kritik-Vertrag)
+ *   m8   updateAvatarPreview(ch.avatar || '') an    1 rot: genau (W9) "✏️ Ida" — vor Ida war m8
+ *        der Stelle von R2, plus R3                 von aussen nicht vom Feld zu unterscheiden
  * Von aussen NICHT zu unterscheiden, darum in tests/unit/avatar-vorschau.test.js: der Aufruf
  * IN customHandlers (m5 hinter dem Leeren der Angriffe, m5a als ERSTE Anweisung im Block; hier
  * alle 13 gruen, dort U4 rot, bei m5 auch U1) und ein synthetisches input statt des Aufrufs
@@ -1044,7 +1050,7 @@ const NAMEN = new Map([
  * Ein Held — `speed` als TEXT (R7), sonst laedt editChar() nur halb.
  * @param {number} id
  * @param {string} name
- * @param {string} avatar
+ * @param {any} avatar Text; in (W9) auch Altdaten (ein Array)
  * @param {object} [extra]
  */
 function held(id, name, avatar, extra = {}) {
@@ -1091,6 +1097,10 @@ const EIK = held(5, 'Eik', NETZWERKPFADE[0]);
 const FENN = held(6, 'Fenn', HTTPS_BILD);
 /** Altdaten (W9): `speed` als Zahl, wie aeltere Staende ihn trugen; die Datengrenze laesst ihn. */
 const GUS = held(7, 'Gus', '', { speed: 30 });
+/** Altdaten (W9): der Avatar als Array — editChar() macht per `.value =` Text daraus. */
+const IDA = held(8, 'Ida', [HTTPS_BILD]);
+/** Altdaten (W9): ein NBSP vor dem Bild — JS-trim() entfernt es, sichereBildquelle() nicht. */
+const KAI = held(9, 'Kai', '\u00a0' + DATA_BILD);
 const HELDEN = [ARIA, BRAM, CORA, DORN, EIK, FENN];
 
 /**
@@ -1557,28 +1567,39 @@ test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden un
         // schreibt: das ist R7 (eigener Vorgang). Darum auch nur pageerror: editChar() wirft
         // heute bei `speed` als Zahl (`speedVal.split is not a function`), EventDelegation
         // faengt das und meldet es per console.error und im Fehlerlog der App — das haelt
-        // dieser Fall nicht fest, weder als Soll noch als Verbot.
-        test('(g) (W9) Altdaten: nach ✏️ Aria und ✏️ Gus (`speed` als Zahl) folgt die Vorschau dem Feld', async ({
+        // dieser Fall nicht fest, weder als Soll noch als Verbot. Ebenso wenig die Karte: bei
+        // Ida und Kai zeigt sie vor dem Speichern 👤, die Vorschau das Bild aus dem Feld.
+        test('(g) (W9) Altdaten: nach ✏️ Aria, ✏️ Gus (`speed` als Zahl), ✏️ Ida (Avatar als Array) und ✏️ Kai (NBSP davor) folgt die Vorschau dem Feld', async ({
             page
         }) => {
             test.setTimeout(60000);
-            const beob = await ladenMitHelden(page, { characters: [ARIA, BRAM, GUS] });
+            const beob = await ladenMitHelden(page, { characters: [ARIA, BRAM, GUS, IDA, KAI] });
             const bedien = bedienung(page, false);
             expect(
-                await page.evaluate(
+                await page.evaluate(() => {
+                    /** @param {number} id */
                     // @ts-ignore
-                    () => typeof window.D?.characters?.find(c => c.id === 7)?.speed
-                ),
-                'Vorbedingung: Gus traegt `speed` nach dem Laden noch als Zahl (sonst ist es keine Altdaten-Probe)'
-            ).toBe('number');
+                    const finde = id => (window.D?.characters || []).find(c => c && c.id === id);
+                    return {
+                        gus: typeof finde(7)?.speed,
+                        ida: Array.isArray(finde(8)?.avatar),
+                        kai: String(finde(9)?.avatar).startsWith('\u00a0')
+                    };
+                }),
+                'Vorbedingung: die Altdaten ueberstehen das Laden (sonst ist es keine Altdaten-Probe)'
+            ).toEqual({ gus: 'number', ida: true, kai: true });
             await zuReiter(page, 'party');
             await bearbeitenKopf(page, bedien, ARIA.id);
             await pruefe(page, '(W9) ✏️ Aria', DATA_BILD);
             await bearbeitenKopf(page, bedien, GUS.id);
             await pruefe(
                 page,
-                '(W9) dann ✏️ Gus (Altdaten): Vorschau = Feld, gleich was im Feld steht'
+                '(W9) dann ✏️ Gus (`speed` als Zahl): Vorschau = Feld, gleich was im Feld steht'
             );
+            await bearbeitenKopf(page, bedien, IDA.id);
+            await pruefe(page, '(W9) dann ✏️ Ida (Avatar als Array): Vorschau = Feld');
+            await bearbeitenKopf(page, bedien, KAI.id);
+            await pruefe(page, '(W9) dann ✏️ Kai (NBSP davor): Vorschau = Feld, getrimmt');
             await page.waitForTimeout(300);
             expect(beob.netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
             expect(beob.seitenfehler, 'kein Seitenfehler').toEqual([]);

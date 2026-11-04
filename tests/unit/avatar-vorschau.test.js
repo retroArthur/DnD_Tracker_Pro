@@ -33,8 +33,10 @@
  *   m6   dispatchEvent(input) am Feld statt des Aufrufs           U1, U2, U3, U4 rot — am
  *                                                                 Bildschirm alle gruen
  *   m10  der Aufruf VOR clearFormFields() (liest den alten Wert)  U1, U2, U4 rot
- *   m7/m8  Vorschau aus ch.avatar (am Anfang bzw. an der Stelle   alle fuenf gruen; m7 faengt
- *        von R2), plus R3                                         (W9) von Block (g)
+ *   m7/m8  Vorschau aus ch.avatar (am Anfang bzw. an der Stelle   alle fuenf gruen; beide
+ *        von R2), plus R3                                         faengt (W9) von Block (g)
+ *                                                                 (m7 bei Gus und Ida, m8 bei
+ *                                                                 Ida: Avatar als Array)
  *
  * Das Modul laeuft echt: vm-Kontext mit dem jsdom-Dokument der Suite, der echten Vorlage
  * assets/templates/view-party.html, dem echten Datengrenzen-Block (sichereBildquelle()) und
