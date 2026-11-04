@@ -578,4 +578,27 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
             expect(protokoll).toEqual([]);
         });
     });
+
+    describe('(HL6) R5: speed als Liste waehlt die Vorgabe — auch wenn ihr Text eine Option traefe', () => {
+        test.each([[['12m']], [['8m|25ft.']], [['12m|40ft.']]])('(HL6) speed %j', liste => {
+            HELDEN.set(2, xaverMit('speed', liste));
+            ctx.editChar(1);
+            expect(() => ctx.editChar(2)).not.toThrow();
+            const z = formularStand();
+            expect({
+                id: z['edit-char-id'],
+                offen: z.offen,
+                speed: z['char-speed'],
+                fuss: z['char-speed-ft']
+            }).toEqual({
+                id: '2',
+                offen: true,
+                speed: STAND.leer['char-speed'],
+                fuss: STAND.leer['char-speed-ft']
+            });
+            expect(STAND.leer['char-speed']).toBe('9m|30ft.');
+            expect(meldungen).toEqual([]);
+            expect(protokoll).toEqual([]);
+        });
+    });
 });
