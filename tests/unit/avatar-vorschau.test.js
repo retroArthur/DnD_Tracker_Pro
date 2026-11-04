@@ -1,8 +1,8 @@
 /**
  * AVATAR-VORSCHAU — R2, R3 und R4 an den Funktionen selbst (features/party/party-crud.js)
  *
- * Die Bedienwege stehen in tests/e2e/features/avatar-vorschau.spec.js (Befund, Ursache und
- * Vertrag im Kopf dort). Diese Datei haelt fest, was von aussen nicht zu sehen ist:
+ * Die Bedienwege stehen in Block (g) von tests/e2e/features/bild-lokal.spec.js (Befund,
+ * Ursache und Vertrag am Block dort). Diese Datei haelt fest, was von aussen nicht zu sehen ist:
  *
  *   R3  cancelCharEdit() fuehrt die Vorschau NACH der Rueckkehr von clearFormFields() aus dem
  *       Feld nach, nicht in dessen try-Block (customHandlers). clearFormFields()
@@ -21,7 +21,7 @@
  *   R2  editChar() fuehrt die Vorschau direkt nach der Feldzuweisung nach (U3).
  *
  * Gemessen am Kopf 543706c6: U1, U2, U3 und U4 rot (die Vorschau bleibt, wie sie war), U0
- * gruen. Gegenproben an Kopien von party-crud.js (nicht eingecheckt; Namen wie in der E2E-Datei):
+ * gruen. Gegenproben an Kopien von party-crud.js (nicht eingecheckt; Namen wie in Block (g)):
  *   fix  R2 + R3 wie im Vertrag                                   alle fuenf gruen
  *   m1   nur editChar()                                           U1, U2, U4 rot
  *   m2   nur cancelCharEdit()                                     U3 rot
@@ -34,13 +34,13 @@
  *                                                                 Bildschirm alle gruen
  *   m10  der Aufruf VOR clearFormFields() (liest den alten Wert)  U1, U2, U4 rot
  *   m7/m8  Vorschau aus ch.avatar (am Anfang bzw. an der Stelle   alle fuenf gruen; m7 faengt
- *        von R2), plus R3                                         (W9) der E2E-Datei
+ *        von R2), plus R3                                         (W9) von Block (g)
  *
  * Das Modul laeuft echt: vm-Kontext mit dem jsdom-Dokument der Suite, der echten Vorlage
  * assets/templates/view-party.html, dem echten Datengrenzen-Block (sichereBildquelle()) und
  * der echten clearFormFields(). Attrappen nur fuer, was nicht zur Vorschau gehoert
  * (EntityLookup, sanitizeHTML, getProfBonus, esc). jsdom laedt keine Bilder: gemessen wird
- * das <img> und seine Quelle, nicht das Laden (das misst die E2E-Datei).
+ * das <img> und seine Quelle, nicht das Laden (das misst Block (g)).
  */
 
 const fs = require('fs');

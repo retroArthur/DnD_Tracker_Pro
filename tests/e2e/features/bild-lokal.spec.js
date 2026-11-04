@@ -1,11 +1,13 @@
 // @ts-check
+import fs from 'node:fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect } from '@playwright/test';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
- * Lokale Bilder in der Eingabe — Bild-Dialog, Bestiar-Editor, Charakterformular (AVATAR-DATEI)
+ * Lokale Bilder in der Eingabe — Bild-Dialog, Bestiar-Editor, Charakterformular (AVATAR-DATEI);
+ * Block (g): die Vorschau im Charakterformular beim Laden und Leeren (AVATAR-VORSCHAU)
  * =============================================================================================
  *
  * DIE AUSSAGE, AUF DIE ES ANKOMMT, in einem Satz: **wer ein Bild von der eigenen Platte als
@@ -78,6 +80,11 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *       einer Vorschau, die jedes `file:///` ohne Pruefung zeigte und data:image/ nicht.
  *   (e) Die Meldung des Bild-Dialogs nennt lokale Dateien (A2).            rot an dd399a32
  *   (f) Kontrolle: http(s)-Bild und data:image/ werden weiter angenommen.  gruen
+ *   (g) Block AVATAR-VORSCHAU (eigener Vorgang, docs/bugfixes.md): A3 galt nur fuer das
+ *       TIPPEN (Fall (d)); die Vorschau folgt dem Feld jetzt auch beim LADEN (✏️) und LEEREN
+ *       (Abbrechen, Speichern, Kopfzeile, Taste n, Palette, Import). Befund, Vertrag R1-R7,
+ *       Faelle (W1)-(W9) und Gegenproben stehen am Block unten; er nutzt die Hilfen dieser
+ *       Datei (Saat, laden() mit dem Netz-Protokoll, istNetzziel(), eintippen(), die Bilder).
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * WIE GEMESSEN WIRD
@@ -201,7 +208,10 @@ const SCHRAT = {
     avatar: ''
 };
 
-function saat() {
+/**
+ * @param {object[]} [characters] Helden fuer Block (g); (a)-(f) saeen keine.
+ */
+function saat(characters = []) {
     return {
         _version: '99.0.0',
         settings: {
@@ -214,7 +224,7 @@ function saat() {
         timers: [],
         shops: [],
         campaign: {},
-        characters: [],
+        characters,
         npcs: [MIRA],
         locations: [],
         quests: [],
@@ -235,7 +245,7 @@ function saat() {
         partyGold: 0,
         quickRefCustom: [],
         _nextId: {
-            characters: 1,
+            characters: Math.max(0, ...characters.map(c => /** @type {any} */ (c).id)) + 1,
             npcs: 2,
             locations: 1,
             quests: 1,
@@ -284,16 +294,35 @@ function istNetzziel(url) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab (ein Neuladen liest, was die App gespeichert hat), bricht
- * jede Anforderung an das Netz und an einen Netzwerkpfad ab und zaehlt die Netzwerkpfade.
+ * Das http(s)-Bild beantwortet der Test mit der Datei des Repos; spaeter angemeldet als der
+ * Abbruch in laden(), darum geht diese Route vor. Das Geraet verlaesst nichts.
  * @param {import('@playwright/test').Page} page
  */
-async function laden(page) {
+async function httpsBildBeantworten(page) {
+    await page.route(
+        u => u.href === HTTPS_BILD,
+        r => r.fulfill({ path: LOKALE_DATEI, contentType: 'image/png' })
+    );
+}
+
+/**
+ * Laedt breit, saet EINMAL je Tab (ein Neuladen liest, was die App gespeichert hat), bricht
+ * jede Anforderung an das Netz und an einen Netzwerkpfad ab und zaehlt die Netzwerkpfade.
+ * Block (g) gibt Helden, ein anderes Buendel, das http(s)-Bild schon VOR dem Laden (die Karte
+ * eines Helden fordert es beim ersten Zeichnen an) und am Telefon die Groesse aus test.use()
+ * mit: dort ist `.app-title` versteckt, darum wird nur auf `data-app-ready` gewartet.
+ * @param {import('@playwright/test').Page} page
+ * @param {{ url?: string, characters?: object[], httpsBild?: boolean, telefon?: boolean }} [opt]
+ */
+async function laden(page, opt = {}) {
     /** @type {string[]} */
     const netz = [];
     /** @type {string[]} */
     const seitenfehler = [];
+    /** @type {string[]} */
+    const konsole = [];
     await page.route(/^https?:/i, r => r.abort());
+    if (opt.httpsBild) await httpsBildBeantworten(page);
     // Entschieden wird an der URL, wie Chromium sie anfordert (route.request().url()), nicht an
     // der node-URL der route-Pruefung: node macht aus `file://localhost/x` ein `file:///x`, der
     // Host waere weg. Gemessen mit einer Gegenprobe (Vorschau ohne Pruefung): Chromium fordert
@@ -306,7 +335,12 @@ async function laden(page) {
         if (istNetzziel(req.url())) netz.push(req.url());
     });
     page.on('pageerror', e => seitenfehler.push(String(e).split('\n')[0].slice(0, 200)));
-    await page.setViewportSize(BREIT);
+    page.on('console', m => {
+        if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
+            konsole.push('console.error: ' + m.text().split('\n')[0].slice(0, 200));
+        }
+    });
+    if (!opt.telefon) await page.setViewportSize(BREIT);
     await page.addInitScript(
         ([schluessel, s]) => {
             try {
@@ -317,20 +351,94 @@ async function laden(page) {
                 // file://-Speicher ist je Browserbau unterschiedlich streng
             }
         },
-        [SPEICHER, saat()]
+        [SPEICHER, saat(opt.characters)]
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
+    await page.goto(opt.url || APP_URL);
+    if (opt.telefon) {
+        await page.waitForFunction(
+            () => document.documentElement.dataset.appReady === 'true',
+            null,
+            { timeout: 20000 }
+        );
+    } else {
+        await waitForAppReady(page);
+    }
     await page.waitForTimeout(300);
-    return { netz, seitenfehler };
+    return {
+        netz,
+        seitenfehler,
+        /** pageerror, console.error und das Fehlerlog der App (EventDelegation faengt einen
+         *  werfenden Handler und meldet ihn NUR per console.error und dort). */
+        async alleFehler() {
+            const log = await page.evaluate(() =>
+                // @ts-ignore
+                (window.ErrorHandler?.getRecentErrors?.(50) || []).map(
+                    e => `ErrorHandler: ${e.fn} (${e.context}): ${e.message}`
+                )
+            );
+            return [...seitenfehler, ...konsole, ...log];
+        }
+    };
 }
 
 // ---------------------------------------------------------------------------
 // Bedienung
 // ---------------------------------------------------------------------------
-/** Reiter per Klick (Gruppenmenue der Navigation zuerst oeffnen, wie zuReiter()). */
+/** Abstand vor jedem Tipper (> 300 ms Sperre in initTouchOptimizations(), systems/avatars.js:
+ *  ein Knopf-Tipper binnen 300 ms nach dem vorigen wird per preventDefault verschluckt). */
+const TIPP_ABSTAND = 450;
+
+/**
+ * Mitte eines Elements und ob dort wirklich es selbst obenauf liegt (bestiar-klick.spec.js).
+ * @param {import('@playwright/test').Page} page @param {string} sel
+ */
+function mitteFrei(page, sel) {
+    return page.evaluate(s => {
+        const el = document.querySelector(s);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const x = Math.round(r.left + r.width / 2);
+        const y = Math.round(r.top + r.height / 2);
+        const oben = document.elementFromPoint(x, y);
+        return { x, y, frei: !!oben && (oben === el || el.contains(oben)) };
+    }, sel);
+}
+
+/**
+ * Reiter ueber die ECHTE Navigation (wie zuReiter() in senken-kanarie.spec.js und zurAnsicht()
+ * in bestiar-klick.spec.js). Breit: Gruppenmenue zuerst oeffnen, Reiter klicken. Telefon
+ * (Block (g)): Leiste per Tap ausfahren, Reiter antippen, Leiste wieder einfahren.
+ * @param {import('@playwright/test').Page} page @param {string} ansicht
+ */
 async function zuReiter(page, ansicht) {
-    const tab = page.locator(`.nav-tab[data-view="${ansicht}"]`).first();
+    const reiterSel = `.nav-tab[data-view="${ansicht}"]`;
+    const mobil = await page.evaluate(() => document.documentElement.dataset.layout === 'mobile');
+    if (mobil) {
+        await page.waitForTimeout(TIPP_ABSTAND);
+        const u = await mitteFrei(page, '.mobile-nav-toggle');
+        expect(u && u.frei, 'Vorbedingung: der Umschalter der Leiste ist frei').toBe(true);
+        await page.touchscreen.tap(/** @type {any} */ (u).x, /** @type {any} */ (u).y);
+        await page.waitForTimeout(TIPP_ABSTAND);
+        await page.locator(reiterSel).scrollIntoViewIfNeeded();
+        let m = null;
+        for (let i = 0; i < 40; i++) {
+            m = await mitteFrei(page, reiterSel);
+            if (m && m.frei) break;
+            await page.waitForTimeout(150);
+        }
+        expect(m && m.frei, `Vorbedingung: der Reiter ${ansicht} ist frei`).toBe(true);
+        await page.touchscreen.tap(/** @type {any} */ (m).x, /** @type {any} */ (m).y);
+        await expect(page.locator(`#view-${ansicht}`)).toHaveClass(/\bactive\b/);
+        await page.waitForTimeout(TIPP_ABSTAND);
+        const offen = await page.evaluate(() => !!document.querySelector('.app-header.nav-open'));
+        if (offen) {
+            const u2 = await mitteFrei(page, '.mobile-nav-toggle');
+            await page.touchscreen.tap(/** @type {any} */ (u2).x, /** @type {any} */ (u2).y);
+            await page.waitForTimeout(TIPP_ABSTAND);
+        }
+        return;
+    }
+    const tab = page.locator(reiterSel).first();
     if (!(await tab.isVisible())) {
         await page.locator('.nav-group', { has: tab }).locator('.nav-group-btn').click();
     }
@@ -339,9 +447,17 @@ async function zuReiter(page, ansicht) {
     await page.waitForTimeout(250);
 }
 
-/** Feld anklicken, leeren (Strg+A, Entf) und Zeichen fuer Zeichen tippen. */
-async function eintippen(page, selektor, text) {
-    await page.locator(selektor).click();
+/**
+ * Feld anklicken (Block (g): mit `bedien` am Telefon antippen), leeren (Strg+A, Entf) und
+ * Zeichen fuer Zeichen tippen.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} selektor
+ * @param {string} text
+ * @param {(z: import('@playwright/test').Locator) => Promise<void>} [bedien]
+ */
+async function eintippen(page, selektor, text, bedien) {
+    if (bedien) await bedien(page.locator(selektor));
+    else await page.locator(selektor).click();
     await page.keyboard.press('Control+A');
     await page.keyboard.press('Delete');
     await page.keyboard.type(text);
@@ -622,12 +738,8 @@ test('(d) Charakterformular: die Vorschau zeigt lokale Datei, data:image/, relat
 }) => {
     test.setTimeout(90000);
     const { netz, seitenfehler } = await laden(page);
-    // Das http(s)-Bild beantwortet der Test mit der Datei des Repos; spaeter angemeldet als der
-    // Abbruch in laden(), darum geht diese Route vor. Das Geraet verlaesst nichts.
-    await page.route(
-        u => u.href === HTTPS_BILD,
-        r => r.fulfill({ path: LOKALE_DATEI, contentType: 'image/png' })
-    );
+    // Das http(s)-Bild beantwortet der Test mit der Datei des Repos (httpsBildBeantworten()).
+    await httpsBildBeantworten(page);
     await charakterFormularOeffnen(page);
     const vorschau = page.locator('#cf-avatar-preview');
 
@@ -725,4 +837,750 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
 
     expect(netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
     expect(seitenfehler).toEqual([]);
+});
+
+// ===========================================================================
+// (g) AVATAR-VORSCHAU — die Vorschau im Charakterformular beim Laden und Leeren
+// ===========================================================================
+/**
+ * DIE AUSSAGE, AUF DIE ES ANKOMMT, in einem Satz: **solange das Charakterformular offen ist,
+ * zeigt die Vorschau #cf-avatar-preview, was der Wert im Feld #char-avatar beim Speichern auf
+ * der Karte ergaebe — nach jedem ✏️, nach jedem Leeren, und gleich, was vorher getippt oder
+ * bearbeitet wurde.**
+ *
+ * Ursprung: docs/bugfixes.md, Eintrag AVATAR-DATEI, Offen (1) ("editChar() ruft die Vorschau
+ * nicht auf"). A3 galt nur fuer das TIPPEN (Fall (d) oben); dieser Block dehnt ihn auf Laden
+ * und Leeren aus. Eigener Vorgang auf dem Stapelkopf (BESTIAR-KLICK), keine Nachbesserung in
+ * AVATAR-DATEI (#24, gemergt). Der Block steht hier, wie der Vertrag der Kritik es verlangt
+ * (Heimat von A3, dieselben Hilfen: Saat, laden() mit dem Netz-Protokoll, istNetzziel() fuer
+ * alle fuenf NETZWERKPFADE, zuReiter(), eintippen(), die Bilder); zuerst stand er in einer
+ * eigenen Datei mit einer verkuerzten Kopie von istNetzziel() (Pruefbefund, behoben).
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * DER BEFUND (gemessen am Kopf 543706c6, Chromium, dev und prod, 1440x900 mit der Maus und
+ * 390x844 per Tap, null Seitenfehler; an main 4037338d dasselbe)
+ *
+ * Die Vorschau zeigt immer den Wert, der seit dem Laden der Seite ZULETZT INS FELD GETIPPT
+ * wurde, und ohne Tippen den Platzhalter "?" der Vorlage (assets/templates/view-party.html).
+ * ✏️ (Kartenkopf, 🔍 → "✏️ Bearbeiten", Strg+K-Treffer), Abbrechen, Speichern, Kopfzeile
+ * zu/auf, Taste n und die Palette aendern sie nie:
+ *   - frisch geladen, ✏️ Aria (data:image/), Cora (file:///), Dorn (relativer Pfad), Fenn
+ *     (https): das Feld traegt das Bild, die Vorschau "?" — bei Bram (ohne Bild) stimmt "?"
+ *     nur zufaellig;
+ *   - ein getipptes Bild bleibt nach Abbrechen stehen: neben dem leeren neuen Formular, neben
+ *     ✏️ Bram (ohne Bild), neben ✏️ Aria (mit eigenem Bild) und nach dem Speichern eines
+ *     Neulings, bis wieder getippt oder neu geladen wird.
+ * Gespeichert wird der FELDWERT, nicht die Vorschau — falsche Daten entstehen so nicht, wohl
+ * aber eine falsche Anzeige, der man glaubt (ein Bild "nachtragen", das schon da ist, oder
+ * eines zum zweiten Mal eintragen).
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * DIE URSACHE
+ *
+ *   - updateAvatarPreview() (features/party/party-crud.js) hat genau einen Aufrufer: die
+ *     data-action 'update-avatar-preview' am input-/change-Ereignis des Feldes
+ *     (ui/actions/entity-actions.js). Eine Zuweisung an `.value` feuert kein Ereignis.
+ *   - editChar() setzt `avatarInput.value = ch.avatar || ''` und ruft die Vorschau nicht nach —
+ *     jede andere Anzeige des Formulars ruft dieselbe Funktion ausdruecklich nach
+ *     (updateAttrMod, setCharLanguages, updateSpeedDisplay, updateProficiencyBonus).
+ *   - cancelCharEdit() leert das Feld ueber clearFormFields() und laesst die Vorschau stehen.
+ *     Ueber cancelCharEdit() laufen ALLE Leerwege: Abbrechen, Speichern (saveCharacter()),
+ *     Kopfzeile aufklappen mit verworfenem Bearbeiten-Rest (ABBRUCH R1), Taste n und Palette
+ *     (verwirfBearbeitenRest(), systems/spellslots/navigation.js) und Import R7
+ *     (reiterBearbeitenVerwerfen(), systems/spellslots/import-export.js).
+ *   - Alt: `git log -S` findet nie einen zweiten Aufrufer; AVATAR-DATEI hat nur die Pruefung IN
+ *     updateAvatarPreview() geaendert (sichereBildquelle()), nicht ihre Aufrufer.
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * DER VERTRAG (AVATAR-VORSCHAU)
+ *
+ *   R1  Invariante (A3, ausgedehnt vom Tippen auf Laden und Leeren): solange das Formular offen
+ *       ist, zeigt #cf-avatar-preview das Ergebnis von sichereBildquelle(#char-avatar.value
+ *       .trim()) — mit Bild genau ein GELADENES <img> mit src === Feldwert.trim(), sonst der
+ *       Platzhalter "?" ohne <img>. Massgeblich ist das FELD (das, was 💾 schriebe), nicht
+ *       ch.avatar — auch bei Altdaten, Fall (W9).
+ *   R2  Laden: editChar() fuehrt die Vorschau direkt nach der Feldzuweisung nach, mit dem
+ *       Feldwert — fuer alle drei Einstiege (Kartenkopf, 🔍 → "✏️ Bearbeiten", Strg+K-Treffer)
+ *       und gleich, was davor war (frisch geladen, getippt, ein anderer Held).
+ *   R3  Leeren: cancelCharEdit() fuehrt die Vorschau nach dem Leeren aus dem Feld nach, und zwar
+ *       NACH der Rueckkehr von clearFormFields(), vor dem Zuklappen — nicht in dessen try-Block
+ *       (customHandlers): dort fiele der Aufruf still weg, sobald etwas davor wirft. Von aussen
+ *       nicht zu sehen; die Waechter sind tests/unit/avatar-vorschau.test.js (U1: hinter einem
+ *       werfenden Handler; U4: customHandlers wirft beim Eintritt — erst U4 faengt einen Aufruf
+ *       als ERSTE Anweisung im Block, m5a).
+ *   R4  Direkt aufrufen. Kein synthetisches input-/change-Ereignis und kein dispatchEvent am
+ *       Feld: BESTIAR-KLICK (#27) stellt ein change mit dem Wert, den derselbe Handler schon
+ *       per input bekam, nicht mehr zu (_changeBringtNichtsNeues(), ui/event-delegation.js) —
+ *       Fall (W5); ein synthetisches input waere hier unsichtbar, darum U1-U4 der Unit-Datei.
+ *   R5  ABBRUCH R2 bleibt: ein Anlege-Entwurf ohne ID behaelt Feld UND Vorschau ueber
+ *       Kopfzeile zu/auf, Taste n und Palette — Kontrolle (W6).
+ *   R6  Sonst aendert sich nichts: updateAvatarPreview() selbst (Pruefung nach A3, die Quelle
+ *       als DOM-Eigenschaft, kein innerHTML mit Nutzerwert), keine neue globale Funktion, kein
+ *       neuer Export (eslint.generated-globals.js und party-crud.d.ts bleiben unberuehrt),
+ *       keine Anforderung an einen Netzwerkpfad.
+ *   R7  Nicht in diesem Vorgang (je ein eigener, docs/bugfixes.md, AVATAR-VORSCHAU Offen):
+ *       Sprachen ausserhalb der festen Liste gehen nach ✏️ + 💾 verloren (Produktfrage);
+ *       editChar() laedt einen Helden mit `speed` als ZAHL nur halb und schreibt beim Speichern
+ *       Bild und Sprachen des vorigen Helden auf ihn (Datenverfaelschung); Uebungsbonus "+3"
+ *       bei Stufe 1 beim ersten Oeffnen; das Sprachmenue bleibt beim ✏️-Wechsel offen. Deshalb
+ *       saet dieser Block `speed` als TEXT — ausser in (W9), der genau diese Altdaten nimmt und
+ *       NUR die Invariante R1 prueft, nicht, was editChar() ins Feld schreibt.
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * DIE FAELLE                                                                  am Kopf 543706c6
+ *
+ *   (W1) frisch geladen, ✏️ ueber den Kartenkopf nacheinander Aria, Cora, Dorn, Fenn, Eik, Bram
+ *        → Bild, Bild, Bild, Bild, "?" ohne Anforderung, "?"                              rot
+ *   (W2) dieselbe Erwartung ueber 🔍 → "✏️ Bearbeiten" (Cora) und ueber Strg+K (Dorn)      rot
+ *   (W3) Kopfzeile auf, ein Bild tippen, Abbrechen, Kopfzeile auf → "?"; ✏️ Bram → "?";
+ *        ✏️ Aria → Arias Bild (am Kopf steht ueberall das getippte)                       rot
+ *   (W4) Leerwege OHNE vorheriges Tippen, gemessen beim naechsten Oeffnen: Abbrechen,
+ *        Speichern + Taste n, Kopfzeile zu/auf (ABBRUCH R1), Reiter Quests + Palette
+ *        "Neuer Charakter" → je "?"                                                    gruen
+ *        Zufaellig gruen (es wurde nie ein Bild gezeigt) — der Fall waecht gegen den Halbfix
+ *        "nur editChar()": der zeigt nach ✏️ das Bild und laesst es beim Leeren stehen.
+ *   (W5) GENAU Coras Wert in einen Entwurf tippen, Abbrechen, Kopfzeile auf → "?"; dann
+ *        Kopfzeile zu, ✏️ Cora → Coras Bild                   rot (der Abbrechen-Schritt)
+ *        Am Kopf ist "✏️ Cora" zufaellig gruen (der zuletzt getippte Wert IST Coras). Der Fall
+ *        waecht gegen den verworfenen Weg R4: ein synthetisches change am Feld wird hier, beim
+ *        Wert, den 'update-avatar-preview' schon per input bekam, verschluckt.
+ *   (W6) Kontrolle R5: ein Entwurf mit getipptem Bild bleibt ueber Kopfzeile zu/auf, Taste n
+ *        und Palette stehen, Feld und Vorschau                                          gruen
+ *   (W7) 390x844 mit hasTouch per .tap(): (W1), (W3), (W4) — dort ohne Taste n und Palette
+ *        (Telefon), "Speichern" gefolgt von der Kopfzeile                     rot, rot, gruen
+ *   (W8) prod-Buendel: (W1) und (W3)                                                  rot
+ *   (W9) Altdaten (R1, nicht R7): ✏️ Aria, dann ✏️ Gus (`speed: 30` als Zahl) — die Vorschau
+ *        folgt dem FELD, was immer editChar() dort hinterlaesst (heute Arias Bild, weil es vor
+ *        der Avatar-Zeile wirft)                                                          rot
+ *        Waecht gegen eine Vorschau aus ch.avatar am ANFANG von editChar() (m7): sie zeigte
+ *        "?" neben Arias Bild im Feld, und 💾 schriebe dieses Bild auf Gus.
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * GEGENPROBEN (am Buendel, nicht eingecheckt)
+ *
+ * Kopien der Quelle am Kopf mit je einer Aenderung an editChar()/cancelCharEdit(), dev und
+ * prod gebaut, gefahren mit genau diesem Block (process.cwd() = der Ordner der Kopie, drei
+ * Worker, Messung vom 04.11.); die Namen sind die von tests/unit/avatar-vorschau.test.js:
+ *   fix  R2 + R3 wie im Vertrag                     alle 12 gruen
+ *   m1   nur editChar() (Halbfix)                   6 rot: (W4) alle vier Leerwege, je der
+ *                                                   Abbrechen-Schritt von (W3) und (W5); ebenso
+ *                                                   (W7)-(W3), (W7)-(W4), (W8)-(W3)
+ *   m2   nur cancelCharEdit() (Halbfix)             9 rot: (W1), (W2), (W3) "✏️ Aria", (W5)
+ *                                                   "✏️ Cora", (W9); ebenso (W7)-(W1),
+ *                                                   (W7)-(W3), (W8)
+ *   m4   dispatchEvent(change) am Feld in beiden,   1 rot: genau (W5) "✏️ Cora"
+ *        statt des Aufrufs (verworfen, R4)
+ *   m7   updateAvatarPreview(ch.avatar) am ANFANG   1 rot: genau (W9) "✏️ Gus"
+ *        von editChar(), plus R3
+ *   m8   updateAvatarPreview(ch.avatar || '') an    alle 12 gruen — zulaessig: von aussen nicht
+ *        der Stelle von R2, plus R3                 vom Feld zu unterscheiden (Kritik-Vertrag)
+ * Von aussen NICHT zu unterscheiden, darum in tests/unit/avatar-vorschau.test.js: der Aufruf
+ * IN customHandlers (m5 hinter dem Leeren der Angriffe, m5a als ERSTE Anweisung im Block; hier
+ * alle 12 gruen, dort U4 rot, bei m5 auch U1) und ein synthetisches input statt des Aufrufs
+ * (m6, R4; hier alle 12 gruen, dort U1-U4 rot).
+ *
+ * ───────────────────────────────────────────────────────────────────────────────────────────
+ * WIE GEMESSEN WIRD
+ *
+ * Bedienung nur ueber die Oberflaeche: Reiter, Kartenkopf (`.char-card-meta`), 🔍 und
+ * "✏️ Bearbeiten", Strg+K mit Klick auf den Treffer, die Kopfzeile, Abbrechen, Speichern, die
+ * Taste n und die Palette; Eingaben Zeichen fuer Zeichen (eintippen()). Am Telefon .tap() mit TIPP_ABSTAND. `evaluate` nur zum Ablesen;
+ * gesaet wird vor dem Laden (laden(), einmal je Tab).
+ *
+ * Nach JEDEM Schritt, bei offenem Formular, die Invariante R1 als WEICHE Zusicherung: die
+ * Vorschau wird aus dem Feld vorhergesagt (Tabelle BREITE: welcher Wert ein Bild welcher Breite
+ * ergibt) und mit der gelesenen verglichen; "angezeigt" heisst GELADEN (naturalWidth), nicht nur
+ * "ein img steht da". Dazu, wo der Schritt es festlegt, der Feldwert selbst. Am Ende: keine
+ * Anforderung an einen Netzwerkpfad (laden(), istNetzziel()) und kein Fehler (pageerror,
+ * console.error, Fehlerlog der App; (W9) prueft nur pageerror, siehe dort). Die Bilder sind die
+ * der Faelle oben; HTTPS_BILD beantwortet laden() mit icons/icon-192.png, schon VOR dem Laden
+ * (Fenns Karte fordert es beim ersten Zeichnen an).
+ */
+
+const APP_URL_PROD = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-optimized.html`;
+/** Der CI-Job `e2e` baut nur dev (`python build.py`); den prod-Fall gibt es nur mit einem
+ *  frischen `python build.py --production` (Muster aus bestiar-klick.spec.js). */
+const PROD_DA = fs.existsSync(path.join(process.cwd(), 'dist', 'dnd-tracker-optimized.html'));
+const PROD_GRUND =
+    'kein prod-Buendel — vorher `python build.py --production` (der CI-Job e2e baut nur dev)';
+const TELEFON = { width: 390, height: 844 };
+/** Zeit nach einer Bedienung fuer Zeichnen und verzoegerte Aufrufe (Strg+K: 100 ms). */
+const SETZEN = 250;
+/** So lange darf ein Bild laden, bevor ein Schritt als rot gilt. */
+const WARTEN_BILD = 3000;
+
+/**
+ * R1 als Tabelle: welcher (getrimmte) Feldwert welche Vorschau ergibt — die Breite des GELADENEN
+ * Bildes, oder null fuer den Platzhalter "?". Dass genau diese Werte ein Bild ergeben, ist A3
+ * (sichereBildquelle(); Wertetabelle in tests/unit/avatars.test.js, Fall (d) oben).
+ * @type {Map<string, number|null>}
+ */
+const BREITE = new Map([
+    ['', null],
+    [DATA_BILD, 1],
+    [LOKALES_BILD, LOKALE_BREITE],
+    [RELATIVES_BILD, LOKALE_BREITE],
+    [HTTPS_BILD, LOKALE_BREITE],
+    ...NETZWERKPFADE.map(n => /** @type {[string, null]} */ ([n, null]))
+]);
+
+/** Lesbare Namen fuer die Meldungen (die Werte selbst sind lang). */
+const NAMEN = new Map([
+    ['', "''"],
+    [DATA_BILD, 'DATA_BILD'],
+    [LOKALES_BILD, 'LOKALES_BILD'],
+    [RELATIVES_BILD, 'RELATIVES_BILD'],
+    [HTTPS_BILD, 'HTTPS_BILD'],
+    ...NETZWERKPFADE.map((n, i) => /** @type {[string, string]} */ ([n, `NETZWERKPFADE[${i}]`]))
+]);
+
+/**
+ * Ein Held — `speed` als TEXT (R7), sonst laedt editChar() nur halb.
+ * @param {number} id
+ * @param {string} name
+ * @param {string} avatar
+ * @param {object} [extra]
+ */
+function held(id, name, avatar, extra = {}) {
+    return {
+        id,
+        name,
+        playerName: '',
+        characterClass: 'Kämpfer',
+        subclass: '',
+        race: 'Mensch',
+        level: 1,
+        background: '',
+        alignment: '',
+        attributes: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+        saveProficiencies: {},
+        hpCurrent: 10,
+        hpMax: 10,
+        tempHp: 0,
+        armorClass: 12,
+        initiative: 0,
+        speed: '9m|30ft.',
+        hitDice: '1d10',
+        passivePerception: 10,
+        inspiration: false,
+        resistances: [],
+        immunities: [],
+        languages: [],
+        spellSlots: {},
+        currency: { pm: 0, gm: 0, em: 0, sm: 0, km: 0 },
+        notes: '',
+        avatar,
+        conditions: [],
+        spells: [],
+        items: [],
+        ...extra
+    };
+}
+
+const ARIA = held(1, 'Aria', DATA_BILD);
+const BRAM = held(2, 'Bram', '');
+const CORA = held(3, 'Cora', LOKALES_BILD);
+const DORN = held(4, 'Dorn', RELATIVES_BILD);
+const EIK = held(5, 'Eik', NETZWERKPFADE[0]);
+const FENN = held(6, 'Fenn', HTTPS_BILD);
+/** Altdaten (W9): `speed` als Zahl, wie aeltere Staende ihn trugen; die Datengrenze laesst ihn. */
+const GUS = held(7, 'Gus', '', { speed: 30 });
+const HELDEN = [ARIA, BRAM, CORA, DORN, EIK, FENN];
+
+/**
+ * laden() fuer Block (g): Helden, das http(s)-Bild beantwortet.
+ * @param {import('@playwright/test').Page} page
+ * @param {{ url?: string, characters?: object[], telefon?: boolean }} [opt]
+ */
+function ladenMitHelden(page, opt = {}) {
+    return laden(page, { characters: HELDEN, httpsBild: true, ...opt });
+}
+
+/**
+ * Klick, am Telefon Tipper mit Abstand.
+ * @param {import('@playwright/test').Page} page
+ * @param {boolean} tap
+ * @returns {(ziel: import('@playwright/test').Locator) => Promise<void>}
+ */
+function bedienung(page, tap) {
+    return async ziel => {
+        if (tap) {
+            await page.waitForTimeout(TIPP_ABSTAND);
+            await ziel.tap();
+        } else {
+            await ziel.click();
+        }
+        await page.waitForTimeout(SETZEN);
+    };
+}
+
+/** @param {import('@playwright/test').Page} page */
+function formular(page) {
+    return page.locator('#char-form');
+}
+/** Die Kopfzeile "+ Charakter hinzufügen" ueber ihren PLATZ (charakterFormularOeffnen() oben).
+ *  @param {import('@playwright/test').Page} page */
+function kopfzeile(page) {
+    return page.locator('#view-party .card:has(> #char-form) > .collapsible-header');
+}
+/** @param {import('@playwright/test').Page} page */
+function abbrechenKnopf(page) {
+    return formular(page).getByRole('button', { name: 'Abbrechen', exact: true });
+}
+/** @param {import('@playwright/test').Page} page */
+function speichernKnopf(page) {
+    return formular(page).getByRole('button', { name: 'Speichern', exact: true });
+}
+/** @param {import('@playwright/test').Page} page */
+function bearbeitenId(page) {
+    return page.evaluate(
+        () => /** @type {HTMLInputElement|null} */ (document.getElementById('edit-char-id'))?.value
+    );
+}
+
+/** Vorbedingung nach einem ✏️: Formular offen, Bearbeiten-ID gesetzt.
+ *  @param {import('@playwright/test').Page} page @param {number} id */
+async function geladen(page, id) {
+    await expect(formular(page)).toHaveClass(/\bopen\b/);
+    await expect.poll(() => bearbeitenId(page)).toBe(String(id));
+}
+
+/** ✏️ ueber den Kartenkopf (`edit-char`).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien
+ *  @param {number} id */
+async function bearbeitenKopf(page, bedien, id) {
+    await bedien(page.locator(`#party-list .char-card-header[data-id="${id}"] .char-card-meta`));
+    await geladen(page, id);
+}
+
+/** ✏️ ueber 🔍 und "✏️ Bearbeiten" im Detail-Dialog (`edit-char-from-modal`).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien
+ *  @param {number} id */
+async function bearbeitenDetail(page, bedien, id) {
+    await bedien(page.locator(`#char-${id} [data-action="show-char-details"]`));
+    await expect(page.locator('#char-detail-modal')).toHaveClass(/\bshow\b/);
+    await bedien(page.locator('#char-detail-modal [data-action="edit-char-from-modal"]'));
+    await expect(page.locator('#char-detail-modal')).not.toHaveClass(/\bshow\b/);
+    await geladen(page, id);
+}
+
+/** ✏️ ueber Strg+K und einen Klick auf den Treffer (navigateToResult() → editChar() nach 100 ms).
+ *  @param {import('@playwright/test').Page} page @param {string} name @param {number} id */
+async function bearbeitenSuche(page, name, id) {
+    await page.keyboard.press('Control+k');
+    await expect(page.locator('#global-search')).toBeFocused();
+    await page.keyboard.type(name, { delay: 30 });
+    const treffer = page
+        .locator('#global-search-results .search-result-item[data-type="character"]')
+        .filter({ hasText: name })
+        .first();
+    await treffer.click();
+    await page.waitForTimeout(SETZEN);
+    await geladen(page, id);
+}
+
+/** Befehlspalette → Befehl (charakter-anlegen.spec.js). Enter fuehrt den obersten Treffer aus.
+ *  @param {import('@playwright/test').Page} page @param {string} text */
+async function palette(page, text) {
+    await page.keyboard.press('Control+Shift+K');
+    await expect(page.locator('.cp-overlay')).toBeVisible();
+    await expect(page.locator('.cp-input')).toBeFocused();
+    await page.keyboard.type(text);
+    await expect(page.locator('#cp-results-list .cp-result').first()).toContainText(text);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.cp-overlay')).toBeHidden();
+    await page.waitForTimeout(SETZEN);
+}
+
+/** Das Avatarfeld des Formulars (eintippen() mit Klick bzw. Tipper).
+ *  @param {import('@playwright/test').Page} page
+ *  @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien
+ *  @param {string} text */
+async function avatarTippen(page, bedien, text) {
+    await eintippen(page, '#char-avatar', text, bedien);
+    await page.waitForTimeout(SETZEN);
+}
+
+// --- Messen: die Invariante R1 ----------------------------------------------
+/** @param {string} wert */
+function kurz(wert) {
+    if (NAMEN.has(wert)) return /** @type {string} */ (NAMEN.get(wert));
+    return wert.length > 60 ? wert.slice(0, 57) + '…' : wert;
+}
+
+/** Was die Vorschau zu diesem Feldwert zeigen MUSS (R1).
+ *  @param {string} feld */
+function vorhersage(feld) {
+    const wert = feld.trim();
+    if (!BREITE.has(wert)) return `UNBEKANNTER Feldwert ${kurz(wert)} — Tabelle BREITE ergaenzen`;
+    const breite = BREITE.get(wert);
+    return breite === null ? 'Platzhalter "?"' : `Bild ${breite}px ${kurz(wert)}`;
+}
+
+/** Feld, Formular und Vorschau, wie sie gerade stehen — nur Ablesen.
+ *  @param {import('@playwright/test').Page} page */
+function ablesen(page) {
+    return page.evaluate(() => {
+        const feld = /** @type {HTMLInputElement} */ (document.getElementById('char-avatar'));
+        const vorschau = /** @type {HTMLElement} */ (document.getElementById('cf-avatar-preview'));
+        const platzhalter = vorschau.querySelector('.cf-avatar-placeholder');
+        return {
+            feld: feld.value,
+            offen: !!document.getElementById('char-form')?.classList.contains('open'),
+            bilder: [...vorschau.querySelectorAll('img')].map(b => ({
+                src: b.getAttribute('src') || '',
+                breite: b.complete ? b.naturalWidth : 0
+            })),
+            platzhalter: platzhalter ? (platzhalter.textContent || '').trim() : null
+        };
+    });
+}
+
+/** Was die Vorschau zeigt, in derselben Sprache wie vorhersage().
+ *  @param {Awaited<ReturnType<typeof ablesen>>} z */
+function beschreibe(z) {
+    if (z.bilder.length === 0) {
+        return z.platzhalter === '?' ? 'Platzhalter "?"' : `weder Bild noch Platzhalter`;
+    }
+    if (z.bilder.length === 1 && z.platzhalter === null) {
+        const b = z.bilder[0];
+        return b.breite > 0
+            ? `Bild ${b.breite}px ${kurz(b.src)}`
+            : `Bild NICHT geladen ${kurz(b.src)}`;
+    }
+    return `${z.bilder.length} Bilder und Platzhalter ${JSON.stringify(z.platzhalter)}`;
+}
+
+const STIMMT = 'Vorschau = Feld';
+
+/**
+ * R1 nach einem Schritt, als weiche Zusicherung: die Vorschau ist die aus dem Feld vorhergesagte
+ * (bis WARTEN_BILD, solange ein Bild noch laedt). Mit `feldSoll` zusaetzlich der Feldwert, den
+ * der Schritt festlegt; ohne (W9) nur die Invariante, gleich was im Feld steht.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} schritt
+ * @param {string} [feldSoll]
+ */
+async function pruefe(page, schritt, feldSoll) {
+    await weich
+        .poll(
+            async () => {
+                const z = await ablesen(page);
+                const soll = vorhersage(z.feld);
+                const ist = beschreibe(z);
+                return ist === soll ? STIMMT : `Feld ${kurz(z.feld)}: soll ${soll}, ist ${ist}`;
+            },
+            { timeout: WARTEN_BILD, message: `${schritt}: Vorschau = Feld (R1)` }
+        )
+        .toBe(STIMMT);
+    const z = await ablesen(page);
+    weich(z.offen, `${schritt}: Formular offen`).toBe(true);
+    if (feldSoll !== undefined) weich(kurz(z.feld), `${schritt}: Feld`).toBe(kurz(feldSoll));
+}
+
+/**
+ * Ende jedes Falls: kein Netzwerkpfad angefordert, kein Fehler.
+ * @param {import('@playwright/test').Page} page
+ * @param {Awaited<ReturnType<typeof laden>>} beob
+ */
+async function ohneNetzUndFehler(page, beob) {
+    await page.waitForTimeout(300);
+    expect(beob.netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
+    expect(await beob.alleFehler(), 'kein Fehler').toEqual([]);
+}
+
+// --- Ablaeufe, je fuer Maus und Tap -----------------------------------------
+/** Reihenfolge von (W1): Bild, Bild, Bild, Bild, Netzwerkpfad, ohne Bild. */
+const KARTENKOPF_REIHE = [ARIA, CORA, DORN, FENN, EIK, BRAM];
+
+/** (W1) frisch geladen, ✏️ ueber den Kartenkopf.
+ *  @param {import('@playwright/test').Page} page
+ *  @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien */
+async function ablaufW1(page, bedien) {
+    await zuReiter(page, 'party');
+    for (const h of KARTENKOPF_REIHE) {
+        await bearbeitenKopf(page, bedien, h.id);
+        await pruefe(page, `(W1) ✏️ ${h.name} ueber den Kartenkopf`, h.avatar);
+    }
+}
+
+/** (W3) ein getipptes Bild bleibt nicht ueber Abbrechen und ✏️ stehen.
+ *  @param {import('@playwright/test').Page} page
+ *  @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien */
+async function ablaufW3(page, bedien) {
+    await zuReiter(page, 'party');
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).toHaveClass(/\bopen\b/);
+    await pruefe(page, '(W3) Kopfzeile auf (neu)', '');
+    await avatarTippen(page, bedien, HTTPS_BILD);
+    await pruefe(page, '(W3) HTTPS_BILD getippt', HTTPS_BILD);
+    await bedien(abbrechenKnopf(page));
+    await expect(formular(page)).not.toHaveClass(/\bopen\b/);
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).toHaveClass(/\bopen\b/);
+    await pruefe(page, '(W3) getippt → Abbrechen → Kopfzeile auf', '');
+    await bearbeitenKopf(page, bedien, BRAM.id);
+    await pruefe(page, '(W3) dann ✏️ Bram (ohne Bild)', '');
+    await bearbeitenKopf(page, bedien, ARIA.id);
+    await pruefe(page, '(W3) dann ✏️ Aria', DATA_BILD);
+}
+
+/**
+ * (W4) Leerwege ohne vorheriges Tippen, gemessen beim naechsten Oeffnen. Am Telefon gibt es
+ * weder Taste n noch Palette: dort oeffnet nach "Speichern" die Kopfzeile, die Palette entfaellt.
+ * @param {import('@playwright/test').Page} page
+ * @param {(z: import('@playwright/test').Locator) => Promise<void>} bedien
+ * @param {boolean} tasten
+ */
+async function ablaufW4(page, bedien, tasten) {
+    await zuReiter(page, 'party');
+    const offen = /\bopen\b/;
+
+    // Abbrechen
+    await bearbeitenKopf(page, bedien, CORA.id);
+    weich(kurz((await ablesen(page)).feld), '(W4) Feld nach ✏️ Cora').toBe('LOKALES_BILD');
+    await bedien(abbrechenKnopf(page));
+    await expect(formular(page)).not.toHaveClass(offen);
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).toHaveClass(offen);
+    await pruefe(page, '(W4) ✏️ Cora → Abbrechen → Kopfzeile auf', '');
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).not.toHaveClass(offen);
+
+    // Speichern, dann Taste n (Telefon: Kopfzeile)
+    await bearbeitenKopf(page, bedien, ARIA.id);
+    await bedien(speichernKnopf(page));
+    await expect(formular(page)).not.toHaveClass(offen);
+    if (tasten) {
+        await page.keyboard.press('n');
+        await page.waitForTimeout(SETZEN);
+    } else {
+        await bedien(kopfzeile(page));
+    }
+    await expect(formular(page)).toHaveClass(offen);
+    await pruefe(page, `(W4) ✏️ Aria → Speichern → ${tasten ? 'Taste n' : 'Kopfzeile auf'}`, '');
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).not.toHaveClass(offen);
+
+    // Kopfzeile zu und auf: verwirft den Bearbeiten-Rest (ABBRUCH R1)
+    await bearbeitenKopf(page, bedien, ARIA.id);
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).not.toHaveClass(offen);
+    await bedien(kopfzeile(page));
+    await expect(formular(page)).toHaveClass(offen);
+    await pruefe(page, '(W4) ✏️ Aria → Kopfzeile zu und auf (ABBRUCH R1)', '');
+
+    if (!tasten) return;
+    // Reiter Quests, Palette "Neuer Charakter": verwirft den Rest aus der anderen Ansicht
+    await bearbeitenKopf(page, bedien, ARIA.id);
+    await zuReiter(page, 'quests');
+    await palette(page, 'Neuer Charakter');
+    await expect(page.locator('#view-party')).toHaveClass(/\bactive\b/);
+    await expect(formular(page)).toHaveClass(offen);
+    await pruefe(page, '(W4) ✏️ Aria → Reiter Quests → Palette "Neuer Charakter"', '');
+}
+
+test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden und Leeren', () => {
+    // =======================================================================
+    // (W1) (W2) (W3) (W4) (W5) (W6) (W9) — 1440x900, Maus und Tastatur, dev
+    // =======================================================================
+    test.describe('1440x900, Maus und Tastatur', () => {
+        test.use({ viewport: BREIT });
+
+        test('(g) (W1) frisch geladen: ✏️ ueber den Kartenkopf zeigt das Bild des Helden, ohne Bild und beim Netzwerkpfad "?" — dev', async ({
+            page
+        }) => {
+            test.setTimeout(90000);
+            const beob = await ladenMitHelden(page);
+            await ablaufW1(page, bedienung(page, false));
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W2) frisch geladen: ✏️ ueber 🔍 → "✏️ Bearbeiten" (Cora) und ueber Strg+K (Dorn) zeigt das Bild des Helden', async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page);
+            const bedien = bedienung(page, false);
+            await zuReiter(page, 'party');
+            await bearbeitenDetail(page, bedien, CORA.id);
+            await pruefe(page, '(W2) 🔍 → "✏️ Bearbeiten" Cora', LOKALES_BILD);
+            await bearbeitenSuche(page, 'Dorn', DORN.id);
+            await pruefe(page, '(W2) Strg+K → Treffer Dorn', RELATIVES_BILD);
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W3) ein getipptes Bild verschwindet mit Abbrechen und steht nicht neben ✏️ Bram oder ✏️ Aria — dev', async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page);
+            await ablaufW3(page, bedienung(page, false));
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W4) Leerwege ohne Tippen — Abbrechen, Speichern + Taste n, Kopfzeile zu/auf, Palette — hinterlassen "?" (gegen den Halbfix "nur editChar")', async ({
+            page
+        }) => {
+            test.setTimeout(90000);
+            const beob = await ladenMitHelden(page);
+            await ablaufW4(page, bedienung(page, false), true);
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W5) GENAU Coras Wert getippt, Abbrechen → "?", dann ✏️ Cora → Coras Bild (gegen ein synthetisches change, R4)', async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page);
+            const bedien = bedienung(page, false);
+            await zuReiter(page, 'party');
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).toHaveClass(/\bopen\b/);
+            await avatarTippen(page, bedien, LOKALES_BILD);
+            await pruefe(page, '(W5) Coras Wert in den Entwurf getippt', LOKALES_BILD);
+            await bedien(abbrechenKnopf(page));
+            await expect(formular(page)).not.toHaveClass(/\bopen\b/);
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).toHaveClass(/\bopen\b/);
+            await pruefe(page, '(W5) → Abbrechen → Kopfzeile auf', '');
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).not.toHaveClass(/\bopen\b/);
+            await bearbeitenKopf(page, bedien, CORA.id);
+            await pruefe(page, '(W5) → ✏️ Cora', LOKALES_BILD);
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W6) Kontrolle R5: ein Entwurf mit getipptem Bild behaelt Feld und Vorschau ueber Kopfzeile zu/auf, Taste n und Palette', async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page);
+            const bedien = bedienung(page, false);
+            await zuReiter(page, 'party');
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).toHaveClass(/\bopen\b/);
+            await avatarTippen(page, bedien, HTTPS_BILD);
+            await pruefe(page, '(W6) Entwurf: HTTPS_BILD getippt', HTTPS_BILD);
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).not.toHaveClass(/\bopen\b/);
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).toHaveClass(/\bopen\b/);
+            await pruefe(page, '(W6) Entwurf → Kopfzeile zu und auf', HTTPS_BILD);
+            // Der Fokus liegt nach dem Klick auf die Kopfzeile in keinem Feld: n erreicht die Seite
+            await page.keyboard.press('n');
+            await page.waitForTimeout(SETZEN);
+            await pruefe(page, '(W6) Entwurf → Taste n', HTTPS_BILD);
+            await zuReiter(page, 'quests');
+            await palette(page, 'Neuer Charakter');
+            await expect(page.locator('#view-party')).toHaveClass(/\bactive\b/);
+            await pruefe(
+                page,
+                '(W6) Entwurf → Reiter Quests → Palette "Neuer Charakter"',
+                HTTPS_BILD
+            );
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        // (W9) Altdaten — prueft NUR R1 (Vorschau = Feld), nicht, was editChar() ins Feld
+        // schreibt: das ist R7 (eigener Vorgang). Darum auch nur pageerror: editChar() wirft
+        // heute bei `speed` als Zahl (`speedVal.split is not a function`), EventDelegation
+        // faengt das und meldet es per console.error und im Fehlerlog der App — das haelt
+        // dieser Fall nicht fest, weder als Soll noch als Verbot.
+        test('(g) (W9) Altdaten: nach ✏️ Aria und ✏️ Gus (`speed` als Zahl) folgt die Vorschau dem Feld', async ({
+            page
+        }) => {
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page, { characters: [ARIA, BRAM, GUS] });
+            const bedien = bedienung(page, false);
+            expect(
+                await page.evaluate(
+                    // @ts-ignore
+                    () => typeof window.D?.characters?.find(c => c.id === 7)?.speed
+                ),
+                'Vorbedingung: Gus traegt `speed` nach dem Laden noch als Zahl (sonst ist es keine Altdaten-Probe)'
+            ).toBe('number');
+            await zuReiter(page, 'party');
+            await bearbeitenKopf(page, bedien, ARIA.id);
+            await pruefe(page, '(W9) ✏️ Aria', DATA_BILD);
+            await bearbeitenKopf(page, bedien, GUS.id);
+            await pruefe(
+                page,
+                '(W9) dann ✏️ Gus (Altdaten): Vorschau = Feld, gleich was im Feld steht'
+            );
+            await page.waitForTimeout(300);
+            expect(beob.netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
+            expect(beob.seitenfehler, 'kein Seitenfehler').toEqual([]);
+        });
+    });
+
+    // =======================================================================
+    // (W7) 390x844 per Tap
+    // =======================================================================
+    test.describe('(W7) Telefon 390x844, per Tap', () => {
+        test.use({ viewport: TELEFON, hasTouch: true, isMobile: true });
+
+        /** @param {import('@playwright/test').Page} page */
+        async function mobil(page) {
+            await expect(page.locator('html'), 'Vorbedingung: Mobil-Layout').toHaveAttribute(
+                'data-layout',
+                'mobile'
+            );
+        }
+
+        test('(g) (W7) = (W1) per Tap: ✏️ ueber den Kartenkopf zeigt das Bild des Helden', async ({
+            page
+        }) => {
+            test.setTimeout(120000);
+            const beob = await ladenMitHelden(page, { telefon: true });
+            await mobil(page);
+            await ablaufW1(page, bedienung(page, true));
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W7) = (W3) per Tap: ein getipptes Bild verschwindet mit Abbrechen', async ({
+            page
+        }) => {
+            test.setTimeout(120000);
+            const beob = await ladenMitHelden(page, { telefon: true });
+            await mobil(page);
+            await ablaufW3(page, bedienung(page, true));
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W7) = (W4) per Tap: Abbrechen, Speichern + Kopfzeile, Kopfzeile zu/auf hinterlassen "?"', async ({
+            page
+        }) => {
+            test.setTimeout(120000);
+            const beob = await ladenMitHelden(page, { telefon: true });
+            await mobil(page);
+            await ablaufW4(page, bedienung(page, true), false);
+            await ohneNetzUndFehler(page, beob);
+        });
+    });
+
+    // =======================================================================
+    // (W8) prod-Buendel
+    // =======================================================================
+    test.describe('(W8) prod-Buendel, 1440x900', () => {
+        test.use({ viewport: BREIT });
+
+        test('(g) (W8) = (W1) am prod-Buendel', async ({ page }) => {
+            test.skip(!PROD_DA, PROD_GRUND);
+            test.setTimeout(90000);
+            const beob = await ladenMitHelden(page, { url: APP_URL_PROD });
+            await ablaufW1(page, bedienung(page, false));
+            await ohneNetzUndFehler(page, beob);
+        });
+
+        test('(g) (W8) = (W3) am prod-Buendel', async ({ page }) => {
+            test.skip(!PROD_DA, PROD_GRUND);
+            test.setTimeout(60000);
+            const beob = await ladenMitHelden(page, { url: APP_URL_PROD });
+            await ablaufW3(page, bedienung(page, false));
+            await ohneNetzUndFehler(page, beob);
+        });
+    });
 });
