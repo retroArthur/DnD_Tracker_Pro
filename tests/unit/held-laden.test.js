@@ -537,4 +537,45 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
             });
         });
     });
+
+    describe('(HL5) R5: resistances und immunities als Text laden wie bisher, per Teilstring', () => {
+        test.each([
+            ['resistances', 'Gift', ['Gift']],
+            ['resistances', 'Gift, Säure (halbiert)', ['Gift', 'Säure']],
+            ['immunities', 'Kälte', ['Kälte']],
+            ['immunities', 'Donner und Psychisch', ['Donner', 'Psychisch']]
+        ])('(HL5) %s als Text %j markiert %j', (feld, text, markiert) => {
+            HELDEN.set(2, xaverMit(feld, text));
+            ctx.editChar(1);
+            expect(() => ctx.editChar(2)).not.toThrow();
+            const z = formularStand();
+            expect({ id: z['edit-char-id'], offen: z.offen }).toEqual({ id: '2', offen: true });
+            const gruppe = `char-${feld}:`;
+            const chips = Object.keys(z).filter(k => k.startsWith(gruppe));
+            expect(chips.length).toBeGreaterThan(0);
+            /** @type {Record<string, any>} */
+            const ist = {};
+            /** @type {Record<string, any>} */
+            const soll = {};
+            for (const k of chips) {
+                ist[k] = z[k];
+                soll[k] = markiert.includes(k.slice(gruppe.length))
+                    ? 'true|markiert'
+                    : 'false|unmarkiert';
+            }
+            expect(ist).toEqual(soll);
+            const ausserhalb = Object.keys(STAND.kontrolle).filter(k => !gehoertZu(feld, k));
+            /** @type {Record<string, any>} */
+            const istRest = {};
+            /** @type {Record<string, any>} */
+            const sollRest = {};
+            for (const k of ausserhalb) {
+                istRest[k] = z[k];
+                sollRest[k] = STAND.kontrolle[k];
+            }
+            expect(istRest).toEqual(sollRest);
+            expect(meldungen).toEqual([]);
+            expect(protokoll).toEqual([]);
+        });
+    });
 });
