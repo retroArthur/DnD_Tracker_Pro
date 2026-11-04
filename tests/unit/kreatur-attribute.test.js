@@ -1,5 +1,5 @@
 /**
- * Kreaturen-Editor: Attributmodifikator (KREATUR-ATTRIBUTE, U1b und U4)
+ * Kreaturen-Editor: Attributmodifikator (KREATUR-ATTRIBUTE, U1b, U4 und U5)
  *
  * DER BEFUND: die sechs Attributfelder des Kreaturen-Editors zeigen nach jeder
  * Eingabe "+0" (bzw. im Bearbeiten-Modus den Modifikator des geladenen Werts),
@@ -8,8 +8,9 @@
  * (Befund, Ursache und Faelle am gebauten Buendel:
  * tests/e2e/features/kreatur-attribute.spec.js).
  *
- * DIESE DATEI prueft die zwei Bausteine des Vertrags am echten Quelltext, per
- * `vm` in einer Sandbox (Muster tests/unit/event-delegation.test.js):
+ * DIESE DATEI prueft drei Bausteine des Vertrags am echten Quelltext — die
+ * zwei Funktionen per `vm` in einer Sandbox (Muster
+ * tests/unit/event-delegation.test.js), das Markup tagweise:
  *
  *   U4  features/bestiary/bestiary-editor.js (R2): `updateBstAttrMod(attr)`
  *       nimmt den Schluessel als Text, rechnet `parseInt(wert) || 10` und
@@ -22,17 +23,22 @@
  *       reicht `ctx.target.dataset.value` weiter und liest NIE ctx.value — bei
  *       input/change ist das der getippte Wert, bei leerem Feld der
  *       data-value-Rueckfall.
+ *   U5  assets/templates/view-bestiary.html (R1): die sechs Felder tragen die
+ *       eigene Aktion, den Schluessel in data-value und kein data-attr.
  *
  * Am Stand 543706c6 (vor dem Fix) sind rot: U1b (der Handler fehlt), die
  * U4-Faelle mit Schluessel als Text (die heutige Signatur liest `.target` von
  * einem String und schreibt nichts) und der Export-Fall. Gruen als Gegenprobe:
  * fremder Schluessel schreibt nichts, updateAllBstAttrMods.
  *
- * NACHPRUEFUNG (an einem Mutanten gemessen): der Fall "fremder Schluessel"
- * legt seither ein Feldpaar zum fremden Schluessel an. Vorher lieferte
- * `window.$('bst-xyz')` ohnehin null, und ein Mutant OHNE die
- * Schluesselpruefung von R2 blieb gruen (21 von 21); jetzt sind an ihm alle
- * vier Faelle rot.
+ * NACHPRUEFUNG (zwei Regeln waren unbewacht, je an einem Mutanten gemessen):
+ * der Fall "fremder Schluessel" legt seither ein Feldpaar zum fremden
+ * Schluessel an. Vorher lieferte `window.$('bst-xyz')` ohnehin null, und ein
+ * Mutant OHNE die Schluesselpruefung von R2 blieb gruen (21 von 21); jetzt
+ * sind an ihm alle vier Faelle rot. U5 ist neu: ein Mutant, an dessen sechs
+ * Feldern data-attr stehen blieb, war in U2 (event-delegation.test.js), W9
+ * und allen uebrigen Faellen gruen; U5 ist an ihm rot und nennt alle sechs
+ * Felder. Am Stand 543706c6 ist U5 ebenfalls rot (`call` und data-attr).
  */
 
 const fs = require('fs');
@@ -241,4 +247,45 @@ describe("Handler 'update-bst-attr-mod' liest den Schluessel aus dem Feld, nie c
             expect(updateBstAttrMod).toHaveBeenCalledWith(schluessel);
         }
     );
+});
+
+describe('Markup der sechs Attributfelder (KREATUR-ATTRIBUTE, R1, U5)', () => {
+    // R1 verlangt drei Dinge am Markup: die eigene Aktion, den Schluessel in data-value
+    // und KEIN data-attr mehr (sein einziger Leser war die alte Signatur
+    // updateBstAttrMod(ctx) mit ctx.target.dataset.attr). U2 (event-delegation.test.js)
+    // und W9 (Spec) pruefen nur, dass kein Formularfeld `call` traegt — ein Fix, der das
+    // tote data-attr stehen liesse, bliebe dort gruen (Nachpruefung, an einem Mutanten
+    // gemessen). Gelesen wird TAGWEISE: die Vorlage ist CRLF, Tag-Anfang und data-action
+    // stehen auf verschiedenen Zeilen.
+    const TEMPLATE_PATH = path.join(__dirname, '../../assets/templates/view-bestiary.html');
+
+    /** Wert eines Attributs im Tag, oder null, wenn es fehlt. */
+    function attribut(tag, name) {
+        const m = tag.match(new RegExp('\\s' + name + '\\s*=\\s*"([^"]*)"'));
+        return m ? m[1] : null;
+    }
+
+    test('jedes der sechs Felder steht genau einmal da, mit data-action="update-bst-attr-mod", data-value = Schluessel, ohne data-attr', () => {
+        const tags = fs.readFileSync(TEMPLATE_PATH, 'utf8').match(/<input\b[^>]*>/gi) || [];
+
+        const ist = Object.fromEntries(
+            ATTR.map(a => {
+                const eigene = tags.filter(t => attribut(t, 'id') === 'bst-' + a);
+                return [
+                    a,
+                    eigene.map(t => ({
+                        action: attribut(t, 'data-action'),
+                        value: attribut(t, 'data-value'),
+                        attr: attribut(t, 'data-attr')
+                    }))
+                ];
+            })
+        );
+
+        expect(ist).toEqual(
+            Object.fromEntries(
+                ATTR.map(a => [a, [{ action: 'update-bst-attr-mod', value: a, attr: null }]])
+            )
+        );
+    });
 });
