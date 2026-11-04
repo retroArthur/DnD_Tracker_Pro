@@ -921,11 +921,12 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *       keine Anforderung an einen Netzwerkpfad.
  *   R7  Nicht in diesem Vorgang (je ein eigener, docs/bugfixes.md, AVATAR-VORSCHAU Offen):
  *       Sprachen ausserhalb der festen Liste gehen nach ✏️ + 💾 verloren (Produktfrage);
- *       editChar() laedt einen Helden mit `speed` als ZAHL nur halb und schreibt beim Speichern
- *       Bild und Sprachen des vorigen Helden auf ihn (Datenverfaelschung); Uebungsbonus "+3"
- *       bei Stufe 1 beim ersten Oeffnen; das Sprachmenue bleibt beim ✏️-Wechsel offen. Deshalb
- *       saet dieser Block `speed` als TEXT — ausser in (W9), der genau diese Altdaten nimmt und
- *       NUR die Invariante R1 prueft, nicht, was editChar() ins Feld schreibt.
+ *       editChar() laedt einen Helden mit Altdaten (`speed` als Zahl oder Array, `languages`
+ *       als Zahl, `resistances` als Objekt) nur halb und schreibt beim Speichern Bild und
+ *       Sprachen des vorigen Helden auf ihn (Datenverfaelschung); Uebungsbonus "+3" bei
+ *       Stufe 1 beim ersten Oeffnen; das Sprachmenue bleibt beim ✏️-Wechsel offen. Deshalb
+ *       saet dieser Block `speed` als TEXT — ausser in (W9), der genau solche Altdaten nimmt
+ *       und NUR die Invariante R1 prueft, nicht, was editChar() ins Feld schreibt.
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * DIE FAELLE                                                                  am Kopf 543706c6
