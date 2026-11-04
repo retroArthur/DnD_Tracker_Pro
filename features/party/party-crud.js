@@ -391,8 +391,17 @@ function editChar(id) {
         $('char-ac').value = String(ch.armorClass || '');
         $('char-init').value = String(ch.initiative || '');
         // Speed - handle both old format (just "9m") and new format ("9m|30ft.")
-        const speedVal = ch.speed || '9m|30ft.';
+        // - beide als Text. Eine Zahl ist die App-Altform in Fuss (der Reiter-Import setzte bis
+        // 99143da7 `speed: 30` ein) und waehlt die Option mit diesem data-ft, sonst die Vorgabe
+        // (E3); jede andere Form die Vorgabe — `speedVal.split` warf dort (CHAR-HALBLADEN R5).
         const speedSelect = $('char-speed');
+        let speedVal = typeof ch.speed === 'string' && ch.speed ? ch.speed : '9m|30ft.';
+        if (typeof ch.speed === 'number' && speedSelect) {
+            const passend = Array.from(speedSelect.options).find(
+                opt => opt.getAttribute('data-ft') === String(ch.speed)
+            );
+            if (passend) speedVal = passend.value;
+        }
         if (speedSelect) {
             // Try to find matching option
             let found = false;
@@ -411,20 +420,23 @@ function editChar(id) {
         updateProficiencyBonus();
         // Inspiration
         $('char-inspiration').checked = ch.inspiration || false;
-        // Resistances and immunities
+        // Resistances and immunities - Liste und Text wie bisher (Text per Teilstring), jede
+        // andere Form ohne Chips statt `.includes is not a function` (CHAR-HALBLADEN R5)
+        const chipWerte = wert => (Array.isArray(wert) || typeof wert === 'string' ? wert : []);
         document.querySelectorAll('#char-resistances .cf-chip').forEach(chip => {
             const input = chip.querySelector('input');
             const val = input.value;
-            input.checked = (ch.resistances || []).includes(val);
+            input.checked = chipWerte(ch.resistances).includes(val);
             chip.classList.toggle('selected', input.checked);
         });
         document.querySelectorAll('#char-immunities .cf-chip').forEach(chip => {
             const input = chip.querySelector('input');
             const val = input.value;
-            input.checked = (ch.immunities || []).includes(val);
+            input.checked = chipWerte(ch.immunities).includes(val);
             chip.classList.toggle('selected', input.checked);
         });
-        // Languages - use new dropdown with checkboxes
+        // Languages - use new dropdown with checkboxes. Roh durchgereicht: den Leser fuer andere
+        // Formen baut SPRACHEN-FREI; bis dahin faengt einen Wurf der catch-Zweig unten.
         setCharLanguages(ch.languages);
         // Spell slots
         for (let i = 0; i <= 9; i++) {
@@ -441,7 +453,9 @@ function editChar(id) {
         $('char-km').value = String(cur.km || 0);
         // Avatar and height
         const avatarInput = $('char-avatar');
-        if (avatarInput) avatarInput.value = ch.avatar || '';
+        // Nur Text (CHAR-HALBLADEN R5/E2): `.value =` machte aus 42 den Pfad "42", den die
+        // Vorschau im App-Ordner anforderte (AVATAR-VORSCHAU Offen (g)).
+        if (avatarInput) avatarInput.value = typeof ch.avatar === 'string' ? ch.avatar : '';
         // Die Vorschau folgt dem FELD (AVATAR-VORSCHAU R1/R2): `.value =` loest kein input-Ereignis
         // aus, und 'update-avatar-preview' hing nur daran — sie zeigte den zuletzt GETIPPTEN Wert
         // oder "?", nie das Bild des geladenen Helden. Direkt aufrufen, kein synthetisches Ereignis
@@ -464,11 +478,11 @@ function editChar(id) {
             if (profEl) profEl.checked = chSkillProf[key] || false;
             if (expEl) expEl.checked = chSkillExp[key] || false;
         });
-        // Attacks (D-05, CHAR-03)
+        // Attacks (D-05, CHAR-03) - nur eine Liste, sonst keine Zeile (CHAR-HALBLADEN R5)
         const attacksContainer = $('cf-attacks-container');
         if (attacksContainer) {
             attacksContainer.innerHTML = '';
-            (ch.attacks || []).forEach(atk => {
+            (Array.isArray(ch.attacks) ? ch.attacks : []).forEach(atk => {
                 attacksContainer.insertAdjacentHTML('beforeend', buildAttackRowHTML(atk));
             });
         }
