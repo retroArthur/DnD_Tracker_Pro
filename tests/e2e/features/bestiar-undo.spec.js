@@ -94,6 +94,7 @@
  *   ... auch mit Fokus/Rolllage von Hand zurueckgesetzt             → (W7)(W8)(W9)(W12a)
  *   Fokus der verschwundenen Zeile an die Nachbarzeile (Index)      → (W3)
  *   Aenderungspruefung des Details nur ueber den Namen              → (W6b)
+ *   Rolllage des Details beim Neuzeichnen zurueckgesetzt            → (W9b)
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE FAELLE (1440x900 dev und prod; Telefon 390x844 per Tap, dev und prod)
@@ -125,6 +126,10 @@
  *                                                             Zeile, Fokus gruen
  *   (W9)  Drache waehlen, Detail per Rad rollen,
  *         ★, Strg+Z                               R3          gruen ×2 (Rueckschritt)
+ *   (W9b) Altwesen (lang) bearbeitet, Detail
+ *         per Rad gerollt, Strg+Z, Strg+Y         R3 (c)      rot ×2 (Detail 10 statt 77
+ *                                                             nach dem Speichern, nicht
+ *                                                             neu gezeichnet)
  *   (W10) Start auf dem Dashboard, erstes Oeffnen  R2          gruen ×2 (Rueckschritt)
  *   (W11) Typ-Filter Probetyp per Tastatur,
  *         Strg+Z, Strg+Y                          R5 (d)      rot ×2 (Filter bleibt auf
@@ -136,7 +141,7 @@
  *   In jedem Fall: kein pageerror, kein console.error, kein Toast "nicht
  *   gefunden", als Dialog hoechstens das confirm des Loeschens (W5).
  *   Aus der Pruefung nachgetragen (Luecken, die ein Halbfix gruen liess), am
- *   Basisstand gemessen: (W6b) rot ×2.
+ *   Basisstand gemessen: (W6b) (W9b) rot ×2.
  *
  * AN BUENDELKOPIEN DES DEV-BUENDELS GEMESSEN (ausserhalb des Repos):
  *   Fix-Skizze (Registry: Liste + Detail mit Aenderungspruefung, offene
@@ -149,6 +154,8 @@
  *   Detail immer neu, Fokus/Rolllage von Hand       rot (W7)(W8)(W9)(W12a) — Beobachter
  * NACHGETRAGEN, an Quelltextkopien des Fix-Stands gemessen (dev gebaut):
  *   Aenderungspruefung nur ueber den Namen          rot NUR (W6b) — 14 andere gruen
+ *   Rolllage des Details nach dem Neuzeichnen auf 0 rot (W9b) 462 → 0
+ *   ohne die Rueckgabe der Rolllage                 gruen (W9b) — Chromium haelt sie selbst
  *
  * MODULPFADE: das CRUD- und das Aktionsmodul des Bestiars stehen auf der
  * Ausnahmeliste der Modulabdeckung; ihre Pfade werden hier nicht woertlich
@@ -286,8 +293,9 @@ function fehlerFangen(page) {
  * Saet (einmal je Tab, VOR dem Laden), laedt und wartet die fremde
  * Speicherung ab (`load()` repariert die Saat und schreibt `_version` neu).
  * @param {import('@playwright/test').Page} page @param {string} url
+ * @param {ReturnType<typeof saat>} [s] eine abgewandelte Saat (Standard: saat())
  */
-async function laden(page, url) {
+async function laden(page, url, s = saat()) {
     const f = fehlerFangen(page);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -299,7 +307,7 @@ async function laden(page, url) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        [SPEICHER, saat()]
+        [SPEICHER, s]
     );
     // Ein reiner Beobachter, kein Eingriff: er zaehlt, wie oft das Detail seinen
     // Inhalt ersetzt bekommt (childList-Aenderung AM Panel = innerHTML). R3 sagt:
@@ -1179,6 +1187,88 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
                 z2.fokus.zeile === erster && z2.fokus.aktion === 'bestiary-toggle-fav',
                 `der Fokus bleibt auf dem ★ (${z2.fokus.beschreibung})`
             ).toBe(true);
+            await rahmen(page, f);
+        });
+
+        // (W9) haelt die Rolllage der UNVERAENDERTEN Kreatur (kein Neuzeichnen). Hier die
+        // GEAENDERTE: das Detail wird neu geschrieben, und die Rolllage bleibt — ueber den
+        // Vertrag hinaus (R3 sagt dazu nichts), aber gebaut und im Katalog als Fix-Eigenschaft
+        // genannt. An Quelltextkopien gemessen (dev): ohne die Rueckgabe der Rolllage in
+        // renderBestiaryAnsicht() GRUEN — Chromium haelt scrollTop beim Austausch gleich hohen
+        // Inhalts selbst; mit "scrollTop = 0" statt der Rueckgabe ROT (462 → 0). Der Fall haelt
+        // also das Verhalten, nicht die eine Zeile. Altwesen bekommt dafuer in der Saat dreissig
+        // Zeilen Aktionen — sonst rollt sein Detail bei 1440x900 nicht.
+        test(`(W9b) Altwesen bearbeitet, Detail per Rad gerollt, Strg+Z, Strg+Y: neu gezeichnet, die Rolllage bleibt — ${buendel}`, async ({
+            page
+        }) => {
+            test.skip(buendel === 'prod' && !PROD_DA, 'kein prod-Buendel gebaut');
+            const s = saat();
+            s.bestiary = [
+                Object.assign({}, s.bestiary[0], {
+                    actions: Array.from(
+                        { length: 30 },
+                        (_, i) =>
+                            `<p>Probeaktion ${i + 1}: eine Zeile, die das Detail verlaengert.</p>`
+                    ).join('')
+                })
+            ];
+            const f = await laden(page, url, s);
+            await zurAnsicht(page, 'bestiary');
+            await suchen(page, 'wesen');
+            await bediene(page, zeileSel(ALT) + ' .bestiary-name', 'die Zeile Altwesen');
+            await bediene(
+                page,
+                '#bestiary-detail-panel [data-action="call"][data-value="openBestiaryEditor"]',
+                'Bearbeiten'
+            );
+            await bediene(page, '#bst-hp', 'das TP-Feld');
+            await page.keyboard.press('Control+a');
+            await page.keyboard.type('77', { delay: 20 });
+            await bediene(page, '#bestiary-editor-modal [data-value="saveBestiary"]', 'Speichern');
+            const kasten = /** @type {{x: number, y: number, width: number, height: number}} */ (
+                await page.locator('#bestiary-detail-panel').boundingBox()
+            );
+            await page.mouse.move(kasten.x + kasten.width / 2, kasten.y + kasten.height / 2);
+            for (let i = 0; i < 4; i++) {
+                await page.mouse.wheel(0, 150);
+                await page.waitForTimeout(80);
+            }
+            await page.waitForTimeout(300);
+            const z0 = await zustand(page);
+            expect(z0.D_tp, 'Vorbedingung: gespeichert').toEqual(['1:77']);
+            expect(z0.detailRollen, 'Vorbedingung: das Detail ist gerollt').toBeGreaterThan(0);
+            weich(z0.detailTP, 'nach dem Speichern zeigt das Detail 77 (Entscheidung (c))').toBe(
+                'Trefferpunkte 77'
+            );
+
+            let vor = z0;
+            for (const [schritt, tun, tp] of /** @type {const} */ ([
+                ['Strg+Z', rueckgaengig, 10],
+                ['Strg+Y', wiederholen, 77]
+            ])) {
+                await tun(page);
+                const z = await zustand(page);
+                expect(z.D_tp, `Vorbedingung: ${schritt} setzt die TP in D auf ${tp}`).toEqual([
+                    '1:' + tp
+                ]);
+                weich(z.detailTP, `${schritt}: das Detail zeigt die TP aus D`).toBe(
+                    `Trefferpunkte ${tp}`
+                );
+                weich(
+                    z.detailZeichnungen - vor.detailZeichnungen,
+                    `${schritt}: die geaenderte Kreatur wird neu gezeichnet`
+                ).toBeGreaterThan(0);
+                weich(z.detailRollen, `${schritt}: die Rolllage des Details bleibt`).toBe(
+                    z0.detailRollen
+                );
+                weich(
+                    z.fokus.imDetail &&
+                        z.fokus.aktion === 'call' &&
+                        z.fokus.wert === 'openBestiaryEditor',
+                    `${schritt}: der Fokus bleibt auf "Bearbeiten" (${z.fokus.beschreibung})`
+                ).toBe(true);
+                vor = z;
+            }
             await rahmen(page, f);
         });
 
