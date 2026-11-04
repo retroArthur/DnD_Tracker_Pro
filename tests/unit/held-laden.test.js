@@ -14,23 +14,23 @@
  *        ist nur "kein Halbladen, nichts von Aria": ENTWEDER offen und geladen wie oben, ODER
  *        (der catch-Zweig, R3) leer und zu, mit genau einer Fehlermeldung. Welches von beiden,
  *        legt diese Datei nicht fest.
- *   HL2  R3: ein unerwarteter Fehler beim Laden — eingeschleust frueh (updateAttrMod), mittig
- *        (setCharLanguages), spaet (buildAttackRowHTML) — verlaesst editChar() nicht, und
- *        danach ist das Formular leer und zu: keine Bearbeiten-ID, kein Wert von Aria, kein
+ *   HL2  R3: ein unerwarteter Fehler beim Laden verlaesst editChar() nicht, und danach ist das
+ *        Formular leer und zu: keine Bearbeiten-ID, kein Wert und keine Anzeige von Aria, kein
  *        Teilwert von Xaver; genau eine Meldung showToast(…, 'error') und genau ein Eintrag
- *        ueber ErrorHandler.log. Am Bildschirm wirft mit gueltigen Daten nichts — darum hier.
- *        **"Frueh" weicht bewusst vom Vertrag ab:** der Vertrag (WAECHTER, HL2) schleust ein
- *        "updateAttrMod wirft immer"; hier wirft es nur fuer jeden Wert ausser der Vorgabe 10.
- *        Unter der Vertragsinjektion halten R3 und E5 NICHT, gemessen (Unit und am Bildschirm,
- *        CHAR-HALBLADEN Offen (4) in docs/bugfixes.md): ID '', Formular zu, genau eine
- *        Meldung — aber char-dex/con/int/wis/cha tragen Arias 14/12/18/13/15 und alle sechs
- *        -mod-Anzeigen Arias Modifikatoren (11 Werte von Aria). Ursache: BEIDE
- *        cancelCharEdit()-Aufrufe (vorab und im catch) setzen die Attribute ueber
- *        resetAttributes(…, updateAttrMod) (utils/form-helpers.js) zurueck, und
- *        resetAttributes() faengt den Wurf beim ersten Attribut still und laesst die uebrigen
- *        fuenf stehen; die -mod-Anzeigen schreibt nur updateAttrMod(). Das ist ein Mangel des
- *        Leerens, nicht von editChar(); R9 laesst cancelCharEdit() unveraendert, und auch ein
- *        robustes resetAttributes() liesse die sechs Anzeigen stehen. Eigener Vorgang.
+ *        ueber ErrorHandler.log, der von editChar(). Am Bildschirm wirft mit gueltigen Daten
+ *        nichts — darum hier. Eingeschleust frueh (updateAttrMod wirft IMMER — die Injektion
+ *        des Vertrags, WAECHTER HL2), beim Tempo (updateSpeedDisplay wirft immer), beim
+ *        Uebungsbonus (updateProficiencyBonus wirft immer), mittig (setCharLanguages) und
+ *        spaet (buildAttackRowHTML). Die drei Anzeige-Helfer ruft auch cancelCharEdit(), also
+ *        das Leeren in BEIDEN Aufrufen aus editChar() (vorab, R4, und im catch, R3): R3 haelt
+ *        nur, weil das Leeren selbst total ist (CHAR-HALBLADEN Offen (4) in docs/bugfixes.md,
+ *        erledigt). Dazu das Leeren allein, ohne editChar() (Abbrechen-Knopf,
+ *        verwirfBearbeitenRest()): cancelCharEdit() nach editChar(Aria) mit je einem der drei
+ *        Helfer, der immer wirft, laesst nichts von Aria stehen, und der Wurf steht unter
+ *        DEBUG_MODE im Fehlerlog. Bis zu dieser Nachbesserung warf "frueh" nur fuer Werte
+ *        ausser der Vorgabe 10 — schwaecher als der Vertrag, und blind fuer den Rest, den das
+ *        Leeren stehen liess: mit der Vertragsinjektion 11 Werte von Aria (char-dex bis -cha und
+ *        die sechs -mod-Anzeigen), mit updateSpeedDisplay 16, mit updateProficiencyBonus 15.
  *   HL3  E3: speed als Zahl (App-Altform 30) waehlt die Option mit data-ft gleich der Zahl,
  *        sonst '9m|30ft.' — 30, 25, 40, 35, 0.
  *   HL4  R6: Laden schreibt nie nach D — Aria und Xaver' sind nach editChar(1), editChar(2)
@@ -80,6 +80,26 @@
  *   m17  speed, das keine Zahl ist, per String()                  HL6 3 rot
  *   m23  Laden schreibt speed zurueck (`ch.speed = speedVal`)     HL4 6 rot (speed ausser Text)
  *   m24  Laden schreibt avatar zurueck (`ch.avatar = ''`)         HL4 6 rot (avatar ausser Text)
+ *
+ * Die HL2-Zahlen der Tabelle gelten fuer die Fassung mit drei Stellen. Nachgemessen mit der
+ * geschaerften HL2 (die Pruef-Kopien m1–m24, ihr cancelCharEdit() durch das neue ersetzt):
+ * m1, m2, m3, m7 und m12 je HL2 5 rot (alle fuenf Stellen ueber editChar(); die drei Faelle
+ * "das Leeren allein" bleiben gruen, sie pruefen cancelCharEdit()), m5 HL2 8 rot; die
+ * uebrigen Zeilen wie oben.
+ *
+ * HL2 in dieser Fassung (fuenf Stellen, dazu das Leeren allein fuer die drei Helfer) am Kopf
+ * 305a1b70, vor der Nachbesserung zu Offen (4): 6 rot — die drei Helfer, je ueber editChar()
+ * und allein —, mittig und spaet gruen. Gegenproben zum Leeren (Kopien von
+ * utils/form-helpers.js bzw. party-crud.js, nicht eingecheckt; dazu avatar-vorschau.test.js):
+ *
+ *   l1   nur resetAttributes() total, cancelCharEdit() wie vorher     HL2 6 rot
+ *   l2   ohne den Leerwert der Anzeigen (-mod '+0', Fuss '30ft')      HL2 4 rot (updateAttrMod,
+ *                                                                     updateSpeedDisplay)
+ *   l3   ohne 'char-proficiency' in textFields                        HL2 4 rot (Tempo, Bonus)
+ *   l4   die Anzeige-Helfer vorn in customHandlers, wie vorher        HL2 4 rot (Tempo, Bonus)
+ *   l5   resetAttributes() wie vorher (Rueckruf in der Schleife)      HL2 2 rot (updateAttrMod)
+ *   l6   resetAttributes() faengt je Rueckruf, aber ohne Fehlerlog    HL2 1 rot (das Leeren
+ *                                                                     allein, updateAttrMod)
  *
  * Das Modul laeuft echt wie in tests/unit/avatar-vorschau.test.js: vm-Kontext mit dem
  * jsdom-Dokument der Suite, der echten Vorlage assets/templates/view-party.html, dem echten
