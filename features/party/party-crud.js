@@ -194,6 +194,10 @@ function setCharLanguages(languages) {
     }
     // Haken-Klasse, verstecktes select (= was 💾 speichert) und Anzeige, freie eingeschlossen
     updateCharLanguages();
+    // R9: jedes Laden eines Helden schliesst das Menue, wie das Leeren (AVATAR-VORSCHAU
+    // Offen (c)); der Aussenklick-Lauscher unten sieht Klicks auf data-action-Ziele nicht
+    const wrapper = $('cf-languages-wrapper');
+    if (wrapper) wrapper.classList.remove('open');
 }
 /**
  * Clear character languages
