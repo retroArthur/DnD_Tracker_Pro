@@ -123,9 +123,15 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *        '12m|40ft.', attackBonus '+5', level '7', Avatar als relativer Pfad und mit NBSP vor
  *        dem Bild, notes 42, playerName {x:1}                                 11 von 11 gruen
  *   HA9  R4: ✏️ Aria → Sprachmenue auf → ✏️ Xaver: das Menue ist zu            rot
+ *   R6   in JEDEM Fall von HA1–HA8 zusaetzlich: das ✏️ selbst schreibt nichts nach D — alle
+ *        Helden in D vor und nach dem ✏️ verglichen, vor jedem 💾 (nachgetragen auf einen
+ *        Befund der Pruefung: HA2/HA8 vergleichen D erst nach dem 💾, HA3 gar nicht, und ein
+ *        Zurueckschreiben beim Laden blieb so unsichtbar; am Basisstand gruen)
  *
- * Die Einzelheiten ohne Bildschirmweg (Fehlerinjektion, speed 25/40/35/0) stehen in
- * tests/unit/held-laden.test.js (HL1–HL3).
+ * Die Einzelheiten ohne Bildschirmweg (Fehlerinjektion, speed 25/40/35/0, resistances/
+ * immunities als Text, speed als Liste mit Optionstext, zwei Ladefehler kurz hintereinander
+ * mit dem echten ErrorHandler, ein "vergessenes" Steuerelement) stehen in
+ * tests/unit/held-laden.test.js (HL1–HL8).
  *
  * DIE MUTANTEN (Kopien des Buendels und von party-crud.js ausserhalb des Repos, nicht
  * eingecheckt; gefahren mit dieser Datei und tests/unit/held-laden.test.js; keine Variante
@@ -145,6 +151,11 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   m7   catch ohne cancelCharEdit()          die 14 languages-Faelle rot (zu, ohne ID, mit
  *                                             Teilwerten von Xaver)
  *   m9   Avatar wie heute (`ch.avatar || ''`) HA7 8 von 8 rot
+ *   m23  Laden schreibt speed zurueck         `-g speed` 18 von 20 rot, jeder nur an der
+ *        (`ch.speed = speedVal`, wenn speed   R6-Zusage (gruen die zwei HA8-Faelle mit speed
+ *        kein Text ist)                       als Text)
+ *   m24  Laden schreibt avatar zurueck        HA7 8 von 8 rot (dev und prod), nur an der
+ *        (`ch.avatar = ''`)                   R6-Zusage; HA8 gruen
  *
  * WIE GEURTEILT WIRD: am Formular (jedes Steuerelement in #char-form, auch ein kuenftiges,
  * dazu Modifikatoren, Fuss-Anzeige, Sprachanzeige, Vorschau, Angriffszeilen, offen/zu), an D

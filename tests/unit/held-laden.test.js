@@ -19,19 +19,44 @@
  *        danach ist das Formular leer und zu: keine Bearbeiten-ID, kein Wert von Aria, kein
  *        Teilwert von Xaver; genau eine Meldung showToast(…, 'error') und genau ein Eintrag
  *        ueber ErrorHandler.log. Am Bildschirm wirft mit gueltigen Daten nichts — darum hier.
- *        "Frueh" wirft updateAttrMod() fuer jeden Wert ausser der Vorgabe 10, nicht "immer":
- *        cancelCharEdit() ruft es ueber resetAttributes() (utils/form-helpers.js) beim Leeren
- *        mit 10 auf, und resetAttributes() faengt einen Wurf dort still und laesst die
- *        uebrigen fuenf Attribute stehen. Das waere ein Mangel von resetAttributes(), nicht
- *        von editChar(), und R9 laesst cancelCharEdit() unveraendert.
+ *        **"Frueh" weicht bewusst vom Vertrag ab:** der Vertrag (WAECHTER, HL2) schleust ein
+ *        "updateAttrMod wirft immer"; hier wirft es nur fuer jeden Wert ausser der Vorgabe 10.
+ *        Unter der Vertragsinjektion halten R3 und E5 NICHT, gemessen (Unit und am Bildschirm,
+ *        CHAR-HALBLADEN Offen (4) in docs/bugfixes.md): ID '', Formular zu, genau eine
+ *        Meldung — aber char-dex/con/int/wis/cha tragen Arias 14/12/18/13/15 und alle sechs
+ *        -mod-Anzeigen Arias Modifikatoren (11 Werte von Aria). Ursache: BEIDE
+ *        cancelCharEdit()-Aufrufe (vorab und im catch) setzen die Attribute ueber
+ *        resetAttributes(…, updateAttrMod) (utils/form-helpers.js) zurueck, und
+ *        resetAttributes() faengt den Wurf beim ersten Attribut still und laesst die uebrigen
+ *        fuenf stehen; die -mod-Anzeigen schreibt nur updateAttrMod(). Das ist ein Mangel des
+ *        Leerens, nicht von editChar(); R9 laesst cancelCharEdit() unveraendert, und auch ein
+ *        robustes resetAttributes() liesse die sechs Anzeigen stehen. Eigener Vorgang.
  *   HL3  E3: speed als Zahl (App-Altform 30) waehlt die Option mit data-ft gleich der Zahl,
  *        sonst '9m|30ft.' — 30, 25, 40, 35, 0.
+ *   HL4  R6: Laden schreibt nie nach D — Aria und Xaver' sind nach editChar(1), editChar(2)
+ *        bytegleich (toStrictEqual gegen einen JSON-Abzug), fuer die ganze Matrix aus HL1 und
+ *        die ausdruecklichen R6-Formen (wie HA8 der Spec). Ob editChar() wirft, urteilt HL1.
+ *   HL5  R5: resistances/immunities als Text laden wie bisher per Teilstring
+ *        (String.includes): 'Gift' markiert Gift, 'Gift, Säure (halbiert)' Gift und Säure usw.
+ *        Am Bildschirm nur ueber Strg+K erreichbar (renderParty wirft bei Text, E6) — darum
+ *        hier.
+ *   HL6  R5: speed als Liste waehlt '9m|30ft.', auch wenn ihr Text eine Option traefe
+ *        (['12m'], ['8m|25ft.'], ['12m|40ft.']; HL1 saet nur ['abc']).
+ *   HL7  E5: zwei Ladefehler kurz hintereinander melden sich beide — mit dem ECHTEN
+ *        ErrorHandler aus render/helpers.js, dessen showError() jede Meldung binnen 2 s nach
+ *        der vorigen verschluckt (der Grund, aus dem E5 showToast verlangt). Die Attrappe der
+ *        uebrigen Faelle kennt nur log().
+ *   HL8  R4, die Schutzwirkung: ein Steuerelement, das editChar() nicht laedt
+ *        (setCharLanguages() als No-op, "vergessen"), traegt danach den Leerwert, nichts von
+ *        Aria.
  *
  * Gemessen am Basisstand 0f63c0be: HL1 17 rot (genau die 17 werfenden Kombinationen: speed
  * als Zahl, Liste, Objekt, true; resistances, immunities, languages je als Zahl, Objekt,
  * true; attacks als Zahl, Text, Objekt, true — der Wurf verlaesst editChar()), HL2 3 rot,
- * HL3 4 rot (0 ist falsch und war schon gruen); HL0 gruen. Gegenproben an Kopien von
- * party-crud.js (nicht eingecheckt; Namen wie in der Spec, die Varianten aendern
+ * HL3 4 rot (0 ist falsch und war schon gruen); HL0 gruen. HL4–HL8 kamen nach dem Fix auf
+ * Befunde der Pruefung hinzu; am Basisstand sind HL4 und HL5 gruen (die Basis schreibt nicht
+ * nach D und las Text schon so), HL6 3 rot (die Liste warf), HL7 und HL8 rot. Gegenproben an
+ * Kopien von party-crud.js (nicht eingecheckt; Namen wie in der Spec, die Varianten aendern
  * setCharLanguages() nicht):
  *
  *   fix  totale Leser, Leeren vorab, catch → cancelCharEdit(), ID zuletzt     alles gruen
@@ -42,16 +67,26 @@
  *   m3   ohne catch                                               HL1 languages x3, HL2 3 rot
  *   m4   ID zuerst, mit catch                                     gruen — keine Regel
  *   m5   Avatar ueber datenText (im Harness nicht geladen)        87 rot, auch avatar-vorschau U3
- *   m6   ohne Leeren vorab                                        gruen — das haelt HA9 der Spec
+ *   m6   ohne Leeren vorab                                        HL8 rot (dazu HA9 der Spec)
  *   m7   catch ohne cancelCharEdit()                              HL1 languages x3, HL2 3 rot
  *   m8   speed als Zahl immer '9m|30ft.' (E3 "immer die Vorgabe") HL3 25 und 40 rot
  *   m9   Avatar wie heute (`ch.avatar || ''`)                     gruen — das haelt HA7 der Spec
+ *   m12  catch meldet ueber ErrorHandler.showError()              HL7 rot (dazu HL1 x3, HL2 3:
+ *                                                                 die Attrappe kennt kein
+ *                                                                 showError)
+ *   m13  resistances/immunities nur als Liste, Text ohne Chips    HL5 4 rot
+ *   m14  vorab nur das Sprachmenue schliessen statt
+ *        cancelCharEdit()                                         HL8 rot
+ *   m17  speed, das keine Zahl ist, per String()                  HL6 3 rot
+ *   m23  Laden schreibt speed zurueck (`ch.speed = speedVal`)     HL4 6 rot (speed ausser Text)
+ *   m24  Laden schreibt avatar zurueck (`ch.avatar = ''`)         HL4 6 rot (avatar ausser Text)
  *
  * Das Modul laeuft echt wie in tests/unit/avatar-vorschau.test.js: vm-Kontext mit dem
  * jsdom-Dokument der Suite, der echten Vorlage assets/templates/view-party.html, dem echten
  * Datengrenzen-Block (sichereBildquelle() fuer die Vorschau) und der echten clearFormFields().
  * Attrappen nur fuer EntityLookup, esc, sanitizeHTML, getProfBonus, showToast und
- * ErrorHandler — die beiden letzten zaehlen, unter ihrem globalen Namen UND unter window.
+ * ErrorHandler — die beiden letzten zaehlen, unter ihrem globalen Namen UND unter window;
+ * HL7 setzt dafuer den echten ErrorHandler aus render/helpers.js ein (eigener vm-Kontext).
  */
 
 const fs = require('fs');
