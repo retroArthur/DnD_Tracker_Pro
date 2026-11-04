@@ -93,6 +93,7 @@
  *   Detail bei jedem Neuzeichnen ohne Aenderungspruefung (BODY)     → (W6) (W7)
  *   ... auch mit Fokus/Rolllage von Hand zurueckgesetzt             → (W7)(W8)(W9)(W12a)
  *   Fokus der verschwundenen Zeile an die Nachbarzeile (Index)      → (W3)
+ *   Aenderungspruefung des Details nur ueber den Namen              → (W6b)
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE FAELLE (1440x900 dev und prod; Telefon 390x844 per Tap, dev und prod)
@@ -114,6 +115,9 @@
  *   (W6)  Bearbeiten → Neuwesen → Speichern,
  *         Strg+Z, Strg+Y                          R1 R3 R4 (c) rot ×2 (Detail alter Name;
  *                                                             Liste "Neuwesen")
+ *   (W6b) Bearbeiten → nur TP 10 → 77 →
+ *         Speichern, Strg+Z, Strg+Y               R3 (c)      rot ×2 (Detail 10 statt 77
+ *                                                             nach Speichern und Strg+Y)
  *   (W7)  Goblin waehlen, ★, Tab auf "Zur
  *         Initiative", Strg+Z                     R3 R4       rot ×2 (★)
  *   (W8)  per Rad gerollt, Goblin waehlen, ★,
@@ -131,6 +135,8 @@
  *   Zusammen 24 rot, 4 gruen; kein Fall an Vorbedingung oder Zeitueberschreitung.
  *   In jedem Fall: kein pageerror, kein console.error, kein Toast "nicht
  *   gefunden", als Dialog hoechstens das confirm des Loeschens (W5).
+ *   Aus der Pruefung nachgetragen (Luecken, die ein Halbfix gruen liess), am
+ *   Basisstand gemessen: (W6b) rot ×2.
  *
  * AN BUENDELKOPIEN DES DEV-BUENDELS GEMESSEN (ausserhalb des Repos):
  *   Fix-Skizze (Registry: Liste + Detail mit Aenderungspruefung, offene
@@ -141,6 +147,8 @@
  *   Detail-Abgleich nur in renderAll, ungeprueft    rot (W4), (W6)(W7) BODY, (W3)(W5)
  *   Kritik-Kandidat (Nachbarzeile gleichen Index)   rot NUR (W3) — fremde Zeile
  *   Detail immer neu, Fokus/Rolllage von Hand       rot (W7)(W8)(W9)(W12a) — Beobachter
+ * NACHGETRAGEN, an Quelltextkopien des Fix-Stands gemessen (dev gebaut):
+ *   Aenderungspruefung nur ueber den Namen          rot NUR (W6b) — 14 andere gruen
  *
  * MODULPFADE: das CRUD- und das Aktionsmodul des Bestiars stehen auf der
  * Ausnahmeliste der Modulabdeckung; ihre Pfade werden hier nicht woertlich
@@ -539,6 +547,10 @@ function zustand(page, sterne = []) {
         let detail = '?';
         if (name) detail = (name.textContent || '').trim();
         else if (leer) detail = 'LEER: ' + (leer.textContent || '').trim();
+        // Ein Statblock-Feld, das NICHT der Name ist: die Trefferpunkte im Detail
+        const tpZeile = Array.from(panel.querySelectorAll('.bestiary-statblock-basics p'))
+            .map(p => (p.textContent || '').replace(/\s+/g, ' ').trim())
+            .find(t => t.startsWith('Trefferpunkte'));
         // Fokus
         const a = /** @type {HTMLElement|null} */ (document.activeElement);
         const fz = a && a.closest ? a.closest('#bestiary-list .bestiary-list-item') : null;
@@ -547,6 +559,7 @@ function zustand(page, sterne = []) {
         return {
             D_fav: (w.D.bestiaryFavorites || []).slice(),
             D_namen: (w.D.bestiary || []).map(m => m.id + ':' + m.name),
+            D_tp: (w.D.bestiary || []).map(m => m.id + ':' + m.hp),
             knoepfe,
             zeilen: zeilen.map(key),
             zeileInfo,
@@ -560,6 +573,7 @@ function zustand(page, sterne = []) {
             ).value,
             gewaehlt: typeof selectedBestiaryId === 'undefined' ? 'fehlt' : selectedBestiaryId,
             detail,
+            detailTP: tpZeile || null,
             detailKnoepfe: Array.from(panel.querySelectorAll('button[data-action]')).map(
                 b => /** @type {HTMLElement} */ (b).dataset.action
             ),
@@ -973,6 +987,60 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             await wiederholen(page);
             const z3 = await zustand(page);
             pruefe(z3, 'Neuwesen', 'nach Strg+Y');
+            await rahmen(page, f);
+        });
+
+        // R3 "geaendert → im Stand von D neu gezeichnet" gilt fuer JEDES Feld, nicht nur den
+        // Namen. (W6) aendert nur den Namen; eine Aenderungspruefung, die nur den Namen
+        // vergleicht, liess alle 14 Faelle davor gruen und zeigte nach dem Speichern und nach
+        // Strg+Y die alten Trefferpunkte (an einer Quelltextkopie gemessen, dev: nur dieser Fall rot).
+        test(`(W6b) Bearbeiten → nur TP 10 → 77 → Speichern, Strg+Z, Strg+Y — ${buendel}`, async ({
+            page
+        }) => {
+            test.skip(buendel === 'prod' && !PROD_DA, 'kein prod-Buendel gebaut');
+            const f = await laden(page, url);
+            await zurAnsicht(page, 'bestiary');
+            await suchen(page, 'wesen');
+            await bediene(page, zeileSel(ALT) + ' .bestiary-name', 'die Zeile Altwesen');
+            const z0 = await zustand(page);
+            expect(z0.detailTP, 'Vorbedingung: das Detail zeigt 10 TP').toBe('Trefferpunkte 10');
+            await bediene(
+                page,
+                '#bestiary-detail-panel [data-action="call"][data-value="openBestiaryEditor"]',
+                'Bearbeiten'
+            );
+            await bediene(page, '#bst-hp', 'das TP-Feld');
+            await page.keyboard.press('Control+a');
+            await page.keyboard.type('77', { delay: 20 });
+            await bediene(page, '#bestiary-editor-modal [data-value="saveBestiary"]', 'Speichern');
+
+            /** @param {Awaited<ReturnType<typeof zustand>>} z @param {number} soll @param {string} wann */
+            const pruefe = (z, soll, wann) => {
+                weich(z.detailTP, `${wann}: das Detail zeigt die TP aus D`).toBe(
+                    `Trefferpunkte ${soll}`
+                );
+                weich(z.detail, `${wann}: der Name im Detail bleibt`).toBe('Altwesen');
+                weich(
+                    z.fokus.imDetail &&
+                        z.fokus.aktion === 'call' &&
+                        z.fokus.wert === 'openBestiaryEditor',
+                    `${wann}: der Fokus liegt auf "Bearbeiten" (${z.fokus.beschreibung})`
+                ).toBe(true);
+            };
+            const z1 = await zustand(page);
+            expect(z1.D_tp, 'Vorbedingung: gespeichert, nur die TP geaendert').toEqual(['1:77']);
+            expect(z1.D_namen, 'Vorbedingung: der Name ist unveraendert').toEqual(['1:Altwesen']);
+            pruefe(z1, 77, 'nach dem Speichern (Entscheidung (c))');
+
+            await rueckgaengig(page);
+            const z2 = await zustand(page);
+            expect(z2.D_tp, 'Vorbedingung: Strg+Z nimmt die TP in D zurueck').toEqual(['1:10']);
+            pruefe(z2, 10, 'nach Strg+Z');
+
+            await wiederholen(page);
+            const z3 = await zustand(page);
+            expect(z3.D_tp, 'Vorbedingung: Strg+Y stellt sie in D wieder her').toEqual(['1:77']);
+            pruefe(z3, 77, 'nach Strg+Y');
             await rahmen(page, f);
         });
 
