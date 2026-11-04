@@ -539,6 +539,52 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
         });
     });
 
+    describe('(HL4) R6: Laden schreibt nie nach D', () => {
+        /** Die ausdruecklichen R6-Formen (wie HA8 der Spec), dazu die ganze Matrix aus HL1. */
+        /** @type {Array<[string, string, any]>} */
+        const LEGITIM = [
+            ['speed', "'9m'", '9m'],
+            ['speed', "'12m|40ft.'", '12m|40ft.'],
+            ['languages', "Text 'Gemein, Zwergisch'", 'Gemein, Zwergisch'],
+            ['languages', "['Gemein', 'Kauderwelsch']", ['Gemein', 'Kauderwelsch']],
+            [
+                'attacks',
+                "attackBonus '+5'",
+                [{ name: 'Streitaxt', attackBonus: '+5', damage: '1d8+3', damageType: 'Hieb' }]
+            ],
+            ['level', "'7'", '7'],
+            ['avatar', "relativer Pfad 'bilder/xaver.png'", 'bilder/xaver.png'],
+            ['avatar', 'NBSP vor dem Bild', ' ' + BILD_X],
+            ['notes', 'Zahl 42', 42],
+            ['playerName', 'Objekt {x:1}', { x: 1 }]
+        ];
+        /** @type {Array<[string, string, any]>} */
+        const FAELLE = [
+            ...FELDER.flatMap(feld =>
+                FORMEN.map(
+                    ([name, wert]) => /** @type {[string, string, any]} */ ([feld, name, wert])
+                )
+            ),
+            ...LEGITIM
+        ];
+        test.each(FAELLE)('(HL4) %s als %s', (feld, _name, wert) => {
+            const xaver = xaverMit(feld, wert);
+            HELDEN.set(2, xaver);
+            // Bytegleich: ein JSON-Abzug vorher; toStrictEqual sieht auch einen hinzugefuegten
+            // Schluessel mit undefined.
+            const vorher = JSON.parse(JSON.stringify({ aria: HELDEN.get(1), xaver }));
+            // Nur R6: ob editChar() wirft, urteilt HL1 (hier wie der Verteiler: geschluckt).
+            for (const id of [1, 2]) {
+                try {
+                    ctx.editChar(id);
+                } catch {
+                    // HL1
+                }
+            }
+            expect({ aria: HELDEN.get(1), xaver: HELDEN.get(2) }).toStrictEqual(vorher);
+        });
+    });
+
     describe('(HL5) R5: resistances und immunities als Text laden wie bisher, per Teilstring', () => {
         test.each([
             ['resistances', 'Gift', ['Gift']],

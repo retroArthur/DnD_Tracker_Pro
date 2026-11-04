@@ -751,6 +751,15 @@ function heldImSpeicher(page, id) {
         }
     }, /** @type {[string, number]} */ ([SPEICHER, id]));
 }
+/**
+ * Alle Helden in D, als JSON-Abzug — vor und nach dem ✏️ verglichen (R6: Laden schreibt nie
+ * nach D).
+ * @param {import('@playwright/test').Page} page
+ */
+function alleHeldenInD(page) {
+    // @ts-ignore
+    return page.evaluate(() => JSON.parse(JSON.stringify(window.D?.characters || [])));
+}
 /** @param {import('@playwright/test').Page} page */
 function anzahlHelden(page) {
     // @ts-ignore
@@ -1055,8 +1064,13 @@ async function fallFahren(w, fall) {
     });
     await zurParty(page);
     const vorD = await heldInD(page, 2);
+    const vorHelden = await alleHeldenInD(page);
     const bedien = bedienung(page, lauf.telefon);
     await WEGE[fall.weg](page, bedien);
+    weich(
+        await alleHeldenInD(page),
+        `${fall.formTitel || fall.titel}: das ✏️ schreibt nichts nach D (R6)`
+    ).toEqual(vorHelden);
     const offen = await formularUrteil(
         page,
         beob,
@@ -1396,8 +1410,13 @@ test.describe('CHAR-HALBLADEN — ✏️ an einem Helden mit Altdaten laedt ganz
                     await zurParty(page);
                     const bedien = bedienung(page, false);
                     const vorher = beob.anforderungen.length;
+                    const vorHelden = await alleHeldenInD(page);
                     await bedien(kartenkopf(page, 2));
                     await page.waitForTimeout(300);
+                    weich(
+                        await alleHeldenInD(page),
+                        `${titel}: das ✏️ schreibt nichts nach D (R6)`
+                    ).toEqual(vorHelden);
                     const imOrdner = beob.anforderungen
                         .slice(vorher)
                         .filter(
@@ -1480,7 +1499,12 @@ test.describe('CHAR-HALBLADEN — ✏️ an einem Helden mit Altdaten laedt ganz
                 const beob = await laden(page, [ARIA, feld ? xaverMit(feld, wert) : xaverMit()]);
                 await zurParty(page);
                 const bedien = bedienung(page, false);
+                const vorHelden = await alleHeldenInD(page);
                 await WEGE.B(page, bedien);
+                weich(
+                    await alleHeldenInD(page),
+                    `${titel}: das ✏️ schreibt nichts nach D (R6)`
+                ).toEqual(vorHelden);
                 await expect(formular(page), `Vorbedingung: ${titel} laedt`).toHaveClass(
                     /\bopen\b/
                 );
