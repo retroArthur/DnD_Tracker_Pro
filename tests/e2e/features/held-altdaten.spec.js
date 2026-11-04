@@ -61,8 +61,8 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   E1  Ort: editChar() wird total und atomar; die Datengrenze bleibt, wie sie ist.
  *   R1  Total: editChar() wirft fuer keine Form in keinem gelesenen Feld — kein console.error,
  *       kein Eintrag im Fehlerlog, kein pageerror; an jedem Einstieg (Kartenkopf mit Maus,
- *       Tab+Enter und Tap; 🔍 → "✏️ Bearbeiten"; Strg+K-Treffer). Ausnahme languages, siehe
- *       ABGRENZUNG.
+ *       Tab+Enter und Tap; 🔍 → "✏️ Bearbeiten"; Strg+K-Treffer). Die Ausnahme languages ist
+ *       seit dem Waechter von SPRACHEN-FREI aufgehoben, siehe ABGRENZUNG.
  *   R2  Vollstaendig: nach ✏️ X ist das Formular offen (auch frisch), #edit-char-id ist X, jedes
  *       Steuerelement traegt den Wert aus X, im Altfeld den aus R5 — nie einen Wert des vorher
  *       bearbeiteten Helden, eines Entwurfs oder eines leer geoeffneten Formulars.
@@ -88,12 +88,16 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   E6  NPC-, Encounter-, Quest-Formular und Heldenliste/-detail: nicht hier (Offen-Punkte).
  *
  * ABGRENZUNG MIT SPRACHEN-FREI (stapelt auf diesem Vorgang): den Leser fuer languages baut NUR
- * SPRACHEN-FREI; setCharLanguages() bleibt hier unveraendert und darf bei 42/{x:1}/true weiter
- * werfen — der catch-Zweig (R3) faengt es. Die languages-Faelle dieser Datei sichern darum NUR:
- * kein Halbladen (ENTWEDER offen mit Xavers Werten ausserhalb der Sprachen, ODER leer und zu
- * mit genau einer sichtbaren Fehlermeldung und einem Eintrag im Fehlerlog), keine Sprache von
- * Aria, kein Fremdwert in D nach 💾, kein pageerror. Sie legen weder fest, ob das Formular
- * offen oder zu bleibt, noch, welcher Sprachwert gespeichert wird.
+ * SPRACHEN-FREI; setCharLanguages() blieb hier unveraendert und durfte bei 42/{x:1}/true weiter
+ * werfen — der catch-Zweig (R3) fing es. Bis dahin sicherten die languages-Faelle dieser Datei
+ * NUR: kein Halbladen (ENTWEDER offen mit Xavers Werten ausserhalb der Sprachen, ODER leer und
+ * zu mit genau einer sichtbaren Fehlermeldung und einem Eintrag im Fehlerlog), keine Sprache
+ * von Aria, kein Fremdwert in D nach 💾, kein pageerror. NACHGEZOGEN mit dem Waechter von
+ * SPRACHEN-FREI (tests/e2e/features/sprachen-frei.spec.js, dessen R1–R4 und R6): auch bei
+ * languages ist das Formular offen und fehlerfrei (R1 ohne Ausnahme), im Altfeld stehen die
+ * Sprachen nach SPRACHEN_FREI_GESPEICHERT (42 → freies "42", {x:1} → keins, true → "true",
+ * 7 → "7"), und genau das schreibt 💾; HA8 erwartet bei der freien Sprache
+ * ['Kauderwelsch','Gemein'] statt des Verlusts ['Gemein']. Alle anderen Zusagen bleiben.
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * DIE FAELLE (gemessen mit dieser Datei am Basisstand 0f63c0be, dev und prod gebaut, Chromium,
@@ -123,6 +127,12 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *        '12m|40ft.', attackBonus '+5', level '7', Avatar als relativer Pfad und mit NBSP vor
  *        dem Bild, notes 42, playerName {x:1}                                 11 von 11 gruen
  *   HA9  R4: ✏️ Aria → Sprachmenue auf → ✏️ Xaver: das Menue ist zu            rot
+ *   SF   nachgezogen fuer SPRACHEN-FREI (siehe ABGRENZUNG): am Basisstand 5d28d85f (CHAR-
+ *        HALBLADEN gelandet) rot genau die 14 languages-Faelle — HA1+HA2 und HA3 je 42, {x:1},
+ *        true; HA4, HA5 und HA6 ×6 (🔍, Strg+K, Tab, Telefon B und L, prod) je 7 — und die
+ *        HA8-Zeile mit der freien Sprache (15 rot, 59 gruen). An der Fix-Skizze von
+ *        SPRACHEN-FREI (R1–R10 woertlich, ausserhalb des Repos gebaut) 74 von 74 gruen; an
+ *        dessen Mutante m8 (String(w) statt datenText()) HA1+HA2 und HA3 bei Objekt rot
  *   R6   in JEDEM Fall von HA1–HA8 zusaetzlich: das ✏️ selbst schreibt nichts nach D — alle
  *        Helden in D vor und nach dem ✏️ verglichen, vor jedem 💾 (nachgetragen auf einen
  *        Befund der Pruefung: HA2/HA8 vergleichen D erst nach dem 💾, HA3 gar nicht, und ein
@@ -169,9 +179,10 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * Weich sind die Zusagen des Vertrags (ein roter Lauf nennt jede gebrochene), hart nur die
  * Vorbedingungen (Kontrolle, Aria laedt, Dialoge gehen auf).
  *
- * WAS HIER BEWUSST NICHT GEPRUEFT WIRD: der gespeicherte Sprachwert und offen/zu bei languages
- * (SPRACHEN-FREI); was sich nicht darstellen laesst (E4); attacks als Text ueber 🔍 (das
- * Detail wirft dort schon vorher, party-details.js, E6); NPC-, Encounter-, Quest-Formular,
+ * WAS HIER BEWUSST NICHT GEPRUEFT WIRD: Sprachen ausserhalb der festen Liste im Einzelnen
+ * (Schreibvarianten, Dubletten, Reihenfolge, Abwaehlen: tests/e2e/features/sprachen-frei.spec.js);
+ * was sich nicht darstellen laesst (E4); attacks als Text ueber 🔍 (das Detail wirft dort
+ * schon vorher, party-details.js, E6); NPC-, Encounter-, Quest-Formular,
  * Heldenliste und -detail (E6); quick-actions Dash bei speed als Zahl (E6); Firefox.
  */
 
@@ -926,7 +937,30 @@ function gehoertZu(feld, k) {
     }
 }
 
-/** Was R5 nach dem 💾 im Altfeld verlangt (languages: Sache von SPRACHEN-FREI).
+/**
+ * languages nach dem Vertrag SPRACHEN-FREI R1–R4 (tests/e2e/features/sprachen-frei.spec.js), je
+ * Form der Saat dieser Datei: jeder Wert, der weder Liste noch Text ist, wird EIN Element und
+ * laeuft durch datenText() — Zahl und Wahrheitswert werden ein freies Haekchen, ein Objekt
+ * nichts. Keine dieser Formen trifft ein festes Haekchen. Das ist zugleich, was 💾 schreibt.
+ * @type {Map<string, string[]>}
+ */
+const SPRACHEN_FREI_GESPEICHERT = new Map([
+    ['42', ['42']],
+    ['{"x":1}', []],
+    ['true', ['true']],
+    ['7', ['7']]
+]);
+/** Schluesselanfang der Sprach-Haekchen in formularStand(). */
+const SPRACH_HAKEN = 'cf-lang-dropdown:';
+
+/** @param {any} wert die Form von languages in der Saat */
+function sprachenNachSprachenFrei(wert) {
+    const soll = SPRACHEN_FREI_GESPEICHERT.get(JSON.stringify(wert));
+    if (!soll) throw new Error(`SPRACHEN_FREI_GESPEICHERT kennt ${JSON.stringify(wert)} nicht`);
+    return soll;
+}
+
+/** Was R5 nach dem 💾 im Altfeld verlangt (languages: SPRACHEN_FREI_GESPEICHERT oben).
  *  @type {Record<string, any>} */
 const R5_GESPEICHERT = {
     speed: '9m|30ft.',
@@ -990,23 +1024,8 @@ async function formularUrteil(page, beob, k, feld, wert, wo) {
     const z = await formularStand(page);
     const fehler = await beob.alle();
 
-    if (feld === 'languages' && !z.offen) {
-        // Der catch-Zweig (R3, E5): leer und zu, genau eine sichtbare Meldung, ein Logeintrag.
-        weich(z, `${wo}: bleibt das Formular zu, dann leer — kein Halbladen (R3)`).toEqual(k.leer);
-        const meldung = page.locator('#event-log .event-log-entry.error');
-        await weich(meldung, `${wo}: genau eine Fehlermeldung (E5)`).toHaveCount(1);
-        await weich(meldung.first(), `${wo}: die Fehlermeldung ist sichtbar (E5)`).toBeVisible();
-        weich(
-            fehler.filter(f => f.startsWith('ErrorHandler')).length,
-            `${wo}: genau ein Eintrag im Fehlerlog (R3)`
-        ).toBe(1);
-        weich(
-            fehler.filter(f => f.startsWith('pageerror')),
-            `${wo}: kein pageerror (R3)`
-        ).toEqual([]);
-        return false;
-    }
-
+    // Bis SPRACHEN-FREI durfte languages hier auch im catch-Zweig enden (leer und zu, eine
+    // Meldung). Seit dessen Waechter gilt R1 ohne Ausnahme: offen, kein Fehler — fuer jede Form.
     weich(
         { offen: z.offen, id: z['edit-char-id'] },
         `${wo}: das Formular ist offen und bearbeitet Xaver (R2)`
@@ -1019,19 +1038,21 @@ async function formularUrteil(page, beob, k, feld, wert, wo) {
     weich(arienWerte(z, k), `${wo}: kein Wert von Aria (R2)`).toEqual([]);
     if (feld === 'languages') {
         weich(arienSprachen(z), `${wo}: keine Sprache von Aria (R2)`).toEqual([]);
+        const soll = sprachenNachSprachenFrei(wert);
         weich(
-            fehler.filter(f => f.startsWith('pageerror')),
-            `${wo}: kein pageerror (R3)`
-        ).toEqual([]);
-    } else {
-        if (feld in R5_GESPEICHERT && !(feld === 'attacks' && Array.isArray(wert))) {
-            const alt = Object.keys(k.leer).filter(s => gehoertZu(feld, s));
-            weich(nur(z, alt), `${wo}: ${feld} zeigt den Leerwert aus R5`).toEqual(
-                nur(k.leer, alt)
-            );
-        }
-        weich(fehler, `${wo}: kein Fehler — pageerror, console.error, Fehlerlog (R1)`).toEqual([]);
+            {
+                frei: Object.keys(z)
+                    .filter(s => s.startsWith(SPRACH_HAKEN) && !(s in k.leer))
+                    .map(s => `${s.slice(SPRACH_HAKEN.length)} ${z[s]}`),
+                select: z['char-languages']
+            },
+            `${wo}: languages nach SPRACHEN-FREI R1–R4 — freie Haekchen und verstecktes select`
+        ).toEqual({ frei: soll.map(s => `${s} true|markiert`), select: soll.join(',') });
+    } else if (feld in R5_GESPEICHERT && !(feld === 'attacks' && Array.isArray(wert))) {
+        const alt = Object.keys(k.leer).filter(s => gehoertZu(feld, s));
+        weich(nur(z, alt), `${wo}: ${feld} zeigt den Leerwert aus R5`).toEqual(nur(k.leer, alt));
     }
+    weich(fehler, `${wo}: kein Fehler — pageerror, console.error, Fehlerlog (R1)`).toEqual([]);
     return z.offen;
 }
 
@@ -1041,8 +1062,9 @@ async function formularUrteil(page, beob, k, feld, wert, wo) {
  * @param {Kontrolle} k
  * @param {string} feld
  * @param {string} wo
+ * @param {any} [wert] die Form in der Saat (fuer languages: der Speicherwert nach SPRACHEN-FREI)
  */
-function datensatzUrteil(ist, k, feld, wo) {
+function datensatzUrteil(ist, k, feld, wo, wert) {
     const ohne = (/** @type {Record<string, any>|null} */ o) => {
         const c = { ...(o || {}) };
         delete c[feld];
@@ -1053,6 +1075,9 @@ function datensatzUrteil(ist, k, feld, wo) {
     );
     if (feld === 'languages') {
         weich(fremdeSprachenInD(ist?.languages), `${wo}: keine Sprache von Aria in D`).toEqual([]);
+        weich(ist?.languages, `${wo}: languages nach SPRACHEN-FREI R1–R4`).toEqual(
+            sprachenNachSprachenFrei(wert)
+        );
     } else if (feld in R5_GESPEICHERT) {
         weich(ist?.[feld], `${wo}: ${feld} nach R5`).toEqual(R5_GESPEICHERT[feld]);
     }
@@ -1094,7 +1119,9 @@ async function fallFahren(w, fall) {
 
     if (!offen) {
         if (fall.feld !== 'languages') return; // schon rot: offen ist Zusage (R2)
-        // languages, catch-Zweig: kein 💾-Weg; D und Speicher bleiben, wie sie waren.
+        // languages im catch-Zweig — seit SPRACHEN-FREI schon rot an R1/R2 (formularUrteil);
+        // die Zusage von CHAR-HALBLADEN gilt trotzdem weiter: kein 💾-Weg, D und Speicher
+        // bleiben, wie sie waren.
         weich(await heldInD(page, 2), `${fall.titel}: D unveraendert`).toEqual(vorD);
         weich(await anzahlHelden(page), `${fall.titel}: 2 Helden`).toBe(2);
         if (fall.neuladen) {
@@ -1107,7 +1134,7 @@ async function fallFahren(w, fall) {
         return;
     }
     const d = await speichern(page, bedien);
-    datensatzUrteil(d, k, fall.feld, `${fall.titel}, 💾`);
+    datensatzUrteil(d, k, fall.feld, `${fall.titel}, 💾`, fall.wert);
     weich(await anzahlHelden(page), `${fall.titel}: 2 Helden nach dem 💾`).toBe(2);
     if (fall.neuladen) {
         await neuLaden(page, beob, lauf.telefon);
@@ -1115,13 +1142,15 @@ async function fallFahren(w, fall) {
             await heldInD(page, 2),
             k,
             fall.feld,
-            `${fall.titel}, nach dem Neuladen in D`
+            `${fall.titel}, nach dem Neuladen in D`,
+            fall.wert
         );
         datensatzUrteil(
             await heldImSpeicher(page, 2),
             k,
             fall.feld,
-            `${fall.titel}, nach dem Neuladen im Speicher`
+            `${fall.titel}, nach dem Neuladen im Speicher`,
+            fall.wert
         );
         const fehler = await beob.alle();
         weich(
@@ -1459,7 +1488,10 @@ test.describe('CHAR-HALBLADEN — ✏️ an einem Helden mit Altdaten laedt ganz
     test.describe('(HA8) R6, Kontrollen: 💾 ohne Aenderung ergibt dasselbe wie heute', () => {
         /**
          * Feld, Wert in der Saat, und was nach dem 💾 in D steht — gemessen am Basisstand
-         * 0f63c0be (dev). `{}`: alles wie das 💾 der Kontrolle.
+         * 0f63c0be (dev). `{}`: alles wie das 💾 der Kontrolle. Ausnahme ist die freie Sprache:
+         * dort stand "wie heute" (['Gemein'], der Verlust von AVATAR-VORSCHAU Offen (a)); seit
+         * dem Waechter von SPRACHEN-FREI gilt dessen R6 — erhalten, freie zuerst — und die
+         * Zeile ist am Basisstand rot.
          * @type {Array<[string, string, any, Record<string, any>]>}
          */
         const LEGITIM = [
@@ -1467,9 +1499,9 @@ test.describe('CHAR-HALBLADEN — ✏️ an einem Helden mit Altdaten laedt ganz
             ['languages', "Text 'Gemein, Zwergisch'", 'Gemein, Zwergisch', {}],
             [
                 'languages',
-                "['Gemein', 'Kauderwelsch'] (freie Sprache, Offen (a))",
+                "['Gemein', 'Kauderwelsch'] (freie Sprache, SPRACHEN-FREI R6)",
                 ['Gemein', 'Kauderwelsch'],
-                { languages: ['Gemein'] }
+                { languages: ['Kauderwelsch', 'Gemein'] }
             ],
             ['speed', "'9m'", '9m', { speed: '9m|30ft.' }],
             ['speed', "'12m|40ft.'", '12m|40ft.', { speed: '12m|40ft.' }],

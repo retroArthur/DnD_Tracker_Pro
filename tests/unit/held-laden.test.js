@@ -9,11 +9,16 @@
  *        Bearbeiten-ID ist 2, jedes Steuerelement ausserhalb des Altfelds traegt den Wert des
  *        Kontroll-Xaver, im Altfeld steht nach R5 der Leerwert (speed, resistances,
  *        immunities, attacks) bzw. kein Wert von Aria (alle anderen).
- *        languages ist die Ausnahme (Abgrenzung mit SPRACHEN-FREI): den Leser baut erst
- *        SPRACHEN-FREI, setCharLanguages() darf bei 42/{x:1}/true weiter werfen. Gesichert
- *        ist nur "kein Halbladen, nichts von Aria": ENTWEDER offen und geladen wie oben, ODER
- *        (der catch-Zweig, R3) leer und zu, mit genau einer Fehlermeldung. Welches von beiden,
- *        legt diese Datei nicht fest.
+ *        languages: den Leser baut SPRACHEN-FREI (stapelt auf diesem Vorgang). Bis dahin
+ *        sicherte diese Datei dort nur "kein Halbladen, nichts von Aria" — ENTWEDER offen,
+ *        ODER (der catch-Zweig, R3) leer und zu mit genau einer Meldung. Seit dem Waechter von
+ *        SPRACHEN-FREI gilt auch fuer languages: offen, kein Wurf, keine Meldung, kein
+ *        Eintrag im Fehlerlog, und im Altfeld stehen die Sprachen nach dessen R1–R4
+ *        (SPRACHEN_NACH_SPRACHEN_FREI: 42 → freies "42", 'abc' und ['abc'] → freies "abc",
+ *        true → "true", Objekt, null und fehlend → keins). Am Basisstand 5d28d85f rot: Zahl,
+ *        Text, Liste, Objekt, true (Objekt, Zahl und true werfen und landen im catch-Zweig,
+ *        Text und Liste zeigen die freie Sprache nicht); null und fehlend gruen. Dafuer laedt
+ *        die Werkbank das ECHTE datenText() (der Leser ruft es je Element, auch fuer Aria).
  *   HL2  R3: ein unerwarteter Fehler beim Laden verlaesst editChar() nicht, und danach ist das
  *        Formular leer und zu: keine Bearbeiten-ID, kein Wert und keine Anzeige von Aria, kein
  *        Teilwert von Xaver; genau eine Meldung showToast(…, 'error') und genau ein Eintrag
@@ -112,7 +117,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
+const { ladeDatengrenze, ladeDatenText } = require('./helpers/datengrenze-block.js');
 
 const WURZEL = path.join(__dirname, '..', '..');
 const PARTY_CRUD = path.join(WURZEL, 'features', 'party', 'party-crud.js');
@@ -247,6 +252,24 @@ const FELDER = [
     'skillProficiencies',
     'saveProficiencies'
 ];
+
+/**
+ * Was nach editChar() bei languages in welcher Form angehakt ist — die freien Haekchen (keine
+ * der sieben Formen trifft ein festes) und damit das versteckte select, das 💾 schreibt. Nach
+ * dem Vertrag SPRACHEN-FREI R1–R4 (tests/e2e/features/sprachen-frei.spec.js): Text → split,
+ * eine Liste elementweise, jeder andere Wert als EIN Element, je durch datenText() — Zahl und
+ * Wahrheitswert werden Text, Objekt, null und fehlend nichts.
+ * @type {Record<string, string[]>}
+ */
+const SPRACHEN_NACH_SPRACHEN_FREI = {
+    Zahl: ['42'],
+    Text: ['abc'],
+    Liste: ['abc'],
+    Objekt: [],
+    null: [],
+    fehlend: [],
+    true: ['true']
+};
 
 /** Die Felder, deren Leser R5 festlegt: dort steht bei jeder nicht darstellbaren Form der
  *  Leerwert des Formulars (speed '9m|30ft.', keine Chips, keine Angriffszeile). Fuer eine
@@ -391,6 +414,9 @@ beforeAll(() => {
     ctx = { window: {}, document, URL, Event, InputEvent: window.InputEvent };
     vm.createContext(ctx);
     ladeDatengrenze(ctx);
+    // Das ECHTE datenText(): der Leser fuer languages ruft es je Element (SPRACHEN-FREI R1),
+    // auch fuer die legitimen Sprachen von Aria und Xaver — ohne es luede keiner der beiden.
+    ladeDatenText(ctx);
     ctx.$ = (/** @type {string} */ id) => document.getElementById(id);
     ctx.esc = (/** @type {any} */ s) => String(s);
     ctx.sanitizeHTML = (/** @type {any} */ s) => (s == null ? '' : String(s));
@@ -490,14 +516,8 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
                 expect(() => ctx.editChar(2)).not.toThrow();
                 const z = formularStand();
 
-                if (feld === 'languages' && !z.offen) {
-                    // Der catch-Zweig (R3): leer und zu, genau eine sichtbare Meldung.
-                    expect(z).toEqual(STAND.leer);
-                    expect(fehlerMeldungen()).toHaveLength(1);
-                    expect(protokoll).toHaveLength(1);
-                    return;
-                }
-
+                // Seit SPRACHEN-FREI auch fuer languages: offen, kein Wurf, keine Meldung — der
+                // catch-Zweig (R3) ist fuer keine Form mehr ein zulaessiger Ausgang.
                 expect({ id: z['edit-char-id'], offen: z.offen }).toEqual({ id: '2', offen: true });
                 const ausserhalb = Object.keys(STAND.kontrolle).filter(k => !gehoertZu(feld, k));
                 /** @type {Record<string, any>} */
@@ -510,7 +530,21 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
                 }
                 expect(ist).toEqual(soll);
                 expect(arienWerte(z)).toEqual([]);
-                if (feld === 'languages') expect(arienSprachen(z)).toEqual([]);
+                if (feld === 'languages') {
+                    expect(arienSprachen(z)).toEqual([]);
+                    // SPRACHEN-FREI R1–R4: die freien Haekchen (Schluessel, die das leere
+                    // Formular nicht kennt) und das versteckte select, das 💾 liest
+                    const soll = SPRACHEN_NACH_SPRACHEN_FREI[_name];
+                    expect({
+                        frei: Object.keys(z)
+                            .filter(k => k.startsWith('cf-lang-dropdown:') && !(k in STAND.leer))
+                            .map(k => `${k.slice('cf-lang-dropdown:'.length)} ${z[k]}`),
+                        select: z['char-languages']
+                    }).toEqual({
+                        frei: soll.map(s => `${s} true|markiert`),
+                        select: soll.join(',')
+                    });
+                }
                 if (R5_LEERWERT.has(feld) && !(feld === 'attacks' && Array.isArray(wert))) {
                     /** @type {Record<string, any>} */
                     const altIst = {};
@@ -523,7 +557,7 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
                     expect(altIst).toEqual(altSoll);
                 }
                 expect(fehlerMeldungen()).toEqual([]);
-                if (feld !== 'languages') expect(protokoll).toEqual([]);
+                expect(protokoll).toEqual([]);
             });
         }
     });
