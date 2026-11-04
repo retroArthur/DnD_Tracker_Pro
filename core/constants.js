@@ -716,8 +716,7 @@ const CALL_ACTION_WHITELIST = new Set([
     'testWikiSystem',
     'toggleLinkForm',
     'toggleMobileNav',
-    'toggleSessionTimer',
-    'updateBstAttrMod'
+    'toggleSessionTimer'
 ]);
 
 // ============================================================

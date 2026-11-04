@@ -540,11 +540,9 @@ test.describe('Bestiary — SC2: Eigene Kreaturen CRUD + Undo', () => {
             await dialog.accept();
         });
 
-        // Loeschen
-        await page.evaluate(function() {
-            var btn = document.querySelector('.bestiary-detail-actions [data-action="bestiary-delete"]');
-            if (btn) btn.click();
-        });
+        // Loeschen — echter Klick (BESTIAR-UNDO): vorher per evaluate(btn.click()),
+        // das jede Erreichbarkeit des Knopfes uebersprang
+        await page.locator('.bestiary-detail-actions [data-action="bestiary-delete"]').click();
         await page.waitForTimeout(700);
 
         // Verify: geloescht
@@ -563,20 +561,17 @@ test.describe('Bestiary — SC2: Eigene Kreaturen CRUD + Undo', () => {
         }, creatureName);
         expect(restoredInData).toBe(true);
 
-        // Verify: Kreatur erscheint wieder in der Liste
-        // renderBestiaryList wird durch afterCrudOperation nach Undo aufgerufen;
-        // wir warten auf das DOM-Update
+        // Verify: Kreatur erscheint wieder in der Liste — die OFFENE Bestiar-Ansicht
+        // folgt D nach Strg+Z (BESTIAR-UNDO R1). Bis dahin schluckte hier ein
+        // .catch das Ausbleiben ("Undo may not trigger renderBestiaryList"), und
+        // der Fall blieb gruen, obwohl die Liste die Kreatur nicht zeigte.
         await page.waitForFunction(function(name) {
             var items = document.querySelectorAll('.bestiary-list-item .bestiary-name');
             for (var i = 0; i < items.length; i++) {
                 if (items[i].textContent && items[i].textContent.trim() === name) return true;
             }
             return false;
-        }, creatureName, { timeout: 5000 }).catch(async function() {
-            // Undo may not trigger renderBestiaryList automatically;
-            // check that the creature is at least back in D.bestiary
-            // (list re-render is triggered on next tab switch or manual refresh)
-        });
+        }, creatureName, { timeout: 5000 });
 
         // Final check: creature is back in D.bestiary (undo worked)
         const finalCheck = await page.evaluate(function(name) {

@@ -109,7 +109,7 @@ const TAB_RENDER_REGISTRY = {
         cleanup: null
     },
     bestiary: {
-        renders: [() => renderBestiaryList],
+        renders: [() => renderBestiaryAnsicht], // Liste UND Detail im Stand von D (BESTIAR-UNDO R2)
         init: null,
         cleanup: () => cleanupBestiaryEditor
     },
