@@ -29,6 +29,9 @@
  *       `input` den Wert '' zugestellt hat.
  *   R3  Der Fokus steht danach im Feld (der Klick fokussiert vorher das ✕,
  *       wie der mousedown im Browser).
+ *   R2  Das ✕ verliert `.visible` auch bei einer Feldaktion, die es nicht
+ *       selbst nachzieht — im Buendel ziehen es beide Aktionen nach, der
+ *       Browser saehe das Fehlen im Helfer nicht (Nachpruefung, Mutant m9).
  *
  * Ob der Weg im Zweig 'clear-search' oder in der Hilfe `clearSearch()`
  * (utils/basic.js) steht, ist Nutzerentscheidung (2) und hier gleich: die
@@ -237,6 +240,45 @@ describe('R1: ein Feld, das keine Liste kennt, leert das ✕ ueber seine eigene 
                 { ziel: 'suche-leeren-eigen', wert: '', art: 'input' }
             ],
             'R3: der Fokus steht im Feld': true,
+            'Abstuerze im Zweig': []
+        });
+    });
+});
+
+describe('R2: das ✕ verliert .visible auch bei einer Aktion, die es nicht nachzieht', () => {
+    // Heute ziehen beide Feldaktionen ('search-input', 'wiki-search-input')
+    // das ✕ selbst nach; im Buendel faellt darum nicht auf, wenn der Helfer es
+    // nicht tut. Ein kuenftiges Feld mit eigener Aktion soll das aber nicht
+    // muessen — der Helfer zieht es generisch ueber den Behaelter nach. Ohne
+    // diesen Fall sah nur die Lint-Ratsche, wenn der Aufruf im Helfer wegfiel
+    // (Nachpruefung, Mutant m9: E2E und diese Datei gruen, ESLint 358).
+    test('registrierte Aktion ohne updateSearchClear: nach dem ✕ traegt das ✕ kein .visible', () => {
+        const zugestellt = [];
+        verteiler.registerAction('suche-leeren-ohne-kreuz', ctx => {
+            zugestellt.push(ctx.target.value);
+        });
+        const { input, kreuz } = feldMitKreuz({
+            id: 'suche-leeren-ohne-kreuz',
+            aktion: 'suche-leeren-ohne-kreuz'
+        });
+        tippen(input, 'gob');
+        // Vorbedingung: die Aktion laeuft beim Tippen und zieht das ✕ NICHT nach
+        expect(zugestellt).toEqual(['gob']);
+        expect(kreuz.classList.contains('visible')).toBe(false);
+        // Das ✕ ist sichtbar, wie nach einer Suche, die es zeigte.
+        kreuz.classList.add('visible');
+
+        kreuzKlicken(kreuz);
+
+        expect({
+            'das Feld ist leer': input.value,
+            'die Aktion des Feldes bekam': zugestellt.slice(1),
+            'das ✕ traegt .visible': kreuz.classList.contains('visible'),
+            'Abstuerze im Zweig': abstuerze()
+        }).toEqual({
+            'das Feld ist leer': '',
+            'die Aktion des Feldes bekam': [''],
+            'das ✕ traegt .visible': false,
             'Abstuerze im Zweig': []
         });
     });
