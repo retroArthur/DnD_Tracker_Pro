@@ -1670,12 +1670,28 @@ test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden un
     test.describe('(W7) Telefon 390x844, per Tap', () => {
         test.use({ viewport: TELEFON, hasTouch: true, isMobile: true });
 
-        /** @param {import('@playwright/test').Page} page */
+        /**
+         * Vorbedingung Mobil-Layout; danach den Umzugshinweis per Tap wegnehmen. Unter
+         * file:// erscheint er einmal je Sitzung als feste Leiste oben (`showMigrationHintBanner()`,
+         * systems/migration/migration-wizard.js). Ungescrollt schiebt `body.has-migration-hint` den
+         * Inhalt darunter, gescrollt liegt die Leiste UEBER ihm — und `locator.tap()` prueft nicht,
+         * ob das Ziel verdeckt ist, es tippt auf die Mitte. Gemessen im CI-Lauf zu 7d0c6760
+         * (Linux): (W3) scrollte Arias Kartenkopf genau unter die Unterkante der Leiste, der Tipp
+         * traf sie, und Bram blieb in Bearbeitung („2“ statt „1“, in allen drei Versuchen); unter
+         * Windows lagen die Karten mit anderen Schrifthoehen woanders. Die Leiste gehoert nicht zu
+         * diesem Block; ein Mensch tippt sie weg, wie eingaberahmen, fokusring und welle-5 es tun.
+         * @param {import('@playwright/test').Page} page
+         */
         async function mobil(page) {
             await expect(page.locator('html'), 'Vorbedingung: Mobil-Layout').toHaveAttribute(
                 'data-layout',
                 'mobile'
             );
+            const hinweis = page.locator('#migration-hint-banner');
+            if (await hinweis.isVisible()) {
+                await hinweis.locator('[data-action="close-migration-hint"]').tap();
+                await expect(hinweis).toBeHidden();
+            }
         }
 
         test('(g) (W7) = (W1) per Tap: ✏️ ueber den Kartenkopf zeigt das Bild des Helden', async ({
