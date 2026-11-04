@@ -125,30 +125,82 @@ function updateCharLanguages() {
     }
 }
 /**
- * Set character languages in the dropdown
+ * Set character languages in the dropdown — jede Form, ohne Verlust (SPRACHEN-FREI,
+ * docs/bugfixes.md): eine Schreibvariante einer festen Sprache setzt deren Haekchen, jede andere
+ * Sprache wird ein zusaetzliches, gesetztes Haekchen OBEN im Menue. 💾 speichert genau, was
+ * angehakt ist (R6) — frueher fiel alles ausserhalb der 19 Werte der Vorlage still weg.
+ * @param {unknown} languages - Liste, Kommatext oder ein beliebiger Altwert aus D
  */
 function setCharLanguages(languages) {
-    // Set languages in the dropdown checkboxes
-    const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
-    const langArray = Array.isArray(languages)
-        ? languages
-        : languages
-          ? languages.split(',').map(l => l.trim())
-          : [];
-    checkboxes.forEach(cb => {
+    // R8: zuerst die freien Haekchen des vorigen Helden weg und die festen zurueck — nicht nur
+    // in clearCharLanguages(), das in einem try-Block der Leerwege laeuft (AVATAR-VORSCHAU R3)
+    document.querySelectorAll('#cf-lang-dropdown [data-frei]').forEach(el => el.remove());
+    // R2/R3: Normalform (NFC, jede Leerraumfolge samt NBSP und Zeilenumbruch ein Leerzeichen,
+    // trim) und Schluessel ohne Gross-/Kleinschreibung. Lokal: kein neuer globaler Name (R11).
+    const normalform = text => text.normalize('NFC').replace(/\s+/g, ' ').trim();
+    const schluessel = text => text.toLocaleLowerCase('de');
+    // Die festen Werte zur Aufrufzeit aus der Vorlage — keine zweite Liste im JS
+    const fest = new Map();
+    document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]').forEach(cb => {
         const checkbox = cb;
-        checkbox.checked = langArray.includes(checkbox.value);
-        const item = checkbox.closest('.cf-lang-item');
-        if (item) {
-            item.classList.toggle('selected', checkbox.checked);
-        }
+        checkbox.checked = false;
+        fest.set(schluessel(normalform(checkbox.value)), checkbox);
     });
+    // R1: totaler Leser. Eine Liste je Element (NICHT an Kommas zerlegt — das waere geraten),
+    // Text an Kommas, jeder andere Wert, auch 0 und false, als ein Element; datenText() macht
+    // Zahl und Wahrheitswert zu Text, Objekt, Liste und null zu ''. `.split` warf bei 7, true
+    // und Objekten.
+    const kandidaten = Array.isArray(languages)
+        ? languages
+        : typeof languages === 'string'
+          ? languages.split(',')
+          : languages === null || languages === undefined
+            ? []
+            : [languages];
+    const gesehen = new Set();
+    const frei = [];
+    kandidaten.forEach(wert => {
+        const text = normalform(datenText(wert));
+        const kennung = schluessel(text);
+        // Leer, oder eine Dublette: das erste Vorkommen gewinnt, samt Schreibweise (R4)
+        if (!text || gesehen.has(kennung)) return;
+        gesehen.add(kennung);
+        // R3: eine Schreibvariante setzt das FESTE Haekchen, gespeichert wird dessen Schreibweise;
+        // Synonyme und Uebersetzungen (Common, Riesisch) bleiben frei
+        const checkbox = fest.get(kennung);
+        if (checkbox) checkbox.checked = true;
+        else frei.push(text);
+    });
+    // R5: je freie Sprache ein Eintrag wie die der Vorlage, OBEN (im offenen Menue sind nur 4
+    // von 19 ohne Scrollen sichtbar), in der Reihenfolge des ersten Vorkommens. Nur ueber die
+    // DOM-API: der Text kommt aus Daten ('<b>Fett</b>', '"' und "'" bleiben woertlich).
+    const dropdown = $('cf-lang-dropdown');
+    if (dropdown) {
+        const ersterFester = dropdown.firstChild;
+        frei.forEach(text => {
+            const item = document.createElement('label');
+            item.className = 'cf-lang-item';
+            item.dataset.frei = '';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = text;
+            checkbox.checked = true;
+            checkbox.dataset.action = 'update-char-languages';
+            const span = document.createElement('span');
+            span.textContent = text;
+            item.append(checkbox, span);
+            dropdown.insertBefore(item, ersterFester);
+        });
+    }
+    // Haken-Klasse, verstecktes select (= was 💾 speichert) und Anzeige, freie eingeschlossen
     updateCharLanguages();
 }
 /**
  * Clear character languages
  */
 function clearCharLanguages() {
+    // Nach dem Leeren stehen genau die 19 der Vorlage im Menue (SPRACHEN-FREI R8)
+    document.querySelectorAll('#cf-lang-dropdown [data-frei]').forEach(el => el.remove());
     const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
     checkboxes.forEach(cb => {
         const checkbox = cb;
@@ -439,8 +491,8 @@ function editChar(id) {
             input.checked = chipWerte(ch.immunities).includes(val);
             chip.classList.toggle('selected', input.checked);
         });
-        // Languages - use new dropdown with checkboxes. Roh durchgereicht: den Leser fuer andere
-        // Formen baut SPRACHEN-FREI; bis dahin faengt einen Wurf der catch-Zweig unten.
+        // Languages - use new dropdown with checkboxes. Roh durchgereicht: setCharLanguages()
+        // liest jede Form, ohne zu werfen, und zeigt freie Sprachen (SPRACHEN-FREI R1/R5).
         setCharLanguages(ch.languages);
         // Spell slots
         for (let i = 0; i <= 9; i++) {
