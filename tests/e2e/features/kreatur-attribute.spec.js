@@ -59,8 +59,10 @@
  *       fremden Schluessel zurueck, rechnet `parseInt(wert) || 10` und
  *       floor((v-10)/2) mit Vorzeichen ('' / '0' / badInput -> "+0"), schreibt
  *       nur #bst-<attr>-mod (kein D, kein save(), kein saveUndoState());
- *       updateAllBstAttrMods ruft sie mit dem Schluessel; der window-Export
- *       entfaellt.      W1–W4, W7, W8; tests/unit/kreatur-attribute.test.js (U4)
+ *       updateAllBstAttrMods ruft sie mit dem Schluessel; die Zuweisung
+ *       `window.updateBstAttrMod = …` entfaellt (die Eigenschaft selbst
+ *       bleibt — die Top-Level-Funktionsdeklaration legt sie an).
+ *                        W1–W4, W7, W8; tests/unit/kreatur-attribute.test.js (U4)
  *   R3  Handler 'update-bst-attr-mod' in ui/actions/entity-actions.js direkt
  *       hinter 'update-enc-attr-mod' (hinter dem JS_MARKEN-Anker :376 von
  *       tests/unit/design-consistency.test.js), liest NUR
@@ -168,8 +170,8 @@
  *
  * Unit am selben Stand: 17 rot — U1 (der Schluessel fehlt), U2 (sechs
  * Treffer, assets/templates/view-bestiary.html:183 … :213), U4 elf Faelle (die
- * heutige Signatur liest `.target` von einem Text und schreibt nichts; der
- * window-Export steht noch), U1b vier Faelle (kein Handler). Gruen: U3
+ * heutige Signatur liest `.target` von einem Text und schreibt nichts; die
+ * Zuweisung an window steht noch), U1b vier Faelle (kein Handler). Gruen: U3
  * (122 Eintraege, 122 Ziele, 0 ueberzaehlig), U4 fremder Schluessel (4), kein
  * D/save (1), updateAllBstAttrMods (1). Die volle Jest-Suite: 17 rot, 4691
  * gruen — genau diese 17.
@@ -199,7 +201,7 @@
  *   Anzeige geklemmt (Variante b statt a)        rot W3r (35, -5); Unit 2
  *   updateAllBstAttrMods ruft noch ({attr})      rot W4 (beim Oeffnen, erneut
  *                                                 geoeffnet); Unit 1
- *   window-Export bleibt                         Unit 1 (Export-Audit)
+ *   Zuweisung an window bleibt                   Unit 1 (Export-Audit)
  *   Handler vor dem JS_MARKEN-Anker :376         Unit 1 (design-consistency,
  *                                                 R-22 "der Bestand ist der
  *                                                 gemessene")

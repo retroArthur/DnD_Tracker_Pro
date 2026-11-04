@@ -18,7 +18,13 @@
  *       Party-Formular (Nutzerentscheidung a: 35 -> "+12") —, schreibt nur
  *       #bst-<attr>-mod (kein D, kein save(), kein saveUndoState()) und kehrt
  *       bei einem fremden Schluessel zurueck. updateAllBstAttrMods rechnet alle
- *       sechs. Der window-Export entfaellt (Export-Audit: kein Leser mehr).
+ *       sechs. Die explizite Zuweisung `window.updateBstAttrMod = …` entfaellt
+ *       (Export-Audit: kein Leser mehr). Im Browser bleibt
+ *       window.updateBstAttrMod trotzdem eine Funktion — die
+ *       Top-Level-Funktionsdeklaration legt die Eigenschaft selbst an (am
+ *       gebauten Buendel nachgemessen, dev und prod, an Basis und Kopf
+ *       gleich); die Sandbox hier trennt `window` vom globalen Objekt und
+ *       sieht nur die Zuweisung.
  *   U1b ui/actions/entity-actions.js (R3): der Handler 'update-bst-attr-mod'
  *       reicht `ctx.target.dataset.value` weiter und liest NIE ctx.value — bei
  *       input/change ist das der getippte Wert, bei leerem Feld der
@@ -197,7 +203,11 @@ describe('updateBstAttrMod(attr) — der Schluessel als Text (KREATUR-ATTRIBUTE,
         });
     });
 
-    test('window.updateBstAttrMod entfaellt — Export-Audit: der Handler ruft die Funktionsdeklaration, sonst liest niemand den Export', () => {
+    // Geprueft wird die gestrichene ZUWEISUNG (Export-Audit am Quelltext). Im Browser ist
+    // window.updateBstAttrMod weiter eine Funktion: die Top-Level-Funktionsdeklaration legt
+    // die Eigenschaft selbst an (eigene, nicht konfigurierbare Eigenschaft, nach dem Laden
+    // abgelesen, dev und prod, an Basis und Kopf gleich).
+    test('die Zuweisung window.updateBstAttrMod = … entfaellt — Export-Audit: der Handler ruft die Funktionsdeklaration, sonst liest niemand den Export', () => {
         const { windowStub } = ladeEditor({});
 
         expect(windowStub.updateBstAttrMod).toBeUndefined();
