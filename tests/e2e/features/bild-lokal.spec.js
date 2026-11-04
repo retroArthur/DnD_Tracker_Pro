@@ -83,7 +83,7 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   (g) Block AVATAR-VORSCHAU (eigener Vorgang, docs/bugfixes.md): A3 galt nur fuer das
  *       TIPPEN (Fall (d)); die Vorschau folgt dem Feld jetzt auch beim LADEN (✏️) und LEEREN
  *       (Abbrechen, Speichern, Kopfzeile, Taste n, Palette, Import). Befund, Vertrag R1-R7,
- *       Faelle (W1)-(W9) und Gegenproben stehen am Block unten; er nutzt die Hilfen dieser
+ *       Faelle (W1)-(W10) und Gegenproben stehen am Block unten; er nutzt die Hilfen dieser
  *       Datei (Saat, laden() mit dem Netz-Protokoll, istNetzziel(), eintippen(), die Bilder).
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
@@ -863,13 +863,13 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  * Die Vorschau zeigt immer den Wert, der seit dem Laden der Seite ZULETZT INS FELD GETIPPT
  * wurde, und ohne Tippen den Platzhalter "?" der Vorlage (assets/templates/view-party.html).
  * ✏️ (Kartenkopf, 🔍 → "✏️ Bearbeiten", Strg+K-Treffer), Abbrechen, Speichern, Kopfzeile
- * zu/auf, Taste n und die Palette aendern sie nie:
+ * zu/auf, Taste n, die Palette und der Import ("Ersetzen") aendern sie nie:
  *   - frisch geladen, ✏️ Aria (data:image/), Cora (file:///), Dorn (relativer Pfad), Fenn
  *     (https): das Feld traegt das Bild, die Vorschau "?" — bei Bram (ohne Bild) stimmt "?"
  *     nur zufaellig;
  *   - ein getipptes Bild bleibt nach Abbrechen stehen: neben dem leeren neuen Formular, neben
- *     ✏️ Bram (ohne Bild), neben ✏️ Aria (mit eigenem Bild) und nach dem Speichern eines
- *     Neulings, bis wieder getippt oder neu geladen wird.
+ *     ✏️ Bram (ohne Bild), neben ✏️ Aria (mit eigenem Bild), nach dem Speichern eines
+ *     Neulings und nach einem Import, bis wieder getippt oder neu geladen wird.
  * Gespeichert wird der FELDWERT, nicht die Vorschau — falsche Daten entstehen so nicht, wohl
  * aber eine falsche Anzeige, der man glaubt (ein Bild "nachtragen", das schon da ist, oder
  * eines zum zweiten Mal eintragen).
@@ -954,6 +954,10 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *        der Avatar-Zeile wirft)                                                          rot
  *        Waecht gegen eine Vorschau aus ch.avatar am ANFANG von editChar() (m7): sie zeigte
  *        "?" neben Arias Bild im Feld, und 💾 schriebe dieses Bild auf Gus.
+ *   (W10) Import R7 am Bildschirm, mit dem echten 📤-Export als Vorlage und 📥 ueber den
+ *        Dateidialog: ✏️ Cora, "Hinzufuegen" — der Held bleibt in Bearbeitung (Kontrolle);
+ *        ✏️ Aria, ein anderes Bild tippen, "Ersetzen" → das Formular ist zu, die Bearbeiten-ID
+ *        weg, Kopfzeile auf → "?"; dann ✏️ Pia (aus der Datei) → Pias Bild                rot
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * GEGENPROBEN (am Buendel, nicht eingecheckt)
@@ -961,30 +965,32 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  * Kopien der Quelle am Kopf mit je einer Aenderung an editChar()/cancelCharEdit(), dev und
  * prod gebaut, gefahren mit genau diesem Block (process.cwd() = der Ordner der Kopie, drei
  * Worker, Messung vom 04.11.); die Namen sind die von tests/unit/avatar-vorschau.test.js:
- *   fix  R2 + R3 wie im Vertrag                     alle 12 gruen
- *   m1   nur editChar() (Halbfix)                   6 rot: (W4) alle vier Leerwege, je der
- *                                                   Abbrechen-Schritt von (W3) und (W5); ebenso
- *                                                   (W7)-(W3), (W7)-(W4), (W8)-(W3)
- *   m2   nur cancelCharEdit() (Halbfix)             9 rot: (W1), (W2), (W3) "✏️ Aria", (W5)
- *                                                   "✏️ Cora", (W9); ebenso (W7)-(W1),
- *                                                   (W7)-(W3), (W8)
+ *   fix  R2 + R3 wie im Vertrag                     alle 13 gruen
+ *   m1   nur editChar() (Halbfix)                   7 rot: (W4) alle vier Leerwege, je der
+ *                                                   Abbrechen-Schritt von (W3) und (W5), (W10)
+ *                                                   nach "Ersetzen"; ebenso (W7)-(W3),
+ *                                                   (W7)-(W4), (W8)-(W3)
+ *   m2   nur cancelCharEdit() (Halbfix)             10 rot: (W1), (W2), (W3) "✏️ Aria", (W5)
+ *                                                   "✏️ Cora", (W9), (W10) die vier ✏️-Schritte;
+ *                                                   ebenso (W7)-(W1), (W7)-(W3), (W8)
  *   m4   dispatchEvent(change) am Feld in beiden,   1 rot: genau (W5) "✏️ Cora"
  *        statt des Aufrufs (verworfen, R4)
  *   m7   updateAvatarPreview(ch.avatar) am ANFANG   1 rot: genau (W9) "✏️ Gus"
  *        von editChar(), plus R3
- *   m8   updateAvatarPreview(ch.avatar || '') an    alle 12 gruen — zulaessig: von aussen nicht
+ *   m8   updateAvatarPreview(ch.avatar || '') an    alle 13 gruen — zulaessig: von aussen nicht
  *        der Stelle von R2, plus R3                 vom Feld zu unterscheiden (Kritik-Vertrag)
  * Von aussen NICHT zu unterscheiden, darum in tests/unit/avatar-vorschau.test.js: der Aufruf
  * IN customHandlers (m5 hinter dem Leeren der Angriffe, m5a als ERSTE Anweisung im Block; hier
- * alle 12 gruen, dort U4 rot, bei m5 auch U1) und ein synthetisches input statt des Aufrufs
- * (m6, R4; hier alle 12 gruen, dort U1-U4 rot).
+ * alle 13 gruen, dort U4 rot, bei m5 auch U1) und ein synthetisches input statt des Aufrufs
+ * (m6, R4; hier alle 13 gruen, dort U1-U4 rot).
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * WIE GEMESSEN WIRD
  *
  * Bedienung nur ueber die Oberflaeche: Reiter, Kartenkopf (`.char-card-meta`), 🔍 und
  * "✏️ Bearbeiten", Strg+K mit Klick auf den Treffer, die Kopfzeile, Abbrechen, Speichern, die
- * Taste n und die Palette; Eingaben Zeichen fuer Zeichen (eintippen()). Am Telefon .tap() mit TIPP_ABSTAND. `evaluate` nur zum Ablesen;
+ * Taste n, die Palette, 📤/📥 mit dem Dateidialog und dem Import-Fenster; Eingaben Zeichen fuer
+ * Zeichen (eintippen()). Am Telefon .tap() mit TIPP_ABSTAND. `evaluate` nur zum Ablesen;
  * gesaet wird vor dem Laden (laden(), einmal je Tab).
  *
  * Nach JEDEM Schritt, bei offenem Formular, die Invariante R1 als WEICHE Zusicherung: die
@@ -1382,9 +1388,72 @@ async function ablaufW4(page, bedien, tasten) {
     await pruefe(page, '(W4) ✏️ Aria → Reiter Quests → Palette "Neuer Charakter"', '');
 }
 
+// --- (W10) Import: 📤 als Vorlage, 📥 mit dem Dateidialog -------------------
+/**
+ * Der echte 📤-Export der Party (wie exportieren() in reiterimport-verweise.spec.js) als Vorlage.
+ * @param {import('@playwright/test').Page} page
+ */
+async function partyExportieren(page) {
+    const knopf = page.locator('#view-party .io-btn.export[data-value="characters"]');
+    const [download] = await Promise.all([
+        page.waitForEvent('download', { timeout: 5000 }),
+        knopf.click()
+    ]);
+    const json = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+    expect(
+        Array.isArray(json?.data) && json.data.length > 0,
+        'Vorbedingung: der 📤-Export liefert Eintraege'
+    ).toBe(true);
+    return json;
+}
+
+/**
+ * 📥 → Dateidialog → Datei → Fenster → Modus → "Importieren" (Muster aus
+ * reiterimport-verweise.spec.js, fensterOeffnen()/modusWaehlen()/importieren()).
+ * @param {import('@playwright/test').Page} page
+ * @param {object} inhalt die Datei, wie der 📤-Export sie schreibt
+ * @param {'merge'|'replace'} modus
+ */
+async function partyImportieren(page, inhalt, modus) {
+    const knopf = page.locator('#view-party .io-btn.import[data-value="import-characters"]');
+    const [waehler] = await Promise.all([
+        page.waitForEvent('filechooser', { timeout: 5000 }),
+        knopf.click()
+    ]);
+    await waehler.setFiles({
+        name: 'characters-Andere-Runde.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify(inhalt, null, 2), 'utf8')
+    });
+    await expect(page.locator('#import-modal'), 'Vorbedingung: das Import-Fenster').toBeVisible();
+    const radio = page.locator(`#import-modal input[name="import-mode"][value="${modus}"]`);
+    const beschriftung = modus === 'merge' ? 'Hinzufügen' : 'Ersetzen';
+    if (await radio.isVisible()) await radio.check();
+    else await page.locator('#import-modal label', { hasText: beschriftung }).click();
+    await expect(radio, `Vorbedingung: Modus "${beschriftung}" gewaehlt`).toBeChecked();
+    await page.locator('#import-modal [data-action="execute-import"]').click();
+    await expect(page.locator('#import-modal'), 'Vorbedingung: das Fenster ist zu').toBeHidden();
+    await page.waitForTimeout(SETZEN);
+}
+
+/** Die IDs der Karten nach Namen — nur Ablesen.
+ *  @param {import('@playwright/test').Page} page */
+function kartenIds(page) {
+    return page.evaluate(() =>
+        Object.fromEntries(
+            [...document.querySelectorAll('#party-list .char-card')].map(k => [
+                (k.querySelector('.char-card-name')?.textContent || '')
+                    .replace(/[⭐☆⋮]/g, '')
+                    .trim(),
+                Number(/** @type {HTMLElement} */ (k).dataset.id)
+            ])
+        )
+    );
+}
+
 test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden und Leeren', () => {
     // =======================================================================
-    // (W1) (W2) (W3) (W4) (W5) (W6) (W9) — 1440x900, Maus und Tastatur, dev
+    // (W1) (W2) (W3) (W4) (W5) (W6) (W9) (W10) — 1440x900, Maus und Tastatur, dev
     // =======================================================================
     test.describe('1440x900, Maus und Tastatur', () => {
         test.use({ viewport: BREIT });
@@ -1513,6 +1582,63 @@ test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden un
             await page.waitForTimeout(300);
             expect(beob.netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
             expect(beob.seitenfehler, 'kein Seitenfehler').toEqual([]);
+        });
+
+        test('(g) (W10) Import R7: "Ersetzen" bei offenem ✏️ mit getipptem Bild leert Feld UND Vorschau, ✏️ eines importierten Helden zeigt sein Bild; "Hinzufuegen" laesst beides stehen', async ({
+            page
+        }) => {
+            test.setTimeout(90000);
+            const beob = await ladenMitHelden(page);
+            const bedien = bedienung(page, false);
+            await zuReiter(page, 'party');
+            const vorlage = await partyExportieren(page);
+            /** @param {number} id */
+            const quelle = id =>
+                vorlage.data.find(/** @param {any} c */ c => c && Number(c.id) === id) ||
+                vorlage.data[0];
+            const datei = {
+                ...vorlage,
+                data: [
+                    { ...quelle(ARIA.id), name: 'Pia', avatar: HTTPS_BILD },
+                    { ...quelle(BRAM.id), name: 'Quirin', avatar: '' }
+                ]
+            };
+
+            // Hinzufuegen bei offenem ✏️ Cora: Coras ID bleibt Cora, R7 verwirft nichts (Kontrolle)
+            await bearbeitenKopf(page, bedien, CORA.id);
+            await pruefe(page, '(W10) ✏️ Cora', LOKALES_BILD);
+            await partyImportieren(page, datei, 'merge');
+            await expect(formular(page), 'Vorbedingung: nach "Hinzufuegen" offen').toHaveClass(
+                /\bopen\b/
+            );
+            await expect.poll(() => bearbeitenId(page)).toBe(String(CORA.id));
+            await pruefe(page, '(W10) ✏️ Cora → Import "Hinzufuegen"', LOKALES_BILD);
+
+            // Ersetzen bei offenem ✏️ Aria mit getipptem, nie gespeichertem Bild: R7 verwirft
+            // das Bearbeiten ueber cancelCharEdit()
+            await bearbeitenKopf(page, bedien, ARIA.id);
+            await pruefe(page, '(W10) ✏️ Aria', DATA_BILD);
+            await avatarTippen(page, bedien, RELATIVES_BILD);
+            await pruefe(page, '(W10) ✏️ Aria, RELATIVES_BILD getippt', RELATIVES_BILD);
+            await partyImportieren(page, datei, 'replace');
+            await expect(formular(page), 'Vorbedingung: "Ersetzen" klappt zu').not.toHaveClass(
+                /\bopen\b/
+            );
+            weich(await bearbeitenId(page), '(W10) Bearbeiten-ID verworfen (R7)').toBe('');
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).toHaveClass(/\bopen\b/);
+            await pruefe(page, '(W10) ✏️ Aria, getippt → Import "Ersetzen" → Kopfzeile auf', '');
+            await bedien(kopfzeile(page));
+            await expect(formular(page)).not.toHaveClass(/\bopen\b/);
+
+            const ids = await kartenIds(page);
+            expect(Object.keys(ids).sort(), 'Vorbedingung: ersetzt durch Pia und Quirin').toEqual([
+                'Pia',
+                'Quirin'
+            ]);
+            await bearbeitenKopf(page, bedien, ids.Pia);
+            await pruefe(page, '(W10) dann ✏️ Pia (importiert)', HTTPS_BILD);
+            await ohneNetzUndFehler(page, beob);
         });
     });
 
