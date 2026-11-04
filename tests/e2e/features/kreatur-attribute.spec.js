@@ -54,7 +54,8 @@
  *   R1  Markup: alle sechs Felder tragen `data-action="update-bst-attr-mod"
  *       data-value="<str|dex|con|int|wis|cha>"`; data-attr faellt weg. Kein
  *       Formularfeld traegt mehr `data-action="call"`.
- *                        W9; tests/unit/event-delegation.test.js (U2)
+ *                        W9; tests/unit/event-delegation.test.js (U2),
+ *                        tests/unit/kreatur-attribute.test.js (U5, data-attr)
  *   R2  `updateBstAttrMod(attr)` nimmt den Schluessel als Text, kehrt bei einem
  *       fremden Schluessel zurueck, rechnet `parseInt(wert) || 10` und
  *       floor((v-10)/2) mit Vorzeichen ('' / '0' / badInput -> "+0"), schreibt
@@ -174,7 +175,10 @@
  * Zuweisung an window steht noch), U1b vier Faelle (kein Handler). Gruen: U3
  * (122 Eintraege, 122 Ziele, 0 ueberzaehlig), U4 fremder Schluessel (4), kein
  * D/save (1), updateAllBstAttrMods (1). Die volle Jest-Suite: 17 rot, 4691
- * gruen — genau diese 17.
+ * gruen — genau diese 17. Seit der Nachpruefung kommt U5 (Markup R1, kein
+ * data-attr) dazu, an diesem Stand ebenfalls rot; der Fall "fremder
+ * Schluessel" legt ein Feldpaar zum fremden Schluessel an und bleibt hier
+ * gruen.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DIE GEGENPROBE — Fix-Skizzen AUSSERHALB des Repos: der Quellbaum von
