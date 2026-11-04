@@ -638,4 +638,26 @@ describe('CHAR-HALBLADEN — editChar() laedt total und atomar', () => {
             }
         });
     });
+
+    describe('(HL8) R4: ein Steuerelement, das editChar() nicht laedt, erbt nichts vom vorigen Helden', () => {
+        test('(HL8) setCharLanguages() laedt nichts ("vergessen"): keine Sprache von Aria', () => {
+            ctx.editChar(1);
+            expect(arienSprachen(formularStand())).toEqual(ARIA.languages);
+            ctx.setCharLanguages = () => {};
+            expect(() => ctx.editChar(2)).not.toThrow();
+            const z = formularStand();
+            expect({ id: z['edit-char-id'], offen: z.offen }).toEqual({ id: '2', offen: true });
+            expect(arienSprachen(z)).toEqual([]);
+            expect(arienWerte(z)).toEqual([]);
+            /** @type {Record<string, any>} */
+            const ist = {};
+            /** @type {Record<string, any>} */
+            const soll = {};
+            for (const k of Object.keys(STAND.leer).filter(k => gehoertZu('languages', k))) {
+                ist[k] = z[k];
+                soll[k] = STAND.leer[k];
+            }
+            expect(ist).toEqual(soll);
+        });
+    });
 });
