@@ -80,4 +80,21 @@ describe('Action-Registry Kollisions-Erkennung (Phase 8, D-02, Pitfall 1)', () =
         expect([...new Set(keyToFiles['update-attr-mod'] || [])]).toEqual(['entity-actions.js']);
         expect([...new Set(keyToFiles['update-enc-attr-mod'] || [])]).toEqual(['entity-actions.js']);
     });
+
+    // KREATUR-ATTRIBUTE (U1): die sechs Attributfelder des Kreaturen-Editors hingen an der
+    // generischen Knopf-Aktion `call`, die ein Eingabefeld nicht bedienen kann (bei input ist
+    // ctx.value der getippte Wert, beim Klick laeuft updateBstAttrMod(null)). Der Vertrag gibt
+    // ihnen eine eigene Aktion neben 'update-enc-attr-mod' — und sie darf, wie die zwei
+    // Geschwister oben, nur EINMAL registriert sein: eine zweite Registrierung in einem spaeter
+    // geladenen Modul gewaenne still (Pitfall 1). Gezaehlt wird zusaetzlich IN der Datei, denn
+    // scanActionKeysByFile() fasst die Treffer einer Datei zu einer Menge zusammen.
+    test('update-bst-attr-mod ist genau einmal registriert, in entity-actions.js (KREATUR-ATTRIBUTE, U1)', () => {
+        const keyToFiles = scanActionKeysByFile();
+
+        expect([...new Set(keyToFiles['update-bst-attr-mod'] || [])]).toEqual([
+            'entity-actions.js'
+        ]);
+        const inhalt = fs.readFileSync(path.join(ACTIONS_DIR, 'entity-actions.js'), 'utf8');
+        expect((inhalt.match(/^\s*'update-bst-attr-mod':/gm) || []).length).toBe(1);
+    });
 });
