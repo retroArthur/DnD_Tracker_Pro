@@ -93,8 +93,11 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
         const sectionTitles = detailPanel.querySelectorAll('.npc-section-title');
         sectionTitles.forEach(title => {
             if (title.textContent?.includes('Dialoge')) {
-                const btnHtml = title.querySelector('.npc-section-btn')?.outerHTML || '';
-                title.innerHTML = `💬 Dialoge (${usedCount}/${npc.dialogs.length} verwendet) ${btnHtml}`;
+                // Text per textContent, den vorhandenen Knopf wieder anhaengen — kein
+                // innerHTML mit einer Laenge aus D (Vertrag SENKEN, docs/bugfixes.md).
+                const btn = title.querySelector('.npc-section-btn');
+                title.textContent = `💬 Dialoge (${usedCount}/${npc.dialogs.length} verwendet) `;
+                if (btn) title.appendChild(btn);
             }
         });
     }

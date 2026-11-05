@@ -151,26 +151,12 @@ declare function populateFilterDropdown<T = any>(selectId: string, items: T[], c
  */
 type EntityType = 'characters' | 'npcs' | 'locations' | 'quests' | 'spells' | 'loot' | 'encounters' | 'shops' | 'wiki' | 'sessionNotes' | 'filters' | 'links';
 /**
- * Zentrales Entity-Lookup-System mit optionalem Caching
- * Vermeidet redundante Array.find()-Aufrufe
+ * Zentrales Entity-Lookup-System, ohne Zwischenspeicher (RUECKSPRUNG)
  */
 declare const EntityLookup: {
-    /** Cache für Entity-Lookups */
-    _cache: Map<string, any>;
-    /** Ob Caching aktiviert ist */
-    _cacheEnabled: boolean;
     /**
-     * Aktiviert Caching für Performance bei vielen Lookups
-     * Sollte vor Batch-Operationen aktiviert und danach deaktiviert werden
-     */
-    enableCache(): void;
-    /**
-     * Deaktiviert und leert den Cache
-     * Sollte nach Datenänderungen aufgerufen werden
-     */
-    clearCache(): void;
-    /**
-     * Holt eine Entity aus der entsprechenden Collection
+     * Holt eine Entity aus der entsprechenden Collection — immer das Objekt,
+     * das im Moment des Aufrufs in D steht
      */
     get(type: EntityType, id: number | string): any | null;
     /**
@@ -212,7 +198,11 @@ interface CombatEntityResult {
  * Get comprehensive entity details for combat/display
  * Centralizes entity lookup pattern used across combat and rendering
  */
-declare function getEntityForCombat(entityType: string, entityName: string): CombatEntityResult;
+declare function getEntityForCombat(
+    entityType: string,
+    entityName: string,
+    encounterId?: number | string | null
+): CombatEntityResult;
 /**
  * Entity Type Icon/Label Config
  */

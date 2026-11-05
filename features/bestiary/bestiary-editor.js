@@ -11,9 +11,16 @@ var _bstEditorAvatarUrl = '';
 // ============================================================
 // ATTRIBUTE MODIFIER DISPLAY
 // ============================================================
-function updateBstAttrMod(ctx) {
-    var attr = ctx.target ? ctx.target.dataset.attr : (ctx.attr || '');
-    if (!attr) return;
+// KREATUR-ATTRIBUTE: nimmt den Attributschlüssel als Text, wie updateEncAttrMod(attr).
+// Gerufen von der Aktion 'update-bst-attr-mod' (ui/actions/entity-actions.js) bei input
+// und click und von updateAllBstAttrMods() beim Öffnen. Die sechs Felder hingen vorher an
+// der Knopf-Aktion `call`, die ein Eingabefeld nicht bedienen kann: die Anzeige blieb
+// "+0", jeder Klick und jede Eingabe schrieb einen Fehler.
+// Angezeigt wird ungeklemmt wie im Encounter- und Party-Formular (35 -> "+12");
+// saveBestiary() klemmt erst beim Speichern auf 1–30. Leer/unlesbar -> Rückfall 10 ("+0").
+// Nur Anzeige: kein D, kein save(), kein saveUndoState().
+function updateBstAttrMod(attr) {
+    if (['str', 'dex', 'con', 'int', 'wis', 'cha'].indexOf(attr) === -1) return;
     var inputEl = window.$('bst-' + attr);
     var modEl = window.$('bst-' + attr + '-mod');
     if (!inputEl || !modEl) return;
@@ -24,7 +31,7 @@ function updateBstAttrMod(ctx) {
 
 function updateAllBstAttrMods() {
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(function(attr) {
-        updateBstAttrMod({ attr: attr });
+        updateBstAttrMod(attr);
     });
 }
 
@@ -65,7 +72,7 @@ function refreshBstAvatarPreview() {
     var preview = window.$('bst-avatar-preview');
     var clearBtn = window.$('bst-avatar-clear');
     if (preview) {
-        if (_bstEditorAvatarUrl) {
+        if (sichereBildquelle(_bstEditorAvatarUrl)) {
             preview.src = _bstEditorAvatarUrl;
             preview.style.display = '';
         } else {
@@ -302,7 +309,6 @@ function cleanupBestiaryEditor() {
 // WINDOW EXPORTS
 // ============================================================
 window.openBestiaryEditor = openBestiaryEditor;
-window.updateBstAttrMod = updateBstAttrMod;
 window.openBstAvatarModal = openBstAvatarModal;
 window.clearBstAvatar = clearBstAvatar;
 window.cleanupBestiaryEditor = cleanupBestiaryEditor;

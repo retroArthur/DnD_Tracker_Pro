@@ -155,6 +155,58 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
         expect(missingFromWhitelist).toEqual([]);
     });
 
+    // KREATUR-ATTRIBUTE (U3): der Abgleich oben prueft nur, dass kein Ziel FEHLT. Ein Name,
+    // der in der Whitelist stehen bleibt, nachdem sein letzter Aufrufer verschwunden ist,
+    // fiele dort nie auf — SEC-03 verlangt aber nur Ziele, die wirklich gebraucht werden.
+    // Gemessen mit genau dieser Ableitung: am Stand 543706c6 122 Eintraege, 122 Ziele,
+    // 0 ueberzaehlig; an der Fix-Skizze von KREATUR-ATTRIBUTE (die sechs Felder ohne `call`,
+    // 'updateBstAttrMod' gestrichen) 121/121/0. Zieht ein Fix die Felder um und vergisst die
+    // Streichung (Vertrag R4), wird dieser Fall rot.
+    test('jeder CALL_ACTION_WHITELIST-Eintrag ist ein call-Ziel im Quellbaum — Ueberzaehligkeits-Ratsche (KREATUR-ATTRIBUTE, U3)', () => {
+        const whitelist = loadRealWhitelist();
+        const { targets } = findCallTargetsInSourceTree();
+
+        const ueberzaehlig = [...whitelist].filter(name => !targets.has(name));
+        expect(ueberzaehlig).toEqual([]);
+    });
+
+    // KREATUR-ATTRIBUTE (U2), der Klassenwaechter: `call` ist eine Knopf-Aktion. Sie reicht
+    // ihrem Ziel nur ctx.id weiter, und an einem Eingabefeld ist ctx.value bei input/change
+    // der GETIPPTE Wert (ui/event-delegation.js: `target.value || target.dataset.value`) —
+    // die Whitelist lehnt ihn ab, und ist das Feld leer, laeuft das Ziel mit ctx.id = null.
+    // Kein Ziel des call-Wegs kann ein Formularfeld bedienen. Gelesen wird TAGWEISE ueber
+    // Zeilenumbrueche (in view-bestiary.html stehen Tag-Anfang und data-action auf
+    // verschiedenen Zeilen, die Vorlagen sind CRLF), ein `${…}` in einem JS-Tag wird
+    // uebersprungen statt den Tag an seinem `>` zu beenden. Am Stand 543706c6 rot mit sechs
+    // Treffern, alle in assets/templates/view-bestiary.html (#bst-str … #bst-cha).
+    test('kein Formularfeld (input/select/textarea) traegt data-action="call" — Klassenwaechter (KREATUR-ATTRIBUTE, U2)', () => {
+        const TAG = /<(input|select|textarea)\b(?:[^>$]|\$(?!\{)|\$\{[^}]*\})*>/gi;
+        const CALL = /data-action\s*=\s*\\?["']call\\?["']/;
+        const treffer = [];
+
+        function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    walk(full);
+                } else if (entry.isFile() && /\.(js|html)$/.test(entry.name)) {
+                    const content = fs.readFileSync(full, 'utf8');
+                    let m;
+                    while ((m = TAG.exec(content))) {
+                        if (!CALL.test(m[0])) continue;
+                        const zeile = content.slice(0, m.index).split('\n').length;
+                        const id = (m[0].match(/\bid\s*=\s*\\?["']([^"'\\]*)/) || [])[1] || '?';
+                        const rel = path.relative(REPO_ROOT, full).split(path.sep).join('/');
+                        treffer.push(`${rel}:${zeile} ${m[1].toLowerCase()}#${id}`);
+                    }
+                }
+            }
+        }
+        SOURCE_DIRS.forEach(d => walk(path.join(REPO_ROOT, d)));
+
+        expect(treffer).toEqual([]);
+    });
+
     test('protokolliert ein nicht gelistetes Ziel bei aktivem DEBUG_MODE genau einmal über ErrorHandler', () => {
         const errorHandlerLog = jest.fn();
         const { handlers } = loadUIActions({

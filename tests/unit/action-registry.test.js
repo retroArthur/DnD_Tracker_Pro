@@ -31,7 +31,7 @@ beforeAll(() => {
             quickRoll: jest.fn(),
             undo: jest.fn(),
             redo: jest.fn(),
-            toggleCollapse: jest.fn(),
+            showNewCollapsibleForm: jest.fn(),
             D: {
                 characters: [],
                 npcs: [],

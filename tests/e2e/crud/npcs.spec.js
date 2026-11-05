@@ -28,7 +28,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC mit Minimaldaten erstellen', async ({ page }) => {
             const npcName = generateTestName('MinNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'npc-name', npcName);
@@ -48,7 +48,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC mit vollständigen Daten erstellen', async ({ page }) => {
             const npcName = generateTestName('FullNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'npc-name', npcName);
@@ -80,7 +80,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         });
 
         test('NPC ohne Namen zeigt Fehlermeldung', async ({ page }) => {
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'npc-role', 'Wirt');
@@ -100,7 +100,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC mit Trigger erstellen', async ({ page }) => {
             const npcName = generateTestName('TriggerNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'npc-name', npcName);
@@ -128,7 +128,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC mit Dialog erstellen', async ({ page }) => {
             const npcName = generateTestName('DialogNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'npc-name', npcName);
@@ -155,7 +155,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC-Liste zeigt alle NPCs', async ({ page }) => {
             const npcName = generateTestName('ListNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -171,13 +171,13 @@ test.describe('NPCs - CRUD Operationen', () => {
             const npc2 = generateTestName('Beta');
 
             // Zwei NPCs erstellen
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npc1);
             await page.click('[data-action="call"][data-value="saveNPC"]');
             await page.waitForTimeout(500);
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npc2);
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -196,7 +196,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC-Details können angezeigt werden', async ({ page }) => {
             const npcName = generateTestName('DetailNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await fillField(page, 'npc-role', 'Magier');
@@ -218,7 +218,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC-Daten können geändert werden', async ({ page }) => {
             const npcName = generateTestName('EditNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await fillField(page, 'npc-role', 'Lehrling');
@@ -250,7 +250,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC-Chapter kann aktualisiert werden', async ({ page }) => {
             const npcName = generateTestName('ChapterNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await fillField(page, 'npc-chapter', '1');
@@ -290,7 +290,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('NPC kann gelöscht werden', async ({ page }) => {
             const npcName = generateTestName('DeleteNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -323,7 +323,7 @@ test.describe('NPCs - CRUD Operationen', () => {
         test('Löschen kann rückgängig gemacht werden', async ({ page }) => {
             const npcName = generateTestName('UndoNPC');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await page.click('[data-action="call"][data-value="saveNPC"]');

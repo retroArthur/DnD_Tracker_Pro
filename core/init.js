@@ -158,8 +158,11 @@ async function initSteps() {
         }, 200)
     );
 
-    // Encounter-Runde aus Daten laden
-    encounterRound = D.initiative?.round || 1;
+    // Hier stand `encounterRound = D.initiative?.round || 1` — das Nachziehen
+    // einer Modulkopie des Rundenzaehlers beim Start. Die Kopie ist weg
+    // (RUNDE, Begruendung an `nextEncounterRound()` in `systems/undo.js`):
+    // `D.initiative.round` ist die einzige Quelle und kommt aus dem Speicher
+    // mit, es gibt nichts mehr zu laden.
 
     // Auto-Backup starten
     startAutoBackup();
@@ -398,6 +401,35 @@ async function initIndexedDB() {
 // ============================================================
 // PREV TURN (für Keyboard Shortcut)
 // ============================================================
+/**
+ * Einen Zug zurueck — die Umkehrung von `nextTurn()` in der Zug- und
+ * Rundenzaehlung (RUNDE).
+ *
+ * WAS HIER FALSCH WAR. Die Bedingung lautete `if (encounterRound > 1)` und las
+ * damit die Modulkopie des Rundenzaehlers aus `systems/undo.js`, die
+ * `nextTurn()` nie anfasste. GEMESSEN, sechs Kaempfer, 7x `n` dann 7x `p`:
+ *
+ *   n: 0/1 1/1 2/1 3/1 4/1 5/1 0/2 1/2
+ *   p: 0/2 5/2 4/2 3/2 2/2 1/2 0/2
+ *
+ * Sieben vor, sieben zurueck — der Zug stand wieder auf 0, die Runde auf 2.
+ * Aus einer durch Shift+N erreichten Runde (dort zog die Kopie mit) senkte
+ * dasselbe Bedienelement sie dagegen: ein Knopf, zwei Verhalten.
+ *
+ * ES BLEIBT BEI `> 1`, UND DAS IST ABSICHT: unter Runde 1 gibt es keine
+ * Runde 0: ein Rueckumlauf aus dem frischen Stand (Zug 0, Runde 1) springt auf
+ * den letzten Kaempfer und laesst die Runde bei 1. Nur liest die Schranke
+ * jetzt die EINE Quelle statt einer Kopie.
+ *
+ * WAS DIESE FUNKTION NICHT ZURUECKRECHNET, und warum das hier steht: die
+ * Wirkungsdauern. `nextTurn()` zieht die Dauer des Kaempfers am Zug ab und
+ * ENTFERNT abgelaufene Effekte; was entfernt wurde, ist aus dem Vorwaertsschritt
+ * allein nicht wiederherstellbar. Der Weg dafuer ist `Strg+Z`
+ * (`pushUndo('Vorheriger Zug')` eine Zeile weiter unten schreibt den Punkt).
+ * Eine halbe Umkehrung, die die Dauer um eins erhoeht, waere schlimmer als
+ * keine: sie wuerde einen bereits abgelaufenen Effekt nicht wiederbringen und
+ * einen permanenten verfaelschen.
+ */
 function prevTurn() {
     if (!D.initiative.combatants.length) return;
 
@@ -406,12 +438,16 @@ function prevTurn() {
     D.initiative.currentTurn--;
     if (D.initiative.currentTurn < 0) {
         D.initiative.currentTurn = D.initiative.combatants.length - 1;
-        if (encounterRound > 1) {
-            encounterRound--;
-            D.initiative.round = encounterRound;
+        if ((D.initiative.round || 1) > 1) {
+            D.initiative.round = (D.initiative.round || 1) - 1;
         }
     }
 
+    // `renderInit()` schreibt `#encounter-round-num` selbst aus `init.round`
+    // (`features/initiative.js`) — ein zusaetzlicher Aufruf von
+    // `updateEncounterDisplay()` waere hier nicht nur doppelt, er braeuchte
+    // einen neuen window-Export fuer eine modulinterne Funktion (CLAUDE.md,
+    // Export-Audit).
     save();
     renderInit();
 }

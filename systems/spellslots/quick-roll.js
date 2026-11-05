@@ -16,6 +16,14 @@ function quickRoll(sides) {
     D.diceHistory = D.diceHistory || [];
     D.diceHistory.unshift({ dice: `d${sides}`, result, timestamp: Date.now() });
     if (D.diceHistory.length > 50) D.diceHistory = D.diceHistory.slice(0, 50);
+    // D.diceHistory oben liest keine Ansicht. In Verlauf und Statistik kommt der
+    // Wurf erst hier (07-CONTEXT D-04: "ALLE Würfe ... Quick-Rolls (R)").
+    // Ohne Schadensart: der Chip des Wuerfel-Tabs gilt nicht fuer R/Alt+Ziffer.
+    // typeof: die Multi-Tab-Werkbank der Unit-Tests laedt dieses Modul ohne
+    // das Wuerfelmodul.
+    if (typeof addToDiceHistory === 'function') {
+        addToDiceHistory(`1d${sides}`, result, [result], { ohneSchadensart: true });
+    }
 }
 // (D-07) Speicher-Konflikt auflösen. Es gibt (noch) keinen externen UI-Dialog —
 // bei abweichendem Inhalt wird der neuere IDB-Stand bevorzugt (kein stiller Verlust).
@@ -55,6 +63,12 @@ function _parseStoredCampaign(s) {
         ErrorHandler.log('load', error);
         return { reason: 'invalid', error };
     }
+    // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): der gespeicherte Stand ist so fremd
+    // wie eine Datei — ein anderer Tab, der Migrations-Import oder ein Altstand legt ihn ab.
+    // __proto__/constructor/prototype fallen VOR der Migration und vor Object.assign(D, p)
+    // im Startpfad (ein eigener "__proto__"-Schluessel setzte dort den Prototyp von D), und
+    // Zahlen-/Verweisfelder werden Zahlen statt Text.
+    p = bereinigeDatengrenze(p);
     // (D-05/STAB-06) Legacy-Stempel-Normalisierung: '2.11' wurde fälschlicherweise
     // als "neuer als 2.6.x" behandelt (compareVersions: 11 > 6).
     // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
@@ -70,7 +84,8 @@ function _parseStoredCampaign(s) {
             log(`[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
         }
         try {
-            p = migrateData(p);
+            // Nach der Migration noch einmal: sie fuellt Felder aus Altformaten nach
+            p = bereinigeDatengrenze(migrateData(p));
         } catch (migrateError) {
             ErrorHandler.log('load', migrateError, 'Migration fehlgeschlagen');
             // Fahre trotzdem fort mit unmigierten Daten

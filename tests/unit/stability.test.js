@@ -4,6 +4,136 @@
  */
 
 // ============================================================
+// AUDIT_MUSTER — die drei Regexe der Quelltext-Audits, EINE Quelle.
+//
+// Zwei Faelle dieser Datei schneiden Funktionskoerper aus
+// `systems/spellslots/persistence.js` heraus und urteilen ueber deren
+// Inhalt: der SAFE-06-Audit ('ruft der catch-Zweig den IndexedDB-Fallback?')
+// und der Nachzug-R12-Audit ('steht in den Koerpern eine DOM-Abfrage als
+// Vorab-Guard?'). Beide brauchen dieselben drei Muster, und beide trugen sie
+// bis hierher als EIGENE Literale — sechs Kopien von drei Ausdruecken, in
+// 450 Zeilen Abstand.
+//
+// WARUM SIE JETZT HIER STEHEN. Die Kopien waren nicht nur Dopplung, sie
+// waren SECHSMAL DERSELBE FEHLER: das Endeanker lautete `\n}\n`, verlangte
+// also ein `}` mit einem reinen LF davor und dahinter. Der Arbeitsbaum des
+// Entwicklers traegt diese Datei mit LF (von einem Editor geschrieben und
+// nie neu ausgecheckt), jeder frische `git clone` oder `git worktree` auf
+// Windows mit `core.autocrlf=true` — dem hier gesetzten Wert, ohne
+// `.gitattributes` — traegt sie mit CRLF. Dort steht `}\r\n`, das Muster
+// greift nicht, `src.match()` gibt `null`, und beide Audits melden
+// `expect(received).not.toBeNull() / Received: null`.
+//
+// GEMESSEN, nicht erschlossen (frischer `git worktree --detach` auf 00bdd0f,
+// nichts mutiert):
+//     $ python -c "...count(b'\r\n')"
+//       Worktree   1027 CRLF / 0 LF-only
+//       Hauptbaum  0 CRLF / 1027 LF-only
+//     $ npx jest tests/unit/stability.test.js --silent
+//       Worktree   2 failed, 106 passed, 108 total  (:1260 und :1708)
+//       Hauptbaum  108 passed, 108 total
+// Die CI (ubuntu-latest, LF) sah das nie. Die Faelle urteilten also still
+// ueber Zeilenenden statt ueber Code, und das in der Richtung Falsch-ROT:
+// wer die Suite im frischen Checkout zum ersten Mal faehrt, bekommt zwei
+// Fehlschlaege, die nichts mit seiner Aenderung zu tun haben und auf die
+// Persistenzschicht zeigen.
+//
+// `\r?\n` statt `\n` an beiden Enden. Unter LF ist das Verhalten
+// unveraendert (das `\r?` greift ins Leere), unter CRLF greift es. Der
+// Waechter 'Die drei Audit-Muster urteilen ueber Code, nicht ueber
+// Zeilenenden' unten haelt beide Richtungen fest — er prueft jedes Muster
+// gegen EINE LF- und EINE CRLF-Fassung derselben Quelle und ist damit auch
+// im LF-Arbeitsbaum aussagekraeftig, wo der Fehler sonst unsichtbar ist.
+//
+// Die Alternative — eine `.gitattributes` mit `* text=auto eol=lf` — waere
+// der strukturelle Ort fuer die ganze Fehlerklasse, aendert aber die
+// Zeilenenden JEDER Datei bei jedem Checkout und damit weit mehr als diese
+// drei Zeilen. Als offener Posten notiert, hier nicht mitgemacht.
+// ============================================================
+const AUDIT_MUSTER = {
+    saveImmediate: /async function saveImmediate\(\)\s*{[\s\S]*?\r?\n}\r?\n/,
+    save: /const save = function[\s\S]*?\r?\n};\r?\n/,
+    persistNow: /async function _persistNow\([^)]*\)\s*{[\s\S]*?\r?\n}\r?\n/
+};
+
+describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const PERSISTENZ = path.join(__dirname, '../../systems/spellslots/persistence.js');
+
+    /** Die Quelle einmal mit reinem LF und einmal mit reinem CRLF. */
+    function beideFassungen() {
+        const lf = fs.readFileSync(PERSISTENZ, 'utf-8').replace(/\r\n/g, '\n');
+        return { lf, crlf: lf.replace(/\n/g, '\r\n') };
+    }
+
+    // KEIN ZWEITES expect-ARGUMENT. Jest nimmt genau einen Wert; ein
+    // Meldungsargument wie in Playwright laesst `expect()` SELBST werfen
+    // ('Expect takes at most one argument.') — der Fall ist dann rot, ohne je
+    // gemessen zu haben. Genau das ist der ersten Fassung dieses Waechters
+    // passiert, und es ist dieselbe Fehlerklasse, die der Waechter aufdecken
+    // soll: rot aus einem fremden Grund. Die Befunde werden darum GESAMMELT
+    // und als Liste verglichen; so steht der Grund in der Diff-Ausgabe und
+    // nicht in einem Argument, das Jest verwirft.
+    test('Die drei Audit-Muster urteilen ueber Code, nicht ueber Zeilenenden', () => {
+        const { lf, crlf } = beideFassungen();
+
+        // Gegenprobe gegen Leerlauf: die beiden Fassungen sind wirklich
+        // verschieden, die Umschreibung hat gewirkt, und sie hat keine Zeile
+        // verloren. Ohne diese drei Zeilen koennte der Fall gruen laufen,
+        // weil er zweimal DASSELBE prueft.
+        expect(lf).not.toBe(crlf);
+        expect(lf.includes('\r')).toBe(false);
+        expect(crlf.split('\r\n').length).toBe(lf.split('\n').length);
+
+        const garNicht = [];
+        const nurLf = [];
+        for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
+            if (!lf.match(muster)) {
+                garNicht.push(name);
+                continue;
+            }
+            if (!crlf.match(muster)) nurLf.push(name);
+        }
+        // Greift ein Muster nicht einmal auf der LF-Fassung, ist nicht das
+        // Zeilenende das Problem, sondern das Muster oder die Quelle.
+        expect(garNicht).toEqual([]);
+        // Greift es auf LF, aber nicht auf CRLF, dann macht genau dieser
+        // Zustand die beiden Quelltext-Audits dieser Datei in JEDEM frischen
+        // Checkout auf Windows rot (core.autocrlf=true, keine
+        // .gitattributes), ohne dass am Code etwas falsch ist. Der Endeanker
+        // muss `\r?\n` lauten, nicht `\n`.
+        expect(nurLf).toEqual([]);
+    });
+
+    test('Die Muster schneiden unter LF und CRLF denselben Koerper heraus', () => {
+        // Nicht nur "greift", sondern "greift gleich weit". Ein Muster, das
+        // unter CRLF einen KUERZEREN Koerper liefert, waere die
+        // Falsch-GRUEN-Richtung desselben Fehlers: die Audits unten pruefen
+        // dann einen Ausschnitt, in dem der gesuchte Aufruf gar nicht mehr
+        // stehen kann.
+        const { lf, crlf } = beideFassungen();
+        const abweichend = [];
+        for (const [name, muster] of Object.entries(AUDIT_MUSTER)) {
+            const a = lf.match(muster);
+            const b = crlf.match(muster);
+            if (!a || !b) {
+                abweichend.push(`${name}: greift nicht auf beiden Fassungen`);
+                continue;
+            }
+            const bNormalisiert = b[0].replace(/\r\n/g, '\n');
+            if (bNormalisiert !== a[0]) {
+                abweichend.push(
+                    `${name}: LF-Koerper ${a[0].length} Zeichen, CRLF-Koerper ` +
+                        `${bNormalisiert.length} Zeichen (nach Normalisierung)`
+                );
+            }
+        }
+        expect(abweichend).toEqual([]);
+    });
+});
+
+// ============================================================
 // 1. DATA PERSISTENCE TESTS
 // ============================================================
 
@@ -1254,9 +1384,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
 
             // saveImmediate(): Funktionskörper isolieren, um sicherzugehen, dass der
             // catch-Zweig DIESER Funktion (nicht z. B. der von save()) geprüft wird.
-            const saveImmediateMatch = src.match(
-                /async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/
-            );
+            const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
             expect(saveImmediateMatch).not.toBeNull();
             const saveImmediateBody = saveImmediateMatch[0];
             const saveImmediateCatch = saveImmediateBody.slice(saveImmediateBody.indexOf('} catch (e) {'));
@@ -1265,10 +1393,10 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             // save(): dasselbe Muster im Koerper des entprellten Durchlaufs. Seit U7 (R02) ist
             // der setTimeout-Callback-Koerper nach _persistNow() ausgelagert (flushPendingSave()
             // zieht ihn vor); save() selbst plant nur noch diesen Durchlauf ein.
-            const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+            const saveMatch = src.match(AUDIT_MUSTER.save);
             expect(saveMatch).not.toBeNull();
             expect(saveMatch[0]).toMatch(/_persistNow\(showMessage\)/);
-            const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+            const persistNowMatch = src.match(AUDIT_MUSTER.persistNow);
             expect(persistNowMatch).not.toBeNull();
             const saveBody = persistNowMatch[0];
             const saveCatch = saveBody.slice(saveBody.lastIndexOf('} catch (e) {'));
@@ -1638,6 +1766,70 @@ describe('Data Integrity', () => {
 
                 expect(hook).toHaveBeenCalledTimes(1);
             });
+
+            // REITERIMPORT R7: Rueckgaengig und Wiederholen eines Ersetzens tauschen, WELCHER
+            // Eintrag hinter einer ID steht — wie der Import selbst. Ein Konsument (der
+            // Reiter-Import) muss darum erfahren, welche Aktion ein Schritt zuruecknimmt bzw.
+            // wiederherstellt; das Label allein ist dafuer nicht eindeutig.
+            test('Kennung: saveUndoState(label, kennung) gibt sie dem Hook bei Undo UND Redo mit', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                const kennung = { reiterImport: { typ: 'characters', modus: 'replace' } };
+                realSaveUndoState('1 Charakter importiert', kennung);
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+                realRedo();
+                realUndo();
+
+                expect(hook.mock.calls.map(c => c[0])).toEqual([
+                    { action: '1 Charakter importiert', direction: 'undo', kennungen: [kennung] },
+                    { action: '1 Charakter importiert', direction: 'redo', kennungen: [kennung] },
+                    { action: '1 Charakter importiert', direction: 'undo', kennungen: [kennung] }
+                ]);
+                expect(context.window.D.characters[0].name).toBe('X');
+            });
+
+            test('Kennung bei gleichem Stand (Dedupe): sie geht an den Kopf — dessen Rueckgaengig nimmt die Aktion mit zurueck', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Frueheres Oeffnen');
+                // D unveraendert: der Stand gleicht dem Kopf, es entsteht kein neuer Eintrag
+                const kennung = { reiterImport: { typ: 'characters', modus: 'replace' } };
+                realSaveUndoState('1 Charakter importiert', kennung);
+                const zweite = { reiterImport: { typ: 'npcs', modus: 'replace' } };
+                realSaveUndoState('1 NPC importiert', zweite);
+                context.window.D.characters[0].name = 'Y';
+                expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+
+                expect(hook.mock.calls.map(c => c[0])).toEqual([
+                    {
+                        action: 'Frueheres Oeffnen',
+                        direction: 'undo',
+                        kennungen: [kennung, zweite]
+                    }
+                ]);
+            });
+
+            test('Ohne Kennung bleibt die Nachricht an den Hook, wie sie war: { action, direction }', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Aktion');
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                realUndo();
+                realRedo();
+
+                expect(hook.mock.calls.map(c => Object.keys(c[0]))).toEqual([
+                    ['action', 'direction'],
+                    ['action', 'direction']
+                ]);
+            });
         });
     });
 
@@ -1704,12 +1896,12 @@ describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', 
     test('saveImmediate()- und save()-Koerper enthalten ueberhaupt keine DOM-Abfrage als Vorab-Guard', () => {
         const src = quelle('systems/spellslots/persistence.js');
 
-        const saveImmediateMatch = src.match(/async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/);
+        const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
         expect(saveImmediateMatch).not.toBeNull();
-        const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+        const saveMatch = src.match(AUDIT_MUSTER.save);
         expect(saveMatch).not.toBeNull();
         // Seit U7 (R02) liegt der entprellte Save-Koerper in _persistNow()
-        const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+        const persistNowMatch = src.match(AUDIT_MUSTER.persistNow);
         expect(persistNowMatch).not.toBeNull();
 
         // Der geloeschte Codepfad war ein Vorab-Guard, der bei nicht gesetztem
@@ -2192,6 +2384,9 @@ function _erzeugePersistenzKontext(optionen = {}) {
         context
     );
     if (optionen.mitLoad) {
+        // load() ruft seit SENKEN die Datengrenze auf (Vertrag SENKEN R4) — der echte Block
+        // aus utils/basic.js, keine Attrappe; ohne ihn warf load() still ('exception')
+        require('./helpers/datengrenze-block.js').ladeDatengrenze(context);
         vm.runInContext(
             fs.readFileSync(path.join(wurzel, 'systems/spellslots/quick-roll.js'), 'utf-8'),
             context
@@ -2266,6 +2461,42 @@ describe('Nachzug R13 — echter >5-MB-IDB-only-Save plus echter Neustart-Lesepf
         expect(frischesD.characters[5].notes.length).toBe(1024 * 1024);
         // byte-gleich: dieselben Daten, die geschrieben wurden
         expect(JSON.parse(geschrieben).characters[3].name).toBe(frischesD.characters[3].name);
+    });
+});
+
+/*
+ * SENKEN R4 (Gutachten, Regression der Verdrahtung): tests/unit/datengrenze.test.js prueft im
+ * Aufrufgraph nur, DASS load() die Datengrenze erreicht. Gemessen im Gutachten: ohne den Aufruf
+ * in _parseStoredCampaign() fuer Daten mit aktueller `_version` (Start, Kampagnenwechsel,
+ * Konflikt-Neuladen — der Hauptpfad) blieb die ganze Jest-Suite gruen, weil der
+ * Migrationszweig die Erreichbarkeit weiter erfuellte; rot wurde erst der E2E-Gegenfall. Hier
+ * das Verhalten am ECHTEN load() derselben Werkbank: aktueller Stempel, keine Migration.
+ */
+describe('SENKEN R4 — load() bereinigt den gespeicherten Stand auch ohne Migration', () => {
+    test('aktuelle _version: "40" wird 40, ein eigener __proto__ faellt weg, Text bleibt', async () => {
+        const gespeichert =
+            '{"_version":"9.9.9","__proto__":{"vergiftet":true},' +
+            '"characters":[{"id":"1","name":"Thorin & <Söhne> \\"Zwerg\\"","hpCurrent":"40"}]}';
+        const D = {};
+        const werkbank = _erzeugePersistenzKontext({
+            D,
+            mitLoad: true,
+            lsStart: { 'nachzug-key': gespeichert, 'nachzug-key_ts': '1700000000000' }
+        });
+        // Vorbedingung: der Stand ist aktuell — der Migrationszweig (mit seinem eigenen
+        // Aufruf der Grenze) laeuft NICHT, geprueft wird der Hauptpfad
+        werkbank.context.migrateData = jest.fn(daten => daten);
+
+        const erg = await werkbank.context.load();
+
+        expect(erg.ok).toBe(true);
+        expect(werkbank.context.migrateData).not.toHaveBeenCalled();
+        expect(D.characters[0].hpCurrent).toBe(40);
+        expect(D.characters[0].id).toBe(1);
+        expect(D.characters[0].name).toBe('Thorin & <Söhne> "Zwerg"');
+        expect(Object.prototype.hasOwnProperty.call(D, '__proto__')).toBe(false);
+        expect(Object.getPrototypeOf(D)).toBe(Object.prototype);
+        expect(D.vergiftet).toBeUndefined();
     });
 });
 

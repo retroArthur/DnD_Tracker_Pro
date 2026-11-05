@@ -130,8 +130,9 @@ function saveBestiary() {
         window.hideModal('bestiary-editor-modal');
     }
 
-    // ---- Refresh list + persist ----
-    afterCrudOperation(renderBestiaryList, 'Kreatur gespeichert');
+    // ---- Refresh list AND detail + persist ----
+    // Das Detail folgt D: nach "Bearbeiten -> Speichern" stand dort der alte Name (BESTIAR-UNDO R3)
+    afterCrudOperation(renderBestiaryAnsicht, 'Kreatur gespeichert');
 }
 
 // ============================================================
@@ -144,7 +145,9 @@ function deleteBestiaryEntry(id) {
         entityType: 'bestiary',
         id: id,
         onSuccess: function() {
-            afterCrudOperation(renderBestiaryList, 'Kreatur gelöscht');
+            // Liste UND Detail: die geloeschte Kreatur blieb samt Loeschen-Knopf im Detail
+            // stehen; jetzt leerer Zustand, Auswahl null, Fokus ins Suchfeld (BESTIAR-UNDO R3/R4)
+            afterCrudOperation(renderBestiaryAnsicht, 'Kreatur gelöscht');
         }
     });
 }

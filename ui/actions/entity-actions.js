@@ -92,7 +92,7 @@ const EntityActions = {
         if (typeof window.renderParty === 'function') window.renderParty();
         // Detail-Modal neu öffnen damit Änderungen sofort sichtbar sind
         if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
-        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '!', 'success');
+        showToast('⬆️ ' + ch.name + ' ist jetzt Level ' + ch.level + '!', 'success');
     },
     'milestone-level-up': ctx => {
         // Identische Logik wie confirm-level-up — Milestone-Modus-Alias
@@ -108,7 +108,7 @@ const EntityActions = {
         window.save();
         if (typeof window.renderParty === 'function') window.renderParty();
         if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
-        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '! (Meilenstein)', 'success');
+        showToast('⬆️ ' + ch.name + ' ist jetzt Level ' + ch.level + '! (Meilenstein)', 'success');
     },
 
     // Charakter-Angriffs-Editor: add-attack / delete-attack (D-05, CHAR-03)
@@ -226,6 +226,7 @@ const EntityActions = {
     },
 
     // NPC actions
+    'show-new-npc-modal': () => showNewNPCModal(),
     'edit-npc': ctx => editNPC(ctx.id),
     'delete-npc': ctx => deleteNPC(ctx.id),
     'toggle-npc-card': ctx => toggleNPCCard(ctx.id),
@@ -332,6 +333,7 @@ const EntityActions = {
     'remove-relation-modal': ctx => removeRelation(ctx.id, parseInt(ctx.value)),
 
     // Location actions
+    'show-new-location-modal': () => showNewLocationModal(),
     'edit-location': ctx => editLocation(ctx.id),
     'delete-location': ctx => deleteLocation(ctx.id),
     'toggle-location': ctx => toggleLocation(ctx.id),
@@ -341,6 +343,7 @@ const EntityActions = {
     'delete-filter': ctx => deleteFilter(ctx.id),
 
     // Quest actions
+    'show-new-quest-modal': () => showNewQuestModal(),
     'edit-quest': ctx => editQuest(ctx.id),
     'delete-quest': ctx => deleteQuest(ctx.id),
     'toggle-quest-status': ctx => toggleQuestStatus(ctx.id),
@@ -394,8 +397,14 @@ const EntityActions = {
         addEncToInit(ctx.id);
     },
     'load-monster-template': ctx => loadMonsterTemplate(ctx.value),
+    // Der Tap des Nutzers — bis 900px oeffnet er das Detail im Vollbild.
+    // Automatische Auswahlen rufen selectEncounter direkt und kommen hier
+    // nicht vorbei.
     'select-encounter': ctx => {
-        if (typeof selectEncounter === 'function') selectEncounter(ctx.id);
+        if (typeof openEncounterDetail === 'function') openEncounterDetail(ctx.id);
+    },
+    'close-encounter-detail': () => {
+        if (typeof closeEncounterDetail === 'function') closeEncounterDetail(true);
     },
     'set-enc-filter': ctx => {
         if (typeof setEncFilter === 'function') setEncFilter(ctx.value || 'all');
@@ -433,6 +442,7 @@ const EntityActions = {
     },
 
     // Spell actions
+    'show-new-spell-modal': () => showNewSpellModal(),
     'edit-spell': ctx => editSpell(ctx.id),
     'delete-spell': ctx => deleteSpell(ctx.id),
     'show-spell-tooltip': ctx => showSpellTooltip(ctx.id, ctx.event),
@@ -464,6 +474,10 @@ const EntityActions = {
     // Encounter form actions
     'update-enc-languages': () => updateEncLanguages(),
     'update-enc-attr-mod': ctx => updateEncAttrMod(ctx.target.dataset.value),
+    // KREATUR-ATTRIBUTE: die sechs Attributfelder des Kreaturen-Editors. Der Schlüssel kommt
+    // aus data-value, NIE aus ctx.value — bei input ist das der getippte Wert, bei leerem
+    // Feld der data-value-Rückfall. Idempotent für input, change und click.
+    'update-bst-attr-mod': ctx => updateBstAttrMod(ctx.target.dataset.value),
     'toggle-enc-save-box': ctx => toggleEncSaveBox(ctx.target.dataset.value),
 
     // Spell form actions
@@ -549,7 +563,7 @@ const EntityActions = {
             '<div class="wp-faden-item">',
             '  <input type="hidden" class="wp-faden-quelle-id" value="">',
             '  <input type="hidden" class="wp-faden-quelle-typ" value="manual">',
-            '  <input type="text" class="wp-faden-text form-control" value="' + (typeof esc === 'function' ? esc(text) : text) + '">',
+            '  <input type="text" class="wp-faden-text form-control" value="' + esc(text) + '">',
             '  <button type="button" class="btn btn-sm wp-faden-remove-btn" data-action="remove-faden" title="Entfernen">×</button>',
             '</div>'
         ].join('');

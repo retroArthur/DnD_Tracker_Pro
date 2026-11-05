@@ -28,7 +28,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('MinQuest');
 
             // Modal öffnen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
 
             // Titel ausfüllen
@@ -45,7 +45,7 @@ test.describe('Quests - CRUD Operationen', () => {
         test('Quest mit vollständigen Daten erstellen', async ({ page }) => {
             const questTitle = generateTestName('FullQuest');
 
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
 
             await fillField(page, 'quest-title', questTitle);
@@ -87,7 +87,7 @@ test.describe('Quests - CRUD Operationen', () => {
         });
 
         test('Quest ohne Titel zeigt Fehlermeldung', async ({ page }) => {
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
 
             // Nur Belohnung, kein Titel
@@ -110,7 +110,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('ListQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await page.click('[data-action="call"][data-value="saveQuest"]');
@@ -125,13 +125,13 @@ test.describe('Quests - CRUD Operationen', () => {
             const quest2 = generateTestName('SearchQuest_Goblin');
 
             // Zwei Quests erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', quest1);
             await page.click('[data-action="call"][data-value="saveQuest"]');
             await page.waitForTimeout(500);
 
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', quest2);
             await page.click('[data-action="call"][data-value="saveQuest"]');
@@ -150,7 +150,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const activeQuest = generateTestName('ActiveQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', activeQuest);
             await page.click('[data-action="call"][data-value="saveQuest"]');
@@ -175,7 +175,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('CompleteQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await page.click('[data-action="call"][data-value="saveQuest"]');
@@ -215,7 +215,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('RewardQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await fillField(page, 'quest-reward-gold', '100');
@@ -252,7 +252,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('DeleteQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await page.click('[data-action="call"][data-value="saveQuest"]');
@@ -280,7 +280,7 @@ test.describe('Quests - CRUD Operationen', () => {
             const questTitle = generateTestName('UndoQuest');
 
             // Quest erstellen
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await page.click('[data-action="call"][data-value="saveQuest"]');

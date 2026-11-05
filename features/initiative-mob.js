@@ -130,7 +130,7 @@ function createMobCombatant(monster, count, source) {
 
 // ============================================================
 // RENDERMOBROW — Mob-Zeile als HTML-String (INIT-03, D-12)
-// Analog: lair-type Zweig in renderInit() (features/initiative.js Zeilen 148-161)
+// Analog: lair-type Zweig in renderInit() (features/initiative.js Zeilen 146-159)
 // UI-SPEC HTML-Struktur: 04-UI-SPEC.md Component Visual Contracts INIT-03
 // ============================================================
 
@@ -164,9 +164,9 @@ function renderMobRow(cb, i, init) {
     // DMG-Regel-Eingaben (nur sichtbar wenn Modus = dmg-regel)
     var dmgInputsClass = isDmgRegel ? 'init-mob-dmg-inputs' : 'init-mob-dmg-inputs hidden';
 
-    return '<div class="init-entry init-row monster' + (active ? ' active' : '') + '" draggable="true" data-id="' + cb.id + '">' +
+    return '<div class="init-entry init-row monster' + (active ? ' active' : '') + '" draggable="true" data-id="' + esc(cb.id) + '">' +
         '<span class="drag-handle" title="Ziehen zum Umsortieren">⠇</span>' +
-        '<div class="init-value" data-action="edit-init-value" data-id="' + cb.id + '" title="Klicken zum Bearbeiten">' + esc(String(cb.initiative)) + '</div>' +
+        '<div class="init-value" data-action="edit-init-value" data-id="' + esc(cb.id) + '" title="Klicken zum Bearbeiten">' + esc(String(cb.initiative)) + '</div>' +
         '<div class="init-ac" title="R\xfcstungsklasse"><span class="init-ac-icon">🛡️</span>' + esc(String(cb.ac)) + '</div>' +
         '<div class="init-info init-info--mob">' +
             '<div class="init-name">' + esc(cb.name) + '</div>' +
@@ -177,12 +177,12 @@ function renderMobRow(cb, i, init) {
                 '<div class="init-mob-mode-toggle">' +
                     '<button class="init-mob-mode-btn' + (!isDmgRegel ? ' active' : '') + '"' +
                         ' data-action="init-mob-set-mode-stop"' +
-                        ' data-id="' + cb.id + '"' +
+                        ' data-id="' + esc(cb.id) + '"' +
                         ' data-mode="nfach"' +
                         ' title="N-facher Einzel-Wurf">N\xd7-Wurf</button>' +
                     '<button class="init-mob-mode-btn' + (isDmgRegel ? ' active' : '') + '"' +
                         ' data-action="init-mob-set-mode-stop"' +
-                        ' data-id="' + cb.id + '"' +
+                        ' data-id="' + esc(cb.id) + '"' +
                         ' data-mode="dmg-regel"' +
                         ' title="DMG-Mob-Regel (Seite 250)">Mob-Regel</button>' +
                 '</div>' +
@@ -192,7 +192,7 @@ function renderMobRow(cb, i, init) {
                 '</div>' +
                 '<button class="btn-sm init-mob-attack-btn"' +
                     ' data-action="init-mob-attack-stop"' +
-                    ' data-id="' + cb.id + '"' +
+                    ' data-id="' + esc(cb.id) + '"' +
                     ' title="Sammel-Angriff wuerfeln">🎲 Angriff w\xfcrf​eln</button>' +
             '</div>' +
         '</div>' +
@@ -200,16 +200,16 @@ function renderMobRow(cb, i, init) {
             '<div class="init-hp">' +
                 '<span class="init-hp-value ' + hpClass + '">' + esc(String(cb.currentHp)) + '/' + esc(String(cb.maxHp)) + (cb.tempHp ? ' <span style="color:var(--cyan);">(+' + esc(String(cb.tempHp)) + ')</span>' : '') + '</span>' +
                 '<div class="init-hp-btns">' +
-                    '<button class="btn btn-sm btn-success" data-action="mod-hp" data-id="' + cb.id + '" data-value="1">➕</button>' +
-                    '<button class="btn btn-sm btn-danger" data-action="mod-hp" data-id="' + cb.id + '" data-value="-1">➖</button>' +
-                    '<button class="btn btn-sm" data-action="show-hp-calculator" data-type="combatant" data-id="' + cb.id + '" title="HP \xe4ndern">\xf7</button>' +
+                    '<button class="btn btn-sm btn-success" data-action="mod-hp" data-id="' + esc(cb.id) + '" data-value="1">➕</button>' +
+                    '<button class="btn btn-sm btn-danger" data-action="mod-hp" data-id="' + esc(cb.id) + '" data-value="-1">➖</button>' +
+                    '<button class="btn btn-sm" data-action="show-hp-calculator" data-type="combatant" data-id="' + esc(cb.id) + '" title="HP \xe4ndern">\xf7</button>' +
                 '</div>' +
             '</div>' +
-            '<button class="btn btn-sm" data-action="show-add-effect" data-id="' + cb.id + '">🔮</button>' +
-            '<button class="btn-icon init-statblock-btn" data-action="show-init-statblock" data-id="' + cb.id + '" title="Basisinfos anzeigen">📖</button>' +
+            '<button class="btn btn-sm" data-action="show-add-effect" data-id="' + esc(cb.id) + '">🔮</button>' +
+            '<button class="btn-icon init-statblock-btn" data-action="show-init-statblock" data-id="' + esc(cb.id) + '" title="Basisinfos anzeigen">📖</button>' +
             '<button class="btn-icon init-mob-dissolve-btn"' +
                 ' data-action="init-mob-dissolve-stop"' +
-                ' data-id="' + cb.id + '"' +
+                ' data-id="' + esc(cb.id) + '"' +
                 ' title="Mob aufheben">⊞</button>' +
         '</div>' +
     '</div>';

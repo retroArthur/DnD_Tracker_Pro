@@ -6,8 +6,10 @@
 function validateAvatarURL(url) {
     if (!url || url.trim() === '') return true; // Empty is valid (will be removed)
     const trimmed = url.trim();
-    // Block dangerous protocols
-    const dangerousProtocols = ['javascript:', 'file:', 'vbscript:', 'data:text/html'];
+    // Block dangerous protocols. `file:` steht seit AVATAR-DATEI nicht mehr hier (s. unten). Die
+    // Liste bleibt neben sichereBildquelle(), weil sie strenger liest als der Browser: fuer
+    // sichereBildquelle() sind `java script:` und `jav\vascript:` relative Pfade.
+    const dangerousProtocols = ['javascript:', 'vbscript:', 'data:text/html'];
     // WR-01 (Phase 12, Review-Fix): Browser entfernen Steuerzeichen (ASCII C0
     // U+0000-U+001F, DEL U+007F) und Leerzeichen aus der GESAMTEN URL — nicht
     // nur am Rand — bevor sie das Schema bestimmen (WHATWG-URL-Spezifikation).
@@ -20,23 +22,24 @@ function validateAvatarURL(url) {
     if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
         return false;
     }
-    const lowerUrl = trimmed.toLowerCase();
-    // Allow relative paths
-    if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
-        return true;
-    }
-    // Allow data: URLs for images only (base64 encoded images)
-    if (lowerUrl.startsWith('data:image/')) {
-        return true;
-    }
-    // Validate absolute URLs
-    try {
-        const parsed = new URL(trimmed);
-        return ['http:', 'https:'].includes(parsed.protocol);
-    } catch {
-        // If it's not a valid URL and doesn't start with /, assume it's relative
-        return !trimmed.includes(':'); // No protocol = relative path
-    }
+    // SENKEN Nachbesserung (16) und AVATAR-DATEI: gespeichert wird genau, was die Anzeige zeigt —
+    // dieselbe Pruefung sichereBildquelle() wie Karte, Detail und Vorschau. Erlaubt sind http(s),
+    // data:image/, relative Pfade und lokale Dateien (`file:///C:/Bilder/held.png`, nach
+    // istLokalerDateipfad()). Gesperrt jeder Netzwerkpfad (`file://host/…`, `file://localhost/…`,
+    // `file:////host`, `//host/share`, `/%5C%5Chost/x.png` — unter Windows UNC), jedes andere
+    // Schema und relative Werte, die mit `?`/`#` beginnen. Bis AVATAR-DATEI stand `file:` oben in
+    // der Sperrliste: das Bild-Modal zeigte ein lokales Portrait in der Vorschau und verweigerte
+    // das Speichern. Nutzerentscheidung 03.11. zu SENKEN Offen (15): "Erlauben"
+    // (docs/bugfixes.md, AVATAR-DATEI). Die frueheren Zweige danach (relativ, data:image/,
+    // `new URL()` mit http(s)) waren nur noch enger als sichereBildquelle(): einen relativen Pfad
+    // mit `:` hinter dem Trenner (`bilder/a:b.png`) zeigte die Karte, die Eingabe lehnte ihn ab.
+    // Geprueft wird der GETRIMMTE Wert, denn den speichern beide Aufrufer (saveAvatar() unten und
+    // openBstAvatarModal() trimmen vor dem Aufruf). JS-trim() streicht am Anfang mehr als der
+    // Browser (U+00A0, U+FEFF, U+3000 …): am Rohwert gelesen lehnte der Dialog `\u00a0https://…`
+    // ab, obwohl `https://…` gespeichert wird, und naehme `\u00a0file:host/x.png` an, dessen
+    // gespeicherte Form die Anzeige sperrt (Faelle: tests/unit/avatars.test.js, "A1 am
+    // gespeicherten Wert").
+    return sichereBildquelle(trimmed) !== '';
 }
 // ============================================================
 // AVATAR MODAL
@@ -59,7 +62,12 @@ function previewAvatar() {
     const preview = $('avatar-preview');
     if (!preview) return;
     const url = urlEl?.value.trim();
-    if (url) {
+    // Die Vorschau laedt sofort, auch einen Wert aus Daten (showAvatarModal fuellt das Feld
+    // vor): nur eine sichere Bildquelle (SENKEN R3), sonst das Fehlerzeichen
+    if (url && !sichereBildquelle(url)) {
+        preview.innerHTML = '';
+        preview.textContent = '❌';
+    } else if (url) {
         const img = document.createElement('img');
         img.src = url;
         img.className = 'avatar avatar-xl';
@@ -84,7 +92,7 @@ function saveAvatar() {
     // Validate URL for security
     if (!validateAvatarURL(url)) {
         showToast(
-            '❌ Ungültige URL: Nur http(s), data:image/ oder relative Pfade erlaubt',
+            '❌ Ungültige URL: Nur http(s), data:image/, lokale Dateien (file:///) oder relative Pfade erlaubt, keine Netzwerkpfade',
             'error'
         );
         return;

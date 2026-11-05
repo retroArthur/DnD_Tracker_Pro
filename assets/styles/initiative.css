@@ -211,7 +211,7 @@
            Kampfzustaenden ueberhaupt im Markup stehen und deshalb von einer
            Saat aus gleich gesunden Kaempfern nie erzeugt wurden:
 
-             `.death-saves`                  braucht 277px (features/initiative.js:183,
+             `.death-saves`                  braucht 277px (features/initiative.js:193,
                                              nur SPIELER bei 0 Trefferpunkten)
              `.concentration-check-banner`   braucht 221px (nur bei
                                              `concentration.pendingCheck`)
@@ -499,7 +499,7 @@
                mitbringt: der Name kuerzt sich ab, statt die Marke
                hinauszuschieben. ABKUERZEN IST HIER ZULAESSIG, weil der volle
                Name im `title` der Marke steht
-               (features/initiative-combat-widgets.js:294) — anders als bei den
+               (features/initiative-combat-widgets.js:295) — anders als bei den
                Tippzielen der Todesrettung, wo nur Umbrechen bleibt.
 
                KEIN `min-width: 0` an `.conc-spell` noetig: das automatische

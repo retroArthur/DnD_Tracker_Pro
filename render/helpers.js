@@ -423,18 +423,18 @@ function renderEmptyState(config) {
     const desc = isFiltered ? descFiltered : descEmpty;
     const showButton = !isFiltered && buttonText && buttonAction;
     return `
-        <div class="empty-state" style="grid-column: ${gridSpan};">
-            <div class="empty-state-icon">${icon}</div>
-            <div class="empty-state-title">${title}</div>
-            <div class="empty-state-desc">${desc}</div>
+        <div class="empty-state" style="grid-column: ${esc(gridSpan)};">
+            <div class="empty-state-icon">${esc(icon)}</div>
+            <div class="empty-state-title">${esc(title)}</div>
+            <div class="empty-state-desc">${esc(desc)}</div>
             ${
                 showButton
                     ? `
                 <button class="btn btn-success"
-                    data-action="${buttonAction}"
-                    ${buttonValue ? `data-value="${buttonValue}"` : ''}
+                    data-action="${esc(buttonAction)}"
+                    ${buttonValue ? `data-value="${esc(buttonValue)}"` : ''}
                     style="font-size: var(--text-lg); padding: 12px 24px;">
-                    ${buttonText}
+                    ${esc(buttonText)}
                 </button>
             `
                     : ''
@@ -465,7 +465,9 @@ function filterBySearch(items, inputId, fields) {
     // und ein durch <b> geteiltes Wort wird nicht gefunden. Ersetzt wird durch
     // die LEERE Zeichenkette, nicht durch ein Leerzeichen — so bleibt ein an
     // einer Formatierungsgrenze geteiltes Wort zusammenhaengend suchbar.
-    // Gleiches Muster wie sessions.js:191.
+    // Gleiches Muster wie die Suche in renderSessions()
+    // (features/sessions/sessions.js) — ueber den Funktionsnamen benannt: die
+    // Zeilennummer, die hier stand, ist schon einmal gewandert.
     return items.filter(item =>
         fields(item).some(
             v =>
@@ -515,12 +517,13 @@ function populateFilterDropdown(selectId, items, config = {}) {
     } = config;
     const currentValue = preserveValue ? select.value : '';
     select.innerHTML =
-        `<option value="">${allLabel}</option>` +
+        `<option value="">${esc(allLabel)}</option>` +
         (items || [])
             .map(item => {
                 const value = item[valueField];
-                const label = labelFn ? labelFn(item) : esc(item[labelField] || '');
-                return `<option value="${value}">${label}</option>`;
+                // labelFn liefert Klartext wie labelField — kodiert wird hier (Vertrag SENKEN).
+                const label = labelFn ? labelFn(item) : item[labelField] || '';
+                return `<option value="${esc(value)}">${esc(label)}</option>`;
             })
             .join('');
     if (preserveValue && currentValue) {
@@ -529,47 +532,46 @@ function populateFilterDropdown(selectId, items, config = {}) {
     return true;
 }
 /**
- * Zentrales Entity-Lookup-System mit optionalem Caching
- * Vermeidet redundante Array.find()-Aufrufe
+ * Zentrales Entity-Lookup-System: ein Ort fuer "Eintrag zu Sammlung und ID",
+ * statt ueberall eigener Array.find()-Aufrufe. Ohne Zwischenspeicher — jeder
+ * Leser sieht, was im Moment des Aufrufs in D steht (siehe get()). Den
+ * Schalter enableCache()/clearCache() samt seinen 23 Aufrufzeilen in acht
+ * Darstellungsfunktionen gibt es seit RUECKSPRUNG nicht mehr.
  */
 const EntityLookup = {
-    /** Cache für Entity-Lookups */
-    _cache: new Map(),
-    /** Ob Caching aktiviert ist */
-    _cacheEnabled: false,
     /**
-     * Aktiviert Caching für Performance bei vielen Lookups
-     * Sollte vor Batch-Operationen aktiviert und danach deaktiviert werden
-     */
-    enableCache() {
-        this._cacheEnabled = true;
-    },
-    /**
-     * Deaktiviert und leert den Cache
-     * Sollte nach Datenänderungen aufgerufen werden
-     */
-    clearCache() {
-        this._cache.clear();
-        this._cacheEnabled = false;
-    },
-    /**
-     * Holt eine Entity aus der entsprechenden Collection
+     * Holt eine Entity aus der entsprechenden Collection — immer das Objekt,
+     * das im Moment des Aufrufs in D steht (Vertrag RUECKSPRUNG, R1,
+     * docs/bugfixes.md). Nichts wird gemerkt, weder ein Treffer noch null.
+     *
+     * Bis RUECKSPRUNG legte get() bei eingeschaltetem Zwischenspeicher
+     * (enableCache(), inzwischen entfernt) jeden Treffer als Objektreferenz
+     * ab, und kein Schreiben machte das ungueltig.
+     * Die Speicherpfade von Wiki, Links, Zaubern, Sitzungsnotizen und Truhe
+     * ERSETZEN den Eintrag in D (`{ ...alt, ...neu }`), und eingeschaltet
+     * blieb die Ablage nach jedem Laden ohne Kampf (renderInit() kehrt bei 0
+     * Kaempfern frueh zurueck), nach dem DM-Screen ohne Grid-Widget, nach
+     * Langer Rast, HP-Rechner, Zustand und nach jedem Wurf in einer der acht
+     * Darstellungsfunktionen. Gemessen: das zweite ✏️ nach einem 💾 lud den
+     * alten Stand, das naechste 💾 schrieb ihn zurueck — in D, im Speicher
+     * und nach dem Neuladen. Eine Ablage, die an der Disziplin ihrer Aufrufer
+     * haengt, ist hier die falsche Abwaegung. Der Preis ist gemessen: am
+     * meisten zahlt renderParty(), das je Held jeden Zauber und jeden
+     * Gegenstand sucht (20 Helden mit je 30 Zaubern und 20 Gegenstaenden aus
+     * 500 bzw. 400: 1000 Aufrufe). Bei realistischer Verteilung kein
+     * messbarer Unterschied, auch bei 4-fach gedrosselter CPU. Im kuenstlich
+     * schlechtesten Fall — alle Helden tragen die 30 letzten Zauber und die
+     * 20 letzten Gegenstaende — Median 1,2 → 3,4 ms, bei 4-fach gedrosselter
+     * CPU 6,9 → 15,8 ms. Wird das je eng: einen Index, der je Aufruf frisch
+     * aus D entsteht, keine Ablage ueber Aufrufe hinweg (R1).
      */
     get(type, id) {
         const D = window.D;
         const numId = parseEntityId(id);
         if (numId === null) return null;
-        const key = `${type}-${numId}`;
-        if (this._cacheEnabled && this._cache.has(key)) {
-            return this._cache.get(key);
-        }
         const collection = D[type];
         if (!Array.isArray(collection)) return null;
-        const entity = collection.find(item => item.id === numId) || null;
-        if (this._cacheEnabled) {
-            this._cache.set(key, entity);
-        }
-        return entity;
+        return collection.find(item => item.id === numId) || null;
     },
     /**
      * Holt den Namen einer Entity
@@ -641,8 +643,10 @@ const EntityLookup = {
 /**
  * Get comprehensive entity details for combat/display
  * Centralizes entity lookup pattern used across combat and rendering
+ * encounterId (optional): Kaempfer aus dem Encounter-Rechner tragen die ID ihres
+ * Encounters (RECHNER) — "Skelett #2" findet ueber den Namen nichts, die ID schon.
  */
-function getEntityForCombat(entityType, entityName) {
+function getEntityForCombat(entityType, entityName, encounterId) {
     let entity = null;
     let ac = '?';
     let type = null;
@@ -655,8 +659,14 @@ function getEntityForCombat(entityType, entityName) {
             id = entity.id;
         }
     } else if (entityType === 'enemy') {
-        // Check encounters first, then NPCs
-        entity = EntityLookup.findByName('encounters', entityName);
+        // Check encounters first, then NPCs. Die ID direkt in D.encounters — so
+        // geschrieben, als EntityLookup noch einen Zwischenspeicher hatte, der ein
+        // ersetztes Objekt festhielt; seit RUECKSPRUNG liest EntityLookup.encounter()
+        // ebenso frisch, beide Wege sind gleichwertig.
+        const encId = parseEntityId(encounterId);
+        entity =
+            (encId !== null && (window.D.encounters || []).find(e => e.id === encId)) ||
+            EntityLookup.findByName('encounters', entityName);
         if (entity) {
             ac = entity.ac || entity.armorClass || 10;
             type = 'encounters';
@@ -709,17 +719,17 @@ function renderEntityLink(type, id, label, options = {}) {
         fallbackColor = 'var(--gold)',
         className = ''
     } = options;
-    const iconHtml = showIcon && icon ? `${icon} ` : '';
+    const iconHtml = showIcon && icon ? `${esc(icon)} ` : '';
     const escapedLabel = esc(label || '—');
     // Kein Link wenn keine ID
     if (!id) {
-        return `<span style="color: ${fallbackColor};">${iconHtml}${escapedLabel}</span>`;
+        return `<span style="color: ${esc(fallbackColor)};">${iconHtml}${escapedLabel}</span>`;
     }
     // Verwende data-action System für korrekte Event-Propagation
-    return `<span class="entity-link clickable ${className}"
+    return `<span class="entity-link clickable ${esc(className)}"
         data-action="navigate-entity"
-        data-type="${type}"
-        data-id="${id}"
+        data-type="${esc(type)}"
+        data-id="${esc(id)}"
         title="Klicken für Details"
         style="cursor: pointer;">
         ${iconHtml}${escapedLabel}

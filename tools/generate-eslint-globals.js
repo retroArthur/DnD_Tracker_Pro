@@ -59,9 +59,11 @@ function extractModulesFromLoader(source) {
 // unten) — nicht Teil der urspruenglichen Task-Beschreibung, aber notwendig:
 // ein pauschales 'readonly' erzeugt echte no-global-assign-Fehler fuer
 // `let`/`var`-deklarierte Cross-Modul-Globals, die andere Module neu zuweisen
-// (z. B. `encounterRound` in systems/undo.js, neu zugewiesen in
-// core/init.js) — dasselbe Muster, das den bestehenden Handeintrag
-// `D: 'writable'` begruendet.
+// — dasselbe Muster, das den bestehenden Handeintrag `D: 'writable'`
+// begruendet. (Das frueher hier genannte Beispiel `encounterRound` in
+// systems/undo.js, neu zugewiesen in core/init.js, gibt es seit RUNDE nicht
+// mehr: die Modulkopie des Rundenzaehlers ist entfallen. Die Begruendung des
+// Unterschieds bleibt, das Beispiel waere eine tote Fundstelle.)
 const DECLARATION_PATTERN = /^\s*(?:async\s+)?(function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/;
 
 // WR-01-Guard (14-REVIEW.md, Plan 14-09-Nachtrag): DECLARATION_PATTERN fasst
@@ -135,8 +137,8 @@ function hasUncapturedTopLevelBinding(line) {
 }
 
 // Deklarationsarten, deren Bindung von anderen Modulen neu zugewiesen wird
-// (kein re-`let`/`var`, sondern direkte Zuweisung wie `encounterRound = 1`
-// oder `encounterRound++`). `const`, `function` und `class` bleiben
+// (kein re-`let`/`var`, sondern eine direkte Zuweisung wie `X = 1` oder
+// `X++` aus einem anderen Modul). `const`, `function` und `class` bleiben
 // 'readonly' — eine Neuzuweisung dieser Bindungen waere ein echter Fehler,
 // den `no-global-assign` zu Recht faengt.
 const MUTABLE_DECLARATION_KEYWORDS = new Set(['let', 'var']);

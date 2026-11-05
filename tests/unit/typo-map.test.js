@@ -683,14 +683,32 @@ describe('W5-W7 — die Kandidatenmengen sind benannt und gezaehlt, aber nicht g
         // Zeichen, ein Aufklapp-Pfeil). Dass die Muster sie nicht fangen, war
         // der Grund, sie VON HAND zu beurteilen; die geschlossene Aufzaehlung
         // steht in W5-R-07 in tests/unit/design-consistency.test.js.
+        //
+        // 73 -> 74 UND 54 -> 55 DURCH MKOPF. "Geduldet" heisst hier: in
+        // `M.AUSNAHMEN` gefuehrt. "Unbeurteilt" heisst nur, dass die Stelle in
+        // der geschlossenen Aufzaehlung von W5-R-07 nicht VON HAND beurteilt
+        // ist — es heisst NICHT, dass sie noch eine em-Zahl traegt; der
+        // groessere Teil der 54 steht laengst auf einer Sprosse. Dazugekommen
+        // ist `core.css [data-layout="mobile"] .mobile-header-menu-icon`, das
+        // Symbol eines Eintrags im Punkte-Menue des Mobil-Kopfs. Es traegt von
+        // Anfang an `var(--text-lg)`: es gibt keinen Sprung zu rechnen, also
+        // auch nichts von Hand zu beurteilen. Geduldet ist es nicht und soll
+        // es nicht sein — genau das prueft der Fall oben (`stillGeduldet`).
         const { alle } = W.erheben();
         const ikon = alle.filter(d => M.istIkon(d.selektoren));
-        expect(ikon.length).toBe(73);
+        expect(ikon.length).toBe(74);
         const geduldeteIkonen = ikon.filter(
             d => M.AUSNAHMEN[M.anker(d.datei, d.selektoren, 'font-size')]
         );
         expect(geduldeteIkonen.length).toBe(19);
-        expect(ikon.length - geduldeteIkonen.length).toBe(54);
+        expect(ikon.length - geduldeteIkonen.length).toBe(55);
+        // DIE GEGENPROBE ZUR ZAHL: der Zugang ist benannt und traegt eine
+        // Sprosse. Ohne diese Zeile waere "73 -> 74" eine Zahl ohne Gegenstand,
+        // und die naechste Runde koennte sie mit einer em-Stelle bezahlen.
+        const neuMkopf = ikon.filter(d => /mobile-header-menu-icon/.test(d.selektoren));
+        expect(neuMkopf.map(d => `${d.datei}: ${String(d.wert).trim()}`)).toEqual([
+            'core.css: var(--text-lg)'
+        ]);
         // Jede geduldete nennt ihren gemessenen Wert — sonst waere die
         // Umdrehung dieses Falles ein Freibrief geworden.
         const ohneZahl = geduldeteIkonen

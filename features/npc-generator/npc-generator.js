@@ -27,8 +27,34 @@ function _npcgZufallsElement(arr) {
 }
 
 /**
+ * Name aus einem Eintrag einer Namenstabelle (Vertrag NPC-NAME, N3) oder ''.
+ * Uebernommen wird nur Text: der `text` eines Eintrags `{weight, text}` oder
+ * ein Eintrag, der selbst Text ist; eine Zahl wird verlustfrei Text
+ * (7 -> '7'). Alles andere ergibt '' und faellt aus dem Pool: ein Eintrag
+ * ohne `text`, ein leerer oder nur aus Leerzeichen bestehender Text, `null`,
+ * ein Objekt oder ein Wahrheitswert als `text` — ein Tabelleneintrag ist ein
+ * Namensvorschlag, und ihn zu ueberspringen verliert nichts (anders als an
+ * der Datengrenze, die einen GESPEICHERTEN Namen `true` als 'true' erhaelt).
+ * Vorher (`e.text || e`) wurde eine Zahl unveraendert Name und ein Eintrag
+ * ohne Text (auch `{text: 0}`) das ganze Objekt — `name: 7` bzw.
+ * `name: {weight: 1}` in D, und die NPC-Liste brach (herkunft B5/B6). Ein
+ * `null`-Eintrag warf, und der catch in generiereNPCName() verwarf die ganze
+ * Tabelle samt ihren gueltigen Namen.
+ * Interne Hilfsfunktion — kein window-Export nötig.
+ * @param {*} eintrag
+ * @returns {string}
+ */
+function _npcgTabellenName(eintrag) {
+    var wert = (eintrag !== null && typeof eintrag === 'object') ? eintrag.text : eintrag;
+    if (typeof wert === 'number') wert = String(wert);
+    if (typeof wert !== 'string' || wert.trim() === '') return '';
+    return wert;
+}
+
+/**
  * Generiert einen zufälligen NPC-Namen basierend auf Volk und Geschlecht.
- * Nutzt NPC_DEFAULT_TABLES.namen[volk][geschlecht].
+ * Nutzt NPC_DEFAULT_TABLES.namen[volk][geschlecht], dazu die Texte einer
+ * Nutzertabelle 'npc-namen-<volk>-<geschlecht>' (_npcgTabellenName).
  * Falls kein Pool vorhanden: Fallback 'Unbekannt'.
  * @param {string} volk - z.B. 'mensch', 'elf', 'zwerg'
  * @param {string} geschlecht - 'maennlich' | 'weiblich' | 'neutral'
@@ -48,7 +74,7 @@ function generiereNPCName(volk, geschlecht) {
             var userKey = 'npc-namen-' + volk + '-' + geschlecht;
             var userTable = userD.randomTables.find(function(t) { return t.name === userKey; });
             if (userTable && Array.isArray(userTable.entries) && userTable.entries.length > 0) {
-                pool = pool.concat(userTable.entries.map(function(e) { return e.text || e; }).filter(Boolean));
+                pool = pool.concat(userTable.entries.map(_npcgTabellenName).filter(Boolean));
             }
         }
     } catch (_e) {
@@ -99,6 +125,34 @@ function generiereNPC(volk, geschlecht) {
 // ============================================================
 var _npcgAktuell = null; // Vorschau-State (KEIN Eintrag in D.npcs)
 
+// Die Voelker des Generators: Schluessel seiner Namenstabellen -> Anzeigename.
+// Der Anzeigename ist zugleich der Wert der festen Option im NPC-Formular
+// (#npc-race); gespeichert wird DER (saveGeneratedNPC). Vorher stand der
+// Schluessel ('zwerg') im NPC, fuer den das Formular keine Option hat — ✏️ → 💾
+// loeschte danach das Volk.
+var NPCG_VOELKER = [
+    ['mensch', 'Mensch'],
+    ['elf', 'Elf'],
+    ['zwerg', 'Zwerg'],
+    ['halbling', 'Halbling'],
+    ['halbork', 'Halbork'],
+    ['tiefling', 'Tiefling'],
+    ['gnom', 'Gnom']
+];
+
+/**
+ * Anzeigename eines Generator-Volks ('zwerg' -> 'Zwerg'). Ein unbekannter
+ * Schluessel bleibt, wie er ist.
+ * @param {string} volk
+ * @returns {string}
+ */
+function _npcgVolkName(volk) {
+    var paar = NPCG_VOELKER.find(function (p) {
+        return p[0] === volk;
+    });
+    return paar ? paar[1] : volk || '';
+}
+
 // ============================================================
 // MODAL: showNPCGeneratorModal
 // ============================================================
@@ -110,27 +164,27 @@ var _npcgAktuell = null; // Vorschau-State (KEIN Eintrag in D.npcs)
  */
 function _npcgRenderVorschau(npcData) {
     if (!npcData) return '<p class="npcg-empty">Noch kein NPC generiert.</p>';
-    var e = (typeof esc === 'function') ? esc : function(s) { return String(s || ''); };
+    // SENKEN R1: esc() direkt — der fruehere Rueckfall ohne esc kodierte nichts.
     return [
         '<div class="npcg-preview-card">',
-        '  <div class="npcg-preview-name">' + e(npcData.name) + '</div>',
+        '  <div class="npcg-preview-name">' + esc(npcData.name) + '</div>',
         '  <div class="npcg-preview-meta">',
-        '    <span class="npcg-meta-tag npcg-volk">' + e(npcData.volk) + '</span>',
-        '    <span class="npcg-meta-tag npcg-geschlecht">' + e(npcData.geschlecht) + '</span>',
-        npcData.beruf ? '    <span class="npcg-meta-tag npcg-beruf">' + e(npcData.beruf) + '</span>' : '',
+        '    <span class="npcg-meta-tag npcg-volk">' + esc(npcData.volk) + '</span>',
+        '    <span class="npcg-meta-tag npcg-geschlecht">' + esc(npcData.geschlecht) + '</span>',
+        npcData.beruf ? '    <span class="npcg-meta-tag npcg-beruf">' + esc(npcData.beruf) + '</span>' : '',
         '  </div>',
         '  <div class="npcg-preview-section">',
         '    <span class="npcg-label">Persönlichkeit:</span>',
-        '    <span class="npcg-zug">' + e(npcData.zug) + '</span>',
+        '    <span class="npcg-zug">' + esc(npcData.zug) + '</span>',
         '  </div>',
         '  <div class="npcg-preview-section">',
         '    <span class="npcg-label">Marotte:</span>',
-        '    <span class="npcg-marotte">' + e(npcData.marotte) + '</span>',
+        '    <span class="npcg-marotte">' + esc(npcData.marotte) + '</span>',
         '  </div>',
         npcData.aussehen ? [
             '  <div class="npcg-preview-section npcg-secondary">',
             '    <span class="npcg-label">Aussehen:</span>',
-            '    <span class="npcg-aussehen">' + e(npcData.aussehen) + '</span>',
+            '    <span class="npcg-aussehen">' + esc(npcData.aussehen) + '</span>',
             '  </div>'
         ].join('') : '',
         '</div>'
@@ -146,15 +200,7 @@ function showNPCGeneratorModal() {
     var geschlecht = 'maennlich';
     _npcgAktuell = generiereNPC(volk, geschlecht);
 
-    var volkOptionen = [
-        ['mensch', 'Mensch'],
-        ['elf', 'Elf'],
-        ['zwerg', 'Zwerg'],
-        ['halbling', 'Halbling'],
-        ['halbork', 'Halbork'],
-        ['tiefling', 'Tiefling'],
-        ['gnom', 'Gnom']
-    ].map(function(pair) {
+    var volkOptionen = NPCG_VOELKER.map(function(pair) {
         return '<option value="' + pair[0] + '"' + (pair[0] === volk ? ' selected' : '') + '>' + pair[1] + '</option>';
     }).join('');
 
@@ -270,7 +316,7 @@ function saveGeneratedNPC() {
         id: id,
         name: npc.name,
         role: npc.beruf || '',
-        race: npc.volk || '',
+        race: _npcgVolkName(npc.volk),
         description: beschreibung,
         locationId: null,
         chapter: '',
@@ -283,18 +329,41 @@ function saveGeneratedNPC() {
         relations: []
     });
 
-    if (typeof save === 'function') save();
-
-    // NPC-Liste neu rendern
-    if (typeof renderNPCList === 'function') renderNPCList();
-
-    // Modal schließen
-    var modal = document.getElementById('npc-generator-modal');
-    if (modal) modal.remove();
-    _npcgAktuell = null;
+    // GENERATOR-DOPPELT: Ab dem push endet JEDER Ausgang mit verbrauchter
+    // Vorschau und geschlossenem Fenster — auch wenn save() wirft. Das
+    // Verbrauchen IST die Sperre gegen den zweiten Klick (wie in
+    // createCampaign das Leeren der Eingabe vor dem Zeichnen), kein Zeitflag:
+    // ein weiterer Klick auf dieselbe Vorschau gelangt nicht mehr bis hierher.
+    try {
+        if (typeof save === 'function') save();
+    } finally {
+        _npcgAktuell = null;
+        var modal = document.getElementById('npc-generator-modal');
+        if (modal) modal.remove();
+    }
 
     if (typeof showToast === 'function') {
         showToast(npc.name + ' als NPC gespeichert', 'success');
+    }
+
+    // NPC-Liste neu rendern — ZULETZT und hier abgefangen (GENERATOR-DOPPELT):
+    // der NPC ist gespeichert und bleibt es, ein Wurf rollt nichts zurueck.
+    // Der Nutzer sieht ihn als Fehlermeldung, das Fehlerlog bekommt den Wurf.
+    // Nicht in renderNPCList fangen: der Reiterwechsel braucht den Wurf
+    // (ruecksprung-rundlauf.spec.js (12)). Nicht ueber safeRender: das wirft
+    // im dev-Buendel (DEBUG_MODE) erneut, dev und prod liefen auseinander.
+    try {
+        if (typeof renderNPCList === 'function') renderNPCList();
+    } catch (fehler) {
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('saveGeneratedNPC', fehler, 'renderNPCList nach dem Speichern');
+        }
+        if (typeof showToast === 'function') {
+            showToast(
+                '⚠️ NPC gespeichert – die NPC-Liste konnte nicht aktualisiert werden',
+                'error'
+            );
+        }
     }
 }
 

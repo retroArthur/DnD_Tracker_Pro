@@ -193,7 +193,7 @@ const ZUORDNUNG = {
     /* --- rem: drei Werte, und nur aus der INLINE-Typografie ---
        NACHGETRAGEN am 2026-10-06 (Schritt 7). Im CSS kommt `rem` nicht vor —
        F-03 wacht darueber — aber die Inline-Stile in Templates und JS tragen
-       drei rem-Werte: `0.8rem` (initiative.js:157 und drei Stellen in
+       drei rem-Werte: `0.8rem` (initiative.js:164 und drei Stellen in
        soundboard-render.js), `0.85rem` (soundboard-render.js:32) und
        `1.2rem` (modals-entity.html:637).
        SIE STEHEN IN DERSELBEN TABELLE UND NICHT IN EINER ZWEITEN, weil die
@@ -310,7 +310,14 @@ const SVG_GEDULDET = {};
  * bewacht nichts — sie verlaengert nur die Liste (Lehre O-5).
  */
 const INLINE_GEDULDET = {
-    'assets/templates/modals-tools.html:552':
+    // MKOPF: 552 -> 589. Die Stelle selbst ist unberuehrt; das Punkte-Menue
+    // des Mobil-Kopfs hat 37 Zeilen VOR ihr eingefuegt (`.mobile-header` steht
+    // in derselben Datei auf Zeile 287ff.). Genau diese Verschiebung faengt
+    // die VERWESUNGSPROBE in W5-R-08 ab — sie ist rot geworden und hat den
+    // Anker benannt, statt ihn stillschweigend auf eine Leerzeile zeigen zu
+    // lassen. Die vier Anker in `modal-fokus.spec.js` (12, 180, 194, 291)
+    // liegen VOR dem Einschub und sind unverschoben.
+    'assets/templates/modals-tools.html:589':
         '48px. Das 🎲 des Impressumsfensters, einziger Inhalt seines Kastens, kein ' +
         'Lesetext (E-3). Die Skala hat zwischen 34 und 72 px keine Sprosse: der Weg ' +
         'auf --text-3xl waere -14,00 px, der auf --text-hero +24,00 px. Beide ' +

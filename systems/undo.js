@@ -27,7 +27,7 @@ function enforceUndoByteBudget() {
         undoStack.shift();
     }
 }
-function pushUndo(action) {
+function pushUndo(action, kennung) {
     // Serialisierbarkeit VOR dem Push prüfen (D-06): ein zirkuläres oder sonst nicht
     // serialisierbares window.D darf keinen kaputten Eintrag auf den Stack legen. Der
     // Aufrufer (die destruktive Operation) läuft trotzdem weiter — "am Spieltisch nie
@@ -48,32 +48,42 @@ function pushUndo(action) {
         redoStack.length = 0;
         return;
     }
-    _pushUndoSnapshot(action, stateJSON);
+    _pushUndoSnapshot(action, stateJSON, kennung);
 }
 // Legt einen bereits serialisierten Stand auf den Undo-Stack — gemeinsam fuer pushUndo() und
-// das Konflikt-Neuladen (reloadData, R06).
-function _pushUndoSnapshot(action, stateJSON) {
+// das Konflikt-Neuladen (reloadData, R06). `kennung` (optional) sagt den Undo-Hooks, WELCHE
+// Aktion ein Schritt zuruecknimmt bzw. wiederherstellt — das Label ist dafuer nicht eindeutig
+// (REITERIMPORT R7: Rueckgaengig und Wiederholen eines Ersetzens tauschen, welcher Eintrag
+// hinter einer ID steht). Ein Eintrag fuehrt sie als Liste `kennungen`.
+function _pushUndoSnapshot(action, stateJSON, kennung) {
     // Dedupe (D-09a): ein Snapshot, der zeichengleich zum aktuellen Stack-Kopf ist, wird
     // NICHT erneut gepusht — die Serialisierung in pushUndo() lief trotzdem, weil sie der
     // einzige Weg ist, das ueberhaupt festzustellen. Der Redo-Stack wird unten unabhaengig
     // davon geleert, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23).
     const currentTop = undoStack[undoStack.length - 1];
     if (!currentTop || currentTop.state !== stateJSON) {
-        undoStack.push({
-            action,
-            state: stateJSON,
-            timestamp: Date.now()
-        });
+        const eintrag = { action, state: stateJSON, timestamp: Date.now() };
+        if (kennung !== undefined) eintrag.kennungen = [kennung];
+        undoStack.push(eintrag);
         if (undoStack.length > UNDO_LIMIT) {
             undoStack.shift();
         }
         enforceUndoByteBudget();
+    } else if (kennung !== undefined) {
+        // Gleicher Stand: kein neuer Eintrag — das Rueckgaengig des Kopfs nimmt die neue
+        // Aktion mit zurueck, also traegt der Kopf auch ihre Kennung.
+        currentTop.kennungen = (currentTop.kennungen || []).concat([kennung]);
     }
     // Redo-Stack leeren wenn neue Aktion
     redoStack.length = 0;
 }
-function saveUndoState(action = 'Änderung') {
-    pushUndo(action);
+function saveUndoState(action = 'Änderung', kennung) {
+    pushUndo(action, kennung);
+}
+// Die Kennungen eines Eintrags fuer Stack-Wechsel und Hook-Nachricht — ohne Kennung kein Feld,
+// die Nachricht bleibt dann { action, direction } wie zuvor.
+function _undoKennungen(eintrag) {
+    return eintrag.kennungen ? { kennungen: eintrag.kennungen } : {};
 }
 function undo() {
     if (undoStack.length === 0) {
@@ -118,7 +128,8 @@ function undo() {
     redoStack.push({
         action: last.action,
         state: redoStateJSON,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        ..._undoKennungen(last)
     });
     if (redoStack.length > UNDO_LIMIT) {
         redoStack.shift();
@@ -140,7 +151,7 @@ function undo() {
     if (renderAll) renderAll();
     if (saveImmediate) saveImmediate();
     showToast(`↩️ Rückgängig: ${last.action}`);
-    _notifyUndoHooks({ action: last.action, direction: 'undo' });
+    _notifyUndoHooks({ action: last.action, direction: 'undo', ..._undoKennungen(last) });
 }
 function redo() {
     if (redoStack.length === 0) {
@@ -174,7 +185,8 @@ function redo() {
     undoStack.push({
         action: last.action,
         state: undoStateJSON,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        ..._undoKennungen(last)
     });
     if (undoStack.length > UNDO_LIMIT) {
         undoStack.shift();
@@ -197,7 +209,7 @@ function redo() {
     if (renderAll) renderAll();
     if (saveImmediate) saveImmediate();
     showToast('↪️ Wiederhergestellt');
-    _notifyUndoHooks({ action: last.action, direction: 'redo' });
+    _notifyUndoHooks({ action: last.action, direction: 'redo', ..._undoKennungen(last) });
 }
 function clearUndoHistory() {
     undoStack.length = 0;
@@ -406,9 +418,9 @@ async function _loadForReload(onBeforeApply) {
 // erfasster Wahrheitswert): sonst setzte der spaete Commit die Baseline zurueck und der Tab
 // waere trotz stehendem Banner nicht mehr veraltet.
 async function _afterReloadApplied(beforeJSON, generationAtStart, foreignSaveSinceFn) {
-    const D = window.D;
+    // Das Nachziehen der Modulkopie `encounterRound` (und das `const D`, dessen
+    // einziger Leser es war) ist mit der Kopie entfallen — RUNDE, s. u.
     if (beforeJSON) _pushUndoSnapshot('Neu laden (anderer Tab)', beforeJSON);
-    encounterRound = (D.initiative && D.initiative.round) || 1;
     try {
         (window.renderAfterDataReplace || window.renderAll)();
     } catch (e) {
@@ -510,17 +522,112 @@ function getCurrentStorageKey() {
 // ============================================================
 // TASTENKÜRZEL-OVERLAY
 // ============================================================
+// DER FOKUS GEHOERT IN DIE HILFE, SOLANGE SIE OFFEN IST (HILF, Fall 7).
+//
+// GEMESSENER AUSGANGSSTAND (HEAD 52caf1d, gebautes Buendel, echte
+// Tastendruecke): `?` oeffnete die Hilfe, und der Fokus blieb auf `BODY`.
+// 45 von 45 Tabulatorspruengen liefen danach in die Seite UNTER der Hilfe,
+// kein einziger in die Hilfe. Das ist nicht nur unschoen, es macht die Hilfe
+// fuer den Tastaturnutzer unvollstaendig: `.shortcuts-modal` traegt
+// `max-height: 80vh; overflow-y: auto` und laeuft gemessen schon bei 1440 px
+// ueber (785 px Inhalt in 638 px Flaeche), auf dem Telefon noch mehr. Einen
+// Laufbereich bewegt die Tastatur nur, wenn der Fokus DARIN liegt — ohne das
+// ist die untere Haelfte der Hilfe allein mit der Tastatur nicht zu lesen.
+// Und die Hilfe ist genau das Werkzeug dessen, der nur die Tastatur hat.
+//
+// WARUM `tabindex="-1"` AUF DER FLAECHE UND NICHT AUF DER BLENDE, und warum
+// nur solange sie offen ist. `ui/keyboard-reach.js` hat genau hier schon
+// einen Phantomhalt erzeugt und ihn dokumentiert: die Blende
+// `#shortcuts-overlay` ist im geschlossenen Zustand NUR ueber `opacity: 0`
+// und `pointer-events: none` verborgen (kein `display: none`, kein
+// `visibility: hidden`), ein `tabindex` darauf bleibt also fokussierbar und
+// brachte +1 unsichtbaren Halt in 23 von 24 Ansichten. Beides ist hier
+// vermieden: das Attribut sitzt auf `.shortcuts-modal` (kein `data-action`,
+// damit ausserhalb der Kehrschleife), es lautet `-1` (nie ein Tabulatorhalt
+// — `ui/modal-focus.js` schliesst `[tabindex="-1"]` ausdruecklich aus seiner
+// Haltepunktliste aus), und es verschwindet beim Schliessen wieder.
+//
+// WAS HIER ABSICHTLICH NICHT PASSIERT: ein Oeffner wird nicht gemerkt und
+// der Fokus nicht auf ihn zurueckgesetzt. Die Hilfe wird fast immer per `?`
+// geoeffnet, und dann gibt es keinen Oeffner. Ein vorgetaeuschter waere
+// schaedlich — `tastatur-kuerzel.spec.js` (j) hat fuer den HP-Rechner
+// gemessen, dass der Fokus danach auf diesem Element haengt und die
+// Leertaste verbraucht, die eigentlich den Zug wechselt. Statt dessen wird
+// der Fokus beim Schliessen FREIGELASSEN (`blur()`), und die Leertaste
+// gehoert wieder dem Zug.
+/**
+ * Das Bedienelement, von dem aus die Hilfe geoeffnet wurde — oder `null`.
+ *
+ * DER UNTERSCHIED, DER MICH EINEN ROTEN FALL GEKOSTET HAT. Die erste Fassung
+ * merkte sich gar keinen Oeffner und gab den Fokus beim Schliessen frei. Das
+ * war fuer `?` richtig und fuer die Maus falsch:
+ * `tastatur-ausloesung.spec.js` (g2) klickt den ⌨️-Knopf, drueckt Escape und
+ * sichert zu, dass der geklickte Knopf den Fokus BEHAELT ("ohne diese
+ * Zusicherung misst der Fall nichts"). Gemessen nach der ersten Fassung:
+ * `BODY` statt `BUTTON` — der Fokus war weg, weil `showShortcutsOverlay()`
+ * ihn in die Hilfe geholt und `hideShortcutsOverlay()` ihn danach freigegeben
+ * hat.
+ *
+ * Richtig ist beides zugleich, und die Unterscheidung ist einfach: einen
+ * vorhandenen Oeffner WIEDERHERSTELLEN, aber keinen ERFINDEN. Bei `?` liegt
+ * der Fokus auf `BODY`, es gibt keinen Oeffner, und der Fokus wird
+ * freigegeben — sonst verbrauchte ein untergeschobener Oeffner die
+ * Leertaste, die danach wieder dem Zug gehoert (derselbe Fehler, den
+ * `tastatur-kuerzel.spec.js` (j) fuer den HP-Rechner festhaelt). Beim Klick
+ * auf den ⌨️-Knopf gibt es einen, und er bekommt den Fokus zurueck — so wie
+ * `ui/modal-focus.js` es fuer die 36 Schalen tut.
+ *
+ * EINE EINFACHE VARIABLE UND KEINE WeakMap, anders als bei den Schalen: es
+ * gibt genau EINE Tastenhilfe, sie kann nicht geschachtelt auftreten, und
+ * `showShortcutsOverlay()` ist der einzige Oeffner im Baum.
+ */
+let tastenhilfeOeffner = null;
+
 function showShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
-    if (overlay) {
-        overlay.classList.add('show');
+    if (!overlay) return;
+    // Erst merken, dann den Fokus holen — in dieser Reihenfolge, sonst ist
+    // der Oeffner schon die Hilfe selbst.
+    const aktiv = document.activeElement;
+    tastenhilfeOeffner =
+        aktiv &&
+        aktiv !== document.body &&
+        !overlay.contains(aktiv) &&
+        typeof aktiv.focus === 'function'
+            ? aktiv
+            : null;
+    overlay.classList.add('show');
+    // DIE MARKE AM `<body>`, an der das Ereignislog beiseitetritt (HILF).
+    // Gemessen verdeckte EIN Hinweis bei 390 px drei der zwoelf sichtbaren
+    // Hilfezeilen; das Log liegt mit `--z-toast` (4000) ueber der Hilfe
+    // (`--z-floating`, 2000), und diese Ebenenleiter ist in variables.css
+    // eine ausdrueckliche Entscheidung — eine Ausnahme fuer eine Blende
+    // haette sie entwertet. Die Regel steht am Ende von
+    // `assets/styles/dmscreen.css`, dort auch der Preis dieser Wahl.
+    document.body.classList.add('tastenhilfe-offen');
+    const flaeche = overlay.querySelector('.shortcuts-modal');
+    if (flaeche) {
+        flaeche.setAttribute('tabindex', '-1');
+        flaeche.focus();
     }
 }
 function hideShortcutsOverlay() {
     const overlay = $('shortcuts-overlay');
-    if (overlay) {
-        overlay.classList.remove('show');
+    if (!overlay) return;
+    overlay.classList.remove('show');
+    document.body.classList.remove('tastenhilfe-offen');
+    // Den Fokus nicht auf einer Flaeche mit `opacity: 0` stehen lassen: der
+    // naechste Anschlag bediente sonst etwas Unsichtbares.
+    if (document.activeElement && overlay.contains(document.activeElement)) {
+        if (tastenhilfeOeffner && document.contains(tastenhilfeOeffner)) {
+            tastenhilfeOeffner.focus();
+        } else {
+            document.activeElement.blur();
+        }
     }
+    tastenhilfeOeffner = null;
+    const flaeche = overlay.querySelector('.shortcuts-modal');
+    if (flaeche) flaeche.removeAttribute('tabindex');
 }
 // ============================================================
 // CONDITIONS / ZUSTÄNDE HELPER
@@ -532,11 +639,11 @@ function renderConditionBadges(conditions = [], exhaustion = 0, small = false) {
     conditions.forEach(key => {
         const cond = CONDITIONS[key];
         if (cond) {
-            html += `<span class="condition-badge ${key} active" title="${cond.name}: ${cond.desc}">${cond.icon}</span>`;
+            html += `<span class="condition-badge ${esc(key)} active" title="${cond.name}: ${cond.desc}">${cond.icon}</span>`;
         }
     });
     if (exhaustion > 0) {
-        html += `<span class="condition-badge exhaustion active" title="Erschöpfung Stufe ${exhaustion}">${CONDITIONS.exhaustion.icon}${exhaustion}</span>`;
+        html += `<span class="condition-badge exhaustion active" title="Erschöpfung Stufe ${esc(String(exhaustion))}">${CONDITIONS.exhaustion.icon}${esc(String(exhaustion))}</span>`;
     }
     html += '</div>';
     return html;
@@ -565,7 +672,7 @@ function showRelationshipsModal(type, id) {
         targetEl.innerHTML = targets
             .map(
                 t =>
-                    `<option value="${t.type}:${t.id}">${t.type === 'character' ? '👤' : '🎭'} ${esc(t.name)}</option>`
+                    `<option value="${esc(t.type)}:${esc(t.id)}">${t.type === 'character' ? '👤' : '🎭'} ${esc(t.name)}</option>`
             )
             .join('');
     }
@@ -645,7 +752,7 @@ function renderRelationshipBadges(relationships = [], sourceType, sourceId) {
                 ? EntityLookup.character(rel.targetId)
                 : EntityLookup.npc(rel.targetId);
         const targetName = target?.name || '?';
-        html += `<span class="relationship-badge ${rel.type}" title="${rel.note || typeLabels[rel.type]}">${targetName} <span data-action="remove-relationship-stop" data-source-type="${sourceType}" data-source-id="${sourceId}" data-target-type="${rel.targetType}" data-target-id="${rel.targetId}" style="cursor:pointer;opacity:0.6;">✕</span></span>`;
+        html += `<span class="relationship-badge ${sichereKlasse(rel.type, Object.keys(typeLabels), '')}" title="${esc(rel.note || typeLabels[rel.type])}">${esc(targetName)} <span data-action="remove-relationship-stop" data-source-type="${esc(sourceType)}" data-source-id="${esc(sourceId)}" data-target-type="${esc(rel.targetType)}" data-target-id="${esc(rel.targetId)}" style="cursor:pointer;opacity:0.6;">✕</span></span>`;
     });
     html += '</div></div>';
     return html;
@@ -721,8 +828,8 @@ function searchNotes() {
             const excerpt = highlightExcerpt(content.replace(/<[^>]+>/g, ''), query, 150);
             const name = note.name || note.title || '';
             return `
-            <div class="notes-search-result" data-action="go-to-note" data-value="${note.date}">
-                <div class="notes-search-date">${note.date}${name ? ' - ' + esc(name) : ''}</div>
+            <div class="notes-search-result" data-action="go-to-note" data-value="${esc(note.date)}">
+                <div class="notes-search-date">${esc(note.date)}${name ? ' - ' + esc(name) : ''}</div>
                 <div class="notes-search-excerpt">${excerpt}</div>
             </div>
         `;
@@ -783,12 +890,48 @@ function goToNote(date) {
 // ============================================================
 // ENCOUNTER RESET / RUNDEN-SYSTEM
 // ============================================================
-let encounterRound = 1;
+/**
+ * DIE RUNDE STEHT IN `D.initiative.round` UND NUR DORT (RUNDE).
+ *
+ * WAS HIER FRUEHER STAND, und warum es weg ist: eine Modulglobale
+ * `let encounterRound = 1`, also ein ZWEITER Rundenzaehler neben
+ * `D.initiative.round`. `nextTurn()` (`features/initiative.js`) erhoehte beim
+ * Rundenumschlag nur `init.round`; dieser Zaehler hier wurde ausschliesslich
+ * beim App-Start (`core/init.js`) und beim Undo-Zurueckspielen
+ * (`_afterReloadApplied()`) nachgezogen. Jeder Umschlag ueber "▶ Naechster"
+ * liess ihn also stehen — und `nextEncounterRound()` SETZTE anschliessend
+ * `D.initiative.round = encounterRound`, schrieb damit eine 2 auf eine Runde,
+ * die schon 2 war, und meldete trotzdem "⚔️ Runde 2".
+ *
+ * GEMESSEN am Buendel zu 279ad98, Kampfansicht, sechs Kaempfer:
+ *
+ *   Handlung           Zug   Daten   Anzeige   Ereignis-Log
+ *   ----------------   ---   -----   -------   ------------
+ *   nach 6x `n`          0       2       "2"   —
+ *   nach Shift+N         0       2       "2"   "⚔️ Runde 2"
+ *   nach 2x Shift+N      0       3       "3"   "⚔️ Runde 3"
+ *
+ * Der erste Druck verbrauchte sich und aenderte nichts. Mit dem Finger auf dem
+ * Knopf identisch. DERSELBE veraltete Zaehler machte `prevTurn()`
+ * (`core/init.js`) zur Nicht-Umkehrung von `nextTurn()`: es senkte die Runde
+ * nur unter `if (encounterRound > 1)`, also aus einer durch `n` erreichten
+ * Runde 2 nicht, aus einer durch Shift+N erreichten Runde 3 schon.
+ *
+ * WARUM DER ZAEHLER NICHT "NACHGEZOGEN", SONDERN ENTFERNT WURDE. Ein dritter
+ * Nachzieh-Punkt in `nextTurn()` haette dieselbe Lage nur verschoben: die
+ * Runde wird an fuenf Stellen geschrieben (`nextTurn`, `prevTurn`,
+ * `nextEncounterRound`, `resetEncounter`, Import/Undo), und jede neue
+ * Schreibstelle muesste die Kopie kennen. Es gibt jetzt nur noch EINE Quelle;
+ * `renderInit()` und `updateEncounterDisplay()` lesen beide aus ihr.
+ *
+ * Bewacht von `tests/e2e/features/kampfrunde.spec.js`, Fall (5) namentlich:
+ * nach jeder der drei Handlungen muss die Anzeige `D.initiative.round` sein.
+ */
 function nextEncounterRound() {
     saveUndoState('Neue Runde');
-    encounterRound++;
     const D = window.D;
-    D.initiative.round = encounterRound;
+    const runde = (D.initiative.round || 1) + 1;
+    D.initiative.round = runde;
     // Runden-basierte Effekte verarbeiten
     D.initiative.combatants.forEach(c => {
         // Hier könnten automatische Effekte pro Runde verarbeitet werden
@@ -797,7 +940,7 @@ function nextEncounterRound() {
     const save = window.save;
     if (save) save();
     updateEncounterDisplay();
-    showToast(`⚔️ Runde ${encounterRound}`, 'success', { kategorie: 'kampf' });
+    showToast(`⚔️ Runde ${runde}`, 'success', { kategorie: 'kampf' });
 }
 function resetEncounter() {
     if (
@@ -806,7 +949,6 @@ function resetEncounter() {
         return;
     saveUndoState('Encounter Reset');
     const D = window.D;
-    encounterRound = 1;
     D.initiative.round = 1;
     D.initiative.currentTurn = 0;
     // Alle temporären Zustände entfernen
@@ -827,7 +969,10 @@ function resetEncounter() {
 function updateEncounterDisplay() {
     const roundEl = document.querySelector('.encounter-round-num');
     if (roundEl) {
-        roundEl.textContent = String(encounterRound);
+        // Aus der EINEN Quelle (RUNDE) — frueher aus der Modulkopie, und genau
+        // darum konnte diese Zeile eine andere Zahl schreiben als
+        // `renderInit()` zwei Zeilen davor.
+        roundEl.textContent = String(window.D?.initiative?.round || 1);
     }
 }
 // ============================================================

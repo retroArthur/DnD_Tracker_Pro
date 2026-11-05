@@ -222,11 +222,11 @@ function renderFavoritesDropdown() {
             ${favs
                 .map(
                     f => `
-                <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${f.id}">
+                <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${esc(f.id)}">
                     <span>⭐</span>
                     <span class="calc-fav-name">${esc(f.name)}</span>
-                    <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + m.count, 0)})</span>
-                    <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${f.id}" title="Löschen">×</button>
+                    <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + Number(m.count), 0)})</span>
+                    <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${esc(f.id)}" title="Löschen">×</button>
                 </div>
             `
                 )
@@ -375,7 +375,7 @@ function updateMonsterPreview() {
     // Simuliere das Hinzufügen
     const tempMonsters = [...calculatorMonsters, { cr: crInputValue, count, name: '' }];
     const newMonsterCount = tempMonsters.reduce((sum, m) => sum + m.count, 0);
-    const newBaseXP = tempMonsters.reduce((sum, m) => sum + CR_TO_XP[m.cr] * m.count, 0);
+    const newBaseXP = tempMonsters.reduce((sum, m) => sum + xpFuerCR(m.cr) * m.count, 0);
     // Berechne neuen Multiplikator
     let newMult = 1.0;
     for (const mult of ENCOUNTER_MULTIPLIERS) {
@@ -409,7 +409,7 @@ function updateMonsterPreview() {
         : `<span class="calc-preview-same">${newDiff.label}</span>`;
     previewDiv.innerHTML = `
         <span class="calc-preview-icon">📊</span>
-        <span class="calc-preview-xp">+${addedXP.toLocaleString()} XP</span>
+        <span class="calc-preview-xp">+${esc(addedXP.toLocaleString())} XP</span>
         ${diffHtml}
     `;
 }
@@ -460,7 +460,7 @@ function calculateMonsterXP() {
     let baseXP = 0;
     let totalMonsters = 0;
     calculatorMonsters.forEach(({ cr, count }) => {
-        baseXP += CR_TO_XP[cr] * count;
+        baseXP += xpFuerCR(cr) * count;
         totalMonsters += count;
     });
     // Get multiplier based on number of monsters
@@ -623,9 +623,9 @@ function recalculateEncounter() {
         <div class="calc-difficulty-main">
             <div class="calc-diff-badge ${difficulty.level}">${difficulty.label}</div>
             <div class="calc-diff-info">
-                <div class="calc-diff-xp">${monsters.finalXP.toLocaleString()} <span>Final XP</span></div>
+                <div class="calc-diff-xp">${esc(monsters.finalXP.toLocaleString())} <span>Final XP</span></div>
                 <div class="calc-diff-details">
-                    ${monsters.baseXP.toLocaleString()} Base × ${monsters.multiplier} (${monsters.totalMonsters} Monster)${modifierInfo}
+                    ${esc(monsters.baseXP.toLocaleString())} Base × ${esc(String(monsters.multiplier))} (${esc(String(monsters.totalMonsters))} Monster)${esc(modifierInfo)}
                     ${difficulty.percentage > 100 ? ` • ${Math.round(difficulty.percentage - 100)}% über Deadly` : ''}
                 </div>
             </div>
@@ -634,10 +634,10 @@ function recalculateEncounter() {
         <!-- Threshold Bar -->
         <div class="calc-threshold-bar">
             <div class="calc-threshold-labels">
-                <div class="calc-threshold-label easy">Easy<br>${thresholds.easy.toLocaleString()}</div>
-                <div class="calc-threshold-label medium">Medium<br>${thresholds.medium.toLocaleString()}</div>
-                <div class="calc-threshold-label hard">Hard<br>${thresholds.hard.toLocaleString()}</div>
-                <div class="calc-threshold-label deadly">Deadly<br>${thresholds.deadly.toLocaleString()}</div>
+                <div class="calc-threshold-label easy">Easy<br>${esc(thresholds.easy.toLocaleString())}</div>
+                <div class="calc-threshold-label medium">Medium<br>${esc(thresholds.medium.toLocaleString())}</div>
+                <div class="calc-threshold-label hard">Hard<br>${esc(thresholds.hard.toLocaleString())}</div>
+                <div class="calc-threshold-label deadly">Deadly<br>${esc(thresholds.deadly.toLocaleString())}</div>
             </div>
             <div class="calc-threshold-track">
                 <div class="calc-threshold-seg easy"></div>
@@ -651,21 +651,21 @@ function recalculateEncounter() {
         <!-- Stats Grid -->
         <div class="calc-stats">
             <div class="calc-stat">
-                <div class="calc-stat-value">${thresholds.totalPCs}</div>
+                <div class="calc-stat-value">${esc(String(thresholds.totalPCs))}</div>
                 <div class="calc-stat-label">Spieler</div>
             </div>
             <div class="calc-stat">
-                <div class="calc-stat-value">${monsters.totalMonsters}</div>
+                <div class="calc-stat-value">${esc(String(monsters.totalMonsters))}</div>
                 <div class="calc-stat-label">Monster</div>
             </div>
             <div class="calc-stat">
-                <div class="calc-stat-value">${xpPerPlayer.toLocaleString()}</div>
+                <div class="calc-stat-value">${esc(xpPerPlayer.toLocaleString())}</div>
                 <div class="calc-stat-label">XP/Spieler</div>
             </div>
             <div class="calc-stat">
                 <div class="calc-stat-value">
-                    ×${monsters.multiplier}
-                    <span class="calc-stat-info" title="${getMultiplierExplanation(monsters.totalMonsters, thresholds.totalPCs, monsters.multiplier)}">ⓘ</span>
+                    ×${esc(String(monsters.multiplier))}
+                    <span class="calc-stat-info" title="${esc(getMultiplierExplanation(monsters.totalMonsters, thresholds.totalPCs, monsters.multiplier))}">ⓘ</span>
                 </div>
                 <div class="calc-stat-label">Multiplier</div>
             </div>
@@ -730,13 +730,14 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
             showToast('Ungültiger Schwierigkeitsgrad: ' + targetDifficultyLevel);
             return;
     }
-    // XP pro einzelnes Monster (vom ersten Typ)
-    const cr = calculatorMonsters[0].cr;
-    const monsterXP = CR_TO_XP[cr];
-    if (!monsterXP) {
-        showToast('Ungültige CR: ' + cr);
+    // XP pro einzelnes Monster — vom ersten Typ MIT CR (RECHNER): ein Eintrag
+    // ohne CR zaehlt 0 XP, an ihm laesst sich keine Anzahl bemessen.
+    const ziel = calculatorMonsters.find(m => xpFuerCR(m.cr) > 0);
+    if (!ziel) {
+        showToast('Kein Monster mit CR — die Anzahl lässt sich nicht bemessen', 'warning');
         return;
     }
+    const monsterXP = xpFuerCR(ziel.cr);
     // Iterativ die beste Anzahl finden (berücksichtigt Multiplier-Sprünge)
     let bestCount = 1;
     let bestDiff = Infinity;
@@ -759,7 +760,7 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
         // Stoppe wenn wir deutlich über dem Ziel sind
         if (adjustedXP > targetXP * 1.5) break;
     }
-    calculatorMonsters[0].count = bestCount;
+    ziel.count = bestCount;
     renderCalculator();
     recalculateEncounter();
     showToast(
@@ -814,7 +815,9 @@ function saveAsEncounter() {
         cr: m.cr,
         hp: 0, // Default
         initiative: 0,
-        count: m.count
+        count: m.count,
+        // Beim erneuten Import wieder GENAU dieser Encounter als Vorlage (RECHNER)
+        ...(m.encounterId != null ? { encounterId: m.encounterId } : {})
     }));
     // Build terrain/lair info for description
     const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
@@ -878,13 +881,11 @@ function addCalculatorToInitiative() {
     // Add each monster to initiative
     let addedCount = 0;
     calculatorMonsters.forEach(monster => {
-        // Get monster template for HP if available
-        const template =
-            typeof D !== 'undefined' && D.encounters
-                ? D.encounters.find(e => e.cr === monster.cr || e.CR === monster.cr)
-                : null;
+        // Vorlage (RECHNER): bekannte Quelle -> GENAU dieser Encounter; sonst
+        // die Schaetzung nach CR wie bisher. Regel in rechnerVorlage().
+        const { vorlage: template, bekannt } = rechnerVorlage(monster);
         const baseHP = template?.hp || template?.HP || getDefaultHPForCR(monster.cr);
-        const initBonus = template?.initBonus || template?.dex || 0;
+        const initBonus = initBonusAusVorlage(template);
         for (let i = 0; i < monster.count; i++) {
             // Roll initiative (1d20 + bonus)
             const initRoll = Math.floor(Math.random() * 20) + 1 + initBonus;
@@ -899,9 +900,14 @@ function addCalculatorToInitiative() {
                 maxHp: hp,
                 currentHp: hp,
                 ac: template?.ac || template?.AC || 10,
-                type: 'monster',
+                // 'enemy' wie addEncToInit(): nur fuer diesen Typ sucht die
+                // Initiative den Eintrag (Namenslink, RK). Ohne bekannte Quelle
+                // gibt es keinen Eintrag — 'monster', wie von Hand (RECHNER).
+                type: bekannt ? 'enemy' : 'monster',
                 cr: monster.cr,
-                xp: CR_TO_XP[monster.cr] || 0,
+                xp: xpFuerCR(monster.cr),
+                // "Skelett #2" findet ueber den Namen nichts — die ID schon.
+                ...(bekannt ? { encounterId: template.id } : {}),
                 effects: []
             });
             addedCount++;
@@ -934,6 +940,51 @@ function addCalculatorToInitiative() {
     showToast(`${addedCount} Monster zur Initiative hinzugefügt`, 'success', {
         kategorie: 'kampf'
     });
+}
+// XP eines CR. Fehlender oder unbekannter CR zaehlt 0 XP — wie getXPForCR() bei
+// der XP-Verteilung der Initiative; statt NaN in der Summe (RECHNER).
+function xpFuerCR(cr) {
+    return CR_TO_XP[cr] || 0;
+}
+// Init-Bonus aus einem gespeicherten Encounter (RECHNER): das Feld "Initiative"
+// (enc.init), sonst der GES-Modifikator — nie der GES-Wert. Ein leeres Feld
+// steht als 0 im Datensatz (die Ansicht zeigt "—"); 0 gilt darum als "nicht
+// gesetzt", wie bei der Charakter-Initiative im Wuerfelmodul.
+function initBonusAusVorlage(vorlage) {
+    if (!vorlage) return 0;
+    const init = parseInt(vorlage.init, 10) || parseInt(vorlage.initBonus, 10);
+    if (init) return init;
+    const ges = parseInt(vorlage.dex, 10);
+    return Number.isFinite(ges) ? Math.floor((ges - 10) / 2) : 0;
+}
+// Vorlage eines Rechner-Monsters fuer "⚔️ Zur Initiative" (RECHNER). Die Quelle
+// ist bekannt ueber die gespeicherte encounterId, sonst ueber den Namen eines
+// Kreatur-Encounters — exakt, ohne Gross-/Kleinschreibung, erster Treffer, wie
+// findByName(). Der Name traegt Gruppen ("💾 Speichern") und ⭐-Vorlagen von
+// vor RECHNER, die keine ID kennen: der Import setzte schon immer
+// `name: encounter.name`. Ohne bekannte Quelle (von Hand gewaehlt, Quelle
+// geloescht) bleibt es die Schaetzung: der erste gespeicherte Encounter mit
+// diesem CR. Gruppen sind keine Vorlage — sie haben weder RK noch TP.
+function rechnerVorlage(monster) {
+    const kreaturen = (Array.isArray(window.D.encounters) ? window.D.encounters : []).filter(
+        e => e && !rechnerGruppenMonster(e)
+    );
+    const id = parseEntityId(monster.encounterId);
+    const name = typeof monster.name === 'string' ? monster.name.toLowerCase() : '';
+    const quelle =
+        (id !== null && kreaturen.find(e => e.id === id)) ||
+        (name && kreaturen.find(e => String(e.name || '').toLowerCase() === name));
+    if (quelle) return { vorlage: quelle, bekannt: true };
+    const schaetzung = monster.cr
+        ? kreaturen.find(e => e.cr === monster.cr || e.CR === monster.cr) || null
+        : null;
+    return { vorlage: schaetzung, bekannt: false };
+}
+// "💾 Speichern" legt eine GRUPPE ab (monsters[], ohne eigenen CR, RK, TP) —
+// keine Kreatur. Liefert ihre Monster oder null (RECHNER).
+function rechnerGruppenMonster(enc) {
+    if (!enc || enc.cr || enc.CR) return null;
+    return Array.isArray(enc.monsters) && enc.monsters.length > 0 ? enc.monsters : null;
 }
 // Default HP by CR (rough estimates)
 function getDefaultHPForCR(cr) {
@@ -996,8 +1047,8 @@ function renderCalculator() {
             .map(
                 (m, i) => `
             <div class="calc-list-item">
-                <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
-                <span class="calc-list-xp">CR ${m.cr} (${CR_TO_XP[m.cr]} XP)</span>
+                <span class="calc-list-text">${esc(String(m.count))}× ${esc(m.name)}</span>
+                <span class="calc-list-xp">CR ${esc(m.cr) || '–'} (${xpFuerCR(m.cr)} XP)</span>
                 <button class="calc-list-remove" data-action="calc-remove-monster" data-value="${i}">✕</button>
             </div>
         `
@@ -1201,18 +1252,29 @@ function showEncounterImport() {
             <div class="calc-import-grid">
                 ${D.encounters
                     .map(enc => {
-                        const cr = enc.cr || enc.CR || '0';
-                        const xp = CR_TO_XP[cr] || 0;
+                        const cr = enc.cr || enc.CR || '';
+                        const gruppe = rechnerGruppenMonster(enc);
+                        const xp = gruppe
+                            ? gruppe.reduce(
+                                  (s, m) => s + xpFuerCR(m.cr) * (parseInt(m.count) || 1),
+                                  0
+                              )
+                            : xpFuerCR(cr);
+                        // Gruppe: die Summe heisst Basis-XP — ihr Name traegt die
+                        // angepassten XP (mit Multiplikator), s. saveAsEncounter().
+                        const art = gruppe
+                            ? `Gruppe - ${gruppe.length} Monster-Typ(en) - ${xp} Basis-XP`
+                            : `CR ${cr || '–'} - ${xp} XP`;
                         const type = enc.creatureType || enc.type || '';
                         return `
                         <div class="calc-import-card">
                             <div class="calc-import-info">
                                 <div class="calc-import-name">${esc(enc.name)}</div>
-                                <div class="calc-import-meta">${type ? type + ' - ' : ''}CR ${cr} - ${xp} XP</div>
+                                <div class="calc-import-meta">${type ? esc(type) + ' - ' : ''}${esc(art)}</div>
                             </div>
                             <div class="calc-import-actions">
-                                <input type="number" class="calc-import-count" id="import-count-${enc.id}" min="1" value="1" title="Anzahl">
-                                <button class="calc-import-btn" data-action="calc-import-encounter" data-value="${enc.id}">+</button>
+                                <input type="number" class="calc-import-count" id="import-count-${esc(enc.id)}" min="1" value="1" title="Anzahl">
+                                <button class="calc-import-btn" data-action="calc-import-encounter" data-value="${esc(enc.id)}">+</button>
                             </div>
                         </div>
                     `;
@@ -1237,30 +1299,46 @@ function importEncounterMonsters(encId) {
         );
         return;
     }
-    // Encounter IST die Kreatur selbst
-    const cr = encounter.cr || encounter.CR || null;
-    if (!cr) {
-        showToast('Kreatur hat kein CR');
-        if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log(
-                'importEncounterMonsters',
-                new Error('Missing CR'),
-                `Encounter: ${encounter.name || encId}`
-            );
-        }
-        return;
-    }
-    // Füge Kreatur zur Monster-Liste hinzu (nicht ersetzen!)
     const countInput = $('import-count-' + encId);
     const count = countInput ? parseInt(countInput.value) || 1 : 1;
+    // Mit "💾 Speichern" gespeichert: eine Gruppe — ihre Monster kommen zurueck,
+    // jedes mit seinem CR und seiner Vorlage (RECHNER).
+    const gruppe = rechnerGruppenMonster(encounter);
+    if (gruppe) {
+        let summe = 0;
+        gruppe.forEach(m => {
+            const anzahl = (parseInt(m.count) || 1) * count;
+            summe += anzahl;
+            calculatorMonsters.push({
+                cr: m.cr || '',
+                count: anzahl,
+                name: m.name || (m.cr ? `CR ${m.cr} Monster` : 'Monster'),
+                ...(m.encounterId != null ? { encounterId: m.encounterId } : {})
+            });
+        });
+        renderCalculatorModal();
+        recalculateEncounter();
+        showToast(`"${encounter.name}" (Gruppe, ${summe} Monster) hinzugefügt`, 'success', {
+            kategorie: 'kampf'
+        });
+        return;
+    }
+    // Encounter IST die Kreatur selbst. Ohne CR wird sie trotzdem uebernommen
+    // (RECHNER): das Formular laesst "-- CR --" zu, und der Abbruch widersprach
+    // dem Dialog. Sie zaehlt als Monster (Multiplikator) mit 0 XP, s. xpFuerCR().
+    const cr = encounter.cr || encounter.CR || '';
+    // Füge Kreatur zur Monster-Liste hinzu (nicht ersetzen!)
     calculatorMonsters.push({
         cr: cr,
         count: count,
-        name: encounter.name || `CR ${cr} Kreatur`
+        name: encounter.name || (cr ? `CR ${cr} Kreatur` : 'Kreatur'),
+        // Vorlage fuer "⚔️ Zur Initiative" ist GENAU dieser Encounter (RECHNER)
+        encounterId: encounter.id
     });
     renderCalculatorModal();
     recalculateEncounter();
-    showToast(`"${encounter.name}" (CR ${cr}) hinzugefügt`, 'success', { kategorie: 'kampf' });
+    const crText = cr ? `CR ${cr}` : 'ohne CR, 0 XP';
+    showToast(`"${encounter.name}" (${crText}) hinzugefügt`, 'success', { kategorie: 'kampf' });
 }
 function renderEncounterCalculator() {
     // Legacy function - now just shows modal

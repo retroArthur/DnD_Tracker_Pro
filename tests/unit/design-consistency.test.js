@@ -526,7 +526,10 @@ describe('F-08 — Werkzeugleisten-Kontrakt', () => {
 /**
  * Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css, ohne
  * fonts.css). fonts.css bleibt aussen vor, weil dort ausschliesslich
- * @font-face-Bloecke stehen (inter-500, poppins-500 etc.) — eine spaetere
+ * @font-face-Bloecke stehen (seit dem Dateiaustausch vom 2026-10-13: zwei
+ * Gewichtsbereiche `100 900` fuer die variablen Roboto/Inter und fuenf
+ * Einzelgewichte fuer die statischen Poppins/Source Sans Pro — das frueher
+ * hier genannte `inter-500` gibt es nicht mehr) — eine spaetere
  * font-weight-Ratsche (D-42, zurueckgestellt bis TYPO-07 ausgefuehrt wird)
  * wuerde sonst @font-face-Deklarationen mitzaehlen. Vorarbeit, keine
  * Freigabe: die Ratsche selbst wird hier NICHT geschrieben.
@@ -577,6 +580,193 @@ describe('F-05 — zwei Schrift-Quellen plus eine bewusste dritte', () => {
         );
         const uiDecls = (scope.match(/font-family:\s*var\(--font-ui\)/g) || []).length;
         expect(uiDecls).toBe(1);
+    });
+
+    /* ----------------------------------------------------------------------
+       F-05b — die Gegenrichtung: jedes Schrift-Token hat einen Verbraucher
+       ----------------------------------------------------------------------
+       F-05 prueft bisher nur EINE Richtung — dass jede font-family-Deklaration
+       aus einem der drei Tokens kommt. Die Gegenrichtung fehlte, und genau
+       darin sassen drei Deklarationen, die seit ihrer Geburt niemand liest:
+
+           core.css :root { --font-abadi / --font-roboto / --font-arial }
+
+       Gemessen am Stand c1e1b84 ueber CSS-Code + Templates + Quell-JS +
+       tools/ + loader.js + sw.js + build.py: je NULL Verbraucher, in jeder
+       der drei Formen. --font-roboto zeigte dabei auf eine der zehn
+       gebuendelten woff2, deren Zeichensatz Einheit 1 als falsch geholtes
+       Subset nachgewiesen hat — der Eindruck, die App benutze Roboto
+       irgendwo, war allein diese tote Zeile.
+
+       WARUM HIER UND NICHT IN schriftdateien.test.js: die Frage ist keine
+       ueber Schriftdateien, sondern die fehlende Gegenrichtung von F-05. Die
+       Helfer (cssFiles/cssCode/withoutComments/tplFiles/sourceJs) stehen hier
+       schon, und der erste Test dieses Blocks und dieser hier urteilen damit
+       ueber dieselbe Tokenmenge. Lagen sie in zwei Dateien mit zwei Scans,
+       waere die Differenz genau der Bereich, in dem ein Fehler unbemerkt
+       bleibt — dieselbe Begruendung, mit der F-01 und R-01 sich ihre
+       Deklarations-Regex teilen.
+
+       WAS ALS VERBRAUCH ZAEHLT: die drei syntaktischen Formen, in denen ein
+       Token wirklich GELESEN wird — var() mit und ohne Fallback,
+       getPropertyValue und setProperty. Eine blosse Nennung des Namens zaehlt
+       NICHT. Das ist nicht theoretisch: die drei toten Tokens haben je genau
+       einen Treffer unter tests/ — Zeile 76 des Blockkommentars in
+       tests/e2e/features/schriftdateien.spec.js, die ihr Totsein BESCHREIBT.
+       Wer tests/ mitzaehlte und nur auf den Namen suchte, haette alle drei
+       als benutzt gemeldet und diese Ratsche leerlaufen lassen. Darum:
+       tests/ ist nicht im Scan, und gesucht wird die Form, nicht der Name.
+
+       KOMMENTARE WERDEN GESTRICHEN, auch in JS. Der Stripper ist absichtlich
+       grob (er kennt keine Zeichenketten): verschluckt er zuviel, verliert
+       ein Token seinen Verbraucher und dieser Test geht ROT — laut und
+       behebbar. Die andere Richtung waere still. Dass das noetig ist, ist
+       gemessen: systems/session-timer.js:27 schreibt die var()-Form in einem
+       Kommentar, dice.css:111/165/180 tun dasselbe. Ohne Stripper zaehlte das
+       als Verbrauch.
+
+       UNTERSCHIED ZU F-01, bewusst umgekehrt: F-01 liest `cssAll`, also CSS
+       MIT Kommentaren, und geht an einem var()-Platzhalter in einem Kommentar
+       rot (die Warnung dort erklaert es). Dieser Test hier streicht Kommentare
+       auf BEIDEN Seiten — Definitionen wie Verbrauch. Beides ist richtig fuer
+       die jeweilige Frage: F-01 soll auch einen auskommentierten var()-Aufruf
+       finden, der beim Wiedereinschalten ins Leere zeigen wuerde; hier waere
+       derselbe Kommentar ein Alibi-Verbraucher und wuerde ein totes Token
+       gruen stellen. */
+
+    /** Die sechs Namen, die es geben DARF. Gemessen: neun Deklarationen
+     *  (--font-size-* steht je zweimal, in zwei Breakpoint-Bloecken), alle in
+     *  variables.css — ausser den drei geloeschten, die in core.css standen.
+     *  Die Liste ist festgenagelt, damit ein wieder eingeschlepptes Token
+     *  auch dann auffaellt, wenn jemand ihm einen einzigen Alibi-Verbraucher
+     *  mitgibt: dann greift die Liste, nicht die Verbrauchszaehlung. */
+    const SCHRIFT_TOKENS = [
+        '--font-mono',
+        '--font-serif',
+        '--font-size-base',
+        '--font-size-small',
+        '--font-size-title',
+        '--font-ui'
+    ];
+
+    /** CSS- UND JS-Kommentare weg. Grob mit Absicht — siehe Kopfkommentar. */
+    function ohneKommentare(code) {
+        return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+    }
+
+    /**
+     * Bilanz aus zwei Textmengen: wo Tokens DEFINIERT werden und wo sie
+     * GELESEN werden. Beide Mengen sind Parameter, damit die Gegenprobe unten
+     * denselben Erkenner mit erfundenem Text fuettern kann.
+     */
+    function schriftBilanz(defQuellen, verbrauchQuellen) {
+        const definiert = new Set();
+        defQuellen.forEach(code => {
+            for (const m of withoutComments(code).matchAll(/(--font-[\w-]+)\s*:/g)) {
+                definiert.add(m[1]);
+            }
+        });
+        const text = verbrauchQuellen.map(c => ohneKommentare(c)).join('\n');
+        const benutzt = new Set();
+        const form =
+            /var\(\s*(--font-[\w-]+)\s*[,)]|(?:getPropertyValue|setProperty)\(\s*['"](--font-[\w-]+)['"]/g;
+        for (const m of text.matchAll(form)) benutzt.add(m[1] || m[2]);
+        return {
+            definiert: [...definiert].sort(),
+            benutzt: [...benutzt].sort(),
+            tot: [...definiert].filter(t => !benutzt.has(t)).sort()
+        };
+    }
+
+    /** Dieselbe Bilanz, aber ueber den echten Baum. */
+    function schriftBilanzEcht() {
+        const extra = ['loader.js', 'sw.js', 'build.py']
+            .map(n => path.join(REPO, n))
+            .filter(p => fs.existsSync(p))
+            .map(p => fs.readFileSync(p, 'utf8'));
+        return schriftBilanz(
+            [...cssFiles.map(f => f.content), ...tplFiles.map(f => f.content)],
+            [
+                cssCode,
+                ...tplFiles.map(f => f.content),
+                ...sourceJs().map(f => f.content),
+                ...readAll('tools', '.js').map(f => f.content),
+                ...extra
+            ]
+        );
+    }
+
+    test('die Schrift-Tokens sind genau diese sechs', () => {
+        expect(schriftBilanzEcht().definiert).toEqual([...SCHRIFT_TOKENS].sort());
+    });
+
+    test('jedes definierte Schrift-Token hat mindestens einen Verbraucher', () => {
+        const { definiert, benutzt, tot } = schriftBilanzEcht();
+        // Leerlaufsperre A — bricht der Definitionsscan, waere `tot` leer und
+        // dieser Test gruen, ohne etwas geprueft zu haben (Fall 7 unten).
+        // Absichtlich eine UNTERE Grenze und kein toBe: die exakte Menge
+        // nagelt der Test darueber fest. Stuende hier toBe, scheiterte bei
+        // einem wieder eingeschleppten Token diese Zeile mit "9 statt 6" statt
+        // die Zeile, die den NAMEN des toten Tokens nennt.
+        expect(definiert.length).toBeGreaterThanOrEqual(SCHRIFT_TOKENS.length);
+        // Leerlaufsperre B — bricht der Verbrauchsscan, meldet er alles tot
+        // (Fall 6 unten); diese Zeile sagt dasselbe direkt.
+        expect(benutzt.length).toBeGreaterThanOrEqual(SCHRIFT_TOKENS.length);
+        expect(tot).toEqual([]);
+    });
+
+    test('Gegenprobe: der Erkenner trennt echten Verbrauch von blosser Nennung', () => {
+        const def = ':root { --font-echt: Arial; --font-tot: Arial; --font-prosa: Arial; }';
+        const ALLE = ['--font-echt', '--font-prosa', '--font-tot'];
+
+        // Fall 1 — ein benutztes Token, zwei unbenutzte.
+        const a = schriftBilanz([def], ['.x { font-family: var(--font-echt); }']);
+        expect(a.definiert).toEqual(ALLE);
+        expect(a.tot).toEqual(['--font-prosa', '--font-tot']);
+
+        // Fall 2 — var() mit Fallback zaehlt.
+        expect(schriftBilanz([def], ['.x { font-size: var(--font-tot, 14px); }']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 3 — die beiden JS-Formen zaehlen.
+        expect(schriftBilanz([def], ["s.getPropertyValue('--font-tot')"]).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+        expect(schriftBilanz([def], ['e.style.setProperty("--font-tot", x)']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 4 — DER KERN: eine Nennung in Prosa rettet kein Token. Genau
+        // diese Form steht in tests/e2e/features/schriftdateien.spec.js:76.
+        const prosa = ' * `--font-prosa`/`--font-tot` in core.css haben je 0 Verweise';
+        expect(schriftBilanz([def], [prosa]).tot).toEqual(ALLE);
+
+        // Fall 5 — auch die VOLLE var()-Form rettet nicht, wenn sie in einem
+        // Kommentar steht. Belegt an systems/session-timer.js:27 (Zeilen-
+        // kommentar) und dice.css:111/165/180 (Blockkommentar), die genau so
+        // schreiben. Beide Kommentararten einzeln geprueft.
+        expect(schriftBilanz([def], ['    // var(--font-tot) bei 14px 61.6px breit']).tot).toEqual(
+            ALLE
+        );
+        expect(schriftBilanz([def], ['/* in var(--font-tot) bei 1em 130px */']).tot).toEqual(ALLE);
+        // und als Gegenstueck: dieselbe Form OHNE Kommentar zaehlt sehr wohl.
+        expect(schriftBilanz([def], ['font-family: var(--font-tot);']).tot).toEqual([
+            '--font-echt',
+            '--font-prosa'
+        ]);
+
+        // Fall 6 — ein leerer Verbrauchsscan meldet ALLES tot, niemals nichts.
+        // Das ist die strukturelle Antwort auf den Leerlauf: ein kaputtes
+        // Messwerkzeug stellt diese Ratsche rot, nicht gruen.
+        expect(schriftBilanz([def], []).tot).toEqual(ALLE);
+
+        // Fall 7 — ein Definitionsscan ohne Treffer meldet NICHTS tot. Genau
+        // dagegen steht Leerlaufsperre A im Test darueber.
+        expect(schriftBilanz([], ['var(--font-echt)']).tot).toEqual([]);
     });
 });
 
@@ -1428,11 +1618,11 @@ describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
         // Rahmen 0px none, padding 0px, max-height none, overflow-y visible —
         // die Karte ist 1210px hoch, beginnt bei y=-155 und ragt 155px unter
         // den Fensterrand; das Formular liegt ohne Flaeche auf der
-        // weichgezeichneten Seite. Dazu zeigt ihr Schliessknopf auf
-        // data-action="close-modal", und dieser Schluessel ist in KEINEM
-        // ui/actions/*.js registriert — das x schliesst nichts (nachgeklickt).
-        // Das ist ein eigener Vorgang mit eigenem roten Nachweis; hier steht
-        // es, damit es nicht verloren geht. Diese Liste darf nur KUERZER werden.
+        // weichgezeichneten Seite. Ihr Schliessknopf zeigte zudem auf
+        // data-action="close-modal", einen in KEINEM ui/actions/*.js registrierten
+        // Schluessel — behoben in UAT-Runde 7 (jetzt hide-modal, roter Nachweis in
+        // session-prep.spec.js). Die KARTE bleibt hier gefuehrt, bis sie Flaeche
+        // und eine Hoehenschranke hat. Diese Liste darf nur KUERZER werden.
         // Der Pfad steht bewusst in AUSFUEHRBAREM Code und nicht nur im
         // Erklaertext: nur so ist das Modul im Sinne von
         // tests/unit/module-test-coverage.test.js wirklich beurteilt (dieselbe
@@ -3667,7 +3857,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    Theme-Farbe
    ===========================================================================
    Der Bestiarium-Statblock liegt NICHT auf einer Theme-Flaeche. Er liegt auf
-   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:300` baut
+   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:320` baut
    `<div class="bestiary-statblock read-aloud parchment">`, und
    `party.css .read-aloud.parchment` faerbt das mit einem Verlauf aus
    --ra-parchment-from (#f5e6c8) nach --ra-parchment-to (#e8d4a8). Diese beiden
@@ -3734,7 +3924,7 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    #64503e und damit 5,66 und 5,22. Literal -> Token ist Welle-2-Arbeit, kein
    Kontrastmangel. Ebenso NICHT gemeint ist `.bestiary-attribution`: sie steht
    trotz des gemeinsamen Namensanfangs ausserhalb des Statblocks
-   (bestiary-render.js:435, Geschwister der Statblock-Schachtel).
+   (bestiary-render.js:455, Geschwister der Statblock-Schachtel).
    =========================================================================== */
 describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () => {
     /** Der Modulpfad steht hier BEWUSST am Stueck und in ausfuehrbarem Code,
@@ -3754,8 +3944,8 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
      *  deshalb bis 2026-09-28 aus dem Muster — lautlos, wie es sich fuer
      *  diesen Fehlertyp gehoert. Die Spans entstehen in
      *  renderClickableDice() (bestiary-render.js:41) und gehen ueber
-     *  renderTraitList() (:240, :249) in Merkmale und Aktionen; beides
-     *  verpackt renderStatblockHTML() (:300) in die Pergamentschachtel, auf
+     *  renderTraitList() (:235, :244) in Merkmale und Aktionen; beides
+     *  verpackt renderStatblockHTML() (:295) in die Pergamentschachtel, auf
      *  demselben Weg auch in der Initiative-Schublade
      *  (initiative-statblock.js:86). Die Spans liegen also mitten auf dem
      *  Pergament und trugen mit `var(--cyan)`/`var(--gold)` die schlechteste
@@ -6711,6 +6901,15 @@ describe('R-18 — verfeinernde Regel toent, Tinte ist geerbt (Ratsche)', () => 
     const ERWARTETE_PAARE = [
         'core.css .char-action-btn.primary -> .char-action-btn',
         'core.css .link-chip:hover -> .link-chip',
+        // MKOPF: die Eintraege des Punkte-Menues im Mobil-Kopf. Die
+        // Zeigerueckmeldung toent 18% Gold; die Tinte bleibt die geerbte
+        // `var(--text)` der Grundregel. Absichtlich KEINE eigene Tinte wie bei
+        // `.editor-toolbar .tb-menu-item:hover` (das `var(--gold-text)` setzt
+        // und darum unter R-04 faellt, nicht hier): auf einer
+        // 18-Prozent-Toenung bleibt die Lesefarbe die bessere Wahl — und
+        // diese Ratsche rechnet nach, dass sie 4,5 haelt, statt es zu
+        // behaupten.
+        'core.css [data-layout="mobile"] .mobile-header-menu-item:hover -> [data-layout="mobile"] .mobile-header-menu-item',
         'dashboard.css .dice-formula-chip:hover -> .dice-formula-chip',
         'dice.css .dice-attr.save:hover -> .dice-attr span',
         'dice.css .dice-attr.save:hover -> .dice-attr.save small',
@@ -7730,13 +7929,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
 
            6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
                4x `0 0 20px var(--gold)`   Sprungmarken:
-                   features/encounters/encounters-render.js:520  (heute :528)
-                   features/locations/locations-render.js:360    (heute :368)
-                   features/npcs/npc-render.js:382               (heute :390)
-                   systems/entity-links.js:430                   (heute :437)
+                   features/encounters/encounters-render.js:520  (heute :596)
+                   features/locations/locations-render.js:360    (heute :391)
+                   features/npcs/npc-render.js:382               (heute :428)
+                   systems/entity-links.js:430                   (heute :453)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
-                   ui/actions/entity-actions.js:362              (heute :373)
-                   systems/undo.js:778                           (war :756, dann :766)
+                   ui/actions/entity-actions.js:362              (heute :376)
+                   systems/undo.js:885                           (war :756, :766, :778, :821, :864, dann :873)
            6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
            3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
            3   `transition = 'box-shadow …'` — keine Schattenwerte, kein Fall
@@ -10070,31 +10269,31 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
     const JS_MARKEN = [
         {
             datei: 'features/encounters/encounters-render.js',
-            zeile: 528,
+            zeile: 596,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'features/locations/locations-render.js',
-            zeile: 368,
+            zeile: 391,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'features/npcs/npc-render.js',
-            zeile: 390,
+            zeile: 428,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'systems/entity-links.js',
-            zeile: 437,
+            zeile: 453,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'ui/actions/entity-actions.js',
-            zeile: 373,
+            zeile: 376,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.quest-item',
@@ -10102,7 +10301,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'systems/undo.js',
-            zeile: 778,
+            zeile: 885,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.session-card',
@@ -14975,7 +15174,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  Eigenschaft — KEINE Zeile). Bewusst LEER, nicht abwesend: fuer das
      *  Gewicht ist nach heutigem Stand KEINE Ausnahme begruendet. Die zehn
      *  `bold`, die eine `normal` und die eine `300` sitzen alle an sichtbarem
-     *  Text. Die 10 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
+     *  Text. Die 7 @font-face-Gewichte in `fonts.css` sind keine Ausnahme,
      *  sondern liegen ausserhalb des Geltungsbereichs — sie benennen
      *  Schriftdateien, sie gestalten nichts. */
     const FONT_WEIGHT_GEDULDET = {};
@@ -15007,8 +15206,8 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     /** SCHRANKE 2 — Inline-Gewichte in Templates und JS.
      *  Gemessener Ausgangswert: 4 von 17 Inline-Deklarationen.
      *    bold    3x  assets/templates/modals-shops.html (Ladenbogen-Titel),
-     *                tags.js:62 (das Loeschkreuz der Schlagwortliste),
-     *                loader.js:344 (die Zusammenfassungszeile des Ladefehlers)
+     *                tags.js:67 (das Loeschkreuz der Schlagwortliste),
+     *                loader.js:383 (die Zusammenfassungszeile des Ladefehlers)
      *  Der Modulpfad von `tags.js` steht hier bewusst in der KURZFORM. Das
      *  Abdeckungs-Tor (tests/unit/module-test-coverage.test.js) sucht
      *  Modulpfade als Teilzeichenkette und zaehlt JEDEN Treffer als
@@ -15016,7 +15215,7 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
      *  das Modul von seiner datierten Ausnahmeliste zu streichen — und haette
      *  damit eine Testabdeckung behauptet, die es nicht gibt. Diese Schranke
      *  liest den Dateitext, sie fuehrt keine Zeile des Moduls aus. Dieselbe
-     *  Loesung wie bei `dice-core.js:372` im W5-R-07-Block.
+     *  Loesung wie bei `dice-core.js:378` im W5-R-07-Block.
      *    normal  1x  assets/templates/view-resources.html (der Klammerhinweis
      *                neben "Zusammenfassung")
      *  Die uebrigen 13 stehen schon auf 500 oder 600.
@@ -15115,15 +15314,29 @@ describe('W5-R-06 — jedes Schriftgewicht ist 400, 500 oder 600 (Ratsche)', () 
     });
 
     test('SELBSTPROBE: fonts.css bleibt draussen, und das ist nachgerechnet', () => {
-        // Die 10 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
-        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der 700er-Datei
-        // — und sie WIRD sie mitzaehlen, sobald jemand den Geltungsbereich
-        // "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        // Die 7 @font-face-Gewichte dort benennen Schriftschnittdateien. Eine
+        // Ratsche, die sie mitzaehlt, verlangte die Loeschung der zwei
+        // variablen Dateien — und sie WIRD sie mitzaehlen, sobald jemand den
+        // Geltungsbereich "aufraeumt". Die Zahl haelt die Entscheidung fest.
+        //
+        // NACHGEZOGEN NACH DEM DATEIAUSTAUSCH (SCHR, b0ada5b). Bis dahin
+        // standen hier 10 Deklarationen mit einer `700`; seit Roboto und Inter
+        // als je EINE variable Datei kommen, sind es 7 mit zwei `100 900`. Der
+        // Fall war seit b0ada5b die einzige rote Stelle der Jest-Suite und
+        // keinem der SCHR-Auftraege zugewiesen. Die beiden `100 900` sind
+        // genau die Gewichtsbereiche, die `tests/unit/schriftdateien.test.js`
+        // Teil 8 gegen die fvar-Achsen der Dateien prueft; dass sie NICHT in
+        // `ERLAUBT` stehen, ist derselbe Satz wie zuvor fuer die `700` — eine
+        // @font-face-Gewichtsangabe gestaltet nichts und gehoert nicht in die
+        // Gestaltungsskala. `ERLAUBT` bleibt darum unberuehrt.
         const fonts = cssFiles.find(f => f.name === 'fonts.css');
         expect(fonts).toBeTruthy();
         const dort = typoDeklarationen(fonts.content).filter(d => d.prop === 'font-weight');
-        expect(dort.length).toBe(10);
-        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual(['700']);
+        expect(dort.length).toBe(7);
+        expect(dort.filter(d => !ERLAUBT.test(d.wert)).map(d => d.wert)).toEqual([
+            '100 900',
+            '100 900'
+        ]);
         expect(typoGeltungsbereich().map(f => f.name)).not.toContain('fonts.css');
     });
 
@@ -15819,7 +16032,7 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
             // verlangt, das Modul von seiner datierten Ausnahmeliste zu
             // streichen — und damit eine Abdeckung behauptet, die es nicht
             // gibt. Es gibt genau EINE dice-core.js im Baum.
-            'vom Rueckfallpfad in dice-core.js:372 angesprochen, und der ' +
+            'vom Rueckfallpfad in dice-core.js:378 angesprochen, und der ' +
             'findet seinen Behaelter nie (gemessen auf der Wuerfelansicht nach einem ' +
             'Wurf: 0 Treffer fuer .dice-result-main, #dice-result nicht vorhanden). Der ' +
             'tote Behaelter ist ein eigener Befund und in der Aktenlage gefuehrt; die ' +
@@ -16014,9 +16227,23 @@ describe('W5-R-07 — die 32 Urteilsstellen der Welle 5 (Ratsche)', () => {
         expect(stillGeduldet.sort()).toEqual([]);
         // Die Zahlen daneben, damit die Probe nicht durch WEGLASSEN gruen
         // wird: waechst die Kandidatenmenge, faellt dieser Fall.
+        //
+        // 73 -> 74 UND 54 -> 55 DURCH MKOPF — der Fall IST gefallen, und zu
+        // Recht. Dazugekommen ist
+        // `core.css [data-layout="mobile"] .mobile-header-menu-icon`, das
+        // Symbol eines Eintrags im Punkte-Menue des Mobil-Kopfs. In die
+        // Kandidatenmenge kommt es, weil `istIkon()` nach dem Namensmuster
+        // `-icon` sucht; "unbeurteilt" ist es, weil `URTEIL_IKON` es nicht von
+        // Hand fuehrt — und das soll so bleiben: es traegt von Anfang an
+        // `font-size: var(--text-lg)`, also eine SPROSSE, und E-3 urteilt
+        // ueber den SPRUNG einer em-Deklaration auf die naechste Sprosse. Wo
+        // kein Sprung ist, ist nichts zu beurteilen. Geduldet ist es nicht
+        // (das prueft `stillGeduldet` eine Zeile darueber), und dass der
+        // Zugang genau diese eine Stelle mit genau diesem Wert ist, bewacht
+        // `tests/unit/typo-map.test.js` im Block W5-W7.
         expect({ kandidaten: kandidaten.length, unbeurteilt: offen.length }).toEqual({
-            kandidaten: 73,
-            unbeurteilt: 54
+            kandidaten: 74,
+            unbeurteilt: 55
         });
     });
 
@@ -16535,7 +16762,16 @@ describe('W6-R-04 — die Ringfarbe haelt 3:1 auf fuenf Flaechen in vier Themes 
         expect(befunde.sort()).toEqual([]);
         // Die Menge ist nicht leer und nicht geschrumpft: sieben setzende
         // Fokusregeln, zwei Zeigerkonturen daneben.
-        expect(fokusregeln.length).toBe(7);
+        //
+        // 7 -> 8 DURCH MKOPF. Die achte ist
+        // `core.css [data-layout="mobile"] .mobile-header-menu-item:focus-visible`
+        // — die Eintraege des Punkte-Menues im Mobil-Kopf. Sie liegen in einer
+        // Blase mit Goldrahmen; ohne eigene Regel saesse der Ring der
+        // Weltregel AUSSERHALB des Eintrags und damit halb unter dem Rand der
+        // Blase, darum `outline-offset: -2px`. Sie nimmt `var(--focus-ring)`
+        // und nicht `var(--gold)`, die Zusicherung dieses Falles gilt also
+        // auch fuer sie — die Zahl waechst, der Satz bleibt.
+        expect(fokusregeln.length).toBe(8);
         expect(hoverkonturen.sort()).toEqual([
             'dashboard.css {.qref-row:hover}',
             'file-backup.css {.backup-entry:hover}'

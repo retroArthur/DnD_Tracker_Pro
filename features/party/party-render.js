@@ -7,16 +7,12 @@
  */
 function renderParty() {
     const D = window.D;
-    const renderConditionsBar = window.renderConditionsBar;
-    const CATS = window.CATS;
     const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     const repairCharactersData = window.repairCharactersData;
     const updateDiceCharSelect = window.updateDiceCharSelect;
     const c = $('party-list');
     if (!c) return;
     const roster = $('party-roster');
-    // Enable EntityLookup cache for performance during render cycle
-    EntityLookup.enableCache();
     // Robuste Daten-Prüfung
     if (!Array.isArray(D.characters)) {
         c.innerHTML = renderEmptyState({
@@ -28,7 +24,6 @@ function renderParty() {
             buttonValue: 'repairCharactersData'
         });
         if (roster) roster.innerHTML = '';
-        EntityLookup.clearCache();
         return;
     }
     const searchInput = $('party-search');
@@ -70,14 +65,11 @@ function renderParty() {
             buttonValue: 'char-form',
             isFiltered: !!(search || classFilter)
         });
-        EntityLookup.clearCache();
         return;
     }
-    c.innerHTML = characters.map(ch => renderCharacterCard(ch, renderConditionsBar, CATS)).join('');
+    c.innerHTML = characters.map(ch => renderCharacterCard(ch)).join('');
     // Update dice tab character select
     if (typeof updateDiceCharSelect === 'function') updateDiceCharSelect();
-    // Clear EntityLookup cache after render to prevent stale data
-    EntityLookup.clearCache();
 }
 /**
  * Renders the party roster sidebar
@@ -104,10 +96,10 @@ function renderPartyRoster(container, characters) {
                           : 'healthy';
                 const conditions = ch.conditions?.length || 0;
                 return `
-            <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${ch.id}">
-                ${conditions > 0 ? `<span class="roster-conditions">${conditions}</span>` : ''}
+            <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${esc(ch.id)}">
+                ${conditions > 0 ? `<span class="roster-conditions">${esc(conditions)}</span>` : ''}
                 <div class="roster-avatar">
-                    ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
+                    ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                 </div>
                 <div class="roster-name">${esc(ch.name)}</div>
                 <div class="roster-class">${esc(ch.characterClass || '—')}</div>
@@ -126,18 +118,25 @@ function renderPartyRoster(container, characters) {
     `;
 }
 /**
- * Renders a single character card
+ * Renders a single character card.
+ * Vertrag SENKEN (docs/bugfixes.md): jeder Wert aus D laeuft durch esc() — auch
+ * Zahlenfelder, IDs und Fallbacks. Zahlen, bei denen 0 etwas bedeutet, gehen ueber
+ * esc(String(x)), weil esc(0) die leere Zeichenkette liefert. Zustandsleiste und
+ * Kategorie-Symbol kommen aus den globalen Deklarationen (renderConditionsBar in
+ * systems/conditions.js, CATS in core/constants.js) und nicht mehr als Parameter:
+ * so ist fuer jeden Leser — auch fuer die Ratsche tests/unit/html-senken.test.js —
+ * sichtbar, dass beide nur geprueftes Markup bzw. Tabellenwerte liefern.
  */
-function renderCharacterCard(ch, renderConditionsBar, CATS) {
+function renderCharacterCard(ch) {
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
     const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
     const cur = ch.currency || {};
     const coins = [
-        cur.pm && `${cur.pm}P`,
-        cur.gm && `${cur.gm}G`,
-        cur.em && `${cur.em}E`,
-        cur.sm && `${cur.sm}S`,
-        cur.km && `${cur.km}K`
+        cur.pm && `${esc(cur.pm)}P`,
+        cur.gm && `${esc(cur.gm)}G`,
+        cur.em && `${esc(cur.em)}E`,
+        cur.sm && `${esc(cur.sm)}S`,
+        cur.km && `${esc(cur.km)}K`
     ]
         .filter(Boolean)
         .join(' ');
@@ -164,25 +163,25 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
         ? `${esc(ch.characterClass || '')} (${esc(ch.subclass)})`
         : esc(ch.characterClass || '');
     return `
-        <div class="char-card" id="char-${ch.id}" draggable="true" data-sortable data-id="${ch.id}">
+        <div class="char-card" id="char-${esc(ch.id)}" draggable="true" data-sortable data-id="${esc(ch.id)}">
             <!-- Header -->
-            <div class="char-card-header" data-action="edit-char" data-id="${ch.id}">
+            <div class="char-card-header" data-action="edit-char" data-id="${esc(ch.id)}">
                 <div class="char-card-avatar">
-                    ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
+                    ${sichereBildquelle(ch.avatar) ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                 </div>
                 <div class="char-card-info">
                     <div class="char-card-name">
-                        <button class="char-inspiration-toggle${ch.inspiration ? ' active' : ''}" data-action="toggle-inspiration-stop" data-id="${ch.id}" title="${ch.inspiration ? 'Inspiration entfernen' : 'Inspiration vergeben'}">${ch.inspiration ? '⭐' : '☆'}</button>${esc(ch.name)}
+                        <button class="char-inspiration-toggle${ch.inspiration ? ' active' : ''}" data-action="toggle-inspiration-stop" data-id="${esc(ch.id)}" title="${ch.inspiration ? 'Inspiration entfernen' : 'Inspiration vergeben'}">${ch.inspiration ? '⭐' : '☆'}</button>${esc(ch.name)}
                         <span class="drag-handle" title="Sortieren">⋮⋮</span>
                     </div>
                     <div class="char-card-meta">
-                        ${classDisplay} ${ch.level ? 'Lv.' + ch.level : ''} • ${esc(ch.race || '')}
+                        ${classDisplay} ${esc(ch.level ? 'Lv.' + ch.level : '')} • ${esc(ch.race || '')}
                         ${ch.playerName ? `• 👤 ${esc(ch.playerName)}` : ''}
                     </div>
                 </div>
-                <div class="char-card-hp" data-action="show-hp-calculator-stop" data-type="characters" data-id="${ch.id}">
+                <div class="char-card-hp" data-action="show-hp-calculator-stop" data-type="characters" data-id="${esc(ch.id)}">
                     <div class="char-card-hp-value ${hpClass}">
-                        ${ch.hpCurrent || 0}/${ch.hpMax || 0}${ch.tempHp ? `<span style="color:var(--cyan);">+${ch.tempHp}</span>` : ''}
+                        ${esc(String(ch.hpCurrent || 0))}/${esc(String(ch.hpMax || 0))}${ch.tempHp ? `<span style="color:var(--cyan);">+${esc(ch.tempHp)}</span>` : ''}
                     </div>
                     <div class="char-card-hp-bar">
                         <div class="char-card-hp-fill ${hpClass}" style="width: ${Math.max(0, Math.min(100, hpPct))}%"></div>
@@ -196,19 +195,19 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                 <div class="char-card-stats">
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">RK</span>
-                        <span class="char-stat-pill-value">${ch.armorClass || '—'}</span>
+                        <span class="char-stat-pill-value">${esc(ch.armorClass || '—')}</span>
                     </div>
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">Init</span>
-                        <span class="char-stat-pill-value">${ch.initiative !== undefined ? (ch.initiative >= 0 ? '+' : '') + ch.initiative : '—'}</span>
+                        <span class="char-stat-pill-value">${esc(ch.initiative !== undefined ? (ch.initiative >= 0 ? '+' : '') + ch.initiative : '—')}</span>
                     </div>
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">Tempo</span>
-                        <span class="char-stat-pill-value">${String(ch.speed || '').split('|')[0] || '—'}</span>
+                        <span class="char-stat-pill-value">${esc(String(ch.speed || '').split('|')[0] || '—')}</span>
                     </div>
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">Wahr</span>
-                        <span class="char-stat-pill-value">${ch.passivePerception || '—'}</span>
+                        <span class="char-stat-pill-value">${esc(ch.passivePerception || '—')}</span>
                     </div>
                 </div>
 
@@ -225,7 +224,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                                 return `
                                 <div class="char-attr-pill">
                                     <div class="char-attr-pill-name">${attr.toUpperCase()}</div>
-                                    <div class="char-attr-pill-val">${val}</div>
+                                    <div class="char-attr-pill-val">${esc(val)}</div>
                                     <div class="char-attr-pill-mod">${modStr}</div>
                                 </div>
                             `;
@@ -246,8 +245,8 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                     ch.resistances?.length || ch.immunities?.length
                         ? `
                     <div style="font-size: var(--text-xs); color: var(--text-dim); margin-bottom: 8px;">
-                        ${ch.resistances?.length ? `<span style="color: var(--cyan);">🛡️ ${ch.resistances.join(', ')}</span>` : ''}
-                        ${ch.immunities?.length ? `<span style="color: var(--gold);"> ⭐ ${ch.immunities.join(', ')}</span>` : ''}
+                        ${ch.resistances?.length ? `<span style="color: var(--cyan);">🛡️ ${esc(ch.resistances.join(', '))}</span>` : ''}
+                        ${ch.immunities?.length ? `<span style="color: var(--gold);"> ⭐ ${esc(ch.immunities.join(', '))}</span>` : ''}
                     </div>
                 `
                         : ''
@@ -261,7 +260,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                             .slice(0, 6)
                             .map(
                                 s => `
-                            <span class="char-tag spell" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}">✨ ${esc(s.name)}</span>
+                            <span class="char-tag spell" data-action="navigate-entity-stop" data-type="spells" data-id="${esc(s.id)}">✨ ${esc(s.name)}</span>
                         `
                             )
                             .join('')}
@@ -279,7 +278,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                             .slice(0, 4)
                             .map(
                                 i => `
-                            <span class="char-tag item" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ' ×' + i.assignedQty : ''}</span>
+                            <span class="char-tag item" data-action="navigate-entity-stop" data-type="loot" data-id="${esc(i.id)}">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ' ×' + esc(i.assignedQty) : ''}</span>
                         `
                             )
                             .join('')}
@@ -291,12 +290,12 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
 
                 <!-- Actions -->
                 <div class="char-card-actions" data-stop-propagation="true">
-                    <button class="char-action-btn primary" data-action="show-hp-calculator" data-type="characters" data-id="${ch.id}">❤️ HP</button>
-                    <button class="char-action-btn" data-action="show-conditions-modal" data-type="characters" data-id="${ch.id}">⚡</button>
-                    <button class="char-action-btn" data-action="show-assign-spells" data-id="${ch.id}">✨</button>
-                    <button class="char-action-btn" data-action="show-assign-items" data-id="${ch.id}">📦</button>
-                    <button class="char-action-btn" data-action="show-char-details" data-id="${ch.id}" title="Details">🔍</button>
-                    <button class="char-action-btn danger" data-action="delete-char" data-id="${ch.id}">🗑️</button>
+                    <button class="char-action-btn primary" data-action="show-hp-calculator" data-type="characters" data-id="${esc(ch.id)}">❤️ HP</button>
+                    <button class="char-action-btn" data-action="show-conditions-modal" data-type="characters" data-id="${esc(ch.id)}">⚡</button>
+                    <button class="char-action-btn" data-action="show-assign-spells" data-id="${esc(ch.id)}">✨</button>
+                    <button class="char-action-btn" data-action="show-assign-items" data-id="${esc(ch.id)}">📦</button>
+                    <button class="char-action-btn" data-action="show-char-details" data-id="${esc(ch.id)}" title="Details">🔍</button>
+                    <button class="char-action-btn danger" data-action="delete-char" data-id="${esc(ch.id)}">🗑️</button>
                 </div>
             </div>
         </div>
@@ -306,8 +305,8 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
  * Renders compact spell slot pips
  */
 function renderCompactSpellSlots(ch) {
-    // Kanonische Datenform (features/party/party-crud.js:186, wie
-    // systems/spellslots/spellslots-ui.js sie liest): ch.spellSlots[level] =
+    // Kanonische Datenform (saveCharacter() in features/party/party-crud.js,
+    // wie systems/spellslots/spellslots-ui.js sie liest): ch.spellSlots[level] =
     // { max, current }. Die initialisierende Hilfsfunktion aus
     // spellslots-ui.js wird hier bewusst NICHT aufgerufen — sie
     // initialisiert/mutiert das Datenobjekt, und eine Renderfunktion darf den
@@ -330,7 +329,7 @@ function renderCompactSpellSlots(ch) {
     if (cantrips && cantrips.max > 0) {
         html += `<span style="margin-right: 10px; display: inline-flex; align-items: center;" title="Bekannte Zaubertricks">`;
         html += `<span style="font-size: var(--text-xs); color: var(--gold); margin-right: 3px;">🔮</span>`;
-        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${esc(cantrips.max)}</span>`;
         html += `</span>`;
     }
     // Grade 1-9 aufsteigend, Pips innerhalb eines Grades aufsteigend nach
@@ -345,7 +344,7 @@ function renderCompactSpellSlots(ch) {
                 const filled = i < slot.current;
                 // Attribute exakt wie ui/event-delegation.js sie liest:
                 // data-id -> ctx.id, data-value -> ctx.value (D-14/D-46)
-                html += `<span class="slot-pip ${filled ? 'filled' : ''}" data-action="toggle-spell-slot-stop" data-id="${ch.id}" data-value="${level}" title="Grad ${level} Slot ${filled ? '(verfügbar)' : '(verbraucht)'}"></span>`;
+                html += `<span class="slot-pip ${filled ? 'filled' : ''}" data-action="toggle-spell-slot-stop" data-id="${esc(ch.id)}" data-value="${level}" title="Grad ${level} Slot ${filled ? '(verfügbar)' : '(verbraucht)'}"></span>`;
             }
             html += `</span>`;
         }
@@ -392,7 +391,7 @@ function renderPartyOverview() {
     const hpPercent = totalHP > 0 ? Math.round((currentHP / totalHP) * 100) : 100;
     const hpStatus = hpPercent <= 25 ? 'critical' : hpPercent <= 50 ? 'bloodied' : 'healthy';
     // Count conditions
-    const totalConditions = chars.reduce((sum, c) => sum + (c.conditions?.length || 0), 0);
+    const totalConditions = chars.reduce((sum, c) => sum + (Number(c.conditions?.length) || 0), 0);
     container.innerHTML = `
         <div class="party-stat-card">
             <div class="party-stat-icon">👁️</div>
@@ -414,7 +413,7 @@ function renderPartyOverview() {
         </div>
         <div class="party-stat-card">
             <div class="party-stat-icon">👥</div>
-            <div class="party-stat-value">${chars.length}</div>
+            <div class="party-stat-value">${Number(chars.length)}</div>
             <div class="party-stat-label">Party<br>Größe</div>
         </div>
         ${

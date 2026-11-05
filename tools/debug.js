@@ -985,9 +985,9 @@ function updateDebugStats() {
         .map(
             s => `
         <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
-            <div style="font-size: 1.2em;">${s.icon}</div>
-            <div style="font-size: 1.4em; font-weight: 600; color: var(--gold);">${s.value}</div>
-            <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
+            <div style="font-size: 1.2em;">${esc(s.icon)}</div>
+            <div style="font-size: 1.4em; font-weight: 600; color: var(--gold);">${esc(String(s.value))}</div>
+            <div style="font-size: 0.75em; color: var(--text-dim);">${esc(s.label)}</div>
         </div>
     `
         )
@@ -1021,8 +1021,8 @@ function updateDebugSystemStatus() {
         .map(
             s => `
         <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
-            <div style="font-size: 1.1em; font-weight: 600; color: ${s.color};">${s.value}</div>
-            <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
+            <div style="font-size: 1.1em; font-weight: 600; color: ${esc(s.color)};">${esc(String(s.value))}</div>
+            <div style="font-size: 0.75em; color: var(--text-dim);">${esc(s.label)}</div>
         </div>
     `
         )
@@ -1094,8 +1094,8 @@ function runValidation(silent = false) {
                 r => `
             <div style="padding: 4px 0; border-bottom: 1px solid var(--border);">
                 <span style="color: ${r.pass ? 'var(--green)' : 'var(--red)'};">${r.pass ? '✓' : '✗'}</span>
-                <span style="color: var(--text);">${r.name}</span>
-                <span style="color: var(--text-dim); float: right;">${r.detail}</span>
+                <span style="color: var(--text);">${esc(r.name)}</span>
+                <span style="color: var(--text-dim); float: right;">${esc(r.detail)}</span>
             </div>
         `
             )

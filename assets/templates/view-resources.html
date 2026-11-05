@@ -25,7 +25,7 @@
                 </div>
                 <!-- Gruppe 4: Primäre Aktion -->
                 <div class="section-toolbar-actions">
-                    <button class="btn btn-primary" data-action="show-modal" data-value="loot-modal">+ Item</button>
+                    <button class="btn btn-primary" data-action="show-loot-modal">+ Item</button>
                 </div>
             </div>
 
@@ -144,7 +144,7 @@
                             </div>
                         </div>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-spells" title="Zauber importieren">📥</button>
-                        <input type="file" id="import-spells" class="io-file-input" accept=".json,.csv" data-on-change="importData" data-type="spells">
+                        <input type="file" id="import-spells" class="io-file-input" accept=".json" data-on-change="importData" data-type="spells">
                     </div>
                     <button class="btn" data-action="call" data-value="loadSRDSpells" title="SRD-Zauber laden">📚 SRD</button>
                     <select id="spell-class-filter" data-action="render-spells">
@@ -167,7 +167,7 @@
                 
                 <!-- Gruppe 4: Primäre Aktion -->
                 <div class="section-toolbar-actions">
-                    <button class="btn btn-primary" data-action="show-modal" data-value="spell-modal">+ Zauber</button>
+                    <button class="btn btn-primary" data-action="show-new-spell-modal">+ Zauber</button>
                 </div>
             </div>
             <div class="spell-filter-bar">

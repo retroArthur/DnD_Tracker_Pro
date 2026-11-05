@@ -128,15 +128,15 @@ function importFullExport(parsedObj) {
         throw new Error('Zu viele Kampagnen in der Datei (max ' + MAX_IMPORT_CAMPAIGNS + ')');
     }
 
-    // WR-03: Key-Whitelist — die Keys aus der (nicht vertrauenswuerdigen) Datei
-    // werden 1:1 als localStorage-Keys verwendet. Nur echte Kampagnen-Key-Formate
-    // zulassen: 'dnd-tracker-*' (Standard-Kampagne, core/config.js) und
-    // 'dnd-campaign-*' (benannte Kampagnen, campaign-manager.js createCampaign).
-    const ALLOWED_KEY_RE = /^(dnd-tracker(-|$)|dnd-campaign-)/;
+    // WR-03/SENKEN: die Keys der (fremden) Datei werden 1:1 localStorage-Keys. Nur die Formate,
+    // die die App selbst schreibt: Standard-Kampagne (APP_CONFIG.STORAGE_KEY, frueher
+    // 'dnd-tracker'/'dnd-tracker-vN') und 'dnd-campaign-<Date.now()>[-N]' (newCampaignKey).
+    // Die alte Regel /^(dnd-tracker(-|$)|dnd-campaign-)/ liess JEDEN App-Key durch, auch
+    // dnd-tracker-backups/-campaigns/-theme und `_ts`-Begleiter (Gutachten, Sonde G).
+    const istKampagnenKey = key => typeof key === 'string' && key.length <= 200 &&
+        (key === APP_CONFIG.STORAGE_KEY || /^(?:dnd-tracker(?:-v\d+)?|dnd-campaign-\d+(?:-\d+)?)$/.test(key));
     for (const [key] of campaignEntries) {
-        if (typeof key !== 'string' || key.length > 200 || !ALLOWED_KEY_RE.test(key)) {
-            throw new Error('Unerwarteter Kampagnen-Key: ' + key);
-        }
+        if (!istKampagnenKey(key)) throw new Error('Unerwarteter Kampagnen-Key: ' + key);
     }
 
     // CR-01 (Phase 12, Review-Fix): Formkorrektheit ALLER Kampagnen-Eintraege
@@ -155,12 +155,16 @@ function importFullExport(parsedObj) {
     // Jede Kampagne migrieren und speichern
     for (const [key, campaign] of campaignEntries) {
         // T-02-08: migrateData pro Kampagne (Sanitierung + Versions-Migration)
-        let migratedData = campaign.data;
+        // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): VOR der Migration, weil die Datei
+        // fremd ist (verbotene Schluessel, Zahlenfelder als Text), und danach noch einmal,
+        // weil die Migration Felder aus Altformaten nachfuellt.
+        let migratedData = bereinigeDatengrenze(campaign.data);
         if (typeof migrateData === 'function') {
-            migratedData = migrateData(campaign.data);
+            migratedData = migrateData(migratedData);
         } else if (typeof window.migrateData === 'function') {
-            migratedData = window.migrateData(campaign.data);
+            migratedData = window.migrateData(migratedData);
         }
+        migratedData = bereinigeDatengrenze(migratedData);
 
         // Kampagnendaten speichern — mit {success, error}-Pruefung (StorageAPI-Muster)
         const saveResult = StorageAPI.setJSON(key, migratedData);
@@ -175,7 +179,7 @@ function importFullExport(parsedObj) {
         // Start lud die aeltere IndexedDB-Kopie. setQuiet() statt set(), weil set() dabei
         // "💾 Speicher voll! Versuche Fallback zu IndexedDB..." meldet — es gibt hier
         // keinen Rueckfall. Ein VORHANDENER (auch alter) Stempel genuegt: load() prueft nur,
-        // DASS er da ist (quick-roll.js:152); nur ohne jeden Stempel ist es ein Fehlschlag.
+        // DASS er da ist (quick-roll.js:167); nur ohne jeden Stempel ist es ein Fehlschlag.
         const tsResult = StorageAPI.setQuiet(key + '_ts', String(Date.now()));
         if (!tsResult.success && StorageAPI.get(key + '_ts', null) === null) {
             throw new Error(
@@ -217,9 +221,19 @@ function importFullExport(parsedObj) {
     };
     let preservedIndexEntriesCount = 0;
     if (typeof saveCampaignIndexFn === 'function') {
-        const importedIndex = parsedObj.campaignIndex;
+        // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): auch der Index kommt aus der
+        // Datei. Verbotene Schluessel fallen in jeder Tiefe; ein Eintrag bleibt nur mit einem
+        // Schluessel im Kampagnenformat (dieselbe Regel wie fuer campaigns{} oben) — er wird
+        // beim Wechsel zum localStorage-Schluessel und steht als data-value in der
+        // Kampagnenliste. Ein `active` ausserhalb des Formats wird zur Standard-Kampagne,
+        // genau das, was der Start aus einem fehlenden `active` macht (core/init.js).
+        const importedIndex = bereinigeDatengrenze(parsedObj.campaignIndex);
+        // istKampagnenKey: oben bei den Keys von campaigns{} (nur Formate der App, also kein
+        // dnd-tracker-backups als Kampagne im Index)
         if (importedIndex && typeof importedIndex === 'object') {
-            const importedCampaigns = Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : [];
+            const importedCampaigns = (
+                Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : []
+            ).filter(c => c && typeof c === 'object' && istKampagnenKey(c.key));
             let localCampaigns = [];
             if (typeof getCampaignIndexFn === 'function') {
                 const localIndex = getCampaignIndexFn();
@@ -232,7 +246,9 @@ function importFullExport(parsedObj) {
             preservedIndexEntriesCount = keptLocalCampaigns.length;
             const mergedIndex = Object.assign({}, importedIndex, {
                 campaigns: importedCampaigns.concat(keptLocalCampaigns),
-                active: importedIndex.active
+                active: istKampagnenKey(importedIndex.active)
+                    ? importedIndex.active
+                    : APP_CONFIG.STORAGE_KEY
             });
             pruefeIndexErgebnis(saveCampaignIndexFn(mergedIndex));
         } else {

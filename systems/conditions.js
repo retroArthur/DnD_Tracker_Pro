@@ -22,8 +22,9 @@ function renderConditionsList() {
     const entity = getEntityByTypeAndId(type, id);
     const currentConditions = entity?.conditions || [];
     const CONDITIONS = window.CONDITIONS;
-    c.innerHTML = Object.entries(CONDITIONS)
-        .map(([key, cond]) => {
+    c.innerHTML = Object.keys(CONDITIONS)
+        .map(key => {
+            const cond = CONDITIONS[key];
             const hasCondition = currentConditions.some(c => c.type === key);
             return `<button class="btn ${hasCondition ? 'btn-success' : ''}" data-action="toggle-condition" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 10px 12px; min-width: 0; overflow: hidden;">
             <span style="flex-shrink: 0;">${cond.icon}</span>
@@ -105,12 +106,17 @@ function renderConditionsBar(conditions, type, id) {
     if (!conditions || !conditions.length) return '';
     const CONDITIONS = window.CONDITIONS;
     const esc = window.esc;
+    // Vertrag SENKEN (docs/bugfixes.md): der Typ landet in einer Klasse und kommt nur
+    // aus der Erlaubnisliste (die Zustaende plus 'custom', das addCustomCondition()
+    // schreibt); ein fremder Typ bekommt wie bisher keinen eigenen Stil. type/id und
+    // das Symbol laufen wie jeder Wert aus D durch esc().
+    const erlaubteTypen = Object.keys(CONDITIONS).concat(['custom']);
     return `<div class="conditions-bar">
         ${conditions
             .map((c, i) => {
                 const cond = CONDITIONS[c.type] || { icon: '⚡', name: c.name };
-                return `<span class="condition-tag condition-${c.type}" title="${esc(cond.desc || c.name)}" data-action="remove-condition-stop" data-type="${type}" data-id="${id}" data-value="${i}">
-                ${cond.icon} ${esc(c.name || cond.name)}
+                return `<span class="condition-tag condition-${sichereKlasse(c.type, erlaubteTypen, '')}" title="${esc(cond.desc || c.name)}" data-action="remove-condition-stop" data-type="${esc(type)}" data-id="${esc(id)}" data-value="${i}">
+                ${esc(cond.icon)} ${esc(c.name || cond.name)}
                 <span class="remove-condition">✕</span>
             </span>`;
             })

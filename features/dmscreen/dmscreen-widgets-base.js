@@ -61,11 +61,11 @@ function renderDMSPartyWidget() {
             </div>
             <div class="dms-stat-row">
                 <span class="dms-stat-label">Höchste Pass. Wahrn.</span>
-                <span class="dms-stat-value">${highestPP} <span class="dms-stat-char">(${esc(highestPPChar)})</span></span>
+                <span class="dms-stat-value">${esc(String(highestPP))} <span class="dms-stat-char">(${esc(highestPPChar)})</span></span>
             </div>
             <div class="dms-stat-row">
                 <span class="dms-stat-label">Spieler</span>
-                <span class="dms-stat-value">${chars.length}</span>
+                <span class="dms-stat-value">${Number(chars.length)}</span>
             </div>
         </div>
     `;
@@ -82,7 +82,7 @@ function renderDMSInitiativeWidget() {
     }
     return `
         <div class="dms-initiative">
-            <div class="dms-init-header">Runde ${round} <span class="dms-init-count">(${combatants.length})</span></div>
+            <div class="dms-init-header">Runde ${esc(String(round))} <span class="dms-init-count">(${Number(combatants.length)})</span></div>
             <div class="dms-init-list">
                 ${combatants
                     .map((c, i) => {
@@ -97,7 +97,7 @@ function renderDMSInitiativeWidget() {
                         <div class="dms-init-entry ${isCurrent ? 'active' : ''} ${hpClass}">
                             <span class="dms-init-marker">${isCurrent ? '▶' : ''}</span>
                             <span class="dms-init-name">${esc(c.name)}</span>
-                            <span class="dms-init-value">${c.initiative || 0}</span>
+                            <span class="dms-init-value">${esc(String(c.initiative || 0))}</span>
                         </div>
                     `;
                     })
@@ -131,19 +131,35 @@ function renderDMSDiceWidget() {
 }
 /**
  * DM Screen Würfelwurf
+ * @returns Summe, oder null, wenn die Formel ungueltig ist (dann kein Wurf)
  */
 function dmsRollDice(formula) {
     let result = 0;
     let rolls = [];
+    // Ungueltige Formel: KEIN Wurf (WUERFEL). Vorher lehnte parseDiceNotation()
+    // per alert() ab, und der "Wurf" ging trotzdem mit Summe 0 und ohne
+    // Einzelwuerfe in Verlauf und Statistik ({abc, 0, []}). Die Pruefung ist
+    // DIESELBE Grammatik wie in parseDiceNotation() (features/dice/dice-core.js)
+    // — lockerer darf sie nie werden, sonst geht der alert() wieder auf.
+    const notation = String(formula || '').trim();
+    if (!/^(\d+)?d(\d+)(k[hl](\d+))?([+-]\d+)?$/i.test(notation)) {
+        if (typeof window.showToast === 'function') {
+            window.showToast('Ungültige Würfelformel (z. B. 2d6+3, 4d6kh3)', 'error');
+        }
+        return null;
+    }
+    formula = notation;
     // Use parseDiceNotation if available (returns object with total, rolls)
     if (typeof window.parseDiceNotation === 'function') {
         const parsed = window.parseDiceNotation(formula);
-        if (parsed) {
-            result = parsed.total;
-            rolls = parsed.rolls;
-        }
+        // Unerreichbar, solange die Pruefung oben dieselbe Grammatik hat; wird
+        // parseDiceNotation() strenger, haelt die Zeile den Scheineintrag ab.
+        if (!parsed) return null;
+        result = parsed.total;
+        rolls = parsed.rolls;
     } else {
-        // Fallback: simple dice roll
+        // Fallback ohne Wuerfelmodul (nur Unit-Werkbaenke): ein einfacher Wurf.
+        // Nach der Pruefung oben trifft `match` immer — `if (match)` ist Vorsicht.
         const match = formula.match(/(\d+)?d(\d+)/i);
         if (match) {
             const count = parseInt(match[1]) || 1;
@@ -209,9 +225,9 @@ function renderDMSTablesWidget() {
                 .map(
                     t => `
                 <div class="dms-table-entry">
-                    <span class="dms-table-icon">${t.icon || '🎲'}</span>
+                    <span class="dms-table-icon">${esc(t.icon || '🎲')}</span>
                     <span class="dms-table-name">${esc(t.name)}</span>
-                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="${t.id}">Roll</button>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="${esc(t.id)}">Roll</button>
                 </div>
             `
                 )

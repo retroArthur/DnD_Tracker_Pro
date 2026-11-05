@@ -1,6 +1,6 @@
 // [SECTION:EVENT_DELEGATION]
 // ============================================================
-// EVENT DELEGATION SYSTEM - @click @change @input @action
+// EVENT DELEGATION SYSTEM - @click @keydown @change @input @action
 // ============================================================
 // Kern-Infrastruktur für Event-Handling
 // Actions werden von separaten Modulen in ui/actions/ registriert
@@ -32,12 +32,53 @@ const ALLOWED_CHANGE_HANDLERS = new Set([
     'updateRangeHint'
 ]);
 
+// Die zwei Tasten, die ein Bedienelement ausloesen (TAST, Schritt 3). Mehr
+// nicht: ein Buchstabe ist ein Kuerzel, keine Bedienung (O-7).
+const AUSLOESE_TASTEN = new Set(['Enter', ' ']);
+
+// INPUT-Arten, die Enter/Leertaste NICHT selbst brauchen — Knoepfe in
+// Feldgestalt. Alle anderen (text, number, checkbox, radio, range, file,
+// date, …) behalten ihre Taste; der Verteiler bedient sie ueber 'change'
+// bzw. 'input'.
+const KNOPFARTIGE_INPUT_TYPEN = new Set(['button', 'submit', 'reset']);
+
+// INPUT-Arten, deren Wert GETIPPT wird (BESTIAR-KLICK, R1). Nur fuer sie
+// stellt _handleChange ein `change` nicht zu, das nichts Neues bringt. SELECT,
+// checkbox, radio, file, range und date fehlen mit Absicht: ihr Wert ist kein
+// Getipptes (eine Checkbox meldet bei JEDEM Umschalten 'on'), und die zwei
+// Handler, die input und change unterscheiden, sitzen an Datei-Inputs
+// (ui/actions/system-actions.js): sie lesen NUR beim change, das denselben
+// Wert traegt wie das input davor. Ohne diese Schranke waeren der Markdown-
+// und der Audio-Import tot (markdown-austausch.spec.js und soundboard.spec.js
+// am Mutanten 21 von 31 rot). TEXTAREA nennt der Vertrag nicht.
+const TEXTARTIGE_INPUT_TYPEN = new Set([
+    'text',
+    'search',
+    'url',
+    'email',
+    'tel',
+    'password',
+    'number'
+]);
+
 const EventDelegation = {
     _handlers: new Map(),
+
+    // Element -> { action, value }: was der data-action-Zweig von _handleInput
+    // diesem Feld zuletzt zugestellt hat (BESTIAR-KLICK, R1). Eine WeakMap,
+    // damit ein per innerHTML ersetztes Feld keinen Eintrag zuruecklaesst.
+    _perInputZugestellt: new WeakMap(),
 
     init() {
         // Event listener in CAPTURE-Phase, um Events vor onclick-Handlern abzufangen
         document.addEventListener('click', e => this._handleClick(e), {
+            capture: true,
+            passive: false
+        });
+        // Ebenfalls CAPTURE und ausdruecklich NICHT passive — _handleKeydown
+        // ruft preventDefault(). Die Begruendung beider Eigenschaften steht
+        // dort.
+        document.addEventListener('keydown', e => this._handleKeydown(e), {
             capture: true,
             passive: false
         });
@@ -118,12 +159,204 @@ const EventDelegation = {
         }
     },
 
+    /**
+     * Enter und Leertaste auf einem [data-action]-Element (TAST, Schritt 3,
+     * Orchestrator-Entscheidung O-2).
+     *
+     * WARUM ES DIESEN ZWEIG BRAUCHT. Solange jedes bediente Element ein
+     * echter `<button>` ist, fehlt er niemandem: der Browser macht aus
+     * Enter und Leertaste selbst ein `click`, und _handleClick faengt es.
+     * Fuer die ~219 Quellstellen, die `div`, `span` oder `label` sind, gilt
+     * das NICHT. Gemessen am gebauten Buendel, gefuellte Kampagne, echte
+     * Tabulatorspruenge: auf einem `div[tabindex="0"][data-action]` erzeugt
+     * die Leertaste 0 Klicks, die Aktion laeuft nicht — und `scrollY`
+     * springt von 0 auf 143 (sechs Eintraege je Typ) bzw. 564 (zwanzig).
+     * Der Knopf tut nichts, und das Dokument laeuft weg.
+     *
+     * WIE ER ES TUT: er loest sein Ziel ueber dasselbe
+     * `closest('[data-action]')` auf wie der Klick-Zweig und schickt dann
+     * einen SYNTHETISCHEN Klick auf das fokussierte Element. Danach
+     * erledigt _handleClick alles Weitere — die Formular-Ausnahmen,
+     * `data-stop-propagation`, den Kontext, die Fehlerabschirmung. Ein
+     * zweiter Aufrufweg in den Handler haette einen zweiten Regelsatz
+     * bedeutet, der mit dem ersten synchron zu halten waere.
+     *
+     * DER KLICK GEHT AUF `quelle`, NICHT AUF `ziel` — nachgemessen, nicht
+     * Geschmack. `backdrop-close` (ui/actions/ui-actions.js) prueft
+     * `ctx.event.target === ctx.target` und schliesst nur, wenn der Klick
+     * die Schale selbst getroffen hat. Ein Klick auf das aufgeloeste Ziel
+     * wuerde diese Pruefung immer erfuellen: ein Tastendruck auf einem
+     * Element INNERHALB der Schale wuerde den Dialog schliessen. Ein Klick
+     * auf das fokussierte Element verhaelt sich dagegen genau wie ein
+     * Mausklick darauf.
+     *
+     * DIE ZWEI TRAGENDEN ZEILEN sind `preventDefault()` und
+     * `stopPropagation()`. Beide sind gemessen, nicht angenommen:
+     *   - OHNE preventDefault meldet ein echter `<button>` ZWEI Klicks
+     *     (einer isTrusted vom Browser, einer synthetisch von hier) und die
+     *     Leertaste rollt ein `div` um 143–787 px weg. MIT: genau einer,
+     *     scrollY bleibt 0 — bei Enter UND bei der Leertaste.
+     *   - stopPropagation() in der Capture-Phase auf `document` entzieht
+     *     die Taste dem globalen Einzeltasten-Lauscher
+     *     (systems/spellslots/keyboard-shortcuts.js), der auf demselben
+     *     Knoten in der BUBBLE-Phase sitzt: die Bubble-Runde ueber
+     *     `document` ist eine eigene Zustellung und prueft die Flagge.
+     *     Das ueberschneidet sich mit der `beanspruchtLeertaste`-Schranke
+     *     aus Schritt 2 und ersetzt sie NICHT — jene greift auch dort, wo
+     *     dieser Zweig nicht greift (Element ohne `data-action`, Aktion
+     *     nicht registriert).
+     * Wer eine der beiden Zeilen beim Aufraeumen fuer redundant haelt,
+     * bricht jeden `<button>` der App bzw. gibt die gekaperte Leertaste
+     * zurueck.
+     *
+     * EINE AUSNAHME, und sie ist gemessen: auf einer von der Kehrschleife
+     * (T-C) nachgeruesteten Stelle greift der Zweig fuer die LEERTASTE nicht,
+     * wenn der Fokus per MAUSKLICK dort steht. Sonst drueckt der Spielleiter
+     * nach der Korrektur eines Initiative-Werts die Leertaste und oeffnet
+     * dieselbe Eingabe wieder, statt den Zug weiterzugeben. Begruendung und
+     * Messwerte an `KeyboardReach.nurMausfokus()`; Enter und native Knoepfe
+     * sind ausdruecklich NICHT betroffen.
+     *
+     * WAS ER NICHT ANFASST, und warum das die riskantere Haelfte ist. Im
+     * Dokument sitzen Tippflaechen MIT eigener Aktion oder IN einem Element
+     * mit Aktion (am gebauten Buendel gezaehlt): der Wiki-Editor als
+     * `div[contenteditable][data-action]`, `textarea#quick-notes`
+     * INNERHALB von `div[data-action="backdrop-close"]`, 38
+     * `input[type=checkbox]` in `label[data-action="toggle-selected"]`, 15
+     * Suchfelder und ~45 Auswahllisten mit eigener Aktion. Ein Zweig, der
+     * die Leertaste dort abfaengt, macht den Wiki-Editor unbenutzbar und
+     * schliesst die Schnellnotizen beim Tippen. Die Schranke sitzt deshalb
+     * an der QUELLE des Ereignisses, nicht am aufgeloesten Ziel — sonst
+     * greift sie beim Textfeld in einer Schale mit Aktion nicht.
+     *
+     * KEINE ABSENDE-FALLE: der Quellbaum enthaelt 0 `<form>`-Elemente
+     * (nachgezaehlt in Quelltext und gebautem Dokument). Enter kann hier
+     * also kein Formular abschicken.
+     */
+    _handleKeydown(e) {
+        if (!AUSLOESE_TASTEN.has(e.key)) return;
+
+        // Jede Zusatztaste bleibt beim Browser. Strg+Enter, Alt+Leertaste
+        // (Fenstermenue) und Shift+Enter sind keine Bedienung des
+        // fokussierten Elements; ohne Eingriff bleibt das native Verhalten.
+        if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+
+        const quelle = e.target;
+        // `closest`/`click` fehlen z.B. auf document und auf SVG-Knoten.
+        if (!quelle || typeof quelle.closest !== 'function' || typeof quelle.click !== 'function') {
+            return;
+        }
+
+        // Tippflaechen behalten ihre Taste — gemessen an der QUELLE.
+        if (this._tasteGehoertDerQuelle(quelle, e.key)) return;
+
+        // NACH EINEM MAUSKLICK GEHOERT DIE LEERTASTE WEITER DEM ZUG (T-C,
+        // Runde 1). Eine von der Kehrschleife (`ui/keyboard-reach.js`)
+        // nachgeruestete Stelle nimmt beim Mausklick den Fokus an — vorher
+        // nahm sie ueberhaupt keinen. Ohne diese Zeile bedient die Leertaste
+        // danach das angeklickte Element ERNEUT statt den Zug weiterzugeben:
+        // gemessen auf `div.init-value` Zug 0 -> 0 und ein zweiter
+        // `prompt()`. Warum das nur versorgte Stellen und nur die Leertaste
+        // betrifft, warum ein nativer `<button>` ausdruecklich NICHT
+        // dazugehoert, und warum die Herkunft des Fokus NICHT ueber
+        // `:focus-visible` festgestellt werden kann: alles an
+        // `KeyboardReach.nurMausfokus()`.
+        if (e.key === ' ' && window.KeyboardReach?.nurMausfokus?.(quelle)) return;
+
+        const ziel = quelle.closest('[data-action]');
+        if (!ziel) return;
+
+        // Nur bei einer REGISTRIERTEN Aktion eingreifen — dieselbe Schranke
+        // wie im Klick-Zweig, der auch erst dann preventDefault() ruft.
+        // Ohne sie wuerde die Taste an Elementen mit unbekannter Aktion
+        // geschluckt, ohne dass etwas passiert.
+        if (!this._handlers.has(ziel.dataset.action)) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Gehaltene Taste: die Vorgabe bleibt unterdrueckt (kein Seitenlauf),
+        // aber es loest nur der erste Anschlag aus. Ein nativer `<button>`
+        // feuert beim Halten ebenfalls nicht fortlaufend.
+        if (e.repeat) return;
+
+        quelle.click();
+    },
+
+    /**
+     * Braucht `el` die Taste `key` selbst? Dann laesst _handleKeydown sie
+     * unberuehrt durch.
+     * @param {HTMLElement} el Die QUELLE des Tastenereignisses
+     * @param {string} key
+     */
+    _tasteGehoertDerQuelle(el, key) {
+        if (el.isContentEditable) return true;
+
+        const tag = el.tagName;
+        // TEXTAREA: Enter macht einen Absatz, die Leertaste ein Leerzeichen.
+        // SELECT: die Leertaste oeffnet die Liste, Enter bestaetigt.
+        if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+
+        if (tag === 'INPUT') return !KNOPFARTIGE_INPUT_TYPEN.has((el.type || '').toLowerCase());
+
+        // Enter auf einem Verweis ist dessen eigene Handlung; daraus erzeugt
+        // der Browser selbst ein `click`, das der Klick-Zweig ohnehin
+        // bekommt. Die Leertaste rollt dort nur die Seite — die darf der
+        // Zweig uebernehmen.
+        if (tag === 'A' && key === 'Enter' && el.hasAttribute('href')) return true;
+
+        return false;
+    },
+
+    /**
+     * Bringt dieses `change` dem Handler nichts Neues? (BESTIAR-KLICK, R1)
+     *
+     * DER FEHLER. Nach dem Tippen in ein Suchfeld wurde der ERSTE Klick auf
+     * einen Treffer verschluckt — gemessen im Bestiar, in sechs weiteren
+     * Listen, im Wiki-Suchfeld, in "Zauber zuweisen" und "Items zuweisen",
+     * mit Maus und Finger, in dev und prod. Beim mousedown verliert das Feld
+     * den Fokus, Chromium feuert SYNCHRON `change`, und dieser Verteiler rief
+     * dieselbe Aktion wie fuer `input` ein zweites Mal — fuer einen Wert, den
+     * die Liste beim Tippen laengst gezeichnet hatte. Das Neuzeichnen per
+     * innerHTML nahm den mousedown-Knoten mit, und aus mousedown und mouseup
+     * auf verschiedenen Knoten entsteht kein click.
+     *
+     * DIE REGEL. Nicht zugestellt wird ein `change` nur, wenn ALLES zutrifft:
+     * das Feld ist ein textartiges INPUT, und DERSELBE Handler hat fuer
+     * DIESES Element den IDENTISCHEN Wert schon per `input` bekommen. Jede
+     * getippte, eingefuegte oder per Autofill gesetzte Aenderung feuert
+     * vorher `input`; was ein Handler so verpassen koennte, hat er schon.
+     *
+     * WARUM HIER UND NICHT IN 'search-input'. Die Klasse reicht ueber diese
+     * eine Aktion hinaus ('wiki-search-input', 'filter-assign-spells',
+     * 'filter-assign-items', 'search-notes'); ein Fix je Handler waere eine
+     * Disziplin, die der naechste Handler nicht kennt. Und WARUM NUR IM
+     * data-action-ZWEIG: der Legacy-Zweig `data-on-change` hat keinen
+     * input-Pfad — `validateAssignItemQty` klemmt die Mengenfelder in
+     * "Items zuweisen" NUR am change.
+     *
+     * Entscheidungstabelle: tests/unit/event-delegation-change.test.js;
+     * Bedienwege: tests/e2e/features/bestiar-klick.spec.js (W1–W6); die
+     * Typschranke am Bildschirm: markdown-austausch.spec.js, soundboard.spec.js.
+     * @param {HTMLInputElement} target
+     * @param {string} action
+     */
+    _changeBringtNichtsNeues(target, action) {
+        if (target.tagName !== 'INPUT') return false;
+        if (!TEXTARTIGE_INPUT_TYPEN.has((target.type || '').toLowerCase())) return false;
+        const zuletzt = this._perInputZugestellt.get(target);
+        return !!zuletzt && zuletzt.action === action && zuletzt.value === target.value;
+    },
+
     _handleChange(e) {
         const target = e.target;
 
         // Prüfe zuerst auf data-action (neue konsistente Methode)
         const action = target.dataset.action;
         if (action && this._handlers.has(action)) {
+            // BESTIAR-KLICK, R1 — Begruendung an _changeBringtNichtsNeues().
+            if (this._changeBringtNichtsNeues(target, action)) return;
+
             const id = target.dataset.id ? parseEntityId(target.dataset.id) : null;
             const type = target.dataset.type || null;
             const value = target.value || target.dataset.value || null;
@@ -188,6 +421,10 @@ const EventDelegation = {
             const type = target.dataset.type || null;
             const value = target.value || target.dataset.value || null;
             const ctx = { id, type, value, target, event: e };
+
+            // Gemerkt wird der Wert, den der Handler JETZT bekommt — vor dem
+            // Aufruf, falls er das Feld selbst umschreibt (BESTIAR-KLICK, R1).
+            this._perInputZugestellt.set(target, { action, value: target.value });
 
             try {
                 this._handlers.get(action)(ctx);

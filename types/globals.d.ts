@@ -110,7 +110,7 @@ declare global {
   function hideConflictBanner(): void;
   
   /** Push undo state */
-  function pushUndo(description?: string): void;
+  function pushUndo(description?: string, kennung?: unknown): void;
   
   /** Undo last action */
   function undo(): void;
@@ -749,8 +749,8 @@ declare global {
   /** Navigate to search result */
   function navigateToResult(type: EntityType, id: EntityId, locId?: EntityId | null): void;
   
-  /** Clear search */
-  function clearSearch(inputId: string, renderFn: () => void): void;
+  /** Leert ein Suchfeld ueber seine eigene input-Aktion und fokussiert es (SUCHE-LEEREN) */
+  function clearSearch(inputId: string): void;
   
   // ============================================================
   // TAG FUNCTIONS
@@ -794,11 +794,14 @@ declare global {
   /** Export data as CSV */
   function exportToCSV(dataType: string): void;
   
-  /** Import data */
-  function importData(file: File): void;
+  /** Reiter-Import: liest die im Reiterfeld (.io-file-input) gewaehlte Datei und oeffnet #import-modal */
+  function importData(inputEl: HTMLInputElement): void;
   
-  /** Execute import */
-  function executeImport(type: string): void;
+  /** Reiter-Import: schreibt die vorbereitete Datei ("Importieren" in #import-modal) */
+  function executeImport(type?: string | null): void;
+
+  /** Reiter-Import: zeichnet die Vorschau #import-info fuer den gewaehlten Modus neu */
+  function renderImportVorschau(): void;
   
   // ============================================================
   // ERROR HANDLER

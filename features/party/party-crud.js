@@ -40,16 +40,24 @@ function updateSpeedDisplay() {
     ftDisplay.textContent = ft + 'ft';
 }
 /**
- * Avatar preview - sichere Implementierung
+ * Avatar preview - sichere Implementierung. Zeigt, was die Karte zeigt (AVATAR-DATEI, A3): ein
+ * Bild genau dann, wenn sichereBildquelle() den Wert anzeigt — http(s), data:image/, eine lokale
+ * Datei (`file:///C:/Bilder/held.png`) oder ein relativer Pfad —, sonst den Platzhalter "?". Bis
+ * AVATAR-DATEI liess sie nur http(s) zu: ein lokales Portrait stand nach dem Speichern auf der
+ * Karte, die Vorschau zeigte "?" (SENKEN Offen (15)). Ein Netzwerkpfad laedt auch hier nicht.
  */
 function updateAvatarPreview(url) {
     const preview = $('cf-avatar-preview');
     if (!preview) return;
-    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    // Getrimmt wie beim Speichern (saveCharacter()): Vorschau und Karte pruefen denselben Wert
+    const quelle = typeof url === 'string' ? url.trim() : '';
+    if (sichereBildquelle(quelle)) {
         // Sichere Erstellung ohne innerHTML mit User-Input
         preview.innerHTML = '';
         const img = document.createElement('img');
-        img.src = esc(url);
+        // DOM-Eigenschaft, kein HTML: esc() machte aus `&` in der URL `&amp;` und damit
+        // eine andere Adresse (Vertrag SENKEN R5). Das Schema prueft sichereBildquelle() oben.
+        img.src = quelle;
         img.alt = 'Avatar Preview';
         img.onerror = function () {
             if (this.parentElement) {
@@ -175,7 +183,18 @@ function saveCharacter() {
     const D = window.D;
     const renderParty = window.renderParty;
     const idInput = $('edit-char-id');
-    const id = idInput.value;
+    let id = idInput.value;
+    // Zeigt die ID auf einen Charakter, den es nicht mehr gibt (geloescht,
+    // oder per Strg+Z bzw. ↩️ zurueckgenommen, waehrend das Formular offen
+    // war), wird als NEUER Charakter gespeichert — die Eingaben bleiben
+    // erhalten. Vorher legte saveCharacter() den Undo-Eintrag "Charakter
+    // bearbeitet" an, BEVOR es die ID suchte, fand nichts, schrieb nichts und
+    // meldete trotzdem "Charakter aktualisiert" (gemessen: "Neu A (Wirt)"
+    // endgueltig verloren, am Telefon ebenso). Geprueft VOR pushUndo, wie in
+    // saveNPC().
+    const idx = id ? D.characters.findIndex(c => c.id === parseEntityId(id)) : -1;
+    const verwaist = Boolean(id) && idx === -1;
+    if (verwaist) id = '';
     const languageSelect = $('char-languages');
     const selectedLanguages = Array.from(languageSelect.selectedOptions).map(o => o.value);
     // Collect spell slots (including slot 0 for cantrips)
@@ -300,22 +319,19 @@ function saveCharacter() {
     }
     pushUndo(id ? 'Charakter bearbeitet' : 'Charakter erstellt');
     if (id) {
-        const idx = D.characters.findIndex(c => c.id === parseEntityId(id));
-        if (idx > -1) {
-            // Preserve current slot values when editing
-            const existing = D.characters[idx];
-            if (existing.spellSlots) {
-                for (let i = 0; i <= 9; i++) {
-                    if (
-                        existing.spellSlots[i] &&
-                        ch.spellSlots[i].max === existing.spellSlots[i].max
-                    ) {
-                        ch.spellSlots[i].current = existing.spellSlots[i].current;
-                    }
+        // Preserve current slot values when editing
+        const existing = D.characters[idx];
+        if (existing.spellSlots) {
+            for (let i = 0; i <= 9; i++) {
+                if (
+                    existing.spellSlots[i] &&
+                    ch.spellSlots[i].max === existing.spellSlots[i].max
+                ) {
+                    ch.spellSlots[i].current = existing.spellSlots[i].current;
                 }
             }
-            D.characters[idx] = { ...D.characters[idx], ...ch };
         }
+        D.characters[idx] = { ...D.characters[idx], ...ch };
     } else {
         ch.id = nextId('characters');
         ch.spells = [];
@@ -325,7 +341,14 @@ function saveCharacter() {
     cancelCharEdit();
     renderParty();
     save();
-    showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
+    if (verwaist) {
+        showToast(
+            'Der bearbeitete Charakter existiert nicht mehr — als neuer Charakter gespeichert',
+            'warning'
+        );
+    } else {
+        showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
+    }
 }
 /**
  * Oeffnet das Bearbeitungsformular fuer einen Charakter
@@ -414,6 +437,11 @@ function editChar(id) {
     // Avatar and height
     const avatarInput = $('char-avatar');
     if (avatarInput) avatarInput.value = ch.avatar || '';
+    // Die Vorschau folgt dem FELD (AVATAR-VORSCHAU R1/R2): `.value =` loest kein input-Ereignis
+    // aus, und 'update-avatar-preview' hing nur daran — sie zeigte den zuletzt GETIPPTEN Wert
+    // oder "?", nie das Bild des geladenen Helden. Direkt aufrufen, kein synthetisches Ereignis
+    // (R4): BESTIAR-KLICK stellt ein change mit dem schon zugestellten Wert nicht mehr zu.
+    updateAvatarPreview(avatarInput ? avatarInput.value : '');
     const heightInput = $('char-height');
     if (heightInput) heightInput.value = String(ch.height || '');
     // Skill proficiencies + expertise (D-03, CHAR-03)
@@ -467,7 +495,12 @@ function cancelCharEdit() {
             'char-gm',
             'char-em',
             'char-sm',
-            'char-km'
+            'char-km',
+            // Die Stufe stand nur unter `defaults` — clearFormFields() wendet
+            // die aber nur auf GELISTETE Felder an. Gemessen trug der naechste
+            // neue Charakter nach "Abbrechen" (und nach 💾) Stufe 5 und
+            // Uebungsbonus 3 des zuletzt bearbeiteten.
+            'char-level'
         ],
         selectFields: [
             'char-class',
@@ -496,8 +529,14 @@ function cancelCharEdit() {
         },
         customHandlers: () => {
             updateSpeedDisplay();
+            updateProficiencyBonus();
             clearCharLanguages();
-            clearChipSelection('.cf-chip');
+            // clearChipSelection() haengt selbst ' .cf-chip' an: der Aufruf mit
+            // '.cf-chip' suchte '.cf-chip .cf-chip' und traf nichts — die
+            // Resistenz- und Immunitaets-Chips blieben angehakt und wanderten
+            // in den naechsten neuen Charakter (gemessen: Feuer, Gift).
+            clearChipSelection('#char-resistances');
+            clearChipSelection('#char-immunities');
             resetAttributes(['str', 'dex', 'con', 'int', 'wis', 'cha'], 'char', 10, updateAttrMod);
             clearSpellSlots('char-slot', 9);
             // Clear skill checkboxes (D-03)
@@ -518,6 +557,11 @@ function cancelCharEdit() {
             if (attacksContainer) attacksContainer.innerHTML = '';
         }
     });
+    // Vorschau aus dem geleerten Feld nachfuehren (AVATAR-VORSCHAU R3) — fuer alle Leerwege:
+    // Abbrechen, Speichern, Kopfzeile/Taste n/Palette (verwirfBearbeitenRest) und Import R7.
+    // Bewusst NACH clearFormFields() und nicht in customHandlers: dort laeuft alles in einem
+    // try-Block, und ein frueherer werfender Handler liesse den Aufruf still wegfallen.
+    updateAvatarPreview($('char-avatar')?.value || '');
 
     // Formular schließen
     $('char-form').classList.remove('open');

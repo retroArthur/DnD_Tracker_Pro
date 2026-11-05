@@ -103,7 +103,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="npc-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'npcs');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
         }
     },
     {
@@ -112,7 +112,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="loc-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'locations');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
         }
     },
     {
@@ -121,7 +121,7 @@ const EDITORS = [
         boldSelector: '[data-action="format-text"][data-cmd="quest-desc"][data-editor="bold"]',
         open: async page => {
             await openTabInGroup(page, 'quests');
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
         }
     },
     {
@@ -266,7 +266,7 @@ test.describe('Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben
         await gotoBundleFresh(page);
         await ensureMarkdownShortcutsEnabled(page);
         await openTabInGroup(page, 'npcs');
-        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        await page.click('[data-action="show-new-npc-modal"]');
         const editor = page.locator('#npc-desc');
         await expect(editor).toBeVisible();
         await editor.click();

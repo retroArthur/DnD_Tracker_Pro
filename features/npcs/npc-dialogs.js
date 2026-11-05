@@ -66,7 +66,7 @@ function showAddDialogModal(npcId) {
             ${buildEditorToolbar('quick-dialog-text', 'minimal')}
             <div id="quick-dialog-text" class="rich-editor" contenteditable="true" style="min-height: 100px;" data-placeholder="Was sagt der NPC?"></div>
         </div>
-        <button class="btn btn-success" data-action="save-quick-dialog" data-id="${npcId}">💾 Speichern</button>
+        <button class="btn btn-success" data-action="save-quick-dialog" data-id="${esc(npcId)}">💾 Speichern</button>
     `;
     // Create modal if not exists
     let modal = $('quick-dialog-modal');

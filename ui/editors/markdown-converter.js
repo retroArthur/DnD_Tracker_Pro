@@ -12,11 +12,57 @@
 function htmlToMarkdown(html) {
     if (!html || typeof html !== 'string') return '';
 
-    // Create temporary container to parse HTML
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
+    // Inert parsen (SENKEN R1): ein Dokument aus DOMParser laedt keine Bilder und fuehrt
+    // nichts aus — ein losgeloestes div DIESER Seite (frueher `temp.innerHTML = html`) schon,
+    // der Export eines importierten Eintrags forderte so dessen Bilder an. Die Knoten wandern
+    // in ein div desselben inerten Dokuments: die Wandlung beginnt wie bisher an einem div.
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const temp = doc.createElement('div');
+    temp.append(...doc.head.childNodes, ...doc.body.childNodes);
 
     return convertNodeToMarkdown(temp);
+}
+
+/**
+ * Text aus Daten fuer eine Markdown-Datei (SENKEN R1). Die Datei verlaesst die App: ein
+ * HTML-faehiger Markdown-Betrachter macht aus `<…>` im Text Markup, und markdownToHtml() beim
+ * Re-Import Formatierung aus Text (frueher wurde `<p>&lt;img …&gt;</p>` — sichtbarer TEXT —
+ * in der Datei zu einem lebendigen `<img>`). Darum `<`/`>` als Entitaet, `&` nur, wo er eine
+ * Entitaet bilden wuerde ("Tom & Jerry" bleibt lesbar). Eine Linkmarke `](` bzw. `]:` vor
+ * einem Ziel mit fremdem Schema (alles ausser http/https/mailto, vgl. sichererLink) wird
+ * entwertet: `(`/`:` als Entitaet bilden keine Linkstruktur. Der Re-Import liest die
+ * Entitaeten wieder als Zeichen (sanitizeHTML parst sie), der Text kommt woertlich zurueck.
+ * @param {*} text
+ * @returns {string}
+ */
+function markdownText(text) {
+    return String(text ?? '')
+        .replace(/&(?=#?[a-zA-Z0-9]+;)/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\]([(:])(\s*)([^\s)]*)/g, (treffer, marke, raum, ziel) =>
+            /^[a-z][a-z0-9+.-]*:/i.test(ziel) && !sichererLink(ziel)
+                ? `]&#${marke.charCodeAt(0)};${raum}${ziel}`
+                : treffer
+        );
+}
+
+/**
+ * Linkziel aus Daten fuer `[text](ziel)` (SENKEN R3): http/https/mailto (sichererLink) oder
+ * ein relatives Ziel, wie der Editor es anlegt (`#…`, `./…`, `/…`), nach istRelativerLink() —
+ * derselbe Pruefkern wie sanitizeHTML() und der Editor: kein doppelter, auch kodierter Trenner
+ * (`//host`, `/%5C%5Chost`), unter file:// ein UNC-Pfad (Nachbesserung (16)). Sonst '' (der
+ * Aufrufer schreibt dann nur den Text). Leerraum, `<`, `>`, `"` und Klammern prozentkodiert:
+ * sonst endet das Ziel vorzeitig, und der Rest stuende als Text — samt Markup — in der Datei.
+ * @param {*} href
+ * @returns {string}
+ */
+function markdownLinkZiel(href) {
+    const ziel = String(href ?? '').trim();
+    if (!sichererLink(ziel) && !istRelativerLink(ziel)) return '';
+    return ziel.replace(/[\s<>"()]/g, z =>
+        z === '(' ? '%28' : z === ')' ? '%29' : encodeURIComponent(z)
+    );
 }
 
 /**
@@ -29,7 +75,7 @@ function convertNodeToMarkdown(node) {
 
     // Text node
     if (node.nodeType === Node.TEXT_NODE) {
-        return node.textContent || '';
+        return markdownText(node.textContent || '');
     }
 
     // Element node
@@ -38,49 +84,59 @@ function convertNodeToMarkdown(node) {
         let markdown = '';
 
         switch (tag) {
+            // Betonung liest die KINDER, nicht textContent: textContent
+            // verschluckt <br> ("<b>eins<br>zwei</b>" wurde "**einszwei**") und
+            // jede Formatierung darin (MARKDOWN, docs/bugfixes.md).
             case 'b':
             case 'strong':
-                markdown = `**${getTextContent(node)}**`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '**', '**');
                 break;
 
             case 'i':
             case 'em':
-                markdown = `*${getTextContent(node)}*`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '*', '*');
                 break;
 
             case 's':
             case 'strike':
             case 'del':
-                markdown = `~~${getTextContent(node)}~~`;
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '~~', '~~');
+                break;
+
+            case 'u':
+                // Markdown kennt keine Unterstreichung. Als Inline-HTML reicht
+                // markdownToHtml() sie durch, und sanitizeHTML() erlaubt <u>.
+                markdown = wrapMarkdownLines(convertChildrenToMarkdown(node), '<u>', '</u>');
                 break;
 
             case 'code':
-                markdown = `\`${getTextContent(node)}\``;
+                markdown = `\`${textAus(node)}\``;
                 break;
 
             case 'h1':
-                markdown = `# ${getTextContent(node)}\n\n`;
+                markdown = `# ${textAus(node)}\n\n`;
                 break;
             case 'h2':
-                markdown = `## ${getTextContent(node)}\n\n`;
+                markdown = `## ${textAus(node)}\n\n`;
                 break;
             case 'h3':
-                markdown = `### ${getTextContent(node)}\n\n`;
+                markdown = `### ${textAus(node)}\n\n`;
                 break;
             case 'h4':
-                markdown = `#### ${getTextContent(node)}\n\n`;
+                markdown = `#### ${textAus(node)}\n\n`;
                 break;
             case 'h5':
-                markdown = `##### ${getTextContent(node)}\n\n`;
+                markdown = `##### ${textAus(node)}\n\n`;
                 break;
             case 'h6':
-                markdown = `###### ${getTextContent(node)}\n\n`;
+                markdown = `###### ${textAus(node)}\n\n`;
                 break;
 
             case 'a': {
-                const href = node.getAttribute('href') || '';
-                const linkText = getTextContent(node);
-                markdown = `[${linkText}](${href})`;
+                // Nur ein erlaubtes Ziel wird ein Link (SENKEN R3), sonst bleibt der Text
+                const ziel = markdownLinkZiel(node.getAttribute('href'));
+                const linkText = textAus(node);
+                markdown = ziel ? `[${linkText}](${ziel})` : linkText;
                 break;
             }
 
@@ -93,15 +149,18 @@ function convertNodeToMarkdown(node) {
                     listItems
                         .map((li, index) => {
                             const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
-                            return `${prefix} ${getTextContent(li)}`;
+                            return `${prefix} ${textAus(li)}`;
                         })
                         .join('\n') + '\n\n';
                 break;
             }
 
             case 'blockquote': {
-                const lines = getTextContent(node).split('\n');
-                markdown = lines.map(line => `> ${line}`).join('\n') + '\n\n';
+                const lines = textAus(node).split('\n');
+                // Markdown-Zitatmarke, kein Markup — als Name, weil R6 das `>` im Literal
+                // fuer HTML hielte (tests/unit/html-senken.test.js, Regel der Vorsichtung).
+                const marke = '> ';
+                markdown = lines.map(line => marke + line).join('\n') + '\n\n';
                 break;
             }
 
@@ -117,23 +176,16 @@ function convertNodeToMarkdown(node) {
             case 'div':
                 // Check for read-aloud class
                 if (node.classList.contains('read-aloud')) {
-                    markdown = `:::read-aloud\n${getTextContent(node)}\n:::\n\n`;
+                    // Mehrzeilig: der Block traegt Zeilenumbrueche und Formatierung.
+                    markdown = `:::read-aloud\n${convertChildrenToMarkdown(node).trim()}\n:::\n\n`;
                 } else {
-                    // Process children and add line breaks
-                    markdown = '';
-                    for (const child of node.childNodes) {
-                        markdown += convertNodeToMarkdown(child);
-                    }
-                    markdown += '\n\n';
+                    markdown = convertChildrenToMarkdown(node) + '\n\n';
                 }
                 break;
 
             default:
                 // Process children for unknown tags
-                markdown = '';
-                for (const child of node.childNodes) {
-                    markdown += convertNodeToMarkdown(child);
-                }
+                markdown = convertChildrenToMarkdown(node);
                 break;
         }
 
@@ -144,12 +196,89 @@ function convertNodeToMarkdown(node) {
 }
 
 /**
- * Get text content from node without HTML
+ * Elemente, die in Markdown auf einer eigenen Zeile beginnen muessen —
+ * "Text<h2>X</h2>" ergab sonst "Text## X", also keine Ueberschrift.
+ */
+const MARKDOWN_EXPORT_BLOCK_TAGS = [
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'blockquote',
+    'table',
+    'p',
+    'div'
+];
+
+/**
+ * Wandelt die Kinder eines Knotens. Ein Block-Element bekommt davor eine
+ * Leerzeile ("\n\n" ZUSAETZLICH zu Zeilenumbruechen davor), ausser es folgt
+ * auf einen Block, der seine Leerzeile schon mitbringt. markdownToHtml()
+ * nimmt diese Leerzeile wieder als Blockgrenze weg — ein <br> davor bleibt.
+ * @param {Node} node - DOM node
+ * @returns {string} Markdown string
+ */
+function convertChildrenToMarkdown(node) {
+    const istBlock = child =>
+        child.nodeType === Node.ELEMENT_NODE &&
+        MARKDOWN_EXPORT_BLOCK_TAGS.includes(child.tagName.toLowerCase());
+    let markdown = '';
+    let vorigerBlock = true;
+    for (const child of node.childNodes) {
+        const teil = convertNodeToMarkdown(child);
+        if (!teil) continue;
+        const block = istBlock(child);
+        if (block && !vorigerBlock && markdown) markdown += '\n\n';
+        markdown += teil;
+        vorigerBlock = block;
+    }
+    return markdown;
+}
+
+/**
+ * Setzt Betonung JE ZEILE: markdownToHtml() erkennt "**…**" nur innerhalb
+ * einer Zeile, ein "**eins\nzwei**" bliebe Text. Leerraum am Rand bleibt
+ * ausserhalb der Marken, leere Zeilen bleiben leer.
+ * @param {string} inhalt - schon gewandeltes Markdown
+ * @param {string} auf - oeffnende Marke
+ * @param {string} zu - schliessende Marke
+ * @returns {string}
+ */
+function wrapMarkdownLines(inhalt, auf, zu) {
+    return inhalt
+        .split('\n')
+        .map(zeile => {
+            const teile = zeile.match(/^(\s*)([\s\S]*?)(\s*)$/);
+            return teile && teile[2] ? `${teile[1]}${auf}${teile[2]}${zu}${teile[3]}` : zeile;
+        })
+        .join('\n');
+}
+
+/**
+ * Text eines Elements fuer die EINZEILIGEN Markdown-Formen (Ueberschrift,
+ * Link, Listenpunkt, Zelle, Code). Ein <br> darin wird zum Leerzeichen —
+ * textContent verschluckt ihn und klebt "eins<br>zwei" zu "einszwei".
  * @param {Node} node - DOM node
  * @returns {string} Text content
  */
 function getTextContent(node) {
-    return (node.textContent || '').trim();
+    if (node.nodeType !== Node.ELEMENT_NODE) return (node.textContent || '').trim();
+    const kopie = /** @type {Element} */ (node.cloneNode(true));
+    kopie.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+    return (kopie.textContent || '').trim();
+}
+
+/**
+ * Text eines Elements wie getTextContent(), fuer die Datei kodiert (markdownText, SENKEN R1).
+ * @param {Node} node - DOM node
+ * @returns {string}
+ */
+function textAus(node) {
+    return markdownText(getTextContent(node));
 }
 
 /**
@@ -166,7 +295,7 @@ function convertTableToMarkdown(table) {
     // Process rows
     rows.forEach((row, rowIndex) => {
         const cells = Array.from(row.cells);
-        const cellContents = cells.map(cell => getTextContent(cell).replace(/\|/g, '\\|'));
+        const cellContents = cells.map(cell => textAus(cell).replace(/\|/g, '\\|'));
         markdown += '| ' + cellContents.join(' | ') + ' |\n';
 
         // Add separator after first row (header)
@@ -205,10 +334,13 @@ function markdownToHtml(markdown) {
 
     let html = markdown;
 
-    // Read-aloud blocks (must be first to avoid interference)
-    html = html.replace(/:::read-aloud\n([\s\S]*?)\n:::/g, (match, content) => {
-        return `<div class="read-aloud">${content.trim()}</div>`;
-    });
+    // Read-aloud blocks (must be first to avoid interference). Die `\s*` um die Gruppe tun, was
+    // frueher content.trim() im Rueckruf tat; die Ersetzung ist ein Muster wie alle Regeln hier
+    // (das Ergebnis geht am Ende durch sanitizeHTML()).
+    html = html.replace(
+        /:::read-aloud\n\s*([\s\S]*?)\s*\n:::/g,
+        '<div class="read-aloud">$1</div>'
+    );
 
     // Headings (must be before other conversions)
     html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
@@ -241,15 +373,25 @@ function markdownToHtml(markdown) {
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
     );
 
-    // Unordered lists (lines starting with - or *)
+    // Unordered lists (lines starting with - or *). Der Zeilenumbruch NACH dem
+    // letzten Punkt bleibt draussen — er gehoert zur Blockgrenze darunter.
     html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    html = html.replace(/(?:<li>.*<\/li>(?:\n(?=<li>))?)+/g, '<ul>$&</ul>');
 
     // Blockquotes (lines starting with >)
     html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
 
-    // Line breaks (double newline = paragraph)
-    html = html.replace(/\n\n/g, '<br><br>');
+    // Zeilenumbrueche (MARKDOWN, docs/bugfixes.md). Bis zu zwei "\n" an einem
+    // Block-Element sind die Blockgrenze, die htmlToMarkdown() dort schreibt,
+    // und fallen weg; JEDES weitere "\n" ist ein <br> — htmlToMarkdown()
+    // schreibt jedes <br> als "\n". Frueher wurde nur "\n\n" zu <br><br>, ein
+    // einzelnes blieb Leerraum: "Zeile eins<br>Zeile zwei" kam nach der
+    // Rundreise als EINE Zeile zurueck. <blockquote> zaehlt nicht als Block:
+    // sanitizeHTML() macht Text daraus.
+    const block = '(?:h[1-6]|ul|ol|li|div|p|table|thead|tbody|tr|th|td)\\b';
+    html = html.replace(new RegExp(`(<\\/?${block}[^>]*>)\\n{1,2}`, 'gi'), '$1');
+    html = html.replace(new RegExp(`\\n{1,2}(<\\/?${block})`, 'gi'), '$1');
+    html = html.replace(/\n/g, '<br>');
 
     // Sanitize to prevent XSS
     if (typeof sanitizeHTML === 'function') {
@@ -326,3 +468,5 @@ function renderMarkdownInContent(html) {
 window.htmlToMarkdown = htmlToMarkdown;
 window.markdownToHtml = markdownToHtml;
 window.renderMarkdownInContent = renderMarkdownInContent;
+// markdownText: Kopfzeilen des Markdown-Exports (systems/markdown-import-export.js)
+window.markdownText = markdownText;

@@ -164,3 +164,24 @@ describe('Strukturprüfung (b): bekannte, dokumentierte esc()-Abweichung bei der
         });
     });
 });
+
+// ============================================================
+// STRUKTURPRÜFUNG (c): der Datengrenzen-Block ist in beiden Kopien zeichengleich
+// ============================================================
+// Vertrag SENKEN R2/R3/R4 (docs/bugfixes.md): sichererLink(), sichereFarbe(),
+// sichereKlasse() und bereinigeDatengrenze() stehen in utils/basic.js (Produktion) und in
+// der Paritaetskopie utils/testable-utils.js (Jest-Ladepfad, Coverage-Schwelle). Den
+// Vertrag beider Kopien prueft tests/unit/datengrenze.test.js — aber nur an seinen
+// Faellen. Ein Feld, das nur EINE Kopie in DATENGRENZE_ZAHLENFELDER fuehrt, fiele dort
+// nicht auf. Darum hier der Text zwischen den Markierungen, Zeichen fuer Zeichen (nur die
+// Zeilenenden sind normalisiert). Anders als bei esc(0) oben wird Drift hier nicht
+// dokumentiert, sondern rot.
+describe('Strukturprüfung (c): Datengrenzen-Block (Vertrag SENKEN) ist in beiden Kopien gleich', () => {
+    const { datengrenzeBlock } = require('./helpers/datengrenze-block.js');
+
+    test('utils/basic.js und utils/testable-utils.js fuehren denselben Block', () => {
+        const produktion = datengrenzeBlock('utils/basic.js');
+        expect(produktion).toContain('function bereinigeDatengrenze(');
+        expect(datengrenzeBlock('utils/testable-utils.js')).toBe(produktion);
+    });
+});

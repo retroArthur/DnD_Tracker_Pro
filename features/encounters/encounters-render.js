@@ -5,6 +5,10 @@
 // State
 let selectedEncounterId = null;
 let currentEncFilter = 'all';
+// Bis zu dieser Breite blendet assets/styles/encounters.css das Detail neben
+// der Liste aus; ein Tap auf einen Eintrag oeffnet es dann bildschirmfuellend
+// (openEncounterDetail). Muss zur @media-Grenze dort passen.
+const ENC_DETAIL_VOLLBILD = '(max-width: 900px)';
 // Creature type icons
 const ENC_ICONS = {
     aberration: '👁️',
@@ -24,11 +28,13 @@ const ENC_ICONS = {
     undead: '💀',
     default: '⚔️'
 };
-// Format speed for display (supports both old string and new object format)
+// Format speed for display (supports both old string and new object format).
+// Beide Formen liefern kodierten Text bzw. Markup fuer innerHTML, nicht fuer
+// textContent: jeder Wert aus D laeuft durch esc() (Vertrag SENKEN, docs/bugfixes.md).
 function formatEncSpeed(speed, html = false) {
     if (!speed) return '—';
     // Old format: just a string
-    if (typeof speed === 'string') return speed || '—';
+    if (typeof speed === 'string') return esc(speed);
     // New format: object with walk, climb, swim, fly, burrow
     const icons = { walk: '🚶', climb: '🧗', swim: '🏊', fly: '🦅', burrow: '⛏️' };
     const labels = {
@@ -39,11 +45,13 @@ function formatEncSpeed(speed, html = false) {
         burrow: 'Graben'
     };
     const parts = [];
-    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: speed.walk });
-    if (speed.climb) parts.push({ icon: icons.climb, label: labels.climb, value: speed.climb });
-    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: speed.swim });
-    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: speed.fly });
-    if (speed.burrow) parts.push({ icon: icons.burrow, label: labels.burrow, value: speed.burrow });
+    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: esc(speed.walk) });
+    if (speed.climb)
+        parts.push({ icon: icons.climb, label: labels.climb, value: esc(speed.climb) });
+    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: esc(speed.swim) });
+    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: esc(speed.fly) });
+    if (speed.burrow)
+        parts.push({ icon: icons.burrow, label: labels.burrow, value: esc(speed.burrow) });
     if (parts.length === 0) return '—';
     if (html) {
         // Return as HTML with icons for multi-line display
@@ -59,8 +67,10 @@ function formatEncSpeed(speed, html = false) {
 }
 function getEncounterIcon(enc) {
     const type = (enc.creatureType || enc.race || '').toLowerCase();
-    for (const [key, icon] of Object.entries(ENC_ICONS)) {
-        if (type.includes(key)) return icon;
+    // Ueber die Schluessel statt Object.entries: der Rueckgabewert ist sichtbar ein
+    // Tabellenwert (Vertrag SENKEN, Ratsche tests/unit/html-senken.test.js).
+    for (const key of Object.keys(ENC_ICONS)) {
+        if (type.includes(key)) return ENC_ICONS[key];
     }
     return ENC_ICONS.default;
 }
@@ -69,8 +79,6 @@ function renderEncounters() {
     const listContainer = $('encounter-list');
     const filterContainer = $('encounter-filters');
     if (!listContainer) return;
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     // Update counter
     setViewCount('encounter', D.encounters?.length || 0);
     // Render filter chips (by creature type)
@@ -145,19 +153,20 @@ function renderEncounters() {
             </div>
         `;
         clearEncounterDetail();
-        EntityLookup.clearCache();
         return;
     }
     // Render list items
     listContainer.innerHTML = encounters.map(enc => renderEncounterItem(enc)).join('');
     // Auto-select first if none selected
     if (!selectedEncounterId || !encounters.find(e => e.id === selectedEncounterId)) {
+        // Die gezeigte Auswahl ist weg (Rueckgaengig, Wiederholen, Import):
+        // im Vollbild stuende sonst still ein anderer Encounter. Zurueck zur
+        // Liste, wie nach 🗑️.
+        if (selectedEncounterId) closeEncounterDetail(true);
         selectEncounter(encounters[0].id, false);
     } else {
         showEncounterDetail(selectedEncounterId);
     }
-    // Clear EntityLookup cache
-    EntityLookup.clearCache();
 }
 // Helper to parse CR values like "1/4", "1/2" etc.
 function parseCR(cr) {
@@ -233,11 +242,11 @@ function renderEncounterItem(enc) {
     const isSelected = enc.id === selectedEncounterId;
     const difficulty = enc.cr ? getEncounterDifficulty(enc.cr) : null;
     return `
-        <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${enc.id}">
+        <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${esc(enc.id)}">
             <div class="enc-item-icon">${icon}</div>
             <div class="enc-item-info">
                 <div class="enc-item-name">
-                    ${enc.cr ? `<span class="enc-item-cr">CR ${enc.cr}</span>` : ''}
+                    ${enc.cr ? `<span class="enc-item-cr">CR ${esc(enc.cr)}</span>` : ''}
                     ${esc(enc.name)}
                 </div>
                 <div class="enc-item-meta">
@@ -245,8 +254,8 @@ function renderEncounterItem(enc) {
                 </div>
             </div>
             <div class="enc-item-stats">
-                <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${enc.ac || '—'}</span>
-                <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${enc.hp || '—'}</span>
+                <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${esc(enc.ac || '—')}</span>
+                <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${esc(enc.hp || '—')}</span>
             </div>
             ${
                 difficulty
@@ -276,6 +285,61 @@ function selectEncounter(id, scroll = true) {
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
+}
+/**
+ * Tap auf einen Listeneintrag (Aktion select-encounter). Breit wie bisher:
+ * Auswahl, das Detail steht daneben. Bis 900px ist das Detail ausgeblendet —
+ * dort oeffnet es bildschirmfuellend, Liste, Werkzeugleiste und Anlegekarte
+ * treten zurueck (`.enc-view.detail-open`, encounters.css). Automatische
+ * Auswahlen (renderEncounters, Listensuche, Filter) rufen selectEncounter
+ * allein und oeffnen nichts; ein Treffer der Kopfsuche zaehlt als Tap.
+ */
+function openEncounterDetail(id) {
+    selectEncounter(id);
+    if (!window.matchMedia(ENC_DETAIL_VOLLBILD).matches) return;
+    // Ohne Encounter gibt es kein Detail und kein "← Liste" — dann bleibt
+    // die Liste stehen.
+    if (!EntityLookup.encounter(id)) return;
+    const view = $('view-encounter');
+    const panel = $('enc-detail-panel');
+    if (!view || !panel) return;
+    view.classList.add('detail-open');
+    view.scrollTop = 0;
+    // Der Scrollstand des vorigen Statblocks gilt nicht fuer diesen.
+    panel.scrollTop = 0;
+    const zurueck = panel.querySelector('.enc-detail-back');
+    if (zurueck) zurueck.focus({ preventScroll: true });
+}
+/**
+ * Zurueck aus dem Vollbild-Detail zur Liste. `fokus` nur, wenn ein Nutzer
+ * zurueckkehrt ("← Liste", Loeschen, ein verschwundener Encounter): dann
+ * liegt der Fokus wieder auf dem gewaehlten Eintrag, bei leerer Liste auf
+ * "+ Neuer Encounter". Beim Bearbeiten und Leeren bleibt er, wo er ist.
+ */
+function closeEncounterDetail(fokus = false) {
+    const view = $('view-encounter');
+    if (!view || !view.classList.contains('detail-open')) return;
+    view.classList.remove('detail-open');
+    if (!fokus) return;
+    // Erst nach zwei Frames: renderEncounters ersetzt die Eintraege per
+    // innerHTML, und die Tastaturgruppe ruestet ihren tabindex erst im
+    // naechsten Frame nach — ein sofortiges focus() fiel auf BODY (gemessen
+    // nach 🗑️). Bis dahin steht auch die neue Auswahl fest.
+    requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+            const item = document.querySelector(`.enc-item[data-id="${selectedEncounterId}"]`);
+            if (item) {
+                if (!item.hasAttribute('tabindex')) item.tabIndex = -1;
+                item.focus({ preventScroll: true });
+                item.scrollIntoView({ block: 'nearest' });
+                return;
+            }
+            const neu = document.querySelector(
+                '#view-encounter .section-toolbar [data-action="show-enc-form"]'
+            );
+            if (neu) neu.focus({ preventScroll: true });
+        })
+    );
 }
 function showEncounterDetail(id) {
     const panel = $('enc-detail-panel');
@@ -327,7 +391,7 @@ function showEncounterDetail(id) {
                           const total = mod + profBonus;
                           displayValue = `+${total}`;
                       }
-                      return `<span class="enc-save-tag">${attr.toUpperCase()} ${displayValue}</span>`;
+                      return `<span class="enc-save-tag">${esc(attr.toUpperCase())} ${esc(displayValue)}</span>`;
                   })
                   .join('')
             : '';
@@ -343,19 +407,20 @@ function showEncounterDetail(id) {
         .join('');
     panel.innerHTML = `
         <div class="enc-detail-content">
+            <button class="enc-detail-back" data-action="close-encounter-detail" title="Zurück zur Liste" aria-label="Zurück zur Liste">← Liste</button>
             <div class="enc-detail-header">
                 <div class="enc-detail-icon">${icon}</div>
                 <div class="enc-detail-title">
                     <div class="enc-detail-name">${esc(enc.name)}</div>
                     <div class="enc-detail-subtitle">
                         ${enc.creatureType ? esc(enc.creatureType) : ''}
-                        ${enc.cr ? ` • CR ${enc.cr}` : ''}
+                        ${enc.cr ? ` • CR ${esc(enc.cr)}` : ''}
                     </div>
                 </div>
                 <div class="enc-detail-actions">
-                    <button class="enc-detail-btn success" data-action="load-encounter" data-id="${enc.id}" title="Zum Kampf hinzufügen">⚔️</button>
-                    <button class="enc-detail-btn" data-action="edit-encounter" data-id="${enc.id}" title="Bearbeiten">✏️</button>
-                    <button class="enc-detail-btn danger" data-action="delete-encounter" data-id="${enc.id}" title="Löschen">🗑️</button>
+                    <button class="enc-detail-btn success" data-action="load-encounter" data-id="${esc(enc.id)}" title="Zum Kampf hinzufügen">⚔️</button>
+                    <button class="enc-detail-btn" data-action="edit-encounter" data-id="${esc(enc.id)}" title="Bearbeiten">✏️</button>
+                    <button class="enc-detail-btn danger" data-action="delete-encounter" data-id="${esc(enc.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -363,15 +428,15 @@ function showEncounterDetail(id) {
             <div class="enc-stats-row">
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">RK</div>
-                    <div class="enc-core-stat-value">${enc.ac || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.ac || '—')}</div>
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">HP</div>
-                    <div class="enc-core-stat-value">${enc.hp || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.hp || '—')}</div>
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">Init</div>
-                    <div class="enc-core-stat-value">${enc.init || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.init || '—')}</div>
                 </div>
                 <div class="enc-core-stat enc-speed-stat">
                     <div class="enc-core-stat-label">Speed</div>
@@ -379,7 +444,7 @@ function showEncounterDetail(id) {
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">Wahr.</div>
-                    <div class="enc-core-stat-value">${enc.perception || '—'}</div>
+                    <div class="enc-core-stat-value">${esc(enc.perception || '—')}</div>
                 </div>
             </div>
 
@@ -391,9 +456,9 @@ function showEncounterDetail(id) {
                         .map(
                             a => `
                         <div class="enc-attr-box">
-                            <div class="enc-attr-name">${a.name}</div>
-                            <div class="enc-attr-value">${a.val}</div>
-                            <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${a.mod}</div>
+                            <div class="enc-attr-name">${esc(a.name)}</div>
+                            <div class="enc-attr-value">${esc(a.val)}</div>
+                            <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${esc(a.mod)}</div>
                         </div>
                     `
                         )
@@ -485,6 +550,9 @@ function showEncounterDetail(id) {
     `;
 }
 function clearEncounterDetail() {
+    // Ohne Encounter hat das Vollbild nichts zu zeigen — und die leere
+    // Fassung traegt kein "← Liste", aus dem Vollbild gaebe es keinen Weg.
+    closeEncounterDetail();
     const panel = $('enc-detail-panel');
     if (panel) {
         panel.innerHTML = `
@@ -553,3 +621,12 @@ window.selectEncounter = selectEncounter;
 window.setEncFilter = setEncFilter;
 window.toggleEncounterCard = toggleEncounterCard;
 window.showEncForm = showEncForm;
+// Verbraucher: ui/actions/entity-actions.js (select-encounter,
+// close-encounter-detail), features/encounters/encounters-crud.js (editEnc,
+// deleteEnc), systems/entity-links.js (navigateToEntity),
+// systems/search/global-search.js (navigateToResult).
+// toggleEncounter() hat genau einen Verbraucher, navigateToResult(); der ruft
+// sie ohne window-Export (Export-Audit-Regel). ESLint meldet die Funktion
+// trotzdem als unbenutzt — es prueft je Datei. Kein toter Code.
+window.openEncounterDetail = openEncounterDetail;
+window.closeEncounterDetail = closeEncounterDetail;

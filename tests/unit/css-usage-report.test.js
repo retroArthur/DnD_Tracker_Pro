@@ -345,7 +345,8 @@ describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-0
     });
 
     test('CR-01b: ein Objektschluessel "containerClass:" mit einer Ternary haelt BEIDE Zweige lebendig', () => {
-        // Reale Form aus safe-render.js (im ui/-Verzeichnis), Zeile 360 —
+        // Form aus safe-render.js (ui/, am 2026-10-26 als toter Code geloescht;
+        // seither steht kein containerClass-Schluessel mehr im Baum) —
         // `containerClass: options.viewMode === 'list' ? 'list-view-container' : 'npc-grid',`
         const cssFiles = [
             {
@@ -454,9 +455,9 @@ describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeiche
     });
 
     test('CR-02b: ein "containerClass:"-Objektschluessel mit einer ueber die Folgezeile umbrochenen Ternary haelt beide Zweige lebendig', () => {
-        // Reale Form aus safe-render.js (im ui/-Verzeichnis), Zeile 360 — hier bewusst mit dem Wert in
-        // der Folgezeile, um den Umbruchfall zu belegen (im echten Baum steht
-        // die Zeile heute nur zufaellig einzeilig).
+        // Form aus safe-render.js (ui/, am 2026-10-26 geloescht) — hier bewusst mit dem Wert in
+        // der Folgezeile, um den Umbruchfall zu belegen (im echten Baum stand
+        // die Zeile nur zufaellig einzeilig).
         const cssFiles = [
             { name: 'a.css', content: '.gamma { color: red; } .delta { color: blue; } .dead-control { color: green; }' }
         ];

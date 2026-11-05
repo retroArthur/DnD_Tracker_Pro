@@ -42,6 +42,8 @@ const SystemActions = {
     'export-json': ctx => exportData(ctx.value),
     'export-csv': ctx => exportToCSV(ctx.value),
     'execute-import': ctx => executeImport(ctx.value),
+    // Moduswechsel im Fenster #import-modal: die Vorschau nennt, was der Modus tut
+    'import-vorschau': () => renderImportVorschau(),
 
     // Backup
     'restore-backup': ctx => {
@@ -55,6 +57,8 @@ const SystemActions = {
     'delete-timer': ctx => deleteTimer(ctx.id),
     'focus-timer': ctx => focusTimer(ctx.id),
     'quick-timer': ctx => quickTimer(parseInt(ctx.value)),
+    // ⚙️: leert einen Bearbeiten-Rest, bevor der Dialog aufgeht (ABBRUCH).
+    'show-timer-preset-modal': () => showTimerPresetModal(),
     'edit-timer-preset': ctx => editTimerPreset(ctx.id),
     'delete-timer-preset': ctx => deleteTimerPreset(ctx.id),
     'add-preset-timer': ctx => {
@@ -247,7 +251,28 @@ const SystemActions = {
     'set-preset-emoji': ctx => setPresetEmoji(ctx.value),
 
     // System
-    'show-about-modal': () => showModal('about-modal'),
+    //
+    // DIE VERSION KOMMT AUS `APP_CONFIG.VERSION`, nicht aus der Vorlage (VER).
+    // Sie stand in `assets/templates/modals-tools.html` festgeschrieben und
+    // war GEMESSEN "2.4.0", waehrend `core/config.js` und `package.json` beide
+    // 2.6.1 fuehrten — zwei Nebenversionen zu alt, an dem einen Ort der App,
+    // an dem ein Nutzer die Version nachsieht. Auf dem Telefon fuehrt erst das
+    // Punkte-Menue ueberhaupt dorthin (MKOPF); das Erste, was man auf dem
+    // neuen Weg liest, war falsch.
+    //
+    // BEIM OEFFNEN UND NICHT EINMAL BEIM START: das Markup der Dialoge haengt
+    // beim Laden aus den Vorlagen ein, ein einmaliges Setzen haette also eine
+    // Reihenfolgeabhaengigkeit (welcher Knoten existiert wann). Hier ist der
+    // Zeitpunkt eindeutig. Der Text in der Vorlage bleibt als Rueckfall
+    // stehen und wird von `tests/unit/version-konsistenz.test.js` gegen
+    // dieselbe Quelle gehalten — ein Rueckfall allein waere die naechste
+    // Drift, er muesste bei jeder Anhebung von Hand mitgezogen werden.
+    'show-about-modal': () => {
+        const el = $('about-version');
+        const v = window.APP_CONFIG && window.APP_CONFIG.VERSION;
+        if (el && v) el.textContent = `Version ${v}`;
+        showModal('about-modal');
+    },
     'reload-page': () => location.reload(),
 
     // Debug/Test
@@ -283,43 +308,28 @@ const SystemActions = {
     // Loot Distribution
     'show-loot-distribution': () => showLootDistributionModal(),
 
-    // Markdown Export/Import
-    exportSpellAsMarkdown: () => {
-        const editId = $('edit-spell-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('spells', editId.value);
-        }
+    // Markdown Export/Import im Fuss der Formulare von NPC, Quest und Zauber.
+    // data-type nennt den Typ (npcs|quests|spells), die ID steht im offenen
+    // Formular. Bis 2026-10-27 liefen die Knoepfe ueber die Aktion `call` auf
+    // sechs camelCase-Schluessel dieses Objekts — `call` sucht an window und
+    // fand sie nie (MARKDOWN, docs/bugfixes.md).
+    'export-markdown': ctx => {
+        const id = markdownFormularId(ctx.type);
+        if (id) exportEntityAsMarkdown(ctx.type, id);
     },
-    importSpellMarkdown: () => {
-        const editId = $('edit-spell-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('spells', editId.value);
-        }
+    'import-markdown': ctx => {
+        const id = markdownFormularId(ctx.type);
+        if (id) showMarkdownImportModal(ctx.type, id);
     },
-    exportNPCAsMarkdown: () => {
-        const editId = $('edit-npc-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('npcs', editId.value);
-        }
+    // Die Import-Schale baut systems/markdown-import-export.js zur Laufzeit.
+    // <input type="file"> feuert bei EINER Auswahl 'input' UND 'change', und
+    // EventDelegation dispatcht beide — ohne die Schranke wird jede Datei
+    // zweimal gelesen (dieselbe Falle wie 'soundboard-file-change' unten).
+    'markdown-import-file': ctx => {
+        if (ctx.event && ctx.event.type !== 'change') return;
+        readMarkdownImportFile(ctx.target);
     },
-    importNPCMarkdown: () => {
-        const editId = $('edit-npc-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('npcs', editId.value);
-        }
-    },
-    exportQuestAsMarkdown: () => {
-        const editId = $('edit-quest-id');
-        if (editId && editId.value) {
-            exportEntityAsMarkdown('quests', editId.value);
-        }
-    },
-    importQuestMarkdown: () => {
-        const editId = $('edit-quest-id');
-        if (editId && editId.value) {
-            showMarkdownImportModal('quests', editId.value);
-        }
-    },
+    'markdown-import-confirm': () => confirmMarkdownImport(),
 
     // Migrated inline handlers
     'convert-units-metric': () => convertUnitsMetric(),

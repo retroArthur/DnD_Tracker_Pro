@@ -109,7 +109,45 @@ test.describe('U5: Kampfprotokoll — nichts geht verloren', () => {
         await page.evaluate(() => {
             window.showToast('Vor dem Neustart: 14 Schaden', 'info');
         });
-        await page.waitForTimeout(700); // Schreibverzoegerung der Persistenz
+
+        // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass der
+        // Eintrag im Speicher steht.
+        //
+        // Vorher stand hier `waitForTimeout(700)` gegen eine
+        // Schreibverzoegerung von 400ms (KPLOG_SCHREIB_VERZOEGERUNG in
+        // features/combat-log/combat-log-core.js) — 300ms Luft. Auf dem
+        // Linux-Laeufer von GitHub reicht das nicht verlaesslich: derselbe
+        // Fall war am 20.10.2026 im einen Lauf gruen und im naechsten
+        // dreimal von drei rot (`retries: 2`), beide Male mit
+        // "Puffer: 0 Eintraege". Der Nachbarfall, der dasselbe mit einem
+        // Neuladen prueft (U5-13), wartet 3500ms und war in beiden Laeufen
+        // gruen — die Dauer entscheidet, nicht das Verhalten.
+        //
+        // Gewartet wird ueber ALLE Protokollschluessel, nicht ueber den aus
+        // `getActiveCampaignKey()` nachgerechneten. Zwei Gruende: der
+        // Schluessel wird in der App aus einer Quelle gebildet
+        // (`kpLogSpeicherSchluessel()`), und eine zweite Abschrift hier waere
+        // genau die Drift, vor der der Kommentar an
+        // KPLOG_SCHLUESSEL_SUFFIX warnt. Und faellt der Eintrag unter einen
+        // ANDEREN Schluessel als den nach dem Neustart aktiven (etwa weil die
+        // Kampagne beim Schreiben noch nicht initialisiert war), dann sieht
+        // man das unten an den Zahlen statt es zu raten.
+        const vorReload = await page
+            .waitForFunction(
+                text => {
+                    const suffix = window.KPLOG_SCHLUESSEL_SUFFIX || '::kampfprotokoll';
+                    const treffer = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (!k || !k.endsWith(suffix)) continue;
+                        if (String(localStorage.getItem(k) || '').includes(text)) treffer.push(k);
+                    }
+                    return treffer.length ? treffer : false;
+                },
+                'Vor dem Neustart: 14 Schaden',
+                { timeout: 15000 }
+            )
+            .then(h => h.jsonValue());
 
         await page.reload();
         await page.waitForFunction(() => typeof window.showToast === 'function', {
@@ -119,19 +157,45 @@ test.describe('U5: Kampfprotokoll — nichts geht verloren', () => {
 
         const messwert = await page.evaluate(() => {
             const puffer = typeof window.getCombatLog === 'function' ? window.getCombatLog() : null;
+            const suffix = window.KPLOG_SCHLUESSEL_SUFFIX || '::kampfprotokoll';
+            const schluessel = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.endsWith(suffix)) schluessel.push(k);
+            }
+            const basis =
+                (typeof window.getActiveCampaignKey === 'function'
+                    ? window.getActiveCampaignKey()
+                    : null) ||
+                window.APP_CONFIG?.STORAGE_KEY ||
+                'dnd-tracker-v4';
             return {
                 imPuffer: puffer ? puffer.length : -1,
                 gefunden: puffer
                     ? puffer.some(e => String(e.text).includes('Vor dem Neustart: 14 Schaden'))
-                    : false
+                    : false,
+                schluessel,
+                aktiverSchluessel: basis + suffix
             };
         });
 
         console.log(
-            `[U5-3] nach reload — Puffer: ${messwert.imPuffer} Eintraege · ` +
-                `Eintrag von vorher auffindbar: ${messwert.gefunden}`
+            `[U5-3] vor reload geschrieben unter: ${JSON.stringify(vorReload)} · ` +
+                `nach reload — Puffer: ${messwert.imPuffer} Eintraege · ` +
+                `Eintrag von vorher auffindbar: ${messwert.gefunden} · ` +
+                `Protokollschluessel im Speicher: ${JSON.stringify(messwert.schluessel)} · ` +
+                `aktiver Schluessel: ${messwert.aktiverSchluessel}`
         );
 
+        // Der Eintrag war vor dem Neustart nachweislich geschrieben (sonst
+        // haette das Warten oben zugeschlagen). Faellt die Zusicherung jetzt,
+        // ist es kein Wettlauf, sondern das Laden nach dem Neustart — und die
+        // Zeile darueber sagt, unter welchem Schluessel er liegt und welcher
+        // gelesen wird.
+        expect(
+            vorReload.length,
+            'der Eintrag stand vor dem Neustart unter keinem Protokollschluessel'
+        ).toBeGreaterThan(0);
         expect(messwert.gefunden).toBe(true);
     });
 

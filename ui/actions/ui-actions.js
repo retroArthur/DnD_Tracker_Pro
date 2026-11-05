@@ -28,13 +28,13 @@ const UIActions = {
         navigateToEntityInPlace(ctx.type, ctx.id);
     },
     'navigate-result': ctx => {
-        const locId = ctx.target.dataset.loc || null;
-        navigateToResult(ctx.type, ctx.id, locId === '' ? null : locId);
+        // data-loc traegt "null" als TEXT fuer "kein Ort" — darum wie data-id parsen
+        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
     },
     'mobile-search-navigate': ctx => {
         hideModal('mobile-search-modal');
-        const locId = ctx.target.dataset.loc || null;
-        navigateToResult(ctx.type, ctx.id, locId === '' ? null : locId);
+        // Derselbe Ort-Wert wie bei navigate-result: "null" ist kein Ort
+        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
     },
     'tag-search-navigate': ctx => {
         hideModal('tag-search-modal');
@@ -49,23 +49,9 @@ const UIActions = {
         else if (filterType === 'loc') setLocFilter(ctx.value);
         else if (filterType === 'spell') setSpellFilter(ctx.value);
     },
-    'clear-search': ctx => {
-        const searchRenderMap = {
-            'party-search': renderParty,
-            'npc-search': renderNPCList,
-            'loc-search': renderLocations,
-            'quest-search': renderQuests,
-            'enc-search': renderEncounters,
-            'loot-search': renderLoot,
-            'shop-search': renderShops,
-            'spell-search': renderSpells,
-            'notes-search': renderSessions,
-            'wiki-search': renderWiki,
-            'link-search': renderLinks
-        };
-        const renderFn = searchRenderMap[ctx.value];
-        if (renderFn) clearSearch(ctx.value, renderFn);
-    },
+    // ✕ eines Suchfeldes: data-value nennt das Feld, geleert wird ueber dessen
+    // eigene Aktion — keine Liste Feld -> Renderfunktion (SUCHE-LEEREN, R1).
+    'clear-search': ctx => clearSearch(ctx.value),
 
     // Toggle actions
     'toggle-selected': ctx => ctx.target.classList.toggle('selected'),
@@ -164,6 +150,18 @@ const UIActions = {
     // Shortcuts
     'show-shortcuts': () => showShortcutsOverlay(),
     'show-shortcuts-overlay': () => showShortcutsOverlay(),
+
+    // Punkte-Menue im Mobil-Kopf (MKOPF). Der EINE auffindbare Ort fuer die
+    // sieben Aktionen der Kopfzeile, die im Mobil-Layout alle hinter
+    // `.header-actions { display: none }` liegen — gemessen waren bei
+    // 390/360/320 px null von sieben bedienbar. Mechanik und Begruendung:
+    // `ui/mobile-header-menu.js`. Direktaufruf ueber `window` und KEIN
+    // function-scoped `const` — CLAUDE.md, Dedup-Regel vom 2026-01-10.
+    'toggle-mobile-header-menu': () => {
+        if (typeof window.toggleMobileHeaderMenu === 'function') {
+            window.toggleMobileHeaderMenu();
+        }
+    },
 
     // Quick Notes
     'toggle-quick-notes': () => showQuickNotesModal(),

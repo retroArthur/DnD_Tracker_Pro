@@ -693,15 +693,15 @@ function showToast(msg = '✓ Gespeichert', type = 'success', options = undefine
     entry.className = `event-log-entry ${type}`;
     entry.setAttribute('role', 'alert');
     entry.setAttribute('aria-live', 'polite');
-    // Use esc function (needs to be available globally or imported)
-    const escMsg = window.esc ? window.esc(msg) : msg;
+    // Die Meldung geht als TEXT hinein (SENKEN R1): frueher fiel sie ohne window.esc roh ins Markup.
     entry.innerHTML = `
         <span class="event-log-icon">${icons[type] || icons.success}</span>
         <div class="event-log-content">
-            <div class="event-log-message">${escMsg}</div>
+            <div class="event-log-message"></div>
             <div class="event-log-time">${timeStr}</div>
         </div>
     `;
+    entry.querySelector('.event-log-message').textContent = msg;
     // Nach Header einfügen (neueste oben)
     const header = log.querySelector('.event-log-header');
     if (header && header.nextSibling) {

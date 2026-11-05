@@ -164,7 +164,7 @@ test.describe('Datenpersistenz', () => {
             // NPC erstellen
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('MultiNPC');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -173,7 +173,7 @@ test.describe('Datenpersistenz', () => {
             // Ort erstellen
             await navigateToTab(page, 'locations');
             const locName = generateTestName('MultiLoc');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -331,7 +331,7 @@ test.describe('Datenintegrität', () => {
         // NPC erstellen
         await navigateToTab(page, 'npcs');
         const npcName = generateTestName('RefNPC');
-        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        await page.click('[data-action="show-new-npc-modal"]');
         await page.waitForTimeout(300);
         await fillField(page, 'npc-name', npcName);
         await page.click('[data-action="call"][data-value="saveNPC"]');

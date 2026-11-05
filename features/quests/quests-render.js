@@ -16,8 +16,6 @@ function renderQuests() {
        auf der alten Zahl stehen, also genau umgekehrt falsch (Welle 6,
        Schritt 7; bewacht von W6-R-09 Fall 3 und W6-R-10 Fall 2). */
     setViewCount('quests', (D.quests || []).length);
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');
     const activeOnly = activeOnlyEl?.checked || false;
     const searchEl = $('quest-search');
@@ -38,15 +36,12 @@ function renderQuests() {
             titleEmpty: 'Keine Quests',
             descEmpty: 'Erstelle Aufträge und Missionen für deine Abenteurer.',
             buttonText: '➕ Quest erstellen',
-            buttonAction: 'show-modal',
-            buttonValue: 'quest-modal',
+            buttonAction: 'show-new-quest-modal',
             isFiltered: !!(search || activeOnly)
         });
-        EntityLookup.clearCache();
         return;
     }
     c.innerHTML = quests.map(q => renderQuestItem(q)).join('');
-    EntityLookup.clearCache();
 }
 function renderQuestItem(q) {
     const renderEntityLinks = window.renderEntityLinks;
@@ -84,19 +79,59 @@ function renderQuestItem(q) {
        Tinten auf einer Flaeche, sichtbar nebeneinander. */
     // Quest type badge
     const typeClass = q.type === 'plot' ? 'plot-quest' : q.type === 'side' ? 'side-quest' : 'quest';
+    // Die Typ-Marke traegt den Typ als Klasse: nur die drei Werte des Formulars
+    // (#quest-type), sonst 'quest' wie bisher bei fehlendem Typ (Vertrag SENKEN R2).
+    const typeBadge = sichereKlasse(q.type, ['quest', 'side', 'plot'], 'quest');
     const typeLabel = q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest';
-    return `<div class="quest-item ${typeClass} ${q.completed ? 'completed' : ''}" id="quest-${q.id}" draggable="true" data-sortable data-id="${q.id}">
-        <div class="quest-header" data-action="toggle-quest" data-id="${q.id}">
+    return `<div class="quest-item ${typeClass} ${q.completed ? 'completed' : ''}" id="quest-${esc(q.id)}" draggable="true" data-sortable data-id="${esc(q.id)}">
+        <!-- DREI NAMEN STATT EINEM (TASV/E-2, Runde 3, Befund 6). Die
+             Zeile ist seit E-2 ein Gruppenglied mit role="button"; ihr Name
+             entstand damit aus dem INHALT und lautete im
+             Zugaenglichkeitsbaum gemessen "⋮⋮ 📌 Auftrag Quest
+             Auftragsstatus" — bis hinein leckte die Beschriftung der
+             Markenleiste darin, ein Wort, das auf dem Schirm nirgends
+             steht. Gleichzeitig hiessen die 20 Pinnknoepfe alle "📌" und
+             die 40 Marken alle "○ Done"/"○ Loot": welchem Auftrag sie
+             gehoeren, sagte nichts, weil der einzige Halt mit dem
+             Auftragsnamen gerade der weggruppierte ist. Wer Auftrag 17 auf
+             erledigt setzen wollte, musste Halte zaehlen. Darum tragen hier
+             DREI Stellen den Titel: die Zeile, der Pinnknopf und die
+             Markenleiste. Das aria-label an der Leiste geht der Mechanik
+             vor, die sonst "Auftragsstatus" ohne Titel schreiben wuerde
+             (_regleGruppe() schreibt nur, was fehlt).
+             WARUM AM PINNKNOPF EIN aria-label UND NICHT NUR DAS title:
+             gemessen am Zugaenglichkeitsbaum heisst er mit title allein
+             weiter "📌". Die Namensberechnung nimmt bei einem <button> den
+             INHALT vor dem title, und der Inhalt ist die Stecknadel. Nur
+             aria-label geht dem Inhalt vor. Das title bleibt daneben
+             stehen, weil es der Mauszeiger zeigt.
+             DIE ZWEI MARKEN BEHALTEN IHREN TEXT ("○ Done"/"○ Loot") und
+             bekommen KEIN aria-label: ein Name, der vom sichtbaren Text
+             abweicht, bricht die Sprachsteuerung ("klick Done"). Welchem
+             Auftrag sie gehoeren, sagt der Name der Leiste, in die man
+             eintritt. -->
+        <div class="quest-header" data-action="toggle-quest" data-id="${esc(q.id)}" aria-label="Auftrag: ${esc(q.title)}">
             <div class="quest-title-row">
                 <span class="drag-handle" title="Zum Sortieren ziehen">⋮⋮</span>
-                <button class="btn btn-sm" style="padding: 2px 6px; font-size: var(--text-sm); ${q.tracked ? 'background: var(--gold); color: var(--on-gold);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${q.id}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}">📌</button>
+                <button class="btn btn-sm" style="padding: 2px 6px; font-size: var(--text-sm); ${q.tracked ? 'background: var(--gold); color: var(--on-gold);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${esc(q.id)}" aria-pressed="${q.tracked ? 'true' : 'false'}" aria-label="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}: ${esc(q.title)}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}: ${esc(q.title)}">📌</button>
                 <span class="quest-title">${esc(q.title)}</span>
-                <span class="quest-type-badge ${q.type || 'quest'}">${typeLabel}</span>
+                <span class="quest-type-badge ${typeBadge}">${typeLabel}</span>
                 ${giverDisplay ? renderEntityLink('npcs', q.giverId, giverDisplay, { icon: '👤', fallbackColor: 'var(--cyan)' }) : ''}
             </div>
-            <div style="display:flex; gap:6px; align-items:center;">
-                <span class="chip ${q.completed ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${q.id}" data-value="completed">${q.completed ? '✓' : '○'} Done</span>
-                <span class="chip ${q.rewardReceived ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${q.id}" data-value="reward">${q.rewardReceived ? '✓' : '○'} Loot</span>
+            <!-- data-tastgruppe: der Behaelter der zwei Statusmarken hatte
+                 weder Klasse noch id und war damit fuer keinen Selektor
+                 erreichbar. Die Gruppenmechanik (ui/keyboard-group-views.js,
+                 E-2) braucht ihn, um die Marken zu EINEM Tabulatorhalt
+                 zusammenzufassen — ohne ihn sind es 40 Halte bei 20
+                 Auftraegen. Ein data-Attribut und keine Klasse, weil der
+                 Stil-Sollstand (computed-style-diff.spec.js) nur Elemente
+                 mit Klasse erfasst und sie als tag.klassen#index
+                 schluesselt: eine Klasse hier erzeugte 20 neue Schluessel
+                 fuer reine Kosmetik. Vorbild im Haus: data-tb an jeder
+                 .toolbar-group. -->
+            <div style="display:flex; gap:6px; align-items:center;" data-tastgruppe="auftrag-status" aria-label="Auftragsstatus: ${esc(q.title)}">
+                <span class="chip ${q.completed ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${esc(q.id)}" data-value="completed">${q.completed ? '✓' : '○'} Done</span>
+                <span class="chip ${q.rewardReceived ? 'color-green' : ''}" data-action="toggle-quest-status-stop" data-id="${esc(q.id)}" data-value="reward">${q.rewardReceived ? '✓' : '○'} Loot</span>
                 <span style="color:var(--text-dim);">▼</span>
             </div>
         </div>
@@ -111,10 +146,10 @@ function renderQuestItem(q) {
             </div>
             ${q.epilog ? `<div class="quest-epilog"><div style="font-size:var(--text-sm); color:var(--purple); margin-bottom:4px;">Epilog / Nachwirkungen:</div><div style="font-size:var(--text-md);">${sanitizeHTML(q.epilog)}</div></div>` : ''}
             <div class="btn-group">
-                <button class="btn btn-sm" data-action="show-entity-links-modal" data-type="quests" data-id="${q.id}" title="Verknüpfungen">🔗</button>
-                <button class="btn btn-sm" data-action="show-tags-modal" data-type="quests" data-id="${q.id}" title="Tags">🏷️</button>
-                <button class="btn btn-sm" data-action="edit-quest" data-id="${q.id}">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-quest" data-id="${q.id}">🗑️</button>
+                <button class="btn btn-sm" data-action="show-entity-links-modal" data-type="quests" data-id="${esc(q.id)}" title="Verknüpfungen">🔗</button>
+                <button class="btn btn-sm" data-action="show-tags-modal" data-type="quests" data-id="${esc(q.id)}" title="Tags">🏷️</button>
+                <button class="btn btn-sm" data-action="edit-quest" data-id="${esc(q.id)}">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-quest" data-id="${esc(q.id)}">🗑️</button>
             </div>
         </div>
     </div>`;

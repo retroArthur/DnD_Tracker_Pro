@@ -30,19 +30,55 @@ const NPC_ICONS = {
     default: '🎭'
 };
 const RELATION_STATUS = {
+    // SENKEN: ohne Prototyp — ein Schluessel aus Daten (`constructor`, `__proto__`) findet nichts
+    __proto__: null,
     friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
     neutral: { label: 'Neutral', icon: '⚪', color: 'var(--text)' },
     hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
 };
 /**
+ * Der Name eines NPC als HTML fuer Liste und Detail (Vertrag NPC-NAME, E1): ohne Namen (auch
+ * nur aus Leerzeichen) ein gedimmtes "Unbenannt" (.npc-unbenannt). Gespeichert bleibt '' (so
+ * setzt die Datengrenze einen fehlenden Namen, N1), und 💾 verlangt weiter einen Namen. Chips,
+ * Popup und Suchen zeigen weiter den gespeicherten Wert. Name und Volk liest diese Datei ueber
+ * datenText() (utils/basic.js, N2): Text fuer jeden Wert, auch zur Laufzeit an der Grenze vorbei.
+ */
+function npcNameHtml(npc) {
+    const name = datenText(npc.name);
+    return name.trim() ? esc(name) : '<span class="npc-unbenannt">Unbenannt</span>';
+}
+/**
  * Gets the appropriate icon for an NPC based on race
  */
 function getNPCIcon(npc) {
-    const race = (npc.race || '').toLowerCase();
-    for (const [key, icon] of Object.entries(NPC_ICONS)) {
-        if (race.includes(key)) return icon;
+    // Das Volk total gelesen (N2): `(npc.race || '').toLowerCase()` warf bei einer Zahl oder
+    // einem Objekt — in jeder Lage — und leerte die ganze Liste.
+    const race = datenText(npc.race).toLowerCase();
+    // Ueber die Schluessel statt Object.entries: der Rueckgabewert ist sichtbar ein
+    // Tabellenwert (Vertrag SENKEN, Ratsche tests/unit/html-senken.test.js).
+    for (const key of Object.keys(NPC_ICONS)) {
+        if (race.includes(key)) return NPC_ICONS[key];
     }
     return NPC_ICONS.default;
+}
+/**
+ * Ein Dialogtext (HTML aus dem Editor) als sichtbarer Text fuer die Suche, kleingeschrieben
+ * (Vertrag NPC-SUCHE, R4): <br> und die Grenzen von div, p, li, td und th (Tabellen schreibt
+ * die App selbst in einen Dialog) werden ein Leerzeichen, alle anderen Tags fallen weg, &nbsp;
+ * &lt; &gt; &amp; werden dekodiert (&amp; zuletzt, sonst wuerde "&amp;lt;" zu "<"), Leerraum
+ * wird zusammengefasst. Ein eigener Normalisierer: stripHtml() klebt die Woerter beiderseits
+ * einer Zeilengrenze zusammen ("Rabattenur"), dient aber der Anzeige und bleibt, wie es ist.
+ */
+function npcDialogSuchtext(html) {
+    return html
+        .replace(/<(br|\/?(div|p|li|td|th))\b[^>]*>/gi, ' ')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
 }
 /**
  * Renders the NPC list in master-detail layout
@@ -53,8 +89,6 @@ function renderNPCList() {
     const listContainer = $('npc-list');
     const filterContainer = $('npc-filters');
     if (!listContainer) return;
-    // Enable EntityLookup cache for performance
-    EntityLookup.enableCache();
     // Update counter
     setViewCount('npcs', D.npcs?.length || 0);
     // Render filter chips (by location)
@@ -67,7 +101,7 @@ function renderNPCList() {
                 .map(
                     loc => `
                 <div class="npc-filter-chip ${currentNpcFilter === loc.id ? 'active' : ''}"
-                     data-action="set-npc-filter" data-id="${loc.id}">
+                     data-action="set-npc-filter" data-id="${esc(loc.id)}">
                     ${esc(loc.name)}
                 </div>
             `
@@ -80,7 +114,7 @@ function renderNPCList() {
                     <option value="">Mehr...</option>
                     ${locations
                         .slice(5)
-                        .map(loc => `<option value="${loc.id}">${esc(loc.name)}</option>`)
+                        .map(loc => `<option value="${esc(loc.id)}">${esc(loc.name)}</option>`)
                         .join('')}
                 </select>
             `
@@ -88,26 +122,32 @@ function renderNPCList() {
             }
         `;
     }
-    // Get search and filter
+    // Get search and filter — der Begriff einmal beim Lesen getrimmt (Vertrag NPC-SUCHE, R6):
+    // der Leerzustand sieht denselben Begriff wie applyFilters() und der Dialogzweig.
     const searchEl = $('npc-search');
-    const search = (searchEl?.value || '').toLowerCase();
-    // Apply filters (single pass)
+    const search = (searchEl?.value || '').trim().toLowerCase();
+    // Apply filters (single pass). Der Dialogtext ist ein ODER-Zweig der Suche (searchAlso, R1),
+    // kein customFilter mehr: der schraenkt nur ein, und seit 73d3193b fand die Ansicht einen
+    // NPC mit Dialogen nur, wenn der Begriff in einem Feld UND einem Dialog stand. Total (R3):
+    // dialogs, das keine Liste ist, und ein Element, dessen text kein String ist, treffen nie.
     const npcs = applyFilters(D.npcs || [], {
         searchText: search,
         searchFields: ['name', 'role', 'race', 'description'],
+        searchAlso: (n, s) =>
+            Array.isArray(n?.dialogs) &&
+            n.dialogs.some(
+                d => typeof d?.text === 'string' && npcDialogSuchtext(d.text).includes(s)
+            ),
         filters: {
             locationId: currentNpcFilter !== 'all' ? currentNpcFilter : null
-        },
-        customFilter: n => {
-            // Also search in dialog texts
-            if (search && (n.dialogs || []).length > 0) {
-                return (n.dialogs || []).some(d => (d.text || '').toLowerCase().includes(search));
-            }
-            return true;
         }
     });
-    // Sort alphabetically
-    npcs.sort((a, b) => a.name.localeCompare(b.name));
+    // Alphabetisch, total fuer JEDEN Namen (Vertrag NPC-NAME, N2): `a.name.localeCompare(b.name)`
+    // warf an einem Namen, der kein Text war, und leerte die ganze Liste — ob, hing an Lage UND
+    // Engine (Chromium letzte/mittlere, Firefox erste/mittlere Lage; npc-altdaten.spec.js).
+    // Ein NPC ohne Namen ('') steht vorn. Damit ist RUECKSPRUNG Offen (8) erledigt; Rundlauf
+    // (12) haengt nicht mehr an diesem Wurf, sondern an einem Pruefwurf in getNPCIcon().
+    npcs.sort((a, b) => datenText(a.name).localeCompare(datenText(b.name)));
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
@@ -118,7 +158,7 @@ function renderNPCList() {
                 ${
                     !search && currentNpcFilter === 'all'
                         ? `
-                    <button class="npc-add-btn" data-action="show-modal" data-value="npc-modal" style="margin-top: 12px;">
+                    <button class="npc-add-btn" data-action="show-new-npc-modal" style="margin-top: 12px;">
                         + NPC erstellen
                     </button>
                 `
@@ -127,7 +167,6 @@ function renderNPCList() {
             </div>
         `;
         clearNPCDetail();
-        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -138,23 +177,21 @@ function renderNPCList() {
     } else {
         showNPCDetail(selectedNpcId);
     }
-    // Clear EntityLookup cache
-    EntityLookup.clearCache();
 }
 function renderNPCItem(npc) {
     const location = EntityLookup.location(npc.locationId);
     const icon = getNPCIcon(npc);
     const isSelected = npc.id === selectedNpcId;
-    const dialogCount = (npc.dialogs || []).length;
-    const triggerCount = (npc.triggers || []).length;
+    const dialogCount = Number((npc.dialogs || []).length) || 0;
+    const triggerCount = Number((npc.triggers || []).length) || 0;
     return `
-        <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${npc.id}">
+        <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${esc(npc.id)}">
             <div class="npc-item-avatar">
-                ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
+                ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
             </div>
             <div class="npc-item-info">
                 <div class="npc-item-name">
-                    ${esc(npc.name)}
+                    ${npcNameHtml(npc)}
                     ${location ? `<span class="npc-item-tag">${esc(location.name)}</span>` : ''}
                 </div>
                 <div class="npc-item-meta">
@@ -220,11 +257,11 @@ function showNPCDetail(id) {
             </div>
             <div class="npc-dialog-actions">
                 <button class="npc-detail-btn small ${d.used ? '' : 'success'}"
-                        data-action="toggle-npc-dialog-stop" data-id="${npc.id}" data-value="${idx}"
+                        data-action="toggle-npc-dialog-stop" data-id="${esc(npc.id)}" data-value="${idx}"
                         title="${d.used ? 'Als unbenutzt markieren' : 'Als verwendet markieren'}">
                     ${d.used ? '↩️' : '✓'}
                 </button>
-                <button class="npc-detail-btn small" data-action="copy-dialog-text-stop" data-id="${npc.id}" data-value="${idx}" title="Kopieren">📋</button>
+                <button class="npc-detail-btn small" data-action="copy-dialog-text-stop" data-id="${esc(npc.id)}" data-value="${idx}" title="Kopieren">📋</button>
             </div>
         </div>
     `
@@ -238,7 +275,7 @@ function showNPCDetail(id) {
                   (t, idx) => `
         <div class="npc-trigger-item ${t.triggered ? 'triggered' : ''}">
             <div class="npc-trigger-check ${t.triggered ? 'triggered' : ''}"
-                 data-action="toggle-npc-trigger-stop" data-id="${npc.id}" data-value="${idx}">
+                 data-action="toggle-npc-trigger-stop" data-id="${esc(npc.id)}" data-value="${idx}">
                 ${t.triggered ? '✓' : ''}
             </div>
             <div class="npc-trigger-content">
@@ -250,9 +287,10 @@ function showNPCDetail(id) {
               )
               .join('')
         : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
-    // Build tags
+    // Build tags — in beiden Formen, die in D stehen (Vertrag NPC-NAME, E4): 🏷️ schreibt
+    // {name, color}, Altdaten tragen Text. `esc(t)` zeigte das Objekt als "[object Object]".
     const tagsHtml = tags.length
-        ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('')
+        ? tags.map(t => `<span class="npc-tag">${esc(tagText(t))}</span>`).join('')
         : '';
     // Build links (LINK_ICONS from core/constants.js)
     const linksHtml = links.length
@@ -260,7 +298,7 @@ function showNPCDetail(id) {
               .map(link => {
                   const target = EntityLookup.get(link.type, link.id);
                   if (!target) return '';
-                  return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
+                  return `<span class="npc-link" data-action="navigate-entity" data-type="${esc(link.type)}" data-id="${esc(link.id)}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
               })
               .join('')
         : '';
@@ -268,10 +306,10 @@ function showNPCDetail(id) {
         <div class="npc-detail-content">
             <div class="npc-detail-header">
                 <div class="npc-detail-avatar">
-                    ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
+                    ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
                 </div>
                 <div class="npc-detail-title">
-                    <div class="npc-detail-name">${esc(npc.name)}</div>
+                    <div class="npc-detail-name">${npcNameHtml(npc)}</div>
                     <div class="npc-detail-subtitle">
                         ${npc.race ? `<span class="npc-detail-race">${esc(npc.race)}</span>` : ''}
                         ${npc.race && npc.role ? ' • ' : ''}
@@ -280,12 +318,12 @@ function showNPCDetail(id) {
                     ${location ? `<div class="npc-detail-location">📍 ${esc(location.name)}</div>` : ''}
                 </div>
                 <div class="npc-detail-actions">
-                    <button class="npc-detail-btn" data-action="show-avatar-modal" data-type="npcs" data-id="${npc.id}" title="Bild">🖼️</button>
-                    <button class="npc-detail-btn" data-action="show-relations-modal-stop" data-id="${npc.id}" title="Beziehungen">🤝</button>
-                    <button class="npc-detail-btn" data-action="show-entity-links-modal" data-type="npcs" data-id="${npc.id}" title="Verknüpfungen">🔗</button>
-                    <button class="npc-detail-btn" data-action="show-tags-modal" data-type="npcs" data-id="${npc.id}" title="Tags">🏷️</button>
-                    <button class="npc-detail-btn" data-action="edit-npc" data-id="${npc.id}" title="Bearbeiten">✏️</button>
-                    <button class="npc-detail-btn danger" data-action="delete-npc" data-id="${npc.id}" title="Löschen">🗑️</button>
+                    <button class="npc-detail-btn" data-action="show-avatar-modal" data-type="npcs" data-id="${esc(npc.id)}" title="Bild">🖼️</button>
+                    <button class="npc-detail-btn" data-action="show-relations-modal-stop" data-id="${esc(npc.id)}" title="Beziehungen">🤝</button>
+                    <button class="npc-detail-btn" data-action="show-entity-links-modal" data-type="npcs" data-id="${esc(npc.id)}" title="Verknüpfungen">🔗</button>
+                    <button class="npc-detail-btn" data-action="show-tags-modal" data-type="npcs" data-id="${esc(npc.id)}" title="Tags">🏷️</button>
+                    <button class="npc-detail-btn" data-action="edit-npc" data-id="${esc(npc.id)}" title="Bearbeiten">✏️</button>
+                    <button class="npc-detail-btn danger" data-action="delete-npc" data-id="${esc(npc.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -313,22 +351,22 @@ function showNPCDetail(id) {
 
             <div class="npc-section">
                 <div class="npc-section-title">
-                    Beziehungen (${(npc.relations || []).length})
-                    <button class="npc-section-btn" data-action="show-relations-modal-stop" data-id="${npc.id}" title="Beziehung hinzufügen">+</button>
+                    Beziehungen (${Number((npc.relations || []).length)})
+                    <button class="npc-section-btn" data-action="show-relations-modal-stop" data-id="${esc(npc.id)}" title="Beziehung hinzufügen">+</button>
                 </div>
                 ${renderNPCRelations(npc)}
             </div>
 
             <div class="npc-section">
                 <div class="npc-section-title">
-                    Dialoge (${usedDialogs}/${dialogs.length} verwendet)
-                    <button class="npc-section-btn" data-action="show-add-dialog-modal-stop" data-id="${npc.id}" title="Dialog hinzufügen">+</button>
+                    Dialoge (${usedDialogs}/${Number(dialogs.length)} verwendet)
+                    <button class="npc-section-btn" data-action="show-add-dialog-modal-stop" data-id="${esc(npc.id)}" title="Dialog hinzufügen">+</button>
                 </div>
                 <div class="npc-dialog-list">${dialogsHtml}</div>
             </div>
 
             <div class="npc-section">
-                <div class="npc-section-title">Trigger (${triggers.length})</div>
+                <div class="npc-section-title">Trigger (${Number(triggers.length)})</div>
                 <div class="npc-trigger-list">${triggersHtml}</div>
             </div>
 
@@ -403,7 +441,7 @@ function renderNPCTags(n) {
                 qst => qst.name && qst.name.toLowerCase() === q.toLowerCase()
             );
             if (quest) {
-                return `<span class="npc-list-tag quest clickable" data-action="navigate-entity-stop" data-type="quests" data-id="${quest.id}">📜 ${esc(q)}</span>`;
+                return `<span class="npc-list-tag quest clickable" data-action="navigate-entity-stop" data-type="quests" data-id="${esc(quest.id)}">📜 ${esc(q)}</span>`;
             }
             return `<span class="npc-list-tag quest">📜 ${esc(q)}</span>`;
         })
@@ -417,9 +455,9 @@ function renderNPCTags(n) {
                 c => c.name && c.name.toLowerCase() === r.toLowerCase()
             );
             if (npc) {
-                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="npcs" data-id="${npc.id}">👥 ${esc(r)}</span>`;
+                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="npcs" data-id="${esc(npc.id)}">👥 ${esc(r)}</span>`;
             } else if (char) {
-                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="characters" data-id="${char.id}">👥 ${esc(r)}</span>`;
+                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="characters" data-id="${esc(char.id)}">👥 ${esc(r)}</span>`;
             }
             return `<span class="npc-list-tag relation">👥 ${esc(r)}</span>`;
         })
@@ -447,6 +485,8 @@ function collapseAllNPCDialogs() {
 // ============================================================
 // NPC RELATIONS SYSTEM
 // ============================================================
+/** Statuswerte einer Beziehung, die als Klasse landen duerfen (Vertrag SENKEN R2). */
+const RELATION_STATUS_KLASSEN = Object.keys(RELATION_STATUS);
 function renderNPCRelations(npc) {
     const relations = npc.relations || [];
     if (!relations.length) {
@@ -479,12 +519,18 @@ function renderNPCRelations(npc) {
                         typeLabel = 'NPC';
                     }
                     const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+                    // Ein unbekannter Status zeigt schon heute "Neutral" — die Klasse folgt ihm.
+                    const statusKlasse = sichereKlasse(
+                        rel.status,
+                        RELATION_STATUS_KLASSEN,
+                        'neutral'
+                    );
                     return `
                     <div class="npc-relation-item">
                         <span class="npc-relation-icon">${icon}</span>
                         <div class="npc-relation-info">
                             <div class="npc-relation-name"
-                                 ${isClickable ? `data-action="navigate-entity-stop" data-type="${rel.targetType}" data-id="${rel.targetId}"` : ''}>
+                                 ${isClickable ? `data-action="navigate-entity-stop" data-type="${esc(rel.targetType)}" data-id="${esc(rel.targetId)}"` : ''}>
                                 ${esc(targetName)}
                             </div>
                             <div class="npc-relation-type">
@@ -493,12 +539,12 @@ function renderNPCRelations(npc) {
                             </div>
                         </div>
                         <div class="npc-relation-bar">
-                            <div class="npc-relation-fill ${rel.status}"></div>
+                            <div class="npc-relation-fill ${statusKlasse}"></div>
                         </div>
-                        <span class="npc-relation-status ${rel.status}">${status.label}</span>
+                        <span class="npc-relation-status ${statusKlasse}">${status.label}</span>
                         <div class="npc-relation-actions">
-                            <button class="npc-relation-btn" data-action="cycle-relation-status-stop" data-id="${npc.id}" data-value="${idx}" title="Status ändern">🔄</button>
-                            <button class="npc-relation-btn danger" data-action="remove-relation-stop" data-id="${npc.id}" data-value="${idx}" title="Entfernen">✕</button>
+                            <button class="npc-relation-btn" data-action="cycle-relation-status-stop" data-id="${esc(npc.id)}" data-value="${idx}" title="Status ändern">🔄</button>
+                            <button class="npc-relation-btn danger" data-action="remove-relation-stop" data-id="${esc(npc.id)}" data-value="${idx}" title="Entfernen">✕</button>
                         </div>
                     </div>
                 `;
@@ -519,10 +565,10 @@ function showRelationsModal(npcId) {
             : '';
     const npcOptions = (D.npcs || [])
         .filter(n => n.id !== npc.id) // Exclude self
-        .map(n => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
+        .map(n => `<option value="npcs:${esc(n.id)}">${esc(n.name)} (NPC)</option>`)
         .join('');
     const charOptions = (D.characters || [])
-        .map(c => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
+        .map(c => `<option value="characters:${esc(c.id)}">${esc(c.name)} (Charakter)</option>`)
         .join('');
     const existingRelations = (npc.relations || [])
         .map((rel, idx) => {
@@ -548,8 +594,8 @@ function showRelationsModal(npcId) {
                 <div class="npc-relation-info">
                     <div class="npc-relation-name">${esc(targetName)}</div>
                 </div>
-                <span class="npc-relation-status ${rel.status}">${status.label}</span>
-                <button class="npc-relation-btn danger" data-action="remove-relation-modal" data-id="${npcId}" data-value="${idx}">✕</button>
+                <span class="npc-relation-status ${sichereKlasse(rel.status, RELATION_STATUS_KLASSEN, 'neutral')}">${status.label}</span>
+                <button class="npc-relation-btn danger" data-action="remove-relation-modal" data-id="${esc(npcId)}" data-value="${idx}">✕</button>
             </div>
         `;
         })
@@ -583,7 +629,7 @@ function showRelationsModal(npcId) {
                     <input type="text" id="relation-note" placeholder="Notiz (optional)...">
                 </div>
                 <div class="relations-form-row">
-                    <button class="relations-add-btn" data-action="add-relation" data-id="${npcId}">+ Beziehung hinzufügen</button>
+                    <button class="relations-add-btn" data-action="add-relation" data-id="${esc(npcId)}">+ Beziehung hinzufügen</button>
                 </div>
             </div>
 
@@ -681,6 +727,10 @@ function cycleRelationStatus(npcId, index) {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
+// toggleNPC() hat im Produktionscode genau einen Verbraucher,
+// navigateToResult() in systems/search/global-search.js (NSC ohne Ort); der
+// ruft sie ohne window-Export (Export-Audit-Regel). ESLint meldet die Funktion
+// trotzdem als unbenutzt — es prueft je Datei. Kein toter Code.
 window.selectedNpcId = selectedNpcId;
 window.renderNPCList = renderNPCList;
 window.selectNPC = selectNPC;

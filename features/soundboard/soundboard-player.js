@@ -97,7 +97,7 @@ async function loadTrackBuffer(blobId) {
     const blob = await window.getSoundBlob(blobId);
     if (!blob) {
         if (typeof showToast === 'function') {
-            showToast('Audio-Datei nicht gefunden (ID: ' + esc(blobId) + ')', 'error');
+            showToast('Audio-Datei nicht gefunden (ID: ' + blobId + ')', 'error');
         }
         return null;
     }
@@ -315,11 +315,15 @@ function _progressTick() {
         return;
     }
     const ctx = _soundboardAudioContext;
-    const sceneSel = '.sb-scene-card[data-scene-id="' + _activeScene.sceneId + '"]';
+    const sceneId = _activeScene.sceneId;
     _activeScene.tracks.forEach(function(t) {
         const pct = computeProgress(ctx.currentTime - t.iterStart, t.duration) * 100;
+        // Ein Selektor, kein Markup: die Kette geht unmittelbar an querySelector
+        // (Ratsche R6, tests/unit/html-senken.test.js, Regel "Selektoren").
         const fill = document.querySelector(
-            sceneSel + ' .sb-track-row[data-blob-id="' + t.blobId + '"] .sb-progress-fill'
+            '.sb-scene-card[data-scene-id="' + sceneId + '"] .sb-track-row[data-blob-id="' +
+                t.blobId +
+                '"] .sb-progress-fill'
         );
         if (fill) fill.style.width = pct.toFixed(1) + '%';
     });

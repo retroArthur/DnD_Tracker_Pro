@@ -596,7 +596,7 @@ function kurzKennung() {
         /* Ohne Git-Historie (etwa in einem Abzug) bleibt die Herkunftsangabe
            leer. Kein Abbruch: die Erhebung selbst braucht Git nicht, und eine
            Grundlinie ohne Kennung ist noch immer ein Vergleichsmass. Die
-           leere Bindung statt `catch (e)` haelt die Lint-Ratsche bei 363 —
+           leere Bindung statt `catch (e)` erzeugt keine neue Lint-Warnung —
            `caughtErrors` steht auf "all". */
         return '(keine Git-Kennung)';
     }

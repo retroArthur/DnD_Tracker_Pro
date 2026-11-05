@@ -8,6 +8,9 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+// importFullExport() ruft seit SENKEN die Datengrenze auf (Vertrag SENKEN R4) — der echte
+// Block aus utils/basic.js, keine Attrappe
+const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 // ============================================================
 // SETUP: full-export.js in vm-Kontext laden (non-ESM-Muster)
@@ -131,6 +134,7 @@ beforeAll(() => {
         console: console
     };
     vm.createContext(context);
+    ladeDatengrenze(context);
 
     const filePath = path.join(__dirname, '../../systems/migration/full-export.js');
     const code = fs.readFileSync(filePath, 'utf8');
@@ -328,8 +332,10 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
             // Eintraegen gefolgt von einem fehlerhaften). Object.entries() erhaelt
             // die Einfuegereihenfolge der Datei.
             bad.campaigns = Object.assign({}, bad.campaigns, {
-                'dnd-campaign-kaputt': {
-                    meta: { key: 'dnd-campaign-kaputt', name: 'Kaputt' },
+                // Ein Schluessel im Format der App (newCampaignKey): die Ablehnung soll an
+                // den DATEN liegen, nicht an der Schluesselregel (SENKEN)
+                'dnd-campaign-1700000000000': {
+                    meta: { key: 'dnd-campaign-1700000000000', name: 'Kaputt' },
                     data: null
                 }
             });
@@ -354,8 +360,10 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         );
         const idxTypeCheck = src.indexOf("_exportType !== 'full-v1'");
         const idxMaxCheck = src.indexOf('MAX_IMPORT_CAMPAIGNS');
-        const idxKeyWhitelist = src.indexOf('ALLOWED_KEY_RE');
+        const idxKeyWhitelist = src.indexOf('if (!istKampagnenKey(key))');
         const idxFirstWrite = src.indexOf('StorageAPI.setJSON(key, migratedData)');
+
+        expect(idxKeyWhitelist).toBeGreaterThan(-1);
 
         expect(idxTypeCheck).toBeGreaterThan(-1);
         expect(idxFirstWrite).toBeGreaterThan(-1);
@@ -388,6 +396,72 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
 // Import gewinnt, wo beide dasselbe meinen; erhalten bleibt nur, was der Import
 // gar nicht kennt; wortgleiche Doppelte entstehen nicht.
 // ============================================================
+// ============================================================
+// SENKEN (Gutachten, Sonde G): die Schluesselregel laesst nur die Formate zu, die die App
+// selbst schreibt. Die fruehere Regel /^(dnd-tracker(-|$)|dnd-campaign-)/ liess JEDEN
+// App-Schluessel durch: eine Kampagne 'dnd-tracker-backups' ueberschrieb ohne Fehler den
+// localStorage-Rueckfall der Backups, und der Index uebernahm ihn als Kampagne.
+// ============================================================
+describe('SENKEN — Kampagnen- und Index-Schluessel nur im Format der App', () => {
+    const FREMDE_APP_SCHLUESSEL = [
+        'dnd-tracker-backups',
+        'dnd-tracker-campaigns',
+        'dnd-tracker-theme',
+        'dnd-tracker-layout',
+        'dnd-tracker-sync',
+        'dnd-tracker-db',
+        'dnd-tracker-v4_ts',
+        'dnd-tracker-data_ts',
+        'dnd-campaign-1700000000000_ts',
+        'dnd-campaign-x',
+        'dnd-campaign-',
+        'dnd-tracker-v4x'
+    ];
+    const SCHLUESSEL_DER_APP = [
+        'dnd-tracker-data', // APP_CONFIG.STORAGE_KEY dieser Werkbank
+        'dnd-tracker-v4',
+        'dnd-tracker',
+        'dnd-campaign-1700000000000',
+        'dnd-campaign-1700000000000-2'
+    ];
+    const mitKampagne = key => {
+        const datei = buildFullExport();
+        datei.campaigns = Object.assign({}, datei.campaigns, {
+            [key]: { meta: { key, name: 'X' }, data: { npcs: [{ id: 9, name: 'Ueberschrieben' }] } }
+        });
+        return datei;
+    };
+
+    test.each(FREMDE_APP_SCHLUESSEL)('Kampagne unter %s wird abgelehnt, nichts geschrieben', key => {
+        expect(() => importFullExport(mitKampagne(key))).toThrow(/Unerwarteter Kampagnen-Key/);
+        expect(Object.keys(writtenKeys).filter(k => k !== 'dnd-dice-favorites')).toEqual([]);
+        expect(savedIndexCalls).toHaveLength(0);
+    });
+
+    test.each(SCHLUESSEL_DER_APP)('Kampagne unter %s wird geschrieben', key => {
+        importFullExport(mitKampagne(key));
+        expect(writtenKeys[key]).toBeDefined();
+    });
+
+    test('ein Indexeintrag mit fremdem App-Schluessel faellt weg, ein gueltiger bleibt', () => {
+        const datei = buildFullExport();
+        datei.campaignIndex = {
+            campaigns: [
+                { key: 'dnd-tracker-backups', name: 'Backups als Kampagne' },
+                { key: 'dnd-tracker-campaigns', name: 'Index als Kampagne' },
+                { key: 'dnd-tracker-data', name: 'Standard-Kampagne' },
+                { key: 'dnd-campaign-1700000000000', name: 'Benannt' }
+            ],
+            active: 'dnd-tracker-backups'
+        };
+        importFullExport(datei);
+        const index = savedIndexCalls[savedIndexCalls.length - 1];
+        expect(index.campaigns.map(c => c.key)).toEqual(['dnd-tracker-data', 'dnd-campaign-1700000000000']);
+        // `active` ausserhalb des Formats wird die Standard-Kampagne
+        expect(index.active).toBe('dnd-tracker-data');
+    });
+});
+
 describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefuehrt, nicht ersetzt', () => {
     // Minimaler, aber gueltiger Import — genau eine Kampagne, damit die
     // Campaigns-/ALLOWED_KEY_RE-Pruefungen anstandslos durchlaufen und der Test
@@ -618,6 +692,7 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
             console: console
         };
         vm.createContext(context);
+        ladeDatengrenze(context);
 
         // ECHTE Migration zuerst — full-export.js schlaegt `migrateData` als
         // globale Funktion nach (full-export.js:149).

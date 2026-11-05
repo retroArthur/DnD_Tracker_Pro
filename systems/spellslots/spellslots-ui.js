@@ -67,7 +67,7 @@ function renderSpellSlotPips(charId) {
         hasSlots = true;
         html += `<span style="margin-right: 10px; display: inline-flex; align-items: center;" title="Bekannte Zaubertricks">`;
         html += `<span style="font-size: var(--text-xs); color: var(--gold); margin-right: 3px;">🔮</span>`;
-        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
+        html += `<span style="font-size: var(--text-xs); color: var(--purple); font-weight: 600;">${esc(String(cantrips.max))}</span>`;
         html += `</span>`;
     }
     for (let level = 1; level <= 9; level++) {

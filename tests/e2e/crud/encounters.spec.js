@@ -206,9 +206,7 @@ test.describe('Encounters - CRUD Operationen', () => {
             // isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
             // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
             // stillen Pass).
-            const editBtn = page
-                .locator('[data-action="edit-enc"], [data-action="edit-encounter"]')
-                .first();
+            const editBtn = page.locator('[data-action="edit-encounter"]').first();
             await expect(editBtn).toBeVisible();
             await editBtn.click();
             await page.waitForTimeout(300);
@@ -250,9 +248,7 @@ test.describe('Encounters - CRUD Operationen', () => {
             // gerendert — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b:
             // vorheriger Guard umschloss die einzige Assertion des Tests und maskierte ein
             // fehlendes Element als stillen Pass).
-            const deleteBtn = page
-                .locator('[data-action="delete-enc"], [data-action="delete-encounter"]')
-                .first();
+            const deleteBtn = page.locator('[data-action="delete-encounter"]').first();
             await expect(deleteBtn).toBeVisible();
             await deleteBtn.click();
             await page.waitForTimeout(500);
@@ -279,9 +275,7 @@ test.describe('Encounters - CRUD Operationen', () => {
             // gerendert — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b:
             // vorheriger Guard umschloss die einzige Assertion des Tests und maskierte ein
             // fehlendes Element als stillen Pass).
-            const deleteBtn = page
-                .locator('[data-action="delete-enc"], [data-action="delete-encounter"]')
-                .first();
+            const deleteBtn = page.locator('[data-action="delete-encounter"]').first();
             await expect(deleteBtn).toBeVisible();
             await deleteBtn.click();
             await page.waitForTimeout(500);

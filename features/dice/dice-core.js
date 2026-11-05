@@ -315,7 +315,7 @@ function rollGroupPerception() {
         rolls: results.map(r => r.roll)
     };
     const extraHtml = `<div style="text-align: left; font-size: var(--text-sm); margin-top: 8px;">
-        ${results.map(r => `<div>${r.name}: <strong>${r.total}</strong> (🎲${r.roll}) | Passiv: ${r.passive}</div>`).join('')}
+        ${results.map(r => `<div>${esc(r.name)}: <strong>${esc(String(r.total))}</strong> (🎲${esc(String(r.roll))}) | Passiv: ${esc(String(r.passive))}</div>`).join('')}
     </div>`;
     displayDiceResult(
         `Höchste: ${highest}`,
@@ -331,7 +331,13 @@ function rollGroupPerception() {
         results.map(r => r.roll)
     );
 }
-function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = '') {
+/**
+ * Zeigt ein Wurfergebnis. `extraHtml` ist fertiges Markup des AUFRUFERS (ohne
+ * Vorgabewert, damit die Ratsche tests/unit/html-senken.test.js jeden Aufruf
+ * pruefen kann, statt die Stelle hier pauschal zu zaehlen); Notation und
+ * Einzelwuerfe sind Text und gehen nur per textContent hinaus (Vertrag SENKEN).
+ */
+function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml) {
     // Try new structure first, fall back to old
     const heroContainer = $('dice-hero');
     const heroResult = $('dice-hero-result');
@@ -381,7 +387,7 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
                 'dice-result-main' + (isCrit ? ' dice-crit' : '') + (isFail ? ' dice-fail' : '');
         }
         if (detail) {
-            detail.innerHTML = `${notation}${dmgType} → [${Array.isArray(rolls) ? rolls.join(', ') : rolls}]`;
+            detail.textContent = `${notation}${dmgType} → [${Array.isArray(rolls) ? rolls.join(', ') : rolls}]`;
         }
         if (extra) {
             if (extraHtml) {
@@ -436,8 +442,20 @@ function toggleDamageType(chip) {
         selectedDamageType = null;
     }
 }
-function addToDiceHistory(notation, result, rolls) {
-    const dmgType = selectedDamageType ? ` (${selectedDamageType})` : '';
+/**
+ * Traegt einen Wurf in den Verlauf ein und reicht ihn an die Statistik weiter.
+ * @param notation - Notation oder Beschriftung (z.B. '1d20+4', 'Vorteil')
+ * @param result - Summe
+ * @param rolls - Einzelwuerfe
+ * @param optionen - `{ ohneSchadensart: true }` laesst den im Wuerfel-Tab
+ *   gewaehlten Schadensart-Chip weg. Gesetzt von Schnellreferenz, Bestiar,
+ *   Statblock und Schnellwurf — sonst hiesse Fallschaden "1d6 (Feuer)"
+ *   (WUERFEL). Alle uebrigen Aufrufer, auch DM-Screen, schwebendes Panel und
+ *   die Charakterwuerfe, tragen den Zusatz weiter wie zuvor (nicht entschieden).
+ */
+function addToDiceHistory(notation, result, rolls, optionen) {
+    const dmgType =
+        selectedDamageType && !optionen?.ohneSchadensart ? ` (${selectedDamageType})` : '';
     diceHistory.unshift({ notation: notation + dmgType, result, rolls, time: new Date() });
     if (diceHistory.length > 30) diceHistory.pop();
     renderDiceHistory();
@@ -461,7 +479,7 @@ function renderFormulaHistory() {
     c.innerHTML = diceFormulaHistory
         .map(
             f =>
-                `<span class="dice-formula-chip" data-action="set-dice-formula" data-value="${f}">${f}</span>`
+                `<span class="dice-formula-chip" data-action="set-dice-formula" data-value="${esc(f)}">${esc(f)}</span>`
         )
         .join('');
 }
@@ -480,7 +498,7 @@ function renderDiceHistory() {
             return `
             <div class="dice-history-item" data-action="set-dice-history" data-value="${esc(cleanNotation || h.notation)}">
                 <span class="dice-history-notation">${esc(cleanNotation || h.notation)}</span>
-                <span class="dice-history-result">${h.result}</span>
+                <span class="dice-history-result">${esc(String(h.result))}</span>
             </div>
         `;
         })
@@ -501,7 +519,7 @@ function updateDiceCharSelect() {
     select.innerHTML =
         '<option value="">— Charakter —</option>' +
         (D.characters || [])
-            .map(ch => `<option value="${ch.id}">${esc(ch.name)}</option>`)
+            .map(ch => `<option value="${esc(ch.id)}">${esc(ch.name)}</option>`)
             .join('');
 }
 function updateDiceCharStats() {
@@ -532,15 +550,18 @@ function renderSkillButtons(ch, attrs, profBonus) {
     const grid = $('dice-skill-grid');
     if (!grid) return;
     let html = '';
-    Object.entries(SKILLS).forEach(([attr, skills]) => {
+    // Ueber die Schluessel statt Object.entries: Fertigkeit und Name sind sichtbar
+    // Tabellenwerte; der Bonus kommt aus D und geht durch esc() (Vertrag SENKEN).
+    Object.keys(SKILLS).forEach(attr => {
+        const skills = SKILLS[attr];
         const attrVal = attrs[attr] || 10;
         const attrMod = Math.floor((attrVal - 10) / 2);
         skills.forEach(skill => {
             const isProficient = ch?.skillProficiencies?.[skill.skill];
             const mod = attrMod + (isProficient ? profBonus : 0);
             const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-            html += `<button class="dice-skill-btn" data-action="roll-skill" data-value="${skill.skill}" data-mod="${mod}" data-name="${skill.name}">
-                ${skill.name}<span class="skill-mod">${modStr}${isProficient ? '●' : ''}</span>
+            html += `<button class="dice-skill-btn" data-action="roll-skill" data-value="${skill.skill}" data-mod="${esc(String(mod))}" data-name="${skill.name}">
+                ${skill.name}<span class="skill-mod">${esc(modStr)}${isProficient ? '●' : ''}</span>
             </button>`;
         });
     });
@@ -744,7 +765,7 @@ function renderFloatingHistory() {
         .map(
             h => `
         <div class="fdp-history-item" data-action="reroll-floating" data-value="${esc(h.notation)}">
-            <span class="fdp-history-result">${h.result}</span>
+            <span class="fdp-history-result">${esc(String(h.result))}</span>
             <span class="fdp-history-notation">${esc(h.notation)}</span>
         </div>
     `

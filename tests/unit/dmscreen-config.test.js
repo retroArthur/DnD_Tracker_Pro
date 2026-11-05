@@ -125,7 +125,10 @@ function loadDmScreenConfigSandbox(fixtureWidgets) {
         D: sandboxD,
         APP_CONFIG: { DEBUG_MODE: false },
         ErrorHandler: { log: jest.fn() },
-        EntityLookup: { enableCache: jest.fn(), clearCache: jest.fn() },
+        // Keine EntityLookup-Attrappe mehr: renderDMScreen() rief nur enableCache()/
+        // clearCache(), und beide gibt es seit RUECKSPRUNG nicht mehr. Kein Modul unter
+        // features/dmscreen/ liest ueber EntityLookup; ein neuer Leser dort liefe hier
+        // in einen ReferenceError, sobald ein Fall seinen Weg faehrt.
         $: id => sandboxDocument.getElementById(id),
         esc: s => (s === null || s === undefined ? '' : String(s)),
         showToast: jest.fn(),

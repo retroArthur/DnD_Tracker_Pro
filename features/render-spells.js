@@ -196,15 +196,15 @@ function renderAssignSpellList() {
             const isChecked = currentSpells.some(sid => parseEntityId(sid) === spellId);
             const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
             const levelText = level === 0 ? '🔮' : level;
-            const levelClass = level === 0 ? 'trick' : `level-${level}`;
+            const levelClass = level === 0 ? 'trick' : `level-${Number(level)}`;
             const school = s.school ? s.school.substring(0, 3) : '';
             return `<label class="assign-spell-item ${isChecked ? 'checked' : ''}">
-            <input type="checkbox" value="${spellId}" ${isChecked ? 'checked' : ''} data-on-change="updateAssignSpellCount">
+            <input type="checkbox" value="${esc(String(spellId))}" ${isChecked ? 'checked' : ''} data-on-change="updateAssignSpellCount">
             <div class="assign-spell-info">
                 <span class="assign-spell-name">${esc(s.name)}</span>
-                <span class="assign-spell-meta">${school}</span>
+                <span class="assign-spell-meta">${esc(school)}</span>
             </div>
-            <span class="assign-spell-level ${levelClass}">${levelText}</span>
+            <span class="assign-spell-level ${levelClass}">${esc(String(levelText))}</span>
         </label>`;
         })
         .join('');

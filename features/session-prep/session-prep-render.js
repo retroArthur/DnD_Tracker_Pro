@@ -87,24 +87,24 @@ function renderSessionPrepList() {
         var szenenAnz = (prep.szenen || []).length;
 
         html += [
-            '<div class="wp-card" id="session-prep-card-' + prep.id + '">',
+            '<div class="wp-card" id="session-prep-card-' + esc(prep.id) + '">',
             '  <div class="wp-card-header">',
             '    <div class="wp-card-title">',
             '      ' + (sessionLabel ? ('<span class="wp-session-nr">' + sessionLabel + '</span> ') : ''),
             '      ' + (datumLabel ? ('<span class="wp-datum">' + datumLabel + '</span>') : ''),
             '    </div>',
             '    <div class="wp-card-actions">',
-            '      <button class="btn btn-sm" data-action="edit-session-prep" data-id="' + prep.id + '">✏️ Bearbeiten</button>',
-            '      <button class="btn btn-sm btn-danger" data-action="delete-session-prep" data-id="' + prep.id + '">🗑️ Löschen</button>',
+            '      <button class="btn btn-sm" data-action="edit-session-prep" data-id="' + esc(prep.id) + '">✏️ Bearbeiten</button>',
+            '      <button class="btn btn-sm btn-danger" data-action="delete-session-prep" data-id="' + esc(prep.id) + '">🗑️ Löschen</button>',
             '    </div>',
             '  </div>',
             '  <div class="wp-card-meta">',
             '    ' + (inGameLabel ? '<span class="wp-ingame-datum">📅 ' + inGameLabel + '</span>' : ''),
-            '    <span class="wp-meta-tag">' + szenenAnz + ' Szene(n)</span>',
-            '    <span class="wp-meta-tag">' + faedenAnz + ' Faden/Fäden</span>',
+            '    <span class="wp-meta-tag">' + Number(szenenAnz) + ' Szene(n)</span>',
+            '    <span class="wp-meta-tag">' + Number(faedenAnz) + ' Faden/Fäden</span>',
             '  </div>',
             '  <div class="wp-card-preview">',
-            '    ' + (prep.strongStart ? '<div class="wp-strong-start-preview">' + sanitizeHTML(prep.strongStart).substring(0, 120) + '…</div>' : ''),
+            '    ' + (prep.strongStart ? '<div class="wp-strong-start-preview">' + sanitizeHTML(sanitizeHTML(prep.strongStart).substring(0, 120) + '…') + '</div>' : ''), // Schnitt kann mitten im Tag liegen: erneut bereinigen (SENKEN R1)
             '  </div>',
             '</div>'
         ].join('\n');
@@ -148,7 +148,7 @@ function showSessionPrepModal(prep) {
     faedenQuellen.forEach(function(faden) {
         faedenHtml += [
             '<div class="wp-faden-item">',
-            '  <input type="hidden" class="wp-faden-quelle-id" value="' + (faden.quelleId || '') + '">',
+            '  <input type="hidden" class="wp-faden-quelle-id" value="' + esc(faden.quelleId || '') + '">',
             '  <input type="hidden" class="wp-faden-quelle-typ" value="' + esc(faden.quelleTyp || 'manual') + '">',
             '  <input type="text" class="wp-faden-text form-control" value="' + esc(faden.text || '') + '" placeholder="Offener Faden…">',
             '  <button type="button" class="btn btn-sm wp-faden-remove-btn" data-action="remove-faden" title="Entfernen">×</button>',
@@ -161,7 +161,7 @@ function showSessionPrepModal(prep) {
         '  <div class="modal-content modal-large">',
         '    <div class="modal-header">',
         '      <h2 id="prep-modal-title">' + (isEdit ? 'Session-Prep bearbeiten' : 'Neue Session-Prep') + '</h2>',
-        '      <button class="modal-close" data-action="close-modal" data-value="session-prep-modal" aria-label="Schließen">×</button>',
+        '      <button class="modal-close" data-action="hide-modal" data-value="session-prep-modal" aria-label="Schließen">×</button>',
         '    </div>',
         '    <div class="modal-body">',
         '      <input type="hidden" id="prep-edit-id" value="' + (isEdit ? esc(String(prep.id)) : '') + '">',
@@ -265,7 +265,7 @@ function showSessionPrepModal(prep) {
         '',
         '    </div><!-- /modal-body -->',
         '    <div class="modal-footer">',
-        '      <button type="button" class="btn btn-secondary" data-action="close-modal" data-value="session-prep-modal">Abbrechen</button>',
+        '      <button type="button" class="btn btn-secondary" data-action="hide-modal" data-value="session-prep-modal">Abbrechen</button>',
         '      <button type="button" class="btn btn-primary" data-action="save-session-prep">💾 Speichern</button>',
         '    </div>',
         '  </div>',
@@ -287,7 +287,7 @@ function showSessionPrepModal(prep) {
  * @returns {string} HTML
  */
 function renderSzeneFormular(szene, idx) {
-    var szeneIdx = idx || 0;
+    var szeneIdx = Number(idx) || 0;
     var editorId = 'szene-beschreibung-' + szeneIdx;
     return [
         '<div class="wp-szene-item" data-szene-idx="' + szeneIdx + '">',
@@ -391,7 +391,7 @@ function renderSessionPrepDetail(prep) {
         '  </div>',
         '',
         '  <div class="wp-section-block">',
-        '    <h4>🧵 Offene Fäden (' + (prep.offeneFaeden || []).length + ')</h4>',
+        '    <h4>🧵 Offene Fäden (' + Number((prep.offeneFaeden || []).length) + ')</h4>',
         '    <div class="wp-faeden-list">' + (faedenHtml || '<em>Keine offenen Fäden</em>') + '</div>',
         '  </div>',
         '</div>'

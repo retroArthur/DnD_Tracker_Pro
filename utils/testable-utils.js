@@ -168,13 +168,13 @@ function sanitizeHTML(html) {
                     const href = attr.value.trim();
                     const hrefLower = href.toLowerCase();
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
+                    // relativ nur nach istRelativerLink() (Datengrenzen-Block): kein doppelter,
+                    // auch kodierter Trenner — unter file:// ein UNC-Pfad (SENKEN R3, (16))
                     if (
                         isSafe &&
                         (hrefLower.startsWith('http://') ||
                             hrefLower.startsWith('https://') ||
-                            href.startsWith('/') ||
-                            href.startsWith('#') ||
-                            href.startsWith('./'))
+                            istRelativerLink(href))
                     ) {
                         cleanElement.setAttribute('href', href);
                         cleanElement.setAttribute('target', '_blank');
@@ -477,6 +477,479 @@ function distributeXP(totalXP, activeChars) {
     return { share, remainder };
 }
 
+// [DATENGRENZE:ANFANG] — zeichengleich in utils/basic.js und utils/testable-utils.js
+// (tests/unit/sanitizer-parity.test.js vergleicht den Block; der Vertrag beider Kopien steht
+// in tests/unit/datengrenze.test.js)
+// ============================================================
+// SICHERE WERTE AUS DATEN — Vertrag SENKEN R2/R3/R4, docs/bugfixes.md
+// Keine dieser Hilfen ist ein Kodierer: Text- und Attributausgabe laeuft weiter durch esc().
+// ============================================================
+/**
+ * Leseregel des Browsers fuer einen Wert, der als URL gelesen wird — EINMAL fuer alle R3-Hilfen
+ * (sichererLink, istLokalerDateipfad, sichereBildquelle, istRelativerLink); intern im Block,
+ * kein Export. Der Browser entfernt fuehrende Leer- und Steuerzeichen (U+0000 bis U+0020) und
+ * streicht Tabulator und Zeilenumbruch auch IM Text: "\tjava\nScRiPt:" ist fuer ihn javascript:,
+ * "fi\tle:///C:/x" eine lokale Datei. Gross/Klein bleibt stehen — das pruefen die Aufrufer.
+ * @param {string} url - Wert aus Daten (Text)
+ * @returns {string} der Wert, wie der Browser ihn liest
+ */
+function wieBrowserGelesen(url) {
+    let start = 0;
+    while (start < url.length && url.charCodeAt(start) <= 0x20) start++;
+    return url.slice(start).replace(/[\t\n\r]/g, '');
+}
+/**
+ * R3: Link aus Daten -> derselbe Link oder ''. Erlaubt sind nur http:, https:, mailto:.
+ * Geprueft wird das Schema so, wie der Browser es liest (wieBrowserGelesen()), Gross/Klein
+ * egal. Darum eine Erlaubnisliste statt einer Sperrliste, verankert am Anfang. Ein erlaubter
+ * Link kommt unveraendert zurueck; im Attribut gehoert er zusaetzlich in esc() (er laesst `"`
+ * stehen).
+ * @param {*} url - Wert aus Daten
+ * @returns {string} der Link oder ''
+ */
+function sichererLink(url) {
+    if (typeof url !== 'string') return '';
+    return /^(?:https?|mailto):/i.test(wieBrowserGelesen(url)) ? url : '';
+}
+/**
+ * R3-Pruefkern fuer Pfade — EINE Pruefung fuer den Pfad hinter `file://` (istLokalerDateipfad),
+ * fuer relative Bildquellen (sichereBildquelle) und fuer relative Linkziele im Rich-Text
+ * (istRelativerLink, Nachbesserung (16)); intern im Block, kein Export. Wahr ist ein Pfad mit
+ * hoechstens einem Trenner am Anfang, danach etwas anderes als `?`/`#`, und nirgends zwei
+ * Trenner hintereinander. Trenner werden gelesen wie vom Browser: `\` wie `/`, und `%2F`/`%5C`
+ * (Gross/Klein egal) ebenfalls, weil ein Teil der Browser sie beim Oeffnen einer Datei
+ * dekodiert. Ein doppelter Trenner, wo auch immer, ist unter Windows ein UNC-Pfad oder wird
+ * einer: `.`/`..` (auch kodiert, `%2e%2e`) loesen sich vorher auf, `/x/..//rechner` wird
+ * `//rechner`. Gemessen: Firefox setzt `/%5C%5Crechner/x.png` hinter `file://` und laedt
+ * `\\rechner\x.png` (Nachbesserung (15), docs/bugfixes.md SENKEN) — und oeffnet ebenso
+ * `/%5C%5Crechner/x.pdf` als Linkziel beim Klick (Nachbesserung (16)).
+ * @param {string} pfad - Pfad, wie der Browser ihn liest (wieBrowserGelesen())
+ * @returns {boolean} ob der Pfad keinen Netzwerkanteil hat
+ */
+function istLokalerPfad(pfad) {
+    const getrennt = pfad.replace(/%2f|%5c|\\/gi, '/');
+    return /^\/?[^/?#]/.test(getrennt) && !getrennt.includes('//');
+}
+/**
+ * R3: lokaler Dateipfad — EINE Pruefung fuer die Linkliste (sichererListenLink) und die
+ * Bildquellen (sichereBildquelle); intern im Block, kein Export. Nutzerentscheidung (29.10.):
+ * der Nutzer arbeitet unter file://, verlinkt eigene PDFs und Karten und legt Portraits auf der
+ * eigenen Platte ab; vor SENKEN war beides bedienbar bzw. sichtbar und soll es wieder sein.
+ * Wahr ist darum genau `file:///` mit einem lokalen Pfad dahinter (istLokalerPfad()) — ein
+ * Laufwerk (`file:///C:/Karten/x.pdf`) oder ein absoluter Pfad (`file:///home/x.pdf`).
+ * Falsch bleibt jeder Netzwerkpfad: unter Windows ist `file://rechner/freigabe/x` ein
+ * UNC-Pfad, und das System meldet sich beim fremden Rechner an (NTLM — die Anmeldung des
+ * Nutzers geht an einen Rechner, den die Daten bestimmen); beim Link genuegt der Klick, beim
+ * Bild schon das Anzeigen. Darum kein Host (auch nicht `localhost`: Hostnamen liest die
+ * Pruefung nicht, und Chromium liest ihn als Host), kein Pfad, der mit einem Trenner beginnt
+ * (`file:////rechner`, `file:///\\rechner`, `file:///%5C%5Crechner`), und kein doppelter
+ * Trenner im Rest (`file:///home/../..//rechner` loest sich zu `file:////rechner` auf). Gelesen
+ * wie der Browser (wieBrowserGelesen()), Gross/Klein egal. Die Faelle stehen einmal fuer beide
+ * Hilfen in tests/unit/datengrenze.test.js (DATEIPFAD_LOKAL, DATEIPFAD_GESPERRT).
+ * @param {*} url - Wert aus Daten
+ * @returns {boolean} ob der Wert ein lokaler Dateipfad ist
+ */
+function istLokalerDateipfad(url) {
+    if (typeof url !== 'string') return false;
+    const gelesen = wieBrowserGelesen(url);
+    return /^file:\/\/\//i.test(gelesen) && istLokalerPfad(gelesen.slice('file://'.length));
+}
+/**
+ * R3 fuer die Linkliste (features/shops/links.js): was sichererLink() erlaubt, dazu lokale
+ * Datei-Links nach istLokalerDateipfad() — Netzwerkpfade bleiben gesperrt (Nutzerentscheidung
+ * 29.10.). Nur fuer die Linkliste — Editor-Links (Linkmenue, Markdown-Wandler) bleiben bei
+ * sichererLink().
+ * @param {*} url - Wert aus Daten
+ * @returns {string} der Link oder ''
+ */
+function sichererListenLink(url) {
+    return sichererLink(url) || (istLokalerDateipfad(url) ? url : '');
+}
+/**
+ * R3 fuer Bildquellen (`<img src>`, `img.src`): Bild aus Daten -> dieselbe Quelle oder ''.
+ * Ein Bild laedt die App von selbst, ohne Klick. Erlaubt sind http:, https:, data:image/,
+ * lokale Dateipfade nach istLokalerDateipfad() (Nutzerentscheidung 29.10.: lokale Portraits
+ * wieder sichtbar) und relative Pfade nach demselben Pruefkern istLokalerPfad() wie der Pfad
+ * hinter `file://`. Verboten jedes andere Schema (javascript:, data:text/html, blob:, ein
+ * Netzwerkpfad `file://host/…` …) und jeder relative Wert mit Netzwerkanteil: ein
+ * protokoll-relativer Anfang (`//host/share/x.png` wird unter file:// zu
+ * `file://host/share/x.png`, unter Windows ein UNC-Pfad, also eine Verbindung samt
+ * Anmeldeversuch zu einem fremden Rechner) und ebenso ein doppelter Trenner aus `\`, `%2F` oder
+ * `%5C` irgendwo im Wert (`/%5C%5Chost/x.png` laedt Firefox als `\\host\x.png`, Nachbesserung
+ * (15)). Gelesen wie der Browser (wieBrowserGelesen()).
+ * @param {*} url - Wert aus Daten
+ * @returns {string} die Quelle oder ''
+ */
+function sichereBildquelle(url) {
+    if (typeof url !== 'string') return '';
+    const gelesen = wieBrowserGelesen(url);
+    if (!gelesen) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(gelesen)) return istLokalerPfad(gelesen) ? url : '';
+    return /^(?:https?:|data:image\/)/i.test(gelesen) || istLokalerDateipfad(url) ? url : '';
+}
+/**
+ * R3 fuer relative Linkziele im Rich-Text — EINE Pruefung fuer sanitizeHTML() (beide Kopien),
+ * isAllowedEditorHref() (Link-Eingabe und Linkmenue des Editors, ui/editors/rich-text.js) und
+ * markdownLinkZiel() (Markdown-Export, ui/editors/markdown-converter.js). Erlaubt ist, was der
+ * Editor selbst anlegt: ein Anker `#…` (ein Sprung im Dokument, er oeffnet nichts) und ein Pfad
+ * ab `./` oder `/` ohne Netzwerkanteil nach demselben Pruefkern wie eine relative Bildquelle
+ * (istLokalerPfad()) — `?` und `#` hinter dem Pfad bleiben erlaubt (`./abschnitt.html#a`,
+ * `/bilder/x.png?v=1`). Gesperrt ist jeder doppelte, auch kodierte Trenner: Firefox setzt
+ * `/%5C%5Crechner/x.pdf` beim Klick hinter `file://` und oeffnet `\\rechner\x.pdf` (UNC,
+ * Nachbesserung (16)). Gelesen wie der Browser (wieBrowserGelesen()). Absolute Ziele (http(s),
+ * mailto) prueft der Aufrufer selbst.
+ * @param {*} url - Linkziel aus Daten oder aus der Eingabe
+ * @returns {boolean} ob der Wert ein erlaubtes relatives Linkziel ist
+ */
+function istRelativerLink(url) {
+    if (typeof url !== 'string') return false;
+    const gelesen = wieBrowserGelesen(url);
+    if (gelesen.startsWith('#')) return true;
+    return /^\.?\//.test(gelesen) && istLokalerPfad(gelesen);
+}
+/**
+ * R2: Farbwert aus Daten fuer `style`/Farbattribute: nur `#rgb` oder `#rrggbb`, sonst der
+ * feste Ersatz aus dem Code (der darf auch `var(--gold)` sein).
+ * @param {*} wert - Wert aus Daten
+ * @param {string} ersatz - fester Ersatzwert aus dem Code
+ * @returns {string}
+ */
+function sichereFarbe(wert, ersatz) {
+    return typeof wert === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(wert) ? wert : ersatz;
+}
+/**
+ * R2: Klassen-/Enum-Wert aus Daten: nur ein Wert aus der Erlaubnisliste (exakt, ohne
+ * Objekt-Nachschlagen — `__proto__`, `constructor`, `toString` sind nie erlaubt), sonst der
+ * feste Ersatz aus dem Code.
+ * @param {*} wert - Wert aus Daten
+ * @param {string[]} erlaubteWerte - Erlaubnisliste aus dem Code
+ * @param {string} ersatz - fester Ersatzwert aus dem Code
+ * @returns {string}
+ */
+function sichereKlasse(wert, erlaubteWerte, ersatz) {
+    return typeof wert === 'string' && Array.isArray(erlaubteWerte) && erlaubteWerte.includes(wert)
+        ? wert
+        : ersatz;
+}
+/**
+ * R4: Schluessel, die aus Daten nie uebernommen werden: die Prototyp-Setzer (eine Zuweisung
+ * setzt sonst den Prototyp) und die Umwandler `toString`/`valueOf` — ein Objekt aus JSON mit
+ * einem solchen Datenfeld (`{"toString": 1}`) laesst String(), esc() und jedes Template
+ * werfen, die Ansicht zeichnet dann nicht (Gutachten, Sonde F).
+ */
+const DATENGRENZE_VERBOTEN = Object.freeze([
+    '__proto__',
+    'constructor',
+    'prototype',
+    'toString',
+    'valueOf'
+]);
+/**
+ * R4: Textfelder, auf denen Darstellung, Sortierung und Suche Zeichenketten-Methoden rufen
+ * (`a.name.localeCompare`, `.toLowerCase()`): ein Objekt oder eine Liste dort wird '' —
+ * sonst wirft die ganze Ansicht (Gutachten, Sonde F: ein NPC mit `name: {}` leerte die Liste).
+ * Zahl, Wahrheitswert und `null` bleiben hier stehen: ob die App diese Felder anderswo
+ * regulaer so schreibt, ist nicht gezaehlt. Ganz Text werden nur `npcs[].name` und
+ * `npcs[].race` (N1, datengrenzeNpcTexte()).
+ */
+const DATENGRENZE_TEXTFELDER = Object.freeze(['name', 'title', 'category', 'type']);
+/**
+ * R4: Zahlen- und Verweisfelder des Kampagnenformats, als Pfad ab der Kampagnenwurzel:
+ * `a[]` = jeder Eintrag der Liste a, `a.*` = jeder Wert des Objekts a; ein Pfad, der auf `[]`
+ * endet, ist eine Liste von Zahlen. Aufgenommen ist nur, was die App selbst ausschliesslich
+ * als Zahl schreibt (parseInt/parseFloat/nextId/Date.now in der Speicherfunktion) — der
+ * Typzwang haengt an Sammlung UND Feld, nicht am Feldnamen. Bewusst NICHT hier, weil die App
+ * dort auch Text schreibt: characters[].speed ("7.5m"), shops[].items[].weight ("1,5 kg"),
+ * attacks[].attackBonus ("+5"), savingThrows-Werte, statblockRef.id ("goblin"),
+ * soundboard.scenes[].id ("scene_1"), loot[].assignedTo, die Widget-IDs des DM-Screens.
+ * characters[].items[] traegt Zahlen (Altformat) ODER {id, quantity}: nur die Felder der
+ * Objekte sind hier, ein Eintrag, der kein Objekt ist, bleibt unberuehrt.
+ */
+const DATENGRENZE_ZAHLENFELDER = Object.freeze([
+    'characters[].id',
+    'characters[].level',
+    'characters[].xp',
+    'characters[].hpCurrent',
+    'characters[].hpMax',
+    'characters[].tempHp',
+    'characters[].armorClass',
+    'characters[].initiative',
+    'characters[].passivePerception',
+    'characters[].proficiencyBonus',
+    'characters[].weight',
+    'characters[].height',
+    'characters[].attributes.*',
+    'characters[].currency.*',
+    'characters[].spellSlots.*.max',
+    'characters[].spellSlots.*.current',
+    'characters[].spellSlotsMax[]',
+    'characters[].spellSlotsUsed[]',
+    'characters[].spells[]',
+    'characters[].items[].id',
+    'characters[].items[].quantity',
+    'characters[].links[].id',
+    'npcs[].id',
+    'npcs[].locationId',
+    'npcs[].factionId',
+    'npcs[].relations[].targetId',
+    'npcs[].links[].id',
+    'locations[].id',
+    'locations[].links[].id',
+    'quests[].id',
+    'quests[].giverId',
+    'quests[].locationId',
+    'quests[].targetId',
+    'quests[].rewardGold',
+    'quests[].rewardItems[].id',
+    'quests[].createdAt',
+    'quests[].links[].id',
+    'encounters[].id',
+    'encounters[].ac',
+    'encounters[].hp',
+    'encounters[].init',
+    'encounters[].perception',
+    'encounters[].str',
+    'encounters[].dex',
+    'encounters[].con',
+    'encounters[].int',
+    'encounters[].wis',
+    'encounters[].cha',
+    'encounters[].links[].id',
+    'factions[].id',
+    'factions[].ruf',
+    'factions[].sitzOrtId',
+    'factions[].mitgliederNpcIds[]',
+    'factions[].rufHistorie[].delta',
+    'factions[].rufHistorie[].zeitstempel',
+    'factions[].links[].id',
+    'loot[].id',
+    'loot[].quantity',
+    'loot[].weight',
+    'loot[].value',
+    'loot[].links[].id',
+    'spells[].id',
+    'spells[].level',
+    'spells[].links[].id',
+    'sessionNotes[].id',
+    'sessionNotes[].number',
+    'sessionNotes[].arcId',
+    'storyArcs[].id',
+    'storyArcs[].order',
+    'shops[].id',
+    'shops[].npcId',
+    'shops[].locationId',
+    'shops[].items[].quantity',
+    'randomTables[].id',
+    'randomTables[].entries[].weight',
+    'wiki[].id',
+    'wiki[].parentId',
+    'wiki[].createdAt',
+    'wiki[].updatedAt',
+    'wiki[].links[].id',
+    'sessionPreps[].id',
+    'sessionPreps[].sessionNr',
+    'sessionPreps[].erstellt',
+    'sessionPreps[].szenen[].id',
+    'sessionPreps[].offeneFaeden[].quelleId',
+    'sessionPreps[].links[].id',
+    'bestiary[].id',
+    'bestiary[].ac',
+    'bestiary[].hp',
+    'bestiary[].xp',
+    'bestiary[].str',
+    'bestiary[].dex',
+    'bestiary[].con',
+    'bestiary[].int',
+    'bestiary[].wis',
+    'bestiary[].cha',
+    'bestiary[].legendaryActionsPerRound',
+    'links[].id',
+    'filters[].id',
+    'quickRefCustom[].id',
+    'monsterFavorites[].id',
+    'monsterFavorites[].monsters[].count',
+    'sessionHistory[].duration',
+    'wikiRecentlyViewed[]',
+    'partyGold',
+    'calendar.day',
+    'calendar.month',
+    'calendar.year',
+    'calendar.events[].id',
+    'calendar.events[].quelleId',
+    'calendar.events[].datum.tag',
+    'calendar.events[].datum.monat',
+    'calendar.events[].datum.jahr',
+    'initiative.round',
+    'initiative.currentTurn',
+    'initiative.combatants[].id',
+    'initiative.combatants[].initiative',
+    'initiative.combatants[].initBonus',
+    'initiative.combatants[].maxHp',
+    'initiative.combatants[].currentHp',
+    'initiative.combatants[].tempHp',
+    'initiative.combatants[].ac',
+    'initiative.combatants[].xp',
+    'initiative.combatants[].effects[].id',
+    'initiative.combatants[].effects[].duration',
+    'initiative.combatants[].deathSaves.successes',
+    'initiative.combatants[].deathSaves.failures',
+    'initiative.combatants[].concentration.lastDC',
+    'initiative.combatants[].concentration.pendingCheck',
+    'initiative.combatants[].legendaryActions.max',
+    'initiative.combatants[].legendaryActions.remaining',
+    'initiative.combatants[].legendaryResistance.max',
+    'initiative.combatants[].legendaryResistance.remaining',
+    'initiative.combatants[].mob.count',
+    'initiative.combatants[].mob.poolHp',
+    'initiative.combatants[].mob.maxPoolHp',
+    'initiative.combatants[].mob.individualMaxHp',
+    'soundboard.scenes[].slot',
+    'soundboard.scenes[].tracks[].volume'
+]);
+/** Die Pfade, einmal zerlegt: je Stufe der Name und ob sie eine Liste ist. */
+const DATENGRENZE_PFADE = DATENGRENZE_ZAHLENFELDER.map(pfad =>
+    pfad.split('.').map(teil => ({ name: teil.replace('[]', ''), liste: teil.endsWith('[]') }))
+);
+/** Zahl als Text aus einem alten Export: "12", "-2", "1.5", "1,5" (ohne Exponent, ohne Rest). */
+const DATENGRENZE_ZAHLTEXT = /^[+-]?\d+(?:[.,]\d+)?$/;
+/**
+ * Mehrdeutig: eine bis drei Ziffern (ohne fuehrende Null), ein Trenner, genau drei Ziffern.
+ * "6.500" ist deutsch 6500 und englisch 6,5; "1,500" umgekehrt. Die App schreibt solche Texte
+ * nie (jede Speicherfunktion nimmt parseInt/parseFloat); sie kommen nur aus fremden oder von
+ * Hand bearbeiteten Dateien. Eine Umwandlung riete und schriebe beim naechsten save() einen
+ * um den Faktor 1000 falschen Wert fest — ein solcher Wert wird verworfen wie Text mit Einheit
+ * ("80 kg"). Eindeutig bleiben "0.125", "1234.567", "1.5", "1,80".
+ */
+const DATENGRENZE_ZAHLTEXT_MEHRDEUTIG = /^[+-]?[1-9]\d{0,2}[.,]\d{3}$/;
+/**
+ * Wert eines Zahlenfelds -> Zahl, unveraendert oder `undefined` (= verwerfen). Unveraendert
+ * bleiben Zahl, `null` (z. B. unbegrenzter Bestand, kein Verweis), Wahrheitswert und der
+ * leere Text — keiner davon traegt Markup. Zahl als Text wird umgewandelt, nicht verworfen —
+ * ausser in mehrdeutiger Form (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG). Alles andere (Markup, Objekt,
+ * Liste — eine Liste wird im Template zu ihrem Text) faellt weg.
+ */
+function datengrenzeZahlwert(wert) {
+    if (wert === null || wert === '' || typeof wert === 'number' || typeof wert === 'boolean') {
+        return wert;
+    }
+    if (typeof wert === 'string') {
+        const text = wert.trim();
+        if (DATENGRENZE_ZAHLTEXT_MEHRDEUTIG.test(text)) return undefined;
+        if (DATENGRENZE_ZAHLTEXT.test(text)) return Number(text.replace(',', '.'));
+    }
+    return undefined;
+}
+/** Wendet einen zerlegten Pfad ab Stufe `stufe` auf `knoten` an (Tiefe = Pfadlaenge). */
+function datengrenzeFeld(knoten, pfad, stufe) {
+    if (!knoten || typeof knoten !== 'object') return;
+    const teil = pfad[stufe];
+    const letzte = stufe === pfad.length - 1;
+    const namen = teil.name === '*' ? Object.keys(knoten) : [teil.name];
+    for (const name of namen) {
+        if (!Object.prototype.hasOwnProperty.call(knoten, name)) continue;
+        const wert = knoten[name];
+        if (!letzte) {
+            if (!teil.liste) datengrenzeFeld(wert, pfad, stufe + 1);
+            else if (Array.isArray(wert)) wert.forEach(e => datengrenzeFeld(e, pfad, stufe + 1));
+        } else if (teil.liste) {
+            // Liste von Zahlen: Positionen bleiben stehen (Zauberplaetze haengen am Index)
+            if (Array.isArray(wert)) {
+                for (let i = 0; i < wert.length; i++) {
+                    const zahl = datengrenzeZahlwert(wert[i]);
+                    if (zahl !== wert[i]) wert[i] = zahl === undefined ? null : zahl;
+                }
+            } else if (wert !== null && wert !== undefined) {
+                knoten[name] = [];
+            }
+        } else {
+            const zahl = datengrenzeZahlwert(wert);
+            if (zahl === undefined) delete knoten[name];
+            else if (zahl !== wert) knoten[name] = zahl;
+        }
+    }
+}
+/**
+ * Entfernt die verbotenen Schluessel (DATENGRENZE_VERBOTEN) in jeder Tiefe und setzt ein
+ * Objekt in einem Textfeld (DATENGRENZE_TEXTFELDER) auf '' (iterativ).
+ */
+function datengrenzeEntgiften(wurzel) {
+    const offen = [wurzel];
+    const gesehen = new Set();
+    while (offen.length > 0) {
+        const knoten = offen.pop();
+        if (!knoten || typeof knoten !== 'object' || gesehen.has(knoten)) continue;
+        gesehen.add(knoten);
+        if (Array.isArray(knoten)) {
+            for (let i = 0; i < knoten.length; i++) offen.push(knoten[i]);
+            continue;
+        }
+        for (const schluessel of DATENGRENZE_VERBOTEN) {
+            if (Object.prototype.hasOwnProperty.call(knoten, schluessel)) delete knoten[schluessel];
+        }
+        for (const schluessel of DATENGRENZE_TEXTFELDER) {
+            const wert = knoten[schluessel];
+            if (wert && typeof wert === 'object') knoten[schluessel] = '';
+        }
+        for (const schluessel of Object.keys(knoten)) offen.push(knoten[schluessel]);
+    }
+}
+/**
+ * N1 (Vertrag NPC-NAME): Wert eines Textfelds -> Text oder unveraendert. Zahl und
+ * Wahrheitswert werden verlustfrei Text (`42` -> "42", `true` -> "true"), Objekt und Liste ''
+ * (wie die Objektregel in datengrenzeEntgiften()). Text, `null` und ein fehlender Wert kommen
+ * unveraendert zurueck — was dort gilt, entscheidet das Feld (datengrenzeNpcTexte()).
+ */
+function datengrenzeText(wert) {
+    if (typeof wert === 'number' || typeof wert === 'boolean') return String(wert);
+    if (wert && typeof wert === 'object') return '';
+    return wert;
+}
+/**
+ * N1 (Vertrag NPC-NAME): GENAU `npcs[].name` und `npcs[].race` werden Text. Sortierung,
+ * Suchen, Initiative und Volks-Symbol rufen dort Zeichenketten-Methoden
+ * (`a.name.localeCompare`, `.toLowerCase()`): ein Name als Zahl, Wahrheitswert, `null` oder
+ * fehlend und ein Volk, das kein Text ist, leerten die ganze NPC-Liste und legten Orts-, Kopf-
+ * und Telefonsuche und die Initiative lahm (tests/e2e/features/npc-altdaten.spec.js). Ein
+ * fehlender oder `null`-Name wird '' (E1: gespeichert wird '', die Anzeige sagt "Unbenannt"),
+ * ein fehlendes oder `null`-Volk bleibt — kein Volk ist ein gueltiger Stand. Pfadgebunden,
+ * NICHT in jeder Tiefe wie die Objektregel: dieselben Werte in Heldenname, Tag-Name,
+ * Wiki-Titel oder Kaempfer bleiben stehen (R5), und kein fehlender Name wird anderswo
+ * ergaenzt. Ein Eintrag, der kein Objekt ist (auch eine Liste), bleibt unberuehrt — die
+ * Grenze repariert Felder, keine Eintraege.
+ */
+function datengrenzeNpcTexte(daten) {
+    if (!Array.isArray(daten.npcs)) return;
+    for (const npc of daten.npcs) {
+        if (!npc || typeof npc !== 'object' || Array.isArray(npc)) continue;
+        const name = datengrenzeText(npc.name);
+        if (name === null || name === undefined) npc.name = '';
+        else if (name !== npc.name) npc.name = name;
+        const volk = datengrenzeText(npc.race);
+        if (volk !== npc.race) npc.race = volk;
+    }
+}
+/**
+ * R4: gemeinsame Datengrenze aller Wege nach D (Kampagnen-Import, Backup lokal und aus dem
+ * Ordner, Migrations-Import, Start/Neuladen ueber load()). Entfernt __proto__/constructor/
+ * prototype/toString/valueOf in jeder Tiefe, setzt ein Objekt in name/title/category/type auf
+ * '', zwingt `npcs[].name` und `npcs[].race` auf Text (N1, datengrenzeNpcTexte()) und die
+ * Felder aus DATENGRENZE_ZAHLENFELDER auf Zahl (siehe datengrenzeZahlwert). KEIN Sanitizer:
+ * Texte, Wuerfelformeln mit `<`/`>`, Namen mit `&`, `<`, `"`, Rich-Text bleiben byte-gleich
+ * (R5) — die Ausgabe kodiert (R1). Arbeitet auf dem uebergebenen Objekt (frisch aus
+ * JSON.parse) und gibt es zurueck; zweimal angewandt aendert nichts mehr. Aufrufer verwenden
+ * das Ergebnis (tests/unit/datengrenze.test.js, Verdrahtung).
+ * @param {*} daten - Kampagnenobjekt aus Datei oder Speicher
+ * @returns {*} dieselben, bereinigten Daten (kein Objekt: unveraendert)
+ */
+function bereinigeDatengrenze(daten) {
+    if (!daten || typeof daten !== 'object') return daten;
+    datengrenzeEntgiften(daten);
+    datengrenzeNpcTexte(daten);
+    for (const pfad of DATENGRENZE_PFADE) datengrenzeFeld(daten, pfad, 0);
+    return daten;
+}
+// [DATENGRENZE:ENDE]
+
 // ============================================================
 // MODULE EXPORTS (for Jest tests)
 // ============================================================
@@ -498,6 +971,14 @@ module.exports = {
     canLevelUp,
     getXPForCR,
     distributeXP,
+    // Vertrag SENKEN R2/R3/R4 (tests/unit/datengrenze.test.js)
+    sichererLink,
+    sichererListenLink,
+    sichereBildquelle,
+    istRelativerLink,
+    sichereFarbe,
+    sichereKlasse,
+    bereinigeDatengrenze,
     // Test data accessible for test assertions
     XP_LEVEL_THRESHOLDS: XP_LEVEL_THRESHOLDS_TEST,
     SKILL_INFO: SKILL_INFO_TEST,

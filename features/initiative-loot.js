@@ -25,12 +25,12 @@ function renderLootList() {
     if (filterContainer) {
         filterContainer.innerHTML = `
             <div class="loot-filter-chip ${currentLootFilter === 'all' ? 'active' : ''}" data-action="set-loot-filter" data-value="all">Alle</div>
-            ${Object.entries(CATS)
+            ${Object.keys(CATS)
                 .map(
-                    ([k, v]) => `
+                    k => `
                 <div class="loot-filter-chip ${currentLootFilter === k ? 'active' : ''}"
                      data-action="set-loot-filter" data-value="${k}">
-                    ${v}
+                    ${CATS[k]}
                 </div>
             `
                 )
@@ -67,7 +67,7 @@ function renderLootList() {
                 ${
                     !search && currentLootFilter === 'all'
                         ? `
-                    <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal" style="margin-top: 12px;">
+                    <button class="loot-add-btn" data-action="show-loot-modal" style="margin-top: 12px;">
                         + Item hinzufügen
                     </button>
                 `
@@ -101,7 +101,7 @@ function renderLootItem(item) {
     const rarityBg = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
     const depleted = item.quantity <= 0;
     return `
-        <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${item.id}">
+        <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${esc(item.id)}">
             <div class="loot-item-icon">${catIcon}</div>
             <div class="loot-item-info">
                 <div class="loot-item-name" style="color: ${rarityInk};">
@@ -109,7 +109,7 @@ function renderLootItem(item) {
                     ${rarity !== 'normal' ? `<span class="loot-item-tag" style="background: ${rarityBg}; color: var(--on-rarity);">${RARITY_LABELS[rarity]}</span>` : ''}
                 </div>
                 <div class="loot-item-meta">
-                    ×${item.quantity} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
+                    ×${esc(String(item.quantity))} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
                 </div>
             </div>
             <div class="loot-item-badges">
@@ -155,8 +155,8 @@ function showLootDetail(id) {
                     <div class="loot-detail-subtitle">${CATS[item.category] || 'Sonstiges'} • ${RARITY_LABELS[rarity]}</div>
                 </div>
                 <div class="loot-detail-actions">
-                    <button class="loot-detail-btn" data-action="edit-loot" data-id="${id}" title="Bearbeiten">✏️</button>
-                    <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${id}" title="Löschen">🗑️</button>
+                    <button class="loot-detail-btn" data-action="edit-loot" data-id="${esc(id)}" title="Bearbeiten">✏️</button>
+                    <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${esc(id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
 
@@ -165,7 +165,7 @@ function showLootDetail(id) {
                     ? `
                 <div class="loot-tags-section">
                     <div class="loot-tags">
-                        ${(item.tags || []).map(t => `<span class="loot-tag">${LOOT_TAG_LABELS[t] || t}</span>`).join('')}
+                        ${(item.tags || []).map(t => `<span class="loot-tag">${esc(LOOT_TAG_LABELS[t] || t)}</span>`).join('')}
                     </div>
                 </div>
             `
@@ -176,7 +176,7 @@ function showLootDetail(id) {
                 <div class="loot-stats">
                     <div class="loot-stat">
                         <div class="loot-stat-label">Menge</div>
-                        <div class="loot-stat-value">${item.quantity}</div>
+                        <div class="loot-stat-value">${esc(String(item.quantity))}</div>
                     </div>
                     <div class="loot-stat">
                         <div class="loot-stat-label">Wert</div>
@@ -184,7 +184,7 @@ function showLootDetail(id) {
                     </div>
                     <div class="loot-stat">
                         <div class="loot-stat-label">Gewicht</div>
-                        <div class="loot-stat-value">${item.weight ? item.weight + ' kg' : '—'}</div>
+                        <div class="loot-stat-value">${esc(item.weight ? item.weight + ' kg' : '—')}</div>
                     </div>
                 </div>
             </div>
@@ -194,7 +194,7 @@ function showLootDetail(id) {
                     ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Herkunft</div>
-                    <div>${ORIGIN_LABELS[item.origin] || item.origin}</div>
+                    <div>${esc(ORIGIN_LABELS[item.origin] || item.origin)}</div>
                 </div>
             `
                     : ''
@@ -250,8 +250,63 @@ function setLootFilter(f) {
     currentLootFilter = f;
     renderLootList();
 }
+// Das Formular der Truhe zuruecksetzen und die Tag-Anzeige fuehren (TRUHE).
+// Beide Funktionen gingen mit 3e44317 verloren — die Aufrufe darunter
+// blieben als `window.clearLootForm()`/`window.updateLootSelectedTags()`
+// stehen und warfen: ✏️ oeffnete nichts, und saveLoot() brach nach dem
+// Schreiben in D ab, vor renderLootList() und save(). Modul-intern, ohne
+// window-Export: kein anderes Modul und kein Handler ruft sie
+// (Export-Audit-Regel). Waechter: tests/e2e/features/truhe-formular.spec.js.
+
+/**
+ * Setzt das Formular in den Anlege-Zustand: keine ID, Text- und Zahlenfelder
+ * auf den Wert aus dem Template (Menge 1), Auswahlfelder auf ihre erste
+ * Option, Beschreibung leer, kein Tag angekreuzt.
+ * Die Vorgaben stehen im Template (`#loot-modal` in
+ * assets/templates/modals-entity.html), nicht hier. `#edit-loot-id` ist die
+ * Ausnahme: bei `type="hidden"` schreibt `.value` auch das value-Attribut,
+ * `defaultValue` truege nach einem Bearbeiten die alte ID.
+ */
+function clearLootForm() {
+    const editIdInput = $('edit-loot-id');
+    if (editIdInput) editIdInput.value = '';
+    const ids = ['loot-name', 'loot-qty', 'loot-wt', 'loot-val', 'loot-special', 'loot-property'];
+    ids.forEach(id => {
+        const input = $(id);
+        if (input) input.value = input.defaultValue;
+    });
+    ['loot-cat', 'loot-rarity', 'loot-origin'].forEach(id => {
+        const select = $(id);
+        if (select) select.selectedIndex = 0;
+    });
+    const descDiv = $('loot-desc');
+    if (descDiv) descDiv.innerHTML = '';
+    document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
+        cb.checked = false;
+    });
+    updateLootSelectedTags();
+}
+/**
+ * Zeigt unter dem Tag-Raster die angekreuzten Tags. Leer greift die
+ * CSS-Vorgabe `.loot-selected-tags:empty::before` ("Keine Tags ausgewählt").
+ */
+function updateLootSelectedTags() {
+    const container = $('loot-selected-tags');
+    if (!container) return;
+    const labels = [];
+    document.querySelectorAll('#loot-tag-grid .loot-tag-chip input:checked').forEach(cb => {
+        labels.push(`<span class="loot-tag">${esc(LOOT_TAG_LABELS[cb.value] || cb.value)}</span>`);
+    });
+    container.innerHTML = labels.join(' ');
+}
+// Die Anzeige folgt jedem Ankreuzen. Ein Lauscher fuer das ganze Dokument,
+// weil die Kaestchen im Template stehen und `change` nur das Kaestchen selbst
+// trifft; frueher legte initLootTagSystem() je Kaestchen einen an.
+document.addEventListener('change', e => {
+    if (e.target instanceof Element && e.target.closest('#loot-tag-grid')) updateLootSelectedTags();
+});
 function showLootModal(id = null) {
-    window.clearLootForm();
+    clearLootForm();
     const modal = $('loot-modal');
     const title = modal?.querySelector('.modal-title');
     if (id) {
@@ -284,7 +339,7 @@ function showLootModal(id = null) {
         document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
             cb.checked = (item.tags || []).includes(cb.value);
         });
-        window.updateLootSelectedTags();
+        updateLootSelectedTags();
         const saveBtn = $('loot-save-btn');
         if (saveBtn) saveBtn.textContent = '💾 Speichern';
     } else {
@@ -364,7 +419,7 @@ function saveLoot() {
         }
     }
     hideModal('loot-modal');
-    window.clearLootForm();
+    clearLootForm();
     renderLootList();
     if (selectedLootId) showLootDetail(selectedLootId);
     window.save();

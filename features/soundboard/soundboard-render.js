@@ -50,7 +50,7 @@ async function renderAudioLibrary() {
         const sizeClass = b.size > 20 * 1024 * 1024 ? ' sb-file-warn' : '';
         return `<div class="sb-library-row${sizeClass}" data-blob-id="${esc(b.id)}">
             <span class="sb-library-name" title="${esc(b.name)}">${esc(b.name)}</span>
-            <span class="sb-library-size">${_sbFormatSize(b.size)}</span>
+            <span class="sb-library-size">${esc(_sbFormatSize(b.size))}</span>
             <button class="btn-icon sb-remove-btn" data-action="remove-audio" data-id="${esc(b.id)}"
                 title="Datei entfernen" aria-label="Entfernen">✕</button>
         </div>`;
@@ -99,7 +99,7 @@ async function renderSceneList() {
         const trackRows = tracks.map(function(track) {
             const meta = blobMeta[track.blobId];
             const trackName = meta ? meta.name : track.blobId;
-            const vol = typeof track.volume === 'number' ? track.volume : 0.8;
+            const vol = typeof track.volume === 'number' ? Number(track.volume) : 0.8; // Number(): fuer die Ratsche R6 sichtbar nur eine Zahl
             const isLoop = track.loop !== false; // Default true (abwaertskompatibel)
             return `<div class="sb-track-row" data-blob-id="${esc(track.blobId)}">
                 <button class="btn-icon sb-loop-btn${isLoop ? ' active' : ''}"

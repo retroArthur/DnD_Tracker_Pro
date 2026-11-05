@@ -177,10 +177,41 @@ function isCovered(relModulePath) {
 // den Modulpfad in AUSFUEHRBAREM Code, nicht nur im Erklaertext.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
-    'features/bestiary/bestiary-actions.js',
-    'features/bestiary/bestiary-crud.js',
-    'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'features/command-palette/command-palette.js',
+    // -- 2026-11-03, KREATUR-ATTRIBUTE: 'features/bestiary/bestiary-actions.js' und
+    //    'features/bestiary/bestiary-crud.js' sind hier GESTRICHEN, die Liste
+    //    schrumpft um zwei. tests/e2e/features/kreatur-attribute.spec.js faehrt am
+    //    gebauten Buendel mit echten Klicks und Tasten "+ Neue Kreatur" bzw.
+    //    "Bearbeiten" -> Werte -> "Kreatur speichern" -> erneute Auswahl ->
+    //    "Zur Initiative" (W5, W6, W7) und urteilt ueber die Werte in D, die
+    //    saveBestiary() geklemmt schreibt (35 -> 30, -5 -> 1), ueber die
+    //    Statblock-Zellen und ueber den initBonus, den addBestiaryToInitiative()
+    //    aus dem GE-Wert rechnet. Ohne diese zwei Module waere keiner der Faelle
+    //    erklaerbar — keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur
+    //    schrumpfen; sie tut es hier.
+    // -- 2026-11-03, AVATAR-DATEI: 'features/bestiary/bestiary-editor.js' (CR-01)
+    //    ist hier GESTRICHEN. tests/e2e/features/bild-lokal.spec.js (c) faehrt am
+    //    gebauten Buendel mit echten Klicks "Bearbeiten" -> "🖼️ Bild setzen" ->
+    //    Speichern, einmal mit einer lokalen Datei und einmal mit Netzwerkpfaden,
+    //    und urteilt ueber Vorschau, Meldung, D, Speicher und das Portrait im
+    //    Detail. openBestiaryEditor(), openBstAvatarModal(),
+    //    validateAvatarUrlSafe() und refreshBstAvatarPreview() stehen in diesem
+    //    Modul; ohne es waere keiner der Faelle erklaerbar. Bis zum Pruefbefund
+    //    nach bd06445d nannte die Spec nur den Dateinamen, damit dieser Fall
+    //    nicht rot wurde. Die Liste darf nur schrumpfen; sie tut es hier.
+    // -- 2026-10-27, ABBRUCH: 'features/command-palette/command-palette.js' ist
+    //    hier GESTRICHEN, und mit ihm acht weitere Eintraege (unten markiert):
+    //    die Liste schrumpft um neun. Die Waechter des Vertrags ABBRUCH
+    //    (Commit 0be4cc6, tests/e2e/features/*-anlegen.spec.js) fahren am
+    //    gebauten Buendel mit echten Klicks und Tasten Bearbeiten -> Abbrechen
+    //    -> Anlegen -> Speichern und urteilen ueber D, Speicher und Neuladen:
+    //    charakter-anlegen ueber saveCharacter()/cancelCharEdit() samt
+    //    clearFormFields() und deleteWithConfirm(), encounter-anlegen ueber
+    //    saveEncounter(), die Befehlspalette und die Schnell-Vorlagen,
+    //    notiz-anlegen ueber saveSession(), link-anlegen ueber saveLink(),
+    //    timer-vorlage-anlegen ueber saveTimerPreset() samt clearFormFields().
+    //    Ohne diese Module waere keiner der Faelle erklaerbar — keine
+    //    Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen; sie
+    //    tut es hier.
     // GESTRICHEN am 2026-10-05 (Welle 5, Schritt 1): W5-R-05c in
     // tests/unit/design-consistency.test.js liest jede .js-Datei unter
     // features/ und urteilt ueber die drei SVG-Praesentationsattribute
@@ -190,29 +221,54 @@ const MODULE_TEST_EXCEPTIONS = [
     // Gegenprobe zur Dateimenge), nicht nur im Erklaertext; das ist genau
     // das Kriterium, das die CR-01-Eintraege unten voneinander trennt.
     // Die Liste darf nur schrumpfen — und sie tut es hier um eins.
-    'features/dice/dice-core.js',
+    // -- 2026-10-27, WUERFEL: 'features/dice/dice-core.js' und
+    //    'features/dmscreen/dmscreen-widgets-base.js' sind hier GESTRICHEN.
+    //    tests/e2e/features/wurf-verlauf.spec.js faehrt am gebauten Buendel mit
+    //    echten Klicks und Tasten die Wurfwege der App in Verlauf und Statistik
+    //    und urteilt ueber das, was addToDiceHistory() daraus macht (Notation,
+    //    Summe, Einzelwuerfe, Schadensart-Zusatz), sowie ueber dmsRollDice() mit
+    //    gueltiger und ungueltiger Freiformel. tests/unit/wurf-eintrag.test.js
+    //    laedt beide Module in eine vm-Sandbox und fuehrt dieselben Funktionen
+    //    direkt aus. Ohne diese zwei Module waere keiner der Faelle erklaerbar.
+    //    Die Liste darf nur schrumpfen; sie tut es hier um zwei.
     'features/dice/dice-favorites.js',
-    'features/dmscreen/dmscreen-widgets-base.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-combat.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/dmscreen/dmscreen-widgets-reference.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'features/encounter-calculator.js',
-    'features/encounters/encounters-crud.js',
-    'features/encounters/monster-templates.js',
+    // -- 2026-10-26, RECHNER: 'features/encounter-calculator.js' ist hier
+    //    GESTRICHEN. tests/e2e/features/rechner-werte.spec.js faehrt den Weg
+    //    "📥 Aus Encounters" -> "+" -> "⚔️ Zur Initiative" am gebauten Buendel
+    //    mit echten Klicks und urteilt ueber RK, TP, Initiative, Typ und
+    //    Namenslink jedes Kaempfers. Ohne dieses Modul waere keiner der Faelle
+    //    erklaerbar — ein Verhaltensfall, keine Erwaehnung zur Gate-Beruhigung.
+    //    Die Liste darf nur schrumpfen; sie tut es hier.
+    // -- 2026-10-27, ABBRUCH: 'features/encounters/encounters-crud.js' und
+    //    'features/encounters/monster-templates.js' GESTRICHEN, s. oben.
     'features/fraktionen/fraktionen-crud.js',
     'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
     'features/initiative-statblock.js',
-    'features/locations/locations-crud.js',
+    // -- 2026-10-27, MARKDOWN: 'features/locations/locations-crud.js' GESTRICHEN,
+    //    siehe den Eintrag 'systems/markdown-import-export.js' unten.
     'features/loot-distribution.js',
     'features/npc-generator/npc-default-tables.js',
-    'features/npc-generator/npc-generator.js',
-    'features/npcs/npc-crud.js',
+    // -- 2026-10-27, NPC: 'features/npc-generator/npc-generator.js' und
+    //    'features/npcs/npc-crud.js' sind hier GESTRICHEN.
+    //    tests/e2e/features/npc-formular.spec.js faehrt am gebauten Buendel
+    //    mit echten Klicks ✏️ → 💾, die vier Anlegen-Wege, das Entfernen von
+    //    Dialogen und Triggern und den 🎲-Generator bis "Als NPC speichern",
+    //    und urteilt ueber jedes Feld des NPC in D, im Speicher und nach dem
+    //    Neuladen. Ohne saveNPC()/editNPC() bzw. saveGeneratedNPC() waere
+    //    keiner der Faelle erklaerbar. Die Liste darf nur schrumpfen.
+    // -- 2026-10-27, MARKDOWN: 'features/npcs/npc-crud.js' GESTRICHEN, s. unten.
     'features/npcs/npc-interactions.js',
     'features/npcs/npc-popup.js',
-    'features/party/party-crud.js',
+    // -- 2026-10-27, ABBRUCH: 'features/party/party-crud.js' GESTRICHEN, s. oben.
     'features/party/party-details.js',
-    'features/quests/quests-crud.js',
-    'features/quests/quests-render.js',
+    // -- 2026-10-27, MARKDOWN: 'features/quests/quests-crud.js' GESTRICHEN, s. unten.
+    // 'features/quests/quests-render.js' — gestrichen in E-2/Einheit 2:
+    // tests/unit/keyboard-group-views.test.js liest die Datei und sichert
+    // zu, dass der Behaelter der zwei Statusmarken sein
+    // data-tastgruppe-Attribut behaelt. Die Liste darf nur schrumpfen.
     'features/quick-actions.js',
     'features/reise/reise-crud.js',
     'features/reise/reise-default-tables.js',
@@ -229,8 +285,8 @@ const MODULE_TEST_EXCEPTIONS = [
     // AUSFUEHRBAREM Code, nicht im Erklaertext — dieselbe Unterscheidung, die
     // der Eintrag vom 2026-09-28 fuer bestiary-render.js/locations-render.js
     // festhaelt.
-    'features/sessions/sessions.js',
-    'features/shops/links.js',
+    // -- 2026-10-27, ABBRUCH: 'features/sessions/sessions.js' und
+    //    'features/shops/links.js' GESTRICHEN, s. oben.
     // -- 2026-09-30, Welle 3 Schritt 8: 'features/shops/shop-export.js' ist hier
     //    GESTRICHEN. R-19 Teil (5) in design-consistency.test.js fuehrt seine
     //    beiden Schattenzeilen (:292 und :486) als benannte JS_AUSNAHMEN und
@@ -238,21 +294,63 @@ const MODULE_TEST_EXCEPTIONS = [
     //    ueber sourceJs() wirklich einliest. Keine Erwaehnung zur
     //    Gate-Beruhigung. Die Liste darf nur schrumpfen — sie tut es hier.
     'features/soundboard/soundboard-render.js',
-    'features/spells/spell-manager.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    // -- 2026-10-27, MARKDOWN: 'features/spells/spell-manager.js' GESTRICHEN, s. unten.
     'features/timeline/timeline-crud.js',
     'features/timeline/timeline-render.js',
-    'features/timers/timers.js',
+    // -- 2026-10-27, ABBRUCH: 'features/timers/timers.js' GESTRICHEN, s. oben.
     'systems/conditions.js',
     'systems/hp-calculator.js',
-    'systems/markdown-import-export.js',
-    'systems/spellslots/keyboard-shortcuts.js',
-    'systems/spellslots/navigation.js',
+    // -- 2026-10-27, MARKDOWN: 'systems/markdown-import-export.js' ist hier
+    //    GESTRICHEN, und mit ihm vier weitere Eintraege (oben markiert): die
+    //    Liste schrumpft um fuenf. tests/e2e/features/markdown-austausch.spec.js
+    //    faehrt am gebauten Buendel mit echten Klicks "📄 Export" und
+    //    "📥 Import" in den Formularen von NPC, Quest und Zauber, die
+    //    Import-Schale, Speichern, Strg+Z und das Neuladen — und ✏️/Speichern
+    //    an Orten, deren Filter populateSelects() verlor. Jeder der fuenf Pfade
+    //    gehoert zu einem Modul, ohne das ein Fall nicht erklaerbar waere:
+    //    das Markdown-Modul selbst, editNPC()/saveNPC(), editQuest()/saveQuest(),
+    //    editSpell()/saveSpell() und editLocation()/saveLocation(). Keine
+    //    Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen; sie tut
+    //    es hier.
+    // -- 2026-10-07, Tastatur-Strang T-A: 'systems/spellslots/keyboard-shortcuts.js'
+    //    ist hier GESTRICHEN. tests/e2e/features/tastatur-ausloesung.spec.js prueft
+    //    genau die isTyping-Schranke dieses Moduls und seine Leertasten-, Ziffern-
+    //    und Einzeltasten-Zweige: elf Faelle treiben sie mit echten Tastendruecken
+    //    am gebauten Buendel durch und urteilen ueber die Wirkung (Zug, Runde,
+    //    Kaempfer, Ansicht) UND ueber das ausgeloeste click-Ereignis. Das ist keine
+    //    Erwaehnung zur Gate-Beruhigung: ohne dieses Modul waere kein einziger der
+    //    elf Faelle erklaerbar. Dass der Pfad dabei im Erklaertext steht und nicht
+    //    in ausfuehrbarem Code, liegt in der Natur eines Verhaltensfalls — er liest
+    //    die Quelle nicht, er fuehrt sie aus. Die Liste darf nur schrumpfen; sie
+    //    tut es hier.
+    // -- 2026-10-19, Abnahme ABN: 'systems/spellslots/navigation.js' ist hier
+    //    GESTRICHEN, und zwar nicht wegen einer Erwaehnung. Dieses Gate wurde
+    //    rot, weil ein KOMMENTAR in tastenhilfe.spec.js den Pfad woertlich
+    //    nannte — nach dem Kriterium dieses Falls gilt das Modul damit als
+    //    angefasst, obwohl kein Test es las. Zwei Wege standen offen: den Pfad
+    //    aus dem Kommentar nehmen (dann bewacht nichts das Modul) oder es
+    //    wirklich abdecken. Genommen ist der zweite:
+    //    tests/unit/navigation-collapse.test.js laedt das Modul in eine
+    //    vm-Sandbox mit jsdom und fuehrt toggleCollapse() gegen echtes Markup
+    //    (vier Laufzeitfaelle), plus zwei Faelle, die den Vertrag mit den
+    //    Vorlagen halten. Der Anlass war ein gemessener Fehler: eine Sonde
+    //    suchte `.collapsible.open`, eine Klasse, die der Baum nicht fuehrt.
+    //    Die Liste darf nur schrumpfen; sie tut es hier.
     'systems/spellslots/notes-templates.js',
     'systems/spellslots/pwa-install.js',
     'systems/spellslots/spell-slots-core.js',
     'systems/spellslots/spellslots-ui.js',
     'systems/spellslots/virtual-list.js',
-    'systems/tags.js',
+    // -- 2026-11-03, NPC-NAME: 'systems/tags.js' ist hier GESTRICHEN. Das Gate
+    //    wurde rot, weil der Kopf von tests/e2e/features/npc-altdaten.spec.js den
+    //    Pfad nennt — aber die Abdeckung ist echt: W11f und W11g fahren das
+    //    🏷️-Fenster mit echten Klicks (renderTagsModal(), "+" ueber
+    //    addTagToEntity(), der Klick auf ein globales Tag ueber
+    //    addExistingTagToEntity(), das Loeschen ueber deleteGlobalTag()), W11 und
+    //    W11o lesen tagText() im NPC- und im Ort-Detail. Gemessen: jede der fuenf
+    //    Stellen des Fensters einzeln auf `t.name` zurueckgesetzt macht W11f bzw.
+    //    W11g rot. Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur
+    //    schrumpfen; sie tut es hier.
     'systems/wiki-links.js',
     'tools/debug.js',
     'ui/actions/combat-actions.js',
@@ -267,11 +365,23 @@ const MODULE_TEST_EXCEPTIONS = [
     'ui/dom-builder.js',
     'ui/editors/rich-text-toolbars.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'ui/lazy-loading.js',
-    'ui/safe-render.js',
+    // 2026-10-26: 'ui/safe-render.js' GESTRICHEN, die Liste schrumpft um eins.
+    // Erst deckte ein Verhaltensfall das Modul ab (#9); noch am selben Tag
+    // wurde es als toter Code geloescht — kein Aufrufer seit dem ersten
+    // Commit — und steht damit auch nicht mehr in loader.js MODULES.
     'ui/virtual-scroll.js',
-    'utils/crud-helpers.js',
-    'utils/filter-engine.js',
-    'utils/form-helpers.js',
+    // -- 2026-10-27, ABBRUCH: 'utils/crud-helpers.js' GESTRICHEN, s. oben.
+    // -- 2026-11-03, NPC-SUCHE: 'utils/filter-engine.js' ist hier GESTRICHEN.
+    //    tests/unit/filter-engine.test.js laedt das ECHTE Modul per
+    //    vm.runInContext und fuehrt applyFilters() aus: Feld UND filters UND
+    //    customFilter wie bisher, leeres searchFields, und den ODER-Zweig
+    //    searchAlso aus dem Vertrag NPC-SUCHE (R2) — getrimmter Begriff, kein
+    //    Aufruf bei leerem Begriff, UND mit filters und customFilter. Am Stand
+    //    vor dem Fix sind dort genau die fuenf searchAlso-Faelle rot, die einen
+    //    Treffer ueber den neuen Zweig verlangen oder seinen Aufruf beobachten.
+    //    Keine Erwaehnung zur Gate-Beruhigung. Die Liste darf nur schrumpfen;
+    //    sie tut es hier.
+    // -- 2026-10-27, ABBRUCH: 'utils/form-helpers.js' GESTRICHEN, s. oben.
     'utils/game-rules.js',
     'utils/performance-extras.js',
     'utils/performance.js'

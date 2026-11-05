@@ -513,10 +513,10 @@ function renderCampaignList() {
     </div>`;
     // Other campaigns
     index.campaigns.forEach(camp => {
-        html += `<div class="campaign-item ${index.active === camp.key ? 'active' : ''}" data-action="switch-campaign" data-value="${camp.key}">
+        html += `<div class="campaign-item ${index.active === camp.key ? 'active' : ''}" data-action="switch-campaign" data-value="${esc(camp.key)}">
             <div>
                 <div class="campaign-name">${esc(camp.name)}</div>
-                <div class="campaign-info">Erstellt: ${formatDate(camp.created)}</div>
+                <div class="campaign-info">Erstellt: ${esc(formatDate(camp.created))}</div>
             </div>
             ${index.active === camp.key ? '<span style="color:var(--green);">✓ Aktiv</span>' : ''}
         </div>`;

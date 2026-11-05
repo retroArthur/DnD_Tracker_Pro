@@ -36,17 +36,17 @@ function crToSortValue(cr) {
 // ============================================================
 // CLICKABLE DICE (D-09, Muster aus PATTERNS.md)
 // Wraps damage formulas and to-hit bonuses with data-action spans
-// renderClickableDice runs AFTER sanitizeHTML — dice spans are added to already-sanitized HTML
+// renderClickableDice bereinigt selbst und ersetzt NUR in Textknoten (Vertrag SENKEN R1)
 // ============================================================
 function renderClickableDice(text) {
     if (!text) return '';
+    // sanitizeHTML() selbst (idempotent); Knopf als Knoten, nie per Regex im Markup (ersetzeImText)
+    var knopf = function (wert) { return function (doc, t) { var s = doc.createElement('span'); s.className = 'bestiary-dice'; s.setAttribute('data-action', 'bestiary-roll-dice'); s.setAttribute('data-value', wert(t)); s.title = 'Würfeln'; s.textContent = t; return s; }; };
     // Schadensformeln: NdN, NdN+N, NdN-N (auch mit W statt d)
-    text = text.replace(/(\d+[dWw]\d+(?:[+\-]\d+)?)/g,
-        '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="$1" title="W\xfcrfeln">$1</span>');
+    var html = ersetzeImText(sanitizeHTML(text), /(\d+[dWw]\d+(?:[+\-]\d+)?)/g, knopf(function (t) { return t; }));
     // Trefferwurf-Boni: isoliertes +N (nicht Teil einer Wuerfelformel, nicht direkt vor 'd'/'W')
-    text = text.replace(/(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
-        '<span class="bestiary-dice" data-action="bestiary-roll-dice" data-value="1d20$1" title="W\xfcrfeln">$1</span>');
-    return text;
+    return ersetzeImText(html, /(?<![dWw\d])(\+\d+)(?!\s*[dWw\d])/g,
+        knopf(function (t) { return '1d20' + t; }));
 }
 
 // ============================================================
@@ -132,13 +132,30 @@ function renderBestiaryListItem(monster) {
         '<button class="bestiary-fav' + (isFav ? ' active' : '') + '"' +
             ' data-action="bestiary-toggle-fav"' +
             ' data-id="' + esc(String(mId)) + '"' +
-            ' data-source="' + monster.source + '"' +
+            ' data-source="' + esc(monster.source) + '"' +
             ' aria-label="Favorit">' +
             (isFav ? '★' : '☆') +
             '<span class="sr-only">Favorit</span>' +
         '</button>' +
     '</div>';
 }
+
+// ============================================================
+// LAGE DER LISTE (BESTIAR-KLICK, R3)
+// Die Filtersignatur des letzten Zeichnens: Suchwert, HG, Typ, Nur Eigene,
+// Favoriten. Nur wenn sie sich AENDERT, geht die Liste nach oben — dann
+// steht der Anfang der neuen Trefferliste im Bild. Bleibt sie gleich
+// (Auswahl, ★, Klick ins Suchfeld, Neuzeichnen nach dem Speichern einer
+// Kreatur), bleibt die Lage, und der gewaehlte Eintrag bleibt gezeichnet und
+// im Bild. Das gilt auch fuer Strg+Z/Strg+Y: renderAll() zeichnet die OFFENE
+// Liste neu (BESTIAR-UNDO R2), ihre Signatur bleibt — ausser ein gewaehlter
+// HG-/Typ-Wert verschwand; dann "Alle" und nach oben (BESTIAR-UNDO R5).
+// Bewusst NICHT an der Aktion 'search-input' festgemacht: die ruft schon der
+// Klick ins Suchfeld (ui/event-delegation.js, _handleClick), und der aendert
+// nichts. Dass die Lage ein Neuzeichnen ueberhaupt ueberlebt, sichert das
+// Rollwerk selbst (BESTIAR-KLICK, R2).
+// ============================================================
+var bestiaryFilterSignatur = null;
 
 // ============================================================
 // RENDER BESTIARY LIST (main render hook, called by tab-registry)
@@ -152,8 +169,6 @@ function renderBestiaryList() {
         }
         return;
     }
-
-    EntityLookup.enableCache();
 
     // Combine SRD + custom
     var srdMonsters = getSRDMonsters().map(function(m) {
@@ -171,16 +186,24 @@ function renderBestiaryList() {
     setViewCount('bestiary', allMonsters.length);
 
     // Read filter values
+    var searchText = window.$('bestiary-search') ? window.$('bestiary-search').value : '';
+    var crFilter = window.$('bestiary-filter-cr') ? window.$('bestiary-filter-cr').value : '';
+    var typeFilter = window.$('bestiary-filter-type') ? window.$('bestiary-filter-type').value : '';
     var onlyCustom = window.$('bestiary-filter-custom') ? window.$('bestiary-filter-custom').checked : false;
     var onlyFavs = window.$('bestiary-filter-favs') ? window.$('bestiary-filter-favs').checked : false;
 
+    // Geaenderter Filter -> nach oben, sonst Lage halten (BESTIAR-KLICK, R3).
+    var signatur = JSON.stringify([searchText, crFilter, typeFilter, onlyCustom, onlyFavs]);
+    if (signatur !== bestiaryFilterSignatur) container.scrollTop = 0;
+    bestiaryFilterSignatur = signatur;
+
     // Single-pass filter via applyFilters (utils/filter-engine.js)
     var filtered = applyFilters(allMonsters, {
-        searchText: window.$('bestiary-search') ? window.$('bestiary-search').value : '',
+        searchText: searchText,
         searchFields: ['name', 'creatureType'],
         filters: {
-            cr: window.$('bestiary-filter-cr') ? window.$('bestiary-filter-cr').value : '',
-            creatureType: window.$('bestiary-filter-type') ? window.$('bestiary-filter-type').value : ''
+            cr: crFilter,
+            creatureType: typeFilter
         },
         customFilter: function(item) {
             if (onlyCustom && item.source !== 'custom') return false;
@@ -199,14 +222,11 @@ function renderBestiaryList() {
     // Empty state
     if (!filtered.length) {
         container.innerHTML = '<div class="bestiary-empty-results">Keine Monster gefunden</div>';
-        EntityLookup.clearCache();
         return;
     }
 
     // VirtualScroll.create — auto-activates above 50 items (rowHeight 52)
     VirtualScroll.create(container, filtered, renderBestiaryListItem, 52);
-
-    EntityLookup.clearCache();
 }
 
 // ============================================================
@@ -407,7 +427,7 @@ function renderBestiaryDetail(id, source) {
 
     // Portrait (custom only)
     var portraitHtml = '';
-    if (source === 'custom' && monster.avatar) {
+    if (source === 'custom' && sichereBildquelle(monster.avatar)) {
         portraitHtml = '<img class="bestiary-detail-avatar" src="' + esc(monster.avatar) + '" alt="Portrait" onerror="this.style.display=\'none\'">';
     }
 
@@ -442,6 +462,9 @@ function renderBestiaryDetail(id, source) {
             renderStatblockHTML(monster, source) +
             attributionHtml +
         '</div>';
+    // Was das Detail jetzt zeigt — renderBestiaryAnsicht() zeichnet es nur neu, wenn sich die
+    // Kreatur in D davon unterscheidet (BESTIAR-UNDO R3)
+    bestiaryDetailStand = JSON.stringify(monster);
 }
 
 // ============================================================
@@ -453,6 +476,92 @@ function selectBestiary(id, source) {
     selectedBestiarySource = source;
     renderBestiaryDetail(id, source);
     renderBestiaryList();
+}
+
+// ============================================================
+// BESTIAR-ANSICHT (BESTIAR-UNDO, R2-R4)
+// Der Eintrag 'bestiary' in TAB_RENDER_REGISTRY: Liste UND Detail im Stand
+// von D. Ein Weg fuer den Reiterwechsel, renderAll() bei OFFENEM Bestiar
+// (Strg+Z/Strg+Y, Import, Wiederherstellen) und Speichern/Loeschen einer
+// eigenen Kreatur — darum stimmt das Detail auch, wenn Strg+Z in einem
+// anderen Reiter fiel und man zurueckkommt.
+// Liste: immer neu, die Lage haelt BESTIAR-KLICK R3. Der Fokus einer Zeile
+//   oder ihres ★ bleibt bei DIESER Kreatur (die Tastaturgruppe hielte nur
+//   den Index und gaebe ihn einem fremden Monster); ist sie weg: Suchfeld.
+// Detail: nur neu, wenn sich die gewaehlte Kreatur in D geaendert hat —
+//   sonst gingen Fokus, Rolllage und der Oeffner eines Dialogs verloren.
+//   Gibt es sie nicht mehr: Auswahl null, leerer Zustand, Fokus ins Suchfeld.
+// Der Fokus faellt dabei nie auf BODY.
+// ============================================================
+
+/** JSON der Kreatur, die das Detail zuletzt zeigte (gesetzt in renderBestiaryDetail). */
+var bestiaryDetailStand = null;
+
+function renderBestiaryAnsicht() {
+    var ZEILE = '#bestiary-list .bestiary-list-item';
+    var suchfeld = window.$('bestiary-search');
+    // Fokus nach dem Neuzeichnen an ziel — gelingt das nicht, ins Suchfeld
+    function fokussiere(ziel) {
+        if (ziel) {
+            ziel.focus({ preventScroll: true });
+            if (document.activeElement !== ziel && window.KeyboardGroup) {
+                // Eine frische Zeile ist ein div ohne tabindex, bis die Kehrschleife
+                // laeuft — derselbe Griff wie fokusZurueck() in ui/virtual-scroll.js
+                window.KeyboardGroup.aktualisieren();
+                ziel.focus({ preventScroll: true });
+            }
+        }
+        if (document.activeElement !== ziel && suchfeld) suchfeld.focus({ preventScroll: true });
+    }
+
+    // ---- Liste ----
+    var vorher = document.activeElement;
+    var zeile = vorher && vorher.closest ? vorher.closest(ZEILE) : null;
+    var zeilenFokus = null;
+    if (zeile) {
+        zeilenFokus = {
+            id: zeile.dataset.id,
+            source: zeile.dataset.source,
+            aktion: vorher === zeile ? null : vorher.getAttribute('data-action')
+        };
+    }
+    renderBestiaryList();
+    if (zeilenFokus) {
+        var ziel = null;
+        document.querySelectorAll(ZEILE).forEach(function (z) {
+            if (z.dataset.id === zeilenFokus.id && z.dataset.source === zeilenFokus.source) {
+                ziel = z;
+            }
+        });
+        if (ziel && zeilenFokus.aktion) {
+            ziel = ziel.querySelector('[data-action="' + zeilenFokus.aktion + '"]');
+        }
+        fokussiere(ziel);
+    }
+
+    // ---- Detail ----
+    var panel = window.$('bestiary-detail-panel');
+    if (!panel || selectedBestiaryId === null) return;
+    var monster = getBestiaryMonster(selectedBestiaryId, selectedBestiarySource);
+    var fokusImDetail = panel.contains(document.activeElement);
+    if (!monster) {
+        selectedBestiaryId = null;
+        selectedBestiarySource = null;
+        bestiaryDetailStand = null;
+        panel.innerHTML =
+            '<div class="bestiary-detail-empty"><div class="bestiary-detail-empty-icon">🐉</div>' +
+            '<div class="bestiary-detail-empty-text">Wähle ein Monster aus der Liste</div></div>';
+        if (fokusImDetail) fokussiere(null);
+        return;
+    }
+    if (JSON.stringify(monster) === bestiaryDetailStand) return;
+    var aktion = fokusImDetail ? document.activeElement.getAttribute('data-action') : null;
+    var lage = panel.scrollTop;
+    renderBestiaryDetail(selectedBestiaryId, selectedBestiarySource);
+    panel.scrollTop = lage;
+    if (fokusImDetail) {
+        fokussiere(aktion ? panel.querySelector('[data-action="' + aktion + '"]') : null);
+    }
 }
 
 // cleanupBestiaryEditor is implemented in bestiary-editor.js (Plan 04).
@@ -477,4 +586,6 @@ window.renderStatblockHTML = renderStatblockHTML;
 window.renderClickableDice = renderClickableDice;
 window.crToSortValue = crToSortValue;
 window.selectBestiary = selectBestiary;
+// Registry-Eintrag 'bestiary' (systems/tab-registry.js) und Speichern/Loeschen im CRUD-Modul
+window.renderBestiaryAnsicht = renderBestiaryAnsicht;
 // cleanupBestiaryEditor: exported by bestiary-editor.js (loads after this module)

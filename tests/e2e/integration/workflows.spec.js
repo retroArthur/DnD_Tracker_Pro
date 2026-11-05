@@ -58,7 +58,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('Questgeber');
 
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
 
@@ -80,7 +80,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'locations');
             const locName = generateTestName('Dorf');
 
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -96,7 +96,7 @@ test.describe('Komplette Workflows', () => {
             await navigateToTab(page, 'quests');
             const questTitle = generateTestName('Hauptquest');
 
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
 
@@ -212,7 +212,7 @@ test.describe('Komplette Workflows', () => {
 
             // NPC
             await navigateToTab(page, 'npcs');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', searchTerm + '_NPC');
             await page.click('[data-action="call"][data-value="saveNPC"]');
@@ -289,7 +289,7 @@ test.describe('Komplette Workflows', () => {
             // Erst Ort erstellen
             await navigateToTab(page, 'locations');
             const locName = generateTestName('LinkLoc');
-            await page.click('[data-action="show-modal"][data-value="location-modal"]');
+            await page.click('[data-action="show-new-location-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
@@ -298,7 +298,7 @@ test.describe('Komplette Workflows', () => {
             // Dann NPC mit diesem Ort erstellen
             await navigateToTab(page, 'npcs');
             const npcName = generateTestName('LinkNPC');
-            await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+            await page.click('[data-action="show-new-npc-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'npc-name', npcName);
 
@@ -358,15 +358,26 @@ test.describe('Komplette Workflows', () => {
             }, monsterName);
             expect(monsterExists).toBe(true);
 
-            // Zum Initiative-Tracker wechseln
-            await navigateToTab(page, 'initiative');
+            // Monster zum Tracker hinzufügen — über den Kampfknopf im Detail-Panel
+            // des eben angelegten (automatisch ausgewählten) Encounters. Früher
+            // suchte dieser Schritt im Initiative-Tab einen Knopf `add-enc-to-init`
+            // hinter einem isVisible()-Guard. Den gab es nie (nur im ungenutzten
+            // Ersatz-Renderer, und dort unregistriert) — der Schritt lief still leer.
+            const kampfBtn = page.locator('[data-action="load-encounter"]').first();
+            await expect(kampfBtn).toBeVisible();
+            await kampfBtn.click();
 
-            // Monster zum Tracker hinzufügen (falls Button vorhanden)
-            const addEncBtn = page.locator('[data-action="add-enc-to-init"]').first();
-            if (await addEncBtn.isVisible()) {
-                await addEncBtn.click();
-                await page.waitForTimeout(300);
-            }
+            // Zum Initiative-Tracker wechseln: der Gegner steht dort
+            await navigateToTab(page, 'initiative');
+            await expect
+                .poll(() =>
+                    page.evaluate(
+                        name => D.initiative.combatants.some(c => c.name === name),
+                        monsterName
+                    )
+                )
+                .toBe(true);
+            await expect(page.locator('#init-list')).toContainText(monsterName);
         });
     });
 
@@ -461,7 +472,7 @@ test.describe('Komplette Workflows', () => {
 
             await navigateToTab(page, 'quests');
             const questTitle = generateTestName('SessionQuest');
-            await page.click('[data-action="show-modal"][data-value="quest-modal"]');
+            await page.click('[data-action="show-new-quest-modal"]');
             await page.waitForTimeout(300);
             await fillField(page, 'quest-title', questTitle);
             await fillField(page, 'quest-reward-gold', '100');

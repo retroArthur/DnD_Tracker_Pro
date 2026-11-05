@@ -173,7 +173,7 @@ test.describe('Kampagnen-Import im Browser — Ueberschreiben ersetzt, IDs bleib
             if ((await gruppe.count()) > 0) await gruppe.locator('.nav-group-btn').click();
         }
         await navTab.click();
-        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        await page.click('[data-action="show-new-npc-modal"]');
         await page.locator('#npc-name').fill('Neu angelegter NPC');
         await page.click('[data-action="call"][data-value="saveNPC"]');
 

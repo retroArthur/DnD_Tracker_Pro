@@ -179,7 +179,7 @@ declare function renderDMSDiceWidget(): string;
 /**
  * DM Screen Würfelwurf
  */
-declare function dmsRollDice(formula: string): number;
+declare function dmsRollDice(formula: string): number | null;
 declare function renderDMSDCWidget(): string;
 declare function renderDMSTablesWidget(): string;
 declare function renderDMSRulesWidget(): string;

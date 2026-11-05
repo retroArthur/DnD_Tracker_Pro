@@ -12,18 +12,37 @@ function getStoryArcs() {
     if (!D.storyArcs) D.storyArcs = [];
     return D.storyArcs;
 }
+// Baut die Arc-Auswahl des Notizformulars und den Arc-Filter neu und HAELT
+// dabei die Auswahl, solange es ihre Option noch gibt (ABBRUCH, Vertrag R6;
+// Muster neuBefuellen in populateSelects(), navigation.js). Aufgerufen beim
+// Aufklappen des Formulars (toggleCollapse), von addStoryArc(),
+// deleteStoryArc(), saveSession(), editSession() und initSessionsEnhanced().
+// editSession() ruft es VOR dem Setzen des Arcs: der Select traegt dazwischen
+// kurz die Auswahl der vorigen Eingabe, und editSession() setzt den Wert der
+// Notiz danach ausdruecklich. Vorher stand die Auswahl nach einem Neubau auf
+// '' — gemessen nach ✏️ S1 → ⚙️ → Arc anlegen bzw. einen ANDEREN Arc
+// loeschen, ebenso fuer einen Entwurf beim Zu-/Aufklappen; 💾 schrieb arcId
+// null. Den Arc-Filter haelt dieselbe Regel: er fiel sonst auf "Alle", obwohl
+// die Liste gefiltert blieb (laut Quelltext — addStoryArc() und
+// editSession() zeichnen sie nicht neu). Ein geloeschter Arc faellt weiter
+// auf '' zurueck: seine Option ist weg.
 function renderStoryArcSelects() {
-    const arcs = getStoryArcs();
-    const options =
-        '<option value="">— Kein Arc —</option>' +
-        arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    const arcOptionen = getStoryArcs()
+        .map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`)
+        .join('');
+    const neuBefuellen = (select, optionen) => {
+        const vorher = select.value;
+        select.innerHTML = optionen;
+        if (vorher && Array.from(select.options).some(o => o.value === vorher)) {
+            select.value = vorher;
+        }
+    };
     const sessionArc = $('session-arc');
     const filterArc = $('filter-session-arc');
-    if (sessionArc) sessionArc.innerHTML = options;
-    if (filterArc)
-        filterArc.innerHTML =
-            '<option value="">Alle</option>' +
-            arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    if (sessionArc) {
+        neuBefuellen(sessionArc, '<option value="">— Kein Arc —</option>' + arcOptionen);
+    }
+    if (filterArc) neuBefuellen(filterArc, '<option value="">Alle</option>' + arcOptionen);
 }
 function manageStoryArcs() {
     renderStoryArcList();
@@ -42,10 +61,10 @@ function renderStoryArcList() {
         .map(
             a => `
         <div class="story-arc-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 4px; margin-bottom: 4px;">
-            <span style="width: 16px; height: 16px; background: ${a.color || 'var(--gold)'}; border-radius: 3px;"></span>
+            <span style="width: 16px; height: 16px; background: ${sichereFarbe(a.color, 'var(--gold)')}; border-radius: 3px;"></span>
             <span style="flex: 1; color: var(--text);">${esc(a.name)}</span>
             <span style="color: var(--text-dim); font-size: var(--text-sm);">${countSessionsInArc(a.id)} Sessions</span>
-            <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${a.id}" title="Löschen">🗑️</button>
+            <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${esc(a.id)}" title="Löschen">🗑️</button>
         </div>
     `
         )
@@ -256,13 +275,13 @@ function renderSessions() {
             if (arcNotes.length === 0) return;
             html += `
                 <div class="session-arc-group">
-                    <div class="session-arc-header" data-action="toggle-arc-group" data-id="${arc.id}">
-                        <span style="width: 12px; height: 12px; background: ${arc.color || 'var(--gold)'}; border-radius: 2px;"></span>
+                    <div class="session-arc-header" data-action="toggle-arc-group" data-id="${esc(arc.id)}">
+                        <span style="width: 12px; height: 12px; background: ${sichereFarbe(arc.color, 'var(--gold)')}; border-radius: 2px;"></span>
                         <span class="session-arc-title">${esc(arc.name)}</span>
-                        <span class="session-arc-count">${arcNotes.length} Sessions</span>
+                        <span class="session-arc-count">${Number(arcNotes.length)} Sessions</span>
                         <span class="session-arc-toggle">▼</span>
                     </div>
-                    <div class="session-arc-sessions" id="arc-sessions-${arc.id}">
+                    <div class="session-arc-sessions" id="arc-sessions-${esc(arc.id)}">
                         ${arcNotes.map(n => renderSessionCard(n)).join('')}
                     </div>
                 </div>
@@ -275,7 +294,7 @@ function renderSessions() {
                     <div class="session-arc-header" data-action="toggle-arc-group" data-id="none">
                         <span style="width: 12px; height: 12px; background: var(--text-dim); border-radius: 2px;"></span>
                         <span class="session-arc-title" style="color: var(--text-dim);">Ohne Arc</span>
-                        <span class="session-arc-count">${noArc.length} Sessions</span>
+                        <span class="session-arc-count">${Number(noArc.length)} Sessions</span>
                         <span class="session-arc-toggle">▼</span>
                     </div>
                     <div class="session-arc-sessions" id="arc-sessions-none">
@@ -298,20 +317,20 @@ function renderSessionCard(n) {
     return `
         <div class="session-card">
             <div class="session-card-header">
-                <div class="session-number">#${n.number || '?'}</div>
+                <div class="session-number">#${esc(n.number || '?')}</div>
                 <div class="session-info">
                     <div class="session-title">${esc(n.name) || 'Unbenannte Session'}</div>
-                    <div class="session-date">${formatDate(n.date)}</div>
+                    <div class="session-date">${esc(formatDate(n.date))}</div>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-sm" data-action="toggle-session-content" data-id="${n.id}" title="Auf-/Zuklappen">📖</button>
-                    <button class="btn btn-sm" data-action="edit-session" data-id="${n.id}" title="Bearbeiten">✏️</button>
-                    <button class="btn btn-sm btn-danger" data-action="delete-session" data-id="${n.id}" title="Löschen">🗑️</button>
+                    <button class="btn btn-sm" data-action="toggle-session-content" data-id="${esc(n.id)}" title="Auf-/Zuklappen">📖</button>
+                    <button class="btn btn-sm" data-action="edit-session" data-id="${esc(n.id)}" title="Bearbeiten">✏️</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete-session" data-id="${esc(n.id)}" title="Löschen">🗑️</button>
                 </div>
             </div>
             ${n.summary ? `<div class="session-summary">${esc(n.summary)}</div>` : ''}
             ${tagsHtml ? `<div class="session-tags">${tagsHtml}</div>` : ''}
-            <div class="session-content collapsed" id="session-content-${n.id}">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(n.content)) || ''}</div>
+            <div class="session-content collapsed" id="session-content-${esc(n.id)}">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(n.content)) || ''}</div>
         </div>
     `;
 }
@@ -344,7 +363,16 @@ function saveSession() {
     const arcInput = $('session-arc');
     const summaryInput = $('session-summary');
     const textInput = $('session-text');
-    const editId = editIdInput?.value || '';
+    let editId = editIdInput?.value || '';
+    // Zeigt die ID auf eine Notiz, die es nicht mehr gibt (geloescht, oder per
+    // Strg+Z zurueckgenommen, waehrend das Formular offen war), wird als NEUE
+    // Notiz gespeichert — die Eingabe bleibt erhalten. Vorher fand der
+    // Bearbeiten-Zweig nichts, schrieb nichts, meldete nichts, und
+    // cancelSessionEdit() warf die Eingabe danach weg (gemessen). Geprueft VOR
+    // pushUndo, wie in saveNPC().
+    const idx = editId ? (D.sessionNotes || []).findIndex(n => n.id === parseEntityId(editId)) : -1;
+    const verwaist = Boolean(editId) && idx === -1;
+    if (verwaist) editId = '';
     const number = parseInt(numberInput?.value || '') || getNextSessionNumber();
     const name = nameInput?.value.trim() || '';
     const date = dateInput?.value || '';
@@ -356,22 +384,24 @@ function saveSession() {
         showToast('⚠️ Datum und Text erforderlich', 'error');
         return;
     }
+    // Vorher legte saveSession() KEINEN Undo-Eintrag an (Vertrag R5): Strg+Z
+    // nach dem Anlegen nahm die vorige Aktion zurueck und die neue Notiz still
+    // mit (Schnappschuss-Undo), ein Ueberschreiben war endgueltig. Der Wortlaut
+    // folgt "Session gelöscht" in deleteSession().
+    pushUndo(editId ? 'Session bearbeitet' : 'Session erstellt');
     if (editId) {
         // Bearbeiten
-        const idx = D.sessionNotes.findIndex(n => n.id === parseInt(editId));
-        if (idx > -1) {
-            D.sessionNotes[idx] = {
-                ...D.sessionNotes[idx],
-                number,
-                name,
-                date,
-                arcId,
-                summary,
-                tags,
-                content
-            };
-            showToast('Notiz aktualisiert');
-        }
+        D.sessionNotes[idx] = {
+            ...D.sessionNotes[idx],
+            number,
+            name,
+            date,
+            arcId,
+            summary,
+            tags,
+            content
+        };
+        showToast('Notiz aktualisiert');
     } else {
         // Neu erstellen
         D.sessionNotes.push({
@@ -384,7 +414,17 @@ function saveSession() {
             tags,
             content
         });
-        showToast('Notiz gespeichert');
+        // Bei verwaister ID die Warnung STATT der Erfolgsmeldung (wie
+        // saveCharacter()): "gespeichert" allein verschwiege, dass es eine
+        // neue Notiz ist und keine bearbeitete.
+        if (verwaist) {
+            showToast(
+                'Die bearbeitete Notiz existiert nicht mehr — als neue Notiz gespeichert',
+                'warning'
+            );
+        } else {
+            showToast('Notiz gespeichert');
+        }
     }
     cancelSessionEdit();
     renderSessions();
@@ -443,6 +483,11 @@ function cancelSessionEdit() {
     if (textInput) textInput.innerHTML = '';
     currentSessionTags = [];
     renderCurrentSessionTags();
+    // Auch ein angefangener, nicht mit Enter uebernommener Tag gehoert zur
+    // verworfenen Eingabe. Vorher stand er im naechsten Formular, und ein
+    // Enter dort machte ihn zum Tag der NEUEN Notiz (gemessen, ABBRUCH).
+    const tagInput = $('session-tags-input');
+    if (tagInput) tagInput.value = '';
     const formTitle = $('session-form-title');
     if (formTitle) formTitle.textContent = '+ Neue Session-Notiz';
     // Formular einklappen

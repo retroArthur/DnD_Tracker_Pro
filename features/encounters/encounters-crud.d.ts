@@ -1,5 +1,6 @@
 declare function updateEncAttrMod(attr: string): void;
 declare function toggleEncSaveBox(attr: string): void;
+declare function clearEncFormFields(): void;
 declare function cancelEncEdit(): void;
 declare function toggleEncLangDropdown(): void;
 declare function updateEncLanguages(): void;

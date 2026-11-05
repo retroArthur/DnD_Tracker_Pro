@@ -72,7 +72,7 @@ function updateWikiParentSelect() {
         if (isDescendantOf(entry.id, currentId)) return;
         if (selectedCategory && entry.category !== selectedCategory) return;
         const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
-        select.innerHTML += `<option value="${entry.id}">${cat.icon} ${esc(entry.title)}</option>`;
+        select.innerHTML += `<option value="${esc(entry.id)}">${cat.icon} ${esc(entry.title)}</option>`;
     });
     if (previousValue && select.querySelector(`option[value="${previousValue}"]`)) {
         select.value = previousValue;
@@ -102,12 +102,22 @@ function isDescendantOf(entryId, potentialAncestorId) {
     if (entry.parentId === potentialAncestorId) return true;
     return isDescendantOf(entry.parentId, potentialAncestorId);
 }
+// Wiki-Links [[Titel]] in bereinigtem Markup. SENKEN R1: Ersetzung NUR in Textknoten
+// (ersetzeImText, utils/basic.js), der Link wird als Knoten gebaut — eine Marke, die in einem
+// Attributwert beginnt oder endet (`<a href="…[[x]]">`), bleibt unberuehrt. Der Titel ist der
+// Text der Seite, nicht das serialisierte Markup: "Götter & Co" findet seinen Eintrag.
 function parseWikiLinks(content) {
     const D = window.D;
-    return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
-        const exists = D.wiki?.some(e => e.title.toLowerCase() === linkText.toLowerCase());
-        const escapedText = esc(linkText);
-        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${escapedText}</span>`;
+    return ersetzeImText(content, /\[\[([^\]]+)\]\]/g, (doc, treffer, linkText) => {
+        const gesucht = linkText.toLowerCase();
+        const exists = (D.wiki || []).some(e => String(e.title || '').toLowerCase() === gesucht);
+        const span = doc.createElement('span');
+        span.className = exists ? 'wiki-link' : 'wiki-link missing';
+        span.setAttribute('data-action', 'wiki-link-click-stop');
+        span.setAttribute('data-value', linkText);
+        span.setAttribute('data-exists', String(exists));
+        span.textContent = linkText;
+        return span;
     });
 }
 function extractWikiLinks(content) {
@@ -333,7 +343,7 @@ function renderWikiBreadcrumb(entryId) {
         if (isLast) {
             html += `<span class="breadcrumb-item current">${esc(item.title)}</span>`;
         } else {
-            html += `<span class="breadcrumb-item" data-action="select-wiki-entry" data-id="${item.id}">${esc(item.title)}</span>`;
+            html += `<span class="breadcrumb-item" data-action="select-wiki-entry" data-id="${esc(item.id)}">${esc(item.title)}</span>`;
             html += '<span class="breadcrumb-separator">›</span>';
         }
     });
@@ -353,8 +363,8 @@ function getSearchContextPreview(content, query, maxLength = 80) {
     if (start > 0) preview = '...' + preview;
     if (end < plainText.length) preview = preview + '...';
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    preview = esc(preview).replace(regex, '<mark>$1</mark>');
-    return preview;
+    // Erst kodiert, dann markiert: jede Rueckgabe ist geprueftes Markup (R1, Vertrag SENKEN).
+    return esc(preview).replace(regex, '<mark>$1</mark>');
 }
 function renderWikiSearchDropdown(query) {
     const D = window.D;
@@ -376,8 +386,7 @@ function renderWikiSearchDropdown(query) {
                 entry,
                 titleMatch,
                 contentMatch,
-                tagMatch,
-                preview: contentMatch ? getSearchContextPreview(entry.content, query) : ''
+                tagMatch
             };
         })
         .filter(Boolean)
@@ -395,19 +404,20 @@ function renderWikiSearchDropdown(query) {
     container.innerHTML = results
         .map((r, i) => {
             const cat = WIKI_CATEGORIES[r.entry.category] || { icon: '📄' };
+            const preview = r.contentMatch ? getSearchContextPreview(r.entry.content, query) : '';
             const highlightedTitle = esc(r.entry.title).replace(
                 new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
                 '<mark>$1</mark>'
             );
             return `
             <div class="search-result-item ${i === WikiState.searchDropdownIndex ? 'selected' : ''}"
-                 data-action="select-wiki-entry" data-id="${r.entry.id}">
+                 data-action="select-wiki-entry" data-id="${esc(r.entry.id)}">
                 <div class="search-result-header">
                     <span class="search-result-icon">${cat.icon}</span>
                     <span class="search-result-title">${highlightedTitle}</span>
                     ${r.tagMatch ? '<span class="search-result-badge">Tag</span>' : ''}
                 </div>
-                ${r.preview ? `<div class="search-result-preview">${r.preview}</div>` : ''}
+                ${preview ? `<div class="search-result-preview">${preview}</div>` : ''}
             </div>
         `;
         })
@@ -437,8 +447,10 @@ function handleWikiSearchKeydown(e) {
             const id = parseInt(selected.dataset.id || '0');
             selectWikiEntry(id);
             dropdown.style.display = 'none';
-            const searchInput = $('wiki-search');
-            if (searchInput) searchInput.value = '';
+            // Leeren wie das ✕, ueber die Aktion des Feldes (SUCHE-LEEREN, R8):
+            // nur den Wert zu setzen liess den Baum auf dem alten Begriff
+            // gefiltert und das ✕ sichtbar.
+            clearSearch('wiki-search');
             WikiState.searchDropdownIndex = -1;
         }
     } else if (e.key === 'Escape') {
@@ -463,7 +475,9 @@ function extractWikiTOC(content) {
     while ((match = regex.exec(content)) !== null) {
         headings.push({
             level: parseInt(match[1]),
-            text: match[2].trim(),
+            // Der Fang ist serialisiertes Markup ohne Tag: "Zwei &amp; mehr" — als Text
+            // gelesen (inert), sonst zeigte die Inhaltsliste nach esc() "&amp;" (R5)
+            text: new DOMParser().parseFromString(match[2], 'text/html').body.textContent.trim(),
             id: `toc-${index++}`
         });
     }
@@ -476,7 +490,7 @@ function renderWikiTOC(content) {
     html += '<div class="wiki-toc-title">📋 Inhalt</div>';
     headings.forEach(h => {
         const levelClass = `level-${h.level - 2}`;
-        html += `<div class="toc-item ${levelClass}" data-action="wiki-toc-jump" data-target="${h.id}">${esc(h.text)}</div>`;
+        html += `<div class="toc-item ${levelClass}" data-action="wiki-toc-jump" data-target="${esc(h.id)}">${esc(h.text)}</div>`;
     });
     html += '</div>';
     return html;
@@ -484,8 +498,15 @@ function renderWikiTOC(content) {
 function addTOCAnchors(content) {
     if (!content) return content;
     let index = 0;
-    return content.replace(/<h([2-4])([^>]*)>([^<]+)<\/h[2-4]>/gi, (match, level, attrs, text) => {
-        return `<h${level}${attrs} id="toc-${index++}">${text}</h${level}>`;
+    // Kennung als Attribut am Element (bearbeiteMarkup, utils/basic.js), nicht per Regex im
+    // serialisierten Markup: dort traf `<h2>…</h2>` auch IN einem Attributwert, und das
+    // eingefuegte `id="…"` beendete ihn (SENKEN R1). Wie bisher nur Ueberschriften aus reinem
+    // Text, in Dokumentreihenfolge — dieselben, die extractWikiTOC() auf dem Rohinhalt zaehlt.
+    return bearbeiteMarkup(content, koerper => {
+        for (const h of koerper.querySelectorAll('h2, h3, h4')) {
+            if (h.children.length || !h.textContent) continue;
+            h.id = 'toc-' + index++;
+        }
     });
 }
 function scrollToTOCHeading(targetId) {
@@ -498,7 +519,8 @@ function scrollToTOCHeading(targetId) {
 }
 function renderWikiTemplateSelector() {
     let html = '<div class="wiki-templates-grid">';
-    Object.entries(WIKI_TEMPLATES).forEach(([key, template]) => {
+    Object.keys(WIKI_TEMPLATES).forEach(key => {
+        const template = WIKI_TEMPLATES[key];
         html += `
             <div class="wiki-template-card" data-action="apply-wiki-template" data-template="${key}">
                 <div class="wiki-template-icon">${template.icon}</div>

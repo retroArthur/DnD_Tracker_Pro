@@ -87,7 +87,7 @@ const CAMPAIGN_CONTENT_ARRAYS = [
     // Nutzerinhalt wie jeder andere. Der Schluessel existiert im Startzustand
     // gar nicht (core/data.js initializeData() legt ihn nicht an) und entsteht
     // ausschliesslich ueber saveQuickRefEntry() (systems/spellslots/
-    // quick-reference.js:408-414) — eine bewusste Nutzerhandlung, exakt die
+    // quick-reference.js:427-433) — eine bewusste Nutzerhandlung, exakt die
     // Aufnahmeregel oben.
     'quickRefCustom'
 ];
@@ -574,7 +574,7 @@ function _processWizardFile(file, dropzone) {
         if (resultEl) {
             const sizeKB = (result.totalBytes / 1024).toFixed(1);
             let html = `
-                <div class="migration-success-line">Kampagnen importiert: <strong>${result.campaignCount}</strong></div>
+                <div class="migration-success-line">Kampagnen importiert: <strong>${Number(result.campaignCount)}</strong></div>
                 <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
             `;
 

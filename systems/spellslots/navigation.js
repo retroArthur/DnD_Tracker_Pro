@@ -45,9 +45,26 @@ function switchView(name) {
         }
     }
     // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
+    // Das Datum wird nur VORGESCHLAGEN, wenn keine Notiz bearbeitet wird und
+    // das Feld leer ist oder noch den eigenen Vorschlag traegt (ABBRUCH,
+    // Vertrag R6). Vorher setzte jeder Wechsel auf "Notizen" heute ein —
+    // gemessen auch bei offenem ✏️: S1 vom 2026-01-10 wurde nach Wiki →
+    // Notizen → 💾 mit dem heutigen Datum gespeichert. Ein getipptes
+    // Entwurfsdatum bleibt aus demselben Grund. Der Vorschlag ist in
+    // `data-vorschlag` vermerkt, damit er einem Tageswechsel folgt: der erste
+    // Fix-Stand schlug nur fuer ein LEERES Feld vor, und in einem Tab, der
+    // ueber Tage offen bleibt (PWA am Tablet), stand dann der Vorschlag vom
+    // ersten Tag (gemessen: 20. → 23., das Feld blieb beim 20.).
     if (name === 'notes') {
         const sessionDate = $('session-date');
-        if (sessionDate) sessionDate.value = new Date().toISOString().split('T')[0];
+        if (sessionDate && !$('edit-session-id')?.value) {
+            const vorschlag = sessionDate.dataset.vorschlag;
+            if (!sessionDate.value || sessionDate.value === vorschlag) {
+                const heute = new Date().toISOString().split('T')[0];
+                sessionDate.value = heute;
+                sessionDate.dataset.vorschlag = heute;
+            }
+        }
     }
     // NEW: Use tab registry to render content
     const renderTabContent = window.renderTabContent;
@@ -82,8 +99,19 @@ function switchView(name) {
         toggleText.textContent = viewNames[name] || '📍 Navigation';
     }
 }
+// Die ModalFocus-Aufrufe in showModal/hideModal stehen DIREKT in der
+// Deklaration und nicht in einem `window.showModal`-Mantel (O-4). Grund,
+// nachgezaehlt: von den 60 showModal- und 63 hideModal-Aufrufstellen im
+// Quellbaum rufen 52 bzw. 58 BLANK und binden damit LEXIKALISCH an diese
+// Deklarationen — unter ihnen `ui/actions/ui-actions.js:8`, der Weg jedes
+// Klicks auf `data-action="show-modal"`. Ein Mantel an `window` wuerde von
+// diesen umgangen und feuerte bei normaler Arbeit nie; genau die Falle, die
+// CLAUDE.md fuer `save()` dokumentiert. Begruendung und Messwerte stehen in
+// `ui/modal-focus.js`.
 function showModal(id) {
     const modal = $(id);
+    // VOR dem Sichtbarmachen: danach kann der Fokus schon verschoben sein.
+    if (modal && window.ModalFocus) window.ModalFocus.merkeOeffner(modal);
     if (modal) modal.classList.add('show');
     const populateSelects = window.populateSelects;
     if (populateSelects) populateSelects();
@@ -95,18 +123,68 @@ function showModal(id) {
         const populateQuestSelects = window.populateQuestSelects;
         if (populateQuestSelects) populateQuestSelects();
     }
+    // NACH dem Befuellen: die populate-Aufrufe oben bauen Felder nach, und
+    // der Einstieg soll den ersten davon greifen, nicht einen Halt, der
+    // gleich wieder ersetzt wird.
+    if (modal && window.ModalFocus) window.ModalFocus.einstieg(modal);
 }
 function hideModal(id) {
     const modal = $(id);
     if (modal) modal.classList.remove('show');
+    if (modal && window.ModalFocus) window.ModalFocus.kehreZurueck(modal);
+}
+// Klappformulare, in denen ✏️ einen Eintrag zum Bearbeiten laedt (ABBRUCH,
+// Vertrag R1). Gemessen war JEDER Anlege-Weg dieser Formulare derselbe reine
+// Umschalter toggleCollapse(): nach ✏️ → Kopfzeile zu → wieder auf trug das
+// Formular die Bearbeiten-ID samt allen Werten, und "Neu" → 💾 UEBERSCHRIEB
+// den bearbeiteten Eintrag (Charakter und Encounter, in D, im Speicher und
+// nach dem Neuladen; beim Encounter ohne Meldung und ohne Undo). Zuklappen
+// eines Bearbeitens ist darum ein Abbruch: beim naechsten AUFklappen wird
+// der Rest verworfen. Ein Anlege-Entwurf (keine ID) bleibt stehen (R2).
+//
+// `leeren` ist eine AUFGESCHOBENE Referenz wie in TAB_RENDER_REGISTRY
+// (MAINT-02): der Bezeichner steht im Quelltext (Grep, ESLint, und
+// tests/unit/navigation-collapse.test.js prueft, dass es ihn gibt), aufgeloest
+// wird erst beim Klick — dieses Modul laeuft im Lader VOR den Feature-Modulen.
+// Ein neues Klappformular mit Bearbeiten-ID gehoert hier mit hinein.
+const KLAPPFORMULAR_BEARBEITEN = {
+    'char-form': { bearbeitenId: 'edit-char-id', leeren: () => cancelCharEdit },
+    'enc-form': { bearbeitenId: 'edit-enc-id', leeren: () => cancelEncEdit },
+    // Die Notiz hat nur DIESEN Anlege-Weg (Kopf "+ Neue Session-Notiz"; keine
+    // Taste n, keine Palette). Gemessen ueberschrieb ✏️ S1 → Kopf zu → auf → 💾
+    // die Notiz S1 und mischte deren Zusammenfassung und Tags in die Eingabe.
+    'session-form': { bearbeitenId: 'edit-session-id', leeren: () => cancelSessionEdit }
+};
+/**
+ * Verwirft den Bearbeiten-Rest eines Klappformulars (ID gesetzt → dessen
+ * Leeren-Funktion). Fuer toggleCollapse() beim Aufklappen und fuer
+ * showNewCollapsibleForm() bei einem Formular in einer anderen Ansicht.
+ * @param {string} id
+ */
+function verwirfBearbeitenRest(id) {
+    const eintrag = KLAPPFORMULAR_BEARBEITEN[id];
+    if (!eintrag || !$(eintrag.bearbeitenId)?.value) return;
+    let leeren = null;
+    try {
+        leeren = eintrag.leeren();
+    } catch {
+        // Modul nicht geladen (Einzeltest) — dann gibt es nichts zu leeren.
+    }
+    if (typeof leeren === 'function') leeren();
 }
 function toggleCollapse(id) {
     const el = $(id);
     const icon = $(id + '-icon');
     if (el) {
-        el.classList.toggle('open');
+        // Die Richtung VOR dem Leeren festhalten: cancelCharEdit(),
+        // cancelEncEdit() und cancelSessionEdit() klappen selbst zu. Am Ende
+        // steht das Formular offen und leer, nicht wieder zu.
+        const aufklappen = !el.classList.contains('open');
+        if (aufklappen) verwirfBearbeitenRest(id);
+        el.classList.toggle('open', aufklappen);
         if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼';
         // Story-Arc Dropdown aktualisieren wenn Session-Formular geöffnet wird
+        // (haelt die Auswahl eines Entwurfs, siehe renderStoryArcSelects())
         if (
             id === 'session-form' &&
             el.classList.contains('open') &&
@@ -116,14 +194,54 @@ function toggleCollapse(id) {
         }
     }
 }
+/**
+ * Klappt ein Formular zum Anlegen auf — der Weg der Taste n und der
+ * Befehlspalette ("Neuer Charakter", "Neuer Encounter"). Vorher riefen beide
+ * toggleCollapse() und klappten ein OFFENES Formular zu, mitten in der
+ * Eingabe (gemessen an ✏️ wie am Entwurf). Ist es offen, tun sie jetzt
+ * nichts (Vertrag R3, wie showNewNPCModal()); ist es zu, klappt
+ * toggleCollapse() es auf und verwirft dabei einen Bearbeiten-Rest.
+ * Die Kopfzeile bleibt ein Umschalter.
+ *
+ * "Offen" heisst SICHTBAR offen. Ein Klappformular bleibt ueber einen
+ * Ansichtswechsel aufgeklappt, und die Palette erreicht es von ueberall — sie
+ * ruft diese Funktion VOR switchView(). Gemessen: ✏️ Aria → Reiter Quests →
+ * Palette "Neuer Charakter" zeigte ID 1 mit allen Werten von Aria, und "Neu"
+ * → 💾 UEBERSCHRIEB Aria (ebenso ✏️ Goblinboss → Reiter Party → "Neuer
+ * Encounter", Undo "Gegner bearbeitet"). Ein ✏️, das in einer anderen Ansicht
+ * liegt, ist darum ein Rest wie ein per ✕ geschlossenes Modal (R1): es wird
+ * verworfen, und das Formular steht danach offen und leer. Ein Entwurf ohne
+ * ID bleibt auch dort stehen (R2) — er ist Arbeit des Nutzers.
+ * @param {string} id
+ */
+function showNewCollapsibleForm(id) {
+    const el = $(id);
+    if (!el) return;
+    if (el.classList.contains('open')) {
+        // Ohne umgebende Ansicht (Einzeltest) gilt das Formular als sichtbar.
+        const ansicht = el.closest('.view');
+        if (!ansicht || ansicht.classList.contains('active')) return;
+        verwirfBearbeitenRest(id);
+        // Die Leeren-Funktionen klappen selbst zu; ist es noch offen, war es
+        // ein Entwurf (oder ist schon leer) — nichts weiter zu tun.
+        if (el.classList.contains('open')) return;
+    }
+    toggleCollapse(id);
+}
+// #quicknotes-modal geht NICHT durch showModal/hideModal — es traegt
+// `.modal-backdrop` und schaltet `style.display` selbst. Darum bekommt es
+// dieselben drei Haken einzeln; sonst waere es die eine Schale ohne
+// Fokusfuehrung (und war gemessen auch die eine, die auf Escape offen blieb).
 function showQuickNotesModal() {
     const D = window.D;
     const quickNotes = $('quick-notes');
     if (quickNotes) quickNotes.value = D.quickNotes || '';
     const modal = $('quicknotes-modal');
     if (modal) {
+        if (window.ModalFocus) window.ModalFocus.merkeOeffner(modal);
         modal.style.display = 'flex';
         modal.classList.add('show');
+        if (window.ModalFocus) window.ModalFocus.einstieg(modal);
     }
 }
 function hideQuickNotesModal() {
@@ -131,6 +249,7 @@ function hideQuickNotesModal() {
     if (modal) {
         modal.style.display = 'none';
         modal.classList.remove('show');
+        if (window.ModalFocus) window.ModalFocus.kehreZurueck(modal);
     }
 }
 function saveQuickNotes() {
@@ -141,24 +260,40 @@ function saveQuickNotes() {
     if (save) save();
     showToast('📝 Notizen gespeichert');
 }
+// Baut die Auswahllisten von NPC- und Ort-Formular neu und HAELT dabei die
+// Auswahl (MARKDOWN, docs/bugfixes.md). showModal() ruft das fuer JEDES Modal —
+// auch fuer eines, das UEBER dem offenen Formular aufgeht. Vorher stand danach
+// alles auf '': die Markdown-Import-Schale ueber dem NPC-Formular leerte Ort
+// und Filter, und ✏️ an einem Ort verlor seinen Filter schon beim Oeffnen;
+// "Speichern" schrieb beide Male null. Leere Werte beim Bearbeiten setzen
+// editNPC()/editLocation() deshalb selbst.
 function populateSelects() {
     const D = window.D;
     const esc = window.esc;
+    const neuBefuellen = (select, optionen) => {
+        const vorher = select.value;
+        select.innerHTML = optionen;
+        if (vorher && Array.from(select.options).some(o => o.value === vorher)) {
+            select.value = vorher;
+        }
+    };
     // Location select for NPCs
     const locSel = $('npc-location');
     if (locSel) {
-        locSel.innerHTML =
+        neuBefuellen(
+            locSel,
             '<option value="">-- Ort --</option>' +
-            (D.locations || [])
-                .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
-                .join('');
+                (D.locations || [])
+                    .map(l => `<option value="${esc(l.id)}">${esc(l.name)}</option>`)
+                    .join('')
+        );
     }
     // Filter selects
     const filterOpts =
         '<option value="">-- Kein Filter --</option>' +
-        (D.filters || []).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+        (D.filters || []).map(f => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
     ['loc-filter', 'npc-filter'].forEach(id => {
         const select = $(id);
-        if (select) select.innerHTML = filterOpts;
+        if (select) neuBefuellen(select, filterOpts);
     });
 }
