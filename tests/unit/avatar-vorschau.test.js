@@ -11,7 +11,10 @@
  *       wirft heute keiner — darum hier, mit einem Handler, der wirft (U1), und mit einem
  *       customHandlers, das schon beim Eintritt wirft (U4). U1 allein haelt nur "hinter einem
  *       werfenden Handler": ein Aufruf als ERSTE Anweisung in customHandlers (m5a) lief vor
- *       dem werfenden updateSpeedDisplay() und bestand U0-U3 und alle E2E-Faelle. U4 haelt den
+ *       dem werfenden updateSpeedDisplay() und bestand U0-U3 und alle E2E-Faelle. Seit
+ *       CHAR-HALBLADEN Offen (4) steht updateSpeedDisplay() am ENDE des Blocks (das Leeren ist
+ *       total: ein Wurf dort ueberspringt nur noch updateProficiencyBonus()) — U1 sieht damit
+ *       auch einen Aufruf hinter dem Leeren der Angriffe (m5) nicht mehr. U4 haelt den
  *       Wortlaut von R3 — kein Aufruf im Block, gleich an welcher Stelle.
  *   R4  Direkt aufrufen, kein synthetisches input-/change-Ereignis und kein dispatchEvent am
  *       Feld. Am Bildschirm faengt (W5) nur das change (BESTIAR-KLICK verschluckt es beim schon
@@ -27,9 +30,14 @@
  *   m2   nur cancelCharEdit()                                     U3 rot
  *   m4   dispatchEvent(change) am Feld statt des Aufrufs          U1, U2, U3, U4 rot
  *   m5   der Aufruf IN customHandlers (hinter dem Leeren der      U1, U4 rot — am Bildschirm
- *        Angriffe), sonst wie fix                                 alle Faelle gruen
+ *        Angriffe), sonst wie fix                                 alle Faelle gruen. Seit
+ *                                                                 CHAR-HALBLADEN Offen (4)
+ *                                                                 nur U4 rot (die Helfer
+ *                                                                 stehen dahinter); als
+ *                                                                 LETZTE Anweisung U1, U4 rot
  *   m5a  der Aufruf als ERSTE Anweisung in customHandlers (vor    genau U4 rot — am
- *        updateSpeedDisplay()), sonst wie fix                     Bildschirm alle gruen
+ *        updateSpeedDisplay()), sonst wie fix                     Bildschirm alle gruen;
+ *                                                                 seit Offen (4) ebenso
  *   m6   dispatchEvent(input) am Feld statt des Aufrufs           U1, U2, U3, U4 rot — am
  *                                                                 Bildschirm alle gruen
  *   m10  der Aufruf VOR clearFormFields() (liest den alten Wert)  U1, U2, U4 rot
@@ -155,7 +163,8 @@ describe('AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden und Leeren,
 
     test('(U1) R3: wirft ein frueherer Leeren-Handler, fuehrt cancelCharEdit() die Vorschau trotzdem nach', () => {
         getippt(LOKALES_BILD);
-        // Der ERSTE Handler in customHandlers wirft — alles dahinter faellt im try-Block weg.
+        // Ein Handler in customHandlers wirft — der Rest des try-Blocks faellt weg. Seit
+        // CHAR-HALBLADEN Offen (4) ist updateSpeedDisplay() der vorletzte (frueher der erste).
         ctx.updateSpeedDisplay = () => {
             throw new Error('Probe: ein frueherer Leeren-Handler wirft');
         };

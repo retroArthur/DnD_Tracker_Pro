@@ -313,7 +313,8 @@ function kampagne(teile) {
 }
 
 /** Ein Charakter mit den Feldern, die saveCharacter() schreibt und
- *  editChar() liest (`speed` als Text — sonst wirft ✏️). */
+ *  editChar() liest (`speed` als Text — wie die App ihn schreibt; bis CHAR-HALBLADEN warf ✏️
+ *  sonst, und R3 lehnt eine Zahl wegen quick-actions.js Dash weiter ab). */
 const THORIN = {
     id: 1,
     name: 'Thorin',
