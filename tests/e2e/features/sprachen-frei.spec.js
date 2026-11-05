@@ -126,8 +126,13 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *        (am Kopf c5bb6a1a rot; seit CHAR-HALBLADEN R4 erledigt, R9 sichert es doppelt)
  *   W12  Umbruch, 1440 mit Maus und 390 per Tap: Wim ['Gemein', 'Kauderwelsch' x 8]; die
  *        Anzeige nennt die lange Sprache, und mit Menue zu und auf hat das Dokument keinen
- *        seitlichen Ueberlauf, der Ausloeser liegt im Fenster                       rot
- *        (am Basisstand, weil nichts angezeigt wird; am Fix ohne R10 am Ueberlauf)
+ *        seitlichen Ueberlauf, der Ausloeser liegt im Fenster; mit Menue auf hat auch das
+ *        Dropdown keinen seitlichen Ueberlauf, und der Text des freien Eintrags liegt darin rot
+ *        (am Basisstand, weil nichts angezeigt wird; am Fix ohne R10 am Ueberlauf). Der
+ *        Dropdown-Teil kam nach der Pruefung dazu: das Dropdown hat overflow-y: auto, also
+ *        auch overflow-x: auto — ohne `.cf-lang-item span` laeuft der Eintrag nur IM Dropdown
+ *        ueber (gemessen 478 px bei 1440, 534 px bei 390), das Dokument bleibt bei 0 px, und
+ *        die Zusagen zum Dokument allein blieben gruen (Mutanten m19/m19b unten)
  *   W13  Tastatur: ✏️ Rex, Klick auf den Ausloeser, Tab → Fokus auf dem freien "Kauderwelsch";
  *        Leertaste → abgewaehlt, "Sprachen wählen..."; 💾 → []                       rot
  *   W14  (CHAR-HALBLADEN ist gelandet) ✏️ Zed → ✏️ Gil (`speed: 30`) → 💾 → Gil traegt genau
@@ -159,6 +164,13 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *        datenText()              Objekt; U1 Uwe, Hal, ['x',[1],null], held-laden HL1 Objekt
  *   m9   ohne R9                  W11 gruen (CHAR-HALBLADEN R4 schliesst schon); rot nur U6
  *   m10  ohne R10 (CSS)           W12 1440 und 390, je Menue zu und auf (seitlicher Ueberlauf)
+ *   m19  R10 nur fuer die Anzeige W12 1440 und 390, nur an der Zusage zum Dropdown (innerer
+ *        (`.cf-lang-item span`    Ueberlauf 478 bzw. 534 px, der Text ragt hinaus); vor der
+ *        gestrichen)              Pruefung gruen, gefangen nur zufaellig von design-consistency
+ *                                 (die Zeilenanker in party.css rutschen um eine Zeile)
+ *   m19b dito, Zeilenzahl gleich  wie m19; vor der Pruefung gruen, auch alle CSS-Tore
+ *        (`.cf-lang-item-aus      (Kopf 1362b756, gemessen mit dieser Datei vor und nach
+ *        span`)                   dem Nachtrag)
  *
  * WIE GEURTEILT WIRD: am Menue (jedes Haekchen mit Wert, Text, Haken, Frei-Markierung und
  * `.selected`, die Ausloeser-Anzeige, das versteckte select, offen/zu), an D und am Speicher.
@@ -915,6 +927,35 @@ function geometrie(page) {
     });
 }
 
+/**
+ * Seitlicher Ueberlauf IM offenen Dropdown und Lage des Textes eines freien Eintrags darin (W12,
+ * R10 — der Teil `.cf-lang-item span`). Das Dropdown hat `overflow-y: auto`, damit auch
+ * `overflow-x: auto`: ein Eintrag ohne Umbruch laeuft nur IM Dropdown ueber und erreicht die
+ * Breite des Dokuments nie — `geometrie()` allein bliebe gruen (Pruefbefund, Mutante m19b:
+ * 534 px innerer Ueberlauf bei 390, der Text ragt 533 px ueber das 276 px breite Dropdown).
+ * Gemessen wird gegen die Innenkante (`clientLeft`/`clientWidth`, ohne Rollbalken).
+ * @param {import('@playwright/test').Page} page @param {string} wert
+ */
+function dropdownGeometrie(page, wert) {
+    return page.evaluate(w => {
+        const dd = /** @type {HTMLElement} */ (document.getElementById('cf-lang-dropdown'));
+        const cb = [...dd.querySelectorAll('[data-frei] input')].find(
+            e => /** @type {HTMLInputElement} */ (e).value === w
+        );
+        const span = cb?.closest('.cf-lang-item')?.querySelector('span');
+        if (!span) return { gefunden: false };
+        const d = dd.getBoundingClientRect();
+        const s = span.getBoundingClientRect();
+        const links = d.left + dd.clientLeft;
+        const rechts = links + dd.clientWidth;
+        return {
+            gefunden: true,
+            innererUeberlauf: dd.scrollWidth - dd.clientWidth,
+            textImDropdown: s.left >= links - 1 && s.right <= rechts + 1
+        };
+    }, wert);
+}
+
 // ===========================================================================
 // ABLAEUFE, je fuer Maus und Tap
 // ===========================================================================
@@ -1399,7 +1440,9 @@ test.describe('SPRACHEN-FREI — Sprachen ausserhalb der festen Liste bleiben be
 
 /**
  * (W12) Wim: die lange freie Sprache steht in der Anzeige, und weder mit Menue zu noch auf
- * laeuft das Dokument seitlich ueber; der Ausloeser bleibt im Fenster (R10).
+ * laeuft das Dokument seitlich ueber; der Ausloeser bleibt im Fenster; mit Menue auf laeuft
+ * auch das Dropdown selbst nicht seitlich ueber, und der Text des freien Eintrags liegt darin
+ * (R10 — beide Teile der Regel: Anzeige UND Eintrag).
  * @param {import('@playwright/test').Page} page @param {Bedien} bedien @param {string} wo
  */
 async function ablaufW12(page, bedien, wo) {
@@ -1418,4 +1461,9 @@ async function ablaufW12(page, bedien, wo) {
         seitlicherUeberlauf: 0,
         ausloeserImFenster: true
     });
+    weich(
+        await dropdownGeometrie(page, LANG_OHNE_UMBRUCH),
+        `${wo}, Menue auf: der freie Eintrag bricht im Wort — kein seitlicher Ueberlauf IM ` +
+            'Dropdown, sein Text liegt darin (R10, `.cf-lang-item span`)'
+    ).toEqual({ gefunden: true, innererUeberlauf: 0, textImDropdown: true });
 }
