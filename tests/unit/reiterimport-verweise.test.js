@@ -21,6 +21,10 @@
  *     Kennung, sein Undo-Hook verwirft danach nach derselben Regel.
  *   - R8: updateIOCounts() kennt die drei Welt-Reiter (bei aktiver Suche schreibt die Liste),
  *     renderAll() zeichnet den offenen Welt-Reiter neu (features/render-dashboard.js).
+ *   - BESTIAR-UNDO R2: dasselbe fuer das OFFENE Bestiar (Z3) — und NUR fuer das offene (Z5):
+ *     ein verstecktes Bestiar zeichnet renderAll() weder ueber die Registry noch direkt, sonst
+ *     setzt das Rollwerk beim Start die Fensterhoehe auf den Rueckfall (400 statt 587 px, E2E
+ *     tests/e2e/features/bestiar-undo.spec.js (W10)).
  */
 
 const fs = require('fs');
@@ -1461,15 +1465,19 @@ describe('REITERIMPORT R8 — Zaehler und offener Welt-Reiter', () => {
             'renderFilterList',
             'initQuickRefCustom',
             'renderRandomTables',
-            'renderTimers'
+            'renderTimers',
+            // BESTIAR-UNDO Z5: ein direkter Aufruf der Liste ausserhalb der Registry wird sichtbar
+            'renderBestiaryList'
         ]) {
             ctx[name] = jest.fn();
         }
         return { ctx, frame: () => frames.splice(0).forEach(fn => fn(0)) };
     }
 
-    test.each(['sessionprep', 'kalender', 'fraktionen'])(
-        'Z3 %s: renderAll() zeichnet den offenen Welt-Reiter ueber seinen Registry-Eintrag neu',
+    // 'bestiary' seit BESTIAR-UNDO R2: Liste UND Detail haengen am Registry-Eintrag, renderAll()
+    // zeichnet das offene Bestiar ueber ihn — nach demselben Muster wie die Welt-Reiter.
+    test.each(['sessionprep', 'kalender', 'fraktionen', 'bestiary'])(
+        'Z3 %s: renderAll() zeichnet die offene Ansicht ueber ihren Registry-Eintrag neu',
         ansicht => {
             document.body.insertAdjacentHTML(
                 'beforeend',
@@ -1496,6 +1504,30 @@ describe('REITERIMPORT R8 — Zaehler und offener Welt-Reiter', () => {
             ctx.renderAll();
             frame();
             expect(ctx.renderTabContent).not.toHaveBeenCalled();
+            expect(ctx.renderNPCList).toHaveBeenCalledTimes(1);
+        }
+    );
+
+    // BESTIAR-UNDO R2 (Vertrag: "NICHT ZULAESSIG — renderBestiaryList unbedingt in renderAll").
+    // renderAll() laeuft beim Start (core/init.js) bei verstecktem Bestiar; zeichnete es die Liste
+    // dort, setzte das Rollwerk ihre Hoehe auf den Rueckfall fest (gemessen 400 statt 587 px bei
+    // 1440x900, 13 statt 17 Zeilen). Gezeichnet wird nur die OFFENE Ansicht (Z3).
+    test.each(['party', 'dashboard', 'sessionprep'])(
+        'Z5 verstecktes Bestiar, offen %s: renderAll() zeichnet das Bestiar weder ueber die Registry noch direkt',
+        ansicht => {
+            document.body.insertAdjacentHTML(
+                'beforeend',
+                '<div class="view" id="view-bestiary"></div>' +
+                    `<div class="view active" id="view-${ansicht}"></div>`
+            );
+            const { ctx, frame } = dashboard();
+            ctx.renderAll();
+            frame();
+            expect(ctx.renderTabContent.mock.calls.map(c => c[0])).not.toContain('bestiary');
+            expect(ctx.renderBestiaryList).not.toHaveBeenCalled();
+            // Auch kein Aufruf einer anderen, hier nicht gestellten Bestiar-Funktion (er liefe in
+            // renderSafe auf einen Fehler und landete im Fehlerlog)
+            expect(ctx.ErrorHandler.log).not.toHaveBeenCalled();
             expect(ctx.renderNPCList).toHaveBeenCalledTimes(1);
         }
     );
