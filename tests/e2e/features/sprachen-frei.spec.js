@@ -190,8 +190,11 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  * WAS HIER BEWUSST NICHT GEPRUEFT WIRD: "+ Angriff" und Escape bei offenem Menue, das offene
  * Menue im Entwurf nach Kopfzeile zu und die uebrigen Aussenklick-Lauscher (Klassenbefund (c),
  * eigener Vorgang); das Encounter-Formular (ENC-SPRACHEN); die 🔍-Detailanzeige der Rohdaten
- * (party-details.js); 320 px (das Identitaets-Panel laeuft schon am Kopf 37 px ueber); Zeichen
- * ohne Breite (U+200B) werden nicht normalisiert; Firefox.
+ * (party-details.js); 320 px (das Identitaets-Panel laeuft schon am Kopf 37 px ueber);
+ * Formatzeichen ohne Breite werden nicht normalisiert (gemessen U+00AD, U+2060, U+200B bis
+ * U+200E: ein freies Haekchen, das wie die feste Sprache aussieht; ein Wert nur aus U+200B ein
+ * Eintrag ohne sichtbaren Text und ein leer wirkender Ausloeser; U+FEFF gehoert zu \s und wird
+ * fest — Katalog SPRACHEN-FREI Offen (5)); Firefox.
  */
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
