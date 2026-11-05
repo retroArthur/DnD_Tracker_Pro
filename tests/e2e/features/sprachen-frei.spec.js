@@ -155,8 +155,15 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *        entfernt                 leert seit CHAR-HALBLADEN R4 vorab; rot nur U2 "A, dann B"
  *   m2   ohne NFC                 W3 Kai; U1 Kai
  *   m3   Bau per innerHTML        W6 (kein Element aus dem Markup, Werte, 💾); U1 Lia, U4
- *   m4   mit Gross-/Kleinschr.    W3 Cora und Eik; U1 Cora, GEBÄRDEN, Eik, "erstes Vorkommen"
- *   m5   freie unten              W1, W8 (W1) und (W2) an "oben/sichtbar"; U1 19 Zeilen, U2
+ *   m4   mit Gross-/Kleinschr.    W3 Cora und Eik, W10 (' zwergisch ' wird frei); U1 Cora,
+ *                                GEBÄRDEN, Eik, "erstes Vorkommen"
+ *   m5   freie unten              20 von 35: jeder Fall mit freien Eintraegen, an der
+ *                                Menuereihenfolge (menueUrteil) — W1, W2, W3 Eik, Fenn, Gus,
+ *                                Tex, Yan, Zed, W6, W7 Pia, Vic, Hal, Ole, Sam, W10, W12 1440
+ *                                und 390, W13, W8 (W1) und (W2); W1/W8 auch an "oben/sichtbar",
+ *                                W2/W8 an "ungescrollt"; U1 18 Zeilen, U2 (19 Unit-Faelle)
+ *                                (m4/m5 nach der Pruefung am Kopf 1362b756 nachgemessen; die
+ *                                erste Fassung dieser Liste war fuer beide unvollstaendig)
  *   m6   Listenelemente an        W3 Tex und Zed; U1 Tex und Zed
  *        Kommas zerlegt
  *   m7   `languages ? … : []`     W7 Ole und Sam; U1 Ole und Sam
@@ -167,7 +174,7 @@ import { waitForAppReady } from '../helpers/test-utils.js';
  *   m19  R10 nur fuer die Anzeige W12 1440 und 390, nur an der Zusage zum Dropdown (innerer
  *        (`.cf-lang-item span`    Ueberlauf 478 bzw. 534 px, der Text ragt hinaus); vor der
  *        gestrichen)              Pruefung gruen, gefangen nur zufaellig von design-consistency
- *                                 (die Zeilenanker in party.css rutschen um eine Zeile)
+ *                                (die Zeilenanker in party.css rutschen um eine Zeile)
  *   m19b dito, Zeilenzahl gleich  wie m19; vor der Pruefung gruen, auch alle CSS-Tore
  *        (`.cf-lang-item-aus      (Kopf 1362b756, gemessen mit dieser Datei vor und nach
  *        span`)                   dem Nachtrag)
