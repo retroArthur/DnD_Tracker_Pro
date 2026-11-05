@@ -749,8 +749,8 @@ declare global {
   /** Navigate to search result */
   function navigateToResult(type: EntityType, id: EntityId, locId?: EntityId | null): void;
   
-  /** Clear search */
-  function clearSearch(inputId: string, renderFn: () => void): void;
+  /** Leert ein Suchfeld ueber seine eigene input-Aktion und fokussiert es (SUCHE-LEEREN) */
+  function clearSearch(inputId: string): void;
   
   // ============================================================
   // TAG FUNCTIONS

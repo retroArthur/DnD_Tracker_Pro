@@ -39,13 +39,36 @@ function stripHtml(s) {
         : '';
 }
 // Search-Helper-Funktionen
-function clearSearch(inputId, renderFn) {
+// Leert ein Suchfeld ueber SEINE EIGENE Aktion (SUCHE-LEEREN, R1): Wert '' und
+// dasselbe `input` wie beim Tippen. Der Verteiler stellt es an 'search-input'
+// (data-render) bzw. 'wiki-search-input' zu; die zeichnen, was am Feld haengt
+// (Liste, Baum, Wiki-Aufklapp). Keine zweite Liste Feld -> Renderfunktion: die
+// fruehere `searchRenderMap` im Zweig 'clear-search' schwieg bei jedem Feld,
+// das ihr fehlte — vier ✕ taten nichts. Das ✕ neben dem Feld zieht der Helfer
+// selbst nach (generisch ueber den Behaelter, wie es die Aktionen beim Tippen
+// tun), damit es ohne Begriff auch dann verschwindet, wenn eine Aktion das
+// vergisst (tests/unit/suche-leeren.test.js, R2). Der Aufruf haelt zugleich
+// den Lint-Pin: ohne ihn ist `updateSearchClear` in dieser Datei unbenutzt
+// (no-unused-vars), ESLint zaehlt eine Warnung mehr, und lint-gate prueft
+// den Pin exakt. Danach steht der Fokus im Feld, auch auf dem Telefon (R3):
+// sonst saesse er auf dem unsichtbar gewordenen ✕, und getippte Buchstaben loesten
+// Kurztasten aus. Ein Ziel, das sich so nicht leeren laesst, wird gemeldet,
+// nicht verschluckt (R4). Aufrufer: 'clear-search' (ui/actions/ui-actions.js)
+// und Enter im Wiki-Aufklapp (R8, wiki-crud.js).
+function clearSearch(inputId) {
     const input = $(inputId);
-    if (input instanceof HTMLInputElement) {
-        input.value = '';
-        updateSearchClear(input);
-        if (typeof renderFn === 'function') renderFn();
+    if (
+        !(input instanceof HTMLInputElement) ||
+        !TEXTARTIGE_INPUT_TYPEN.has((input.type || '').toLowerCase()) ||
+        !EventDelegation.hasAction(input.dataset.action || '')
+    ) {
+        ErrorHandler.log('clearSearch', new Error(`Suchfeld nicht aufloesbar: ${inputId}`));
+        return;
     }
+    input.value = '';
+    updateSearchClear(input);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
 }
 function updateSearchClear(input) {
     const btn = input.parentElement?.querySelector('.search-clear-btn');

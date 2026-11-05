@@ -447,8 +447,10 @@ function handleWikiSearchKeydown(e) {
             const id = parseInt(selected.dataset.id || '0');
             selectWikiEntry(id);
             dropdown.style.display = 'none';
-            const searchInput = $('wiki-search');
-            if (searchInput) searchInput.value = '';
+            // Leeren wie das ✕, ueber die Aktion des Feldes (SUCHE-LEEREN, R8):
+            // nur den Wert zu setzen liess den Baum auf dem alten Begriff
+            // gefiltert und das ✕ sichtbar.
+            clearSearch('wiki-search');
             WikiState.searchDropdownIndex = -1;
         }
     } else if (e.key === 'Escape') {
