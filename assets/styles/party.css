@@ -1764,6 +1764,14 @@
     accent-color: var(--gold);
 }
 
+/* SPRACHEN-FREI R10: eine freie Sprache aus Daten kann ohne Umbruchstelle sein (gemessen
+   96 Zeichen: 203 px seitlicher Seiten-Scroll bei 1440, 311 px bei 390) — Anzeige und
+   Eintrag brechen dann im Wort */
+.cf-languages-block .cf-lang-selected,
+.cf-lang-item span {
+    overflow-wrap: anywhere;
+}
+
 
 /* Notizen V4 */
 .cf-notes-panel {

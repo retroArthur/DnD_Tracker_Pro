@@ -23,9 +23,9 @@ declare function toggleLangDropdown(): void;
  */
 declare function updateCharLanguages(): void;
 /**
- * Set character languages in the dropdown
+ * Set character languages in the dropdown — jede Form, ohne Verlust (SPRACHEN-FREI R1/R11)
  */
-declare function setCharLanguages(languages: string[] | string | null): void;
+declare function setCharLanguages(languages: unknown): void;
 /**
  * Clear character languages
  */
