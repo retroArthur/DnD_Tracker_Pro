@@ -1,6 +1,10 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
-import { waitForAppReady } from '../helpers/test-utils.js';
+import {
+    waitForAppReady,
+    waitForPersistedEntry,
+    readPersistedEntryReport
+} from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Wiki System
@@ -336,7 +340,17 @@ test.describe('Wiki System', () => {
             await editor.type('Dieser Eintrag sollte persistieren.');
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
-            await page.waitForTimeout(1000);
+            // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass der
+            // Eintrag im Speicher steht. Vorher stand hier
+            // `waitForTimeout(1000)` gegen einen um 300ms entprellten save()
+            // (systems/spellslots/persistence.js) — eine Wette auf die Last des
+            // Laeufers, und genau diese Gattung hat am 20.10.2026 auf dem
+            // Linux-Laeufer verloren (kampfprotokoll.spec.js, Fall "das
+            // Protokoll ueberlebt einen Neustart der App").
+            const probe = { liste: 'wiki', wo: { title: 'Persistenter Eintrag' } };
+            const vorReload = await waitForPersistedEntry(page, probe, {
+                name: 'Wiki-Eintrag "Persistenter Eintrag"'
+            });
 
             // Seite neu laden
             await page.reload();
@@ -345,6 +359,24 @@ test.describe('Wiki System', () => {
             // Zur Wiki-View wechseln
             await page.evaluate(() => window.switchView('wiki'));
             await page.waitForSelector('#view-wiki', { state: 'visible' });
+
+            const nachReload = await readPersistedEntryReport(page, probe);
+            console.log(
+                `[Wiki-Persistenz] vor reload geschrieben unter: ${JSON.stringify(vorReload.treffer)} · ` +
+                    `nach reload im Speicher: ${JSON.stringify(nachReload.treffer)} · ` +
+                    `in window.D: ${nachReload.imArbeitsspeicher} · ` +
+                    `Kampagnenschluessel: ${JSON.stringify(nachReload.kandidaten)} · ` +
+                    `aktiver Schluessel: ${nachReload.aktiverSchluessel}`
+            );
+
+            // Der Eintrag war vor dem Neustart nachweislich geschrieben (sonst
+            // haette das Warten oben zugeschlagen). Faellt die Zusicherung jetzt,
+            // ist es kein Wettlauf, sondern das Laden oder das Rendern nach dem
+            // Neustart.
+            expect(
+                vorReload.treffer.length,
+                'der Eintrag stand vor dem Neustart unter keinem Kampagnenschluessel'
+            ).toBeGreaterThan(0);
 
             // Eintrag sollte noch da sein
             await expect(page.locator('.wiki-tree')).toContainText('Persistenter Eintrag');
