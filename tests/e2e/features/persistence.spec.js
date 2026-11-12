@@ -9,7 +9,9 @@ import {
     performSave,
     seedCleanSession,
     waitForAppReady,
-    waitForLogEntry
+    waitForLogEntry,
+    waitForPersistedEntry,
+    readPersistedEntryReport
 } from '../helpers/test-utils.js';
 
 /**
@@ -62,11 +64,41 @@ test.describe('Datenpersistenz', () => {
             await openCollapseForm(page, 'char-form');
             await fillField(page, 'char-name', charName);
             await page.click('[data-action="call"][data-value="saveCharacter"]');
-            await page.waitForTimeout(2000);
+
+            // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass der
+            // Charakter im Speicher steht. Vorher stand hier
+            // `waitForTimeout(2000)` gegen einen um 300ms entprellten save()
+            // (systems/spellslots/persistence.js). Zwei Sekunden sind viel Luft —
+            // aber eine Dauer bleibt eine Wette auf die Last des Laeufers, und
+            // genau diese Gattung hat am 20.10.2026 auf dem Linux-Laeufer
+            // verloren (kampfprotokoll.spec.js, Fall "das Protokoll ueberlebt
+            // einen Neustart der App"). Die Tatsache kostet im gruenen Fall
+            // ausserdem nur die Zeit, die sie wirklich braucht.
+            const probe = { liste: 'characters', wo: { name: charName } };
+            const vorReload = await waitForPersistedEntry(page, probe, {
+                name: `Charakter "${charName}"`
+            });
 
             // Page neu laden
             await page.reload();
             await waitForAppReady(page);
+
+            const nachReload = await readPersistedEntryReport(page, probe);
+            console.log(
+                `[Persistenz-Reload] vor reload geschrieben unter: ${JSON.stringify(vorReload.treffer)} · ` +
+                    `nach reload im Speicher: ${JSON.stringify(nachReload.treffer)} · ` +
+                    `in window.D: ${nachReload.imArbeitsspeicher} · ` +
+                    `Kampagnenschluessel: ${JSON.stringify(nachReload.kandidaten)} · ` +
+                    `aktiver Schluessel: ${nachReload.aktiverSchluessel}`
+            );
+
+            // Der Charakter war vor dem Neustart nachweislich geschrieben (sonst
+            // haette das Warten oben zugeschlagen). Faellt die Zusicherung jetzt,
+            // ist es kein Wettlauf, sondern das Laden nach dem Neustart.
+            expect(
+                vorReload.treffer.length,
+                'der Charakter stand vor dem Neustart unter keinem Kampagnenschluessel'
+            ).toBeGreaterThan(0);
 
             // Charakter sollte noch in den Daten sein
             const charExists = await page.evaluate(name => {
@@ -145,11 +177,57 @@ test.describe('Datenpersistenz', () => {
             await page.waitForTimeout(300);
             await fillField(page, 'loc-name', locName);
             await page.click('[data-action="call"][data-value="saveLocation"]');
-            await page.waitForTimeout(2000);
+
+            // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass ALLE
+            // DREI Entitaeten im Speicher stehen. Vorher stand hier ein
+            // `waitForTimeout(2000)` — und zwar nur nach der dritten: dass die
+            // ersten zwei mit drin sind, war die stillschweigende Annahme, dass
+            // save() immer das ganze D schreibt. Jetzt wird jede einzeln
+            // nachgewiesen, und die Fehlermeldung nennt die, die fehlt.
+            const proben = [
+                { liste: 'characters', wo: { name: charName } },
+                { liste: 'npcs', wo: { name: npcName } },
+                { liste: 'locations', wo: { name: locName } }
+            ];
+            const vorReload = [];
+            for (const probe of proben) {
+                vorReload.push(
+                    await waitForPersistedEntry(page, probe, {
+                        name: `${probe.liste}-Eintrag "${Object.values(probe.wo)[0]}"`
+                    })
+                );
+            }
 
             // Page neu laden
             await page.reload();
             await waitForAppReady(page);
+
+            const nachReload = [];
+            for (const probe of proben) {
+                nachReload.push(await readPersistedEntryReport(page, probe));
+            }
+            console.log(
+                proben
+                    .map(
+                        (probe, i) =>
+                            `[Multi-Persistenz] ${probe.liste}: vor reload ${JSON.stringify(vorReload[i].treffer)} · ` +
+                            `nach reload ${JSON.stringify(nachReload[i].treffer)} · ` +
+                            `in window.D: ${nachReload[i].imArbeitsspeicher}`
+                    )
+                    .join('\n') +
+                    `\n[Multi-Persistenz] Kampagnenschluessel: ${JSON.stringify(nachReload[0].kandidaten)} · ` +
+                    `aktiver Schluessel: ${nachReload[0].aktiverSchluessel}`
+            );
+
+            // Alle drei waren vor dem Neustart nachweislich geschrieben (sonst
+            // haette das Warten oben zugeschlagen). Faellt eine Zusicherung jetzt,
+            // ist es kein Wettlauf, sondern das Laden nach dem Neustart.
+            for (let i = 0; i < proben.length; i++) {
+                expect(
+                    vorReload[i].treffer.length,
+                    `${proben[i].liste} stand vor dem Neustart unter keinem Kampagnenschluessel`
+                ).toBeGreaterThan(0);
+            }
 
             // Alle Entities via Daten prüfen
             const allData = await page.evaluate(

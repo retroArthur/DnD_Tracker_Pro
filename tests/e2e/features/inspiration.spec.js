@@ -13,10 +13,18 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { waitForAppReady } from '../helpers/test-utils.js';
+import {
+    waitForAppReady,
+    waitForPersistedEntry,
+    readPersistedEntryReport
+} from '../helpers/test-utils.js';
 
 // file://-Basis analog zu tests/e2e/crud/party.spec.js und den Welt-Feature-Specs
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+
+// Eine Quelle fuer die ID des Testcharakters: injectTestCharacter() setzt sie, der
+// Persistenz-Fall sucht damit im Speicher. Zwei Abschriften waeren die Drift.
+const TEST_CHAR_ID = 99901;
 
 /**
  * Hilfsfunktion: App laden und auf Party-Tab navigieren
@@ -33,21 +41,27 @@ async function loadAndNavToParty(page) {
  * Hilfsfunktion: Einen Testcharakter in D.characters injizieren und Party neu rendern
  */
 async function injectTestCharacter(page, charData = {}) {
-    await page.evaluate(data => {
-        // @ts-ignore
-        const ch = Object.assign({
-            id: 99901,
-            name: 'Testcharakter (Inspiration)',
-            level: 3,
-            inspiration: false,
-            hpCurrent: 20,
-            hpMax: 20,
-            armorClass: 14,
-            attributes: { str: 10, dex: 14, con: 12, int: 10, wis: 10, cha: 10 }
-        }, data);
-        window.D.characters = [ch];
-        if (typeof window.renderParty === 'function') window.renderParty();
-    }, charData);
+    await page.evaluate(
+        ({ id, data }) => {
+            // @ts-ignore
+            const ch = Object.assign(
+                {
+                    id,
+                    name: 'Testcharakter (Inspiration)',
+                    level: 3,
+                    inspiration: false,
+                    hpCurrent: 20,
+                    hpMax: 20,
+                    armorClass: 14,
+                    attributes: { str: 10, dex: 14, con: 12, int: 10, wis: 10, cha: 10 }
+                },
+                data
+            );
+            window.D.characters = [ch];
+            if (typeof window.renderParty === 'function') window.renderParty();
+        },
+        { id: TEST_CHAR_ID, data: charData }
+    );
     await page.waitForTimeout(300);
 }
 
@@ -81,12 +95,45 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
             // 06-VALIDATION.md: CHAR-02 Inspiration-Toggle — Reload → weiterhin ⭐
             await injectTestCharacter(page, { inspiration: false });
             await page.click('.char-inspiration-toggle');
-            await page.waitForTimeout(300);
+
+            // NICHT auf eine DAUER warten, sondern auf die TATSACHE, dass der
+            // Schalterstand im Speicher steht. Vorher stand hier
+            // `waitForTimeout(300)` gegen einen um 300ms entprellten save()
+            // (systems/spellslots/persistence.js) — null Luft. Dieselbe Wette hat
+            // am 20.10.2026 auf dem Linux-Laeufer verloren (kampfprotokoll.spec.js,
+            // Fall "das Protokoll ueberlebt einen Neustart der App").
+            const probe = {
+                liste: 'characters',
+                wo: { id: TEST_CHAR_ID },
+                pfad: ['inspiration'],
+                wert: true
+            };
+            const vorReload = await waitForPersistedEntry(page, probe, {
+                name: 'Inspiration=true des Testcharakters'
+            });
+
             // Neu laden und prüfen ob Zustand persistiert
             await page.reload();
             await waitForAppReady(page);
             await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
+
+            const nachReload = await readPersistedEntryReport(page, probe);
+            console.log(
+                `[CHAR-02] vor reload geschrieben unter: ${JSON.stringify(vorReload.treffer)} · ` +
+                    `nach reload im Speicher: ${JSON.stringify(nachReload.treffer)} · ` +
+                    `in window.D: ${nachReload.imArbeitsspeicher} · ` +
+                    `Kampagnenschluessel: ${JSON.stringify(nachReload.kandidaten)} · ` +
+                    `aktiver Schluessel: ${nachReload.aktiverSchluessel}`
+            );
+
+            // Der Stand war vor dem Neustart nachweislich geschrieben (sonst haette
+            // das Warten oben zugeschlagen). Faellt die Zusicherung jetzt, ist es
+            // kein Wettlauf, sondern das Laden oder das Rendern nach dem Neustart.
+            expect(
+                vorReload.treffer.length,
+                'der Schalterstand stand vor dem Neustart unter keinem Kampagnenschluessel'
+            ).toBeGreaterThan(0);
             await expect(page.locator('.char-inspiration-toggle.active')).toBeVisible();
         }
     );
