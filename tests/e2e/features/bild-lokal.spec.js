@@ -921,12 +921,12 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *       keine Anforderung an einen Netzwerkpfad.
  *   R7  Nicht in diesem Vorgang (je ein eigener, docs/bugfixes.md, AVATAR-VORSCHAU Offen):
  *       Sprachen ausserhalb der festen Liste gehen nach ✏️ + 💾 verloren (Produktfrage);
- *       editChar() laedt einen Helden mit Altdaten (`speed` als Zahl oder Array, `languages`
- *       als Zahl, `resistances` als Objekt) nur halb und schreibt beim Speichern Bild und
- *       Sprachen des vorigen Helden auf ihn (Datenverfaelschung); Uebungsbonus "+3" bei
- *       Stufe 1 beim ersten Oeffnen; das Sprachmenue bleibt beim ✏️-Wechsel offen. Deshalb
- *       saet dieser Block `speed` als TEXT — ausser in (W9), der genau solche Altdaten nimmt
- *       und NUR die Invariante R1 prueft, nicht, was editChar() ins Feld schreibt.
+ *       Uebungsbonus "+3" bei Stufe 1 beim ersten Oeffnen. Seit CHAR-HALBLADEN erledigt
+ *       (tests/e2e/features/held-altdaten.spec.js): editChar() lud einen Helden mit Altdaten
+ *       (`speed` als Zahl oder Array, `languages` als Zahl, `resistances` als Objekt) nur
+ *       halb und schrieb beim Speichern Bild und Sprachen des vorigen Helden auf ihn, und das
+ *       Sprachmenue blieb beim ✏️-Wechsel offen. Dieser Block saet `speed` weiter als TEXT —
+ *       ausser in (W9), der Altdaten nimmt und NUR die Invariante R1 prueft.
  *
  * ───────────────────────────────────────────────────────────────────────────────────────────
  * DIE FAELLE                                                                  am Kopf 543706c6
@@ -952,15 +952,18 @@ test('(f) Kontrolle: Bild-Dialog nimmt http(s) und data:image/ weiter an', async
  *        (Telefon), "Speichern" gefolgt von der Kopfzeile                     rot, rot, gruen
  *   (W8) prod-Buendel: (W1) und (W3)                                                  rot
  *   (W9) Altdaten (R1, nicht R7): ✏️ Aria, dann ✏️ Gus (`speed: 30` als Zahl) — editChar()
- *        wirft vor der Avatar-Zeile, im Feld bleibt Arias Bild —, dann ✏️ Ida (Avatar als
- *        ARRAY `[HTTPS_BILD]`, im Feld als Text) und ✏️ Kai (NBSP vor DATA_BILD, JS-trim()
- *        entfernt es). Die Vorschau folgt jeweils dem FELD, gleich was dort steht        rot
- *        Waecht gegen eine Vorschau aus ch.avatar statt aus dem Feld: am ANFANG von editChar()
- *        (m7) zeigte sie bei Gus "?" neben Arias Bild im Feld, das 💾 auf Gus schriebe; an der
- *        Stelle von R2 (m8) zeigte sie bei Ida "?" — updateAvatarPreview() nimmt nur Text —,
- *        waehrend 💾 das Bild schriebe. Die KARTE haelt der Fall nicht fest: bei Ida und Kai
- *        zeigt sie vor dem Speichern 👤 (sie prueft den rohen Wert, und sichereBildquelle()
- *        entfernt nur Zeichen <= U+0020), danach das Bild.
+ *        warf bis CHAR-HALBLADEN vor der Avatar-Zeile, im Feld blieb Arias Bild; seither laedt
+ *        es Gus ganz —, dann ✏️ Ida (Avatar als ARRAY `[HTTPS_BILD]`, im Feld bis dahin als
+ *        Text, seit CHAR-HALBLADEN E2 '') und ✏️ Kai (NBSP vor DATA_BILD, JS-trim() entfernt
+ *        es). Die Vorschau folgt jeweils dem FELD, gleich was dort steht                 rot
+ *        Waecht gegen eine Vorschau aus ch.avatar statt aus dem Feld — gemessen VOR
+ *        CHAR-HALBLADEN: am ANFANG von editChar() (m7) zeigte sie bei Gus "?" neben Arias Bild
+ *        im Feld, das 💾 auf Gus schriebe; an der Stelle von R2 (m8) zeigte sie bei Ida "?" —
+ *        updateAvatarPreview() nimmt nur Text —, waehrend 💾 das Bild schriebe. Seither laedt
+ *        editChar() Gus ganz und Idas Array als '', Feld und ch.avatar fallen fuer die
+ *        Vorschau zusammen (am Code gelesen, nicht neu gemessen). Die KARTE haelt der Fall
+ *        nicht fest: bei Kai zeigt sie vor dem Speichern 👤 (sie prueft den rohen Wert, und
+ *        sichereBildquelle() entfernt nur Zeichen <= U+0020), danach das Bild.
  *   (W10) Import R7 am Bildschirm, mit dem echten 📤-Export als Vorlage und 📥 ueber den
  *        Dateidialog: ✏️ Cora, "Hinzufuegen" — der Held bleibt in Bearbeitung (Kontrolle);
  *        ✏️ Aria, ein anderes Bild tippen, "Ersetzen" → das Formular ist zu, die Bearbeiten-ID
@@ -1048,7 +1051,7 @@ const NAMEN = new Map([
 ]);
 
 /**
- * Ein Held — `speed` als TEXT (R7), sonst laedt editChar() nur halb.
+ * Ein Held — `speed` als TEXT (R7; bis CHAR-HALBLADEN lud editChar() sonst nur halb).
  * @param {number} id
  * @param {string} name
  * @param {any} avatar Text; in (W9) auch Altdaten (ein Array)
@@ -1096,9 +1099,11 @@ const CORA = held(3, 'Cora', LOKALES_BILD);
 const DORN = held(4, 'Dorn', RELATIVES_BILD);
 const EIK = held(5, 'Eik', NETZWERKPFADE[0]);
 const FENN = held(6, 'Fenn', HTTPS_BILD);
-/** Altdaten (W9): `speed` als Zahl, wie aeltere Staende ihn trugen; die Datengrenze laesst ihn. */
+/** Altdaten (W9): `speed` als Zahl, wie aeltere Staende ihn trugen; die Datengrenze laesst ihn
+ *  (editChar() waehlt seit CHAR-HALBLADEN die Option mit data-ft 30, E3). */
 const GUS = held(7, 'Gus', '', { speed: 30 });
-/** Altdaten (W9): der Avatar als Array — editChar() macht per `.value =` Text daraus. */
+/** Altdaten (W9): der Avatar als Array — editChar() machte per `.value =` Text daraus, seit
+ *  CHAR-HALBLADEN (E2) laedt es '' (nur Text wird uebernommen). */
 const IDA = held(8, 'Ida', [HTTPS_BILD]);
 /** Altdaten (W9): ein NBSP vor dem Bild — JS-trim() entfernt es, sichereBildquelle() nicht. */
 const KAI = held(9, 'Kai', '\u00a0' + DATA_BILD);
@@ -1565,11 +1570,12 @@ test.describe('(g) AVATAR-VORSCHAU — die Vorschau folgt dem Feld beim Laden un
         });
 
         // (W9) Altdaten — prueft NUR R1 (Vorschau = Feld), nicht, was editChar() ins Feld
-        // schreibt: das ist R7 (eigener Vorgang). Darum auch nur pageerror: editChar() wirft
-        // heute bei `speed` als Zahl (`speedVal.split is not a function`), EventDelegation
-        // faengt das und meldet es per console.error und im Fehlerlog der App — das haelt
-        // dieser Fall nicht fest, weder als Soll noch als Verbot. Ebenso wenig die Karte: bei
-        // Ida und Kai zeigt sie vor dem Speichern 👤, die Vorschau das Bild aus dem Feld.
+        // schreibt: das haelt seit CHAR-HALBLADEN tests/e2e/features/held-altdaten.spec.js
+        // fest. Darum auch nur pageerror: bis CHAR-HALBLADEN warf editChar() bei `speed` als
+        // Zahl (`speedVal.split is not a function`), EventDelegation fing das und meldete es
+        // per console.error — das haelt dieser Fall nicht fest, weder als Soll noch als
+        // Verbot. Ebenso wenig die Karte: bei Kai zeigt sie vor dem Speichern 👤, die
+        // Vorschau das Bild aus dem Feld.
         test('(g) (W9) Altdaten: nach ✏️ Aria, ✏️ Gus (`speed` als Zahl), ✏️ Ida (Avatar als Array) und ✏️ Kai (NBSP davor) folgt die Vorschau dem Feld', async ({
             page
         }) => {

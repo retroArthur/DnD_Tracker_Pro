@@ -700,9 +700,10 @@ const REITER_NAMENSFELD = Object.freeze({
 /**
  * Textfelder je Typ, die eine Datei nicht als Zahl, Liste oder Objekt bringen darf (R3,
  * "umgekehrt"): die App schreibt sie nur als Text, und ihre Anzeige ruft Textmethoden darauf.
- * Gemessen bzw. am Code: `speed` des Helden (`speedVal.split` beim Bearbeiten, quick-actions.js
- * `char.speed.split`), `school` des Zaubers (render-spells.js `s.school.substring`), `content`
- * des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`). Pruefer, Runde 2 (Sonden p11/p18,
+ * Gemessen bzw. am Code: `speed` des Helden (quick-actions.js `char.speed.split` bei Dash; das
+ * Bearbeiten warf bis CHAR-HALBLADEN ebenso), `school` des Zaubers (render-spells.js
+ * `s.school.substring`), `content` des Wiki-Eintrags (wiki-crud.js `e.content.toLowerCase`).
+ * Pruefer, Runde 2 (Sonden p11/p18,
  * gemessen): `race` des NPCs (npc-render.js getNPCIcon `(npc.race || '').toLowerCase` — EIN
  * solcher NPC legte die ganze NPC-Liste lahm, auch nach dem Neuladen), `creatureType` und
  * `race` des Encounters (encounters-render.js getEncounterIcon, ebenso die ganze Liste),

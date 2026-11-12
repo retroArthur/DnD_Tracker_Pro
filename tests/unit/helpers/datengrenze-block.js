@@ -50,4 +50,40 @@ function ladeDatengrenze(context) {
     });
 }
 
-module.exports = { datengrenzeBlock, ladeDatengrenze, ANFANG, ENDE };
+/**
+ * Text der ECHTEN datenText() aus utils/basic.js (Vertrag NPC-NAME, N2). Sie steht HINTER dem
+ * Datengrenzen-Block und braucht aus ihm datengrenzeText(); ladeDatengrenze() allein laedt sie
+ * nicht. Eine Attrappe waere falsch: dann pruefte die Werkbank eine andere Umwandlung als die
+ * App (Vertrag SPRACHEN-FREI, Unit-Teil: "das ECHTE datenText(), keine Attrappe").
+ * @returns {string}
+ */
+function datenTextQuelle() {
+    const text = fs
+        .readFileSync(path.join(WURZEL, 'utils', 'basic.js'), 'utf8')
+        .replace(/\r\n/g, '\n');
+    const kopf = 'function datenText(wert) {';
+    const start = text.indexOf(kopf);
+    const ende = text.indexOf('\n}\n', start);
+    if (start < 0 || ende < 0 || text.indexOf(kopf, start + 1) >= 0) {
+        throw new Error('datenText() in utils/basic.js nicht genau einmal gefunden');
+    }
+    return text.slice(start, ende + 2);
+}
+
+/**
+ * Fuehrt datenText() aus utils/basic.js im vm-Kontext aus — NACH ladeDatengrenze() (sie ruft
+ * datengrenzeText() aus dem Block).
+ * @param {object} context - vm-Kontext (bereits per vm.createContext angelegt)
+ */
+function ladeDatenText(context) {
+    vm.runInContext(datenTextQuelle(), context, { filename: 'utils/basic.js (datenText)' });
+}
+
+module.exports = {
+    datengrenzeBlock,
+    ladeDatengrenze,
+    datenTextQuelle,
+    ladeDatenText,
+    ANFANG,
+    ENDE
+};
