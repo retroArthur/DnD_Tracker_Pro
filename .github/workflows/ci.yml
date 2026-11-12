@@ -103,6 +103,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     needs: [lint-and-typecheck, test, e2e]
+    outputs:
+      artifact_id: ${{ steps.production-build.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -115,33 +117,22 @@ jobs:
       - run: npm ci
       - run: python build.py --production
       - name: Bereite vollstaendiges Artefakt vor
-        # build.py erzeugt dnd-tracker-optimized.html, sw.js UND seit SCHR
-        # dist/assets/fonts/ (es schreibt die url()-Pfade dorthin um, also
-        # schuldet es die Dateien auch — kopiere_schriftdateien() in build.py,
-        # abgesichert durch tests/build/test_build_fonts.py). Manifest und
-        # Icons kommen hier aus dem Repo dazu, dieselben Schritte wie im
-        # deploy-Job, damit smoke-test genau das prueft, was veroeffentlicht
-        # wird. Ohne das fehlt sw.js im Artefakt (404) und der SW-Precache von
-        # ./manifest.webmanifest liesse cache.addAll() scheitern (CR-09).
-        # KEIN 'cp -r assets/fonts dist/assets/' mehr: dist/assets/fonts
-        # existiert jetzt schon, und GNU cp kopierte das Quellverzeichnis dann
-        # HINEIN (dist/assets/fonts/fonts/*, der alte CR-09-Fall). Der
-        # Kopierschritt lag ausserdem nur in DIESEM Job und in 'deploy' — dem
-        # Job 'e2e', der dist/ ebenso braucht, fehlte er, und die zehn
-        # Schriften standen dort auf 'error'.
-        run: |
-          cp manifest.webmanifest dist/manifest.webmanifest
-          cp -r icons dist/
-        shell: bash
+        # build.py liefert Bundle, Service Worker und Schriften. Der Paketschritt
+        # ergänzt Pages-Einstieg, Manifest und Icons vor dem gemeinsamen Upload.
+        run: node tools/package-pages.cjs
       - uses: actions/upload-artifact@v7
+        id: production-build
         with:
           name: production-build
           path: dist/
+          if-no-files-found: error
           retention-days: 7
 
   smoke-test:
     runs-on: ubuntu-24.04
     needs: [build]
+    outputs:
+      artifact_id: ${{ needs.build.outputs.artifact_id }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -155,7 +146,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - uses: actions/download-artifact@v8
         with:
-          name: production-build
+          artifact-ids: ${{ needs.build.outputs.artifact_id }}
+          digest-mismatch: error
           path: dist/
       - name: Starte HTTP-Server
         run: python -m http.server 8000 --directory dist &
@@ -165,7 +157,7 @@ jobs:
       - name: Smoke-Test
         run: npx playwright test --config=playwright.smoke.config.js
         env:
-          SMOKE_BASE_URL: http://localhost:8000/dnd-tracker-optimized.html
+          SMOKE_BASE_URL: http://localhost:8000/
 
   deploy:
     runs-on: ubuntu-24.04
@@ -181,28 +173,11 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/download-artifact@v8
         with:
-          python-version: '3.x'
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: python build.py --production
-      - name: Bereite Pages-Artefakt vor
-        # Die Schriften legt build.py selbst nach dist/assets/fonts/ (SCHR,
-        # kopiere_schriftdateien()) — dort, wohin es die url()-Pfade
-        # umschreibt, und damit in JEDEM Job, der baut, nicht nur in diesem
-        # und in 'build'. Das haelt die SW-Precache-Pfade
-        # ./assets/fonts/*.woff2 gueltig und vermeidet gleichzeitig den alten
-        # CR-09-Fall: 'cp -r assets/fonts dist/assets/' kopierte das
-        # Quellverzeichnis HINEIN, sobald das Ziel schon existierte.
-        run: |
-          cp manifest.webmanifest dist/manifest.webmanifest
-          cp -r icons dist/
-        shell: bash
+          artifact-ids: ${{ needs.smoke-test.outputs.artifact_id }}
+          digest-mismatch: error
+          path: dist/
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
