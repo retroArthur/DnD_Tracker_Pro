@@ -130,11 +130,18 @@ function clearSpellSlots(prefix = 'char-slot', maxLevel = 9) {
 /**
  * Reset attributes to default value (typically 10)
  *
+ * Total (CHAR-HALBLADEN Offen (4)): erst ALLE Werte, dann der Rueckruf je Attribut, jeder
+ * einzeln abgesichert. Der Rueckruf stand frueher in derselben Schleife wie das Setzen; sein
+ * erster Wurf liess die uebrigen fuenf Werte stehen — beim Leeren des Charakterformulars die
+ * des vorher bearbeiteten Helden, die der naechste neue Held erbte. Die Anzeige, die ein
+ * werfender Rueckruf nicht schreibt, setzt der Aufrufer selbst auf den Leerwert
+ * (cancelCharEdit()).
+ *
  * @param {string[]} attributes - Array of attribute abbreviations ['str', 'dex', 'con', 'int', 'wis', 'cha']
  * @param {string} prefix - ID prefix (e.g., 'char' for 'char-str', 'char-dex', etc.)
  * @param {number} defaultValue - Default attribute value (default 10)
  * @param {Function} updateModCallback - Optional callback to update modifier display
- * @returns {boolean} - True if successful
+ * @returns {boolean} - True if successful (false, wenn ein Rueckruf geworfen hat)
  */
 function resetAttributes(
     attributes = ['str', 'dex', 'con', 'int', 'wis', 'cha'],
@@ -143,16 +150,29 @@ function resetAttributes(
     updateModCallback = null
 ) {
     try {
+        /** @type {string[]} */
+        const gesetzt = [];
         attributes.forEach(attr => {
             const el = $(`${prefix}-${attr}`);
             if (el) {
                 el.value = String(defaultValue);
-                if (updateModCallback && typeof updateModCallback === 'function') {
-                    updateModCallback(attr);
-                }
+                gesetzt.push(attr);
             }
         });
-        return true;
+        let ok = true;
+        if (typeof updateModCallback === 'function') {
+            gesetzt.forEach(attr => {
+                try {
+                    updateModCallback(attr);
+                } catch (err) {
+                    ok = false;
+                    if (window.APP_CONFIG?.DEBUG_MODE) {
+                        window.ErrorHandler?.log('resetAttributes', err, attr);
+                    }
+                }
+            });
+        }
+        return ok;
     } catch (err) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             window.ErrorHandler?.log('resetAttributes', err);
