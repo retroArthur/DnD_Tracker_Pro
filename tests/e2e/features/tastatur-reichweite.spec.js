@@ -810,7 +810,8 @@ const HALTGRENZEN = {
     dice: 46,
     dmscreen: 37,
     quests: 69,
-    loot: 33,
+    // Je ein zusätzlicher Halt für die Seltenheitssortierung und den Truhen-Umschalter.
+    loot: 35,
     // 31 und nicht 47: die erste Zahl stammte aus dem fehlerhaften Zaehler
     // oben, der 16 Favoritenknoepfe mit `tabindex="-1"` mitzaehlte. Die
     // Bestiarium-Ansicht war damals die einzige mit einem nativen
