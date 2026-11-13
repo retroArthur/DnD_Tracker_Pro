@@ -6,6 +6,7 @@
 let selectedNpcId = null;
 let currentNpcFilter = 'all';
 let currentRelationStatus = 'neutral';
+const NPC_SEARCH_DETAIL_NARROW = '(max-width: 900px)';
 // NPC type icons based on race
 const NPC_ICONS = {
     mensch: '👤',
@@ -126,21 +127,24 @@ function renderNPCList() {
     // der Leerzustand sieht denselben Begriff wie applyFilters() und der Dialogzweig.
     const searchEl = $('npc-search');
     const search = (searchEl?.value || '').trim().toLowerCase();
-    // Apply filters (single pass). Der Dialogtext ist ein ODER-Zweig der Suche (searchAlso, R1),
-    // kein customFilter mehr: der schraenkt nur ein, und seit 73d3193b fand die Ansicht einen
-    // NPC mit Dialogen nur, wenn der Begriff in einem Feld UND einem Dialog stand. Total (R3):
-    // dialogs, das keine Liste ist, und ein Element, dessen text kein String ist, treffen nie.
+    const favoritesOnly = $('npc-favorites-filter')?.getAttribute('aria-pressed') === 'true';
+    const hasFilter = Boolean(search) || currentNpcFilter !== 'all' || favoritesOnly;
+    // Notizen und Dialoge erweitern die Feldsuche per ODER (NPC-SUCHE, R1).
+    // customFilter wuerde die Treffer einschraenken. Der Ortsfilter bleibt UND-verknuepft.
+    // Nur Text zaehlt bei Notizen und Dialogen. Ungueltige Dialoglisten bleiben leer (R3).
     const npcs = applyFilters(D.npcs || [], {
         searchText: search,
         searchFields: ['name', 'role', 'race', 'description'],
         searchAlso: (n, s) =>
-            Array.isArray(n?.dialogs) &&
-            n.dialogs.some(
-                d => typeof d?.text === 'string' && npcDialogSuchtext(d.text).includes(s)
-            ),
+            (typeof n?.notes === 'string' && n.notes.toLowerCase().includes(s)) ||
+            (Array.isArray(n?.dialogs) &&
+                n.dialogs.some(
+                    d => typeof d?.text === 'string' && npcDialogSuchtext(d.text).includes(s)
+                )),
         filters: {
             locationId: currentNpcFilter !== 'all' ? currentNpcFilter : null
-        }
+        },
+        customFilter: favoritesOnly ? npc => npc?.nextSession === true : null
     });
     // Alphabetisch, total fuer JEDEN Namen (Vertrag NPC-NAME, N2): `a.name.localeCompare(b.name)`
     // warf an einem Namen, der kein Text war, und leerte die ganze Liste — ob, hing an Lage UND
@@ -150,13 +154,18 @@ function renderNPCList() {
     npcs.sort((a, b) => datenText(a.name).localeCompare(datenText(b.name)));
     // Empty state
     if (!npcs.length) {
+        const hint = favoritesOnly
+            ? 'Schalte die Merkliste aus oder passe Suche und Ortsfilter an.'
+            : hasFilter
+              ? 'Versuche andere Suchbegriffe'
+              : 'Erstelle deinen ersten NPC';
         listContainer.innerHTML = `
             <div class="npc-empty-state">
                 <div class="npc-empty-icon">🎭</div>
-                <div class="npc-empty-title">${search || currentNpcFilter !== 'all' ? 'Keine Treffer' : 'Keine NPCs'}</div>
-                <div class="npc-empty-desc">${search || currentNpcFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle deinen ersten NPC'}</div>
+                <div class="npc-empty-title">${hasFilter ? 'Keine Treffer' : 'Keine NPCs'}</div>
+                <div class="npc-empty-desc">${hint}</div>
                 ${
-                    !search && currentNpcFilter === 'all'
+                    !hasFilter
                         ? `
                     <button class="npc-add-btn" data-action="show-new-npc-modal" style="margin-top: 12px;">
                         + NPC erstellen
@@ -173,10 +182,18 @@ function renderNPCList() {
     listContainer.innerHTML = npcs.map(npc => renderNPCItem(npc)).join('');
     // Auto-select first if none selected
     if (!selectedNpcId || !npcs.find(n => n.id === selectedNpcId)) {
+        closeNPCSearchDetail();
         selectNPC(npcs[0].id, false);
     } else {
         showNPCDetail(selectedNpcId);
     }
+}
+function renderNPCFavoriteButton(npc, inDetail = false) {
+    const marked = npc.nextSession === true;
+    const name = datenText(npc.name).trim() || 'Unbenannt';
+    return `<button type="button" class="npc-favorite-btn${inDetail ? ' npc-detail-btn' : ''}${marked ? ' active' : ''}"
+                    data-action="toggle-npc-favorite" data-id="${esc(npc.id)}"
+                    aria-label="${esc(name)} für die nächste Sitzung merken" aria-pressed="${marked}">${marked ? '★' : '☆'}</button>`;
 }
 function renderNPCItem(npc) {
     const location = EntityLookup.location(npc.locationId);
@@ -185,25 +202,28 @@ function renderNPCItem(npc) {
     const dialogCount = Number((npc.dialogs || []).length) || 0;
     const triggerCount = Number((npc.triggers || []).length) || 0;
     return `
-        <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${esc(npc.id)}">
-            <div class="npc-item-avatar">
-                ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
-            </div>
-            <div class="npc-item-info">
-                <div class="npc-item-name">
-                    ${npcNameHtml(npc)}
-                    ${location ? `<span class="npc-item-tag">${esc(location.name)}</span>` : ''}
+        <div class="npc-row">
+            <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${esc(npc.id)}">
+                <div class="npc-item-avatar">
+                    ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
                 </div>
-                <div class="npc-item-meta">
-                    ${npc.race ? `<span class="npc-item-race">${esc(npc.race)}</span>` : ''}
-                    ${npc.race && npc.role ? ' • ' : ''}
-                    ${npc.role ? esc(npc.role) : ''}
+                <div class="npc-item-info">
+                    <div class="npc-item-name">
+                        ${npcNameHtml(npc)}
+                        ${location ? `<span class="npc-item-tag">${esc(location.name)}</span>` : ''}
+                    </div>
+                    <div class="npc-item-meta">
+                        ${npc.race ? `<span class="npc-item-race">${esc(npc.race)}</span>` : ''}
+                        ${npc.race && npc.role ? ' • ' : ''}
+                        ${npc.role ? esc(npc.role) : ''}
+                    </div>
+                </div>
+                <div class="npc-item-badges">
+                    ${dialogCount ? `<span class="npc-badge dialog" title="${dialogCount} Dialoge">💬 ${dialogCount}</span>` : ''}
+                    ${triggerCount ? `<span class="npc-badge trigger" title="${triggerCount} Trigger">🔔 ${triggerCount}</span>` : ''}
                 </div>
             </div>
-            <div class="npc-item-badges">
-                ${dialogCount ? `<span class="npc-badge dialog" title="${dialogCount} Dialoge">💬 ${dialogCount}</span>` : ''}
-                ${triggerCount ? `<span class="npc-badge trigger" title="${triggerCount} Trigger">🔔 ${triggerCount}</span>` : ''}
-            </div>
+            ${renderNPCFavoriteButton(npc)}
         </div>
     `;
 }
@@ -224,6 +244,46 @@ function selectNPC(id, scroll = true) {
         }
     }
 }
+
+function openNPCDetailFromSearch(id) {
+    const targetId = parseEntityId(id);
+    if (
+        targetId === null ||
+        selectedNpcId !== targetId ||
+        !window.matchMedia(NPC_SEARCH_DETAIL_NARROW).matches
+    ) return;
+
+    const view = $('view-npcs');
+    const panel = $('npc-detail-panel');
+    const back = panel?.querySelector('.npc-search-detail-back');
+    if (!view?.classList.contains('active') || !panel || !back) return;
+
+    view.classList.add('npc-search-detail-open');
+    panel.scrollTop = 0;
+    back.focus({ preventScroll: true });
+}
+
+function closeNPCSearchDetail() {
+    const view = $('view-npcs');
+    if (!view?.classList.contains('npc-search-detail-open')) return;
+    view.classList.remove('npc-search-detail-open');
+    if (!window.matchMedia(NPC_SEARCH_DETAIL_NARROW).matches) return;
+
+    // Die Liste kann unmittelbar danach neu gezeichnet werden. Erst dann steht das Fokusziel fest.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (!view.classList.contains('active') || view.classList.contains('npc-search-detail-open')) return;
+        const row = view.querySelector('.npc-item.selected');
+        if (row) {
+            if (!row.hasAttribute('tabindex')) row.tabIndex = -1;
+            row.focus({ preventScroll: true });
+            row.scrollIntoView({ block: 'nearest' });
+            return;
+        }
+        const filter = $('npc-favorites-filter');
+        const fallback = filter?.getAttribute('aria-pressed') === 'true' ? filter : $('npc-search');
+        fallback?.focus({ preventScroll: true });
+    }));
+}
 /**
  * Shows the detail view of an NPC in the right panel
  */
@@ -237,6 +297,7 @@ function showNPCDetail(id) {
         clearNPCDetail();
         return;
     }
+    const backWasFocused = document.activeElement === panel.querySelector('.npc-search-detail-back');
     const location = EntityLookup.location(npc.locationId);
     const icon = getNPCIcon(npc);
     const dialogs = npc.dialogs || [];
@@ -244,16 +305,29 @@ function showNPCDetail(id) {
     const usedDialogs = dialogs.filter(d => d.used).length;
     const tags = npc.tags || [];
     const links = npc.links || [];
+    const notes = typeof npc.notes === 'string' ? npc.notes : '';
     // Build dialogs list
+    const previewLimit = 100;
     const dialogsHtml = dialogs.length
         ? dialogs
-              .map(
-                  (d, idx) => `
+              .map((d, idx) => {
+                  const text = sanitizeHTML(datenText(d.text));
+                  const preview = stripHtml(text);
+                  const quote = `<div class="npc-dialog-text">${text}</div>`;
+                  const dialogContent =
+                      preview.length > previewLimit
+                          ? `<div class="npc-dialog-text npc-dialog-preview">${esc(preview.slice(0, previewLimit))}…</div>
+                             <details class="npc-dialog-details">
+                                 <summary>Ganzen Dialog anzeigen</summary>
+                                 ${quote}
+                             </details>`
+                          : quote;
+                  return `
         <div class="npc-dialog-item ${d.used ? 'used' : ''}">
             <div class="npc-dialog-marker ${d.used ? 'used' : ''}">${idx + 1}</div>
             <div class="npc-dialog-content">
                 <div class="npc-dialog-title">${esc(d.title || d.situation || 'Dialog ' + (idx + 1))}</div>
-                <div class="npc-dialog-text">"${esc(stripHtml(d.text || '').substring(0, 100))}${(d.text || '').length > 100 ? '...' : ''}"</div>
+                ${dialogContent}
             </div>
             <div class="npc-dialog-actions">
                 <button class="npc-detail-btn small ${d.used ? '' : 'success'}"
@@ -264,8 +338,8 @@ function showNPCDetail(id) {
                 <button class="npc-detail-btn small" data-action="copy-dialog-text-stop" data-id="${esc(npc.id)}" data-value="${idx}" title="Kopieren">📋</button>
             </div>
         </div>
-    `
-              )
+    `;
+              })
               .join('')
         : '<div class="npc-detail-empty-text">Keine Dialoge vorhanden</div>';
     // Build triggers list
@@ -304,6 +378,7 @@ function showNPCDetail(id) {
         : '';
     panel.innerHTML = `
         <div class="npc-detail-content">
+            <button type="button" class="btn npc-search-detail-back" data-action="close-npc-search-detail">← Liste</button>
             <div class="npc-detail-header">
                 <div class="npc-detail-avatar">
                     ${sichereBildquelle(npc.avatar) ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
@@ -318,6 +393,7 @@ function showNPCDetail(id) {
                     ${location ? `<div class="npc-detail-location">📍 ${esc(location.name)}</div>` : ''}
                 </div>
                 <div class="npc-detail-actions">
+                    ${renderNPCFavoriteButton(npc, true)}
                     <button class="npc-detail-btn" data-action="show-avatar-modal" data-type="npcs" data-id="${esc(npc.id)}" title="Bild">🖼️</button>
                     <button class="npc-detail-btn" data-action="show-relations-modal-stop" data-id="${esc(npc.id)}" title="Beziehungen">🤝</button>
                     <button class="npc-detail-btn" data-action="show-entity-links-modal" data-type="npcs" data-id="${esc(npc.id)}" title="Verknüpfungen">🔗</button>
@@ -333,6 +409,17 @@ function showNPCDetail(id) {
                 <div class="npc-section">
                     <div class="npc-section-title">Beschreibung</div>
                     <div class="npc-desc">${sanitizeHTML(npc.description)}</div>
+                </div>
+            `
+                    : ''
+            }
+
+            ${
+                notes.trim()
+                    ? `
+                <div class="npc-section">
+                    <div class="npc-section-title">Notizen</div>
+                    <div class="npc-desc npc-notes">${esc(notes)}</div>
                 </div>
             `
                     : ''
@@ -382,8 +469,10 @@ function showNPCDetail(id) {
             }
         </div>
     `;
+    if (backWasFocused) panel.querySelector('.npc-search-detail-back')?.focus({ preventScroll: true });
 }
 function clearNPCDetail() {
+    closeNPCSearchDetail();
     const panel = $('npc-detail-panel');
     if (panel) {
         panel.innerHTML = `
@@ -410,6 +499,7 @@ function toggleNPC(id) {
     const npc = EntityLookup.npc(id);
     if (!npc) return;
     currentNpcFilter = 'all';
+    $('npc-favorites-filter')?.setAttribute('aria-pressed', 'false');
     selectedNpcId = typeof id === 'string' ? parseInt(id) : id;
     renderNPCList();
     setTimeout(() => {
@@ -727,13 +817,12 @@ function cycleRelationStatus(npcId, index) {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-// toggleNPC() hat im Produktionscode genau einen Verbraucher,
-// navigateToResult() in systems/search/global-search.js (NSC ohne Ort); der
-// ruft sie ohne window-Export (Export-Audit-Regel). ESLint meldet die Funktion
-// trotzdem als unbenutzt — es prueft je Datei. Kein toter Code.
+// Globale Suche und Details im Orts-Popup rufen toggleNPC() direkt auf.
+// Der window-Export ist entbehrlich. ESLint prueft die Nutzung je Datei.
 window.selectedNpcId = selectedNpcId;
 window.renderNPCList = renderNPCList;
 window.selectNPC = selectNPC;
+window.openNPCDetailFromSearch = openNPCDetailFromSearch;
 window.setNpcFilter = setNpcFilter;
 window.showRelationsModal = showRelationsModal;
 window.setRelationStatus = setRelationStatus;

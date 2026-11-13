@@ -65,7 +65,7 @@ function erzeugeSeite(D) {
     ctx.hideModal = jest.fn();
     ctx.confirm = jest.fn(() => true);
     ctx.saveUndoState = jest.fn();
-    ctx.save = jest.fn();
+    ctx.saveImmediate = jest.fn().mockResolvedValue({ success: true });
     ctx.renderAll = jest.fn();
     ctx.setViewCount = jest.fn();
     ctx.createAutoBackup = jest.fn(() => Promise.resolve('ok'));
@@ -126,7 +126,7 @@ async function importiere(typ, data, D, modus) {
     document.querySelector(`input[name="import-mode"][value="${modus}"]`).checked = true;
     seite.ctx.renderImportVorschau();
     const vorschau = vorschauZeilen();
-    seite.ctx.executeImport();
+    await seite.ctx.executeImport();
     return { seite, vorschau };
 }
 

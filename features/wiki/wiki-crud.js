@@ -289,7 +289,10 @@ function createWikiFromLink(title) {
 }
 function searchWikiTag(tag) {
     const searchInput = $('wiki-search');
-    if (searchInput) searchInput.value = tag;
+    if (searchInput) {
+        searchInput.value = tag;
+        updateSearchClear(searchInput);
+    }
     renderWiki();
 }
 function insertWikiLink() {

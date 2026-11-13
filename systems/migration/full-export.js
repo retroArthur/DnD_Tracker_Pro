@@ -5,7 +5,7 @@
 // Analog: systems/spellslots/import-export.js (IO_SCHEMA, exportData, executeImport)
 // ============================================================
 
-// Schema fuer Nutzerdaten (OHNE SRD-Spells — Pitfall 6 / T-02-09)
+// Schema fuer Nutzerdaten
 const FULL_EXPORT_SCHEMA = {
     _exportType: 'full-v1',
     fields: {
@@ -16,51 +16,59 @@ const FULL_EXPORT_SCHEMA = {
         campaignIndex: { type: 'object', required: true }
     }
 };
-
-// Felder, die SRD-Daten enthalten und nicht exportiert werden duerfen (T-02-09)
-const SRD_FIELDS = ['spells'];
-
-// ============================================================
-// STRIP — SRD-Daten aus Kampagnendaten entfernen
-// ============================================================
-function stripNonUserData(data) {
-    if (!data || typeof data !== 'object') return data;
-    const result = Object.assign({}, data);
-    for (const field of SRD_FIELDS) {
-        delete result[field];
-    }
-    return result;
-}
+// Gemeinsame Obergrenzen für Download und Umzugs-Assistent.
+const FULL_MIGRATION_MAX_BYTES = 64 * 1024 * 1024;
+const FULL_MIGRATION_MAX_CAMPAIGNS = 100;
+let fullImportInProgress = false;
 
 // ============================================================
 // BUILD — Voll-Export-Objekt erstellen (alle Kampagnen + Meta)
 // Analog: RESEARCH.md Code Example "Voll-Export-Format"
 // ============================================================
-function buildFullExport() {
+async function _readFullExportCampaignData(key) {
+    let raw = StorageAPI.get(key, null);
+    // Wie beim Start: Ein Wert ohne Zeitstempel kann ein alter localStorage-Schatten sein.
+    if (!raw || !StorageAPI.get(key + '_ts', null)) {
+        const record = await window.loadFromIndexedDBFallbackRaw(key);
+        if (record) raw = record.data;
+    }
+    if (raw === null) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error('keine gültigen Kampagnendaten');
+    }
+    return data;
+}
+
+async function buildFullExport() {
     const campaignIndex = window.getCampaignIndex ? window.getCampaignIndex() : getCampaignIndex();
     const storageKey = APP_CONFIG.STORAGE_KEY;
+    const activeKey = campaignIndex?.active || storageKey;
     const allCampaigns = {};
+    const targets = new Map([[storageKey, { key: storageKey, name: 'Standard-Kampagne' }]]);
+    for (const campaign of campaignIndex?.campaigns || []) targets.set(campaign.key, campaign);
+    if (!targets.has(activeKey)) targets.set(activeKey, { key: activeKey, name: activeKey });
 
-    // Alle benannten Kampagnen aus dem Index sammeln
-    if (campaignIndex && Array.isArray(campaignIndex.campaigns)) {
-        for (const campaign of campaignIndex.campaigns) {
-            const data = StorageAPI.getJSON(campaign.key, null);
-            if (data) {
-                allCampaigns[campaign.key] = {
-                    meta: campaign, // { key, name, created }
-                    data: stripNonUserData(data)
-                };
+    for (const [key, meta] of targets) {
+        try {
+            const data = await _readFullExportCampaignData(key);
+            // Eine noch nie gespeicherte Standard-Kampagne muss nicht exportiert werden.
+            if (data === null) {
+                if (key === storageKey) continue;
+                throw new Error('keine gültigen Kampagnendaten');
             }
+            // SRD- und eigene Zauber teilen dieselbe Sammlung ohne verlässliche Herkunftskennung.
+            allCampaigns[key] = { meta, data };
+        } catch (error) {
+            throw new Error(`Kampagne „${meta.name || key}“ konnte nicht gelesen werden: ${error.message}`);
         }
     }
 
-    // Standard-Kampagne immer einschliessen (auch wenn nicht im Index)
-    const defaultData = StorageAPI.getJSON(storageKey, null);
-    if (defaultData && !allCampaigns[storageKey]) {
-        allCampaigns[storageKey] = {
-            meta: { key: storageKey, name: 'Standard-Kampagne' },
-            data: stripNonUserData(defaultData)
-        };
+    if (Object.keys(allCampaigns).length > FULL_MIGRATION_MAX_CAMPAIGNS) {
+        throw new Error(
+            `Die Umzugsdatei darf höchstens ${FULL_MIGRATION_MAX_CAMPAIGNS} Kampagnen enthalten. ` +
+                'Exportiere die Kampagnen einzeln.'
+        );
     }
 
     const D = window.D;
@@ -69,7 +77,7 @@ function buildFullExport() {
         _exportType: 'full-v1',
         _appVersion: APP_CONFIG.VERSION,
         _exportDate: new Date().toISOString(),
-        _activeCampaignKey: campaignIndex ? campaignIndex.active : storageKey,
+        _activeCampaignKey: activeKey,
         campaigns: allCampaigns,
         settings: (D && D.settings) ? D.settings : {},
         diceFavorites: StorageAPI.getJSON(APP_CONFIG.DICE_FAV_KEY, []),
@@ -81,11 +89,17 @@ function buildFullExport() {
 // ============================================================
 // DOWNLOAD — Blob + Anchor Download (Muster: exportData in import-export.js)
 // ============================================================
-function downloadFullExport() {
+async function downloadFullExport() {
     try {
-        const exportObj = buildFullExport();
-        const json = JSON.stringify(exportObj, null, 2);
+        if (!(await window.flushPendingSaveAndSettle())) {
+            throw new Error('Ausstehende Kampagnenänderungen konnten nicht gespeichert werden.');
+        }
+        const exportObj = await buildFullExport();
+        const json = JSON.stringify(exportObj);
         const blob = new Blob([json], { type: 'application/json' });
+        if (blob.size > FULL_MIGRATION_MAX_BYTES) {
+            throw new Error('Die Umzugsdatei überschreitet 64 MiB. Exportiere die Kampagnen einzeln.');
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -94,11 +108,13 @@ function downloadFullExport() {
         a.click();
         URL.revokeObjectURL(url);
         showToast('Umzugs-Export heruntergeladen');
+        return true;
     } catch (err) {
         if (APP_CONFIG.DEBUG_MODE) {
             ErrorHandler.log('downloadFullExport', err, 'Export fehlgeschlagen');
         }
         showToast('Export fehlgeschlagen: ' + err.message, 'error');
+        return false;
     }
 }
 
@@ -106,7 +122,70 @@ function downloadFullExport() {
 // IMPORT — Alle Kampagnen wiederherstellen (T-02-08 / T-02-11)
 // Analog: executeImport + StorageAPI error handling (import-export.js L558-568)
 // ============================================================
-function importFullExport(parsedObj) {
+async function importFullExport(parsedObj) {
+    if (fullImportInProgress) throw new Error('Ein Umzugsimport läuft bereits');
+    fullImportInProgress = true;
+    try {
+        const { journalCleanup, ...result } = await window.withCampaignIndexLock(
+            (assertHeld, runRollback, importJournal) =>
+                _importFullExport(parsedObj, assertHeld, runRollback, importJournal)
+        );
+        // Der Assistent darf direkt nach dem Import neu laden.
+        await journalCleanup;
+        return result;
+    } finally {
+        fullImportInProgress = false;
+    }
+}
+
+async function _rollbackFullImport(id, receipts, importJournal, assertHeld) {
+    let journalError;
+    const entries = await importJournal(store => store.getAll()).catch(error => {
+        journalError = error;
+        return [];
+    });
+    const batches = [{ id, receipts: [...receipts] }, ...entries.filter(entry => entry.receipts)];
+    const failed = new Set();
+    let restored;
+    do {
+        restored = false;
+        for (const batch of batches) {
+            for (let i = 0; i < batch.receipts.length; i++) {
+                const receipt = batch.receipts[i];
+                if (!receipt) continue;
+                assertHeld();
+                try {
+                    if (!(await window.rollbackCampaignOverwrite(receipt))) continue;
+                    restored = true;
+                } catch {
+                    failed.add(receipt.key);
+                }
+                batch.receipts[i] = null;
+            }
+        }
+    } while (restored && batches.some(batch => batch.receipts.some(Boolean)));
+
+    // Ein noch laufender Folgeimport kann einen momentan fremden Stand wieder
+    // freigeben. Sein Rückbau prüft dann auch die hier zurückgestellten Belege.
+    assertHeld();
+    await importJournal(store => {
+        const current = store.getAll();
+        current.onsuccess = () => {
+            const othersActive = current.result.some(entry => entry.id !== id && !entry.receipts);
+            for (const batch of batches) {
+                const pending = batch.receipts.filter(Boolean);
+                if (othersActive && pending.length) store.put({ id: batch.id, receipts: pending });
+                else store.delete(batch.id);
+            }
+        };
+    });
+    if (journalError) {
+        throw new Error('Das Rückbaujournal konnte nicht vollständig gelesen werden.', { cause: journalError });
+    }
+    return [...failed];
+}
+
+async function _importFullExport(parsedObj, assertHeld, runRollback, importJournal) {
     // T-02-08: _exportType-Pruefung
     if (!parsedObj || parsedObj._exportType !== 'full-v1') {
         throw new Error('Ungueltige Datei — kein full-v1-Export');
@@ -123,9 +202,8 @@ function importFullExport(parsedObj) {
 
     // WR-03: Mengenlimit — eine manipulierte Datei darf nicht beliebig viele
     // localStorage-Keys anlegen (DoS/Quota)
-    const MAX_IMPORT_CAMPAIGNS = 100;
-    if (campaignEntries.length > MAX_IMPORT_CAMPAIGNS) {
-        throw new Error('Zu viele Kampagnen in der Datei (max ' + MAX_IMPORT_CAMPAIGNS + ')');
+    if (campaignEntries.length > FULL_MIGRATION_MAX_CAMPAIGNS) {
+        throw new Error(`Zu viele Kampagnen in der Datei (max ${FULL_MIGRATION_MAX_CAMPAIGNS})`);
     }
 
     // WR-03/SENKEN: die Keys der (fremden) Datei werden 1:1 localStorage-Keys. Nur die Formate,
@@ -147,13 +225,13 @@ function importFullExport(parsedObj) {
     // Kampagnendaten in localStorage, obwohl der Wizard "Import fehlgeschlagen"
     // meldet (analog zur bereits bestehenden Key-Whitelist-Vorschleife oben).
     for (const [key, campaign] of campaignEntries) {
-        if (!campaign.data || typeof campaign.data !== 'object') {
+        if (!campaign?.data || typeof campaign.data !== 'object' || Array.isArray(campaign.data)) {
             throw new Error('Kampagne "' + key + '" hat keine gueltigen Daten');
         }
     }
 
-    // Jede Kampagne migrieren und speichern
-    for (const [key, campaign] of campaignEntries) {
+    // Die ganze Datei prüfen und migrieren, bevor der erste Schreibvorgang beginnt.
+    const prepared = campaignEntries.map(([key, campaign]) => {
         // T-02-08: migrateData pro Kampagne (Sanitierung + Versions-Migration)
         // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): VOR der Migration, weil die Datei
         // fremd ist (verbotene Schluessel, Zahlenfelder als Text), und danach noch einmal,
@@ -164,53 +242,20 @@ function importFullExport(parsedObj) {
         } else if (typeof window.migrateData === 'function') {
             migratedData = window.migrateData(migratedData);
         }
-        migratedData = bereinigeDatengrenze(migratedData);
-
-        // Kampagnendaten speichern — mit {success, error}-Pruefung (StorageAPI-Muster)
-        const saveResult = StorageAPI.setJSON(key, migratedData);
-        if (!saveResult.success) {
-            throw new Error('Speichern fehlgeschlagen: ' + (saveResult.error || 'Unbekannter Fehler'));
-        }
-        // _ts-Begleiter (Code-Review 2026-09-21, R07): ohne ihn haelt load() den frisch
-        // importierten Stand fuer einen veralteten localStorage-Schatten und nimmt eine
-        // vorhandene (aeltere) IndexedDB-Kopie — jede Kampagne ueber 2 MB hat eine.
-        // Korrekturrunde (F5, U6 minor:5): das Ergebnis PRUEFEN. Scheitert dieser ~13 Byte
-        // kleine Write (Quota), meldete der Assistent trotzdem Erfolg, und der naechste
-        // Start lud die aeltere IndexedDB-Kopie. setQuiet() statt set(), weil set() dabei
-        // "💾 Speicher voll! Versuche Fallback zu IndexedDB..." meldet — es gibt hier
-        // keinen Rueckfall. Ein VORHANDENER (auch alter) Stempel genuegt: load() prueft nur,
-        // DASS er da ist (quick-roll.js:167); nur ohne jeden Stempel ist es ein Fehlschlag.
-        const tsResult = StorageAPI.setQuiet(key + '_ts', String(Date.now()));
-        if (!tsResult.success && StorageAPI.get(key + '_ts', null) === null) {
-            throw new Error(
-                'Speichern fehlgeschlagen: Zeitstempel für "' + key + '" (' +
-                (tsResult.error || 'Unbekannter Fehler') + ')'
-            );
-        }
-        totalBytes += JSON.stringify(migratedData).length;
-    }
-
+        return [key, JSON.stringify(bereinigeDatengrenze(migratedData))];
+    });
     // Kampagnen-Index wiederherstellen — SEC-05 (Plan 12-16): ZUSAMMENFUEHREN statt
     // zu ersetzen. Ein lokaler Index-Eintrag, dessen Key im Import nicht vorkommt,
     // wuerde sonst unerreichbar: die Kampagnendaten selbst bleiben unter ihrem Key
     // in localStorage liegen, nur der Verweis im Index verschwindet (T-12-65).
-    // Regel (siehe <design_note> im Plan): der Import gewinnt, wo beide dasselbe
-    // meinen (ueberschneidende Keys) — erhalten bleibt nur, was der Import gar
-    // nicht kennt. `active` stammt immer aus dem Import.
+    // Der Import gewinnt dort, wo er auch Kampagnendaten schreibt. Alte Dateien
+    // konnten IndexedDB-Kampagnen auslassen und dennoch im Index aufführen.
     const saveCampaignIndexFn = typeof saveCampaignIndex === 'function'
         ? saveCampaignIndex
         : window.saveCampaignIndex;
     const getCampaignIndexFn = typeof getCampaignIndex === 'function'
         ? getCampaignIndex
         : window.getCampaignIndex;
-    // Korrekturrunde (F5, R07-Restbefund): das Ergebnis des Indexwrites PRUEFEN. Ohne die
-    // Pruefung meldete der Assistent Erfolg, obwohl die importierten benannten Kampagnen
-    // ueber den Index nicht erreichbar sind — ihre Daten liegen unter ihrem Key, nur der
-    // Verweis fehlt. Ein Wurf wird vom Assistenten zu "Import fehlgeschlagen: ..." und
-    // sperrt die Schreibpfade dieses Tabs NICHT (migration-wizard.js:550-554).
-    // Bekannte Grenze: die bereits geschriebenen Kampagnendaten werden NICHT
-    // zurueckgenommen (Folgearbeit) — sie sind erreichbar, sobald der Index wieder
-    // schreibbar ist und der Import wiederholt wird.
     const pruefeIndexErgebnis = indexResult => {
         if (!indexResult || indexResult.success !== true) {
             throw new Error(
@@ -219,42 +264,128 @@ function importFullExport(parsedObj) {
             );
         }
     };
-    let preservedIndexEntriesCount = 0;
-    if (typeof saveCampaignIndexFn === 'function') {
+    const writeIndex = async () => {
+        if (typeof saveCampaignIndexFn !== 'function') return 0;
         // Datengrenze (Vertrag SENKEN R4, docs/bugfixes.md): auch der Index kommt aus der
         // Datei. Verbotene Schluessel fallen in jeder Tiefe; ein Eintrag bleibt nur mit einem
-        // Schluessel im Kampagnenformat (dieselbe Regel wie fuer campaigns{} oben) — er wird
-        // beim Wechsel zum localStorage-Schluessel und steht als data-value in der
-        // Kampagnenliste. Ein `active` ausserhalb des Formats wird zur Standard-Kampagne,
-        // genau das, was der Start aus einem fehlenden `active` macht (core/init.js).
+        // Schluessel mit bestätigtem Kampagnenwrite. Der lokale Index bleibt für
+        // Kampagnen ohne Importdaten maßgeblich.
         const importedIndex = bereinigeDatengrenze(parsedObj.campaignIndex);
-        // istKampagnenKey: oben bei den Keys von campaigns{} (nur Formate der App, also kein
-        // dnd-tracker-backups als Kampagne im Index)
         if (importedIndex && typeof importedIndex === 'object') {
+            const writtenKeys = new Set(prepared.map(([key]) => key));
             const importedCampaigns = (
                 Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : []
-            ).filter(c => c && typeof c === 'object' && istKampagnenKey(c.key));
-            let localCampaigns = [];
-            if (typeof getCampaignIndexFn === 'function') {
-                const localIndex = getCampaignIndexFn();
-                if (localIndex && Array.isArray(localIndex.campaigns)) {
-                    localCampaigns = localIndex.campaigns;
+            ).filter(c => c && typeof c === 'object' && writtenKeys.has(c.key));
+            const campaignsOf = index => (Array.isArray(index?.campaigns) ? index.campaigns : []);
+            const localIndex =
+                typeof getCampaignIndexFn === 'function' ? getCampaignIndexFn() : null;
+            const importedKeys = new Set(importedCampaigns.map(c => c.key));
+            const localKeys = new Set(campaignsOf(localIndex).map(c => c?.key));
+            const storageKey = APP_CONFIG.STORAGE_KEY;
+            const requested = istKampagnenKey(importedIndex.active)
+                ? importedIndex.active
+                : storageKey;
+            let active = storageKey;
+            let checkedLocalData = false;
+            for (const key of new Set([requested, localIndex?.active])) {
+                if (key === storageKey || writtenKeys.has(key)) {
+                    active = key;
+                    break;
+                }
+                if (!istKampagnenKey(key) || !localKeys.has(key)) continue;
+                checkedLocalData = true;
+                try {
+                    if ((await _readFullExportCampaignData(key)) !== null) {
+                        active = key;
+                        break;
+                    }
+                } catch {
+                    // Nicht lesbare Kampagnen bleiben im lokalen Index, werden aber nicht aktiviert.
                 }
             }
-            const importedKeys = new Set(importedCampaigns.map(c => c && c.key));
-            const keptLocalCampaigns = localCampaigns.filter(c => c && !importedKeys.has(c.key));
-            preservedIndexEntriesCount = keptLocalCampaigns.length;
+            // Andere Indexschreiber können während der IndexedDB-Abfrage fertig werden.
+            const currentIndex = checkedLocalData ? getCampaignIndexFn() : localIndex;
+            const keptLocalCampaigns = campaignsOf(currentIndex).filter(
+                c => c && !importedKeys.has(c.key)
+            );
+            // Auch bestätigte Kampagnendaten ohne Datei-Eintrag bleiben auswählbar.
+            // Die Standardkampagne erscheint von selbst, vorhandene Metadaten haben Vorrang.
+            const listedKeys = new Set([...importedKeys, ...keptLocalCampaigns.map(c => c.key)]);
+            const unlistedCampaigns = campaignEntries
+                .filter(([key]) => key !== storageKey && !listedKeys.has(key))
+                .map(([key, campaign]) => {
+                    const meta = bereinigeDatengrenze(campaign.meta);
+                    const name = typeof meta?.name === 'string' ? meta.name.trim() : '';
+                    const created = meta?.created;
+                    return {
+                        key,
+                        name: name || key,
+                        created:
+                            typeof created === 'string' && Number.isFinite(Date.parse(created))
+                                ? created
+                                : new Date().toISOString()
+                    };
+                });
+            if (
+                active !== storageKey &&
+                !writtenKeys.has(active) &&
+                !keptLocalCampaigns.some(c => c.key === active)
+            ) {
+                active = storageKey;
+            }
             const mergedIndex = Object.assign({}, importedIndex, {
-                campaigns: importedCampaigns.concat(keptLocalCampaigns),
-                active: istKampagnenKey(importedIndex.active)
-                    ? importedIndex.active
-                    : APP_CONFIG.STORAGE_KEY
+                campaigns: importedCampaigns.concat(keptLocalCampaigns, unlistedCampaigns),
+                active
             });
+            assertHeld();
             pruefeIndexErgebnis(saveCampaignIndexFn(mergedIndex));
-        } else {
-            pruefeIndexErgebnis(saveCampaignIndexFn(importedIndex));
+            return keptLocalCampaigns.length;
         }
+        assertHeld();
+        pruefeIndexErgebnis(saveCampaignIndexFn(importedIndex));
+        return 0;
+    };
+
+    // Erst Kampagnen bestätigen, dann den Index veröffentlichen. Bis dahin kann
+    // jeder bestätigte Kampagnenwrite auf seine vorherigen Speicherwerte zurück.
+    const written = [];
+    const importId = await importJournal(store => store.add({ receipts: null }));
+    let preservedIndexEntriesCount;
+    try {
+        for (const [key, data] of prepared) {
+            assertHeld();
+            const result = await window.writeCampaignData(key, data, { withRollback: true });
+            if (!result.success) {
+                throw new Error('Speichern fehlgeschlagen: ' + (result.error || 'Unbekannter Fehler'));
+            }
+            if (result.rollback) written.push(result.rollback);
+            totalBytes += data.length;
+        }
+        assertHeld();
+        preservedIndexEntriesCount = await writeIndex();
+    } catch (error) {
+        written.reverse();
+        const failed = await runRollback(assertRollbackHeld =>
+            _rollbackFullImport(importId, written, importJournal, assertRollbackHeld)
+        );
+        if (failed.length) {
+            throw new Error(`${error.message}. Rückabwicklung fehlgeschlagen für ${failed.join(', ')}.`);
+        }
+        throw error;
     }
+    // Den Mutex nach der Veröffentlichung freigeben. Der Aufrufer wartet
+    // danach auf die Journalbereinigung.
+    const journalCleanup = importJournal(store => {
+        const entries = store.getAll();
+        entries.onsuccess = () => {
+            store.delete(importId);
+            if (!entries.result.some(entry => entry.id !== importId && !entry.receipts)) {
+                for (const entry of entries.result) {
+                    if (entry.receipts) store.delete(entry.id);
+                }
+            }
+        };
+    }).catch(error => window.ErrorHandler?.log?.('importFullExport', error, 'Rückbaujournal'));
 
     // WR-04 / SEC-05 (Plan 12-16): Wuerfel-Favoriten wiederherstellen — sie liegen
     // unter einem EIGENEN localStorage-Key (DICE_FAV_KEY) und sind NICHT Teil der
@@ -275,7 +406,7 @@ function importFullExport(parsedObj) {
         const favoriteKey = fav => {
             if (fav && typeof fav === 'object' &&
                     typeof fav.name === 'string' && typeof fav.notation === 'string') {
-                return fav.name + ' ' + fav.notation;
+                return fav.name + '\0' + fav.notation;
             }
             return JSON.stringify(fav);
         };
@@ -286,6 +417,7 @@ function importFullExport(parsedObj) {
     }
 
     return {
+        journalCleanup,
         campaignCount: campaignEntries.length,
         totalBytes: totalBytes,
         preservedFavoritesCount: preservedFavoritesCount,
@@ -297,7 +429,7 @@ function importFullExport(parsedObj) {
 // EXPORTS
 // ============================================================
 window.FULL_EXPORT_SCHEMA = FULL_EXPORT_SCHEMA;
-window.stripNonUserData = stripNonUserData;
+window.FULL_MIGRATION_MAX_BYTES = FULL_MIGRATION_MAX_BYTES;
 window.buildFullExport = buildFullExport;
 window.downloadFullExport = downloadFullExport;
 window.importFullExport = importFullExport;

@@ -7931,11 +7931,11 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
                4x `0 0 20px var(--gold)`   Sprungmarken:
                    features/encounters/encounters-render.js:520  (heute :596)
                    features/locations/locations-render.js:360    (heute :391)
-                   features/npcs/npc-render.js:382               (heute :428)
+                   features/npcs/npc-render.js:382               (heute :518)
                    systems/entity-links.js:430                   (heute :453)
                2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
-                   ui/actions/entity-actions.js:362              (heute :376)
-                   systems/undo.js:885                           (war :756, :766, :778, :821, :864, dann :873)
+                   ui/actions/entity-actions.js:362              (heute :406)
+                   systems/undo.js:906                           (war :756, :766, :778, :821, :864, :873, :885, dann :893)
            6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
            3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
            3   `transition = 'box-shadow …'` — keine Schattenwerte, kein Fall
@@ -10281,19 +10281,19 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'features/npcs/npc-render.js',
-            zeile: 428,
+            zeile: 518,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'systems/entity-links.js',
-            zeile: 453,
+            zeile: 454,
             wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
             art: 'sprungmarke'
         },
         {
             datei: 'ui/actions/entity-actions.js',
-            zeile: 376,
+            zeile: 406,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.quest-item',
@@ -10301,7 +10301,7 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         },
         {
             datei: 'systems/undo.js',
-            zeile: 885,
+            zeile: 906,
             wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
             art: 'ring',
             traeger: '.session-card',

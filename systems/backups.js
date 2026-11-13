@@ -37,8 +37,8 @@ let _backupFailureLogged = false;
  * Aufraeumen vollstaendig durch; danach schrieb derselbe Tick die Zeile der geloeschten
  * Kampagne neu und meldete dafuer 'written' (T17d/T17e).
  *
- * Es geht dabei nichts verloren: die Sicherheitskopie von clearStorage() ist bestaetigt
- * geschrieben, BEVOR gesperrt wird, und die Importpfade sperren erst nach ihrer Kopie.
+ * Der Datenreset schreibt seine eigene Sicherheitskopie unter dem Kampagnen-Mutex.
+ * Ihr Snapshot und die Sperrprüfung werden explizit an den Backup-Write übergeben.
  * @returns {boolean}
  */
 function backupWritesRetired() {
@@ -64,35 +64,44 @@ function backupWritesRetired() {
  *   file-backup: die zaehlt diceHistory und partyGold — eine geleerte Kampagne plus ein
  *   Probewurf wuerde alle 5 Minuten gesichert und verdraengte die Sicherheitskopie von vor
  *   dem Leeren.
- * @param {{reason?: string}} [options] - reason 'safety': Sicherheitskopie vor einer
- *   destruktiven Aktion; sie ist gegen die periodische Rotation geschuetzt
+ * @param {{reason?: string, snapshot?: {key: string, data: string|null}, assertHeld?: () => void}} [options]
+ *   Der Datenreset übergibt seinen vorbereiteten Snapshot und die Prüfung der Sperre.
+ *   reason 'safety' schützt die Kopie vor der periodischen Rotation.
  * @returns {Promise<'written'|'unchanged'|'skipped-empty'|'failed'>}
  */
 async function createAutoBackup(options = {}) {
     try {
-        const key =
-            typeof window.getActiveCampaignKey === 'function'
-                ? window.getActiveCampaignKey()
+        const snapshot =
+            options?.reason === 'safety' && typeof options.assertHeld === 'function'
+                ? options.snapshot
                 : null;
+        const key = snapshot ? snapshot.key : window.getActiveCampaignKey?.();
         if (!key) return 'failed';
         // Schreibsperre respektieren (Korrekturrunde F4, D2) — erste von drei Pruefungen:
         // hier gar nicht erst anfangen. Die beiden anderen stehen unmittelbar vor den echten
         // Schreibvorgaengen (saveBackupToIndexedDB, writeLocalBackup), weil dazwischen awaits
         // liegen. Siehe backupWritesRetired().
-        if (backupWritesRetired()) return 'failed';
-        const D = window.D;
+        const canWrite = snapshot
+            ? () => {
+                  options.assertHeld();
+                  return true;
+              }
+            : () => !backupWritesRetired();
+        if (!canWrite()) return 'failed';
+        const D = snapshot ? JSON.parse(snapshot.data) : window.D;
+        if (snapshot && (!D || typeof D !== 'object' || Array.isArray(D))) return 'failed';
         if (typeof window.hasCampaignContent === 'function' && !window.hasCampaignContent(D)) {
             return 'skipped-empty';
         }
         const backup = {
             timestamp: Date.now(),
             campaignKey: key,
-            data: JSON.stringify(D),
+            data: snapshot ? snapshot.data : JSON.stringify(D),
             kind: options && options.reason === 'safety' ? 'safety' : 'auto'
         };
         // Versuche IndexedDB (bevorzugt, kein Quota-Limit)
         try {
-            return await saveBackupToIndexedDB(backup);
+            return await saveBackupToIndexedDB(backup, canWrite);
         } catch (idbError) {
             if (window.APP_CONFIG?.DEBUG_MODE) {
                 window.ErrorHandler?.log(
@@ -102,7 +111,7 @@ async function createAutoBackup(options = {}) {
                 );
             }
         }
-        return writeLocalBackup(backup);
+        return writeLocalBackup(backup, canWrite);
     } catch (e) {
         if (window.APP_CONFIG?.DEBUG_MODE && !_backupFailureLogged) {
             window.ErrorHandler?.log(
@@ -123,9 +132,10 @@ async function createAutoBackup(options = {}) {
  * aeltesten Zeile, die als erste herausrotiert. Beim Rotieren bleibt die neueste
  * Sicherheitskopie ('safety') stehen; Zeilen ohne kind zaehlen als 'auto'.
  * @param {{timestamp: number, campaignKey: string, data: string, kind?: string}} backup
+ * @param {() => boolean} [canWrite] - Schreibberechtigung bis zum letzten Request prüfen
  * @returns {Promise<'written'|'unchanged'|'failed'>}
  */
-async function saveBackupToIndexedDB(backup) {
+async function saveBackupToIndexedDB(backup, canWrite = () => !backupWritesRetired()) {
     if (!backup || typeof backup.campaignKey !== 'string' || backup.campaignKey === '') {
         throw new Error('Kein Kampagnenschlüssel');
     }
@@ -137,13 +147,17 @@ async function saveBackupToIndexedDB(backup) {
         // initIndexedDB() hinter einem await (utils/idb-tx.js), in dem deleteCampaign() bzw.
         // clearStorage() vollstaendig durchlaufen kann. Dann wird nichts eingereiht und die
         // Transaktion committet leer.
-        if (backupWritesRetired()) {
+        if (!canWrite()) {
             result.status = 'retired';
             return result;
         }
         const store = transaction.objectStore('backups');
         const request = store.index('campaign').getAll(backup.campaignKey);
         request.onsuccess = () => {
+            if (!canWrite()) {
+                result.status = 'retired';
+                return;
+            }
             const existing = Array.isArray(request.result) ? request.result.slice() : [];
             existing.sort((a, b) => b.timestamp - a.timestamp);
             const newest = existing[0];
@@ -244,6 +258,7 @@ function pickLocalBackupEviction(list, backup, known) {
  * Backup, bevorzugt ihre neueste Sicherheitskopie, dann die neuesten uebrigen.
  * @param {Array<Object>} list - enthaelt backup
  * @param {Object} backup
+ * @param {() => boolean} [canWrite] - Schreibberechtigung für den lokalen Rückfall
  * @returns {Array<Object>}
  */
 function capOwnLocalBackups(list, backup) {
@@ -276,8 +291,8 @@ function capOwnLocalBackups(list, backup) {
  * @param {Object} backup
  * @returns {'written'|'unchanged'|'failed'}
  */
-function writeLocalBackup(backup) {
-    if (backupWritesRetired()) return 'failed';
+function writeLocalBackup(backup, canWrite = () => !backupWritesRetired()) {
+    if (!canWrite()) return 'failed';
     const backupSizeMB = new Blob([backup.data]).size / (1024 * 1024);
     if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
         if (window.APP_CONFIG?.DEBUG_MODE) {

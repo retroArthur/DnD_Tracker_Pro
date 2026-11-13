@@ -1183,7 +1183,7 @@ async function bearbeitenDetail(page, bedien, id) {
     await geladen(page, id);
 }
 
-/** ✏️ ueber Strg+K und einen Klick auf den Treffer (navigateToResult() → editChar() nach 100 ms).
+/** ✏️ auf der Charakterkarte nach dem Sprung per Strg+K.
  *  @param {import('@playwright/test').Page} page @param {string} name @param {number} id */
 async function bearbeitenSuche(page, name, id) {
     await page.keyboard.press('Control+k');
@@ -1194,6 +1194,7 @@ async function bearbeitenSuche(page, name, id) {
         .filter({ hasText: name })
         .first();
     await treffer.click();
+    await page.locator(`#char-${id} [data-action="edit-char"]`).click();
     await page.waitForTimeout(SETZEN);
     await geladen(page, id);
 }

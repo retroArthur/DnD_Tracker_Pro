@@ -50,8 +50,17 @@ function saveBestiary() {
         return raw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
     }
 
-    // ---- Collect the full D-04 schema ----
+    var numId = parseEntityId(id);
+    var idx = id ? D.bestiary.findIndex(function(x) { return x.id === numId; }) : -1;
+
+    // Das Formular kennt nicht alle Statblock-Felder. Beim Bearbeiten bleiben
+    // importierte Fertigkeiten, Resistenzen, Immunitäten und weitere Daten erhalten.
     var creature = {
+        skills: {},
+        damageResistances: [],
+        damageImmunities: [],
+        conditionImmunities: [],
+        ...(idx > -1 ? D.bestiary[idx] : {}),
         name: name,
         source: 'custom',
         size:          (window.$('bst-size')    ? window.$('bst-size').value    : '') || 'Mittelgroß',
@@ -77,10 +86,6 @@ function saveBestiary() {
         wis: parseInt(window.$('bst-wis') ? window.$('bst-wis').value : '10') || 10,
         cha: parseInt(window.$('bst-cha') ? window.$('bst-cha').value : '10') || 10,
         savingThrows: savingThrows,
-        skills: {},
-        damageResistances: [],
-        damageImmunities: [],
-        conditionImmunities: [],
         senses:    parseCommaList('bst-senses'),
         languages: parseCommaList('bst-languages'),
         // Rich-text fields: sanitizeHTML applied at save time (T-03-06 mitigation)
@@ -106,21 +111,11 @@ function saveBestiary() {
     var undoLabel = id ? 'Kreatur bearbeitet' : 'Kreatur angelegt';
     saveUndoState(undoLabel);
 
-    if (id) {
-        // ---- UPDATE existing creature ----
-        var numId = parseEntityId(id);
-        var idx = D.bestiary.findIndex(function(x) { return x.id === numId; });
-        if (idx > -1) {
-            // Preserve existing id
-            creature.id = numId;
-            D.bestiary[idx] = creature;
-        } else {
-            // id provided but not found — treat as new (safety fallback)
-            creature.id = nextId('bestiary');
-            D.bestiary.push(creature);
-        }
+    if (idx > -1) {
+        creature.id = numId;
+        D.bestiary[idx] = creature;
     } else {
-        // ---- CREATE new creature ----
+        // Auch eine inzwischen entfernte Kreatur wird wie bisher neu angelegt.
         creature.id = nextId('bestiary');
         D.bestiary.push(creature);
     }

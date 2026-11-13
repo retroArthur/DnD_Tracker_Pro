@@ -171,6 +171,8 @@ export interface NPC {
   info: string[];
   relationships: string[];
   description: string;
+  notes?: string;
+  nextSession?: boolean;
   triggers: NPCTrigger[];
   dialogs: NPCDialog[];
   /** Tags */
@@ -269,6 +271,32 @@ export interface LootItem {
   ownerId?: EntityId | null;
   /** Tags */
   tags?: Tag[];
+}
+
+export interface LootChestEntry {
+  name: string;
+  description: string;
+  category: string;
+  rarity: string;
+  weight: number;
+  /** A null reference stays unlinked. Only old entries omit this field. */
+  sourceItemId?: number | null;
+  itemDetails?: {
+    descriptionHtml?: string;
+    weight?: number;
+    value?: number;
+    origin?: string;
+    special?: string;
+    property?: string;
+    tags?: string[];
+    attunement?: boolean;
+  };
+}
+
+export interface LootChest {
+  id: number;
+  name: string;
+  entries: LootChestEntry[];
 }
 
 // ============================================================
@@ -477,6 +505,7 @@ export interface AppData {
   quests: Quest[];
   encounters: Encounter[];
   loot: LootItem[];
+  lootChests: LootChest[];
   spells: Spell[];
   wiki: WikiEntry[];
   links: Link[];
@@ -499,6 +528,7 @@ export interface AppData {
 declare global {
   /** Main application data store */
   var D: AppData;
+  function normalizeLootChests(raw: unknown): LootChest[];
   
   /** Application configuration */
   var APP_CONFIG: {

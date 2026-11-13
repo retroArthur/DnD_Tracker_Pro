@@ -72,6 +72,7 @@ function previewAvatar() {
         img.src = url;
         img.className = 'avatar avatar-xl';
         img.addEventListener('error', () => {
+            if (img.parentElement !== preview) return;
             preview.innerHTML = '';
             preview.textContent = '❌';
         });

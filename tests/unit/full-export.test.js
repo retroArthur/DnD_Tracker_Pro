@@ -20,7 +20,7 @@ let buildFullExport;
 // Plan 12-07 / SAFE-06: die Import-Gegenseite. Bisher war nur die Bauseite
 // geprueft — nicht der Pfad, auf dem beim Umzug tatsaechlich Daten ankommen.
 let importFullExport;
-let writtenKeys; // alles, was StorageAPI.setJSON geschrieben hat
+let writtenKeys; // Kampagnen- und Favoritenwrites
 let savedIndexCalls; // Argumente von saveCampaignIndex
 let migrateCalls; // Argumente von migrateData (eines pro Kampagne)
 
@@ -35,9 +35,7 @@ let diceFavoritesBacking;
 // (mockReturnValueOnce), ohne den Standardwert fuer alle anderen Tests zu aendern.
 let getCampaignIndexMock;
 
-// Realistische Kampagnendaten INKLUSIVE SRD-Spells — damit der SRD-Strip-Test
-// den stripNonUserData-Codepfad tatsaechlich durchlaeuft (WR-09: vorher lieferte
-// der getJSON-Mock fuer alle Keys null und der Test bestand trivial).
+// Gespeicherte Zauber einschliesslich SRD und selbst angelegter Zauber.
 const CAMPAIGN_DATA = {
     characters: [{ id: 1, name: 'Tester', class: 'Krieger' }],
     npcs: [{ id: 2, name: 'Gastgeber', role: 'NPC' }],
@@ -46,7 +44,8 @@ const CAMPAIGN_DATA = {
     settings: { theme: 'dark' },
     spells: [
         { id: 100, name: 'Feuerball', source: 'srd' },
-        { id: 101, name: 'Heilen', source: 'srd' }
+        { id: 101, name: 'Heilen', source: 'srd' },
+        { id: 102, name: 'Eigener Zauber' }
     ],
     _version: '2.7.0'
 };
@@ -65,6 +64,15 @@ beforeAll(() => {
                 active: 'dnd-tracker-data'
             })),
             showToast: jest.fn(),
+            loadFromIndexedDBFallbackRaw: jest.fn(async () => null),
+            withCampaignIndexLock: work =>
+                work(() => {}, rollback => rollback(() => {}), async operation =>
+                    operation({ add: () => 1, getAll: () => ({ result: [] }), delete: () => {} })
+                ),
+            writeCampaignData: jest.fn(async (key, json) => {
+                writtenKeys[key] = JSON.parse(json);
+                return { success: true };
+            }),
             ErrorHandler: { log: jest.fn() }
         },
         APP_CONFIG: {
@@ -92,12 +100,7 @@ beforeAll(() => {
             ]
         },
         StorageAPI: {
-            // WR-09: Mock per Key differenzieren — Kampagnen-Key liefert echte
-            // Daten (mit SRD-Spells), Dice-Favoriten eigener Key, Rest Fallback
             getJSON: jest.fn((key, fallback) => {
-                if (key === 'dnd-tracker-data') {
-                    return JSON.parse(JSON.stringify(CAMPAIGN_DATA));
-                }
                 if (key === 'dnd-dice-favorites') {
                     return diceFavoritesBacking;
                 }
@@ -109,13 +112,11 @@ beforeAll(() => {
                 writtenKeys[key] = value;
                 return { success: true };
             }),
-            // Code-Review 2026-09-21 (R07): _ts-Begleiter je Kampagne — bewusst NICHT in
-            // writtenKeys, damit die Schluessel-Aufzaehlungen unten unveraendert bleiben.
-            // Korrekturrunde F5: importFullExport() schreibt den Stempel jetzt ueber
-            // setQuiet() (ohne Quota-Toast) und liest ihn bei Fehlschlag per get() nach.
-            set: jest.fn(() => ({ success: true })),
-            setQuiet: jest.fn(() => ({ success: true })),
-            get: jest.fn((key, fallback) => (fallback !== undefined ? fallback : null)),
+            get: jest.fn((key, fallback) => {
+                if (key === 'dnd-tracker-data') return JSON.stringify(CAMPAIGN_DATA);
+                if (key === 'dnd-tracker-data_ts') return '1';
+                return fallback;
+            }),
             has: jest.fn(() => false)
         },
         // 12-07: Stubs, die importFullExport() nachschlaegt (bare oder ueber window)
@@ -164,11 +165,11 @@ beforeEach(() => {
 // ============================================================
 
 describe('buildFullExport — Voll-Export-Format (TECH-02)', () => {
-    test('buildFullExport enthaelt alle Kampagnen + Settings + diceFavorites + dmScreenProfiles', () => {
+    test('buildFullExport enthaelt alle Kampagnen + Settings + diceFavorites + dmScreenProfiles', async () => {
         // RED-Phase: buildFullExport existiert noch nicht — expect schlaegt fehl und dokumentiert den Grund
         expect(typeof buildFullExport).toBe('function'); // Schlaegt fehl bis Plan 02-03 implementiert ist
 
-        const result = buildFullExport();
+        const result = await buildFullExport();
 
         expect(result).toBeDefined();
         // Export muss Metadaten enthalten
@@ -184,25 +185,22 @@ describe('buildFullExport — Voll-Export-Format (TECH-02)', () => {
         expect(result.dmScreenProfiles).toBeDefined();
     });
 
-    test('Voll-Export enthaelt KEINE SRD-Spells (D.spells nicht im Output)', () => {
-        // RED-Phase: buildFullExport existiert noch nicht
-        expect(typeof buildFullExport).toBe('function'); // Schlaegt fehl bis Plan 02-03 implementiert ist
+    test('Voll-Export erhaelt alle gespeicherten Zauber im Kampagnendatensatz', async () => {
+        const result = await buildFullExport();
+        const data = result.campaigns['dnd-tracker-data'].data;
 
-        const result = buildFullExport();
-
-        // WR-09: Der Export muss die Kampagne tatsaechlich eingesammelt haben —
-        // sonst prueft der Strip-Test ein leeres Objekt (vakuumoes gruen)
-        expect(result.campaigns['dnd-tracker-data']).toBeDefined();
-        expect(result.campaigns['dnd-tracker-data'].data.characters).toHaveLength(1);
-
-        // stripNonUserData muss das spells-Feld der Kampagnendaten entfernt haben
-        expect(result.campaigns['dnd-tracker-data'].data.spells).toBeUndefined();
-
-        // SRD-Spells duerfen niemals exportiert werden (Lizenz + Groesse)
+        expect(data.characters).toHaveLength(1);
+        expect(data.spells).toEqual(CAMPAIGN_DATA.spells);
         expect(result.spells).toBeUndefined();
-        // Auch tief verschachtelt nicht
-        const resultStr = JSON.stringify(result);
-        expect(resultStr).not.toContain('"source":"srd"');
+    });
+
+    test('fehlende benannte Kampagne wird nicht stillschweigend ausgelassen', async () => {
+        getCampaignIndexMock.mockReturnValueOnce({
+            campaigns: [{ key: 'dnd-campaign-1700000000000', name: 'Nicht lesbar' }],
+            active: 'dnd-tracker-data'
+        });
+
+        await expect(buildFullExport()).rejects.toThrow(/Nicht lesbar|dnd-campaign-1700000000000/);
     });
 });
 
@@ -216,9 +214,9 @@ describe('buildFullExport — Voll-Export-Format (TECH-02)', () => {
 // ============================================================
 
 describe('Export/Import-Rundlauf (SAFE-06)', () => {
-    test('importFullExport(buildFullExport()) stellt Kampagnen, Index und Wuerfel-Favoriten wieder her', () => {
-        const exportObj = buildFullExport();
-        const result = importFullExport(exportObj);
+    test('importFullExport(buildFullExport()) stellt Kampagnen, Index und Wuerfel-Favoriten wieder her', async () => {
+        const exportObj = await buildFullExport();
+        const result = await importFullExport(exportObj);
 
         // Kampagnendaten kommen unveraendert an
         expect(result.campaignCount).toBe(1);
@@ -241,12 +239,12 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         ]);
     });
 
-    test('Versionsstempel: _appVersion kommt aus APP_CONFIG.VERSION, aelterer Stempel laeuft durch migrateData', () => {
-        const exportObj = buildFullExport();
+    test('Versionsstempel: _appVersion kommt aus APP_CONFIG.VERSION, aelterer Stempel laeuft durch migrateData', async () => {
+        const exportObj = await buildFullExport();
         expect(exportObj._appVersion).toBe('2.7.0'); // APP_CONFIG.VERSION im Kontext
 
         const alterExport = Object.assign({}, exportObj, { _appVersion: '2.5.0' });
-        const result = importFullExport(alterExport);
+        const result = await importFullExport(alterExport);
 
         expect(result.campaignCount).toBe(1);
         // migrateData laeuft je Kampagne — genau einmal hier
@@ -255,17 +253,11 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         expect(writtenKeys['dnd-tracker-data']).toBeDefined();
     });
 
-    test('SRD-Abgrenzung: entfernte Spells kommen beim Import nicht zurueck', () => {
-        const exportObj = buildFullExport();
-        // Vorbedingung: der Export hat die Spells wirklich entfernt
-        expect(exportObj.campaigns['dnd-tracker-data'].data.spells).toBeUndefined();
+    test('der Rundlauf erhaelt SRD- und selbst angelegte Zauber', async () => {
+        const exportObj = await buildFullExport();
+        await importFullExport(exportObj);
 
-        importFullExport(exportObj);
-
-        // Der Strip ist keine Anzeigefrage — SRD-Daten bleiben dauerhaft draussen
-        expect(writtenKeys['dnd-tracker-data'].spells).toBeUndefined();
-        expect(JSON.stringify(writtenKeys)).not.toContain('"source":"srd"');
-        expect(JSON.stringify(writtenKeys)).not.toContain('Feuerball');
+        expect(writtenKeys['dnd-tracker-data'].spells).toEqual(CAMPAIGN_DATA.spells);
     });
 
     describe('Ablehnungen — es wird nichts geschrieben, bevor geworfen wird', () => {
@@ -275,31 +267,31 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
             return Object.keys(writtenKeys).filter(k => k !== 'dnd-dice-favorites');
         }
 
-        test('falscher _exportType wird abgelehnt', () => {
-            const bad = Object.assign({}, buildFullExport(), { _exportType: 'irgendwas' });
-            expect(() => importFullExport(bad)).toThrow(/full-v1/);
+        test('falscher _exportType wird abgelehnt', async () => {
+            const bad = Object.assign({}, await buildFullExport(), { _exportType: 'irgendwas' });
+            await expect(importFullExport(bad)).rejects.toThrow(/full-v1/);
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
 
-        test('fehlende campaigns werden abgelehnt', () => {
-            const bad = Object.assign({}, buildFullExport());
+        test('fehlende campaigns werden abgelehnt', async () => {
+            const bad = Object.assign({}, await buildFullExport());
             delete bad.campaigns;
-            expect(() => importFullExport(bad)).toThrow(/Kampagnendaten fehlen/);
+            await expect(importFullExport(bad)).rejects.toThrow(/Kampagnendaten fehlen/);
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
 
-        test('fehlender campaignIndex wird abgelehnt', () => {
-            const bad = Object.assign({}, buildFullExport());
+        test('fehlender campaignIndex wird abgelehnt', async () => {
+            const bad = Object.assign({}, await buildFullExport());
             delete bad.campaignIndex;
-            expect(() => importFullExport(bad)).toThrow(/Kampagnen-Index fehlt/);
+            await expect(importFullExport(bad)).rejects.toThrow(/Kampagnen-Index fehlt/);
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
 
-        test('mehr als 100 Kampagnen werden abgelehnt (WR-03: Quota/DoS)', () => {
-            const bad = buildFullExport();
+        test('mehr als 100 Kampagnen werden abgelehnt (WR-03: Quota/DoS)', async () => {
+            const bad = await buildFullExport();
             bad.campaigns = {};
             for (let i = 0; i < 101; i++) {
                 bad.campaigns['dnd-campaign-' + i] = {
@@ -307,25 +299,25 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
                     data: { characters: [] }
                 };
             }
-            expect(() => importFullExport(bad)).toThrow(/Zu viele Kampagnen/);
+            await expect(importFullExport(bad)).rejects.toThrow(/Zu viele Kampagnen/);
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
 
-        test('Key ausserhalb der erlaubten Praefixe wird abgelehnt', () => {
-            const bad = buildFullExport();
+        test('Key ausserhalb der erlaubten Praefixe wird abgelehnt', async () => {
+            const bad = await buildFullExport();
             bad.campaigns = Object.assign({}, bad.campaigns, {
                 'boeser-key': { meta: { key: 'boeser-key' }, data: { characters: [] } }
             });
-            expect(() => importFullExport(bad)).toThrow(/Unerwarteter Kampagnen-Key/);
+            await expect(importFullExport(bad)).rejects.toThrow(/Unerwarteter Kampagnen-Key/);
             // Der gueltige Key darf ebenfalls NICHT geschrieben worden sein —
             // die Whitelist-Pruefung laeuft vollstaendig vor der Schreibschleife
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
 
-        test('gueltige Kampagne gefolgt von Kampagne mit ungueltigem campaign.data wird VOLLSTAENDIG abgelehnt (CR-01)', () => {
-            const bad = buildFullExport();
+        test('gueltige Kampagne gefolgt von Kampagne mit ungueltigem campaign.data wird VOLLSTAENDIG abgelehnt (CR-01)', async () => {
+            const bad = await buildFullExport();
             // Insertions-Reihenfolge ist entscheidend: die gueltige Kampagne
             // ('dnd-tracker-data') steht ZUERST in campaigns, die kaputte DANACH —
             // das reproduziert exakt das CR-01-Szenario (Umzugsdatei mit gueltigen
@@ -339,7 +331,7 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
                     data: null
                 }
             });
-            expect(() => importFullExport(bad)).toThrow(/hat keine gueltigen Daten/);
+            await expect(importFullExport(bad)).rejects.toThrow(/hat keine gueltigen Daten/);
             // CR-01: Die VOR der kaputten Kampagne stehende, fuer sich genommen
             // gueltige Kampagne ('dnd-tracker-data') darf NICHT geschrieben worden
             // sein — sonst blieben verwaiste, aus dem Kampagnen-Index nicht mehr
@@ -361,7 +353,7 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         const idxTypeCheck = src.indexOf("_exportType !== 'full-v1'");
         const idxMaxCheck = src.indexOf('MAX_IMPORT_CAMPAIGNS');
         const idxKeyWhitelist = src.indexOf('if (!istKampagnenKey(key))');
-        const idxFirstWrite = src.indexOf('StorageAPI.setJSON(key, migratedData)');
+        const idxFirstWrite = src.indexOf('await window.writeCampaignData(');
 
         expect(idxKeyWhitelist).toBeGreaterThan(-1);
 
@@ -424,27 +416,27 @@ describe('SENKEN — Kampagnen- und Index-Schluessel nur im Format der App', () 
         'dnd-campaign-1700000000000',
         'dnd-campaign-1700000000000-2'
     ];
-    const mitKampagne = key => {
-        const datei = buildFullExport();
+    const mitKampagne = async key => {
+        const datei = await buildFullExport();
         datei.campaigns = Object.assign({}, datei.campaigns, {
             [key]: { meta: { key, name: 'X' }, data: { npcs: [{ id: 9, name: 'Ueberschrieben' }] } }
         });
         return datei;
     };
 
-    test.each(FREMDE_APP_SCHLUESSEL)('Kampagne unter %s wird abgelehnt, nichts geschrieben', key => {
-        expect(() => importFullExport(mitKampagne(key))).toThrow(/Unerwarteter Kampagnen-Key/);
+    test.each(FREMDE_APP_SCHLUESSEL)('Kampagne unter %s wird abgelehnt, nichts geschrieben', async key => {
+        await expect(importFullExport(await mitKampagne(key))).rejects.toThrow(/Unerwarteter Kampagnen-Key/);
         expect(Object.keys(writtenKeys).filter(k => k !== 'dnd-dice-favorites')).toEqual([]);
         expect(savedIndexCalls).toHaveLength(0);
     });
 
-    test.each(SCHLUESSEL_DER_APP)('Kampagne unter %s wird geschrieben', key => {
-        importFullExport(mitKampagne(key));
+    test.each(SCHLUESSEL_DER_APP)('Kampagne unter %s wird geschrieben', async key => {
+        await importFullExport(await mitKampagne(key));
         expect(writtenKeys[key]).toBeDefined();
     });
 
-    test('ein Indexeintrag mit fremdem App-Schluessel faellt weg, ein gueltiger bleibt', () => {
-        const datei = buildFullExport();
+    test('ein Indexeintrag mit fremdem App-Schluessel faellt weg, ein gueltiger bleibt', async () => {
+        const datei = await mitKampagne('dnd-campaign-1700000000000');
         datei.campaignIndex = {
             campaigns: [
                 { key: 'dnd-tracker-backups', name: 'Backups als Kampagne' },
@@ -454,7 +446,7 @@ describe('SENKEN — Kampagnen- und Index-Schluessel nur im Format der App', () 
             ],
             active: 'dnd-tracker-backups'
         };
-        importFullExport(datei);
+        await importFullExport(datei);
         const index = savedIndexCalls[savedIndexCalls.length - 1];
         expect(index.campaigns.map(c => c.key)).toEqual(['dnd-tracker-data', 'dnd-campaign-1700000000000']);
         // `active` ausserhalb des Formats wird die Standard-Kampagne
@@ -477,7 +469,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         };
     }
 
-    test('SEC-05 Test A: lokale Favoriten ueberleben, importierte kommen hinzu, lokale zuerst', () => {
+    test('SEC-05 Test A: lokale Favoriten ueberleben, importierte kommen hinzu, lokale zuerst', async () => {
         diceFavoritesBacking = [
             { name: 'Initiative', notation: '1d20+3' },
             { name: 'Heiltrank', notation: '2d4+2' }
@@ -487,7 +479,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
             campaignIndex: { campaigns: [], active: 'dnd-tracker-data' }
         });
 
-        const result = importFullExport(importObj);
+        const result = await importFullExport(importObj);
 
         expect(writtenKeys['dnd-dice-favorites']).toEqual([
             { name: 'Initiative', notation: '1d20+3' },
@@ -497,31 +489,31 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         expect(result.preservedFavoritesCount).toBe(2);
     });
 
-    test('SEC-05 Test B: wortgleicher Favorit (Name UND Notation) entsteht nicht doppelt', () => {
+    test('SEC-05 Test B: wortgleicher Favorit (Name UND Notation) entsteht nicht doppelt', async () => {
         diceFavoritesBacking = [{ name: 'Initiative', notation: '1d20+3' }];
         const importObj = baueImport({
             diceFavorites: [{ name: 'Initiative', notation: '1d20+3' }],
             campaignIndex: { campaigns: [], active: 'dnd-tracker-data' }
         });
 
-        importFullExport(importObj);
+        await importFullExport(importObj);
 
         expect(writtenKeys['dnd-dice-favorites']).toEqual([{ name: 'Initiative', notation: '1d20+3' }]);
     });
 
-    test('SEC-05 Test C: lokal keine Favoriten -> exakt das bisherige Verhalten (WR-04 bleibt erfuellt)', () => {
+    test('SEC-05 Test C: lokal keine Favoriten -> exakt das bisherige Verhalten (WR-04 bleibt erfuellt)', async () => {
         diceFavoritesBacking = [];
         const importObj = baueImport({
             diceFavorites: [{ name: 'Initiative', notation: '1d20+3' }],
             campaignIndex: { campaigns: [], active: 'dnd-tracker-data' }
         });
 
-        importFullExport(importObj);
+        await importFullExport(importObj);
 
         expect(writtenKeys['dnd-dice-favorites']).toEqual([{ name: 'Initiative', notation: '1d20+3' }]);
     });
 
-    test('SEC-05 Test D: ein lokaler Index-Eintrag, den der Import nicht kennt, bleibt erhalten; active stammt aus dem Import', () => {
+    test('SEC-05 Test D: ein lokaler Index-Eintrag, den der Import nicht kennt, bleibt erhalten; active stammt aus dem Import', async () => {
         getCampaignIndexMock.mockReturnValueOnce({
             campaigns: [
                 { key: 'dnd-tracker-data', name: 'Standard-Kampagne' },
@@ -538,7 +530,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
             }
         });
 
-        const result = importFullExport(importObj);
+        const result = await importFullExport(importObj);
 
         expect(savedIndexCalls[0].campaigns).toEqual([
             { key: 'dnd-tracker-data', name: 'Standard-Kampagne (importiert)' },
@@ -548,7 +540,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         expect(result.preservedIndexEntriesCount).toBe(1);
     });
 
-    test('SEC-05 Test E: ueberschneidender Key -> der Import gewinnt (Name aus dem Import, nicht doppelt)', () => {
+    test('SEC-05 Test E: ueberschneidender Key -> der Import gewinnt (Name aus dem Import, nicht doppelt)', async () => {
         getCampaignIndexMock.mockReturnValueOnce({
             campaigns: [{ key: 'dnd-tracker-data', name: 'Alter lokaler Name' }],
             active: 'dnd-tracker-data'
@@ -562,14 +554,14 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
             }
         });
 
-        importFullExport(importObj);
+        await importFullExport(importObj);
 
         expect(savedIndexCalls[0].campaigns).toEqual([
             { key: 'dnd-tracker-data', name: 'Neuer Name aus dem Import' }
         ]);
     });
 
-    test('SEC-05 Test F: der Rueckgabewert nennt beide Zusammenfuehrungszahlen; campaignCount/totalBytes bleiben unveraendert', () => {
+    test('SEC-05 Test F: der Rueckgabewert nennt beide Zusammenfuehrungszahlen; campaignCount/totalBytes bleiben unveraendert', async () => {
         getCampaignIndexMock.mockReturnValueOnce({
             campaigns: [
                 { key: 'dnd-tracker-data', name: 'Standard-Kampagne' },
@@ -589,7 +581,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
             }
         });
 
-        const result = importFullExport(importObj);
+        const result = await importFullExport(importObj);
 
         expect(result.preservedFavoritesCount).toBe(2);
         expect(result.preservedIndexEntriesCount).toBe(1);
@@ -662,6 +654,15 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
             window: {
                 APP_CONFIG: appConfig,
                 getCampaignIndex: () => JSON.parse(JSON.stringify(index)),
+                loadFromIndexedDBFallbackRaw: async () => null,
+                withCampaignIndexLock: work =>
+                    work(() => {}, rollback => rollback(() => {}), async operation =>
+                        operation({ add: () => 1, getAll: () => ({ result: [] }), delete: () => {} })
+                    ),
+                writeCampaignData: async (key, json) => {
+                    echtGeschrieben[key] = JSON.parse(json);
+                    return { success: true };
+                },
                 showToast: jest.fn(),
                 ErrorHandler: { log: jest.fn() },
                 D: { settings: {}, dmScreenProfiles: {} }
@@ -678,10 +679,10 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
                     echtGeschrieben[key] = value;
                     return { success: true };
                 },
-                set: () => ({ success: true }),
-                // Korrekturrunde F5: Stempel per setQuiet(), Nachlese per get()
-                setQuiet: () => ({ success: true }),
-                get: (key, fallback) => (fallback !== undefined ? fallback : null),
+                get: (key, fallback) => {
+                    if (key.endsWith('_ts') && quellen[key.slice(0, -3)] !== undefined) return '1';
+                    return quellen[key] !== undefined ? JSON.stringify(quellen[key]) : fallback;
+                },
                 has: () => false
             },
             // F5: der Rueckgabewert wird jetzt geprueft
@@ -715,19 +716,19 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
         echtImport = context.importFullExport;
     });
 
-    test('Vorbedingung: der Kontext benutzt die ECHTE migrateData, keinen Identitaets-Stub', () => {
-        const exportObj = echtBuild();
+    test('Vorbedingung: der Kontext benutzt die ECHTE migrateData, keinen Identitaets-Stub', async () => {
+        const exportObj = await echtBuild();
         const roh = exportObj.campaigns['dnd-tracker-data'].data;
         expect(roh._version).toBe('2.5.0');
         expect(roh.bestiary).toBeUndefined();
     });
 
-    test('Import in neuerer Version: was gespeichert wird, ist das MIGRIERTE Ergebnis (nicht die Rohdaten)', () => {
-        const exportObj = echtBuild();
+    test('Import in neuerer Version: was gespeichert wird, ist das MIGRIERTE Ergebnis (nicht die Rohdaten)', async () => {
+        const exportObj = await echtBuild();
         // Kopie ziehen: migrateData mutiert das Original in-place
         const rohVersion = exportObj.campaigns['dnd-tracker-data'].data._version;
 
-        echtImport(exportObj);
+        await echtImport(exportObj);
 
         const gespeichert = echtGeschrieben['dnd-tracker-data'];
         expect(gespeichert).toBeDefined();
@@ -745,15 +746,14 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
         expect(gespeichert.characters[0].xp).toBe(0);
         // Nutzdaten bleiben erhalten
         expect(gespeichert.characters[0].name).toBe('Erste');
-        // SRD bleibt auch nach der echten Migration draussen
-        expect(gespeichert.spells).toBeUndefined();
+        expect(gespeichert.spells).toEqual(altKampagne('Erste').spells);
     });
 
-    test('Mehrere Kampagnen: JEDE Kampagne wird geschrieben und einzeln migriert', () => {
-        const exportObj = echtBuild();
+    test('Mehrere Kampagnen: JEDE Kampagne wird geschrieben und einzeln migriert', async () => {
+        const exportObj = await echtBuild();
         expect(Object.keys(exportObj.campaigns)).toHaveLength(2);
 
-        const result = echtImport(exportObj);
+        const result = await echtImport(exportObj);
 
         expect(result.campaignCount).toBe(2);
         // campaignCount stammt aus der EINGABE — die Schreibseite separat pruefen
@@ -768,18 +768,18 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
         expect(echtIndexCalls).toHaveLength(1);
     });
 
-    test('_appVersion stammt aus APP_CONFIG.VERSION (kein hartkodierter Stempel)', () => {
-        const exportObj = echtBuild();
+    test('_appVersion stammt aus APP_CONFIG.VERSION (kein hartkodierter Stempel)', async () => {
+        const exportObj = await echtBuild();
         expect(exportObj._appVersion).toBe(ECHTE_VERSION);
         expect(exportObj._appVersion).not.toBe('2.7.0');
     });
 
-    test('Ablehnung schreibt GAR NICHTS — auch keine Wuerfel-Favoriten (WR-04 vor der Pruefung)', () => {
-        const bad = echtBuild();
+    test('Ablehnung schreibt GAR NICHTS — auch keine Wuerfel-Favoriten (WR-04 vor der Pruefung)', async () => {
+        const bad = await echtBuild();
         bad._exportType = 'irgendwas';
         expect(bad.diceFavorites.length).toBeGreaterThan(0);
 
-        expect(() => echtImport(bad)).toThrow(/full-v1/);
+        await expect(echtImport(bad)).rejects.toThrow(/full-v1/);
 
         expect(Object.keys(echtGeschrieben)).toEqual([]);
         expect(echtIndexCalls).toHaveLength(0);

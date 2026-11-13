@@ -625,6 +625,54 @@ test('(1) ✏️ → 💾 ohne Aenderung: der ganze NPC bleibt gleich — in D, 
     weich(await fehler.alle(), 'der Rundlauf darf keinen Fehler hinterlassen').toEqual([]);
 });
 
+test('NPC-Notizen bleiben nach dem Neuladen beim jeweiligen NPC und lassen sich leeren', async ({
+    page
+}) => {
+    await npcsLaden(page, [VOLO]);
+    const notizfeld = page
+        .locator('#npc-modal')
+        .getByRole('textbox', { name: 'Notizen', exact: true });
+    const notizbereich = page.locator('#npc-detail-panel .npc-notes');
+    const voloNotiz = 'Treffen an der Brücke\n<b>Nur für die SL</b> & geheim';
+    const elminsterNotiz = 'Kennt den Weg zum Turm.';
+
+    await bearbeiten(page, 1);
+    await expect(notizfeld).toBeVisible();
+    await expect(notizfeld).toHaveValue('');
+    await notizfeld.fill(voloNotiz);
+    const vorBearbeitung = await revStand(page);
+    await speichern(page);
+    await geschriebenSeit(page, vorBearbeitung, 'Volo-Notiz');
+    expect((await npcImSpeicher(page, 1))?.notes).toBe(voloNotiz);
+    await expect(notizbereich).toBeVisible();
+    expect(await notizbereich.innerText()).toBe(voloNotiz);
+
+    await plusNPC(page).click();
+    await expect(notizfeld).toHaveValue('');
+    await page.locator('#npc-name').fill('Elminster');
+    await notizfeld.fill(elminsterNotiz);
+    const vorAnlegen = await revStand(page);
+    await speichern(page);
+    await geschriebenSeit(page, vorAnlegen, 'Elminster-Notiz');
+    const elminsterId = await idVon(page, 'Elminster');
+    expect((await npcImSpeicher(page, elminsterId))?.notes).toBe(elminsterNotiz);
+
+    await page.reload();
+    await waitForAppReady(page);
+    await page.evaluate(() => window.switchView('npcs'));
+    await page.locator(`#npc-list .npc-item[data-id="${elminsterId}"]`).click();
+    await expect(notizbereich).toHaveText(elminsterNotiz);
+    await bearbeiten(page, 1);
+    await expect(notizfeld).toHaveValue(voloNotiz);
+    await notizfeld.fill('');
+    const vorLeeren = await revStand(page);
+    await speichern(page);
+    await geschriebenSeit(page, vorLeeren, 'Volo-Notiz leeren');
+    await expect(notizbereich).toHaveCount(0);
+    expect((await npcImSpeicher(page, 1))?.notes || '').toBe('');
+    expect((await npcImSpeicher(page, elminsterId))?.notes).toBe(elminsterNotiz);
+});
+
 // ===========================================================================
 // (2) DER TITEL SAGT, WAS DAS FORMULAR TUT
 // ===========================================================================
@@ -795,6 +843,67 @@ test('(7) Dialogtext aendern: der Text kommt an, "verwendet" bleibt', async ({ p
     );
 
     weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+});
+
+test('NPC-Detail zeigt den ganzen langen Dialog per Tastatur in derselben Karte', async ({
+    page
+}) => {
+    const anfang = 'Wenn die Gilde schweigt, beginnt das Gerede.';
+    const ende = 'Treffpunkt unter der Brücke';
+    const kurzerText = 'Nur ein Satz.';
+    const lang = `<p>${anfang} ${'Kein Gast kennt die geheime Abmachung. '.repeat(4)}</p>
+        <p><strong>${ende}</strong> <span onclick="throw new Error('Unsicherer Dialog')">heute Abend</span></p>`;
+    const kurz = `<span style="font-family: var(--font-ui); font-weight: bold; letter-spacing: normal; color: var(--text);">${kurzerText}</span>`;
+    expect(kurz.length).toBeGreaterThan(100);
+    await npcsLaden(page, [
+        {
+            ...VOLO,
+            dialogs: [
+                { title: 'Langer Dialog', text: lang, used: false },
+                { title: 'Kurzer Dialog', text: kurz, used: false }
+            ]
+        }
+    ]);
+    await page.locator('#npc-list .npc-item[data-id="1"]').click();
+
+    const panel = page.locator('#npc-detail-panel');
+    const langDialog = panel.locator('.npc-dialog-item', { hasText: 'Langer Dialog' });
+    const kurzDialog = panel.locator('.npc-dialog-item', { hasText: 'Kurzer Dialog' });
+    const details = langDialog.locator('details');
+    const oeffner = details.locator('summary');
+    const vorschau = langDialog.locator('.npc-dialog-preview');
+    const volltextEnde = langDialog.locator('strong', { hasText: ende });
+    await expect(langDialog).toBeVisible();
+    expect(await langDialog.innerText()).toContain(anfang);
+    await expect(volltextEnde).toBeHidden();
+    await expect(
+        oeffner,
+        'Der lange Dialog braucht eine sichtbare Öffnungsmöglichkeit'
+    ).toBeVisible();
+    await expect(oeffner).toHaveAccessibleName('Ganzen Dialog anzeigen');
+    await expect(details).not.toHaveAttribute('open');
+    await expect(vorschau).toBeVisible();
+
+    await panel.locator('[data-action="show-add-dialog-modal-stop"]').focus();
+    await page.keyboard.press('Tab');
+    await expect(oeffner).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(details).toHaveAttribute('open', '');
+    await expect(vorschau).toBeHidden();
+    await expect(volltextEnde).toBeVisible();
+    expect(await langDialog.innerText()).toContain('heute Abend');
+    await expect(langDialog.locator('[onclick]')).toHaveCount(0);
+
+    await page.keyboard.press('Space');
+    await expect(details).not.toHaveAttribute('open');
+    await expect(volltextEnde).toBeHidden();
+    await expect(oeffner).toBeFocused();
+    await expect(vorschau).toBeVisible();
+
+    await expect(kurzDialog.locator('summary')).toHaveCount(0);
+    const kurzerSichttext = await kurzDialog.innerText();
+    expect(kurzerSichttext).toContain(kurzerText);
+    expect(kurzerSichttext).not.toMatch(/\.{3}|…/);
 });
 
 // ===========================================================================
@@ -1191,6 +1300,35 @@ test('(17) ✏️ aus dem NPC-Popup eines Ortes: Titel und Zustand wie aus dem D
         (await fehler.alle()).filter(f => !f.includes('Element not found: #npc-popup')),
         'kein Fehler ausser dem benannten Popup-Rauschen'
     ).toEqual([]);
+});
+
+test('Details im Orts-Popup öffnen den angeklickten NPC', async ({ page }) => {
+    await npcsLaden(page, [VOLO, { ...MANSHOON, locationId: 1 }]);
+    const namenszeile = page.locator('#npc-detail-panel .npc-detail-name');
+    await page.locator('#npc-list .npc-item[data-id="1"]').click();
+    await expect(namenszeile).toHaveText(VOLO.name);
+    const suche = page.locator('#npc-search');
+    await suche.fill('Volo');
+    await expect(page.locator('#npc-list .npc-item[data-id="2"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: /Welt/ }).click();
+    await page.getByRole('menuitem', { name: /Orte/ }).click();
+    await page.locator('#view-locations .loc-item[data-id="1"]').click();
+    await page
+        .locator('#view-locations [data-action="show-npc-popup"][data-id="2"]')
+        .first()
+        .click();
+
+    const popup = page.locator('#npc-popup');
+    await expect(popup.locator('.npc-popup-name')).toHaveText(MANSHOON.name);
+    await popup.getByRole('button', { name: /Details/ }).click();
+
+    await expect(popup).toHaveCount(0);
+    await expect(page.locator('#view-npcs')).toBeVisible();
+    await expect(namenszeile, 'Details müssen den NPC aus dem Popup anzeigen').toBeVisible();
+    await expect(namenszeile).toHaveText(MANSHOON.name);
+    await expect(suche).toHaveValue('');
+    await expect(page.locator('#npc-list .npc-item.selected')).toHaveAttribute('data-id', '2');
 });
 
 // ===========================================================================

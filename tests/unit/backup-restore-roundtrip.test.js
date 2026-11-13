@@ -289,7 +289,7 @@ async function wiederherstellenUeberModal(w) {
 /**
  * Vollstaendig befuellte Kampagne im aktuellen Format (deckt das SEC-06-Inventar ab).
  * settings/calendar/initiative/soundboard tragen alle Standard-Schluessel und _nextId
- * alle 19 Registertypen (plus Alt-Schluessel items) oberhalb der Untergrenze, damit
+ * alle 20 Registertypen (plus Alt-Schluessel items) oberhalb der Untergrenze, damit
  * Normalisierer und validateDataIntegrity() nichts veraendern muessen.
  * _version steht bewusst am Ende.
  */
@@ -325,6 +325,21 @@ function volleKampagne(ctx) {
         locations: [{ id: 4, name: 'Phandalin' }],
         encounters: [{ id: 5, name: 'Goblins', monsters: [] }],
         loot: [{ id: 6, name: 'Heiltrank', assignedTo: 1 }],
+        lootChests: [
+            {
+                id: 23,
+                name: 'Vorratskiste',
+                entries: [
+                    {
+                        name: 'Heiltrank',
+                        description: 'Kleine Flasche',
+                        category: 'Trank',
+                        rarity: 'common',
+                        weight: 0
+                    }
+                ]
+            }
+        ],
         spells: [{ id: 7, name: 'Feuerball', level: 3 }],
         wiki: [{ id: 8, title: 'Goetter', content: '<p>Pantheon</p>' }],
         sessionNotes: [{ id: 9, title: 'Sitzung 1', content: 'Start' }],
@@ -388,6 +403,7 @@ function volleKampagne(ctx) {
             locations: 5,
             encounters: 6,
             loot: 7,
+            lootChests: 24,
             spells: 8,
             wiki: 9,
             sessionNotes: 10,

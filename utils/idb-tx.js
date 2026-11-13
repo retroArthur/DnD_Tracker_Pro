@@ -62,6 +62,10 @@ async function idbWriteTx(storeNames, work, options) {
     }
     const db = window.idb;
     if (!db) throw new Error('IndexedDB nicht verfügbar');
+    return _idbWriteTx(db, storeNames, work, options);
+}
+
+async function _idbWriteTx(db, storeNames, work, options) {
     const tx = db.transaction(
         storeNames,
         'readwrite',
@@ -90,3 +94,117 @@ async function idbWriteTx(storeNames, work, options) {
 
 window.idbTransactionDone = idbTransactionDone;
 window.idbWriteTx = idbWriteTx;
+
+function _openCampaignOperationDb(suffix, createStore) {
+    return new Promise((resolve, reject) => {
+        const request = window.indexedDB.open(APP_CONFIG.IDB_NAME + suffix, 1);
+        request.onupgradeneeded = () => createStore(request.result);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+    });
+}
+
+// Eine eigene DB hält das Journal auch in Browsern schreibbar, die Transaktionen
+// derselben Datenbank selbst bei disjunkten Stores serialisieren.
+async function _campaignImportJournal(work) {
+    const db = await _openCampaignOperationDb('-campaign-import-recovery', database =>
+        database.createObjectStore('import-recovery', { keyPath: 'id', autoIncrement: true })
+    );
+    try {
+        const request = await _idbWriteTx(
+            db,
+            'import-recovery',
+            tx => work(tx.objectStore('import-recovery')),
+            { durability: 'strict' }
+        );
+        return request?.result;
+    } finally {
+        db.close();
+    }
+}
+
+async function _withCampaignIdbLock(work) {
+    let db;
+    try {
+        db = await _openCampaignOperationDb('-campaign-operations', database =>
+            database.createObjectStore('mutex')
+        );
+    } catch (error) {
+        throw new Error('Die tabübergreifende Kampagnensperre ist nicht verfügbar.', { cause: error });
+    }
+
+    let operation;
+    let settled = false;
+    try {
+        // Eine eigene Datenbank hält die Kampagnen- und Backup-Transaktionen frei.
+        // Der erste erfolgreiche Request bedeutet, dass diese Transaktion an der Reihe ist.
+        const tx = db.transaction('mutex', 'readwrite');
+        const done = idbTransactionDone(tx);
+        const store = tx.objectStore('mutex');
+        let lost;
+        done.catch(error => {
+            lost = error;
+        });
+        const assertHeld = () => {
+            if (lost) throw lost;
+        };
+        // Rückbau nach Sperrverlust wartet auf den aktuellen Inhaber. Der äußere
+        // Web Lock kann noch uns gehören, daher nur den gemeinsamen IDB-Mutex neu anfordern.
+        const runRollback = async rollback => {
+            if (!lost) {
+                try {
+                    const result = await rollback(assertHeld);
+                    assertHeld();
+                    return result;
+                } catch (error) {
+                    if (!lost) throw error;
+                }
+            }
+            return _withCampaignIdbLock(rollback);
+        };
+        const keepAlive = () => {
+            store.get(APP_CONFIG.CAMPAIGN_INDEX_KEY).onsuccess = () => {
+                if (!operation) {
+                    operation = Promise.resolve().then(() => work(assertHeld, runRollback, _campaignImportJournal));
+                    const finish = () => {
+                        settled = true;
+                    };
+                    operation.then(finish, finish);
+                }
+                // Solange die Arbeit läuft, bleibt durch den nächsten Request die Sperre aktiv.
+                if (!settled) keepAlive();
+            };
+        };
+        try {
+            keepAlive();
+            await done;
+        } catch (error) {
+            // Eine begonnene Operation auslaufen lassen und nicht erneut starten.
+            await done.catch(() => {});
+            if (operation) await operation;
+            throw error;
+        }
+        return await operation;
+    } finally {
+        db.close();
+    }
+}
+
+async function withCampaignIndexLock(work) {
+    let started = false;
+    try {
+        const locks = window.navigator?.locks;
+        if (locks?.request) {
+            return await locks.request(APP_CONFIG.CAMPAIGN_INDEX_KEY, () => {
+                started = true;
+                // Auch unter Web Locks dieselbe IDB-Sperre nutzen wie Tabs ohne dieses API.
+                return _withCampaignIdbLock(work);
+            });
+        }
+    } catch (error) {
+        if (started) throw error;
+    }
+    return _withCampaignIdbLock(work);
+}
+
+window.withCampaignIndexLock = withCampaignIndexLock;

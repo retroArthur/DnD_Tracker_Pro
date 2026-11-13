@@ -627,7 +627,7 @@ test('(1) R1: ✏️ → ✕ → "+ Zauber" zeigt ein leeres Formular, 💾 legt
 // (2) R1: ✏️ AUS DER GLOBALEN SUCHE → ESCAPE → "+ ZAUBER" LEGT NEU AN
 // ===========================================================================
 //
-// Der zweite Bearbeiten-Weg (Strg+K, Treffer anklicken) und der zweite
+// Der Weg ueber die globale Suche (Strg+K, Treffer, ✏️) und der zweite
 // Abbruch-Weg. Vor dem Fix (gemessen): Formular mit id "1"/"Feuerball",
 // 💾 ueberschrieb Feuerball. Dazu R2 im Anschluss: der Name, der nach dem
 // Aufraeumen getippt wird, ist ein Entwurf und ueberlebt ✕ → "+ Zauber".
@@ -645,11 +645,9 @@ test('(2) R1: ✏️ aus der globalen Suche → Escape → "+ Zauber" zeigt ein 
         .locator('#global-search-results [data-action="navigate-result"][data-type="spell"]')
         .first()
         .click();
+    await page.locator('.spell-card[data-spell-id="1"] [data-action="edit-spell-stop"]').click();
     await expect(page.locator('#spell-modal')).toHaveClass(/\bshow\b/);
-    expect(
-        (await formular(page)).id,
-        'Vorbedingung: die Suche hat Feuerball zum Bearbeiten geoeffnet'
-    ).toBe('1');
+    expect((await formular(page)).id, 'Vorbedingung: Feuerball ist zum Bearbeiten offen').toBe('1');
     await escape(page);
 
     await plusZauber(page).click();

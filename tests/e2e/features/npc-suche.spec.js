@@ -878,6 +878,163 @@ test('W5 der Ortschip bleibt UND-verknuepft, auch fuer einen Dialogtreffer', asy
     await keinFehlerAusser(fehler);
 });
 
+test('NPC-Suche findet Klartext in Notizen zusätzlich zu Feldern und Dialogen', async ({
+    page
+}) => {
+    const fehler = fehlerFangen(page);
+    const mitNotizen = npcs();
+    mitNotizen[0].notes = 'Anna, Versteck am Leuchtturm.\nSignal: <Grün> &amp; Blau';
+    mitNotizen[1].notes = 'Trifft Anna am Leuchtturm.';
+    mitNotizen[2].notes = 'Goldenen Schlüssel mitnehmen.';
+    await laden(page, { npcs: mitNotizen });
+    await zuAnsicht(page, 'npcs');
+
+    for (const zeile of /** @type {[string, number[], string][]} */ ([
+        [' LEUCHTTURM ', [1, 2], 'nur in Notizen, Großschreibung und Leerzeichen am Rand'],
+        ['Anna', [1, 2], 'Name und Notiz ergeben pro NPC nur einen Treffer'],
+        ['Bert', [2], 'bestehender Namenstreffer ohne Notiztreffer'],
+        ['Wirt', [1, 5], 'bestehende Rollentreffer'],
+        ['Mensch', [1, 5, 6], 'bestehende Volkstreffer'],
+        ['Taverne', [1, 5], 'bestehende Beschreibungstreffer'],
+        ['Goldenen', [1, 3], 'bestehender Dialogtreffer und neuer Notiztreffer'],
+        ['<Grün> &amp;', [1], 'Notiz durchsucht die Zeichen wörtlich']
+    ]))
+        await npcSuche(page, zeile);
+
+    const hafen = page.locator('#npc-filters .npc-filter-chip', { hasText: 'Hafen' });
+    await hafen.click();
+    await expect(hafen).toHaveClass(/active/);
+    await npcSuche(page, ['Leuchtturm', [1], 'Ortsfilter schränkt auch Notiztreffer ein']);
+    await keinFehlerAusser(fehler);
+});
+
+test('NPC-Merkliste nutzt am Desktop den Stern in der Detailleiste', async ({ page }) => {
+    await laden(page);
+    await zuAnsicht(page, 'npcs');
+    const liste = page.locator('#npc-list');
+    const sterne = 'button[data-action="toggle-npc-favorite"]';
+    const detailaktionen = page.locator('#npc-detail-panel .npc-detail-actions');
+    const anna = detailaktionen.locator(`${sterne}[data-id="1"]`);
+    const zora = detailaktionen.locator(`${sterne}[data-id="3"]`);
+    const annaZeile = liste.locator('.npc-item[data-id="1"]');
+    const zoraZeile = liste.locator('.npc-item[data-id="3"]');
+    const merkliste = page.locator('button[data-action="toggle-npc-favorites-filter"]');
+    const revision = () => page.evaluate(key => localStorage.getItem(key + '_rev'), SPEICHER);
+    const merklisteAnzeigen = async () => {
+        if ((await merkliste.getAttribute('aria-pressed')) === 'false') await merkliste.click();
+        await expect(merkliste).toHaveAttribute('aria-pressed', 'true');
+    };
+
+    await annaZeile.click();
+    await expect(anna, 'Der Desktop-Stern gehört in die Detailleiste').toBeVisible();
+    await expect(detailaktionen.locator('button').first()).toHaveAttribute(
+        'data-action',
+        'toggle-npc-favorite'
+    );
+    await expect(liste.locator(sterne).filter({ visible: true })).toHaveCount(0);
+    await expect(anna).toHaveAccessibleName(/Anna/);
+    await expect(anna).toHaveAttribute('aria-pressed', 'false');
+    await expect(merkliste).toHaveAccessibleName(/Merkliste/);
+    await expect(merkliste).toHaveAttribute('aria-pressed', 'false');
+    const vorMarkieren = await revision();
+    await anna.focus();
+    await page.keyboard.press('Space');
+    await expect(anna).toHaveAttribute('aria-pressed', 'true');
+    await expect(anna).toHaveAccessibleName(/Anna/);
+    await expect(anna).toBeFocused();
+    await expect(annaZeile).toHaveClass(/\bselected\b/);
+    await zoraZeile.click();
+    await zora.click();
+    await expect(zora).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(revision, { timeout: SOFORT_MS }).not.toBe(vorMarkieren);
+
+    await merklisteAnzeigen();
+    expect(await npcIds(page)).toEqual([1, 3]);
+    await npcSuche(page, ['Goldenen', [1], 'Dialogtext und Merkliste werden kombiniert']);
+    await npcSuche(page, ['Bert', [], 'Name außerhalb der Merkliste']);
+    await tippen(page, '#npc-search', '');
+
+    await page.reload();
+    await waitForAppReady(page);
+    await zuAnsicht(page, 'npcs');
+    await merklisteAnzeigen();
+    expect(await npcIds(page)).toEqual([1, 3]);
+    const vorEntfernen = await revision();
+    await annaZeile.click();
+    await anna.focus();
+    await page.keyboard.press('Enter');
+    expect(await npcIds(page)).toEqual([3]);
+    await expect(zora).toBeFocused();
+    await expect.poll(revision, { timeout: SOFORT_MS }).not.toBe(vorEntfernen);
+
+    await page.reload();
+    await waitForAppReady(page);
+    await zuAnsicht(page, 'npcs');
+    await merklisteAnzeigen();
+    expect(await npcIds(page)).toEqual([3]);
+    await merkliste.click();
+    await expect(merkliste).toHaveAttribute('aria-pressed', 'false');
+    await annaZeile.click();
+    await expect(anna).toHaveAttribute('aria-pressed', 'false');
+    await zoraZeile.click();
+    await expect(zora).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('NPC-Merkliste hält bei 901 Pixeln alle Detailaktionen erreichbar', async ({ page }) => {
+    const name = 'Elisabeth Nachtwanderin der Küstenwache';
+    await laden(page, {
+        npcs: [{ ...npcs()[0], name, role: 'Überwachungsbeauftragte der Küstenwache' }],
+        locations: [{ ...ORTE[0], name: 'Hauptquartier der Nachtwache am Leuchtturm' }]
+    });
+    await page.setViewportSize({ width: 901, height: BREIT.height });
+    await zuAnsicht(page, 'npcs');
+    const detail = page.locator('#npc-detail-panel');
+    await expect(detail.locator('.npc-detail-name')).toHaveText(name);
+    const aktionen = detail.locator('.npc-detail-actions button');
+    await expect(aktionen).toHaveCount(7);
+    await expect(aktionen.nth(0)).toHaveAttribute('data-action', 'toggle-npc-favorite');
+    await expect(aktionen.nth(1)).toHaveAttribute('data-action', 'show-avatar-modal');
+
+    const unerreichbar = await aktionen.evaluateAll(knoepfe => {
+        const panel = document.getElementById('npc-detail-panel')?.getBoundingClientRect();
+        if (!panel) return ['Detailansicht fehlt'];
+        return knoepfe
+            .filter(knopf => {
+                const box = knopf.getBoundingClientRect();
+                const x = box.left + box.width / 2;
+                const y = box.top + box.height / 2;
+                return (
+                    box.left < Math.max(0, panel.left) ||
+                    box.right > Math.min(window.innerWidth, panel.right) ||
+                    box.top < Math.max(0, panel.top) ||
+                    box.bottom > Math.min(window.innerHeight, panel.bottom) ||
+                    !knopf.contains(document.elementFromPoint(x, y))
+                );
+            })
+            .map(knopf => knopf.getAttribute('data-action'));
+    });
+    expect(unerreichbar, 'Vollständige und anklickbare Detailaktionen bei 901 Pixeln').toEqual([]);
+});
+
+test.describe('NPC-Merkliste am Telefon', () => {
+    test.use({ hasTouch: true });
+
+    test('der Stern bleibt in der Liste erreichbar', async ({ page }) => {
+        await laden(page);
+        await zuAnsicht(page, 'npcs');
+        await aufsTelefon(page, '#npc-search');
+        const sterne = 'button[data-action="toggle-npc-favorite"]';
+        const anna = page.locator(`#npc-list ${sterne}[data-id="1"]`);
+        await expect(
+            page.locator(`#npc-detail-panel ${sterne}`).filter({ visible: true })
+        ).toHaveCount(0);
+        await expect(anna).toBeVisible();
+        await expect(anna).toHaveAttribute('aria-pressed', 'false');
+        await anna.tap();
+        await expect(anna).toHaveAttribute('aria-pressed', 'true');
+    });
+});
+
 test('W6f Bedienweg: ein NPC, ueber das Formular mit Dialog angelegt, ist auffindbar', async ({
     page
 }) => {

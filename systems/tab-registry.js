@@ -76,6 +76,11 @@ const TAB_RENDER_REGISTRY = {
         init: null,
         cleanup: null
     },
+    inspiration: {
+        renders: [() => renderInspiration],
+        init: null,
+        cleanup: null
+    },
     links: {
         renders: [() => renderLinks],
         init: null,

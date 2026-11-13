@@ -810,15 +810,15 @@ const HALTGRENZEN = {
     dice: 46,
     dmscreen: 37,
     quests: 69,
-    loot: 32,
+    loot: 33,
     // 31 und nicht 47: die erste Zahl stammte aus dem fehlerhaften Zaehler
     // oben, der 16 Favoritenknoepfe mit `tabindex="-1"` mitzaehlte. Die
-    // Bestiarium-Ansicht ist die EINZIGE, in der die Korrektur etwas
-    // bewegt — nur dort traegt ein NATIVES Bedienelement ein
-    // `tabindex="-1"`. Vor E-2 waren es 46 Halte, es ist also eine
+    // Bestiarium-Ansicht war damals die einzige mit einem nativen
+    // Bedienelement mit `tabindex="-1"`. Vor E-2 waren es 46 Halte, es ist also eine
     // Verringerung um 15, nicht eine Zunahme um 1.
     bestiary: 31,
-    npcs: 39,
+    // Zwei gemessene Halte für die Merkliste: Schnellfilter und Stern-Spalte.
+    npcs: 41,
     spells: 35,
     encounter: 34,
     locations: 33,
@@ -827,6 +827,7 @@ const HALTGRENZEN = {
     data: 36,
     notes: 27,
     wiki: 30,
+    inspiration: 38,
     // Die sieben, die vor E-2 schon sauber waren — diese Zahlen sind die
     // VORHER-Zahlen und duerfen sich nicht bewegen.
     dicestats: 26,
@@ -913,7 +914,7 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         ).toEqual({ ohneGrenze: [], ohneAnsicht: [] });
     });
 
-    test('(5) alle 23 Ansichtsgruppen sind angemeldet', async ({ page }) => {
+    test('(5) alle 24 Ansichtsgruppen sind angemeldet', async ({ page }) => {
         test.setTimeout(120_000);
         await ansichtOeffnen(page, 'dashboard');
         const s = await page.evaluate(() => window.KeyboardGroupViews.statistik());
@@ -922,12 +923,10 @@ test.describe('Reichweite — die Haltgrenze je Ansicht', () => {
         expect(s.angemeldet, `angemeldet: ${s.namen.join(', ')}`).toBe(s.arten);
         // 18 aus Runde 2, vier aus Runde 3 (die Zauberkarten, die
         // Wiki-Baumeintraege, die Ladenartikel und die Artikelkategorien),
-        // und seit MKOPF eine 23.: das Punkte-Menue des Mobil-Kopfs
-        // (`kopfmenue`). Es ist die eine Gruppe aus `<button>`-Elementen; die
-        // Begruendung fuer diese Ausnahme steht an ihrer Anmeldung in
-        // `ui/keyboard-group-views.js`.
-        expect(s.arten).toBe(23);
-        expect(s.namen, 'die 23. Art fehlt oder heisst anders').toContain('kopfmenue');
+        // dazu das Punkte-Menue des Mobil-Kopfs und die Stern-Spalte der NPCs.
+        expect(s.arten).toBe(24);
+        expect(s.namen).toContain('kopfmenue');
+        expect(s.namen).toContain('nscMerkliste');
     });
 });
 
@@ -1297,7 +1296,7 @@ test.describe('Reichweite — mit der Maus aendert sich nichts', () => {
 // WAS DIESE SCHICHT NICHT FAENGT, und darum steht es hier: faellt die
 // ANMELDUNG aus, ist auch die Erwartung 0 und der Fall wieder stumm. Diese
 // Luecke deckt die zweite Schicht, und zwar gemessen: unter derselben
-// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 23 Ansichtsgruppen` und
+// Mutation sind `(5) quests`, `(5) loot`, `(5) alle 24 Ansichtsgruppen` und
 // die Volkszaehlung `UNGRUPPIERT` rot. Zwei Schichten, zwei Fehlerbilder —
 // eine Probe, die beides allein leisten koennte, gibt es nicht.
 

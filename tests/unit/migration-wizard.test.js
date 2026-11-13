@@ -141,6 +141,23 @@ beforeEach(() => {
 // readCampaignDataForBackup()
 // ============================================================
 
+test('startMigrationFlow() schliesst den reservierten Tab bei fehlgeschlagenem Export', async () => {
+    const zielTab = { close: jest.fn(), location: { replace: jest.fn() } };
+    context.window.open = jest.fn(() => zielTab);
+    context.window.downloadFullExport = jest.fn().mockResolvedValue(false);
+    try {
+        await context.startMigrationFlow();
+
+        expect(context.window.downloadFullExport).toHaveBeenCalledTimes(1);
+        expect(zielTab.close).toHaveBeenCalledTimes(1);
+        expect(zielTab.location.replace).not.toHaveBeenCalled();
+        expect(mockStorageAPI.setJSON).not.toHaveBeenCalled();
+    } finally {
+        delete context.window.open;
+        delete context.window.downloadFullExport;
+    }
+});
+
 describe('isFreshInstall() — Quellenkette wie readCampaignDataForBackup() (D-07, SAFE-04)', () => {
     test('leerer Speicher, kein Override, keine Quelle liefert Daten -> true', async () => {
         mockReadCampaignDataForBackup.mockResolvedValue(null);
@@ -335,7 +352,7 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
         mockConfirm.mockReturnValue(false); // Nutzer bricht ab
 
         const saveUndoStateMock = jest.fn();
-        const importFullExportMock = jest.fn();
+        const importFullExportMock = jest.fn(async () => ({ totalBytes: 4096, campaignCount: 1 }));
         context.window.saveUndoState = saveUndoStateMock;
         context.window.importFullExport = importFullExportMock;
 
@@ -364,7 +381,7 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 
         const callOrder = [];
         context.window.saveUndoState = jest.fn(() => callOrder.push('saveUndoState'));
-        context.window.importFullExport = jest.fn(() => {
+        context.window.importFullExport = jest.fn(async () => {
             callOrder.push('importFullExport');
             return { totalBytes: 4096, campaignCount: 1 };
         });
@@ -377,7 +394,7 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 
         context._processWizardFile(file, dropzone);
 
-        await waitFor(() => callOrder.length >= 2);
+        await waitFor(() => resultEl.innerHTML !== '');
 
         expect(callOrder).toEqual(['saveUndoState', 'importFullExport']);
         expect(dropzone.classList.add).toHaveBeenCalledWith('file-ready');
@@ -385,12 +402,12 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 });
 
 // ============================================================
-// Code-Review 2026-09-21, Einheit U7 — R02: location.reload() feuert beforeunload. Nach dem
-// geschriebenen Umzugs-Import muss der Tab seine Schreibpfade SOFORT sperren
+// Code-Review 2026-09-21, Einheit U7 — R02: location.reload() feuert beforeunload. Vor dem
+// asynchronen Umzugs-Import muss der Tab seine Schreibpfade sperren
 // (retireCampaignWrites), sonst schreibt Strg+S, Strg+Z, der Session-Timer-Autosave oder ein
 // ausstehender save() den Vor-Import-Stand ueber den Import, bevor wizard-close neu laedt.
 // ============================================================
-describe('_processWizardFile() — Schreibsperre direkt nach dem Import (U7, R02)', () => {
+describe('_processWizardFile() — Schreibsperre waehrend des Imports (U7, R02)', () => {
     let errorEl, filenameEl, resultEl, dropzone;
 
     beforeEach(() => {
@@ -413,6 +430,7 @@ describe('_processWizardFile() — Schreibsperre direkt nach dem Import (U7, R02
 
     afterEach(() => {
         delete context.window.retireCampaignWrites;
+        delete context.window.resumeCampaignWrites;
     });
 
     function exportDatei() {
@@ -423,36 +441,44 @@ describe('_processWizardFile() — Schreibsperre direkt nach dem Import (U7, R02
         );
     }
 
-    test('erfolgreicher Import -> retireCampaignWrites() unmittelbar nach importFullExport()', async () => {
+    test('erfolgreicher Import wartet auf die Schreibsperre und haelt sie bis zum Neuladen', async () => {
         const callOrder = [];
         context.window.saveUndoState = jest.fn(() => callOrder.push('saveUndoState'));
-        context.window.importFullExport = jest.fn(() => {
+        context.window.importFullExport = jest.fn(async () => {
             callOrder.push('importFullExport');
             return { totalBytes: 4096, campaignCount: 1 };
         });
+        let settleWrites;
         context.window.retireCampaignWrites = jest.fn(() => {
             callOrder.push('retireCampaignWrites');
-            return Promise.resolve();
+            return new Promise(resolve => { settleWrites = resolve; });
         });
+        context.window.resumeCampaignWrites = jest.fn();
 
         context._processWizardFile(exportDatei(), dropzone);
+        await waitFor(() => typeof settleWrites === 'function');
+        expect(context.window.importFullExport).not.toHaveBeenCalled();
+        settleWrites();
         await waitFor(() => resultEl.innerHTML !== '');
 
-        expect(callOrder).toEqual(['saveUndoState', 'importFullExport', 'retireCampaignWrites']);
+        expect(callOrder).toEqual(['saveUndoState', 'retireCampaignWrites', 'importFullExport']);
+        expect(context.window.resumeCampaignWrites).not.toHaveBeenCalled();
     });
 
-    test('scheiternder Import -> keine Schreibsperre (der Tab bleibt voll nutzbar)', async () => {
+    test('abgelehnter Import hebt die Schreibsperre wieder auf', async () => {
         context.window.saveUndoState = jest.fn();
-        context.window.importFullExport = jest.fn(() => {
-            throw new Error('Speichern fehlgeschlagen: QUOTA_EXCEEDED');
-        });
-        context.window.retireCampaignWrites = jest.fn(() => Promise.resolve());
+        context.window.importFullExport = jest.fn().mockRejectedValue(
+            new Error('Speichern fehlgeschlagen: QUOTA_EXCEEDED')
+        );
+        context.window.retireCampaignWrites = jest.fn().mockResolvedValue(undefined);
+        context.window.resumeCampaignWrites = jest.fn();
 
         context._processWizardFile(exportDatei(), dropzone);
         await waitFor(() => errorEl.textContent !== '');
 
         expect(errorEl.textContent).toMatch(/Import fehlgeschlagen/);
-        expect(context.window.retireCampaignWrites).not.toHaveBeenCalled();
+        expect(context.window.retireCampaignWrites).toHaveBeenCalledTimes(1);
+        expect(context.window.resumeCampaignWrites).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -515,6 +541,92 @@ describe('_setupWizardActions() — wizard-skip nach Schritt 4 (CR-01, SAFE-01)'
         context.window.location = { protocol: 'https:', reload: jest.fn() };
     });
 
+    test('Überspringen und erneutes Öffnen unterbrechen einen laufenden Import nicht', async () => {
+        const { modal, footerEl, getClickHandler } = createModalStub();
+        modal.style.display = 'flex';
+        modal.innerHTML = 'bestehender Assistent';
+        context.document = buildDocumentForModal(modal);
+        context._setupWizardActions(modal);
+        context.showWizardStep(3);
+        let finishImport;
+        context.window.importFullExport = jest.fn(() => new Promise(resolve => { finishImport = resolve; }));
+        const file = new global.File([JSON.stringify({ _exportType: 'full-v1' })], 'export.json');
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context._processWizardFile(file, dropzone);
+        await waitFor(() => typeof finishImport === 'function');
+        getClickHandler()({ target: { dataset: { action: 'wizard-skip' } } });
+        const displayAfterSkip = modal.style.display;
+        const skipped = storageBacking['migration-wizard-shown'];
+        context.showMigrationWizard();
+        const contentAfterReopen = modal.innerHTML;
+        getClickHandler()({ target: { dataset: { action: 'wizard-close' } } });
+        const prematureReloads = context.window.location.reload.mock.calls.length;
+
+        finishImport({ totalBytes: 4096, campaignCount: 1 });
+        await waitFor(() => resultEl.innerHTML !== '');
+
+        expect(displayAfterSkip).toBe('flex');
+        expect(skipped).toBeUndefined();
+        expect(contentAfterReopen).toBe('bestehender Assistent');
+        expect(prematureReloads).toBe(0);
+        expect(footerEl.style.display).toBe('none');
+        getClickHandler()({ target: { dataset: { action: 'wizard-close' } } });
+        expect(context.window.location.reload).toHaveBeenCalledTimes(1);
+    });
+
+    test('ein zweiter Leseversuch wird ignoriert, nach einem Lesefehler ist ein neuer möglich', () => {
+        const { modal, getClickHandler } = createModalStub();
+        modal.style.display = 'flex';
+        context.document = buildDocumentForModal(modal);
+        context._setupWizardActions(modal);
+        context.showWizardStep(3);
+        const originalReader = context.FileReader;
+        const reads = [];
+        context.FileReader = class extends global.FileReader {
+            readAsText() { reads.push(this); }
+        };
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        try {
+            context._processWizardFile({ size: 100 }, dropzone);
+            getClickHandler()({ target: { dataset: { action: 'wizard-skip' } } });
+            context._processWizardFile({ size: 100 }, dropzone);
+            const readsBeforeError = reads.length;
+            reads[0].onerror();
+            context._processWizardFile({ size: 100 }, dropzone);
+            reads[reads.length - 1].onerror();
+
+            expect(modal.style.display).toBe('flex');
+            expect(readsBeforeError).toBe(1);
+            expect(reads).toHaveLength(2);
+        } finally {
+            context.FileReader = originalReader;
+        }
+    });
+
+    test('eine 21-MiB-Umzugsdatei wird gelesen, eine Datei oberhalb der gemeinsamen Grenze nicht', () => {
+        context.document = buildDocumentForModal(createModalStub().modal);
+        const originalReader = context.FileReader;
+        const reads = [];
+        context.window.FULL_MIGRATION_MAX_BYTES = 64 * 1024 * 1024;
+        context.FileReader = class extends global.FileReader {
+            readAsText(file) { reads.push({ file, reader: this }); }
+        };
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        try {
+            context._processWizardFile({ size: 65 * 1024 * 1024 }, dropzone);
+            context._processWizardFile({ size: 21 * 1024 * 1024 }, dropzone);
+            reads[0]?.reader.onerror();
+
+            expect(reads.map(({ file }) => file.size)).toEqual([21 * 1024 * 1024]);
+        } finally {
+            context.FileReader = originalReader;
+            delete context.window.FULL_MIGRATION_MAX_BYTES;
+        }
+    });
+
     test('CR-01 Test A: Skip-Klick NACH abgeschlossenem _processWizardFile()-Import loest window.location.reload() aus', async () => {
         const { modal, getClickHandler } = createModalStub();
         context.document = buildDocumentForModal(modal);
@@ -524,7 +636,7 @@ describe('_setupWizardActions() — wizard-skip nach Schritt 4 (CR-01, SAFE-01)'
         mockGetCampaignIndex.mockReturnValue({ campaigns: [] });
         mockConfirm.mockReturnValue(true);
         context.window.saveUndoState = jest.fn();
-        context.window.importFullExport = jest.fn(() => ({ totalBytes: 4096, campaignCount: 1 }));
+        context.window.importFullExport = jest.fn().mockResolvedValue({ totalBytes: 4096, campaignCount: 1 });
 
         const file = new global.File(
             [JSON.stringify({ _exportType: 'full-v1', campaigns: { c1: {} } })],
@@ -775,7 +887,7 @@ describe('hasCampaignContent() — Gegenprobe + Strukturpruefung gegen core/data
 // Unterscheidung, die den Kommentar oben ueberhaupt noetig macht.
 // ============================================================
 const ERWARTETE_CONTENT_ARRAYS = [
-    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
+    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'lootChests', 'spells',
     'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
     'shops', 'links', 'filters', 'tags', 'quickRefCustom'
 ];
@@ -787,7 +899,7 @@ const ERWARTETE_CONTENT_PATHS = [
 ];
 
 describe('hasCampaignContent() — Mindestumfang gegen handgeschriebene Erwartung (R16, SAFE-04)', () => {
-    test('CAMPAIGN_CONTENT_ARRAYS enthaelt exakt die erwarteten 18 Sammlungen', () => {
+    test('CAMPAIGN_CONTENT_ARRAYS enthaelt exakt die erwarteten 19 Sammlungen', () => {
         expect([...REAL_CAMPAIGN_CONTENT_ARRAYS].sort()).toEqual([...ERWARTETE_CONTENT_ARRAYS].sort());
     });
 

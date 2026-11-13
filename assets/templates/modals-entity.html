@@ -106,6 +106,11 @@
                     <div class="editor-toolbar editor-toolbar-minimal" data-toolbar-for="npc-desc"><div class="toolbar-group" data-tb="chars"><button type="button" class="editor-btn editor-btn-type" data-action="format-text" data-cmd="npc-desc" data-editor="bold" title="Fett"><b>B</b></button><button type="button" class="editor-btn editor-btn-type" data-action="format-text" data-cmd="npc-desc" data-editor="italic" title="Kursiv"><i>I</i></button><button type="button" class="editor-btn editor-btn-type" data-action="format-text" data-cmd="npc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button></div><div class="toolbar-group toolbar-group-right" data-tb="right"><button type="button" class="editor-btn" data-action="clear-formatting" data-value="npc-desc" title="Formatierung entfernen"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button><span class="tb-anchor" data-tb="more"><button type="button" class="editor-btn" data-action="toggle-editor-menu" data-editor="npc-desc" data-value="tb-menu-more-npc-desc" data-tb-menu="more" title="Weitere Werkzeuge"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button><div class="tb-menu tb-menu-right" id="tb-menu-more-npc-desc" hidden><button type="button" class="tb-menu-item" data-action="format-text" data-cmd="npc-desc" data-editor="list">Liste</button><div class="tb-menu-head">Schrift</div><select class="editor-select" data-action="set-editor-font" data-editor="npc-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select><div class="tb-menu-head">Ansicht</div><button type="button" class="tb-menu-item" data-action="toggle-editor-bubble" data-editor="npc-desc"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Werkzeug-Blase</button><div class="tb-menu-head">Zuruecksetzen</div><button type="button" class="tb-menu-item tb-menu-item-danger" data-action="clear-formatting-hard" data-editor="npc-desc"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>Alles entkleiden</button></div></span></div></div>
                     <div id="npc-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
                 </div>
+
+                <div class="form-group">
+                    <label for="npc-notes">Notizen</label>
+                    <textarea id="npc-notes" rows="3"></textarea>
+                </div>
                 
                 <!-- Trigger -->
                 <div class="char-section-title">🔔 Trigger</div>
@@ -206,12 +211,12 @@
 
                 <!-- Tags -->
                 <div class="char-section-title">🏷️ Tags</div>
-                <div class="loot-tag-filters">
-                    <button class="loot-tag-filter-btn active" data-tag-category="all">Alle</button>
-                    <button class="loot-tag-filter-btn" data-tag-category="type">Typ</button>
-                    <button class="loot-tag-filter-btn" data-tag-category="property">Eigensch.</button>
-                    <button class="loot-tag-filter-btn" data-tag-category="magic">Magie</button>
-                    <button class="loot-tag-filter-btn" data-tag-category="slot">Slot</button>
+                <div class="loot-tag-filters" role="group" aria-label="Tag-Filter">
+                    <button type="button" class="loot-tag-filter-btn active" data-action="set-loot-tag-filter" data-value="all" aria-pressed="true">Alle</button>
+                    <button type="button" class="loot-tag-filter-btn" data-action="set-loot-tag-filter" data-value="type" aria-pressed="false">Typ</button>
+                    <button type="button" class="loot-tag-filter-btn" data-action="set-loot-tag-filter" data-value="property" aria-pressed="false">Eigensch.</button>
+                    <button type="button" class="loot-tag-filter-btn" data-action="set-loot-tag-filter" data-value="magic" aria-pressed="false">Magie</button>
+                    <button type="button" class="loot-tag-filter-btn" data-action="set-loot-tag-filter" data-value="slot" aria-pressed="false">Slot</button>
                 </div>
                 <div class="loot-tag-grid" id="loot-tag-grid">
                     <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="weapon"><span>⚔️ Waffe</span></label>
@@ -240,6 +245,8 @@
             <div class="btn-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
                 <button class="btn btn-success" data-action="call" data-value="saveLoot" id="loot-save-btn">💾 Speichern</button>
                 <button class="btn" data-action="hide-modal" data-value="loot-modal">Abbrechen</button>
+                <button type="button" class="btn" id="loot-save-choose-chest-btn" data-action="save-loot-and-choose-chest"
+                        aria-haspopup="dialog">Speichern &amp; Truhe wählen</button>
             </div>
         </div>
     </div>

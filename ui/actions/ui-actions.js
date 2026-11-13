@@ -27,14 +27,11 @@ const UIActions = {
         ctx.event.stopPropagation();
         navigateToEntityInPlace(ctx.type, ctx.id);
     },
-    'navigate-result': ctx => {
-        // data-loc traegt "null" als TEXT fuer "kein Ort" — darum wie data-id parsen
-        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
-    },
+    'navigate-result': ctx => navigateToResult(ctx.type, ctx.id),
+    'open-inspiration-article': ctx => window.openInspirationArticle(ctx.id),
     'mobile-search-navigate': ctx => {
         hideModal('mobile-search-modal');
-        // Derselbe Ort-Wert wie bei navigate-result: "null" ist kein Ort
-        navigateToResult(ctx.type, ctx.id, parseEntityId(ctx.target.dataset.loc));
+        navigateToResult(ctx.type, ctx.id);
     },
     'tag-search-navigate': ctx => {
         hideModal('tag-search-modal');

@@ -507,8 +507,11 @@ function onAfterSave() {
  * Wer dann weiter nur aus localStorage liest, sichert eine leere Kampagne —
  * und `pruneOldSnapshots()` raeumt darueber die letzten echten Snapshots weg.
  *
- * Reihenfolge: localStorage -> IndexedDB -> laufendes D-Objekt NUR fuer die
- * AKTIVE Kampagne (CR-02, Plan 12-10). Seit D-03 (Plan 12-03) ruft _doBackup()
+ * Wie beim Neustart ist ein localStorage-Eintrag mit Zeitstempel maßgeblich.
+ * Ohne Zeitstempel kann der Eintrag nach einem Quota-Fallback ein alter Schatten
+ * sein. In diesem Fall zuerst IndexedDB prüfen, danach die lokale Kopie und
+ * zuletzt das laufende D-Objekt NUR fuer die AKTIVE Kampagne (CR-02, Plan 12-10).
+ * Seit D-03 (Plan 12-03) ruft _doBackup()
  * diese Funktion fuer JEDE Kampagne des Index einzeln auf — ein Rueckfall, der
  * seinen eigenen campaignKey-Parameter ignoriert, wuerde die Daten der aktiven
  * Kampagne faelschlich in die Backup-Datei einer anderen, nie gespeicherten
@@ -520,30 +523,32 @@ function onAfterSave() {
  * (`Object.keys(obj).length > 0`) haelt BEIDE faelschlich fuer "befuellt".
  *
  * @param {string} campaignKey
+ * @param {{strictIdb?: boolean}} [options] Bei Lesefehlern keinen ungeprüften Schatten sichern
  * @returns {Promise<Object|null>} Daten, oder null wenn keine Quelle etwas liefert
  */
-async function readCampaignDataForBackup(campaignKey) {
-    // 1. localStorage (Normalfall <5MB)
-    if (typeof StorageAPI !== 'undefined') {
-        const ausLs = StorageAPI.getJSON(campaignKey, null);
-        if (_hatKampagnenInhalt(ausLs)) return ausLs;
+async function readCampaignDataForBackup(campaignKey, { strictIdb = false } = {}) {
+    const ausLs = typeof StorageAPI !== 'undefined' ? StorageAPI.getJSON(campaignKey, null) : null;
+    if (ausLs && StorageAPI.get?.(campaignKey + '_ts', null)) {
+        return _hatKampagnenInhalt(ausLs) ? ausLs : null;
     }
 
-    // 2. IndexedDB (IDB-Modus: der LS-Key wurde nach dem Write geloescht)
+    // Eine neuere, absichtlich geleerte Kampagne darf nicht den alten Schatten wiederbeleben.
     const idbRead = typeof window !== 'undefined' ? window.loadFromIndexedDBFallbackRaw : null;
     if (typeof idbRead === 'function') {
         try {
             const record = await idbRead(campaignKey);
-            if (record && record.data) {
+            if (record) {
                 const geparst = JSON.parse(record.data);
-                if (_hatKampagnenInhalt(geparst)) return geparst;
+                return _hatKampagnenInhalt(geparst) ? geparst : null;
             }
         } catch (e) {
             if (window.APP_CONFIG?.DEBUG_MODE) {
                 window.ErrorHandler?.log('readCampaignDataForBackup', e, 'IDB-Lesen fehlgeschlagen');
             }
+            if (strictIdb) return null;
         }
     }
+    if (_hatKampagnenInhalt(ausLs)) return ausLs;
 
     // 3. Letzter Ausweg: der laufende Zustand im Speicher — NUR fuer die
     // AKTIVE Kampagne (CR-02). Dieselbe Aufloesung wie in _doBackup() (:415-417);
@@ -580,7 +585,7 @@ async function _doBackup(dirHandle) {
         try {
             // Kampagnendaten laden — DEBT-17-Schutz gilt jetzt JE KAMPAGNE
             // (frueher nur einmal fuer die aktive Kampagne).
-            const data = await readCampaignDataForBackup(target.key);
+            const data = await readCampaignDataForBackup(target.key, { strictIdb: true });
 
             // DEBT-17: NIEMALS eine leere Kampagne schreiben. writeBackupForCampaign
             // wuerde -aktuell.json leeren und den Tages-Snapshot ueberschreiben,

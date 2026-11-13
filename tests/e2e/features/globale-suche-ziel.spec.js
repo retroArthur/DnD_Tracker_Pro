@@ -6,7 +6,7 @@
  * DIE AUSSAGE, AUF DIE ES ANKOMMT, in einem Satz: **jeder Treffer der
  * Kopfsuche bringt den Nutzer zu genau diesem Eintrag** — mit der Maus und mit
  * der Tastatur, er wechselt die Ansicht, schliesst die Suche und waehlt bzw.
- * oeffnet das Ziel, und zwar so, dass man es sieht.
+ * oeffnet das Ziel im Ansichtsmodus, und zwar so, dass man es sieht.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * DER BEFUND, aus dem diese Datei entstand — DREI FEHLER AUF EINEM WEG
@@ -287,8 +287,9 @@ function fehlerFangen(page) {
  * der Encounter-Liste ist ein anderer Eintrag als das Ziel.
  * @param {import('@playwright/test').Page} page
  * @param {{width: number, height: number}} [kleiner] Erst NACH dem Laden verkleinern
+ * @param {ReturnType<typeof saat>} [daten]
  */
-async function laden(page, kleiner) {
+async function laden(page, kleiner, daten = saat()) {
     await page.setViewportSize(BREIT);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -301,7 +302,7 @@ async function laden(page, kleiner) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        [SPEICHER, saat()]
+        [SPEICHER, daten]
     );
     await page.goto(APP_URL);
     await waitForAppReady(page);
@@ -560,13 +561,10 @@ function lage(page, name) {
                 ?.classList.contains('visible'),
             feld: wert('global-search'),
             charFormular: !!document.getElementById('char-form')?.classList.contains('open'),
-            charId: wert('edit-char-id'),
             npcDialog: offen('npc-modal'),
-            npcId: wert('edit-npc-id'),
+            ortDialog: offen('location-modal'),
             questDialog: offen('quest-modal'),
-            questId: wert('edit-quest-id'),
             spellDialog: offen('spell-modal'),
-            spellId: wert('edit-spell-id'),
             ortGewaehlt: ids(
                 '#location-list .loc-item.selected, #view-locations .loc-item.selected'
             ),
@@ -583,19 +581,62 @@ function lage(page, name) {
  * Was jeder Treffertyp nach dem Sprung zusagt. Ein Typ, den die Suche liefert
  * und der hier fehlt, macht die Ratsche rot: er braucht einen Zweig in
  * `navigateToResult()` UND eine Zusage hier.
- * @type {Record<string, (t: {typ: string, id: string, loc: string, name: string}) => object>}
+ * @type {Record<string, (t: {typ: string, id: string, name: string}) => object>}
  */
 const ZUSAGE = {
-    character: t => ({ ansicht: 'view-party', charFormular: true, charId: t.id }),
-    npc: t =>
-        !t.loc || t.loc === 'null'
-            ? { ansicht: 'view-npcs', npcGewaehlt: [t.id], npcDialog: true, npcId: t.id }
-            : { ansicht: 'view-locations', ortGewaehlt: [t.loc], npcDialog: true, npcId: t.id },
-    location: t => ({ ansicht: 'view-locations', ortGewaehlt: [t.id] }),
-    quest: t => ({ ansicht: 'view-quests', questDialog: true, questId: t.id }),
-    spell: t => ({ ansicht: 'view-spells', spellDialog: true, spellId: t.id }),
+    character: () => ({ ansicht: 'view-party', charFormular: false }),
+    npc: t => ({ ansicht: 'view-npcs', npcGewaehlt: [t.id], npcDialog: false }),
+    location: t => ({ ansicht: 'view-locations', ortGewaehlt: [t.id], ortDialog: false }),
+    quest: () => ({ ansicht: 'view-quests', questDialog: false }),
+    spell: () => ({ ansicht: 'view-spells', spellDialog: false }),
     encounter: t => ({ ansicht: 'view-encounter', encGewaehlt: [t.id], encDetailZeigtZiel: true })
 };
+
+/** @type {Record<string, (id: string) => string>} */
+const ZIELKARTEN = {
+    character: id => `#char-${id}`,
+    npc: id => `#npc-list .npc-item.selected[data-id="${id}"]`,
+    location: id => `#locations-list .loc-item.selected[data-id="${id}"]`,
+    quest: id => `#quest-${id}.expanded .quest-details`,
+    spell: id => `.spell-card.expanded[data-spell-id="${id}"] .spell-card-content`,
+    encounter: id => `#encounter-list .enc-item.selected[data-id="${id}"]`
+};
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {{typ: string, id: string, name: string}} t
+ */
+async function zielImBild(page, t) {
+    await weich
+        .poll(() => imBild(page, ZIELKARTEN[t.typ](t.id)), {
+            message: `${t.typ}:${t.id} zeigt die Zielkarte`,
+            timeout: 3000
+        })
+        .toBe('ja');
+    if (t.typ === 'npc' && t.name) {
+        await weich(page.locator('#npc-detail-panel .npc-detail-name')).toHaveText(t.name);
+    }
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name @param {string} id @param {string} [ort]
+ */
+async function nscDetailUndZurueck(page, name, id, ort = '') {
+    const panel = page.locator('#npc-detail-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('.npc-detail-name')).toHaveText(name);
+    const ortszeile = panel.locator('.npc-detail-location');
+    if (ort) await expect(ortszeile).toContainText(ort);
+    else await expect(ortszeile).toHaveCount(0);
+    const zurueck = panel.getByRole('button', { name: /Liste/ });
+    await expect(zurueck).toBeFocused();
+    await zurueck.click();
+    await expect(panel).toBeHidden();
+    const zeile = page.locator(ZIELKARTEN.npc(id));
+    await expect(zeile).toBeVisible();
+    await expect(zeile).toBeFocused();
+}
 
 /** Nur die Felder von `ist`, die `soll` nennt. */
 function auswahl(ist, soll) {
@@ -620,7 +661,7 @@ async function abwarten(page, name, soll, ms = 3000) {
 
 /**
  * Die Typliste AUS DEM BUENDEL: alle Treffer einer Suche nach dem Kunstwort,
- * mit Typ, ID und Ort, wie die Suche sie rendert.
+ * mit Typ, ID und Name, wie die Suche sie rendert.
  * @param {import('@playwright/test').Browser} browser
  */
 async function typListe(browser) {
@@ -637,7 +678,6 @@ async function typListe(browser) {
             return {
                 typ: d.type || '',
                 id: d.id || '',
-                loc: d.loc || '',
                 name: (e.querySelector('.search-result-name')?.textContent || '').trim()
             };
         })
@@ -733,11 +773,12 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             `Tab erreicht den Treffer, und der Fokus haelt ${WETTLAUF_MS} ms (Fokus: ${t.weg})`
         ).toBe(true);
         const soll = {
-            ...ZUSAGE.quest({ typ: 'quest', id: '6001', loc: '', name: '' }),
+            ...ZUSAGE.quest({ typ: 'quest', id: '6001', name: '' }),
             sucheOffen: false,
             feld: ''
         };
         weich(await abwarten(page, '', soll)).toEqual(soll);
+        await zielImBild(page, { typ: 'quest', id: '6001', name: 'Qorx-Auftrag' });
         weich(await fehler.alle()).toEqual([]);
     });
 
@@ -836,32 +877,30 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         weich(await fehler.alle()).toEqual([]);
     });
 
-    test('(5) NSC ohne Ort: NSC-Ansicht, der NSC gewaehlt, sein Bearbeiten-Dialog offen', async ({
+    test('(5) NSC ohne Ort: NSC-Ansicht, der NSC gewaehlt, Bearbeiten bleibt zu', async ({
         page
     }) => {
         const fehler = fehlerFangen(page);
         await laden(page);
         await tippen(page, 'Qorxine');
         const t = await trefferAbwarten(page, 'npc', 7002, 'Qorxine');
-        // Vorbedingung: der Treffer traegt "keinen Ort" — heute als Text "null".
-        expect(['', 'null']).toContain((await t.getAttribute('data-loc')) || '');
         await t.click();
         const soll = {
-            ...ZUSAGE.npc({ typ: 'npc', id: '7002', loc: 'null', name: '' }),
+            ...ZUSAGE.npc({ typ: 'npc', id: '7002', name: '' }),
             sucheOffen: false,
             feld: ''
         };
         weich(await abwarten(page, '', soll)).toEqual(soll);
+        await zielImBild(page, { typ: 'npc', id: '7002', name: 'Qorxine' });
         weich(await fehler.alle()).toEqual([]);
     });
 
     /**
      * Der NSC-Filter "Ort 0" blendet das Ziel (ein NSC ohne Ort) aus — das
      * Gegenstueck zu (4a/4b). Danach steht der Filter auf "Alle", das Ziel in
-     * der Liste, gewaehlt und mit Goldschein; nach dem Schliessen des Dialogs
-     * steht es im Bild, und nach einer Rundreise ueber die Reiter ist es immer
-     * noch gewaehlt. Bis 900 px blendet `npcs.css` das Detail aus — dort zaehlt
-     * nur die Liste.
+     * der Liste, gewaehlt und mit Goldschein; das Bearbeiten-Formular bleibt
+     * zu. Nach einer Rundreise ueber die Reiter ist das Ziel immer noch
+     * gewaehlt. Bis 900 px zeigt der Sprung das Vollbild mit Rueckweg zur Liste.
      * @param {import('@playwright/test').Page} page
      * @param {boolean} schmal
      */
@@ -873,6 +912,10 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             'data-id',
             '101'
         );
+        await page.locator('#npc-search').fill('Bert');
+        const merkliste = page.locator('#npc-favorites-filter');
+        await merkliste.click();
+        await expect(merkliste).toHaveAttribute('aria-pressed', 'true');
         await expect(
             page.locator(ziel),
             'Vorbedingung: der Filter blendet das Ziel aus'
@@ -882,7 +925,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         await tippen(page, 'Qorxine');
         await (await trefferAbwarten(page, 'npc', NSC_OHNE_ORT, 'Qorxine')).click();
         const soll = {
-            ...ZUSAGE.npc({ typ: 'npc', id: String(NSC_OHNE_ORT), loc: 'null', name: '' }),
+            ...ZUSAGE.npc({ typ: 'npc', id: String(NSC_OHNE_ORT), name: '' }),
             sucheOffen: false,
             feld: ''
         };
@@ -897,12 +940,13 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             )
             .not.toBe('');
 
-        await page.keyboard.press('Escape');
-        await expect(page.locator('#npc-modal'), 'Escape schliesst den Dialog').not.toHaveClass(
+        await expect(page.locator('#npc-modal'), 'Bearbeiten bleibt zu').not.toHaveClass(
             /\bshow\b/
         );
-        await weich.poll(() => imBild(page, ziel), { timeout: 3000 }).toBe('ja');
-        if (!schmal) {
+        if (schmal) {
+            await nscDetailUndZurueck(page, 'Qorxine', String(NSC_OHNE_ORT));
+        } else {
+            await weich.poll(() => imBild(page, ziel), { timeout: 3000 }).toBe('ja');
             weich((await nscLage(page)).detailZeigtZiel, 'das Detail zeigt das Ziel').toBe(true);
         }
 
@@ -927,7 +971,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         weich(await fehler.alle()).toEqual([]);
     });
 
-    test('(5c) NSC ohne Ort bei aktivem NSC-Filter "Ort 0" — 900x800, ohne Detailspalte', async ({
+    test('(5c) NSC ohne Ort bei aktivem NSC-Filter "Ort 0" — 900x800 mit Vollbild', async ({
         page
     }) => {
         const fehler = fehlerFangen(page);
@@ -948,7 +992,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             6
         );
         for (const t of liste) {
-            await test.step(`${t.typ}:${t.id} (Ort ${t.loc})`, async () => {
+            await test.step(`${t.typ}:${t.id}`, async () => {
                 const zusage = ZUSAGE[t.typ];
                 weich(
                     zusage,
@@ -965,6 +1009,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
                 weich(await abwarten(page, t.name, soll), `${t.typ}:${t.id} "${t.name}"`).toEqual(
                     soll
                 );
+                await zielImBild(page, t);
                 weich(await fehler.alle(), `${t.typ}:${t.id} Fehler`).toEqual([]);
                 await kontext.close();
             });
@@ -978,7 +1023,7 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         const liste = await typListe(browser);
         expect(liste.length).toBeGreaterThanOrEqual(6);
         for (const t of liste) {
-            await test.step(`${t.typ}:${t.id} (Ort ${t.loc})`, async () => {
+            await test.step(`${t.typ}:${t.id}`, async () => {
                 const zusage = ZUSAGE[t.typ];
                 weich(
                     zusage,
@@ -998,10 +1043,43 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
                 weich(await abwarten(page, t.name, soll), `${t.typ}:${t.id} "${t.name}"`).toEqual(
                     soll
                 );
+                await zielImBild(page, t);
                 weich(await fehler.alle(), `${t.typ}:${t.id} Fehler`).toEqual([]);
                 await kontext.close();
             });
         }
+    });
+
+    test('(6c) Zaubertreffer oeffnet dieselbe Karte trotz lokaler Suche und Seitengrenze', async ({
+        page
+    }) => {
+        const fehler = fehlerFangen(page);
+        const daten = saat();
+        daten.spells.push(
+            ...Array.from({ length: 70 }, (_, i) => ({
+                id: 8100 + i,
+                name: `Fuellzauber ${i}`,
+                level: 0,
+                school: 'Hervorrufung',
+                description: ''
+            }))
+        );
+        await laden(page, undefined, daten);
+        await zurAnsicht(page, 'spells');
+        const ziel = page.locator('.spell-card[data-spell-id="8001"]');
+        await expect(page.locator('.spell-card').first()).toBeVisible();
+        await expect(ziel, 'Qorxblitz liegt hinter der ersten Ergebnisseite').toHaveCount(0);
+        await page.locator('#spell-search').fill('Feuerball');
+        await expect(page.locator('.spell-card[data-spell-id="1"]')).toBeVisible();
+        await zurAnsicht(page, 'dashboard');
+
+        for (let wiederholung = 0; wiederholung < 2; wiederholung++) {
+            await tippen(page, 'Qorxblitz');
+            await (await trefferAbwarten(page, 'spell', 8001, 'Qorxblitz')).click();
+            await zielImBild(page, { typ: 'spell', id: '8001', name: 'Qorxblitz' });
+            await expect(page.locator('#spell-modal')).not.toHaveClass(/\bshow\b/);
+        }
+        weich(await fehler.alle()).toEqual([]);
     });
 
     test('(7) Tippen sucht weiter: ein neuer Begriff zeichnet neu, eine geschlossene Liste auch', async ({
@@ -1106,28 +1184,33 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
         weich(await fehler.alle()).toEqual([]);
     });
 
-    test('(9) Telefon 390x844, mobile Suche: ein NSC ohne Ort oeffnet in der NSC-Ansicht', async ({
+    test('(9) Telefon 390x844: mobile Suche zeigt NSC mit und ohne Ort im eigenen Vollbild', async ({
         page
     }) => {
         const fehler = fehlerFangen(page);
         await laden(page, TELEFON);
-        await page.locator('.mobile-header button[data-value="showMobileSearch"]').click();
-        const feld = page.locator('#mobile-search-input');
-        await expect(feld, 'die mobile Suche ist offen').toBeVisible();
-        await feld.pressSequentially('Qorxine', { delay: 20 });
-        const t = page.locator(
-            `#mobile-search-results [data-action="mobile-search-navigate"][data-type="npc"][data-id="${NSC_OHNE_ORT}"]`
-        );
-        await expect(t, 'Treffer Qorxine in der mobilen Suche').toBeVisible();
-        // Vorbedingung: auch hier traegt der Treffer "keinen Ort" als Text "null".
-        expect(['', 'null']).toContain((await t.getAttribute('data-loc')) || '');
-        await t.click();
-        const soll = ZUSAGE.npc({ typ: 'npc', id: String(NSC_OHNE_ORT), loc: 'null', name: '' });
-        weich(await abwarten(page, '', soll)).toEqual(soll);
-        await weich(
-            page.locator('#mobile-search-modal'),
-            'die mobile Suche ist zu'
-        ).not.toHaveClass(/\bshow\b/);
+        for (const nsc of [
+            { typ: 'npc', id: String(NSC_OHNE_ORT), name: 'Qorxine', ort: '' },
+            { typ: 'npc', id: '7001', name: 'Qorx der Wirt', ort: 'Qorxburg' }
+        ]) {
+            await page.locator('.mobile-header button[data-value="showMobileSearch"]').click();
+            const feld = page.locator('#mobile-search-input');
+            await expect(feld, 'die mobile Suche ist offen').toBeVisible();
+            await feld.fill('');
+            await feld.pressSequentially(nsc.name, { delay: 20 });
+            const treffer = page.locator(
+                `#mobile-search-results [data-action="mobile-search-navigate"][data-type="npc"][data-id="${nsc.id}"]`
+            );
+            await expect(treffer).toBeVisible();
+            await treffer.click();
+            const soll = ZUSAGE.npc(nsc);
+            weich(await abwarten(page, '', soll)).toEqual(soll);
+            await weich(
+                page.locator('#mobile-search-modal'),
+                'die mobile Suche ist zu'
+            ).not.toHaveClass(/\bshow\b/);
+            await nscDetailUndZurueck(page, nsc.name, nsc.id, nsc.ort);
+        }
         // Vorbestehend, nicht Teil dieses Falls: `$()` meldet im DEBUG_MODE das
         // Dialogfenster der mobilen Suche, das erst beim ersten Oeffnen angelegt
         // wird ("Element not found"), gemessen schon an 429ad8f. Genau diese

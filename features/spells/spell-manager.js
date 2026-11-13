@@ -11,7 +11,7 @@ const expandedSpells = new Set();
 // RENDER
 // ============================================================
 const debouncedRenderSpells = debounce(renderSpells, 200);
-function renderSpells() {
+function renderSpells(revealId = null) {
     const D = window.D;
     const renderEmptyState = window.renderEmptyState;
     const currentSpellFilter = window.currentSpellFilter || 'all';
@@ -166,14 +166,11 @@ function renderSpells() {
         return (a.name || '').localeCompare(b.name || '');
     });
     filteredSpellsCache = spells;
-    currentSpellPage = 0;
-    if (spells.length > SPELLS_PER_PAGE) {
-        const visibleSpells = spells.slice(0, SPELLS_PER_PAGE);
-        c.innerHTML =
-            renderSpellCards(visibleSpells) + renderLoadMoreButton(spells.length, SPELLS_PER_PAGE);
-    } else {
-        c.innerHTML = renderSpellCards(spells);
-    }
+    const revealIndex = revealId === null ? -1 : spells.findIndex(spell => spell.id === revealId);
+    currentSpellPage = Math.max(0, Math.floor(revealIndex / SPELLS_PER_PAGE));
+    const visibleSpells = spells.slice(0, (currentSpellPage + 1) * SPELLS_PER_PAGE);
+    c.innerHTML =
+        renderSpellCards(visibleSpells) + renderLoadMoreButton(spells.length, SPELLS_PER_PAGE);
 }
 function renderSpellCards(spells) {
     return spells
@@ -252,6 +249,28 @@ function toggleSpellCard(id) {
     if (card) {
         card.classList.toggle('expanded', expandedSpells.has(id));
     }
+}
+// Globale Suche: nach dem Tabwechsel den exakten Treffer auf seiner Seite öffnen.
+function openSpellSearchResult(id) {
+    const spell = EntityLookup.spell(id);
+    if (!spell) return;
+    const search = $('spell-search');
+    if (search?.value) {
+        search.value = '';
+        updateSearchClear(search);
+    }
+    const classFilter = $('spell-class-filter');
+    if (classFilter) classFilter.value = '';
+    window.currentSpellFilter = 'all';
+    window.currentSpellLevelFilter = 'all';
+    window.currentSpellSchoolFilter = 'all';
+
+    expandedSpells.add(spell.id);
+    renderSpells(spell.id);
+    const header = document.querySelector(
+        `.spell-card[data-spell-id="${spell.id}"] .spell-card-header`
+    );
+    header?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 function expandAllSpells() {
     const D = window.D;
@@ -643,6 +662,7 @@ function clearSpellForm() {
 // ============================================================
 window.debouncedRenderSpells = debouncedRenderSpells;
 window.renderSpells = renderSpells;
+window.openSpellSearchResult = openSpellSearchResult;
 window.toggleSpellCard = toggleSpellCard;
 window.expandAllSpells = expandAllSpells;
 window.collapseAllSpells = collapseAllSpells;

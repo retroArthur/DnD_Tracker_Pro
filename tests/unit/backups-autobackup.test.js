@@ -29,6 +29,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const { setImmediate: naechsterTask } = require('timers');
+const { erzeugeKampagnenSperrDb } = require('./helpers/campaign-lock-idb.js');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 // Loader-Reihenfolge (loader.js MODULES)
@@ -326,7 +327,7 @@ function erzeugeWerkbank(opt = {}) {
     ctx.self = ctx;
     ctx.document = document;
     ctx.localStorage = ls.api;
-    ctx.indexedDB = {};
+    ctx.indexedDB = erzeugeKampagnenSperrDb();
     ctx.ErrorHandler = { log: jest.fn(), showError: jest.fn() };
     ctx.debugLogAdd = jest.fn();
     ctx.log = () => {};

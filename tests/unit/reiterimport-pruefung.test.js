@@ -57,7 +57,7 @@ function erzeugeSeite(D) {
     ctx.hideModal = jest.fn();
     ctx.confirm = jest.fn(() => seite.antwort);
     ctx.saveUndoState = jest.fn();
-    ctx.save = jest.fn();
+    ctx.saveImmediate = jest.fn().mockResolvedValue({ success: true });
     ctx.renderAll = jest.fn();
     ctx.setViewCount = jest.fn();
     ctx.createAutoBackup = jest.fn(() => Promise.resolve('ok'));
@@ -620,7 +620,7 @@ describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () =
         ]);
         // "Hinzufügen" vergibt eine neue ID und geht weiter
         modus(seite, 'merge');
-        seite.ctx.executeImport('npcs');
+        await seite.ctx.executeImport('npcs');
         expect(plain(seite.ctx.D.npcs).map(n => n.name)).toEqual(['Volo', 'Objekt-ID']);
     });
 
@@ -646,12 +646,12 @@ describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () =
         expect(plain(seite.ctx.D.npcs)).toEqual([{ id: 1, name: 'Volo' }]);
         expect(seite.ctx.saveUndoState).not.toHaveBeenCalled();
         expect(seite.ctx.createAutoBackup).not.toHaveBeenCalled();
-        expect(seite.ctx.save).not.toHaveBeenCalled();
+        expect(seite.ctx.saveImmediate).not.toHaveBeenCalled();
         expect(seite.ctx.hideModal).not.toHaveBeenCalled();
 
         // dieselbe Datei, "Hinzufügen": neue IDs, geschrieben
         modus(seite, 'merge');
-        seite.ctx.executeImport('npcs');
+        await seite.ctx.executeImport('npcs');
         expect(seite.ctx.D.npcs.map(n => n.name)).toEqual(['Volo', 'Doppel A', 'Doppel B']);
         expect(seite.ctx.D.npcs.map(n => n.id)).toEqual([1, 101, 102]);
         expect(seite.ctx.saveUndoState).toHaveBeenCalledTimes(1);
@@ -685,7 +685,7 @@ describe('REITERIMPORT R6 — Ersetzen nur mit gueltigen, eindeutigen IDs', () =
         expect(vorschauZeilen()).toContain(
             'Ersetzen: 1 vorhandener Eintrag wird durch die Datei ersetzt; vorher wird eine Sicherheitskopie angelegt'
         );
-        seite.ctx.executeImport('npcs');
+        await seite.ctx.executeImport('npcs');
         expect(plain(seite.ctx.D.npcs)).toEqual([
             { id: 3, name: 'C' },
             { id: 4, name: 'D' }
@@ -759,6 +759,161 @@ describe('REITERIMPORT R4 — der ganze Eintrag hin und zurueck', () => {
         const seite = erzeugeSeite({ calendar: { events: [] } });
         expect(exportiere(seite, 'calendarEvents')).toBeNull();
         expect(seite.toasts).toEqual(['warning: Keine Ereignisse zum Exportieren vorhanden']);
+    });
+
+    const TRUHE = {
+        id: 7,
+        name: 'Beute am Hafen',
+        entries: [
+            {
+                name: 'Silberring',
+                description: 'Ein kleiner Ring mit Gravur',
+                category: 'Schmuck',
+                rarity: 'ungewöhnlich',
+                weight: 3.5
+            }
+        ]
+    };
+
+    test('eine Datei mit ausschließlich Truhen ist exportierbar und ergänzt den vorhandenen Bestand', async () => {
+        const quelle = erzeugeSeite({ loot: [], lootChests: [TRUHE] });
+        const exportiert = exportiere(quelle, 'loot');
+        expect(exportiert).toMatchObject({ _dataType: 'loot', data: [], lootChests: [TRUHE] });
+
+        const gegenstand = { id: 1, name: 'Karte' };
+        const vorhandeneTruhe = { id: 7, name: 'Waldversteck', entries: [] };
+        const { seite } = await angenommen('loot', JSON.stringify(exportiert), {
+            loot: [gegenstand],
+            lootChests: [vorhandeneTruhe]
+        });
+        expect(vorschauZeilen()).toContain('Truhen: 1');
+        await seite.ctx.executeImport('loot');
+
+        expect(plain(seite.ctx.D.loot)).toEqual([gegenstand]);
+        expect(plain(seite.ctx.D.lootChests)).toEqual([vorhandeneTruhe, { ...TRUHE, id: 101 }]);
+        expect(seite.ctx.nextId).toHaveBeenCalledWith('lootChests');
+        expect(seite.ctx.saveUndoState).toHaveBeenCalledTimes(1);
+        expect(seite.ctx.saveImmediate).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+        ['expliziter Truhenliste', { lootChests: [TRUHE] }, [TRUHE]],
+        ['explizit leerer Truhenliste', { lootChests: [] }, []],
+        ['älterer Datei ohne Truhenliste', {}, [{ ...TRUHE, name: 'Waldversteck' }]]
+    ])('Ersetzen mit %s übernimmt nur die enthaltenen Listen', async (_, kopf, erwartet) => {
+        const neu = { id: 1, name: 'Karte' };
+        const { seite } = await angenommen('loot', datei('loot', [neu], kopf), {
+            loot: [{ id: 1, name: 'Dolch' }],
+            lootChests: [{ ...TRUHE, name: 'Waldversteck' }]
+        });
+        modus(seite, 'replace');
+        if ('lootChests' in kopf) {
+            expect(vorschauZeilen().join('\n')).toMatch(/Truhen: [01][\s\S]*vorhanden.*Truhen/);
+        }
+        await seite.ctx.executeImport('loot');
+        expect(plain(seite.ctx.D.loot)).toEqual([neu]);
+        expect(plain(seite.ctx.D.lootChests)).toEqual(erwartet);
+    });
+
+    test('Hinzufügen löst fehlende und mehrdeutige Truhenverweise ausdrücklich', async () => {
+        const legacyEntry = TRUHE.entries[0];
+        const entries = [
+            ...[1, 2, 3, null].map(sourceItemId => ({ ...legacyEntry, sourceItemId })),
+            legacyEntry
+        ];
+        const items = [
+            { id: 1, name: 'Silberring' },
+            { id: 2, name: 'Armreif' },
+            { id: 2, name: 'Kette' }
+        ];
+        const { seite } = await angenommen(
+            'loot',
+            datei('loot', items, { lootChests: [{ ...TRUHE, entries }] }),
+            {
+                loot: [
+                    { id: 1, name: 'Dolch' },
+                    { id: 3, name: 'Karte' }
+                ],
+                lootChests: []
+            }
+        );
+        await seite.ctx.executeImport('loot');
+        const [truhe] = plain(seite.ctx.D.lootChests);
+        const ring = seite.ctx.D.loot.find(item => item.name === 'Silberring');
+        expect(truhe.entries).toEqual([
+            { ...legacyEntry, sourceItemId: ring.id },
+            { ...legacyEntry, sourceItemId: null },
+            { ...legacyEntry, sourceItemId: null },
+            { ...legacyEntry, sourceItemId: null },
+            legacyEntry
+        ]);
+    });
+
+    test.each([true, false])(
+        'Ersetzen prüft Truhenverweise gegen die Herkunft (mit Truhenliste: %s)',
+        async mitTruhen => {
+            const legacyEntry = TRUHE.entries[0];
+            const entries = [
+                ...[1, 2, null].map(sourceItemId => ({ ...legacyEntry, sourceItemId })),
+                legacyEntry
+            ];
+            const truhe = { ...TRUHE, entries };
+            const items = [{ id: 1, name: 'Silberring' }];
+            const kopf = mitTruhen ? { lootChests: [truhe] } : {};
+            const { seite } = await angenommen('loot', datei('loot', items, kopf), {
+                loot: [
+                    { id: 1, name: 'Dolch' },
+                    { id: 2, name: 'Karte' }
+                ],
+                lootChests: [truhe]
+            });
+            modus(seite, 'replace');
+            await seite.ctx.executeImport('loot');
+            const geloest = { ...legacyEntry, sourceItemId: null };
+            expect(plain(seite.ctx.D.lootChests)).toEqual([
+                {
+                    ...TRUHE,
+                    entries: [
+                        mitTruhen ? { ...legacyEntry, sourceItemId: 1 } : geloest,
+                        geloest,
+                        geloest,
+                        legacyEntry
+                    ]
+                }
+            ]);
+        }
+    );
+
+    test('eine Truhe mit ungültigem Gewicht wird vor der Importvorschau abgelehnt', async () => {
+        const defekt = { ...TRUHE, entries: [{ ...TRUHE.entries[0], weight: -1 }] };
+        await abgelehnt(
+            'loot',
+            datei('loot', [{ id: 1, name: 'Karte' }], { lootChests: [defekt] }),
+            /Truhe 1/,
+            { loot: [{ id: 1, name: 'Dolch' }], lootChests: [TRUHE] }
+        );
+    });
+
+    test('doppelte Truhen-IDs sperren Ersetzen, Hinzufügen vergibt neue IDs', async () => {
+        const bestand = { loot: [], lootChests: [TRUHE] };
+        const { seite } = await angenommen(
+            'loot',
+            datei('loot', [], { lootChests: [TRUHE, { ...TRUHE, name: 'Am Steg' }] }),
+            bestand
+        );
+        modus(seite, 'replace');
+        expect(vorschauZeilen().join('\n')).toMatch(/Truhen: Ersetzen nicht möglich.*doppelt/);
+        await seite.ctx.executeImport('loot');
+        expect(plain(seite.ctx.D.lootChests)).toEqual([TRUHE]);
+        expect(seite.ctx.saveImmediate).not.toHaveBeenCalled();
+
+        modus(seite, 'merge');
+        await seite.ctx.executeImport('loot');
+        expect(plain(seite.ctx.D.lootChests)).toEqual([
+            TRUHE,
+            { ...TRUHE, id: 101 },
+            { ...TRUHE, id: 102, name: 'Am Steg' }
+        ]);
     });
 
     test('E3: Export -> Import: der Eintrag kommt tief gleich an, keine Warnung', async () => {

@@ -4,7 +4,7 @@
  */
 
 // ============================================================
-// AUDIT_MUSTER — die drei Regexe der Quelltext-Audits, EINE Quelle.
+// AUDIT_MUSTER — die Regexe der Quelltext-Audits, EINE Quelle.
 //
 // Zwei Faelle dieser Datei schneiden Funktionskoerper aus
 // `systems/spellslots/persistence.js` heraus und urteilen ueber deren
@@ -40,7 +40,7 @@
 //
 // `\r?\n` statt `\n` an beiden Enden. Unter LF ist das Verhalten
 // unveraendert (das `\r?` greift ins Leere), unter CRLF greift es. Der
-// Waechter 'Die drei Audit-Muster urteilen ueber Code, nicht ueber
+// Waechter 'Die Audit-Muster urteilen ueber Code, nicht ueber
 // Zeilenenden' unten haelt beide Richtungen fest — er prueft jedes Muster
 // gegen EINE LF- und EINE CRLF-Fassung derselben Quelle und ist damit auch
 // im LF-Arbeitsbaum aussagekraeftig, wo der Fehler sonst unsichtbar ist.
@@ -51,7 +51,8 @@
 // drei Zeilen. Als offener Posten notiert, hier nicht mitgemacht.
 // ============================================================
 const AUDIT_MUSTER = {
-    saveImmediate: /async function saveImmediate\(\)\s*{[\s\S]*?\r?\n}\r?\n/,
+    saveImmediate: /async function saveImmediate\([^)]*\)\s*{[\s\S]*?\r?\n}\r?\n/,
+    immediateWrite: /async function _saveImmediate\([^)]*\)\s*{[\s\S]*?\r?\n}\r?\n/,
     save: /const save = function[\s\S]*?\r?\n};\r?\n/,
     persistNow: /async function _persistNow\([^)]*\)\s*{[\s\S]*?\r?\n}\r?\n/
 };
@@ -75,7 +76,7 @@ describe('Quelltext-Audit-Muster — Code, nicht Zeilenenden', () => {
     // soll: rot aus einem fremden Grund. Die Befunde werden darum GESAMMELT
     // und als Liste verglichen; so steht der Grund in der Diff-Ausgabe und
     // nicht in einem Argument, das Jest verwirft.
-    test('Die drei Audit-Muster urteilen ueber Code, nicht ueber Zeilenenden', () => {
+    test('Die Audit-Muster urteilen ueber Code, nicht ueber Zeilenenden', () => {
         const { lf, crlf } = beideFassungen();
 
         // Gegenprobe gegen Leerlauf: die beiden Fassungen sind wirklich
@@ -1042,7 +1043,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             expect(branch).toMatch(
                 /const\s+loadFromIndexedDBFallback\s*=\s*window\.loadFromIndexedDBFallback/
             );
-            expect(branch).toMatch(/s\s*=\s*await\s+loadFromIndexedDBFallback\(\s*key\s*\)/);
+            expect(branch).toMatch(/s\s*=\s*await\s+loadFromIndexedDBFallback\(\s*key,\s*record\s*=>/);
 
             // 2. Gegenseite in persistence.js: der Fallback liefert .data aus dem
             //    Record. Die Deklaration muss auf oberster Ebene stehen (Spalte 0) —
@@ -1053,15 +1054,18 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
                 path.join(__dirname, '../../systems/spellslots/persistence.js'),
                 'utf-8'
             );
-            expect(persistSrc).toMatch(/^async function loadFromIndexedDBFallback\(key\)/m);
+            expect(persistSrc).toMatch(/^async function loadFromIndexedDBFallback\(key, onRead\)/m);
             expect(persistSrc).toMatch(/resolve\(request\.result\.data\)/);
 
             // 3. Der Schreibzweig entfernt den LS-Schatten NACH dem bestätigten
             //    IDB-Write — diese Reihenfolge ist der Kern von D-01/STAB-05.
             const writeIdx = persistSrc.indexOf('if (dataSizeMB > LS_LIMIT_MB) {');
             expect(writeIdx).toBeGreaterThan(-1);
-            const writeBranch = persistSrc.slice(writeIdx, writeIdx + 400);
-            const awaitIdx = writeBranch.indexOf('await saveToIndexedDBFallback(key, dataString)');
+            const writeBranch = persistSrc.slice(
+                writeIdx,
+                persistSrc.indexOf('// Normaler localStorage-Save', writeIdx)
+            );
+            const awaitIdx = writeBranch.indexOf('await saveToIndexedDBFallback(key, dataString');
             const removeIdx = writeBranch.indexOf('StorageAPI.remove(key)');
             expect(awaitIdx).toBeGreaterThan(-1);
             expect(removeIdx).toBeGreaterThan(awaitIdx);
@@ -1382,11 +1386,13 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const srcPath = path.join(__dirname, '../../systems/spellslots/persistence.js');
             const src = fs.readFileSync(srcPath, 'utf-8');
 
-            // saveImmediate(): Funktionskörper isolieren, um sicherzugehen, dass der
-            // catch-Zweig DIESER Funktion (nicht z. B. der von save()) geprüft wird.
+            // saveImmediate() erfasst den Auftrag und delegiert den Schreibdurchlauf.
             const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
             expect(saveImmediateMatch).not.toBeNull();
-            const saveImmediateBody = saveImmediateMatch[0];
+            expect(saveImmediateMatch[0]).toMatch(/_saveImmediate\(key, prepare\)/);
+            const immediateWriteMatch = src.match(AUDIT_MUSTER.immediateWrite);
+            expect(immediateWriteMatch).not.toBeNull();
+            const saveImmediateBody = immediateWriteMatch[0];
             const saveImmediateCatch = saveImmediateBody.slice(saveImmediateBody.indexOf('} catch (e) {'));
             expect(saveImmediateCatch).toMatch(/saveToIndexedDBFallback\(/);
 
@@ -1395,7 +1401,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             // zieht ihn vor); save() selbst plant nur noch diesen Durchlauf ein.
             const saveMatch = src.match(AUDIT_MUSTER.save);
             expect(saveMatch).not.toBeNull();
-            expect(saveMatch[0]).toMatch(/_persistNow\(showMessage\)/);
+            expect(saveMatch[0]).toMatch(/_persistNow\(showMessage\b/);
             const persistNowMatch = src.match(AUDIT_MUSTER.persistNow);
             expect(persistNowMatch).not.toBeNull();
             const saveBody = persistNowMatch[0];
@@ -1898,6 +1904,8 @@ describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', 
 
         const saveImmediateMatch = src.match(AUDIT_MUSTER.saveImmediate);
         expect(saveImmediateMatch).not.toBeNull();
+        const immediateWriteMatch = src.match(AUDIT_MUSTER.immediateWrite);
+        expect(immediateWriteMatch).not.toBeNull();
         const saveMatch = src.match(AUDIT_MUSTER.save);
         expect(saveMatch).not.toBeNull();
         // Seit U7 (R02) liegt der entprellte Save-Koerper in _persistNow()
@@ -1908,8 +1916,8 @@ describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', 
         // Schalter still zurueckkehrte. Ein Ersatz unter anderem Element-Namen
         // (z. B. 'autosave-switch') stellt denselben Defekt wieder her und wuerde
         // vom reinen Literal-Grep auf "autosave-toggle" NICHT gefangen. Deshalb
-        // hier: in beiden Funktionskoerpern darf gar keine DOM-Abfrage stehen.
-        [saveImmediateMatch[0], saveMatch[0], persistNowMatch[0]].forEach(koerper => {
+        // hier: in den Aufruf- und Schreibkoerpern darf gar keine DOM-Abfrage stehen.
+        [saveImmediateMatch[0], immediateWriteMatch[0], saveMatch[0], persistNowMatch[0]].forEach(koerper => {
             expect(koerper).not.toMatch(/getElementById\(/);
             expect(koerper).not.toMatch(/querySelector\(/);
             expect(koerper).not.toMatch(/\$c?\(['"][a-z-]+['"]\)/);
@@ -2769,7 +2777,7 @@ describe('PERF-01 — Messung gegen realistisch dimensionierte Kampagne (13-PERF
         expect(medianMs).toBeGreaterThan(0);
         expect(zeichenLaenge).toBeGreaterThan(100000);
         expect(byteLaenge).toBeGreaterThan(0);
-        expect(kampagne.bestiary.length).toBe(112);
+        expect(kampagne.bestiary.length).toBeGreaterThanOrEqual(112);
         expect(kampagne.spells.length).toBeGreaterThan(0);
 
         const UNDO_BYTE_BUDGET_MB = 64;

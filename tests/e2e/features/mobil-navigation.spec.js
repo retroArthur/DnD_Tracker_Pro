@@ -116,7 +116,7 @@ const ENGE_FENSTER = [
 ];
 
 /** Vollzahl der Ansichten (dieselbe Liste wie in der Reiter-Registrierung). */
-const ANZAHL_ANSICHTEN = 24;
+const ANZAHL_ANSICHTEN = 25;
 
 /** Kleinste Tippflaeche, die ein Daumen zuverlaessig trifft. */
 const MIN_TIPPFLAECHE = 44;
@@ -512,10 +512,10 @@ function pruefeWaagerechteAchse(m, breite, kennung) {
 /* ====================================================================
    ZUSICHERUNG 1-4 — die beiden Telefonfenster, alle vier Themes.
    ==================================================================== */
-test.describe('M1 — alle 24 Ansichten auf dem Telefon', () => {
+test.describe('M1 — alle Ansichten auf dem Telefon', () => {
     for (const theme of THEMES) {
         for (const [breite, hoehe] of FENSTER) {
-            test(`${breite}x${hoehe}, Theme ${theme}: alle 24 Reiter erreichbar`, async ({
+            test(`${breite}x${hoehe}, Theme ${theme}: alle Reiter erreichbar`, async ({
                 page
             }) => {
                 await page.setViewportSize({ width: breite, height: hoehe });
@@ -715,7 +715,7 @@ test.describe('M1 — kurzes Fenster: das Mausrad reicht', () => {
 test.describe('M1 — enges Telefon: die Leiste bleibt im Fenster', () => {
     for (const theme of THEMES) {
         for (const [breite, hoehe] of ENGE_FENSTER) {
-            test(`${breite}x${hoehe}, Theme ${theme}: alle 24 Reiter erreichbar`, async ({
+            test(`${breite}x${hoehe}, Theme ${theme}: alle Reiter erreichbar`, async ({
                 page
             }) => {
                 await page.setViewportSize({ width: breite, height: hoehe });

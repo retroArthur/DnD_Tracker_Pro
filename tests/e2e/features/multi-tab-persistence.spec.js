@@ -77,6 +77,14 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
         await seedCleanSessionOnce(page.context());
         await loadApp(page);
 
+        // Der Seed hat keinen Zeitstempel. Erst ein bestätigter LocalStorage-Save
+        // macht ihn zur führenden Kopie für den synchronen Entladepfad.
+        // @ts-ignore — App-Global im Seitenkontext
+        expect(await page.evaluate(() => window.saveImmediate())).toMatchObject({
+            success: true,
+            backend: 'localStorage'
+        });
+
         await page.evaluate(() => {
             // @ts-ignore — App-Globals im Seitenkontext
             window.D.quickNotes = 'R02-Sicherheitsnetz';

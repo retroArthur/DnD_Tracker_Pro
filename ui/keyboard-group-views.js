@@ -310,6 +310,14 @@ const ANSICHTSGRUPPEN = [
         zustand: zeileAktuell()
     },
     {
+        name: 'nscMerkliste',
+        behaelter: 'div#npc-list',
+        glied: '[data-action="toggle-npc-favorite"]',
+        achse: 'vertical',
+        beschriftung: () => 'NPC-Merkliste',
+        zustand: MARKE_GEDRUECKT
+    },
+    {
         name: 'nscFilter',
         behaelter: 'div#npc-filters',
         glied: '[data-action="set-npc-filter"]',

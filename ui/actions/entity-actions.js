@@ -236,6 +236,33 @@ const EntityActions = {
     'set-npc-filter': ctx => {
         if (typeof setNpcFilter === 'function') setNpcFilter(ctx.id || ctx.value);
     },
+    'toggle-npc-favorite': ctx => {
+        const npc = EntityLookup.npc(ctx.id);
+        if (!npc) return;
+        pushUndo('NPC-Merkliste geändert');
+        if (npc.nextSession === true) delete npc.nextSession;
+        else npc.nextSession = true;
+        saveImmediate();
+
+        const wasFocused = document.activeElement === ctx.target;
+        const detail = ctx.target.closest('#npc-detail-panel');
+        const list = $('npc-list');
+        const master = list?.closest('.npc-master');
+        const scrollTop = master?.scrollTop;
+        renderNPCList();
+        if (master) master.scrollTop = scrollTop;
+        if (wasFocused && (!detail || detail.getClientRects().length)) {
+            const stars = (detail || list)?.querySelectorAll('[data-action="toggle-npc-favorite"]');
+            if (detail || (stars?.length ?? 0) < 2) {
+                (stars?.[0] || $('npc-favorites-filter'))?.focus({ preventScroll: true });
+            }
+        }
+    },
+    'toggle-npc-favorites-filter': ctx => {
+        const pressed = ctx.target.getAttribute('aria-pressed') === 'true';
+        ctx.target.setAttribute('aria-pressed', String(!pressed));
+        renderNPCList();
+    },
     'edit-npc-stop': ctx => {
         ctx.event.stopPropagation();
         editNPC(ctx.id);
@@ -255,12 +282,15 @@ const EntityActions = {
     },
     'view-npc-details': ctx => {
         closeNPCPopup();
-        switchView('view-npcs');
-        setTimeout(() => {
-            const card = document.getElementById(`npc-card-${ctx.id}`);
-            if (card) card.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        const search = $('npc-search');
+        if (search?.value) {
+            search.value = '';
+            updateSearchClear(search);
+        }
+        switchView('npcs');
+        toggleNPC(ctx.id);
     },
+    'close-npc-search-detail': () => closeNPCSearchDetail(),
     'toggle-npc-section': ctx => {
         const content = ctx.target.nextElementSibling;
         if (content) {
@@ -420,6 +450,7 @@ const EntityActions = {
     'select-loot': ctx => {
         if (typeof selectLoot === 'function') selectLoot(ctx.id);
     },
+    'close-loot-mobile-detail': () => window.closeLootMobileDetail?.(),
     'edit-loot': ctx => {
         ctx.event.stopPropagation();
         editLoot(ctx.id);
@@ -437,8 +468,19 @@ const EntityActions = {
         removeLoot(ctx.id);
     },
     'set-loot-filter': ctx => setLootFilter(ctx.value || 'all'),
+    'set-loot-tag-filter': ctx => setLootTagFilter(ctx.value || 'all'),
+    'sort-loot': ctx => {
+        if (ctx.event.type === 'change') renderLootList();
+    },
     'show-loot-modal': ctx => {
         if (typeof showLootModal === 'function') showLootModal(ctx.id || null);
+    },
+    'set-loot-chest-view': ctx => window.setLootChestView(ctx.value === 'templates'),
+    'open-loot-chests': ctx => window.openLootChests(ctx.id),
+    'open-loot-chest-template': ctx => window.openLootChestTemplate(ctx.id, ctx.value === 'drop'),
+    'save-loot-and-choose-chest': () => {
+        const id = saveLoot();
+        if (id !== null) window.openLootChests(id);
     },
 
     // Spell actions

@@ -27,7 +27,10 @@ interface BroadcastMessage {
     timestamp: number;
 }
 declare function initConflictDetection(): void;
-declare function broadcastSave(): void;
+declare function broadcastSave(
+    campaign?: string,
+    change?: { backend?: 'localStorage' | 'indexedDB'; revision?: string | null }
+): void;
 declare function showConflictBanner(): void;
 declare function dismissConflict(): void;
 declare function reloadData(): void;

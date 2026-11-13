@@ -3,20 +3,25 @@
             <div class="section-toolbar">
                 <!-- Gruppe 1: Identität -->
                 <div class="section-toolbar-identity">
-                    <span class="section-toolbar-title">📦 Truhe</span>
-                    <span class="section-toolbar-count" id="loot-count">0</span>
+                    <span class="section-toolbar-title" id="loot-view-title">📦 Truhe</span>
+                    <span class="section-toolbar-count" id="loot-count" data-loot-items-only>0</span>
                 </div>
                 <!-- Gruppe 2: Suche -->
-                <div class="section-toolbar-search">
+                <div class="section-toolbar-search" data-loot-items-only>
                     <div class="search-wrapper">
                         <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." data-action="search-input" data-render="renderLootList">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
+                    <select class="toolbar-select" id="loot-sort" data-action="sort-loot" aria-label="Items sortieren" title="Items sortieren">
+                        <option value="name">Name A–Z</option>
+                        <option value="rarity-desc">Seltenste zuerst</option>
+                        <option value="rarity-asc">Häufigste zuerst</option>
+                    </select>
                 </div>
                 <!-- Gruppe 3: Filter + IO -->
                 <div class="section-toolbar-filters">
-                    <div class="loot-filter-chips" id="loot-filters"></div>
-                    <button class="btn btn-sm btn-gold" data-action="show-loot-distribution" title="Beute auf Party verteilen">💰 Verteilen</button>
+                    <div class="loot-filter-chips" id="loot-filters" data-loot-items-only></div>
+                    <button class="btn btn-sm btn-gold" data-action="show-loot-distribution" title="Beute auf Party verteilen" data-loot-items-only>💰 Verteilen</button>
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="loot" title="Truhe exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-loot" title="Truhe importieren">📥</button>
@@ -25,12 +30,15 @@
                 </div>
                 <!-- Gruppe 4: Primäre Aktion -->
                 <div class="section-toolbar-actions">
-                    <button class="btn btn-primary" data-action="show-loot-modal">+ Item</button>
+                    <button type="button" class="btn" id="loot-chest-view-toggle" data-action="set-loot-chest-view"
+                            data-value="templates" aria-controls="loot-chest-templates loot-items-layout">Truhen</button>
+                    <button type="button" class="btn btn-primary" id="loot-view-create" data-action="show-loot-modal"
+                            aria-haspopup="dialog">+ Item</button>
                 </div>
             </div>
 
             <!-- Master-Detail Layout -->
-            <div class="loot-layout">
+            <div class="loot-layout" id="loot-items-layout" data-loot-items-only>
                 <!-- Liste (Master) -->
                 <div class="loot-master">
                     <div class="loot-list" id="loot-list"></div>
@@ -44,7 +52,94 @@
                     </div>
                 </div>
             </div>
+
+            <section id="loot-chest-templates" aria-label="Drop-Vorlagen" hidden>
+                <p class="loot-chest-template-note" id="loot-chest-templates-empty">Noch keine Drop-Vorlagen. Lege über „+ Truhe“ deine erste Vorlage an.</p>
+                <ul id="loot-chest-template-list" class="loot-chest-template-list"></ul>
+            </section>
         </section>
+
+        <div class="modal-overlay" id="loot-chests-modal" aria-labelledby="loot-chests-title">
+            <div class="modal loot-chest-dialog">
+                <div class="modal-header">
+                    <span class="modal-title" id="loot-chests-title">Truhen</span>
+                    <button type="button" class="btn btn-sm" data-action="hide-modal"
+                            data-value="loot-chests-modal" aria-label="Truhen schließen">✕</button>
+                </div>
+                <form id="loot-chest-create" class="loot-chest-controls">
+                    <div class="form-group loot-chest-field">
+                        <label for="loot-chest-name">Name der neuen Truhe</label>
+                        <input type="text" id="loot-chest-name" maxlength="120" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Truhe anlegen</button>
+                </form>
+                <div class="form-group" id="loot-chest-picker" hidden>
+                    <label for="loot-chest-select">Truhe auswählen</label>
+                    <select id="loot-chest-select"></select>
+                </div>
+                <div id="loot-chest-details" class="loot-chest-details" hidden>
+                    <form id="loot-chest-rename" class="loot-chest-controls">
+                        <div class="form-group loot-chest-field">
+                            <label for="loot-chest-current-name">Truhenname</label>
+                            <input type="text" id="loot-chest-current-name" maxlength="120" required>
+                        </div>
+                        <button type="submit" class="btn">Name speichern</button>
+                        <button type="button" class="btn btn-danger" id="loot-chest-delete">Truhe löschen</button>
+                    </form>
+                    <form id="loot-chest-add" class="loot-chest-controls">
+                        <div class="form-group loot-chest-field">
+                            <label for="loot-chest-item">Gegenstand</label>
+                            <select id="loot-chest-item" required></select>
+                        </div>
+                        <div class="form-group loot-chest-weight-field">
+                            <div class="loot-chest-weight-label">
+                                <label for="loot-chest-weight">Drop-Gewicht</label>
+                                <button type="button" class="btn btn-sm" id="loot-chest-weight-help-toggle"
+                                        aria-label="Info zum Drop-Gewicht" aria-expanded="false"
+                                        aria-controls="loot-chest-weight-help">ⓘ</button>
+                            </div>
+                            <input type="number" id="loot-chest-weight" min="0" max="1000000"
+                                   step="any" value="1" required>
+                        </div>
+                        <button type="submit" class="btn" id="loot-chest-add-button">Gegenstand hinzufügen</button>
+                    </form>
+                    <div id="loot-chest-weight-help" class="loot-chest-help" hidden>
+                        <p><strong>Erlaubt sind 0 bis 1.000.000 pro Gegenstand.</strong> Dezimalzahlen wie 0,5 sind möglich. Beim Hinzufügen ist 1 voreingestellt.</p>
+                        <p>Die Drop-Chance ergibt sich aus dem <strong>Gewicht des Gegenstands geteilt durch die Summe aller Gewichte</strong>. Bei zwei Gegenständen mit den Gewichten 1 und 3 sind die Chancen <strong>25 % und 75 %</strong>. Gleiche Gewichte ergeben gleiche Chancen.</p>
+                        <p>Gewicht <strong>0</strong> setzt den Gegenstand aus. Hat mindestens ein Gegenstand ein positives Gewicht, liefert jeder Klick auf „Drop“ genau einen Gegenstand. Bei einer leeren Truhe oder wenn alle Gewichte 0 sind, gibt es keinen Drop.</p>
+                    </div>
+                    <div>
+                        <h3>Truheninhalt</h3>
+                        <p class="loot-chest-hint">Gewichte bestimmen die Drop-Chance. Gewicht 0 setzt den Eintrag aus.</p>
+                        <ul id="loot-chest-entries" class="loot-chest-entries"></ul>
+                    </div>
+                    <div class="loot-chest-drop">
+                        <button type="button" class="btn btn-primary" id="loot-chest-drop">Drop</button>
+                        <div id="loot-chest-drop-result" class="loot-chest-result" role="status" aria-live="polite" aria-atomic="true"></div>
+                        <div id="loot-chest-drop-assignment" class="loot-chest-assignment"></div>
+                    </div>
+                </div>
+                <div class="loot-chest-footer">
+                    <span class="loot-chest-hint" id="loot-chest-finish-status" role="status"></span>
+                    <button type="button" class="btn btn-primary" id="loot-chest-finish">Fertig</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="loot-chest-quick-drop-modal" aria-labelledby="loot-chest-quick-drop-title">
+            <div class="modal loot-chest-dialog loot-chest-quick-dialog">
+                <div class="modal-header">
+                    <span class="modal-title" id="loot-chest-quick-drop-title">Drop</span>
+                    <button type="button" class="btn btn-sm" data-action="hide-modal"
+                            data-value="loot-chest-quick-drop-modal" aria-label="Drop schließen">✕</button>
+                </div>
+                <div class="loot-chest-quick-content">
+                    <div id="loot-chest-quick-drop-result" class="loot-chest-result" role="status" aria-live="polite" aria-atomic="true"></div>
+                    <div id="loot-chest-quick-drop-assignment" class="loot-chest-assignment"></div>
+                    <button type="button" class="btn" id="loot-chest-quick-reroll">Noch einmal würfeln</button>
+                </div>
+            </div>
+        </div>
         
         <!-- SHOPS VIEW -->
         <section id="view-shops" class="view">
@@ -59,7 +154,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="shop-search" class="toolbar-search" placeholder="🔍 Shop suchen..." data-action="search-input" data-render="renderShops">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="shop-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="shop-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 
@@ -127,7 +222,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="spell-search" class="toolbar-search" placeholder="🔍 Zauber suchen..." data-action="search-input" data-render="debouncedRenderSpells">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="spell-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="spell-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 
@@ -207,7 +302,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="notes-search" class="toolbar-search" placeholder="🔍 Notizen durchsuchen..." data-action="search-input" data-render="renderSessions">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="notes-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="notes-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 
@@ -341,7 +436,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper" style="position: relative;">
                         <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." data-action="wiki-search-input">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="wiki-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="wiki-search" title="Suche leeren" tabindex="-1">✕</button>
                         <div id="wiki-search-dropdown" class="wiki-search-dropdown" style="display: none;"></div>
                     </div>
                 </div>
@@ -460,6 +555,37 @@
 
             <!-- Link Auto-Suggest Container -->
             <div id="wiki-link-suggester" class="wiki-link-suggester" style="display: none;"></div>
+        </section>
+
+        <!-- INSPIRATION VIEW -->
+        <section id="view-inspiration" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">💡 Inspiration</span>
+                </div>
+            </div>
+            <div class="wiki-explorer">
+                <aside class="wiki-sidebar" aria-label="Artikel auswählen">
+                    <div class="wiki-sidebar-header">
+                        <label class="sr-only" for="inspiration-search">Inspiration durchsuchen</label>
+                        <input type="search" id="inspiration-search" class="toolbar-search" placeholder="🔍 Artikel durchsuchen …">
+                    </div>
+                    <nav id="inspiration-list" class="wiki-tree" aria-label="Themenliste"></nav>
+                </aside>
+                <div class="inspiration-reader">
+                    <button type="button" id="inspiration-back" class="btn">Zur Themenliste</button>
+                    <article id="inspiration-article" class="wiki-detail" aria-labelledby="inspiration-title">
+                        <header class="wiki-detail-header inspiration-article-header">
+                            <div class="wiki-detail-title-section">
+                                <p id="inspiration-article-group" class="wiki-detail-meta"></p>
+                                <h2 id="inspiration-title" class="wiki-detail-title" tabindex="-1"></h2>
+                            </div>
+                            <div id="inspiration-jumps" class="inspiration-jumps"></div>
+                        </header>
+                        <div id="inspiration-body" class="wiki-detail-body"></div>
+                    </article>
+                </div>
+            </div>
         </section>
 
         <!-- LINKS VIEW -->

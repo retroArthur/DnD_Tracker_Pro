@@ -286,7 +286,9 @@ const REITER_EXPORT_FORMAT = 'dnd-tracker/reiter-export@2';
 function exportData(dataType) {
     const APP_CONFIG = window.APP_CONFIG;
     const data = ioGetArray(dataType);
-    if (!data || !Array.isArray(data) || data.length === 0) {
+    const truhen = dataType === 'loot' ? ioGetArray('lootChests') : null;
+    const lootChests = Array.isArray(truhen) ? truhen : [];
+    if ((!Array.isArray(data) || data.length === 0) && lootChests.length === 0) {
         showToast(`Keine ${reiterTypName(dataType, 2)} zum Exportieren vorhanden`, 'warning');
         return;
     }
@@ -309,7 +311,8 @@ function exportData(dataType) {
             _campaignName: campaignName,
             _version: APP_CONFIG.VERSION,
             _dataType: dataType,
-            data
+            data: Array.isArray(data) ? data : [],
+            ...(dataType === 'loot' ? { lootChests } : {})
         };
         const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
@@ -319,7 +322,9 @@ function exportData(dataType) {
         a.download = `${dataType}-${campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast(`📁 ${data.length} ${reiterTypName(dataType, data.length)} exportiert`);
+        showToast(
+            `📁 ${reiterMengenText(dataType, exportObj.data.length, lootChests.length)} exportiert`
+        );
     } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
         // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
@@ -413,6 +418,7 @@ function exportToCSV(dataType) {
  * @typedef {Object} ReiterImportVorbereitung
  * @property {string} dataType - Typ des Reiterfelds (`data-type`)
  * @property {Object[]} items - die vorbereiteten Eintraege, so wie executeImport() sie schreibt
+ * @property {LootChest[]} [lootChests] - unabhängige Truhen in einem Truhe-Export
  * @property {string} kampagne - Kampagne laut Datei, sonst der Dateiname
  * @property {string} exportDatum - Exportdatum laut Datei (TT.MM.JJJJ) oder "unbekannt"
  * @property {{text: string, warnung?: boolean}[]} hinweise - weitere Zeilen der Vorschau
@@ -433,6 +439,7 @@ const REITER_TYPNAMEN = Object.freeze({
     quests: Object.freeze(['Quest', 'Quests']),
     encounters: Object.freeze(['Encounter', 'Encounter']),
     loot: Object.freeze(['Gegenstand', 'Gegenstände']),
+    lootChests: Object.freeze(['Truhe', 'Truhen']),
     spells: Object.freeze(['Zauber', 'Zauber']),
     wiki: Object.freeze(['Wiki-Eintrag', 'Wiki-Einträge']),
     links: Object.freeze(['Link', 'Links']),
@@ -455,6 +462,13 @@ function reiterTypName(typ, anzahl) {
         ? REITER_TYPNAMEN[typ]
         : ['Eintrag', 'Einträge'];
     return anzahl === 1 ? namen[0] : namen[1];
+}
+
+function reiterMengenText(typ, anzahl, truhen) {
+    const eintraege = `${anzahl} ${reiterTypName(typ, anzahl)}`;
+    if (!truhen) return eintraege;
+    const truhenText = `${truhen} ${reiterTypName('lootChests', truhen)}`;
+    return anzahl ? `${eintraege} und ${truhenText}` : truhenText;
 }
 
 /** Die groesste Datei, die der Reiter-Import liest (wie bisher). */
@@ -634,7 +648,12 @@ function pruefeReiterImport(inhalt, dataType) {
     if (!istObjekt || !Array.isArray(inhalt.data)) {
         throw reiterImportFehler('Ungültiges Format: der Datei fehlt die Liste „data“');
     }
-    if (inhalt.data.length === 0) {
+    const hatTruhenliste =
+        dataType === 'loot' && Object.prototype.hasOwnProperty.call(inhalt, 'lootChests');
+    if (hatTruhenliste && !Array.isArray(inhalt.lootChests)) {
+        throw reiterImportFehler('Die Truhen der Datei müssen eine Liste sein');
+    }
+    if (inhalt.data.length === 0 && !(hatTruhenliste && inhalt.lootChests.length > 0)) {
         throw reiterImportFehler('Die Datei enthält keine Einträge');
     }
     const keinObjekt = inhalt.data.findIndex(
@@ -1123,6 +1142,41 @@ const REITER_ALTFELDER = Object.freeze({
 });
 
 /**
+ * Bereitet die optionale Truhenliste vor. Der gemeinsame Normalisierer toleriert
+ * fehlerhafte Altdaten. Beim Dateiimport darf ein defekter Eintrag vor „Ersetzen“
+ * weder verloren gehen noch eine eigentlich befüllte Truhe leer machen.
+ * @param {Object[]} roh
+ * @returns {LootChest[]}
+ */
+function bereiteReiterTruhenVor(roh) {
+    const defekteTruhe = roh.findIndex(
+        truhe =>
+            !isPlainDataObject(truhe) ||
+            typeof truhe.name !== 'string' ||
+            !truhe.name.trim() ||
+            !Array.isArray(truhe.entries)
+    );
+    if (defekteTruhe >= 0) {
+        throw reiterImportFehler(
+            `Truhe ${defekteTruhe + 1} braucht einen Namen und eine Eintragsliste`
+        );
+    }
+    const truhen = window.normalizeLootChests(roh);
+    if (truhen.length !== roh.length) {
+        throw reiterImportFehler('Die Truhenliste enthält ungültige Daten');
+    }
+    const defekteEintraege = truhen.findIndex(
+        (truhe, index) => truhe.entries.length !== roh[index].entries.length
+    );
+    if (defekteEintraege >= 0) {
+        throw reiterImportFehler(
+            `Truhe ${defekteEintraege + 1}: Jeder Gegenstand braucht einen Namen und ein gültiges Drop-Gewicht`
+        );
+    }
+    return truhen;
+}
+
+/**
  * Bereitet die gepruefte Datei fuer das Fenster vor: die ID-Pruefung fuers Ersetzen (R6, auf
  * den ROHEN Eintraegen — die Grenze loescht eine ID "abc"), dieselbe Datengrenze wie jeder
  * andere Eingang nach D (SENKEN R4), bei einer alten Datei ohne Formatkennung die Warnung und
@@ -1137,7 +1191,12 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
     if (!IO_SCHEMA[dataType]) {
         throw reiterImportFehler('Dieser Bereich lässt sich nicht importieren');
     }
-    const idFehler = reiterIdFehler(inhalt.data);
+    const roheTruhen =
+        dataType === 'loot' && Array.isArray(inhalt.lootChests) ? inhalt.lootChests : undefined;
+    const truhenIdFehler = roheTruhen ? reiterIdFehler(roheTruhen) : null;
+    const idFehler =
+        reiterIdFehler(inhalt.data) || (truhenIdFehler ? `Truhen: ${truhenIdFehler}` : null);
+    const lootChests = roheTruhen ? bereiteReiterTruhenVor(roheTruhen) : undefined;
     const grenze = bereinigeDatengrenze(reiterImportWurzel(dataType, inhalt.data));
     const eintraege = (IO_DATA_PATH[dataType] || [dataType]).reduce(
         (knoten, schluessel) => (knoten ? knoten[schluessel] : undefined),
@@ -1183,6 +1242,7 @@ function bereiteReiterImportVor(inhalt, dataType, dateiname) {
     return {
         dataType,
         items,
+        ...(lootChests ? { lootChests } : {}),
         kampagne: kampagne.slice(0, KAMPAGNENNAME_MAX),
         exportDatum:
             datum && !isNaN(datum.getTime()) ? datum.toLocaleDateString('de-DE') : 'unbekannt',
@@ -1695,13 +1755,12 @@ function reiterHinzufuegenVerweise(typ, items) {
  * sanitizeHTML() nie durchgelassen haette. Doppelt bereinigt aendert nichts mehr.
  * @param {string} typ
  * @param {Object[]} items
+ * @param {Map<number, number>} [abbildung] - erfasst die neue ID pro eindeutiger Quell-ID
  * @returns {Object[]}
  */
-function reiterHinzufuegen(typ, items) {
+function reiterHinzufuegen(typ, items, abbildung = new Map()) {
     const eindeutig = reiterEindeutigeIds(items);
     const neueIds = items.map(() => nextId(typ));
-    /** @type {Map<number, number>} */
-    const abbildung = new Map();
     items.forEach((item, i) => {
         const id = reiterIdZahl(item && item.id);
         if (id !== null && eindeutig.has(id)) abbildung.set(id, neueIds[i]);
@@ -1716,6 +1775,23 @@ function reiterHinzufuegen(typ, items) {
             id: neueIds[i]
         })
     );
+}
+
+/**
+ * @param {LootChest[]} truhen
+ * @param {(id: number) => number | undefined} zielId
+ * @returns {LootChest[]}
+ */
+function reiterTruhenQuellIds(truhen, zielId) {
+    return truhen.map(truhe => ({
+        ...truhe,
+        entries: truhe.entries.map(({ sourceItemId, ...eintrag }) => {
+            // Nur alte Einträge ohne Quellfeld dürfen über den Namen zugeordnet werden.
+            if (sourceItemId === undefined) return eintrag;
+            const id = sourceItemId === null ? null : zielId(sourceItemId);
+            return { ...eintrag, sourceItemId: id ?? null };
+        })
+    }));
 }
 
 /**
@@ -1867,11 +1943,26 @@ function importVorschauZeilen(bereit, modus) {
         modus === 'replace'
             ? ersetzenVorschauZeilen(bereit, vorhanden)
             : hinzufuegenVorschauZeilen(bereit, vorhanden);
+    const truhen = bereit.lootChests?.length;
+    const truhenzeilen = [];
+    if (truhen !== undefined) {
+        truhenzeilen.push({ text: `Truhen: ${truhen}` });
+        if (modus === 'replace' && !ersetzenIdFehler(bereit)) {
+            const truhenBestand = ioGetArray('lootChests')?.length || 0;
+            truhenzeilen.push({
+                text: `Ersetzen: Die Datei ersetzt alle vorhandenen Truhen (${truhenBestand})`,
+                warnung: true
+            });
+        } else if (modus === 'merge' && truhen > 0) {
+            truhenzeilen.push({ text: 'Hinzufügen: Die Truhen der Datei erhalten neue IDs' });
+        }
+    }
     return [
         { text: `Typ: ${reiterTypName(bereit.dataType, 2)}` },
         { text: `Einträge: ${n}` },
         { text: `Kampagne: ${bereit.kampagne}` },
         { text: `Export-Datum: ${bereit.exportDatum}` },
+        ...truhenzeilen,
         ...moduszeilen,
         ...bereit.hinweise
     ];
@@ -2162,14 +2253,19 @@ if (typeof window.registerUndoHook === 'function') {
  * @param {string} [dataType] - nur zur Gegenprobe: weicht er vom vorbereiteten Typ ab, wird
  *   nichts geschrieben
  */
-function executeImport(dataType) {
+async function executeImport(dataType) {
     const bereit = _reiterImport;
-    if (!bereit || bereit.items.length === 0 || (dataType && dataType !== bereit.dataType)) {
+    if (
+        !bereit ||
+        (!bereit.items.length && !bereit.lootChests?.length) ||
+        (dataType && dataType !== bereit.dataType)
+    ) {
         showToast('Keine Daten zum Importieren', 'error');
         return;
     }
     const type = bereit.dataType;
     const items = bereit.items;
+    const lootChests = bereit.lootChests;
     const mode = gewaehlterImportModus();
     // R6: Ersetzen uebernimmt die IDs der Datei — nur gueltige und eindeutige. Das Fenster
     // bleibt offen: "Hinzufügen" vergibt neue IDs und geht weiter.
@@ -2178,14 +2274,14 @@ function executeImport(dataType) {
         showToast('❌ ' + idFehler, 'error');
         return;
     }
-    const name = reiterTypName(type, items.length);
+    const menge = reiterMengenText(type, items.length, lootChests?.length);
     const renderAll = window.renderAll;
     // Die Kennung sagt reiterImportNachUndo(), welchen Typ ein Strg+Z/Strg+Y dieses Imports
     // betrifft (R7) — beim Hinzufuegen dazu die neuen IDs, die erst unten feststehen: nextId()
     // laeuft NACH dem Undo-Punkt, damit Strg+Z auch den Zaehler zuruecknimmt.
     /** @type {{reiterImport: {typ: string, modus: string, neueIds?: number[]}}} */
     const kennung = { reiterImport: { typ: type, modus: mode } };
-    saveUndoState(`${items.length} ${name} importiert`, kennung);
+    saveUndoState(`${menge} importiert`, kennung);
     /** @type {Set<number>|undefined} */
     let neueIds;
     // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
@@ -2193,16 +2289,42 @@ function executeImport(dataType) {
     if (mode === 'replace') {
         reportSafetyBackup(createAutoBackup({ reason: 'safety' }));
         ioSetArray(type, items);
+        if (type === 'loot') {
+            const truhen = lootChests ?? ioGetArray('lootChests');
+            if (Array.isArray(truhen)) {
+                // Bei alten Dateien bleibt die Truhe erhalten, ihre Quell-ID gehört zum alten Katalog.
+                const dateiIds = lootChests ? reiterEindeutigeIds(items) : new Set();
+                ioSetArray(
+                    'lootChests',
+                    reiterTruhenQuellIds(truhen, id => (dateiIds.has(id) ? id : undefined))
+                );
+            }
+        }
         // Zaehler ueber die groesste ersetzte ID heben (Code-Review 2026-09-21, R03)
-        validateAndRepairNextId(undefined, [type]);
+        validateAndRepairNextId(undefined, lootChests ? [type, 'lootChests'] : [type]);
     } else {
         // Merge (R5): neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
         // Sammlungen wie calendarEvents — R03: die hier frueher aufgerufene Funktion gab es
         // nicht); Verweise innerhalb des Typs auf die neuen IDs, alle anderen geleert
-        const neu = reiterHinzufuegen(type, items);
+        /** @type {Map<number, number>} */
+        const abbildung = new Map();
+        const neu = reiterHinzufuegen(type, items, abbildung);
+        const neueTruhen = reiterTruhenQuellIds(lootChests || [], id => abbildung.get(id)).map(
+            truhe => ({
+                ...truhe,
+                id: nextId('lootChests')
+            })
+        );
         neueIds = new Set(neu.map(item => item.id));
         kennung.reiterImport.neueIds = [...neueIds];
         ioSetArray(type, [...(ioGetArray(type) || []), ...neu]);
+        if (neueTruhen.length) {
+            const bestand = ioGetArray('lootChests');
+            ioSetArray('lootChests', [
+                ...(Array.isArray(bestand) ? bestand : []),
+                ...neueTruhen
+            ]);
+        }
     }
     // Ein Import, ein Schreiben: ein zweites "Importieren" findet nichts mehr vor
     _reiterImport = null;
@@ -2210,13 +2332,17 @@ function executeImport(dataType) {
     // kann jede Bearbeiten-ID einem ANDEREN Eintrag gehoeren, nach dem Hinzufuegen nur eine neu
     // vergebene
     reiterBearbeitenVerwerfen(type, neueIds);
-    save();
     renderAll();
     updateIOCounts();
-    hideModal('import-modal');
-    showToast(
-        `✅ ${items.length} ${name} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
-    );
+    // Ein älterer entprellter Save würde denselben Import parallel schreiben.
+    window.cancelPendingSave?.();
+    const gespeichert = await window.saveImmediate();
+    if (!_reiterImport) hideModal('import-modal');
+    if (!gespeichert.success) {
+        showToast('❌ Import nicht gespeichert. Mit Strg+S erneut speichern oder mit Strg+Z rückgängig machen.', 'error');
+        return;
+    }
+    showToast(`✅ ${menge} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`);
 }
 // UTILITY FUNCTIONS
 // ============================================================
@@ -2337,6 +2463,7 @@ const CAMPAIGN_IMPORT_COLLECTIONS = [
     ['quests'],
     ['encounters'],
     ['loot'],
+    ['lootChests'],
     ['spells'],
     ['wiki'],
     ['sessionNotes'],
@@ -2563,7 +2690,11 @@ function importDataGlobal() {
                 updateIOCounts();
                 const quickNotes = $('quick-notes');
                 if (quickNotes) quickNotes.value = D.quickNotes || '';
-                save();
+                window.cancelPendingSave?.();
+                const gespeichert = await window.saveImmediate();
+                if (!gespeichert.success) {
+                    throw new Error('Import nicht gespeichert. Mit Strg+S erneut speichern oder mit Strg+Z rückgängig machen.');
+                }
                 showToast('Import OK!');
                 // Reine Typumwandlungen ('7' -> 7) sind keine neu vergebenen IDs
                 const reassigned = prepared.renumbered.filter(
@@ -2660,61 +2791,86 @@ async function clearStorage() {
         '🚨 LETZTE WARNUNG!\n\n' + 'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?'
     );
     if (!doubleCheck) return;
-    // Step 3: Sicherheitskopie — bestaetigt geschrieben, BEVOR etwas entfernt wird
-    const status = await createAutoBackup({ reason: 'safety' });
-    if (status === 'failed') {
-        if (
-            !confirm(
-                '⚠️ Die Sicherheitskopie konnte nicht erstellt werden.\n\nTrotzdem ALLE Daten dieser Kampagne löschen?'
-            )
-        ) {
-            return;
-        }
-    } else {
-        await reportSafetyBackup(status);
-    }
-    // Step 4 (R02): Schreibsperre ZUERST — ein ausstehender oder ueberfaelliger save(), Strg+S,
-    // Strg+Z oder der Session-Timer schreiben sonst vor dem Neuladen alles zurueck
-    if (typeof window.retireCampaignWrites === 'function') await window.retireCampaignWrites();
-    // Step 5: Kampagnendaten entfernen — IndexedDB-Kopie (bestaetigter Commit) und localStorage
     const key =
         typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
-    const result =
-        typeof window.removeCampaignData === 'function'
-            ? await window.removeCampaignData(key)
-            : null;
-    if (result && result.success) {
-        leereKampfprotokollNachLoeschung();
-        showToast('✅ Alle Daten gelöscht', 'info');
+    let started = false;
+    let cancelled = false;
+    let removed = false;
+    let nurLokal = false;
+    let idbNichtErreichbar = false;
+    try {
+        await window.withCampaignIndexLock(async assertHeld => {
+            started = true;
+            // R02: Sobald der Reset an der Reihe ist, darf dieser Tab bis zum Reload
+            // keine alte Kopie der Kampagne mehr speichern.
+            const hasLocalDraft = window.hasExplicitPendingWork?.();
+            await window.retireCampaignWrites?.();
+            assertHeld();
+            // N27: Erst jetzt ist der vorangegangene Import samt Index oder Rückbau fertig.
+            const snapshot = await window.readCampaignResetSnapshot(key, hasLocalDraft);
+            const assertCanRemove = () => {
+                assertHeld();
+                snapshot.assertLocal();
+            };
+            assertCanRemove();
+            const status =
+                snapshot.data === null
+                    ? 'failed'
+                    : await createAutoBackup({ reason: 'safety', snapshot, assertHeld: assertCanRemove });
+            assertCanRemove();
+            if (status === 'failed') {
+                if (
+                    !confirm(
+                        '⚠️ Die Sicherheitskopie konnte nicht erstellt werden.\n\nTrotzdem ALLE Daten dieser Kampagne löschen?'
+                    )
+                ) {
+                    cancelled = true;
+                    window.resumeCampaignWrites?.();
+                    return;
+                }
+            } else {
+                await reportSafetyBackup(status);
+            }
+            assertCanRemove();
+            const result = await window.removeCampaignData?.(key, assertCanRemove, snapshot);
+            removed = !!result?.success;
+            assertHeld();
+            if (!removed) {
+                window.ErrorHandler?.log('Clear storage', result?.error);
+                // D-B: Nur ein Fehler beim Öffnen von IndexedDB erlaubt die Rückfrage.
+                idbNichtErreichbar = result?.stage === 'indexedDB' && result.reason === 'open';
+                if (idbNichtErreichbar) {
+                    nurLokal = !!window.confirmLocalOnlyCampaignRemoval?.(
+                        key, undefined, assertCanRemove
+                    ).removed;
+                    removed = nurLokal;
+                }
+            }
+            if (removed) leereKampfprotokollNachLoeschung();
+            else window.resumeCampaignWrites?.();
+        });
+    } catch (error) {
+        if (started && !removed) window.resumeCampaignWrites?.();
+        window.ErrorHandler?.log('Clear storage', error);
+        showToast('❌ Fehler beim Löschen: ' + error.message, 'error');
+        return;
+    }
+    if (cancelled) return;
+    if (removed) {
+        if (nurLokal) {
+            showToast(
+                '⚠️ Nur die lokalen Daten wurden gelöscht. Die IndexedDB-Kopie konnte nicht ' +
+                    'entfernt werden und kann beim nächsten Start wieder auftauchen.',
+                'warning',
+                8000
+            );
+        } else {
+            showToast('✅ Alle Daten gelöscht', 'info');
+        }
         setTimeout(() => location.reload(), 1000);
         return;
     }
-    if (window.ErrorHandler) {
-        window.ErrorHandler.log('Clear storage', result && result.error);
-    }
-    // Step 5b (D-B, Nutzerentscheidung 2026-09-27): IndexedDB ist gemeldet, liess sich aber
-    // nicht OEFFNEN. Ob dort eine Kopie liegt, ist unbekannt — statt nur fehlzuschlagen
-    // ("Es wurde nichts gelöscht") entscheidet der Nutzer. Ein abgebrochener Commit einer
-    // GEOEFFNETEN Datenbank bleibt fail-closed: dort ist eine erreichbare Kopie belegt.
-    if (
-        result &&
-        result.stage === 'indexedDB' &&
-        result.reason === 'open' &&
-        typeof window.confirmLocalOnlyCampaignRemoval === 'function' &&
-        window.confirmLocalOnlyCampaignRemoval(key).removed
-    ) {
-        leereKampfprotokollNachLoeschung();
-        showToast(
-            '⚠️ Nur die lokalen Daten wurden gelöscht. Die IndexedDB-Kopie konnte nicht ' +
-                'entfernt werden und kann beim nächsten Start wieder auftauchen.',
-            'warning',
-            8000
-        );
-        setTimeout(() => location.reload(), 1000);
-        return;
-    }
-    if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
-    if (result && result.stage === 'indexedDB' && result.reason === 'open') {
+    if (idbNichtErreichbar) {
         showToast('❌ IndexedDB nicht erreichbar — es wurde nichts gelöscht', 'error');
         return;
     }

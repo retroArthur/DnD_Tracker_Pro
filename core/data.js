@@ -14,6 +14,7 @@ function initializeData() {
             round: 1
         },
         loot: [],
+        lootChests: [],
         encounters: [],
         spells: [],
         links: [],

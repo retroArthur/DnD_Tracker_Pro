@@ -2,6 +2,8 @@
 
 ## Aktuelles Setup (nach TypeScript-Migration)
 
+Für die Entwicklungswerkzeuge wird Node.js 22 oder Node.js ab Version 24 benötigt. Die CI verwendet Node.js 22.
+
 ### Verzeichnisstruktur:
 
 ```

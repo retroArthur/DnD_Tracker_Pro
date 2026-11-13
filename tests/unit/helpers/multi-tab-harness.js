@@ -37,6 +37,7 @@ const vm = require('vm');
 const { setImmediate: naechsterTask } = require('timers');
 const { extractModulesFromLoader } = require('../../../tools/generate-eslint-globals.js');
 const { erzeugeFakeIDB } = require('./fake-idb.js');
+const { erzeugeKampagnenSperrDb } = require('./campaign-lock-idb.js');
 
 const WURZEL = path.join(__dirname, '../../..');
 const LOADER_MODULE = extractModulesFromLoader(
@@ -220,6 +221,7 @@ function erzeugeUrsprung(opt = {}) {
     const kanaele = [];
     const idbLog = [];
     const idb = erzeugeFakeIDB({ log: idbLog });
+    const sperrDb = erzeugeKampagnenSperrDb();
     const uhr = erzeugeUhr();
     const quota = { zeichen: opt.lsQuotaZeichen === undefined ? Infinity : opt.lsQuotaZeichen };
 
@@ -320,6 +322,7 @@ function erzeugeUrsprung(opt = {}) {
     }
 
     const ursprung = {
+        sperrDb,
         ls,
         tabs,
         log,
@@ -461,7 +464,7 @@ function oeffneTab(ursprung, name, opt = {}) {
             };
         })(),
         BroadcastChannel: ursprung.kanalKlasseFuer(tab),
-        indexedDB: {}
+        indexedDB: ursprung.sperrDb
     };
     ctx.window = ctx;
     ctx.self = ctx;
@@ -496,6 +499,8 @@ function oeffneTab(ursprung, name, opt = {}) {
     // Dateileser: onload laeuft im naechsten Mikrotask; tab.dateiGelesen ist sein Promise
     ctx.FileReader = function FakeFileReader() {
         const leser = this;
+        // Diese Werkbank simuliert nur erfolgreiche Lesevorgänge.
+        leser.addEventListener = () => {};
         leser.readAsText = datei => {
             tab.dateiGelesen = Promise.resolve().then(() =>
                 leser.onload({ target: { result: datei.inhalt } })

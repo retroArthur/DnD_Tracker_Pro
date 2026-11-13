@@ -199,6 +199,7 @@ const CAMPAIGN_SHAPE = Object.freeze({
         'quests',
         'encounters',
         'loot',
+        'lootChests',
         'spells',
         'wiki',
         'sessionNotes',

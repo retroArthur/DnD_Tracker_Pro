@@ -139,6 +139,21 @@ function volleKampagne(ctx) {
         locations: [{ id: 4, name: 'Phandalin' }],
         encounters: [],
         loot: [],
+        lootChests: [
+            {
+                id: 23,
+                name: 'Vorratskiste',
+                entries: [
+                    {
+                        name: 'Heiltrank',
+                        description: 'Kleine Flasche',
+                        category: 'Trank',
+                        rarity: 'common',
+                        weight: 1.5
+                    }
+                ]
+            }
+        ],
         spells: [],
         wiki: [{ id: 8, title: 'Goetter' }],
         sessionNotes: [{ id: 9, title: 'Sitzung 1' }],
@@ -176,6 +191,7 @@ function volleKampagne(ctx) {
             locations: 5,
             encounters: 1,
             loot: 1,
+            lootChests: 24,
             spells: 1,
             wiki: 9,
             sessionNotes: 10,

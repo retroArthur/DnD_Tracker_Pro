@@ -88,6 +88,7 @@ function switchView(name) {
             spells: '✨ Zauber',
             notes: '📝 Notizen',
             wiki: '📚 Wiki',
+            inspiration: '💡 Inspiration',
             links: '🔗 Links',
             dice: '🎲 Würfel',
             timers: '⏱️ Timer',

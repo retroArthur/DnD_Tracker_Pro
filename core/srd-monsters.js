@@ -1,12 +1,13 @@
 // [SECTION:SRD_MONSTERS]
 // ============================================================
 // SRD 5.1 DE Monster-Datenbank — CC-BY-4.0
-// Quelle: Wizards of the Coast / openrpg.de/srd/5e/de/
+// Quelle: Wizards of the Coast, ursprünglicher Datenimport über openrpg.de/srd/5e/de/
 // Attribution: "Dungeons & Dragons, SRD 5.1 DE" — CC BY 4.0
 // Originalquelle: media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1_DE.pdf
+// Ergänzungen aus dem deutschen SRD: Werte übernommen, Regeltexte zusammengefasst.
 // Repository: codeberg.org/nesges/SRD-5.1-DE
-// Generiert: 2026-06-13 via tools/build-srd-monsters.cjs
-// Monster: 112 | Lizenz: Creative Commons Attribution 4.0 International
+// Generiert: 2026-11-09 via tools/build-srd-monsters.cjs
+// Monster: 127 | Lizenz: Creative Commons Attribution 4.0 International
 // Die Daten werden erst beim ersten Zugriff initialisiert (lazy-cache).
 // NIEMALS D.* = getSRDMonsters() — SRD-Daten leben ausschliesslich im
 // Closure-Cache, nie in D (Architektur-Constraint, Phase 3).
@@ -1005,6 +1006,131 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "eber",
+        "name": "Eber",
+        "size": "Mittelgroßes",
+        "creatureType": "Tier",
+        "alignment": "gesinnungslos",
+        "cr": "1/4",
+        "xp": 50,
+        "ac": 11,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 11,
+        "hpFormula": "2W8+2",
+        "speed": {
+            "walk": "12 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 13,
+        "dex": 11,
+        "con": 12,
+        "int": 2,
+        "wis": 9,
+        "cha": 5,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Passive Wahrnehmung 9"
+        ],
+        "languages": [
+            "-"
+        ],
+        "traits": [
+            {
+                "name": "Sturmangriff",
+                "desc": "Nach mindestens 6 m direktem Anlauf verursacht ein Hauer-Treffer gegen dasselbe Ziel im selben Zug zusätzlich 3 (1W6) Hiebschaden. Ist das Ziel eine Kreatur, stürzt es bei einem misslungenen Stärkerettungswurf gegen SG 11."
+            },
+            {
+                "name": "Unermüdlich (kurze oder lange Rast)",
+                "desc": "Würde ein einzelner Schadenseffekt von höchstens 7 Punkten den Eber auf 0 TP bringen, bleibt ihm 1 TP. Eine kurze oder lange Rast macht das Merkmal erneut verfügbar."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Hauer",
+                "desc": "Nahkampfwaffenangriff mit +3 gegen ein Ziel innerhalb von 1,5 m. Der Treffer verursacht 4 (1W6+1) Hiebschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "fliegendes-schwert",
+        "name": "Fliegendes Schwert",
+        "size": "Kleines",
+        "creatureType": "Konstrukt",
+        "alignment": "gesinnungslos",
+        "cr": "1/4",
+        "xp": 50,
+        "ac": 17,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 17,
+        "hpFormula": "5W6",
+        "speed": {
+            "walk": "0 m",
+            "fly": "15 m (Schweben)",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 12,
+        "dex": 15,
+        "con": 11,
+        "int": 1,
+        "wis": 5,
+        "cha": 1,
+        "savingThrows": {
+            "dex": "+4"
+        },
+        "skills": {},
+        "damageResistances": [],
+        "damageImmunities": [
+            "Gift",
+            "Psychisch"
+        ],
+        "conditionImmunities": [
+            "Bezaubert",
+            "Blind",
+            "Gelähmt",
+            "Liegend",
+            "Taub",
+            "Verängstigt",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Blindsicht 18 m (außerhalb davon blind)",
+            "Passive Wahrnehmung 7"
+        ],
+        "languages": [],
+        "traits": [
+            {
+                "name": "Antimagische Empfindlichkeit",
+                "desc": "Ein antimagisches Feld macht das Konstrukt kampfunfähig. Gegen Magie bannen braucht es einen Konstitutionsrettungswurf gegen den Zauberrettungswurf-SG des Wirkenden. Misslingt der Wurf, bleibt es 1 Minute bewusstlos."
+            },
+            {
+                "name": "Falsches Erscheinungsbild",
+                "desc": "Solange es reglos ist und nicht fliegt, sieht das Konstrukt wie ein gewöhnliches Schwert aus."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Langschwert",
+                "desc": "Nahkampfwaffenangriff mit +3, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 5 (1W8+1) Hiebschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "goblin",
         "name": "Goblin",
         "size": "Klein",
@@ -1669,6 +1795,65 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "rostmonster",
+        "name": "Rostmonster",
+        "size": "Mittelgroße",
+        "creatureType": "Monstrosität",
+        "alignment": "gesinnungslos",
+        "cr": "1/2",
+        "xp": 100,
+        "ac": 14,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 27,
+        "hpFormula": "5W8+5",
+        "speed": {
+            "walk": "12 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 13,
+        "dex": 12,
+        "con": 13,
+        "int": 2,
+        "wis": 13,
+        "cha": 6,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 11"
+        ],
+        "languages": [],
+        "traits": [
+            {
+                "name": "Eisenwitterung",
+                "desc": "Eisenhaltiges Metall kann das Rostmonster aus bis zu 9 m Entfernung riechen und orten."
+            },
+            {
+                "name": "Metall verrosten",
+                "desc": "Ein Treffer mit einer nichtmagischen Metallwaffe lässt die Waffe rosten. Verursacht sie Schaden, sinken ihre Schadenswürfe dauerhaft und kumulativ um 1. Bei einem Gesamtmalus von −5 zerfällt sie. Nichtmagische Metallmunition wird durch den Treffer nach dem Schaden sofort zerstört."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Biss",
+                "desc": "Nahkampfwaffenangriff mit +3, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 5 (1W8+1) Stichschaden."
+            },
+            {
+                "name": "Antennen",
+                "desc": "Das Rostmonster berührt einen sichtbaren Gegenstand aus eisenhaltigem Metall in bis zu 1,5 m Entfernung. Ist der Gegenstand weder getragen noch gehalten, zerstört die Berührung einen Würfel mit 30 cm Kantenlänge. Wer das Objekt hält oder trägt, vermeidet die Berührung mit einem Geschicklichkeitsrettungswurf gegen SG 11. Eine berührte Metallrüstung oder ein Metallschild verliert dauerhaft und kumulativ 1 Punkt der gewährten RK. Bei RK 10 für die Rüstung oder Schildbonus +0 wird das Stück zerstört. Eine gehaltene Metallwaffe rostet nach den Regeln von Metall verrosten."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "satyr",
         "name": "Satyr",
         "size": "Mittelgroßes",
@@ -1877,6 +2062,120 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "schwarzbaer",
+        "name": "Schwarzbär",
+        "size": "Mittelgroßes",
+        "creatureType": "Tier",
+        "alignment": "gesinnungslos",
+        "cr": "1/2",
+        "xp": 100,
+        "ac": 11,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 19,
+        "hpFormula": "3W8+6",
+        "speed": {
+            "walk": "12 m",
+            "fly": "",
+            "swim": "",
+            "climb": "9 m",
+            "burrow": ""
+        },
+        "str": 15,
+        "dex": 10,
+        "con": 14,
+        "int": 2,
+        "wis": 12,
+        "cha": 7,
+        "savingThrows": {},
+        "skills": {
+            "wahrnehmung": "+3"
+        },
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Passive Wahrnehmung 13"
+        ],
+        "languages": [
+            "-"
+        ],
+        "traits": [
+            {
+                "name": "Scharfer Geruchssinn",
+                "desc": "Bei einem Weisheitswurf (Wahrnehmung) über den Geruch würfelt der Schwarzbär mit Vorteil."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "In derselben Aktion greift der Schwarzbär einmal mit dem Biss und einmal mit den Klauen an."
+            },
+            {
+                "name": "Biss",
+                "desc": "Nahkampfwaffenangriff mit +3 gegen ein Ziel innerhalb von 1,5 m. Der Treffer verursacht 5 (1W6+2) Stichschaden."
+            },
+            {
+                "name": "Klauen",
+                "desc": "Nahkampfwaffenangriff mit +3 gegen ein Ziel innerhalb von 1,5 m. Der Treffer verursacht 7 (2W4+2) Hiebschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "streitross",
+        "name": "Streitross",
+        "size": "Großes",
+        "creatureType": "Tier",
+        "alignment": "gesinnungslos",
+        "cr": "1/2",
+        "xp": 100,
+        "ac": 11,
+        "acInfo": "",
+        "hp": 19,
+        "hpFormula": "3W10+3",
+        "speed": {
+            "walk": "18 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 18,
+        "dex": 12,
+        "con": 13,
+        "int": 2,
+        "wis": 12,
+        "cha": 7,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Passive Wahrnehmung 11"
+        ],
+        "languages": [
+            "-"
+        ],
+        "traits": [
+            {
+                "name": "Trampel-Sturmangriff",
+                "desc": "Nach mindestens 6 m geradem Anlauf auf eine Kreatur verlangt ein Huf-Treffer im selben Zug von ihr einen Stärkerettungswurf gegen SG 14. Bei einem Fehlschlag stürzt sie. Liegt das Ziel, ist ein weiterer Huftritt gegen dieses Ziel als Bonusaktion möglich."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Hufe",
+                "desc": "Nahkampfwaffenangriff mit +6 gegen ein Ziel innerhalb von 1,5 m. Der Treffer verursacht 11 (2W6+4) Wuchtschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "worg",
         "name": "Worg",
         "size": "Groß",
@@ -1926,6 +2225,77 @@ function getSRDMonsters() {
             {
                 "name": "Biss",
                 "desc": "Nahkampfwaffenangriff: +5 auf Treffer, Reichweite 1,5 m, ein Ziel. Treffer: 10 (2W6+3) Stichschaden. Wenn das Ziel eine Kreatur ist, muss es einen SG-13-Stärkerettungswurf bestehen, oder es wird umgestoßen."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "belebte-ruestung",
+        "name": "Belebte Rüstung",
+        "size": "Mittelgroßes",
+        "creatureType": "Konstrukt",
+        "alignment": "gesinnungslos",
+        "cr": "1",
+        "xp": 200,
+        "ac": 18,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 33,
+        "hpFormula": "6W8+6",
+        "speed": {
+            "walk": "7,5 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 14,
+        "dex": 11,
+        "con": 13,
+        "int": 1,
+        "wis": 3,
+        "cha": 1,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [],
+        "damageImmunities": [
+            "Gift",
+            "Psychisch"
+        ],
+        "conditionImmunities": [
+            "Bezaubert",
+            "Blind",
+            "Erschöpft",
+            "Gelähmt",
+            "Taub",
+            "Verängstigt",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Blindsicht 18 m (außerhalb davon blind)",
+            "Passive Wahrnehmung 6"
+        ],
+        "languages": [],
+        "traits": [
+            {
+                "name": "Antimagische Empfindlichkeit",
+                "desc": "Ein antimagisches Feld macht das Konstrukt kampfunfähig. Gegen Magie bannen braucht es einen Konstitutionsrettungswurf gegen den Zauberrettungswurf-SG des Wirkenden. Misslingt der Wurf, bleibt es 1 Minute bewusstlos."
+            },
+            {
+                "name": "Falsches Erscheinungsbild",
+                "desc": "Reglos sieht das Konstrukt wie eine gewöhnliche Rüstung aus."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Die Rüstung greift zweimal im Nahkampf an."
+            },
+            {
+                "name": "Hieb",
+                "desc": "Nahkampfwaffenangriff mit +4, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 5 (1W6+2) Wuchtschaden."
             }
         ],
         "reactions": [],
@@ -2649,6 +3019,83 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "schreckgespenst",
+        "name": "Schreckgespenst",
+        "size": "Mittelgroßer",
+        "creatureType": "Untoter",
+        "alignment": "chaotisch böse",
+        "cr": "1",
+        "xp": 200,
+        "ac": 12,
+        "acInfo": "",
+        "hp": 22,
+        "hpFormula": "5W8",
+        "speed": {
+            "walk": "0 m",
+            "fly": "15 m (Schweben)",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 1,
+        "dex": 14,
+        "con": 11,
+        "int": 10,
+        "wis": 10,
+        "cha": 11,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Blitz",
+            "Feuer",
+            "Kälte",
+            "Säure",
+            "Schall",
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift",
+            "Nekrotisch"
+        ],
+        "conditionImmunities": [
+            "Bezaubert",
+            "Bewusstlos",
+            "Erschöpft",
+            "Festgesetzt",
+            "Gelähmt",
+            "Gepackt",
+            "Liegend",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Versteht seine früheren Sprachen, spricht aber nicht"
+        ],
+        "traits": [
+            {
+                "name": "Empfindlich gegenüber Sonnenlicht",
+                "desc": "Bei Sonnenlicht hat das Schreckgespenst Nachteil auf Angriffswürfe und auf sichtabhängige Weisheitswürfe (Wahrnehmung)."
+            },
+            {
+                "name": "Körperlose Bewegung",
+                "desc": "Beim Durchqueren von Kreaturen oder Objekten gelten die Bewegungskosten für schwieriges Gelände. Ein Zugende in einem Gegenstand verursacht beim Schreckgespenst 5 (1W10) Energieschaden."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Lebensentzug",
+                "desc": "Nahkampf-Zauberangriff mit +4 gegen eine Kreatur innerhalb von 1,5 m. Ein Treffer verursacht 10 (3W6) nekrotischen Schaden. Misslingt dem Ziel ein Konstitutionsrettungswurf gegen SG 10, sinkt sein TP-Maximum um die tatsächlich erlittene Schadensmenge. Eine lange Rast hebt die Senkung auf. Erreicht das Maximum dadurch 0, stirbt das Ziel."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "spion",
         "name": "Spion",
         "size": "Mittelgroß",
@@ -2913,6 +3360,73 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "banditenhauptmann",
+        "name": "Banditenhauptmann",
+        "size": "Mittelgroßer",
+        "creatureType": "Humanoide (jedes Volk)",
+        "alignment": "jede nichtrechtschaffene Gesinnung",
+        "cr": "2",
+        "xp": 450,
+        "ac": 15,
+        "acInfo": "(beschlagenes Leder)",
+        "hp": 65,
+        "hpFormula": "10W8+20",
+        "speed": {
+            "walk": "9 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 15,
+        "dex": 16,
+        "con": 14,
+        "int": 14,
+        "wis": 11,
+        "cha": 14,
+        "savingThrows": {
+            "str": "+4",
+            "dex": "+5",
+            "wis": "+2"
+        },
+        "skills": {
+            "athletik": "+4",
+            "taeuschen": "+4"
+        },
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Zwei beliebige Sprachen"
+        ],
+        "traits": [],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Im Nahkampf greift der Hauptmann zweimal mit dem Krummsäbel und einmal mit dem Dolch an. Alternativ führt er zwei Fernkampfangriffe mit Dolchen aus."
+            },
+            {
+                "name": "Krummsäbel",
+                "desc": "Nahkampfwaffenangriff mit +5, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 6 (1W6+3) Hiebschaden."
+            },
+            {
+                "name": "Dolch",
+                "desc": "Nah- oder Fernkampfwaffenangriff mit +5, Nahkampfreichweite 1,5 m oder Wurfweite 6/18 m, ein Ziel. Bei einem Treffer 5 (1W4+3) Stichschaden."
+            }
+        ],
+        "reactions": [
+            {
+                "name": "Parieren",
+                "desc": "Gegen einen Nahkampfangriff, der ihn treffen würde, erhält der Hauptmann +2 RK. Er muss den Angreifer sehen und eine Nahkampfwaffe führen."
+            }
+        ],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "berserker",
         "name": "Berserker",
         "size": "Mittelgroß",
@@ -3158,6 +3672,67 @@ function getSRDMonsters() {
             {
                 "name": "Klauen",
                 "desc": "Nahkampfwaffenangriff: +4 auf Treffer, Reichweite 1,5 m, ein Ziel. Treffer: 5 (1W6+2) Hiebschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "greif",
+        "name": "Greif",
+        "size": "Große",
+        "creatureType": "Monstrosität",
+        "alignment": "gesinnungslos",
+        "cr": "2",
+        "xp": 450,
+        "ac": 12,
+        "acInfo": "",
+        "hp": 59,
+        "hpFormula": "7W10+21",
+        "speed": {
+            "walk": "9 m",
+            "fly": "24 m",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 18,
+        "dex": 15,
+        "con": 16,
+        "int": 2,
+        "wis": 13,
+        "cha": 8,
+        "savingThrows": {},
+        "skills": {
+            "wahrnehmung": "+5"
+        },
+        "damageResistances": [],
+        "damageImmunities": [],
+        "conditionImmunities": [],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 15"
+        ],
+        "languages": [],
+        "traits": [
+            {
+                "name": "Scharfe Sicht",
+                "desc": "Der Greif hat Vorteil auf Weisheitswürfe (Wahrnehmung), wenn er sich dabei auf seine Sicht stützt."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Ein Angriff mit dem Schnabel und einer mit den Klauen."
+            },
+            {
+                "name": "Klauen",
+                "desc": "Nahkampfwaffenangriff mit +6, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 11 (2W6+4) Hiebschaden."
+            },
+            {
+                "name": "Schnabel",
+                "desc": "Nahkampfwaffenangriff mit +6, Reichweite 1,5 m, ein Ziel. Bei einem Treffer 8 (1W8+4) Stichschaden."
             }
         ],
         "reactions": [],
@@ -4115,6 +4690,80 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "mumie",
+        "name": "Mumie",
+        "size": "Mittelgroßer",
+        "creatureType": "Untoter",
+        "alignment": "rechtschaffen böse",
+        "cr": "3",
+        "xp": 700,
+        "ac": 11,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 58,
+        "hpFormula": "9W8+18",
+        "speed": {
+            "walk": "6 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 16,
+        "dex": 8,
+        "con": 15,
+        "int": 6,
+        "wis": 10,
+        "cha": 12,
+        "savingThrows": {
+            "wis": "+2"
+        },
+        "skills": {},
+        "damageResistances": [
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift",
+            "Nekrotisch"
+        ],
+        "conditionImmunities": [
+            "Bezaubert",
+            "Erschöpft",
+            "Gelähmt",
+            "Verängstigt",
+            "Vergiftet"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Die zu Lebzeiten bekannten Sprachen"
+        ],
+        "traits": [
+            {
+                "name": "Feueranfälligkeit",
+                "desc": "Erlittener Feuerschaden zählt doppelt."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Die Mumie darf ihr Fürchterliches Starren mit einem Angriff der Verrottenden Faust verbinden."
+            },
+            {
+                "name": "Verrottende Faust",
+                "desc": "Nahkampfwaffenangriff mit +5 gegen ein Ziel innerhalb von 1,5 m. Ein Treffer verursacht 10 (2W6+3) Wuchtschaden und 10 (3W6) nekrotischen Schaden. Eine getroffene Kreatur bekommt Mumienfäule, falls ihr Konstitutionsrettungswurf gegen SG 12 misslingt. Solange der Fluch wirkt, gewinnt das Ziel keine TP zurück und sein TP-Maximum sinkt alle 24 Stunden um 10 (3W6). Bei einem Maximum von 0 stirbt das Ziel und zerfällt zu Staub. Fluch brechen oder andere geeignete Magie beendet den Effekt."
+            },
+            {
+                "name": "Fürchterliches Starren",
+                "desc": "Die Mumie wählt eine Kreatur innerhalb von 18 m, die sie sieht. Kann diese zurückblicken, ist gegen den magischen Effekt ein Weisheitsrettungswurf gegen SG 11 fällig. Ein Fehlschlag macht sie bis zum Ende des nächsten Zugs der Mumie verängstigt. Liegt das Ergebnis mindestens 5 unter dem SG, kommt für dieselbe Dauer Gelähmt hinzu. Ein Erfolg schützt das Ziel 24 Stunden vor dem Starren aller gewöhnlichen Mumien. Das Starren von Mumienfürsten wirkt weiterhin."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "phasenspinne",
         "name": "Phasenspinne",
         "size": "Groß",
@@ -4384,6 +5033,95 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "geist",
+        "name": "Geist",
+        "size": "Mittelgroßer",
+        "creatureType": "Untoter",
+        "alignment": "jede Gesinnung",
+        "cr": "4",
+        "xp": 1100,
+        "ac": 11,
+        "acInfo": "",
+        "hp": 45,
+        "hpFormula": "10W8",
+        "speed": {
+            "walk": "0 m",
+            "fly": "12 m (Schweben)",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 7,
+        "dex": 13,
+        "con": 10,
+        "int": 10,
+        "wis": 12,
+        "cha": 17,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Blitz",
+            "Feuer",
+            "Säure",
+            "Schall",
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift",
+            "Kälte",
+            "Nekrotisch"
+        ],
+        "conditionImmunities": [
+            "Bezaubert",
+            "Erschöpft",
+            "Festgesetzt",
+            "Gelähmt",
+            "Gepackt",
+            "Liegend",
+            "Verängstigt",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 11"
+        ],
+        "languages": [
+            "Alle zu Lebzeiten bekannten Sprachen"
+        ],
+        "traits": [
+            {
+                "name": "Ätherische Sicht",
+                "desc": "Von der materiellen Ebene aus sieht der Geist bis 18 m weit in die Ätherebene. Von dort aus reicht seine Sicht ebenso weit in die materielle Ebene."
+            },
+            {
+                "name": "Körperlose Bewegung",
+                "desc": "Kreaturen und Gegenstände zählen für die Bewegung des Geists als schwieriges Gelände. Endet sein Zug im Inneren eines Gegenstands, nimmt er 5 (1W10) Energieschaden."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Vernichtende Berührung",
+                "desc": "Nahkampfwaffenangriff mit +5, ein Ziel innerhalb von 1,5 m. Ein Treffer verursacht 17 (4W6+3) nekrotischen Schaden."
+            },
+            {
+                "name": "Ätherische Gestalten",
+                "desc": "Der Geist wechselt zwischen der materiellen Ebene und der Ätherebene. An der Äthergrenze ist er von der jeweils anderen Ebene aus zu sehen. Ebenenübergreifende Wechselwirkungen sind dabei ausgeschlossen."
+            },
+            {
+                "name": "Grauenhaftes Antlitz",
+                "desc": "Sichtkontakt zum Geist innerhalb von 18 m verlangt von jeder Kreatur außer Untoten einen Weisheitsrettungswurf gegen SG 13. Bei Misserfolg ist das Ziel eine Minute verängstigt. Verfehlt es den SG um mindestens 5, altert es außerdem um 1W4 × 10 Jahre. Am Ende jedes eigenen Zugs kann es die Furcht mit einem erfolgreichen Wiederholungswurf beenden. Nach einem Erfolg oder dem Ende des Effekts ist das Ziel 24 Stunden gegen dieses Antlitz immun. Vollständige Genesung kann die Alterung innerhalb der ersten 24 Stunden aufheben."
+            },
+            {
+                "name": "Inbesitznahme (Aufladung 6)",
+                "desc": "Ein sichtbarer Humanoider innerhalb von 1,5 m muss einen Charismarettungswurf gegen SG 13 schaffen. Misslingt er, verschwindet der Geist und steuert den Körper des kampfunfähigen, weiterhin bewussten Ziels. Nur Effekte, die Untote vertreiben, können dann direkt auf den Geist zielen. Er behält seine Gesinnung, INT, WEI, CHA sowie die Immunität gegen Bezaubert und Verängstigt. Für alles Weitere gelten die Werte des Körpers, jedoch ohne dessen Wissen, Klassenmerkmale oder Übungen. Die Kontrolle endet bei 0 TP des Körpers, freiwillig als Bonusaktion oder durch Vertreibung bzw. Exorzismus, etwa mit Gutes und Böses bannen. Dann erscheint der Geist auf einem freien Feld innerhalb von 1,5 m. Nach einem gelungenen Rettungswurf oder Ende der Kontrolle ist das Ziel 24 Stunden gegen diese Inbesitznahme immun."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "lamia",
         "name": "Lamia",
         "size": "Groß",
@@ -4610,6 +5348,161 @@ function getSRDMonsters() {
         "legendaryActionsPerRound": 0
     },
     {
+        "_id": "erdelementar",
+        "name": "Erdelementar",
+        "size": "Groß",
+        "creatureType": "Elementar",
+        "alignment": "neutral",
+        "cr": "5",
+        "xp": 1800,
+        "ac": 17,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 126,
+        "hpFormula": "12W10+60",
+        "speed": {
+            "walk": "9 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": "9 m"
+        },
+        "str": 20,
+        "dex": 8,
+        "con": 20,
+        "int": 5,
+        "wis": 10,
+        "cha": 5,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift"
+        ],
+        "conditionImmunities": [
+            "Bewusstlos",
+            "Erschöpft",
+            "Gelähmt",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Erschütterungssinn 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Terral"
+        ],
+        "traits": [
+            {
+                "name": "Schadensanfälligkeit",
+                "desc": "Anfällig für Schallschaden."
+            },
+            {
+                "name": "Belagerungsmonster",
+                "desc": "Sein Schaden gegen Gegenstände und Bauwerke verdoppelt sich."
+            },
+            {
+                "name": "Erdgleiten",
+                "desc": "Kann durch nichtmagisches, unbearbeitetes Erdreich und Gestein graben, ohne das durchquerte Material zu verändern."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Führt zwei Hiebangriffe aus."
+            },
+            {
+                "name": "Hieb",
+                "desc": "Nahkampfwaffenangriff mit +8, 3 m Reichweite, ein Ziel. Ein Treffer verursacht 14 (2W8+5) Wuchtschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "feuerelementar",
+        "name": "Feuerelementar",
+        "size": "Groß",
+        "creatureType": "Elementar",
+        "alignment": "neutral",
+        "cr": "5",
+        "xp": 1800,
+        "ac": 13,
+        "acInfo": "",
+        "hp": 102,
+        "hpFormula": "12W10+36",
+        "speed": {
+            "walk": "15 m",
+            "fly": "",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 10,
+        "dex": 17,
+        "con": 16,
+        "int": 6,
+        "wis": 10,
+        "cha": 7,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Feuer",
+            "Gift"
+        ],
+        "conditionImmunities": [
+            "Bewusstlos",
+            "Erschöpft",
+            "Festgesetzt",
+            "Gelähmt",
+            "Gepackt",
+            "Liegend",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Ignal"
+        ],
+        "traits": [
+            {
+                "name": "Beleuchtung",
+                "desc": "Bis 9 m leuchtet er hell, von dort bis 18 m dämmrig."
+            },
+            {
+                "name": "Feuergestalt",
+                "desc": "Passiert Engstellen ab 2,5 cm ohne Quetschen. Wer ihn berührt oder aus höchstens 1,5 m im Nahkampf trifft, nimmt 5 (1W10) Feuerschaden. Er kann in den Bereich einer feindlichen Kreatur ziehen und darin bleiben. Beim ersten Eintritt in diesen Bereich während seines Zugs nimmt die Kreatur 5 (1W10) Feuerschaden und beginnt zu brennen. Sie nimmt zu Beginn jedes ihrer Züge erneut 5 (1W10) Feuerschaden. Eine Kreatur kann die Flammen mit einer Aktion löschen."
+            },
+            {
+                "name": "Wasserempfindlichkeit",
+                "desc": "Er nimmt 1 Kälteschaden je 1,5 m Bewegung im Wasser oder je 4 Liter über ihn gegossenes Wasser."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Führt zwei Angriffe mit Berührung aus."
+            },
+            {
+                "name": "Berührung",
+                "desc": "Nahkampfwaffenangriff mit +6, 1,5 m Reichweite, ein Ziel. Ein Treffer verursacht 10 (2W6+3) Feuerschaden und setzt Kreaturen oder brennbare Gegenstände in Brand. Das Ziel nimmt zu Beginn jedes seiner Züge 5 (1W10) Feuerschaden, bis eine Kreatur die Flammen mit einer Aktion löscht."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
         "_id": "fleischgolem",
         "name": "Fleischgolem",
         "size": "Mittelgroßes",
@@ -4825,6 +5718,82 @@ function getSRDMonsters() {
             {
                 "name": "Felsblock",
                 "desc": "Fernkampfwaffenangriff: +8 auf Treffer, Reichweite 18/72 m, ein Ziel. Treffer: 21 (3W10+5) Wuchtschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "luftelementar",
+        "name": "Luftelementar",
+        "size": "Groß",
+        "creatureType": "Elementar",
+        "alignment": "neutral",
+        "cr": "5",
+        "xp": 1800,
+        "ac": 15,
+        "acInfo": "",
+        "hp": 90,
+        "hpFormula": "12W10+24",
+        "speed": {
+            "walk": "0 m",
+            "fly": "27 m (Schweben)",
+            "swim": "",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 14,
+        "dex": 20,
+        "con": 14,
+        "int": 6,
+        "wis": 10,
+        "cha": 6,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Blitz",
+            "Schall",
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift"
+        ],
+        "conditionImmunities": [
+            "Bewusstlos",
+            "Erschöpft",
+            "Festgesetzt",
+            "Gelähmt",
+            "Gepackt",
+            "Liegend",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Aural"
+        ],
+        "traits": [
+            {
+                "name": "Luftgestalt",
+                "desc": "Kann sich in den Bereich einer feindlichen Kreatur bewegen und dort bleiben. Engstellen ab 2,5 cm durchquert er ohne sich zu quetschen."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Führt zwei Hiebangriffe aus."
+            },
+            {
+                "name": "Hieb",
+                "desc": "Nahkampfwaffenangriff mit +8, 1,5 m Reichweite, ein Ziel. Ein Treffer verursacht 14 (2W8+5) Wuchtschaden."
+            },
+            {
+                "name": "Wirbelwind (Aufladung 4–6)",
+                "desc": "Alle Kreaturen in seinem Bereich würfeln einen Stärkerettungswurf gegen SG 13. Beim Scheitern nimmt das Ziel 15 (3W8+2) Wuchtschaden, wird bis zu 6 m in eine zufällige Richtung geschleudert und landet liegend. Beim Aufprall auf einen Gegenstand wie Wand oder Boden kommen pro 3 m Wurfstrecke 3 (1W6) Wuchtschaden hinzu. Trifft das Ziel eine andere Kreatur, würfelt diese einen Geschicklichkeitsrettungswurf gegen SG 13. Scheitert sie, erleidet sie denselben Schaden und wird ebenfalls umgestoßen. Ein gelungener Stärkerettungswurf halbiert den Schaden des Wirbels und verhindert Wurf und Sturz."
             }
         ],
         "reactions": [],
@@ -5188,6 +6157,85 @@ function getSRDMonsters() {
             {
                 "name": "Klauen",
                 "desc": "Nahkampfwaffenangriff: +7 auf Treffer, Reichweite 1,5 m, ein Ziel. Treffer: 11 (2W6+4) Hiebschaden."
+            }
+        ],
+        "reactions": [],
+        "legendaryActions": [],
+        "legendaryActionsPerRound": 0
+    },
+    {
+        "_id": "wasserelementar",
+        "name": "Wasserelementar",
+        "size": "Groß",
+        "creatureType": "Elementar",
+        "alignment": "neutral",
+        "cr": "5",
+        "xp": 1800,
+        "ac": 14,
+        "acInfo": "(natürliche Rüstung)",
+        "hp": 114,
+        "hpFormula": "12W10+48",
+        "speed": {
+            "walk": "9 m",
+            "fly": "",
+            "swim": "27 m",
+            "climb": "",
+            "burrow": ""
+        },
+        "str": 18,
+        "dex": 14,
+        "con": 18,
+        "int": 5,
+        "wis": 10,
+        "cha": 8,
+        "savingThrows": {},
+        "skills": {},
+        "damageResistances": [
+            "Säure",
+            "Hieb, Stich und Wucht durch nichtmagische Angriffe"
+        ],
+        "damageImmunities": [
+            "Gift"
+        ],
+        "conditionImmunities": [
+            "Bewusstlos",
+            "Erschöpft",
+            "Festgesetzt",
+            "Gelähmt",
+            "Gepackt",
+            "Liegend",
+            "Vergiftet",
+            "Versteinert"
+        ],
+        "senses": [
+            "Dunkelsicht 18 m",
+            "Passive Wahrnehmung 10"
+        ],
+        "languages": [
+            "Aqual"
+        ],
+        "traits": [
+            {
+                "name": "Einfrieren",
+                "desc": "Nach Kälteschaden gefriert er teilweise und verliert 6 m Bewegungsrate bis zum Ende seines nächsten Zugs."
+            },
+            {
+                "name": "Wassergestalt",
+                "desc": "Kann sich in den Bereich einer feindlichen Kreatur bewegen und dort bleiben. Engstellen ab 2,5 cm durchquert er ohne sich zu quetschen."
+            }
+        ],
+        "actions": [
+            {
+                "name": "Mehrfachangriff",
+                "desc": "Führt zwei Hiebangriffe aus."
+            },
+            {
+                "name": "Hieb",
+                "desc": "Nahkampfwaffenangriff mit +7, 1,5 m Reichweite, ein Ziel. Ein Treffer verursacht 13 (2W8+4) Wuchtschaden."
+            },
+            {
+                "name": "Überschutt (Aufladung 4–6)",
+                "desc": "Alle Kreaturen in seinem Bereich würfeln einen Stärkerettungswurf gegen SG 15. Wer besteht, wird aus dem Bereich gestoßen. Wer scheitert, nimmt 13 (2W8+4) Wuchtschaden und wird bis einschließlich Größe Groß gepackt (Entkommen SG 14). Gepackte Ziele sind festgesetzt und können ohne Wasseratmung nicht atmen. Er kann eine große oder höchstens zwei maximal mittelgroße Kreaturen zugleich halten. Zu Beginn jedes Zugs des Elementars nimmt jedes gepackte Ziel erneut 13 (2W8+4) Wuchtschaden. Aus maximal 1,5 m Entfernung kann eine Kreatur mit einer Aktion und einem gelungenen Stärkewurf gegen SG 14 eine Kreatur oder einen Gegenstand aus ihm ziehen."
             }
         ],
         "reactions": [],

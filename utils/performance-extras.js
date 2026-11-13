@@ -145,7 +145,6 @@ function performMobileSearch() {
                 name: n.name,
                 detail: n.role || '',
                 id: n.id,
-                locId: n.locationId,
                 score
             });
     });
@@ -165,6 +164,7 @@ function performMobileSearch() {
                 score
             });
     });
+    matches.push(...window.findInspirationMatches(query));
     matches.sort((a, b) => b.score - a.score);
     if (matches.length === 0) {
         results.innerHTML =
@@ -177,7 +177,7 @@ function performMobileSearch() {
             .map(
                 m => `
             <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;"
-                 data-action="mobile-search-navigate" data-type="${esc(m.type)}" data-id="${esc(m.id)}" data-loc="${esc(m.locId || 'null')}">
+                 data-action="mobile-search-navigate" data-type="${esc(m.type)}" data-id="${esc(m.id)}">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: var(--text-xl);">${getTypeIcon(m.type)}</span>
                     <div>

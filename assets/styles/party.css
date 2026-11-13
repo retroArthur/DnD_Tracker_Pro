@@ -3129,3 +3129,110 @@
     color: var(--text-dim);
 }
 
+/* Lesesammlung unter Inhalte. */
+#view-inspiration.active {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - var(--view-frame-height, 134px));
+    min-height: 300px;
+}
+
+#view-inspiration .wiki-explorer {
+    flex: 1;
+    grid-template-columns: minmax(220px, 290px) minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+}
+
+#view-inspiration .wiki-sidebar,
+#view-inspiration .inspiration-reader,
+#inspiration-article {
+    min-height: 0;
+    min-width: 0;
+}
+
+#inspiration-search {
+    width: 100%;
+    min-width: 0;
+}
+
+.inspiration-collection-title {
+    margin: 4px 4px 0;
+    color: var(--gold-text);
+    font-size: var(--text-lg);
+}
+
+.inspiration-collection-subtitle {
+    margin: 0 4px 10px;
+}
+
+.inspiration-topic > summary {
+    display: list-item;
+}
+
+:where(.inspiration-topic) > .wiki-tree-item {
+    width: calc(100% - 12px);
+    margin-inline-start: 12px;
+    border-block: 0;
+    border-inline-end: 0;
+    background: transparent;
+    text-align: start;
+}
+
+.inspiration-reader {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#inspiration-article {
+    flex: 1;
+    overflow-wrap: anywhere;
+}
+
+.inspiration-article-header {
+    position: static;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.inspiration-jumps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.inspiration-table-scroll {
+    overflow-x: auto;
+}
+
+#inspiration-back {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    #view-inspiration .wiki-explorer {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #view-inspiration .wiki-sidebar {
+        max-height: none;
+    }
+
+    #view-inspiration:not(.inspiration-reading) .inspiration-reader,
+    #view-inspiration.inspiration-reading .wiki-sidebar {
+        display: none;
+    }
+
+    .inspiration-topic > summary,
+    .inspiration-topic > .wiki-tree-item,
+    #inspiration-back {
+        min-height: 44px;
+    }
+
+    #inspiration-back {
+        display: inline-flex;
+        align-self: flex-start;
+    }
+}
+

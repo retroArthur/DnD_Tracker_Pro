@@ -103,7 +103,6 @@ function performGlobalSearch() {
                 name: n.name,
                 detail: n.role || '',
                 id: n.id,
-                locId: n.locationId,
                 score: score
             });
         }
@@ -160,6 +159,7 @@ function performGlobalSearch() {
             });
         }
     });
+    matches.push(...window.findInspirationMatches(query));
     // Sortiere nach Score (beste Treffer zuerst)
     matches.sort((a, b) => b.score - a.score);
     // Erlaubte Typen für Whitelist-Validierung (XSS-Schutz)
@@ -171,7 +171,8 @@ function performGlobalSearch() {
         'spell',
         'encounter',
         'loot',
-        'wiki'
+        'wiki',
+        'inspiration'
     ];
     if (matches.length === 0) {
         results.innerHTML =
@@ -185,9 +186,8 @@ function performGlobalSearch() {
                 // Sanitize type via Whitelist
                 const safeType = sichereKlasse(m.type, allowedTypes, 'unknown');
                 const safeId = Number(m.id) || parseInt(String(m.id)) || 0;
-                const safeLocId = m.locId && typeof m.locId === 'number' ? Number(m.locId) : 'null';
                 return `
-                <div class="search-result-item" data-action="navigate-result" data-type="${safeType}" data-id="${safeId}" data-loc="${safeLocId}">
+                <div class="search-result-item" data-action="navigate-result" data-type="${safeType}" data-id="${safeId}">
                     <span class="search-result-type ${safeType}">${getTypeIcon(safeType)}</span>
                     <span class="search-result-name">${highlightMatch(m.name, query)}</span>
                     ${m.detail ? `<div class="search-result-detail">${esc(m.detail)}</div>` : ''}
@@ -200,6 +200,7 @@ function performGlobalSearch() {
     results.classList.add('visible');
 }
 function getTypeIcon(type) {
+    if (type === 'inspiration') return '💡';
     // LINK_ICONS aus core/constants.js (unterstützt Singular und Plural)
     return LINK_ICONS[type] || LINK_ICONS[type + 's'] || '📋';
 }
@@ -220,48 +221,54 @@ function highlightMatch(text, query) {
     }
     return esc(text);
 }
-function navigateToResult(type, id, locId) {
+function clearSearchForResult(inputId) {
+    const input = $(inputId);
+    if (!input?.value) return;
+    input.value = '';
+    updateSearchClear(input);
+}
+function navigateToResult(type, id) {
     const input = $('global-search');
     const results = $('global-search-results');
     if (input) input.value = '';
     if (results) results.classList.remove('visible');
     switch (type) {
-        case 'character':
+        case 'character': {
+            clearSearchForResult('party-search');
+            const classFilter = $('party-class-filter');
+            if (classFilter) classFilter.value = '';
             switchView('party');
-            setTimeout(() => editChar(id), 100);
+            scrollToChar(id);
             break;
+        }
         case 'npc':
-            if (locId) {
-                switchView('locations');
-                setTimeout(() => {
-                    const loc = EntityLookup.location(locId);
-                    if (loc) toggleLocation(locId);
-                    editNPC(id);
-                }, 100);
-            } else {
-                // Ohne Ort wie mit Ort: toggleNPC() ist das Gegenstueck zu
-                // toggleLocation() — NSC-Filter auf "Alle" (sonst stuende das
-                // Ziel nicht in der Liste, und nach der naechsten Rundreise
-                // waere ein fremder NSC gewaehlt), waehlen, mittig scrollen,
-                // Goldschein. Dann derselbe Bearbeiten-Dialog wie mit Ort.
-                switchView('npcs');
-                setTimeout(() => {
-                    toggleNPC(id);
-                    editNPC(id);
-                }, 100);
-            }
+            clearSearchForResult('npc-search');
+            switchView('npcs');
+            toggleNPC(id);
+            window.openNPCDetailFromSearch(id);
             break;
         case 'location':
+            clearSearchForResult('loc-search');
             switchView('locations');
-            setTimeout(() => toggleLocation(id), 100);
+            toggleLocation(id);
             break;
-        case 'quest':
+        case 'quest': {
+            clearSearchForResult('quest-search');
+            const activeOnly = $('quest-filter-active');
+            if (activeOnly && EntityLookup.quest(id)?.completed) activeOnly.checked = false;
             switchView('quests');
-            setTimeout(() => editQuest(id), 100);
+            const card = document.getElementById(`quest-${id}`);
+            card?.classList.add('expanded');
+            card?.scrollIntoView({ block: 'nearest' });
             break;
+        }
         case 'spell':
             switchView('spells');
-            setTimeout(() => editSpell(id), 100);
+            window.openSpellSearchResult(id);
+            break;
+        case 'inspiration':
+            switchView('inspiration');
+            window.openInspirationArticle(id);
             break;
         case 'encounter':
             // Wie der Ortszweig: toggleEncounter() setzt den Typfilter auf
@@ -269,6 +276,7 @@ function navigateToResult(type, id, locId) {
             // Auswahl spraenge beim naechsten Zeichnen zurueck), waehlt,
             // scrollt und zeigt den Goldschein. openEncounterDetail() oeffnet
             // bis 900 px das Vollbild — dort ist das Detail sonst ausgeblendet.
+            clearSearchForResult('enc-search');
             switchView('encounter');
             toggleEncounter(id);
             openEncounterDetail(id);

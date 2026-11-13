@@ -13,6 +13,7 @@ let currentLootFilter = 'all';
 // Alias für Kompatibilität
 function renderLoot() {
     renderLootList();
+    window.renderLootChests?.();
 }
 function renderLootList() {
     const listContainer = $('loot-list');
@@ -56,8 +57,17 @@ function renderLootList() {
                 (i.tags || []).some(t => t.toLowerCase().includes(search))
         );
     }
-    // Sort by name
-    items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const sort = $('loot-sort')?.value;
+    const rarityDirection = sort === 'rarity-desc' ? -1 : sort === 'rarity-asc' ? 1 : 0;
+    const rarityOrder = Object.keys(RARITY_LABELS);
+    const rarityRank = item => Math.max(0, rarityOrder.indexOf(item.rarity));
+    items.sort((a, b) => {
+        if (rarityDirection) {
+            const difference = rarityRank(a) - rarityRank(b);
+            if (difference) return difference * rarityDirection;
+        }
+        return (a.name || '').localeCompare(b.name || '');
+    });
     // Empty state
     if (!items.length) {
         listContainer.innerHTML = `
@@ -82,6 +92,7 @@ function renderLootList() {
     listContainer.innerHTML = items.map(item => renderLootItem(item)).join('');
     // Auto-select first if none selected
     if (!selectedLootId || !items.find(i => i.id === selectedLootId)) {
+        $('loot-items-layout')?.classList.remove('loot-mobile-detail-open');
         selectLoot(items[0].id, false);
     } else {
         showLootDetail(selectedLootId);
@@ -126,11 +137,38 @@ function selectLoot(id, scroll = true) {
     });
     // Show detail
     showLootDetail(id);
-    // Scroll into view if needed
+    // Nur eine ausdrückliche Auswahl öffnet die schmale Detailansicht.
     if (scroll) {
+        const layout = $('loot-items-layout');
+        const panel = $('loot-detail-panel');
+        const back = panel?.querySelector('.loot-detail-back');
+        if (
+            layout &&
+            back &&
+            $('view-loot')?.classList.contains('active') &&
+            window.matchMedia('(max-width: 900px)').matches
+        ) {
+            layout.classList.add('loot-mobile-detail-open');
+            panel.scrollTop = 0;
+            back.focus({ preventScroll: true });
+            return;
+        }
         const el = document.querySelector(`.loot-item[data-id="${id}"]`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+}
+function closeLootMobileDetail() {
+    const layout = $('loot-items-layout');
+    if (!layout?.classList.contains('loot-mobile-detail-open')) return;
+    layout.classList.remove('loot-mobile-detail-open');
+    const row = layout.querySelector('.loot-item.selected');
+    if (!row) {
+        $('loot-search')?.focus({ preventScroll: true });
+        return;
+    }
+    if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '-1');
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: 'nearest' });
 }
 function showLootDetail(id) {
     const panel = $('loot-detail-panel');
@@ -146,8 +184,11 @@ function showLootDetail(id) {
     // Schritt 10). Traeger ist die Detailspalte auf --bg-card.
     const rarityInk = RARITY_TEXT_COLORS[rarity] || RARITY_TEXT_COLORS.normal;
     const totalValue = (item.value || 0) * Math.max(0, item.quantity);
+    const backWasFocused = document.activeElement === panel.querySelector('.loot-detail-back');
     panel.innerHTML = `
         <div class="loot-detail-content">
+            <button type="button" class="btn loot-detail-back" data-action="close-loot-mobile-detail"
+                    aria-controls="loot-list">← Liste</button>
             <div class="loot-detail-header">
                 <div class="loot-detail-icon">${catIcon}</div>
                 <div class="loot-detail-title">
@@ -155,6 +196,8 @@ function showLootDetail(id) {
                     <div class="loot-detail-subtitle">${CATS[item.category] || 'Sonstiges'} • ${RARITY_LABELS[rarity]}</div>
                 </div>
                 <div class="loot-detail-actions">
+                    <button type="button" class="loot-detail-btn" data-action="open-loot-chests" data-id="${esc(item.id)}"
+                            title="In Truhe legen" aria-label="${esc(item.name)} in Truhe legen" aria-haspopup="dialog">📦</button>
                     <button class="loot-detail-btn" data-action="edit-loot" data-id="${esc(id)}" title="Bearbeiten">✏️</button>
                     <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${esc(id)}" title="Löschen">🗑️</button>
                 </div>
@@ -234,8 +277,10 @@ function showLootDetail(id) {
             }
         </div>
     `;
+    if (backWasFocused) panel.querySelector('.loot-detail-back')?.focus({ preventScroll: true });
 }
 function clearLootDetail() {
+    $('loot-items-layout')?.classList.remove('loot-mobile-detail-open');
     const panel = $('loot-detail-panel');
     if (panel) {
         panel.innerHTML = `
@@ -284,6 +329,7 @@ function clearLootForm() {
     document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
         cb.checked = false;
     });
+    setLootTagFilter('all');
     updateLootSelectedTags();
 }
 /**
@@ -305,6 +351,16 @@ function updateLootSelectedTags() {
 document.addEventListener('change', e => {
     if (e.target instanceof Element && e.target.closest('#loot-tag-grid')) updateLootSelectedTags();
 });
+function setLootTagFilter(category) {
+    document.querySelectorAll('#loot-modal .loot-tag-filter-btn').forEach(button => {
+        const active = button.dataset.value === category;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+    });
+    document.querySelectorAll('#loot-tag-grid .loot-tag-chip').forEach(chip => {
+        chip.classList.toggle('hidden', category !== 'all' && chip.dataset.category !== category);
+    });
+}
 function showLootModal(id = null) {
     clearLootForm();
     const modal = $('loot-modal');
@@ -355,7 +411,7 @@ function saveLoot() {
     const name = nameInput.value.trim();
     if (!name) {
         showToast('⚠️ Name erforderlich', 'error');
-        return;
+        return null;
     }
     const editIdInput = $('edit-loot-id');
     const editId = editIdInput.value;
@@ -388,11 +444,13 @@ function saveLoot() {
         attunement: tags.includes('attunement')
     };
     const D = window.D;
+    let savedItemId = null;
     if (editId) {
         // Update existing item
         const idx = D.loot.findIndex(i => i.id === parseInt(editId));
         if (idx > -1) {
             D.loot[idx] = { ...D.loot[idx], ...item };
+            savedItemId = D.loot[idx].id;
             showToast('Item aktualisiert', 'success', { kategorie: 'kampf' });
             // Detail-Panel aktualisieren falls selbes Item
             if (selectedLootId === parseInt(editId)) {
@@ -417,12 +475,14 @@ function saveLoot() {
             // Neues Item selektieren
             selectedLootId = newItem.id;
         }
+        savedItemId = existing?.id ?? newItem.id;
     }
     hideModal('loot-modal');
     clearLootForm();
     renderLootList();
     if (selectedLootId) showLootDetail(selectedLootId);
     window.save();
+    return savedItemId;
 }
 function editLoot(id) {
     showLootModal(id);
@@ -449,6 +509,7 @@ function removeLoot(id) {
 window.renderLoot = renderLoot;
 window.renderLootList = renderLootList;
 window.selectLoot = selectLoot;
+window.closeLootMobileDetail = closeLootMobileDetail;
 window.setLootFilter = setLootFilter;
 window.showLootModal = showLootModal;
 window.saveLoot = saveLoot;

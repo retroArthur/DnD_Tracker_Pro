@@ -38,7 +38,7 @@
     border-color: var(--gold);
 }
 
-.npc-filter-chip.active {
+.npc-filter-chip.active, #npc-favorites-filter[aria-pressed="true"] {
     background: var(--gold);
     color: var(--on-gold);
     border-color: var(--gold);
@@ -1282,4 +1282,120 @@
    (R-06, R-19 in tests/unit/design-consistency.test.js) nicht wandern. */
 .npc-unbenannt {
     color: var(--text-dim);
+}
+
+.npc-dialog-details > summary {
+    margin-inline: 12px;
+    padding: 6px 0;
+    color: var(--purple-text);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.npc-dialog-content:has(> .npc-dialog-details[open]) > .npc-dialog-preview {
+    display: none;
+}
+
+.npc-dialog-content .npc-dialog-text {
+    overflow-x: auto;
+}
+
+.npc-notes {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Im Detailkopf teilt sich der Titel die Breite mit der Aktionsleiste. */
+.npc-detail-header > .npc-detail-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.npc-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.npc-favorite-btn {
+    color: var(--text-dim);
+    font-size: var(--text-xl);
+}
+
+.npc-row > .npc-favorite-btn {
+    display: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.npc-favorite-btn:hover,
+.npc-favorite-btn[aria-pressed="true"] {
+    border-color: var(--gold);
+    color: var(--gold-text);
+}
+
+@media (max-width: 900px) {
+    .npc-row > .npc-favorite-btn {
+        display: block;
+    }
+}
+
+.npc-search-detail-back {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .npc-view.npc-search-detail-open > .section-toolbar,
+    .npc-view.npc-search-detail-open .npc-master {
+        display: none;
+    }
+
+    .npc-view.npc-search-detail-open .npc-detail {
+        display: flex;
+    }
+
+    .npc-view.npc-search-detail-open .npc-detail-content {
+        padding-bottom: 80px;
+        overflow-wrap: anywhere;
+    }
+
+    .npc-view.npc-search-detail-open .npc-detail-header,
+    .npc-view.npc-search-detail-open .npc-detail-actions {
+        flex-wrap: wrap;
+    }
+
+    .npc-view.npc-search-detail-open .npc-detail-actions {
+        flex-basis: 100%;
+    }
+
+    .npc-view.npc-search-detail-open .npc-detail-btn,
+    .npc-view.npc-search-detail-open .npc-section-btn {
+        min-width: 43px;
+        min-height: 43px;
+    }
+
+    .npc-view.npc-search-detail-open .npc-desc table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .npc-view.npc-search-detail-open .npc-search-detail-back {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        min-height: 43px;
+        margin-bottom: 12px;
+        background: var(--bg-dark);
+    }
 }

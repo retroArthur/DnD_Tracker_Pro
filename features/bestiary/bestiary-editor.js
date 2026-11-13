@@ -188,7 +188,7 @@ function openBestiaryEditor(ctx) {
         setBstRichEditor('bst-legendary', creature.legendaryActions || '');
 
         var legCountEl = window.$('bst-legendary-count');
-        if (legCountEl) legCountEl.value = String(creature.legendaryActionsPerRound || 3);
+        if (legCountEl) legCountEl.value = String(creature.legendaryActionsPerRound ?? 3);
 
         // Avatar
         _bstEditorAvatarUrl = creature.avatar || '';

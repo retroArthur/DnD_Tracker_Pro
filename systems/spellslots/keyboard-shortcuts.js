@@ -554,8 +554,9 @@ function initKeyboardShortcuts() {
         // Belegung, die in keiner Hilfe steht.
         if ((e.ctrlKey || e.metaKey) && taste === 's' && !e.shiftKey) {
             e.preventDefault();
-            saveImmediate();
-            showToast('Gespeichert');
+            saveImmediate().then(result => {
+                if (result.success) showToast('Gespeichert');
+            });
             return;
         }
         // Strg+K oder Strg+F: Globale Suche

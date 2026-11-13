@@ -871,6 +871,15 @@
     flex-wrap: wrap;
 }
 
+.loot-view .section-toolbar-search .search-wrapper,
+.loot-view .section-toolbar-search .toolbar-search {
+    min-width: 0;
+}
+
+#loot-sort {
+    max-width: 55%;
+}
+
 .loot-view .section-toolbar-filters {
     flex: 1 1 auto;
     min-width: 0;
@@ -903,4 +912,337 @@
    es keinen Streifen, der sie mitbringt. */
 .loot-view .loot-filter-chip {
     white-space: nowrap;
+}
+
+#view-loot [data-loot-items-only][hidden] {
+    display: none;
+}
+
+#loot-chest-templates {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.loot-chest-template-note {
+    margin: 8px 0 0;
+    padding: 8px 12px;
+    color: var(--text-dim);
+}
+
+.loot-chest-template-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 0 24px;
+    list-style: none;
+}
+
+.loot-chest-template {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+}
+
+.loot-chest-template-label {
+    flex: 1 1 180px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.loot-chest-template-label h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+    color: var(--gold-text);
+}
+
+.loot-chest-template-count {
+    color: var(--text-dim);
+}
+
+.loot-chest-preview-toggle {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.loot-chest-preview-toggle::before {
+    content: '▸';
+    margin-inline-end: 6px;
+}
+
+.loot-chest-preview-toggle[aria-expanded='true']::before {
+    content: '▾';
+}
+
+.loot-chest-template-preview:not([hidden]) {
+    display: grid;
+    gap: 4px;
+    flex: 1 1 100%;
+    margin: 0;
+    padding: 8px 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+}
+
+.loot-chest-preview-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 8px;
+    overflow-wrap: anywhere;
+}
+
+.loot-chest-preview-entry .btn {
+    text-align: start;
+}
+
+.loot-chest-template-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Die Truhenaktion bleibt neben dem mittig eingeblendeten Ereignisprotokoll erreichbar. */
+#loot-save-choose-chest-btn {
+    margin-inline-start: auto;
+}
+
+.modal.loot-chest-dialog {
+    width: 100%;
+    max-width: 680px;
+    margin: auto;
+    padding: clamp(12px, 4vw, 24px);
+    background: var(--bg-card);
+}
+
+.modal.loot-chest-quick-dialog {
+    max-width: 420px;
+}
+
+.loot-chest-quick-dialog .modal-title {
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+.loot-chest-quick-dialog .modal-header .btn {
+    flex-shrink: 0;
+}
+
+#loot-chests-modal .loot-chest-details:not([hidden]),
+#loot-chests-modal .loot-chest-drop,
+.loot-chest-quick-content {
+    display: grid;
+    gap: 12px;
+}
+
+.loot-chest-dialog .loot-chest-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 8px;
+}
+
+#loot-chest-create[hidden] {
+    display: none;
+}
+
+.loot-chest-dialog .loot-chest-controls .form-group {
+    margin-bottom: 0;
+}
+
+.loot-chest-dialog .loot-chest-field {
+    flex: 1 1 180px;
+    min-width: 0;
+}
+
+#loot-chests-modal .loot-chest-weight-field {
+    flex: 0 1 140px;
+    min-width: 0;
+}
+
+.loot-chest-dialog .form-group label {
+    color: var(--gold-text);
+}
+
+#loot-chests-modal .loot-chest-weight-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+#loot-chests-modal .loot-chest-weight-label label {
+    margin-bottom: 0;
+}
+
+#loot-chests-modal .loot-chest-controls + .form-group {
+    margin-top: 12px;
+}
+
+#loot-chests-modal .loot-chest-entries {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 8px 0 0;
+    list-style: none;
+}
+
+#loot-chests-modal .loot-chest-entry,
+#loot-chests-modal .loot-chest-help,
+.loot-chest-dialog .loot-chest-result:not(:empty) {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-dark);
+    overflow-wrap: anywhere;
+}
+
+#loot-chests-modal .loot-chest-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    align-items: center;
+    padding: 6px 8px;
+}
+
+#loot-chests-modal .loot-chest-entry strong {
+    flex: 1 1 160px;
+    min-width: 0;
+}
+
+#loot-chests-modal .loot-chest-entry .loot-chest-controls {
+    flex-wrap: nowrap;
+    align-items: center;
+    margin-inline-start: auto;
+}
+
+#loot-chests-modal .loot-chest-entry input {
+    width: 88px;
+}
+
+.loot-chest-chance {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+#loot-chests-modal .loot-chest-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+#loot-chest-finish-status {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+#loot-chests-modal .loot-chest-drop {
+    justify-items: start;
+}
+
+.loot-chest-dialog .loot-chest-result,
+.loot-chest-assignment {
+    width: 100%;
+}
+
+.loot-chest-assignment:empty {
+    display: none;
+}
+
+.loot-chest-dialog .loot-chest-result p {
+    margin: 4px 0 0;
+}
+
+.loot-chest-quick-content .loot-chest-result {
+    max-height: min(40vh, 240px);
+    overflow-y: auto;
+}
+
+#loot-chest-quick-reroll {
+    justify-self: start;
+}
+
+#loot-chests-modal .loot-chest-help p + p {
+    margin-top: 8px;
+}
+
+.loot-chest-dialog .loot-chest-hint {
+    color: var(--text-dim);
+}
+
+@media (pointer: coarse) {
+    .loot-chest-preview-entry .btn,
+    .loot-chest-preview-toggle,
+    .loot-chest-template-actions .btn,
+    .loot-chest-dialog .btn,
+    .loot-chest-dialog input,
+    .loot-chest-dialog select {
+        min-height: 44px;
+    }
+}
+
+.loot-detail-back {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .loot-mobile-detail-open .loot-master {
+        display: none;
+    }
+
+    .loot-mobile-detail-open .loot-detail {
+        display: flex;
+    }
+
+    .loot-mobile-detail-open .loot-detail-content {
+        padding-bottom: 80px;
+        overflow-wrap: anywhere;
+    }
+
+    .loot-mobile-detail-open .loot-detail-header,
+    .loot-mobile-detail-open .loot-detail-actions {
+        flex-wrap: wrap;
+    }
+
+    .loot-mobile-detail-open .loot-detail-actions {
+        flex-basis: 100%;
+    }
+
+    .loot-mobile-detail-open .loot-detail-btn {
+        min-width: 43px;
+        min-height: 43px;
+    }
+
+    .loot-mobile-detail-open .loot-desc table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    #loot-items-layout.loot-mobile-detail-open .loot-detail-back {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        min-height: 43px;
+        margin-bottom: 12px;
+        background: var(--bg-dark);
+    }
 }

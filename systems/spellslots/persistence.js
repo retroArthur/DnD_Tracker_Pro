@@ -24,6 +24,9 @@ let _persistFailureStreak = false;
 // BroadcastChannel/storage-Ereignis, systems/undo.js). Nur ein Tab, dessen Baseline zum
 // Speicher passt, schreibt ungefragt; ohne Baseline (load() gescheitert) nie beim Verlassen.
 let _persistBaseline = null;
+let _foreignPersistWriteCount = 0;
+let _foreignIdbWriteCount = 0;
+const _persistWriterId = window.crypto?.randomUUID?.() || _newCampaignRevision();
 // Harte Schreibsperre fuer loeschende/umziehende Ablaeufe (retireCampaignWrites): save(),
 // saveImmediate(), der Debounce-Koerper, saveAutomatic() und das Verlassen schreiben nichts.
 let _campaignWritesRetired = false;
@@ -41,6 +44,8 @@ let _retiredPersistSkipped = false;
 // erneut im Timer-Koerper, weil der Tab in den 300 ms veralten kann. D5: ein solcher Timer
 // zaehlt beim Verlassen nicht als ausdrueckliche Arbeit (_hasExplicitPendingWork).
 let _pendingSaveAutomaticOnly = false;
+// N58: Ein beim Kampagnenwechsel bereits vorgemerkter Save darf nur mit aktueller Baseline schreiben.
+let _pendingSaveRequiresCurrent = false;
 // persistOnUnload hat entschieden, den ausstehenden entprellten save() NICHT auszufuehren.
 // Die Entlade-Sequenz feuert danach noch pagehide UND visibilitychange (hidden) — beide
 // wuerden ihn ueber flushPendingSave() doch vorziehen und damit die Entscheidung umgehen
@@ -48,9 +53,12 @@ let _pendingSaveAutomaticOnly = false;
 // hebt sie auf, cancelPendingSave() verwirft ihn, und laeuft er regulaer, greift in
 // flushPendingSave() schon die Pruefung auf saveTimeout.
 let _unloadFlushDeclined = false;
-// Laufende IndexedDB-Schreibvorgaenge (saveToIndexedDBFallback) und wer auf ihr Ende wartet
+// Offene Save-Aufträge einschließlich Wartezeit, Abgleich und IndexedDB-Writes.
 let _persistWritesInFlight = 0;
 const _persistSettleWaiters = [];
+// Ein vorbereiteter Snapshot wird erst nach seinem Commit in D übernommen.
+// Währenddessen müssen weitere Saves mit der Aufnahme ihres Snapshots warten.
+let _stagedSave = null;
 // Der letzte Save ist endgueltig gescheitert — beim Verlassen wie ein ausstehender Save
 let _lastPersistFailed = false;
 // Anzahl bestaetigter Saves dieses Tabs (getPersistSuccessCount)
@@ -60,6 +68,7 @@ let _pendingSaveShowMessage = false;
 // R06 (U8): > 0, solange reloadData() den gespeicherten Stand liest (runWithSavesSuspended) —
 // ein faelliger entprellter save() schriebe sonst den gerade verdraengten Stand zurueck
 let _saveSuspendDepth = 0;
+let _campaignSwitchSaveProtected = false;
 // Ab dieser UTF-8-Groesse: IndexedDB-Modus (localStorage fasst ~5 MB)
 const PERSIST_LS_LIMIT_MB = 5;
 // Hoechstens so lange warten Sperre/Flush auf laufende IndexedDB-Writes
@@ -128,13 +137,16 @@ function _persistKeyMissing(where) {
 }
 /**
  * Baseline nach load(): stored ist der localStorage-Rohwert VOR jeder IndexedDB-Ersetzung,
- * snapshot das JSON des geladenen D. Der _rev-Marker wird mitgelesen.
+ * snapshot das JSON des geladenen D. idbRecord ist der gelesene Datensatz,
+ * null bei bestätigter Abwesenheit und undefined ohne IDB-Lesung.
  */
-function setPersistBaseline(key, stored, snapshot) {
+function setPersistBaseline(key, stored, snapshot, idbRecord, stamp = StorageAPI.get(key + '_ts', null)) {
     _persistBaseline = {
         key,
         stored: stored === undefined ? null : stored,
         rev: StorageAPI.get(key + '_rev', null),
+        stamp,
+        idbRecord,
         snapshot: typeof snapshot === 'string' ? snapshot : null,
         external: false
     };
@@ -150,8 +162,14 @@ function refreshPersistSnapshot() {
     }
 }
 // Ein anderer Tab hat diese Kampagne gespeichert (systems/undo.js, Konflikt-Erkennung)
-function markExternalCampaignWrite(key) {
-    if (_persistBaseline && _persistBaseline.key === key) _persistBaseline.external = true;
+function markExternalCampaignWrite(key, source) {
+    if (_persistBaseline && _persistBaseline.key === key) {
+        // Normale Storage-Events sind bereits im lokalen Speichervergleich sichtbar.
+        if (source === 'localStorage' && !isCampaignStorageStale(key)) return;
+        _persistBaseline.external = true;
+        if (source === 'indexedDB') _foreignIdbWriteCount++;
+        else if (source !== 'localStorage') _foreignPersistWriteCount++;
+    }
 }
 /**
  * Veraltet: der Speicher entspricht nicht mehr dem, was dieser Tab zuletzt gelesen oder
@@ -163,24 +181,151 @@ function isCampaignStorageStale(key) {
     if (!b || b.key !== key) return true;
     if (b.external) return true;
     if (StorageAPI.get(key + '_rev', null) !== b.rev) return true;
+    if (StorageAPI.get(key + '_ts', null) !== b.stamp) return true;
     return StorageAPI.get(key, null) !== b.stored;
+}
+// Der tablokale Zaehler allein sieht fremde Saves nicht. Der Nachlauf eines
+// IndexedDB-Saves darf nur die localStorage-Fassung bereinigen, die er vor
+// dem asynchronen Write vorgefunden hat. Auch ein bewusstes Speichern in einem
+// schon veralteten Tab darf nicht den erst DANACH gespeicherten Stand entfernen.
+function _watchPersistStorage(
+    key,
+    generation,
+    { automaticOnly = false, silent = false, observedIdb } = {}
+) {
+    const keys = [key + '_rev', key + '_ts', key];
+    const previous = keys.map(k => StorageAPI.get(k, null));
+    const foreignWrites = _foreignPersistWriteCount;
+    let checkedIdbWrites = _foreignIdbWriteCount;
+    let idbStateChanged = false;
+    let idbObservation = observedIdb && Promise.resolve(observedIdb);
+    let changed = false;
+    const storageChanged = (beforeWrite = false) => {
+        if (changed) return true;
+        // Die Wartefrist der Schreibsperre kann enden, bevor sich die Datenbank
+        // oeffnet. Dann darf kein alter put mehr beginnen. Ein laufender Commit
+        // bleibt separat vom Nachlauf geschuetzt (siehe _onPersistSuccess).
+        if (beforeWrite && _campaignWritesRetired) {
+            if (!silent) _retiredPersistSkipped = true;
+            changed = true;
+            return true;
+        }
+        if (
+            beforeWrite &&
+            (_campaignSwitchSaveProtected ||
+                (_persistBaseline?.key === key && _persistBaseline.rawIdbConflict))
+        ) {
+            changed = true;
+            return true;
+        }
+        const current = keys.map(k => StorageAPI.get(k, null));
+        const baseline = _persistBaseline;
+        const ownGeneration = baseline?.key === key ? baseline.generation : undefined;
+        // Die eigene Vorgaenger-Transaktion kann zuerst fertig werden. Deren
+        // Revision ueberholt den juengeren Save dieses Tabs nicht.
+        const ownPredecessor =
+            ownGeneration < generation &&
+            !baseline.external &&
+            current[0] === baseline.rev &&
+            current[1] === baseline.stamp &&
+            current[2] === baseline.stored;
+        // Ist localStorage voll, kann auch der Revisionsmarker fehlen. Das
+        // Konfliktsignal unterscheidet dann einen fremden IDB-Save vom eigenen.
+        changed =
+            ownGeneration > generation ||
+            _foreignPersistWriteCount !== foreignWrites ||
+            idbStateChanged ||
+            storageChanged.hasForeignIdbWrite() ||
+            (!ownPredecessor && current.some((value, i) => value !== previous[i]));
+        if (changed && !silent && generation === _persistGeneration && !_campaignWritesRetired) {
+            if (baseline?.key === key) baseline.external = true;
+            if (!automaticOnly) _lastPersistFailed = true;
+            window.updateSaveIndicator(_lastPersistFailed ? 'error' : 'saved');
+        }
+        return changed;
+    };
+    storageChanged.hasForeignIdbWrite = () => _foreignIdbWriteCount !== checkedIdbWrites;
+    storageChanged.confirmIdbState = (seen = _foreignIdbWriteCount) => {
+        checkedIdbWrites = seen;
+    };
+    storageChanged.observeIdbState = () => {
+        idbObservation ??= _observeCampaignRecord(key);
+        return idbObservation;
+    };
+    storageChanged.rejectIdbState = () => {
+        idbStateChanged = true;
+    };
+    storageChanged.generation = generation;
+    return storageChanged;
+}
+// load() behandelt einen LS-Eintrag ohne _ts als Schatten und kann eine alte
+// IndexedDB-Kopie vorziehen. Passen nur die Nutzdaten in die Quota, gilt der Save
+// deshalb erst nach dem IDB-Fallback. Bis dahin den alten LS-Zustand erhalten.
+function _writeLocalCampaign(key, dataString, quiet = false) {
+    const previous = StorageAPI.get(key, null);
+    const result = StorageAPI[quiet ? 'setQuiet' : 'set'](key, dataString);
+    if (!result.success) return result;
+
+    const stampKey = key + '_ts';
+    const nextStamp = String(Date.now());
+    const stamp = StorageAPI.setQuiet(stampKey, nextStamp);
+    // load() benoetigt einen vorhandenen Marker, keinen neueren Zeitwert.
+    const storedStamp = stamp.success ? nextStamp : StorageAPI.get(stampKey, null);
+    if (storedStamp) return { ...result, stamp: storedStamp };
+
+    if (StorageAPI.get(key, null) === dataString) {
+        if (previous === null) StorageAPI.remove(key);
+        else if (previous !== dataString) StorageAPI.setQuiet(key, previous);
+    }
+    return stamp;
 }
 // Gemeinsamer Erfolgspunkt aller Schreibpfade: neuer _rev-Marker (leise — kein zweiter
 // Quota-Toast; scheitert er, gilt der vorhandene), neue Baseline. lsValueNow ist der
 // localStorage-Wert NACH dem Save (im IndexedDB-Modus ggf. null).
 // R02-Nachtrag (F2, U7 minor:3/open:7): unter der Schreibsperre passiert hier NICHTS. Der
-// Speicher gehoert waehrend eines loeschenden/umziehenden Ablaufs nicht mehr diesem Save —
-// ein _rev und eine Baseline auf seinen Stand wuerden den Umzugs-Import ueberschreiben.
-function _onPersistSuccess(key, lsValueNow, dataString) {
+function _newCampaignRevision() {
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+function _writeCampaignRevision(key) {
+    const rev = _newCampaignRevision();
+    return StorageAPI.setQuiet(key + '_rev', rev).success ? rev : null;
+}
+
+function _broadcastCampaignOverwrite(key, change) {
+    try {
+        window.broadcastSave?.(key, change);
+    } catch {
+        // Die Revision bleibt auch bei nicht verfügbarem BroadcastChannel lesbar.
+    }
+}
+
+function _publishCampaignOverwrite(key, backend, previousRevision = StorageAPI.get(key + '_rev', null)) {
+    const revision = _writeCampaignRevision(key);
+    _broadcastCampaignOverwrite(key, { backend, revision });
+    return revision ?? previousRevision;
+}
+
+// Ein laufender Umzug besitzt den Speicher. Alte Saves dürfen ihre Baseline nicht nachziehen.
+function _onPersistSuccess(key, lsValueNow, dataString, generation, idbRecord) {
     if (_campaignWritesRetired) {
         _retiredPersistSkipped = true;
         return;
     }
-    let rev = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-    if (!StorageAPI.setQuiet(key + '_rev', rev).success) rev = StorageAPI.get(key + '_rev', null);
-    _persistBaseline = { key, stored: lsValueNow, rev, snapshot: dataString, external: false };
+    const revision = _writeCampaignRevision(key);
+    _persistBaseline = {
+        key,
+        stored: lsValueNow,
+        rev: revision ?? StorageAPI.get(key + '_rev', null),
+        stamp: StorageAPI.get(key + '_ts', null),
+        idbRecord,
+        generation,
+        snapshot: dataString,
+        external: false
+    };
     _lastPersistFailed = false;
     _persistSuccessCount++;
+    return revision;
 }
 function getPersistSuccessCount() {
     return _persistSuccessCount;
@@ -205,6 +350,7 @@ function cancelPendingSave() {
     clearTimeout(saveTimeout);
     saveTimeout = null;
     _pendingSaveAutomaticOnly = false;
+    _pendingSaveRequiresCurrent = false;
     _unloadFlushDeclined = false;
     return true;
 }
@@ -244,6 +390,33 @@ async function runWithSavesSuspended(fn) {
     } finally {
         _saveSuspendDepth--;
     }
+}
+// N61: Die Sicherheitskopie darf schreiben, während Live-Saves zurückgestellt sind.
+async function runWithCampaignSwitchProtection(fn) {
+    if (_campaignSwitchSaveProtected || _campaignWritesRetired) return;
+    _campaignSwitchSaveProtected = true;
+    try {
+        return await runWithSavesSuspended(fn);
+    } finally {
+        _campaignSwitchSaveProtected = false;
+    }
+}
+
+function _campaignSaveBlock(key) {
+    const rawConflict = _persistBaseline?.key === key && _persistBaseline.rawIdbConflict;
+    if (!_campaignSwitchSaveProtected && !rawConflict) return null;
+    _lastPersistFailed = true;
+    window.updateSaveIndicator('error');
+    if (_campaignSwitchSaveProtected) {
+        showToast('⚠️ Die Sicherheitskopie für den Kampagnenwechsel läuft.', 'warning');
+        return 'campaign-switch-pending';
+    }
+    showToast(
+        '⚠️ Speichern abgebrochen. Ein anderer Tab hat diese Kampagne gespeichert. Lade den neueren Stand oder sichere deine Änderungen über den Kampagnenwechsel.',
+        'warning',
+        8000
+    );
+    return 'campaign-conflict';
 }
 function _endPersistWrite() {
     _persistWritesInFlight = Math.max(0, _persistWritesInFlight - 1);
@@ -286,14 +459,19 @@ function retireCampaignWrites() {
  * der unter der Sperre uebersprungene Nachlauf eines IndexedDB-Commits (F2): dieser save()
  * raeumt den LS-Schatten und zieht _rev und Baseline nach. Er ist dann NICHT automatisch —
  * ohne ihn bliebe eine aeltere localStorage-Kopie mit _ts liegen, die load() bevorzugt.
+ * Beim gesicherten Wechsel eines veralteten Tabs bleibt der fremde Stand führend (N55).
  */
-function resumeCampaignWrites() {
+function resumeCampaignWrites({ retryPending = true } = {}) {
     _campaignWritesRetired = false;
     if (!_retiredPersistSkipped && !_retireCancelledSave) return;
     const automaticOnly = _retiredPersistSkipped ? false : _retireCancelledAutomaticOnly;
     _retiredPersistSkipped = false;
     _retireCancelledSave = false;
     _retireCancelledAutomaticOnly = false;
+    if (!retryPending) {
+        window.updateSaveIndicator('error');
+        return;
+    }
     save(_pendingSaveShowMessage);
     _pendingSaveAutomaticOnly = automaticOnly;
 }
@@ -329,8 +507,8 @@ function saveAutomatic() {
     return true;
 }
 // Ausstehenden entprellten Save sofort ausfuehren (pagehide, verstecken, vor dem Neuladen).
-// Ein veralteter Tab zieht nicht vor: sein ausstehender Save laeuft regulaer, solange die
-// Seite lebt, und endet mit ihr, wenn der Nutzer sie nach der Rueckfrage verlaesst.
+// Ein veralteter Tab zieht nicht vor. Bleibt der Nutzer nach der Rueckfrage, prueft
+// der regulaere Timer, ob sein Save schon vor dem Fremdstand eingeplant war (N35).
 // Hat persistOnUnload den Save schon abgelehnt, zieht ihn auch kein Flush der
 // Entlade-Sequenz mehr vor (_unloadFlushDeclined, F2); interne Festschreib-Stellen
 // verlangen ihn mit { force: true } ausdruecklich.
@@ -347,13 +525,24 @@ function flushPendingSave(opts) {
     if (_pendingSaveAutomaticOnly && !(opts && opts.force)) return;
     const key = window.getActiveCampaignKey();
     if (!key || isCampaignStorageStale(key)) return;
+    const automaticOnly = _pendingSaveAutomaticOnly;
     cancelPendingSave();
-    _persistNow(_pendingSaveShowMessage);
+    _persistNow(_pendingSaveShowMessage, automaticOnly, { lifecycle: opts?.lifecycle });
 }
-// Fuer interne Reload-Stellen (Kampagnenwechsel): festschreiben und den Commit abwarten
-async function flushPendingSaveAndSettle() {
+// allowStale gilt nur beim Kampagnenwechsel, der offene Arbeit eines veralteten Tabs separat sichert.
+async function flushPendingSaveAndSettle({ allowStale = false } = {}) {
+    // Die Sicherheitskopie kann länger dauern als der bereits vorgemerkte Timer.
+    if (allowStale && saveTimeout) _pendingSaveRequiresCurrent = true;
+    if (_stagedSave) {
+        await _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
+        if (_persistWritesInFlight > 0 || _lastPersistFailed) return false;
+    }
     flushPendingSave({ force: true });
     await _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
+    if (_persistWritesInFlight > 0) return false;
+    if (!saveTimeout && !_lastPersistFailed) return true;
+    const key = window.getActiveCampaignKey();
+    return allowStale && !!key && isCampaignStorageStale(key);
 }
 // Native "Seite verlassen?"-Rueckfrage anfordern (D5 = A). Browser zeigen sie nur nach einer
 // Nutzeraktivierung und ohne eigenen Text.
@@ -370,18 +559,14 @@ function _askToStay(event) {
  *  - unveraendert -> nichts (Rueckfrage nur, solange ein IndexedDB-Write laeuft)
  *  - veraltet -> nie schreiben; Rueckfrage nur fuer ausdrueckliche Arbeit (ausstehend,
  *    laufend, gescheitert). Harmlose Nebenaenderungen verfallen still.
- *  - > 5 MB -> nur fuer ausdrueckliche Arbeit einen IndexedDB-Save anstossen (asynchron,
- *    bestmoeglich). Fuer harmlose Nebenaenderungen NICHT: sein put wird nach einem laufenden
- *    Save eines anderen Tabs angelegt und committet danach (D4, F2).
- *  - sonst synchron nach localStorage mit _ts und _rev; scheitert der (Quota), bleibt nur der
- *    IndexedDB-Rueckfall — und der laeuft nach derselben Regel wie der >5-MB-Zweig: nur fuer
- *    ausdrueckliche Arbeit. Fuer nicht ausdrueckliche Arbeit wird der verworfene Timer neu
- *    eingeplant (nach "Bleiben" rettet er) und gefragt, aber kein put abgesetzt: bei voller
- *    Quota faellt auch der ausdrueckliche Save eines anderen Tabs auf IndexedDB zurueck, und
- *    unser put committete nach seinem (D4, F2).
+ *  - ohne führenden localStorage-Zeitstempel oder bei > 5 MiB die IDB-Transaktion
+ *    für ausdrückliche Arbeit anstoßen. Der put folgt erst nach dem Abgleich mit der Baseline.
+ *  - sonst synchron nach localStorage mit _ts und _rev. Scheitert das, nutzt ausdrückliche
+ *    Arbeit denselben IDB-Abgleich. Ein rein automatischer Timer wird für „Bleiben“ neu
+ *    eingeplant, mit Rückfrage beim Schließen (D4, F2).
  * "Ausdrueckliche Arbeit" ist _hasExplicitPendingWork(): ein rein automatischer Timer zaehlt
- * nicht. Der ausstehende Timer wird erst verworfen, wenn wirklich geschrieben wird — waehlt der
- * Nutzer "Bleiben", laeuft er danach regulaer.
+ * nicht. Waehlt der Nutzer "Bleiben", laeuft der Timer danach mit seiner Pruefung auf
+ * einen seit der Einplanung hinzugekommenen Fremdstand weiter (N35).
  * Wird ein ausstehender Save NICHT ausgefuehrt, fragt der Tab nach (D5), damit der Nutzer
  * entscheidet, statt die Arbeit still verfallen zu lassen — und _unloadFlushDeclined haelt die
  * spaeteren Flushes der Entlade-Sequenz von genau diesem Save fern (F2).
@@ -390,6 +575,10 @@ function persistOnUnload(event) {
     if (_campaignWritesRetired) return;
     // Bis eine Schreibentscheidung getroffen ist, gilt der ausstehende Save als abgelehnt
     _unloadFlushDeclined = true;
+    if (_stagedSave || _campaignSwitchSaveProtected) {
+        _askToStay(event);
+        return;
+    }
     const key = window.getActiveCampaignKey();
     const b = _persistBaseline;
     const explicit = _hasExplicitPendingWork();
@@ -412,7 +601,14 @@ function persistOnUnload(event) {
         if (explicit) _askToStay(event);
         return;
     }
-    if (_measureDataByteLength(current) / (1024 * 1024) > PERSIST_LS_LIMIT_MB) {
+    // Ein laufender Autosave zählt für die Rückfrage. Ohne neue ausdrückliche
+    // Arbeit darf daraus beim Verlassen kein zweiter Write ohne IDB-Abgleich werden.
+    if (_persistWritesInFlight > 0 && (!saveTimeout || _pendingSaveAutomaticOnly)) {
+        _askToStay(event);
+        return;
+    }
+    const needsIdbGuard = !(b.stored && b.stamp);
+    if (needsIdbGuard || _measureDataByteLength(current) / (1024 * 1024) > PERSIST_LS_LIMIT_MB) {
         if (!explicit) {
             // Kein put fuer nicht ausdrueckliche Arbeit (D4). Stand dennoch ein — dann
             // automatischer — Save aus, den wir damit nicht ausfuehren, entscheidet der
@@ -421,18 +617,17 @@ function persistOnUnload(event) {
             return;
         }
         cancelPendingSave();
-        _persistNow(false);
+        _persistNow(false, false, { lifecycle: true });
         _askToStay(event);
         return;
     }
     const standSaveAus = !!saveTimeout; // vor cancelPendingSave() erfassen
     cancelPendingSave();
     const generation = ++_persistGeneration;
-    if (StorageAPI.set(key, current).success) {
-        StorageAPI.set(key + '_ts', String(Date.now()));
+    if (_writeLocalCampaign(key, current).success) {
         _lsWriteGeneration = generation;
         _persistFailureStreak = false;
-        _onPersistSuccess(key, current, current);
+        _onPersistSuccess(key, current, current, generation);
         return;
     }
     // Notrettung "localStorage voll": der synchrone Write ist an der Quota gescheitert, der
@@ -454,7 +649,7 @@ function persistOnUnload(event) {
         }
         return;
     }
-    _persistNow(false);
+    _persistNow(false, false, { lifecycle: true });
     _askToStay(event);
 }
 // Einmalig: Verlassen-Schutz plus vorgezogener Flush beim Verstecken/pagehide — grosse
@@ -464,9 +659,9 @@ function initUnloadPersistence() {
     window._unloadPersistenceBound = true;
     window.addEventListener('beforeunload', persistOnUnload);
     // Ohne Argument: das Ereignisobjekt darf nicht als Optionen durchschlagen
-    window.addEventListener('pagehide', () => flushPendingSave());
+    window.addEventListener('pagehide', () => flushPendingSave({ lifecycle: true }));
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') flushPendingSave();
+        if (document.visibilityState === 'hidden') flushPendingSave({ lifecycle: true });
     });
 }
 // Sofortiges Speichern (für kritische Aktionen).
@@ -474,21 +669,92 @@ function initUnloadPersistence() {
 // Write, {success:false, error} bei endgueltigem Fehler, {success:false, superseded:true,
 // error:'superseded'}, wenn ein neuerer Save diesen ueberholt hat. R02: {success:false,
 // error:'retired'} unter der Schreibsperre, {success:false, error:'no-campaign-key'} ohne Schluessel.
-// 'superseded' heisst AUSSCHLIESSLICH "von diesem Aufruf nicht geschrieben" — kein Fehler:
-// der neuere Save hat D vollstaendig serialisiert und meldet sein Ergebnis selbst. Beide
-// catch-Ebenen (erster Versuch und IndexedDB-Retry) melden so (F2); ein ueberholter Aufruf
-// fasst Anzeige, Toasts und Notfall-Export nicht an.
-async function saveImmediate() {
+// 'superseded' heisst "von diesem Aufruf nicht geschrieben". Die Schreibpfade melden
+// das ohne Toast oder Notfall-Export. Ein wartender Save ohne bestätigten Abgleich
+// bleibt für den Kampagnenwechsel als offene Arbeit erkennbar (N56).
+// prepare() liefert optional einen separaten Snapshot und dessen synchrone Übernahme in D.
+// Die Übernahme erfolgt nach bestätigtem Write und vor den Post-Save-Hooks.
+async function saveImmediate(prepare) {
     if (_campaignWritesRetired) return { success: false, error: 'retired' };
     const key = window.getActiveCampaignKey();
+    if (!key) return _persistKeyMissing('saveImmediate');
+    const blocked = _campaignSaveBlock(key);
+    if (blocked) return { success: false, error: blocked };
+    // N53: Der Auftrag ist auch beim Warten auf die Drop-Zuweisung und beim IDB-Abgleich offen.
+    _persistWritesInFlight++;
+    try {
+        return await _saveImmediate(key, prepare);
+    } finally {
+        _endPersistWrite();
+    }
+}
+
+async function _saveImmediate(key, prepare) {
+    let observedIdb;
+    if (_stagedSave) {
+        // N49: Die Beobachtung gehört zum Auftrag. Infinity lässt bestätigte eigene
+        // Vorgänger zu, ohne schon vor dem Warten eine Schreibgeneration zu vergeben.
+        const changedWhileQueued = _watchPersistStorage(key, Number.POSITIVE_INFINITY, {
+            silent: true
+        });
+        const stale = () =>
+            window.getActiveCampaignKey() !== key ||
+            changedWhileQueued() ||
+            isCampaignStorageStale(key);
+        const unconfirmedSave = () => {
+            // N56: Der Abgleich konnte den Live-Stand nicht bestätigen. Den Auftrag
+            // vor _endPersistWrite() als offen markieren, damit der Wechsel darauf reagiert.
+            if (typeof prepare !== 'function' && window.getActiveCampaignKey() === key) {
+                _lastPersistFailed = true;
+                window.updateSaveIndicator('error');
+            }
+            return { success: false, superseded: true, error: 'superseded' };
+        };
+        for (;;) {
+            while (_stagedSave) await _stagedSave;
+            if (_campaignWritesRetired) return { success: false, error: 'retired' };
+            if (stale()) return unconfirmedSave();
+            const baseline = _persistBaseline;
+            if (baseline.stored && baseline.stamp) break;
+
+            // Ohne führenden LS-Zeitstempel kann ein Fremdwrite vor seinem Signal
+            // nur im Rohdatensatz sichtbar sein. Die bestätigte Baseline bleibt maßgeblich.
+            const current = await _observeCampaignRecord(key);
+            if (_campaignWritesRetired) return { success: false, error: 'retired' };
+            if (stale()) return unconfirmedSave();
+            if (_stagedSave || baseline !== _persistBaseline) continue;
+            if (!current || baseline.idbRecord === undefined) return unconfirmedSave();
+            if (!_matchesCampaignRecord(baseline.idbRecord, current.record)) {
+                const ownNewerCommit =
+                    current.record?.saveWriter === _persistWriterId &&
+                    current.record.saveGeneration > (baseline.generation ?? -1);
+                if (!ownNewerCommit) {
+                    // N59: Der Rohdatensatz belegt den Fremdstand auch ohne Revision und Broadcast.
+                    baseline.rawIdbConflict = true;
+                    markExternalCampaignWrite(key, 'indexedDB');
+                    window.showConflictBanner?.();
+                }
+                return unconfirmedSave();
+            }
+            observedIdb = current;
+            break;
+        }
+    }
     const D = window.D;
     const updateSaveIndicator = window.updateSaveIndicator;
     const broadcastSave = window.broadcastSave;
-    if (!key) return _persistKeyMissing('saveImmediate');
     updateSaveIndicator('saving');
     let dataString;
+    let staged;
     try {
-        dataString = JSON.stringify(D);
+        if (typeof prepare === 'function') {
+            staged = prepare();
+            if (!staged) {
+                updateSaveIndicator(_lastPersistFailed ? 'error' : 'saved');
+                return { success: false, error: 'cancelled' };
+            }
+        }
+        dataString = JSON.stringify(staged?.snapshot ?? D);
     } catch (serializeError) {
         window.ErrorHandler &&
             window.ErrorHandler.log('saveImmediate', serializeError, 'JSON Serialisierung fehlgeschlagen');
@@ -498,10 +764,23 @@ async function saveImmediate() {
         return { success: false, error: serializeError.message };
     }
     const generation = ++_persistGeneration;
+    const storageChanged = _watchPersistStorage(key, generation, { observedIdb });
     const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
     // localStorage Limit: ~5-10MB je nach Browser
     const LS_LIMIT_MB = PERSIST_LS_LIMIT_MB;
     const LS_WARNING_MB = 4;
+    let finishStagedSave;
+    if (staged) {
+        _stagedSave = new Promise(resolve => {
+            finishStagedSave = resolve;
+        });
+        _saveSuspendDepth++;
+    }
+    const confirmWrite = (lsValue, record) => {
+        const revision = _onPersistSuccess(key, lsValue, dataString, generation, record);
+        staged?.publish();
+        return revision;
+    };
     try {
         // (D-08) 4-MB-Warnung einmal pro Sitzung — kein Toast-Spam am Spieltisch
         if (dataSizeMB > LS_WARNING_MB && dataSizeMB <= LS_LIMIT_MB) {
@@ -516,7 +795,8 @@ async function saveImmediate() {
         }
         // (D-01 / STAB-05) IDB-only-Pfad bei >5MB: LS-Schatten entfernen nach bestätigtem IDB-Write
         if (dataSizeMB > LS_LIMIT_MB) {
-            await saveToIndexedDBFallback(key, dataString);
+            const record = await saveToIndexedDBFallback(key, dataString, { storageChanged, verifyForeignIdb: true });
+            if (storageChanged()) return { success: false, superseded: true, error: 'superseded' };
             // R04: erst nach dem Commit, nur ohne neueren LS-Write; F2: nie gesperrt.
             if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key);
@@ -525,7 +805,7 @@ async function saveImmediate() {
                 _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
-            _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
+            const revision = confirmWrite(StorageAPI.get(key, null), record);
             updateSaveIndicator('saved');
             // (D-02) Sitzungs-Hinweis einmal pro Sitzung, kein Per-Save-Toast
             if (!window._idbModeSeen) {
@@ -536,29 +816,31 @@ async function saveImmediate() {
                     4000
                 );
             }
-            broadcastSave();
+            broadcastSave(key, { backend: 'indexedDB', revision });
             _notifyPostSaveHooks();
             return { success: true, backend: 'indexedDB' };
         }
         // Normaler localStorage-Save
-        const saveResult = StorageAPI.set(key, dataString);
+        const saveResult = _writeLocalCampaign(key, dataString);
         if (!saveResult.success) {
             // Fehler beim Speichern → werfe Error für catch-Block
             throw new Error(saveResult.error);
         }
-        // (D-01) Begleit-Timestamp für Konflikt-Erkennung beim Laden
-        StorageAPI.set(key + '_ts', String(Date.now()));
         _lsWriteGeneration = generation;
         _persistFailureStreak = false;
-        _onPersistSuccess(key, dataString, dataString);
+        const revision = confirmWrite(dataString);
         updateSaveIndicator('saved');
-        broadcastSave();
+        broadcastSave(key, { backend: 'localStorage', revision });
         _notifyPostSaveHooks();
         // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB) — ohne strict-fsync:
         // localStorage bleibt hier die fuehrende Kopie
         if (dataSizeMB > 2) {
-            saveToIndexedDBFallback(key, dataString, { optionalCopy: true }).catch(e => {
-                if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
+            const optionalStorageChanged = _watchPersistStorage(key, generation, { silent: true });
+            saveToIndexedDBFallback(key, dataString, {
+                optionalCopy: true,
+                storageChanged: optionalStorageChanged
+            }).catch(e => {
+                if (!optionalStorageChanged() && window.APP_CONFIG?.DEBUG_MODE) {
                     window.ErrorHandler &&
                         window.ErrorHandler.log(
                             'saveImmediate',
@@ -572,7 +854,7 @@ async function saveImmediate() {
     } catch (e) {
         // R04: ueberholt — ein neuerer Save hat D bereits vollstaendig serialisiert und meldet
         // selbst. Ein spaeter Retry mit diesem aelteren Stand koennte ihn in IDB ueberschreiben.
-        if (generation !== _persistGeneration) {
+        if (generation !== _persistGeneration || storageChanged()) {
             return { success: false, superseded: true, error: 'superseded' };
         }
         if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
@@ -583,7 +865,8 @@ async function saveImmediate() {
         const retryAfterIdb = dataSizeMB > LS_LIMIT_MB;
         // Fallback zu IndexedDB bei Fehler
         try {
-            await saveToIndexedDBFallback(key, dataString);
+            const record = await saveToIndexedDBFallback(key, dataString, { storageChanged, verifyForeignIdb: true });
+            if (storageChanged()) return { success: false, superseded: true, error: 'superseded' };
             // (D-01) Begleit-Timestamp für IDB-Fallback entfernen (IDB hat eigenen timestamp).
             // R04: nur ohne neueren LS-Write; nach einem >5-MB-Retry auch keinen LS-Schatten
             // ohne _ts zuruecklassen (loest sonst beim Laden einen Schein-Konflikt aus).
@@ -595,7 +878,7 @@ async function saveImmediate() {
                 _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
-            _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
+            const revision = confirmWrite(StorageAPI.get(key, null), record);
             updateSaveIndicator('saved');
             showToast(
                 retryAfterIdb
@@ -603,7 +886,7 @@ async function saveImmediate() {
                     : '💾 In IndexedDB gespeichert (localStorage voll)',
                 'warning'
             );
-            broadcastSave();
+            broadcastSave(key, { backend: 'indexedDB', revision });
             _notifyPostSaveHooks();
             return { success: true, backend: 'indexedDB' };
         } catch (idbError) {
@@ -611,7 +894,7 @@ async function saveImmediate() {
             // und meldet selbst. Kein lauter Toast, kein Notfall-Export, keine Fehleranzeige
             // fuer Daten, die sicher liegen (gesperrte und schluessellose Saves kehren vor
             // ++_persistGeneration zurueck, eine neuere Generation ist also ein echter Save).
-            if (generation !== _persistGeneration) {
+            if (generation !== _persistGeneration || storageChanged()) {
                 return { success: false, superseded: true, error: 'superseded' };
             }
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
@@ -622,8 +905,52 @@ async function saveImmediate() {
             _reportPersistFailure();
             return { success: false, error: (idbError && idbError.message) || String(idbError) };
         }
+    } finally {
+        if (finishStagedSave) {
+            _stagedSave = null;
+            _saveSuspendDepth--;
+            finishStagedSave();
+        }
     }
 }
+async function _observeCampaignRecord(key) {
+    try {
+        return { record: await window.loadFromIndexedDBFallbackRaw(key) };
+    } catch {
+        // Ohne bestätigte Beobachtung bleiben Fremdsignale konservativ wirksam.
+        return null;
+    }
+}
+
+function _matchesCampaignRecord(a, b) {
+    return a?.timestamp === b?.timestamp &&
+        a?.data === b?.data &&
+        a?.saveWriter === b?.saveWriter &&
+        a?.saveGeneration === b?.saveGeneration &&
+        a?.importRevision === b?.importRevision;
+}
+
+// Eine verspätete IDB-Meldung ohne sichtbare Revision zählt nur, wenn der
+// gespeicherte Stand abweicht oder sich nicht zuverlässig prüfen lässt.
+async function isCampaignIdbStateCurrent(key) {
+    const baseline = _persistBaseline;
+    if (isCampaignStorageStale(key)) return false;
+    if (baseline.stored && baseline.stamp) return true;
+    if (baseline.idbRecord === undefined || !window.idb) return false;
+    const current = await _observeCampaignRecord(key);
+    if (!current || isCampaignStorageStale(key)) return false;
+
+    // Ein eigener Save kann während des Reads committen oder seine Baseline nachziehen.
+    const latest = _persistBaseline;
+    if (latest.stored && latest.stamp) return true;
+    const record = current.record;
+    return (latest.idbRecord !== undefined && _matchesCampaignRecord(latest.idbRecord, record)) ||
+        (latest.generation > (baseline.generation ?? -1) &&
+            _matchesCampaignRecord(baseline.idbRecord, record)) ||
+        (_persistWritesInFlight > 0 && record?.saveWriter === _persistWriterId &&
+            record.saveGeneration === _persistGeneration);
+}
+
 // IndexedDB Fallback für große Kampagnen. R04: loest erst nach dem bestaetigten Commit auf
 // ('complete'); ein abgebrochener Commit lehnt ab. Standard ist durability 'strict', weil die
 // Aufrufer danach die andere Kopie (LS-Schatten, _ts) entfernen; nur die optionale Zusatzkopie
@@ -634,21 +961,100 @@ async function saveToIndexedDBFallback(key, dataString, opts) {
     const tracked = !(opts && opts.optionalCopy);
     if (tracked) _persistWritesInFlight++;
     try {
+        const storageChanged = opts?.storageChanged;
+        const protectedBaseline = opts?.protectedBaseline;
+        const leadingLocal = protectedBaseline?.stored && protectedBaseline.stamp;
+        const lifecycleLocal = opts?.lifecycle && leadingLocal;
+        let before = null;
+        if (protectedBaseline) {
+            // Beim Entladen den get direkt in der Schreibtransaktion starten.
+            // Eine spätere Beobachtung könnte bereits den fremden Stand erfassen.
+            before = leadingLocal && !lifecycleLocal
+                ? await _observeCampaignRecord(key)
+                : { record: protectedBaseline.idbRecord };
+            if (!before || (before.record === undefined && !lifecycleLocal)) {
+                throw new Error('Kein bestätigter IndexedDB-Stand für diesen Save');
+            }
+        } else if (opts?.verifyForeignIdb) {
+            before = await storageChanged.observeIdbState();
+            if (!before) throw new Error('IndexedDB-Stand konnte vor dem Speichern nicht geprüft werden');
+        }
+        let record;
         await window.idbWriteTx(
             ['campaigns'],
             tx => {
-                tx.objectStore('campaigns').put({
+                // Die Datenbank kann sich erst asynchron oeffnen. Vor dem put
+                // erneut pruefen, damit ein inzwischen bestaetigter fremder
+                // IndexedDB-Stand nicht schon innerhalb der Transaktion verloren geht.
+                const store = tx.objectStore('campaigns');
+                record = {
                     id: key,
                     data: dataString,
                     timestamp: Date.now()
-                });
+                };
+                if (storageChanged) {
+                    record.saveWriter = _persistWriterId;
+                    record.saveGeneration = storageChanged.generation;
+                }
+                if (opts?.optionalCopy) record.optionalCopy = true;
+                if (before) {
+                    const current = store.get(key);
+                    current.onsuccess = () => {
+                        // Der Read in der Schreibtransaktion sieht auch Commits, deren
+                        // Nachricht noch unterwegs ist. Eigene ältere Saves sind Vorgänger.
+                        const previousOwnSave = current.result?.saveWriter === _persistWriterId &&
+                            current.result.saveGeneration < storageChanged.generation &&
+                            (!protectedBaseline || lifecycleLocal ||
+                                current.result.saveGeneration > (protectedBaseline.generation ?? -1));
+                        // Bei führendem LS darf ein alter optionaler Schatten weichen.
+                        // storageChanged prüft das lokale Tupel vor dem put erneut.
+                        const copyOfLocalData = current.result?.optionalCopy &&
+                            StorageAPI.get(key + '_ts', null) &&
+                            (lifecycleLocal || current.result.data === StorageAPI.get(key, null));
+                        const matches = before.record == null
+                            ? current.result == null
+                            : _matchesCampaignRecord(before.record, current.result);
+                        if (matches || previousOwnSave || copyOfLocalData) {
+                            if (!protectedBaseline) storageChanged.confirmIdbState();
+                        } else {
+                            storageChanged.rejectIdbState();
+                        }
+                        if (storageChanged(true)) tx.abort();
+                        else store.put(record);
+                    };
+                    return;
+                }
+                if (storageChanged?.(true)) throw new Error('superseded');
+                if (opts?.rollbackState) {
+                    const previous = store.get(key);
+                    previous.onsuccess = () => {
+                        opts.rollbackState.record = previous.result;
+                        store.put({ ...record, importRevision: opts.rollbackState.revision });
+                    };
+                } else if (opts?.createOnly) {
+                    if (StorageAPI.get(key, null) !== null) {
+                        throw Object.assign(new Error('Kampagnenschlüssel ist bereits belegt'), {
+                            name: 'ConstraintError'
+                        });
+                    }
+                    store.add(record);
+                } else {
+                    store.put(record);
+                }
             },
             { durability: tracked ? 'strict' : undefined }
         );
+        if (opts?.verifyForeignIdb && storageChanged.hasForeignIdbWrite()) {
+            const seen = _foreignIdbWriteCount;
+            const current = await _observeCampaignRecord(key);
+            if (current && _matchesCampaignRecord(record, current.record)) {
+                storageChanged.confirmIdbState(seen);
+            }
+        }
+        return record;
     } finally {
         if (tracked) _endPersistWrite();
     }
-    return key;
 }
 /**
  * Entfernt ALLE localStorage-Schluessel einer Kampagne: Daten, `_ts`, `_rev` — und das
@@ -665,16 +1071,22 @@ async function saveToIndexedDBFallback(key, dataString, opts) {
  * abgeschrieben: zwei Abschriften derselben Zeichenkette sind genau die Drift, die den Befund
  * erzeugt hat. Fehlt das Modul (Unit-Lagen, die es nicht laden), gibt es auch keinen
  * Protokollschluessel — dann bleibt dieser Schritt aus.
- * Wirft wie StorageAPI.remove(); der Aufrufer meldet die Stufe 'localStorage'.
+ * Bricht beim ersten fehlgeschlagenen Löschversuch ab. Der Aufrufer meldet den Fehler.
  * @param {string} key - Kampagnen-Speicherschluessel
  */
 function removeLocalCampaignKeys(key) {
-    StorageAPI.remove(key);
-    StorageAPI.remove(key + '_ts');
-    StorageAPI.remove(key + '_rev');
+    const keys = [key, key + '_ts', key + '_rev'];
     const protokollZusatz = window.KPLOG_SCHLUESSEL_SUFFIX;
     if (typeof protokollZusatz === 'string' && protokollZusatz !== '') {
-        StorageAPI.remove(key + protokollZusatz);
+        keys.push(key + protokollZusatz);
+    }
+    for (const storageKey of keys) {
+        const result = StorageAPI.remove(storageKey);
+        if (!result.success) {
+            throw new Error(
+                `LocalStorage-Schlüssel „${storageKey}“ konnte nicht gelöscht werden (${result.error}).`
+            );
+        }
     }
 }
 /**
@@ -691,19 +1103,41 @@ function removeLocalCampaignKeys(key) {
  * wurde abgebrochen; dort ist belegt, dass eine erreichbare Kopie existiert, und der Aufrufer
  * bleibt fail-closed.
  * @param {string} key - Kampagnen-Speicherschluessel
+ * @param {() => void} [assertHeld] - Sperre vor jeder asynchron erreichbaren Änderung prüfen
+ * @param {{idbRecord?: object|null}} [expected] - beim Datenreset zuvor gesicherter IDB-Stand
  * @returns {Promise<{success: true} |
  *   {success: false, stage: string, reason?: 'open'|'commit', error: *}>}
  */
-async function removeCampaignData(key) {
+async function removeCampaignData(key, assertHeld, expected) {
     if (typeof key !== 'string' || key === '') {
         return { success: false, stage: 'key', error: new Error('Ungültiger Kampagnenschlüssel') };
     }
     if (window.indexedDB || window.idb) {
+        let verificationError;
         try {
             await window.idbWriteTx(
                 ['campaigns'],
                 tx => {
-                    tx.objectStore('campaigns').delete(key);
+                    assertHeld?.();
+                    const store = tx.objectStore('campaigns');
+                    if (!expected) {
+                        store.delete(key);
+                        return;
+                    }
+                    const current = store.get(key);
+                    current.onsuccess = () => {
+                        try {
+                            assertHeld?.();
+                            if (expected.idbRecord === undefined ||
+                                !_matchesCampaignRecord(expected.idbRecord, current.result)) {
+                                throw new Error('Kampagnendaten haben sich seit der Sicherung geändert.');
+                            }
+                            store.delete(key);
+                        } catch (error) {
+                            verificationError = error;
+                            tx.abort();
+                        }
+                    };
                 },
                 { durability: 'strict' }
             );
@@ -712,11 +1146,12 @@ async function removeCampaignData(key) {
                 success: false,
                 stage: 'indexedDB',
                 reason: window.idb ? 'commit' : 'open',
-                error
+                error: verificationError || error
             };
         }
     }
     try {
+        assertHeld?.();
         removeLocalCampaignKeys(key);
     } catch (error) {
         return { success: false, stage: 'localStorage', error };
@@ -736,9 +1171,10 @@ async function removeCampaignData(key) {
  * danach sagen, was geloescht wurde und was nicht. Wirft nie.
  * @param {string} key - Kampagnen-Speicherschluessel
  * @param {string} [label] - Anzeigename der Kampagne fuer die Rueckfrage
+ * @param {() => void} [assertCanRemove] - Sperre und gesicherten Stand nach der Rückfrage prüfen
  * @returns {{removed: boolean, error?: *}} removed: die localStorage-Kopie ist entfernt
  */
-function confirmLocalOnlyCampaignRemoval(key, label) {
+function confirmLocalOnlyCampaignRemoval(key, label, assertCanRemove) {
     if (typeof key !== 'string' || key === '') return { removed: false };
     const wen = label ? `von „${label}“` : 'dieser Kampagne';
     let bestaetigt = false;
@@ -758,17 +1194,99 @@ function confirmLocalOnlyCampaignRemoval(key, label) {
     }
     if (!bestaetigt) return { removed: false };
     try {
+        assertCanRemove?.();
         removeLocalCampaignKeys(key);
     } catch (error) {
         return { removed: false, error };
     }
     return { removed: true };
 }
+// Snapshot für den Datenreset unter dem Kampagnen-Mutex. Wie beim Laden führt
+// eine gestempelte lokale Kopie, sonst hat der IDB-Datensatz Vorrang.
+async function readCampaignResetSnapshot(key, hasLocalDraft) {
+    if (!key) throw new Error('Kein aktiver Kampagnenschlüssel');
+    const local = [key, key + '_ts', key + '_rev'].map(name => [name, localStorage.getItem(name)]);
+    const assertLocal = () => {
+        if (!local.every(([name, value]) => localStorage.getItem(name) === value)) {
+            throw new Error('Kampagnendaten haben sich seit der Sicherung geändert.');
+        }
+    };
+    const idbState = (window.indexedDB || window.idb)
+        ? await _observeCampaignRecord(key)
+        : { record: null };
+    if (!idbState && window.idb) {
+        throw new Error('IndexedDB-Kampagnendaten konnten nicht gelesen werden.');
+    }
+    assertLocal();
+    const raw = local[0][1];
+    const localLeads = raw !== null && !!local[1][1];
+    const saved = localLeads ? raw : (idbState?.record?.data ?? raw);
+    const ownDraft = hasLocalDraft && !isCampaignStorageStale(key) &&
+        (localLeads || (idbState && _persistBaseline.idbRecord !== undefined &&
+            _matchesCampaignRecord(_persistBaseline.idbRecord, idbState.record)));
+    const data = ownDraft || (saved === null && idbState) ? JSON.stringify(window.D) : saved;
+    return { key, data, assertLocal, idbRecord: idbState?.record };
+}
+function _readCampaignLocalState(key) {
+    return [key, key + '_ts', key + '_rev'].map(name => [name, StorageAPI.get(name, null)]);
+}
+
+function _campaignLocalStateMatches(state) {
+    return state.every(([name, value]) => StorageAPI.get(name, null) === value);
+}
+
+async function _rollbackCampaignRecord(key, state) {
+    let restored = false;
+    await window.idbWriteTx(
+        ['campaigns'],
+        tx => {
+            const store = tx.objectStore('campaigns');
+            const current = store.get(key);
+            current.onsuccess = () => {
+                if (current.result?.importRevision !== state.revision) {
+                    restored = state.restored === true && _matchesCampaignRecord(state.record, current.result);
+                    return;
+                }
+                if (state.record === undefined) store.delete(key);
+                else store.put(state.record);
+                restored = true;
+            };
+        },
+        { durability: 'strict' }
+    );
+    if (restored) state.restored = true;
+    return restored;
+}
+
+async function rollbackCampaignOverwrite({ key, before, after, indexedDBState }) {
+    // Beide Speicher getrennt auf Besitz prüfen. Ein fremder Save kann nur
+    // localStorage geändert haben, während der IDB-Datensatz noch uns gehört.
+    if (indexedDBState && !(await _rollbackCampaignRecord(key, indexedDBState))) return false;
+    if (!_campaignLocalStateMatches(after)) return false;
+
+    const changes = before
+        .map(([name, value], i) => ({ name, value, current: after[i][1] }))
+        .filter(({ value, current }) => value !== current);
+    // Kürzere Werte zuerst zurückschreiben, damit der alte Stand wieder in die Quota passt.
+    const growth = ({ name, value, current }) =>
+        (value === null ? 0 : name.length + value.length) -
+        (current === null ? 0 : name.length + current.length);
+    changes.sort((a, b) => growth(a) - growth(b));
+    const failed = [];
+    for (const { name, value } of changes) {
+        const result = value === null ? StorageAPI.remove(name) : StorageAPI.setQuiet(name, value);
+        if (!result.success) failed.push(name);
+    }
+    if (changes.length || indexedDBState) _broadcastCampaignOverwrite(key);
+    if (failed.length) {
+        throw new Error(`Vorherige Speicherwerte für ${failed.join(', ')} konnten nicht wiederhergestellt werden`);
+    }
+    return true;
+}
+
 /**
- * Schreibt die Daten EINER Kampagne nach denselben Regeln wie save(), aber ohne
- * UI-Nebenwirkungen (kein Toast, keine Speicheranzeige, kein Broadcast, keine
- * Post-Save-Hooks) — fuer Kampagnen, die dieser Tab (noch) nicht anzeigt: neue Kampagne,
- * Import als neue Kampagne (Code-Review 2026-09-21, R07).
+ * Schreibt eine Kampagne nach denselben Backend-Regeln wie save(). Ein Überschreiben
+ * meldet den bestätigten Stand an andere Tabs, ohne die Baseline dieses Tabs zu ändern.
  *  - > 5 MB (UTF-8): nur IndexedDB (strict, bestaetigter Commit), danach localStorage-Kopie
  *    und _ts entfernen
  *  - sonst localStorage plus _ts-Begleiter (sonst haelt load() den Stand fuer einen
@@ -778,11 +1296,13 @@ function confirmLocalOnlyCampaignRemoval(key, label) {
  * aufloest (R04). Wirft nie.
  * @param {string} key - Kampagnen-Speicherschluessel
  * @param {object|string} data - Kampagnenobjekt oder bereits serialisierter Text
- * @returns {Promise<{success: boolean, backend: 'localStorage'|'indexedDB'|null, error: string|null}>}
+ * @param {{createOnly?: boolean, withRollback?: boolean}} [options]
+ * @returns {Promise<WriteCampaignDataResult>}
  */
-async function writeCampaignData(key, data) {
+async function writeCampaignData(key, data, { createOnly = false, withRollback = false } = {}) {
     const LS_LIMIT_MB = PERSIST_LS_LIMIT_MB;
     const fail = error => ({ success: false, backend: null, error: String(error) });
+    const collision = () => ({ ...fail('Kampagnenschlüssel ist bereits belegt'), collision: true });
     if (typeof key !== 'string' || key === '') return fail('Ungültiger Kampagnenschlüssel');
     let dataString;
     try {
@@ -792,33 +1312,79 @@ async function writeCampaignData(key, data) {
     }
     if (typeof dataString !== 'string') return fail('Keine Kampagnendaten');
     try {
+        const before = withRollback && !createOnly ? _readCampaignLocalState(key) : null;
+        const rollbackState = before ? { revision: _newCampaignRevision(), record: undefined } : null;
+        const confirmWrite = (backend, value, stamp) => {
+            const rev = createOnly ? null : _publishCampaignOverwrite(key, backend, before?.[2][1]);
+            const result = { success: true, backend, error: null };
+            if (before) {
+                // Nur selbst geschriebene Werte gelten als Besitznachweis, auch wenn
+                // ein zweiter Tab schon während der Veröffentlichung speichert.
+                const after = [[key, value], [key + '_ts', stamp], [key + '_rev', rev]];
+                const indexedDBState = backend === 'indexedDB' ? rollbackState : null;
+                result.rollback = { key, before, after, indexedDBState };
+            }
+            return result;
+        };
+        const confirmIndexedDB = async removeLocalData => {
+            if (before && !_campaignLocalStateMatches(before)) {
+                await _rollbackCampaignRecord(key, rollbackState);
+                return fail('Kampagne wurde während des Imports in einem anderen Tab geändert');
+            }
+            if (!createOnly) {
+                const obsolete = removeLocalData ? [key, key + '_ts'] : [key + '_ts'];
+                const remaining = before?.map(entry => [...entry]);
+                for (const name of obsolete) {
+                    if (StorageAPI.get(name, null) === null || StorageAPI.remove(name).success) {
+                        const entry = remaining?.find(([entryName]) => entryName === name);
+                        if (entry) entry[1] = null;
+                        continue;
+                    }
+                    if (before) {
+                        try {
+                            await rollbackCampaignOverwrite({ key, before, after: remaining, indexedDBState: rollbackState });
+                        } catch (error) {
+                            return fail(`Rückabwicklung nach fehlgeschlagener Speicherbereinigung fehlgeschlagen (${error.message})`);
+                        }
+                    }
+                    return fail(`Vorheriger Speicherwert für ${name} konnte nicht entfernt werden`);
+                }
+            }
+            return confirmWrite('indexedDB', removeLocalData ? null : before?.[0][1], null);
+        };
+        if (createOnly && StorageAPI.get(key, null) !== null) return collision();
         if (_measureDataByteLength(dataString) / (1024 * 1024) > LS_LIMIT_MB) {
-            await saveToIndexedDBFallback(key, dataString);
-            StorageAPI.remove(key);
-            StorageAPI.remove(key + '_ts');
-            return { success: true, backend: 'indexedDB', error: null };
+            await saveToIndexedDBFallback(key, dataString, { createOnly, rollbackState });
+            return await confirmIndexedDB(true);
         }
-        const lsResult = StorageAPI.setQuiet(key, dataString);
+        if (createOnly && window.idb) {
+            // Ein kleines lokales Objekt darf keine schon vorhandene IDB-only-Kampagne
+            // mit demselben Schluessel verdecken. Ein nicht lesbarer IDB-Store darf
+            // eine eigenstaendig moegliche localStorage-Anlage aber nicht verhindern.
+            const existing = await window.loadFromIndexedDBFallbackRaw(key).catch(() => null);
+            if (existing || StorageAPI.get(key, null) !== null) return collision();
+        }
+        const lsResult = _writeLocalCampaign(key, dataString, true);
         if (lsResult.success) {
-            StorageAPI.setQuiet(key + '_ts', String(Date.now()));
-            return { success: true, backend: 'localStorage', error: null };
+            return confirmWrite('localStorage', dataString, lsResult.stamp);
         }
         try {
-            await saveToIndexedDBFallback(key, dataString);
+            await saveToIndexedDBFallback(key, dataString, { createOnly, rollbackState });
         } catch (idbError) {
+            if (createOnly && idbError?.name === 'ConstraintError') return collision();
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
                 window.ErrorHandler.log('writeCampaignData', idbError, 'IndexedDB-Rueckfall fehlgeschlagen');
             }
             return fail(lsResult.error || 'Speichern fehlgeschlagen');
         }
-        StorageAPI.remove(key + '_ts');
-        return { success: true, backend: 'indexedDB', error: null };
+        return await confirmIndexedDB(false);
     } catch (error) {
+        if (createOnly && error?.name === 'ConstraintError') return collision();
         return fail((error && error.message) || error);
     }
 }
 // Load mit IndexedDB-Fallback (gibt nur .data zurück)
-async function loadFromIndexedDBFallback(key) {
+async function loadFromIndexedDBFallback(key, onRead) {
     const initIndexedDB = window.initIndexedDB;
     let idb = window.idb;
     if (!idb) await initIndexedDB();
@@ -828,6 +1394,7 @@ async function loadFromIndexedDBFallback(key) {
         const store = transaction.objectStore('campaigns');
         const request = store.get(key);
         request.onsuccess = () => {
+            onRead?.(request.result || null);
             if (request.result) {
                 resolve(request.result.data);
             } else {
@@ -863,37 +1430,50 @@ const save = function (showMessage = false) {
     // Ein Aufruf ueber save() ist ausdruecklich; saveAutomatic() setzt die Markierung danach
     // wieder (F2)
     _pendingSaveAutomaticOnly = false;
+    _pendingSaveRequiresCurrent = _campaignSwitchSaveProtected;
     // Ein neu eingeplanter Save ist nicht der beim Verlassen abgelehnte (F2)
     _unloadFlushDeclined = false;
     const updateSaveIndicator = window.updateSaveIndicator;
     updateSaveIndicator('saving');
     if (saveTimeout) clearTimeout(saveTimeout);
     _pendingSaveShowMessage = showMessage;
-    saveTimeout = window.setTimeout(() => {
-        saveTimeout = null;
-        const automaticOnly = _pendingSaveAutomaticOnly;
-        _pendingSaveAutomaticOnly = false;
-        // R06: waehrend reloadData() nicht schreiben, sondern neu einplanen
+    const keyAtSchedule = window.getActiveCampaignKey();
+    const storageChangedSinceSchedule = keyAtSchedule
+        ? _watchPersistStorage(keyAtSchedule, _persistGeneration, { silent: true })
+        : null;
+    const persistPending = () => {
+        // R06: beim Konflikt-Neuladen denselben Save mit seiner ursprünglichen
+        // Vergleichsbasis zurückstellen.
         if (_saveSuspendDepth > 0) {
-            save(showMessage);
-            _pendingSaveAutomaticOnly = automaticOnly;
+            saveTimeout = window.setTimeout(persistPending, 300);
             return;
         }
+        saveTimeout = null;
+        const automaticOnly = _pendingSaveAutomaticOnly;
+        const requiresCurrent =
+            automaticOnly ||
+            _pendingSaveRequiresCurrent ||
+            (_unloadFlushDeclined && storageChangedSinceSchedule?.());
+        _pendingSaveAutomaticOnly = false;
+        _pendingSaveRequiresCurrent = false;
         // D4-Nachtrag (F2): der Tab kann in den 300 ms veraltet sein. Ein rein automatischer
         // Save schreibt dann nicht — und stellt die Anzeige wieder her, die save() auf
         // 'saving' gesetzt hatte.
-        if (automaticOnly) {
+        // N35: „Bleiben“ lässt einen überholten Save als ungesicherte Arbeit im Tab.
+        if (requiresCurrent) {
             const key = window.getActiveCampaignKey();
             if (!key || isCampaignStorageStale(key)) {
-                window.updateSaveIndicator(_lastPersistFailed ? 'error' : 'saved');
+                if (!automaticOnly) _lastPersistFailed = true;
+                updateSaveIndicator(_lastPersistFailed ? 'error' : 'saved');
                 return;
             }
         }
-        _persistNow(showMessage);
-    }, 300);
+        _persistNow(showMessage, automaticOnly);
+    };
+    saveTimeout = window.setTimeout(persistPending, 300);
 };
 // Ein Save-Durchlauf des entprellten save() (auch vorgezogen durch flushPendingSave())
-async function _persistNow(showMessage = false) {
+async function _persistNow(showMessage = false, automaticOnly = false, { lifecycle = false } = {}) {
     if (_campaignWritesRetired) return;
     const key = window.getActiveCampaignKey();
     const D = window.D;
@@ -904,6 +1484,7 @@ async function _persistNow(showMessage = false) {
         _persistKeyMissing('save');
         return;
     }
+    if (_campaignSaveBlock(key)) return;
     // Sichere JSON-Serialisierung
     let dataString;
     try {
@@ -916,12 +1497,26 @@ async function _persistNow(showMessage = false) {
         return;
     }
     const generation = ++_persistGeneration;
+    const storageChanged = _watchPersistStorage(key, generation, { automaticOnly });
+    const protectedBaseline = automaticOnly || lifecycle ? _persistBaseline : null;
+    const indexedDbOptions = {
+        storageChanged,
+        protectedBaseline,
+        lifecycle,
+        verifyForeignIdb: !protectedBaseline
+    };
     const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
     const LS_LIMIT_MB = PERSIST_LS_LIMIT_MB;
+    // Ohne führenden LS-Zeitstempel könnte ein kleiner LS-Save einen neueren
+    // IDB-Stand verdecken. Auch hier muss der Vergleich in der IDB-Transaktion liegen.
+    const useIdb = dataSizeMB > LS_LIMIT_MB ||
+        (protectedBaseline && !(protectedBaseline.stored && protectedBaseline.stamp));
+    _persistWritesInFlight++;
     try {
         // (D-01 / STAB-05) IDB-only-Pfad: LS-Schatten nach bestätigtem IDB-Write entfernen
-        if (dataSizeMB > LS_LIMIT_MB) {
-            await saveToIndexedDBFallback(key, dataString);
+        if (useIdb) {
+            const record = await saveToIndexedDBFallback(key, dataString, indexedDbOptions);
+            if (storageChanged()) return;
             // R04: erst nach dem Commit, und nur ohne neueren LS-Write.
             // R02-Nachtrag (F2): nicht unter der Schreibsperre.
             if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
@@ -931,12 +1526,12 @@ async function _persistNow(showMessage = false) {
                 _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
-            _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
+            const revision = _onPersistSuccess(key, StorageAPI.get(key, null), dataString, generation, record);
             updateSaveIndicator('saved');
-            broadcastSave();
+            broadcastSave(key, { backend: 'indexedDB', revision });
             _notifyPostSaveHooks();
             // (D-02) Sitzungs-Hinweis statt Per-Save-Toast
-            if (!window._idbModeSeen) {
+            if (dataSizeMB > LS_LIMIT_MB && !window._idbModeSeen) {
                 window._idbModeSeen = true;
                 showToast(
                     '💾 Kampagne im IndexedDB-Modus (>5MB). Daten sicher gespeichert.',
@@ -946,38 +1541,37 @@ async function _persistNow(showMessage = false) {
             }
             return;
         }
-        const saveResult = StorageAPI.set(key, dataString);
+        const saveResult = _writeLocalCampaign(key, dataString);
         if (!saveResult.success) {
             throw new Error(saveResult.error);
         }
-        // (D-01) Begleit-Timestamp setzen
-        StorageAPI.set(key + '_ts', String(Date.now()));
         _lsWriteGeneration = generation;
         _persistFailureStreak = false;
-        _onPersistSuccess(key, dataString, dataString);
+        const revision = _onPersistSuccess(key, dataString, dataString, generation);
         updateSaveIndicator('saved');
-        broadcastSave();
+        broadcastSave(key, { backend: 'localStorage', revision });
         _notifyPostSaveHooks();
         if (showMessage) showToast('💾 Gespeichert', 'success');
     } catch (e) {
         // R04: ueberholt — der neuere Save meldet selbst, kein Retry mit altem Stand
-        if (generation !== _persistGeneration) return;
+        if (generation !== _persistGeneration || storageChanged()) return;
         ErrorHandler.log('save', e, 'localStorage');
-        const retryAfterIdb = dataSizeMB > LS_LIMIT_MB;
+        const retryAfterIdb = useIdb;
         // Fallback zu IndexedDB
         try {
-            await saveToIndexedDBFallback(key, dataString);
+            const record = await saveToIndexedDBFallback(key, dataString, indexedDbOptions);
+            if (storageChanged()) return;
             // R02-Nachtrag (F2): nicht unter der Schreibsperre raeumen
             if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key + '_ts');
-                if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
+                if (useIdb) StorageAPI.remove(key);
             } else if (_lsWriteGeneration < generation) {
                 _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
-            _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
+            const revision = _onPersistSuccess(key, StorageAPI.get(key, null), dataString, generation, record);
             updateSaveIndicator('saved');
-            broadcastSave();
+            broadcastSave(key, { backend: 'indexedDB', revision });
             _notifyPostSaveHooks();
             showToast(
                 retryAfterIdb
@@ -987,11 +1581,13 @@ async function _persistNow(showMessage = false) {
             );
         } catch (idbError) {
             // R04-Nachtrag (F2): ueberholt — der neuere Save meldet selbst (siehe saveImmediate)
-            if (generation !== _persistGeneration) return;
+            if (generation !== _persistGeneration || storageChanged()) return;
             ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
             // (D-03) Laut bei IDB-Fehler, Export einmal pro Fehlerserie
             _reportPersistFailure();
         }
+    } finally {
+        _endPersistWrite();
     }
 }
 
@@ -1001,7 +1597,9 @@ window.saveImmediate = saveImmediate;
 window.registerPostSaveHook = registerPostSaveHook;
 window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
 window.removeCampaignData = removeCampaignData;
+window.readCampaignResetSnapshot = readCampaignResetSnapshot;
 window.writeCampaignData = writeCampaignData;
+window.rollbackCampaignOverwrite = rollbackCampaignOverwrite;
 // D-B / D-C (Nutzerentscheidungen 2026-09-27)
 window.confirmLocalOnlyCampaignRemoval = confirmLocalOnlyCampaignRemoval;
 window.hasExplicitPendingWork = hasExplicitPendingWork;
@@ -1010,6 +1608,7 @@ window.setPersistBaseline = setPersistBaseline;
 window.refreshPersistSnapshot = refreshPersistSnapshot;
 window.markExternalCampaignWrite = markExternalCampaignWrite;
 window.isCampaignStorageStale = isCampaignStorageStale;
+window.isCampaignIdbStateCurrent = isCampaignIdbStateCurrent;
 window.getPersistSuccessCount = getPersistSuccessCount;
 window.areCampaignWritesRetired = areCampaignWritesRetired;
 window.getPersistGeneration = getPersistGeneration;
@@ -1024,4 +1623,5 @@ window.initUnloadPersistence = initUnloadPersistence;
 // R06 (Code-Review 2026-09-21, U8)
 window.cancelPendingSave = cancelPendingSave;
 window.runWithSavesSuspended = runWithSavesSuspended;
+window.runWithCampaignSwitchProtection = runWithCampaignSwitchProtection;
 // Note: load() is defined in systems/spellslots/quick-roll.js

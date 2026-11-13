@@ -72,6 +72,7 @@ const FENSTER = [
 
 /** 24 Eintraege — genug, dass die Listenspalte in jedem Fenster scrollen MUSS. */
 const N = 24;
+const ANZAHL_REITER = 25;
 
 const KAEMPFER = [
     'Danuel von Bruchstein',
@@ -341,7 +342,9 @@ const ZUSTAENDE = [
                 const tabs = [...document.querySelectorAll('.nav-tab[data-view]')];
                 return { anzahl: tabs.length };
             });
-            if (m.anzahl !== N) return `${m.anzahl} statt ${N} Reiter in der Leiste`;
+            if (m.anzahl !== ANZAHL_REITER) {
+                return `${m.anzahl} statt ${ANZAHL_REITER} Reiter in der Leiste`;
+            }
             return null;
         }
     },

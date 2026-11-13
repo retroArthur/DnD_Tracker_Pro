@@ -128,6 +128,64 @@
 import { test, expect } from '@playwright/test';
 import { loadApp, seedPopulatedSession, waitForAppReady } from '../helpers/test-utils.js';
 
+/** @param {import('@playwright/test').Page} page */
+async function simulierePwaPrompt(page) {
+    return page.evaluate(() => {
+        const probe = { anzahl: 0, entscheide: () => {} };
+        const userChoice = new Promise(resolve => {
+            probe.entscheide = () => resolve({ outcome: 'dismissed' });
+        });
+        /** @type {any} */ (window).__pwaProbe = probe;
+        const event = new Event('beforeinstallprompt', { cancelable: true });
+        Object.assign(event, { prompt: () => { probe.anzahl++; }, userChoice });
+        window.dispatchEvent(event);
+        return event.defaultPrevented;
+    });
+}
+
+test('PWA-Installation am Telefon ist nur mit unverbrauchtem Prompt verfügbar', async ({ page }) => {
+    await ladenDannVerkleinern(page, 390, 844);
+    const oeffner = page.locator('#mobile-header-menu-btn');
+    const menue = page.locator('#mobile-header-menu');
+    const installieren = menue.locator('[data-action="install-pwa"]');
+    await oeffner.click();
+    await expect(installieren).toHaveCount(0);
+    const info = menue.locator('[data-action="show-about-modal"]');
+    await info.focus();
+
+    expect(await simulierePwaPrompt(page)).toBe(true);
+    await expect(installieren).toBeVisible();
+    await expect(info).toBeFocused();
+    await expect(page.locator('#pwa-install-btn')).toBeHidden();
+    await installieren.click();
+    expect(await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.anzahl)).toBe(1);
+    await expect(menue).toBeHidden();
+
+    // Der Prompt bleibt offen. Der bereits verbrauchte Eintrag darf nicht erneut angeboten werden.
+    await oeffner.click();
+    await expect(installieren).toHaveCount(0);
+    await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.entscheide());
+
+    expect(await simulierePwaPrompt(page)).toBe(true);
+    await expect(installieren).toBeVisible();
+    await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
+    await expect(installieren).toHaveCount(0);
+    await simulierePwaPrompt(page);
+    await expect(installieren).toHaveCount(0);
+});
+
+test('PWA-Installation bleibt über den Desktop-Knopf bedienbar', async ({ page }) => {
+    await ladenDannVerkleinern(page, 1440, 900);
+    const installieren = page.locator('#pwa-install-btn');
+    await expect(installieren).toBeHidden();
+    expect(await simulierePwaPrompt(page)).toBe(true);
+    await expect(installieren).toBeVisible();
+    await installieren.click();
+    expect(await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.anzahl)).toBe(1);
+    await expect(installieren).toBeHidden();
+    await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.entscheide());
+});
+
 /** Die drei Telefonbreiten dieser Datei. 320 ist die kleinste Geraeteklasse,
  *  die der C1-Block in `core.css` namentlich fuehrt. */
 const TELEFON = [

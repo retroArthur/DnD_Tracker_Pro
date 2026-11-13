@@ -946,6 +946,12 @@ function bereinigeDatengrenze(daten) {
     datengrenzeEntgiften(daten);
     datengrenzeNpcTexte(daten);
     for (const pfad of DATENGRENZE_PFADE) datengrenzeFeld(daten, pfad, 0);
+    if (
+        Object.prototype.hasOwnProperty.call(daten, 'lootChests') &&
+        typeof normalizeLootChests === 'function'
+    ) {
+        daten.lootChests = normalizeLootChests(daten.lootChests);
+    }
     return daten;
 }
 // [DATENGRENZE:ENDE]

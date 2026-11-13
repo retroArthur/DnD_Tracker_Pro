@@ -202,6 +202,7 @@ const ID_COUNTER_PATHS = Object.freeze({
     encounters: Object.freeze(['encounters']),
     spells: Object.freeze(['spells']),
     loot: Object.freeze(['loot']),
+    lootChests: Object.freeze(['lootChests']),
     wiki: Object.freeze(['wiki']),
     sessionNotes: Object.freeze(['sessionNotes']),
     randomTables: Object.freeze(['randomTables']),
@@ -583,6 +584,60 @@ function normalizeEntityIds(data) {
     }
     return changes;
 }
+
+/**
+ * Bereitet Truhen aus einer Kampagne oder einem Truhe-Export auf.
+ * Einträge bleiben eigenständige Kopien und können auf den Kataloggegenstand verweisen.
+ */
+function normalizeLootChests(raw) {
+    if (!Array.isArray(raw)) return [];
+    const text = value => (typeof value === 'string' ? value : '');
+    const normalizeItemDetails = details => {
+        if (!isPlainDataObject(details)) return undefined;
+        const copy = {};
+        for (const field of ['descriptionHtml', 'origin', 'special', 'property']) {
+            if (typeof details[field] === 'string') copy[field] = details[field];
+        }
+        for (const field of ['weight', 'value']) {
+            if (Number.isFinite(details[field])) copy[field] = details[field];
+        }
+        if (Array.isArray(details.tags)) {
+            copy.tags = details.tags.filter(tag => typeof tag === 'string');
+        }
+        if (typeof details.attunement === 'boolean') copy.attunement = details.attunement;
+        return Object.keys(copy).length > 0 ? copy : undefined;
+    };
+    const lootChests = [];
+    for (const chest of raw) {
+        if (!isPlainDataObject(chest)) continue;
+        const name = text(chest.name).trim();
+        if (!name) continue;
+        const entries = [];
+        for (const entry of Array.isArray(chest.entries) ? chest.entries : []) {
+            if (!isPlainDataObject(entry)) continue;
+            const entryName = text(entry.name).trim();
+            const weight = datengrenzeZahlwert(entry.weight);
+            if (!entryName || !Number.isFinite(weight) || weight < 0 || weight > 1e6) continue;
+            const sourceItemId = toEntityIdNumber(entry.sourceItemId);
+            const itemDetails = normalizeItemDetails(entry.itemDetails);
+            entries.push({
+                name: entryName,
+                description: text(entry.description),
+                category: text(entry.category),
+                rarity: text(entry.rarity),
+                weight,
+                // Nur alte Vorlagen ohne Quell-ID dürfen anhand des Inhalts verlinkt werden.
+                ...(entry.sourceItemId === undefined
+                    ? {}
+                    : { sourceItemId: isValidEntityId(sourceItemId) ? sourceItemId : null }),
+                ...(itemDetails ? { itemDetails } : {})
+            });
+        }
+        lootChests.push({ id: chest.id, name, entries });
+    }
+    normalizeEntityIds({ lootChests });
+    return lootChests;
+}
 /**
  * Bestimmt data._nextId neu: gueltige Zaehler der Datei bleiben erhalten (auch Alt-Schluessel
  * wie 'items'), jeder Registertyp bekommt mindestens max(ID) + 1.
@@ -618,6 +673,7 @@ window.getIdCollection = getIdCollection;
 window.maxEntityId = maxEntityId;
 window.isValidEntityId = isValidEntityId;
 window.normalizeEntityIds = normalizeEntityIds;
+window.normalizeLootChests = normalizeLootChests;
 window.recomputeNextIds = recomputeNextIds;
 /**
  * Formatiert ein Datum für die deutsche Anzeige

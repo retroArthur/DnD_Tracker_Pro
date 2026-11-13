@@ -205,9 +205,6 @@ const SETZEN_MS = 450;
 
 /** Der leere Zustand des Details, wie die Vorlage ihn zeigt (R3, Entscheidung (b)). */
 const LEER_TEXT = 'Wähle ein Monster aus der Liste';
-/** SRD-Monster (112) plus die gesaete eigene Kreatur. */
-const ZAEHLER_SAAT = 113;
-
 const GOB = 'goblin:srd';
 const ALT = '1:custom';
 const PROBE = '2:custom';
@@ -586,6 +583,7 @@ function zustand(page, sterne = []) {
             ersteSichtbare: erste ? key(erste) : null,
             scrollTop: Math.round(c.scrollTop),
             zaehler: ((document.getElementById('bestiary-count') || {}).textContent || '').trim(),
+            zaehlerSoll: alle.length,
             hg: { ist: optionen('bestiary-filter-cr'), soll: sollHg },
             typ: { ist: optionen('bestiary-filter-type'), soll: sollTyp },
             typWert: /** @type {HTMLSelectElement} */ (
@@ -709,10 +707,10 @@ function detailUnberuehrt(vor, nach, wann) {
 
 /**
  * Filteroptionen = vorhandene Kreaturen, Zaehler = SRD plus eigene (R1).
- * @param {Awaited<ReturnType<typeof zustand>>} z @param {number} zaehler @param {string} wann
+ * @param {Awaited<ReturnType<typeof zustand>>} z @param {string} wann
  */
-function kopfPasst(z, zaehler, wann) {
-    weich(z.zaehler, `${wann}: #bestiary-count = SRD plus eigene`).toBe(String(zaehler));
+function kopfPasst(z, wann) {
+    weich(z.zaehler, `${wann}: #bestiary-count = SRD plus eigene`).toBe(String(z.zaehlerSoll));
     weich(z.typ.ist, `${wann}: die Typ-Optionen entsprechen den vorhandenen Kreaturen`).toEqual(
         z.typ.soll
     );
@@ -846,7 +844,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             expect(z0.gewaehlt, 'Vorbedingung: Probewesen ist gewaehlt').toBe('2');
             expect(z0.detail, 'Vorbedingung: das Detail zeigt es').toBe('Probewesen');
             expect(z0.fokus.zeile, 'Vorbedingung: der Fokus liegt in seiner Zeile').toBe(PROBE);
-            kopfPasst(z0, ZAEHLER_SAAT + 1, 'nach dem Anlegen');
+            kopfPasst(z0, 'nach dem Anlegen');
 
             await rueckgaengig(page);
             const z1 = await zustand(page);
@@ -855,7 +853,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             ]);
             weich(z1.zeilen, 'nach Strg+Z ist die Zeile Probewesen weg').not.toContain(PROBE);
             weich(z1.zeilen, 'Altwesen steht weiter da').toContain(ALT);
-            kopfPasst(z1, ZAEHLER_SAAT, 'nach Strg+Z');
+            kopfPasst(z1, 'nach Strg+Z');
             weich(z1.typ.ist, 'nach Strg+Z kein "Probetyp" im Typ-Filter').not.toContain(
                 'Probetyp'
             );
@@ -876,7 +874,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             await wiederholen(page);
             const z2 = await zustand(page);
             weich(z2.zeilen, 'nach Strg+Y ist die Zeile zurueck').toContain(PROBE);
-            kopfPasst(z2, ZAEHLER_SAAT + 1, 'nach Strg+Y');
+            kopfPasst(z2, 'nach Strg+Y');
             weich(z2.typ.ist, 'nach Strg+Y steht "Probetyp" wieder im Typ-Filter').toContain(
                 'Probetyp'
             );
@@ -969,7 +967,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             weich(z1.zeilen, 'zurueck im Bestiar: die Zeile Probewesen ist weg').not.toContain(
                 PROBE
             );
-            kopfPasst(z1, ZAEHLER_SAAT, 'zurueck im Bestiar');
+            kopfPasst(z1, 'zurueck im Bestiar');
             detailLeer(z1, 'zurueck im Bestiar');
             await rahmen(page, f);
         });
@@ -991,7 +989,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             const z1 = await zustand(page);
             expect(z1.D_namen, 'Vorbedingung: Altwesen ist geloescht').toEqual([]);
             weich(z1.zeilen, 'nach dem Loeschen ist die Zeile weg').not.toContain(ALT);
-            kopfPasst(z1, ZAEHLER_SAAT - 1, 'nach dem Loeschen');
+            kopfPasst(z1, 'nach dem Loeschen');
             detailLeer(z1, 'nach dem Loeschen (Entscheidung (c))');
             weich(
                 z1.fokus.id,
@@ -1004,7 +1002,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
                 '1:Altwesen'
             ]);
             weich(z2.zeilen, 'nach Strg+Z ist die Zeile Altwesen zurueck').toContain(ALT);
-            kopfPasst(z2, ZAEHLER_SAAT, 'nach Strg+Z');
+            kopfPasst(z2, 'nach Strg+Z');
             detailLeer(z2, 'nach Strg+Z (waehlt nicht wieder aus)');
             weich(z2.fokus.body, `nach Strg+Z nicht auf BODY (${z2.fokus.beschreibung})`).toBe(
                 false
@@ -1013,7 +1011,7 @@ test.describe('BESTIAR-UNDO breit 1440x900', () => {
             await wiederholen(page);
             const z3 = await zustand(page);
             weich(z3.zeilen, 'nach Strg+Y ist die Zeile wieder weg').not.toContain(ALT);
-            kopfPasst(z3, ZAEHLER_SAAT - 1, 'nach Strg+Y');
+            kopfPasst(z3, 'nach Strg+Y');
             detailLeer(z3, 'nach Strg+Y');
             await rahmen(page, f, [/^confirm: .*Altwesen/]);
         });
@@ -1561,7 +1559,7 @@ test.describe('BESTIAR-UNDO Telefon 390x844', () => {
                 '1:Altwesen'
             ]);
             weich(z1.zeilen, 'nach ↩️ ist die Zeile Probewesen weg').not.toContain(PROBE);
-            kopfPasst(z1, ZAEHLER_SAAT, 'nach ↩️');
+            kopfPasst(z1, 'nach ↩️');
             detailLeer(z1, 'nach ↩️');
             weich(z1.fokus.body, `nach ↩️ nicht auf BODY (${z1.fokus.beschreibung})`).toBe(false);
             await rahmen(page, f);

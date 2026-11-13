@@ -866,7 +866,7 @@ test.describe('A: andere Aktionen als search-input — ein Fix nur dort reicht n
             await page.evaluate(() => WikiState.selectedEntryId),
             'nach EINEM Klick ist Rabenfels gewaehlt'
         ).toBe(2);
-        await weich(page.locator('.wiki-detail-title'), 'und wird angezeigt').toHaveText(
+        await weich(page.locator('#view-wiki .wiki-detail-title'), 'und wird angezeigt').toHaveText(
             'Rabenfels'
         );
         await weich(page.locator('#wiki-search-dropdown'), 'der Aufklapp ist zu').toBeHidden();

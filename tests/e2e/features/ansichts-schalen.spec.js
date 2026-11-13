@@ -240,13 +240,15 @@ test.describe('Ansichts-Schalen (U1)', () => {
         });
     }
 
-    test('auf jedem der 24 Reiter ist genau eine .view sichtbar', async ({ page }) => {
+    test('auf jedem Reiter ist genau eine .view sichtbar', async ({ page }) => {
         await appLaden(page);
         const reiter = await page.evaluate(() =>
             Array.from(document.querySelectorAll('.nav-tab[data-view]')).map(t => t.dataset.view)
         );
-        expect(reiter.length, 'Anzahl der Reiter mit data-view').toBe(24);
-        expect(await page.evaluate(() => document.querySelectorAll('.view').length)).toBe(24);
+        expect(reiter.length, 'Anzahl der Reiter mit data-view').toBe(25);
+        expect(await page.evaluate(() => document.querySelectorAll('.view').length)).toBe(
+            reiter.length
+        );
 
         const abweichungen = [];
         for (const name of reiter) {
@@ -261,7 +263,7 @@ test.describe('Ansichts-Schalen (U1)', () => {
             }
         }
         console.log(
-            `[U1] Reiter mit nicht genau einer sichtbaren .view: ${abweichungen.length}/24`
+            `[U1] Reiter mit nicht genau einer sichtbaren .view: ${abweichungen.length}/${reiter.length}`
         );
         expect(abweichungen, abweichungen.join(' | ')).toEqual([]);
     });

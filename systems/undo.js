@@ -279,10 +279,10 @@ const RELOAD_WATCHDOG_MS = 10000;
 // Ein anderer Tab hat DIESE Kampagne gespeichert: der Tab ist veraltet (R02 — seine
 // automatischen Saves und das Verlassen schreiben nicht mehr zurueck), unabhaengig davon,
 // ob der Nutzer das Banner weggeklickt hat; das Banner nur, solange nicht weggeklickt
-function _noteForeignCampaignSave(campaignKey) {
+function _noteForeignCampaignSave(campaignKey, source) {
     _conflictSignalSeq++;
     if (typeof window.markExternalCampaignWrite === 'function') {
-        window.markExternalCampaignWrite(campaignKey);
+        window.markExternalCampaignWrite(campaignKey, source);
     }
     if (!conflictDismissed) showConflictBanner();
 }
@@ -290,14 +290,30 @@ function initConflictDetection() {
     try {
         const APP_CONFIG = window.APP_CONFIG;
         broadcastChannel = new BroadcastChannel(APP_CONFIG.BROADCAST_CHANNEL);
-        broadcastChannel.onmessage = event => {
+        broadcastChannel.onmessage = async event => {
             const data = event.data || {};
             if (
                 data.tabId !== tabId &&
                 data.type === 'save' &&
                 data.campaign === getCurrentStorageKey()
             ) {
-                _noteForeignCampaignSave(data.campaign);
+                const visibleRevision =
+                    data.revision && data.revision === StorageAPI.get(data.campaign + '_rev', null);
+                let source;
+                // LocalStorage-Meldungen sind Hinweise auf das aktuelle Speichertupel.
+                // Eine inzwischen ersetzte Revision ist kein zusätzlicher Fremdwrite.
+                if (data.backend === 'localStorage' || visibleRevision) {
+                    if (!_reloadInFlight && window.isCampaignStorageStale?.(data.campaign) === false) return;
+                    source = 'localStorage';
+                } else if (data.backend === 'indexedDB') {
+                    source = 'indexedDB';
+                    if (!_reloadInFlight) {
+                        const current = await window.isCampaignIdbStateCurrent?.(data.campaign);
+                        if (current && !_reloadInFlight) return;
+                    }
+                    if (data.campaign !== getCurrentStorageKey()) return;
+                }
+                _noteForeignCampaignSave(data.campaign, source);
             }
         };
     } catch (e) {
@@ -311,17 +327,22 @@ function initConflictDetection() {
         const k = getCurrentStorageKey();
         if (!k) return;
         if (e.key === k || e.key === k + '_rev' || e.key === null) {
-            _noteForeignCampaignSave(k);
+            const source = e.key !== null && e.newValue !== undefined ? 'localStorage' : undefined;
+            if (source === 'localStorage' && !_reloadInFlight &&
+                window.isCampaignStorageStale?.(k) === false) return;
+            _noteForeignCampaignSave(k, source);
         }
     });
 }
-function broadcastSave() {
+function broadcastSave(campaign = getCurrentStorageKey(), change = {}) {
     if (broadcastChannel) {
         broadcastChannel.postMessage({
             type: 'save',
             tabId: tabId,
-            campaign: getCurrentStorageKey(),
-            timestamp: Date.now()
+            campaign,
+            timestamp: Date.now(),
+            backend: change.backend,
+            revision: change.revision
         });
     }
 }

@@ -266,7 +266,7 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         expect(JSON.parse(u.idbDatensatz(KEY).data).characters[1].name).toBe('Neu aus B');
     });
 
-    test('U10: ausstehende Umbenennung beim Schliessen — IndexedDB-put ist abgesetzt, Rueckfrage angefordert', async () => {
+    test('U10: ausstehende Umbenennung beim Schließen — Abgleich ist eingereiht, „Bleiben“ speichert', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
         u.saeenIdb(KEY, grosseKampagne());
         const A = await oeffneTab(u, 'A').starten();
@@ -274,16 +274,14 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         A.ctx.save();
         const vorher = u.idb.anfragen.length;
 
-        const ev = A.entladen('schliessen innerhalb des Debounce');
-
-        // Nur "abgesetzt" pruefen — ob ein entladendes Dokument den Commit erlebt, garantiert
-        // kein Browser. Die Rueckfrage haelt die Seite dafuer offen.
-        const puts = u.idb.anfragen
-            .slice(vorher)
-            .filter(a => a.op === 'put' && a.store === 'campaigns');
-        expect(puts.length).toBeGreaterThanOrEqual(1);
-        expect(JSON.parse(puts[puts.length - 1].wert.data).characters[0].name).toBe('Umbenannt');
+        const ev = A.entladen('schließen innerhalb des Debounce', { bleiben: true });
         expect(ev.defaultPrevented).toBe(true);
+        expect(u.idb.anfragen.slice(vorher).map(a => a.op)).toEqual(['get']);
+
+        await u.uhr.laufen(0);
+        expect(idbPuts(u, vorher)).toHaveLength(1);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(C.ctx.D.characters[0].name).toBe('Umbenannt');
     });
 
     test('U11: Flush beim Verstecken — die Aenderung ist vor dem Schliessen in IndexedDB, das spaetere Schliessen fragt nicht', async () => {
@@ -332,7 +330,7 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         expect(u.schreibvorgaenge({ tab: 'A', phase: ['beforeunload', 'pagehide'] })).toEqual([]);
     });
 
-    test('U4d: nach dem eigenen IndexedDB-Save erneut geaendert mit ausstehendem save() — put mit der neuen Aenderung abgesetzt, Rueckfrage angefordert', async () => {
+    test('U4d: nach dem eigenen IndexedDB-Save erneut geändert — Abgleich und Sicherung bei „Bleiben“', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
         u.saeenIdb(KEY, grosseKampagne());
         const A = await oeffneTab(u, 'A').starten();
@@ -342,12 +340,13 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         A.ctx.save();
         const vorher = u.idb.anfragen.length;
 
-        const ev = A.entladen('schliessen innerhalb des Debounce');
+        const ev = A.entladen('schließen innerhalb des Debounce', { bleiben: true });
+        expect(ev.defaultPrevented).toBe(true);
+        expect(u.idb.anfragen.slice(vorher).map(a => a.op)).toEqual(['get']);
 
-        const puts = idbPuts(u, vorher);
-        expect(puts.length).toBeGreaterThanOrEqual(1);
-        expect(JSON.parse(puts[puts.length - 1].wert.data).characters[0].name).toBe('Zweite');
-        expect(ev.defaultPrevented).toBe(true); // D5: > 5 MB schreibt noch
+        await u.uhr.laufen(0);
+        expect(idbPuts(u, vorher)).toHaveLength(1);
+        expect(namen(u.idbDatensatz(KEY).data)[0]).toBe('Zweite');
         expect(speicherVoll(A)).toEqual([]);
     });
 
@@ -498,6 +497,87 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
     });
 });
 
+describe('N31: Entladen erhält einen bestätigten IndexedDB-Fremdstand ohne Revisionsmarker', () => {
+    const faelle = ['Quota-Fallback', 'großer Save', 'wieder freie Quota'].flatMap(pfad => [
+        [pfad, 'beforeunload', false],
+        [pfad, 'beforeunload', true],
+        [pfad, 'visibilitychange', true],
+        [pfad, 'pagehide', true]
+    ]);
+
+    test.each(faelle)('%s bei %s, Nutzer bleibt: %s', async (pfad, phase, bleiben) => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 0 });
+        u.saeenIdb(KEY, kampagne(['Ursprünglicher Stand']));
+        const { A, B } = await zweiTabs(u);
+        const meldungen = [];
+        B.ctx.broadcastSave = (...args) => meldungen.push(args);
+
+        A.ctx.D.characters[0].name = 'Ältere Änderung aus A';
+        if (pfad === 'großer Save') A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+        const generation = A.ctx.getPersistGeneration();
+        A.ctx.save();
+
+        B.ctx.D.characters[0].name = 'Bestätigter Stand aus B';
+        expect(await B.ctx.saveImmediate()).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(meldungen).toHaveLength(1);
+        expect(u.ls.has(KEY + '_rev')).toBe(false);
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Bestätigter Stand aus B']);
+        expect(A.ctx.getPersistGeneration()).toBe(generation);
+        expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
+        if (pfad === 'wieder freie Quota') u.quota.zeichen = Infinity;
+
+        let event;
+        if (phase === 'beforeunload') {
+            event = A.entladen('schließen', { bleiben });
+        } else if (phase === 'visibilitychange') {
+            A.verstecken();
+        } else {
+            A.feuere('window', 'pagehide', {});
+        }
+        // Auch beim Bleiben darf der zuvor geplante Save B nicht nachträglich überschreiben.
+        await u.uhr.laufen(350);
+        const C = await oeffneTab(u, 'C').starten();
+        expect({
+            gefragt: event?.defaultPrevented ?? false,
+            geschlossen: A.geschlossen,
+            idb: namen(u.idbDatensatz(KEY).data),
+            ls: namen(u.ls.get(KEY)),
+            geladen: namenIn(C.ctx.D)
+        }).toEqual({
+            gefragt: phase === 'beforeunload',
+            geschlossen: !bleiben,
+            idb: ['Bestätigter Stand aus B'],
+            ls: null,
+            geladen: ['Bestätigter Stand aus B']
+        });
+    });
+
+    test('führendes localStorage kann beim Entladen eine ältere optionale IDB-Kopie ersetzen', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aktuell aus LS']));
+        u.idb.setze('campaigns', {
+            id: KEY,
+            data: JSON.stringify(kampagne(['Ältere Zusatzkopie'])),
+            timestamp: 1,
+            optionalCopy: true
+        });
+        const A = await oeffneTab(u, 'A').starten();
+        expect(namenIn(A.ctx.D)).toEqual(['Aktuell aus LS']);
+        A.ctx.D.characters[0].name = 'Aktuelle Änderung';
+        A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+        A.ctx.save();
+
+        const event = A.entladen('schließen', { bleiben: true });
+        expect(event.defaultPrevented).toBe(true);
+        await u.uhr.laufen(350);
+
+        expect(u.ls.has(KEY)).toBe(false);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toEqual(['Aktuelle Änderung']);
+    });
+});
+
 // ============================================================
 // Loeschende und umziehende Ablaeufe
 // ============================================================
@@ -623,15 +703,12 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
         }
     );
 
-    // Korrekturrunde zum Code-Review 2026-09-21 (F2, U7 minor:3 + open:7 /
-    // R02-Restbefund R2): der Umzugs-Assistent schreibt den Import ueber
-    // StorageAPI (ohne Generationszaehler) und sperrt danach die Schreibpfade.
-    // Ein noch laufender IndexedDB-Save DIESES Tabs raeumte danach den frisch
-    // importierten Schluessel samt _ts weg — der naechste Start las die alte
-    // IndexedDB-Kopie, obwohl der Assistent Erfolg gemeldet hatte.
+    // F2 / U7: Ein bereits gestarteter IndexedDB-Save darf den Umzugsimport
+    // weder beim Commit noch beim Aufraeumen seines localStorage-Schattens verdecken.
     const IMPORT_MODULE = [
         'systems/campaign-manager/campaign-manager.js',
-        'systems/migration/full-export.js'
+        'systems/migration/full-export.js',
+        'systems/migration/migration-wizard.js'
     ];
 
     function grosseAltKampagne(anzahl = 6) {
@@ -650,12 +727,11 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
 
         A.ctx.D.quickNotes = 'x';
         const laufend = A.ctx.saveImmediate(); // put abgesetzt, Commit offen
-        A.ctx.importFullExport(exportObjekt(['Importiert']));
-        A.ctx.retireCampaignWrites(); // genau migration-wizard.js:550 (ohne await)
-        expect(u.ls.has(KEY)).toBe(true); // der Import steht im Speicher
-        await u.uhr.laufen(0);
+        A.ctx._processWizardFile(exportDatei(['Importiert']), A.element('migration-wizard-dropzone'));
+        await A.dateiGelesen;
         await laufend;
         await u.uhr.laufen(0);
+        expect(namen(u.ls.get(KEY))).toEqual(['Importiert']);
         A.entladen('reload');
 
         expect(u.ls.has(KEY)).toBe(true);
@@ -663,7 +739,7 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
         expect(namenIn(C.ctx.D)).toEqual(['Importiert']);
     });
 
-    test('U14d: dasselbe mit await retireCampaignWrites() VOR dem Import (gleiches Realm) — Umsortieren hilft nicht', async () => {
+    test('U14d: nach der Schreibsperre ueberlebt der Import im selben Realm den laufenden Save', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: 5 * MB });
         u.saeenIdb(KEY, grosseAltKampagne());
         const A = await oeffneTab(u, 'A', { module: IMPORT_MODULE }).starten();
@@ -677,7 +753,7 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
                 D.quickNotes = 'x';
                 const laufend = saveImmediate();
                 await retireCampaignWrites();
-                importFullExport(__exp);
+                await importFullExport(__exp);
                 const da = localStorage.getItem('${KEY}') !== null;
                 await laufend;
                 return da;
@@ -1689,6 +1765,220 @@ describe('D-C — veralteter Tab mit ausdruecklicher Arbeit wechselt verlustfrei
         expect(A.toasts.map(t => t.text).join(' | ')).toMatch(/Kampagnenwechsel/);
         // Der Tab bleibt schreibfaehig (keine haengende Schreibsperre)
         expect(A.ctx.areCampaignWritesRetired()).toBe(false);
+        await u.uhr.laufen(310);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'Borin']);
+        expect(namenIn(A.ctx.D)).toEqual(['Nur in A']);
+        expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+    });
+
+    test.each(['localStorage', 'indexedDB'])(
+        'N58: Bs bestätigter Stand in %s bleibt erhalten, wenn As Timer während der Sicherheitskopie abläuft',
+        async backend => {
+            const u = erzeugeUrsprung();
+            if (backend === 'localStorage') {
+                u.saeen(KEY, kampagne(['Aria']));
+            } else {
+                u.saeenIdb(KEY, kampagne(['Aria'], { quickNotes: 'X'.repeat(5 * MB + 1) }));
+            }
+            nebenkampagne(u);
+            u.saeen(NEBEN_KEY, kampagne(['Zielcharakter']));
+            const A = await mitBackups(u, 'A').starten();
+            const B = await oeffneTab(u, 'B').starten();
+            A.ctx.D.characters[0].name = 'Nur in A';
+            A.ctx.save();
+            expect(await bSpeichertBorin(u, B)).toMatchObject({ success: true, backend });
+            expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+            const leseStand = () =>
+                backend === 'localStorage' ? u.ls.get(KEY) : u.idbDatensatz(KEY)?.data;
+            const standVonB = leseStand();
+            const revisionVonB = u.ls.get(KEY + '_rev');
+
+            const freigabe = Promise.withResolvers();
+            const write = A.ctx.idbWriteTx;
+            let sicherungWartet = false;
+            A.ctx.idbWriteTx = async (stores, ...args) => {
+                if (stores.includes('backups')) {
+                    sicherungWartet = true;
+                    await freigabe.promise;
+                }
+                return write(stores, ...args);
+            };
+            const wechsel = A.ctx.switchCampaign(NEBEN_KEY);
+            try {
+                await u.uhr.laufen(0);
+                expect(sicherungWartet).toBe(true);
+                expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+                await u.uhr.laufen(310);
+                expect(backupZeilen(u)).toHaveLength(0);
+                expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(KEY);
+                expect(namen(leseStand())).toEqual(['Aria', 'Borin']);
+                expect(leseStand() === standVonB).toBe(true);
+                expect(u.ls.get(KEY + '_rev')).toBe(revisionVonB);
+            } finally {
+                freigabe.resolve();
+                await u.uhr.laufen(0);
+                await wechsel;
+            }
+            expect(A.geschlossen).toBe(true);
+            expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+            expect(backupZeilen(u)).toHaveLength(1);
+            expect(backupZeilen(u)[0]).toMatchObject({ campaignKey: KEY, kind: 'safety' });
+            expect(namen(backupZeilen(u)[0].data)).toEqual(['Nur in A']);
+
+            const C = await mitBackups(u, 'C', { aktiv: NEBEN_KEY }).starten();
+            expect(namenIn(C.ctx.D)).toEqual(['Zielcharakter']);
+            const zurueck = C.ctx.switchCampaign(KEY);
+            await u.uhr.laufen(0);
+            await zurueck;
+            expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(KEY);
+            const D = await oeffneTab(u, 'D').starten();
+            expect(D.ctx.getActiveCampaignKey()).toBe(KEY);
+            expect(namenIn(D.ctx.D)).toEqual(['Aria', 'Borin']);
+            expect(leseStand() === standVonB).toBe(true);
+        }
+    );
+
+    test.each(['localStorage', 'indexedDB'])(
+        'N61: ein neuer Save während der Sicherheitskopie erhält Bs Stand in %s und As spätere Notiz',
+        async backend => {
+            const u = erzeugeUrsprung();
+            const notizen = backend === 'indexedDB' ? 'X'.repeat(5 * MB + 1) : 'Vorherige Notiz';
+            const ausgang = kampagne(['Aria'], { quickNotes: notizen });
+            if (backend === 'indexedDB') u.saeenIdb(KEY, ausgang);
+            else u.saeen(KEY, ausgang);
+            nebenkampagne(u);
+            u.saeen(NEBEN_KEY, kampagne(['Zielcharakter']));
+            const A = await mitBackups(u, 'A', {
+                module: [
+                    'systems/spellslots/navigation.js',
+                    'systems/backups.js',
+                    'systems/campaign-manager/campaign-manager.js'
+                ]
+            }).starten();
+            const B = await oeffneTab(u, 'B').starten();
+            A.ctx.D.characters[0].name = 'Nur in A';
+            A.ctx.save();
+            expect(await bSpeichertBorin(u, B)).toMatchObject({ success: true, backend });
+            expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+            const leseStand = () =>
+                backend === 'localStorage' ? u.ls.get(KEY) : u.idbDatensatz(KEY)?.data;
+            const standVonB = leseStand();
+            const revisionVonB = u.ls.get(KEY + '_rev');
+
+            const freigabe = Promise.withResolvers();
+            const write = A.ctx.idbWriteTx;
+            let sicherungWartet = false;
+            A.ctx.idbWriteTx = async (stores, ...args) => {
+                if (stores.includes('backups')) {
+                    sicherungWartet = true;
+                    await freigabe.promise;
+                }
+                return write(stores, ...args);
+            };
+            const neueNotiz = notizen + '\nWährend der Sicherung bearbeitet';
+            const wechsel = A.ctx.switchCampaign(NEBEN_KEY);
+            try {
+                await u.uhr.laufen(0);
+                expect(sicherungWartet).toBe(true);
+                await u.uhr.laufen(310);
+                expect(namen(leseStand())).toEqual(['Aria', 'Borin']);
+
+                A.ctx.document.getElementById('quick-notes').value = neueNotiz;
+                A.ctx.saveQuickNotes();
+                await u.uhr.laufen(310);
+
+                expect(backupZeilen(u)).toHaveLength(0);
+                expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(KEY);
+                expect(namen(leseStand())).toEqual(['Aria', 'Borin']);
+                expect(leseStand() === standVonB).toBe(true);
+                expect(u.ls.get(KEY + '_rev')).toBe(revisionVonB);
+            } finally {
+                freigabe.resolve();
+                await u.uhr.laufen(0);
+                await wechsel;
+            }
+
+            expect(A.geschlossen).toBe(false);
+            expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(KEY);
+            expect(A.ctx.D.quickNotes === neueNotiz).toBe(true);
+            expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+            await u.uhr.laufen(310);
+            expect(leseStand() === standVonB).toBe(true);
+
+            const wiederholung = A.ctx.switchCampaign(NEBEN_KEY);
+            await u.uhr.laufen(0);
+            await wiederholung;
+            expect(A.geschlossen).toBe(true);
+            expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+            expect(
+                backupZeilen(u).some(
+                    entry =>
+                        entry.campaignKey === KEY &&
+                        entry.kind === 'safety' &&
+                        JSON.parse(entry.data).quickNotes === neueNotiz
+                )
+            ).toBe(true);
+
+            const C = await mitBackups(u, 'C', { aktiv: NEBEN_KEY }).starten();
+            const zurueck = C.ctx.switchCampaign(KEY);
+            await u.uhr.laufen(0);
+            await zurueck;
+            const D = await oeffneTab(u, 'D').starten();
+            expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(KEY);
+            expect(namenIn(D.ctx.D)).toEqual(['Aria', 'Borin']);
+            expect(leseStand() === standVonB).toBe(true);
+        }
+    );
+
+    test('N55: nach dem Indexfehler bleibt Bs bestätigter Stand über den alten Save-Timer hinaus erhalten', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const indexVorher = u.ls.get(INDEX_KEY);
+        const A = await mitBackups(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        A.ctx.D.characters[0].name = 'Nur in A';
+        A.ctx.save();
+        expect(await bSpeichertBorin(u, B)).toMatchObject({
+            success: true,
+            backend: 'localStorage'
+        });
+        const standVonB = u.ls.get(KEY);
+        const revisionVonB = u.ls.get(KEY + '_rev');
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+        expect(A.entladen('schließen', { bleiben: true }).defaultPrevented).toBe(true);
+
+        const setItem = A.ctx.localStorage.setItem;
+        let indexFehler = 0;
+        A.ctx.localStorage.setItem = (key, value) => {
+            if (key === INDEX_KEY && JSON.parse(value).active === NEBEN_KEY && indexFehler === 0) {
+                indexFehler++;
+                throw Object.assign(new Error('Index-Quota'), { name: 'QuotaExceededError' });
+            }
+            return setItem(key, value);
+        };
+
+        const wechsel = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await wechsel;
+
+        expect(indexFehler).toBe(1);
+        expect(u.ls.get(INDEX_KEY)).toBe(indexVorher);
+        expect(A.geschlossen).toBe(false);
+        expect(A.ctx.areCampaignWritesRetired()).toBe(false);
+        expect(A.toasts.map(t => t.text).join(' | ')).toContain('Kampagnenwechsel fehlgeschlagen');
+        expect(backupZeilen(u)).toHaveLength(1);
+        expect(backupZeilen(u)[0]).toMatchObject({ campaignKey: KEY, kind: 'safety' });
+        expect(namen(backupZeilen(u)[0].data)).toEqual(['Nur in A']);
+        expect(namenIn(A.ctx.D)).toEqual(['Nur in A']);
+        expect(u.ls.get(KEY)).toBe(standVonB);
+
+        await u.uhr.laufen(310);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(C.ctx.getActiveCampaignKey()).toBe(KEY);
+        expect(namenIn(C.ctx.D)).toEqual(['Aria', 'Borin']);
+        expect(u.ls.get(KEY)).toBe(standVonB);
+        expect(u.ls.get(KEY + '_rev')).toBe(revisionVonB);
     });
 
     // Gegenprobe (vor und nach der Aenderung gruen): ein AKTUELLER Tab wechselt wie bisher —
@@ -1766,5 +2056,53 @@ describe('D-C — veralteter Tab mit ausdruecklicher Arbeit wechselt verlustfrei
         expect(A.alerts.some(a => /nicht gespeichert/.test(a))).toBe(true);
         expect(A.geschlossen).toBe(true);
         expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+    });
+});
+
+describe('N35: Bleiben lässt einen bereits überholten ausdrücklichen Save nicht nachlaufen', () => {
+    test.each(['localStorage', 'indexedDB'])('bekannter Konflikt in %s', async backend => {
+        const nurIdb = backend === 'indexedDB';
+        const u = erzeugeUrsprung({ lsQuotaZeichen: nurIdb ? 0 : Infinity });
+        const alterStand = kampagne(['Ursprünglicher Stand']);
+        if (nurIdb) u.saeenIdb(KEY, alterStand);
+        else u.saeen(KEY, alterStand);
+        const { A, B } = await zweiTabs(u);
+
+        A.ctx.D.characters[0].name = 'Zuerst geplante Änderung aus A';
+        const generation = A.ctx.getPersistGeneration();
+        A.ctx.save();
+
+        B.ctx.D.characters[0].name = 'Später bestätigter Stand aus B';
+        expect(await B.ctx.saveImmediate()).toMatchObject({ success: true, backend });
+        if (nurIdb) expect(u.ls.has(KEY + '_rev')).toBe(false);
+        await u.uhr.laufen(0);
+        expect(A.ctx.getPersistGeneration()).toBe(generation);
+        expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+
+        const gespeicherteNamen = () => namen(nurIdb ? u.idbDatensatz(KEY)?.data : u.ls.get(KEY));
+        const event = A.entladen('schließen', { bleiben: true });
+        expect(event.defaultPrevented).toBe(true);
+        expect(A.geschlossen).toBe(false);
+        expect(gespeicherteNamen()).toEqual(['Später bestätigter Stand aus B']);
+
+        await u.uhr.laufen(350);
+        const C = await oeffneTab(u, 'C').starten();
+        expect({ gespeichert: gespeicherteNamen(), geladen: namenIn(C.ctx.D) }).toEqual({
+            gespeichert: ['Später bestätigter Stand aus B'],
+            geladen: ['Später bestätigter Stand aus B']
+        });
+
+        expect(A.ctx.getPersistGeneration()).toBe(generation);
+        expect(namenIn(A.ctx.D)).toEqual(['Zuerst geplante Änderung aus A']);
+        expect(A.ctx.hasExplicitPendingWork()).toBe(true);
+        const erneut = A.entladen('schließen', { bleiben: true });
+        expect(erneut.defaultPrevented).toBe(true);
+
+        // Ein neuer ausdrücklicher Save darf die weiterhin offenen Änderungen übernehmen.
+        A.ctx.save();
+        await u.uhr.laufen(350);
+        expect(gespeicherteNamen()).toEqual(['Zuerst geplante Änderung aus A']);
+        expect(A.ctx.hasExplicitPendingWork()).toBe(false);
     });
 });

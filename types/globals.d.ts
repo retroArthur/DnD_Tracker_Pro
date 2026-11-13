@@ -192,10 +192,17 @@ declare global {
    * Auto-Backup der aktiven Kampagne (gemeinsame Inhaltsregel hasCampaignContent()).
    * Erfasst D SYNCHRON beim Aufruf; reason 'safety' schuetzt die Kopie vor der Rotation.
    */
-  function createAutoBackup(options?: { reason?: 'safety' | 'auto' }): Promise<AutoBackupStatus>;
+  function createAutoBackup(options?: {
+    reason?: 'safety' | 'auto';
+    snapshot?: Pick<CampaignResetSnapshot, 'key' | 'data'>;
+    assertHeld?: () => void;
+  }): Promise<AutoBackupStatus>;
 
   /** IndexedDB-Backup nach bestaetigtem Commit; vergleicht nur mit der neuesten Zeile */
-  function saveBackupToIndexedDB(backup: AutoBackupRecord): Promise<'written' | 'unchanged'>;
+  function saveBackupToIndexedDB(
+    backup: AutoBackupRecord,
+    canWrite?: () => boolean
+  ): Promise<'written' | 'unchanged' | 'failed'>;
 
   /** Meldet das echte Ergebnis einer Sicherheitskopie per Toast; wirft nie */
   function reportSafetyBackup(
@@ -227,7 +234,18 @@ declare global {
     success: boolean;
     backend: 'localStorage' | 'indexedDB' | null;
     error: string | null;
+    collision?: boolean;
+    rollback?: CampaignRollbackReceipt;
   }
+
+  interface CampaignRollbackReceipt {
+    key: string;
+    before: [string, string | null][];
+    after: [string, string | null][];
+    indexedDBState: { revision: string; record?: object; restored?: boolean } | null;
+  }
+
+  function rollbackCampaignOverwrite(receipt: CampaignRollbackReceipt): Promise<boolean>;
 
   /** Ergebnis von addCampaignWithData() — wirft nie */
   type AddCampaignResult =
@@ -242,7 +260,11 @@ declare global {
   }
 
   /** Kampagnendaten nach den Regeln von save() schreiben, ohne UI-Nebenwirkungen */
-  function writeCampaignData(key: string, data: object | string): Promise<WriteCampaignDataResult>;
+  function writeCampaignData(
+    key: string,
+    data: object | string,
+    options?: { createOnly?: boolean; withRollback?: boolean }
+  ): Promise<WriteCampaignDataResult>;
 
   /** Kampagnenindex streng lesen: ein unlesbarer Index wird nie ueberschrieben */
   function readCampaignIndexStrict():
@@ -353,11 +375,37 @@ declare global {
     options?: { durability?: 'strict' | 'relaxed' | 'default' }
   ): Promise<T>;
 
+  function withCampaignIndexLock<T>(
+    work: (
+      assertHeld: () => void,
+      runRollback: <R>(rollback: (assertHeld: () => void) => Promise<R>) => Promise<R>,
+      importJournal: <R>(work: (store: IDBObjectStore) => IDBRequest<R> | void) => Promise<R>
+    ) => T | Promise<T>
+  ): Promise<T>;
+
   /** Sofort speichern; Ergebnis erst nach bestaetigtem Write */
-  function saveImmediate(): Promise<SaveImmediateResult>;
+  function saveImmediate(
+    prepare?: () => { snapshot: typeof D; publish: () => void } | null
+  ): Promise<SaveImmediateResult>;
 
   /** Alle Kopien einer Kampagne entfernen: IndexedDB (Commit) vor localStorage */
-  function removeCampaignData(key: string): Promise<RemoveCampaignDataResult>;
+  function removeCampaignData(
+    key: string,
+    assertHeld?: () => void,
+    expected?: Pick<CampaignResetSnapshot, 'idbRecord'>
+  ): Promise<RemoveCampaignDataResult>;
+
+  interface CampaignResetSnapshot {
+    key: string;
+    data: string | null;
+    assertLocal: () => void;
+    idbRecord?: object | null;
+  }
+
+  function readCampaignResetSnapshot(
+    key: string | null,
+    hasLocalDraft?: boolean
+  ): Promise<CampaignResetSnapshot>;
 
   /**
    * D-B: IndexedDB gemeldet, aber nicht oeffenbar — fragt per confirm() und entfernt NUR bei
@@ -365,7 +413,8 @@ declare global {
    */
   function confirmLocalOnlyCampaignRemoval(
     key: string,
-    label?: string
+    label?: string,
+    assertCanRemove?: () => void
   ): { removed: boolean; error?: unknown };
 
   // ============================================================
@@ -373,16 +422,26 @@ declare global {
   // ============================================================
 
   /** Baseline nach load(): localStorage-Rohwert (vor IDB-Ersetzung) und Snapshot von D */
-  function setPersistBaseline(key: string, stored: string | null, snapshot: string): void;
+  function setPersistBaseline(
+    key: string,
+    stored: string | null,
+    snapshot: string,
+    idbRecord?: object | null,
+    stamp?: string | null
+  ): void;
 
   /** Snapshot an D angleichen — nur ohne ausstehenden oder laufenden Save */
   function refreshPersistSnapshot(): void;
 
   /** Ein anderer Tab hat diese Kampagne gespeichert (Konflikt-Erkennung) */
-  function markExternalCampaignWrite(key: string | null | undefined): void;
+  function markExternalCampaignWrite(
+    key: string | null | undefined,
+    source?: 'localStorage' | 'indexedDB'
+  ): void;
 
   /** true: keine Baseline, fremder Save gemeldet, anderer _rev oder anderer Inhalt */
   function isCampaignStorageStale(key: string | null): boolean;
+  function isCampaignIdbStateCurrent(key: string): Promise<boolean>;
 
   /** Anzahl bestaetigter Saves dieses Tabs */
   function getPersistSuccessCount(): number;
@@ -399,9 +458,8 @@ declare global {
   /** Harte Schreibsperre; loest nach laufenden IndexedDB-Writes auf (hoechstens 5 s) */
   function retireCampaignWrites(): Promise<void>;
 
-  /** Sperre aufheben (Abbruchpfade); holt einen verworfenen save() oder den unter der
-   *  Sperre uebersprungenen Nachlauf eines IndexedDB-Commits nach */
-  function resumeCampaignWrites(): void;
+  /** Sperre aufheben; verworfene Saves und Nachlauf nur bei retryPending nachholen. */
+  function resumeCampaignWrites(options?: { retryPending?: boolean }): void;
 
   /**
    * D-C: Steht ausdrueckliche, noch nicht gespeicherte Arbeit aus? Ein rein automatischer
@@ -417,10 +475,10 @@ declare global {
    * Hat persistOnUnload ihn abgelehnt, ziehen die Flushes der Entlade-Sequenz ihn nicht
    * mehr vor; `force` verlangt ihn fuer interne Festschreib-Stellen trotzdem.
    */
-  function flushPendingSave(opts?: { force?: boolean }): void;
+  function flushPendingSave(opts?: { force?: boolean; lifecycle?: boolean }): void;
 
   /** flushPendingSave() plus Warten auf den IndexedDB-Commit (vor internen Reloads) */
-  function flushPendingSaveAndSettle(): Promise<void>;
+  function flushPendingSaveAndSettle(options?: { allowStale?: boolean }): Promise<boolean>;
 
   /** beforeunload: schreibt nie blind, fordert die Rueckfrage nur fuer ausdrueckliche Saves an */
   function persistOnUnload(event: BeforeUnloadEvent): void;
@@ -433,6 +491,7 @@ declare global {
 
   /** fn ausfuehren, waehrend entprellte Saves zurueckgestellt sind (verschachtelbar, R06) */
   function runWithSavesSuspended<T>(fn: () => T | Promise<T>): Promise<T>;
+  function runWithCampaignSwitchProtection<T>(fn: () => T | Promise<T>): Promise<T | undefined>;
 
   // ============================================================
   // RENDER FUNCTIONS
@@ -464,6 +523,10 @@ declare global {
   
   /** Render loot */
   function renderLoot(): void;
+  function setLootChestView(showTemplates: boolean): void;
+  function openLootChests(itemId?: EntityId | null): void;
+  function openLootChestTemplate(id: EntityId, roll?: boolean): void;
+  function renderLootChests(): void;
   
   /** Render spells */
   function renderSpells(): void;
@@ -617,7 +680,7 @@ declare global {
   function removeLoot(id: EntityId): void;
   
   /** Save loot item from form */
-  function saveLoot(): void;
+  function saveLoot(): EntityId | null;
 
   // ============================================================
   // SPELL FUNCTIONS
@@ -747,7 +810,18 @@ declare global {
   function performGlobalSearch(): void;
   
   /** Navigate to search result */
-  function navigateToResult(type: EntityType, id: EntityId, locId?: EntityId | null): void;
+  function navigateToResult(type: EntityType | 'inspiration', id: EntityId): void;
+  function renderInspiration(): void;
+  function openInspirationArticle(id: EntityId): void;
+  function findInspirationMatches(query: string): {
+    type: 'inspiration';
+    id: number;
+    name: string;
+    detail: string;
+    score: number;
+  }[];
+  function openNPCDetailFromSearch(id: EntityId): void;
+  function openSpellSearchResult(id: EntityId): void;
   
   /** Leert ein Suchfeld ueber seine eigene input-Aktion und fokussiert es (SUCHE-LEEREN) */
   function clearSearch(inputId: string): void;
@@ -798,7 +872,7 @@ declare global {
   function importData(inputEl: HTMLInputElement): void;
   
   /** Reiter-Import: schreibt die vorbereitete Datei ("Importieren" in #import-modal) */
-  function executeImport(type?: string | null): void;
+  function executeImport(type?: string | null): Promise<void>;
 
   /** Reiter-Import: zeichnet die Vorschau #import-info fuer den gewaehlten Modus neu */
   function renderImportVorschau(): void;

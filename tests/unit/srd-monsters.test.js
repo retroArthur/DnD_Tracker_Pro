@@ -35,6 +35,33 @@ beforeAll(() => {
 // ============================================================
 
 describe('getSRDMonsters()', () => {
+    test('enthält die fünfzehn neuen SRD-Kreaturen mit eindeutigen IDs und Aktionen', () => {
+        const monsters = getSRDMonsters();
+        const byId = new Map(monsters.map(monster => [monster._id, monster]));
+        expect(byId.size).toBe(monsters.length);
+        const addedIds = [
+            'banditenhauptmann', 'belebte-ruestung', 'eber', 'erdelementar', 'feuerelementar',
+            'fliegendes-schwert', 'geist', 'greif', 'luftelementar', 'mumie', 'rostmonster',
+            'schreckgespenst', 'schwarzbaer', 'streitross', 'wasserelementar'
+        ];
+        for (const id of addedIds) {
+            expect(byId.get(id)).toMatchObject({
+                _id: id,
+                name: expect.any(String),
+                actions: expect.arrayContaining([
+                    expect.objectContaining({ name: expect.any(String), desc: expect.any(String) })
+                ])
+            });
+        }
+    });
+
+    test('Banditenhauptmann, Rostmonster und Erdelementar haben die SRD-Grundwerte', () => {
+        const byId = new Map(getSRDMonsters().map(monster => [monster._id, monster]));
+        expect(byId.get('banditenhauptmann')).toMatchObject({ cr: '2', ac: 15, hp: 65 });
+        expect(byId.get('rostmonster')).toMatchObject({ cr: '1/2', ac: 14, hp: 27 });
+        expect(byId.get('erdelementar')).toMatchObject({ cr: '5', ac: 17, hp: 126 });
+    });
+
     test('returns an Array', () => {
         const monsters = getSRDMonsters();
         expect(Array.isArray(monsters)).toBe(true);

@@ -339,7 +339,7 @@
       }
     },
     "npcs": {
-      "elementCount": 59,
+      "elementCount": 62,
       "capped": false,
       "keys": [
         "button.btn.btn-primary#0",
@@ -352,6 +352,8 @@
         "button.npc-detail-btn#2",
         "button.npc-detail-btn#3",
         "button.npc-detail-btn#4",
+        "button.npc-detail-btn.npc-favorite-btn#0",
+        "button.npc-filter-chip#0",
         "button.npc-section-btn#0",
         "button.npc-section-btn#1",
         "button.search-clear-btn#0",
@@ -379,6 +381,7 @@
         "div.npc-layout#0",
         "div.npc-list#0",
         "div.npc-master#0",
+        "div.npc-row#0",
         "div.npc-section#0",
         "div.npc-section#1",
         "div.npc-section#2",
@@ -413,6 +416,8 @@
         "button.npc-detail-btn#2": "a94eafeb9eecd23b",
         "button.npc-detail-btn#3": "a94eafeb9eecd23b",
         "button.npc-detail-btn#4": "a94eafeb9eecd23b",
+        "button.npc-detail-btn.npc-favorite-btn#0": "a9a695fcbdf86034",
+        "button.npc-filter-chip#0": "ee270c6468574bb5",
         "button.npc-section-btn#0": "d62ab252600de66d",
         "button.npc-section-btn#1": "d62ab252600de66d",
         "button.search-clear-btn#0": "c1ec4af85d635c48",
@@ -440,6 +445,7 @@
         "div.npc-layout#0": "a447eb3c98f371b4",
         "div.npc-list#0": "ded381e43b0f0051",
         "div.npc-master#0": "e4c0f5779bab5a20",
+        "div.npc-row#0": "a447eb3c98f371b4",
         "div.npc-section#0": "3d15516136f8ca7f",
         "div.npc-section#1": "3d15516136f8ca7f",
         "div.npc-section#2": "3d15516136f8ca7f",
@@ -841,9 +847,10 @@
       }
     },
     "loot": {
-      "elementCount": 37,
+      "elementCount": 39,
       "capped": false,
       "keys": [
+        "button.btn#0",
         "button.btn.btn-gold.btn-sm#0",
         "button.btn.btn-primary#0",
         "button.export.io-btn#0",
@@ -879,10 +886,12 @@
         "div.section-toolbar-io#0",
         "div.section-toolbar-search#0",
         "input.toolbar-search#0",
+        "select.toolbar-select#0",
         "span.section-toolbar-count#0",
         "span.section-toolbar-title#0"
       ],
       "digests": {
+        "button.btn#0": "c88051abc6111aff",
         "button.btn.btn-gold.btn-sm#0": "f7aac7fdf73f216a",
         "button.btn.btn-primary#0": "f879c0309c57bee8",
         "button.export.io-btn#0": "c2b30e76b893e1b6",
@@ -918,6 +927,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "3fd05d479f19ad2c",
+        "select.toolbar-select#0": "21be028a6e23f868",
         "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }
@@ -3003,13 +3013,15 @@
       }
     },
     "npcs": {
-      "elementCount": 27,
+      "elementCount": 30,
       "capped": false,
       "keys": [
         "button.btn.btn-primary#0",
         "button.btn.btn-secondary.npcg-trigger-btn#0",
         "button.export.io-btn#0",
         "button.import.io-btn#0",
+        "button.npc-favorite-btn#0",
+        "button.npc-filter-chip#0",
         "button.search-clear-btn#0",
         "div.active.npc-filter-chip#0",
         "div.npc-filter-chip#0",
@@ -3022,6 +3034,7 @@
         "div.npc-layout#0",
         "div.npc-list#0",
         "div.npc-master#0",
+        "div.npc-row#0",
         "div.search-wrapper#0",
         "div.section-toolbar#0",
         "div.section-toolbar-actions#0",
@@ -3039,6 +3052,8 @@
         "button.btn.btn-secondary.npcg-trigger-btn#0": "ed90e25ab9b18227",
         "button.export.io-btn#0": "c2b30e76b893e1b6",
         "button.import.io-btn#0": "2dd569e867e6d745",
+        "button.npc-favorite-btn#0": "cb55842ce0586617",
+        "button.npc-filter-chip#0": "ee270c6468574bb5",
         "button.search-clear-btn#0": "c1ec4af85d635c48",
         "div.active.npc-filter-chip#0": "680b38997fe6b4e3",
         "div.npc-filter-chip#0": "56851903ee5b4792",
@@ -3051,6 +3066,7 @@
         "div.npc-layout#0": "a447eb3c98f371b4",
         "div.npc-list#0": "ded381e43b0f0051",
         "div.npc-master#0": "e4c0f5779bab5a20",
+        "div.npc-row#0": "a447eb3c98f371b4",
         "div.search-wrapper#0": "133ba0201fddfa5d",
         "div.section-toolbar#0": "023178657a095c7b",
         "div.section-toolbar-actions#0": "7575d70617ed5784",
@@ -3403,9 +3419,10 @@
       }
     },
     "loot": {
-      "elementCount": 33,
+      "elementCount": 35,
       "capped": false,
       "keys": [
+        "button.btn#0",
         "button.btn.btn-gold.btn-sm#0",
         "button.btn.btn-primary#0",
         "button.export.io-btn#0",
@@ -3437,10 +3454,12 @@
         "div.section-toolbar-io#0",
         "div.section-toolbar-search#0",
         "input.toolbar-search#0",
+        "select.toolbar-select#0",
         "span.section-toolbar-count#0",
         "span.section-toolbar-title#0"
       ],
       "digests": {
+        "button.btn#0": "d50dddc71fbebeca",
         "button.btn.btn-gold.btn-sm#0": "cb7c0eadc8b025a9",
         "button.btn.btn-primary#0": "cb7c0eadc8b025a9",
         "button.export.io-btn#0": "c2b30e76b893e1b6",
@@ -3472,6 +3491,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "3fd05d479f19ad2c",
+        "select.toolbar-select#0": "21be028a6e23f868",
         "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d3272f4e3c4a001f"
       }
@@ -5487,7 +5507,7 @@
       }
     },
     "npcs": {
-      "elementCount": 59,
+      "elementCount": 62,
       "capped": false,
       "keys": [
         "button.btn.btn-primary#0",
@@ -5500,6 +5520,8 @@
         "button.npc-detail-btn#2",
         "button.npc-detail-btn#3",
         "button.npc-detail-btn#4",
+        "button.npc-detail-btn.npc-favorite-btn#0",
+        "button.npc-filter-chip#0",
         "button.npc-section-btn#0",
         "button.npc-section-btn#1",
         "button.search-clear-btn#0",
@@ -5527,6 +5549,7 @@
         "div.npc-layout#0",
         "div.npc-list#0",
         "div.npc-master#0",
+        "div.npc-row#0",
         "div.npc-section#0",
         "div.npc-section#1",
         "div.npc-section#2",
@@ -5561,6 +5584,8 @@
         "button.npc-detail-btn#2": "a94eafeb9eecd23b",
         "button.npc-detail-btn#3": "a94eafeb9eecd23b",
         "button.npc-detail-btn#4": "a94eafeb9eecd23b",
+        "button.npc-detail-btn.npc-favorite-btn#0": "a9a695fcbdf86034",
+        "button.npc-filter-chip#0": "ee270c6468574bb5",
         "button.npc-section-btn#0": "d62ab252600de66d",
         "button.npc-section-btn#1": "d62ab252600de66d",
         "button.search-clear-btn#0": "c1ec4af85d635c48",
@@ -5588,6 +5613,7 @@
         "div.npc-layout#0": "a447eb3c98f371b4",
         "div.npc-list#0": "ded381e43b0f0051",
         "div.npc-master#0": "e4c0f5779bab5a20",
+        "div.npc-row#0": "a447eb3c98f371b4",
         "div.npc-section#0": "3d15516136f8ca7f",
         "div.npc-section#1": "3d15516136f8ca7f",
         "div.npc-section#2": "3d15516136f8ca7f",
@@ -5989,9 +6015,10 @@
       }
     },
     "loot": {
-      "elementCount": 37,
+      "elementCount": 39,
       "capped": false,
       "keys": [
+        "button.btn#0",
         "button.btn.btn-gold.btn-sm#0",
         "button.btn.btn-primary#0",
         "button.export.io-btn#0",
@@ -6027,10 +6054,12 @@
         "div.section-toolbar-io#0",
         "div.section-toolbar-search#0",
         "input.toolbar-search#0",
+        "select.toolbar-select#0",
         "span.section-toolbar-count#0",
         "span.section-toolbar-title#0"
       ],
       "digests": {
+        "button.btn#0": "c88051abc6111aff",
         "button.btn.btn-gold.btn-sm#0": "f7aac7fdf73f216a",
         "button.btn.btn-primary#0": "f879c0309c57bee8",
         "button.export.io-btn#0": "c2b30e76b893e1b6",
@@ -6066,6 +6095,7 @@
         "div.section-toolbar-io#0": "133ba0201fddfa5d",
         "div.section-toolbar-search#0": "133ba0201fddfa5d",
         "input.toolbar-search#0": "3fd05d479f19ad2c",
+        "select.toolbar-select#0": "21be028a6e23f868",
         "span.section-toolbar-count#0": "a587717db128bdbe",
         "span.section-toolbar-title#0": "d5d9495aa7b6e996"
       }

@@ -20,6 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { erzeugeUrsprung, oeffneTab, STANDARD_KEY } = require('./helpers/multi-tab-harness.js');
 
 const MODULE_PATH = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
 
@@ -74,7 +75,7 @@ function createMockDirHandle() {
  * @param {Object|null} opts.idbData     Was in IndexedDB liegt (null = nichts)
  * @param {Object|null} opts.memoryD     Das laufende D-Objekt
  */
-function loadModule({ lsData, idbData, memoryD }) {
+function loadModule({ lsData, idbData, memoryD, lsTimestamp = null }) {
     const dirHandle = createMockDirHandle();
     const showToast = jest.fn();
 
@@ -107,6 +108,7 @@ function loadModule({ lsData, idbData, memoryD }) {
         StorageAPI: {
             // getJSON(key, default) — im IDB-Modus ist der Key weg, also default
             getJSON: jest.fn((key, def) => (lsData === null ? def : lsData)),
+            get: jest.fn((key, def) => (key.endsWith('_ts') ? lsTimestamp : def)),
             has: jest.fn(() => lsData !== null)
         },
         sessionStorage: { getItem: jest.fn(() => null), setItem: jest.fn() },
@@ -131,6 +133,24 @@ function geschriebeneKampagne(dirHandle) {
 }
 
 describe('Datei-Backup im IndexedDB-Modus (DEBT-17)', () => {
+    test('N05: Nach Quota-Fallback sichern Datei-Backup und Neustart denselben Stand', async () => {
+        const origin = erzeugeUrsprung({ lsQuotaZeichen: 3000 });
+        origin.saeen(STANDARD_KEY, { ...ECHTE_KAMPAGNE, quickNotes: 'Alter localStorage-Stand' });
+        const a = await oeffneTab(origin, 'A', {
+            module: ['systems/file-backup/file-backup-manager.js']
+        }).starten();
+        a.ctx.D.quickNotes = 'Neuer IndexedDB-Stand '.repeat(200);
+        expect(await a.ctx.saveImmediate()).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(origin.ls.has(STANDARD_KEY + '_ts')).toBe(false);
+        expect(JSON.parse(origin.ls.get(STANDARD_KEY)).quickNotes).toBe('Alter localStorage-Stand');
+
+        const dirHandle = createMockDirHandle();
+        await a.ctx._doBackup(dirHandle);
+        const reboot = await oeffneTab(origin, 'Neustart').starten();
+        expect(reboot.ctx.D.quickNotes).toBe(a.ctx.D.quickNotes);
+        expect(geschriebeneKampagne(dirHandle)?.quickNotes === reboot.ctx.D.quickNotes).toBe(true);
+    });
+
     test('sichert die echten Daten aus IndexedDB, wenn der localStorage-Key fehlt', async () => {
         // IDB-Modus: persistence.js hat den LS-Key nach dem IDB-Write geloescht
         const { context, dirHandle } = loadModule({
@@ -190,11 +210,12 @@ describe('Datei-Backup im IndexedDB-Modus (DEBT-17)', () => {
         expect(context.getBackupStatus()).not.toBe('active');
     });
 
-    test('bevorzugt localStorage, solange der Key existiert (Normalfall <5MB)', async () => {
+    test('bevorzugt localStorage mit Zeitstempel (Normalfall <5MB)', async () => {
         const { context, dirHandle, loadFromIndexedDBFallbackRaw } = loadModule({
             lsData: ECHTE_KAMPAGNE,
             idbData: { characters: [], _version: 'veraltet' },
-            memoryD: null
+            memoryD: null,
+            lsTimestamp: '123'
         });
 
         await context._doBackup(dirHandle);
@@ -204,6 +225,33 @@ describe('Datei-Backup im IndexedDB-Modus (DEBT-17)', () => {
         );
         // Kein unnoetiger IDB-Zugriff im Normalfall
         expect(loadFromIndexedDBFallbackRaw).not.toHaveBeenCalled();
+    });
+
+    test('schreibt keinen alten localStorage-Schatten, wenn der neuere Stand leer ist', async () => {
+        const { context, dirHandle } = loadModule({
+            lsData: ECHTE_KAMPAGNE,
+            idbData: { characters: [], _version: '2.6.1' },
+            memoryD: ECHTE_KAMPAGNE
+        });
+        await context._doBackup(dirHandle);
+        expect(geschriebeneKampagne(dirHandle)).toBeUndefined();
+    });
+
+    test('N05: ein Lesefehler in IndexedDB ersetzt keine vorhandene Sicherung durch den Schatten', async () => {
+        const { context, dirHandle, loadFromIndexedDBFallbackRaw } = loadModule({
+            lsData: { ...ECHTE_KAMPAGNE, quickNotes: 'Alter Schatten' },
+            idbData: null,
+            memoryD: null
+        });
+        loadFromIndexedDBFallbackRaw.mockRejectedValue(new Error('IndexedDB nicht lesbar'));
+        const { current } = context.resolveBackupTargets(null, 'dnd-tracker-data')[0].filenames;
+        const bisher = JSON.stringify({ ...ECHTE_KAMPAGNE, quickNotes: 'Aktuelle Sicherung' });
+        dirHandle._files.set(current, bisher);
+
+        await context._doBackup(dirHandle);
+
+        expect(dirHandle._files.get(current)).toBe(bisher);
+        expect(dirHandle._files.size).toBe(1);
     });
 
     test('faellt auf das laufende D-Objekt zurueck, wenn beide Speicher leer sind', async () => {

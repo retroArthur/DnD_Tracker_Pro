@@ -543,8 +543,7 @@ async function bearbeiten(page, id) {
     await auswahlGesetzt(page, id);
 }
 
-/** Der zweite Bearbeiten-Weg: globale Suche → Treffer
- *  (`systems/search/global-search.js`, editQuest() nach 100 ms).
+/** Globale Suche → Quest-Karte → ✏️.
  *  @param {import('@playwright/test').Page} page
  *  @param {string} begriff
  *  @param {number} id */
@@ -556,6 +555,7 @@ async function bearbeitenUeberSuche(page, begriff, id) {
     );
     await expect(treffer).toBeVisible();
     await treffer.click();
+    await page.locator(`#quest-${id} [data-action="edit-quest"]`).click();
     await expect(page.locator('#quest-modal')).toHaveClass(/\bshow\b/);
     await auswahlGesetzt(page, id);
 }
@@ -752,8 +752,8 @@ test('(2) R1: nach ✏️ und Escape legt die Taste n eine NEUE Quest an', async
 // (3) R1: ✏️ UEBER DIE SUCHE → ✕ → BEFEHLSPALETTE "NEUE QUEST" LEGT NEU AN
 // ===========================================================================
 //
-// Mit dem zweiten Bearbeiten-Weg: die globale Suche oeffnet dasselbe Formular
-// ueber editQuest() und hinterlaesst denselben Rest.
+// Nach dem Sprung ueber die globale Suche oeffnet ✏️ auf der Quest-Karte
+// das Formular und hinterlaesst denselben Rest.
 test('(3) R1: nach ✏️ aus der Suche und ✕ legt die Befehlspalette "Neue Quest" eine NEUE Quest an', async ({
     page
 }) => {
@@ -763,7 +763,7 @@ test('(3) R1: nach ✏️ aus der Suche und ✕ legt die Befehlspalette "Neue Qu
     const drachenjagd = await questInD(page, 1);
 
     await bearbeitenUeberSuche(page, 'Drachen', 1);
-    expect((await formular(page)).id, 'Vorbedingung: die Suche hat Drachenjagd geoeffnet').toBe(
+    expect((await formular(page)).id, 'Vorbedingung: Drachenjagd ist zum Bearbeiten offen').toBe(
         '1'
     );
     await kreuz(page);

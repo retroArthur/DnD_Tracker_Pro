@@ -70,6 +70,8 @@ function saveNPC() {
             });
         });
     }
+    const notes = $('npc-notes').value;
+    const hasNotes = notes.trim() !== '';
     const npc = {
         name: $('npc-name').value.trim(),
         role: $('npc-role').value.trim(),
@@ -90,6 +92,7 @@ function saveNPC() {
             .map(s => s.trim())
             .filter(Boolean),
         description: sanitizeHTML($('npc-desc').innerHTML),
+        ...(hasNotes ? { notes } : {}),
         triggers,
         dialogs,
         factionId: parseInt($('npc-faction') && $('npc-faction').value) || null
@@ -101,7 +104,9 @@ function saveNPC() {
         // Felder ohne Formularfeld (avatar, tags, links, relations, ...)
         // bleiben ueber den Spread stehen; dialogs und triggers kommen ganz
         // aus dem Formular — "alle Dialoge entfernen" entfernt sie also.
-        D.npcs[idx] = { ...D.npcs[idx], ...npc };
+        const updated = { ...D.npcs[idx], ...npc };
+        if (!hasNotes && typeof updated.notes === 'string') delete updated.notes;
+        D.npcs[idx] = updated;
     } else {
         npc.id = nextId('npcs');
         D.npcs.push(npc);
@@ -228,6 +233,7 @@ function editNPC(id) {
     $('npc-info').value = (n.info || []).join(', ');
     $('npc-relations').value = (n.relationships || []).join(', ');
     $('npc-desc').innerHTML = sanitizeHTML(n.description) || '';
+    $('npc-notes').value = typeof n.notes === 'string' ? n.notes : '';
     // Location, Filter und Fraktion nach kleiner Verzögerung setzen (damit Optionen geladen sind)
     // Leere Werte AUSDRUECKLICH setzen: populateSelects() haelt seit MARKDOWN
     // die Auswahl, sonst bliebe die des zuletzt bearbeiteten NPC stehen.
@@ -322,7 +328,8 @@ function clearNPCForm() {
             'npc-faction',
             'npc-quests',
             'npc-info',
-            'npc-relations'
+            'npc-relations',
+            'npc-notes'
         ],
         contentEditableFields: ['npc-desc'],
         customHandlers: () => {

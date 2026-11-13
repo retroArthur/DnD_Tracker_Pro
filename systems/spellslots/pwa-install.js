@@ -14,13 +14,12 @@ function initPWA() {
     }
     // beforeinstallprompt Event abfangen
     window.addEventListener('beforeinstallprompt', e => {
+        if (StorageAPI.has('pwa-installed')) return;
         e.preventDefault();
         deferredPrompt = e;
-        // Zeige Header-Install-Button (D-05) — nur wenn noch nicht installiert
-        if (!StorageAPI.has('pwa-installed')) {
-            const btn = window.$('pwa-install-btn');
-            if (btn) btn.style.display = 'flex';
-        }
+        // Der Mobil-Kopf übernimmt die Sichtbarkeit dieses Knopfs.
+        const btn = window.$('pwa-install-btn');
+        if (btn) btn.style.display = 'flex';
     });
     // App installed Event
     window.addEventListener('appinstalled', () => {
@@ -38,14 +37,19 @@ async function installPWA() {
         showToast('Installation nicht verfügbar');
         return;
     }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        showToast('App wird installiert!');
-    }
+    // Der Prompt ist mit der ersten Aktivierung verbraucht, auch solange
+    // die Entscheidung im Browserdialog noch aussteht.
+    const prompt = deferredPrompt;
     deferredPrompt = null;
     const btn = window.$('pwa-install-btn');
     if (btn) btn.style.display = 'none';
+    try {
+        await prompt.prompt();
+        const { outcome } = await prompt.userChoice;
+        if (outcome === 'accepted') showToast('App wird installiert!');
+    } catch {
+        showToast('Installation nicht verfügbar', 'error');
+    }
 }
 
 /**

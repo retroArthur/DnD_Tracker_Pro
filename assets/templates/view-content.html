@@ -10,11 +10,12 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="npc-search" class="toolbar-search" placeholder="🔍 NPC suchen..." data-action="search-input" data-render="renderNPCList">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="npc-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="npc-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 <!-- Gruppe 3: Filter + IO -->
                 <div class="section-toolbar-filters">
+                    <button type="button" id="npc-favorites-filter" class="npc-filter-chip" data-action="toggle-npc-favorites-filter" aria-pressed="false">Merkliste</button>
                     <div class="npc-filter-chips" id="npc-filters"></div>
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="npcs" title="NPCs exportieren">📤</button>
@@ -58,7 +59,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="loc-search" class="toolbar-search" placeholder="🔍 Orte suchen..." data-action="search-input" data-render="renderLocations">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="loc-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loc-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 <!-- Gruppe 3: Filter + IO -->
@@ -106,7 +107,7 @@
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
                         <input type="text" id="quest-search" class="toolbar-search" placeholder="🔍 Quest suchen..." data-action="search-input" data-render="renderQuests">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="quest-search" title="Suche leeren">✕</button>
+                        <button class="search-clear-btn" data-action="clear-search" data-value="quest-search" title="Suche leeren" tabindex="-1">✕</button>
                     </div>
                 </div>
                 

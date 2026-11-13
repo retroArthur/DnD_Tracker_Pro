@@ -93,6 +93,7 @@ const commitNummernScheitern =
 // ============================================================
 
 const { erzeugeFakeIDB } = require('./helpers/fake-idb.js');
+const { erzeugeKampagnenSperrDb } = require('./helpers/campaign-lock-idb.js');
 // load() ruft seit SENKEN die Datengrenze auf — der echte Block, keine Attrappe
 const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
@@ -530,8 +531,10 @@ describe('P — persistence.js bestaetigt IndexedDB-Saves erst nach dem Commit (
         const w = erzeugePersistenz({ D: grosseKampagne('V2') });
         const r = await mitFrist(w.context.saveImmediate(), 5000);
         expect(r.wert).toEqual({ success: true, backend: 'indexedDB' });
-        const folge = ereignisse(w.log, /^(tx\.complete|tx\.abort|broadcast|hook|indicator:saved)/);
-        expect(folge).toEqual(['tx.complete', 'indicator:saved', 'broadcast', 'hook']);
+        const writeTx = w.log.find(e => /^tx\.create#\d+\(readwrite\)$/.test(e));
+        const commit = writeTx.replace('tx.create', 'tx.complete').replace('(readwrite)', '');
+        const folge = w.log.filter(e => e === commit || /^(broadcast|hook|indicator:saved)$/.test(e));
+        expect(folge).toEqual([commit, 'indicator:saved', 'broadcast', 'hook']);
     });
 
     test('P7b: erster Commit bricht ab, Retry gelingt — weder LS-Schatten noch _ts bleiben, IDB haelt v2', async () => {
@@ -1041,11 +1044,12 @@ function erzeugeKampagnen(opt = {}) {
             DEBUG_MODE: false,
             VERSION: '9.9.9',
             STORAGE_KEY: SCHLUESSEL,
-            CAMPAIGN_INDEX_KEY: INDEX_SCHLUESSEL
+            CAMPAIGN_INDEX_KEY: INDEX_SCHLUESSEL,
+            IDB_NAME: 'dnd-tracker-db'
         },
         STORAGE_KEY: SCHLUESSEL,
         idb: fake.db,
-        indexedDB: {},
+        indexedDB: erzeugeKampagnenSperrDb(),
         localStorage: erzeugeLocalStorage(lsStore, log, opt.setItemWirft),
         location,
         confirm: jest.fn(() => true),

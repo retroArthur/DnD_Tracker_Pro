@@ -19,6 +19,7 @@ const MIGRATION_PWA_URL = 'https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tra
 
 // Wizard-Schrittnummer (Modulglobal fuer showWizardStep)
 let _wizardStep = 1;
+let migrationImportInFlight = false;
 
 // ============================================================
 // HILFSFUNKTIONEN
@@ -80,7 +81,7 @@ let _wizardStep = 1;
  * eines CAMPAIGN_CONTENT_PATHS-Eintrags) vorkommen, sonst schlaegt der Test an.
  */
 const CAMPAIGN_CONTENT_ARRAYS = [
-    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
+    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'lootChests', 'spells',
     'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
     'shops', 'links', 'filters', 'tags',
     // SEC-06 (Plan 12-16): selbst verfasste Schnellreferenz-Eintraege sind
@@ -246,6 +247,7 @@ function showWizardStep(n) {
  * showMigrationWizard() ist auch fuer den manuellen Wiederaufruf via data-action gedacht (D-09).
  */
 function showMigrationWizard() {
+    if (migrationImportInFlight) return;
     _wizardStep = 1;
 
     const stepsIndicator = `
@@ -380,9 +382,12 @@ function _setupWizardDragDrop(modal) {
     const fileInput = document.getElementById('migration-wizard-file-input');
     if (dropzone && fileInput) {
         // Klick auf Dropzone: file input triggern
-        dropzone.addEventListener('click', () => fileInput.click());
+        const openFile = () => {
+            if (!migrationImportInFlight) fileInput.click();
+        };
+        dropzone.addEventListener('click', openFile);
         dropzone.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFile(); }
         });
 
         // Drag&Drop Events
@@ -406,6 +411,7 @@ function _setupWizardDragDrop(modal) {
         // Datei-Input change (Alternativ-Button)
         fileInput.addEventListener('change', e => {
             const file = e.target?.files?.[0];
+            fileInput.value = '';
             if (file) _processWizardFile(file, dropzone);
         });
     }
@@ -449,6 +455,7 @@ function _setupWizardDragDrop(modal) {
  * T-02-08: JSON.parse in try/catch + _exportType-Pruefung
  */
 function _processWizardFile(file, dropzone) {
+    if (migrationImportInFlight) return;
     const errorEl = document.getElementById('migration-wizard-error');
     const filenameEl = document.getElementById('migration-wizard-filename');
 
@@ -465,16 +472,22 @@ function _processWizardFile(file, dropzone) {
 
     clearError();
 
-    // Groessenlimit: 20MB
-    // WR-05: showError setzt textContent — hier echte UTF-8-Literale, KEINE
-    // HTML-Entities und KEIN esc() (würden wörtlich angezeigt)
-    if (file.size > 20 * 1024 * 1024) {
-        showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');
+    const maxBytes = window.FULL_MIGRATION_MAX_BYTES ?? 64 * 1024 * 1024;
+    if (file.size > maxBytes) {
+        showError(`Die Umzugsdatei ist zu groß (maximal ${maxBytes / (1024 * 1024)} MiB).`);
         return;
     }
 
     const reader = new FileReader();
-    reader.onload = async evt => {
+    const skipButton = document.getElementById('migration-wizard-modal')
+        ?.querySelector('[data-action="wizard-skip"]');
+    migrationImportInFlight = true;
+    if (skipButton) skipButton.disabled = true;
+    const finish = () => {
+        migrationImportInFlight = false;
+        if (skipButton) skipButton.disabled = false;
+    };
+    const importFile = async evt => {
         // SEC-01 (Plan 12-14): die Grenze "ab hier sind die Daten geschrieben" steht
         // ab jetzt im Code selbst, nicht nur im Kommentar. Der Import-try endet
         // UNMITTELBAR nach dem Ruecksprung aus importFn() — `parsedObj` und `result`
@@ -483,6 +496,7 @@ function _processWizardFile(file, dropzone) {
         // zustaendig (kaputte Datei, falscher Typ, importFn() selbst wirft).
         let parsedObj;
         let result;
+        let writesRetired = false;
         try {
             parsedObj = JSON.parse(evt.target?.result);
 
@@ -542,13 +556,15 @@ function _processWizardFile(file, dropzone) {
                 throw new Error('Import-Funktion nicht verfuegbar');
             }
 
-            result = importFn(parsedObj);
-            // ---- Grenze: ab hier sind die Kampagnendaten in localStorage geschrieben.
-            // R02 (Code-Review 2026-09-21): SOFORT die Schreibpfade dieses Tabs sperren — sein
-            // D ist der Vor-Import-Stand. Die Sperre greift synchron (kein await noetig);
-            // Strg+S, Strg+Z, Autosave und das Verlassen schreiben ab jetzt nichts mehr.
-            if (typeof window.retireCampaignWrites === 'function') window.retireCampaignWrites();
+            // Der Tab zeigt bis zum Reload den alten Stand. Seine Saves dürfen weder
+            // während des asynchronen Imports noch nach dem erfolgreichen Commit schreiben.
+            if (typeof window.retireCampaignWrites === 'function') {
+                writesRetired = true;
+                await window.retireCampaignWrites();
+            }
+            result = await importFn(parsedObj);
         } catch (err) {
+            if (writesRetired) window.resumeCampaignWrites?.();
             const msg = err.message || 'Unbekannter Fehler';
             showError('Import fehlgeschlagen: ' + msg + '. Bitte erneut versuchen oder Überspringen wählen.');
             return;
@@ -616,10 +632,18 @@ function _processWizardFile(file, dropzone) {
         }
         showWizardStep(4);
     };
-    reader.onerror = () => {
+    reader.onload = evt => importFile(evt).finally(finish);
+    const readError = () => {
+        finish();
         showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');
     };
-    reader.readAsText(file);
+    reader.onerror = readError;
+    reader.addEventListener('abort', readError);
+    try {
+        reader.readAsText(file);
+    } catch {
+        readError();
+    }
 }
 
 /**
@@ -775,7 +799,7 @@ function _setupWizardActions(modal) {
     // inline-click-Handler fuer Aktionen die nur im Wizard-Kontext relevant sind
     modal.addEventListener('click', e => {
         const action = e.target?.dataset?.action || e.target?.closest('[data-action]')?.dataset?.action;
-        if (!action) return;
+        if (!action || migrationImportInFlight) return;
 
         if (action === 'wizard-next-step') {
             showWizardStep(_wizardStep + 1);
@@ -819,6 +843,7 @@ function _setupWizardActions(modal) {
 }
 
 function _closeWizard() {
+    if (migrationImportInFlight) return;
     const modal = document.getElementById('migration-wizard-modal');
     if (modal) modal.style.display = 'none';
 }
@@ -988,14 +1013,25 @@ async function _renderAudioDownloadButton() {
 /**
  * Umzugs-Flow starten (D-10): Voll-Export erstellen, PWA-URL oeffnen, Divergenz merken.
  */
-function startMigrationFlow() {
+async function startMigrationFlow() {
+    let zielTab = null;
     try {
         // Voll-Export herunterladen (full-export.js)
         const downloadFn = typeof downloadFullExport === 'function'
             ? downloadFullExport
             : window.downloadFullExport;
-        if (typeof downloadFn === 'function') {
-            downloadFn();
+        if (typeof downloadFn !== 'function') throw new Error('Export-Funktion nicht verfügbar');
+        // Den Tab in der Nutzergeste reservieren. Erst nach erfolgreichem Download
+        // navigieren, da der IndexedDB-Zugriff die Geste überdauern kann.
+        try {
+            zielTab = window.open('about:blank', '_blank');
+            if (zielTab) zielTab.opener = null;
+        } catch {
+            // Bei blockiertem Tab folgt nach dem Download der Hinweis mit der Adresse.
+        }
+        if (!(await downloadFn())) {
+            zielTab?.close();
+            return;
         }
 
         // Checkpoint-Fix (Weg B, ersetzt den urspruenglichen Plan 12-02-Task-1-
@@ -1009,6 +1045,7 @@ function startMigrationFlow() {
         // Divergenz-Banner (showDivergenceBanner() -> _renderAudioDownloadButton()),
         // dessen Klick seine EIGENE Nutzergeste liefert.
     } catch (err) {
+        zielTab?.close();
         if (APP_CONFIG.DEBUG_MODE) {
             ErrorHandler.log('startMigrationFlow', err, 'Export fehlgeschlagen');
         }
@@ -1022,7 +1059,8 @@ function startMigrationFlow() {
 
     // PWA-URL oeffnen (PLATZHALTER — A1 RESEARCH.md)
     try {
-        window.open(MIGRATION_PWA_URL, '_blank', 'noopener,noreferrer');
+        if (!zielTab || zielTab.closed) throw new Error('Neuer Tab blockiert');
+        zielTab.location.replace(MIGRATION_PWA_URL);
     } catch (err) {
         // Fallback: Link anzeigen statt oeffnen
         showToast('Bitte oeffne: ' + MIGRATION_PWA_URL, 'info');

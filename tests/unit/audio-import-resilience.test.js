@@ -107,7 +107,7 @@ beforeAll(() => {
     const APP_CONFIG_MOCK = { STORAGE_KEY: 'dnd-tracker-data', DEBUG_MODE: false, VERSION: '2.7.0' };
 
     mockListSoundBlobs = jest.fn(async () => []);
-    mockImportFullExport = jest.fn(() => ({ totalBytes: 4096, campaignCount: 2 }));
+    mockImportFullExport = jest.fn();
     mockReadCampaignDataForBackup = jest.fn(async () => null);
     mockGetCampaignIndex = jest.fn(() => ({ campaigns: [] }));
     mockConfirm = jest.fn(() => true);
@@ -171,7 +171,7 @@ beforeEach(() => {
     mockListSoundBlobs.mockReset();
     mockListSoundBlobs.mockResolvedValue([]);
     mockImportFullExport.mockReset();
-    mockImportFullExport.mockReturnValue({ totalBytes: 4096, campaignCount: 2 });
+    mockImportFullExport.mockResolvedValue({ totalBytes: 4096, campaignCount: 2 });
     mockConfirm.mockReset();
     mockConfirm.mockReturnValue(true);
     mockReadCampaignDataForBackup.mockReset();

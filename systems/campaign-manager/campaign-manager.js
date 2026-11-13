@@ -64,43 +64,58 @@ function readCampaignIndexStrict() {
     return { ok: true, index: parsed };
 }
 /**
- * Freier Schluessel fuer eine neue Kampagne: weder im Index noch in localStorage belegt. So
- * kann ein Rueckbau nie fremde Daten loeschen (zwei Anlagen in derselben Millisekunde
- * bekommen ein Zaehler-Suffix).
+ * Freier Schluessel fuer eine neue Kampagne. Eine zufaellige Kennung trennt Tabs,
+ * die denselben Millisekundentakt sehen. Das numerische Suffix erhaelt das
+ * Schluesselformat bestehender Umzugsdateien.
  * @param {{campaigns: Array}} index - streng gelesener Index
+ * @param {Set<string>} tried - in IndexedDB bereits als belegt erkannte Kandidaten
  * @returns {string}
  */
-function newCampaignKey(index) {
+function newCampaignKey(index, tried) {
+    const entropy = new Uint32Array(4);
+    if (window.crypto?.getRandomValues) {
+        window.crypto.getRandomValues(entropy);
+    } else {
+        for (let i = 0; i < entropy.length; i++) entropy[i] = Math.floor(Math.random() * 2 ** 32);
+    }
+    const random = Array.from(entropy, n => String(n).padStart(10, '0')).join('');
+    const base = 'dnd-campaign-' + Date.now() + '-' + random;
     const taken = key =>
-        index.campaigns.some(c => c && c.key === key) || StorageAPI.get(key, null) !== null;
-    const base = 'dnd-campaign-' + Date.now();
+        tried.has(key) ||
+        index.campaigns.some(c => c && c.key === key) ||
+        StorageAPI.get(key, null) !== null;
     let key = base;
-    for (let n = 1; taken(key); n++) key = base + '-' + n;
+    for (let n = 1; taken(key); n++) key = base + n;
     return key;
 }
 /**
  * Entfernt die Daten einer eben angelegten, nicht in den Index uebernommenen Kampagne.
- * Nur localStorage beschrieben: gezielt dort (funktioniert auch ohne oeffnbare IndexedDB);
- * sonst ueber removeCampaignData() (IndexedDB mit bestaetigtem Commit, dann localStorage).
+ * Nur den Speicherzweig anfassen, in dem diese Anlage erfolgreich geschrieben hat.
  * @param {string} key
- * @param {'localStorage'|'indexedDB'|null} backend - wohin writeCampaignData() geschrieben hat
+ * @param {'localStorage'|'indexedDB'} backend - wohin writeCampaignData() geschrieben hat
  */
 async function rollbackNewCampaignData(key, backend) {
+    const current = readCampaignIndexStrict();
+    if (current.ok && current.index.campaigns.some(c => c && c.key === key)) return;
     if (backend === 'localStorage') {
         StorageAPI.remove(key);
         StorageAPI.remove(key + '_ts');
         return;
     }
-    const removal =
-        typeof window.removeCampaignData === 'function'
-            ? await window.removeCampaignData(key)
-            : null;
-    if ((!removal || !removal.success) && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
-        window.ErrorHandler.log(
-            'addCampaignWithData',
-            removal && removal.error,
-            'Rueckbau der neuen Kampagne unvollstaendig: ' + key
+    try {
+        await window.idbWriteTx(
+            ['campaigns'],
+            tx => tx.objectStore('campaigns').delete(key),
+            { durability: 'strict' }
         );
+    } catch (error) {
+        if (APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log(
+                'addCampaignWithData',
+                error,
+                'Rueckbau der neuen Kampagne unvollstaendig: ' + key
+            );
+        }
     }
 }
 /**
@@ -114,15 +129,38 @@ async function rollbackNewCampaignData(key, backend) {
  *   {success: false, stage: 'index'|'data'|'unexpected', key?: string, error: *}>}
  */
 async function addCampaignWithData(name, data, { activate = false } = {}) {
+    const create = () => _addCampaignWithData(name, data, activate);
+    let started = false;
+    try {
+        const locks = window.navigator?.locks;
+        if (!locks?.request) return create();
+        return await locks.request(CAMPAIGN_INDEX_KEY, () => {
+            started = true;
+            return create();
+        });
+    } catch (error) {
+        // Wo Web Locks gesperrt sind, bleiben zufaellige Schluessel und IDB-add wirksam.
+        if (!started) return create();
+        return { success: false, stage: 'unexpected', error };
+    }
+}
+
+async function _addCampaignWithData(name, data, activate) {
     let key = null;
     let backend = null;
     try {
         const before = readCampaignIndexStrict();
         if (!before.ok) return { success: false, stage: 'index', error: before.error };
-        key = newCampaignKey(before.index);
-        const write = await window.writeCampaignData(key, data);
+        const tried = new Set();
+        let write;
+        for (let attempt = 0; attempt < 4; attempt++) {
+            key = newCampaignKey(before.index, tried);
+            write = await window.writeCampaignData(key, data, { createOnly: true });
+            if (!write?.collision) break;
+            tried.add(key);
+        }
         if (!write || !write.success) {
-            await rollbackNewCampaignData(key, null);
+            // Ohne bestaetigten Write gehoert uns kein Datensatz zum Entfernen.
             return { success: false, stage: 'data', key, error: write && write.error };
         }
         backend = write.backend;
@@ -131,6 +169,9 @@ async function addCampaignWithData(name, data, { activate = false } = {}) {
         if (!current.ok) {
             await rollbackNewCampaignData(key, backend);
             return { success: false, stage: 'index', key, error: current.error };
+        }
+        if (current.index.campaigns.some(c => c && c.key === key)) {
+            return { success: false, stage: 'index', key, error: 'Kampagnenschlüssel ist bereits belegt' };
         }
         const next = Object.assign({}, current.index, {
             campaigns: current.index.campaigns.concat([
@@ -150,7 +191,7 @@ async function addCampaignWithData(name, data, { activate = false } = {}) {
         }
         return { success: true, key, backend };
     } catch (error) {
-        if (key) await rollbackNewCampaignData(key, backend);
+        if (key && backend) await rollbackNewCampaignData(key, backend);
         return {
             success: false,
             stage: 'unexpected',
@@ -223,10 +264,19 @@ async function secureStaleTabBeforeSwitch() {
     if (!veraltet || !ausdruecklich) return { mayContinue: true, secured: false };
     let status = 'failed';
     try {
+        const snapshot = JSON.stringify(window.D);
         status =
             typeof window.createAutoBackup === 'function'
                 ? await window.createAutoBackup({ reason: 'safety' })
                 : 'failed';
+        if (status !== 'failed' && snapshot !== JSON.stringify(window.D)) {
+            showToast(
+                '⚠️ Kampagnenwechsel abgebrochen: Der Stand hat sich während der Sicherung geändert. Starte den Wechsel erneut, um die Änderungen zu sichern.',
+                'warning',
+                8000
+            );
+            return { mayContinue: false, secured: false };
+        }
     } catch (error) {
         if (window.ErrorHandler) {
             window.ErrorHandler.log('switchCampaign', error, 'Sicherungskopie vor dem Wechsel');
@@ -277,28 +327,42 @@ async function secureStaleTabBeforeSwitch() {
 // async (R02): einen ausstehenden Save der alten Kampagne erst festschreiben und den Commit
 // abwarten — sonst muesste das Verlassen im IndexedDB-Modus nachfragen
 async function switchCampaign(key) {
-    if (typeof window.flushPendingSaveAndSettle === 'function') {
-        await window.flushPendingSaveAndSettle();
+    if (
+        typeof window.flushPendingSaveAndSettle === 'function' &&
+        !(await window.flushPendingSaveAndSettle({ allowStale: true }))
+    ) {
+        showToast(
+            '⚠️ Kampagnenwechsel abgebrochen: Warte auf den laufenden Speichervorgang oder wiederhole das fehlgeschlagene Speichern.',
+            'warning',
+            8000
+        );
+        return;
     }
     // D-C: In einem veralteten Tab schreibt der Flush nichts. Ausdrueckliche Arbeit wird dann
     // erst gesichert (siehe secureStaleTabBeforeSwitch), sonst ginge sie beim Neuladen
     // verloren oder das beforeunload fragte nach.
-    const gesichert = await secureStaleTabBeforeSwitch();
-    if (!gesichert.mayContinue) return;
-    if (gesichert.secured && typeof window.retireCampaignWrites === 'function') {
-        // Schreibsperre statt Flush: sie verwirft den ausstehenden Save und haelt das
-        // beforeunload still (persistOnUnload kehrt unter der Sperre sofort zurueck). Der
-        // Stand liegt in der Sicherungskopie, der Speicher behaelt den neueren fremden Stand.
-        await window.retireCampaignWrites();
-    }
+    const sichern = async () => {
+        const result = await secureStaleTabBeforeSwitch();
+        if (result.secured && typeof window.retireCampaignWrites === 'function') {
+            // Die Sicherung ist bestätigt. Die Sperre verwirft vorgemerkte Saves
+            // und hält beforeunload beim anschließenden Neuladen still.
+            await window.retireCampaignWrites();
+        }
+        return result;
+    };
+    const gesichert =
+        typeof window.runWithCampaignSwitchProtection === 'function'
+            ? await window.runWithCampaignSwitchProtection(sichern)
+            : await sichern();
+    if (!gesichert?.mayContinue) return;
     const index = getCampaignIndex();
     index.active = key;
     // Nur neu laden, wenn der Wechsel wirklich gespeichert ist (R07)
     const result = saveCampaignIndex(index);
     if (!result || !result.success) {
-        // Der Tab bleibt, wo er ist — und muss wieder schreiben duerfen
+        // Die Sicherung bleibt erhalten. Ein neuer Save braucht einen neuen Auftrag (N55).
         if (gesichert.secured && typeof window.resumeCampaignWrites === 'function') {
-            window.resumeCampaignWrites();
+            window.resumeCampaignWrites({ retryPending: false });
         }
         showToast('❌ Kampagnenwechsel fehlgeschlagen (Speicher voll?)', 'error');
         return;
@@ -334,30 +398,65 @@ async function deleteCampaign() {
     ) {
         return;
     }
-    // Soundboard-Audio stoppen — Web Audio überlebt sonst den D-Reset und spielt im Hintergrund weiter
-    if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
     // R02: Schreibsperre ZUERST — ein ausstehender/ueberfaelliger save() oder das Verlassen
     // wuerde die geloeschte Kampagne sonst neu anlegen. Jeder Abbruchpfad hebt sie wieder auf.
     const resume = () => {
         if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
     };
-    if (typeof window.retireCampaignWrites === 'function') await window.retireCampaignWrites();
+    let result;
+    let started = false;
+    try {
+        await window.withCampaignIndexLock(async (assertHeld, runRollback) => {
+            started = true;
+            // Jeder wartende Löschvorgang sperrt erst seinen eigenen Schreibabschnitt.
+            if (typeof window.retireCampaignWrites === 'function') await window.retireCampaignWrites();
+            assertHeld();
+            if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
+            result = await _deleteCampaignStorage(
+                key,
+                isDefault,
+                campaignName,
+                resume,
+                assertHeld,
+                runRollback
+            );
+        });
+        if (!result) return;
+        if (result.error) throw result.error;
+        // Erst nach Freigabe der Sperre navigieren oder die Erfolgsmeldung anzeigen.
+        window.replaceCampaignData(window.D, window.initializeData());
+        if (result.dataRemoved && !result.nurLokal) {
+            alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
+        }
+        window.location.href = window.location.pathname + '?cleared=' + Date.now();
+    } catch (error) {
+        if (started && !result?.dataRemoved) resume();
+        const failure = result?.error ?? error;
+        if (window.ErrorHandler) window.ErrorHandler.log('deleteCampaign', failure);
+        alert('❌ Fehler beim Löschen:\n\n' + failure.message);
+    }
+}
+
+async function _deleteCampaignStorage(key, isDefault, campaignName, resume, assertHeld, runRollback) {
     let dataRemoved = false;
     try {
         log('[deleteCampaign] Lösche Kampagne:', key);
         // 1. Benannte Kampagne: zuerst aus dem Index entfernen (frisch gelesen). Die aktive
         //    Auswahl eines anderen Tabs bleibt stehen; scheitert der Write, wird nichts geloescht.
         let entfernterEintrag = null; // gesetzt, sobald Schritt 1 den Eintrag entfernt hat
+        let entferntePosition = -1;
         let warAktiv = false;
         if (!isDefault) {
             const current = getCampaignIndex();
-            entfernterEintrag = (current.campaigns || []).find(c => c && c.key === key) || {
+            const campaigns = current.campaigns || [];
+            entferntePosition = campaigns.findIndex(c => c && c.key === key);
+            entfernterEintrag = campaigns[entferntePosition] || {
                 key,
                 name: campaignName
             };
             warAktiv = current.active === key;
             const next = Object.assign({}, current, {
-                campaigns: (current.campaigns || []).filter(c => c.key !== key)
+                campaigns: campaigns.filter(c => c.key !== key)
             });
             if (warAktiv) next.active = APP_CONFIG.STORAGE_KEY;
             const indexResult = saveCampaignIndex(next);
@@ -371,28 +470,53 @@ async function deleteCampaign() {
             }
         }
         /**
-         * Legt den in Schritt 1 entfernten Indexeintrag zurueck (Korrekturrunde F9). Notwendig
-         * nur auf dem D-B-Abbruchpfad: dort ist NICHTS geloescht, die Rueckfrage hat das
-         * ausdruecklich zugesagt ("ABBRECHEN: Es wird nichts geloescht. Erst exportieren"), und
-         * ohne den Eintrag waere die Kampagne ueber die Oberflaeche nicht mehr erreichbar —
-         * getCampaignIndex()/renderCampaignList() zeigen nur Standard + index.campaigns, eine
-         * Waisen-Wiederherstellung gibt es nicht. Frisch gelesen, damit ein anderer Tab nicht
-         * ueberschrieben wird; `active` nur dann zurueck, wenn niemand sonst gewechselt hat.
+         * Legt den entfernten Eintrag nach einem Abbruch an seine ursprüngliche Position zurück.
+         * Ein inzwischen gespeicherter Eintrag oder Wechsel in eine andere Kampagne bleibt erhalten.
          * @returns {boolean} der Eintrag steht wieder im Index (oder war nie entfernt)
          */
         const indexEintragZuruecklegen = () => {
             if (!entfernterEintrag) return true;
-            const current = getCampaignIndex();
+            const { ok, index: current } = readCampaignIndexStrict();
+            if (!ok) return false;
             const campaigns = (current.campaigns || []).slice();
-            if (!campaigns.some(c => c && c.key === key)) campaigns.push(entfernterEintrag);
+            if (campaigns.some(c => c && c.key === key)) return true;
+            campaigns.splice(
+                entferntePosition < 0 ? campaigns.length : entferntePosition,
+                0,
+                entfernterEintrag
+            );
             const next = Object.assign({}, current, { campaigns });
             if (warAktiv && current.active === APP_CONFIG.STORAGE_KEY) next.active = key;
             const result = saveCampaignIndex(next);
             return !!(result && result.success);
         };
         // 2. Gespeicherte Daten entfernen: IndexedDB (bestaetigter Commit) VOR localStorage
-        const removal = await window.removeCampaignData(key);
+        const removal = await window.removeCampaignData(key, assertHeld);
         dataRemoved = !!(removal && removal.success);
+        try {
+            assertHeld();
+        } catch (error) {
+            if (entferntePosition >= 0 && !dataRemoved) {
+                try {
+                    await runRollback(async assertRollbackHeld => {
+                        // Nach einem unterbrochenen Delete kann eine Kopie übrig sein.
+                        const vorhanden =
+                            StorageAPI.get(key, null) !== null ||
+                            !!(await window.loadFromIndexedDBFallbackRaw(key));
+                        assertRollbackHeld();
+                        if (vorhanden && !indexEintragZuruecklegen()) {
+                            throw new Error('Der Kampagnenindex konnte nicht gespeichert werden.');
+                        }
+                    });
+                } catch (rollbackError) {
+                    throw new Error(
+                        `${error.message}. Der Kampagneneintrag konnte nicht wiederhergestellt werden (${rollbackError.message}).`,
+                        { cause: rollbackError }
+                    );
+                }
+            }
+            throw error;
+        }
         // D-B (Nutzerentscheidung 2026-09-27): IndexedDB ist gemeldet, liess sich aber nicht
         // OEFFNEN — ob dort eine Kopie liegt, ist unbekannt. Statt fail-closed ("Es wurde
         // nichts gelöscht") entscheidet der Nutzer, ob wenigstens die lokale Kopie weichen
@@ -482,21 +606,9 @@ async function deleteCampaign() {
                 }
             }
         }
-        // 3. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt) — vollstaendiges
-        //    Grundgeruest aus initializeData(), in place (D ist const)
-        window.replaceCampaignData(window.D, window.initializeData());
-        if (dataRemoved && !nurLokal) {
-            alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
-        }
-        // 4. Seite mit Cache-Bypass neu laden
-        window.location.href = window.location.pathname + '?cleared=' + Date.now();
+        return { dataRemoved, nurLokal };
     } catch (error) {
-        // Nur solange nichts entfernt ist, darf der Tab wieder schreiben
-        if (!dataRemoved) resume();
-        if (window.ErrorHandler) {
-            window.ErrorHandler.log('deleteCampaign', error);
-        }
-        alert('❌ Fehler beim Löschen:\n\n' + error.message);
+        return { dataRemoved, error };
     }
 }
 function renderCampaignList() {

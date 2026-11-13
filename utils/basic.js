@@ -73,7 +73,11 @@ function clearSearch(inputId) {
 function updateSearchClear(input) {
     const btn = input.parentElement?.querySelector('.search-clear-btn');
     if (btn) {
-        btn.classList.toggle('visible', input.value.length > 0);
+        const hasSearch = input.value.length > 0;
+        btn.classList.toggle('visible', hasSearch);
+        // Ohne Suchtext überspringt Tab das ✕. Maus und Touch bleiben bedienbar.
+        if (hasSearch) btn.removeAttribute('tabindex');
+        else btn.setAttribute('tabindex', '-1');
     }
 }
 // HTML-Sanitizer für Rich-Text-Content (erlaubt nur sichere Tags/Attribute)
@@ -1002,6 +1006,12 @@ function bereinigeDatengrenze(daten) {
     datengrenzeEntgiften(daten);
     datengrenzeNpcTexte(daten);
     for (const pfad of DATENGRENZE_PFADE) datengrenzeFeld(daten, pfad, 0);
+    if (
+        Object.prototype.hasOwnProperty.call(daten, 'lootChests') &&
+        typeof normalizeLootChests === 'function'
+    ) {
+        daten.lootChests = normalizeLootChests(daten.lootChests);
+    }
     return daten;
 }
 // [DATENGRENZE:ENDE]

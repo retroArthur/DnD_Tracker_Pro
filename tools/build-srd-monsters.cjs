@@ -5,7 +5,8 @@
  * One-off build-time script to fetch ~150 German SRD 5.1 monster statblocks
  * from openrpg.de/srd/5e/de/api/ and embed them in core/srd-monsters.js.
  *
- * Run: node tools/build-srd-monsters.cjs
+ * Lokale Ergänzungen einpflegen: node tools/build-srd-monsters.cjs --local
+ * Historischer API-Import: node tools/build-srd-monsters.cjs
  *
  * Data source: openrpg.de/srd/5e/de/api/ (CC-BY-4.0)
  * Attribution: SRD 5.1 DE, © 2023 Wizards of the Coast LLC
@@ -15,9 +16,31 @@
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('node:vm');
 
 const BASE_URL = 'https://openrpg.de/srd/5e/de/api/monster';
 const OUT_FILE = path.join(__dirname, '..', 'core', 'srd-monsters.js');
+const ADDITIONS_FILE = path.join(__dirname, 'srd-monsters-ergaenzungen.json');
+
+function readBuiltMonsters() {
+    if (!fs.existsSync(OUT_FILE)) return [];
+    const context = { window: {} };
+    vm.runInNewContext(fs.readFileSync(OUT_FILE, 'utf8'), context);
+    return context.window.getSRDMonsters();
+}
+
+function mergeMonsters(monsters, additions) {
+    const byId = new Map(monsters.map(monster => [monster._id, monster]));
+    const addedIds = new Set();
+    for (const monster of additions) {
+        if (!monster._id || addedIds.has(monster._id)) {
+            throw new Error(`Fehlende oder doppelte ID in den Ergänzungen: ${monster._id}`);
+        }
+        addedIds.add(monster._id);
+        byId.set(monster._id, monster);
+    }
+    return [...byId.values()];
+}
 
 // The 12 required seed IDs (from monster-templates.js + plan requirements)
 const REQUIRED_SEEDS = [
@@ -246,6 +269,13 @@ async function fetchMonster(id) {
 }
 
 async function main() {
+    const current = readBuiltMonsters();
+    const additions = JSON.parse(fs.readFileSync(ADDITIONS_FILE, 'utf8'));
+    if (process.argv.includes('--local')) {
+        writeMonsters(mergeMonsters(current, additions));
+        return;
+    }
+
     console.log(`Fetching ${FETCH_IDS.length} monster IDs from openrpg.de...`);
 
     // First verify all required seeds are in the list
@@ -285,9 +315,20 @@ async function main() {
     const foundIds = new Set(monsters.map(m => m._id));
     const missingSeeds = REQUIRED_SEEDS.filter(s => !foundIds.has(s));
     if (missingSeeds.length > 0) {
-        console.warn(`WARNING: Missing required seeds: ${missingSeeds.join(', ')}`);
-    } else {
-        console.log('All 12 required seeds present: ' + REQUIRED_SEEDS.join(', '));
+        throw new Error(`Fehlende Grundkreaturen: ${missingSeeds.join(', ')}`);
+    }
+    const merged = mergeMonsters(monsters, additions);
+    const mergedIds = new Set(merged.map(monster => monster._id));
+    const missing = current.filter(monster => !mergedIds.has(monster._id));
+    if (missing.length) {
+        throw new Error(`Der API-Import ist unvollständig. Fehlende IDs: ${missing.map(m => m._id).join(', ')}`);
+    }
+    writeMonsters(merged);
+}
+
+function writeMonsters(monsters) {
+    if (monsters.length < 100) {
+        throw new Error('Weniger als 100 Kreaturen verfügbar. Der Katalog wurde nicht überschrieben.');
     }
 
     // Check for legendary actions
@@ -308,9 +349,10 @@ async function main() {
     const header = `// [SECTION:SRD_MONSTERS]
 // ============================================================
 // SRD 5.1 DE Monster-Datenbank — CC-BY-4.0
-// Quelle: Wizards of the Coast / openrpg.de/srd/5e/de/
+// Quelle: Wizards of the Coast, ursprünglicher Datenimport über openrpg.de/srd/5e/de/
 // Attribution: "Dungeons & Dragons, SRD 5.1 DE" — CC BY 4.0
 // Originalquelle: media.wizards.com/2023/downloads/dnd/SRD_CC_v5.1_DE.pdf
+// Ergänzungen aus dem deutschen SRD: Werte übernommen, Regeltexte zusammengefasst.
 // Repository: codeberg.org/nesges/SRD-5.1-DE
 // Generiert: ${new Date().toISOString().slice(0, 10)} via tools/build-srd-monsters.cjs
 // Monster: ${monsters.length} | Lizenz: Creative Commons Attribution 4.0 International
@@ -339,11 +381,6 @@ window.getSRDMonsters = getSRDMonsters;
     console.log(`\nWritten to ${OUT_FILE}`);
     console.log(`File size: ${Math.round(output.length / 1024)} KB unminified`);
     console.log(`Monster count: ${monsters.length}`);
-
-    if (monsters.length < 100) {
-        console.error('ERROR: Less than 100 monsters fetched! Check network and retry.');
-        process.exit(1);
-    }
 
     console.log('\nDone! Run: npx jest tests/unit/srd-monsters.test.js to verify.');
 }

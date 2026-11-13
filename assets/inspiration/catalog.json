@@ -1,0 +1,25 @@
+[
+    {
+        "id": "mittelalter-wissen",
+        "title": "Mittelalter-Wissen",
+        "subtitle": "Mitteleuropa · ca. 1250–1450",
+        "idOffset": 0,
+        "groups": {
+            "Einstieg": [100],
+            "Grundlagen und Werkzeuge": [1, 2, 19, 20, 10],
+            "Dorf, Haushalt und Gemeinschaft": [5, 6, 7, 11, 13, 15, 17, 18],
+            "Lebenslauf": [25, 16, 26, 27, 24],
+            "Versorgung und Handwerk": [21, 22, 31, 32, 33, 34, 35, 39, 40],
+            "Handel und Verkehr": [9, 12, 14, 36, 37, 38],
+            "Wohnen": [41, 42, 43, 44, 45, 58],
+            "Vergnügen": [28, 29, 30],
+            "Adel": [46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57],
+            "Gesundheit und Fürsorge": [23, 59, 60, 61, 62, 63],
+            "Kirche und Orden": [8, 64, 65, 66, 67, 68, 69, 70],
+            "Vom Alltag zur Quest": [71, 72, 73, 74, 75, 76, 77],
+            "Quellen": [3]
+        },
+        "unlisted": [10],
+        "notSearchable": [3, 10]
+    }
+]

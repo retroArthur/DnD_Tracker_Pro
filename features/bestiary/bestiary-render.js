@@ -309,7 +309,7 @@ function renderStatblockHTML(monster, source) {
 
     // Legendary actions intro sentence
     var legendaryIntro = '';
-    var legActionsPerRound = monster.legendaryActionsPerRound || 3;
+    var legActionsPerRound = monster.legendaryActionsPerRound ?? 3;
     if (monster.legendaryActions && monster.legendaryActions.length) {
         legendaryIntro = '<p>' + esc(monster.name) +
             ' kann ' + esc(String(legActionsPerRound)) +
@@ -555,12 +555,19 @@ function renderBestiaryAnsicht() {
         return;
     }
     if (JSON.stringify(monster) === bestiaryDetailStand) return;
-    var aktion = fokusImDetail ? document.activeElement.getAttribute('data-action') : null;
+    var aktiverKnoten = fokusImDetail ? document.activeElement : null;
+    var aktion = aktiverKnoten?.getAttribute('data-action');
+    var wert = aktiverKnoten?.getAttribute('data-value');
+    // Würfel teilen sich die Aktion. Bei gleicher Formel zählt das Vorkommen.
+    var passendeKnoepfe = () => Array.from(panel.querySelectorAll('[data-action]')).filter(
+        knopf => knopf.getAttribute('data-action') === aktion && knopf.getAttribute('data-value') === wert
+    );
+    var vorkommen = aktion ? passendeKnoepfe().indexOf(aktiverKnoten) : -1;
     var lage = panel.scrollTop;
     renderBestiaryDetail(selectedBestiaryId, selectedBestiarySource);
     panel.scrollTop = lage;
     if (fokusImDetail) {
-        fokussiere(aktion ? panel.querySelector('[data-action="' + aktion + '"]') : null);
+        fokussiere(vorkommen >= 0 ? passendeKnoepfe()[vorkommen] : null);
     }
 }
 

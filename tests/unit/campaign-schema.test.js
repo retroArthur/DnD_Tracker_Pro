@@ -113,6 +113,21 @@ function buildFullFixture(ctx) {
         locations: [{ id: 4, name: 'Phandalin' }],
         encounters: [{ id: 5, name: 'Goblins', monsters: [] }],
         loot: [{ id: 6, name: 'Heiltrank', assignedTo: 1 }],
+        lootChests: [
+            {
+                id: 22,
+                name: 'Händlertruhe',
+                entries: [
+                    {
+                        name: 'Heiltrank',
+                        description: 'Kleine Flasche',
+                        category: 'Trank',
+                        rarity: 'common',
+                        weight: 1.5
+                    }
+                ]
+            }
+        ],
         spells: [{ id: 7, name: 'Feuerball', level: 3 }],
         wiki: [{ id: 8, title: 'Goetter', content: '<p>Pantheon</p>' }],
         sessionNotes: [{ id: 9, title: 'Sitzung 1', content: 'Start' }],
@@ -161,6 +176,7 @@ function buildFullFixture(ctx) {
             locations: 5,
             encounters: 6,
             loot: 7,
+            lootChests: 23,
             spells: 8,
             wiki: 9,
             sessionNotes: 10,
@@ -269,6 +285,7 @@ describe('normalizeCampaignData() — Rundlauf (R01/R03)', () => {
         // Standardwerte aus initializeData() sind ergaenzt
         expect(plain(res.data.initiative)).toEqual({ combatants: [], currentTurn: 0, round: 1 });
         expect(Array.isArray(res.data.factions)).toBe(true);
+        expect(plain(res.data.lootChests)).toEqual([]);
     });
 
     test('der Normalisierer liest und schreibt window.D nicht', () => {
@@ -365,6 +382,132 @@ describe('normalizeCampaignData() — Versionsbehandlung', () => {
 });
 
 describe('normalizeCampaignData() — Eingangsgrenze', () => {
+    test('Truhen werden an der Ladegrenze ohne Verweis auf den Katalog repariert', () => {
+        const ctx = makeContext();
+        const saved = {
+            loot: [],
+            lootChests: [
+                null,
+                {
+                    id: '7',
+                    name: ' Vorratskiste ',
+                    entries: [
+                        { name: 'Seil', description: 'Gerollt', weight: '1,5' },
+                        { name: 'Leeres Glas', weight: 0 },
+                        { name: 'Kein gültiges Gewicht', weight: -1 },
+                        { name: { kaputt: true }, weight: 1 },
+                        null
+                    ]
+                },
+                { id: 7, name: 'Ersatztruhe', entries: null }
+            ]
+        };
+        expect(plain(ctx.bereinigeDatengrenze(saved).lootChests)).toEqual([
+            {
+                id: 7,
+                name: 'Vorratskiste',
+                entries: [
+                    {
+                        name: 'Seil',
+                        description: 'Gerollt',
+                        category: '',
+                        rarity: '',
+                        weight: 1.5
+                    },
+                    { name: 'Leeres Glas', description: '', category: '', rarity: '', weight: 0 }
+                ]
+            },
+            { id: 8, name: 'Ersatztruhe', entries: [] }
+        ]);
+        expect(plain(ctx.bereinigeDatengrenze({ lootChests: {} }).lootChests)).toEqual([]);
+    });
+
+    test('Truheneinträge behalten ihre Item-Eigenschaften beim Laden', () => {
+        const ctx = makeContext();
+        const saved = {
+            _version: ctx.APP_CONFIG.VERSION,
+            lootChests: [
+                {
+                    id: 1,
+                    name: 'Vorratskiste',
+                    entries: [
+                        {
+                            name: 'Silberring',
+                            weight: 3,
+                            itemDetails: {
+                                descriptionHtml: '<p>Erste Zeile</p><p>Zweite Zeile</p>',
+                                weight: 2,
+                                value: 40,
+                                origin: 'shop',
+                                special: 'Silber',
+                                property: '+1 Angriff',
+                                tags: ['attunement', 17],
+                                attunement: true,
+                                id: 99,
+                                quantity: 6,
+                                assignedTo: 23
+                            }
+                        },
+                        {
+                            name: 'Stoffbeutel',
+                            weight: 1,
+                            itemDetails: {
+                                descriptionHtml: [],
+                                weight: 0,
+                                value: 0,
+                                origin: {},
+                                special: null,
+                                property: false,
+                                tags: 'attunement',
+                                attunement: false
+                            }
+                        }
+                    ]
+                }
+            ]
+        };
+        const loaded = normalize(ctx, JSON.stringify(saved));
+        expect(loaded.ok).toBe(true);
+        const [ring, beutel] = plain(loaded.data.lootChests[0].entries);
+        expect(ring.itemDetails).toEqual({
+            descriptionHtml: '<p>Erste Zeile</p><p>Zweite Zeile</p>',
+            weight: 2,
+            value: 40,
+            origin: 'shop',
+            special: 'Silber',
+            property: '+1 Angriff',
+            tags: ['attunement'],
+            attunement: true
+        });
+        expect(ring.weight).toBe(3);
+        expect(beutel.itemDetails).toEqual({ weight: 0, value: 0, attunement: false });
+    });
+
+    test('Truheneinträge unterscheiden gelöste und ungültige Quellverweise von Altdaten', () => {
+        const ctx = makeContext();
+        const entries = [7, '8', null, '8x', 0, 1.5, undefined].map((sourceItemId, index) => ({
+            name: `Gegenstand ${index + 1}`,
+            weight: 1,
+            sourceItemId
+        }));
+        const saved = {
+            _version: ctx.APP_CONFIG.VERSION,
+            lootChests: [{ id: 1, name: 'Vorratskiste', entries }]
+        };
+        const loaded = normalize(ctx, JSON.stringify(saved));
+        expect(loaded.ok).toBe(true);
+        const [chest] = plain(loaded.data.lootChests);
+        expect(chest.entries.map(entry => entry.sourceItemId)).toEqual([
+            7,
+            8,
+            null,
+            null,
+            null,
+            null,
+            undefined
+        ]);
+    });
+
     test('S6: __proto__-Schluessel (JSON-Text und Objekt) veraendern keinen Prototyp', () => {
         const ctx = makeContext();
         const vmObjectProto = vm.runInContext('Object.prototype', ctx);
@@ -384,6 +527,7 @@ describe('normalizeCampaignData() — Eingangsgrenze', () => {
 
     test.each([
         [{ characters: 'x' }, 'characters'],
+        [{ lootChests: {} }, 'lootChests'],
         [{ npcs: [], calendar: { events: 'x' } }, 'calendar.events'],
         [{ npcs: [], randomTables: {} }, 'randomTables'],
         [{ npcs: [], quickNotes: 5 }, 'quickNotes'],

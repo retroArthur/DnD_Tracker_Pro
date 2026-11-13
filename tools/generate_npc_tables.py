@@ -9,7 +9,7 @@ Output: features/npc-generator/npc-default-tables.js
         (in loader.js + build.py registriert durch Plan 05-01)
 
 Inhalt: NPC_DEFAULT_TABLES mit
-  - namen: 7 Völker × Geschlechter (maennlich/weiblich[/neutral])
+  - namen: Völker × Geschlechter (maennlich/weiblich/neutral)
   - persoenlichkeitszuege, marotten, berufe, aussehen
 """
 
@@ -151,6 +151,103 @@ NAMEN_GNOM_WEIBLICH = [
 ]
 
 
+NAMENSPOOLS = {
+    'mensch': (NAMEN_MENSCH_MAENNLICH, NAMEN_MENSCH_WEIBLICH, NAMEN_MENSCH_NEUTRAL),
+    'elf': (
+        NAMEN_ELF_MAENNLICH, NAMEN_ELF_WEIBLICH,
+        ["Aelven", "Caerith", "Elyr", "Ithrien", "Laevin", "Nymriel", "Sylthir", "Vaeloren"],
+    ),
+    'zwerg': (
+        NAMEN_ZWERG_MAENNLICH, NAMEN_ZWERG_WEIBLICH,
+        ["Ambrun", "Brondil", "Dorgast", "Garneth", "Keldrum", "Morveth", "Taldrek", "Varnim"],
+    ),
+    'halbling': (
+        NAMEN_HALBLING_MAENNLICH, NAMEN_HALBLING_WEIBLICH,
+        ["Auenklee", "Birnblatt", "Flinkfarn", "Haselkorn", "Kesselblüte", "Mohnfink", "Riedgras", "Tautropf"],
+    ),
+    'halbork': (
+        NAMEN_HALBORK_MAENNLICH, NAMEN_HALBORK_WEIBLICH,
+        ["Brakka", "Drav", "Ghorin", "Khar", "Morga", "Rusk", "Tharok", "Vargan"],
+    ),
+    'tiefling': (
+        NAMEN_TIEFLING_MAENNLICH, NAMEN_TIEFLING_WEIBLICH,
+        ["Aufbruch", "Funkenmut", "Gnade", "Glut", "Hoffnung", "Klarheit", "Nachhall", "Wagnis"],
+    ),
+    'gnom': (
+        NAMEN_GNOM_MAENNLICH, NAMEN_GNOM_WEIBLICH,
+        ["Brixel", "Dimpel", "Fimblek", "Knirpsi", "Moxlin", "Nibrel", "Pindit", "Tixli"],
+    ),
+    'drow': (
+        ["Drelvyr", "Ilveth", "Kharzenn", "Malzair", "Nethryl", "Rylzun", "Sszorin", "Velthar"],
+        ["Alyzzra", "Belvrae", "Drisvyn", "Kelzara", "Lethyra", "Myrzael", "Thalyss", "Veldrissa"],
+        ["Aelzryn", "Draevel", "Ithzair", "Kelthyr", "Lyzven", "Nymzeth", "Sornyl", "Vraezil"],
+    ),
+    'halbelf': (
+        ["Alwinor", "Berelar", "Cadrin", "Elarven", "Ivenar", "Joranel", "Mariven", "Thalrik"],
+        ["Alineth", "Celandria", "Elswyn", "Ilenora", "Kaelinde", "Maralyn", "Noriel", "Terenya"],
+        ["Avenil", "Eliarn", "Fenniel", "Lioren", "Marel", "Nairen", "Selwyn", "Tiralen"],
+    ),
+    'drachenbluetiger': (
+        ["Aarvok", "Bharvak", "Dharrak", "Kalthor", "Medrazz", "Orvash", "Rhashkar", "Vethrak"],
+        ["Arrisha", "Dharessa", "Irzatha", "Kharvessa", "Myrazha", "Ralshira", "Sarvekka", "Vezhara"],
+        ["Ashvyr", "Drethak", "Izzar", "Korveth", "Qashir", "Rhaaz", "Tazren", "Vyrash"],
+    ),
+    'goblin': (
+        ["Bregg", "Gribs", "Knorx", "Murgit", "Prakk", "Skorbel", "Trumms", "Zirrk"],
+        ["Brikka", "Fizzla", "Knerga", "Murgela", "Prazzi", "Rikkla", "Trubza", "Ziska"],
+        ["Blinz", "Drelk", "Fitz", "Glimm", "Klips", "Pritsch", "Skratz", "Zwick"],
+    ),
+    'kobold': (
+        ["Brizk", "Drikk", "Ikzun", "Kazzik", "Mitzrak", "Rizzik", "Skrivik", "Tikzark"],
+        ["Azrikka", "Ezzili", "Kriissa", "Mikrazi", "Nizirka", "Sazzila", "Tizziri", "Vrixa"],
+        ["Chirk", "Ezzik", "Izri", "Krakz", "Rits", "Skizz", "Tzik", "Vrik"],
+    ),
+    'ork': (
+        ["Bragosh", "Droggar", "Gharrok", "Korgath", "Mogrul", "Raghun", "Thorgak", "Urgrim"],
+        ["Ashgura", "Drozha", "Grushka", "Karzhna", "Morgatha", "Ruzgana", "Tharga", "Urzhal"],
+        ["Drak", "Ghur", "Kharz", "Mok", "Rhogg", "Thruk", "Uzg", "Vrak"],
+    ),
+    'tabaxi': (
+        [
+            "Schatten unterm Steg", "Regen auf Zinn", "Funke im Schilf", "Schritt im Schnee",
+            "Fuchs vorm Tor", "Splitter im Wind", "Kupfermond", "Tanz auf Dächern",
+        ],
+        [
+            "Blüte nach Frost", "Glut in der Dämmerung", "Lied der Dachrinne", "Pfote im Mondlicht",
+            "Perle im Sand", "Feder im Aufwind", "Klinge aus Nebel", "Tinte im Wasser",
+        ],
+        [
+            "Wind durchs Korn", "Atem vor dem Sprung", "Echo im Gewölbe", "Glanz auf Schiefer",
+            "Funkeln zwischen Wellen", "Rascheln im Farn", "Salz in der Luft", "Wolke über Türmen",
+        ],
+    ),
+    'kenku': (
+        [
+            "Fassklang", "Flügelschlag", "Hofpfiff", "Kettenklirr",
+            "Riegelklick", "Seilknarren", "Trommelschlag", "Wagenrumpeln",
+        ],
+        [
+            "Dachtröpfeln", "Glockenspiel", "Kielkratzen", "Kreidestrich",
+            "Muschelruf", "Samtrascheln", "Trillertropfen", "Windpfeife",
+        ],
+        [
+            "Bogenknacks", "Brunnenecho", "Donnerhall", "Kiesknirschen",
+            "Münzklang", "Ofenknacken", "Schlüsselschnapp", "Tassenklack",
+        ],
+    ),
+    'goliath': (
+        ["Akravan", "Dhornak", "Golavar", "Kadrom", "Malgoran", "Orukan", "Thavor", "Vordek"],
+        ["Alraka", "Dhorvani", "Galara", "Harvoka", "Kelvanna", "Morakha", "Tavora", "Varkana"],
+        ["Felsgruß", "Firn", "Gratwacht", "Lawinenruh", "Schneelicht", "Steinatem", "Sturmspur", "Wolkenbruch"],
+    ),
+    'aasimar': (
+        ["Aelvarin", "Caelior", "Elathen", "Heliandor", "Maerion", "Orelian", "Solvian", "Valeriel"],
+        ["Altheira", "Aurielis", "Caelina", "Elaris", "Helivara", "Liorana", "Orelisse", "Solmira"],
+        ["Dämmerglanz", "Fernlicht", "Himmelsruh", "Lichtfaden", "Morgenstern", "Nachtgold", "Sonnensegel", "Sternensaum"],
+    ),
+}
+
+
 # --- Persönlichkeitszüge ---
 
 PERSOENLICHKEITSZUEGE = [
@@ -184,6 +281,18 @@ PERSOENLICHKEITSZUEGE = [
     "Traut seiner/ihrer Intuition mehr als Fakten.",
     "Macht Situationen mit schwarzem Humor erträglicher.",
     "Besteht darauf, immer den Plan A zu kennen — und B und C.",
+    "Hilft Fremden sofort und bittet sie später um einen kleinen Gefallen.",
+    "Kann eine Bitte kaum ablehnen, wenn sie offen ausgesprochen wird.",
+    "Fragt bei einem Streit zuerst nach den stillen Beteiligten.",
+    "Erzählt schlechte Nachrichten mit großer Sachlichkeit.",
+    "Hält jedes gegebene Wort, auch wenn es inzwischen teuer geworden ist.",
+    "Will jeden Raum gemeinsam verlassen und achtet darauf, wer zurückbleibt.",
+    "Versucht, sich bei jeder Begegnung etwas beibringen zu lassen.",
+    "Bietet eine ehrliche Antwort an, wenn das Gegenüber zuerst ehrlich ist.",
+    "Behandelt Dienstboten mit derselben Förmlichkeit wie Adlige.",
+    "Verhandelt hart, schenkt aber großzügig, sobald der Handel abgeschlossen ist.",
+    "Lenkt mit Nachfragen ab, sobald die eigene Vergangenheit zur Sprache kommt.",
+    "Gibt Fehler bereitwillig zu und möchte sie sofort wiedergutmachen.",
 ]
 
 # --- Marotten ---
@@ -219,6 +328,18 @@ MAROTTEN = [
     "Malt mit dem Finger Kreise auf jede flache Fläche.",
     "Spuckt dreimal aus, bevor er/sie ein schlechtes Omen erwähnt.",
     "Kratzt heimlich Marken in Holz, um seinen/ihren Weg zu markieren.",
+    "Bindet beim Zuhören kleine Knoten in eine Schnur.",
+    "Richtet Gegenstände an der Tischkante aus, bevor ein Gespräch beginnt.",
+    "Nennt unbekannte Leute nach dem ersten Geräusch, das sie machen.",
+    "Notiert neue Redewendungen auf der Rückseite alter Quittungen.",
+    "Legt bei jedem Angebot wortlos einen Kiesel auf den Tisch.",
+    "Sucht beim Betreten eines Raums zuerst nach der Lichtquelle.",
+    "Schreibt bei schwierigen Fragen erst ein Stichwort in die Luft.",
+    "Bittet um die Geschichte hinter jedem getragenen Schmuckstück.",
+    "Sammelt beim Gehen Fäden vom eigenen Mantel und wickelt sie zu einer Kugel.",
+    "Dreht vor jeder ernsten Antwort den Bechergriff vom Gegenüber weg.",
+    "Schüttelt bei der Begrüßung das eigene Handgelenk, bis die Ärmel zurückrutschen.",
+    "Gibt jedem neuen Gerücht einen eigenen Titel.",
 ]
 
 # --- Berufe ---
@@ -269,6 +390,18 @@ BERUFE = [
     "Gauner / Gaunerin",
     "Barde / Bardin",
     "Glücksritter / -ritterin",
+    "Leuchtturmwache",
+    "Kartenzeichner / Kartenzeichnerin",
+    "Zollschreiber / Zollschreiberin",
+    "Brückenbauer / Brückenbauerin",
+    "Glockengießer / Glockengießerin",
+    "Pilzsammler / Pilzsammlerin",
+    "Runenrestaurator / Runenrestauratorin",
+    "Botenreiter / Botenreiterin",
+    "Grabungsaufsicht",
+    "Schleusenwärter / Schleusenwärterin",
+    "Pilgerführer / Pilgerführerin",
+    "Siegelmacher / Siegelmacherin",
 ]
 
 # --- Aussehen / Merkmale ---
@@ -304,6 +437,18 @@ AUSSEHEN = [
     "Hängt immer leicht zur Seite — alte Verletzung.",
     "Tätowierung eines Wolfskopfes auf dem rechten Unterarm.",
     "Wirft einen merkwürdig ungleichmäßigen Schatten.",
+    "Trägt einen Mantel, dessen Saum mit kleinen Kupferringen beschwert ist.",
+    "Auf den Handschuhen sind winzige Sternkarten eingestickt.",
+    "Ein kurzer, fleckiger Schal ist mit einer Porzellanscherbe geschlossen.",
+    "Der Mantel ist mit Stoffstücken in drei verschiedenen Blautönen geflickt.",
+    "Ein Bündel Messingschlüssel hängt sichtbar am Gürtel.",
+    "Die Kleidung ist von feinem Glimmerstaub überzogen.",
+    "Die Stiefelspitzen sind mit silbrigem Draht umwickelt.",
+    "Am Kragen steckt eine gepresste rote Blüte.",
+    "Ein gelbes Halstuch trägt ein handgemaltes Wegzeichen.",
+    "Ein Bündel schmaler Papierstreifen lugt aus der Brusttasche.",
+    "Über der Schulter hängt ein geflochtener Gurt mit geschnitzten Holzperlen.",
+    "Ein gläsernes Monokel wirft bei Kerzenlicht bunte Punkte.",
 ]
 
 
@@ -332,36 +477,14 @@ def build_js():
     # -- namen --
     lines.append('    namen: {')
 
-    def volk_entry(key, m, w, n=None):
-        r = [f'        {key}: {{']
-        r.append(f'            maennlich: {js_string_array(m, "            ")},')
-        r.append(f'            weiblich:  {js_string_array(w, "            ")}')
-        if n is not None:
-            # Insert neutral before closing brace — adjust last entry to have comma
-            r[-1] += ','
-            r.append(f'            neutral:   {js_string_array(n, "            ")}')
-        r.append(f'        }}')
-        return r
-
-    groups = [
-        ('mensch',   NAMEN_MENSCH_MAENNLICH,   NAMEN_MENSCH_WEIBLICH,   NAMEN_MENSCH_NEUTRAL),
-        ('elf',      NAMEN_ELF_MAENNLICH,       NAMEN_ELF_WEIBLICH,      None),
-        ('zwerg',    NAMEN_ZWERG_MAENNLICH,     NAMEN_ZWERG_WEIBLICH,    None),
-        ('halbling', NAMEN_HALBLING_MAENNLICH,  NAMEN_HALBLING_WEIBLICH, None),
-        ('halbork',  NAMEN_HALBORK_MAENNLICH,   NAMEN_HALBORK_WEIBLICH,  None),
-        ('tiefling', NAMEN_TIEFLING_MAENNLICH,  NAMEN_TIEFLING_WEIBLICH, None),
-        ('gnom',     NAMEN_GNOM_MAENNLICH,      NAMEN_GNOM_WEIBLICH,     None),
-    ]
-
-    for i, (key, m, w, n) in enumerate(groups):
-        entry_lines = volk_entry(key, m, w, n)
-        last_idx = len(groups) - 1
-        # Add comma after closing brace for all but last
-        closing = entry_lines[-1]
-        if i < last_idx:
-            closing += ','
-        entry_lines[-1] = closing
-        lines.extend(entry_lines)
+    for i, (volk, (maennlich, weiblich, neutral)) in enumerate(NAMENSPOOLS.items()):
+        lines.extend([
+            f'        {volk}: {{',
+            f'            maennlich: {js_string_array(maennlich, "            ")},',
+            f'            weiblich:  {js_string_array(weiblich, "            ")},',
+            f'            neutral:   {js_string_array(neutral, "            ")}',
+            '        },' if i < len(NAMENSPOOLS) - 1 else '        }',
+        ])
 
     lines.append('    },')
 
@@ -389,37 +512,23 @@ def build_js():
 # Validierung
 # ---------------------------------------------------------------------------
 
-def validate(data):
+def validate():
     """Einfache Mindestmengen-Prüfung der Rohdaten."""
     errors = []
-    if len(NAMEN_MENSCH_MAENNLICH) < 20:
-        errors.append(f'Mensch/maennlich: {len(NAMEN_MENSCH_MAENNLICH)} < 20')
-    if len(NAMEN_MENSCH_WEIBLICH) < 20:
-        errors.append(f'Mensch/weiblich: {len(NAMEN_MENSCH_WEIBLICH)} < 20')
-    if len(NAMEN_ELF_MAENNLICH) < 15:
-        errors.append(f'Elf/maennlich: {len(NAMEN_ELF_MAENNLICH)} < 15')
-    if len(NAMEN_ELF_WEIBLICH) < 15:
-        errors.append(f'Elf/weiblich: {len(NAMEN_ELF_WEIBLICH)} < 15')
-    if len(NAMEN_ZWERG_MAENNLICH) < 15:
-        errors.append(f'Zwerg/maennlich: {len(NAMEN_ZWERG_MAENNLICH)} < 15')
-    if len(NAMEN_ZWERG_WEIBLICH) < 15:
-        errors.append(f'Zwerg/weiblich: {len(NAMEN_ZWERG_WEIBLICH)} < 15')
-    if len(NAMEN_HALBLING_MAENNLICH) < 12:
-        errors.append(f'Halbling/maennlich: {len(NAMEN_HALBLING_MAENNLICH)} < 12')
-    if len(NAMEN_HALBLING_WEIBLICH) < 12:
-        errors.append(f'Halbling/weiblich: {len(NAMEN_HALBLING_WEIBLICH)} < 12')
-    if len(NAMEN_HALBORK_MAENNLICH) < 10:
-        errors.append(f'Halbork/maennlich: {len(NAMEN_HALBORK_MAENNLICH)} < 10')
-    if len(NAMEN_HALBORK_WEIBLICH) < 10:
-        errors.append(f'Halbork/weiblich: {len(NAMEN_HALBORK_WEIBLICH)} < 10')
-    if len(NAMEN_TIEFLING_MAENNLICH) < 10:
-        errors.append(f'Tiefling/maennlich: {len(NAMEN_TIEFLING_MAENNLICH)} < 10')
-    if len(NAMEN_TIEFLING_WEIBLICH) < 10:
-        errors.append(f'Tiefling/weiblich: {len(NAMEN_TIEFLING_WEIBLICH)} < 10')
-    if len(NAMEN_GNOM_MAENNLICH) < 10:
-        errors.append(f'Gnom/maennlich: {len(NAMEN_GNOM_MAENNLICH)} < 10')
-    if len(NAMEN_GNOM_WEIBLICH) < 10:
-        errors.append(f'Gnom/weiblich: {len(NAMEN_GNOM_WEIBLICH)} < 10')
+    bestehende_minima = {
+        'mensch': 20, 'elf': 15, 'zwerg': 15, 'halbling': 12,
+        'halbork': 10, 'tiefling': 10, 'gnom': 10,
+    }
+    for volk, (maennlich, weiblich, neutral) in NAMENSPOOLS.items():
+        minimum = bestehende_minima.get(volk, 8)
+        for geschlecht, pool, limit in (
+            ('maennlich', maennlich, minimum),
+            ('weiblich', weiblich, minimum),
+            ('neutral', neutral, 8),
+        ):
+            anzahl = len(set(pool))
+            if anzahl < limit:
+                errors.append(f'{volk}/{geschlecht}: {anzahl} verschiedene Namen < {limit}')
     if len(PERSOENLICHKEITSZUEGE) < 20:
         errors.append(f'persoenlichkeitszuege: {len(PERSOENLICHKEITSZUEGE)} < 20')
     if len(MAROTTEN) < 20:
@@ -436,7 +545,7 @@ def validate(data):
 # ---------------------------------------------------------------------------
 
 def main():
-    errors = validate(None)
+    errors = validate()
     if errors:
         print('FEHLER — Mindestmengen unterschritten:', file=sys.stderr)
         for e in errors:
@@ -449,20 +558,12 @@ def main():
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         f.write(js_content)
 
-    total_names = (
-        len(NAMEN_MENSCH_MAENNLICH) + len(NAMEN_MENSCH_WEIBLICH) + len(NAMEN_MENSCH_NEUTRAL) +
-        len(NAMEN_ELF_MAENNLICH) + len(NAMEN_ELF_WEIBLICH) +
-        len(NAMEN_ZWERG_MAENNLICH) + len(NAMEN_ZWERG_WEIBLICH) +
-        len(NAMEN_HALBLING_MAENNLICH) + len(NAMEN_HALBLING_WEIBLICH) +
-        len(NAMEN_HALBORK_MAENNLICH) + len(NAMEN_HALBORK_WEIBLICH) +
-        len(NAMEN_TIEFLING_MAENNLICH) + len(NAMEN_TIEFLING_WEIBLICH) +
-        len(NAMEN_GNOM_MAENNLICH) + len(NAMEN_GNOM_WEIBLICH)
-    )
+    total_names = sum(len(pool) for gruppen in NAMENSPOOLS.values() for pool in gruppen)
     total_traits = len(PERSOENLICHKEITSZUEGE) + len(MAROTTEN) + len(BERUFE) + len(AUSSEHEN)
     total = total_names + total_traits
 
     print(f'OK — {OUTPUT_PATH}')
-    print(f'     Namen: {total_names} Eintraege (7 Voelker)')
+    print(f'     Namen: {total_names} Eintraege ({len(NAMENSPOOLS)} Voelker)')
     print(f'     Zuege/Marotten/Berufe/Aussehen: {total_traits} Eintraege')
     print(f'     Gesamt: {total} Eintraege')
 

@@ -24,6 +24,44 @@ async function openBestiaryTab(page) {
     await page.waitForSelector('.bestiary-list-item', { timeout: 5000 });
 }
 
+test('neuer SRD-Banditenhauptmann ist offline auffindbar und für den Kampf nutzbar', async ({
+    page
+}) => {
+    await page.context().setOffline(true);
+    await openBestiaryTab(page);
+    await page.locator('#bestiary-search').fill('Banditenhauptmann');
+    await page
+        .locator('#bestiary-list .bestiary-list-item[data-source="srd"][data-id="banditenhauptmann"]')
+        .click({ timeout: 4000 });
+
+    const panel = page.locator('#bestiary-detail-panel');
+    const statblock = panel.locator('.bestiary-statblock');
+    await expect(statblock).toContainText('Banditenhauptmann');
+    await expect(statblock).toContainText('Krummsäbel');
+    await expect(statblock).toContainText('Parieren');
+
+    await panel.getByRole('button', { name: 'Zu Encounter' }).click();
+    const encounter = await page.evaluate(() =>
+        window.D.encounters.find(entry => entry.name === 'Banditenhauptmann')
+    );
+    expect(encounter).toMatchObject({ cr: '2', ac: 15, hp: 65 });
+    expect(encounter.actions).toContain('Krummsäbel');
+
+    page.once('dialog', dialog => dialog.accept('1'));
+    await panel.getByRole('button', { name: 'Zur Initiative' }).click();
+    await expect(page.locator('#view-initiative')).toHaveClass(/\bactive\b/);
+    const combatant = await page.evaluate(() =>
+        window.D.initiative.combatants.find(entry => entry.name === 'Banditenhauptmann')
+    );
+    expect(combatant).toMatchObject({
+        cr: '2',
+        ac: 15,
+        statblockRef: { source: 'srd', id: 'banditenhauptmann' }
+    });
+    expect(combatant.maxHp).toBeGreaterThanOrEqual(Math.round(65 * 0.9));
+    expect(combatant.maxHp).toBeLessThanOrEqual(Math.round(65 * 1.1));
+});
+
 // Hilfsfunktion: Suche ausfuehren und auf DOM-Aktualisierung warten
 async function performSearch(page, text) {
     await page.evaluate(function(searchText) {

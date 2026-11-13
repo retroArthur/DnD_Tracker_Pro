@@ -37,6 +37,7 @@ const vm = require('vm');
 const REPO = path.resolve(__dirname, '..', '..');
 const MODUL_REL = 'features/npc-generator/npc-generator.js';
 const MODUL = path.join(REPO, ...MODUL_REL.split('/'));
+const STANDARDTABELLEN = path.join(path.dirname(MODUL), 'npc-default-tables.js');
 
 /** Eingebaute Namen im Stub — der Pool ohne Nutzertabelle. */
 const EINGEBAUT = ['Aldric', 'Berthold'];
@@ -101,6 +102,43 @@ function poolAus(ergebnisse) {
     expect(fremd.slice(0, 3)).toEqual([]);
     return [...new Set(ergebnisse)].sort();
 }
+
+describe('NPC-Generator: eingebaute Variationen', () => {
+    test('jedes Volk liefert für alle drei Namenskategorien mindestens acht verschiedene Namen', () => {
+        const { ctx, zufall } = ladeGenerator();
+        vm.runInContext(fs.readFileSync(STANDARDTABELLEN, 'utf8'), ctx);
+
+        for (const volk of Object.keys(ctx.NPC_DEFAULT_TABLES.namen)) {
+            for (const geschlecht of ['maennlich', 'weiblich', 'neutral']) {
+                const namen = new Set();
+                for (let i = 0; i < 128; i++) {
+                    zufall.wert = i / 128;
+                    namen.add(ctx.generiereNPCName(volk, geschlecht));
+                }
+                expect({ volk, geschlecht, fallback: namen.has('Unbekannt') }).toEqual({
+                    volk,
+                    geschlecht,
+                    fallback: false
+                });
+                expect(namen.size).toBeGreaterThanOrEqual(8);
+            }
+        }
+    });
+
+    test('der Generator würfelt die erweiterten Pools für Rolle und Merkmale aus', () => {
+        const { ctx, zufall } = ladeGenerator();
+        vm.runInContext(fs.readFileSync(STANDARDTABELLEN, 'utf8'), ctx);
+        const varianten = Array.from({ length: 128 }, (_, i) => {
+            zufall.wert = i / 128;
+            return ctx.generiereNPC('mensch', 'neutral');
+        });
+
+        expect(new Set(varianten.map(npc => npc.beruf)).size).toBeGreaterThanOrEqual(57);
+        expect(new Set(varianten.map(npc => npc.zug)).size).toBeGreaterThanOrEqual(42);
+        expect(new Set(varianten.map(npc => npc.marotte)).size).toBeGreaterThanOrEqual(42);
+        expect(new Set(varianten.map(npc => npc.aussehen)).size).toBeGreaterThanOrEqual(42);
+    });
+});
 
 describe('NPC-Generator: Namenstabelle (NPC-NAME N3)', () => {
     test('ohne Nutzertabelle: der Pool sind genau die eingebauten Namen (Kontrolle der Messung)', () => {

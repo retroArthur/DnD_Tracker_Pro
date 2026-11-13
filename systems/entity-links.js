@@ -261,6 +261,7 @@ function navigateToEntity(type, id) {
     const view = viewMap[type] || type;
     const switchView = window.switchView;
     if (switchView) switchView(view);
+    if (type === 'loot') window.setLootChestView?.(false);
     // Encounter: das Ziel auswaehlen — bis 900px im Vollbild-Detail. Vorher
     // blieb die alte Auswahl stehen, und ein offen gebliebenes Vollbild zeigte
     // nach "Zum Tab wechseln" einen FREMDEN Encounter (Pruefbefund).

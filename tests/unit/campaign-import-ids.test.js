@@ -996,7 +996,7 @@ describe('R03 — executeImport() und Pfad-Register', () => {
             'merge'
         );
         try {
-            expect(() => seite.ctx.executeImport('npcs')).not.toThrow();
+            await expect(seite.ctx.executeImport('npcs')).resolves.toBeUndefined();
         } finally {
             aufraeumen();
         }
@@ -1019,12 +1019,77 @@ describe('R03 — executeImport() und Pfad-Register', () => {
             'replace'
         );
         try {
-            seite.ctx.executeImport('npcs');
+            await seite.ctx.executeImport('npcs');
         } finally {
             aufraeumen();
         }
         expect(seite.ctx.D._nextId.npcs).toBe(7);
         expect(seite.ctx.nextId('npcs')).toBe(7);
+    });
+
+    test.each(['Reiter', 'Kampagne'])('N07 %s: Erfolg wartet auf den gespeicherten Stand', async weg => {
+        const seite = await boote(erzeugeSeite(speicherMitStand({ npcs: [{ id: 1, name: 'Alt' }] })));
+        const items = [{ id: 2, name: 'Neu' }];
+        const speichern = seite.ctx.saveImmediate;
+        let freigeben;
+        const sperre = new Promise(resolve => { freigeben = resolve; });
+        seite.ctx.saveImmediate = jest.fn(async () => {
+            await sperre;
+            return speichern();
+        });
+        const aufraeumen = weg === 'Reiter' ? mitImportModal(seite, 'npcs', items, 'replace') : () => {};
+        const importiert = weg === 'Reiter'
+            ? seite.ctx.executeImport('npcs')
+            : importiere(seite, { npcs: items }, { antworten: [false, true] });
+        try {
+            await ruhe();
+            expect(seite.toasts).not.toEqual(expect.arrayContaining([
+                expect.objectContaining({ text: expect.stringMatching(/NPC importiert|Import OK/) })
+            ]));
+            expect(seite.ctx.saveImmediate).toHaveBeenCalledTimes(1);
+            expect(gespeichert(seite).npcs.map(n => n.name)).toEqual(['Alt']);
+            expect(seite.ctx.hideModal).not.toHaveBeenCalled();
+        } finally {
+            freigeben();
+            aufraeumen();
+        }
+        await importiert;
+        expect(gespeichert(seite).npcs.map(n => n.name)).toEqual(['Neu']);
+        expect(seite.toasts).toEqual(expect.arrayContaining([
+            expect.objectContaining({ text: expect.stringMatching(/NPC importiert|Import OK/) })
+        ]));
+    });
+
+    test.each(['Reiter', 'Kampagne'])('N07 %s: bei zwei Speicherfehlern bleiben alter Stand und Undo erhalten', async weg => {
+        const seite = await boote(erzeugeSeite(speicherMitStand({ npcs: [{ id: 1, name: 'Alt' }] })));
+        const items = [{ id: 2, name: 'Neu' }];
+        const setItem = seite.ctx.localStorage.setItem;
+        seite.ctx.localStorage.setItem = jest.fn((key, value) => {
+            if (key === STANDARD_KEY) throw Object.assign(new Error('localStorage voll'), { name: 'QuotaExceededError' });
+            setItem(key, value);
+        });
+        const idbWrite = seite.ctx.idbWriteTx;
+        seite.ctx.idbWriteTx = jest.fn(async () => { throw new Error('IndexedDB voll'); });
+        seite.ctx.exportAllDataAsFile = jest.fn();
+        const aufraeumen = weg === 'Reiter' ? mitImportModal(seite, 'npcs', items, 'replace') : () => {};
+        try {
+            if (weg === 'Reiter') await seite.ctx.executeImport('npcs');
+            else await importiere(seite, { npcs: items }, { antworten: [false, true] });
+            expect(seite.toasts).not.toEqual(expect.arrayContaining([
+                expect.objectContaining({ text: expect.stringMatching(/NPC importiert|Import OK/) })
+            ]));
+            expect(seite.ctx.localStorage.setItem).toHaveBeenCalledWith(STANDARD_KEY, expect.any(String));
+            expect(seite.ctx.idbWriteTx).toHaveBeenCalledTimes(1);
+            expect([...seite.alerts, ...seite.toasts.map(t => t.text)].join(' ')).toMatch(/Strg\+S.*Strg\+Z/);
+            expect(gespeichert(seite).npcs.map(n => n.name)).toEqual(['Alt']);
+            expect(seite.ctx.D.npcs.map(n => n.name)).toEqual(['Neu']);
+        } finally {
+            seite.ctx.localStorage.setItem = setItem;
+            seite.ctx.idbWriteTx = idbWrite;
+            aufraeumen();
+        }
+        seite.ctx.undo();
+        expect(seite.ctx.D.npcs.map(n => n.name)).toEqual(['Alt']);
     });
 
     test('C14 (Schutz): jeder gemeinsame Schluessel von IO_DATA_PATH und ID_COUNTER_PATHS zeigt auf denselben Pfad', () => {

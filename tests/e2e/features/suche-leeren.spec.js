@@ -120,10 +120,9 @@
  * "rat" ("r" wuerfelt, "t" startet den Timer). Die Sonde des ersten Berichts
  * tippte "zwe" — drei freie Tasten — und sah darum den Schaden nicht.
  *
- * WAS DIESE DATEI NICHT VERLANGT (Vertrag "NICHT IM PR", Offen): dass das ✕
- * bei leerem Feld kein unsichtbarer Tab-Stopp ist; die Sichtbarkeit des ✕ bei
- * leerem, fokussiertem Feld (core.css); dass `searchWikiTag()` das ✕
- * nachzieht; die Neuzeichnung beim Klick ins Feld (BESTIAR-KLICK Offen (3)).
+ * Die P3-Regressionstests prüfen zusätzlich die Tab-Reihenfolge bei leerem
+ * Feld und das ✕ nach `searchWikiTag()`. Die Neuzeichnung beim Klick ins
+ * Feld und die Sichtbarkeit bei leerem, fokussiertem Feld bleiben unverändert.
  * Der Mausklick auf einen Treffer im Wiki-Aufklapp laesst "gob" stehen — das
  * ist stimmig (Feld, Baum und ✕ zeigen "gob") und hier kein Fall.
  *
@@ -666,8 +665,9 @@ function fehlerFangen(page) {
  * versteckt).
  * @param {import('@playwright/test').Page} page
  * @param {string} [url]
+ * @param {ReturnType<typeof saat>} [kampagne]
  */
-async function laden(page, url = DEV) {
+async function laden(page, url = DEV, kampagne = saat()) {
     const fehler = fehlerFangen(page);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -679,7 +679,7 @@ async function laden(page, url = DEV) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        [SPEICHER, saat()]
+        [SPEICHER, kampagne]
     );
     await page.goto(url);
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', null, {
@@ -1222,6 +1222,32 @@ test.describe('(W4p) prod-Buendel, Maus, 1440x900: Fokus nach ✕', () => {
 test.describe('Wiki-Suchfeld', () => {
     test.use({ viewport: BREIT });
 
+    test('(P3) Wiki-Tag-Klick zeigt das ✕ außerhalb des Suchfelds', async ({ page }) => {
+        const kampagne = saat();
+        kampagne.wiki[0].tags = ['Prüfmarke'];
+        await laden(page, DEV, kampagne);
+        await zurAnsicht(page, await ansichtVon(page, WIKI_FELD));
+        await insFeld(page, WIKI_FELD, false);
+        await tippen(page, 'gob');
+        await page.keyboard.press('ArrowDown');
+        await page.keyboard.press('Enter');
+        await page.locator('#wiki-detail [data-action="search-wiki-tag"]').click();
+        await mausWeg(page);
+
+        const feld = page.locator('#wiki-search');
+        const kreuz = page.locator('[data-action="clear-search"][data-value="wiki-search"]');
+        await expect(feld).toHaveValue('Prüfmarke');
+        await expect
+            .poll(() => kreuz.evaluate(el => el.checkVisibility({ opacityProperty: true })))
+            .toBe(true);
+        await feld.focus();
+        await page.keyboard.press('Tab');
+        await expect(kreuz).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(feld).toBeFocused();
+        await expect(feld).toHaveValue('');
+    });
+
     test('(W5) ✕ schliesst den Aufklapp und zeichnet den Baum wie leer getippt', async ({
         page
     }) => {
@@ -1299,6 +1325,38 @@ test.describe('Wiki-Suchfeld', () => {
     });
 });
 
+test('(P3) Tab überspringt das ✕ bei anfänglich leerer und bei gelöschter Suche', async ({
+    page
+}) => {
+    const feldId = 'party-search';
+    await laden(page);
+    await zurAnsicht(page, await ansichtVon(page, feldId));
+    await insFeld(page, feldId, false);
+    await mausWeg(page);
+    const feld = page.locator('#party-search');
+    const kreuz = page.locator('[data-action="clear-search"][data-value="party-search"]');
+    await expect(feld).toHaveValue('');
+    await page.keyboard.press('Tab');
+    weich(await kreuz.evaluate(el => document.activeElement === el)).toBe(false);
+
+    await insFeld(page, feldId, false);
+    await tippen(page, 'gob');
+    await page.keyboard.press('Tab');
+    await expect(kreuz).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(feld).toBeFocused();
+    await expect(feld).toHaveValue('');
+    await page.keyboard.press('Tab');
+    weich(await kreuz.evaluate(el => document.activeElement === el)).toBe(false);
+
+    await insFeld(page, feldId, false);
+    await tippen(page, 'g');
+    await page.keyboard.press('Backspace');
+    await expect(feld).toHaveValue('');
+    await page.keyboard.press('Tab');
+    weich(await kreuz.evaluate(el => document.activeElement === el)).toBe(false);
+});
+
 // ───────────────────────────────────────────────────────────────────────────
 // R4 statisch — jedes ✕ im Buendel laesst sich aufloesen (Ratsche)
 // ───────────────────────────────────────────────────────────────────────────
@@ -1334,6 +1392,9 @@ test.describe('(W6) Struktur', () => {
                     maengel.push('kein Element mit dieser ID');
                 } else {
                     const input = /** @type {HTMLInputElement} */ (el);
+                    if (!input.value && /** @type {HTMLElement} */ (k).tabIndex !== -1) {
+                        maengel.push('das ✕ ist bei leerer Suche ein Tab-Stopp');
+                    }
                     if (el.tagName !== 'INPUT') {
                         maengel.push('kein INPUT, sondern ' + el.tagName);
                     } else if (

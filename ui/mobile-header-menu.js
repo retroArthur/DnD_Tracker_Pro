@@ -122,15 +122,29 @@ function isMobileHeaderMenuOpen() {
 }
 
 /**
- * Baut die Eintraege aus der Kopfzeile. Leert das Menue zuvor — der Aufbau
- * ist der Normalfall und laeuft bei jedem Oeffnen.
+ * Baut die Eintraege aus der Kopfzeile. Beim Öffnen wird die Liste neu aufgebaut.
+ * @param {boolean} nurInstallation Aktualisiert nur den optionalen PWA-Eintrag.
  * @returns {number} Zahl der gebauten Eintraege
  */
-function buildMobileHeaderMenu() {
+function buildMobileHeaderMenu(nurInstallation = false) {
     const menu = mobileHeaderMenuPanel();
     if (!menu) return 0;
-    const quellen = Array.from(document.querySelectorAll(MKOPF_QUELLE));
-    menu.textContent = '';
+    const installKnopf = document.getElementById('pwa-install-btn');
+    const kannInstallieren = installKnopf && installKnopf.style.display !== 'none';
+    const quellen = nurInstallation ? [] : Array.from(document.querySelectorAll(MKOPF_QUELLE));
+    if (nurInstallation) {
+        const installEintrag = menu.querySelector('[data-action="install-pwa"]');
+        if (installEintrag) {
+            if (!kannInstallieren) {
+                if (document.activeElement === installEintrag) mobileHeaderMenuButton()?.focus();
+                installEintrag.remove();
+            }
+            return 0;
+        }
+    } else {
+        menu.textContent = '';
+    }
+    if (kannInstallieren) quellen.push(installKnopf);
     for (const quelle of quellen) {
         const eintrag = document.createElement('button');
         eintrag.type = 'button';
@@ -143,7 +157,7 @@ function buildMobileHeaderMenu() {
         const symbol = document.createElement('span');
         symbol.className = 'mobile-header-menu-icon';
         symbol.setAttribute('aria-hidden', 'true');
-        symbol.textContent = (quelle.textContent || '').trim();
+        symbol.textContent = quelle === installKnopf ? '↓' : (quelle.textContent || '').trim();
 
         const wort = document.createElement('span');
         wort.className = 'mobile-header-menu-label';
@@ -251,9 +265,19 @@ function toggleMobileHeaderMenu() {
 }
 
 /**
- * Haengt die zwei Lauscher ein, die das Menue von aussen schliessen.
+ * Schließt das Menü bei Bedarf und hält den Installationsbefehl aktuell.
  */
 function initMobileHeaderMenu() {
+    const installKnopf = document.getElementById('pwa-install-btn');
+    if (installKnopf) {
+        // Der Browser kann einen Prompt auch bei geöffnetem Menü anbieten oder verbrauchen.
+        new MutationObserver(() => {
+            if (!isMobileHeaderMenuOpen()) return;
+            buildMobileHeaderMenu(true);
+            window.KeyboardGroup?.aktualisieren();
+        }).observe(installKnopf, { attributeFilter: ['style'] });
+    }
+
     // (1) EIN KLICK DANEBEN. `mousedown` und nicht `click`, aus demselben
     //     gemessenen Grund wie in `ui/editors/rich-text-toolbars.js`: der
     //     Verteiler laeuft auf `click`, und ein `click`-Lauscher hier haette

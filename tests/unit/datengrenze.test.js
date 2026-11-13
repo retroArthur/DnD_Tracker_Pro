@@ -542,7 +542,7 @@ const FELDER_BEKANNT = [
     ['npcs[0].links[0].id', '1', 1], // Verknuepfungen: data-id
     ['locations[0].links[0].id', '2', 2],
     ['factions[0].links[0].id', '3', 3],
-    ['npcs[0].locationId', '13', 13], // Telefon-Suche: data-loc
+    ['npcs[0].locationId', '13', 13], // Ortszuordnung eines NPCs
     ['npcs[0].factionId', '4', 4], // npc-crud: parseInt
     ['quests[0].rewardItems[0].id', '7', 7], // quests-crud: parseInt
     ['factions[0].sitzOrtId', '13', 13],

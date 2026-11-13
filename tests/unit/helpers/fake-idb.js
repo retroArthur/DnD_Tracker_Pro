@@ -280,7 +280,22 @@ function erzeugeFakeIDB(opt = {}) {
                     );
                 },
                 add(wert) {
-                    return store.put(wert);
+                    const v = klon(wert);
+                    if (v.id === undefined) v.id = autoInc++;
+                    return neuerRequest(
+                        () => {
+                            if (sicht(name).has(v.id)) {
+                                throw Object.assign(new Error('IndexedDB-Schluessel bereits vorhanden'), {
+                                    name: 'ConstraintError'
+                                });
+                            }
+                            vorgemerkt.push({ store: name, op: 'put', key: v.id, value: v });
+                            return v.id;
+                        },
+                        'add',
+                        name,
+                        v
+                    );
                 },
                 get(key) {
                     return neuerRequest(() => klon(sicht(name).get(key)), 'get', name, key);

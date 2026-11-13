@@ -848,24 +848,30 @@ function namenInD(page, sammlung) {
 }
 
 /** Haengt den lesenden Haken an `window.pushCombatLog`: zu jeder Meldung
- *  steht danach fest, was in DEM Moment in D stand. showToast() ruft das
+ *  steht danach fest, was in DEM Moment in D und localStorage stand. showToast() ruft das
  *  Protokoll ueber `window.` (utils/utilities.js), der Haken sieht also jede
  *  Meldung. Er aendert nichts — er reicht den Aufruf unveraendert durch.
  *  @param {import('@playwright/test').Page} page */
 function standBeiMeldungMitschreiben(page) {
     return page.evaluate(() => {
         if (window.__standBeiMeldung) return;
-        /** @type {{text: string, typ: string, characters: string[], locations: string[]}[]} */
+        /** @type {{text: string, typ: string, characters: string[], locations: string[], gespeichert: {characters: string[], locations: string[]}}[]} */
         const mitschrift = [];
         window.__standBeiMeldung = mitschrift;
         const roh = window.pushCombatLog;
         window.pushCombatLog = function (text, typ, kategorie) {
             try {
+                const key = window.getActiveCampaignKey();
+                const gespeichert = JSON.parse((key && localStorage.getItem(key)) || '{}');
                 mitschrift.push({
                     text: String(text),
                     typ: String(typ),
                     characters: (window.D.characters || []).map(e => e.name),
-                    locations: (window.D.locations || []).map(e => e.name)
+                    locations: (window.D.locations || []).map(e => e.name),
+                    gespeichert: {
+                        characters: (gespeichert.characters || []).map(e => e.name),
+                        locations: (gespeichert.locations || []).map(e => e.name)
+                    }
                 });
             } catch {
                 // Lesen darf den Aufruf nie verhindern.
@@ -874,7 +880,7 @@ function standBeiMeldungMitschreiben(page) {
         };
     });
 }
-/** Was beim ersten Erfolg mit "importiert" in D stand — oder null.
+/** Was beim ersten Erfolg mit "importiert" in D und localStorage stand — oder null.
  *  @param {import('@playwright/test').Page} page */
 function standBeimImportErfolg(page) {
     return page.evaluate(
@@ -1229,7 +1235,7 @@ for (const fall of ABBRUCH_IM_FENSTER) {
 // Charakter ersetzt, zwei Orte hinzugefuegt. Die Typnamen sind die der App
 // ("Charakter aktualisiert", Reiter "🏠 Orte"). "Erst nach dem Schreiben"
 // heisst: vor dem Fenster keine Erfolgsmeldung, und als die Meldung kommt,
-// steht der Import schon in D (der Haken haelt den Stand fest).
+// steht der Import in D und im persistenten Speicher (der Haken liest beide).
 test('(8) R2: die Erfolgsmeldung kommt erst nach dem Schreiben, mit deutschem Typnamen und richtigem Numerus', async ({
     page
 }) => {
@@ -1290,6 +1296,10 @@ test('(8) R2: die Erfolgsmeldung kommt erst nach dem Schreiben, mit deutschem Ty
         weich(
             beiMeldung?.[runde.spalte] ?? null,
             `${runde.typ}: was in D stand, als die Erfolgsmeldung kam`
+        ).toEqual([...runde.danach]);
+        weich(
+            beiMeldung?.gespeichert[runde.spalte] ?? null,
+            `${runde.typ}: was gespeichert war, als die Erfolgsmeldung kam`
         ).toEqual([...runde.danach]);
         // Die naechste Runde liest wieder nur IHREN Erfolg.
         await page.evaluate(() => window.__standBeiMeldung?.splice(0));

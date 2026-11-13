@@ -313,9 +313,9 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # ist diesmal mitgepflegt (141 -> 142) — genau die Pflicht, die der
         # Absatz darueber einklagt.
         # E-2, Einheit 2 (TASV): 'ui/keyboard-group-views.js' neu registriert
-        # (die Anmeldung der Ansichtsgruppen — 23 Ansichtsgruppen: 21 fuer die
-        # Vorbereitungsansichten, dazu die Party-Zauberplaetze und das
-        # Punkte-Menue des Mobil-Kopfs (MKOPF, nachgetragen am 2026-10-15).
+        # (die Anmeldung der Ansichtsgruppen — 24 Ansichtsgruppen: 21 fuer die
+        # Vorbereitungsansichten, dazu die Party-Zauberplaetze, das
+        # Punkte-Menue des Mobil-Kopfs und die Sterne der NPC-Merkliste).
         # Die Zahl stand
         # hier auf 18 und blieb stehen, als Runde 3 vier Arten nachtrug
         # (Zauberkarten, Wiki-Eintraege, Ladenartikel, Ladenkategorien).
@@ -340,7 +340,8 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # Ersatz-Renderer hatte seit dem ersten Commit keinen Aufrufer; nichts
         # darin wurde ausserhalb der Datei benutzt. eslint.generated-globals.js
         # ist neu erzeugt.
-        assert len(modules) == 143, f"Erwartet 143 Module, gefunden {len(modules)}"
+        # Truhen und Inspiration registrieren vier weitere Module (143 -> 147).
+        assert len(modules) == 147, f"Erwartet 147 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

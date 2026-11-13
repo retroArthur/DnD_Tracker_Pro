@@ -165,11 +165,12 @@ async function load(options = {}) {
         const lsRaw = s;
         if (s) source = 'localStorage';
         const lsTimestamp = StorageAPI.get(key + '_ts', null);
+        let idbRecord;
         // (D-01/D-07) Stale-Shadow-Detection: LS vorhanden, aber ohne _ts
         // → prüfe ob IDB neuere Daten hat
         if (s && !lsTimestamp) {
             try {
-                const idbRecord = await window.loadFromIndexedDBFallbackRaw(key);
+                idbRecord = await window.loadFromIndexedDBFallbackRaw(key);
                 if (idbRecord && idbRecord.data && idbRecord.data !== s) {
                     // IDB hat andere (neuere) Daten — Konflikt auflösen
                     resolveStorageConflict(
@@ -210,7 +211,9 @@ async function load(options = {}) {
         if (!s) {
             try {
                 const loadFromIndexedDBFallback = window.loadFromIndexedDBFallback;
-                s = await loadFromIndexedDBFallback(key);
+                s = await loadFromIndexedDBFallback(key, record => {
+                    idbRecord = record;
+                });
                 if (s) {
                     source = 'indexedDB';
                     if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
@@ -234,6 +237,7 @@ async function load(options = {}) {
                         error: e
                     };
                 }
+                idbRecord = null;
                 if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
                     // Erwarteter Pfad bei frischem Boot (keine IDB-Daten) — kein roter Fehler
                     log('[LOAD] Keine Daten in IndexedDB:', e.message);
@@ -245,7 +249,7 @@ async function load(options = {}) {
             // Neuladen (strictIdb) bleibt die bisherige — ein anderer Tab hat die Kampagne
             // entfernt; automatische Saves schreiben den verdraengten Stand nicht zurueck.
             if (!opts.strictIdb && typeof window.setPersistBaseline === 'function') {
-                window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
+                window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp);
             }
             return { ok: false, applied: false, source: null, reason: 'not-found' };
         }
@@ -293,7 +297,7 @@ async function load(options = {}) {
         // Parse-Fehler, ungueltige Struktur, aufgegeben) und der catch setzen keine — ein Tab,
         // der nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
         if (typeof window.setPersistBaseline === 'function') {
-            window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
+            window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp);
         }
         if (degraded) {
             // R06-Nachtrag (F3, holistisch "write-paths" major): der localStorage-Schatten

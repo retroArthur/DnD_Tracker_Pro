@@ -58,6 +58,79 @@ test.describe('WELT-02: NPC-Generator', () => {
         expect(pool).toContain(name);
     });
 
+    test('der Generator bietet alle Völker des NPC-Formulars an', async ({ page }) => {
+        await page.goto(APP_URL);
+        await page.evaluate(() => window.switchView('npcs'));
+        await page.locator('[data-action="show-npc-generator"]').click();
+
+        const formularVoelker = await page
+            .locator('#npc-race option[value]:not([value=""])')
+            .evaluateAll(optionen => optionen.map(option => option.value).sort());
+        const generatorVoelker = await page
+            .locator('#npcg-volk-select option')
+            .evaluateAll(optionen =>
+                optionen.map(option => ({ key: option.value, label: option.textContent.trim() }))
+            );
+        expect(generatorVoelker.map(volk => volk.label).sort()).toEqual(formularVoelker);
+
+        const namenFehlen = await page.evaluate(
+            voelker =>
+                voelker.flatMap(({ key }) =>
+                    ['maennlich', 'weiblich', 'neutral']
+                        .filter(
+                            geschlecht => window.generiereNPCName(key, geschlecht) === 'Unbekannt'
+                        )
+                        .map(geschlecht => `${key}/${geschlecht}`)
+                ),
+            generatorVoelker
+        );
+        expect(namenFehlen).toEqual([]);
+    });
+
+    test('ein neutral benannter Drachenblütiger bleibt nach dem Neuladen bearbeitbar', async ({
+        page
+    }) => {
+        await page.goto(APP_URL);
+        await page.evaluate(() => window.switchView('npcs'));
+        await page.locator('[data-action="show-npc-generator"]').click();
+
+        const generator = page.locator('#npc-generator-modal');
+        await expect(
+            generator.locator('#npcg-volk-select option[value="drachenbluetiger"]')
+        ).toHaveCount(1);
+        await generator.locator('#npcg-volk-select').selectOption('drachenbluetiger');
+        await generator.locator('#npcg-geschlecht-select').selectOption('neutral');
+        await generator.locator('[data-action="reroll-npc"]').click();
+
+        await expect(generator.locator('.npcg-volk')).toHaveText('Drachenblütiger');
+        await expect(generator.locator('.npcg-geschlecht')).toHaveText('Neutral');
+        const name = await generator.locator('.npcg-preview-name').innerText();
+        const beruf = await generator.locator('.npcg-beruf').innerText();
+        const marotte = await generator.locator('.npcg-marotte').innerText();
+        expect(name).not.toBe('Unbekannt');
+        expect(name.trim()).not.toBe('');
+
+        await generator.locator('[data-action="save-generated-npc"]').click();
+        await expect(generator).toHaveCount(0);
+        await expect
+            .poll(() =>
+                page.evaluate(npcName => {
+                    const campaign = JSON.parse(localStorage.getItem('dnd-tracker-v4') || '{}');
+                    return campaign.npcs?.find(npc => npc.name === npcName)?.race;
+                }, name)
+            )
+            .toBe('Drachenblütiger');
+
+        await page.reload();
+        await page.evaluate(() => window.switchView('npcs'));
+        await page.locator('#npc-list .npc-item').filter({ hasText: name }).click();
+        await page.locator('#npc-detail-panel [data-action="edit-npc"]').click();
+        await expect(page.locator('#npc-modal #npc-race')).toHaveValue('Drachenblütiger');
+        await expect(page.locator('#npc-modal #npc-name')).toHaveValue(name);
+        await expect(page.locator('#npc-modal #npc-role')).toHaveValue(beruf);
+        await expect(page.locator('#npc-modal #npc-desc')).toContainText(marotte);
+    });
+
     test('3× Re-Roll erzeugt keinen Eintrag in D.npcs', async ({ page }) => {
         await page.goto(APP_URL);
         await page.evaluate(() => window.switchView('npcs'));

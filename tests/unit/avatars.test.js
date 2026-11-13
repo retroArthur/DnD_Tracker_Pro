@@ -1,8 +1,7 @@
 /**
  * Avatars Tests — WR-01 (Phase 12, Review-Fix)
  *
- * Testet validateAvatarURL() aus systems/avatars.js. Bisher gab es fuer diese
- * Datei ueberhaupt keine Unit-Tests (neue Datei, T-12-REVIEWFIX).
+ * Testet die URL-Pruefung und Vorschau aus systems/avatars.js.
  *
  * Fokus: der Steuerzeichen-Bypass des reinen trim()+startsWith()-Praefixfilters.
  * Browser entfernen Tab-, Zeilenumbruch- und Carriage-Return-Zeichen (und laut
@@ -12,9 +11,8 @@
  * interpretiert worden.
  *
  * Muster: vm.createContext() analog tests/unit/migration-wizard.test.js
- * (non-ESM-Module in isoliertem vm-Kontext laden). validateAvatarURL() selbst
- * greift auf keine Globals zu (keine $()-, window.*- oder document-Aufrufe),
- * daher genuegt ein minimaler Kontext.
+ * (non-ESM-Module in isoliertem vm-Kontext laden). Die Vorschau verwendet
+ * das jsdom-Dokument, um die Reihenfolge der Bildereignisse gezielt zu testen.
  *
  * AVATAR-DATEI (Nutzerentscheidung 03.11. zu SENKEN Offen (15), docs/bugfixes.md: "Erlauben"):
  * der Bild-Dialog nimmt lokale Bilder wie file:///C:/Bilder/held.png an, Netzwerkpfade bleiben
@@ -39,6 +37,7 @@ const { ladeDatengrenze } = require('./helpers/datengrenze-block.js');
 
 let validateAvatarURL;
 let sichereBildquelle;
+let previewAvatar;
 
 beforeAll(() => {
     // vm.createContext() erbt KEINE Host-Globals. Bis AVATAR-DATEI rief validateAvatarURL()
@@ -46,12 +45,43 @@ beforeAll(() => {
     // das try/catch der Funktion schluckte, und absolute http(s)-URLs liefen faelschlich ueber
     // den Relativpfad-Zweig. Seither entscheidet sichereBildquelle() allein, ohne `new URL()`;
     // die Klasse bleibt im Kontext, damit ein kuenftiger Aufruf nicht wieder still so scheitert.
-    const context = { window: {}, URL };
+    const context = { window: {}, URL, document, $: id => document.getElementById(id) };
     vm.createContext(context);
     ladeDatengrenze(context);
     vm.runInContext(fs.readFileSync(AVATARS_PATH, 'utf8'), context);
     validateAvatarURL = context.validateAvatarURL;
     sichereBildquelle = context.sichereBildquelle;
+    previewAvatar = context.previewAvatar;
+});
+
+describe('previewAvatar — Bildladefehler', () => {
+    beforeEach(() => {
+        document.body.innerHTML = '<input id="avatar-url"><div id="avatar-preview"></div>';
+    });
+
+    function bildAnfordern(url) {
+        const feld = /** @type {HTMLInputElement} */ (document.getElementById('avatar-url'));
+        feld.value = url;
+        previewAvatar();
+        return document.querySelector('#avatar-preview img');
+    }
+
+    test('verspäteter Fehler des alten Bilds lässt das neue Bild stehen', () => {
+        const altesBild = bildAnfordern('./alt.png');
+        const neuesBild = bildAnfordern('./neu.png');
+        neuesBild.dispatchEvent(new Event('load'));
+        altesBild.dispatchEvent(new Event('error'));
+
+        expect(document.querySelector('#avatar-preview img')).toBe(neuesBild);
+        expect(neuesBild.getAttribute('src')).toBe('./neu.png');
+    });
+
+    test('Fehler des aktuellen Bilds zeigt das Fehlerzeichen', () => {
+        const bild = bildAnfordern('./fehler.png');
+        bild.dispatchEvent(new Event('error'));
+
+        expect(document.getElementById('avatar-preview').textContent).toBe('❌');
+    });
 });
 
 describe('validateAvatarURL — Grundverhalten', () => {

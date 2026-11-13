@@ -168,6 +168,16 @@ const NPC_DEFAULT_TABLES = {
                 "Celeste",
                 "Dara",
                 "Elara"
+            ],
+            neutral:   [
+                "Aelven",
+                "Caerith",
+                "Elyr",
+                "Ithrien",
+                "Laevin",
+                "Nymriel",
+                "Sylthir",
+                "Vaeloren"
             ]
         },
         zwerg: {
@@ -224,6 +234,16 @@ const NPC_DEFAULT_TABLES = {
                 "Vistra",
                 "Vonira",
                 "Wulda"
+            ],
+            neutral:   [
+                "Ambrun",
+                "Brondil",
+                "Dorgast",
+                "Garneth",
+                "Keldrum",
+                "Morveth",
+                "Taldrek",
+                "Varnim"
             ]
         },
         halbling: {
@@ -280,6 +300,16 @@ const NPC_DEFAULT_TABLES = {
                 "Elanor",
                 "Goldberry",
                 "Lobelia"
+            ],
+            neutral:   [
+                "Auenklee",
+                "Birnblatt",
+                "Flinkfarn",
+                "Haselkorn",
+                "Kesselblüte",
+                "Mohnfink",
+                "Riedgras",
+                "Tautropf"
             ]
         },
         halbork: {
@@ -326,6 +356,16 @@ const NPC_DEFAULT_TABLES = {
                 "Gorva",
                 "Hinga",
                 "Larka"
+            ],
+            neutral:   [
+                "Brakka",
+                "Drav",
+                "Ghorin",
+                "Khar",
+                "Morga",
+                "Rusk",
+                "Tharok",
+                "Vargan"
             ]
         },
         tiefling: {
@@ -372,6 +412,16 @@ const NPC_DEFAULT_TABLES = {
                 "Callista",
                 "Delia",
                 "Estira"
+            ],
+            neutral:   [
+                "Aufbruch",
+                "Funkenmut",
+                "Gnade",
+                "Glut",
+                "Hoffnung",
+                "Klarheit",
+                "Nachhall",
+                "Wagnis"
             ]
         },
         gnom: {
@@ -418,6 +468,336 @@ const NPC_DEFAULT_TABLES = {
                 "Shamil",
                 "Tana",
                 "Waywocket"
+            ],
+            neutral:   [
+                "Brixel",
+                "Dimpel",
+                "Fimblek",
+                "Knirpsi",
+                "Moxlin",
+                "Nibrel",
+                "Pindit",
+                "Tixli"
+            ]
+        },
+        drow: {
+            maennlich: [
+                "Drelvyr",
+                "Ilveth",
+                "Kharzenn",
+                "Malzair",
+                "Nethryl",
+                "Rylzun",
+                "Sszorin",
+                "Velthar"
+            ],
+            weiblich:  [
+                "Alyzzra",
+                "Belvrae",
+                "Drisvyn",
+                "Kelzara",
+                "Lethyra",
+                "Myrzael",
+                "Thalyss",
+                "Veldrissa"
+            ],
+            neutral:   [
+                "Aelzryn",
+                "Draevel",
+                "Ithzair",
+                "Kelthyr",
+                "Lyzven",
+                "Nymzeth",
+                "Sornyl",
+                "Vraezil"
+            ]
+        },
+        halbelf: {
+            maennlich: [
+                "Alwinor",
+                "Berelar",
+                "Cadrin",
+                "Elarven",
+                "Ivenar",
+                "Joranel",
+                "Mariven",
+                "Thalrik"
+            ],
+            weiblich:  [
+                "Alineth",
+                "Celandria",
+                "Elswyn",
+                "Ilenora",
+                "Kaelinde",
+                "Maralyn",
+                "Noriel",
+                "Terenya"
+            ],
+            neutral:   [
+                "Avenil",
+                "Eliarn",
+                "Fenniel",
+                "Lioren",
+                "Marel",
+                "Nairen",
+                "Selwyn",
+                "Tiralen"
+            ]
+        },
+        drachenbluetiger: {
+            maennlich: [
+                "Aarvok",
+                "Bharvak",
+                "Dharrak",
+                "Kalthor",
+                "Medrazz",
+                "Orvash",
+                "Rhashkar",
+                "Vethrak"
+            ],
+            weiblich:  [
+                "Arrisha",
+                "Dharessa",
+                "Irzatha",
+                "Kharvessa",
+                "Myrazha",
+                "Ralshira",
+                "Sarvekka",
+                "Vezhara"
+            ],
+            neutral:   [
+                "Ashvyr",
+                "Drethak",
+                "Izzar",
+                "Korveth",
+                "Qashir",
+                "Rhaaz",
+                "Tazren",
+                "Vyrash"
+            ]
+        },
+        goblin: {
+            maennlich: [
+                "Bregg",
+                "Gribs",
+                "Knorx",
+                "Murgit",
+                "Prakk",
+                "Skorbel",
+                "Trumms",
+                "Zirrk"
+            ],
+            weiblich:  [
+                "Brikka",
+                "Fizzla",
+                "Knerga",
+                "Murgela",
+                "Prazzi",
+                "Rikkla",
+                "Trubza",
+                "Ziska"
+            ],
+            neutral:   [
+                "Blinz",
+                "Drelk",
+                "Fitz",
+                "Glimm",
+                "Klips",
+                "Pritsch",
+                "Skratz",
+                "Zwick"
+            ]
+        },
+        kobold: {
+            maennlich: [
+                "Brizk",
+                "Drikk",
+                "Ikzun",
+                "Kazzik",
+                "Mitzrak",
+                "Rizzik",
+                "Skrivik",
+                "Tikzark"
+            ],
+            weiblich:  [
+                "Azrikka",
+                "Ezzili",
+                "Kriissa",
+                "Mikrazi",
+                "Nizirka",
+                "Sazzila",
+                "Tizziri",
+                "Vrixa"
+            ],
+            neutral:   [
+                "Chirk",
+                "Ezzik",
+                "Izri",
+                "Krakz",
+                "Rits",
+                "Skizz",
+                "Tzik",
+                "Vrik"
+            ]
+        },
+        ork: {
+            maennlich: [
+                "Bragosh",
+                "Droggar",
+                "Gharrok",
+                "Korgath",
+                "Mogrul",
+                "Raghun",
+                "Thorgak",
+                "Urgrim"
+            ],
+            weiblich:  [
+                "Ashgura",
+                "Drozha",
+                "Grushka",
+                "Karzhna",
+                "Morgatha",
+                "Ruzgana",
+                "Tharga",
+                "Urzhal"
+            ],
+            neutral:   [
+                "Drak",
+                "Ghur",
+                "Kharz",
+                "Mok",
+                "Rhogg",
+                "Thruk",
+                "Uzg",
+                "Vrak"
+            ]
+        },
+        tabaxi: {
+            maennlich: [
+                "Schatten unterm Steg",
+                "Regen auf Zinn",
+                "Funke im Schilf",
+                "Schritt im Schnee",
+                "Fuchs vorm Tor",
+                "Splitter im Wind",
+                "Kupfermond",
+                "Tanz auf Dächern"
+            ],
+            weiblich:  [
+                "Blüte nach Frost",
+                "Glut in der Dämmerung",
+                "Lied der Dachrinne",
+                "Pfote im Mondlicht",
+                "Perle im Sand",
+                "Feder im Aufwind",
+                "Klinge aus Nebel",
+                "Tinte im Wasser"
+            ],
+            neutral:   [
+                "Wind durchs Korn",
+                "Atem vor dem Sprung",
+                "Echo im Gewölbe",
+                "Glanz auf Schiefer",
+                "Funkeln zwischen Wellen",
+                "Rascheln im Farn",
+                "Salz in der Luft",
+                "Wolke über Türmen"
+            ]
+        },
+        kenku: {
+            maennlich: [
+                "Fassklang",
+                "Flügelschlag",
+                "Hofpfiff",
+                "Kettenklirr",
+                "Riegelklick",
+                "Seilknarren",
+                "Trommelschlag",
+                "Wagenrumpeln"
+            ],
+            weiblich:  [
+                "Dachtröpfeln",
+                "Glockenspiel",
+                "Kielkratzen",
+                "Kreidestrich",
+                "Muschelruf",
+                "Samtrascheln",
+                "Trillertropfen",
+                "Windpfeife"
+            ],
+            neutral:   [
+                "Bogenknacks",
+                "Brunnenecho",
+                "Donnerhall",
+                "Kiesknirschen",
+                "Münzklang",
+                "Ofenknacken",
+                "Schlüsselschnapp",
+                "Tassenklack"
+            ]
+        },
+        goliath: {
+            maennlich: [
+                "Akravan",
+                "Dhornak",
+                "Golavar",
+                "Kadrom",
+                "Malgoran",
+                "Orukan",
+                "Thavor",
+                "Vordek"
+            ],
+            weiblich:  [
+                "Alraka",
+                "Dhorvani",
+                "Galara",
+                "Harvoka",
+                "Kelvanna",
+                "Morakha",
+                "Tavora",
+                "Varkana"
+            ],
+            neutral:   [
+                "Felsgruß",
+                "Firn",
+                "Gratwacht",
+                "Lawinenruh",
+                "Schneelicht",
+                "Steinatem",
+                "Sturmspur",
+                "Wolkenbruch"
+            ]
+        },
+        aasimar: {
+            maennlich: [
+                "Aelvarin",
+                "Caelior",
+                "Elathen",
+                "Heliandor",
+                "Maerion",
+                "Orelian",
+                "Solvian",
+                "Valeriel"
+            ],
+            weiblich:  [
+                "Altheira",
+                "Aurielis",
+                "Caelina",
+                "Elaris",
+                "Helivara",
+                "Liorana",
+                "Orelisse",
+                "Solmira"
+            ],
+            neutral:   [
+                "Dämmerglanz",
+                "Fernlicht",
+                "Himmelsruh",
+                "Lichtfaden",
+                "Morgenstern",
+                "Nachtgold",
+                "Sonnensegel",
+                "Sternensaum"
             ]
         }
     },
@@ -451,7 +831,19 @@ const NPC_DEFAULT_TABLES = {
         "Redet schnell, wenn er/sie nervös ist, und langsam, wenn er/sie lügt.",
         "Traut seiner/ihrer Intuition mehr als Fakten.",
         "Macht Situationen mit schwarzem Humor erträglicher.",
-        "Besteht darauf, immer den Plan A zu kennen — und B und C."
+        "Besteht darauf, immer den Plan A zu kennen — und B und C.",
+        "Hilft Fremden sofort und bittet sie später um einen kleinen Gefallen.",
+        "Kann eine Bitte kaum ablehnen, wenn sie offen ausgesprochen wird.",
+        "Fragt bei einem Streit zuerst nach den stillen Beteiligten.",
+        "Erzählt schlechte Nachrichten mit großer Sachlichkeit.",
+        "Hält jedes gegebene Wort, auch wenn es inzwischen teuer geworden ist.",
+        "Will jeden Raum gemeinsam verlassen und achtet darauf, wer zurückbleibt.",
+        "Versucht, sich bei jeder Begegnung etwas beibringen zu lassen.",
+        "Bietet eine ehrliche Antwort an, wenn das Gegenüber zuerst ehrlich ist.",
+        "Behandelt Dienstboten mit derselben Förmlichkeit wie Adlige.",
+        "Verhandelt hart, schenkt aber großzügig, sobald der Handel abgeschlossen ist.",
+        "Lenkt mit Nachfragen ab, sobald die eigene Vergangenheit zur Sprache kommt.",
+        "Gibt Fehler bereitwillig zu und möchte sie sofort wiedergutmachen."
     ],
     marotten: [
         "Klopft dreimal auf Holz, bevor er/sie ein Gebäude betritt.",
@@ -483,7 +875,19 @@ const NPC_DEFAULT_TABLES = {
         "Untersucht jeden Boden auf Unebenheiten.",
         "Malt mit dem Finger Kreise auf jede flache Fläche.",
         "Spuckt dreimal aus, bevor er/sie ein schlechtes Omen erwähnt.",
-        "Kratzt heimlich Marken in Holz, um seinen/ihren Weg zu markieren."
+        "Kratzt heimlich Marken in Holz, um seinen/ihren Weg zu markieren.",
+        "Bindet beim Zuhören kleine Knoten in eine Schnur.",
+        "Richtet Gegenstände an der Tischkante aus, bevor ein Gespräch beginnt.",
+        "Nennt unbekannte Leute nach dem ersten Geräusch, das sie machen.",
+        "Notiert neue Redewendungen auf der Rückseite alter Quittungen.",
+        "Legt bei jedem Angebot wortlos einen Kiesel auf den Tisch.",
+        "Sucht beim Betreten eines Raums zuerst nach der Lichtquelle.",
+        "Schreibt bei schwierigen Fragen erst ein Stichwort in die Luft.",
+        "Bittet um die Geschichte hinter jedem getragenen Schmuckstück.",
+        "Sammelt beim Gehen Fäden vom eigenen Mantel und wickelt sie zu einer Kugel.",
+        "Dreht vor jeder ernsten Antwort den Bechergriff vom Gegenüber weg.",
+        "Schüttelt bei der Begrüßung das eigene Handgelenk, bis die Ärmel zurückrutschen.",
+        "Gibt jedem neuen Gerücht einen eigenen Titel."
     ],
     berufe: [
         "Schmied",
@@ -530,7 +934,19 @@ const NPC_DEFAULT_TABLES = {
         "Spion / Spionin",
         "Gauner / Gaunerin",
         "Barde / Bardin",
-        "Glücksritter / -ritterin"
+        "Glücksritter / -ritterin",
+        "Leuchtturmwache",
+        "Kartenzeichner / Kartenzeichnerin",
+        "Zollschreiber / Zollschreiberin",
+        "Brückenbauer / Brückenbauerin",
+        "Glockengießer / Glockengießerin",
+        "Pilzsammler / Pilzsammlerin",
+        "Runenrestaurator / Runenrestauratorin",
+        "Botenreiter / Botenreiterin",
+        "Grabungsaufsicht",
+        "Schleusenwärter / Schleusenwärterin",
+        "Pilgerführer / Pilgerführerin",
+        "Siegelmacher / Siegelmacherin"
     ],
     aussehen: [
         "Narbe, die sich vom Kinn bis zur linken Wange zieht.",
@@ -562,7 +978,19 @@ const NPC_DEFAULT_TABLES = {
         "Breite Schultern und ein kurzer Hals.",
         "Hängt immer leicht zur Seite — alte Verletzung.",
         "Tätowierung eines Wolfskopfes auf dem rechten Unterarm.",
-        "Wirft einen merkwürdig ungleichmäßigen Schatten."
+        "Wirft einen merkwürdig ungleichmäßigen Schatten.",
+        "Trägt einen Mantel, dessen Saum mit kleinen Kupferringen beschwert ist.",
+        "Auf den Handschuhen sind winzige Sternkarten eingestickt.",
+        "Ein kurzer, fleckiger Schal ist mit einer Porzellanscherbe geschlossen.",
+        "Der Mantel ist mit Stoffstücken in drei verschiedenen Blautönen geflickt.",
+        "Ein Bündel Messingschlüssel hängt sichtbar am Gürtel.",
+        "Die Kleidung ist von feinem Glimmerstaub überzogen.",
+        "Die Stiefelspitzen sind mit silbrigem Draht umwickelt.",
+        "Am Kragen steckt eine gepresste rote Blüte.",
+        "Ein gelbes Halstuch trägt ein handgemaltes Wegzeichen.",
+        "Ein Bündel schmaler Papierstreifen lugt aus der Brusttasche.",
+        "Über der Schulter hängt ein geflochtener Gurt mit geschnitzten Holzperlen.",
+        "Ein gläsernes Monokel wirft bei Kerzenlicht bunte Punkte."
     ]
 };
 

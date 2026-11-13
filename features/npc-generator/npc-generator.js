@@ -133,12 +133,28 @@ var _npcgAktuell = null; // Vorschau-State (KEIN Eintrag in D.npcs)
 var NPCG_VOELKER = [
     ['mensch', 'Mensch'],
     ['elf', 'Elf'],
+    ['drow', 'Drow'],
     ['zwerg', 'Zwerg'],
     ['halbling', 'Halbling'],
+    ['gnom', 'Gnom'],
+    ['halbelf', 'Halbelf'],
     ['halbork', 'Halbork'],
     ['tiefling', 'Tiefling'],
-    ['gnom', 'Gnom']
+    ['drachenbluetiger', 'Drachenblütiger'],
+    ['goblin', 'Goblin'],
+    ['kobold', 'Kobold'],
+    ['ork', 'Ork'],
+    ['tabaxi', 'Tabaxi'],
+    ['kenku', 'Kenku'],
+    ['goliath', 'Goliath'],
+    ['aasimar', 'Aasimar']
 ];
+
+const NPCG_GESCHLECHTER = {
+    maennlich: 'Männlich',
+    weiblich: 'Weiblich',
+    neutral: 'Neutral'
+};
 
 /**
  * Anzeigename eines Generator-Volks ('zwerg' -> 'Zwerg'). Ein unbekannter
@@ -169,8 +185,8 @@ function _npcgRenderVorschau(npcData) {
         '<div class="npcg-preview-card">',
         '  <div class="npcg-preview-name">' + esc(npcData.name) + '</div>',
         '  <div class="npcg-preview-meta">',
-        '    <span class="npcg-meta-tag npcg-volk">' + esc(npcData.volk) + '</span>',
-        '    <span class="npcg-meta-tag npcg-geschlecht">' + esc(npcData.geschlecht) + '</span>',
+        '    <span class="npcg-meta-tag npcg-volk">' + esc(_npcgVolkName(npcData.volk)) + '</span>',
+        '    <span class="npcg-meta-tag npcg-geschlecht">' + esc(NPCG_GESCHLECHTER[npcData.geschlecht]) + '</span>',
         npcData.beruf ? '    <span class="npcg-meta-tag npcg-beruf">' + esc(npcData.beruf) + '</span>' : '',
         '  </div>',
         '  <div class="npcg-preview-section">',
@@ -204,11 +220,7 @@ function showNPCGeneratorModal() {
         return '<option value="' + pair[0] + '"' + (pair[0] === volk ? ' selected' : '') + '>' + pair[1] + '</option>';
     }).join('');
 
-    var geschlechtOptionen = [
-        ['maennlich', 'Männlich'],
-        ['weiblich', 'Weiblich'],
-        ['neutral', 'Neutral']
-    ].map(function(pair) {
+    var geschlechtOptionen = Object.entries(NPCG_GESCHLECHTER).map(function(pair) {
         return '<option value="' + pair[0] + '"' + (pair[0] === geschlecht ? ' selected' : '') + '>' + pair[1] + '</option>';
     }).join('');
 

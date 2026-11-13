@@ -103,8 +103,8 @@ const HEILTRANK = {
     attunement: false
 };
 
-/** @param {object[]} loot */
-function seed(loot) {
+/** @param {object[]} loot @param {object[]} lootChests */
+function seed(loot, lootChests) {
     return {
         _version: '99.0.0',
         settings: {
@@ -122,6 +122,7 @@ function seed(loot) {
         locations: [],
         quests: [],
         loot,
+        lootChests,
         spells: [],
         wiki: [],
         links: [],
@@ -186,8 +187,9 @@ function fehlerFangen(page) {
  * @param {import('@playwright/test').Page} page
  * @param {object[]} loot
  * @param {{width: number, height: number}} [kleiner] Erst NACH dem Laden verkleinern
+ * @param {object[]} [lootChests] Drop-Vorlagen für die Testkampagne
  */
-async function truheLaden(page, loot, kleiner) {
+async function truheLaden(page, loot, kleiner, lootChests = []) {
     await page.setViewportSize(BREIT);
     await page.addInitScript(
         ([schluessel, s]) => {
@@ -197,7 +199,7 @@ async function truheLaden(page, loot, kleiner) {
                 // file://-localStorage ist je Browserbau unterschiedlich streng.
             }
         },
-        [SPEICHER, seed(loot)]
+        [SPEICHER, seed(loot, lootChests)]
     );
     await page.goto(APP_URL);
     await waitForAppReady(page);
@@ -339,6 +341,62 @@ const LEER = {
 
 /** "+ Item" in der Werkzeugleiste der Truhe. */
 const PLUS = '#view-loot .section-toolbar-actions .btn-primary';
+
+test('die Tag-Filter zeigen ihre Kategorie und speichern auch ausgeblendete Tags', async ({
+    page
+}) => {
+    await truheLaden(page, []);
+    await page.locator(PLUS).click();
+    const modal = page.locator('#loot-modal');
+    const visible = modal.locator('#loot-tag-grid .loot-tag-chip:visible');
+    const filter = name => modal.getByRole('button', { name, exact: true });
+    await expect(visible).toHaveCount(19);
+
+    for (const [name, category, count] of [
+        ['Typ', 'type', 6],
+        ['Eigensch.', 'property', 5],
+        ['Magie', 'magic', 4],
+        ['Slot', 'slot', 4]
+    ]) {
+        if (category === 'magic') await filter(name).press('Enter');
+        else await filter(name).click();
+        await expect(visible).toHaveCount(count, { timeout: 3000 });
+        const categories = await visible.evaluateAll(chips =>
+            chips.map(chip => chip.dataset.category)
+        );
+        expect(categories).toEqual(Array(count).fill(category));
+        await expect(filter(name)).toHaveAttribute('aria-pressed', 'true');
+        await expect(modal.locator('.loot-tag-filter-btn[aria-pressed="true"]')).toHaveCount(1);
+        if (category === 'type') await visible.filter({ hasText: 'Waffe' }).click();
+        if (category === 'magic') await visible.filter({ hasText: 'Einstimmung' }).click();
+    }
+
+    await filter('Alle').click();
+    await expect(visible).toHaveCount(19);
+    await expect(modal.locator('input[value="weapon"]')).toBeChecked();
+    await expect(modal.locator('input[value="attunement"]')).toBeChecked();
+    await filter('Slot').click();
+    await expect(modal.locator('#loot-selected-tags')).toContainText('Waffe');
+    await expect(modal.locator('#loot-selected-tags')).toContainText('Einstimmung');
+    await modal.locator('#loot-name').fill('Prüfklinge');
+    await modal.locator('#loot-save-btn').click();
+    await expect(modal).toBeHidden();
+    await expect
+        .poll(() =>
+            page.evaluate(key => {
+                const data = JSON.parse(localStorage.getItem(key) || '{}');
+                return data.loot?.find(item => item.name === 'Prüfklinge')?.tags?.sort();
+            }, SPEICHER)
+        )
+        .toEqual(['attunement', 'weapon']);
+
+    await page.locator('#loot-detail-panel [data-action="edit-loot"]').click();
+    await filter('Magie').click();
+    await page.keyboard.press('Escape');
+    await page.locator(PLUS).click();
+    await expect(filter('Alle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(visible).toHaveCount(19);
+});
 
 /** Wartet, bis D, Liste und Speicher denselben erwarteten Stand zeigen.
  *  @param {import('@playwright/test').Page} page
@@ -528,6 +586,48 @@ test('(5) nach abgebrochenem Bearbeiten legt "+ Item" einen NEUEN Gegenstand an'
     weich(await fehler.alle(), 'Kein Schritt darf einen Fehler hinterlassen').toEqual([]);
 });
 
+test('Items lassen sich bei aktiver Kategorie und Suche in beide Seltenheitsrichtungen sortieren', async ({
+    page
+}) => {
+    const items = [
+        { id: 1, name: 'Amulett', category: 'misc', rarity: 'rare' },
+        { id: 2, name: 'Zepter', category: 'weapons', rarity: 'legendary', description: 'Fund' },
+        { id: 3, name: 'Dolch', category: 'weapons', rarity: 'rare' },
+        { id: 4, name: 'Beil', category: 'weapons', rarity: 'common', description: 'Fund' },
+        { id: 5, name: 'Fackel', category: 'misc' },
+        { id: 6, name: 'Kelch', category: 'misc', rarity: 'veryrare' },
+        { id: 7, name: 'Elixier', category: 'potions', rarity: 'uncommon' }
+    ];
+    await truheLaden(
+        page,
+        items.map(item => ({ ...item, quantity: 1 })),
+        { width: 360, height: 740 }
+    );
+
+    const rows = page.locator('#loot-list .loot-item');
+    const order = () => rows.evaluateAll(elements => elements.map(row => row.dataset.id));
+    const sort = page.getByRole('combobox', { name: 'Items sortieren' });
+    await expect(sort).toBeVisible({ timeout: 3000 });
+    await expect(sort).toHaveValue('name');
+    await expect.poll(order).toEqual(['1', '4', '3', '7', '5', '6', '2']);
+    await rows.filter({ hasText: 'Dolch' }).click();
+
+    await sort.selectOption('rarity-desc');
+    await expect.poll(order).toEqual(['2', '6', '1', '3', '7', '4', '5']);
+    await expect(page.locator('#loot-list .loot-item.selected')).toHaveAttribute('data-id', '3');
+    await sort.selectOption('rarity-asc');
+    await expect.poll(order).toEqual(['5', '4', '7', '1', '3', '6', '2']);
+
+    await page.locator('#loot-filters [data-value="weapons"]').click();
+    await expect.poll(order).toEqual(['4', '3', '2']);
+    await page.locator('#loot-search').fill('Fund');
+    await expect.poll(order).toEqual(['4', '2']);
+    await sort.selectOption('rarity-desc');
+    await expect.poll(order).toEqual(['2', '4']);
+    await sort.selectOption('name');
+    await expect.poll(order).toEqual(['4', '2']);
+});
+
 // ===========================================================================
 // (6) DASSELBE AUF DEM TELEFON, MIT DEM FINGER
 // ===========================================================================
@@ -573,6 +673,40 @@ test.describe('(6) Telefon 390x844', () => {
         await ueberall(page, 'Heiltrank x5 | Seil x1', 'Mengen-Merge (Telefon)');
 
         weich(await fehler.alle(), 'Telefon: kein Fehler').toEqual([]);
+    });
+
+    test('N44 · Itemdetails und Truhenzuweisung sind am Telefon erreichbar', async ({ page }) => {
+        await truheLaden(page, [HEILTRANK], TELEFON, [
+            {
+                id: 1,
+                name: 'Reisevorrat',
+                entries: [{ name: 'Heiltrank', sourceItemId: 1, weight: 1 }]
+            }
+        ]);
+        const row = page.locator('#loot-list .loot-item', { hasText: 'Heiltrank' });
+        const detail = page.locator('#loot-detail-panel');
+        const addToChest = detail.getByRole('button', { name: 'Heiltrank in Truhe legen' });
+
+        await tippen(row);
+        await expect(detail.locator('.loot-detail-name')).toHaveText('Heiltrank');
+        await expect(addToChest).toBeVisible();
+        await tippen(addToChest);
+        const editor = page.locator('#loot-chests-modal');
+        await expect(editor).toBeVisible();
+        await expect(editor.getByLabel('Gegenstand', { exact: true })).toHaveValue('1');
+        await page.keyboard.press('Escape');
+        await expect(editor).toBeHidden();
+        await expect(addToChest).toBeFocused();
+
+        await tippen(detail.getByRole('button', { name: '← Liste', exact: true }));
+        await expect(row).toBeFocused();
+        await expect(detail).toBeHidden();
+        await tippen(page.getByRole('button', { name: 'Truhen', exact: true }));
+        const templates = page.getByRole('region', { name: 'Drop-Vorlagen' });
+        await tippen(templates.getByRole('button', { name: 'Reisevorrat', exact: true }));
+        await tippen(templates.getByRole('button', { name: 'Heiltrank', exact: true }));
+        await expect(addToChest).toBeVisible();
+        await expect(detail.getByRole('button', { name: '← Liste', exact: true })).toBeFocused();
     });
 });
 

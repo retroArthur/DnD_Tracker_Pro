@@ -142,8 +142,9 @@ describe('ID_COUNTER_PATHS — Register aller nextId()-Typen (R03)', () => {
         expect(ctx.ID_COUNTER_PATHS).toBeDefined();
         const registry = ctx.ID_COUNTER_PATHS;
         expect(Object.isFrozen(registry)).toBe(true);
-        expect(Object.keys(registry)).toHaveLength(19);
+        expect(Object.keys(registry)).toHaveLength(20);
         expect(Object.keys(registry)).not.toContain('items');
+        expect(plain(registry.lootChests)).toEqual(['lootChests']);
         expect(plain(registry.calendarEvents)).toEqual(['calendar', 'events']);
         expect(plain(registry.combatants)).toEqual(['initiative', 'combatants']);
         for (const segs of Object.values(registry)) {

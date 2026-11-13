@@ -27,8 +27,7 @@ const LEGACY_CACHE_NAME_RE = /^dnd-tracker-v\d/;
 const OFFLINE_HTML = './dnd-tracker-optimized.html';
 
 // Kern-Assets: MÜSSEN cachebar sein, sonst soll die Installation hart fehlschlagen.
-// KEIN './' — das Pages-Artefakt enthält kein index.html, GET /repo/ liefert 404
-// und ein einziger 404 lässt cache.addAll() komplett scheitern (CR-09).
+// Die Pages-Startseite leitet zur App-Datei weiter. Diese bleibt das Offline-Ziel.
 const CORE_ASSETS = [OFFLINE_HTML, './manifest.webmanifest'];
 
 // Optionale Assets: einzeln cachen (Promise.allSettled) — ein 404 bei Icon/Font
