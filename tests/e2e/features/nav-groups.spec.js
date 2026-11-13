@@ -113,7 +113,7 @@ test.describe('Nav-Gruppen', function () {
         await expect(page.locator('.nav-group-btn.has-active')).toHaveCount(1);
     });
 
-    test('gescrollt auf der Initiative bleibt JEDER der 25 Menueeintraege erreichbar', async ({ page }) => {
+    test('gescrollt auf der Initiative bleibt JEDER der 26 Menueeintraege erreichbar', async ({ page }) => {
         await page.setViewportSize({ width: 1440, height: 800 });
         await page.addInitScript(seed => {
             try {
@@ -168,7 +168,7 @@ test.describe('Nav-Gruppen', function () {
             await page.waitForTimeout(80);
         }
 
-        expect(gesamt, 'erwartet 25 Menueeintraege in 6 Gruppen').toBe(25);
+        expect(gesamt, 'erwartet 26 Menueeintraege in 6 Gruppen').toBe(26);
         expect(verdeckt, `${verdeckt.length} von ${gesamt} Eintraegen unerreichbar:\n${verdeckt.join('\n')}`).toEqual([]);
     });
 });

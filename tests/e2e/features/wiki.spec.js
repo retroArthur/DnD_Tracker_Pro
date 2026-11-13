@@ -58,7 +58,7 @@ test.describe('Wiki System', () => {
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
             // Prüfen ob Eintrag in der Liste erscheint
-            await expect(page.locator('.wiki-tree')).toContainText('Teststadt');
+            await expect(page.locator('#wiki-tree')).toContainText('Teststadt');
         });
 
         test('sollte Wiki-Eintrag mit Tags erstellen', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('Wiki System', () => {
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
             // Eintrag sollte erscheinen
-            await expect(page.locator('.wiki-tree')).toContainText('Getaggter Eintrag');
+            await expect(page.locator('#wiki-tree')).toContainText('Getaggter Eintrag');
         });
 
         test('sollte Pflichtfeld-Validierung haben', async ({ page }) => {
@@ -131,12 +131,12 @@ test.describe('Wiki System', () => {
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
             // Prüfen ob beide Einträge existieren
-            await expect(page.locator('.wiki-tree')).toContainText('Hauptstadt');
+            await expect(page.locator('#wiki-tree')).toContainText('Hauptstadt');
         });
 
         test('sollte Kategorie-Baum expandieren/kollabieren', async ({ page }) => {
             // Kategorie-Header finden und klicken
-            const categoryHeader = page.locator('.wiki-tree-category-header').first();
+            const categoryHeader = page.locator('#wiki-tree .wiki-tree-category-header').first();
 
             if (await categoryHeader.isVisible()) {
                 // Initialer Zustand prüfen
@@ -179,11 +179,11 @@ test.describe('Wiki System', () => {
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
             // Eintrag öffnen und Link prüfen
-            await page.click('.wiki-tree-item:has-text("Quest: Drachenjagd")');
+            await page.click('#wiki-tree .wiki-tree-item:has-text("Quest: Drachenjagd")');
 
             // Link sollte als klickbarer Wiki-Link gerendert werden
             const wikiLink = page.locator(
-                '.wiki-detail-body .wiki-link, .wiki-detail-body a:has-text("Held Max")'
+                '#view-wiki .wiki-detail-body .wiki-link, #view-wiki .wiki-detail-body a:has-text("Held Max")'
             );
             await expect(wikiLink).toBeVisible();
         });
@@ -226,7 +226,7 @@ test.describe('Wiki System', () => {
                 await page.waitForTimeout(500);
 
                 // Sollte passende Einträge zeigen
-                const results = page.locator('.wiki-tree-item');
+                const results = page.locator('#wiki-tree .wiki-tree-item');
                 // Mindestens Zwergenstadt und Schmied sollten gefunden werden
             }
         });
@@ -262,7 +262,7 @@ test.describe('Wiki System', () => {
 
         test('sollte Wiki-Eintrag bearbeiten können', async ({ page }) => {
             // Eintrag auswählen
-            await page.click('.wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
+            await page.click('#wiki-tree .wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
 
             // Bearbeiten-Button klicken
             const editBtn = page
@@ -280,13 +280,13 @@ test.describe('Wiki System', () => {
                 await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
                 // Änderung prüfen
-                await expect(page.locator('.wiki-tree')).toContainText('Bearbeiteter Eintrag');
+                await expect(page.locator('#wiki-tree')).toContainText('Bearbeiteter Eintrag');
             }
         });
 
         test('sollte Wiki-Eintrag löschen können', async ({ page }) => {
             // Eintrag auswählen
-            await page.click('.wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
+            await page.click('#wiki-tree .wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
 
             // Löschen-Button klicken
             const deleteBtn = page
@@ -301,7 +301,7 @@ test.describe('Wiki System', () => {
                 await page.waitForTimeout(500);
 
                 // Eintrag sollte nicht mehr existieren
-                await expect(page.locator('.wiki-tree')).not.toContainText(
+                await expect(page.locator('#wiki-tree')).not.toContainText(
                     'Zu bearbeitender Eintrag'
                 );
             }
@@ -347,7 +347,7 @@ test.describe('Wiki System', () => {
             await page.waitForSelector('#view-wiki', { state: 'visible' });
 
             // Eintrag sollte noch da sein
-            await expect(page.locator('.wiki-tree')).toContainText('Persistenter Eintrag');
+            await expect(page.locator('#wiki-tree')).toContainText('Persistenter Eintrag');
         });
     });
 
@@ -382,7 +382,7 @@ test.describe('Wiki System', () => {
             await expect(tocItems).toHaveCount(3);
 
             // Drei Überschriftselemente mit den codegenerierten Kennungen toc-0..toc-2
-            const detailBody = page.locator('.wiki-detail-body');
+            const detailBody = page.locator('#view-wiki .wiki-detail-body');
             await expect(detailBody.locator('#toc-0')).toBeVisible();
             await expect(detailBody.locator('#toc-1')).toBeVisible();
             const thirdHeading = detailBody.locator('#toc-2');
@@ -416,7 +416,7 @@ test.describe('Wiki System', () => {
 
             await page.click('[data-action="call"][data-value="saveWikiEntry"]');
 
-            const detailBody = page.locator('.wiki-detail-body');
+            const detailBody = page.locator('#view-wiki .wiki-detail-body');
             await expect(detailBody).toContainText('FettText');
             await expect(detailBody).toContainText('KursivText');
             await expect(detailBody).toContainText('ListenpunktEins');

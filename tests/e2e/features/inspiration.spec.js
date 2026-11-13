@@ -1,8 +1,10 @@
 // Gebündelter Nutzungsweg für features/inspiration/inspiration-data.js,
 // features/inspiration/inspiration-markdown.js und features/inspiration/inspiration.js.
 import { test, expect } from '@playwright/test';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const app = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+const app = pathToFileURL(resolve('dist/dnd-tracker-bundled.html')).href;
 const articleTitle = 'Bier, Wein und Schankstätten';
 
 test('Inhalte öffnet das Offline-Nachschlagewerk mit Tabellen und Artikelverweisen', async ({
