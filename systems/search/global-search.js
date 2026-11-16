@@ -12,8 +12,9 @@ function fuzzyMatch(text, query) {
     text = text.toLowerCase();
     query = query.toLowerCase();
     // Exakte Übereinstimmung hat höchste Priorität
-    if (text.includes(query)) {
-        return { match: true, score: 100 - text.indexOf(query) };
+    const exactIndex = text.indexOf(query);
+    if (exactIndex >= 0) {
+        return { match: true, score: Math.max(1, 100 - exactIndex) };
     }
     // Fuzzy-Match: Alle Zeichen müssen in Reihenfolge vorkommen
     let textIndex = 0;
@@ -52,6 +53,34 @@ function fuzzySearchFields(item, query, fields) {
     }
     return bestScore;
 }
+
+function appendSpellAndEncounterSearchMatches(matches, query) {
+    for (const spell of D.spells) {
+        const score = fuzzySearchFields(spell, query, ['name', 'school', 'description']);
+        if (score > 0) {
+            matches.push({
+                type: 'spell',
+                name: spell.name,
+                detail: spell.level === 0 ? 'Zaubertrick' : `Grad ${spell.level}`,
+                id: spell.id,
+                score
+            });
+        }
+    }
+    for (const encounter of D.encounters || []) {
+        const score = fuzzySearchFields(encounter, query, ['name', 'type', 'notes']);
+        if (score > 0) {
+            matches.push({
+                type: 'encounter',
+                name: encounter.name,
+                detail: encounter.type || '',
+                id: encounter.id,
+                score
+            });
+        }
+    }
+}
+
 // Debounced Version der globalen Suche (150ms Verzögerung)
 const debouncedGlobalSearch = debounce(performGlobalSearch, 150);
 function performGlobalSearch() {
@@ -133,32 +162,7 @@ function performGlobalSearch() {
             });
         }
     });
-    // Search Spells (fuzzy)
-    D.spells.forEach(s => {
-        const score = fuzzySearchFields(s, query, ['name', 'school', 'description']);
-        if (score > 0) {
-            matches.push({
-                type: 'spell',
-                name: s.name,
-                detail: s.level === 0 ? 'Zaubertrick' : `Grad ${s.level}`,
-                id: s.id,
-                score: score
-            });
-        }
-    });
-    // Search Encounters (fuzzy)
-    (D.encounters || []).forEach(e => {
-        const score = fuzzySearchFields(e, query, ['name', 'type', 'notes']);
-        if (score > 0) {
-            matches.push({
-                type: 'encounter',
-                name: e.name,
-                detail: e.type || '',
-                id: e.id,
-                score: score
-            });
-        }
-    });
+    appendSpellAndEncounterSearchMatches(matches, query);
     matches.push(...window.findInspirationMatches(query));
     // Sortiere nach Score (beste Treffer zuerst)
     matches.sort((a, b) => b.score - a.score);

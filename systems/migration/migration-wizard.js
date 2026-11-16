@@ -593,6 +593,13 @@ function _processWizardFile(file, dropzone) {
                 <div class="migration-success-line">Kampagnen importiert: <strong>${Number(result.campaignCount)}</strong></div>
                 <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
             `;
+            const failedFavorites = Number(result.failedDiceFavoritesCount);
+            if (failedFavorites > 0) {
+                const warning = failedFavorites === 1
+                    ? '1 Würfelfavorit konnte nicht gespeichert werden.'
+                    : `${failedFavorites} Würfelfavoriten konnten nicht gespeichert werden.`;
+                html += `<div class="migration-success-line"><strong>${esc(warning)}</strong></div>`;
+            }
 
             // D-02/D-08: fehlende Audio-Dateien NAMENTLICH benennen, statt still zu
             // uebergehen. Der Hauptimport steht bereits — diese Benennung ist reine

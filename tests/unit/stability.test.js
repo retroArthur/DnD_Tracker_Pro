@@ -1066,10 +1066,15 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
                 persistSrc.indexOf('// Normaler localStorage-Save', writeIdx)
             );
             const awaitIdx = writeBranch.indexOf('await saveToIndexedDBFallback(key, dataString');
-            const removeIdx = writeBranch.indexOf('StorageAPI.remove(key)');
+            const removeIdx = writeBranch.indexOf('_clearLeadingLocalCopy(key, dataString, generation, true)');
             expect(awaitIdx).toBeGreaterThan(-1);
             expect(removeIdx).toBeGreaterThan(awaitIdx);
-            expect(writeBranch).toMatch(/StorageAPI\.remove\(key \+ '_ts'\)/);
+            const cleanup = persistSrc.slice(
+                persistSrc.indexOf('function _clearLeadingLocalCopy('),
+                persistSrc.indexOf('// Gemeinsamer Erfolgspunkt')
+            );
+            expect(cleanup).toMatch(/removeLocalData && StorageAPI\.remove\(key\)/);
+            expect(cleanup).toMatch(/StorageAPI\.remove\(key \+ '_ts'\)/);
         });
 
         test('Stale-Shadow ohne _ts: abweichender IDB-Stand gewinnt als Rückfallebene', async () => {

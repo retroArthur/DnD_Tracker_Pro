@@ -849,7 +849,11 @@ describe('N23: Altdateien ohne Kampagnendaten für einen Indexeintrag', () => {
     const FEHLEND_KEY = 'dnd-campaign-222';
     const IMPORT_KEY = 'dnd-campaign-333';
     const LOKAL = { key: ALT_KEY, name: 'Lokale Kampagne' };
-    const IMPORTIERT = { key: IMPORT_KEY, name: 'Importierte Kampagne' };
+    const IMPORTIERT = {
+        key: IMPORT_KEY,
+        name: 'Importierte Kampagne',
+        created: '2026-11-01T00:00:00.000Z'
+    };
 
     async function speichereLokal(ctx, backend) {
         const data = { ...standAlt(ctx), quickNotes: LOKAL.name };
@@ -895,7 +899,9 @@ describe('N23: Altdateien ohne Kampagnendaten für einen Indexeintrag', () => {
                 geladen: neustart.ctx.D.quickNotes
             }).toEqual({
                 index: {
-                    campaigns: backend ? [IMPORTIERT, LOKAL] : [IMPORTIERT],
+                    campaigns: backend
+                        ? [{ ...IMPORTIERT, _localInstance: expect.any(String) }, LOKAL]
+                        : [{ ...IMPORTIERT, _localInstance: expect.any(String) }],
                     active: backend ? ALT_KEY : STANDARD_KEY
                 },
                 geladen: backend ? LOKAL.name : 'Importierter Standard'
@@ -1029,7 +1035,48 @@ describe('N30: Umzugsdaten ohne Kampagnenlisteneintrag', () => {
             })
         ).toMatchObject({ campaignCount: 1 });
         expect(indexVon(speicher)).toEqual({
-            campaigns: [lokal ? vorhandenerEintrag : importEintrag],
+            campaigns: [lokal ? vorhandenerEintrag : { ...importEintrag, _localInstance: expect.any(String) }],
+            active: ALT_KEY
+        });
+    });
+
+    test.each([
+        [{}, 'Lokaler Name', '2026-09-01T00:00:00.000Z'],
+        [{ name: ' Neuer Name ', created: 'ungültig' }, 'Neuer Name', '2026-09-01T00:00:00.000Z'],
+        [{ name: ' ', created: '2026-11-01T00:00:00.000Z' }, 'Lokaler Name', '2026-11-01T00:00:00.000Z']
+    ])('N34: ergänzt eine unvollständige Indexzeile (%j)', async (felder, name, created) => {
+        const speicher = erzeugeSpeicher();
+        const { ctx } = erzeugeSeite(speicher);
+        ctx.saveCampaignIndex({
+            campaigns: [
+                { key: ALT_KEY, name: 'Lokaler Name', created: '2026-09-01T00:00:00.000Z' }
+            ],
+            active: STANDARD_KEY
+        });
+
+        await ctx.importFullExport({
+            _exportType: 'full-v1',
+            campaigns: { [ALT_KEY]: { data: standAlt(ctx) } },
+            campaignIndex: { campaigns: [{ key: ALT_KEY, ...felder }], active: ALT_KEY }
+        });
+
+        expect(indexVon(speicher)).toEqual({
+            campaigns: [{ key: ALT_KEY, name, created }],
+            active: ALT_KEY
+        });
+    });
+
+    test('N34: eine neue Kampagne übernimmt Metadaten aus dem Datensatz', async () => {
+        const speicher = erzeugeSpeicher();
+        const { ctx } = erzeugeSeite(speicher);
+        const meta = { name: 'Name aus der Datei', created: '2026-11-01T00:00:00.000Z' };
+        await ctx.importFullExport({
+            _exportType: 'full-v1',
+            campaigns: { [ALT_KEY]: { data: standAlt(ctx), meta } },
+            campaignIndex: { campaigns: [{ key: ALT_KEY }], active: ALT_KEY }
+        });
+        expect(indexVon(speicher)).toEqual({
+            campaigns: [{ key: ALT_KEY, ...meta, _localInstance: expect.any(String) }],
             active: ALT_KEY
         });
     });
@@ -1047,7 +1094,7 @@ describe('N30: Umzugsdaten ohne Kampagnenlisteneintrag', () => {
             })
         ).toMatchObject({ campaignCount: 1 });
         expect(indexVon(speicher)).toEqual({
-            campaigns: [{ key: altStandard, name: altStandard, created: expect.any(String) }],
+            campaigns: [{ key: altStandard, name: altStandard, created: expect.any(String), _localInstance: expect.any(String) }],
             active: STANDARD_KEY
         });
         await ctx.switchCampaign(indexVon(speicher).campaigns[0].key);

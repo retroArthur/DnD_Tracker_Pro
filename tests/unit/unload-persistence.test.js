@@ -578,6 +578,178 @@ describe('N31: Entladen erhält einen bestätigten IndexedDB-Fremdstand ohne Rev
     });
 });
 
+describe('N36: Vor dem Entladen zwischen historischem und neuerem IndexedDB-Stand unterscheiden', () => {
+    test.each(['beforeunload', 'visibilitychange', 'pagehide'])(
+        '%s speichert einen großen gültigen Stand über einer älteren IndexedDB-Kopie',
+        async phase => {
+            const u = erzeugeUrsprung();
+            u.saeenIdb(KEY, grosseKampagne());
+            const B = await oeffneTab(u, 'B').starten();
+            B.ctx.D.characters = kampagne(['Bestätigter LocalStorage-Stand']).characters;
+            expect(await B.ctx.saveImmediate()).toMatchObject({
+                success: true,
+                backend: 'localStorage'
+            });
+            const historischeKopie = u.idbDatensatz(KEY);
+            expect(historischeKopie.optionalCopy).toBeUndefined();
+            expect(historischeKopie.timestamp).toBeLessThan(Number(u.ls.get(KEY + '_ts')));
+            expect(namen(historischeKopie.data)[0]).toBe('Held 0');
+
+            const A = await oeffneTab(u, 'A').starten();
+            expect(namenIn(A.ctx.D)).toEqual(['Bestätigter LocalStorage-Stand']);
+            A.ctx.D.characters[0].name = 'Große Änderung aus A';
+            A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+            A.ctx.save();
+
+            if (phase === 'beforeunload') {
+                expect(A.entladen('schließen', { bleiben: true }).defaultPrevented).toBe(true);
+            } else if (phase === 'visibilitychange') {
+                A.verstecken();
+            } else {
+                A.feuere('window', 'pagehide', {});
+            }
+            await u.uhr.laufen(0);
+
+            expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Große Änderung aus A']);
+            expect(u.ls.has(KEY)).toBe(false);
+            const C = await oeffneTab(u, 'C').starten();
+            expect(namenIn(C.ctx.D)).toEqual(['Große Änderung aus A']);
+        }
+    );
+
+    test.each([1000, 1001, undefined])(
+        'verhindert den Write bei unbekanntem IndexedDB-Stand (Zeitstempel %s)',
+        async timestamp => {
+            const u = erzeugeUrsprung();
+            u.saeen(KEY, kampagne(['Bestätigter LocalStorage-Stand']), { ts: '1000' });
+            const A = await oeffneTab(u, 'A').starten();
+            const fremdstand = {
+                id: KEY,
+                data: JSON.stringify(kampagne(['Bestätigter Fremdstand'])),
+                timestamp
+            };
+            // Der andere Tab hat geschrieben, aber sein Signal und die LS-Bereinigung
+            // sind noch nicht angekommen. A muss den Rohdatensatz selbst prüfen.
+            u.idb.setze('campaigns', fremdstand);
+            A.ctx.D.characters[0].name = 'Große Änderung aus A';
+            A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+            A.ctx.save();
+            A.verstecken();
+            await u.uhr.laufen(350);
+
+            expect(u.idbDatensatz(KEY)).toEqual(fremdstand);
+            expect(namen(u.ls.get(KEY))).toEqual(['Bestätigter LocalStorage-Stand']);
+        }
+    );
+});
+
+describe('Bestätigung eines IndexedDB-Saves bei fehlgeschlagener LocalStorage-Bereinigung', () => {
+    test.each([
+        ['sofortig', 'großer Save'],
+        ['sofortig', 'Quota-Fallback'],
+        ['entprellt', 'großer Save'],
+        ['entprellt', 'Quota-Fallback']
+    ])('%s über %s meldet erst Erfolg, wenn die IDB-Kopie geladen wird', async (aufruf, pfad) => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alter LocalStorage-Stand']));
+        const A = await oeffneTab(u, 'A').starten();
+        const entfernen = A.ctx.localStorage.removeItem;
+        A.ctx.localStorage.removeItem = key => {
+            if (key === KEY || key === KEY + '_ts') {
+                throw Object.assign(new Error('Storage denied'), { name: 'SecurityError' });
+            }
+            entfernen(key);
+        };
+        const anzeige = [];
+        const meldungen = [];
+        const gespeichert = A.ctx.getPersistSuccessCount();
+        A.ctx.updateSaveIndicator = status => anzeige.push(status);
+        A.ctx.broadcastSave = (...args) => meldungen.push(args);
+        A.ctx.D.characters[0].name = 'Neu aus IndexedDB';
+        if (pfad === 'großer Save') A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+        else u.quota.zeichen = 0;
+
+        let ergebnis;
+        if (aufruf === 'sofortig') ergebnis = await A.ctx.saveImmediate();
+        else A.ctx.save();
+        await u.uhr.laufen(350);
+        const B = await oeffneTab(u, 'B').starten();
+
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Neu aus IndexedDB']);
+        expect(namenIn(B.ctx.D)).toEqual(['Alter LocalStorage-Stand']);
+        expect({
+            erfolg: ergebnis?.success,
+            anzeige: anzeige.at(-1),
+            bestaetigungen: A.ctx.getPersistSuccessCount() - gespeichert,
+            meldungen: meldungen.length
+        }).toEqual({
+            erfolg: aufruf === 'sofortig' ? false : undefined,
+            anzeige: 'error',
+            bestaetigungen: 0,
+            meldungen: 0
+        });
+    });
+
+    test.each([KEY, KEY + '_ts'])(
+        'bestätigt den großen Save, wenn die zweite Bereinigung trotz Fehler bei %s genügt',
+        async blockiert => {
+            const u = erzeugeUrsprung();
+            u.saeen(KEY, kampagne(['Alter LocalStorage-Stand']));
+            const A = await oeffneTab(u, 'A').starten();
+            const entfernen = A.ctx.localStorage.removeItem;
+            A.ctx.localStorage.removeItem = key => {
+                if (key === blockiert) {
+                    throw Object.assign(new Error('Storage denied'), { name: 'SecurityError' });
+                }
+                entfernen(key);
+            };
+            A.ctx.D.characters[0].name = 'Neu aus IndexedDB';
+            A.ctx.D.quickNotes = 'A'.repeat(5 * MB);
+
+            expect(await A.ctx.saveImmediate()).toMatchObject({ success: true, backend: 'indexedDB' });
+            const B = await oeffneTab(u, 'B').starten();
+            expect(namenIn(B.ctx.D)).toEqual(['Neu aus IndexedDB']);
+        }
+    );
+
+    test('ein vorbereiteter Save bleibt nach dem Bereinigungsfehler unveröffentlicht und ist wiederholbar', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alter LocalStorage-Stand']));
+        const A = await oeffneTab(u, 'A').starten();
+        const entfernen = A.ctx.localStorage.removeItem;
+        A.ctx.localStorage.removeItem = key => {
+            if (key === KEY || key === KEY + '_ts') {
+                throw Object.assign(new Error('Storage denied'), { name: 'SecurityError' });
+            }
+            entfernen(key);
+        };
+        const vorbereiten = () => {
+            const snapshot = {
+                ...A.ctx.D,
+                characters: [...A.ctx.D.characters, { id: 2, name: 'Neue Änderung' }],
+                quickNotes: 'A'.repeat(5 * MB)
+            };
+            return { snapshot, publish: () => Object.assign(A.ctx.D, snapshot) };
+        };
+
+        expect(await A.ctx.saveImmediate(vorbereiten)).toMatchObject({ success: false });
+        expect(namenIn(A.ctx.D)).toEqual(['Alter LocalStorage-Stand']);
+        const B = await oeffneTab(u, 'B').starten();
+        expect(namenIn(B.ctx.D)).toEqual(['Alter LocalStorage-Stand']);
+
+        A.ctx.localStorage.removeItem = entfernen;
+        expect(await A.ctx.saveImmediate(vorbereiten)).toMatchObject({
+            success: true,
+            backend: 'indexedDB'
+        });
+        const C = await oeffneTab(u, 'C').starten();
+        const erwarteterStand = ['Alter LocalStorage-Stand', 'Neue Änderung'];
+        expect(namenIn(A.ctx.D)).toEqual(erwarteterStand);
+        expect(namenIn(C.ctx.D)).toEqual(erwarteterStand);
+        expect(u.ls.has(KEY + '_ts')).toBe(false);
+    });
+});
+
 // ============================================================
 // Loeschende und umziehende Ablaeufe
 // ============================================================

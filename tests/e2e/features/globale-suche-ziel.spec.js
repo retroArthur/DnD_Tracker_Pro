@@ -1221,4 +1221,52 @@ test.describe('Kopfsuche: jeder Treffer fuehrt zu genau seinem Eintrag (SUCHE)',
             )
         ).toEqual([]);
     });
+
+    test('Die globale Suche findet einen exakten Treffer tief in einer NPC-Beschreibung', async ({
+        page
+    }) => {
+        const daten = saat();
+        const begriff = 'Mondrauschzeichen';
+        daten.npcs[2] = {
+            ...daten.npcs[2],
+            description: 'Hintergrund. '.repeat(10) + begriff
+        };
+        await laden(page, undefined, daten);
+        await page.locator('#global-search').fill(begriff);
+        const result = treffer(page, 'npc', NSC_OHNE_ORT);
+        await expect(result).toHaveText(/Qorxine/);
+        await result.click();
+        await expect(page.locator('#npc-detail-panel .npc-detail-name')).toHaveText('Qorxine');
+    });
+
+    for (const { name, id, typ, view, detail } of [
+        {
+            name: 'Qorxblitz',
+            id: 8001,
+            typ: 'spell',
+            view: 'spells',
+            detail: '.spell-card.expanded[data-spell-id="8001"] .spell-card-content'
+        },
+        {
+            name: ZIEL.name,
+            id: ZIEL.id,
+            typ: 'encounter',
+            view: 'encounter',
+            detail: '#view-encounter.detail-open .enc-detail-name'
+        }
+    ]) {
+        test(`Die mobile Suche öffnet ${name} in der jeweiligen Ansicht`, async ({ page }) => {
+            await laden(page, TELEFON);
+            await page.locator('.mobile-header button[data-value="showMobileSearch"]').click();
+            await page.locator('#mobile-search-input').fill(name);
+            const result = page.locator(
+                `#mobile-search-results [data-action="mobile-search-navigate"][data-type="${typ}"][data-id="${id}"]`
+            );
+            await expect(result).toBeVisible();
+            await result.click();
+            await expect(page.locator('#mobile-search-modal')).toBeHidden();
+            await expect(page.locator(`#view-${view}`)).toHaveClass(/\bactive\b/);
+            await expect(page.locator(detail)).toBeVisible();
+        });
+    }
 });

@@ -98,6 +98,7 @@ test.describe('Editor-Regressionsnetz — Statische Toolbar (Wiki)', () => {
 
         // 6. Persistenz-Roundtrip: Speichern, Reload, wiedereroeffnen
         await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+        await expect(page.locator('#save-indicator')).toHaveClass(/\bsaved\b/);
         await page.reload();
         await waitForAppReady(page);
         await page.evaluate(() => window.switchView('wiki'));
@@ -157,6 +158,8 @@ async function typeAndSelectAll(editor, text) {
 
 async function saveAndReopenWikiEntry(page, title) {
     await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+    // Der Roundtrip beginnt nach der bestätigten, entprellten Speicherung.
+    await expect(page.locator('#save-indicator')).toHaveClass(/\bsaved\b/);
     await page.reload();
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('wiki'));

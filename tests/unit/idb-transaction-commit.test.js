@@ -1127,7 +1127,7 @@ describe('Kampagnen-Loeschung — deleteCampaign() erst nach bestaetigtem IDB-De
         expect(k.context.D.characters[0].name).toBe('Aktueller Stand');
     });
 
-    test('Benannte Kampagne, IDB-Delete bricht ab: aus dem Index entfernt, Waisen-Warnung, Navigation', async () => {
+    test('Benannte Kampagne, IDB-Delete bricht ab: Index und Daten bleiben, keine Navigation', async () => {
         const k = erzeugeKampagnen({
             override: K111,
             index: zweiKampagnen(K111),
@@ -1137,15 +1137,13 @@ describe('Kampagnen-Loeschung — deleteCampaign() erst nach bestaetigtem IDB-De
         });
         const r = await mitFrist(k.context.deleteCampaign(), 3000);
         expect(r.zustand).toBe('erfuellt');
-        expect(k.index().campaigns.map(c => c.key)).toEqual([K222]);
-        expect(k.index().active).toBe(SCHLUESSEL);
-        expect(
-            k.alerts.some(a =>
-                a.includes('"Nordmark" wurde aus der Liste entfernt, aber die gespeicherten Daten')
-            )
-        ).toBe(true);
+        expect(k.index()).toEqual(zweiKampagnen(K111));
+        expect(k.lsStore[K111]).toBe(DATEN_111);
+        expect(k.fake.datensatz('campaigns', K111).data).toBe(DATEN_111);
+        expect(letzter(k.alerts)).toContain('Es wurde nichts gelöscht');
         expect(k.alerts.some(a => a.includes('✅'))).toBe(false);
-        expect(k.navigiert()).not.toBeNull();
+        expect(k.context.areCampaignWritesRetired()).toBe(false);
+        expect(k.navigiert()).toBeNull();
     });
 
     test('Erfolg: Alert und Navigation erst nach tx complete, alle Kopien und _ts weg, D zurueckgesetzt', async () => {

@@ -840,6 +840,12 @@ describe.each(QUELLEN.map(([n]) => [n]))('Vertrag SENKEN — Hilfen in %s', quel
     });
 
     describe('R3 sanitizeHTML(): ein relatives href nur nach istRelativerLink() (Nachbesserung (16))', () => {
+        test('N37: sichtbarer Text bleibt beim Bereinigen erhalten', () => {
+            const text = 'Die Tonlage="leise". Sage danach JavaScript: fertig.';
+            const clean = brauche(quellName, 'sanitizeHTML')(`<p>${text}</p>`);
+            const body = new DOMParser().parseFromString(clean, 'text/html').body;
+            expect(body.textContent).toBe(text);
+        });
         test.each(LINK_RELATIV_GESPERRT.map(u => [JSON.stringify(u), u]))(
             'das Ziel faellt weg, der Text bleibt: %s',
             (_n, url) => {

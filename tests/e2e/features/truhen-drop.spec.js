@@ -10,23 +10,42 @@ async function loadChestFixture(page, data = {}) {
         ({ key, data }) => {
             if (sessionStorage.getItem('chest-regression-seeded')) return;
             sessionStorage.setItem('chest-regression-seeded', '1');
-            localStorage.setItem(
-                key,
-                JSON.stringify({
-                    _version: '99.0.0',
-                    settings: { markdownOnboardingSeen: true },
-                    randomTables: [],
-                    timers: [],
-                    shops: [],
-                    campaign: {},
-                    characters: [{ id: 1, name: 'Alva' }],
-                    loot: [],
-                    lootChests: [
-                        { id: 1, name: 'Fundtruhe', entries: [{ name: 'Fackel', weight: 1 }] }
-                    ],
-                    ...data
-                })
+            const seed = {
+                _version: '99.0.0',
+                settings: { markdownOnboardingSeen: true },
+                randomTables: [],
+                timers: [],
+                shops: [],
+                campaign: {},
+                characters: [{ id: 1, name: 'Alva' }],
+                loot: [],
+                lootChests: [
+                    { id: 1, name: 'Fundtruhe', entries: [{ name: 'Fackel', weight: 1 }] }
+                ],
+                ...data
+            };
+            // Gültige Zähler verhindern einen Reparatur-Autosave beim Start.
+            const countedCollections = [
+                'characters',
+                'npcs',
+                'locations',
+                'quests',
+                'encounters',
+                'spells',
+                'loot',
+                'items',
+                'wiki',
+                'sessionNotes',
+                'randomTables',
+                'lootChests'
+            ];
+            seed._nextId = Object.fromEntries(
+                countedCollections.map(type => [
+                    type,
+                    Math.max(0, ...(seed[type] ?? []).map(entry => entry.id)) + 1
+                ])
             );
+            localStorage.setItem(key, JSON.stringify(seed));
         },
         { key: storageKey, data }
     );
@@ -41,13 +60,17 @@ async function pauseChestSave(page, { forceQuota = true } = {}) {
         ({ key, forceQuota }) => {
             const setItem = window.Storage.prototype.setItem;
             const writeTx = window.idbWriteTx;
+            let captured = false;
             window.Storage.prototype.setItem = function (storageKey, value) {
                 if (forceQuota && storageKey === key)
                     throw new window.DOMException('Testquota', 'QuotaExceededError');
                 return setItem.call(this, storageKey, value);
             };
             window.idbWriteTx = (stores, ...args) => {
-                if (!stores.includes('campaigns')) return writeTx(stores, ...args);
+                // Der Test hält die Transaktion der Drop-Zuweisung genau einmal an.
+                if (captured || !_stagedSave || !stores.includes('campaigns'))
+                    return writeTx(stores, ...args);
+                captured = true;
                 return new Promise((resolve, reject) => {
                     const restore = () => {
                         window.Storage.prototype.setItem = setItem;
@@ -606,6 +629,8 @@ for (const commits of [false, true]) {
 test('N39: ein Drop erhält Eigenschaften und Absätze ohne das ursprüngliche Item', async ({
     page
 }) => {
+    const ersterAbsatz = 'Die Tonlage="leise".';
+    const zweiterAbsatz = 'Sage danach JavaScript: fertig.';
     const item = {
         id: 1,
         name: 'Silberring',
@@ -614,7 +639,7 @@ test('N39: ein Drop erhält Eigenschaften und Absätze ohne das ursprüngliche I
         quantity: 4,
         weight: 2,
         value: 40,
-        description: '<p>Erste Zeile</p><p>Zweite Zeile</p>',
+        description: `<p>${ersterAbsatz}</p><p>${zweiterAbsatz}</p>`,
         origin: 'campaign',
         special: 'Leuchtet im Dunkeln',
         property: '+1 Angriff',
@@ -646,8 +671,8 @@ test('N39: ein Drop erhält Eigenschaften und Absätze ohne das ursprüngliche I
 
     const drop = page.getByRole('dialog', { name: 'Drop aus Fundtruhe', exact: true });
     const result = drop.locator('#loot-chest-quick-drop-result');
-    await expect(result.getByText('Erste Zeile', { exact: true })).toBeVisible();
-    await expect(result.getByText('Zweite Zeile', { exact: true })).toBeVisible();
+    await expect(result.getByText(ersterAbsatz, { exact: true })).toBeVisible();
+    await expect(result.getByText(zweiterAbsatz, { exact: true })).toBeVisible();
     await drop.getByLabel('Charakter', { exact: true }).selectOption('1');
     await drop.getByRole('button', { name: 'Zuweisen', exact: true }).press('Enter');
     await expect(result).toContainText('Silberring wurde Alva zugewiesen.');

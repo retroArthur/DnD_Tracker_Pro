@@ -77,8 +77,8 @@ test('Service Worker löscht nur eigene Caches (R08)', async ({ page }) => {
     const EIGENER_ALTCACHE = 'dnd-tracker-v2.6.0-202601010000';
     const BETA_ALTCACHE = 'dnd-tracker-v2.5.0-202512010000';
 
-    // Gleiche Origin, noch kein Service Worker registriert: 404-Seite des Servers.
-    await page.goto(new URL('/__r08-seed__', BASE_URL).href);
+    // Die Testseite liegt im Scope, ohne den Worker vor dem Cache-Setup zu starten.
+    await page.goto(new URL('./__r08-seed__', BASE_URL).href);
     await page.evaluate(
         async ({ eigeneHtml, betaHtml, EIGENER_ALTCACHE, BETA_ALTCACHE }) => {
             const fremd = await window.caches.open('another-app-cache');
@@ -91,18 +91,29 @@ test('Service Worker löscht nur eigene Caches (R08)', async ({ page }) => {
         { eigeneHtml, betaHtml, EIGENER_ALTCACHE, BETA_ALTCACHE }
     );
 
-    await page.goto(BASE_URL);
-    await waitForAppReady(page);
-    await page.evaluate(async () => {
-        await navigator.serviceWorker.ready;
-    });
+    // WebKit kann beim Dokumentwechsel die vorbereiteten Cache-Einträge verlieren.
+    // Die Registrierung im selben Dokument lässt den Worker genau diese Daten prüfen.
+    await page.evaluate(async workerUrl => {
+        await navigator.serviceWorker.register(workerUrl);
+    }, new URL('./sw.js', BASE_URL).href);
+    // clients.claim() läuft im Worker nach dem Aufräumen der Caches.
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
 
-    // ready loest schon zu Beginn der Aktivierung auf — das Aufraeumen abwarten.
-    await expect
-        .poll(() => page.evaluate(() => window.caches.keys()), { timeout: 10000 })
-        .not.toContain(EIGENER_ALTCACHE);
-
-    const keys = await page.evaluate(() => window.caches.keys());
-    expect(keys).toEqual(expect.arrayContaining(['another-app-cache', BETA_ALTCACHE]));
-    expect(keys.filter(k => k.startsWith('dnd-tracker:'))).toHaveLength(1);
+    const cachesAfter = await page.evaluate(
+        async ({ betaHtml, BETA_ALTCACHE }) => {
+            const other = await window.caches.match('/other-app/index.html', {
+                cacheName: 'another-app-cache'
+            });
+            const beta = await window.caches.match(betaHtml, { cacheName: BETA_ALTCACHE });
+            return {
+                keys: await window.caches.keys(),
+                other: await other?.text(),
+                beta: await beta?.text()
+            };
+        },
+        { betaHtml, BETA_ALTCACHE }
+    );
+    expect(cachesAfter.keys).not.toContain(EIGENER_ALTCACHE);
+    expect(cachesAfter.keys.filter(k => k.startsWith('dnd-tracker:'))).toHaveLength(1);
+    expect(cachesAfter).toMatchObject({ other: 'x', beta: 'beta' });
 });

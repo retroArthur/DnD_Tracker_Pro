@@ -305,27 +305,37 @@ async function _importFullExport(parsedObj, assertHeld, runRollback, importJourn
             }
             // Andere Indexschreiber können während der IndexedDB-Abfrage fertig werden.
             const currentIndex = checkedLocalData ? getCampaignIndexFn() : localIndex;
-            const keptLocalCampaigns = campaignsOf(currentIndex).filter(
-                c => c && !importedKeys.has(c.key)
-            );
+            const localCampaigns = campaignsOf(currentIndex).filter(Boolean);
+            const keptLocalCampaigns = localCampaigns.filter(c => !importedKeys.has(c.key));
+            const localByKey = new Map(localCampaigns.map(c => [c.key, c]));
+            const importedDataByKey = new Map(campaignEntries);
+            const withMetadata = entry => {
+                const { key } = entry;
+                const local = localByKey.get(key);
+                const meta = bereinigeDatengrenze(importedDataByKey.get(key)?.meta);
+                const name = [entry.name, local?.name, meta?.name].find(
+                    value => typeof value === 'string' && value.trim()
+                );
+                const created = [entry.created, local?.created, meta?.created].find(
+                    value =>
+                        (typeof value === 'string' || typeof value === 'number') &&
+                        Number.isFinite(new Date(value).getTime())
+                );
+                const row = {
+                    ...entry,
+                    name: name?.trim() || key,
+                    created: created ?? new Date().toISOString()
+                };
+                return typeof withLocalCampaignIdentity === 'function'
+                    ? withLocalCampaignIdentity(row, local)
+                    : row;
+            };
             // Auch bestätigte Kampagnendaten ohne Datei-Eintrag bleiben auswählbar.
             // Die Standardkampagne erscheint von selbst, vorhandene Metadaten haben Vorrang.
             const listedKeys = new Set([...importedKeys, ...keptLocalCampaigns.map(c => c.key)]);
             const unlistedCampaigns = campaignEntries
                 .filter(([key]) => key !== storageKey && !listedKeys.has(key))
-                .map(([key, campaign]) => {
-                    const meta = bereinigeDatengrenze(campaign.meta);
-                    const name = typeof meta?.name === 'string' ? meta.name.trim() : '';
-                    const created = meta?.created;
-                    return {
-                        key,
-                        name: name || key,
-                        created:
-                            typeof created === 'string' && Number.isFinite(Date.parse(created))
-                                ? created
-                                : new Date().toISOString()
-                    };
-                });
+                .map(([key]) => withMetadata({ key }));
             if (
                 active !== storageKey &&
                 !writtenKeys.has(active) &&
@@ -334,7 +344,7 @@ async function _importFullExport(parsedObj, assertHeld, runRollback, importJourn
                 active = storageKey;
             }
             const mergedIndex = Object.assign({}, importedIndex, {
-                campaigns: importedCampaigns.concat(keptLocalCampaigns, unlistedCampaigns),
+                campaigns: importedCampaigns.map(withMetadata).concat(keptLocalCampaigns, unlistedCampaigns),
                 active
             });
             assertHeld();
@@ -399,6 +409,7 @@ async function _importFullExport(parsedObj, assertHeld, runRollback, importJourn
     // Verwerfen im Zweifel. Reihenfolge: lokaler Bestand zuerst, dann importierte
     // Eintraege, die darin noch nicht vorkommen.
     let preservedFavoritesCount = 0;
+    let failedDiceFavoritesCount = 0;
     if (Array.isArray(parsedObj.diceFavorites) && parsedObj.diceFavorites.length > 0 &&
             typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DICE_FAV_KEY) {
         const existingFavorites = StorageAPI.getJSON(APP_CONFIG.DICE_FAV_KEY, []);
@@ -413,7 +424,13 @@ async function _importFullExport(parsedObj, assertHeld, runRollback, importJourn
         const localKeys = new Set(localFavorites.map(favoriteKey));
         const newFavorites = parsedObj.diceFavorites.filter(fav => !localKeys.has(favoriteKey(fav)));
         preservedFavoritesCount = localFavorites.length;
-        StorageAPI.setJSON(APP_CONFIG.DICE_FAV_KEY, localFavorites.concat(newFavorites));
+        if (newFavorites.length > 0) {
+            const mergedFavorites = JSON.stringify(localFavorites.concat(newFavorites));
+            // Für Würfelfavoriten gibt es keinen IndexedDB-Fallback. Der
+            // bestätigte Kampagnenimport bleibt bei einem Teilfehler erhalten.
+            const savedFavorites = StorageAPI.setQuiet(APP_CONFIG.DICE_FAV_KEY, mergedFavorites);
+            if (!savedFavorites.success) failedDiceFavoritesCount = newFavorites.length;
+        }
     }
 
     return {
@@ -421,6 +438,7 @@ async function _importFullExport(parsedObj, assertHeld, runRollback, importJourn
         campaignCount: campaignEntries.length,
         totalBytes: totalBytes,
         preservedFavoritesCount: preservedFavoritesCount,
+        failedDiceFavoritesCount,
         preservedIndexEntriesCount: preservedIndexEntriesCount
     };
 }

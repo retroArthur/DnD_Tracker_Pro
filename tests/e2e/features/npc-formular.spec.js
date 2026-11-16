@@ -849,8 +849,8 @@ test('NPC-Detail zeigt den ganzen langen Dialog per Tastatur in derselben Karte'
     page
 }) => {
     const anfang = 'Wenn die Gilde schweigt, beginnt das Gerede.';
-    const ende = 'Treffpunkt unter der Brücke';
-    const kurzerText = 'Nur ein Satz.';
+    const ende = 'Treffpunkt unter der Brücke. Sage danach JavaScript: fertig.';
+    const kurzerText = 'Die Tonlage="leise".';
     const lang = `<p>${anfang} ${'Kein Gast kennt die geheime Abmachung. '.repeat(4)}</p>
         <p><strong>${ende}</strong> <span onclick="throw new Error('Unsicherer Dialog')">heute Abend</span></p>`;
     const kurz = `<span style="font-family: var(--font-ui); font-weight: bold; letter-spacing: normal; color: var(--text);">${kurzerText}</span>`;
@@ -891,6 +891,7 @@ test('NPC-Detail zeigt den ganzen langen Dialog per Tastatur in derselben Karte'
     await expect(details).toHaveAttribute('open', '');
     await expect(vorschau).toBeHidden();
     await expect(volltextEnde).toBeVisible();
+    await expect(volltextEnde).toHaveText(ende);
     expect(await langDialog.innerText()).toContain('heute Abend');
     await expect(langDialog.locator('[onclick]')).toHaveCount(0);
 

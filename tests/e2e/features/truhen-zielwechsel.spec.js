@@ -5,8 +5,11 @@ const ready = page =>
     page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
 const press = (view, name) => view.getByRole('button', { name, exact: true }).press('Enter');
 
-async function openItemChestEditor(page, includeFallback = false) {
-    await page.addInitScript(includeFallback => {
+async function openItemChestEditor(
+    page,
+    { includeFallback = false, torchWeights = [1], includeRing = false } = {}
+) {
+    const seed = ({ includeFallback, torchWeights, includeRing }) => {
         if (sessionStorage.getItem('chest-target-change-seeded')) return;
         sessionStorage.setItem('chest-target-change-seeded', '1');
         localStorage.setItem(
@@ -26,13 +29,21 @@ async function openItemChestEditor(page, includeFallback = false) {
                     {
                         id: 1,
                         name: 'Fundtruhe',
-                        entries: [{ name: 'Fackel', sourceItemId: 1, weight: 1 }]
+                        entries: [
+                            ...torchWeights.map(weight => ({
+                                name: 'Fackel',
+                                sourceItemId: 1,
+                                weight
+                            })),
+                            ...(includeRing ? [{ name: 'Silberring', sourceItemId: 2, weight: 4 }] : [])
+                        ]
                     },
                     ...(includeFallback ? [{ id: 2, name: 'Vorratskiste', entries: [] }] : [])
                 ]
             })
         );
-    }, includeFallback);
+    };
+    await page.addInitScript(seed, { includeFallback, torchWeights, includeRing });
     await page.goto(app);
     await ready(page);
     await page.evaluate(() => window.switchView('loot'));
@@ -116,7 +127,7 @@ for (const includeFallback of [true, false]) {
     test(`N50 · Löschen bewahrt den Item-Entwurf ${includeFallback ? 'für die verbleibende Truhe' : 'bis zur Neuanlage'}`, async ({
         page
     }) => {
-        const { editor, item, weight } = await openItemChestEditor(page, includeFallback);
+        const { editor, item, weight } = await openItemChestEditor(page, { includeFallback });
         await editor.getByLabel('Truhenname', { exact: true }).fill('Alter Entwurf');
         await editor.getByLabel('Drop-Gewicht für Fackel', { exact: true }).fill('3');
         page.once('dialog', dialog => dialog.accept());
@@ -254,3 +265,74 @@ for (const action of ['Gewicht speichern', 'Zeile löschen']) {
         ]);
     });
 }
+
+for (const action of ['Gewicht speichern', 'Zeile löschen']) {
+    test(`N60 · ${action} an einer anderen Zeile erhält beide Fackel-Entwürfe beim Undo`, async ({
+        page
+    }) => {
+        const { editor, item } = await openItemChestEditor(page, {
+            torchWeights: [1, 2],
+            includeRing: true
+        });
+        await item.selectOption('');
+        const torches = editor.getByLabel('Drop-Gewicht für Fackel', { exact: true });
+        const ringWeight = editor.getByLabel('Drop-Gewicht für Silberring', { exact: true });
+
+        await torches.nth(0).fill('7');
+        await torches.nth(1).fill('8');
+        const changedWeight = action === 'Gewicht speichern' ? '6' : null;
+        if (changedWeight) {
+            await ringWeight.fill(changedWeight);
+            await press(editor, 'Gewicht speichern für Silberring');
+            await expect(ringWeight).toHaveValue(changedWeight);
+        } else {
+            await press(editor, 'Silberring aus der Truhe entfernen');
+            await expect(ringWeight).toHaveCount(0);
+        }
+        await expect(torches.nth(0)).toHaveValue('7');
+        await expect(torches.nth(1)).toHaveValue('8');
+
+        const finish = editor.getByRole('button', { name: 'Fertig', exact: true });
+        for (const [shortcut, expectedWeight] of [
+            ['Control+z', '4'],
+            ['Control+y', changedWeight],
+            ['Control+z', '4']
+        ]) {
+            await finish.focus();
+            await page.keyboard.press(shortcut);
+            if (expectedWeight === null) await expect(ringWeight).toHaveCount(0);
+            else await expect(ringWeight).toHaveValue(expectedWeight);
+            await expect(torches.nth(0)).toHaveValue('7');
+            await expect(torches.nth(1)).toHaveValue('8');
+        }
+
+        await press(editor, 'Fertig');
+        await expect(editor).toBeHidden();
+        await page.reload();
+        await ready(page);
+        expect(
+            await page.evaluate(() => window.D.lootChests[0].entries.map(entry => entry.weight))
+        ).toEqual([7, 8, 4]);
+    });
+}
+
+test('N60 · Undo einer mehrdeutigen Fackel-Zuordnung setzt die Gewichte auf die gespeicherten Werte', async ({
+    page
+}) => {
+    const { editor } = await openItemChestEditor(page, { torchWeights: [1, 1] });
+    const torches = editor.getByLabel('Drop-Gewicht für Fackel', { exact: true });
+    await torches.nth(0).fill('7');
+    await torches.nth(1).fill('8');
+    await editor
+        .getByRole('button', { name: 'Fackel aus der Truhe entfernen', exact: true })
+        .nth(1)
+        .press('Enter');
+    await expect(torches).toHaveCount(1);
+    await expect(torches.first()).toHaveValue('7');
+
+    await editor.getByRole('button', { name: 'Fertig', exact: true }).focus();
+    await page.keyboard.press('Control+z');
+    await expect(torches).toHaveCount(2);
+    await expect(torches.nth(0)).toHaveValue('1');
+    await expect(torches.nth(1)).toHaveValue('1');
+});

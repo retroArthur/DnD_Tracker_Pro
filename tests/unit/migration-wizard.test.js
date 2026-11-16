@@ -399,6 +399,28 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
         expect(callOrder).toEqual(['saveUndoState', 'importFullExport']);
         expect(dropzone.classList.add).toHaveBeenCalledWith('file-ready');
     });
+
+    test('zeigt fehlende Würfelfavoriten neben den importierten Kampagnen an', async () => {
+        mockReadCampaignDataForBackup.mockResolvedValue(null);
+        mockGetCampaignIndex.mockReturnValue({ campaigns: [] });
+        context.window.importFullExport = jest.fn().mockResolvedValue({
+            totalBytes: 4096,
+            campaignCount: 1,
+            failedDiceFavoritesCount: 2
+        });
+        const file = new global.File(
+            [JSON.stringify({ _exportType: 'full-v1', campaigns: { c1: {} } })],
+            'export.json',
+            { type: 'application/json' }
+        );
+
+        context._processWizardFile(file, dropzone);
+        await waitFor(() => resultEl.innerHTML !== '');
+
+        expect(resultEl.innerHTML).toContain('Kampagnen importiert: <strong>1</strong>');
+        expect(resultEl.innerHTML).toContain('2 Würfelfavoriten konnten nicht gespeichert werden');
+        expect(errorEl.textContent).toBe('');
+    });
 });
 
 // ============================================================

@@ -164,6 +164,7 @@ function performMobileSearch() {
                 score
             });
     });
+    appendSpellAndEncounterSearchMatches(matches, query);
     matches.push(...window.findInspirationMatches(query));
     matches.sort((a, b) => b.score - a.score);
     if (matches.length === 0) {

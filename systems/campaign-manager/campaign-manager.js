@@ -63,6 +63,22 @@ function readCampaignIndexStrict() {
     }
     return { ok: true, index: parsed };
 }
+// Legacy-Einträge haben eine leere Kennung. Ein erneut gelisteter Schlüssel
+// bekommt eine neue. So unterscheidet ein offener Tab beide Kampagnenstände.
+function readCampaignWriteIdentity(key) {
+    if (key === APP_CONFIG.STORAGE_KEY) return undefined;
+    const result = readCampaignIndexStrict();
+    const entry = result.ok && result.index.campaigns.find(c => c?.key === key);
+    return entry ? (entry._localInstance || '') : null;
+}
+
+function withLocalCampaignIdentity(entry, previous) {
+    const { _localInstance, ...metadata } = entry;
+    const identity = previous
+        ? previous._localInstance
+        : (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`);
+    return identity ? { ...metadata, _localInstance: identity } : metadata;
+}
 /**
  * Freier Schluessel fuer eine neue Kampagne. Eine zufaellige Kennung trennt Tabs,
  * die denselben Millisekundentakt sehen. Das numerische Suffix erhaelt das
@@ -175,7 +191,7 @@ async function _addCampaignWithData(name, data, activate) {
         }
         const next = Object.assign({}, current.index, {
             campaigns: current.index.campaigns.concat([
-                { key, name, created: new Date().toISOString() }
+                withLocalCampaignIdentity({ key, name, created: new Date().toISOString() })
             ])
         });
         if (activate) next.active = key;
@@ -327,44 +343,64 @@ async function secureStaleTabBeforeSwitch() {
 // async (R02): einen ausstehenden Save der alten Kampagne erst festschreiben und den Commit
 // abwarten — sonst muesste das Verlassen im IndexedDB-Modus nachfragen
 async function switchCampaign(key) {
-    if (
-        typeof window.flushPendingSaveAndSettle === 'function' &&
-        !(await window.flushPendingSaveAndSettle({ allowStale: true }))
-    ) {
-        showToast(
-            '⚠️ Kampagnenwechsel abgebrochen: Warte auf den laufenden Speichervorgang oder wiederhole das fehlgeschlagene Speichern.',
-            'warning',
-            8000
-        );
-        return;
-    }
-    // D-C: In einem veralteten Tab schreibt der Flush nichts. Ausdrueckliche Arbeit wird dann
-    // erst gesichert (siehe secureStaleTabBeforeSwitch), sonst ginge sie beim Neuladen
-    // verloren oder das beforeunload fragte nach.
-    const sichern = async () => {
-        const result = await secureStaleTabBeforeSwitch();
-        if (result.secured && typeof window.retireCampaignWrites === 'function') {
-            // Die Sicherung ist bestätigt. Die Sperre verwirft vorgemerkte Saves
-            // und hält beforeunload beim anschließenden Neuladen still.
-            await window.retireCampaignWrites();
+    let aktiviert = false;
+    let schreibsperre = false;
+    const wechseln = async assertHeld => {
+        // Änderungen während der Wartezeit gehören noch zur alten Kampagne.
+        if (
+            typeof window.flushPendingSaveAndSettle === 'function' &&
+            !(await window.flushPendingSaveAndSettle({ allowStale: true }))
+        ) {
+            showToast(
+                '⚠️ Kampagnenwechsel abgebrochen: Warte auf den laufenden Speichervorgang oder wiederhole das fehlgeschlagene Speichern.',
+                'warning',
+                8000
+            );
+            return;
         }
-        return result;
+        const sichernUndAktivieren = async () => {
+            // D-C: In veralteten Tabs sichert der Wechsel ausstehende Arbeit separat.
+            const result = await secureStaleTabBeforeSwitch();
+            if (!result.mayContinue) return;
+            if (result.secured && typeof window.retireCampaignWrites === 'function') {
+                schreibsperre = true;
+                await window.retireCampaignWrites();
+            }
+            assertHeld?.();
+            const current = readCampaignIndexStrict();
+            if (!current.ok) throw new Error(current.error);
+            const { index } = current;
+            if (key !== APP_CONFIG.STORAGE_KEY && !index.campaigns.some(c => c?.key === key)) {
+                renderCampaignList();
+                showToast('⚠️ Diese Kampagne steht nicht mehr in der Kampagnenliste.', 'warning');
+                return;
+            }
+            const write = saveCampaignIndex({ ...index, active: key });
+            if (!write?.success) throw new Error('Kampagnenwechsel fehlgeschlagen (Speicher voll?)');
+            aktiviert = true;
+        };
+        if (typeof window.runWithCampaignSwitchProtection === 'function') {
+            await window.runWithCampaignSwitchProtection(sichernUndAktivieren);
+        } else {
+            await sichernUndAktivieren();
+        }
     };
-    const gesichert =
-        typeof window.runWithCampaignSwitchProtection === 'function'
-            ? await window.runWithCampaignSwitchProtection(sichern)
-            : await sichern();
-    if (!gesichert?.mayContinue) return;
-    const index = getCampaignIndex();
-    index.active = key;
-    // Nur neu laden, wenn der Wechsel wirklich gespeichert ist (R07)
-    const result = saveCampaignIndex(index);
-    if (!result || !result.success) {
+    try {
+        // Die Auswahl kann aus einer veralteten Liste stammen. Nach einer laufenden
+        // Löschung oder einem Import den aktuellen Index unter derselben Sperre lesen.
+        if (typeof window.indexedDB?.open === 'function') {
+            await window.withCampaignIndexLock(wechseln);
+        } else {
+            await wechseln();
+        }
+    } catch (error) {
+        if (!aktiviert) showToast(`❌ ${error.message}`, 'error');
+    }
+    if (!aktiviert) {
         // Die Sicherung bleibt erhalten. Ein neuer Save braucht einen neuen Auftrag (N55).
-        if (gesichert.secured && typeof window.resumeCampaignWrites === 'function') {
+        if (schreibsperre && typeof window.resumeCampaignWrites === 'function') {
             window.resumeCampaignWrites({ retryPending: false });
         }
-        showToast('❌ Kampagnenwechsel fehlgeschlagen (Speicher voll?)', 'error');
         return;
     }
     location.reload();
@@ -384,13 +420,10 @@ async function deleteCampaign() {
         return;
     }
     const isDefault = key === APP_CONFIG.STORAGE_KEY;
-    const index = getCampaignIndex();
     // Datengröße ermitteln
-    const dataSize = localStorage.getItem(key);
+    const dataSize = StorageAPI.get(key, null);
     const sizeKB = dataSize ? (dataSize.length / 1024).toFixed(1) : 0;
-    const campaignName = isDefault
-        ? 'Standard-Kampagne'
-        : index.campaigns.find(c => c.key === key)?.name || 'Unbekannt';
+    const campaignName = getCampaignDisplayName(key);
     if (
         !confirm(
             `⚠️ "${campaignName}" LÖSCHEN?\n\nAlle Daten (${sizeKB} KB) werden gelöscht:\n- Charaktere, NPCs, Orte\n- Quests, Encounters\n- Initiative, Beute\n- Wiki, Netzwerk\n- Sessions\n- Automatische Backups dieser Kampagne\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!`
@@ -447,16 +480,15 @@ async function _deleteCampaignStorage(key, isDefault, campaignName, resume, asse
         let entferntePosition = -1;
         let warAktiv = false;
         if (!isDefault) {
-            const current = getCampaignIndex();
-            const campaigns = current.campaigns || [];
+            const indexStand = readCampaignIndexStrict();
+            if (!indexStand.ok) throw new Error(indexStand.error);
+            const current = indexStand.index;
+            const campaigns = current.campaigns;
             entferntePosition = campaigns.findIndex(c => c && c.key === key);
-            entfernterEintrag = campaigns[entferntePosition] || {
-                key,
-                name: campaignName
-            };
+            entfernterEintrag = campaigns[entferntePosition] || null;
             warAktiv = current.active === key;
             const next = Object.assign({}, current, {
-                campaigns: campaigns.filter(c => c.key !== key)
+                campaigns: campaigns.filter(c => c?.key !== key)
             });
             if (warAktiv) next.active = APP_CONFIG.STORAGE_KEY;
             const indexResult = saveCampaignIndex(next);
@@ -529,7 +561,7 @@ async function _deleteCampaignStorage(key, isDefault, campaignName, resume, asse
             removal.reason === 'open' &&
             typeof window.confirmLocalOnlyCampaignRemoval === 'function'
         ) {
-            const entscheidung = window.confirmLocalOnlyCampaignRemoval(key, campaignName);
+            const entscheidung = window.confirmLocalOnlyCampaignRemoval(key, campaignName, assertHeld);
             if (entscheidung.removed) {
                 nurLokal = true;
                 dataRemoved = true;
@@ -574,16 +606,18 @@ async function _deleteCampaignStorage(key, isDefault, campaignName, resume, asse
                     'Kampagnendaten konnten nicht entfernt werden'
                 );
             }
-            if (isDefault) {
-                resume();
-                alert(
-                    '❌ Fehler beim Löschen:\n\nDie IndexedDB-Kopie konnte nicht entfernt werden. Es wurde nichts gelöscht.'
-                );
-                return;
-            }
+            const zurueck = indexEintragZuruecklegen();
+            resume();
+            const grund = removal?.stage === 'localStorage'
+                ? 'Die Kampagnendaten konnten nicht vollständig gelöscht werden. LocalStorage konnte nicht vollständig geleert werden.'
+                : 'Die IndexedDB-Kopie konnte nicht entfernt werden. Es wurde nichts gelöscht.';
             alert(
-                `⚠️ "${campaignName}" wurde aus der Liste entfernt, aber die gespeicherten Daten konnten nicht vollständig gelöscht werden.`
+                `❌ Fehler beim Löschen:\n\n${grund}\n\n` +
+                (zurueck
+                    ? 'Die Kampagne bleibt zur Sicherung und für einen erneuten Löschversuch geöffnet.'
+                    : 'Der Kampagneneintrag konnte nicht wiederhergestellt werden. Sichere den geöffneten Stand, bevor du neu lädst.')
             );
+            return;
         } else if (nurLokal) {
             // Ehrlich benennen, was geschehen ist. Die Auto-Backups dieser Kampagne werden
             // hier BEWUSST nicht entfernt (Abweichung von D2 = A): sie sind der einzige Weg
@@ -641,6 +675,7 @@ function renderCampaignList() {
 window.getCampaignIndex = getCampaignIndex;
 window.getCampaignDisplayName = getCampaignDisplayName;
 window.readCampaignIndexStrict = readCampaignIndexStrict;
+window.readCampaignWriteIdentity = readCampaignWriteIdentity;
 window.addCampaignWithData = addCampaignWithData;
 window.createCampaign = createCampaign;
 window.switchCampaign = switchCampaign;

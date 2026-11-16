@@ -156,6 +156,12 @@ async function load(options = {}) {
         ErrorHandler.log('load', error);
         return { ok: false, applied: false, source: null, reason: 'no-key', error };
     }
+    // Die Kennung muss zum gelesenen Datensatz gehören, auch wenn eine
+    // Kampagne während eines IndexedDB-Reads gelöscht und neu importiert wird.
+    const campaignIdentity = window.readCampaignWriteIdentity?.(key);
+    if (campaignIdentity === null) {
+        return { ok: false, applied: false, source: null, reason: 'not-found' };
+    }
     let source = null;
     let applied = false;
     let degraded = false;
@@ -244,12 +250,15 @@ async function load(options = {}) {
                 }
             }
         }
+        if (window.readCampaignWriteIdentity?.(key) !== campaignIdentity) {
+            return { ok: false, applied: false, source, reason: 'abandoned' };
+        }
         if (!s) {
             // Nichts gespeichert (frische Kampagne). R02: der Start setzt die Baseline. Beim
             // Neuladen (strictIdb) bleibt die bisherige — ein anderer Tab hat die Kampagne
             // entfernt; automatische Saves schreiben den verdraengten Stand nicht zurueck.
             if (!opts.strictIdb && typeof window.setPersistBaseline === 'function') {
-                window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp);
+                window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp, campaignIdentity);
             }
             return { ok: false, applied: false, source: null, reason: 'not-found' };
         }
@@ -297,7 +306,7 @@ async function load(options = {}) {
         // Parse-Fehler, ungueltige Struktur, aufgegeben) und der catch setzen keine — ein Tab,
         // der nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
         if (typeof window.setPersistBaseline === 'function') {
-            window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp);
+            window.setPersistBaseline(key, lsRaw, JSON.stringify(D), idbRecord, lsTimestamp, campaignIdentity);
         }
         if (degraded) {
             // R06-Nachtrag (F3, holistisch "write-paths" major): der localStorage-Schatten

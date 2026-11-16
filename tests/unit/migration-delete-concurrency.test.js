@@ -8,7 +8,11 @@ const {
 
 const KAMPAGNEN_KEY = 'dnd-campaign-111';
 const ALTE_KAMPAGNE = { key: KAMPAGNEN_KEY, name: 'Vor dem Umzug' };
-const IMPORTIERTE_KAMPAGNE = { key: KAMPAGNEN_KEY, name: 'Nach dem Umzug' };
+const IMPORTIERTE_KAMPAGNE = {
+    key: KAMPAGNEN_KEY,
+    name: 'Nach dem Umzug',
+    created: '2026-11-01T00:00:00.000Z'
+};
 
 function erfasseSperrtransaktion(ursprung, tab) {
     let transaktion;

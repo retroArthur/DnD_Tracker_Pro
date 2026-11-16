@@ -84,17 +84,10 @@ function updateSearchClear(input) {
 // SICHER: Verwendet DOMParser statt innerHTML um XSS beim Parsen zu verhindern
 function sanitizeHTML(html) {
     if (!html) return '';
-    // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
-    const cleaned = String(html)
-        .replace(new RegExp('<script[\\s\\S]*?</scr' + 'ipt>', 'gi'), '')
-        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
-        .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
-        .replace(/javascript\s*:/gi, '')
-        .replace(/vbscript\s*:/gi, '')
-        .replace(/data\s*:\s*text\/html/gi, '');
-    // Schritt 2: Verwende DOMParser (sicherer als innerHTML)
+    // Im inerten Dokument bleiben Text und Attributwerte getrennt.
     const parser = new DOMParser();
-    const doc = parser.parseFromString(cleaned, 'text/html');
+    const doc = parser.parseFromString(String(html), 'text/html');
+    for (const script of doc.querySelectorAll('script')) script.remove();
     // Erlaubte Tags und Attribute
     const allowedTags = [
         'b',

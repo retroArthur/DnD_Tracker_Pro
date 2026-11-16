@@ -30,6 +30,7 @@ let migrateCalls; // Argumente von migrateData (eines pro Kampagne)
 // bisherigen fest verdrahteten Wert, damit bestehende Tests unveraendert gruen
 // bleiben); die SEC-05-Tests ueberschreiben ihn gezielt.
 let diceFavoritesBacking;
+let diceFavoritesWriteError;
 // SEC-05: Referenz auf den window.getCampaignIndex-Mock, damit die
 // Index-Merge-Tests einen abweichenden LOKALEN Index simulieren koennen
 // (mockReturnValueOnce), ohne den Standardwert fuer alle anderen Tests zu aendern.
@@ -108,8 +109,11 @@ beforeAll(() => {
             }),
             // 12-07: schreibende Seite aufzeichnen — nur so laesst sich pruefen,
             // WAS beim Import ankommt (und dass bei Ablehnung nichts ankommt).
-            setJSON: jest.fn((key, value) => {
-                writtenKeys[key] = value;
+            setQuiet: jest.fn((key, value) => {
+                if (diceFavoritesWriteError && key === 'dnd-dice-favorites') {
+                    return { success: false, error: diceFavoritesWriteError };
+                }
+                writtenKeys[key] = JSON.parse(value);
                 return { success: true };
             }),
             get: jest.fn((key, fallback) => {
@@ -151,11 +155,14 @@ beforeEach(() => {
     writtenKeys = {};
     savedIndexCalls = [];
     migrateCalls = [];
+    diceFavoritesWriteError = null;
     // SEC-05: Default identisch zum vormals fest verdrahteten Rueckgabewert —
     // bestehende Tests (die diesen Wert erwarten) bleiben dadurch unveraendert gruen.
     diceFavoritesBacking = [{ id: 1, name: 'Angriff', formula: '1d20+5' }];
     getCampaignIndexMock.mockReturnValue({
-        campaigns: [{ key: 'dnd-tracker-data', name: 'Standard-Kampagne' }],
+        campaigns: [
+            { key: 'dnd-tracker-data', name: 'Standard-Kampagne', created: '2026-09-01' }
+        ],
         active: 'dnd-tracker-data'
     });
 });
@@ -216,6 +223,7 @@ describe('buildFullExport — Voll-Export-Format (TECH-02)', () => {
 describe('Export/Import-Rundlauf (SAFE-06)', () => {
     test('importFullExport(buildFullExport()) stellt Kampagnen, Index und Wuerfel-Favoriten wieder her', async () => {
         const exportObj = await buildFullExport();
+        diceFavoritesBacking = []; // Ziel-Browser ohne vorhandene Favoriten
         const result = await importFullExport(exportObj);
 
         // Kampagnendaten kommen unveraendert an
@@ -375,7 +383,7 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         // Zusicherung ein Blindgaenger (sie faende die Export-Lesestelle, nicht die
         // Import-Merge-Lesestelle, und wuerde auch gegen den Vor-Fix-Quelltext bestehen).
         const idxFavRead = src.indexOf('StorageAPI.getJSON(APP_CONFIG.DICE_FAV_KEY', idxFirstWrite);
-        const idxFavWrite = src.indexOf('StorageAPI.setJSON(APP_CONFIG.DICE_FAV_KEY', idxFirstWrite);
+        const idxFavWrite = src.indexOf('StorageAPI.setQuiet(APP_CONFIG.DICE_FAV_KEY', idxFirstWrite);
         expect(idxFavRead).toBeGreaterThan(-1);
         expect(idxFavWrite).toBeGreaterThan(-1);
         expect(idxFavRead).toBeLessThan(idxFavWrite);
@@ -487,18 +495,44 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
             { name: 'Feuerball-Schaden', notation: '8d6' }
         ]);
         expect(result.preservedFavoritesCount).toBe(2);
+        expect(result.failedDiceFavoritesCount).toBe(0);
+    });
+
+    test('meldet fehlgeschlagene Favoriten, ohne den bestätigten Kampagnenimport zurückzunehmen', async () => {
+        diceFavoritesBacking = [{ name: 'Initiative', notation: '1d20+3' }];
+        diceFavoritesWriteError = 'QUOTA_EXCEEDED';
+        getCampaignIndexMock.mockReturnValueOnce({ campaigns: [], active: 'dnd-tracker-data' });
+        const importObj = baueImport({
+            diceFavorites: [
+                ...diceFavoritesBacking,
+                { name: 'Heiltrank', notation: '2d4+2' }
+            ],
+            campaignIndex: { campaigns: [], active: 'dnd-tracker-data' }
+        });
+
+        expect(await importFullExport(importObj)).toMatchObject({
+            campaignCount: 1,
+            preservedFavoritesCount: 1,
+            failedDiceFavoritesCount: 1
+        });
+        expect(writtenKeys['dnd-tracker-data']).toEqual({ characters: [] });
+        expect(writtenKeys['dnd-dice-favorites']).toBeUndefined();
+        expect(savedIndexCalls).toEqual([importObj.campaignIndex]);
     });
 
     test('SEC-05 Test B: wortgleicher Favorit (Name UND Notation) entsteht nicht doppelt', async () => {
         diceFavoritesBacking = [{ name: 'Initiative', notation: '1d20+3' }];
+        diceFavoritesWriteError = 'QUOTA_EXCEEDED';
         const importObj = baueImport({
             diceFavorites: [{ name: 'Initiative', notation: '1d20+3' }],
             campaignIndex: { campaigns: [], active: 'dnd-tracker-data' }
         });
 
-        await importFullExport(importObj);
-
-        expect(writtenKeys['dnd-dice-favorites']).toEqual([{ name: 'Initiative', notation: '1d20+3' }]);
+        expect(await importFullExport(importObj)).toMatchObject({
+            preservedFavoritesCount: 1,
+            failedDiceFavoritesCount: 0
+        });
+        expect(writtenKeys['dnd-dice-favorites']).toBeUndefined();
     });
 
     test('SEC-05 Test C: lokal keine Favoriten -> exakt das bisherige Verhalten (WR-04 bleibt erfuellt)', async () => {
@@ -525,7 +559,13 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         const importObj = baueImport({
             diceFavorites: [],
             campaignIndex: {
-                campaigns: [{ key: 'dnd-tracker-data', name: 'Standard-Kampagne (importiert)' }],
+                campaigns: [
+                    {
+                        key: 'dnd-tracker-data',
+                        name: 'Standard-Kampagne (importiert)',
+                        created: '2026-09-01'
+                    }
+                ],
                 active: 'dnd-tracker-data'
             }
         });
@@ -533,7 +573,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         const result = await importFullExport(importObj);
 
         expect(savedIndexCalls[0].campaigns).toEqual([
-            { key: 'dnd-tracker-data', name: 'Standard-Kampagne (importiert)' },
+            { key: 'dnd-tracker-data', name: 'Standard-Kampagne (importiert)', created: '2026-09-01' },
             { key: 'dnd-campaign-999', name: 'Nur lokal vorhandene Kampagne' }
         ]);
         expect(savedIndexCalls[0].active).toBe('dnd-tracker-data');
@@ -549,7 +589,9 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         const importObj = baueImport({
             diceFavorites: [],
             campaignIndex: {
-                campaigns: [{ key: 'dnd-tracker-data', name: 'Neuer Name aus dem Import' }],
+                campaigns: [
+                    { key: 'dnd-tracker-data', name: 'Neuer Name aus dem Import', created: '2026-09-01' }
+                ],
                 active: 'dnd-tracker-data'
             }
         });
@@ -557,7 +599,7 @@ describe('SEC-05 — Wuerfel-Favoriten und Kampagnen-Index werden zusammengefueh
         await importFullExport(importObj);
 
         expect(savedIndexCalls[0].campaigns).toEqual([
-            { key: 'dnd-tracker-data', name: 'Neuer Name aus dem Import' }
+            { key: 'dnd-tracker-data', name: 'Neuer Name aus dem Import', created: '2026-09-01' }
         ]);
     });
 
@@ -675,8 +717,8 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
                         : fallback !== undefined
                           ? fallback
                           : null,
-                setJSON: (key, value) => {
-                    echtGeschrieben[key] = value;
+                setQuiet: (key, value) => {
+                    echtGeschrieben[key] = JSON.parse(value);
                     return { success: true };
                 },
                 get: (key, fallback) => {

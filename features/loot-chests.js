@@ -349,12 +349,14 @@ function pickLootChestEntry(entries, sample = Math.random()) {
         };
     }
 
-    function indexUniqueChestEntries(entries) {
+    function groupChestEntries(entries) {
         const byItem = new Map();
         for (const entry of entries) {
             const { weight: _dropWeight, ...item } = entry;
             const key = JSON.stringify(item);
-            byItem.set(key, byItem.has(key) ? null : entry);
+            const group = byItem.get(key) ?? [];
+            group.push(entry);
+            byItem.set(key, group);
         }
         return byItem;
     }
@@ -371,12 +373,14 @@ function pickLootChestEntry(entries, sample = Math.random()) {
             entries.forEach((entry, index) => carry(previousEntries[index], entry));
             return;
         }
-        // N57: Undo kann Zeilen verschieben. Ohne Zeilen-ID ist die Zuordnung bei
-        // geänderter Liste nur für eindeutige Einträge mit gleichem Gewicht sicher.
-        const previous = indexUniqueChestEntries(previousEntries);
-        for (const [key, entry] of indexUniqueChestEntries(entries)) {
+        // Undo kann andere Zeilen verschieben. Je Gegenstand bleiben die Entwürfe
+        // erhalten, wenn Anzahl und Reihenfolge der gespeicherten Gewichte gleich sind.
+        const previous = groupChestEntries(previousEntries);
+        for (const [key, group] of groupChestEntries(entries)) {
             const before = previous.get(key);
-            if (entry && before?.weight === entry.weight) carry(before, entry);
+            if (before?.length !== group.length) continue;
+            if (group.some((entry, index) => entry.weight !== before[index].weight)) continue;
+            group.forEach((entry, index) => carry(before[index], entry));
         }
     }
 

@@ -140,16 +140,32 @@ function _persistKeyMissing(where) {
  * snapshot das JSON des geladenen D. idbRecord ist der gelesene Datensatz,
  * null bei bestätigter Abwesenheit und undefined ohne IDB-Lesung.
  */
-function setPersistBaseline(key, stored, snapshot, idbRecord, stamp = StorageAPI.get(key + '_ts', null)) {
+function setPersistBaseline(
+    key,
+    stored,
+    snapshot,
+    idbRecord,
+    stamp = StorageAPI.get(key + '_ts', null),
+    campaignIdentity = window.readCampaignWriteIdentity?.(key)
+) {
     _persistBaseline = {
         key,
         stored: stored === undefined ? null : stored,
         rev: StorageAPI.get(key + '_rev', null),
         stamp,
         idbRecord,
+        campaignIdentity,
         snapshot: typeof snapshot === 'string' ? snapshot : null,
         external: false
     };
+}
+
+function _campaignWriteIdentityChanged(
+    key,
+    expected = _persistBaseline?.key === key ? _persistBaseline.campaignIdentity : undefined
+) {
+    const current = window.readCampaignWriteIdentity?.(key);
+    return current === null || (current !== undefined && current !== expected);
 }
 // Snapshot an D angleichen (init: Render-Normalisierungen sind keine Aenderung) — nur ohne
 // ausstehenden oder laufenden Save, sonst gaelte ungespeicherte Arbeit als gespeichert
@@ -179,6 +195,7 @@ function markExternalCampaignWrite(key, source) {
 function isCampaignStorageStale(key) {
     const b = _persistBaseline;
     if (!b || b.key !== key) return true;
+    if (_campaignWriteIdentityChanged(key)) return true;
     if (b.external) return true;
     if (StorageAPI.get(key + '_rev', null) !== b.rev) return true;
     if (StorageAPI.get(key + '_ts', null) !== b.stamp) return true;
@@ -195,6 +212,7 @@ function _watchPersistStorage(
 ) {
     const keys = [key + '_rev', key + '_ts', key];
     const previous = keys.map(k => StorageAPI.get(k, null));
+    const campaignIdentity = _persistBaseline?.key === key ? _persistBaseline.campaignIdentity : undefined;
     const foreignWrites = _foreignPersistWriteCount;
     let checkedIdbWrites = _foreignIdbWriteCount;
     let idbStateChanged = false;
@@ -232,6 +250,7 @@ function _watchPersistStorage(
         // Ist localStorage voll, kann auch der Revisionsmarker fehlen. Das
         // Konfliktsignal unterscheidet dann einen fremden IDB-Save vom eigenen.
         changed =
+            _campaignWriteIdentityChanged(key, campaignIdentity) ||
             ownGeneration > generation ||
             _foreignPersistWriteCount !== foreignWrites ||
             idbStateChanged ||
@@ -279,6 +298,24 @@ function _writeLocalCampaign(key, dataString, quiet = false) {
     }
     return stamp;
 }
+
+// Nach dem IDB-Commit darf kein abweichender, gestempelter LocalStorage-Stand führen.
+function _clearLeadingLocalCopy(key, dataString, generation, removeLocalData) {
+    if (_lsWriteGeneration >= generation) return true;
+    if (_campaignWritesRetired) {
+        _retiredPersistSkipped = true;
+        return true;
+    }
+    const dataRemoved = removeLocalData && StorageAPI.remove(key).success;
+    const stampRemoved = StorageAPI.remove(key + '_ts').success;
+    if (dataRemoved || stampRemoved) return true;
+
+    const local = StorageAPI.get(key, null);
+    if (!local || local === dataString || !StorageAPI.get(key + '_ts', null)) return true;
+    _reportPersistFailure();
+    return false;
+}
+
 // Gemeinsamer Erfolgspunkt aller Schreibpfade: neuer _rev-Marker (leise — kein zweiter
 // Quota-Toast; scheitert er, gilt der vorhandene), neue Baseline. lsValueNow ist der
 // localStorage-Wert NACH dem Save (im IndexedDB-Modus ggf. null).
@@ -319,6 +356,7 @@ function _onPersistSuccess(key, lsValueNow, dataString, generation, idbRecord) {
         rev: revision ?? StorageAPI.get(key + '_rev', null),
         stamp: StorageAPI.get(key + '_ts', null),
         idbRecord,
+        campaignIdentity: _persistBaseline?.key === key ? _persistBaseline.campaignIdentity : undefined,
         generation,
         snapshot: dataString,
         external: false
@@ -403,6 +441,16 @@ async function runWithCampaignSwitchProtection(fn) {
 }
 
 function _campaignSaveBlock(key) {
+    if (_campaignWriteIdentityChanged(key)) {
+        _lastPersistFailed = true;
+        window.updateSaveIndicator('error');
+        showToast(
+            '⚠️ Speichern abgebrochen. Diese Kampagne wurde gelöscht oder neu angelegt. Du kannst den geöffneten Stand noch exportieren.',
+            'warning',
+            8000
+        );
+        return 'campaign-removed';
+    }
     const rawConflict = _persistBaseline?.key === key && _persistBaseline.rawIdbConflict;
     if (!_campaignSwitchSaveProtected && !rawConflict) return null;
     _lastPersistFailed = true;
@@ -623,6 +671,10 @@ function persistOnUnload(event) {
     }
     const standSaveAus = !!saveTimeout; // vor cancelPendingSave() erfassen
     cancelPendingSave();
+    if (_campaignWriteIdentityChanged(key)) {
+        if (explicit) _askToStay(event);
+        return;
+    }
     const generation = ++_persistGeneration;
     if (_writeLocalCampaign(key, current).success) {
         _lsWriteGeneration = generation;
@@ -798,11 +850,8 @@ async function _saveImmediate(key, prepare) {
             const record = await saveToIndexedDBFallback(key, dataString, { storageChanged, verifyForeignIdb: true });
             if (storageChanged()) return { success: false, superseded: true, error: 'superseded' };
             // R04: erst nach dem Commit, nur ohne neueren LS-Write; F2: nie gesperrt.
-            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
-                StorageAPI.remove(key);
-                StorageAPI.remove(key + '_ts');
-            } else if (_lsWriteGeneration < generation) {
-                _retiredPersistSkipped = true;
+            if (!_clearLeadingLocalCopy(key, dataString, generation, true)) {
+                return { success: false, error: 'local-storage-shadow' };
             }
             _persistFailureStreak = false;
             const revision = confirmWrite(StorageAPI.get(key, null), record);
@@ -821,6 +870,7 @@ async function _saveImmediate(key, prepare) {
             return { success: true, backend: 'indexedDB' };
         }
         // Normaler localStorage-Save
+        if (storageChanged(true)) return { success: false, superseded: true, error: 'superseded' };
         const saveResult = _writeLocalCampaign(key, dataString);
         if (!saveResult.success) {
             // Fehler beim Speichern → werfe Error für catch-Block
@@ -871,11 +921,8 @@ async function _saveImmediate(key, prepare) {
             // R04: nur ohne neueren LS-Write; nach einem >5-MB-Retry auch keinen LS-Schatten
             // ohne _ts zuruecklassen (loest sonst beim Laden einen Schein-Konflikt aus).
             // R02-Nachtrag (F2): nicht unter der Schreibsperre.
-            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
-                StorageAPI.remove(key + '_ts');
-                if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
-            } else if (_lsWriteGeneration < generation) {
-                _retiredPersistSkipped = true;
+            if (!_clearLeadingLocalCopy(key, dataString, generation, retryAfterIdb)) {
+                return { success: false, error: 'local-storage-shadow' };
             }
             _persistFailureStreak = false;
             const revision = confirmWrite(StorageAPI.get(key, null), record);
@@ -1011,10 +1058,17 @@ async function saveToIndexedDBFallback(key, dataString, opts) {
                         const copyOfLocalData = current.result?.optionalCopy &&
                             StorageAPI.get(key + '_ts', null) &&
                             (lifecycleLocal || current.result.data === StorageAPI.get(key, null));
+                        // Bei führendem LS hat load() die alte IDB-Kopie nicht gelesen.
+                        // Nur ein nachweislich älterer Datensatz darf in diesem Fall weichen.
+                        const localStamp = Number(protectedBaseline?.stamp);
+                        const idbStamp = current.result?.timestamp;
+                        const historicalIdbCopy = lifecycleLocal && before.record === undefined &&
+                            Number.isFinite(localStamp) && Number.isFinite(idbStamp) &&
+                            idbStamp < localStamp;
                         const matches = before.record == null
                             ? current.result == null
                             : _matchesCampaignRecord(before.record, current.result);
-                        if (matches || previousOwnSave || copyOfLocalData) {
+                        if (matches || previousOwnSave || copyOfLocalData || historicalIdbCopy) {
                             if (!protectedBaseline) storageChanged.confirmIdbState();
                         } else {
                             storageChanged.rejectIdbState();
@@ -1519,12 +1573,7 @@ async function _persistNow(showMessage = false, automaticOnly = false, { lifecyc
             if (storageChanged()) return;
             // R04: erst nach dem Commit, und nur ohne neueren LS-Write.
             // R02-Nachtrag (F2): nicht unter der Schreibsperre.
-            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
-                StorageAPI.remove(key);
-                StorageAPI.remove(key + '_ts');
-            } else if (_lsWriteGeneration < generation) {
-                _retiredPersistSkipped = true;
-            }
+            if (!_clearLeadingLocalCopy(key, dataString, generation, true)) return;
             _persistFailureStreak = false;
             const revision = _onPersistSuccess(key, StorageAPI.get(key, null), dataString, generation, record);
             updateSaveIndicator('saved');
@@ -1541,6 +1590,7 @@ async function _persistNow(showMessage = false, automaticOnly = false, { lifecyc
             }
             return;
         }
+        if (storageChanged(true)) return;
         const saveResult = _writeLocalCampaign(key, dataString);
         if (!saveResult.success) {
             throw new Error(saveResult.error);
@@ -1562,12 +1612,7 @@ async function _persistNow(showMessage = false, automaticOnly = false, { lifecyc
             const record = await saveToIndexedDBFallback(key, dataString, indexedDbOptions);
             if (storageChanged()) return;
             // R02-Nachtrag (F2): nicht unter der Schreibsperre raeumen
-            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
-                StorageAPI.remove(key + '_ts');
-                if (useIdb) StorageAPI.remove(key);
-            } else if (_lsWriteGeneration < generation) {
-                _retiredPersistSkipped = true;
-            }
+            if (!_clearLeadingLocalCopy(key, dataString, generation, retryAfterIdb)) return;
             _persistFailureStreak = false;
             const revision = _onPersistSuccess(key, StorageAPI.get(key, null), dataString, generation, record);
             updateSaveIndicator('saved');

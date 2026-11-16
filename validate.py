@@ -8,72 +8,30 @@ import os
 import re
 from pathlib import Path
 
+from build import load_css_import_order, load_module_list, load_template_list, require_files_exist
+
 SOURCE_DIR = str(Path(__file__).parent)
 
-def check_html_tags_in_js():
-    """Überprüft, ob JavaScript-Module HTML-Tags enthalten"""
-    print("🔍 Überprüfe JavaScript-Module auf HTML-Tags...")
-    
-    js_dirs = ['core', 'utils', 'systems', 'render', 'features', 'ui']
-    errors = []
-    
-    for js_dir in js_dirs:
-        dir_path = f"{SOURCE_DIR}/{js_dir}"
-        if not os.path.exists(dir_path):
-            continue
-            
-        for filename in os.listdir(dir_path):
-            if filename.endswith('.js'):
-                filepath = os.path.join(dir_path, filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    
-                # Suche nach HTML-Tags
-                html_tags = re.findall(r'</?(?:html|head|body|script|style)(?:\s|>)', content)
-                if html_tags:
-                    errors.append(f"  ❌ {js_dir}/{filename}: {set(html_tags)}")
-    
-    if errors:
-        print(f"  ❌ HTML-Tags gefunden in {len(errors)} Datei(en):")
-        for error in errors:
-            print(error)
-        return False
-    else:
-        print("  ✅ Keine HTML-Tags in JavaScript-Modulen")
-        return True
 
-def check_body_html():
-    """Überprüft body.html auf korrekte Tags"""
-    print("\n🔍 Überprüfe body.html...")
-    
-    body_file = f"{SOURCE_DIR}/assets/body.html"
-    
-    if not os.path.exists(body_file):
-        print("  ❌ body.html nicht gefunden!")
-        return False
-    
-    with open(body_file, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        first_line = lines[0].strip() if lines else ""
-        
-        # Sollte mit <body> beginnen
-        if not first_line.startswith('<body'):
-            print(f"  ❌ body.html beginnt nicht mit <body> (gefunden: {first_line[:50]})")
-            return False
-        
-        # Sollte NICHT mit </head> beginnen
-        if first_line.startswith('</head>'):
-            print("  ❌ body.html beginnt mit </head> (sollte entfernt sein)")
-            return False
-        
-        # Sollte KEIN </body> enthalten
-        content = ''.join(lines)
-        if '</body>' in content:
-            print("  ❌ body.html enthält </body> Tag (sollte nicht da sein)")
-            return False
-        
-        print("  ✅ body.html ist korrekt strukturiert")
-        return True
+def check_modules():
+    print("\n🔍 Überprüfe JavaScript-Module aus loader.js...")
+    modules = load_module_list(f"{SOURCE_DIR}/loader.js")
+    require_files_exist(SOURCE_DIR, modules, 'JS-Modul')
+    return True
+
+
+def check_templates():
+    print("\n🔍 Überprüfe HTML-Templates aus loader.js...")
+    templates = load_template_list(f"{SOURCE_DIR}/loader.js")
+    require_files_exist(SOURCE_DIR, templates, 'HTML-Template')
+    return True
+
+
+def check_stylesheets():
+    print("\n🔍 Überprüfe CSS-Imports aus assets/styles.css...")
+    css_files = load_css_import_order(f"{SOURCE_DIR}/assets/styles.css")
+    require_files_exist(SOURCE_DIR, [f"assets/styles/{name}" for name in css_files], 'CSS-Datei')
+    return True
 
 def check_index_html():
     """Überprüft index.html auf korrekte Skript-Tags"""
@@ -154,42 +112,6 @@ def check_init_js():
         print("  ✅ core/init.js ist korrekt konfiguriert")
         return True
 
-def check_module_count():
-    """Überprüft, ob alle erwarteten Module vorhanden sind"""
-    print("\n🔍 Überprüfe Modul-Anzahl...")
-    
-    expected_modules = {
-        'core': 4,  # config.js, data.js, constants.js, init.js
-        'utils': 3,
-        'systems': 8,
-        'render': 2,
-        'features': 3,
-        'ui': 4
-    }
-    
-    all_correct = True
-    total_found = 0
-    
-    for folder, expected_count in expected_modules.items():
-        folder_path = f"{SOURCE_DIR}/{folder}"
-        if not os.path.exists(folder_path):
-            print(f"  ❌ Ordner {folder}/ nicht gefunden!")
-            all_correct = False
-            continue
-        
-        js_files = [f for f in os.listdir(folder_path) if f.endswith('.js')]
-        count = len(js_files)
-        total_found += count
-        
-        if count != expected_count:
-            print(f"  ⚠️ {folder}/: {count} Module (erwartet: {expected_count})")
-            all_correct = False
-        else:
-            print(f"  ✅ {folder}/: {count} Module")
-    
-    print(f"\n  📦 Gesamt: {total_found} Module")
-    return all_correct
-
 def check_bundled_version():
     """Überprüft die gebündelte Version"""
     print("\n🔍 Überprüfe gebündelte Version...")
@@ -237,18 +159,25 @@ def main():
     print()
     
     checks = [
-        ("HTML-Tags in JS", check_html_tags_in_js),
-        ("body.html", check_body_html),
         ("index.html", check_index_html),
         ("loader.js", check_loader_js),
         ("core/init.js", check_init_js),
-        ("Module-Anzahl", check_module_count),
+        ("JavaScript-Module", check_modules),
+        ("HTML-Templates", check_templates),
+        ("CSS-Imports", check_stylesheets),
         ("Gebündelte Version", check_bundled_version),
     ]
     
     results = []
     for name, check_func in checks:
-        result = check_func()
+        try:
+            result = check_func()
+        except SystemExit:
+            # Die Build-Prüfungen geben den Fehler aus, bevor sie abbrechen.
+            result = False
+        except OSError as error:
+            print(f"  ❌ {error}")
+            result = False
         results.append((name, result))
     
     # Zusammenfassung
