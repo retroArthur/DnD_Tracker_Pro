@@ -90,6 +90,10 @@ async function selectExactTextRange(page, matchText) {
 
 async function saveAndReopenWikiEntry(page, title) {
     await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+    // Erst nach dem bestätigten Save neu laden, auch wenn ein früherer Save
+    // die Anzeige bereits aktualisiert hat und noch Arbeit aussteht.
+    await expect(page.locator('#save-indicator')).toHaveClass(/\bsaved\b/);
+    await page.waitForFunction(() => !window.hasExplicitPendingWork());
     await page.reload();
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('wiki'));
@@ -109,6 +113,58 @@ async function saveAndReopenWikiEntry(page, title) {
     const editor = page.locator('#wiki-content');
     await expect(editor).toBeVisible();
     return editor;
+}
+
+async function roundtripWithHeldCommit(page, title) {
+    const initialSave = await page.evaluate(async () => {
+        window.D.quickNotes = 'X'.repeat(5 * 1024 * 1024 + 1);
+        return window.saveImmediate();
+    });
+    expect(initialSave).toMatchObject({ success: true, backend: 'indexedDB' });
+    await page.evaluate(() => {
+        const write = window.idbWriteTx;
+        window.wikiCommitConfirmed = false;
+        window.idbWriteTx = (stores, ...args) => {
+            if (!stores.includes('campaigns')) return write(stores, ...args);
+            window.idbWriteTx = write;
+            return new Promise((resolve, reject) => {
+                window.releaseWikiCommit = () => {
+                    delete window.releaseWikiCommit;
+                    return write(stores, ...args).then(result => {
+                        window.wikiCommitConfirmed = true;
+                        resolve(result);
+                    }, reject);
+                };
+            });
+        };
+    });
+    const reload = page.reload.bind(page);
+    let reloadRequested = false;
+    page.reload = async options => {
+        reloadRequested = true;
+        expect(await page.evaluate(() => window.wikiCommitConfirmed)).toBe(true);
+        return reload(options);
+    };
+    const roundtrip = saveAndReopenWikiEntry(page, title).then(
+        editor => ({ editor }),
+        error => ({ error })
+    );
+    try {
+        await page.waitForFunction(() => typeof window.releaseWikiCommit === 'function');
+        expect(reloadRequested).toBe(false);
+        const savedTitles = await page.evaluate(async () => {
+            const record = await window.loadFromIndexedDBFallbackRaw(window.getActiveCampaignKey());
+            return JSON.parse(record.data).wiki.map(entry => entry.title);
+        });
+        expect(savedTitles).not.toContain(title);
+        await page.evaluate(() => window.releaseWikiCommit());
+        const result = await roundtrip;
+        if (result.error) throw result.error;
+        return result.editor;
+    } finally {
+        await page.evaluate(() => window.releaseWikiCommit?.()).catch(() => {});
+        page.reload = reload;
+    }
 }
 
 // Empirisch erhobene Erwartungswerte (nach Aktion), 09-BASELINE.md-konform.
@@ -569,6 +625,22 @@ test.describe('Persistenz-Roundtrip (floating)', () => {
             '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); padding: 0px 2px">Probetext</mark>'
         );
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Highlight wartet vor dem Reload auf den bestätigten IndexedDB-Commit', async ({
+        page
+    }) => {
+        const title = 'Floating RT Held Commit';
+        await openFreshWikiForm(page, title);
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
+        const reopened = await roundtripWithHeldCommit(page, title);
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); padding: 0px 2px">Probetext</mark>'
+        );
     });
 });
 

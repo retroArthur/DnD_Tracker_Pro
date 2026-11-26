@@ -14,7 +14,8 @@ function initPWA() {
     }
     // beforeinstallprompt Event abfangen
     window.addEventListener('beforeinstallprompt', e => {
-        if (StorageAPI.has('pwa-installed')) return;
+        // Ein neuer Browser-Prompt bestätigt die Installierbarkeit auch nach
+        // einer Deinstallation mit erhaltenen Browserdaten.
         e.preventDefault();
         deferredPrompt = e;
         // Der Mobil-Kopf übernimmt die Sichtbarkeit dieses Knopfs.
@@ -25,8 +26,7 @@ function initPWA() {
     window.addEventListener('appinstalled', () => {
         log('[PWA] App wurde installiert');
         deferredPrompt = null;
-        StorageAPI.set('pwa-installed', 'true');
-        // Header-Button dauerhaft ausblenden
+        // Der aktuelle Prompt ist nach erfolgreicher Installation verbraucht.
         const btn = window.$('pwa-install-btn');
         if (btn) btn.style.display = 'none';
     });

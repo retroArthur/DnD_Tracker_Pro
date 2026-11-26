@@ -34,7 +34,9 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { replacePathSepForRegex } = require('jest-regex-util');
 
 const REPO = path.resolve(__dirname, '..', '..');
@@ -74,6 +76,45 @@ function echteTestdateien() {
 }
 
 describe('Jest sammelt nur den eigenen Baum', () => {
+    test('ein kalter Modulindex ignoriert fremde Pakete und erhält eigene Tests', () => {
+        const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'dnd-jest-cold-'));
+        try {
+            const foreign = path.join(fixture, '.claude', '.claude', 'worktrees', 'probe');
+            fs.mkdirSync(foreign, { recursive: true });
+            const packageJSON = JSON.stringify({ name: 'dnd-jest-cold-regression' });
+            fs.writeFileSync(path.join(fixture, 'package.json'), packageJSON);
+            fs.writeFileSync(path.join(foreign, 'package.json'), packageJSON);
+            fs.writeFileSync(path.join(foreign, 'foreign.test.js'), "test('foreign', () => {});");
+            const ownTests = ['own.test.js', 'xclaude/visible.test.js', '.claudex/visible.test.js'];
+            for (const relative of ownTests) {
+                const file = path.join(fixture, relative);
+                fs.mkdirSync(path.dirname(file), { recursive: true });
+                fs.writeFileSync(file, "test('own', () => {});");
+            }
+            const result = spawnSync(process.execPath, [
+                require.resolve('jest/bin/jest'),
+                '--config', JSON.stringify({
+                    ...config,
+                    rootDir: fixture,
+                    roots: [fixture],
+                    setupFilesAfterEnv: [],
+                    transform: {},
+                    testEnvironment: 'node',
+                    cacheDirectory: path.join(fixture, 'cache')
+                }),
+                '--listTests', '--json', '--runInBand', '--no-cache'
+            ], { cwd: fixture, encoding: 'utf8', timeout: 15000 });
+            expect(result.error).toBeUndefined();
+            expect(result.status).toBe(0);
+            expect(result.stdout + result.stderr).not.toContain('Haste module naming collision');
+            expect(JSON.parse(result.stdout).sort()).toEqual(
+                ownTests.map(relative => path.join(fixture, relative)).sort()
+            );
+        } finally {
+            fs.rmSync(fixture, { recursive: true, force: true });
+        }
+    }, 20000);
+
     test('ein verschachtelter Worktree unter .claude wird nicht gesammelt', () => {
         const re = ignorierMuster();
         expect(re).not.toBeNull();

@@ -86,6 +86,10 @@ module.exports = {
   testTimeout: 10000,
   
   // Ignore Patterns
+  // Der Modulindex entsteht vor der Testauswahl. Auch Paketnamen aus
+  // verschachtelten Worktrees ausschließen, damit ein kalter Cache keine
+  // Namenskollision erzeugt. Die eigenen Quellverzeichnisse bleiben für Coverage sichtbar.
+  modulePathIgnorePatterns: ['/\\.claude/'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',

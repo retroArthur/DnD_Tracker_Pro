@@ -30,6 +30,10 @@ async function openFreshWikiForm(page, title) {
 
 async function saveAndReopenWikiEntry(page, title) {
     await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+    // Erst nach dem bestätigten Save neu laden, auch wenn ein früherer Save
+    // die Anzeige bereits aktualisiert hat und noch Arbeit aussteht.
+    await expect(page.locator('#save-indicator')).toHaveClass(/\bsaved\b/);
+    await page.waitForFunction(() => !window.hasExplicitPendingWork());
     await page.reload();
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('wiki'));
@@ -49,6 +53,58 @@ async function saveAndReopenWikiEntry(page, title) {
     const editor = page.locator('#wiki-content');
     await expect(editor).toBeVisible();
     return editor;
+}
+
+async function roundtripWithHeldCommit(page, title) {
+    const initialSave = await page.evaluate(async () => {
+        window.D.quickNotes = 'X'.repeat(5 * 1024 * 1024 + 1);
+        return window.saveImmediate();
+    });
+    expect(initialSave).toMatchObject({ success: true, backend: 'indexedDB' });
+    await page.evaluate(() => {
+        const write = window.idbWriteTx;
+        window.wikiCommitConfirmed = false;
+        window.idbWriteTx = (stores, ...args) => {
+            if (!stores.includes('campaigns')) return write(stores, ...args);
+            window.idbWriteTx = write;
+            return new Promise((resolve, reject) => {
+                window.releaseWikiCommit = () => {
+                    delete window.releaseWikiCommit;
+                    return write(stores, ...args).then(result => {
+                        window.wikiCommitConfirmed = true;
+                        resolve(result);
+                    }, reject);
+                };
+            });
+        };
+    });
+    const reload = page.reload.bind(page);
+    let reloadRequested = false;
+    page.reload = async options => {
+        reloadRequested = true;
+        expect(await page.evaluate(() => window.wikiCommitConfirmed)).toBe(true);
+        return reload(options);
+    };
+    const roundtrip = saveAndReopenWikiEntry(page, title).then(
+        editor => ({ editor }),
+        error => ({ error })
+    );
+    try {
+        await page.waitForFunction(() => typeof window.releaseWikiCommit === 'function');
+        expect(reloadRequested).toBe(false);
+        const savedTitles = await page.evaluate(async () => {
+            const record = await window.loadFromIndexedDBFallbackRaw(window.getActiveCampaignKey());
+            return JSON.parse(record.data).wiki.map(entry => entry.title);
+        });
+        expect(savedTitles).not.toContain(title);
+        await page.evaluate(() => window.releaseWikiCommit());
+        const result = await roundtrip;
+        if (result.error) throw result.error;
+        return result.editor;
+    } finally {
+        await page.evaluate(() => window.releaseWikiCommit?.()).catch(() => {});
+        page.reload = reload;
+    }
 }
 
 // Erwartete Werte aus 09-BASELINE.md (Zeile 574, Abschnitt A1): Enter (ohne
@@ -716,6 +772,23 @@ test.describe('Persistenz-Roundtrip (Insert-Call-Sites)', () => {
         );
         const tdCount = await reopened.locator('td').count();
         expect(tdCount).toBe(2);
+    });
+
+    test('Tabellen-HTML wartet vor dem Reload auf den bestätigten IndexedDB-Commit', async ({
+        page
+    }) => {
+        const title = 'RT Insert Held Commit';
+        await openFreshWikiForm(page, title);
+        await pasteInto(page, '#wiki-content', {
+            html: '<table><tr><td>A</td><td>B</td></tr></table>',
+            text: 'A\tB'
+        });
+        const reopened = await roundtripWithHeldCommit(page, title);
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            '<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B</td></tr></tbody></table>'
+        );
+        expect(await reopened.locator('td').count()).toBe(2);
     });
 });
 

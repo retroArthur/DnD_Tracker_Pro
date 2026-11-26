@@ -170,8 +170,13 @@ test('PWA-Installation am Telefon ist nur mit unverbrauchtem Prompt verfügbar',
     await expect(installieren).toBeVisible();
     await page.evaluate(() => window.dispatchEvent(new Event('appinstalled')));
     await expect(installieren).toHaveCount(0);
-    await simulierePwaPrompt(page);
-    await expect(installieren).toHaveCount(0);
+    // Ein neuer Browser-Prompt gibt die Installation nach einer Deinstallation wieder frei.
+    expect(await simulierePwaPrompt(page)).toBe(true);
+    await expect(installieren).toBeVisible();
+    await installieren.click();
+    expect(await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.anzahl)).toBe(1);
+    await expect(menue).toBeHidden();
+    await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.entscheide());
 });
 
 test('PWA-Installation bleibt über den Desktop-Knopf bedienbar', async ({ page }) => {
@@ -185,6 +190,52 @@ test('PWA-Installation bleibt über den Desktop-Knopf bedienbar', async ({ page 
     await expect(installieren).toBeHidden();
     await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.entscheide());
 });
+
+for (const { breite, hoehe, modus } of [
+    { breite: 1440, hoehe: 900, modus: 'Desktop' },
+    { breite: 390, hoehe: 844, modus: 'Telefon' }
+]) {
+    test(`PWA-Neuinstallation mit erhaltenen Browserdaten ist am ${modus} verfügbar`, async ({ page }) => {
+        await ladenDannVerkleinern(page, breite, hoehe);
+        const notizLaenge = 5 * 1024 * 1024 + 1;
+        const gespeichert = await page.evaluate(async laenge => {
+            window.D.quickNotes = 'X'.repeat(laenge);
+            const ergebnis = await window.saveImmediate();
+            localStorage.setItem('pwa-regression-setting', 'erhaltene Einstellung');
+            window.dispatchEvent(new Event('appinstalled'));
+            // Ein vor der Deinstallation gespeicherter Marker kann aus einem älteren Build stammen.
+            localStorage.setItem('pwa-installed', 'true');
+            return ergebnis;
+        }, notizLaenge);
+        expect(gespeichert).toMatchObject({ success: true, backend: 'indexedDB' });
+
+        await ladenDannVerkleinern(page, breite, hoehe, true);
+        expect(await simulierePwaPrompt(page)).toBe(true);
+        const installieren = modus === 'Telefon'
+            ? page.locator('#mobile-header-menu [data-action="install-pwa"]')
+            : page.locator('#pwa-install-btn');
+        if (modus === 'Telefon') await page.locator('#mobile-header-menu-btn').click();
+        await expect(installieren).toBeVisible();
+        await installieren.click();
+        expect(await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.anzahl)).toBe(1);
+        await expect(installieren).toBeHidden();
+        await page.evaluate(() => /** @type {any} */ (window).__pwaProbe.entscheide());
+
+        expect(await page.evaluate(async () => {
+            const key = window.getActiveCampaignKey();
+            const record = await window.loadFromIndexedDBFallbackRaw(key);
+            return {
+                notizLaenge: window.D.quickNotes.length,
+                gespeichert: JSON.parse(record.data).quickNotes.length,
+                einstellung: localStorage.getItem('pwa-regression-setting')
+            };
+        })).toEqual({
+            notizLaenge,
+            gespeichert: notizLaenge,
+            einstellung: 'erhaltene Einstellung'
+        });
+    });
+}
 
 /** Die drei Telefonbreiten dieser Datei. 320 ist die kleinste Geraeteklasse,
  *  die der C1-Block in `core.css` namentlich fuehrt. */
