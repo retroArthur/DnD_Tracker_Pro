@@ -103,8 +103,9 @@
  * denselben Zauber zweimal. Der SRD-Typ, den ✏️ → 💾 auf "spell"
  * umschreibt, und das verdeckte Materialfeld.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
@@ -116,6 +117,16 @@ const SPEICHER = 'dnd-tracker-v4';
 
 /** Wie lange "sofort" dauern darf: `save()` entprellt 300 ms. */
 const SOFORT_MS = 4000;
+
+test.beforeEach(async ({ context }) => {
+    // Die Formularfälle beginnen nach dem Erststart, auch mit leerer Zauberliste.
+    await context.addInitScript(() => {
+        localStorage.setItem(
+            'migration-wizard-shown',
+            JSON.stringify({ shown: true, skipped: true })
+        );
+    });
+});
 
 /** Zauber A: JEDES Feld des Formulars gefuellt, und zwar ungleich den
  *  Vorgaben von `clearSpellForm()` (Zeit, Reichweite als eigene Eingabe,
@@ -213,7 +224,7 @@ function seed(spells) {
 /**
  * Faengt jeden Fehler, den ein Bedienweg hinterlaesst: `pageerror`,
  * `console.error` und das Fehlerlog der App. "Failed to load resource" ist
- * Netzrauschen (Schriften unter file://).
+ * Netzrauschen (nicht verfuegbare Schriften).
  * @param {import('@playwright/test').Page} page
  */
 function fehlerFangen(page) {
@@ -251,29 +262,25 @@ async function zuDenZaubern(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die Zauber-Ansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit ueber die lokale HTTP-Origin und oeffnet die Zauber-Ansicht.
+ * Das Startskript wird nach dem ersten Laden entfernt: ein `page.reload()`
+ * liest ausschliesslich, was die App gespeichert hat, auch ohne Sitzungsmarker.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} spells
  */
 async function zauberLaden(page, spells) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('zauber-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('zauber-anlegen-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(spells)]
+        [SPEICHER, seed(spells)],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` etwa 1,4 s
     // spaeter den ganzen Stand aus D (siehe npc-formular.spec.js). Erkennbar
@@ -296,8 +303,7 @@ async function zauberLaden(page, spells) {
     await zuDenZaubern(page);
 }
 
-/** Neu laden und warten, bis die App steht — die Saat greift dank der
- *  Sperre nicht noch einmal.
+/** Neu laden und warten, bis die App steht — ohne erneute Saat.
  *  @param {import('@playwright/test').Page} page */
 async function neuLaden(page) {
     await page.reload();
@@ -760,54 +766,59 @@ test('(3) R4 geloescht: ✏️ → ✕ → 🗑️ → "+ Zauber": leeres Formul
 // zugleich der R1-Fall dieses Anlege-Wegs. Vor dem Fix (gemessen): id "1",
 // 💾 speicherte nichts, D blieb [] und die Liste zeigte weiter "Keine
 // Zauber"; das erste Strg+Z danach aenderte nichts.
-test('(4) R4 geloescht: ✏️ → Escape → 🗑️ des letzten → "➕ Zauber erstellen": leeres Formular, 💾 speichert', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    page.on('dialog', d => d.accept());
-    await zauberLaden(page, [FEUERBALL]);
+for (const fehlenderSitzungsmarker of [false, true]) {
+    test(`(4) R4 geloescht: ✏️ → Escape → 🗑️ des letzten → "➕ Zauber erstellen": leeres Formular, 💾 speichert${
+        fehlenderSitzungsmarker ? ' (ohne Sitzungsmarker beim Neuladen)' : ''
+    }`, async ({ page }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        page.on('dialog', d => d.accept());
+        await zauberLaden(page, [FEUERBALL]);
 
-    await bearbeiten(page, 1);
-    await escape(page);
-    const revLoeschen = await revStand(page);
-    await loeschen(page, 1);
-    await expect(leereListeKnopf(page), 'Vorbedingung: die Liste ist leer').toBeVisible();
-    // Wie in (3): das Schreiben des Loeschens darf nicht als das des
-    // neuen Zaubers durchgehen.
-    await geschriebenSeit(page, revLoeschen, '🗑️');
+        await bearbeiten(page, 1);
+        await escape(page);
+        const revLoeschen = await revStand(page);
+        await loeschen(page, 1);
+        await expect(leereListeKnopf(page), 'Vorbedingung: die Liste ist leer').toBeVisible();
+        // Wie in (3): das Schreiben des Loeschens darf nicht als das des
+        // neuen Zaubers durchgehen.
+        await geschriebenSeit(page, revLoeschen, '🗑️');
 
-    await leereListeKnopf(page).click();
-    await expect(page.locator('#spell-modal')).toHaveClass(/\bshow\b/);
-    weich(await formular(page), '"➕ Zauber erstellen" nach ✏️ → Escape → 🗑️').toEqual(LEER);
-    await page.locator('#spell-name').fill('Magisches Geschoss');
-    const stand = await meldungsStand(page);
-    const rev = await revStand(page);
-    await speichern(page);
-    await geschriebenSeit(page, rev, '"➕ Zauber erstellen" → 💾');
+        await leereListeKnopf(page).click();
+        await expect(page.locator('#spell-modal')).toHaveClass(/\bshow\b/);
+        weich(await formular(page), '"➕ Zauber erstellen" nach ✏️ → Escape → 🗑️').toEqual(LEER);
+        await page.locator('#spell-name').fill('Magisches Geschoss');
+        const stand = await meldungsStand(page);
+        const rev = await revStand(page);
+        await speichern(page);
+        await geschriebenSeit(page, rev, '"➕ Zauber erstellen" → 💾');
 
-    weich(await namenInD(page), 'D: der neue Zauber ist da').toEqual(['Magisches Geschoss']);
-    // Kurze Frist: saveSpell() zeichnet die Liste synchron, und das
-    // Schreiben ist oben schon abgewartet — laenger warten aendert nichts.
-    await weich(
-        page.locator('#spell-list .spell-card'),
-        'die Liste zeigt den neuen Zauber'
-    ).toHaveCount(1, { timeout: 1000 });
-    weich(await undoKopf(page), 'kein leerer Eintrag "Zauber bearbeitet"').toEqual({
-        aktion: 'Zauber erstellt',
-        leer: false
+        weich(await namenInD(page), 'D: der neue Zauber ist da').toEqual(['Magisches Geschoss']);
+        // Kurze Frist: saveSpell() zeichnet die Liste synchron, und das
+        // Schreiben ist oben schon abgewartet — laenger warten aendert nichts.
+        await weich(
+            page.locator('#spell-list .spell-card'),
+            'die Liste zeigt den neuen Zauber'
+        ).toHaveCount(1, { timeout: 1000 });
+        weich(await undoKopf(page), 'kein leerer Eintrag "Zauber bearbeitet"').toEqual({
+            aktion: 'Zauber erstellt',
+            leer: false
+        });
+        weich(
+            aktualisiertMeldungen(await meldungenSeit(page, stand)),
+            'keine Meldung "… aktualisiert"'
+        ).toEqual([]);
+        weich(await namenImSpeicher(page), 'localStorage').toEqual(['Magisches Geschoss']);
+
+        if (fehlenderSitzungsmarker) {
+            await page.evaluate(() => sessionStorage.removeItem('zauber-anlegen-gesaet'));
+        }
+        await neuLaden(page);
+        weich(await namenInD(page), 'nach dem Neuladen').toEqual(['Magisches Geschoss']);
+
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
     });
-    weich(
-        aktualisiertMeldungen(await meldungenSeit(page, stand)),
-        'keine Meldung "… aktualisiert"'
-    ).toEqual([]);
-    weich(await namenImSpeicher(page), 'localStorage').toEqual(['Magisches Geschoss']);
-
-    await neuLaden(page);
-    weich(await namenInD(page), 'nach dem Neuladen').toEqual(['Magisches Geschoss']);
-
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
+}
 
 // ===========================================================================
 // (5) R4: STRG+Z MIT DEM FOKUS IM FELD NIMMT DEN ZAUBER UNTER DEM FORMULAR WEG

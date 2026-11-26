@@ -149,10 +149,9 @@
  *   - Telefon, Bestiarium → Encounter und Encounter-Rechner (legen ohne
  *     Formular an), Kampagnen-Import "Ersetzen" (eigener Vorgang).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
-
-const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 /** Breit — Liste und Detail mit ✏️ und 🗑️ stehen erst ueber 900 px. */
 const BREIT = { width: 1440, height: 900 };
@@ -301,29 +300,25 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die Encounter-Ansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit mit stabiler HTTP-Origin und oeffnet die Encounter-Ansicht.
+ * Der Seed wird nach dem Erststart entfernt: ein Reload liest den gespeicherten
+ * Stand auch dann, wenn der Sitzungsspeicher verloren geht.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} encounters
  */
 async function encounterLaden(page, encounters) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('encounter-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('encounter-anlegen-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(encounters)]
+        [SPEICHER, seed(encounters)],
+        async () => {
+            await page.goto(httpAppUrl(page));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     await page.evaluate(() => window.switchView('encounter'));
     await expect(page.locator('#view-encounter')).toBeVisible();
 }
@@ -653,7 +648,7 @@ async function bestand(page, wo, namen, unberuehrt) {
     );
 }
 
-/** Neu laden (die Saat-Sperre haelt) und den Bestand in D pruefen.
+/** Neu laden (der Seed ist entfernt) und den Bestand in D pruefen.
  *  @param {import('@playwright/test').Page} page
  *  @param {string[]} namen
  *  @param {object} unberuehrt */
@@ -1378,41 +1373,49 @@ test('(12) R7: Schnell-Vorlage "Goblin" bei offenem ✏️ Goblinboss: ohne ID, 
 // er es nach dem Fix weiter tut (Vertrag R1: "bleibt, wie er ist"). Gewaehlt
 // ueber Rolle und Text IN der Liste — die Kopfzeile traegt denselben Text,
 // ist aber kein Knopf und liegt nicht in #encounter-list.
-test('(13) R1 (Kontrolle): ✏️ → Kopfzeile zu → 🗑️ des letzten → "+ Encounter erstellen" der leeren Liste ist leer und legt NEU an', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    page.on('dialog', d => d.accept());
-    await encounterLaden(page, [GOBLINBOSS]);
+for (const sitzungVerloren of [false, true]) {
+    test(`(13) R1 (Kontrolle): ✏️ → Kopfzeile zu → 🗑️ des letzten → "+ Encounter erstellen" der leeren Liste ist leer und legt NEU an${sitzungVerloren ? ' (ohne Sitzungssperre beim Neuladen)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        page.on('dialog', d => d.accept());
+        await encounterLaden(page, [GOBLINBOSS]);
 
-    await bearbeiten(page, 1);
-    await kopfzeile(page).click();
-    await expect(page.locator('#enc-form')).not.toHaveClass(/\bopen\b/);
-    await loeschen(page, 1);
-    await expect
-        .poll(() => namenInD(page), { message: 'Vorbedingung: die Liste ist leer' })
-        .toEqual([]);
+        await bearbeiten(page, 1);
+        await kopfzeile(page).click();
+        await expect(page.locator('#enc-form')).not.toHaveClass(/\bopen\b/);
+        await loeschen(page, 1);
+        await expect
+            .poll(() => namenInD(page), { message: 'Vorbedingung: die Liste ist leer' })
+            .toEqual([]);
 
-    await page
-        .locator('#encounter-list')
-        .getByRole('button', { name: '+ Encounter erstellen', exact: true })
-        .click();
-    await expect(page.locator('#enc-form'), 'Vorbedingung: der Knopf klappt auf').toHaveClass(
-        /\bopen\b/
-    );
-    weich(await formular(page), 'Knopf der leeren Liste nach ✏️ → Zuklappen → 🗑️').toEqual(LEER);
+        await page
+            .locator('#encounter-list')
+            .getByRole('button', { name: '+ Encounter erstellen', exact: true })
+            .click();
+        await expect(page.locator('#enc-form'), 'Vorbedingung: der Knopf klappt auf').toHaveClass(
+            /\bopen\b/
+        );
+        weich(await formular(page), 'Knopf der leeren Liste nach ✏️ → Zuklappen → 🗑️').toEqual(
+            LEER
+        );
 
-    await page.locator('#enc-name').fill('Neu');
-    await speichern(page, 'leere Liste → 💾');
-    weich(await namenInD(page), 'nach 💾: Namen in D').toEqual(['Neu']);
-    weich(await namenImSpeicher(page), 'nach 💾: Namen im Speicher').toEqual(['Neu']);
-    await page.reload();
-    await waitForAppReady(page);
-    weich(await namenInD(page), 'nach dem Neuladen: Namen in D').toEqual(['Neu']);
+        await page.locator('#enc-name').fill('Neu');
+        await speichern(page, 'leere Liste → 💾');
+        weich(await namenInD(page), 'nach 💾: Namen in D').toEqual(['Neu']);
+        weich(await namenImSpeicher(page), 'nach 💾: Namen im Speicher').toEqual(['Neu']);
+        if (sitzungVerloren) {
+            await page.evaluate(() => sessionStorage.removeItem('encounter-anlegen-gesaet'));
+        }
+        await page.reload();
+        await waitForAppReady(page);
+        weich(await namenInD(page), 'nach dem Neuladen: Namen in D').toEqual(['Neu']);
+        weich(await namenImSpeicher(page), 'nach dem Neuladen: Namen im Speicher').toEqual(['Neu']);
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 
 // ===========================================================================
 // (14) R1 — ✏️ LIEGT IN EINER ANDEREN ANSICHT, BEFEHLSPALETTE "NEUER ENCOUNTER"

@@ -116,8 +116,9 @@
  * Neu-Anlegen, nicht die Reste von Stufe und Chips — die kommen aus
  * derselben `cancelCharEdit()` und waren in Fall (2) rot.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
@@ -304,9 +305,10 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die Party-Ansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit auf einer stabilen HTTP-Origin und oeffnet die Party-Ansicht.
+ * Das Seed-Skript wird nach dem ersten Dokument entfernt: ein Reload liest
+ * nur den gespeicherten Stand. Unter file:// konnte der Sitzungsmarker beim
+ * Reload fehlen und die Saat den neuen Charakter wieder mit Aria ersetzen (4s).
  * @param {import('@playwright/test').Page} page
  * @param {object[]} characters
  * @param {{ width: number, height: number }} [kleiner] Erst NACH dem Laden
@@ -315,21 +317,29 @@ function fehlerFangen(page) {
  */
 async function laden(page, characters, kleiner) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem('charakter-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('charakter-anlegen-gesaet', '1');
+                // Der leere Party-Vertrag beginnt nach dem regulär übersprungenen
+                // HTTP-Erststart, damit dessen Assistent das Formular nicht verdeckt.
+                if (s.characters.length === 0) {
+                    localStorage.setItem(
+                        'migration-wizard-shown',
+                        JSON.stringify({ shown: true, skipped: true })
+                    );
                 }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, seed(characters)]
+        [SPEICHER, seed(characters)],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` etwas spaeter
     // den ganzen Stand aus D. Erkennbar daran, dass `_version` der Saat
@@ -866,35 +876,47 @@ test('(3) R1: ✏️ → Kopfzeile zu → Befehlspalette "Neuer Charakter" zeigt
 // letzten Charakters gestossen wird. Vor dem Fix trug das Formular dann die
 // ID des geloeschten; 💾 speicherte NICHTS, meldete "Charakter aktualisiert"
 // und legte einen leeren Rueckgaengig-Eintrag an — auch nach dem Neuladen leer.
-test('(4) R1: ✏️ → Kopfzeile zu → 🗑️ → Knopf der leeren Liste zeigt ein leeres Formular, 💾 legt an', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    page.on('dialog', d => d.accept());
-    await laden(page, [ARIA]);
+for (const [titel, sitzungVerloren] of /** @type {const} */ ([
+    [
+        '(4) R1: ✏️ → Kopfzeile zu → 🗑️ → Knopf der leeren Liste zeigt ein leeres Formular, 💾 legt an',
+        false
+    ],
+    ['(4s) R1: auch ohne Sitzungsmarker bleibt der neu angelegte Charakter nach dem Neuladen', true]
+])) {
+    test(titel, async ({ page }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        page.on('dialog', d => d.accept());
+        await laden(page, [ARIA]);
 
-    await bearbeiten(page, 1);
-    await kopfzeile(page).click();
-    await expect(formularKarte(page), 'die Kopfzeile klappt zu').not.toHaveClass(/\bopen\b/);
-    await loeschen(page, 1);
-    await expect.poll(() => allesInD(page), { message: 'Aria ist geloescht' }).toEqual([]);
-    await expect(leereListeKnopf(page)).toBeVisible();
-    await leereListeKnopf(page).click();
-    await expect(formularKarte(page), 'der Knopf der leeren Liste oeffnet').toHaveClass(/\bopen\b/);
-    weich(await formular(page), 'Knopf der leeren Liste nach ✏️ → Kopfzeile zu → 🗑️').toEqual(LEER);
+        await bearbeiten(page, 1);
+        await kopfzeile(page).click();
+        await expect(formularKarte(page), 'die Kopfzeile klappt zu').not.toHaveClass(/\bopen\b/);
+        await loeschen(page, 1);
+        await expect.poll(() => allesInD(page), { message: 'Aria ist geloescht' }).toEqual([]);
+        await expect(leereListeKnopf(page)).toBeVisible();
+        await leereListeKnopf(page).click();
+        await expect(formularKarte(page), 'der Knopf der leeren Liste oeffnet').toHaveClass(
+            /\bopen\b/
+        );
+        weich(await formular(page), 'Knopf der leeren Liste nach ✏️ → Kopfzeile zu → 🗑️').toEqual(
+            LEER
+        );
 
-    await page.locator('#char-name').fill('Neu');
-    await speichern(page, '"Neu"');
-    weich(await allesInD(page), 'D: "Neu" ist angelegt').toEqual(['Neu:']);
-    weich(await allesImSpeicher(page), 'localStorage').toEqual(['Neu:']);
+        await page.locator('#char-name').fill('Neu');
+        await speichern(page, '"Neu"');
+        weich(await allesInD(page), 'D: "Neu" ist angelegt').toEqual(['Neu:']);
+        weich(await allesImSpeicher(page), 'localStorage').toEqual(['Neu:']);
 
-    await page.reload();
-    await waitForAppReady(page);
-    weich(await allesInD(page), 'D nach dem Neuladen').toEqual(['Neu:']);
+        // Der Testaufbau darf nach Verlust des Sitzungsmarkers die Saat nicht neu schreiben.
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await page.reload();
+        await waitForAppReady(page);
+        weich(await allesInD(page), 'D nach dem Neuladen').toEqual(['Neu:']);
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 
 // ===========================================================================
 // (5) WAECHTER R2 — EIN ANLEGE-ENTWURF UEBERLEBT ESCAPE, ZUKLAPPEN UND JEDEN ANLEGE-WEG
