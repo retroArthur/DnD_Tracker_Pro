@@ -111,7 +111,8 @@
  * Elternelement von #session-form-title. Offen heisst: das Titelfeld ist
  * sichtbar (nicht: eine bestimmte Klasse).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -261,28 +262,28 @@ async function reiter(page, ansicht) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab (sessionStorage-Sperre: ein Neuladen liest
- * danach, was die App gespeichert hat) und oeffnet die Notizen ueber den
- * echten Reiter.
+ * Laedt auf einer stabilen HTTP-Origin und saet nur vor dem ersten Dokument.
+ * Das Seed-Skript ist vor dem Roundtrip entfernt; ein Reload kann die Saat
+ * auch bei verlorenem Sitzungsspeicher nicht erneut schreiben.
  * @param {import('@playwright/test').Page} page
  */
 async function notizenLaden(page) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem('notiz-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('notiz-anlegen-gesaet', '1');
-                }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, seed()]
+        [SPEICHER, seed()],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN (wie npc-formular.spec.js): repariert
     // `load()` die Saat, schreibt `saveAutomatic()` etwa 1,4 s spaeter den
     // ganzen Stand (truhe-formular.spec.js); erkennbar am ueberschriebenen
@@ -532,7 +533,7 @@ async function ruhig(page, was) {
         .toEqual(d);
 }
 
-/** Neu laden; die Saat-Sperre laesst den gespeicherten Stand stehen.
+/** Neu laden; das entfernte Seed-Skript laesst den gespeicherten Stand stehen.
  *  @param {import('@playwright/test').Page} page */
 async function neuLaden(page) {
     await page.reload();
@@ -601,99 +602,101 @@ function warntNeuAngelegt(meldungen) {
 // Abbruch (R3); das Aufklappen danach muss ein Formular ohne ID und ohne
 // einen Wert von S1 zeigen. Vor dem Fix: id 1 und jedes Feld von S1 ausser
 // dem Arc (den das Aufklappen auf '' setzt), und 💾 ueberschrieb S1.
-test('(1) R1: ✏️ S1 → Kopf zu → Kopf auf → 💾 legt eine NEUE Notiz an, S1 bleibt — in D, im Speicher, nach dem Neuladen', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    await notizenLaden(page);
-    const vorher = await notizenInD(page);
-    expect(
-        vorher.find(n => n.id === 1),
-        'die Saat muss so in D ankommen, sonst misst der Fall die Saat'
-    ).toEqual(S1);
+for (const sitzungVerloren of [false, true]) {
+    test(`(1) R1: ✏️ S1 → Kopf zu → Kopf auf → 💾 legt eine NEUE Notiz an, S1 bleibt — in D, im Speicher, nach dem Neuladen${sitzungVerloren ? ' (ohne Sitzungsmarker)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await notizenLaden(page);
+        const vorher = await notizenInD(page);
+        expect(
+            vorher.find(n => n.id === 1),
+            'die Saat muss so in D ankommen, sonst misst der Fall die Saat'
+        ).toEqual(S1);
 
-    await bearbeiten(page, 1);
-    // Ein angefangener, noch nicht mit Enter uebernommener Tag gehoert zur
-    // Bearbeitung von S1 wie jedes Feld. Gemessen am ersten Fix-Stand
-    // (Gutachten, Rest-Sonde ueber alle acht Formulare): er stand nach dem
-    // Abbruch im neuen Formular, und ein Enter dort machte ihn zum Tag der
-    // NEUEN Notiz — das einzige der acht Formulare mit einem solchen Rest.
-    await page.locator('#session-tags-input').fill('halbfertig');
-    await zuklappen(page);
-    await aufklappen(page);
-    const f = await formular(page);
-    weich(
-        { id: f.id, reste: resteVon(f, S1) },
-        'der Kopf nach abgebrochenem Bearbeiten: keine Bearbeiten-ID, kein Wert von S1'
-    ).toEqual({ id: '', reste: [] });
-    weich(
-        await page.locator('#session-tags-input').inputValue(),
-        'der angefangene Tag der abgebrochenen Bearbeitung steht nicht im neuen Formular'
-    ).toBe('');
+        await bearbeiten(page, 1);
+        // Ein angefangener, noch nicht mit Enter uebernommener Tag gehoert zur
+        // Bearbeitung von S1 wie jedes Feld. Gemessen am ersten Fix-Stand
+        // (Gutachten, Rest-Sonde ueber alle acht Formulare): er stand nach dem
+        // Abbruch im neuen Formular, und ein Enter dort machte ihn zum Tag der
+        // NEUEN Notiz — das einzige der acht Formulare mit einem solchen Rest.
+        await page.locator('#session-tags-input').fill('halbfertig');
+        await zuklappen(page);
+        await aufklappen(page);
+        const f = await formular(page);
+        weich(
+            { id: f.id, reste: resteVon(f, S1) },
+            'der Kopf nach abgebrochenem Bearbeiten: keine Bearbeiten-ID, kein Wert von S1'
+        ).toEqual({ id: '', reste: [] });
+        weich(
+            await page.locator('#session-tags-input').inputValue(),
+            'der angefangene Tag der abgebrochenen Bearbeitung steht nicht im neuen Formular'
+        ).toBe('');
 
-    await eintippen(page, { name: 'Neue Sitzung', datum: '2026-03-01', text: 'Neuer Text' });
-    await ruhig(page, 'vor 💾');
-    const rev = await revStand(page);
-    const stand = await meldungsStand(page);
-    await speichern(page);
-    await geschrieben(page, rev, '💾');
+        await eintippen(page, { name: 'Neue Sitzung', datum: '2026-03-01', text: 'Neuer Text' });
+        await ruhig(page, 'vor 💾');
+        const rev = await revStand(page);
+        const stand = await meldungsStand(page);
+        await speichern(page);
+        await geschrieben(page, rev, '💾');
 
-    const erwartet = {
-        name: 'Neue Sitzung',
-        date: '2026-03-01',
-        arcId: null,
-        summary: '',
-        tags: [],
-        text: 'Neuer Text'
-    };
-    const d = await notizenInD(page);
-    weich(namenSortiert(d), 'D: S1, S2, S3 bleiben, "Neue Sitzung" kommt dazu').toEqual([
-        'Der Anfang',
-        'Neue Sitzung',
-        'Ohne Arc',
-        'Wegwerf'
-    ]);
-    weich(
-        d.find(n => n.id === 1),
-        'D: S1 ist feldgleich — nicht ueberschrieben, nicht gemischt'
-    ).toEqual(S1);
-    weich(
-        sicht(d.find(n => n.name === 'Neue Sitzung')),
-        'D: die neue Notiz traegt nur die Eingabe, keinen Wert von S1'
-    ).toEqual(erwartet);
-    const s = await notizenImSpeicher(page);
-    weich(namenSortiert(s), 'localStorage: vier Notizen').toEqual([
-        'Der Anfang',
-        'Neue Sitzung',
-        'Ohne Arc',
-        'Wegwerf'
-    ]);
-    weich(
-        s?.find(n => n.id === 1),
-        'localStorage: S1 feldgleich'
-    ).toEqual(S1);
-    weich(
-        (await meldungenSeit(page, stand)).filter(m => /aktualisiert/.test(m)),
-        'keine Meldung "… aktualisiert" — es wurde nichts bearbeitet'
-    ).toEqual([]);
+        const erwartet = {
+            name: 'Neue Sitzung',
+            date: '2026-03-01',
+            arcId: null,
+            summary: '',
+            tags: [],
+            text: 'Neuer Text'
+        };
+        const d = await notizenInD(page);
+        weich(namenSortiert(d), 'D: S1, S2, S3 bleiben, "Neue Sitzung" kommt dazu').toEqual([
+            'Der Anfang',
+            'Neue Sitzung',
+            'Ohne Arc',
+            'Wegwerf'
+        ]);
+        weich(
+            d.find(n => n.id === 1),
+            'D: S1 ist feldgleich — nicht ueberschrieben, nicht gemischt'
+        ).toEqual(S1);
+        weich(
+            sicht(d.find(n => n.name === 'Neue Sitzung')),
+            'D: die neue Notiz traegt nur die Eingabe, keinen Wert von S1'
+        ).toEqual(erwartet);
+        const s = await notizenImSpeicher(page);
+        weich(namenSortiert(s), 'localStorage: vier Notizen').toEqual([
+            'Der Anfang',
+            'Neue Sitzung',
+            'Ohne Arc',
+            'Wegwerf'
+        ]);
+        weich(
+            s?.find(n => n.id === 1),
+            'localStorage: S1 feldgleich'
+        ).toEqual(S1);
+        weich(
+            (await meldungenSeit(page, stand)).filter(m => /aktualisiert/.test(m)),
+            'keine Meldung "… aktualisiert" — es wurde nichts bearbeitet'
+        ).toEqual([]);
 
-    await neuLaden(page);
-    const nachLaden = await notizenInD(page);
-    weich(namenSortiert(nachLaden), 'nach dem Neuladen: vier Notizen').toEqual([
-        'Der Anfang',
-        'Neue Sitzung',
-        'Ohne Arc',
-        'Wegwerf'
-    ]);
-    weich(
-        nachLaden.find(n => n.id === 1),
-        'nach dem Neuladen: S1 feldgleich'
-    ).toEqual(S1);
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await neuLaden(page);
+        const nachLaden = await notizenInD(page);
+        weich(namenSortiert(nachLaden), 'nach dem Neuladen: vier Notizen').toEqual([
+            'Der Anfang',
+            'Neue Sitzung',
+            'Ohne Arc',
+            'Wegwerf'
+        ]);
+        weich(
+            nachLaden.find(n => n.id === 1),
+            'nach dem Neuladen: S1 feldgleich'
+        ).toEqual(S1);
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
-
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 // ===========================================================================
 // (2) WAECHTER R2: EIN ANLEGE-ENTWURF UEBERLEBT ZUKLAPPEN, ESCAPE, REITERWECHSEL
 // ===========================================================================

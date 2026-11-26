@@ -104,7 +104,8 @@
  * (gemessen) und ist darum kein Abbruch-Weg. Der Dialogtitel (V6) ist ein
  * eigener Vorgang.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -217,30 +218,30 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab (Kampagne UND Vorlagen) und oeffnet die
- * Timer-Ansicht. Die Saat steht hinter einer sessionStorage-Sperre: ein
- * `page.reload()` liest dann, was die App gespeichert hat. Die Sperre gilt je
- * Tab — ein zweiter Tab (Fall 5) saet NICHT, er hat kein Init-Skript.
+ * Laedt auf einer stabilen HTTP-Origin und saet nur vor dem ersten Dokument.
+ * Das Seed-Skript ist vor dem Roundtrip entfernt; ein Reload kann die Saat
+ * auch bei verlorenem Sitzungsspeicher nicht erneut schreiben.
+ * Kampagne und persönliche Vorlagen werden nur im ersten Tab gesaet.
  * @param {import('@playwright/test').Page} page
  */
 async function laden(page) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s, vorlagenSchluessel, vorlagen]) => {
             try {
-                if (!sessionStorage.getItem('timer-vorlage-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    localStorage.setItem(vorlagenSchluessel, JSON.stringify(vorlagen));
-                    sessionStorage.setItem('timer-vorlage-gesaet', '1');
-                }
+                localStorage.setItem(schluessel, JSON.stringify(s));
+                localStorage.setItem(vorlagenSchluessel, JSON.stringify(vorlagen));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, seed(), VORLAGEN, [FACKEL, SEGEN, LICHT]]
+        [SPEICHER, seed(), VORLAGEN, [FACKEL, SEGEN, LICHT]],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     await timerAnsicht(page);
 }
 
@@ -399,7 +400,7 @@ function aktualisiert(meldungen) {
     return meldungen.filter(m => /aktualisiert/i.test(m));
 }
 
-/** Neu laden; die Saat-Sperre haelt, der Speicher ist der der App.
+/** Neu laden; das Seed-Skript ist entfernt, der Speicher ist der der App.
  *  @param {import('@playwright/test').Page} page */
 async function neuLaden(page) {
     await page.reload();
@@ -410,50 +411,53 @@ async function neuLaden(page) {
 // ===========================================================================
 // (1) ✏️ → ✕ → ⚙️ LEGT NEU AN UND UEBERSCHREIBT NICHT
 // ===========================================================================
-test('(1) R1: nach ✏️ und ✕ oeffnet ⚙️ ein leeres Formular, 💾 legt eine NEUE Vorlage an', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    await laden(page);
+for (const sitzungVerloren of [false, true]) {
+    test(`(1) R1: nach ✏️ und ✕ oeffnet ⚙️ ein leeres Formular, 💾 legt eine NEUE Vorlage an${sitzungVerloren ? ' (ohne Sitzungsmarker)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await laden(page);
 
-    await zahnrad(page);
-    expect(await formular(page), 'Vorbedingung: das frische Formular nach ⚙️').toEqual(LEER);
-    await bearbeiten(page, 'Fackel');
-    await kreuz(page);
+        await zahnrad(page);
+        expect(await formular(page), 'Vorbedingung: das frische Formular nach ⚙️').toEqual(LEER);
+        await bearbeiten(page, 'Fackel');
+        await kreuz(page);
 
-    await zahnrad(page);
-    // WEICH: ein roter Lauf soll danach auch den Verlust nennen.
-    weich(
-        await formular(page),
-        '⚙️ nach ✏️ Fackel → ✕ muss leer und im Anlege-Zustand sein'
-    ).toEqual(LEER);
-    await page.locator('#preset-name').fill('Schild');
-    const meldungen = await speichern(page);
+        await zahnrad(page);
+        // WEICH: ein roter Lauf soll danach auch den Verlust nennen.
+        weich(
+            await formular(page),
+            '⚙️ nach ✏️ Fackel → ✕ muss leer und im Anlege-Zustand sein'
+        ).toEqual(LEER);
+        await page.locator('#preset-name').fill('Schild');
+        const meldungen = await speichern(page);
 
-    const erwartet = [
-        FACKEL,
-        SEGEN,
-        LICHT,
-        { name: 'Schild', emoji: '', hours: 0, minutes: 10, seconds: 0 }
-    ];
-    weich(await imSpeicher(page), 'Speicher: Fackel bleibt feldgleich, Schild kommt dazu').toEqual(
-        erwartet
-    );
-    weich(aktualisiert(meldungen), 'eine Neuanlage heisst nicht "aktualisiert"').toEqual([]);
+        const erwartet = [
+            FACKEL,
+            SEGEN,
+            LICHT,
+            { name: 'Schild', emoji: '', hours: 0, minutes: 10, seconds: 0 }
+        ];
+        weich(
+            await imSpeicher(page),
+            'Speicher: Fackel bleibt feldgleich, Schild kommt dazu'
+        ).toEqual(erwartet);
+        weich(aktualisiert(meldungen), 'eine Neuanlage heisst nicht "aktualisiert"').toEqual([]);
 
-    await neuLaden(page);
-    weich(await imSpeicher(page), 'Speicher nach dem Neuladen').toEqual(erwartet);
-    weich(await leiste(page), 'die Schnellleiste nach dem Neuladen').toEqual([
-        '🔥 Fackel',
-        '✨ Segen',
-        '⏱️ Licht',
-        '⏱️ Schild'
-    ]);
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await neuLaden(page);
+        weich(await imSpeicher(page), 'Speicher nach dem Neuladen').toEqual(erwartet);
+        weich(await leiste(page), 'die Schnellleiste nach dem Neuladen').toEqual([
+            '🔥 Fackel',
+            '✨ Segen',
+            '⏱️ Licht',
+            '⏱️ Schild'
+        ]);
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
-
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 // ===========================================================================
 // (2) ✏️ → ESCAPE → ⚙️ LEGT NEU AN UND UEBERSCHREIBT NICHT
 // ===========================================================================
@@ -621,7 +625,7 @@ test('(5) R4: ✏️ einer Vorlage, die ein zweiter Tab loescht: 💾 legt sie n
     const zweiter = await page.context().newPage();
     const fehlerZwei = fehlerFangen(zweiter);
     zweiter.on('dialog', d => d.accept());
-    await zweiter.goto(APP_URL);
+    await zweiter.goto(httpAppUrl(zweiter, APP_URL));
     await waitForAppReady(zweiter);
     await timerAnsicht(zweiter);
     await zahnrad(zweiter);
@@ -937,7 +941,7 @@ async function zweiterTab(page) {
     const zweiter = await page.context().newPage();
     const fehlerZwei = fehlerFangen(zweiter);
     zweiter.on('dialog', d => d.accept());
-    await zweiter.goto(APP_URL);
+    await zweiter.goto(httpAppUrl(zweiter, APP_URL));
     await waitForAppReady(zweiter);
     await timerAnsicht(zweiter);
     return { zweiter, fehlerZwei };

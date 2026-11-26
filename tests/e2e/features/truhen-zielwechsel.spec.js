@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const app = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 const ready = page =>
@@ -10,8 +11,6 @@ async function openItemChestEditor(
     { includeFallback = false, torchWeights = [1], includeRing = false } = {}
 ) {
     const seed = ({ includeFallback, torchWeights, includeRing }) => {
-        if (sessionStorage.getItem('chest-target-change-seeded')) return;
-        sessionStorage.setItem('chest-target-change-seeded', '1');
         localStorage.setItem(
             'dnd-tracker-v4',
             JSON.stringify({
@@ -35,7 +34,9 @@ async function openItemChestEditor(
                                 sourceItemId: 1,
                                 weight
                             })),
-                            ...(includeRing ? [{ name: 'Silberring', sourceItemId: 2, weight: 4 }] : [])
+                            ...(includeRing
+                                ? [{ name: 'Silberring', sourceItemId: 2, weight: 4 }]
+                                : [])
                         ]
                     },
                     ...(includeFallback ? [{ id: 2, name: 'Vorratskiste', entries: [] }] : [])
@@ -43,9 +44,10 @@ async function openItemChestEditor(
             })
         );
     };
-    await page.addInitScript(seed, { includeFallback, torchWeights, includeRing });
-    await page.goto(app);
-    await ready(page);
+    await withInitialSeed(page, seed, { includeFallback, torchWeights, includeRing }, async () => {
+        await page.goto(httpAppUrl(page, app));
+        await ready(page);
+    });
     await page.evaluate(() => window.switchView('loot'));
     await page.locator('#loot-list .loot-item').filter({ hasText: 'Fackel' }).click();
     await press(page, 'Fackel in Truhe legen');
@@ -58,10 +60,16 @@ async function openItemChestEditor(
     return { editor, item, weight };
 }
 
-async function addAndReload(page, editor) {
+async function addAndReload(page, editor, { missingSessionMarker = false } = {}) {
     await press(editor, 'Gegenstand hinzufügen');
     await press(editor, 'Fertig');
     await expect(editor).toBeHidden();
+    if (missingSessionMarker) {
+        expect(
+            await page.evaluate(() => JSON.parse(localStorage.getItem('dnd-tracker-v4')).lootChests)
+        ).toEqual(await page.evaluate(() => window.D.lootChests));
+        await page.evaluate(() => sessionStorage.removeItem('chest-target-change-seeded'));
+    }
     await page.reload();
     await ready(page);
     return page.evaluate(() =>
@@ -114,7 +122,7 @@ test('N50 · Anlegen einer Zieltruhe schützt offene Änderungen und übernimmt 
     await expect(name).toHaveValue('Neue Zieltruhe');
     await expect(item).toHaveValue('2');
     await expect(weight).toHaveValue('2.5');
-    expect(await addAndReload(page, editor)).toEqual([
+    expect(await addAndReload(page, editor, { missingSessionMarker: true })).toEqual([
         {
             name: 'Fundtruhe Nord',
             entries: [{ name: 'Fackel', sourceItemId: 1, weight: 3 }]

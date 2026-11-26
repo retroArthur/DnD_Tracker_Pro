@@ -127,7 +127,8 @@
  * features/locations/locations-crud.js (Fall 15/16).
  */
 import fs from 'fs';
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -139,8 +140,7 @@ const SPEICHER = 'dnd-tracker-v4';
 /** Wie lange "sofort" dauern darf: `save()` entprellt 300 ms. */
 const SOFORT_MS = 4000;
 
-/** sessionStorage-Marke: gesaet wird nur beim ERSTEN Laden je Tab, damit ein
- *  Neuladen den gespeicherten Stand zeigt und nicht wieder die Saat. */
+/** Fruehere Saat-Sperre: die Regression entfernt sie vor dem Neuladen gezielt. */
 const SAAT_MARKE = 'markdown-austausch-saat';
 
 const GRIMBOLD = {
@@ -393,20 +393,17 @@ function fehlerFangen(page) {
  */
 async function laden(page) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
-        ([schluessel, marke, s]) => {
-            try {
-                if (sessionStorage.getItem(marke)) return;
-                localStorage.setItem(schluessel, JSON.stringify(s));
-                sessionStorage.setItem(marke, '1');
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+    await withInitialSeed(
+        page,
+        ([schluessel, s]) => {
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, SAAT_MARKE, seed()]
+        [SPEICHER, seed()],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     await fremdeSpeicherungAbwarten(page);
 }
 
@@ -644,6 +641,10 @@ for (const [nr, typ] of /** @type {const} */ ([
             })
             .toContain('<b>fett</b>');
 
+        // Nur ein Roundtrip der Matrix stellt den verlorenen Sitzungsmarker nach.
+        if (typ === 'npcs') {
+            await page.evaluate(marke => sessionStorage.removeItem(marke), SAAT_MARKE);
+        }
         await page.reload();
         await waitForAppReady(page);
         weich(

@@ -192,7 +192,8 @@
  * fuer Sitzungsnotizen kommt (nicht in diesem PR): Kontrolle (1) haelt nur
  * fest, dass sie den einzigen Export ohne Import haben.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import fs from 'fs';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
 
@@ -934,28 +935,25 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit und saet EINMAL je Tab (sessionStorage-Sperre: ein
- * `page.reload()` liest danach, was die App gespeichert hat).
+ * Laedt breit und entfernt das Startskript nach der ersten Navigation:
+ * `page.reload()` liest danach, was die App gespeichert hat.
  * @param {import('@playwright/test').Page} page
  * @param {object} saat
  */
 async function laden(page, saat) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('reiterimport-daten-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('reiterimport-daten-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
+            localStorage.setItem('migration-wizard-shown', 'skipped');
         },
-        [SPEICHER, saat]
+        [SPEICHER, saat],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN (siehe link-anlegen.spec.js): repariert
     // `load()` die Saat, schreibt `saveAutomatic()` spaeter den ganzen Stand —
     // landete das erst NACH einem `revStand()`, erfuellte es dessen Warten.
@@ -1664,6 +1662,8 @@ test('(6) R4: ein über "+ NPC" angelegter NPC kommt per Export → Ersetzen tie
     weich(zweiter.vorkommen, 'R8: der zweite NPC ist sofort aus Liste und Detail').toBe(0);
     await ansichtPruefen(page, { ansicht, anzeige: 'Dorn Fährmann', zahl: 1, wo: 'NPC Ersetzen' });
 
+    // Fixture-Regression: auch ohne Sitzungsmarker muss der gespeicherte NPC bleiben.
+    await page.evaluate(() => sessionStorage.removeItem('reiterimport-daten-gesaet'));
     await page.reload();
     await waitForAppReady(page);
     weich(await sammlung(page, 'npcs'), 'R4: nach dem Neuladen steht Dorn tief gleich').toEqual(

@@ -1,6 +1,7 @@
 // @ts-check
-import { test, expect } from '@playwright/test';
-import { loadApp, navigateToTab, waitForAppReady } from '../helpers/test-utils.js';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
+import { navigateToTab, waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * Auto-Backup-Restore im echten Browser — R01/R05 (Code-Review 2026-09-21, Einheit U4)
@@ -12,8 +13,8 @@ import { loadApp, navigateToTab, waitForAppReady } from '../helpers/test-utils.j
  *
  * Die Seed-Kampagne ist bereits "gueltig" (aktueller _version, timers/shops/campaign,
  * vollstaendiges _nextId), damit weder load() migriert noch validateDataIntegrity() eine
- * Reparatur-Speicherung einplant. Der Seed laeuft nur beim ersten Laden (sessionStorage-
- * Marke), damit der Reload den wiederhergestellten Stand nicht ueberschreibt.
+ * Reparatur-Speicherung einplant. Das Startskript wird nach dem ersten Laden entfernt,
+ * damit der Reload den wiederhergestellten Stand nicht ueberschreibt.
  * Voraussetzung: frischer Dev-Build (python build.py).
  */
 
@@ -115,20 +116,27 @@ const CHECKED = [
     'initiative'
 ];
 
+async function laden(page, full) {
+    await withInitialSeed(
+        page,
+        ([key, data]) => {
+            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(key + '_ts', String(Date.now()));
+        },
+        [KEY, full],
+        async () => {
+            await page.goto(httpAppUrl(page));
+            await waitForAppReady(page);
+        }
+    );
+}
+
 test.describe('Auto-Backup-Restore (R01/R05)', () => {
     test('IndexedDB-Backup ueber das Modal wiederherstellen: alle Felder zurueck, Kampagne sichtbar', async ({
         page
     }) => {
-        await page.addInitScript(
-            ([key, full]) => {
-                if (sessionStorage.getItem('u4-seeded')) return;
-                sessionStorage.setItem('u4-seeded', '1');
-                localStorage.setItem(key, JSON.stringify(full));
-                localStorage.setItem(key + '_ts', String(Date.now()));
-            },
-            [KEY, FULL]
-        );
-        await loadApp(page);
+        // Abweichende Startsaat: eine erneute Saat darf den Restore nicht verdecken.
+        await laden(page, { ...FULL, quickNotes: 'U4-Startsaat vor dem Backup' });
         const dialoge = [];
         page.on('dialog', dialog => {
             dialoge.push(dialog.message());
@@ -136,7 +144,10 @@ test.describe('Auto-Backup-Restore (R01/R05)', () => {
         });
 
         // Echter Primaerpfad: Auto-Backup in den IndexedDB-Store 'backups'
-        await page.evaluate(() => window.createAutoBackup());
+        await page.evaluate(async notes => {
+            window.D.quickNotes = notes;
+            await window.createAutoBackup();
+        }, FULL.quickNotes);
         const imStore = await page.evaluate(
             () =>
                 new Promise((resolve, reject) => {
@@ -192,6 +203,7 @@ test.describe('Auto-Backup-Restore (R01/R05)', () => {
         expect(persistiert._version).toBe('2.6.1');
 
         // Neuladen: der wiederhergestellte Stand bleibt
+        await page.evaluate(() => sessionStorage.removeItem('u4-seeded'));
         await page.reload();
         await waitForAppReady(page);
         const nachReload = await page.evaluate(
@@ -204,14 +216,7 @@ test.describe('Auto-Backup-Restore (R01/R05)', () => {
     });
 
     test('Strg+Z nach dem Restore stellt den Stand davor wieder her', async ({ page }) => {
-        await page.addInitScript(
-            ([key, full]) => {
-                localStorage.setItem(key, JSON.stringify(full));
-                localStorage.setItem(key + '_ts', String(Date.now()));
-            },
-            [KEY, FULL]
-        );
-        await loadApp(page);
+        await laden(page, FULL);
         page.on('dialog', dialog => dialog.accept());
         await page.evaluate(() => window.createAutoBackup());
         await page.evaluate(async () => {

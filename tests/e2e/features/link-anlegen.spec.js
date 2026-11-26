@@ -137,7 +137,8 @@
  * Eingabe steht nach
  * dem Loeschen noch da und wird gespeichert.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -257,31 +258,36 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und geht per Klick von der Startansicht
- * direkt in die Links-Ansicht (der fruehere Umweg ueber die NPC-Ansicht ist
- * mit RUECKSPRUNG entfallen, siehe Kopf, "Der fruehere Zwischenspeicher").
- * Die Saat steht hinter einer sessionStorage-Sperre: ein `page.reload()`
- * liest dann, was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt auf einer stabilen HTTP-Origin und saet nur vor dem ersten Dokument.
+ * Das Seed-Skript ist vor dem Roundtrip entfernt; ein Reload kann die Saat
+ * auch bei verlorenem Sitzungsspeicher nicht erneut schreiben.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} links
  */
 async function linksLaden(page, links) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem('link-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('link-anlegen-gesaet', '1');
+                // Der leere Entwurfsvertrag beginnt nach regulär übersprungenem Erststart.
+                if (s.links.length === 0) {
+                    localStorage.setItem(
+                        'migration-wizard-shown',
+                        JSON.stringify({ shown: true, skipped: true })
+                    );
                 }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, seed(links)]
+        [SPEICHER, seed(links)],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` spaeter den
     // ganzen Stand aus D (siehe npc-formular.spec.js). Erkennbar daran, dass
@@ -572,20 +578,24 @@ async function anlegenUndPruefen(page, frisch, weg) {
 // stehen (Katalog Offen (6)). Der Nutzer drueckt "+ Link": der erste Klick
 // blendet aus, der zweite ein. Vor dem Fix trug die Karte dann die Weltkarte
 // samt ID, und "Speichern" ueberschrieb sie (gemessen).
-test('(1) nach ✏️ und Escape legt "+ Link" einen NEUEN Link an', async ({ page }) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    await linksLaden(page, [WELTKARTE, SRD]);
-    const frisch = await frischesFormular(page);
+for (const sitzungVerloren of [false, true]) {
+    test(`(1) nach ✏️ und Escape legt "+ Link" einen NEUEN Link an${sitzungVerloren ? ' (ohne Sitzungsmarker)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await linksLaden(page, [WELTKARTE, SRD]);
+        const frisch = await frischesFormular(page);
 
-    await bearbeiten(page, 1);
-    await page.keyboard.press('Escape');
-    await anlegen(page, plusLink(page));
-    await anlegenUndPruefen(page, frisch, '✏️ → Escape → "+ Link"');
+        await bearbeiten(page, 1);
+        await page.keyboard.press('Escape');
+        await anlegen(page, plusLink(page));
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await anlegenUndPruefen(page, frisch, '✏️ → Escape → "+ Link"');
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
-
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 // ===========================================================================
 // (2) ✏️ → ANSICHTSWECHSEL → "+ LINK" LEGT NEU AN
 // ===========================================================================

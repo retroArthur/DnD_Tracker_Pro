@@ -96,7 +96,8 @@
  * Filter geloescht ist, wird bei ✏️ → 💾 still null — eigener kleiner Befund.
  * Kampagnen-Import "Ersetzen" bei stehendem Formular (eigener PR).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -223,29 +224,29 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die Orte-Ansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt auf einer stabilen HTTP-Origin und saet nur vor dem ersten Dokument.
+ * Das Seed-Skript ist vor dem Roundtrip entfernt; ein Reload kann die Saat
+ * auch bei verlorenem Sitzungsspeicher nicht erneut schreiben.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} locations
  */
 async function orteLaden(page, locations) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem('ort-anlegen-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('ort-anlegen-gesaet', '1');
-                }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, seed(locations)]
+        [SPEICHER, seed(locations)],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` etwa 1,4 s
     // spaeter den ganzen Stand aus D (siehe npc-formular.spec.js). Erkennbar
@@ -272,7 +273,7 @@ async function orteLaden(page, locations) {
     await expect(page.locator('#view-locations')).toBeVisible();
 }
 
-/** Neu laden; die Saat-Sperre haelt, gelesen wird der gespeicherte Stand.
+/** Neu laden; das Seed-Skript ist entfernt, gelesen wird der gespeicherte Stand.
  *  @param {import('@playwright/test').Page} page */
 async function neuLaden(page) {
     await page.reload();
@@ -543,35 +544,37 @@ async function neuAngelegtUndTiefwasserGleich(page, tiefwasser, weg) {
 // ===========================================================================
 // (1) R1: ✏️ → ✕ → "+ NEUER ORT" LEGT NEU AN
 // ===========================================================================
-test('(1) R1: nach ✏️ und ✕ legt "+ Neuer Ort" einen NEUEN Ort an, Tiefwasser bleibt', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    await orteLaden(page, [TIEFWASSER, NIEWINTER]);
-    const tiefwasser = await ortInD(page, 1);
-    expect(tiefwasser, 'die Saat muss so in D ankommen, sonst misst der Fall die Saat').toEqual(
-        TIEFWASSER
-    );
+for (const sitzungVerloren of [false, true]) {
+    test(`(1) R1: nach ✏️ und ✕ legt "+ Neuer Ort" einen NEUEN Ort an, Tiefwasser bleibt${sitzungVerloren ? ' (ohne Sitzungsmarker)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await orteLaden(page, [TIEFWASSER, NIEWINTER]);
+        const tiefwasser = await ortInD(page, 1);
+        expect(tiefwasser, 'die Saat muss so in D ankommen, sonst misst der Fall die Saat').toEqual(
+            TIEFWASSER
+        );
 
-    await bearbeiten(page, 1);
-    await abbrechen(page, 'kreuz');
+        await bearbeiten(page, 1);
+        await abbrechen(page, 'kreuz');
 
-    await plusOrt(page).click();
-    await expect(page.locator('#location-modal')).toHaveClass(/\bshow\b/);
-    // WEICH: ein roter Lauf soll danach auch das Ueberschreiben nennen.
-    weich(
-        await formular(page),
-        '"+ Neuer Ort" nach ✏️ → ✕ muss leer und im Anlege-Zustand sein'
-    ).toEqual(LEER);
-    await page.locator('#loc-name').fill('Baldurs Tor');
-    await speichern(page, '"+ Neuer Ort" → 💾');
+        await plusOrt(page).click();
+        await expect(page.locator('#location-modal')).toHaveClass(/\bshow\b/);
+        // WEICH: ein roter Lauf soll danach auch das Ueberschreiben nennen.
+        weich(
+            await formular(page),
+            '"+ Neuer Ort" nach ✏️ → ✕ muss leer und im Anlege-Zustand sein'
+        ).toEqual(LEER);
+        await page.locator('#loc-name').fill('Baldurs Tor');
+        await speichern(page, '"+ Neuer Ort" → 💾');
 
-    await neuAngelegtUndTiefwasserGleich(page, tiefwasser, '"+ Neuer Ort"');
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await neuAngelegtUndTiefwasserGleich(page, tiefwasser, '"+ Neuer Ort"');
 
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
-
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 // ===========================================================================
 // (2) R1: ✏️ → ESCAPE → BEFEHLSPALETTE "NEUER ORT" LEGT NEU AN
 // ===========================================================================

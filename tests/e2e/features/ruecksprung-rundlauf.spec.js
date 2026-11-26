@@ -171,10 +171,9 @@
  * save() — gemessen am Truhen-Detail direkt nach dem ersten 💾, das der
  * Waechter der Anzeigen (R4) prueft; dort ist er rot.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
-
-const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 /** Breit — wie die Messung. */
 const BREIT = { width: 1440, height: 900 };
@@ -379,29 +378,25 @@ function seed(teile = {}) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und bleibt auf der Startansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit mit stabiler HTTP-Origin und bleibt auf der Startansicht.
+ * Der Seed wird nach dem Erststart entfernt, damit ein Reload auch ohne
+ * Sitzungsspeicher ausschließlich den bestätigten Stand liest.
  * @param {import('@playwright/test').Page} page
  * @param {Record<string, any>} [teile]
  */
 async function laden(page, teile) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('ruecksprung-rundlauf-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('ruecksprung-rundlauf-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(teile)]
+        [SPEICHER, seed(teile)],
+        async () => {
+            await page.goto(httpAppUrl(page));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` spaeter den
     // ganzen Stand aus D (siehe npc-formular.spec.js). Erkennbar daran, dass
@@ -771,8 +766,9 @@ async function bearbeiten(page, art, was) {
  * @param {import('@playwright/test').Page} page
  * @param {Art} art
  * @param {ReturnType<typeof fehlerFangen>} fehler
+ * @param {boolean} [sitzungVerloren]
  */
-async function rundlauf(page, art, fehler) {
+async function rundlauf(page, art, fehler, sitzungVerloren = false) {
     await zuAnsicht(page, art.ansicht);
 
     const erst = await bearbeiten(page, art, `${art.name}: das erste ✏️`);
@@ -798,11 +794,18 @@ async function rundlauf(page, art, fehler) {
     ).toBe(art.neu);
 
     await fehler.sichern();
+    if (sitzungVerloren) {
+        await page.evaluate(() => sessionStorage.removeItem('ruecksprung-rundlauf-gesaet'));
+    }
     await page.reload();
     await waitForAppReady(page);
     weich(await feldInD(page, art), `${art.name}: nach dem Neuladen steht der neue Stand`).toBe(
         art.neu
     );
+    weich(
+        await feldImSpeicher(page, art),
+        `${art.name}: nach dem Neuladen steht im Speicher der neue Stand`
+    ).toBe(art.neu);
 }
 
 /** Ein Knopf der Heldenkarte. Die Aktionsleiste steht in der Karte; ist sie
@@ -855,6 +858,16 @@ for (const [nr, schluessel] of /** @type {const} */ ([
 // ===========================================================================
 // (6)–(11) DER LINK-RUNDLAUF NACH JEDEM EINSCHALTWEG
 // ===========================================================================
+
+test('Zauber-Rundlauf ohne Sitzungssperre: bestätigter Stand überlebt das Neuladen', async ({
+    page
+}) => {
+    test.setTimeout(60000);
+    const fehler = fehlerFangen(page);
+    await laden(page);
+    await rundlauf(page, ARTEN.spells, fehler, true);
+    await keinFehlerAusser(fehler);
+});
 
 // (6) Der Initiative-Reiter mit 0 Kaempfern. Vorher der NPC-Reiter: danach
 // war der Zwischenspeicher am Stand 785cdeb sicher aus, und nur der

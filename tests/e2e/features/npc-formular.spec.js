@@ -74,10 +74,9 @@
  * darum keine Bearbeiten-Faelle dort — den Anlegen-Weg gibt es aber, Fall
  * (20) faehrt ihn mit dem Finger.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
-
-const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 /** Breit — das NPC-Detail mit ✏️ und 🗑️ steht erst ueber 900 px. */
 const BREIT = { width: 1440, height: 900 };
@@ -315,9 +314,9 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die NPC-Ansicht. Die Saat
- * steht hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann,
- * was die App gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt breit mit stabiler HTTP-Origin und oeffnet die NPC-Ansicht.
+ * Der Seed wird nach dem Erststart entfernt; ein Reload liest den gespeicherten
+ * Stand auch dann, wenn der Sitzungsspeicher verloren geht.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} npcs
  * @param {{ width: number, height: number }} [kleiner] Erst NACH dem Laden
@@ -326,21 +325,17 @@ function fehlerFangen(page) {
  */
 async function npcsLaden(page, npcs, kleiner) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('npc-formular-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('npc-formular-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(npcs)]
+        [SPEICHER, seed(npcs)],
+        async () => {
+            await page.goto(httpAppUrl(page));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN, sonst misst ein Speicher-Fall nichts:
     // repariert `load()` die Saat, schreibt `saveAutomatic()` etwa 1,4 s
     // spaeter den ganzen Stand aus D (siehe truhe-formular.spec.js). Erkennbar
@@ -657,8 +652,16 @@ test('NPC-Notizen bleiben nach dem Neuladen beim jeweiligen NPC und lassen sich 
     const elminsterId = await idVon(page, 'Elminster');
     expect((await npcImSpeicher(page, elminsterId))?.notes).toBe(elminsterNotiz);
 
+    // Der bestätigte Stand darf auch ohne die frühere Seed-Sperre nicht ersetzt werden.
+    await page.evaluate(() => sessionStorage.removeItem('npc-formular-gesaet'));
     await page.reload();
     await waitForAppReady(page);
+    expect((await npcInD(page, 1))?.notes, 'Volo-Notiz nach Verlust der Sitzungssperre').toBe(
+        voloNotiz
+    );
+    expect((await npcImSpeicher(page, elminsterId))?.notes, 'Elminster bleibt gespeichert').toBe(
+        elminsterNotiz
+    );
     await page.evaluate(() => window.switchView('npcs'));
     await page.locator(`#npc-list .npc-item[data-id="${elminsterId}"]`).click();
     await expect(notizbereich).toHaveText(elminsterNotiz);

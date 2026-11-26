@@ -102,7 +102,8 @@
  * `data-action`/`data-value`: mit dem Fix wird aus "show-modal" +
  * "quest-modal" eine eigene Aktion, der Knopf bleibt fuer den Nutzer derselbe.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -112,9 +113,6 @@ const BREIT = { width: 1440, height: 900 };
 
 /** Der Speicherschluessel der Standardkampagne. */
 const SPEICHER = 'dnd-tracker-v4';
-
-/** Die sessionStorage-Sperre der Saat (je Tab einmal). */
-const SPERRE = 'quest-anlegen-gesaet';
 
 /** Wie lange "sofort" dauern darf: `save()` entprellt 300 ms. */
 const SOFORT_MS = 4000;
@@ -283,30 +281,29 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab und oeffnet die Quest-Ansicht ueber die
- * Navigation (echte Klicks). Die Saat steht hinter einer
- * sessionStorage-Sperre: ein `page.reload()` liest dann, was die App
- * gespeichert hat, statt die Saat neu zu schreiben.
+ * Laedt auf einer stabilen HTTP-Origin und saet nur vor dem ersten Dokument.
+ * Das Seed-Skript ist vor dem Roundtrip entfernt; ein Reload kann die Saat
+ * auch bei verlorenem Sitzungsspeicher nicht erneut schreiben.
  * @param {import('@playwright/test').Page} page
  * @param {object[]} quests
  */
 async function questsLaden(page, quests) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
-        ([schluessel, sperre, s]) => {
+    await withInitialSeed(
+        page,
+        ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem(sperre)) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem(sperre, '1');
-                }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
+                // Fehlender Browser-Speicher wird von den Vorbedingungen sichtbar.
             }
         },
-        [SPEICHER, SPERRE, seed(quests)]
+        [SPEICHER, seed(quests)],
+        async () => {
+            await page.goto(httpAppUrl(page, APP_URL));
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN (wie npc-formular.spec.js): repariert
     // `load()` die Saat, schreibt `saveAutomatic()` spaeter den ganzen Stand
     // aus D. Erkennbar daran, dass `_version` der Saat ueberschrieben wird.
@@ -693,34 +690,36 @@ async function neuAngelegtUndFeldgleich(page, rev, drachenjagd, weg, mitNeuladen
 // ===========================================================================
 // (1) R1: ✏️ → ✕ → "+ QUEST" LEGT NEU AN
 // ===========================================================================
-test('(1) R1: nach ✏️ und ✕ legt "+ Quest" eine NEUE Quest an — D, Speicher, Neuladen', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const fehler = fehlerFangen(page);
-    await questsLaden(page, [DRACHENJAGD, BOTENGANG]);
-    const drachenjagd = await questInD(page, 1);
-    expect(drachenjagd?.title, 'Vorbedingung: die Saat ist in D').toBe('Drachenjagd');
+for (const sitzungVerloren of [false, true]) {
+    test(`(1) R1: nach ✏️ und ✕ legt "+ Quest" eine NEUE Quest an — D, Speicher, Neuladen${sitzungVerloren ? ' (ohne Sitzungsmarker)' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const fehler = fehlerFangen(page);
+        await questsLaden(page, [DRACHENJAGD, BOTENGANG]);
+        const drachenjagd = await questInD(page, 1);
+        expect(drachenjagd?.title, 'Vorbedingung: die Saat ist in D').toBe('Drachenjagd');
 
-    await bearbeiten(page, 1);
-    expect((await formular(page)).id, 'Vorbedingung: ✏️ hat Drachenjagd geoeffnet').toBe('1');
-    await kreuz(page);
+        await bearbeiten(page, 1);
+        expect((await formular(page)).id, 'Vorbedingung: ✏️ hat Drachenjagd geoeffnet').toBe('1');
+        await kreuz(page);
 
-    await plusQuest(page).click();
-    await angelegtOffen(page);
-    // WEICH: ein roter Lauf soll danach auch das Ueberschreiben nennen.
-    weich(
-        await formular(page),
-        '"+ Quest" nach ✏️ → ✕ muss leer und im Anlege-Zustand sein'
-    ).toEqual(LEER);
-    await page.locator('#quest-title').fill('Neue Quest');
-    const rev = await revStand(page);
-    await speichern(page);
+        await plusQuest(page).click();
+        await angelegtOffen(page);
+        // WEICH: ein roter Lauf soll danach auch das Ueberschreiben nennen.
+        weich(
+            await formular(page),
+            '"+ Quest" nach ✏️ → ✕ muss leer und im Anlege-Zustand sein'
+        ).toEqual(LEER);
+        await page.locator('#quest-title').fill('Neue Quest');
+        const rev = await revStand(page);
+        await speichern(page);
 
-    await neuAngelegtUndFeldgleich(page, rev, drachenjagd, '"+ Quest"', true);
-    weich(await fehler.alle(), 'kein Fehler').toEqual([]);
-});
-
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await neuAngelegtUndFeldgleich(page, rev, drachenjagd, '"+ Quest"', true);
+        weich(await fehler.alle(), 'kein Fehler').toEqual([]);
+    });
+}
 // ===========================================================================
 // (2) R1: ✏️ → ESCAPE → TASTE n LEGT NEU AN
 // ===========================================================================

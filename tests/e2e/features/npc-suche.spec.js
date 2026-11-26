@@ -242,8 +242,9 @@
  * im Normalisierer nicht — kein Weg der App schreibt sie in einen Dialog
  * (benannte Grenze, Katalog NPC-SUCHE Offen (6)).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
@@ -464,28 +465,25 @@ function seed(teile = {}) {
 }
 
 /**
- * Laedt, saet EINMAL je Tab (sessionStorage-Sperre wie npc-altdaten.spec.js)
- * und bleibt auf der Startansicht.
+ * Saet nur vor dem ersten Start und bleibt auf der Startansicht.
+ * Speicher-Roundtrips können eine stabile HTTP-Origin verwenden.
  * @param {import('@playwright/test').Page} page
  * @param {Record<string, any>} [teile]
+ * @param {{http?: boolean}} [optionen]
  */
-async function laden(page, teile = {}) {
+async function laden(page, teile = {}, { http = false } = {}) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('npc-suche-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('npc-suche-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(teile)]
+        [SPEICHER, seed(teile)],
+        async () => {
+            await page.goto(http ? httpAppUrl(page) : APP_URL);
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     await page
         .waitForFunction(
             schluessel => {
@@ -909,7 +907,7 @@ test('NPC-Suche findet Klartext in Notizen zusätzlich zu Feldern und Dialogen',
 });
 
 test('NPC-Merkliste nutzt am Desktop den Stern in der Detailleiste', async ({ page }) => {
-    await laden(page);
+    await laden(page, {}, { http: true });
     await zuAnsicht(page, 'npcs');
     const liste = page.locator('#npc-list');
     const sterne = 'button[data-action="toggle-npc-favorite"]';
@@ -954,6 +952,7 @@ test('NPC-Merkliste nutzt am Desktop den Stern in der Detailleiste', async ({ pa
     await npcSuche(page, ['Bert', [], 'Name außerhalb der Merkliste']);
     await tippen(page, '#npc-search', '');
 
+    await page.evaluate(() => sessionStorage.removeItem('npc-suche-gesaet'));
     await page.reload();
     await waitForAppReady(page);
     await zuAnsicht(page, 'npcs');

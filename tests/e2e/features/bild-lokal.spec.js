@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect } from '@playwright/test';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
@@ -306,7 +307,7 @@ async function httpsBildBeantworten(page) {
 }
 
 /**
- * Laedt breit, saet EINMAL je Tab (ein Neuladen liest, was die App gespeichert hat), bricht
+ * Laedt breit, entfernt die Saat nach der ersten Navigation (ein Neuladen liest den Speicher), bricht
  * jede Anforderung an das Netz und an einen Netzwerkpfad ab und zaehlt die Netzwerkpfade.
  * Block (g) gibt Helden, ein anderes Buendel, das http(s)-Bild schon VOR dem Laden (die Karte
  * eines Helden fordert es beim ersten Zeichnen an) und am Telefon die Groesse aus test.use()
@@ -341,28 +342,25 @@ async function laden(page, opt = {}) {
         }
     });
     if (!opt.telefon) await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (sessionStorage.getItem('bild-lokal-gesaet')) return;
-                localStorage.setItem(schluessel, JSON.stringify(s));
-                sessionStorage.setItem('bild-lokal-gesaet', '1');
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, saat(opt.characters)]
+        [SPEICHER, saat(opt.characters)],
+        async () => {
+            await page.goto(opt.url || APP_URL);
+            if (opt.telefon) {
+                await page.waitForFunction(
+                    () => document.documentElement.dataset.appReady === 'true',
+                    null,
+                    { timeout: 20000 }
+                );
+            } else {
+                await waitForAppReady(page);
+            }
+        }
     );
-    await page.goto(opt.url || APP_URL);
-    if (opt.telefon) {
-        await page.waitForFunction(
-            () => document.documentElement.dataset.appReady === 'true',
-            null,
-            { timeout: 20000 }
-        );
-    } else {
-        await waitForAppReady(page);
-    }
     await page.waitForTimeout(300);
     return {
         netz,
@@ -573,62 +571,73 @@ async function gespeichert(page, sammlung) {
 // ===========================================================================
 // (a) Bild-Dialog: lokale Datei wird gespeichert und angezeigt
 // ===========================================================================
-test('(a) Bild-Dialog: ein lokales Bild (file:///) wird gespeichert und auf der Karte geladen, auch nach dem Neuladen', async ({
-    page
-}) => {
-    test.setTimeout(60000);
-    const { netz, seitenfehler } = await laden(page);
-    await bildDialogOeffnen(page);
-    const stand = await protokollStand(page);
-    await bildDialogSpeichern(page, LOKALES_BILD);
+for (const fehlendeSitzungsmarke of [false, true]) {
+    test(`(a) Bild-Dialog: ein lokales Bild (file:///) wird gespeichert und auf der Karte geladen, auch nach dem Neuladen${fehlendeSitzungsmarke ? ' — ohne Sitzungsmarker' : ''}`, async ({
+        page
+    }) => {
+        test.setTimeout(60000);
+        const { netz, seitenfehler } = await laden(page);
+        await bildDialogOeffnen(page);
+        const stand = await protokollStand(page);
+        await bildDialogSpeichern(page, LOKALES_BILD);
 
-    weich(await fehlerSeit(page, stand), 'keine Fehlermeldung beim Speichern').toEqual([]);
-    await weich
-        .poll(() => gespeichert(page, 'npcs'), { timeout: 4000 })
-        .toEqual({ d: LOKALES_BILD, speicher: LOKALES_BILD });
-    // Der Dialog schliesst nach dem Speichern
-    await weich(page.locator('#avatar-modal')).not.toHaveClass(/\bshow\b/);
-    // Karte in der Liste und Detailbereich zeigen das Bild GELADEN
-    await weich
-        .poll(
-            () => bildBreite(page.locator('#npc-list .npc-item[data-id="1"] .npc-item-avatar img')),
-            {
+        weich(await fehlerSeit(page, stand), 'keine Fehlermeldung beim Speichern').toEqual([]);
+        await weich
+            .poll(() => gespeichert(page, 'npcs'), { timeout: 4000 })
+            .toEqual({ d: LOKALES_BILD, speicher: LOKALES_BILD });
+        // Der Dialog schliesst nach dem Speichern
+        await weich(page.locator('#avatar-modal')).not.toHaveClass(/\bshow\b/);
+        // Karte in der Liste und Detailbereich zeigen das Bild GELADEN
+        await weich
+            .poll(
+                () =>
+                    bildBreite(
+                        page.locator('#npc-list .npc-item[data-id="1"] .npc-item-avatar img')
+                    ),
+                {
+                    timeout: 5000
+                }
+            )
+            .toBe(LOKALE_BREITE);
+        await weich
+            .poll(() => bildBreite(page.locator('#npc-detail-panel .npc-detail-avatar img')), {
                 timeout: 5000
-            }
-        )
-        .toBe(LOKALE_BREITE);
-    await weich
-        .poll(() => bildBreite(page.locator('#npc-detail-panel .npc-detail-avatar img')), {
-            timeout: 5000
-        })
-        .toBe(LOKALE_BREITE);
+            })
+            .toBe(LOKALE_BREITE);
 
-    // Nach dem Neuladen: aus dem Speicher, nicht aus D
-    await page.reload();
-    await waitForAppReady(page);
-    await page.waitForTimeout(300);
-    await weich
-        .poll(() => gespeichert(page, 'npcs'), { timeout: 4000 })
-        .toEqual({ d: LOKALES_BILD, speicher: LOKALES_BILD });
-    await zuReiter(page, 'npcs');
-    await weich
-        .poll(
-            () => bildBreite(page.locator('#npc-list .npc-item[data-id="1"] .npc-item-avatar img')),
-            {
+        // Nach dem Neuladen: aus dem Speicher, nicht aus D
+        if (fehlendeSitzungsmarke) {
+            await page.evaluate(() => sessionStorage.removeItem('bild-lokal-gesaet'));
+        }
+        await page.reload();
+        await waitForAppReady(page);
+        await page.waitForTimeout(300);
+        await weich
+            .poll(() => gespeichert(page, 'npcs'), { timeout: 4000 })
+            .toEqual({ d: LOKALES_BILD, speicher: LOKALES_BILD });
+        await zuReiter(page, 'npcs');
+        await weich
+            .poll(
+                () =>
+                    bildBreite(
+                        page.locator('#npc-list .npc-item[data-id="1"] .npc-item-avatar img')
+                    ),
+                {
+                    timeout: 5000
+                }
+            )
+            .toBe(LOKALE_BREITE);
+        await page.locator('#npc-list .npc-item[data-id="1"]').click();
+        await weich
+            .poll(() => bildBreite(page.locator('#npc-detail-panel .npc-detail-avatar img')), {
                 timeout: 5000
-            }
-        )
-        .toBe(LOKALE_BREITE);
-    await page.locator('#npc-list .npc-item[data-id="1"]').click();
-    await weich
-        .poll(() => bildBreite(page.locator('#npc-detail-panel .npc-detail-avatar img')), {
-            timeout: 5000
-        })
-        .toBe(LOKALE_BREITE);
+            })
+            .toBe(LOKALE_BREITE);
 
-    expect(netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
-    expect(seitenfehler).toEqual([]);
-});
+        expect(netz, 'keine Anforderung an einen Netzwerkpfad').toEqual([]);
+        expect(seitenfehler).toEqual([]);
+    });
+}
 
 // ===========================================================================
 // (b) Bild-Dialog: Netzwerkpfade werden abgelehnt

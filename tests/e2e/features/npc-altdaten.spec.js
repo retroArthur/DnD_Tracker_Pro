@@ -179,8 +179,9 @@
  * dieselbe Grenze; die Verdrahtung prueft tests/unit/datengrenze.test.js),
  * Firefox als eigenes Projekt (E8).
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
@@ -325,29 +326,26 @@ function seed(teile = {}) {
 }
 
 /**
- * Laedt, saet EINMAL je Tab und bleibt auf der Startansicht. Die Saat steht
- * hinter einer sessionStorage-Sperre: ein `page.reload()` liest dann, was die
- * App gespeichert hat, statt die Saat neu zu schreiben.
+ * Saet nur vor dem ersten Start und bleibt auf der Startansicht.
+ * Speicher-Roundtrips verwenden eine stabile HTTP-Origin; die übrigen
+ * Altdatenfälle bleiben im Dateimodus.
  * @param {import('@playwright/test').Page} page
  * @param {Record<string, any>} teile
+ * @param {{http?: boolean}} [optionen]
  */
-async function laden(page, teile) {
+async function laden(page, teile, { http = false } = {}) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('npc-altdaten-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('npc-altdaten-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, seed(teile)]
+        [SPEICHER, seed(teile)],
+        async () => {
+            await page.goto(http ? httpAppUrl(page) : APP_URL);
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // Die fremde Speicherung nach load() abwarten (wie ruecksprung-rundlauf):
     // sonst schreibt sie spaeter den ganzen Stand aus D und ein Neuladen-Fall
     // liest, was sie hinterliess, statt was der Weg schrieb.
@@ -880,7 +878,7 @@ test('W13 Generator mit Namenstabelle {text: 7}: der Name in D ist Text, die Lis
         icon: '🎲',
         entries: Array.from({ length: 400 }, () => ({ weight: 1, text: 7 }))
     };
-    await laden(page, { npcs: [ANNA(), CORA(), zora()], randomTables: [tabelle] });
+    await laden(page, { npcs: [ANNA(), CORA(), zora()], randomTables: [tabelle] }, { http: true });
     await zuAnsicht(page, 'npcs');
     await expect(page.locator('#npc-list .npc-item'), 'Vorbedingung: drei NPCs').toHaveCount(3);
 
@@ -925,8 +923,13 @@ test('W13 Generator mit Namenstabelle {text: 7}: der Name in D ist Text, die Lis
         )
         .toBe(4);
     await fehler.sichern();
+    await page.evaluate(() => sessionStorage.removeItem('npc-altdaten-gesaet'));
     await page.reload();
     await waitForAppReady(page);
+    expect(
+        await page.evaluate(id => window.D.npcs.find(n => n.id === id)?.name, neuId),
+        'Der gespeicherte NPC überlebt den Verlust der Sitzungssperre'
+    ).toBe('7');
     await zuAnsicht(page, 'npcs');
     await listeSteht(page, 4, 'nach dem Neuladen');
     await weich(
@@ -941,9 +944,13 @@ test('W14 Kampagnen-Import "Ersetzen", NPC ohne Namen in der letzten Lage: die L
 }) => {
     test.setTimeout(90000);
     const fehler = fehlerFangen(page);
-    await laden(page, {
-        npcs: [{ id: 9, name: 'Vorher', role: 'Wirt', race: 'Mensch', description: '' }]
-    });
+    await laden(
+        page,
+        {
+            npcs: [{ id: 9, name: 'Vorher', role: 'Wirt', race: 'Mensch', description: '' }]
+        },
+        { http: true }
+    );
     const version = await page.evaluate(() => window.APP_CONFIG.VERSION);
     const datei = {
         ...seed({ npcs: [ANNA(), CORA(), zora('name', FEHLT)] }),
