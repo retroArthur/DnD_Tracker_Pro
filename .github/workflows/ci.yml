@@ -93,6 +93,14 @@ jobs:
           python-version: '3.x'
       - run: npm ci
       - run: python build.py
+      - name: Bereite Chromium-Paketquellen vor
+        # Die zusätzliche Microsoft-Prod-Quelle wird für Chromium nicht benötigt.
+        # Ihr HTTP-403 blockierte apt-get update vor dem ersten Test.
+        run: |
+          microsoft_source=/etc/apt/sources.list.d/microsoft-prod.list
+          if [[ -f "$microsoft_source" ]]; then
+            sudo sed -i '\|^[[:space:]]*deb[[:space:]].*https://packages\.microsoft\.com/ubuntu/24\.04/prod[[:space:]]|s|^|# Disabled for Chromium-only CI: |' "$microsoft_source"
+          fi
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --shard=${{ matrix.shard }}/16 --retries=0
       - uses: actions/upload-artifact@v7
@@ -147,6 +155,13 @@ jobs:
         with:
           python-version: '3.x'
       - run: npm ci
+      - name: Bereite Chromium-Paketquellen vor
+        # Gleicher eng begrenzter APT-Workaround wie im E2E-Job.
+        run: |
+          microsoft_source=/etc/apt/sources.list.d/microsoft-prod.list
+          if [[ -f "$microsoft_source" ]]; then
+            sudo sed -i '\|^[[:space:]]*deb[[:space:]].*https://packages\.microsoft\.com/ubuntu/24\.04/prod[[:space:]]|s|^|# Disabled for Chromium-only CI: |' "$microsoft_source"
+          fi
       - run: npx playwright install --with-deps chromium
       - uses: actions/download-artifact@v8
         with:

@@ -210,9 +210,10 @@
  * den Rest beim Aufklappen (`KLAPPFORMULAR_BEARBEITEN`), darum genuegt dort
  * "geschlossen".
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import fs from 'fs';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
@@ -1062,28 +1063,26 @@ function fehlerFangen(page) {
 }
 
 /**
- * Laedt breit und saet EINMAL je Tab — hinter einer sessionStorage-Sperre,
- * damit ein `page.reload()` liest, was die App gespeichert hat.
+ * Laedt breit ueber die lokale HTTP-Origin. Das Startskript wird nach dem
+ * ersten Laden entfernt, damit ein Reload nur gespeicherte Daten liest.
+ * Manuelle Quellkontexte erhalten die URL ausdruecklich vom Testkontext.
  * @param {import('@playwright/test').Page} page
  * @param {Record<string, any>} saat
+ * @param {string} [url]
  */
-async function appLaden(page, saat) {
+async function appLaden(page, saat, url = httpAppUrl(page, APP_URL)) {
     await page.setViewportSize(BREIT);
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
-            try {
-                if (!sessionStorage.getItem('reiterimport-verweise-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('reiterimport-verweise-gesaet', '1');
-                }
-            } catch {
-                // file://-Speicher ist je Browserbau unterschiedlich streng.
-            }
+            localStorage.setItem(schluessel, JSON.stringify(s));
         },
-        [SPEICHER, saat]
+        [SPEICHER, saat],
+        async () => {
+            await page.goto(url);
+            await waitForAppReady(page);
+        }
     );
-    await page.goto(APP_URL);
-    await waitForAppReady(page);
     // DIE FREMDE SPEICHERUNG ABWARTEN (siehe link-anlegen.spec.js): repariert
     // `load()` die Saat, schreibt `saveAutomatic()` spaeter den ganzen Stand —
     // erkennbar daran, dass `_version` der Saat ueberschrieben wird.
@@ -1420,12 +1419,13 @@ test('(4) Hinzufügen Charaktere und Fraktionen, dieselbe Kampagne: Zauber, Gege
  * Exportiert Typen aus einer eigenen Quell-Kampagne in einem zweiten Kontext.
  * @param {import('@playwright/test').Browser} browser
  * @param {string[]} typen
+ * @param {string} url HTTP-Adresse des Testkontexts, nicht dessen Kampagnenspeicher.
  */
-async function ausDerQuelle(browser, typen) {
-    const kontext = await browser.newContext();
+async function ausDerQuelle(browser, typen, url) {
+    const kontext = await browser.newContext({ serviceWorkers: 'block' });
     try {
         const quelle = await kontext.newPage();
-        await appLaden(quelle, kampagne(QUELLE));
+        await appLaden(quelle, kampagne(QUELLE), url);
         /** @type {Record<string, any>} */
         const dateien = {};
         for (const typ of typen) dateien[typ] = await exportieren(quelle, typ);
@@ -1439,59 +1439,75 @@ async function ausDerQuelle(browser, typen) {
  *  @param {string} text */
 const fremdeNamenIn = text => FREMDE_NAMEN.filter(n => text.includes(n));
 
-test('(5) Hinzufügen NPCs in eine FREMDE Kampagne: nichts zeigt auf deren Einträge — in D, auf der Karte, im Detail', async ({
-    page,
-    browser
-}) => {
-    test.setTimeout(90000);
-    const { npcs: datei } = await ausDerQuelle(browser, ['npcs']);
-    const fehler = fehlerFangen(page);
-    await appLaden(page, kampagne(ZIEL));
-    const alteIds = await hinzufuegenUndPruefen(page, 'npcs', datei, 'fremde Kampagne');
+for (const fehlenderSitzungsmarker of [false, true]) {
+    test(`(5) Hinzufügen NPCs in eine FREMDE Kampagne: nichts zeigt auf deren Einträge — in D, auf der Karte, im Detail${
+        fehlenderSitzungsmarker ? ' (ohne Sitzungsmarker beim Neuladen)' : ''
+    }`, async ({ page, browser }) => {
+        test.setTimeout(90000);
+        const { npcs: datei } = await ausDerQuelle(browser, ['npcs'], httpAppUrl(page, APP_URL));
+        const fehler = fehlerFangen(page);
+        await appLaden(page, kampagne(ZIEL));
+        const alteIds = await hinzufuegenUndPruefen(page, 'npcs', datei, 'fremde Kampagne');
 
-    // WAS DER NUTZER SIEHT: Karte und Detail der importierten Alrik-Kopie.
-    const alrik = await page.evaluate(
-        alte =>
-            /** @type {any} */ (window).D.npcs.find(
-                /** @param {any} n */ n => n.name === 'Buergermeister Alrik' && !alte.includes(n.id)
-            )?.id ?? null,
-        alteIds
-    );
-    expect(alrik, 'Vorbedingung: die Alrik-Kopie ist in D').not.toBeNull();
-    const karte = page.locator(`#npc-list .npc-item[data-id="${alrik}"]`);
-    weich(
-        fremdeNamenIn((await karte.textContent()) || ''),
-        'R5: die NPC-Karte der Kopie nennt keinen Eintrag der fremden Kampagne (gemessen: "Eiswueste")'
-    ).toEqual([]);
-    await karte.click();
-    const detail = page.locator('#npc-detail-panel');
-    await expect(detail, 'Vorbedingung: das Detail zeigt die Kopie').toContainText(
-        'Buergermeister Alrik'
-    );
-    const detailText = (await detail.textContent()) || '';
-    weich(
-        fremdeNamenIn(detailText),
-        'R5: das Detail der Kopie nennt keinen Eintrag der fremden Kampagne (gemessen: "Hexe Morla", "Eiswueste")'
-    ).toEqual([]);
-    weich(
-        detailText.includes('Schmugglerin Vela'),
-        'R5: die Beziehung der Kopie zeigt auf die mitimportierte Vela'
-    ).toBe(true);
+        // WAS DER NUTZER SIEHT: Karte und Detail der importierten Alrik-Kopie.
+        const alrik = await page.evaluate(
+            alte =>
+                /** @type {any} */ (window).D.npcs.find(
+                    /** @param {any} n */ n =>
+                        n.name === 'Buergermeister Alrik' && !alte.includes(n.id)
+                )?.id ?? null,
+            alteIds
+        );
+        expect(alrik, 'Vorbedingung: die Alrik-Kopie ist in D').not.toBeNull();
+        const karte = page.locator(`#npc-list .npc-item[data-id="${alrik}"]`);
+        weich(
+            fremdeNamenIn((await karte.textContent()) || ''),
+            'R5: die NPC-Karte der Kopie nennt keinen Eintrag der fremden Kampagne (gemessen: "Eiswueste")'
+        ).toEqual([]);
+        await karte.click();
+        const detail = page.locator('#npc-detail-panel');
+        await expect(detail, 'Vorbedingung: das Detail zeigt die Kopie').toContainText(
+            'Buergermeister Alrik'
+        );
+        const detailText = (await detail.textContent()) || '';
+        weich(
+            fremdeNamenIn(detailText),
+            'R5: das Detail der Kopie nennt keinen Eintrag der fremden Kampagne (gemessen: "Hexe Morla", "Eiswueste")'
+        ).toEqual([]);
+        weich(
+            detailText.includes('Schmugglerin Vela'),
+            'R5: die Beziehung der Kopie zeigt auf die mitimportierte Vela'
+        ).toBe(true);
 
-    await neuLaden(page);
-    weich(
-        await lage(page, 'npcs', alteIds),
-        'R5: nach dem Neuladen zeigt nichts auf die fremden Eintraege'
-    ).toEqual(soll('npcs', datei));
-    weich(await fehler.alle(), 'keine Fehler auf dem Weg').toEqual([]);
-});
+        if (fehlenderSitzungsmarker) {
+            expect(
+                await page.evaluate(
+                    schluessel =>
+                        JSON.parse(localStorage.getItem(schluessel) || '{}').npcs.map(n => n.name),
+                    SPEICHER
+                ),
+                'Vorbedingung: alle vorhandenen und importierten NPCs sind gespeichert'
+            ).toEqual([
+                ...ZIEL.npcs.map(n => n.name),
+                ...datei.json.data.map(/** @param {any} n */ n => n.name)
+            ]);
+            await page.evaluate(() => sessionStorage.removeItem('reiterimport-verweise-gesaet'));
+        }
+        await neuLaden(page);
+        weich(
+            await lage(page, 'npcs', alteIds),
+            'R5: nach dem Neuladen zeigt nichts auf die fremden Eintraege'
+        ).toEqual(soll('npcs', datei));
+        weich(await fehler.alle(), 'keine Fehler auf dem Weg').toEqual([]);
+    });
+}
 
 test('(6) Hinzufügen Wiki und Quests in eine FREMDE Kampagne: Eltern und Quest↔Quest sind die Kopien, die Questkarte nennt keinen fremden Geber oder Ort', async ({
     page,
     browser
 }) => {
     test.setTimeout(90000);
-    const dateien = await ausDerQuelle(browser, ['wiki', 'quests']);
+    const dateien = await ausDerQuelle(browser, ['wiki', 'quests'], httpAppUrl(page, APP_URL));
     const fehler = fehlerFangen(page);
     await appLaden(page, kampagne(ZIEL));
     await hinzufuegenUndPruefen(page, 'wiki', dateien.wiki, 'fremde Kampagne');
