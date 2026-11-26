@@ -1,12 +1,12 @@
 // @ts-check
-import { test, expect } from '@playwright/test';
-import { loadApp, seedCleanSessionOnce, waitForAppReady } from '../helpers/test-utils.js';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
+import { loadApp, loadCleanSessionOnce, waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * Code-Review 2026-09-21, Einheit U7 — R02: Schliessen oder Neuladen eines veralteten Tabs
  * darf die Arbeit eines anderen Tabs nicht ueberschreiben.
  *
- * Zwei Seiten im selben Browserkontext teilen unter file:// dasselbe localStorage. Seite B
+ * Zwei Seiten im selben Browserkontext teilen dieselbe lokale HTTP-Origin. Seite B
  * speichert einen Charakter; Seite A (unveraendert, damit veraltet) wird geschlossen bzw. neu
  * geladen. Vorher schrieb der beforeunload-Handler in systems/avatars.js As alten Stand
  * unbedingt zurueck.
@@ -14,6 +14,8 @@ import { loadApp, seedCleanSessionOnce, waitForAppReady } from '../helpers/test-
  * Wichtig: page.close() ohne { runBeforeUnload: true } ueberspringt beforeunload — der Test
  * waere dann ohne Aussage. Ebenso muss A Bs Schreibvorgang ueberhaupt sehen (geteilter
  * Speicher), sonst ist der Test ebenfalls ohne Aussage.
+ * Seit der Nachprüfung vom 26.11. laufen die Speichertests über HTTP: unter file://
+ * konnte beim Reload der Browser-Speicher wechseln und die Test-Saat erneut laufen.
  */
 
 const KEY = 'dnd-tracker-v4';
@@ -34,11 +36,10 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
     test('Schliessen des veralteten Tabs A laesst Bs gespeicherten Charakter stehen', async ({
         context
     }) => {
-        await seedCleanSessionOnce(context);
         const pageA = await context.newPage();
-        await loadApp(pageA);
+        await loadCleanSessionOnce(pageA, httpAppUrl(pageA));
         const pageB = await context.newPage();
-        await loadApp(pageB);
+        await loadApp(pageB, httpAppUrl(pageB));
         await bSpeichertHeld(pageB);
 
         // Nicht-Vakuitaet: A sieht Bs Schreibvorgang im geteilten Speicher
@@ -54,11 +55,10 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
     test('Neuladen des veralteten Tabs A: A laedt Bs Stand, der Schluessel behaelt ihn', async ({
         context
     }) => {
-        await seedCleanSessionOnce(context);
         const pageA = await context.newPage();
-        await loadApp(pageA);
+        await loadCleanSessionOnce(pageA, httpAppUrl(pageA));
         const pageB = await context.newPage();
-        await loadApp(pageB);
+        await loadApp(pageB, httpAppUrl(pageB));
         await bSpeichertHeld(pageB);
         expect(await gespeichert(pageA)).toContain(HELD);
 
@@ -74,8 +74,22 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
     test('Gegenprobe (ein Tab): save() und sofort neu laden — der Wert ueberlebt (Sicherheitsnetz beim Verlassen)', async ({
         page
     }) => {
-        await seedCleanSessionOnce(page.context());
-        await loadApp(page);
+        // Vor dem App-Listener registrieren: auch am Window-Ziel ist dessen
+        // Aufrufreihenfolge relevant. Die Probe darf erst beim Entladen schreiben.
+        await page.addInitScript(key => {
+            window.addEventListener('beforeunload', event => {
+                localStorage.setItem(
+                    'r02-unload-proof',
+                    JSON.stringify({
+                        trusted: event.isTrusted,
+                        // @ts-ignore — App-Global im Seitenkontext
+                        pending: window.hasExplicitPendingWork(),
+                        before: JSON.parse(localStorage.getItem(key)).quickNotes
+                    })
+                );
+            });
+        }, KEY);
+        await loadCleanSessionOnce(page, httpAppUrl(page));
 
         // Der Seed hat keinen Zeitstempel. Erst ein bestätigter LocalStorage-Save
         // macht ihn zur führenden Kopie für den synchronen Entladepfad.
@@ -85,15 +99,41 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
             backend: 'localStorage'
         });
 
-        await page.evaluate(() => {
-            // @ts-ignore — App-Globals im Seitenkontext
-            window.D.quickNotes = 'R02-Sicherheitsnetz';
-            // @ts-ignore
-            window.save();
-        });
-        await page.reload();
+        // Eine echte Nutzeraktion gehört zum Browser-Lebenszyklus. Ohne sie
+        // garantiert Chromium beforeunload nicht. Kein Warten auf den Save:
+        // Änderung und Reload bleiben im selben Task, vor dem 300-ms-Timer.
+        // Auch bei geöffnetem Erststart-Assistenten eine echte Pointer-Aktion.
+        await page.mouse.click(5, 5);
+        expect(await page.evaluate(() => navigator.userActivation.hasBeenActive)).toBe(true);
+        await Promise.all([
+            page.waitForEvent('load'),
+            page.evaluate(key => {
+                window.addEventListener(
+                    'beforeunload',
+                    () => {
+                        const proof = JSON.parse(localStorage.getItem('r02-unload-proof'));
+                        proof.after = JSON.parse(localStorage.getItem(key)).quickNotes;
+                        localStorage.setItem('r02-unload-proof', JSON.stringify(proof));
+                    },
+                    { once: true }
+                );
+                // @ts-ignore — App-Globals im Seitenkontext
+                window.D.quickNotes = 'R02-Sicherheitsnetz';
+                // @ts-ignore
+                window.save();
+                window.location.reload();
+            }, KEY)
+        ]);
         await waitForAppReady(page);
 
+        expect(
+            await page.evaluate(() => JSON.parse(localStorage.getItem('r02-unload-proof')))
+        ).toEqual({
+            trusted: true,
+            pending: true,
+            before: '',
+            after: 'R02-Sicherheitsnetz'
+        });
         // @ts-ignore
         expect(await page.evaluate(() => window.D.quickNotes)).toBe('R02-Sicherheitsnetz');
     });
@@ -121,9 +161,8 @@ function readCampaignStorage(page, key) {
 test('N63 · Ein alter Tab kann eine gelöschte IndexedDB-Kampagne nicht erneut speichern', async ({
     context
 }) => {
-    await seedCleanSessionOnce(context);
     const pageA = await context.newPage();
-    await loadApp(pageA);
+    await loadCleanSessionOnce(pageA, httpAppUrl(pageA));
     const notesLength = 5 * 1024 * 1024 + 1;
     const created = await pageA.evaluate(length => {
         // @ts-ignore — App-Globals im Seitenkontext
@@ -136,7 +175,7 @@ test('N63 · Ein alter Tab kann eine gelöschte IndexedDB-Kampagne nicht erneut 
     await pageA.reload();
     await waitForAppReady(pageA);
     const pageB = await context.newPage();
-    await loadApp(pageB);
+    await loadApp(pageB, httpAppUrl(pageB));
     for (const tab of [pageA, pageB]) {
         const loaded = await tab.evaluate(() => ({
             // @ts-ignore — App-Globals im Seitenkontext
@@ -193,7 +232,7 @@ test('N63 · Ein alter Tab kann eine gelöschte IndexedDB-Kampagne nicht erneut 
     });
     expect.soft(saved).toMatchObject({ success: false });
     const pageC = await context.newPage();
-    await loadApp(pageC);
+    await loadApp(pageC, httpAppUrl(pageC));
     expect.soft(await readCampaignStorage(pageC, key)).toEqual(absent);
 
     const imported = await pageA.evaluate(

@@ -34,7 +34,7 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
  * kennt, und _nextId.npcs = 1.
  *
  * Bewusst GEGEN das Vorhandensein des Schluessels abgesichert (Muster
- * seedCleanSessionOnce()): addInitScript() laeuft bei JEDER Navigation, also auch beim
+ * der früheren Mehrtab-Fixture): addInitScript() laeuft bei JEDER Navigation, also auch beim
  * Neuladen in Schritt 4 — ein ungeschuetzter Seed wuerde den importierten Stand
  * ueberschreiben und den Reload-Teil des Tests sinnlos machen.
  * @param {import('@playwright/test').Page} page

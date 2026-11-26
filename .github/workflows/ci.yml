@@ -68,9 +68,9 @@ jobs:
       - run: python build.py
       - run: python -m pytest tests/build/ -v
 
-  # Phase 8 (D-03): voller Playwright-E2E-Lauf gegen den DEV-Bundle (file://,
-  # kein HTTP-Server, kein SMOKE_BASE_URL — das ist der bereits vorhandene
-  # smoke-test-Job gegen den PRODUCTION-Bundle, ein anderer Check). Bewusst
+  # Voller Playwright-E2E-Lauf gegen den DEV-Bundle. UI-Verträge nutzen file://;
+  # Persistenz-Fixtures betreiben ihren eigenen lokalen HTTP-Server. Der getrennte
+  # smoke-test-Job prüft das PRODUCTION-Paket über HTTP. Bewusst
   # OHNE die YAML-Option, die einen roten Schritt ignorieren wuerde: ein roter
   # e2e-Lauf muss den Merge/Deploy blockieren. Das Erzwingen dieses Checks vor
   # dem Merge ist eine GitHub-Branch-Protection-Einstellung (Repo-Settings),
@@ -94,7 +94,7 @@ jobs:
       - run: npm ci
       - run: python build.py
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --shard=${{ matrix.shard }}/16
+      - run: npx playwright test --shard=${{ matrix.shard }}/16 --retries=0
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
@@ -159,7 +159,7 @@ jobs:
       - name: Warte auf Server
         run: sleep 2
       - name: Smoke-Test
-        run: npx playwright test --config=playwright.smoke.config.js
+        run: npx playwright test --config=playwright.smoke.config.js --retries=0
         env:
           SMOKE_BASE_URL: http://localhost:8000/
 

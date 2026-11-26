@@ -1,4 +1,5 @@
 // @ts-check
+import { withInitialSeed } from './initial-seed.js';
 /**
  * Test Utilities für D&D Tracker E2E Tests
  * Gemeinsame Hilfsfunktionen für alle Tests
@@ -117,21 +118,21 @@ const CLEAN_SESSION_SEED = {
 };
 
 /**
- * Wie seedCleanSession(), aber fuer den ganzen Browserkontext und NUR, solange noch keine
- * Kampagne gespeichert ist (Code-Review 2026-09-21, U7/R02). Mehrere Seiten eines Kontexts
- * teilen unter file:// dasselbe localStorage; ein bei jeder Navigation erneut geschriebener
- * Seed wuerde einen Reload-Test (Daten ueberleben das Neuladen?) sinnlos machen.
- * @param {import('@playwright/test').BrowserContext} context
+ * Lädt die erste Seite eines frischen Mehrtab-Testkontexts mit sauberer Saat.
+ * Der Seed ist nach dem ersten Start entfernt. Weitere Tabs und Reloads verwenden
+ * loadApp()/waitForAppReady() und lesen ausschließlich den gespeicherten Stand.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} [url]
  */
-export async function seedCleanSessionOnce(context) {
-    await context.addInitScript(seed => {
-        try {
-            if (localStorage.getItem('dnd-tracker-v4') !== null) return;
+export async function loadCleanSessionOnce(page, url) {
+    await withInitialSeed(
+        page,
+        seed => {
             localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
-        } catch {
-            // file:// localStorage restrictions vary by browser build — no crash either way.
-        }
-    }, CLEAN_SESSION_SEED);
+        },
+        CLEAN_SESSION_SEED,
+        () => loadApp(page, url)
+    );
 }
 
 /**
@@ -257,8 +258,16 @@ export async function seedPopulatedSession(page) {
                             beschreibung: '',
                             ruf: 5,
                             rufHistorie: [
-                                { delta: 10, grund: 'Testgrund positiv (15-13)', zeitstempel: Date.now() },
-                                { delta: -5, grund: 'Testgrund negativ (15-13)', zeitstempel: Date.now() }
+                                {
+                                    delta: 10,
+                                    grund: 'Testgrund positiv (15-13)',
+                                    zeitstempel: Date.now()
+                                },
+                                {
+                                    delta: -5,
+                                    grund: 'Testgrund negativ (15-13)',
+                                    zeitstempel: Date.now()
+                                }
                             ],
                             mitgliederNpcIds: [],
                             sitzOrtId: null,
@@ -352,10 +361,11 @@ export async function waitForAppReady(page, options = {}) {
 /**
  * Lädt die App und wartet auf vollständige Initialisierung
  * @param {import('@playwright/test').Page} page
+ * @param {string} [url] Optionaler HTTP-Einstieg für Persistenztests.
  */
-export async function loadApp(page) {
+export async function loadApp(page, url) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
-    await page.goto(filePath);
+    await page.goto(url || filePath);
     await waitForAppReady(page);
     // Warte auf App-Initialisierung
     await page.waitForTimeout(500);

@@ -1,15 +1,26 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { readFile } from 'node:fs/promises';
 import { waitForAppReady } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const app = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 const storageKey = 'dnd-tracker-v4';
 
+test.beforeEach(async ({ context }) => {
+    // Diese Bedienfälle beginnen nach dem Erststart. Sonst öffnet eine leere
+    // HTTP-Kampagne den Umzugsassistenten mitten über dem Truheneditor.
+    await context.addInitScript(() => {
+        localStorage.setItem(
+            'migration-wizard-shown',
+            JSON.stringify({ shown: true, skipped: true })
+        );
+    });
+});
+
 async function loadChestFixture(page, data = {}) {
-    await page.addInitScript(
+    await withInitialSeed(
+        page,
         ({ key, data }) => {
-            if (sessionStorage.getItem('chest-regression-seeded')) return;
-            sessionStorage.setItem('chest-regression-seeded', '1');
             const seed = {
                 _version: '99.0.0',
                 settings: { markdownOnboardingSeen: true },
@@ -47,10 +58,12 @@ async function loadChestFixture(page, data = {}) {
             );
             localStorage.setItem(key, JSON.stringify(seed));
         },
-        { key: storageKey, data }
+        { key: storageKey, data },
+        async () => {
+            await page.goto(httpAppUrl(page, app));
+            await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
+        }
     );
-    await page.goto(app);
-    await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     await page.evaluate(() => window.switchView('loot'));
     await page.getByRole('button', { name: 'Truhen', exact: true }).press('Enter');
 }
@@ -185,7 +198,7 @@ for (const mode of ['blockiert', 'fehlgeschlagen']) {
         };
         expect(await state(page)).toEqual(original);
         const fresh = await context.newPage();
-        await fresh.goto(app);
+        await fresh.goto(httpAppUrl(fresh, app));
         await waitForAppReady(fresh);
         expect(await state(fresh)).toEqual(original);
         await fresh.close();
@@ -379,7 +392,7 @@ for (const [id, mode] of [
         let tabB;
         if (mode !== 'Leseabbruch') {
             tabB = await context.newPage();
-            await tabB.goto(app);
+            await tabB.goto(httpAppUrl(tabB, app));
             await waitForAppReady(tabB);
             expect(await tabB.evaluate(() => window.getActiveCampaignKey())).toBe(storageKey);
             if (id === 'N59') {
@@ -443,7 +456,7 @@ for (const [id, mode] of [
             await saveFinished;
 
             const fresh = await context.newPage();
-            await fresh.goto(app);
+            await fresh.goto(httpAppUrl(fresh, app));
             await waitForAppReady(fresh);
             expect(
                 await fresh.evaluate(() => ({
@@ -502,37 +515,44 @@ for (const [id, mode] of [
     });
 }
 
-test('N38: eine Zuweisung wird erst nach erfolgreichem Speichern bestätigt', async ({ page }) => {
-    await loadChestFixture(page);
-    await page.getByRole('button', { name: 'Drop aus Fundtruhe', exact: true }).press('Enter');
-    const dialog = page.getByRole('dialog', { name: 'Drop aus Fundtruhe', exact: true });
-    const confirmation = dialog.getByText('Fackel wurde Alva zugewiesen.', { exact: true });
-    const reroll = dialog.getByRole('button', { name: 'Noch einmal würfeln', exact: true });
-    await pauseChestSave(page);
-    await assignChestDrop(dialog);
-    await page.waitForFunction(() => typeof window.rejectChestSave === 'function');
-    await expect(confirmation).toHaveCount(0);
-    await expect(dialog.getByRole('button', { name: 'Zuweisen', exact: true })).toBeDisabled();
-    await expect(reroll).toBeDisabled();
-    await page.evaluate(() => window.rejectChestSave());
-    await expect(dialog.getByText('Speichern fehlgeschlagen.', { exact: false })).toBeVisible();
-    await expect(confirmation).toHaveCount(0);
-    await expect(reroll).toBeDisabled();
+for (const missingSessionMarker of [false, true]) {
+    test(`N38: eine Zuweisung wird erst nach erfolgreichem Speichern bestätigt${
+        missingSessionMarker ? ' (ohne Sitzungsmarker beim Neuladen)' : ''
+    }`, async ({ page }) => {
+        await loadChestFixture(page);
+        await page.getByRole('button', { name: 'Drop aus Fundtruhe', exact: true }).press('Enter');
+        const dialog = page.getByRole('dialog', { name: 'Drop aus Fundtruhe', exact: true });
+        const confirmation = dialog.getByText('Fackel wurde Alva zugewiesen.', { exact: true });
+        const reroll = dialog.getByRole('button', { name: 'Noch einmal würfeln', exact: true });
+        await pauseChestSave(page);
+        await assignChestDrop(dialog);
+        await page.waitForFunction(() => typeof window.rejectChestSave === 'function');
+        await expect(confirmation).toHaveCount(0);
+        await expect(dialog.getByRole('button', { name: 'Zuweisen', exact: true })).toBeDisabled();
+        await expect(reroll).toBeDisabled();
+        await page.evaluate(() => window.rejectChestSave());
+        await expect(dialog.getByText('Speichern fehlgeschlagen.', { exact: false })).toBeVisible();
+        await expect(confirmation).toHaveCount(0);
+        await expect(reroll).toBeDisabled();
 
-    await dialog.getByRole('button', { name: 'Erneut speichern', exact: true }).press('Enter');
-    await expect(confirmation).toBeVisible();
-    await expect(reroll).toBeEnabled();
-    await page.reload();
-    await waitForAppReady(page);
-    const persisted = await page.evaluate(() => ({
-        copies: window.D.loot.map(({ name }) => name),
-        inventory: window.D.characters[0].items.map(
-            ({ id }) => window.D.loot.find(item => item.id === id)?.name
-        ),
-        weights: window.D.lootChests[0].entries.map(({ weight }) => weight)
-    }));
-    expect(persisted).toEqual({ copies: ['Fackel'], inventory: ['Fackel'], weights: [1] });
-});
+        await dialog.getByRole('button', { name: 'Erneut speichern', exact: true }).press('Enter');
+        await expect(confirmation).toBeVisible();
+        await expect(reroll).toBeEnabled();
+        if (missingSessionMarker) {
+            await page.evaluate(() => sessionStorage.removeItem('chest-regression-seeded'));
+        }
+        await page.reload();
+        await waitForAppReady(page);
+        const persisted = await page.evaluate(() => ({
+            copies: window.D.loot.map(({ name }) => name),
+            inventory: window.D.characters[0].items.map(
+                ({ id }) => window.D.loot.find(item => item.id === id)?.name
+            ),
+            weights: window.D.lootChests[0].entries.map(({ weight }) => weight)
+        }));
+        expect(persisted).toEqual({ copies: ['Fackel'], inventory: ['Fackel'], weights: [1] });
+    });
+}
 
 test('N46 · Nach Speicherfehler und erneutem Öffnen entsteht nur eine Kopie', async ({ page }) => {
     await loadChestFixture(page);
@@ -694,64 +714,87 @@ test('N39: ein Drop erhält Eigenschaften und Absätze ohne das ursprüngliche I
     expect(saved.dropWeight).toBe(3);
 });
 
-test('N40: eine importierte Vorlage bleibt ohne Quellitem unverlinkt und würfelbar', async ({
-    page
-}) => {
-    await loadChestFixture(page, {
-        loot: [
-            {
-                id: 2,
-                name: 'Silberring',
-                category: 'rings',
-                rarity: 'rare',
-                description: 'Kleine Gravur',
-                quantity: 1
-            }
-        ]
-    });
-    const data = {
-        _dataType: 'loot',
-        _version: '2.6.1',
-        data: [],
-        lootChests: [
-            {
-                id: 17,
-                name: 'Importtruhe',
-                entries: [
-                    {
-                        name: 'Silberring',
-                        category: 'rings',
-                        rarity: 'rare',
-                        description: 'Kleine Gravur',
-                        weight: 1,
-                        sourceItemId: 91
-                    }
-                ]
-            }
-        ]
-    };
-    await page.locator('#import-loot').setInputFiles({
-        name: 'importtruhe.json',
-        mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(data))
-    });
-    const importDialog = page.locator('#import-modal');
-    await importDialog.getByRole('button', { name: 'Importieren', exact: true }).press('Enter');
-    await expect(importDialog).toBeHidden();
-    await page.reload();
-    await waitForAppReady(page);
-    await page.evaluate(() => window.switchView('loot'));
-    await page.getByRole('button', { name: 'Truhen', exact: true }).press('Enter');
+for (const missingSessionMarker of [false, true, 'indexedDB']) {
+    test(`N40: eine importierte Vorlage bleibt ohne Quellitem unverlinkt und würfelbar${
+        missingSessionMarker === 'indexedDB'
+            ? ' (IndexedDB-only ohne Sitzungsmarker beim Neuladen)'
+            : missingSessionMarker
+              ? ' (ohne Sitzungsmarker beim Neuladen)'
+              : ''
+    }`, async ({ page }) => {
+        await loadChestFixture(page, {
+            loot: [
+                {
+                    id: 2,
+                    name: 'Silberring',
+                    category: 'rings',
+                    rarity: 'rare',
+                    description: 'Kleine Gravur',
+                    quantity: 1
+                }
+            ]
+        });
+        const data = {
+            _dataType: 'loot',
+            _version: '2.6.1',
+            data: [],
+            lootChests: [
+                {
+                    id: 17,
+                    name: 'Importtruhe',
+                    entries: [
+                        {
+                            name: 'Silberring',
+                            category: 'rings',
+                            rarity: 'rare',
+                            description: 'Kleine Gravur',
+                            weight: 1,
+                            sourceItemId: 91
+                        }
+                    ]
+                }
+            ]
+        };
+        await page.locator('#import-loot').setInputFiles({
+            name: 'importtruhe.json',
+            mimeType: 'application/json',
+            buffer: Buffer.from(JSON.stringify(data))
+        });
+        const importDialog = page.locator('#import-modal');
+        await importDialog.getByRole('button', { name: 'Importieren', exact: true }).press('Enter');
+        await expect(importDialog).toBeHidden();
+        if (missingSessionMarker === 'indexedDB') {
+            const stored = await page.evaluate(async key => {
+                window.D.quickNotes = 'x'.repeat(5 * 1024 * 1024 + 1);
+                const result = await window.saveImmediate();
+                sessionStorage.clear();
+                return { result, local: localStorage.getItem(key) };
+            }, storageKey);
+            expect(stored).toEqual({
+                result: { success: true, backend: 'indexedDB' },
+                local: null
+            });
+        }
+        if (missingSessionMarker) {
+            await page.evaluate(() => sessionStorage.removeItem('chest-regression-seeded'));
+        }
+        await page.reload();
+        await waitForAppReady(page);
+        await page.evaluate(() => window.switchView('loot'));
+        await page.getByRole('button', { name: 'Truhen', exact: true }).press('Enter');
 
-    const templates = page.getByRole('region', { name: 'Drop-Vorlagen' });
-    await templates.getByRole('button', { name: 'Importtruhe', exact: true }).press('Enter');
-    await expect(templates.getByText('Silberring', { exact: true })).toBeVisible();
-    await expect(templates.getByRole('button', { name: 'Silberring', exact: true })).toHaveCount(0);
-    await templates
-        .getByRole('button', { name: 'Drop aus Importtruhe', exact: true })
-        .press('Enter');
-    await expect(page.locator('#loot-chest-quick-drop-result strong')).toHaveText('Silberring');
-});
+        const templates = page.getByRole('region', { name: 'Drop-Vorlagen' });
+        await templates.getByRole('button', { name: 'Importtruhe', exact: true }).press('Enter');
+        await expect(templates.getByText('Silberring', { exact: true })).toBeVisible();
+        await expect(
+            templates.getByRole('button', { name: 'Silberring', exact: true })
+        ).toHaveCount(0);
+        await templates
+            .getByRole('button', { name: 'Drop aus Importtruhe', exact: true })
+            .press('Enter');
+        await expect(page.locator('#loot-chest-quick-drop-result strong')).toHaveText('Silberring');
+    });
+}
 
 test('N41: Undo im offenen Drop-Dialog entfernt die Bestätigung und erlaubt einen Neuwurf', async ({
     page
@@ -975,7 +1018,7 @@ test('Bearbeiten zeigt nur die gewählte Truhe und kehrt nach dem Löschen zur L
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
 
     const modal = await openChests(page);
@@ -1030,7 +1073,7 @@ test('+ Truhe beginnt leer und zeigt nach dem Anlegen nur die neue Truhe', async
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
 
     const modal = await openChests(page, 'Kupfermine');
@@ -1100,7 +1143,7 @@ test('ein Vorlagen-Drop lässt sich im kompakten Ergebnisdialog neu würfeln und
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     await page.evaluate(() => {
         window.switchView('loot');
@@ -1189,7 +1232,7 @@ test('Fertig speichert die kompakten Truheneinträge und die Vorschau öffnet da
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('loot'));
     await page.locator('#loot-search').fill('Fackel');
@@ -1265,7 +1308,7 @@ test('eine benannte Truhe erscheint als Drop-Vorlage und lässt sich aus der Lis
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     await page.evaluate(() => window.switchView('loot'));
 
@@ -1347,7 +1390,7 @@ test('ein ausgewähltes Item lässt sich aus seiner Detailansicht in eine andere
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     await page.evaluate(() => window.switchView('loot'));
     await page.locator('#loot-list .loot-item').filter({ hasText: 'Silberring' }).click();
@@ -1394,7 +1437,7 @@ test('beim Anlegen kann das gespeicherte Item direkt in die erste Truhe gelegt w
     await page.addInitScript(key => {
         localStorage.setItem(key, JSON.stringify({ loot: [], lootChests: [], _version: '99.0.0' }));
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('loot'));
     await page.getByRole('button', { name: '+ Item', exact: true }).click();
@@ -1438,7 +1481,7 @@ test('die Hilfe zum Drop-Gewicht ist bei 320 Pixeln per Tastatur bedienbar', asy
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     await page.evaluate(() => window.switchView('loot'));
     await page.getByRole('button', { name: 'Truhen', exact: true }).press('Enter');
@@ -1499,7 +1542,7 @@ test('jeder Drop lässt sich einmal zuweisen und bleibt in der Truhe ziehbar', a
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
     const modal = await openChests(page, 'Schmugglertruhe');
     const drop = modal.getByRole('button', { name: 'Drop', exact: true });
@@ -1581,7 +1624,7 @@ test('jeder Drop lässt sich einmal zuweisen und bleibt in der Truhe ziehbar', a
 test('eine Datei mit einer leeren benannten Truhe lässt sich exportieren und hinzufügen', async ({
     page
 }) => {
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await waitForAppReady(page);
     const modal = await openChests(page);
     await modal.locator('#loot-chest-name').fill('Reservetruhe');
@@ -1626,7 +1669,7 @@ test('der Drop bleibt bei 320 Pixeln sichtbar und lässt sich zuweisen', async (
             })
         );
     }, storageKey);
-    await page.goto(app);
+    await page.goto(httpAppUrl(page, app));
     await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
     const modal = await openChests(page);
     await modal.locator('#loot-chest-name').fill('Schmugglertruhe');
@@ -1671,7 +1714,7 @@ for (const viewport of [
                 })
             );
         }, storageKey);
-        await page.goto(app);
+        await page.goto(httpAppUrl(page, app));
         await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true');
         let modal = await openChests(page);
 

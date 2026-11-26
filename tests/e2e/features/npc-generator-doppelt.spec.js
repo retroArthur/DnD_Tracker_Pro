@@ -228,8 +228,9 @@
  *   Telefon, Escape blendet den Generator nur aus.
  */
 import fs from 'fs';
-import { test, expect } from '@playwright/test';
+import { test, expect, httpAppUrl } from '../helpers/http-app.js';
 import { waitForAppReady, navigateToTab } from '../helpers/test-utils.js';
+import { withInitialSeed } from '../helpers/initial-seed.js';
 
 const DIST = `${process.cwd().replace(/\\/g, '/')}/dist`;
 const DEV_URL = `file:///${DIST}/dnd-tracker-bundled.html`;
@@ -347,48 +348,53 @@ async function bereit(page) {
 }
 
 /**
- * Laedt, saet EINMAL je Tab (sessionStorage-Sperre: ein `page.reload()` liest
- * dann, was die App gespeichert hat) und haengt die Ableser ein:
+ * Saet nur vor dem ersten Dokument und haengt die Ableser bei jedem Laden ein.
+ * file:// kann beim Reload sessionStorage verlieren, waehrend localStorage
+ * erhalten bleibt (W4s). Eine Sitzungssperre hatte dann die gespeicherten
+ * drei NPCs wieder mit den zwei NPCs der Saat ueberschrieben. Das Seed-Skript
+ * wird nach dem ersten Laden entfernt; beim Reload kann es nicht mehr schreiben.
  * - `__meldungen`: jede Meldung des Ereignis-Logs beim Einhaengen, mit Typ,
  *   Text und `checkVisibility()` im selben Augenblick;
  * - `__tipps`: der Zeitpunkt jedes `touchstart` (nur W5t liest ihn).
  * Beides nur Ablesen — es greift in keinen Ablauf der App ein.
  * @param {import('@playwright/test').Page} page
- * @param {{ url?: string, viewport?: { width: number, height: number } }} [optionen]
+ * @param {{ url?: string, viewport?: { width: number, height: number }, http?: boolean }} [optionen]
  */
-async function laden(page, { url = DEV_URL, viewport = BREIT } = {}) {
+async function laden(page, { url = DEV_URL, viewport = BREIT, http = false } = {}) {
     await page.setViewportSize(viewport);
-    await page.addInitScript(
+    await page.addInitScript(() => {
+        /** @type {any} */
+        const w = window;
+        w.__meldungen = [];
+        new MutationObserver(aenderungen => {
+            for (const a of aenderungen) {
+                for (const n of a.addedNodes) {
+                    if (n instanceof HTMLElement && n.classList.contains('event-log-entry')) {
+                        const typ = [...n.classList].find(k => k !== 'event-log-entry') || '';
+                        const text = n.querySelector('.event-log-message')?.textContent || '';
+                        w.__meldungen.push({ typ, text, sichtbar: n.checkVisibility() });
+                    }
+                }
+            }
+        }).observe(document, { childList: true, subtree: true });
+        w.__tipps = [];
+        window.addEventListener('touchstart', () => w.__tipps.push(performance.now()), true);
+    });
+    await withInitialSeed(
+        page,
         ([schluessel, s]) => {
             try {
-                if (!sessionStorage.getItem('generator-doppelt-gesaet')) {
-                    localStorage.setItem(schluessel, JSON.stringify(s));
-                    sessionStorage.setItem('generator-doppelt-gesaet', '1');
-                }
+                localStorage.setItem(schluessel, JSON.stringify(s));
             } catch {
                 // file://-Speicher ist je Browserbau unterschiedlich streng.
             }
-            /** @type {any} */
-            const w = window;
-            w.__meldungen = [];
-            new MutationObserver(aenderungen => {
-                for (const a of aenderungen) {
-                    for (const n of a.addedNodes) {
-                        if (n instanceof HTMLElement && n.classList.contains('event-log-entry')) {
-                            const typ = [...n.classList].find(k => k !== 'event-log-entry') || '';
-                            const text = n.querySelector('.event-log-message')?.textContent || '';
-                            w.__meldungen.push({ typ, text, sichtbar: n.checkVisibility() });
-                        }
-                    }
-                }
-            }).observe(document, { childList: true, subtree: true });
-            w.__tipps = [];
-            window.addEventListener('touchstart', () => w.__tipps.push(performance.now()), true);
         },
-        [SPEICHER, seed()]
+        [SPEICHER, seed()],
+        async () => {
+            await page.goto(http ? httpAppUrl(page, url) : url);
+            await bereit(page);
+        }
     );
-    await page.goto(url);
-    await bereit(page);
     // Die fremde Speicherung nach load() abwarten (wie ruecksprung-rundlauf):
     // sonst schreibt sie spaeter den ganzen Stand aus D, und ein Speicher-Fall
     // liest, was sie hinterliess, statt was der Weg schrieb.
@@ -887,34 +893,42 @@ for (const [kuerzel, taste, wie] of /** @type {const} */ ([
     });
 }
 
-test('W4 1440, dev: nach dem Doppelklick und dem Neuladen bleibt genau ein NPC mehr', async ({
-    page
-}) => {
-    const fehler = fehlerFangen(page);
-    await laden(page);
-    const { name, vorher } = await doppelklickMitWurf(page);
-    await fehler.sichern();
-    await page.reload();
-    await waitForAppReady(page);
-    const neu = await page.evaluate(schluessel => {
-        const g = JSON.parse(localStorage.getItem(schluessel) || '{}');
-        return {
-            npcs: window.D.npcs.length,
-            /** @type {unknown[]} */
-            namen: window.D.npcs.map((/** @type {any} */ n) => n.name),
-            gespeichert: Array.isArray(g.npcs) ? g.npcs.length : null
-        };
-    }, SPEICHER);
-    weich(neu.npcs, 'nach dem Neuladen: genau ein NPC mehr in D').toBe(vorher.npcs + 1);
-    weich(
-        neu.namen.filter(n => n === name).length,
-        `nach dem Neuladen: genau ein "${name}" mehr in D`
-    ).toBe(vorher.namen.filter(n => n === name).length + 1);
-    weich(neu.gespeichert, 'nach dem Neuladen: genau ein NPC mehr im Speicher').toBe(
-        vorher.npcs + 1
-    );
-    await keinFehlerAusser(fehler, true);
-});
+for (const [titel, sitzungVerloren] of /** @type {const} */ ([
+    ['W4 1440, dev: nach dem Doppelklick und dem Neuladen bleibt genau ein NPC mehr', false],
+    ['W4s 1440, dev: auch ohne Sitzungsspeicher bleibt nach dem Neuladen genau ein NPC mehr', true]
+])) {
+    test(titel, async ({ page }) => {
+        const fehler = fehlerFangen(page);
+        // Der Reload-Vertrag braucht eine stabile Origin: Chromium kann
+        // Datei-Storage beim Dokumentwechsel voruebergehend leer melden.
+        await laden(page, { http: true });
+        const { name, vorher } = await doppelklickMitWurf(page);
+        await fehler.sichern();
+        // file:// kann beim Reload sessionStorage verlieren, waehrend localStorage
+        // den gespeicherten NPC behaelt. Der Test-Seed darf ihn dann nicht ersetzen.
+        if (sitzungVerloren) await page.evaluate(() => sessionStorage.clear());
+        await page.reload();
+        await waitForAppReady(page);
+        const neu = await page.evaluate(schluessel => {
+            const g = JSON.parse(localStorage.getItem(schluessel) || '{}');
+            return {
+                npcs: window.D.npcs.length,
+                /** @type {unknown[]} */
+                namen: window.D.npcs.map((/** @type {any} */ n) => n.name),
+                gespeichert: Array.isArray(g.npcs) ? g.npcs.length : null
+            };
+        }, SPEICHER);
+        weich(neu.npcs, 'nach dem Neuladen: genau ein NPC mehr in D').toBe(vorher.npcs + 1);
+        weich(
+            neu.namen.filter(n => n === name).length,
+            `nach dem Neuladen: genau ein "${name}" mehr in D`
+        ).toBe(vorher.namen.filter(n => n === name).length + 1);
+        weich(neu.gespeichert, 'nach dem Neuladen: genau ein NPC mehr im Speicher').toBe(
+            vorher.npcs + 1
+        );
+        await keinFehlerAusser(fehler, true);
+    });
+}
 
 test('W5m 390x844, dev: Doppelklick mit der Maus — genau ein NPC', async ({ page }) => {
     const fehler = fehlerFangen(page);

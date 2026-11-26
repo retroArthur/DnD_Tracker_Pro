@@ -20,11 +20,11 @@ export default defineConfig({
     // Parallele Tests
     fullyParallel: true,
 
-    // Fehlgeschlagene Tests nicht wiederholen in CI
+    // Versehentliche test.only-Aufrufe in CI verhindern.
     forbidOnly: !!process.env.CI,
 
-    // Wiederholungen bei Fehlern
-    retries: process.env.CI ? 2 : 0,
+    // Jeder Fall muss im ersten Versuch bestehen, auch in CI.
+    retries: 0,
 
     // Anzahl paralleler Worker
     workers: process.env.CI ? 1 : undefined,
